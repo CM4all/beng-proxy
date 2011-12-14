@@ -612,6 +612,56 @@ src_cm4all_beng_proxy_log_exec_LDADD = \
 
 src_cm4all_beng_proxy_delegate_helper_SOURCES = src/delegate-helper.c
 
+# LLVM
+
+if LLVM
+
+llvmdir = $(libdir)/llvm
+llvm_DATA = cm4all-beng-proxy.bc
+
+src_cm4all_beng_proxy_CSOURCES = $(filter-out %.h,$(src_cm4all_beng_proxy_SOURCES))
+src_cm4all_beng_proxy_BC = $(src_cm4all_beng_proxy_CSOURCES:.c=.bc)
+
+$(src_cm4all_beng_proxy_BC): %.bc: %.c
+	$(CLANG) -c -o $@ $< -emit-llvm $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+
+cm4all-beng-proxy-unoptimized.bc: $(src_cm4all_beng_proxy_BC)
+	$(LLVM_LINK) -o $@ $^
+
+cm4all-beng-proxy.bc: cm4all-beng-proxy-unoptimized.bc
+	$(LLVM_OPT) -o $@ $< -std-compile-opts -std-link-opts -O3
+
+cm4all-beng-proxy.s: cm4all-beng-proxy.bc
+	$(LLVM_LLC) -o $@ $< -O3
+
+cm4all-beng-proxy: cm4all-beng-proxy.s
+	$(CLANG) -o $@ $^ $(src_cm4all_beng_proxy_LDFLAGS) $(src_cm4all_beng_proxy_LDADD)
+
+src_cm4all_beng_lb_CSOURCES = $(filter-out %.h,$(src_cm4all_beng_lb_SOURCES))
+src_cm4all_beng_lb_BC = $(src_cm4all_beng_lb_CSOURCES:.c=.bc)
+
+$(src_cm4all_beng_lb_BC): %.bc: %.c
+	$(CLANG) -c -o $@ $< -emit-llvm $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+
+cm4all-beng-lb-unoptimized.bc: $(src_cm4all_beng_lb_BC)
+	$(LLVM_LINK) -o $@ $^
+
+cm4all-beng-lb.bc: cm4all-beng-lb-unoptimized.bc
+	$(LLVM_OPT) -o $@ $< -std-compile-opts -std-link-opts -O3
+
+cm4all-beng-lb.s: cm4all-beng-lb.bc
+	$(LLVM_LLC) -o $@ $< -O3
+
+cm4all-beng-lb: cm4all-beng-lb.s
+	$(CLANG) -o $@ $^ $(src_cm4all_beng_lb_LDFLAGS) $(src_cm4all_beng_lb_LDADD)
+
+CLEANFILES = \
+	cm4all-beng-lb-unoptimized.bc cm4all-beng-lb.bc cm4all-beng-lb.s cm4all-beng-lb $(src_cm4all_beng_lb_BC) \
+	cm4all-beng-proxy-unoptimized.bc cm4all-beng-proxy.bc cm4all-beng-proxy.s cm4all-beng-proxy $(src_cm4all_beng_proxy_BC)
+
+endif
+
+
 #
 # Libraries
 #

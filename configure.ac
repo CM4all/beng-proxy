@@ -12,6 +12,45 @@ AC_PROG_INSTALL
 AC_PROG_CC_C99
 AC_PROG_RANLIB
 
+dnl Checks for LLVM and clang
+
+AC_ARG_ENABLE(llvm,
+	AS_HELP_STRING([--enable-llvm], [Enable LLVM bitcode library]),,
+	[enable_llvm=no])
+AM_CONDITIONAL(LLVM, test x$enable_llvm = xyes)
+
+AC_ARG_WITH([clang],
+	AS_HELP_STRING([--with-clang=PATH],
+		 [Location of the clang program]),
+	[], [with_clang=no])
+
+AC_ARG_WITH([llvm-config],
+	AS_HELP_STRING([--with-llvm-config=PATH],
+		 [Location of the llvm-config program]))
+
+if test x$enable_llvm = xyes; then
+	if test x$with_clang = xno; then
+		AC_PATH_PROG([CLANG], [clang], AC_MSG_ERROR([clang not found]))
+	else
+		CLANG=$with_clang
+	fi
+
+	if test x$with_llvm_config = x; then
+		AC_PATH_PROGS([with_llvm_config],
+			[llvm-config llvm-config-3.1 llvm-config-3.0],
+			AC_MSG_ERROR([llvm-config not found]))
+	fi
+
+	llvm_bin=`$with_llvm_config --bindir`
+
+	AC_PATH_PROG([LLVM_LINK], [llvm-link],
+		AC_MSG_ERROR([llvm-link not found]), [$llvm_bin])
+	AC_PATH_PROG([LLVM_OPT], [opt],
+		AC_MSG_ERROR([opt not found]), [$llvm_bin])
+	AC_PATH_PROG([LLVM_LLC], [llc],
+		AC_MSG_ERROR([llc not found]), [$llvm_bin])
+fi
+
 dnl Checks for OS features
 
 AC_SYS_LARGEFILE
