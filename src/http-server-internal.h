@@ -114,6 +114,18 @@ http_server_connection_valid(struct http_server_connection *connection)
     return connection->fd >= 0;
 }
 
+static inline void
+http_server_schedule_read(struct http_server_connection *connection)
+{
+    event2_or(&connection->event, EV_READ);
+}
+
+static inline void
+http_server_schedule_write(struct http_server_connection *connection)
+{
+    event2_or(&connection->event, EV_WRITE);
+}
+
 /**
  * A fatal error has occurred, and the connection should be closed
  * immediately, without sending any further information to the client.

@@ -32,12 +32,12 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     if (likely(nbytes >= 0)) {
         connection->response.bytes_sent += nbytes;
         connection->response.length += (off_t)nbytes;
-        event2_or(&connection->event, EV_WRITE);
+        http_server_schedule_write(connection);
         return (size_t)nbytes;
     }
 
     if (likely(errno == EAGAIN)) {
-        event2_or(&connection->event, EV_WRITE);
+        http_server_schedule_write(connection);
         return 0;
     }
 
@@ -65,7 +65,7 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     nbytes = istream_direct_to_socket(type, fd, connection->fd, max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(connection->fd)) {
-            event2_or(&connection->event, EV_WRITE);
+            http_server_schedule_write(connection);
             return -2;
         }
 
@@ -78,7 +78,7 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     if (likely(nbytes > 0)) {
         connection->response.bytes_sent += nbytes;
         connection->response.length += (off_t)nbytes;
-        event2_or(&connection->event, EV_WRITE);
+        http_server_schedule_write(connection);
     }
 
     return nbytes;

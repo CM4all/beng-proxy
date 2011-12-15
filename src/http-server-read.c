@@ -282,7 +282,7 @@ http_server_submit_request(struct http_server_connection *connection)
     if (connection->request.read_state == READ_END)
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        event2_or(&connection->event, EV_READ);
+        http_server_schedule_read(connection);
 
     pool_ref(connection->pool);
 
@@ -324,7 +324,7 @@ http_server_consume_input(struct http_server_connection *connection)
          connection->request.read_state == READ_HEADERS ||
          connection->request.read_state == READ_BODY) &&
         !fifo_buffer_full(connection->input))
-        event2_or(&connection->event, EV_READ);
+        http_server_schedule_read(connection);
 
     return true;
 }
@@ -347,7 +347,7 @@ http_server_read_to_buffer(struct http_server_connection *connection)
         assert(false);
         return true;
     } else if (errno == EAGAIN) {
-        event2_or(&connection->event, EV_READ);
+        http_server_schedule_read(connection);
         return true;
     } else {
         http_server_errno(connection, "read error on HTTP connection");
@@ -403,7 +403,7 @@ http_server_try_request_direct(struct http_server_connection *connection)
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
-            event2_or(&connection->event, EV_READ);
+            http_server_schedule_read(connection);
             return;
         }
 
@@ -420,7 +420,7 @@ http_server_try_request_direct(struct http_server_connection *connection)
         connection->request.read_state = READ_END;
         istream_deinit_eof(&connection->request.body_reader.output);
     } else
-        event2_or(&connection->event, EV_READ);
+        http_server_schedule_read(connection);
 }
 
 void
