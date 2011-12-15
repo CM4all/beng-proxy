@@ -18,6 +18,16 @@
 #include <string.h>
 #include <errno.h>
 
+const struct timeval http_server_idle_timeout = {
+    .tv_sec = 30,
+    .tv_usec = 0,
+};
+
+const struct timeval http_server_header_timeout = {
+    .tv_sec = 20,
+    .tv_usec = 0,
+};
+
 struct http_server_request *
 http_server_request_new(struct http_server_connection *connection)
 {
@@ -165,10 +175,6 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
                            struct http_server_connection **connection_r)
 {
     struct http_server_connection *connection;
-    static const struct timeval tv = {
-        .tv_sec = 30,
-        .tv_usec = 0,
-    };
 
     assert(fd >= 0);
     assert(handler != NULL);
@@ -205,7 +211,7 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     event2_init(&connection->event, connection->fd,
                 http_server_event_callback, connection,
-                &tv);
+                &http_server_idle_timeout);
     event2_persist(&connection->event);
     event2_lock(&connection->event);
 

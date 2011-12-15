@@ -98,6 +98,16 @@ struct http_server_connection {
     bool keep_alive;
 };
 
+/**
+ * The timeout of an idle connection (READ_START).
+ */
+extern const struct timeval http_server_idle_timeout;
+
+/**
+ * The total timeout of a client sending request headers.
+ */
+extern const struct timeval http_server_header_timeout;
+
 static inline int
 http_server_connection_valid(struct http_server_connection *connection)
 {
