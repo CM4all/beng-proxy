@@ -28,6 +28,11 @@ const struct timeval http_server_header_timeout = {
     .tv_usec = 0,
 };
 
+const struct timeval http_server_read_timeout = {
+    .tv_sec = 30,
+    .tv_usec = 0,
+};
+
 const struct timeval http_server_write_timeout = {
     .tv_sec = 30,
     .tv_usec = 0,
@@ -103,12 +108,7 @@ http_server_write_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
-    event2_lock(&connection->event);
-    event2_occurred_persist(&connection->event, event);
-
-    if (http_server_write_event_callback2(connection, event))
-        event2_unlock(&connection->event);
-
+    http_server_write_event_callback2(connection, event);
     pool_commit();
 }
 
@@ -116,28 +116,16 @@ http_server_write_event_callback(int fd gcc_unused, short event, void *ctx)
  * @return false if the connection has been closed
  */
 static bool
-http_server_event_callback2(struct http_server_connection *connection,
-                            short event)
+http_server_read_event_callback2(struct http_server_connection *connection,
+                                 short event)
 {
-    if (unlikely(event == EV_TIMEOUT &&
-                 connection->request.read_state == READ_END &&
-                 (connection->response.event.ev_events & EV_WRITE) == 0 &&
-                 (connection->event.old_mask & EV_READ) == EV_READ)) {
-        /* workaround: ignore timeout when the request has been
-           received (but we're still checking EV_READ to detect a
-           closed socket); this kludge is needed because of an API
-           limitation in the "event2" library */
-        return true;
-    }
-
     if (unlikely(event & EV_TIMEOUT)) {
         daemon_log(4, "timeout\n");
         http_server_cancel(connection);
         return false;
     }
 
-    if ((event & EV_READ) != 0 &&
-        connection->request.read_state == READ_END) {
+    if (connection->request.read_state == READ_END) {
         /* check if the connection was closed by the client while we
            were processing the request */
 
@@ -153,29 +141,19 @@ http_server_event_callback2(struct http_server_connection *connection,
             /* client has disconnected */
             return false;
 
-        /* read more */
-        event2_or(&connection->event, EV_READ);
+        /* read more (no need to reschedule due to EV_PERSIST) */
         return true;
     }
 
-    if ((event & EV_READ) != 0 &&
-        !http_server_try_read(connection))
-        return false;
-
-    return true;
+    return http_server_try_read(connection);
 }
 
 static void
-http_server_event_callback(int fd gcc_unused, short event, void *ctx)
+http_server_read_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
-    event2_lock(&connection->event);
-    event2_occurred_persist(&connection->event, event);
-
-    if (http_server_event_callback2(connection, event))
-        event2_unlock(&connection->event);
-
+    http_server_read_event_callback2(connection, event);
     pool_commit();
 }
 
@@ -232,11 +210,10 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     connection->input = fifo_buffer_new(pool, 4096);
 
-    event2_init(&connection->event, connection->fd,
-                http_server_event_callback, connection,
-                &http_server_idle_timeout);
-    event2_persist(&connection->event);
-    event2_lock(&connection->event);
+    event_set(&connection->request.event, connection->fd,
+              EV_READ|EV_PERSIST|EV_TIMEOUT,
+              http_server_read_event_callback, connection);
+    event_add(&connection->request.event, &http_server_idle_timeout);
 
     event_set(&connection->response.event, connection->fd,
               EV_WRITE|EV_PERSIST|EV_TIMEOUT,
@@ -249,8 +226,7 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     *connection_r = connection;
 
-    if (http_server_try_read(connection))
-        event2_unlock(&connection->event);
+    http_server_try_read(connection);
 }
 
 static void
@@ -258,8 +234,7 @@ http_server_socket_close(struct http_server_connection *connection)
 {
     assert(connection->fd >= 0);
 
-    event2_set(&connection->event, 0);
-    event2_commit(&connection->event);
+    event_del(&connection->request.event);
     event_del(&connection->response.event);
 
     close(connection->fd);

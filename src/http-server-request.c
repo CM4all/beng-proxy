@@ -98,7 +98,7 @@ http_server_request_stream_close(istream_t istream)
     assert(connection->request.read_state == READ_BODY);
     assert(!http_body_eof(&connection->request.body_reader));
 
-    event2_nand(&connection->event, EV_READ);
+    event_del(&connection->request.event);
 
     connection->request.read_state = READ_END;
 

@@ -9,9 +9,10 @@
 
 #include "http-server.h"
 #include "fifo-buffer.h"
-#include "event2.h"
 #include "http-body.h"
 #include "async.h"
+
+#include <event.h>
 
 struct http_server_connection {
     struct pool *pool;
@@ -19,7 +20,6 @@ struct http_server_connection {
     /* I/O */
     int fd;
     enum istream_direct fd_type;
-    struct event2 event;
     struct fifo_buffer *input;
 
     /**
@@ -44,6 +44,8 @@ struct http_server_connection {
 
     /* request */
     struct {
+        struct event event;
+
         enum {
             /** there is no request (yet); waiting for the request
                 line */
@@ -58,6 +60,8 @@ struct http_server_connection {
             /** the request has been consumed, and we are going to send the response */
             READ_END
         } read_state;
+
+        bool want_read;
 
         /** has the client sent a HTTP/1.0 request? */
         bool http_1_0;
@@ -113,6 +117,11 @@ extern const struct timeval http_server_idle_timeout;
 extern const struct timeval http_server_header_timeout;
 
 /**
+ * The timeout for reading more request data (READ_BODY).
+ */
+extern const struct timeval http_server_read_timeout;
+
+/**
  * The timeout for writing more response data (READ_BODY, READ_END).
  */
 extern const struct timeval http_server_write_timeout;
@@ -126,7 +135,21 @@ http_server_connection_valid(struct http_server_connection *connection)
 static inline void
 http_server_schedule_read(struct http_server_connection *connection)
 {
-    event2_or(&connection->event, EV_READ);
+    connection->request.want_read = true;
+
+    const struct timeval *timeout =
+        gcc_likely(connection->request.read_state == READ_START)
+        ? &http_server_idle_timeout
+        : (gcc_likely(connection->request.read_state == READ_BODY)
+           ? &http_server_read_timeout
+           : NULL);
+
+    /* no timeout for READ_HEADERS, because we have a separate event
+       for this */
+    /* no timeout for READ_END, because this event is only there to
+       detect a closing socket */
+
+    event_add(&connection->request.event, timeout);
 }
 
 static inline void
