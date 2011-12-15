@@ -82,6 +82,10 @@ struct http_server_connection {
     /** the response; this struct is only valid if
         read_state==READ_BODY||read_state==READ_END */
     struct {
+        struct event event;
+
+        bool want_write;
+
         bool writing_100_continue;
         http_status_t status;
         char status_buffer[64];
@@ -108,6 +112,11 @@ extern const struct timeval http_server_idle_timeout;
  */
 extern const struct timeval http_server_header_timeout;
 
+/**
+ * The timeout for writing more response data (READ_BODY, READ_END).
+ */
+extern const struct timeval http_server_write_timeout;
+
 static inline int
 http_server_connection_valid(struct http_server_connection *connection)
 {
@@ -123,7 +132,8 @@ http_server_schedule_read(struct http_server_connection *connection)
 static inline void
 http_server_schedule_write(struct http_server_connection *connection)
 {
-    event2_or(&connection->event, EV_WRITE);
+    connection->response.want_write = true;
+    event_add(&connection->response.event, &http_server_write_timeout);
 }
 
 /**

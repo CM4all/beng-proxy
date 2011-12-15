@@ -28,6 +28,11 @@ const struct timeval http_server_header_timeout = {
     .tv_usec = 0,
 };
 
+const struct timeval http_server_write_timeout = {
+    .tv_sec = 30,
+    .tv_usec = 0,
+};
+
 struct http_server_request *
 http_server_request_new(struct http_server_connection *connection)
 {
@@ -60,21 +65,51 @@ http_server_try_write(struct http_server_connection *connection)
     assert(connection->request.request != NULL);
     assert(connection->response.istream != NULL);
 
-    event2_lock(&connection->event);
-    event2_nand(&connection->event, EV_WRITE);
-
     pool_ref(connection->pool);
     istream_read(connection->response.istream);
 
-    if (!http_server_connection_valid(connection)) {
-        pool_unref(connection->pool);
+    bool valid = http_server_connection_valid(connection);
+    pool_unref(connection->pool);
+
+    return valid;
+}
+
+/**
+ * @return false if the connection has been closed
+ */
+static bool
+http_server_write_event_callback2(struct http_server_connection *connection,
+                                  short event)
+{
+    if (event & EV_TIMEOUT) {
+        daemon_log(4, "timeout\n");
+        http_server_cancel(connection);
         return false;
     }
 
-    pool_unref(connection->pool);
+    connection->response.want_write = false;
 
-    event2_unlock(&connection->event);
+    if (!http_server_try_write(connection))
+        return false;
+
+    if (!connection->response.want_write)
+        event_del(&connection->response.event);
+
     return true;
+}
+
+static void
+http_server_write_event_callback(int fd gcc_unused, short event, void *ctx)
+{
+    struct http_server_connection *connection = ctx;
+
+    event2_lock(&connection->event);
+    event2_occurred_persist(&connection->event, event);
+
+    if (http_server_write_event_callback2(connection, event))
+        event2_unlock(&connection->event);
+
+    pool_commit();
 }
 
 /**
@@ -86,7 +121,8 @@ http_server_event_callback2(struct http_server_connection *connection,
 {
     if (unlikely(event == EV_TIMEOUT &&
                  connection->request.read_state == READ_END &&
-                 (connection->event.old_mask & (EV_READ|EV_WRITE)) == EV_READ)) {
+                 (connection->response.event.ev_events & EV_WRITE) == 0 &&
+                 (connection->event.old_mask & EV_READ) == EV_READ)) {
         /* workaround: ignore timeout when the request has been
            received (but we're still checking EV_READ to detect a
            closed socket); this kludge is needed because of an API
@@ -99,10 +135,6 @@ http_server_event_callback2(struct http_server_connection *connection,
         http_server_cancel(connection);
         return false;
     }
-
-    if ((event & EV_WRITE) != 0 &&
-        !http_server_try_write(connection))
-        return false;
 
     if ((event & EV_READ) != 0 &&
         connection->request.read_state == READ_END) {
@@ -215,6 +247,10 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     event2_persist(&connection->event);
     event2_lock(&connection->event);
 
+    event_set(&connection->response.event, connection->fd,
+              EV_WRITE|EV_PERSIST|EV_TIMEOUT,
+              http_server_write_event_callback, connection);
+
     evtimer_set(&connection->timeout,
                 http_server_timeout_callback, connection);
 
@@ -235,6 +271,8 @@ http_server_socket_close(struct http_server_connection *connection)
 
     event2_set(&connection->event, 0);
     event2_commit(&connection->event);
+    event_del(&connection->response.event);
+
     close(connection->fd);
     connection->fd = -1;
 

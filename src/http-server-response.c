@@ -97,7 +97,7 @@ http_server_response_stream_eof(void *ctx)
 
     connection->response.istream = NULL;
 
-    event2_nand(&connection->event, EV_WRITE);
+    event_del(&connection->response.event);
 
     if (connection->response.writing_100_continue)
         /* connection->response.istream contained the string "100
