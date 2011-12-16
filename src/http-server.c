@@ -158,16 +158,9 @@ http_server_event_callback2(struct http_server_connection *connection,
         return true;
     }
 
-    if ((event & EV_READ) != 0) {
-        pool_ref(connection->pool);
-        http_server_try_read(connection);
-        if (!http_server_connection_valid(connection)) {
-            pool_unref(connection->pool);
-            return false;
-        }
-
-        pool_unref(connection->pool);
-    }
+    if ((event & EV_READ) != 0 &&
+        !http_server_try_read(connection))
+        return false;
 
     return true;
 }
@@ -239,8 +232,6 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     connection->input = fifo_buffer_new(pool, 4096);
 
-    pool_ref(connection->pool);
-
     event2_init(&connection->event, connection->fd,
                 http_server_event_callback, connection,
                 &http_server_idle_timeout);
@@ -258,10 +249,8 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     *connection_r = connection;
 
-    http_server_try_read(connection);
-
-    event2_unlock(&connection->event);
-    pool_unref(connection->pool);
+    if (http_server_try_read(connection))
+        event2_unlock(&connection->event);
 }
 
 static void

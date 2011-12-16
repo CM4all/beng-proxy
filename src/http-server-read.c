@@ -382,7 +382,13 @@ http_server_try_read_buffered(struct http_server_connection *connection)
     http_server_consume_input(connection);
 }
 
-static void
+/**
+ * Attempt a "direct" transfer of the request body.  Caller must hold
+ * an additional pool reference.
+ *
+ * @return false if the connection has been closed
+ */
+static bool
 http_server_try_request_direct(struct http_server_connection *connection)
 {
     ssize_t nbytes;
@@ -391,39 +397,45 @@ http_server_try_request_direct(struct http_server_connection *connection)
     assert(connection->request.read_state == READ_BODY);
 
     if (!http_server_maybe_send_100_continue(connection))
-        return;
+        return false;
 
     nbytes = http_body_try_direct(&connection->request.body_reader,
                                   connection->fd, connection->fd_type);
-    if (nbytes == -2 || nbytes == -3)
-        /* either the destination fd blocks (-2) or the stream (and
-           the whole connection) has been closed during the direct()
-           callback (-3); no further checks */
-        return;
+    if (nbytes == -2)
+        /* the destination fd blocks */
+        return true;
+
+    if (nbytes == -3)
+        /* the stream (and the whole connection) has been closed
+           during the direct() callback (-3); no further checks */
+        return false;
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
             http_server_schedule_read(connection);
-            return;
+            return true;
         }
 
         http_server_errno(connection, "read error on HTTP connection");
-        return;
+        return false;
     }
 
     if (nbytes == 0)
-        return;
+        return true;
 
     connection->request.bytes_received += nbytes;
 
     if (http_body_eof(&connection->request.body_reader)) {
         connection->request.read_state = READ_END;
         istream_deinit_eof(&connection->request.body_reader.output);
-    } else
+        return http_server_connection_valid(connection);
+    } else {
         http_server_schedule_read(connection);
+        return true;
+    }
 }
 
-void
+bool
 http_server_try_read(struct http_server_connection *connection)
 {
     event2_nand(&connection->event, EV_READ);
@@ -431,9 +443,19 @@ http_server_try_read(struct http_server_connection *connection)
     if (connection->request.read_state == READ_BODY &&
         istream_check_direct(&connection->request.body_reader.output, connection->fd_type)) {
         if (fifo_buffer_empty(connection->input))
-            http_server_try_request_direct(connection);
-        else
-            http_server_consume_body(connection);
-    } else
+            return http_server_try_request_direct(connection);
+        else {
+            pool_ref(connection->pool);
+            bool valid = http_server_consume_body(connection) ||
+                http_server_connection_valid(connection);
+            pool_unref(connection->pool);
+            return valid;
+        }
+    } else {
+        pool_ref(connection->pool);
         http_server_try_read_buffered(connection);
+        bool valid = http_server_connection_valid(connection);
+        pool_unref(connection->pool);
+        return valid;
+    }
 }
