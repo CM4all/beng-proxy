@@ -87,7 +87,8 @@ http_server_write_event_callback2(struct http_server_connection *connection,
                                   short event)
 {
     if (event & EV_TIMEOUT) {
-        daemon_log(4, "timeout\n");
+        daemon_log(4, "write timeout on HTTP connection from %s\n",
+                   connection->remote_host);
         http_server_cancel(connection);
         return false;
     }
@@ -120,7 +121,10 @@ http_server_read_event_callback2(struct http_server_connection *connection,
                                  short event)
 {
     if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "timeout\n");
+        daemon_log(4, "%s timeout on HTTP connection from %s\n",
+                   connection->request.read_state == READ_START
+                   ? "idle" : "read",
+                   connection->remote_host);
         http_server_cancel(connection);
         return false;
     }
@@ -163,7 +167,8 @@ http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
 {
     struct http_server_connection *connection = ctx;
 
-    daemon_log(4, "header timeout\n");
+    daemon_log(4, "header timeout on HTTP connection from %s\n",
+               connection->remote_host);
     http_server_cancel(connection);
 }
 
