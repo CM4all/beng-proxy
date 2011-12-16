@@ -82,13 +82,9 @@ http_server_request_stream_read(istream_t istream)
     assert(connection->request.request->body != NULL);
     assert(istream_has_handler(connection->request.request->body));
 
-    pool_ref(connection->pool);
-
     if (http_server_consume_body(connection) &&
         connection->request.read_state == READ_BODY)
         http_server_try_read(connection);
-
-    pool_unref(connection->pool);
 }
 
 static void
