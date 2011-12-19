@@ -466,8 +466,12 @@ http_server_try_read(struct http_server_connection *connection)
     if (!http_server_try_read2(connection))
         return false;
 
-    if (!connection->request.want_read)
+    if (!connection->request.want_read) {
+        /* the event must always be enabled while reading headers */
+        assert(connection->request.read_state != READ_HEADERS);
+
         event_del(&connection->request.event);
+    }
 
     return true;
 }
