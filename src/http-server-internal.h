@@ -23,8 +23,12 @@ struct http_server_connection {
     struct fifo_buffer *input;
 
     /**
-     * This timeout event limits the time clients have for sending all
-     * of the headers.
+     * The timeout for receiving data from the client.  Only active
+     * while we're expecting data from the client.
+     *
+     * While receiving request headers, this timeout is not
+     * reinitialized, and is a total timeout for receiving all of the
+     * request headers.
      */
     struct event timeout;
 
@@ -144,12 +148,14 @@ http_server_schedule_read(struct http_server_connection *connection)
            ? &http_server_read_timeout
            : NULL);
 
-    /* no timeout for READ_HEADERS, because we have a separate event
-       for this */
+    /* don't refresh timeout for READ_HEADERS */
     /* no timeout for READ_END, because this event is only there to
        detect a closing socket */
 
-    event_add(&connection->request.event, timeout);
+    if (timeout != NULL)
+        evtimer_add(&connection->timeout, timeout);
+
+    event_add(&connection->request.event, NULL);
 }
 
 static inline void

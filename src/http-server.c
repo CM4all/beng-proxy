@@ -117,18 +117,8 @@ http_server_write_event_callback(int fd gcc_unused, short event, void *ctx)
  * @return false if the connection has been closed
  */
 static bool
-http_server_read_event_callback2(struct http_server_connection *connection,
-                                 short event)
+http_server_read_event_callback2(struct http_server_connection *connection)
 {
-    if (unlikely(event & EV_TIMEOUT)) {
-        daemon_log(4, "%s timeout on HTTP connection from %s\n",
-                   connection->request.read_state == READ_START
-                   ? "idle" : "read",
-                   connection->remote_host);
-        http_server_cancel(connection);
-        return false;
-    }
-
     if (connection->request.read_state == READ_END) {
         /* check if the connection was closed by the client while we
            were processing the request */
@@ -153,11 +143,11 @@ http_server_read_event_callback2(struct http_server_connection *connection,
 }
 
 static void
-http_server_read_event_callback(int fd gcc_unused, short event, void *ctx)
+http_server_read_event_callback(gcc_unused int fd, gcc_unused short event, void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
-    http_server_read_event_callback2(connection, event);
+    http_server_read_event_callback2(connection);
     pool_commit();
 }
 
@@ -167,9 +157,14 @@ http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
 {
     struct http_server_connection *connection = ctx;
 
-    daemon_log(4, "header timeout on HTTP connection from %s\n",
+    daemon_log(4, "%s timeout on HTTP connection from %s\n",
+               connection->request.read_state == READ_START
+               ? "idle"
+               : (connection->request.read_state == READ_HEADERS
+                  ? "header" : "read"),
                connection->remote_host);
     http_server_cancel(connection);
+    pool_commit();
 }
 
 void
@@ -216,9 +211,9 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     connection->input = fifo_buffer_new(pool, 4096);
 
     event_set(&connection->request.event, connection->fd,
-              EV_READ|EV_PERSIST|EV_TIMEOUT,
+              EV_READ|EV_PERSIST,
               http_server_read_event_callback, connection);
-    event_add(&connection->request.event, &http_server_idle_timeout);
+    event_add(&connection->request.event, NULL);
 
     event_set(&connection->response.event, connection->fd,
               EV_WRITE|EV_PERSIST|EV_TIMEOUT,
@@ -226,6 +221,7 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     evtimer_set(&connection->timeout,
                 http_server_timeout_callback, connection);
+    evtimer_add(&connection->timeout, &http_server_idle_timeout);
 
     connection->score = HTTP_SERVER_NEW;
 

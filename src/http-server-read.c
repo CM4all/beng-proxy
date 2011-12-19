@@ -470,6 +470,7 @@ http_server_try_read(struct http_server_connection *connection)
         /* the event must always be enabled while reading headers */
         assert(connection->request.read_state != READ_HEADERS);
 
+        event_del(&connection->timeout);
         event_del(&connection->request.event);
     }
 
