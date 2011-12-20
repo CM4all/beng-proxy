@@ -75,8 +75,7 @@ socket_try_buffered(struct istream_socket *s)
 {
     if (s->buffer == NULL)
         s->buffer = fifo_buffer_new(s->output.pool, 8192);
-
-    if (s->buffer != NULL && istream_buffer_consume(&s->output, s->buffer) > 0)
+    else if (istream_buffer_consume(&s->output, s->buffer) > 0)
         return;
 
     assert(!fifo_buffer_full(s->buffer));
