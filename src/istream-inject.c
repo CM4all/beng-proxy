@@ -7,6 +7,7 @@
  */
 
 #include "istream-internal.h"
+#include "istream-forward.h"
 
 #include <assert.h>
 
@@ -20,23 +21,6 @@ struct istream_inject {
  * istream handler
  *
  */
-
-static size_t
-inject_input_data(const void *data, size_t length, void *ctx)
-{
-    struct istream_inject *inject = ctx;
-
-    return istream_invoke_data(&inject->output, data, length);
-}
-
-static ssize_t
-inject_input_direct(istream_direct_t type, int fd, size_t max_length,
-                    void *ctx)
-{
-    struct istream_inject *inject = ctx;
-
-    return istream_invoke_direct(&inject->output, type, fd, max_length);
-}
 
 static void
 inject_input_eof(void *ctx)
@@ -61,8 +45,8 @@ inject_input_abort(GError *error, void *ctx)
 }
 
 static const struct istream_handler inject_input_handler = {
-    .data = inject_input_data,
-    .direct = inject_input_direct,
+    .data = istream_forward_data,
+    .direct = istream_forward_direct,
     .eof = inject_input_eof,
     .abort = inject_input_abort,
 };
