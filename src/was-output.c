@@ -143,7 +143,7 @@ was_output_stream_direct(istream_direct_t type, int fd,
     } else if (nbytes < 0 && errno == EAGAIN) {
         if (!fd_ready_for_writing(output->fd)) {
             was_output_schedule_write(output);
-            return -2;
+            return ISTREAM_RESULT_BLOCKING;
         }
 
         /* try again, just in case output->fd has become ready between

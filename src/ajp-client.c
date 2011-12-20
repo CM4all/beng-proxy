@@ -731,7 +731,7 @@ ajp_request_stream_direct(istream_direct_t type, int fd, size_t max_length,
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(client->fd)) {
             ajp_client_schedule_write(client);
-            return -2;
+            return ISTREAM_RESULT_BLOCKING;
         }
 
         /* try again, just in case connection->fd has become ready

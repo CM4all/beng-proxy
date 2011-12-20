@@ -144,7 +144,7 @@ fork_input_direct(istream_direct_t type,
             if (!fd_ready_for_writing(f->input_fd)) {
                 p_event_add(&f->input_event, NULL,
                             f->output.pool, "fork_input_event");
-                return -2;
+                return ISTREAM_RESULT_BLOCKING;
             }
 
             /* try again, just in case connection->fd has become ready
@@ -260,13 +260,14 @@ fork_read_from_output(struct fork *f)
 
         ssize_t nbytes = istream_invoke_direct(&f->output, ISTREAM_PIPE,
                                                f->output_fd, INT_MAX);
-        if (nbytes == -2 || nbytes == -3) {
+        if (nbytes == ISTREAM_RESULT_BLOCKING ||
+            nbytes == ISTREAM_RESULT_CLOSED) {
             /* -2 means the callback wasn't able to consume any data right
                now */
         } else if (nbytes > 0) {
             p_event_add(&f->output_event, NULL,
                         f->output.pool, "fork_output_event");
-        } else if (nbytes == 0) {
+        } else if (nbytes == ISTREAM_RESULT_EOF) {
             fork_close(f);
             istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {

@@ -70,16 +70,17 @@ pipe_consume(struct istream_pipe *p)
     assert(p->stock_item != NULL);
 
     nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
-    if (unlikely(nbytes == -2 || nbytes == -3))
+    if (unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
+                 nbytes == ISTREAM_RESULT_CLOSED))
         /* handler blocks (-2) or pipe was closed (-3) */
         return nbytes;
 
-    if (unlikely(nbytes < 0 && errno != EAGAIN)) {
+    if (unlikely(nbytes == ISTREAM_RESULT_ERRNO && errno != EAGAIN)) {
         GError *error =
             g_error_new(g_file_error_quark(), errno,
                         "read from pipe failed: %s", strerror(errno));
         pipe_abort(p, error);
-        return -3;
+        return ISTREAM_RESULT_CLOSED;
     }
 
     if (nbytes > 0) {
@@ -101,7 +102,7 @@ pipe_consume(struct istream_pipe *p)
                waiting for the pipe buffer to become empty */
             pipe_close(p);
             istream_deinit_eof(&p->output);
-            return -3;
+            return ISTREAM_RESULT_CLOSED;
         }
     }
 
@@ -123,7 +124,7 @@ pipe_input_data(const void *data, size_t length, void *ctx)
 
     if (p->piped > 0) {
         ssize_t nbytes = pipe_consume(p);
-        if (nbytes == -3)
+        if (nbytes == ISTREAM_RESULT_CLOSED)
             return 0;
 
         if (p->piped > 0 || p->output.handler == NULL)
@@ -184,7 +185,7 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         if (p->piped > 0)
             /* if the pipe still isn't empty, we can't start reading
                new input */
-            return -2;
+            return ISTREAM_RESULT_BLOCKING;
     }
 
     if (istream_check_direct(&p->output, type))
@@ -195,7 +196,7 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     assert((type & ISTREAM_TO_PIPE) == type);
 
     if (p->fds[1] < 0 && !pipe_create(p))
-        return -3;
+        return ISTREAM_RESULT_CLOSED;
 
     nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,
                     SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
@@ -209,8 +210,8 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     assert(p->piped == 0);
     p->piped = (size_t)nbytes;
 
-    if (pipe_consume(p) == -3)
-        return -3;
+    if (pipe_consume(p) == ISTREAM_RESULT_CLOSED)
+        return ISTREAM_RESULT_CLOSED;
 
     return nbytes;
 }

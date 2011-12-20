@@ -144,7 +144,7 @@ ajp_body_input_direct(istream_direct_t type, int fd, size_t max_length,
 
     if (ab->packet_remaining == 0) {
         if (ab->requested == 0)
-            return -2;
+            return ISTREAM_RESULT_BLOCKING;
 
         /* start a new packet, size determined by
            direct_available() */
@@ -158,7 +158,8 @@ ajp_body_input_direct(istream_direct_t type, int fd, size_t max_length,
     pool_ref(ab->output.pool);
 
     if (!ajp_body_write_header(ab)) {
-        ssize_t ret = ab->input != NULL ? -2 : -3;
+        ssize_t ret = ab->input != NULL
+            ? ISTREAM_RESULT_BLOCKING : ISTREAM_RESULT_CLOSED;
         pool_unref(ab->output.pool);
         return ret;
     }

@@ -77,7 +77,7 @@ my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
 
     if (c->data_blocking) {
         --c->data_blocking;
-        return -2;
+        return ISTREAM_RESULT_BLOCKING;
     }
 
     char buffer[256];

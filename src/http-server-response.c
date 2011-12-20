@@ -66,7 +66,7 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(connection->fd)) {
             http_server_schedule_write(connection);
-            return -2;
+            return ISTREAM_RESULT_BLOCKING;
         }
 
         /* try again, just in case connection->fd has become ready

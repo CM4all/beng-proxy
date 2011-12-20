@@ -199,7 +199,8 @@ was_input_try_direct(struct was_input *input)
 
     ssize_t nbytes = istream_invoke_direct(&input->output, ISTREAM_PIPE,
                                            input->fd, max_length);
-    if (nbytes == 0 || nbytes == -2 || nbytes == -3)
+    if (nbytes == ISTREAM_RESULT_EOF || nbytes == ISTREAM_RESULT_BLOCKING ||
+        nbytes == ISTREAM_RESULT_CLOSED)
         return false;
 
     if (nbytes < 0) {

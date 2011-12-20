@@ -96,15 +96,15 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
     nbytes = istream->handler->direct(type, fd, max_length, istream->handler_ctx);
     assert(nbytes >= -3);
     assert(nbytes < 0 || (size_t)nbytes <= max_length);
-    assert(nbytes == -3 || !istream->eof);
+    assert(nbytes == ISTREAM_RESULT_CLOSED || !istream->eof);
 
 #ifndef NDEBUG
     if (pool_denotify(&notify) || istream->destroyed) {
-        assert(nbytes == -3);
+        assert(nbytes == ISTREAM_RESULT_CLOSED);
         return nbytes;
     }
 
-    assert(nbytes != -3);
+    assert(nbytes != ISTREAM_RESULT_CLOSED);
 
     istream->in_data = false;
 

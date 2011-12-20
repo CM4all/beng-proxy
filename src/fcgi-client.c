@@ -600,7 +600,7 @@ fcgi_request_stream_direct(istream_direct_t type, int fd,
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(client->fd)) {
             fcgi_client_schedule_write(client);
-            return -2;
+            return ISTREAM_RESULT_BLOCKING;
         }
 
         /* try again, just in case client->fd has become ready between

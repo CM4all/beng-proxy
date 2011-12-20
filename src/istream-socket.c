@@ -51,7 +51,8 @@ socket_try_direct(struct istream_socket *s)
         if (s->handler->depleted(s->handler_ctx) &&
             s->handler->finished(s->handler_ctx))
             istream_deinit_eof(&s->output);
-    } else if (nbytes == -2 || nbytes == -3) {
+    } else if (nbytes == ISTREAM_RESULT_BLOCKING ||
+               nbytes == ISTREAM_RESULT_CLOSED) {
         /* either the destination fd blocks (-2) or the stream (and
            the whole connection) has been closed during the direct()
            callback (-3); no further checks */

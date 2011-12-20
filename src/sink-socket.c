@@ -81,7 +81,7 @@ sink_socket_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(ss->fd)) {
             sink_socket_schedule_write(ss);
-            return -2;
+            return ISTREAM_RESULT_BLOCKING;
         }
 
         /* try again, just in case connection->fd has become ready

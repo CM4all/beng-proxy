@@ -635,12 +635,13 @@ memcached_client_try_read_direct(struct memcached_client *client)
             pool_unref(client->pool);
         } else
             memcached_client_schedule_read(client);
-    } else if (unlikely(nbytes == 0)) {
+    } else if (unlikely(nbytes == ISTREAM_RESULT_EOF)) {
         GError *error =
             g_error_new_literal(memcached_client_quark(), 0,
                                 "memcached server closed the connection");
         memcached_connection_abort_response_value(client, error);
-    } else if (nbytes == -2 || nbytes == -3) {
+    } else if (nbytes == ISTREAM_RESULT_BLOCKING ||
+               nbytes == ISTREAM_RESULT_CLOSED) {
         /* either the destination fd blocks (-2) or the stream (and
            the whole connection) has been closed during the direct()
            callback (-3); no further checks */

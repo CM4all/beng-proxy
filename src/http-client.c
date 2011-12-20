@@ -783,7 +783,7 @@ http_client_try_response_direct(struct http_client *client)
 
     ssize_t nbytes = http_body_try_direct(&client->response.body_reader,
                                           client->fd, client->fd_type);
-    if (nbytes == -2 || nbytes == -3)
+    if (nbytes == ISTREAM_RESULT_BLOCKING || nbytes == ISTREAM_RESULT_CLOSED)
         /* either the destination fd blocks (-2) or the stream (and
            the whole connection) has been closed during the direct()
            callback (-3); no further checks */
@@ -804,7 +804,7 @@ http_client_try_response_direct(struct http_client *client)
         return;
     }
 
-    if (nbytes == 0)
+    if (nbytes == ISTREAM_RESULT_EOF)
         return;
 
     if (http_body_eof(&client->response.body_reader))
@@ -1029,7 +1029,7 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(client->fd)) {
             http_client_schedule_write(client);
-            return -2;
+            return ISTREAM_RESULT_BLOCKING;
         }
 
         /* try again, just in case connection->fd has become ready

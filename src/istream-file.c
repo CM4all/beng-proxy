@@ -171,11 +171,11 @@ istream_file_try_direct(struct file *file)
 
     nbytes = istream_invoke_direct(&file->stream, file->fd_type, file->fd,
                                    istream_file_max_read(file));
-    if (nbytes == -3)
+    if (nbytes == ISTREAM_RESULT_CLOSED)
         /* this stream was closed during the direct() callback */
         return;
 
-    if (nbytes > 0 || nbytes == -2) {
+    if (nbytes > 0 || nbytes == ISTREAM_RESULT_BLOCKING) {
         /* -2 means the callback wasn't able to consume any data right
            now */
         if (nbytes > 0 && file->rest != (off_t)-1) {
@@ -184,7 +184,7 @@ istream_file_try_direct(struct file *file)
             if (file->rest == 0)
                 istream_file_eof_detected(file);
         }
-    } else if (nbytes == 0) {
+    } else if (nbytes == ISTREAM_RESULT_EOF) {
         if (file->rest == (off_t)-1) {
             istream_file_eof_detected(file);
         } else {

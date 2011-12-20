@@ -18,6 +18,34 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
+/**
+ * These special values may be returned from
+ * istream_handler::direct().
+ */
+enum istream_result {
+    /**
+     * No more data available in the specified socket.
+     */
+    ISTREAM_RESULT_EOF = 0,
+
+    /**
+     * I/O error, errno set.
+     */
+    ISTREAM_RESULT_ERRNO = -1,
+
+    /**
+     * Writing would block, callee is responsible for registering an
+     * event and calling istream_read().
+     */
+    ISTREAM_RESULT_BLOCKING = -2,
+
+    /**
+     * The stream has ben closed.  This state supersedes all other
+     * states.
+     */
+    ISTREAM_RESULT_CLOSED = -3,
+};
+
 typedef struct istream *istream_t;
 
 /** data sink for an istream */
@@ -43,10 +71,8 @@ struct istream_handler {
      * @param fd the file descriptor
      * @param max_length don't read more than this number of bytes
      * @param ctx the istream_handler context pointer
-     * @return the number of bytes consumed, 0 if there is no more
-     * data in the provided file descriptor, -1 on unhandled error
-     * (errno set), -2 if writing would block (callee is responsible
-     * for registering an event), -3 if the stream has been closed
+     * @return the number of bytes consumed, or one of the
+     * #istream_result values
      */
     ssize_t (*direct)(istream_direct_t type, int fd, size_t max_length, void *ctx);
 

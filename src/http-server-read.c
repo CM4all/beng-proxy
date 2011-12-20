@@ -401,11 +401,11 @@ http_server_try_request_direct(struct http_server_connection *connection)
 
     nbytes = http_body_try_direct(&connection->request.body_reader,
                                   connection->fd, connection->fd_type);
-    if (nbytes == -2)
+    if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
         return true;
 
-    if (nbytes == -3)
+    if (nbytes == ISTREAM_RESULT_CLOSED)
         /* the stream (and the whole connection) has been closed
            during the direct() callback (-3); no further checks */
         return false;
@@ -420,7 +420,7 @@ http_server_try_request_direct(struct http_server_connection *connection)
         return false;
     }
 
-    if (nbytes == 0)
+    if (nbytes == ISTREAM_RESULT_EOF)
         return true;
 
     connection->request.bytes_received += nbytes;

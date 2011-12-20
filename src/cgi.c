@@ -295,7 +295,7 @@ cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 
         istream_close_handler(cgi->input);
         istream_deinit_eof(&cgi->output);
-        return -3;
+        return ISTREAM_RESULT_CLOSED;
     }
 
     if (cgi->remaining != -1 && (off_t)max_length > cgi->remaining)
@@ -311,7 +311,7 @@ cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 
             istream_close_handler(cgi->input);
             istream_deinit_eof(&cgi->output);
-            return -3;
+            return ISTREAM_RESULT_CLOSED;
         }
     }
 
