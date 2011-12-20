@@ -13,6 +13,17 @@ struct growing_buffer;
 
 struct istream_socket_handler {
     /**
+     * Called when the buffer is full, but the handler method did not
+     * consume any of it.  This is never called for "direct" transfer,
+     * because there is no buffer in that mode.
+     *
+     * This method is optional.
+     *
+     * @return false when the istream has been closed
+     */
+    bool (*full)(void *ctx);
+
+    /**
      * Called when data is being requested, but the socket does not
      * deliver.  This may cause some action in the caller that may
      * bring more data into the other side of the socket.

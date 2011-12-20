@@ -49,12 +49,67 @@ socket_schedule_read(struct istream_socket *s)
     p_event_add(&s->event, NULL, s->output.pool, "istream_socket");
 }
 
+/**
+ * @return true if there is still data in the buffer (or if the stream
+ * has been closed), false if the buffer is empty
+ */
+static bool
+socket_buffer_consume(struct istream_socket *s)
+{
+    assert(socket_valid(s));
+    assert(s->buffer != NULL);
+
+    if (gcc_likely(!fifo_buffer_full(s->buffer) ||
+                   s->handler->full == NULL))
+        /* quick path without an additional pool reference */
+        return istream_buffer_consume(&s->output, s->buffer) > 0;
+
+    pool_ref(s->output.pool);
+    const bool full = istream_buffer_send(&s->output, s->buffer) == 0 &&
+        socket_valid(s);
+    const bool empty = !full && socket_valid(s) &&
+        fifo_buffer_empty(s->buffer);
+    pool_unref(s->output.pool);
+
+    if (gcc_unlikely(full && !s->handler->full(s->handler_ctx)))
+        /* stream has been closed */
+        return true;
+
+    return !empty;
+}
+
+/**
+ * @return true if data was consumed, false if the istream handler is
+ * blocking (or if the stream has been closed)
+ */
+static bool
+socket_buffer_send(struct istream_socket *s)
+{
+    assert(socket_valid(s));
+    assert(s->buffer != NULL);
+
+    if (gcc_likely(!fifo_buffer_full(s->buffer) ||
+                   s->handler->full == NULL))
+        /* quick path without an additional pool reference */
+        return istream_buffer_send(&s->output, s->buffer) > 0;
+
+    pool_ref(s->output.pool);
+    const bool consumed = istream_buffer_send(&s->output, s->buffer) > 0;
+    const bool full = !consumed && socket_valid(s);
+    pool_unref(s->output.pool);
+
+    if (full)
+        s->handler->full(s->handler_ctx);
+
+    return consumed;
+}
+
 static void
 socket_try_direct(struct istream_socket *s)
 {
     assert(socket_valid(s));
 
-    if (s->buffer != NULL && istream_buffer_consume(&s->output, s->buffer) > 0)
+    if (s->buffer != NULL && socket_buffer_consume(s))
         return;
 
     ssize_t nbytes = istream_invoke_direct(&s->output, s->fd_type, s->fd,
@@ -96,15 +151,14 @@ socket_try_buffered(struct istream_socket *s)
 
     if (s->buffer == NULL)
         s->buffer = fifo_buffer_new(s->output.pool, 8192);
-    else if (istream_buffer_consume(&s->output, s->buffer) > 0)
+    else if (socket_buffer_consume(s))
         return;
 
     assert(!fifo_buffer_full(s->buffer));
 
     ssize_t nbytes = recv_to_buffer(s->fd, s->buffer, G_MAXINT);
     if (G_LIKELY(nbytes > 0)) {
-        size_t consumed = istream_buffer_send(&s->output, s->buffer);
-        if (consumed > 0)
+        if (socket_buffer_send(s))
             socket_schedule_read(s);
     } else if (nbytes == 0) {
         if (s->handler->depleted(s->handler_ctx) &&
