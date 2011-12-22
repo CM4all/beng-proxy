@@ -17,7 +17,12 @@
 struct istream_socket {
     struct istream output;
 
+    /**
+     * The socket descriptor.  Will be set to -1 when the stream is
+     * closed.
+     */
     int fd;
+
     istream_direct_t fd_type;
     const struct istream_socket_handler *handler;
     void *handler_ctx;
@@ -27,10 +32,18 @@ struct istream_socket {
     struct event event;
 };
 
+static inline bool
+socket_valid(const struct istream_socket *s)
+{
+    assert(s != NULL);
+
+    return s->fd >= 0;
+}
+
 static void
 socket_schedule_read(struct istream_socket *s)
 {
-    assert(s->fd >= 0);
+    assert(socket_valid(s));
     assert(s->buffer == NULL || !fifo_buffer_full(s->buffer));
 
     p_event_add(&s->event, NULL, s->output.pool, "istream_socket");
@@ -39,6 +52,8 @@ socket_schedule_read(struct istream_socket *s)
 static void
 socket_try_direct(struct istream_socket *s)
 {
+    assert(socket_valid(s));
+
     if (s->buffer != NULL && istream_buffer_consume(&s->output, s->buffer) > 0)
         return;
 
@@ -49,8 +64,10 @@ socket_try_direct(struct istream_socket *s)
         socket_schedule_read(s);
     } else if (nbytes == 0) {
         if (s->handler->depleted(s->handler_ctx) &&
-            s->handler->finished(s->handler_ctx))
+            s->handler->finished(s->handler_ctx)) {
+            s->fd = -1;
             istream_deinit_eof(&s->output);
+        }
     } else if (nbytes == ISTREAM_RESULT_BLOCKING ||
                nbytes == ISTREAM_RESULT_CLOSED) {
         /* either the destination fd blocks (-2) or the stream (and
@@ -67,6 +84,7 @@ socket_try_direct(struct istream_socket *s)
 
         GError *error = g_error_new(g_file_error_quark(), e,
                                     "recv error: %s", strerror(e));
+        s->fd = -1;
         istream_deinit_abort(&s->output, error);
     }
 }
@@ -74,6 +92,8 @@ socket_try_direct(struct istream_socket *s)
 static void
 socket_try_buffered(struct istream_socket *s)
 {
+    assert(socket_valid(s));
+
     if (s->buffer == NULL)
         s->buffer = fifo_buffer_new(s->output.pool, 8192);
     else if (istream_buffer_consume(&s->output, s->buffer) > 0)
@@ -88,8 +108,10 @@ socket_try_buffered(struct istream_socket *s)
             socket_schedule_read(s);
     } else if (nbytes == 0) {
         if (s->handler->depleted(s->handler_ctx) &&
-            s->handler->finished(s->handler_ctx))
+            s->handler->finished(s->handler_ctx)) {
+            s->fd = -1;
             istream_deinit_eof(&s->output);
+        }
     } else if (errno == EAGAIN) {
         socket_schedule_read(s);
     } else {
@@ -99,6 +121,7 @@ socket_try_buffered(struct istream_socket *s)
 
         GError *error = g_error_new(g_file_error_quark(), e,
                                     "recv error: %s", strerror(e));
+        s->fd = -1;
         istream_deinit_abort(&s->output, error);
     }
 }
@@ -128,6 +151,8 @@ istream_socket_available(istream_t istream, bool partial)
 {
     struct istream_socket *s = istream_to_socket(istream);
 
+    assert(socket_valid(s));
+
     if (s->buffer == NULL || (!partial && s->fd >= 0))
         return -1;
 
@@ -139,6 +164,8 @@ istream_socket_read(struct istream *istream)
 {
     struct istream_socket *s = istream_to_socket(istream);
 
+    assert(socket_valid(s));
+
     socket_try_read(s);
 }
 
@@ -147,7 +174,10 @@ istream_socket_close(struct istream *istream)
 {
     struct istream_socket *s = istream_to_socket(istream);
 
+    assert(socket_valid(s));
+
     p_event_del(&s->event, s->output.pool);
+    s->fd = -1;
 
     s->handler->close(s->handler_ctx);
 
