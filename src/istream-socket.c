@@ -75,11 +75,10 @@ socket_try_buffered(struct istream_socket *s)
 {
     if (s->buffer == NULL)
         s->buffer = fifo_buffer_new(s->output.pool, 8192);
+    else if (istream_buffer_consume(&s->output, s->buffer) > 0)
+        return;
 
     assert(!fifo_buffer_full(s->buffer));
-
-    if (s->buffer != NULL && istream_buffer_consume(&s->output, s->buffer) > 0)
-        return;
 
     ssize_t nbytes = recv_to_buffer(s->fd, s->buffer, G_MAXINT);
     if (G_LIKELY(nbytes > 0)) {
