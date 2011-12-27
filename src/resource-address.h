@@ -12,6 +12,7 @@
 #include "uri-address.h"
 #include "jail.h"
 
+#include <glib.h>
 #include <assert.h>
 
 struct strref;
@@ -61,6 +62,12 @@ struct resource_address {
             const char *uri;
             const char *script_name, *path_info, *query_string;
             const char *document_root;
+
+            /**
+             * The value of #TRANSLATE_EXPAND_PATH_INFO.  Only used by
+             * the translation cache.
+             */
+            const char *expand_path_info;
 
             /**
              * An optional list of addresses to connect to.  If given
@@ -209,5 +216,26 @@ resource_address_host_and_port(const struct resource_address *address,
 gcc_pure
 const char *
 resource_address_uri_path(const struct resource_address *address);
+
+/**
+ * Does this address need to be expanded with
+ * resource_address_expand()?
+ */
+gcc_pure
+static inline bool
+resource_address_is_expandable(const struct resource_address *address)
+{
+    assert(address != NULL);
+
+    return resource_address_is_cgi_alike(address) &&
+        address->u.cgi.expand_path_info;
+}
+
+/**
+ * Expand the expand_path_info attribute.
+ */
+void
+resource_address_expand(struct pool *pool, struct resource_address *address,
+                        const GMatchInfo *match_info);
 
 #endif

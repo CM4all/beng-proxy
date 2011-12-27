@@ -898,7 +898,7 @@ test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/address-list.c \
 	src/format.c \
 	$(POOL_SRC)
-test_t_resource_address_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
+test_t_resource_address_LDADD = $(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_uri_relative_SOURCES = test/t-uri-relative.c \
 	src/uri-relative.c \

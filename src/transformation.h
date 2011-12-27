@@ -11,6 +11,9 @@
 
 #include <inline/compiler.h>
 
+#include <glib.h>
+#include <assert.h>
+
 struct pool;
 
 struct transformation {
@@ -51,5 +54,44 @@ transformation_dup(struct pool *pool, const struct transformation *src);
 gcc_malloc
 struct transformation *
 transformation_dup_chain(struct pool *pool, const struct transformation *src);
+
+/**
+ * Does this transformation need to be expanded with
+ * transformation_expand()?
+ */
+gcc_pure
+static inline bool
+transformation_is_expandable(const struct transformation *transformation)
+{
+    assert(transformation != NULL);
+
+    return transformation->type == TRANSFORMATION_FILTER &&
+        resource_address_is_expandable(&transformation->u.filter);
+}
+
+/**
+ * Does any transformation in the linked list need to be expanded with
+ * transformation_expand()?
+ */
+gcc_pure
+bool
+transformation_any_is_expandable(const struct transformation *transformation);
+
+/**
+ * Expand the strings in this transformation (not following the linked
+ * lits) with the specified regex result.
+ */
+void
+transformation_expand(struct pool *pool, struct transformation *transformation,
+                      const GMatchInfo *match_info);
+
+/**
+ * The same as transformation_expand(), but expand all transformations
+ * in the linked list.
+ */
+void
+transformation_expand_all(struct pool *pool,
+                          struct transformation *transformation,
+                          const GMatchInfo *match_info);
 
 #endif

@@ -86,3 +86,24 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
                      dest->num_invalidate * sizeof(dest->invalidate[0]));
 }
 
+bool
+translate_response_is_expandable(const struct translate_response *response)
+{
+    return response->regex != NULL &&
+        (resource_address_is_expandable(&response->address) ||
+         widget_view_any_is_expandable(response->views));
+}
+
+void
+translate_response_expand(struct pool *pool,
+                          struct translate_response *response,
+                          const GMatchInfo *match_info)
+{
+    assert(pool != NULL);
+    assert(response != NULL);
+    assert(response->regex != NULL);
+    assert(match_info != NULL);
+
+    resource_address_expand(pool, &response->address, match_info);
+    widget_view_expand_all(pool, response->views, match_info);
+}

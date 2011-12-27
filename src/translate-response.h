@@ -13,6 +13,7 @@
 
 #include <http/status.h>
 
+#include <glib.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -115,5 +116,22 @@ struct translate_response {
 void
 translate_response_copy(struct pool *pool, struct translate_response *dest,
                         const struct translate_response *src);
+
+/**
+ * Does any response need to be expanded with
+ * translate_response_expand()?
+ */
+gcc_pure
+bool
+translate_response_is_expandable(const struct translate_response *response);
+
+/**
+ * Expand the strings in this response with the specified regex
+ * result.
+ */
+void
+translate_response_expand(struct pool *pool,
+                          struct translate_response *response,
+                          const GMatchInfo *match_info);
 
 #endif

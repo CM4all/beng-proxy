@@ -129,6 +129,33 @@ tcache_response_evaluate(const struct translate_response *response)
 }
 
 /**
+ * Expand EXPAND_PATH_INFO specifications in all #resource_address
+ * instances.
+ */
+static void
+tcache_expand_response(struct pool *pool, struct translate_response *response,
+                       const struct tcache_item *item, const char *uri)
+{
+    assert(pool != NULL);
+    assert(response != NULL);
+    assert(item != NULL);
+
+    if (uri == NULL || item->regex == NULL)
+        return;
+
+    assert(response->regex != NULL);
+    assert(response->base != NULL);
+
+    GMatchInfo *match_info;
+    if (!g_regex_match(item->regex, uri, 0, &match_info))
+        /* XXX mismatch; what to do now? */
+        return;
+
+    translate_response_expand(pool, response, match_info);
+    g_match_info_free(match_info);
+}
+
+/**
  * Calculate the suffix relative to a base URI from an incoming URI.
  * Returns NULL if no such suffix is possible (e.g. if the specified
  * URI is not "within" the base, or if there is no base at all).
@@ -577,9 +604,14 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
             key = p_strdup(pool, tcr->key);
 
         if (response->regex != NULL) {
+            GRegexCompileFlags compile_flags = default_regex_compile_flags;
+            if (translate_response_is_expandable(response))
+                /* enable capturing if we need the match groups */
+                compile_flags &= ~G_REGEX_NO_AUTO_CAPTURE;
+
             GError *error = NULL;
             item->regex = g_regex_new(response->regex,
-                                      default_regex_compile_flags,
+                                      compile_flags,
                                       0, &error);
             if (item->regex == NULL) {
                 cache_log(2, "translate_cache: failed to compile regular expression: %s",
@@ -604,6 +636,15 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
 
         cache_put_match(tcr->tcache->cache, key, &item->item,
                         tcache_item_match, tcr);
+
+        if (tcr->request->uri != NULL &&
+            translate_response_is_expandable(response)) {
+            /* create a writable copy and expand it */
+            struct translate_response *response2 =
+                p_memdup(pool, response, sizeof(*response));
+            tcache_expand_response(pool, response2, item, tcr->request->uri);
+            response = response2;
+        }
     } else {
         cache_log(4, "translate_cache: nocache %s\n", tcr->key);
     }
@@ -627,7 +668,8 @@ static const struct translate_handler tcache_handler = {
 };
 
 static void
-tcache_hit(struct pool *pool, const char *key, const struct tcache_item *item,
+tcache_hit(struct pool *pool, const char *uri, const char *key,
+           const struct tcache_item *item,
            const struct translate_handler *handler, void *ctx)
 {
     struct translate_response *response =
@@ -636,6 +678,10 @@ tcache_hit(struct pool *pool, const char *key, const struct tcache_item *item,
     cache_log(4, "translate_cache: hit %s\n", key);
 
     tcache_load_response(pool, response, &item->response, key);
+
+    if (uri != NULL && translate_response_is_expandable(response))
+        tcache_expand_response(pool, response, item, uri);
+
     handler->response(response, ctx);
 }
 
@@ -742,7 +788,7 @@ translate_cache(struct pool *pool, struct tcache *tcache,
         struct tcache_item *item = tcache_lookup(pool, tcache, request, key);
 
         if (item != NULL)
-            tcache_hit(pool, key, item, handler, ctx);
+            tcache_hit(pool, request->uri, key, item, handler, ctx);
         else
             tcache_miss(pool, tcache, request, key, handler, ctx, async_ref);
     } else {

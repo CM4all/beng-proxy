@@ -220,6 +220,13 @@ enum beng_translation_command {
      * Send widget metadata (id, prefix, type) to the widget server.
      */
     TRANSLATE_WIDGET_INFO = 82,
+
+    /**
+     * Expand #TRANSLATE_REGEX match strings in this PATH_INFO value.
+     * Sub-strings in the form "\1" will be replaced.  It can be used
+     * to copy URI parts to a filter.
+     */
+    TRANSLATE_EXPAND_PATH_INFO = 83,
 };
 
 struct beng_translation_header {

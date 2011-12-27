@@ -504,3 +504,38 @@ resource_address_uri_path(const struct resource_address *address)
     assert(false);
     return NULL;
 }
+
+static const char *
+expand_string(struct pool *pool, const char *src, const GMatchInfo *match_info)
+{
+    assert(pool != NULL);
+    assert(src != NULL);
+    assert(match_info != NULL);
+
+    char *p = g_match_info_expand_references(match_info, src, NULL);
+    if (p == NULL)
+        /* XXX an error has occurred; how to report to the caller? */
+        return src;
+
+    /* move result to the memory pool */
+    char *q = p_strdup(pool, p);
+    g_free(p);
+    return q;
+}
+
+/**
+ * Expand EXPAND_PATH_INFO specifications in a #resource_address.
+ */
+void
+resource_address_expand(struct pool *pool, struct resource_address *address,
+                        const GMatchInfo *match_info)
+{
+    assert(pool != NULL);
+    assert(address != NULL);
+    assert(match_info != NULL);
+
+    if (resource_address_is_cgi_alike(address) &&
+        address->u.cgi.expand_path_info != NULL)
+        address->u.cgi.path_info =
+            expand_string(pool, address->u.cgi.expand_path_info, match_info);
+}

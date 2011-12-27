@@ -411,6 +411,63 @@ test_regex(struct pool *pool, struct tcache *cache)
                     &my_translate_handler, NULL, &async_ref);
 }
 
+static void
+test_expand(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    /* add to cache */
+
+    static const struct translate_request request1 = {
+        .uri = "/regex-expand/b=c",
+    };
+    static const struct translate_response response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/foo.cgi",
+                    .path_info = "/a/b=c",
+                    .expand_path_info = "/a/\\1",
+                },
+            },
+        },
+        .base = "/regex-expand/",
+        .regex = "^/regex-expand/(.+=.+)$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* check match */
+
+    static const struct translate_request request2 = {
+        .uri = "/regex-expand/d=e",
+    };
+    static const struct translate_response response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/foo.cgi",
+                    .path_info = "/a/d=e",
+                },
+            },
+        },
+        .base = "/regex-expand/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = NULL;
+    expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, NULL, &async_ref);
+}
+
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
@@ -430,6 +487,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_basic(pool, cache);
     test_vary_invalidate(pool, cache);
     test_regex(pool, cache);
+    test_expand(pool, cache);
 
     /* cleanup */
 

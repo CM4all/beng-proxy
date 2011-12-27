@@ -765,6 +765,20 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->u.cgi.path_info = payload;
         return true;
 
+    case TRANSLATE_EXPAND_PATH_INFO:
+        if (client->response.regex == NULL ||
+            client->resource_address == NULL ||
+            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
+             client->resource_address->type != RESOURCE_ADDRESS_WAS &&
+             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI)) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_EXPAND_PATH_INFO packet");
+            return false;
+        }
+
+        client->resource_address->u.cgi.expand_path_info = payload;
+        return true;
+
     case TRANSLATE_DEFLATED:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {

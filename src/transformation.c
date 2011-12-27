@@ -60,3 +60,50 @@ transformation_dup_chain(struct pool *pool, const struct transformation *src)
 
     return dest;
 }
+
+bool
+transformation_any_is_expandable(const struct transformation *transformation)
+{
+    while (transformation != NULL) {
+        if (transformation_is_expandable(transformation))
+            return true;
+
+        transformation = transformation->next;
+    }
+
+    return false;
+}
+
+void
+transformation_expand(struct pool *pool, struct transformation *transformation,
+                      const GMatchInfo *match_info)
+{
+    assert(pool != NULL);
+    assert(transformation != NULL);
+    assert(match_info != NULL);
+
+    switch (transformation->type) {
+    case TRANSFORMATION_PROCESS:
+    case TRANSFORMATION_PROCESS_CSS:
+    case TRANSFORMATION_PROCESS_TEXT:
+        break;
+
+    case TRANSFORMATION_FILTER:
+        resource_address_expand(pool, &transformation->u.filter, match_info);
+        break;
+    }
+}
+
+void
+transformation_expand_all(struct pool *pool,
+                          struct transformation *transformation,
+                          const GMatchInfo *match_info)
+{
+    assert(pool != NULL);
+    assert(match_info != NULL);
+
+    while (transformation != NULL) {
+        transformation_expand(pool, transformation, match_info);
+        transformation = transformation->next;
+    }
+}

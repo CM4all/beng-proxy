@@ -12,6 +12,8 @@
 
 #include <inline/compiler.h>
 
+#include <glib.h>
+
 struct pool;
 
 struct widget_view {
@@ -86,5 +88,36 @@ widget_view_lookup(const struct widget_view *view, const char *name);
 gcc_malloc
 struct widget_view *
 widget_view_dup_chain(struct pool *pool, const struct widget_view *src);
+
+/**
+ * Does this view need to be expanded with widget_view_expand()?
+ */
+gcc_pure
+bool
+widget_view_is_expandable(const struct widget_view *view);
+
+/**
+ * Does any view in the linked list need to be expanded with
+ * widget_view_expand()?
+ */
+gcc_pure
+bool
+widget_view_any_is_expandable(const struct widget_view *view);
+
+/**
+ * Expand the strings in this view (not following the linked list)
+ * with the specified regex result.
+ */
+void
+widget_view_expand(struct pool *pool, struct widget_view *view,
+                   const GMatchInfo *match_info);
+
+/**
+ * The same as widget_view_expand(), but expand all voews in
+ * the linked list.
+ */
+void
+widget_view_expand_all(struct pool *pool, struct widget_view *view,
+                       const GMatchInfo *match_info);
 
 #endif
