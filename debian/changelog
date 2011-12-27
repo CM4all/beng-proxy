@@ -3,7 +3,7 @@ cm4all-beng-proxy (2.0.3) unstable; urgency=low
   * merge release 1.4.4
   * http-server: log remote host address
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 27 Dec 2011 07:41:15 -0000
 
 cm4all-beng-proxy (2.0.2) unstable; urgency=low
 
