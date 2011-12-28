@@ -186,7 +186,7 @@ my_stock_ready(struct stock_item *item, void *ctx)
     struct strmap *headers =
         lb_forward_request_headers(request->pool, request->headers,
                                    request->local_host,
-                                   request->remote_host,
+                                   request->remote_address,
                                    request2->connection->listener->cluster->mangle_via);
 
     struct growing_buffer *headers2 = headers_dup(request->pool, headers);

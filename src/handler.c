@@ -349,7 +349,7 @@ fill_translate_request(struct translate_request *t,
 {
     t->local_address = request->local_address;
     t->local_address_length = request->local_address_length;
-    t->remote_host = request->remote_host;
+    t->remote_host = request->remote_address;
     t->host = strmap_get(request->headers, "host");
     t->user_agent = strmap_get(request->headers, "user-agent");
     t->accept_language = strmap_get(request->headers, "accept-language");

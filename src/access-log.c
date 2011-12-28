@@ -31,7 +31,7 @@ access_log(struct http_server_request *request, const char *site,
 {
     if (log_global_enabled()) {
         log_http_request(time(NULL) * 1000000, request->method, request->uri,
-                         request->remote_host, site,
+                         request->remote_address, site,
                          referer, user_agent,
                          status, content_length,
                          bytes_received, bytes_sent,
@@ -61,7 +61,7 @@ access_log(struct http_server_request *request, const char *site,
     }
 
     daemon_log(1, "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %llu\n",
-               site, request->remote_host, stamp,
+               site, request->remote_address, stamp,
                http_method_to_string(request->method),
                request->uri,
                status, length,
