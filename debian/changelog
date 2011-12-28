@@ -2,7 +2,7 @@ cm4all-beng-proxy (1.1.23) unstable; urgency=low
 
   * header-forward: remove port number from X-Forwarded-For
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 28 Dec 2011 16:51:41 -0000
 
 cm4all-beng-proxy (1.1.22) unstable; urgency=low
 
