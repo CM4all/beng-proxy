@@ -9,7 +9,6 @@
 #include "strmap.h"
 #include "http-server.h"
 #include "handler.h"
-#include "address.h"
 #include "access-log.h"
 #include "drop.h"
 #include "clock.h"
@@ -164,7 +163,7 @@ http_listener_connected(int fd,
                                ? (const struct sockaddr *)&local_address
                                : NULL,
                                local_address_length,
-                               address_to_string(pool, addr, addrlen),
+                               addr, addrlen,
                                true,
                                &my_http_server_connection_handler,
                                connection,

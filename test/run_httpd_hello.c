@@ -74,8 +74,7 @@ static const struct http_server_connection_handler my_http_handler = {
 
 static void
 my_listener_connected(int fd,
-                      G_GNUC_UNUSED const struct sockaddr *address,
-                      G_GNUC_UNUSED size_t address_length,
+                      const struct sockaddr *address, size_t address_length,
                       void *ctx)
 {
     struct instance *instance = ctx;
@@ -86,7 +85,8 @@ my_listener_connected(int fd,
     connection->pool = pool;
     connection->instance = instance;
 
-    http_server_connection_new(pool, fd, ISTREAM_TCP, NULL, 0, NULL, true,
+    http_server_connection_new(pool, fd, ISTREAM_TCP, NULL, 0,
+                               address, address_length, true,
                                &my_http_handler, connection,
                                &connection->http);
 }

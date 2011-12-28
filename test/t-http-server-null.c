@@ -69,8 +69,8 @@ int main(int argc, char **argv) {
         sockfd = in_fd;
 
     http_server_connection_new(pool, sockfd, ISTREAM_SOCKET,
-                               NULL, 0,
-                               "localhost", true, &handler, NULL,
+                               NULL, 0, NULL, 0,
+                               true, &handler, NULL,
                                &connection);
 
     event_dispatch();
