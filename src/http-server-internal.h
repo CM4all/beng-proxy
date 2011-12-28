@@ -40,7 +40,7 @@ struct http_server_connection {
     size_t local_address_length;
 
     const char *local_host;
-    const char *remote_address;
+    const char *remote_address, *remote_host;
 
     /* request */
     struct {

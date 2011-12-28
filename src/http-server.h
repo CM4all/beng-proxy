@@ -64,6 +64,11 @@ struct http_server_request {
      */
     const char *remote_address;
 
+    /**
+     * The address of the client, without the port number.
+     */
+    const char *remote_host;
+
     /* request metadata */
     http_method_t method;
     char *uri;

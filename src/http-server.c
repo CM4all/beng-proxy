@@ -35,6 +35,7 @@ http_server_request_new(struct http_server_connection *connection)
     request->local_address_length = connection->local_address_length;
     request->local_host = connection->local_host;
     request->remote_address = connection->remote_address;
+    request->remote_host = connection->remote_host;
     request->headers = strmap_new(pool, 64);
 
     return request;
@@ -194,6 +195,9 @@ http_server_connection_new(pool_t pool, int fd, enum istream_direct fd_type,
         : NULL;
     connection->remote_address = remote_address != NULL
         ? address_to_string(pool, remote_address, remote_address_length)
+        : NULL;
+    connection->remote_host = remote_address != NULL
+        ? address_to_host_string(pool, remote_address, remote_address_length)
         : NULL;
     connection->date_header = date_header;
     connection->request.read_state = READ_START;
