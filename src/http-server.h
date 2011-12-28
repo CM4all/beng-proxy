@@ -59,7 +59,19 @@ struct http_server_request {
     const struct sockaddr *local_address;
     size_t local_address_length;
 
+    /**
+     * The local address (host and port) that was connected to.
+     */
     const char *local_host;
+
+    /**
+     * The address (host and port) of the client.
+     */
+    const char *remote_address;
+
+    /**
+     * The address of the client, without the port number.
+     */
     const char *remote_host;
 
     /* request metadata */
@@ -105,7 +117,8 @@ http_server_connection_new(struct pool *pool,
                            int fd, enum istream_direct fd_type,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
-                           const char *remote_host,
+                           const struct sockaddr *remote_address,
+                           size_t remote_address_length,
                            bool date_header,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
