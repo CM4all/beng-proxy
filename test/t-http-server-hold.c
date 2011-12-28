@@ -128,8 +128,8 @@ int main(int argc, char **argv) {
     struct context context;
 
     http_server_connection_new(pool, sockfd, ISTREAM_SOCKET,
-                               NULL, 0,
-                               "localhost", false, &my_handler, &context,
+                               NULL, 0, NULL, 0,
+                               false, &my_handler, &context,
                                &context.connection);
 
     event_dispatch();

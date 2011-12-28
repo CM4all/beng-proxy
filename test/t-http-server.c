@@ -67,8 +67,8 @@ test_catch(struct pool *pool)
     sink_null_new(sock);
 
     http_server_connection_new(pool, fd, ISTREAM_SOCKET,
-                               NULL, 0,
-                               "localhost", true, &catch_close_handler, NULL,
+                               NULL, 0, NULL, 0,
+                               true, &catch_close_handler, NULL,
                                &connection);
     pool_unref(pool);
 

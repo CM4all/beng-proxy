@@ -54,6 +54,7 @@ http_server_request_new(struct http_server_connection *connection)
     request->local_address = connection->local_address;
     request->local_address_length = connection->local_address_length;
     request->local_host = connection->local_host;
+    request->remote_address = connection->remote_address;
     request->remote_host = connection->remote_host;
     request->headers = strmap_new(pool, 64);
 
@@ -171,7 +172,8 @@ void
 http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_type,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
-                           const char *remote_host,
+                           const struct sockaddr *remote_address,
+                           size_t remote_address_length,
                            bool date_header,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
@@ -200,7 +202,12 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     connection->local_host = local_address != NULL
         ? address_to_string(pool, local_address, local_address_length)
         : NULL;
-    connection->remote_host = remote_host;
+    connection->remote_address = remote_address != NULL
+        ? address_to_string(pool, remote_address, remote_address_length)
+        : NULL;
+    connection->remote_host = remote_address != NULL
+        ? address_to_host_string(pool, remote_address, remote_address_length)
+        : NULL;
     connection->date_header = date_header;
     connection->request.read_state = READ_START;
     connection->request.request = NULL;
