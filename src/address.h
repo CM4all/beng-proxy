@@ -18,4 +18,12 @@ struct sockaddr;
 const char *
 address_to_string(pool_t pool, const struct sockaddr *addr, size_t addrlen);
 
+/**
+ * Converts a sockaddr into a human-readable string containing the
+ * numeric IP address, ignoring the port number.
+ */
+const char *
+address_to_host_string(struct pool *pool, const struct sockaddr *address,
+                       size_t address_length);
+
 #endif
