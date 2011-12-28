@@ -22,3 +22,18 @@ address_to_string(struct pool *pool,
 
     return p_strdup(pool, host);
 }
+
+const char *
+address_to_host_string(struct pool *pool, const struct sockaddr *address,
+                       size_t address_length)
+{
+    bool success;
+    char host[512];
+
+    success = socket_host_to_string(host, sizeof(host),
+                                    address, address_length);
+    if (!success)
+        return NULL;
+
+    return p_strdup(pool, host);
+}

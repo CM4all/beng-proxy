@@ -11,7 +11,6 @@
 #include "lb_tcp.h"
 #include "strmap.h"
 #include "http-server.h"
-#include "address.h"
 #include "drop.h"
 #include "fd_util.h"
 #include "ssl_filter.h"
@@ -88,7 +87,7 @@ lb_connection_new(struct lb_instance *instance,
                                    ? (const struct sockaddr *)&local_address
                                    : NULL,
                                    local_address_length,
-                                   address_to_string(pool, addr, addrlen),
+                                   addr, addrlen,
                                    false,
                                    &lb_http_connection_handler,
                                    connection,
