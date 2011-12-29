@@ -293,7 +293,8 @@ SRC = src/main.c \
 	src/direct.c \
 	src/jail.c \
 	src/translate-client.c src/translate-client.h \
-	src/translate-request.h src/translate-response.h \
+	src/translate-request.h \
+	src/translate-response.c rc/translate-response.h \
 	src/transformation.c \
 	src/tstock.c \
 	src/tcache.c \
@@ -854,6 +855,7 @@ test_t_cache_SOURCES = test/t-cache.c src/cache.c src/hashmap.c $(POOL_SRC)
 test_t_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
+	src/translate-response.c \
 	src/hashmap.c src/strmap.c \
 	src/resource-address.c src/uri-address.c \
 	src/widget-view.c \
@@ -1312,6 +1314,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/uri-address.c src/transformation.c \
 	src/address-list.c \
 	src/tcache.c src/cache.c \
+	src/translate-response.c \
 	src/widget-view.c \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/resource-address.c \

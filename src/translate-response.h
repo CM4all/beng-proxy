@@ -16,6 +16,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+struct pool;
+
 struct translate_response {
     unsigned max_age;
 
@@ -109,5 +111,9 @@ struct translate_response {
     const uint16_t *invalidate;
     unsigned num_invalidate;
 };
+
+void
+translate_response_copy(struct pool *pool, struct translate_response *dest,
+                        const struct translate_response *src);
 
 #endif
