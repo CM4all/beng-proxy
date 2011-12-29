@@ -1,6 +1,8 @@
 #include "tcache.h"
 #include "tstock.h"
-#include "translate.h"
+#include "translate-client.h"
+#include "translate-request.h"
+#include "translate-response.h"
 #include "async.h"
 #include "beng-proxy/translation.h"
 

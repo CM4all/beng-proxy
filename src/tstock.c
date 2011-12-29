@@ -5,7 +5,7 @@
  */
 
 #include "tstock.h"
-#include "translate.h"
+#include "translate-client.h"
 #include "stock.h"
 #include "tcp-stock.h"
 #include "lease.h"

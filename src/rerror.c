@@ -5,7 +5,7 @@
  */
 
 #include "request.h"
-#include "translate.h"
+#include "translate-client.h"
 #include "http-client.h"
 #include "ajp-client.h"
 #include "memcached-client.h"

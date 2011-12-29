@@ -1,5 +1,7 @@
 #include "tstock.h"
-#include "translate.h"
+#include "translate-client.h"
+#include "translate-request.h"
+#include "translate-response.h"
 #include "widget-view.h"
 #include "transformation.h"
 #include "balancer.h"

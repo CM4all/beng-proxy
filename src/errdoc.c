@@ -14,6 +14,7 @@
 #include "get.h"
 #include "http-response.h"
 #include "istream.h"
+#include "translate-client.h"
 
 #include <daemon/log.h>
 

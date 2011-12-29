@@ -9,12 +9,15 @@
 #define __BENG_REQUEST_H
 
 #include "uri-parser.h"
-#include "translate.h"
+#include "translate-request.h"
+#include "translate-response.h"
 #include "penv.h"
 #include "async.h"
 #include "session.h"
 #include "transformation.h"
 #include "widget-class.h"
+
+#include <glib.h>
 
 struct request {
     struct client_connection *connection;

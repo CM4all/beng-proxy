@@ -10,7 +10,7 @@
 #include "udp-distribute.h"
 #include "instance.h"
 #include "tcache.h"
-#include "translate.h"
+#include "translate-request.h"
 #include "tpool.h"
 #include "beng-proxy/translation.h"
 

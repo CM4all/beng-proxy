@@ -248,7 +248,6 @@ HDR = \
 	src/tpool.h \
 	src/trace.h \
 	src/transformation.h \
-	src/translate.h \
 	src/tstock.h \
 	src/udp-listener.h \
 	src/udp-distribute.h \
@@ -293,7 +292,8 @@ SRC = src/main.c \
 	src/drop.c \
 	src/direct.c \
 	src/jail.c \
-	src/translate.c \
+	src/translate-client.c src/translate-client.h \
+	src/translate-request.h src/translate-response.h \
 	src/transformation.c \
 	src/tstock.c \
 	src/tcache.c \
@@ -1381,7 +1381,7 @@ test_format_http_date_SOURCES = test/format-http-date.c \
 	src/gmtime.c src/date.c
 
 test_request_translation_SOURCES = test/request-translation.c \
-	src/translate.c src/tstock.c src/growing-buffer.c src/gb-io.c \
+	src/translate-client.c src/tstock.c src/growing-buffer.c src/gb-io.c \
 	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
 	src/tcp-stock.c src/client-socket.c \
 	src/fd_util.c src/fd-util.c \

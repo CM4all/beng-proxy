@@ -4,7 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "translate.h"
+#include "translate-client.h"
+#include "translate-request.h"
+#include "translate-response.h"
 #include "transformation.h"
 #include "widget-class.h"
 #include "please.h"

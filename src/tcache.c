@@ -6,7 +6,9 @@
 
 #include "tcache.h"
 #include "tstock.h"
-#include "translate.h"
+#include "translate-request.h"
+#include "translate-response.h"
+#include "translate-client.h"
 #include "widget-class.h"
 #include "cache.h"
 #include "stock.h"

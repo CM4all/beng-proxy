@@ -10,12 +10,16 @@
 #include "processor.h"
 #include "widget.h"
 #include "tcache.h"
-#include "translate.h"
+#include "translate-client.h"
+#include "translate-request.h"
+#include "translate-response.h"
 #include "uri-address.h"
 #include "transformation.h"
 #include "pool.h"
 
 #include <daemon/log.h>
+
+#include <glib.h>
 
 static void
 widget_registry_lookup(struct pool *pool,

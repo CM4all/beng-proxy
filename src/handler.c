@@ -24,6 +24,7 @@
 #include "strutil.h"
 #include "strmap.h"
 #include "istream.h"
+#include "translate-client.h"
 
 #include <daemon/log.h>
 

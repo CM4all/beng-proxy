@@ -1,11 +1,11 @@
 /*
- * Call the translation server.
+ * The translation response struct.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_TRANSLATE_H
-#define __BENG_TRANSLATE_H
+#ifndef BENG_PROXY_TRANSLATE_RESPONSE_H
+#define BENG_PROXY_TRANSLATE_RESPONSE_H
 
 #include "resource-address.h"
 #include "header-forward.h"
@@ -13,45 +13,8 @@
 
 #include <http/status.h>
 
-#include <glib.h>
-
+#include <stdbool.h>
 #include <stdint.h>
-
-struct pool;
-struct sockaddr;
-struct lease;
-struct async_operation_ref;
-
-struct translate_request {
-    const struct sockaddr *local_address;
-    size_t local_address_length;
-
-    const char *remote_host;
-    const char *host;
-    const char *user_agent;
-    const char *accept_language;
-
-    /**
-     * The value of the "Authorization" HTTP request header.
-     */
-    const char *authorization;
-
-    const char *uri;
-    const char *args;
-    const char *query_string;
-    const char *widget_type;
-    const char *session;
-    const char *param;
-
-    /**
-     * The payload of the CHECK packet.  If
-     * strref_is_null(&esponse.check), then no CHECK packet will be
-     * sent.
-     */
-    struct strref check;
-
-    http_status_t error_document_status;
-};
 
 struct translate_response {
     unsigned max_age;
@@ -146,24 +109,5 @@ struct translate_response {
     const uint16_t *invalidate;
     unsigned num_invalidate;
 };
-
-struct translate_handler {
-    void (*response)(const struct translate_response *response, void *ctx);
-    void (*error)(GError *error, void *ctx);
-};
-
-G_GNUC_CONST
-static inline GQuark
-translate_quark(void)
-{
-    return g_quark_from_static_string("translate");
-}
-
-void
-translate(struct pool *pool, int fd,
-          const struct lease *lease, void *lease_ctx,
-          const struct translate_request *request,
-          const struct translate_handler *handler, void *ctx,
-          struct async_operation_ref *async_ref);
 
 #endif
