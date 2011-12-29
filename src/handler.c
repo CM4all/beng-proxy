@@ -218,10 +218,8 @@ handle_translated_request(struct request *request,
         else
             file_callback(request);
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP ||
-               response->address.type == RESOURCE_ADDRESS_AJP ||
-               response->address.type == RESOURCE_ADDRESS_CGI ||
-               response->address.type == RESOURCE_ADDRESS_WAS ||
-               response->address.type == RESOURCE_ADDRESS_FASTCGI) {
+               resource_address_is_cgi_alike(&response->address) ||
+               response->address.type == RESOURCE_ADDRESS_AJP) {
         proxy_handler(request);
     } else if (response->redirect != NULL) {
         int status = response->status != 0

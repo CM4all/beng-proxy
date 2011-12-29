@@ -588,9 +588,7 @@ static bool
 translate_response_finish(struct translate_response *response,
                           GError **error_r)
 {
-    if (response->address.type == RESOURCE_ADDRESS_CGI ||
-        response->address.type == RESOURCE_ADDRESS_WAS ||
-        response->address.type == RESOURCE_ADDRESS_FASTCGI) {
+    if (resource_address_is_cgi_alike(&response->address)) {
         if (response->address.u.cgi.uri == NULL)
             response->address.u.cgi.uri = response->uri;
 
@@ -748,9 +746,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_PATH_INFO:
         if (client->resource_address == NULL ||
-            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
-             client->resource_address->type != RESOURCE_ADDRESS_WAS &&
-             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI)) {
+            !resource_address_is_cgi_alike(client->resource_address)) {
             /* don't emit this error when the resource is a local
                path.  This combination might be useful one day, but isn't
                currently used. */

@@ -125,9 +125,7 @@ static const char *
 http_cache_cgi_key(struct pool *pool, const struct resource_address *address)
 {
     assert(address != NULL);
-    assert(address->type == RESOURCE_ADDRESS_CGI ||
-           address->type == RESOURCE_ADDRESS_WAS ||
-           address->type == RESOURCE_ADDRESS_FASTCGI);
+    assert(resource_address_is_cgi_alike(address));
 
     GString *buffer = g_string_sized_new(2048);
     if (address->u.cgi.jail.enabled)

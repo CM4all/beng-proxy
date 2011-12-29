@@ -71,9 +71,7 @@ proxy_response(http_status_t status, struct strmap *headers,
 
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
-           tr->address.type == RESOURCE_ADDRESS_CGI ||
-           tr->address.type == RESOURCE_ADDRESS_WAS ||
-           tr->address.type == RESOURCE_ADDRESS_FASTCGI);
+           resource_address_is_cgi_alike(&tr->address));
 
     proxy_collect_cookies(request2, headers);
 
@@ -103,9 +101,7 @@ proxy_handler(struct request *request2)
 
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
-           tr->address.type == RESOURCE_ADDRESS_CGI ||
-           tr->address.type == RESOURCE_ADDRESS_WAS ||
-           tr->address.type == RESOURCE_ADDRESS_FASTCGI);
+           resource_address_is_cgi_alike(&tr->address));
 
     const char *host_and_port = NULL, *uri_p = NULL;
     if (tr->address.type == RESOURCE_ADDRESS_HTTP ||
@@ -133,9 +129,7 @@ proxy_handler(struct request *request2)
                                                             address,
                                                             request->uri);
 
-    if ((address->type == RESOURCE_ADDRESS_CGI ||
-         address->type == RESOURCE_ADDRESS_WAS ||
-         address->type == RESOURCE_ADDRESS_FASTCGI) &&
+    if (resource_address_is_cgi_alike(address) &&
         address->u.cgi.uri == NULL) {
         struct resource_address *copy = resource_address_dup(request->pool,
                                                              address);

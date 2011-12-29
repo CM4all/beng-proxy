@@ -73,6 +73,17 @@ struct resource_address {
     } u;
 };
 
+/**
+ * Is this a CGI address, or a similar protocol?
+ */
+static inline bool
+resource_address_is_cgi_alike(const struct resource_address *address)
+{
+    return address->type == RESOURCE_ADDRESS_CGI ||
+        address->type == RESOURCE_ADDRESS_FASTCGI ||
+        address->type == RESOURCE_ADDRESS_WAS;
+}
+
 gcc_pure
 static inline const char *
 resource_address_cgi_uri(struct pool *pool,
@@ -80,9 +91,7 @@ resource_address_cgi_uri(struct pool *pool,
 {
     const char *p;
 
-    assert(address->type == RESOURCE_ADDRESS_CGI ||
-           address->type == RESOURCE_ADDRESS_WAS ||
-           address->type == RESOURCE_ADDRESS_FASTCGI);
+    assert(resource_address_is_cgi_alike(address));
 
     if (address->u.cgi.uri != NULL)
         return address->u.cgi.uri;
