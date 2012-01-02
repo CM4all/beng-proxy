@@ -186,6 +186,9 @@ resource_address_insert_args(pool_t pool,
     return src;
 }
 
+/**
+ * @return (size_t)-1 on mismatch
+ */
 static size_t
 base_string(const char *p, const char *suffix)
 {
@@ -194,9 +197,12 @@ base_string(const char *p, const char *suffix)
     return length > suffix_length && p[length - suffix_length - 1] == '/' &&
         memcmp(p + length - suffix_length, suffix, suffix_length) == 0
         ? length - suffix_length
-        : 0;
+        : (size_t)-1;
 }
 
+/**
+ * @return (size_t)-1 on mismatch
+ */
 static size_t
 base_string_unescape(pool_t pool, const char *p, const char *suffix)
 {
@@ -227,7 +233,7 @@ resource_address_save_base(pool_t pool, struct resource_address *dest,
             return NULL;
 
         length = base_string_unescape(pool, src->u.cgi.path_info, suffix);
-        if (length == 0)
+        if (length == (size_t)-1)
             return NULL;
 
         resource_address_copy(pool, dest, src);
@@ -236,7 +242,7 @@ resource_address_save_base(pool_t pool, struct resource_address *dest,
 
     case RESOURCE_ADDRESS_LOCAL:
         length = base_string_unescape(pool, src->u.local.path, suffix);
-        if (length == 0)
+        if (length == (size_t)-1)
             return NULL;
 
         resource_address_copy(pool, dest, src);
@@ -250,7 +256,7 @@ resource_address_save_base(pool_t pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
         length = base_string(src->u.http->uri, suffix);
-        if (length == 0)
+        if (length == (size_t)-1)
             return NULL;
 
         resource_address_copy(pool, dest, src);
