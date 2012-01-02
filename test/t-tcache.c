@@ -22,19 +22,59 @@ tstock_translate(gcc_unused struct tstock *stock, gcc_unused struct pool *pool,
         handler->error(g_error_new(translate_quark(), 0, "Error"), ctx);
 }
 
+static bool
+string_equals(const char *a, const char *b)
+{
+    if (a == NULL || b == NULL)
+        return a == NULL && b == NULL;
+
+    return strcmp(a, b) == 0;
+}
+
+static bool
+resource_address_equals(const struct resource_address *a,
+                        const struct resource_address *b)
+{
+    assert(a != NULL);
+    assert(b != NULL);
+
+    if (a->type != b->type)
+        return false;
+
+    switch (a->type) {
+    case RESOURCE_ADDRESS_LOCAL:
+        assert(a->u.local.path != NULL);
+        assert(b->u.local.path != NULL);
+
+        return string_equals(a->u.local.path, b->u.local.path) &&
+            string_equals(a->u.local.deflated, b->u.local.deflated) &&
+            string_equals(a->u.local.gzipped, b->u.local.gzipped) &&
+            string_equals(a->u.local.content_type, b->u.local.content_type) &&
+            string_equals(a->u.local.delegate, b->u.local.delegate) &&
+            string_equals(a->u.local.document_root, b->u.local.document_root);
+
+    default:
+        /* not implemented */
+        assert(false);
+        return false;
+    }
+}
+
+static bool
+translate_response_equals(const struct translate_response *a,
+                          const struct translate_response *b)
+{
+    if (a == NULL || b == NULL)
+        return a == NULL && b == NULL;
+
+    return resource_address_equals(&a->address, &b->address);
+}
+
 static void
 my_translate_response(const struct translate_response *response,
                       gcc_unused void *ctx)
 {
-    if (response == NULL) {
-        assert(expected_response == NULL);
-    } else {
-        assert(expected_response != NULL);
-        assert(response->address.type == RESOURCE_ADDRESS_LOCAL);
-        assert(expected_response->address.type == RESOURCE_ADDRESS_LOCAL);
-        assert(strcmp(response->address.u.local.path,
-                      expected_response->address.u.local.path) == 0);
-    }
+    assert(translate_response_equals(response, expected_response));
 }
 
 static void
