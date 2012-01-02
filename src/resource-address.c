@@ -194,6 +194,12 @@ base_string(const char *p, const char *suffix)
 {
     size_t length = strlen(p), suffix_length = strlen(suffix);
 
+    if (length == suffix_length)
+        /* special case: zero-length prefix (not followed by a
+           slash) */
+        return memcmp(p, suffix, length) == 0
+            ? 0 : (size_t)-1;
+
     return length > suffix_length && p[length - suffix_length - 1] == '/' &&
         memcmp(p + length - suffix_length, suffix, suffix_length) == 0
         ? length - suffix_length
