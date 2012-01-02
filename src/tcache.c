@@ -68,6 +68,11 @@ struct tcache_request {
     void *handler_ctx;
 };
 
+static const GRegexCompileFlags default_regex_compile_flags =
+    G_REGEX_MULTILINE|G_REGEX_DOTALL|
+    G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
+    G_REGEX_OPTIMIZE;
+
 #ifdef CACHE_LOG
 #include <daemon/log.h>
 #define cache_log(...) daemon_log(__VA_ARGS__)
@@ -574,9 +579,7 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
         if (response->regex != NULL) {
             GError *error = NULL;
             item->regex = g_regex_new(response->regex,
-                                      G_REGEX_MULTILINE|G_REGEX_DOTALL|
-                                      G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
-                                      G_REGEX_OPTIMIZE,
+                                      default_regex_compile_flags,
                                       0, &error);
             if (item->regex == NULL) {
                 cache_log(2, "translate_cache: failed to compile regular expression: %s",
@@ -589,9 +592,7 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
         if (response->inverse_regex != NULL) {
             GError *error = NULL;
             item->inverse_regex = g_regex_new(response->inverse_regex,
-                                              G_REGEX_MULTILINE|G_REGEX_DOTALL|
-                                              G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
-                                              G_REGEX_OPTIMIZE,
+                                              default_regex_compile_flags,
                                               0, &error);
             if (item->inverse_regex == NULL) {
                 cache_log(2, "translate_cache: failed to compile regular expression: %s",
