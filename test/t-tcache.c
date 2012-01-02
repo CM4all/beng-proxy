@@ -53,6 +53,19 @@ resource_address_equals(const struct resource_address *a,
             string_equals(a->u.local.delegate, b->u.local.delegate) &&
             string_equals(a->u.local.document_root, b->u.local.document_root);
 
+    case RESOURCE_ADDRESS_CGI:
+        assert(a->u.cgi.path != NULL);
+        assert(b->u.cgi.path != NULL);
+
+        return string_equals(a->u.cgi.path, b->u.cgi.path) &&
+            string_equals(a->u.cgi.interpreter, b->u.cgi.interpreter) &&
+            string_equals(a->u.cgi.action, b->u.cgi.action) &&
+            string_equals(a->u.cgi.uri, b->u.cgi.uri) &&
+            string_equals(a->u.cgi.script_name, b->u.cgi.script_name) &&
+            string_equals(a->u.cgi.path_info, b->u.cgi.path_info) &&
+            string_equals(a->u.cgi.query_string, b->u.cgi.query_string) &&
+            string_equals(a->u.cgi.document_root, b->u.cgi.document_root);
+
     default:
         /* not implemented */
         assert(false);
@@ -187,6 +200,96 @@ test_basic(struct pool *pool, struct tcache *cache)
 
     expected_response = NULL;
     translate_cache(pool, cache, &request5,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request6 = {
+        .uri = "/cgi1/foo",
+    };
+    static const struct translate_response response6 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .path_info = "x/foo",
+                },
+            },
+        },
+        .base = "/cgi1/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response6;
+    translate_cache(pool, cache, &request6,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request7 = {
+        .uri = "/cgi1/a/b/c",
+    };
+    static const struct translate_response response7 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .path_info = "x/a/b/c",
+                },
+            },
+        },
+        .base = "/cgi1/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = NULL;
+    expected_response = &response7;
+    translate_cache(pool, cache, &request7,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request8 = {
+        .uri = "/cgi2/foo",
+    };
+    static const struct translate_response response8 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .path_info = "foo",
+                },
+            },
+        },
+        .base = "/cgi2/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response8;
+    translate_cache(pool, cache, &request8,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request9 = {
+        .uri = "/cgi2/a/b/c",
+    };
+    static const struct translate_response response9 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .path_info = "a/b/c",
+                },
+            },
+        },
+        .base = "/cgi2/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = NULL;
+    expected_response = &response9;
+    translate_cache(pool, cache, &request9,
                     &my_translate_handler, NULL, &async_ref);
 }
 
