@@ -12,17 +12,17 @@
 #include <stdio.h>
 
 void *
-p_memdup(pool_t pool, const void *src, size_t length)
+p_memdup_impl(pool_t pool, const void *src, size_t length TRACE_ARGS_DECL)
 {
-    void *dest = p_malloc(pool, length);
+    void *dest = p_malloc_fwd(pool, length);
     memcpy(dest, src, length);
     return dest;
 }
 
 char *
-p_strdup(pool_t pool, const char *src)
+p_strdup_impl(pool_t pool, const char *src TRACE_ARGS_DECL)
 {
-    return p_memdup(pool, src, strlen(src) + 1);
+    return p_memdup_fwd(pool, src, strlen(src) + 1);
 }
 
 char *
