@@ -20,15 +20,15 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
     p = hashmap_get(map, key);
     assert(p == &a);
     p = hashmap_get_next(map, key, p);
-    assert(p == &b);
-    p = hashmap_get_next(map, key, p);
     assert(p == &c);
+    p = hashmap_get_next(map, key, p);
+    assert(p == &b);
 
     hashmap_remove_value(map, key, &a);
     p = hashmap_get(map, key);
-    assert(p == &b);
-    p = hashmap_get_next(map, key, p);
     assert(p == &c);
+    p = hashmap_get_next(map, key, p);
+    assert(p == &b);
 
     map = hashmap_new(pool, 2);
     hashmap_add(map, key, &a);
