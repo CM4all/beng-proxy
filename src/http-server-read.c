@@ -240,6 +240,12 @@ http_server_parse_headers(struct http_server_connection *connection)
     assert(connection->request.read_state == READ_START ||
            connection->request.read_state == READ_HEADERS);
 
+    if (connection->request.bytes_received >= 64 * 1024) {
+        daemon_log(2, "http_server: too many request headers\n");
+        http_server_connection_close(connection);
+        return false;
+    }
+
     buffer = fifo_buffer_read(connection->input, &length);
     if (buffer == NULL)
         return true;
