@@ -34,7 +34,7 @@ istream_new_impl(pool_t pool,
     pool = pool_new_libc(pool, "istream");
 #endif
 
-    istream = p_malloc(pool, size);
+    istream = p_malloc_fwd(pool, size);
     istream_init_impl(istream, class, pool TRACE_ARGS_FWD);
 
 #ifdef ISTREAM_POOL
