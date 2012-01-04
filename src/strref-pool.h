@@ -13,8 +13,9 @@
 #include <inline/poison.h>
 
 static gcc_always_inline char *
-strref_set_dup(struct pool *pool, struct strref *dest,
-               const struct strref *src)
+strref_set_dup_impl(struct pool *pool, struct strref *dest,
+                    const struct strref *src
+                    TRACE_ARGS_DECL)
 {
     assert(dest != NULL);
     assert(src != NULL);
@@ -25,14 +26,19 @@ strref_set_dup(struct pool *pool, struct strref *dest,
         return NULL;
     } else {
         dest->length = src->length;
-        char *p = p_memdup(pool, src->data, src->length);
+        char *p = p_memdup_fwd(pool, src->data, src->length);
         dest->data = p;
         return p;
     }
 }
 
+#define strref_set_dup(pool, dest, src) strref_set_dup_impl(pool, dest, src TRACE_ARGS)
+#define strref_set_dup_fwd(pool, src, length) strref_set_dup_impl(pool, dest, src TRACE_ARGS_FWD)
+
 static gcc_always_inline void
-strref_append(struct pool *pool, struct strref *dest, const struct strref *src)
+strref_append_impl(struct pool *pool, struct strref *dest,
+                   const struct strref *src
+                   TRACE_ARGS_DECL)
 {
     char *p;
 
@@ -43,7 +49,7 @@ strref_append(struct pool *pool, struct strref *dest, const struct strref *src)
     if (src->length == 0)
         return;
 
-    p = p_malloc(pool, dest->length + src->length);
+    p = p_malloc_fwd(pool, dest->length + src->length);
     memcpy(p, dest->data, dest->length);
     memcpy(p + dest->length, src->data, src->length);
 
@@ -51,14 +57,21 @@ strref_append(struct pool *pool, struct strref *dest, const struct strref *src)
     dest->length += src->length;
 }
 
+#define strref_append(pool, dest, src) strref_append_impl(pool, dest, src TRACE_ARGS)
+#define strref_append_fwd(pool, src, length) strref_append_impl(pool, dest, src TRACE_ARGS_FWD)
+
 static gcc_always_inline char *
-strref_dup(struct pool *pool, const struct strref *s)
+strref_dup_impl(struct pool *pool, const struct strref *s
+           TRACE_ARGS_DECL)
 {
     assert(pool != NULL);
     assert(s != NULL);
 
-    return p_strndup(pool, s->data, s->length);
+    return p_strndup_fwd(pool, s->data, s->length);
 }
+
+#define strref_dup(pool, s) strref_dup_impl(pool, s TRACE_ARGS)
+#define strref_dup_fwd(pool, s) strref_dup_impl(pool, s TRACE_ARGS_FWD)
 
 static gcc_always_inline void
 strref_free(struct pool *pool, struct strref *s)
