@@ -8,7 +8,7 @@ Build-Depends: debhelper (>= 7), autoconf (>= 2.60), automake (>= 1.10),
  libevent-dev (>= 1.4.8~), libattr1-dev,
  libssl-dev,
  libcm4all-inline-dev (>= 0.1.2), libcm4all-daemon-dev (>= 0.3),
- libcm4all-socket-dev (>= 0.3), libcm4all-was-dev, libcm4all-http-dev,
+ libcm4all-socket-dev (>= 0.3.1), libcm4all-was-dev, libcm4all-http-dev,
  texlive, texlive-latex-extra,
  python-central (>= 0.5.6), valgrind,
 Standards-Version: 3.9.1

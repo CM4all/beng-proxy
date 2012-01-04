@@ -184,6 +184,9 @@ widget_proxy_not_found(void *ctx)
                request2->proxy_ref->id,
                widget_path(widget), request2->request->uri);
 
+    if (request2->env.request_body != NULL)
+        istream_free_unused(&request2->env.request_body);
+
     widget_cancel(widget);
     response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                               "No such widget");
@@ -197,6 +200,9 @@ widget_proxy_error(GError *error, void *ctx)
 
     daemon_log(2, "error from widget on %s: %s\n",
                request2->request->uri, error->message);
+
+    if (request2->env.request_body != NULL)
+        istream_free_unused(&request2->env.request_body);
 
     widget_cancel(widget);
     response_dispatch_error(request2, error);

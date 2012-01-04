@@ -7,7 +7,7 @@
 #ifndef __BENG_ISTREAM_NEW_H
 #define __BENG_ISTREAM_NEW_H
 
-#include <inline/poison.h>
+#include <inline/valgrind.h>
 
 static inline void
 istream_init_impl(struct istream *istream, const struct istream *class,
@@ -34,7 +34,7 @@ istream_new_impl(pool_t pool,
     pool = pool_new_libc(pool, "istream");
 #endif
 
-    istream = p_malloc(pool, size);
+    istream = p_malloc_fwd(pool, size);
     istream_init_impl(istream, class, pool TRACE_ARGS_FWD);
 
 #ifdef ISTREAM_POOL
@@ -52,16 +52,18 @@ istream_new_impl(pool_t pool,
 static inline void
 istream_deinit_impl(struct istream *istream TRACE_ARGS_DECL)
 {
+    assert(istream != NULL);
+    assert(!istream->destroyed);
+
     pool_t pool = istream->pool;
 
 #ifndef NDEBUG
     /* poison the istream struct (but not its implementation
-       properties), so it cannot be used later */
-    poison_noaccess(istream, sizeof(*istream));
-    poison_undefined(&istream->pool, sizeof(istream->pool));
-    istream->pool = pool;
+       properties), so it cannot be used later; this does not actually
+       erase data, it will just give a hint to valgrind */
+    VALGRIND_MAKE_MEM_UNDEFINED(istream, sizeof(*istream));
 
-    poison_undefined(&istream->destroyed, sizeof(istream->destroyed));
+    istream->pool = pool;
     istream->destroyed = true;
 #endif
 
