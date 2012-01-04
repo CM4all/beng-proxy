@@ -52,6 +52,9 @@ istream_new_impl(pool_t pool,
 static inline void
 istream_deinit_impl(struct istream *istream TRACE_ARGS_DECL)
 {
+    assert(istream != NULL);
+    assert(!istream->destroyed);
+
     pool_t pool = istream->pool;
 
 #ifndef NDEBUG
