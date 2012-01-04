@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.4) unstable; urgency=low
 
-  * merge release 1.4.5
+  * merge release 1.4.6
   * access-log: don't log the remote port
   * translation: support inserting regex matches into CGI's PATH_INFO
 
@@ -33,6 +33,12 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.6) unstable; urgency=low
+
+  * merge release 1.2.11
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 04 Jan 2012 15:41:43 -0000
 
 cm4all-beng-proxy (1.4.5) unstable; urgency=low
 
@@ -96,6 +102,12 @@ cm4all-beng-proxy (1.3) unstable; urgency=low
   * proxy-widget: client can choose only views that have an address
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 31 Oct 2011 17:41:14 +0100
+
+cm4all-beng-proxy (1.2.11) unstable; urgency=low
+
+  * merge release 1.1.24
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 04 Jan 2012 15:38:27 -0000
 
 cm4all-beng-proxy (1.2.10) unstable; urgency=low
 
@@ -169,6 +181,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.24) unstable; urgency=low
+
+  * merge release 1.0.18
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 04 Jan 2012 15:27:35 -0000
 
 cm4all-beng-proxy (1.1.23) unstable; urgency=low
 
@@ -349,6 +367,15 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.18) unstable; urgency=low
+
+  * resource-address: support zero-length path_info prefix (for BASE)
+  * hashmap: optimize insertions
+  * http-server: limit the number of request headers
+  * proxy-widget: discard the unused request body on error
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 04 Jan 2012 14:55:59 -0000
+
 cm4all-beng-proxy (1.0.17) unstable; urgency=low
 
   * istream-chunked: avoid recursive buffer write, fixes crash

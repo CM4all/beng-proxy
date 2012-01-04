@@ -187,6 +187,8 @@ istream_available(struct istream *istream, bool partial)
 #ifndef NDEBUG
     struct pool_notify notify;
 
+    assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
     assert(!istream->reading);
@@ -233,6 +235,8 @@ istream_skip(struct istream *istream, off_t length)
 #ifndef NDEBUG
     struct pool_notify notify;
 
+    assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
     assert(!istream->reading);
@@ -276,6 +280,8 @@ istream_read(struct istream *istream)
 #ifndef NDEBUG
     struct pool_notify notify;
 
+    assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
     assert(!istream->reading);
@@ -302,6 +308,8 @@ istream_as_fd(struct istream *istream)
 #ifndef NDEBUG
     struct pool_notify notify;
 
+    assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
     assert(!istream->reading);
@@ -331,6 +339,8 @@ istream_as_fd(struct istream *istream)
 static inline void
 istream_close(struct istream *istream)
 {
+    assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(!istream->closing);
     assert(!istream->eof);
 
@@ -352,6 +362,9 @@ istream_free(struct istream **istream_r)
 static inline bool
 istream_has_handler(struct istream *istream)
 {
+    assert(istream != NULL);
+    assert(!istream->destroyed);
+
     return istream->handler != NULL;
 }
 
@@ -362,6 +375,8 @@ istream_handler_set(struct istream *istream,
                     void *handler_ctx,
                     istream_direct_t handler_direct)
 {
+    assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(pool_contains(istream->pool, istream, sizeof(*istream)));
     assert(handler != NULL);
     assert(handler->data != NULL);
@@ -379,6 +394,10 @@ istream_assign_handler(struct istream **istream_r, struct istream *istream,
                        void *handler_ctx,
                        istream_direct_t handler_direct)
 {
+    assert(istream_r != NULL);
+    assert(istream != NULL);
+    assert(!istream->destroyed);
+
     *istream_r = istream;
     istream_handler_set(istream, handler, handler_ctx, handler_direct);
 }
@@ -387,12 +406,17 @@ static inline void
 istream_handler_set_direct(struct istream *istream,
                            istream_direct_t handler_direct)
 {
+    assert(istream != NULL);
+    assert(!istream->destroyed);
+
     istream->handler_direct = handler_direct;
 }
 
 static inline void
 istream_handler_clear(struct istream *istream)
 {
+    assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(!istream->eof);
     assert(istream->handler != NULL);
 
@@ -403,6 +427,7 @@ static inline void
 istream_close_handler(struct istream *istream)
 {
     assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(istream_has_handler(istream));
 
     istream_handler_clear(istream);
@@ -427,7 +452,10 @@ istream_free_handler(struct istream **istream_r)
 static inline void
 istream_close_unused(struct istream *istream)
 {
+    assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(!istream_has_handler(istream));
+
     istream_close(istream);
 }
 

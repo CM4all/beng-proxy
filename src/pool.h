@@ -215,11 +215,17 @@ p_calloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL);
 
 gcc_malloc
 void *
-p_memdup(struct pool *pool, const void *src, size_t length);
+p_memdup_impl(struct pool *pool, const void *src, size_t length TRACE_ARGS_DECL);
+
+#define p_memdup(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS)
+#define p_memdup_fwd(pool, src, length) p_memdup_impl(pool, src, length TRACE_ARGS_FWD)
 
 gcc_malloc
 char *
-p_strdup(struct pool *pool, const char *src);
+p_strdup_impl(struct pool *pool, const char *src TRACE_ARGS_DECL);
+
+#define p_strdup(pool, src) p_strdup_impl(pool, src TRACE_ARGS)
+#define p_strdup_fwd(pool, src) p_strdup_impl(pool, src TRACE_ARGS_FWD)
 
 static inline const char *
 p_strdup_checked(struct pool *pool, const char *s)
@@ -232,6 +238,7 @@ char *
 p_strndup_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL);
 
 #define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
+#define p_strndup_fwd(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS_FWD)
 
 gcc_malloc gcc_printf(2, 3)
 char *

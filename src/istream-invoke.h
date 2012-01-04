@@ -18,6 +18,7 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
     size_t nbytes;
 
     assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(istream->handler != NULL);
     assert(istream->handler->data != NULL);
     assert(data != NULL);
@@ -76,6 +77,7 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
     ssize_t nbytes;
 
     assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(istream->handler != NULL);
     assert(istream->handler->direct != NULL);
     assert((istream->handler_direct & type) == type);
@@ -128,6 +130,7 @@ static inline void
 istream_invoke_eof(struct istream *istream)
 {
     assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(!istream->eof);
     assert(!istream->closing);
     assert(istream->data_available == 0);
@@ -146,6 +149,7 @@ static inline void
 istream_invoke_abort(struct istream *istream, GError *error)
 {
     assert(istream != NULL);
+    assert(!istream->destroyed);
     assert(!istream->eof);
     assert(!istream->closing);
     assert(error != NULL);

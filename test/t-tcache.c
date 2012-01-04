@@ -24,19 +24,72 @@ tstock_translate(gcc_unused struct tstock *stock, gcc_unused struct pool *pool,
         handler->error(g_error_new(translate_quark(), 0, "Error"), ctx);
 }
 
+static bool
+string_equals(const char *a, const char *b)
+{
+    if (a == NULL || b == NULL)
+        return a == NULL && b == NULL;
+
+    return strcmp(a, b) == 0;
+}
+
+static bool
+resource_address_equals(const struct resource_address *a,
+                        const struct resource_address *b)
+{
+    assert(a != NULL);
+    assert(b != NULL);
+
+    if (a->type != b->type)
+        return false;
+
+    switch (a->type) {
+    case RESOURCE_ADDRESS_LOCAL:
+        assert(a->u.local.path != NULL);
+        assert(b->u.local.path != NULL);
+
+        return string_equals(a->u.local.path, b->u.local.path) &&
+            string_equals(a->u.local.deflated, b->u.local.deflated) &&
+            string_equals(a->u.local.gzipped, b->u.local.gzipped) &&
+            string_equals(a->u.local.content_type, b->u.local.content_type) &&
+            string_equals(a->u.local.delegate, b->u.local.delegate) &&
+            string_equals(a->u.local.document_root, b->u.local.document_root);
+
+    case RESOURCE_ADDRESS_CGI:
+        assert(a->u.cgi.path != NULL);
+        assert(b->u.cgi.path != NULL);
+
+        return string_equals(a->u.cgi.path, b->u.cgi.path) &&
+            string_equals(a->u.cgi.interpreter, b->u.cgi.interpreter) &&
+            string_equals(a->u.cgi.action, b->u.cgi.action) &&
+            string_equals(a->u.cgi.uri, b->u.cgi.uri) &&
+            string_equals(a->u.cgi.script_name, b->u.cgi.script_name) &&
+            string_equals(a->u.cgi.path_info, b->u.cgi.path_info) &&
+            string_equals(a->u.cgi.query_string, b->u.cgi.query_string) &&
+            string_equals(a->u.cgi.document_root, b->u.cgi.document_root);
+
+    default:
+        /* not implemented */
+        assert(false);
+        return false;
+    }
+}
+
+static bool
+translate_response_equals(const struct translate_response *a,
+                          const struct translate_response *b)
+{
+    if (a == NULL || b == NULL)
+        return a == NULL && b == NULL;
+
+    return resource_address_equals(&a->address, &b->address);
+}
+
 static void
 my_translate_response(const struct translate_response *response,
                       gcc_unused void *ctx)
 {
-    if (response == NULL) {
-        assert(expected_response == NULL);
-    } else {
-        assert(expected_response != NULL);
-        assert(response->address.type == RESOURCE_ADDRESS_LOCAL);
-        assert(expected_response->address.type == RESOURCE_ADDRESS_LOCAL);
-        assert(strcmp(response->address.u.local.path,
-                      expected_response->address.u.local.path) == 0);
-    }
+    assert(translate_response_equals(response, expected_response));
 }
 
 static void
@@ -149,6 +202,96 @@ test_basic(struct pool *pool, struct tcache *cache)
 
     expected_response = NULL;
     translate_cache(pool, cache, &request5,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request6 = {
+        .uri = "/cgi1/foo",
+    };
+    static const struct translate_response response6 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .path_info = "x/foo",
+                },
+            },
+        },
+        .base = "/cgi1/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response6;
+    translate_cache(pool, cache, &request6,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request7 = {
+        .uri = "/cgi1/a/b/c",
+    };
+    static const struct translate_response response7 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .path_info = "x/a/b/c",
+                },
+            },
+        },
+        .base = "/cgi1/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = NULL;
+    expected_response = &response7;
+    translate_cache(pool, cache, &request7,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request8 = {
+        .uri = "/cgi2/foo",
+    };
+    static const struct translate_response response8 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .path_info = "foo",
+                },
+            },
+        },
+        .base = "/cgi2/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response8;
+    translate_cache(pool, cache, &request8,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request9 = {
+        .uri = "/cgi2/a/b/c",
+    };
+    static const struct translate_response response9 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .path_info = "a/b/c",
+                },
+            },
+        },
+        .base = "/cgi2/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = NULL;
+    expected_response = &response9;
+    translate_cache(pool, cache, &request9,
                     &my_translate_handler, NULL, &async_ref);
 }
 

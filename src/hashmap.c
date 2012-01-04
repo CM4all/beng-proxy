@@ -57,15 +57,9 @@ hashmap_add(struct hashmap *map, const char *key, void *value)
 
     slot = &map->slots[hash % map->capacity];
     if (slot->pair.key != NULL) {
-        while (slot->next != NULL) {
-            slot = slot->next;
-            assert(slot->pair.key != NULL);
-            assert(slot->pair.value != NULL);
-        }
-
         prev = slot;
         slot = p_malloc(map->pool, sizeof(*slot));
-        slot->next = NULL;
+        slot->next = prev->next;
         prev->next = slot;
     }
 
