@@ -7,7 +7,7 @@
 #ifndef __BENG_ISTREAM_NEW_H
 #define __BENG_ISTREAM_NEW_H
 
-#include <inline/poison.h>
+#include <inline/valgrind.h>
 
 static inline void
 istream_init_impl(struct istream *istream, const struct istream *class,
@@ -59,12 +59,11 @@ istream_deinit_impl(struct istream *istream TRACE_ARGS_DECL)
 
 #ifndef NDEBUG
     /* poison the istream struct (but not its implementation
-       properties), so it cannot be used later */
-    poison_noaccess(istream, sizeof(*istream));
-    poison_undefined(&istream->pool, sizeof(istream->pool));
-    istream->pool = pool;
+       properties), so it cannot be used later; this does not actually
+       erase data, it will just give a hint to valgrind */
+    VALGRIND_MAKE_MEM_UNDEFINED(istream, sizeof(*istream));
 
-    poison_undefined(&istream->destroyed, sizeof(istream->destroyed));
+    istream->pool = pool;
     istream->destroyed = true;
 #endif
 

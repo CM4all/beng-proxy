@@ -13,6 +13,7 @@
 #include "header-parser.h"
 #include "istream-internal.h"
 
+#include <inline/poison.h>
 #include <daemon/log.h>
 
 #include <limits.h>
