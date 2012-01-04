@@ -231,6 +231,7 @@ char * __attr_malloc
 p_strndup_impl(pool_t pool, const char *src, size_t length TRACE_ARGS_DECL);
 
 #define p_strndup(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS)
+#define p_strndup_fwd(pool, src, length) p_strndup_impl(pool, src, length TRACE_ARGS_FWD)
 
 char * __attr_malloc __attr_printf(2, 3)
 p_sprintf(pool_t pool, const char *fmt, ...);
