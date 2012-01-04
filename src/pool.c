@@ -797,7 +797,9 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
 static void *
 p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 {
-    struct libc_pool_chunk *chunk = xmalloc(sizeof(*chunk) - sizeof(chunk->data) + size);
+    const size_t aligned_size = align_size(size);
+    struct libc_pool_chunk *chunk =
+        xmalloc(sizeof(*chunk) - sizeof(chunk->data) + aligned_size);
 
 #ifndef NDEBUG
     list_add(&chunk->info.siblings, &pool->allocations);
@@ -831,7 +833,8 @@ pool_dump_allocations(struct pool *pool)
 #endif
 
 static void *
-p_malloc_linear(struct pool *pool, size_t size TRACE_ARGS_DECL)
+p_malloc_linear(struct pool *pool, const size_t original_size
+                TRACE_ARGS_DECL)
 {
     struct linear_pool_area *area = pool->current_area.linear;
     void *p;
@@ -841,6 +844,7 @@ p_malloc_linear(struct pool *pool, size_t size TRACE_ARGS_DECL)
 
     assert(area != NULL);
 
+    size_t size = align_size(original_size);
     size += LINEAR_PREFIX;
 
     if (unlikely(area->used + size > area->size)) {
@@ -867,7 +871,7 @@ p_malloc_linear(struct pool *pool, size_t size TRACE_ARGS_DECL)
     info = p;
     info->file = file;
     info->line = line;
-    info->size = size - LINEAR_PREFIX;
+    info->size = original_size;
     list_add(&info->siblings, &pool->allocations);
 #endif
 
@@ -893,7 +897,7 @@ internal_malloc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 void *
 p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL)
 {
-    return internal_malloc(pool, align_size(size) TRACE_ARGS_FWD);
+    return internal_malloc(pool, size TRACE_ARGS_FWD);
 }
 
 static void
@@ -965,7 +969,7 @@ clear_memory(void *p, size_t size)
 void *
 p_calloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL)
 {
-    void *p = internal_malloc(pool, align_size(size) TRACE_ARGS_FWD);
+    void *p = internal_malloc(pool, size TRACE_ARGS_FWD);
     clear_memory(p, size);
     return p;
 }

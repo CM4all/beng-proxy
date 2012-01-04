@@ -13,6 +13,7 @@
 
 #include <event.h>
 #include <errno.h>
+#include <string.h>
 
 struct istream_socket {
     struct istream output;
