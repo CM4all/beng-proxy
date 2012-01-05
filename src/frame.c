@@ -76,9 +76,6 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
 
-        if (env->request_body != NULL)
-            istream_free_unused(&env->request_body);
-
         GError *error =
             g_error_new(widget_quark(), 0,
                         "frame within non-container requested");

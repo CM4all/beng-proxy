@@ -138,8 +138,7 @@ test_proxy_abort(struct pool *pool)
                        &parsed_uri,
                        NULL,
                        0xdeadbeef,
-                       HTTP_METHOD_GET, NULL,
-                       NULL);
+                       HTTP_METHOD_GET, NULL);
 
     struct async_operation_ref async_ref;
     processor_lookup_widget(pool, HTTP_STATUS_OK, istream_block_new(pool),

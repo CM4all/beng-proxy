@@ -120,7 +120,6 @@ response_invoke_processor(struct request *request2,
                           const struct transformation *transformation)
 {
     struct http_server_request *request = request2->request;
-    struct istream *request_body;
     struct widget *widget;
     const char *uri;
 
@@ -185,10 +184,8 @@ response_invoke_processor(struct request *request2,
     }
 
     if (request2->body != NULL && widget->from_request.focus_ref != NULL) {
-        request_body = request2->body;
+        widget->for_focused.body = request2->body;
         request2->body = NULL;
-    } else {
-        request_body = NULL;
     }
 
     uri = request2->translate.response->uri != NULL
@@ -230,8 +227,7 @@ response_invoke_processor(struct request *request2,
                        &request2->uri,
                        request2->args,
                        request2->session_id,
-                       method, request->headers,
-                       request_body);
+                       method, request->headers);
 
     if (proxy_ref != NULL) {
         /* the client requests a widget in proxy mode */
@@ -332,8 +328,7 @@ response_invoke_css_processor(struct request *request2,
                        &request2->uri,
                        request2->args,
                        request2->session_id,
-                       HTTP_METHOD_GET, request->headers,
-                       NULL);
+                       HTTP_METHOD_GET, request->headers);
 
     body = css_processor(request->pool, body,
                          widget, &request2->env,
@@ -403,8 +398,7 @@ response_invoke_text_processor(struct request *request2,
                        &request2->uri,
                        request2->args,
                        request2->session_id,
-                       HTTP_METHOD_GET, request->headers,
-                       NULL);
+                       HTTP_METHOD_GET, request->headers);
 
     body = text_processor(request->pool, body,
                           widget, &request2->env);
