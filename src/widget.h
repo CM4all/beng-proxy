@@ -33,8 +33,16 @@ struct widget {
 
     const char *class_name;
 
+    /**
+     * The widget class.  May be NULL if the #class_name hasn't been
+     * looked up yet.
+     */
     const struct widget_class *class;
 
+    /**
+     * The object that is currently requesting the widget class from
+     * the translation server.
+     */
     struct widget_resolver *resolver;
 
     /** the widget's instance id, as specified in the template */
@@ -67,7 +75,16 @@ struct widget {
         WIDGET_SESSION_SITE,
     } session;
 
+    /**
+     * Parameters that were forwarded from the HTTP request to this
+     * widget.
+     */
     struct {
+        /**
+         * A reference to the focused widget relative to this one.
+         * NULL when the focused widget is not an (indirect) child of
+         * this one.
+         */
         const struct widget_ref *focus_ref;
 
         /** the path_info provided by the browser (from processor_env.args) */
@@ -77,6 +94,10 @@ struct widget {
             processor_env.external_uri.query_string) */
         struct strref query_string;
 
+        /**
+         * The request's HTTP method if the widget is focused.  Falls
+         * back to HTTP_METHOD_GET if the widget is not focused.
+         */
         http_method_t method;
 
         /** the request body (from processor_env.body) */
@@ -86,6 +107,9 @@ struct widget {
         const char *view;
     } from_request;
 
+    /**
+     * Cached attributes that will be initialized lazily.
+     */
     struct {
         const char *path;
 
