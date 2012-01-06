@@ -95,17 +95,6 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
         }
     }
 
-    if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
-        /* the request body is not consumed yet, but the focus is not
-           within the frame: discard the body, because it cannot ever
-           be used */
-        assert(!istream_has_handler(env->request_body));
-
-        daemon_log(4, "discarding non-framed request body\n");
-
-        istream_free_unused(&env->request_body);
-    }
-
     widget_http_lookup(pool, widget, id, env,
                        handler, handler_ctx,
                        async_ref);

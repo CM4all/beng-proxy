@@ -154,9 +154,20 @@ response_invoke_processor(struct request *request2,
         widget_ref_parse(request->pool,
                          strmap_get_checked(request2->args, "frame"));
 
-    if (focus_ref != NULL && (proxy_ref == NULL ||
-                              widget_ref_includes(proxy_ref, focus_ref)))
-        widget->from_request.focus_ref = focus_ref;
+    if (focus_ref != NULL && proxy_ref != NULL &&
+        !widget_ref_includes(proxy_ref, focus_ref)) {
+        /* the focused widget is not reachable because it is not
+           within the "frame" */
+
+        focus_ref = NULL;
+
+        if (request->body != NULL) {
+            daemon_log(4, "discarding non-framed request body\n");
+            istream_free_unused(&request2->body);
+        }
+    }
+
+    widget->from_request.focus_ref = focus_ref;
 
     if (proxy_ref != NULL)
         /* disable all following transformations, because we're doing
