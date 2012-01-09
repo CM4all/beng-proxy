@@ -65,6 +65,8 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
         dest->u.cgi.script_name =
             p_strdup_checked(pool, src->u.cgi.script_name);
         dest->u.cgi.path_info = p_strdup_checked(pool, src->u.cgi.path_info);
+        dest->u.cgi.expand_path_info =
+            p_strdup_checked(pool, src->u.cgi.expand_path_info);
         dest->u.cgi.query_string =
             p_strdup_checked(pool, src->u.cgi.query_string);
         dest->u.cgi.document_root =
