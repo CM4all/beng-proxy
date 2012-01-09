@@ -200,12 +200,20 @@ base_string(const char *p, const char *suffix)
 static const char *
 tcache_store_address(struct pool *pool, struct resource_address *dest,
                      const struct resource_address *src,
-                     const char *uri, const char *base)
+                     const char *uri, const char *base, bool expandable)
 {
     const char *suffix = base_suffix(uri, base);
     if (suffix != NULL) {
         /* we received a valid BASE packet - store only the base
            URI */
+
+        if (expandable) {
+            /* when the response is expandable, skip appending the
+               base suffix, don't call resource_address_save_base() */
+            resource_address_copy(pool, dest, src);
+            return p_strndup(pool, uri, suffix - uri);
+        }
+
         if (resource_address_save_base(pool, dest, src, suffix) != NULL)
             return p_strndup(pool, uri, suffix - uri);
     }
@@ -222,7 +230,8 @@ tcache_store_response(struct pool *pool, struct translate_response *dest,
     const char *key;
 
     key = tcache_store_address(pool, &dest->address, &src->address,
-                               request->uri, src->base);
+                               request->uri, src->base,
+                               translate_response_is_expandable(src));
     translate_response_copy(pool, dest, src);
 
     if (key == NULL)

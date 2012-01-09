@@ -752,7 +752,9 @@ finding the file \\
 
 \verb|EXPAND_PATH_INFO| & Override the \verb|PATH_INFO| with the given
 value.  Backslash references are expanded to the value of the match
-group of \verb|REGEX|. \scriptsize{(Since version 2.0.4)} \\
+group of \verb|REGEX|. In the presence of this packet, the URI suffix
+after the base will not be appended to other paths.
+\scriptsize{(Since version 2.0.4)} \\
 
 \hline
 

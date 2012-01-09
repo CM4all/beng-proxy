@@ -564,7 +564,22 @@ test_expand(struct pool *pool, struct tcache *cache)
     static const struct translate_request request1 = {
         .uri = "/regex-expand/b=c",
     };
-    static const struct translate_response response1 = {
+    static const struct translate_response response1n = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/foo.cgi",
+                    .expand_path_info = "/a/\\1",
+                },
+            },
+        },
+        .base = "/regex-expand/",
+        .regex = "^/regex-expand/(.+=.+)$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+    static const struct translate_response response1e = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
@@ -581,7 +596,8 @@ test_expand(struct pool *pool, struct tcache *cache)
         .user_max_age = -1,
     };
 
-    next_response = expected_response = &response1;
+    next_response = &response1n;
+    expected_response = &response1e;
     translate_cache(pool, cache, &request1,
                     &my_translate_handler, NULL, &async_ref);
 
