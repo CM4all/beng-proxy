@@ -223,6 +223,50 @@ base_string_unescape(struct pool *pool, const char *p, const char *suffix)
     return base_string(p, unescaped);
 }
 
+char *
+resource_address_auto_base(struct pool *pool,
+                           const struct resource_address *address,
+                           const char *uri)
+{
+    assert(pool != NULL);
+    assert(address != NULL);
+    assert(uri != NULL);
+
+    size_t length;
+
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        return NULL;
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        /* auto-generate the BASE only if the path info begins with a
+           slash and matches the URI */
+
+        if (address->u.cgi.path_info == NULL ||
+            address->u.cgi.path_info[0] != '/' ||
+            address->u.cgi.path_info[1] == 0)
+            return NULL;
+
+        /* XXX implement (un-)escaping of the uri */
+
+        length = base_string(uri, address->u.cgi.path_info + 1);
+        if (length == 0 || length == (size_t)-1)
+            return NULL;
+
+        return p_strndup(pool, uri, length);
+    }
+
+    assert(false);
+    return NULL;
+
+}
+
 struct resource_address *
 resource_address_save_base(struct pool *pool, struct resource_address *dest,
                            const struct resource_address *src,

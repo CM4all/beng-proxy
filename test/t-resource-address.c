@@ -3,6 +3,53 @@
 #include <assert.h>
 #include <string.h>
 
+static void
+test_auto_base(struct pool *pool)
+{
+    static const struct resource_address ra0 = {
+        .type = RESOURCE_ADDRESS_CGI,
+        .u = {
+            .cgi = {
+                .path = "/usr/lib/cgi-bin/foo.pl",
+                .path_info = "/",
+            },
+        },
+    };
+
+    assert(resource_address_auto_base(pool, &ra0, "/") == NULL);
+    assert(resource_address_auto_base(pool, &ra0, "/foo") == NULL);
+
+    static const struct resource_address ra1 = {
+        .type = RESOURCE_ADDRESS_CGI,
+        .u = {
+            .cgi = {
+                .path = "/usr/lib/cgi-bin/foo.pl",
+                .path_info = "foo/bar",
+            },
+        },
+    };
+
+    assert(resource_address_auto_base(pool, &ra1, "/") == NULL);
+    assert(resource_address_auto_base(pool, &ra1, "/foo/bar") == NULL);
+
+    static const struct resource_address ra2 = {
+        .type = RESOURCE_ADDRESS_CGI,
+        .u = {
+            .cgi = {
+                .path = "/usr/lib/cgi-bin/foo.pl",
+                .path_info = "/bar/baz",
+            },
+        },
+    };
+
+    assert(resource_address_auto_base(pool, &ra2, "/") == NULL);
+    assert(resource_address_auto_base(pool, &ra2, "/foobar/baz") == NULL);
+
+    char *a = resource_address_auto_base(pool, &ra2, "/foo/bar/baz");
+    assert(a != NULL);
+    assert(strcmp(a, "/foo/") == 0);
+}
+
 /*
  * main
  *
@@ -124,6 +171,8 @@ int main(int argc, char **argv) {
     assert(b->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
     assert(strcmp(b->u.cgi.path_info, "/bar/bar/xyz") == 0);
+
+    test_auto_base(pool);
 
     pool_unref(pool);
     pool_commit();

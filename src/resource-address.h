@@ -154,6 +154,20 @@ resource_address_insert_args(struct pool *pool,
                              const char *args, size_t length);
 
 /**
+ * Check if a "base" URI can be generated automatically from this
+ * #resource_address.  This applies when the CGI's PATH_INFO matches
+ * the end of the specified URI.
+ *
+ * @param uri the request URI
+ * @return a newly allocated base, or NULL if that is not possible
+ */
+gcc_malloc
+char *
+resource_address_auto_base(struct pool *pool,
+                           const struct resource_address *address,
+                           const char *uri);
+
+/**
  * Duplicate a resource address, but return the base address.
  *
  * @param src the original resource address
