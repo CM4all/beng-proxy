@@ -9,6 +9,8 @@
 
 #include "pool.h"
 
+#include <inline/compiler.h>
+
 #include <stdbool.h>
 #include <sys/socket.h>
 
@@ -27,6 +29,7 @@ bulldog_deinit(void);
  * Returns true if the socket address is either not present in the
  * status directory, or if it is marked as "successful".
  */
+gcc_pure
 bool
 bulldog_check(const struct sockaddr *addr, socklen_t addrlen);
 

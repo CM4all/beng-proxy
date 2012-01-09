@@ -21,6 +21,7 @@ istream_init_impl(struct istream *istream, const struct istream *class,
 
 #define istream_init(istream, class, pool) istream_init_impl(istream, class, pool TRACE_ARGS)
 
+gcc_malloc
 static inline struct istream *
 istream_new_impl(struct pool *pool,
                  const struct istream *class, size_t size

@@ -9,6 +9,8 @@
 
 #include "istream-direct.h"
 
+#include <inline/compiler.h>
+
 #include <assert.h>
 #include <stddef.h>
 
@@ -84,6 +86,7 @@ istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
 #endif
 }
 
+gcc_const
 static inline enum istream_direct
 istream_direct_mask_to(enum istream_direct type)
 {
@@ -139,6 +142,7 @@ direct_global_deinit(void) {}
  * descriptor.  Returns -1 if that could not be determined
  * (unsupported fd type or error).
  */
+gcc_pure
 ssize_t
 direct_available(int fd, istream_direct_t fd_type, size_t max_length);
 

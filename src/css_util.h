@@ -13,6 +13,7 @@
  * Count the number of leading underscores.  Returns 0 if the
  * underscores are not followed by a different name character.
  */
+gcc_pure
 static inline unsigned
 underscore_prefix(const char *p, const char *end)
 {
@@ -31,6 +32,7 @@ underscore_prefix(const char *p, const char *end)
     return 0;
 }
 
+gcc_pure
 static inline bool
 is_underscore_prefix(const char *p, const char *end)
 {

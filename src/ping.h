@@ -21,6 +21,7 @@ struct pool;
 struct sockaddr;
 struct async_operation_ref;
 
+G_GNUC_CONST
 static inline GQuark
 ping_quark(void)
 {

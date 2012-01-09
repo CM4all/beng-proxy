@@ -9,6 +9,8 @@
 
 #include "sticky.h"
 
+#include <inline/compiler.h>
+
 #include <stddef.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -52,6 +54,7 @@ bool
 address_list_add(struct pool *pool, struct address_list *list,
                  const struct sockaddr *address, size_t length);
 
+gcc_pure
 static inline const struct address_envelope *
 address_list_get_n(const struct address_list *list, unsigned n)
 {
@@ -60,9 +63,11 @@ address_list_get_n(const struct address_list *list, unsigned n)
     return list->addresses[n];
 }
 
+gcc_pure
 const struct address_envelope *
 address_list_first(const struct address_list *list);
 
+gcc_pure
 static inline bool
 address_list_is_empty(const struct address_list *list)
 {
@@ -72,6 +77,7 @@ address_list_is_empty(const struct address_list *list)
 /**
  * Is there no more than one address?
  */
+gcc_pure
 static inline bool
 address_list_is_single(const struct address_list *list)
 {
@@ -82,6 +88,7 @@ address_list_is_single(const struct address_list *list)
  * Generates a unique string which identifies this object in a hash
  * table.  This string stored in a statically allocated buffer.
  */
+gcc_pure
 const char *
 address_list_key(const struct address_list *list);
 

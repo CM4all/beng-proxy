@@ -76,6 +76,7 @@ struct ajp_get_body_chunk {
     uint16_t length;
 } gcc_packed;
 
+gcc_pure
 static inline ajp_method_t
 to_ajp_method(http_method_t method)
 {
@@ -103,9 +104,11 @@ to_ajp_method(http_method_t method)
     return AJP_METHOD_NULL;
 }
 
+gcc_pure
 enum ajp_header_code
 ajp_encode_header_name(const char *name);
 
+gcc_pure
 const char *
 ajp_decode_header_name(enum ajp_header_code code);
 

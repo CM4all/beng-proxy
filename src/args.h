@@ -7,11 +7,14 @@
 #ifndef __BENG_ARGS_H
 #define __BENG_ARGS_H
 
+#include <inline/compiler.h>
+
 #include <stddef.h>
 
 struct pool;
 struct strmap;
 
+gcc_pure
 struct strmap *
 args_parse(struct pool *pool, const char *p, size_t length);
 
@@ -22,6 +25,7 @@ args_parse(struct pool *pool, const char *p, size_t length);
  * @param replace_key add, replace or remove an entry in the args map
  * @param replace_value the new value or NULL if the key should be removed
  */
+gcc_pure
 const char *
 args_format_n(struct pool *pool, struct strmap *args,
               const char *replace_key, const char *replace_value,
@@ -32,6 +36,7 @@ args_format_n(struct pool *pool, struct strmap *args,
               size_t replace_value3_length,
               const char *remove_key);
 
+gcc_pure
 const char *
 args_format(struct pool *pool, struct strmap *args,
             const char *replace_key, const char *replace_value,

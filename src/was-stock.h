@@ -9,6 +9,8 @@
 
 #include "was-launch.h"
 
+#include <inline/compiler.h>
+
 struct pool;
 struct hstock;
 struct stock_item;
@@ -28,12 +30,14 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
 /**
  * Returns the socket descriptor of the specified stock item.
  */
+gcc_pure
 const struct was_process *
 was_stock_item_get(const struct stock_item *item);
 
 /**
  * Translates a path into the application's namespace.
  */
+gcc_pure
 const char *
 was_stock_translate_path(const struct stock_item *item,
                          const char *path, struct pool *pool);

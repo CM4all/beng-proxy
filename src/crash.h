@@ -8,6 +8,8 @@
 #ifndef BENG_PROXY_CRASH_H
 #define BENG_PROXY_CRASH_H
 
+#include <inline/compiler.h>
+
 #include <glib.h>
 #include <assert.h>
 #include <stdbool.h>
@@ -43,6 +45,7 @@ crash_global_deinit(void)
 /**
  * Is the specified worker currently in a "safe" state?
  */
+gcc_pure
 static inline bool
 crash_is_safe(struct crash *crash)
 {
@@ -80,6 +83,7 @@ crash_unsafe_leave(void)
 /**
  * Is this process currently in "unsafe" state?
  */
+gcc_pure
 static inline bool
 crash_in_unsafe(void)
 {

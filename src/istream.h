@@ -359,6 +359,7 @@ istream_free(struct istream **istream_r)
     istream_close(istream);
 }
 
+gcc_pure
 static inline bool
 istream_has_handler(struct istream *istream)
 {

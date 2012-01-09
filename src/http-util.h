@@ -21,9 +21,11 @@ struct strref;
 char **
 http_list_split(struct pool *pool, const char *p);
 
+gcc_pure
 bool
 http_list_contains(const char *list, const char *item);
 
+gcc_pure
 static inline int
 http_client_accepts_encoding(struct strmap *request_headers,
                              const char *coding)
