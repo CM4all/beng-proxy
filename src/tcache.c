@@ -227,16 +227,25 @@ tcache_store_response(struct pool *pool, struct translate_response *dest,
                       const struct translate_response *src,
                       const struct translate_request *request)
 {
+    const char *base = src->base;
+    char *new_base = NULL;
+
+    if (base == NULL && request->uri != NULL)
+        base = new_base = resource_address_auto_base(pool, &src->address,
+                                                     request->uri);
+
     const char *key;
 
     key = tcache_store_address(pool, &dest->address, &src->address,
-                               request->uri, src->base,
+                               request->uri, base,
                                translate_response_is_expandable(src));
     translate_response_copy(pool, dest, src);
 
     if (key == NULL)
         /* the BASE value didn't match - clear it */
         dest->base = NULL;
+    else if (new_base != NULL)
+        dest->base = new_base;
 
     if (dest->uri != NULL) {
         const char *suffix = base_suffix(request->uri, src->base);
