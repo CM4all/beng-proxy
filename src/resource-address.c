@@ -190,6 +190,8 @@ resource_address_insert_args(struct pool *pool,
 }
 
 /**
+ * Determine the length of the base prefix in the given string.
+ *
  * @return (size_t)-1 on mismatch
  */
 static size_t
