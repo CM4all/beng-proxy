@@ -82,7 +82,8 @@ translate_response_equals(const struct translate_response *a,
     if (a == NULL || b == NULL)
         return a == NULL && b == NULL;
 
-    return resource_address_equals(&a->address, &b->address);
+    return string_equals(a->base, b->base) &&
+        resource_address_equals(&a->address, &b->address);
 }
 
 static void
@@ -160,6 +161,7 @@ test_basic(struct pool *pool, struct tcache *cache)
                 },
             },
         },
+        .base = "/foo/",
         .max_age = -1,
         .user_max_age = -1,
     };
@@ -173,6 +175,7 @@ test_basic(struct pool *pool, struct tcache *cache)
                 },
             },
         },
+        .base = "/foo/",
         .max_age = -1,
         .user_max_age = -1,
     };
