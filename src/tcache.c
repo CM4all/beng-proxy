@@ -9,11 +9,13 @@
 #include "translate-request.h"
 #include "translate-response.h"
 #include "translate-client.h"
+#include "http-quark.h"
 #include "widget-class.h"
 #include "cache.h"
 #include "stock.h"
 #include "strmap.h"
 #include "uri-address.h"
+#include "uri-verify.h"
 #include "strref-pool.h"
 #include "beng-proxy/translation.h"
 
@@ -269,29 +271,42 @@ tcache_store_response(struct pool *pool, struct translate_response *dest,
  * Load an address from a cached translate_response object, and apply
  * any BASE changes (if a BASE is present).
  */
-static void
+static bool
 tcache_load_address(struct pool *pool, const char *uri,
                     struct resource_address *dest,
-                    const struct translate_response *src)
+                    const struct translate_response *src,
+                    GError **error_r)
 {
     if (src->base != NULL && !translate_response_is_expandable(src)) {
         assert(memcmp(src->base, uri, strlen(src->base)) == 0);
 
+        const char *suffix = uri + strlen(src->base);
+
+        if (!uri_path_verify_paranoid(suffix - 1)) {
+            g_set_error(error_r, http_response_quark(),
+                        HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+            return false;
+        }
+
         if (resource_address_load_base(pool, dest, &src->address,
-                                       uri + strlen(src->base)) != NULL)
-            return;
+                                       suffix) != NULL)
+            return true;
     }
 
     resource_address_copy(pool, dest, &src->address);
+    return true;
 }
 
-static void
+static bool
 tcache_load_response(struct pool *pool, struct translate_response *dest,
                      const struct translate_response *src,
-                     const char *uri)
+                     const char *uri, GError **error_r)
 {
-    tcache_load_address(pool, uri, &dest->address, src);
+    if (!tcache_load_address(pool, uri, &dest->address, src, error_r))
+        return false;
+
     translate_response_copy(pool, dest, src);
+    return true;
 }
 
 static bool
@@ -695,7 +710,11 @@ tcache_hit(struct pool *pool, const char *uri, const char *key,
 
     cache_log(4, "translate_cache: hit %s\n", key);
 
-    tcache_load_response(pool, response, &item->response, key);
+    GError *error = NULL;
+    if (!tcache_load_response(pool, response, &item->response, key, &error)) {
+        handler->error(error, ctx);
+        return;
+    }
 
     if (uri != NULL && translate_response_is_expandable(response))
         tcache_expand_response(pool, response, item, uri);

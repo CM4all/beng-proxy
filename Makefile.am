@@ -903,7 +903,7 @@ test_t_stock_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/resource-address.c src/cgi-address.c \
 	src/jail.c \
-	src/uri-address.c src/uri-relative.c src/uri-verify.c \
+	src/uri-address.c src/uri-relative.c \
 	src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri-base.c \
 	src/address-list.c \

@@ -142,6 +142,9 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
 /**
  * Duplicate a resource address, and append a suffix.
  *
+ * Warning: this function does not check for excessive "../"
+ * sub-strings.
+ *
  * @param src the base resource address (must end with a slash)
  * @param suffix the suffix to be addded to #src
  * @return NULL if this address type cannot have a base address

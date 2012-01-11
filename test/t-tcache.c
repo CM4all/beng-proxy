@@ -207,6 +207,12 @@ test_basic(struct pool *pool, struct tcache *cache)
     translate_cache(pool, cache, &request5,
                     &my_translate_handler, NULL, &async_ref);
 
+    static const struct translate_request request10 = {
+        .uri = "/foo//bar",
+    };
+    translate_cache(pool, cache, &request10,
+                    &my_translate_handler, NULL, &async_ref);
+
     static const struct translate_request request6 = {
         .uri = "/cgi1/foo",
     };

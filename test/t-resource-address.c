@@ -99,33 +99,6 @@ int main(int argc, char **argv) {
     assert(b->type == RESOURCE_ADDRESS_LOCAL);
     assert(strcmp(b->u.local.path, "/var/www/foo/index.html") == 0);
 
-    b = resource_address_load_base(pool, &dest, a, "../hackme");
-    assert(b == NULL);
-
-    b = resource_address_load_base(pool, &dest, a, ".%2e/hackme");
-    assert(b == NULL);
-
-    b = resource_address_load_base(pool, &dest, a, "foo//bar");
-    assert(b == NULL);
-
-    b = resource_address_load_base(pool, &dest, a, "foo/./bar");
-    assert(b == NULL);
-
-    b = resource_address_load_base(pool, &dest, a, "foo/../bar");
-    assert(b == NULL);
-
-    b = resource_address_load_base(pool, &dest, a, "foo/%2e/bar");
-    assert(b == NULL);
-
-    b = resource_address_load_base(pool, &dest, a, "foo/.%2e/bar");
-    assert(b == NULL);
-
-    b = resource_address_load_base(pool, &dest, a, "foo/.%2e");
-    assert(b == NULL);
-
-    b = resource_address_load_base(pool, &dest, a, "f%00");
-    assert(b == NULL);
-
     a = resource_address_save_base(pool, &dest2, &ra2, "space%20.txt");
     assert(a != NULL);
     assert(a->type == RESOURCE_ADDRESS_LOCAL);

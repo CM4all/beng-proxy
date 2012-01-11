@@ -8,7 +8,6 @@
 #include "resource-address.h"
 #include "uri-base.h"
 #include "uri-relative.h"
-#include "uri-verify.h"
 #include "uri-escape.h"
 #include "uri-edit.h"
 #include "strref.h"
@@ -260,9 +259,6 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
     assert(src != dest);
 
     char *unescaped;
-
-    if (!uri_path_verify_paranoid(suffix))
-        return NULL;
 
     switch (src->type) {
     case RESOURCE_ADDRESS_NONE:
