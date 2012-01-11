@@ -850,6 +850,10 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
     assert(http_method_is_valid(method));
 
     if (!uri_verify_quick(uri)) {
+        lease_direct_release(lease, lease_ctx, true);
+        if (body != NULL)
+            istream_close_unused(body);
+
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "malformed request URI '%s'", uri);
@@ -878,6 +882,10 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
     ajp_method = to_ajp_method(method);
     if (ajp_method == AJP_METHOD_NULL) {
         /* invalid or unknown method */
+        p_lease_release(&client->lease_ref, true, client->pool);
+        if (body != NULL)
+            istream_close_unused(body);
+
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "unknown request method");
@@ -926,6 +934,7 @@ ajp_client_request(pool_t pool, int fd, enum istream_direct fd_type,
         available = istream_available(body, false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
+            p_lease_release(&client->lease_ref, true, client->pool);
             istream_close_unused(body);
 
             GError *error =
