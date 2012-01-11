@@ -274,7 +274,7 @@ tcache_load_address(struct pool *pool, const char *uri,
                     struct resource_address *dest,
                     const struct translate_response *src)
 {
-    if (src->base != NULL) {
+    if (src->base != NULL && !translate_response_is_expandable(src)) {
         assert(memcmp(src->base, uri, strlen(src->base)) == 0);
 
         if (resource_address_load_base(pool, dest, &src->address,
