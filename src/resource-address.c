@@ -344,8 +344,7 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        if (src->u.cgi.path_info == NULL)
-            return NULL;
+        assert(src->u.cgi.path_info);
 
         unescaped = p_strdup(pool, suffix);
         unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
