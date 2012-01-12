@@ -29,4 +29,15 @@ address_list_resolve(struct pool *pool, struct address_list *address_list,
                      const struct addrinfo *hints,
                      GError **error_r);
 
+/**
+ * Wrapper for address_list_resolve() that allocates a new
+ * #address_list object from the pool instead of manipulating one that
+ * was passed by the caller.
+ */
+struct address_list *
+address_list_resolve_new(struct pool *pool,
+                         const char *host_and_port, int default_port,
+                         const struct addrinfo *hints,
+                         GError **error_r);
+
 #endif
