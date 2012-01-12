@@ -12,14 +12,6 @@
 
 #include <string.h>
 
-struct uri_address {
-    struct list_head siblings;
-
-    socklen_t length;
-
-    struct sockaddr address;
-};
-
 struct uri_with_address *
 uri_address_new(struct pool *pool, const char *uri)
 {
@@ -72,16 +64,4 @@ uri_address_insert_args(struct pool *pool,
     address_list_copy(pool, &p->addresses, &uwa->addresses);
 
     return p;
-}
-
-bool
-uri_address_is_single(const struct uri_with_address *uwa)
-{
-    return address_list_is_single(&uwa->addresses);
-}
-
-const char *
-uri_address_key(const struct uri_with_address *uwa)
-{
-    return address_list_key(&uwa->addresses);
 }
