@@ -56,7 +56,7 @@ resource_address_has_query_string(const struct resource_address *address)
         return false;
 
     case RESOURCE_ADDRESS_HTTP:
-        return strchr(address->u.http->uri, '?') != NULL;
+        return strchr(address->u.http->path, '?') != NULL;
 
     case RESOURCE_ADDRESS_PIPE:
         return false;

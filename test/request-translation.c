@@ -27,7 +27,7 @@ print_resource_address(const struct resource_address *address)
         break;
 
     case RESOURCE_ADDRESS_HTTP:
-        printf("proxy=%s\n", address->u.http->uri);
+        printf("proxy=%s\n", address->u.http->path);
         break;
 
     case RESOURCE_ADDRESS_PIPE:
@@ -47,7 +47,7 @@ print_resource_address(const struct resource_address *address)
         break;
 
     case RESOURCE_ADDRESS_AJP:
-        printf("ajp=%s\n", address->u.http->uri);
+        printf("ajp=%s\n", address->u.http->path);
         break;
     }
 }

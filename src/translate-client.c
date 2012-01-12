@@ -843,7 +843,18 @@ translate_handle_packet(struct translate_client *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_HTTP;
         client->resource_address->u.http =
-            uri_address_new(client->pool, payload);
+            uri_address_parse(client->pool, payload, &error);
+        if (client->resource_address->u.http == NULL) {
+            translate_client_abort(client, error);
+            return false;
+        }
+
+        if (client->resource_address->u.http->scheme != URI_SCHEME_UNIX &&
+            client->resource_address->u.http->scheme != URI_SCHEME_HTTP) {
+            translate_client_error(client, "malformed TRANSLATE_PROXY packet");
+            return false;
+        }
+
         client->address_list = &client->resource_address->u.http->addresses;
         return true;
 
@@ -1055,7 +1066,17 @@ translate_handle_packet(struct translate_client *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_AJP;
         client->resource_address->u.http =
-            uri_address_new(client->pool, payload);
+            uri_address_parse(client->pool, payload, &error);
+        if (client->resource_address->u.http == NULL) {
+            translate_client_abort(client, error);
+            return false;
+        }
+
+        if (client->resource_address->u.http->scheme != URI_SCHEME_AJP) {
+            translate_client_error(client, "malformed TRANSLATE_AJP packet");
+            return false;
+        }
+
         client->address_list = &client->resource_address->u.http->addresses;
         return true;
 

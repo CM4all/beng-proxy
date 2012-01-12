@@ -11,7 +11,6 @@
 #include "uri-verify.h"
 #include "uri-escape.h"
 #include "uri-edit.h"
-#include "uri-extract.h"
 #include "strref.h"
 
 void
@@ -371,12 +370,12 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
         if (relative_length == 0)
             return src;
 
-        p = uri_absolute(pool, src->u.http->uri, relative, relative_length);
+        p = uri_absolute(pool, src->u.http->path, relative, relative_length);
         if (p == NULL)
             return NULL;
 
         resource_address_copy(pool, buffer, src);
-        buffer->u.http->uri = p;
+        buffer->u.http->path = p;
         return buffer;
 
     case RESOURCE_ADDRESS_CGI:
@@ -459,7 +458,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        return p_strdup(pool, address->u.http->uri);
+        return uri_address_absolute(pool, address->u.http);
 
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
@@ -490,7 +489,7 @@ resource_address_host_and_port(const struct resource_address *address,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        return uri_host_and_port(pool, address->u.http->uri);
+        return address->u.http->host_and_port;
     }
 
     /* unreachable */
@@ -511,7 +510,7 @@ resource_address_uri_path(const struct resource_address *address)
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        return uri_path(address->u.http->uri);
+        return address->u.http->path;
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:

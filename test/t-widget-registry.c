@@ -69,7 +69,7 @@ tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
         struct translate_response *response =
             p_calloc(pool, sizeof(*response));
         response->address.type = RESOURCE_ADDRESS_HTTP;
-        response->address.u.http = uri_address_new(pool, "http://foo/");
+        response->address.u.http = uri_address_parse(pool, "http://foo/", NULL);
         response->views = p_calloc(pool, sizeof(*response->views));
         response->views->address = response->address;
         handler->response(response, ctx);
@@ -110,7 +110,9 @@ test_normal(struct pool *pool)
     assert(data.got_class);
     assert(data.class != NULL);
     assert(data.class->views.address.type == RESOURCE_ADDRESS_HTTP);
-    assert(strcmp(data.class->views.address.u.http->uri, "http://foo/") == 0);
+    assert(data.class->views.address.u.http->scheme == URI_SCHEME_HTTP);
+    assert(strcmp(data.class->views.address.u.http->host_and_port, "foo") == 0);
+    assert(strcmp(data.class->views.address.u.http->path, "/") == 0);
     assert(data.class->views.next == NULL);
     assert(data.class->views.transformation == NULL);
 

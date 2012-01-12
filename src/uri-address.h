@@ -11,23 +11,82 @@
 
 #include <inline/compiler.h>
 
+#include <glib.h>
 #include <stddef.h>
 
 struct pool;
 
+enum uri_scheme {
+    /**
+     * HTTP over UNIX domain socket.
+     */
+    URI_SCHEME_UNIX,
+
+    /**
+     * HTTP over TCP.
+     */
+    URI_SCHEME_HTTP,
+
+    /**
+     * AJP over TCP.
+     */
+    URI_SCHEME_AJP,
+};
+
 struct uri_with_address {
-    const char *uri;
+    enum uri_scheme scheme;
+
+    /**
+     * The host part of the URI (including the port, if any).  NULL if
+     * scheme is URI_SCHEME_UNIX.
+     */
+    const char *host_and_port;
+
+    /**
+     * The path component of the URI, starting with a slash.
+     */
+    const char *path;
 
     struct address_list addresses;
 };
 
+G_GNUC_CONST
+static inline GQuark
+uri_address_quark(void)
+{
+    return g_quark_from_static_string("uri_address");
+}
+
+/**
+ * Parse the given absolute URI into a newly allocated
+ * #uri_with_address object.
+ *
+ * @return NULL on error
+ */
 gcc_malloc
 struct uri_with_address *
-uri_address_new(struct pool *pool, const char *uri);
+uri_address_parse(struct pool *pool, const char *uri, GError **error_r);
 
 gcc_malloc
 struct uri_with_address *
 uri_address_dup(struct pool *pool, const struct uri_with_address *uwa);
+
+/**
+ * Build the absolute URI from this object, but use the specified path
+ * instead.
+ */
+gcc_malloc
+char *
+uri_address_absolute_with_path(struct pool *pool,
+                               const struct uri_with_address *uwa,
+                               const char *path);
+
+/**
+ * Build the absolute URI from this object.
+ */
+gcc_malloc
+char *
+uri_address_absolute(struct pool *pool, const struct uri_with_address *uwa);
 
 /**
  * Duplicates this #uri_with_address object and inserts the specified

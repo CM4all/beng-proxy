@@ -32,21 +32,20 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
     if (src->type != RESOURCE_ADDRESS_HTTP || widget->query_string == NULL)
         return src;
 
-    uri = uri_delete_query_string(pool, src->u.http->uri,
+    uri = uri_delete_query_string(pool, src->u.http->path,
                                   widget->query_string,
                                   strlen(widget->query_string));
 
-
     if (!strref_is_empty(&widget->from_request.query_string))
-        uri = uri_delete_query_string(pool, src->u.http->uri,
+        uri = uri_delete_query_string(pool, src->u.http->path,
                                       widget->from_request.query_string.data,
                                       widget->from_request.query_string.length);
 
-    if (uri == src->u.http->uri)
+    if (uri == src->u.http->path)
         return src;
 
     dest = resource_address_dup(pool, src);
-    dest->u.http->uri = uri;
+    dest->u.http->path = uri;
     return dest;
 }
 
@@ -87,7 +86,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        assert(original_address->u.http->uri != NULL);
+        assert(original_address->u.http->path != NULL);
 
         if ((!stateful ||
              strref_is_empty(&widget->from_request.query_string)) &&
@@ -95,7 +94,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
             widget->query_string == NULL)
             break;
 
-        uri = original_address->u.http->uri;
+        uri = original_address->u.http->path;
 
         if (*path_info != 0)
             uri = p_strcat(pool, uri, path_info, NULL);
@@ -110,7 +109,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
                                             widget->from_request.query_string.length);
 
         address = resource_address_dup(pool, original_address);
-        address->u.http->uri = uri;
+        address->u.http->path = uri;
         return address;
 
     case RESOURCE_ADDRESS_CGI:
@@ -156,8 +155,6 @@ const char *
 widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
                     const struct strref *relative_uri)
 {
-    const char *base, *uri;
-
     assert(widget_address(widget)->type == RESOURCE_ADDRESS_HTTP);
 
     struct strref buffer;
@@ -175,19 +172,23 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
         stateful = false;
     }
 
-    base = (stateful ? widget_address(widget)
-            : widget_stateless_address(widget))->u.http->uri;
+    const struct uri_with_address *uwa =
+        (stateful
+         ? widget_address(widget)
+         : widget_stateless_address(widget))->u.http;
+    const char *base = uwa->path;
     if (relative_uri == NULL)
-        return base;
+        return uri_address_absolute(pool, uwa);
 
-    uri = uri_absolute(pool, base, relative_uri->data, relative_uri->length);
+    const char *uri = uri_absolute(pool, base, relative_uri->data,
+                                   relative_uri->length);
     if (!strref_is_empty(relative_uri) && widget->query_string != NULL)
         /* the relative_uri is non-empty, and uri_absolute() has
            removed the query string: re-add the configured query
            string */
         uri = uri_insert_query_string(pool, uri, widget->query_string);
 
-    return uri;
+    return uri_address_absolute_with_path(pool, uwa, uri);
 }
 
 const struct strref *

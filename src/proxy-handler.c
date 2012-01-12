@@ -106,9 +106,8 @@ proxy_handler(struct request *request2)
     const char *host_and_port = NULL, *uri_p = NULL;
     if (tr->address.type == RESOURCE_ADDRESS_HTTP ||
         tr->address.type == RESOURCE_ADDRESS_AJP) {
-        host_and_port = uri_host_and_port(request->pool,
-                                          tr->address.u.http->uri);
-        uri_p = uri_path(tr->address.u.http->uri);
+        host_and_port = tr->address.u.http->host_and_port;
+        uri_p = tr->address.u.http->path;
     }
 
     request_forward(&forward, request2,

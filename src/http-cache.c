@@ -189,7 +189,7 @@ http_cache_key(struct pool *pool, const struct resource_address *address)
         return NULL;
 
     case RESOURCE_ADDRESS_HTTP:
-        return address->u.http->uri;
+        return uri_address_absolute(pool, address->u.http);
 
     case RESOURCE_ADDRESS_PIPE:
         return NULL;

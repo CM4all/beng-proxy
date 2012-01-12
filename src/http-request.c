@@ -35,7 +35,6 @@ struct http_request {
     const struct address_envelope *current_address;
 
     http_method_t method;
-    const char *uri;
     struct uri_with_address *uwa;
     struct growing_buffer *headers;
     struct istream *body;
@@ -45,12 +44,6 @@ struct http_request {
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
 };
-
-static GQuark
-http_request_quark(void)
-{
-    return g_quark_from_static_string("http_request");
-}
 
 /**
  * Is the specified error a server failure, that justifies
@@ -156,7 +149,7 @@ http_request_stock_ready(struct stock_item *item, void *ctx)
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         &http_socket_lease, hr,
-                        hr->method, hr->uri, hr->headers,
+                        hr->method, hr->uwa->path, hr->headers,
                         hr->body, true,
                         &http_request_response_handler, hr,
                         hr->async_ref);
@@ -199,7 +192,8 @@ http_request(struct pool *pool,
     struct http_request *hr;
 
     assert(uwa != NULL);
-    assert(uwa->uri != NULL);
+    assert(uwa->host_and_port != NULL);
+    assert(uwa->path != NULL);
     assert(handler != NULL);
     assert(handler->response != NULL);
     assert(body == NULL || !istream_has_handler(body));
@@ -224,48 +218,8 @@ http_request(struct pool *pool,
     } else
         hr->body = NULL;
 
-    if (memcmp(uwa->uri, "http://", 7) == 0) {
-        /* HTTP over TCP */
-        const char *p, *slash;
-
-        p = uwa->uri + 7;
-        slash = strchr(p, '/');
-        if (slash == p) {
-            GError *error =
-                g_error_new_literal(http_request_quark(), 0,
-                                    "malformed HTTP URI");
-
-            if (hr->body != NULL)
-                istream_close_unused(hr->body);
-
-            http_response_handler_invoke_abort(&hr->handler, error);
-            return;
-        }
-
-        const char *host_and_port;
-        if (slash == NULL) {
-            host_and_port = p;
-            slash = "/";
-        } else
-            host_and_port = p_strndup(hr->pool, p, slash - p);
-
-        header_write(hr->headers, "host", host_and_port);
-
-        hr->uri = slash;
-    } else if (memcmp(uwa->uri, "unix:/", 6) == 0) {
-        /* HTTP over Unix socket */
-        hr->uri = uwa->uri + 5;
-    } else {
-        GError *error =
-            g_error_new_literal(http_request_quark(), 0,
-                                "malformed URI");
-
-        if (hr->body != NULL)
-            istream_close_unused(hr->body);
-
-        http_response_handler_invoke_abort(&hr->handler, error);
-        return;
-    }
+    if (uwa->host_and_port != NULL)
+        header_write(hr->headers, "host", uwa->host_and_port);
 
     header_write(hr->headers, "connection", "keep-alive");
 

@@ -45,12 +45,6 @@ struct ajp_request {
     struct async_operation_ref *async_ref;
 };
 
-static GQuark
-ajp_request_quark(void)
-{
-    return g_quark_from_static_string("ajp_request");
-}
-
 /*
  * socket lease
  *
@@ -134,7 +128,7 @@ ajp_stock_request(struct pool *pool,
     struct ajp_request *hr;
 
     assert(uwa != NULL);
-    assert(uwa->uri != NULL);
+    assert(uwa->path != NULL);
     assert(handler != NULL);
     assert(handler->response != NULL);
     assert(body == NULL || !istream_has_handler(body));
@@ -163,38 +157,7 @@ ajp_stock_request(struct pool *pool,
     } else
         hr->body = NULL;
 
-    if (memcmp(uwa->uri, "ajp://", 6) == 0) {
-        /* AJP over TCP */
-
-        const char *p = uwa->uri + 6;
-        const char *slash = strchr(p, '/');
-        if (slash == p) {
-            GError *error =
-                g_error_new_literal(ajp_request_quark(), 0,
-                                    "malformed AJP URI");
-
-            if (hr->body != NULL)
-                istream_close_unused(hr->body);
-
-            http_response_handler_invoke_abort(&hr->handler, error);
-            return;
-        }
-
-        if (slash == NULL)
-            slash = "/";
-
-        hr->uri = slash;
-    } else {
-        GError *error =
-            g_error_new_literal(ajp_request_quark(), 0,
-                                "malformed AJP URI");
-
-        if (hr->body != NULL)
-            istream_close_unused(hr->body);
-
-        http_response_handler_invoke_abort(&hr->handler, error);
-        return;
-    }
+    hr->uri = uwa->path;
 
     tcp_balancer_get(tcp_balancer, pool, session_sticky,
                      &uwa->addresses,

@@ -233,7 +233,9 @@ static void
 test_cookie_client(struct pool *pool)
 {
     static struct uri_with_address address = {
-        .uri = "http://foo/bar/",
+        .scheme = URI_SCHEME_HTTP,
+        .host_and_port = "foo",
+        .path = "/bar/",
     };
     static const struct widget_class cls = {
         .views = {

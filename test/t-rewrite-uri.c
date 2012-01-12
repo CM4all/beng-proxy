@@ -59,7 +59,9 @@ widget_resolver_new(G_GNUC_UNUSED struct pool *pool, G_GNUC_UNUSED struct pool *
                     G_GNUC_UNUSED struct async_operation_ref *async_ref)
 {
     static struct uri_with_address address1 = {
-        .uri = "http://widget-server/1/",
+        .scheme = URI_SCHEME_HTTP,
+        .host_and_port = "widget-server",
+        .path = "/1/",
     };
     static const struct widget_class class1 = {
         .views = {
@@ -72,7 +74,9 @@ widget_resolver_new(G_GNUC_UNUSED struct pool *pool, G_GNUC_UNUSED struct pool *
         },
     };
     static struct uri_with_address address2 = {
-        .uri = "http://widget-server/2",
+        .scheme = URI_SCHEME_HTTP,
+        .host_and_port = "widget-server",
+        .path = "/2",
     };
     static const struct widget_class class2 = {
         .views = {
