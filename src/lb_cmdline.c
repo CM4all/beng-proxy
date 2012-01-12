@@ -5,7 +5,6 @@
  */
 
 #include "config.h"
-#include "uri-resolver.h"
 #include "stopwatch.h"
 
 #include <daemon/daemonize.h>

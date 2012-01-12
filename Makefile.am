@@ -257,7 +257,6 @@ HDR = \
 	src/uri-extract.h \
 	src/uri-parser.h \
 	src/uri-relative.h \
-	src/uri-resolver.h \
 	src/uri-string.h \
 	src/uri-verify.h \
 	src/uset.h \
@@ -425,7 +424,6 @@ SRC = src/main.c \
 	src/uri-verify.c \
 	src/uri-parser.c \
 	src/uri-address.c \
-	src/uri-resolver.c \
 	src/uri-escape.c \
 	src/failure.c \
 	src/bulldog.c \
@@ -524,7 +522,6 @@ src_cm4all_beng_lb_SOURCES = \
 	src/header-writer.c \
 	src/header-parser.c \
 	src/uri-verify.c \
-	src/uri-resolver.c \
 	src/uri-address.c \
 	src/uri-edit.c \
 	src/fifo-buffer.c \
@@ -1604,7 +1601,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
-	src/uri-address.c src/uri-resolver.c src/uri-edit.c \
+	src/uri-address.c src/uri-edit.c \
 	src/address-list.c src/address-resolver.c \
 	src/failure.c src/bulldog.c src/balancer.c \
 	src/tcp-stock.c src/tcp-balancer.c \
