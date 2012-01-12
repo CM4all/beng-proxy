@@ -2,7 +2,8 @@
 #include "tcp-balancer.h"
 #include "balancer.h"
 #include "stock.h"
-#include "uri-resolver.h"
+#include "address-list.h"
+#include "address-resolver.h"
 #include "memcached-stock.h"
 #include "http-cache-choice.h"
 #include "lease.h"
@@ -56,7 +57,6 @@ int main(int argc, char **argv) {
     struct event_base *event_base;
     struct pool *root_pool;
     static struct context ctx;
-    struct uri_with_address *uwa;
     struct hstock *tcp_stock;
     struct memcached_stock *stock;
 
@@ -75,16 +75,22 @@ int main(int argc, char **argv) {
     tpool_init(root_pool);
     ctx.pool = pool_new_linear(root_pool, "test", 8192);
 
+    struct address_list address_list;
+    address_list_init(&address_list);
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
-    uwa = uri_address_new_resolve(ctx.pool, argv[1], 11211, &hints);
-    if (uwa == NULL)
+    GError *error = NULL;
+    if (!address_list_resolve(ctx.pool, &address_list,
+                              argv[1], 11211, &hints, &error)) {
+        fprintf(stderr, "%s\n", error->message);
+        g_error_free(error);
         return 1;
+    }
 
     tcp_stock = tcp_stock_new(ctx.pool, 0);
     struct tcp_balancer *tcp_balancer = tcp_balancer_new(ctx.pool, tcp_stock,
                                                          balancer_new(ctx.pool));
-    stock = memcached_stock_new(ctx.pool, tcp_balancer, uwa);
+    stock = memcached_stock_new(ctx.pool, tcp_balancer, &address_list);
 
     /* send memcached request */
 

@@ -5,7 +5,7 @@
  */
 
 #include "config.h"
-#include "uri-resolver.h"
+#include "address-resolver.h"
 #include "stopwatch.h"
 #include "pool.h"
 
@@ -323,6 +323,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
 #endif
     struct addrinfo hints;
     const char *user_name = NULL, *group_name = NULL;
+    GError *error = NULL;
 
     while (1) {
 #ifdef __GLIBC__
@@ -451,8 +452,11 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             memset(&hints, 0, sizeof(hints));
             hints.ai_socktype = SOCK_STREAM;
 
-            config->memcached_server = uri_address_new_resolve(pool, optarg,
-                                                               11211, &hints);
+            config->memcached_server =
+                address_list_resolve_new(pool, optarg, 11211, &hints, &error);
+            if (config->memcached_server == NULL)
+                arg_error(argv[0], "%s", error->message);
+
             break;
 
         case 'B':

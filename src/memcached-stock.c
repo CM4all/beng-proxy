@@ -9,7 +9,7 @@
 #include "stock.h"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"
-#include "uri-address.h"
+#include "address-list.h"
 #include "lease.h"
 #include "pool.h"
 #include "istream.h"
@@ -22,12 +22,12 @@
 struct memcached_stock {
     struct tcp_balancer *tcp_balancer;
 
-    struct uri_with_address *address;
+    const struct address_list *address;
 };
 
 struct memcached_stock *
 memcached_stock_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
-                    struct uri_with_address *address)
+                    const struct address_list *address)
 {
     struct memcached_stock *stock = p_malloc(pool, sizeof(*stock));
 
@@ -149,8 +149,7 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
     request->handler_ctx = handler_ctx;
     request->async_ref = async_ref;
 
-    tcp_balancer_get(stock->tcp_balancer, pool, 0,
-                     &stock->address->addresses,
+    tcp_balancer_get(stock->tcp_balancer, pool, 0, stock->address,
                      &memcached_stock_handler, request,
                      async_ref);
 }

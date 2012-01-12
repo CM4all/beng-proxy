@@ -42,7 +42,7 @@ struct config {
 
     const char *access_logger;
 
-    struct uri_with_address *memcached_server;
+    struct address_list *memcached_server;
 
     /**
      * The Bulldog data path.
