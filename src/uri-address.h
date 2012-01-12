@@ -9,10 +9,7 @@
 
 #include "address-list.h"
 
-#include <inline/list.h>
 #include <inline/compiler.h>
-
-#include <sys/socket.h>
 
 #include <stddef.h>
 

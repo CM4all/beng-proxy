@@ -21,6 +21,7 @@
 #include <inline/compiler.h>
 
 #include <string.h>
+#include <sys/socket.h>
 
 struct ajp_request {
     struct pool *pool;

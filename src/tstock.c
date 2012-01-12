@@ -14,6 +14,7 @@
 
 #include <assert.h>
 #include <sys/un.h>
+#include <sys/socket.h>
 
 struct tstock {
     struct hstock *tcp_stock;
