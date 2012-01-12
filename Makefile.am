@@ -416,6 +416,7 @@ SRC = src/main.c \
 	src/delegate-handler.c \
 	src/address-list.h \
 	src/address-list.c \
+	src/address-resolver.c src/address-resolver.h \
 	src/address-string.h \
 	src/address-string.c \
 	src/uri-edit.c \
@@ -499,6 +500,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/balancer.c \
 	src/address.c \
 	src/address-list.c \
+	src/address-resolver.c src/address-resolver.h \
 	src/address-string.h \
 	src/address-string.c \
 	src/address-edit.h \
@@ -1603,7 +1605,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/uri-address.c src/uri-resolver.c src/uri-edit.c \
-	src/address-list.c \
+	src/address-list.c src/address-resolver.c \
 	src/failure.c src/bulldog.c src/balancer.c \
 	src/tcp-stock.c src/tcp-balancer.c \
 	src/cache.c \

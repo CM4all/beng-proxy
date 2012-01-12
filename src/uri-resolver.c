@@ -7,37 +7,24 @@
 
 #include "uri-resolver.h"
 #include "uri-address.h"
-#include "pool.h"
+#include "address-resolver.h"
 
 #include <daemon/log.h>
-#include <socket/resolver.h>
-
-#include <assert.h>
-#include <netdb.h>
 
 struct uri_with_address *
 uri_address_new_resolve(struct pool *pool, const char *host_and_port,
                         int default_port, const struct addrinfo *hints)
 {
-    int ret;
-    struct addrinfo *ai;
-    struct uri_with_address *uwa;
+    struct uri_with_address *uwa = uri_address_new(pool, host_and_port);
 
-    ret = socket_resolve_host_port(host_and_port, default_port, hints, &ai);
-    if (ret != 0) {
-        daemon_log(1, "Failed to resolve '%s': %s\n",
-                   host_and_port, gai_strerror(ret));
+    GError *error = NULL;
+    if (!address_list_resolve(pool, &uwa->addresses,
+                              host_and_port, default_port, hints,
+                              &error)) {
+        daemon_log(1, "%s\n", error->message);
+        g_error_free(error);
         return NULL;
     }
-
-    assert(ai != NULL);
-
-    uwa = uri_address_new(pool, host_and_port);
-
-    for (const struct addrinfo *i = ai; i != NULL; i = i->ai_next)
-        uri_address_add(uwa, i->ai_addr, i->ai_addrlen);
-
-    freeaddrinfo(ai);
 
     return uwa;
 }

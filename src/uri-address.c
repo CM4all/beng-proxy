@@ -74,13 +74,6 @@ uri_address_insert_args(struct pool *pool,
     return p;
 }
 
-void
-uri_address_add(struct uri_with_address *uwa,
-                const struct sockaddr *addr, socklen_t addrlen)
-{
-    address_list_add(uwa->pool, &uwa->addresses, addr, addrlen);
-}
-
 bool
 uri_address_is_single(const struct uri_with_address *uwa)
 {

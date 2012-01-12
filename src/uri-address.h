@@ -54,10 +54,6 @@ uri_address_insert_args(struct pool *pool,
                         const struct uri_with_address *uwa,
                         const char *args, size_t length);
 
-void
-uri_address_add(struct uri_with_address *uwa,
-                const struct sockaddr *addr, socklen_t addrlen);
-
 /**
  * Is there no more than one address?
  */
