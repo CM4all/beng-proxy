@@ -18,7 +18,6 @@ struct uri_with_address *
 uri_address_new(struct pool *pool, const char *uri)
 {
     struct uri_with_address *uwa = p_malloc(pool, sizeof(*uwa));
-    uwa->pool = pool;
     uwa->uri = p_strdup(pool, uri);
     address_list_init(&uwa->addresses);
 
@@ -30,7 +29,6 @@ uri_address_dup(struct pool *pool, const struct uri_with_address *uwa)
 {
     struct uri_with_address *p = p_malloc(pool, sizeof(*uwa));
 
-    p->pool = pool;
     p->uri = p_strdup(pool, uwa->uri);
 
     address_list_copy(pool, &p->addresses, &uwa->addresses);
@@ -45,7 +43,6 @@ uri_address_insert_query_string(struct pool *pool,
 {
     struct uri_with_address *p = p_malloc(pool, sizeof(*uwa));
 
-    p->pool = pool;
     p->uri = uri_insert_query_string(pool, uwa->uri, query_string);
 
     address_list_copy(pool, &p->addresses, &uwa->addresses);
@@ -60,7 +57,6 @@ uri_address_insert_args(struct pool *pool,
 {
     struct uri_with_address *p = p_malloc(pool, sizeof(*uwa));
 
-    p->pool = pool;
     p->uri = uri_insert_args(pool, uwa->uri, args, length);
 
     address_list_copy(pool, &p->addresses, &uwa->addresses);

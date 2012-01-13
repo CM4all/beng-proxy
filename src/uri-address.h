@@ -16,8 +16,6 @@
 struct pool;
 
 struct uri_with_address {
-    struct pool *pool;
-
     const char *uri;
 
     struct address_list addresses;
