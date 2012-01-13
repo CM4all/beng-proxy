@@ -6,6 +6,7 @@
  */
 
 #include "resource-address.h"
+#include "uri-base.h"
 #include "uri-relative.h"
 #include "uri-verify.h"
 #include "uri-escape.h"
@@ -187,40 +188,6 @@ resource_address_insert_args(struct pool *pool,
     /* unreachable */
     assert(false);
     return src;
-}
-
-/**
- * Determine the length of the base prefix in the given string.
- *
- * @return (size_t)-1 on mismatch
- */
-static size_t
-base_string(const char *p, const char *suffix)
-{
-    size_t length = strlen(p), suffix_length = strlen(suffix);
-
-    if (length == suffix_length)
-        /* special case: zero-length prefix (not followed by a
-           slash) */
-        return memcmp(p, suffix, length) == 0
-            ? 0 : (size_t)-1;
-
-    return length > suffix_length && p[length - suffix_length - 1] == '/' &&
-        memcmp(p + length - suffix_length, suffix, suffix_length) == 0
-        ? length - suffix_length
-        : (size_t)-1;
-}
-
-/**
- * @return (size_t)-1 on mismatch
- */
-static size_t
-base_string_unescape(struct pool *pool, const char *p, const char *suffix)
-{
-    char *unescaped = p_strdup(pool, suffix);
-    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
-
-    return base_string(p, unescaped);
 }
 
 char *

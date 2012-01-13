@@ -421,6 +421,7 @@ SRC = src/main.c \
 	src/uri-edit.c \
 	src/uri-extract.c \
 	src/uri-relative.c \
+	src/uri-base.c src/uri-base.h \
 	src/uri-verify.c \
 	src/uri-parser.c \
 	src/uri-address.c \
@@ -863,7 +864,7 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/widget-view.c \
 	src/jail.c \
 	src/uri-relative.c src/uri-edit.c src/uri-verify.c src/uri-escape.c \
-	src/uri-extract.c \
+	src/uri-extract.c src/uri-base.c \
 	src/address-list.c \
 	src/format.c \
 	src/transformation.c \
@@ -896,7 +897,7 @@ test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/jail.c \
 	src/uri-address.c src/uri-relative.c src/uri-verify.c \
 	src/uri-escape.c src/uri-edit.c \
-	src/uri-extract.c \
+	src/uri-extract.c src/uri-base.c \
 	src/address-list.c \
 	src/format.c \
 	$(POOL_SRC)
@@ -974,7 +975,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/istream-escape.c \
 	src/istream-html-escape.c \
 	src/uri-relative.c src/uri-parser.c src/uri-escape.c src/uri-edit.c \
-	src/uri-verify.c \
+	src/uri-verify.c src/uri-base.c \
 	src/random.c \
 	src/crash.c \
 	src/session.c src/cookie-client.c \
@@ -1245,7 +1246,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/resource-address.c src/uri-address.c \
 	src/jail.c \
 	src/uri-edit.c src/uri-relative.c src/uri-escape.c src/uri-verify.c \
-	src/uri-extract.c \
+	src/uri-extract.c src/uri-base.c \
 	src/address-list.c \
 	src/format.c \
 	src/abort-unref.c src/cache.c \
@@ -1307,7 +1308,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/address-list.c \
 	src/jail.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
-	src/uri-verify.c src/uri-extract.c \
+	src/uri-verify.c src/uri-extract.c src/uri-base.c \
 	src/format.c
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1325,7 +1326,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/resource-address.c \
 	src/jail.c \
 	src/uri-relative.c src/uri-verify.c src/uri-escape.c src/uri-edit.c \
-	src/uri-extract.c \
+	src/uri-extract.c src/uri-base.c \
 	src/format.c
 test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -1362,7 +1363,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/resource-address.c src/uri-address.c \
 	src/address-list.c \
 	src/jail.c \
-	src/uri-relative.c src/uri-edit.c src/uri-extract.c \
+	src/uri-relative.c src/uri-edit.c src/uri-extract.c src/uri-base.c \
 	src/resource-tag.c \
 	src/cookie-client.c \
 	src/header-parser.c src/header-forward.c src/header-writer.c \
@@ -1396,7 +1397,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/stock.c src/hstock.c src/hashmap.c src/strmap.c \
 	src/strutil.c \
 	src/abort-unref.c \
-	src/uri-address.c src/uri-edit.c \
+	src/uri-address.c src/uri-edit.c src/uri-base.c \
 	src/uri-escape.c src/uri-relative.c src/uri-verify.c \
 	src/uri-extract.c \
 	src/address-list.c \
@@ -1466,7 +1467,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/escape_html.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-init.c src/widget-ref.c \
-	src/uri-relative.c src/uri-edit.c src/uri-extract.c \
+	src/uri-base.c src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
@@ -1501,7 +1502,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/escape_html.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-init.c src/widget-ref.c \
-	src/uri-relative.c src/uri-edit.c \
+	src/uri-relative.c src/uri-edit.c src/uri-base.c \
 	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
