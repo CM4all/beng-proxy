@@ -277,12 +277,11 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        length = base_string(src->u.http->uri, suffix);
-        if (length == (size_t)-1)
+        dest->u.http = uri_address_save_base(pool, src->u.http, suffix);
+        if (dest->u.http == NULL)
             return NULL;
 
-        resource_address_copy(pool, dest, src);
-        dest->u.http->uri = p_strndup(pool, dest->u.http->uri, length);
+        dest->type = src->type;
         return dest;
     }
 
@@ -336,12 +335,11 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        assert(src->u.http->uri != NULL);
-        assert(*src->u.http->uri != 0);
-        assert(src->u.http->uri[strlen(src->u.http->uri) - 1] == '/');
+        dest->u.http = uri_address_load_base(pool, src->u.http, suffix);
+        if (dest->u.http == NULL)
+            return NULL;
 
-        resource_address_copy(pool, dest, src);
-        dest->u.http->uri = p_strcat(pool, dest->u.http->uri, suffix, NULL);
+        dest->type = src->type;
         return dest;
     }
 

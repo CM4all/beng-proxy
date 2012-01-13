@@ -49,6 +49,16 @@ uri_address_insert_args(struct pool *pool,
                         const struct uri_with_address *uwa,
                         const char *args, size_t length);
 
+gcc_malloc
+struct uri_with_address *
+uri_address_save_base(struct pool *pool, const struct uri_with_address *uwa,
+                      const char *suffix);
+
+gcc_malloc
+struct uri_with_address *
+uri_address_load_base(struct pool *pool, const struct uri_with_address *uwa,
+                      const char *suffix);
+
 /**
  * Check if one #uri_with_address is relative to the base
  * #uri_with_address, and return the relative part.  Returns NULL if

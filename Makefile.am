@@ -523,9 +523,11 @@ src_cm4all_beng_lb_SOURCES = \
 	src/header-writer.c \
 	src/header-parser.c \
 	src/uri-verify.c \
+	src/uri-base.c \
 	src/uri-address.c \
 	src/uri-relative.c \
 	src/uri-edit.c \
+	src/uri-escape.c \
 	src/fifo-buffer.c \
 	src/growing-buffer.c \
 	src/istream-gb.c \

@@ -6,6 +6,7 @@
 
 #include "uri-address.h"
 #include "uri-edit.h"
+#include "uri-base.h"
 #include "uri-relative.h"
 #include "pool.h"
 #include "strref.h"
@@ -62,6 +63,41 @@ uri_address_insert_args(struct pool *pool,
     address_list_copy(pool, &p->addresses, &uwa->addresses);
 
     return p;
+}
+
+struct uri_with_address *
+uri_address_save_base(struct pool *pool, const struct uri_with_address *src,
+                      const char *suffix)
+{
+    assert(pool != NULL);
+    assert(src != NULL);
+    assert(suffix != NULL);
+
+    size_t length = base_string(src->uri, suffix);
+    if (length == (size_t)-1)
+        return NULL;
+
+    struct uri_with_address *dest = p_malloc(pool, sizeof(*dest));
+    address_list_copy(pool, &dest->addresses, &src->addresses);
+    dest->uri = p_strndup(pool, src->uri, length);
+    return dest;
+}
+
+struct uri_with_address *
+uri_address_load_base(struct pool *pool, const struct uri_with_address *src,
+                      const char *suffix)
+{
+    assert(pool != NULL);
+    assert(src != NULL);
+    assert(suffix != NULL);
+    assert(src->uri != NULL);
+    assert(*src->uri != 0);
+    assert(src->uri[strlen(src->uri) - 1] == '/');
+
+    struct uri_with_address *dest = p_malloc(pool, sizeof(*dest));
+    address_list_copy(pool, &dest->addresses, &src->addresses);
+    dest->uri = p_strcat(pool, src->uri, suffix, NULL);
+    return dest;
 }
 
 const struct strref *
