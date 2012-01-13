@@ -523,6 +523,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/header-parser.c \
 	src/uri-verify.c \
 	src/uri-address.c \
+	src/uri-relative.c \
 	src/uri-edit.c \
 	src/fifo-buffer.c \
 	src/growing-buffer.c \
@@ -1601,7 +1602,6 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
-	src/uri-address.c src/uri-edit.c \
 	src/address-list.c src/address-resolver.c \
 	src/failure.c src/bulldog.c src/balancer.c \
 	src/tcp-stock.c src/tcp-balancer.c \

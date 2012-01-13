@@ -51,4 +51,14 @@ uri_address_insert_args(struct pool *pool,
                         const struct uri_with_address *uwa,
                         const char *args, size_t length);
 
+/**
+ * Check if one #uri_with_address is relative to the base
+ * #uri_with_address, and return the relative part.  Returns NULL if
+ * both URIs do not match.
+ */
+const struct strref *
+uri_address_relative(const struct uri_with_address *base,
+                     const struct uri_with_address *uwa,
+                     struct strref *buffer);
+
 #endif

@@ -456,9 +456,7 @@ resource_address_relative(const struct resource_address *base,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        strref_set_c(&base_uri, base->u.http->uri);
-        strref_set_c(buffer, address->u.http->uri);
-        return uri_relative(&base_uri, buffer);
+        return uri_address_relative(base->u.http, address->u.http, buffer);
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:

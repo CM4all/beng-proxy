@@ -6,7 +6,9 @@
 
 #include "uri-address.h"
 #include "uri-edit.h"
+#include "uri-relative.h"
 #include "pool.h"
+#include "strref.h"
 
 #include <socket/address.h>
 
@@ -64,4 +66,15 @@ uri_address_insert_args(struct pool *pool,
     address_list_copy(pool, &p->addresses, &uwa->addresses);
 
     return p;
+}
+
+const struct strref *
+uri_address_relative(const struct uri_with_address *base,
+                     const struct uri_with_address *uwa,
+                     struct strref *buffer)
+{
+    struct strref base_uri;
+    strref_set_c(&base_uri, base->uri);
+    strref_set_c(buffer, uwa->uri);
+    return uri_relative(&base_uri, buffer);
 }
