@@ -10,6 +10,7 @@
 
 #include "pool.h"
 #include "uri-address.h"
+#include "cgi-address.h"
 #include "jail.h"
 
 #include <glib.h>
@@ -48,35 +49,7 @@ struct resource_address {
 
         const struct uri_with_address *http;
 
-        struct {
-            const char *path;
-
-            const char *args[32];
-            unsigned num_args;
-
-            struct jail_params jail;
-
-            const char *interpreter;
-            const char *action;
-
-            const char *uri;
-            const char *script_name, *path_info, *query_string;
-            const char *document_root;
-
-            /**
-             * The value of #TRANSLATE_EXPAND_PATH_INFO.  Only used by
-             * the translation cache.
-             */
-            const char *expand_path_info;
-
-            /**
-             * An optional list of addresses to connect to.  If given
-             * for a FastCGI resource, then beng-proxy connects to one
-             * of the addresses instead of spawning a new child
-             * process.
-             */
-            struct address_list address_list;
-        } cgi;
+        struct cgi_address cgi;
     } u;
 };
 

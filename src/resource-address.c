@@ -47,35 +47,8 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-       assert(src->u.cgi.path != NULL);
-
-        dest->u.cgi.path = p_strdup(pool, src->u.cgi.path);
-
-        for (unsigned i = 0; i < src->u.cgi.num_args; ++i)
-            dest->u.cgi.args[i] = p_strdup(pool, src->u.cgi.args[i]);
-        dest->u.cgi.num_args = src->u.cgi.num_args;
-
-        jail_params_copy(pool, &dest->u.cgi.jail, &src->u.cgi.jail);
-
-        dest->u.cgi.interpreter =
-            p_strdup_checked(pool, src->u.cgi.interpreter);
-        dest->u.cgi.action = p_strdup_checked(pool, src->u.cgi.action);
-        dest->u.cgi.uri =
-            p_strdup_checked(pool, src->u.cgi.uri);
-        dest->u.cgi.script_name =
-            p_strdup_checked(pool, src->u.cgi.script_name);
-        dest->u.cgi.path_info = p_strdup_checked(pool, src->u.cgi.path_info);
-        dest->u.cgi.expand_path_info =
-            p_strdup_checked(pool, src->u.cgi.expand_path_info);
-        dest->u.cgi.query_string =
-            p_strdup_checked(pool, src->u.cgi.query_string);
-        dest->u.cgi.document_root =
-            p_strdup_checked(pool, src->u.cgi.document_root);
-
-        if (src->type == RESOURCE_ADDRESS_FASTCGI)
-            address_list_copy(pool, &dest->u.cgi.address_list,
-                              &src->u.cgi.address_list);
-
+        cgi_address_copy(pool, &dest->u.cgi, &src->u.cgi,
+                         src->type == RESOURCE_ADDRESS_FASTCGI);
         break;
     }
 }
@@ -209,8 +182,6 @@ resource_address_auto_base(struct pool *pool,
     assert(address != NULL);
     assert(uri != NULL);
 
-    size_t length;
-
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
@@ -222,21 +193,7 @@ resource_address_auto_base(struct pool *pool,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        /* auto-generate the BASE only if the path info begins with a
-           slash and matches the URI */
-
-        if (address->u.cgi.path_info == NULL ||
-            address->u.cgi.path_info[0] != '/' ||
-            address->u.cgi.path_info[1] == 0)
-            return NULL;
-
-        /* XXX implement (un-)escaping of the uri */
-
-        length = base_string(uri, address->u.cgi.path_info + 1);
-        if (length == 0 || length == (size_t)-1)
-            return NULL;
-
-        return p_strndup(pool, uri, length);
+        return cgi_address_auto_base(pool, &address->u.cgi, uri);
     }
 
     assert(false);
@@ -261,15 +218,11 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        if (src->u.cgi.path_info == NULL)
+        if (!cgi_address_save_base(pool, &dest->u.cgi, &src->u.cgi, suffix,
+                                   src->type == RESOURCE_ADDRESS_FASTCGI))
             return NULL;
 
-        length = base_string_unescape(pool, src->u.cgi.path_info, suffix);
-        if (length == (size_t)-1)
-            return NULL;
-
-        resource_address_copy(pool, dest, src);
-        dest->u.cgi.path_info = p_strndup(pool, dest->u.cgi.path_info, length);
+        dest->type = src->type;
         return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
@@ -320,14 +273,9 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        assert(src->u.cgi.path_info);
-
-        unescaped = p_strdup(pool, suffix);
-        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
-
-        resource_address_copy(pool, dest, src);
-        dest->u.cgi.path_info = p_strcat(pool, dest->u.cgi.path_info,
-                                         unescaped, NULL);
+        cgi_address_load_base(pool, &dest->u.cgi, &src->u.cgi, suffix,
+                              src->type == RESOURCE_ADDRESS_FASTCGI);
+        dest->type = src->type;
         return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
@@ -362,8 +310,8 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
                        const char *relative, size_t relative_length,
                        struct resource_address *buffer)
 {
-    const char *p;
     const struct uri_with_address *uwa;
+    const struct cgi_address *cgi;
 
     assert(pool != NULL);
     assert(src != NULL);
@@ -393,18 +341,16 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        if (relative_length == 0)
-            return src;
-
-        /* XXX */
-        p = uri_absolute(pool,
-                         src->u.cgi.path_info == NULL ? "" : src->u.cgi.path_info,
-                         relative, relative_length);
-        if (p == NULL)
+        cgi = cgi_address_apply(pool, &buffer->u.cgi, &src->u.cgi,
+                                relative, relative_length,
+                                src->type == RESOURCE_ADDRESS_FASTCGI);
+        if (cgi == NULL)
             return NULL;
 
-        resource_address_copy(pool, buffer, src);
-        buffer->u.cgi.path_info = p;
+        if (cgi == &src->u.cgi)
+            return src;
+
+        assert(cgi == &buffer->u.cgi);
         return buffer;
     }
 
