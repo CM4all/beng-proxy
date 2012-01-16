@@ -131,6 +131,16 @@ resource_address_dup(struct pool *pool, const struct resource_address *src)
 }
 
 /**
+ * Duplicate the #resource_address object, but replace the HTTP/AJP
+ * URI path component.
+ */
+gcc_malloc
+struct resource_address *
+resource_address_dup_with_path(struct pool *pool,
+                               const struct resource_address *src,
+                               const char *path);
+
+/**
  * Duplicate this #resource_address object, and inserts the query
  * string from the specified URI.  If this resource address does not
  * support a query string, or if the URI does not have one, the

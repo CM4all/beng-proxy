@@ -80,6 +80,17 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
     }
 }
 
+struct resource_address *
+resource_address_dup_with_path(struct pool *pool,
+                               const struct resource_address *src,
+                               const char *path)
+{
+    struct resource_address *dest = p_malloc(pool, sizeof(*dest));
+    dest->type = src->type;
+    dest->u.http = uri_address_dup_with_path(pool, src->u.http, path);
+    return dest;
+}
+
 const struct resource_address *
 resource_address_insert_query_string_from(struct pool *pool,
                                           const struct resource_address *src,

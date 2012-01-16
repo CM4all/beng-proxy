@@ -27,7 +27,6 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
     const struct resource_address *src = stateful
         ? widget_address(widget) : widget_stateless_address(widget);
     const char *uri;
-    struct resource_address *dest;
 
     if (src->type != RESOURCE_ADDRESS_HTTP || widget->query_string == NULL)
         return src;
@@ -44,9 +43,7 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
     if (uri == src->u.http->path)
         return src;
 
-    dest = resource_address_dup(pool, src);
-    dest->u.http->path = uri;
-    return dest;
+    return resource_address_dup_with_path(pool, src, uri);
 }
 
 static const struct resource_address *
@@ -108,9 +105,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
                                             widget->from_request.query_string.data,
                                             widget->from_request.query_string.length);
 
-        address = resource_address_dup(pool, original_address);
-        address->u.http->path = uri;
-        return address;
+        return resource_address_dup_with_path(pool, original_address, uri);
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
