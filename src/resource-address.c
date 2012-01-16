@@ -385,8 +385,8 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
         if (p == NULL)
             return NULL;
 
-        resource_address_copy(pool, buffer, src);
-        buffer->u.http->path = p;
+        buffer->type = src->type;
+        buffer->u.http = uri_address_with_path(pool, src->u.http, p);
         return buffer;
 
     case RESOURCE_ADDRESS_CGI:
