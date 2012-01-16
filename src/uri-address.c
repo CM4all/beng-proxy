@@ -19,6 +19,10 @@ static struct uri_with_address *
 uri_address_new(struct pool *pool, enum uri_scheme scheme,
                 const char *host_and_port, const char *path)
 {
+    assert(pool != NULL);
+    assert(host_and_port != NULL);
+    assert(path != NULL);
+
     struct uri_with_address *uwa = p_malloc(pool, sizeof(*uwa));
     uwa->scheme = scheme;
     uwa->host_and_port = host_and_port;
@@ -34,6 +38,9 @@ static struct uri_with_address *
 uri_address_parse2(struct pool *pool, enum uri_scheme scheme,
                    const char *uri, GError **error_r)
 {
+    assert(pool != NULL);
+    assert(uri != NULL);
+
     const char *path = strchr(uri, '/');
     if (path == uri) {
         g_set_error(error_r, uri_address_quark(), 0,
@@ -71,6 +78,9 @@ uri_address_parse(struct pool *pool, const char *uri, GError **error_r)
 struct uri_with_address *
 uri_address_dup(struct pool *pool, const struct uri_with_address *uwa)
 {
+    assert(pool != NULL);
+    assert(uwa != NULL);
+
     struct uri_with_address *p =
         uri_address_new(pool, uwa->scheme,
                         p_strdup(pool, uwa->host_and_port),
