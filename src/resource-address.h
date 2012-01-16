@@ -46,7 +46,7 @@ struct resource_address {
             struct jail_params jail;
         } local;
 
-        struct uri_with_address *http;
+        const struct uri_with_address *http;
 
         struct {
             const char *path;

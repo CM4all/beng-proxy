@@ -35,7 +35,7 @@ struct http_request {
     const struct address_envelope *current_address;
 
     http_method_t method;
-    struct uri_with_address *uwa;
+    const struct uri_with_address *uwa;
     struct growing_buffer *headers;
     struct istream *body;
 
@@ -182,7 +182,7 @@ http_request(struct pool *pool,
              struct tcp_balancer *tcp_balancer,
              unsigned session_sticky,
              http_method_t method,
-             struct uri_with_address *uwa,
+             const struct uri_with_address *uwa,
              struct growing_buffer *headers,
              struct istream *body,
              const struct http_response_handler *handler,
