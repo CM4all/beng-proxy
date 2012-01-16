@@ -209,6 +209,21 @@ uri_address_load_base(struct pool *pool, const struct uri_with_address *src,
                                      p_strcat(pool, src->path, suffix, NULL));
 }
 
+const struct uri_with_address *
+uri_address_apply(struct pool *pool, const struct uri_with_address *src,
+                  const char *relative, size_t relative_length)
+{
+    if (relative_length == 0)
+        return src;
+
+    const char *p = uri_absolute(pool, src->path,
+                                 relative, relative_length);
+    if (p == NULL)
+        return NULL;
+
+    return uri_address_with_path(pool, src, p);
+}
+
 const struct strref *
 uri_address_relative(const struct uri_with_address *base,
                      const struct uri_with_address *uwa,

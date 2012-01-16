@@ -140,6 +140,10 @@ struct uri_with_address *
 uri_address_load_base(struct pool *pool, const struct uri_with_address *uwa,
                       const char *suffix);
 
+const struct uri_with_address *
+uri_address_apply(struct pool *pool, const struct uri_with_address *src,
+                  const char *relative, size_t relative_length);
+
 /**
  * Check if one #uri_with_address is relative to the base
  * #uri_with_address, and return the relative part.  Returns NULL if

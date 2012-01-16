@@ -363,6 +363,7 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
                        struct resource_address *buffer)
 {
     const char *p;
+    const struct uri_with_address *uwa;
 
     assert(pool != NULL);
     assert(src != NULL);
@@ -378,15 +379,15 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        if (relative_length == 0)
-            return src;
-
-        p = uri_absolute(pool, src->u.http->path, relative, relative_length);
-        if (p == NULL)
+        uwa = uri_address_apply(pool, src->u.http, relative, relative_length);
+        if (uwa == NULL)
             return NULL;
 
+        if (uwa == src->u.http)
+            return src;
+
         buffer->type = src->type;
-        buffer->u.http = uri_address_with_path(pool, src->u.http, p);
+        buffer->u.http = uwa;
         return buffer;
 
     case RESOURCE_ADDRESS_CGI:
