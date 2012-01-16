@@ -76,6 +76,16 @@ uri_address_parse(struct pool *pool, const char *uri, GError **error_r)
 }
 
 struct uri_with_address *
+uri_address_with_path(struct pool *pool, const struct uri_with_address *uwa,
+                      const char *path)
+{
+    struct uri_with_address *p =
+        uri_address_new(pool, uwa->scheme, uwa->host_and_port, path);
+    address_list_copy(pool, &p->addresses, &uwa->addresses);
+    return p;
+}
+
+struct uri_with_address *
 uri_address_dup(struct pool *pool, const struct uri_with_address *uwa)
 {
     assert(pool != NULL);
@@ -88,6 +98,19 @@ uri_address_dup(struct pool *pool, const struct uri_with_address *uwa)
 
     address_list_copy(pool, &p->addresses, &uwa->addresses);
 
+    return p;
+}
+
+struct uri_with_address *
+uri_address_dup_with_path(struct pool *pool,
+                          const struct uri_with_address *uwa,
+                          const char *path)
+{
+    struct uri_with_address *p =
+        uri_address_new(pool, uwa->scheme,
+                        p_strdup(pool, uwa->host_and_port),
+                        path);
+    address_list_copy(pool, &p->addresses, &uwa->addresses);
     return p;
 }
 
@@ -140,15 +163,9 @@ uri_address_insert_query_string(struct pool *pool,
                                 const struct uri_with_address *uwa,
                                 const char *query_string)
 {
-    struct uri_with_address *p =
-        uri_address_new(pool, uwa->scheme,
-                        uwa->host_and_port,
-                        uri_insert_query_string(pool, uwa->path,
-                                                query_string));
-
-    address_list_copy(pool, &p->addresses, &uwa->addresses);
-
-    return p;
+    return uri_address_with_path(pool, uwa,
+                                 uri_insert_query_string(pool, uwa->path,
+                                                         query_string));
 }
 
 struct uri_with_address *
@@ -156,14 +173,9 @@ uri_address_insert_args(struct pool *pool,
                         const struct uri_with_address *uwa,
                         const char *args, size_t length)
 {
-    struct uri_with_address *p =
-        uri_address_new(pool, uwa->scheme,
-                        uwa->host_and_port,
-                        uri_insert_args(pool, uwa->path, args, length));
-
-    address_list_copy(pool, &p->addresses, &uwa->addresses);
-
-    return p;
+    return uri_address_with_path(pool, uwa,
+                                 uri_insert_args(pool, uwa->path,
+                                                 args, length));
 }
 
 struct uri_with_address *
@@ -178,12 +190,8 @@ uri_address_save_base(struct pool *pool, const struct uri_with_address *src,
     if (length == (size_t)-1)
         return NULL;
 
-    struct uri_with_address *dest =
-        uri_address_new(pool, src->scheme,
-                        p_strdup(pool, src->host_and_port),
-                        p_strndup(pool, src->path, length));
-    address_list_copy(pool, &dest->addresses, &src->addresses);
-    return dest;
+    return uri_address_dup_with_path(pool, src,
+                                     p_strndup(pool, src->path, length));
 }
 
 struct uri_with_address *
@@ -197,12 +205,8 @@ uri_address_load_base(struct pool *pool, const struct uri_with_address *src,
     assert(*src->path != 0);
     assert(src->path[strlen(src->path) - 1] == '/');
 
-    struct uri_with_address *dest =
-        uri_address_new(pool, src->scheme,
-                        p_strdup(pool, src->host_and_port),
-                        p_strcat(pool, src->path, suffix, NULL));
-    address_list_copy(pool, &dest->addresses, &src->addresses);
-    return dest;
+    return uri_address_dup_with_path(pool, src,
+                                     p_strcat(pool, src->path, suffix, NULL));
 }
 
 const struct strref *

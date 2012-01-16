@@ -67,9 +67,31 @@ gcc_malloc
 struct uri_with_address *
 uri_address_parse(struct pool *pool, const char *uri, GError **error_r);
 
+/**
+ * Create a new #uri_with_address object from the specified one, but
+ * replace the "path" attribute.  The string pointers are stored,
+ * they are not duplicated.
+ */
+gcc_malloc
+struct uri_with_address *
+uri_address_with_path(struct pool *pool,
+                      const struct uri_with_address *uwa,
+                      const char *path);
+
 gcc_malloc
 struct uri_with_address *
 uri_address_dup(struct pool *pool, const struct uri_with_address *uwa);
+
+/**
+ * Create a new #uri_with_address object from the specified one, but
+ * replace the "path" attribute.  The strings from the source object
+ * are duplicated, but the "path" parameter is not.
+ */
+gcc_malloc
+struct uri_with_address *
+uri_address_dup_with_path(struct pool *pool,
+                          const struct uri_with_address *uwa,
+                          const char *path);
 
 /**
  * Build the absolute URI from this object, but use the specified path
