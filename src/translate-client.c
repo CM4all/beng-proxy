@@ -645,6 +645,7 @@ translate_handle_packet(struct translate_client *client,
 
     switch ((enum beng_translation_command)command) {
         GError *error = NULL;
+        struct uri_with_address *uwa;
 
     case TRANSLATE_END:
         stopwatch_event(client->stopwatch, "end");
@@ -842,20 +843,19 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_HTTP;
-        client->resource_address->u.http =
+        client->resource_address->u.http = uwa =
             uri_address_parse(client->pool, payload, &error);
-        if (client->resource_address->u.http == NULL) {
+        if (uwa == NULL) {
             translate_client_abort(client, error);
             return false;
         }
 
-        if (client->resource_address->u.http->scheme != URI_SCHEME_UNIX &&
-            client->resource_address->u.http->scheme != URI_SCHEME_HTTP) {
+        if (uwa->scheme != URI_SCHEME_UNIX && uwa->scheme != URI_SCHEME_HTTP) {
             translate_client_error(client, "malformed TRANSLATE_PROXY packet");
             return false;
         }
 
-        client->address_list = &client->resource_address->u.http->addresses;
+        client->address_list = &uwa->addresses;
         return true;
 
     case TRANSLATE_REDIRECT:
@@ -1065,19 +1065,19 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_AJP;
-        client->resource_address->u.http =
+        client->resource_address->u.http = uwa =
             uri_address_parse(client->pool, payload, &error);
-        if (client->resource_address->u.http == NULL) {
+        if (uwa == NULL) {
             translate_client_abort(client, error);
             return false;
         }
 
-        if (client->resource_address->u.http->scheme != URI_SCHEME_AJP) {
+        if (uwa->scheme != URI_SCHEME_AJP) {
             translate_client_error(client, "malformed TRANSLATE_AJP packet");
             return false;
         }
 
-        client->address_list = &client->resource_address->u.http->addresses;
+        client->address_list = &uwa->addresses;
         return true;
 
     case TRANSLATE_JAILCGI:
