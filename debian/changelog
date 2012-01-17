@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4.7) unstable; urgency=low
 
-  * 
+  * merge release 1.2.12
 
  --   
 
@@ -72,6 +72,12 @@ cm4all-beng-proxy (1.3) unstable; urgency=low
   * proxy-widget: client can choose only views that have an address
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 31 Oct 2011 17:41:14 +0100
+
+cm4all-beng-proxy (1.2.12) unstable; urgency=low
+
+  * merge release 1.1.25
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Jan 2012 08:31:44 -0000
 
 cm4all-beng-proxy (1.2.11) unstable; urgency=low
 
@@ -151,6 +157,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.25) unstable; urgency=low
+
+  * merge release 1.0.19
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Jan 2012 08:29:34 -0000
 
 cm4all-beng-proxy (1.1.24) unstable; urgency=low
 
@@ -337,6 +349,12 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.19) unstable; urgency=low
+
+  * cookie-client: add a missing out-of-memory check
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Jan 2012 08:27:38 -0000
+
 cm4all-beng-proxy (1.0.18) unstable; urgency=low
 
   * resource-address: support zero-length path_info prefix (for BASE)
