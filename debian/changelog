@@ -2,7 +2,7 @@ cm4all-beng-proxy (1.0.19) unstable; urgency=low
 
   * cookie-client: add a missing out-of-memory check
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Jan 2012 08:27:38 -0000
 
 cm4all-beng-proxy (1.0.18) unstable; urgency=low
 
