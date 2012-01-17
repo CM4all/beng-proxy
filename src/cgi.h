@@ -9,21 +9,12 @@
 
 #include <http/method.h>
 
-#include <glib.h>
-
 struct pool;
 struct istream;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 struct jail_params;
-
-G_GNUC_CONST
-static inline GQuark
-cgi_quark(void)
-{
-    return g_quark_from_static_string("cgi");
-}
 
 /**
  * @param params environment variables for the child process

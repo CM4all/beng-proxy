@@ -5,6 +5,7 @@
  */
 
 #include "cgi.h"
+#include "cgi-quark.h"
 #include "istream-buffer.h"
 #include "processor.h"
 #include "session.h"
