@@ -82,6 +82,9 @@ struct translate_client {
     /** the current resource address being edited */
     struct resource_address *resource_address;
 
+    /** the current CGI/FastCGI/WAS address being edited */
+    struct cgi_address *cgi_address;
+
     /** the current address list being edited */
     struct address_list *address_list;
 
@@ -487,6 +490,7 @@ add_view(struct translate_client *client, const char *name)
     *client->widget_view_tail = view;
     client->widget_view_tail = &view->next;
     client->resource_address = &view->address;
+    client->cgi_address = NULL;
     client->address_list = NULL;
     client->transformation_tail = &view->transformation;
     client->transformation = NULL;
@@ -666,6 +670,7 @@ translate_handle_packet(struct translate_client *client,
         memset(&client->response, 0, sizeof(client->response));
         client->previous_command = command;
         client->resource_address = &client->response.address;
+        client->cgi_address = NULL;
         client->address_list = NULL;
 
         client->response.request_header_forward =
@@ -748,8 +753,7 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_PATH_INFO:
-        if (client->resource_address == NULL ||
-            !resource_address_is_cgi_alike(client->resource_address)) {
+        if (client->cgi_address == NULL) {
             /* don't emit this error when the resource is a local
                path.  This combination might be useful one day, but isn't
                currently used. */
@@ -763,21 +767,18 @@ translate_handle_packet(struct translate_client *client,
             return true;
         }
 
-        client->resource_address->u.cgi.path_info = payload;
+        client->cgi_address->path_info = payload;
         return true;
 
     case TRANSLATE_EXPAND_PATH_INFO:
         if (client->response.regex == NULL ||
-            client->resource_address == NULL ||
-            (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
-             client->resource_address->type != RESOURCE_ADDRESS_WAS &&
-             client->resource_address->type != RESOURCE_ADDRESS_FASTCGI)) {
+            client->cgi_address == NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_EXPAND_PATH_INFO packet");
             return false;
         }
 
-        client->resource_address->u.cgi.expand_path_info = payload;
+        client->cgi_address->expand_path_info = payload;
         return true;
 
     case TRANSLATE_DEFLATED:
@@ -806,10 +807,8 @@ translate_handle_packet(struct translate_client *client,
 
         if (client->resource_address == &client->response.address)
             client->response.site = payload;
-        else if (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
-                 client->resource_address->type == RESOURCE_ADDRESS_WAS ||
-                 client->resource_address->type == RESOURCE_ADDRESS_FASTCGI)
-            client->resource_address->u.cgi.jail.site_id = payload;
+        else if (client->cgi_address != NULL)
+            client->cgi_address->jail.site_id = payload;
         else if (client->resource_address->type == RESOURCE_ADDRESS_LOCAL ||
                  client->resource_address->u.local.jail.enabled)
             client->resource_address->u.local.jail.site_id = payload;
@@ -871,6 +870,7 @@ translate_handle_packet(struct translate_client *client,
         transformation->type = TRANSFORMATION_FILTER;
         transformation->u.filter.type = RESOURCE_ADDRESS_NONE;
         client->resource_address = &transformation->u.filter;
+        client->cgi_address = NULL;
         client->address_list = NULL;
         return true;
 
@@ -1008,7 +1008,8 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_PIPE;
-        cgi_address_init(&client->resource_address->u.cgi, payload, false);
+        client->cgi_address = &client->resource_address->u.cgi;
+        cgi_address_init(client->cgi_address, payload, false);
         return true;
 
     case TRANSLATE_CGI:
@@ -1024,8 +1025,9 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_CGI;
-        cgi_address_init(&client->resource_address->u.cgi, payload, false);
-        client->resource_address->u.cgi.document_root = client->response.document_root;
+        client->cgi_address = &client->resource_address->u.cgi;
+        cgi_address_init(client->cgi_address, payload, false);
+        client->cgi_address->document_root = client->response.document_root;
         return true;
 
     case TRANSLATE_FASTCGI:
@@ -1043,9 +1045,10 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
-        cgi_address_init(&client->resource_address->u.cgi, payload, true);
+        client->cgi_address = &client->resource_address->u.cgi;
+        cgi_address_init(client->cgi_address, payload, true);
 
-        client->address_list = &client->resource_address->u.cgi.address_list;
+        client->address_list = &client->cgi_address->address_list;
         return true;
 
     case TRANSLATE_AJP:
@@ -1077,11 +1080,8 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_JAILCGI:
-        if (client->resource_address != NULL &&
-            (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
-             client->resource_address->type == RESOURCE_ADDRESS_WAS ||
-             client->resource_address->type == RESOURCE_ADDRESS_FASTCGI))
-            client->resource_address->u.cgi.jail.enabled = true;
+        if (client->cgi_address != NULL)
+            client->cgi_address->jail.enabled = true;
         else if (client->resource_address != NULL &&
                  client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
                  client->resource_address->u.local.delegate != NULL)
@@ -1095,12 +1095,10 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_HOME:
-        if ((client->resource_address->type == RESOURCE_ADDRESS_CGI ||
-             client->resource_address->type == RESOURCE_ADDRESS_WAS ||
-             client->resource_address->type == RESOURCE_ADDRESS_FASTCGI) &&
-            client->resource_address->u.cgi.jail.enabled &&
-            client->resource_address->u.cgi.jail.home_directory == NULL)
-            client->resource_address->u.cgi.jail.home_directory = payload;
+        if (client->cgi_address != NULL &&
+            client->cgi_address->jail.enabled &&
+            client->cgi_address->jail.home_directory == NULL)
+            client->cgi_address->jail.home_directory = payload;
         else if (client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
                  client->resource_address->u.local.jail.enabled &&
                  client->resource_address->u.local.jail.home_directory == NULL)
@@ -1117,26 +1115,26 @@ translate_handle_packet(struct translate_client *client,
         if (client->resource_address == NULL ||
             (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
              client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
-            client->resource_address->u.cgi.interpreter != NULL) {
+            client->cgi_address->interpreter != NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_INTERPRETER packet");
             return false;
         }
 
-        client->resource_address->u.cgi.interpreter = payload;
+        client->cgi_address->interpreter = payload;
         return true;
 
     case TRANSLATE_ACTION:
         if (client->resource_address == NULL ||
             (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
              client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
-            client->resource_address->u.cgi.action != NULL) {
+            client->cgi_address->action != NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_ACTION packet");
             return false;
         }
 
-        client->resource_address->u.cgi.action = payload;
+        client->cgi_address->action = payload;
         return true;
 
     case TRANSLATE_SCRIPT_NAME:
@@ -1144,21 +1142,18 @@ translate_handle_packet(struct translate_client *client,
             (client->resource_address->type != RESOURCE_ADDRESS_CGI &&
              client->resource_address->type != RESOURCE_ADDRESS_WAS &&
              client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
-            client->resource_address->u.cgi.script_name != NULL) {
+            client->cgi_address->script_name != NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_SCRIPT_NAME packet");
             return false;
         }
 
-        client->resource_address->u.cgi.script_name = payload;
+        client->cgi_address->script_name = payload;
         return true;
 
     case TRANSLATE_DOCUMENT_ROOT:
-        if (client->resource_address != NULL &&
-            (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
-             client->resource_address->type == RESOURCE_ADDRESS_WAS ||
-             client->resource_address->type == RESOURCE_ADDRESS_FASTCGI))
-            client->resource_address->u.cgi.document_root = payload;
+        if (client->cgi_address != NULL)
+            client->cgi_address->document_root = payload;
         else if (client->resource_address != NULL &&
                  client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
                  client->resource_address->u.local.delegate != NULL)
@@ -1316,8 +1311,8 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        if (client->resource_address->u.cgi.num_args >=
-            G_N_ELEMENTS(client->resource_address->u.cgi.args)) {
+        if (client->cgi_address->num_args >=
+            G_N_ELEMENTS(client->cgi_address->args)) {
             translate_client_error(client,
                                    "too many TRANSLATE_APPEND packets");
             return false;
@@ -1329,16 +1324,13 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        client->resource_address->u.cgi.args[client->resource_address->u.cgi.num_args++] = payload;
+        client->cgi_address->args[client->cgi_address->num_args++] = payload;
         return true;
 
     case TRANSLATE_PAIR:
-        if (client->resource_address != NULL &&
-            (client->resource_address->type == RESOURCE_ADDRESS_FASTCGI ||
-             client->resource_address->type == RESOURCE_ADDRESS_CGI ||
-             client->resource_address->type == RESOURCE_ADDRESS_WAS)) {
-            if (client->resource_address->u.cgi.num_args >=
-                G_N_ELEMENTS(client->resource_address->u.cgi.args)) {
+        if (client->cgi_address != NULL) {
+            if (client->cgi_address->num_args >=
+                G_N_ELEMENTS(client->cgi_address->args)) {
                 translate_client_error(client,
                                        "too many TRANSLATE_PAIR packets");
                 return false;
@@ -1351,7 +1343,7 @@ translate_handle_packet(struct translate_client *client,
                 return false;
             }
 
-            client->resource_address->u.cgi.args[client->resource_address->u.cgi.num_args++] = payload;
+            client->cgi_address->args[client->cgi_address->num_args++] = payload;
         } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_PAIR packet");
@@ -1433,7 +1425,8 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_WAS;
-        cgi_address_init(&client->resource_address->u.cgi, payload, false);
+        client->cgi_address = &client->resource_address->u.cgi;
+        cgi_address_init(client->cgi_address, payload, false);
         return true;
 
     case TRANSLATE_TRANSPARENT:
