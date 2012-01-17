@@ -388,6 +388,7 @@ SRC = src/main.c \
 	src/cgi-address.c src/cgi-address.h \
 	src/cgi-quark.h \
 	src/cgi-client.c src/cgi-client.h \
+	src/cgi-launch.c src/cgi-launch.h \
 	src/cgi.c \
 	src/fcgi-launch.h \
 	src/fcgi-launch.c \
@@ -1029,7 +1030,7 @@ test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
 test_t_cgi_SOURCES = test/t-cgi.c \
 	$(STOPWATCH_SRC) \
 	src/cgi.c src/fork.c \
-	src/cgi-client.c src/cgi-address.c \
+	src/cgi-client.c src/cgi-address.c src/cgi-launch.c \
 	src/jail.c src/uri-base.c src/uri-escape.c src/uri-relative.c \
 	src/format.c src/address-list.c \
 	$(POOL_SRC) src/tpool.c \
