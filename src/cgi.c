@@ -5,6 +5,7 @@
  */
 
 #include "cgi.h"
+#include "cgi-address.h"
 #include "cgi-client.h"
 #include "istream.h"
 #include "processor.h"
@@ -164,27 +165,21 @@ cgi_child_callback(int status, void *ctx gcc_unused)
 }
 
 void
-cgi_new(struct pool *pool, const struct jail_params *jail,
-        const char *interpreter, const char *action,
-        const char *path,
-        http_method_t method, const char *uri,
-        const char *script_name, const char *path_info,
-        const char *query_string,
-        const char *document_root,
+cgi_new(struct pool *pool, http_method_t method,
+        const struct cgi_address *address,
         const char *remote_addr,
         struct strmap *headers, struct istream *body,
-        const char *const params[], unsigned num_params,
         const struct http_response_handler *handler,
         void *handler_ctx,
         struct async_operation_ref *async_ref)
 {
-    struct stopwatch *stopwatch = stopwatch_new(pool, path);
+    const char *uri = cgi_address_uri(pool, address);
+
+    struct stopwatch *stopwatch = stopwatch_new(pool, address->path);
 
     off_t available = body != NULL
         ? istream_available(body, false)
         : -1;
-
-    stopwatch = stopwatch_new(pool, path);
 
     struct istream *input;
     GError *error = NULL;
@@ -213,11 +208,13 @@ cgi_new(struct pool *pool, const struct jail_params *jail,
     }
 
     if (pid == 0)
-        cgi_run(jail, interpreter, action, path, method, uri,
-                script_name, path_info, query_string, document_root,
+        cgi_run(&address->jail, address->interpreter, address->action,
+                address->path, method, uri,
+                address->script_name, address->path_info,
+                address->query_string, address->document_root,
                 remote_addr,
                 headers, available,
-                params, num_params);
+                address->args, address->num_args);
 
     stopwatch_event(stopwatch, "fork");
 

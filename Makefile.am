@@ -1029,7 +1029,9 @@ test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
 test_t_cgi_SOURCES = test/t-cgi.c \
 	$(STOPWATCH_SRC) \
 	src/cgi.c src/fork.c \
-	src/cgi-client.c \
+	src/cgi-client.c src/cgi-address.c \
+	src/jail.c src/uri-base.c src/uri-escape.c src/uri-relative.c \
+	src/format.c src/address-list.c \
 	$(POOL_SRC) src/tpool.c \
 	src/fifo-buffer.c src/buffered-io.c src/growing-buffer.c \
 	src/header-parser.c \

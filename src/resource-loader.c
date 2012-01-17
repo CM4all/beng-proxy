@@ -180,17 +180,9 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         return;
 
     case RESOURCE_ADDRESS_CGI:
-        cgi_new(pool, &address->u.cgi.jail,
-                address->u.cgi.interpreter, address->u.cgi.action,
-                address->u.cgi.path,
-                method, cgi_address_uri(pool, &address->u.cgi),
-                address->u.cgi.script_name,
-                address->u.cgi.path_info,
-                address->u.cgi.query_string,
-                address->u.cgi.document_root,
+        cgi_new(pool, method, &address->u.cgi,
                 extract_remote_ip(pool, headers),
                 headers, body,
-                address->u.cgi.args, address->u.cgi.num_args,
                 handler, handler_ctx, async_ref);
         return;
 
