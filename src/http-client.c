@@ -1145,6 +1145,10 @@ http_client_request(struct pool *caller_pool,
     assert(handler->response != NULL);
 
     if (!uri_verify_quick(uri)) {
+        lease_direct_release(lease, lease_ctx, true);
+        if (body != NULL)
+            istream_close_unused(body);
+
         GError *error = g_error_new(http_client_quark(),
                                     HTTP_CLIENT_UNSPECIFIED,
                                     "malformed request URI '%s'", uri);

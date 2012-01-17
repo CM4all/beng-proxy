@@ -267,9 +267,14 @@ apply_next_cookie(struct cookie_jar *jar, struct strref *input,
     if (cookie == NULL)
         return false;
 
-    if (cookie->domain == NULL)
+    if (cookie->domain == NULL) {
         cookie->domain = d_strdup(jar->pool, domain);
-    else if (!domain_matches(domain, cookie->domain)) {
+        if (cookie->domain == NULL) {
+            /* out of memory */
+            cookie_free(jar->pool, cookie);
+            return false;
+        }
+    } else if (!domain_matches(domain, cookie->domain)) {
         /* discard if domain mismatch */
         cookie_free(jar->pool, cookie);
         return false;
