@@ -46,6 +46,10 @@ struct cgi_address {
 };
 
 void
+cgi_address_init(struct cgi_address *cgi, const char *path,
+                 bool have_address_list);
+
+void
 cgi_address_copy(struct pool *pool, struct cgi_address *dest,
                  const struct cgi_address *src, bool have_address_list);
 

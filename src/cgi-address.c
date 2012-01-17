@@ -11,6 +11,19 @@
 #include <string.h>
 
 void
+cgi_address_init(struct cgi_address *cgi, const char *path,
+                 bool have_address_list)
+{
+    assert(path != NULL);
+
+    memset(cgi, 0, sizeof(*cgi));
+    cgi->path = path;
+
+    if (have_address_list)
+        address_list_init(&cgi->address_list);
+}
+
+void
 cgi_address_copy(struct pool *pool, struct cgi_address *dest,
                  const struct cgi_address *src, bool have_address_list)
 {

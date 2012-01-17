@@ -1008,8 +1008,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_PIPE;
-        memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
-        client->resource_address->u.cgi.path = payload;
+        cgi_address_init(&client->resource_address->u.cgi, payload, false);
         return true;
 
     case TRANSLATE_CGI:
@@ -1025,8 +1024,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_CGI;
-        memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
-        client->resource_address->u.cgi.path = payload;
+        cgi_address_init(&client->resource_address->u.cgi, payload, false);
         client->resource_address->u.cgi.document_root = client->response.document_root;
         return true;
 
@@ -1045,10 +1043,8 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
-        memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
-        client->resource_address->u.cgi.path = payload;
+        cgi_address_init(&client->resource_address->u.cgi, payload, true);
 
-        address_list_init(&client->resource_address->u.cgi.address_list);
         client->address_list = &client->resource_address->u.cgi.address_list;
         return true;
 
@@ -1437,8 +1433,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_WAS;
-        memset(&client->resource_address->u.cgi, 0, sizeof(client->resource_address->u.cgi));
-        client->resource_address->u.cgi.path = payload;
+        cgi_address_init(&client->resource_address->u.cgi, payload, false);
         return true;
 
     case TRANSLATE_TRANSPARENT:
