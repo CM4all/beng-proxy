@@ -23,6 +23,25 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
         address_list_init(&cgi->address_list);
 }
 
+const char *
+cgi_address_uri(struct pool *pool, const struct cgi_address *cgi)
+{
+    if (cgi->uri != NULL)
+        return cgi->uri;
+
+    const char *p = cgi->script_name;
+    if (p == NULL)
+        p = "";
+
+    if (cgi->path_info != NULL)
+        p = p_strcat(pool, p, cgi->path_info, NULL);
+
+    if (cgi->query_string != NULL)
+        p = p_strcat(pool, p, "?", cgi->query_string, NULL);
+
+    return p;
+}
+
 void
 cgi_address_copy(struct pool *pool, struct cgi_address *dest,
                  const struct cgi_address *src, bool have_address_list)

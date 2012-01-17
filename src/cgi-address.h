@@ -8,6 +8,8 @@
 #include "jail.h"
 #include "address-list.h"
 
+#include <inline/compiler.h>
+
 #include <stdbool.h>
 
 struct pool;
@@ -48,6 +50,10 @@ struct cgi_address {
 void
 cgi_address_init(struct cgi_address *cgi, const char *path,
                  bool have_address_list);
+
+gcc_pure
+const char *
+cgi_address_uri(struct pool *pool, const struct cgi_address *cgi);
 
 void
 cgi_address_copy(struct pool *pool, struct cgi_address *dest,

@@ -64,31 +64,6 @@ resource_address_is_cgi_alike(const struct resource_address *address)
         address->type == RESOURCE_ADDRESS_WAS;
 }
 
-gcc_pure
-static inline const char *
-resource_address_cgi_uri(struct pool *pool,
-                         const struct resource_address *address)
-{
-    const char *p;
-
-    assert(resource_address_is_cgi_alike(address));
-
-    if (address->u.cgi.uri != NULL)
-        return address->u.cgi.uri;
-
-    p = address->u.cgi.script_name;
-    if (p == NULL)
-        p = "";
-
-    if (address->u.cgi.path_info != NULL)
-        p = p_strcat(pool, p, address->u.cgi.path_info, NULL);
-
-    if (address->u.cgi.query_string != NULL)
-        p = p_strcat(pool, p, "?", address->u.cgi.query_string, NULL);
-
-    return p;
-}
-
 void
 resource_address_copy(struct pool *pool, struct resource_address *dest,
                       const struct resource_address *src);
