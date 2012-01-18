@@ -296,7 +296,6 @@ handler_translate_error(GError *error, void *ctx)
 
     daemon_log(1, "translation error on '%s': %s\n",
                request->request->uri, error->message);
-    g_error_free(error);
 
     static const struct translate_response error_response = {
         .status = -1,
@@ -306,8 +305,8 @@ handler_translate_error(GError *error, void *ctx)
        #translate_response pointer, so we need a valid pointer here */
     request->translate.response = &error_response;
 
-    response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                              "Internal server error");
+    response_dispatch_error(request, error);
+    g_error_free(error);
 }
 
 static const struct translate_handler handler_translate_handler = {
