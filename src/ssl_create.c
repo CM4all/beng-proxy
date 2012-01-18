@@ -25,8 +25,7 @@ apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
         return false;
     }
 
-    if (SSL_CTX_use_certificate_file(ssl_ctx, config->cert_file,
-                                     SSL_FILETYPE_PEM) != 1) {
+    if (SSL_CTX_use_certificate_chain_file(ssl_ctx, config->cert_file) != 1) {
         ERR_print_errors_fp(stderr);
         g_set_error(error_r, ssl_quark(), 0,
                     "Failed to load certificate file %s", config->key_file);
