@@ -360,6 +360,7 @@ SRC = src/main.c \
 	src/header-parser.c \
 	src/header-writer.c \
 	src/header-forward.c \
+	src/http-quark.h \
 	src/http-response.c src/http-response.h \
 	src/http-string.c \
 	src/http-body.c \

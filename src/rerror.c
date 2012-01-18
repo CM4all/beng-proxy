@@ -16,10 +16,18 @@
 #include "http-error.h"
 #include "http-response.h"
 #include "http-server.h"
+#include "http-quark.h"
 
 void
 response_dispatch_error(struct request *request, GError *error)
 {
+    if (error->domain == http_response_quark()) {
+        response_dispatch_message(request, error->code,
+                                  p_strdup(request->request->pool,
+                                           error->message));
+        return;
+    }
+
     if (error->domain == widget_quark()) {
         switch ((enum widget_error)error->code) {
         case WIDGET_ERROR_UNSPECIFIED:
