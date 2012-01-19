@@ -451,6 +451,15 @@ resource_address_uri_path(const struct resource_address *address)
     return NULL;
 }
 
+bool
+resource_address_is_expandable(const struct resource_address *address)
+{
+    assert(address != NULL);
+
+    return resource_address_is_cgi_alike(address) &&
+        cgi_address_is_expandable(&address->u.cgi);
+}
+
 /**
  * Expand EXPAND_PATH_INFO specifications in a #resource_address.
  */

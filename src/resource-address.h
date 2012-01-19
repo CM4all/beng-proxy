@@ -186,14 +186,8 @@ resource_address_uri_path(const struct resource_address *address);
  * resource_address_expand()?
  */
 gcc_pure
-static inline bool
-resource_address_is_expandable(const struct resource_address *address)
-{
-    assert(address != NULL);
-
-    return resource_address_is_cgi_alike(address) &&
-        cgi_address_is_expandable(&address->u.cgi);
-}
+bool
+resource_address_is_expandable(const struct resource_address *address);
 
 /**
  * Expand the expand_path_info attribute.
