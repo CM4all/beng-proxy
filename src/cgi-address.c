@@ -158,3 +158,34 @@ cgi_address_apply(struct pool *pool, struct cgi_address *dest,
     dest->path_info = p;
     return dest;
 }
+
+static const char *
+expand_string(struct pool *pool, const char *src, const GMatchInfo *match_info)
+{
+    assert(pool != NULL);
+    assert(src != NULL);
+    assert(match_info != NULL);
+
+    char *p = g_match_info_expand_references(match_info, src, NULL);
+    if (p == NULL)
+        /* XXX an error has occurred; how to report to the caller? */
+        return src;
+
+    /* move result to the memory pool */
+    char *q = p_strdup(pool, p);
+    g_free(p);
+    return q;
+}
+
+void
+cgi_address_expand(struct pool *pool, struct cgi_address *address,
+                   const GMatchInfo *match_info)
+{
+    assert(pool != NULL);
+    assert(address != NULL);
+    assert(match_info != NULL);
+
+    if (address->expand_path_info != NULL)
+        address->path_info = expand_string(pool, address->expand_path_info,
+                                           match_info);
+}

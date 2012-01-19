@@ -10,6 +10,7 @@
 
 #include <inline/compiler.h>
 
+#include <glib.h>
 #include <stdbool.h>
 
 struct pool;
@@ -81,5 +82,21 @@ cgi_address_apply(struct pool *pool, struct cgi_address *dest,
                   const struct cgi_address *src,
                   const char *relative, size_t relative_length,
                   bool have_address_list);
+
+/**
+ * Does this address need to be expanded with cgi_address_expand()?
+ */
+gcc_pure
+static inline bool
+cgi_address_is_expandable(const struct cgi_address *address)
+{
+    assert(address != NULL);
+
+    return address->expand_path_info != NULL;
+}
+
+void
+cgi_address_expand(struct pool *pool, struct cgi_address *address,
+                   const GMatchInfo *match_info);
 
 #endif

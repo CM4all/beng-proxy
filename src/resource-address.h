@@ -203,7 +203,7 @@ resource_address_is_expandable(const struct resource_address *address)
     assert(address != NULL);
 
     return resource_address_is_cgi_alike(address) &&
-        address->u.cgi.expand_path_info;
+        cgi_address_is_expandable(&address->u.cgi);
 }
 
 /**
