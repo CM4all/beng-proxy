@@ -9,6 +9,7 @@
 #define __BENG_RESOURCE_ADDRESS_H
 
 #include "pool.h"
+#include "file-address.h"
 #include "uri-address.h"
 #include "cgi-address.h"
 #include "jail.h"
@@ -33,19 +34,7 @@ struct resource_address {
     enum resource_address_type type;
 
     union {
-        struct {
-            const char *path;
-            const char *deflated;
-            const char *gzipped;
-            const char *content_type;
-            const char *delegate;
-            const char *document_root;
-
-            /**
-             * Should the delegate be jailed?
-             */
-            struct jail_params jail;
-        } local;
+        struct file_address local;
 
         const struct uri_with_address *http;
 

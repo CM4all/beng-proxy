@@ -6,9 +6,7 @@
  */
 
 #include "resource-address.h"
-#include "uri-base.h"
 #include "uri-relative.h"
-#include "uri-escape.h"
 #include "uri-edit.h"
 #include "strref.h"
 
@@ -23,17 +21,7 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
         break;
 
     case RESOURCE_ADDRESS_LOCAL:
-        assert(src->u.local.path != NULL);
-        dest->u.local.path = p_strdup(pool, src->u.local.path);
-        dest->u.local.deflated = p_strdup_checked(pool, src->u.local.deflated);
-        dest->u.local.gzipped = p_strdup_checked(pool, src->u.local.gzipped);
-        dest->u.local.content_type =
-            p_strdup_checked(pool, src->u.local.content_type);
-        dest->u.local.delegate = p_strdup_checked(pool, src->u.local.delegate);
-        dest->u.local.document_root =
-            p_strdup_checked(pool, src->u.local.document_root);
-
-        jail_params_copy(pool, &dest->u.local.jail, &src->u.local.jail);
+        file_address_copy(pool, &dest->u.local, &src->u.local);
         break;
 
     case RESOURCE_ADDRESS_HTTP:
@@ -207,8 +195,6 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
 {
     assert(src != dest);
 
-    size_t length;
-
     switch (src->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_PIPE:
@@ -225,16 +211,11 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
         return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
-        length = base_string_unescape(pool, src->u.local.path, suffix);
-        if (length == (size_t)-1)
+        if (!file_address_save_base(pool, &dest->u.local, &src->u.local,
+                                    suffix))
             return NULL;
 
-        resource_address_copy(pool, dest, src);
-        dest->u.local.path = p_strndup(pool, dest->u.local.path, length);
-
-        /* BASE+DEFLATED is not supported */
-        dest->u.local.deflated = NULL;
-        dest->u.local.gzipped = NULL;
+        dest->type = src->type;
         return dest;
 
     case RESOURCE_ADDRESS_HTTP:
@@ -258,8 +239,6 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
 {
     assert(src != dest);
 
-    char *unescaped;
-
     switch (src->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_PIPE:
@@ -275,16 +254,8 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
         return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
-        assert(src->u.local.path != NULL);
-        assert(*src->u.local.path != 0);
-        assert(src->u.local.path[strlen(src->u.local.path) - 1] == '/');
-
-        unescaped = p_strdup(pool, suffix);
-        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
-
-        resource_address_copy(pool, dest, src);
-        dest->u.local.path = p_strcat(pool, dest->u.local.path,
-                                      unescaped, NULL);
+        file_address_load_base(pool, &dest->u.local, &src->u.local, suffix);
+        dest->type = src->type;
         return dest;
 
     case RESOURCE_ADDRESS_HTTP:
