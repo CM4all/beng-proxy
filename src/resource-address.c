@@ -456,6 +456,9 @@ resource_address_is_expandable(const struct resource_address *address)
 {
     assert(address != NULL);
 
+    if (address->type == RESOURCE_ADDRESS_LOCAL)
+        return file_address_is_expandable(&address->u.local);
+
     return resource_address_is_cgi_alike(address) &&
         cgi_address_is_expandable(&address->u.cgi);
 }
@@ -470,6 +473,11 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     assert(pool != NULL);
     assert(address != NULL);
     assert(match_info != NULL);
+
+    if (address->type == RESOURCE_ADDRESS_LOCAL) {
+        file_address_expand(pool, &address->u.local, match_info);
+        return;
+    }
 
     if (resource_address_is_cgi_alike(address))
         cgi_address_expand(pool, &address->u.cgi, match_info);

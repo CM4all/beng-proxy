@@ -9,6 +9,7 @@
 
 #include <inline/compiler.h>
 
+#include <glib.h>
 #include <stdbool.h>
 
 struct pool;
@@ -23,6 +24,12 @@ struct file_address {
     const char *content_type;
     const char *delegate;
     const char *document_root;
+
+    /**
+     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
+     * translation cache.
+     */
+    const char *expand_path;
 
     /**
      * Should the delegate be jailed?
@@ -48,5 +55,16 @@ file_address_save_base(struct pool *pool, struct file_address *dest,
 void
 file_address_load_base(struct pool *pool, struct file_address *dest,
                       const struct file_address *src, const char *suffix);
+
+/**
+ * Does this address need to be expanded with file_address_expand()?
+ */
+gcc_pure
+bool
+file_address_is_expandable(const struct file_address *address);
+
+void
+file_address_expand(struct pool *pool, struct file_address *address,
+                    const GMatchInfo *match_info);
 
 #endif

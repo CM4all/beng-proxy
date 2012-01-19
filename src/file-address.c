@@ -5,6 +5,7 @@
 #include "file-address.h"
 #include "uri-base.h"
 #include "uri-escape.h"
+#include "regex.h"
 #include "pool.h"
 
 #include <assert.h>
@@ -33,6 +34,8 @@ file_address_copy(struct pool *pool, struct file_address *dest,
     dest->delegate = p_strdup_checked(pool, src->delegate);
     dest->document_root =
         p_strdup_checked(pool, src->document_root);
+
+    dest->expand_path = p_strdup_checked(pool, src->expand_path);
 
     jail_params_copy(pool, &dest->jail, &src->jail);
 }
@@ -77,4 +80,24 @@ file_address_load_base(struct pool *pool, struct file_address *dest,
 
     file_address_copy(pool, dest, src);
     dest->path = p_strcat(pool, dest->path, unescaped, NULL);
+}
+
+bool
+file_address_is_expandable(const struct file_address *address)
+{
+    assert(address != NULL);
+
+    return address->expand_path != NULL;
+}
+
+void
+file_address_expand(struct pool *pool, struct file_address *address,
+                    const GMatchInfo *match_info)
+{
+    assert(pool != NULL);
+    assert(address != NULL);
+    assert(match_info != NULL);
+
+    if (address->expand_path != NULL)
+        address->path = expand_string(pool, address->expand_path, match_info);
 }

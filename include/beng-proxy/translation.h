@@ -227,6 +227,13 @@ enum beng_translation_command {
      * to copy URI parts to a filter.
      */
     TRANSLATE_EXPAND_PATH_INFO = 83,
+
+    /**
+     * Expand #TRANSLATE_REGEX match strings in this PATH value (only
+     * CGI, FastCGI, WAS).  Sub-strings in the form "\1" will be
+     * replaced.
+     */
+    TRANSLATE_EXPAND_PATH = 84,
 };
 
 struct beng_translation_header {

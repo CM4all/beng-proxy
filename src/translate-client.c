@@ -779,9 +779,22 @@ translate_handle_packet(struct translate_client *client,
         client->cgi_address->path_info = payload;
         return true;
 
+    case TRANSLATE_EXPAND_PATH:
+        if (client->response.regex == NULL ||
+            client->cgi_address == NULL ||
+            client->cgi_address->expand_path != NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_EXPAND_PATH packet");
+            return false;
+        }
+
+        client->cgi_address->expand_path = payload;
+        return true;
+
     case TRANSLATE_EXPAND_PATH_INFO:
         if (client->response.regex == NULL ||
-            client->cgi_address == NULL) {
+            client->cgi_address == NULL ||
+            client->cgi_address->expand_path_info != NULL) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_EXPAND_PATH_INFO packet");
             return false;
