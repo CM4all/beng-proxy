@@ -809,7 +809,7 @@ translate_handle_packet(struct translate_client *client,
             client->response.site = payload;
         else if (client->cgi_address != NULL)
             client->cgi_address->jail.site_id = payload;
-        else if (client->resource_address->type == RESOURCE_ADDRESS_LOCAL ||
+        else if (client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
                  client->resource_address->u.local.jail.enabled)
             client->resource_address->u.local.jail.site_id = payload;
         else {
