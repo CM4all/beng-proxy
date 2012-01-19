@@ -796,7 +796,7 @@ translate_handle_packet(struct translate_client *client,
                  client->resource_address->type == RESOURCE_ADDRESS_WAS ||
                  client->resource_address->type == RESOURCE_ADDRESS_FASTCGI)
             client->resource_address->u.cgi.jail.site_id = payload;
-        else if (client->resource_address->type == RESOURCE_ADDRESS_LOCAL ||
+        else if (client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
                  client->resource_address->u.local.jail.enabled)
             client->resource_address->u.local.jail.site_id = payload;
         else {
