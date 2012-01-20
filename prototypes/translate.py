@@ -252,12 +252,16 @@ class Translation(Protocol):
             i = uri.index('/', i)
             uri, path_info = uri[:i], uri[i:]
 
+            response.packet(TRANSLATE_BASE, "/imageprocessor-filter/")
+            response.packet(TRANSLATE_REGEX, "^/imageprocessor-filter/(.+\.(?:jpe?g|png|gif|bmp))/([^/]+(?:/[^/])?)")
             response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             response.path('/var/www' + uri)
+            response.packet(TRANSLATE_EXPAND_PATH, r"/var/www/\1")
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(image_processor_path, 'filter.cls'))
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
             response.packet(TRANSLATE_PATH_INFO, path_info)
+            response.packet(TRANSLATE_EXPAND_PATH_INFO, r"/\2")
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))
