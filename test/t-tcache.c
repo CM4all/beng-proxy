@@ -79,6 +79,77 @@ resource_address_equals(const struct resource_address *a,
 }
 
 static bool
+transformation_equals(const struct transformation *a,
+                      const struct transformation *b)
+{
+    assert(a != NULL);
+    assert(b != NULL);
+
+    if (a->type != b->type)
+        return false;
+
+    switch (a->type) {
+    case TRANSFORMATION_PROCESS:
+        return a->u.processor.options == b->u.processor.options;
+
+    case TRANSFORMATION_PROCESS_CSS:
+        return a->u.css_processor.options == b->u.css_processor.options;
+
+    case TRANSFORMATION_PROCESS_TEXT:
+        return true;
+
+    case TRANSFORMATION_FILTER:
+        return resource_address_equals(&a->u.filter, &b->u.filter);
+    }
+
+    /* unreachable */
+    assert(false);
+    return false;
+}
+
+static bool
+transformation_chain_equals(const struct transformation *a,
+                  const struct transformation *b)
+{
+    while (a != NULL && b != NULL) {
+        if (!transformation_equals(a, b))
+            return false;
+
+        a = a->next;
+        b = b->next;
+    }
+
+    return a == NULL && b == NULL;
+}
+
+static bool
+view_equals(const struct widget_view *a, const struct widget_view *b)
+{
+    assert(a != NULL);
+    assert(b != NULL);
+
+    return string_equals(a->name, b->name) &&
+        resource_address_equals(&a->address, &b->address) &&
+        a->filter_4xx == b->filter_4xx &&
+        transformation_chain_equals(a->transformation, b->transformation);
+}
+
+static bool
+view_chain_equals(const struct widget_view *a,
+                  const struct widget_view *b)
+{
+    while (a != NULL && b != NULL) {
+        if (!view_equals(a, b))
+            return false;
+
+        a = a->next;
+        b = b->next;
+    }
+
+    return a == NULL && b == NULL;
+}
+
+static bool
 translate_response_equals(const struct translate_response *a,
                           const struct translate_response *b)
 {
@@ -86,7 +157,8 @@ translate_response_equals(const struct translate_response *a,
         return a == NULL && b == NULL;
 
     return string_equals(a->base, b->base) &&
-        resource_address_equals(&a->address, &b->address);
+        resource_address_equals(&a->address, &b->address) &&
+        view_chain_equals(a->views, b->views);
 }
 
 static void
