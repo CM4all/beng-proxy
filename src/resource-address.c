@@ -430,8 +430,26 @@ static const char *
 append_args(pool_t pool, const struct resource_address *address,
             const char *p)
 {
+    if (address->u.cgi.jail.enabled)
+        p = p_strcat(pool, p, ";j", NULL);
+
+    if (address->u.cgi.interpreter != NULL)
+        p = p_strcat(pool, p, ";i=", address->u.cgi.interpreter, NULL);
+
+    if (address->u.cgi.action != NULL)
+        p = p_strcat(pool, p, ";a=", address->u.cgi.action, NULL);
+
     for (unsigned i = 0; i < address->u.cgi.num_args; ++i)
         p = p_strcat(pool, p, "!", address->u.cgi.args[i], NULL);
+
+    if (address->u.cgi.script_name != NULL)
+        p = p_strcat(pool, p, ";s=", address->u.cgi.script_name, NULL);
+
+    if (address->u.cgi.path_info != NULL)
+        p = p_strcat(pool, p, ";p=", address->u.cgi.path_info, NULL);
+
+    if (address->u.cgi.query_string != NULL)
+        p = p_strcat(pool, p, "?", address->u.cgi.query_string, NULL);
 
     return p;
 }

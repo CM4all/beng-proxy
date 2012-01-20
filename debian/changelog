@@ -3,6 +3,7 @@ cm4all-beng-proxy (1.0.20) unstable; urgency=low
   * ssl: load the whole certificate chain
   * translate: fix PATH+JAILCGI+SITE check
   * translate: fix HOME check
+  * resource-address: include all CGI attributes in cache key
 
  --   
 
