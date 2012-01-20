@@ -44,6 +44,9 @@ resource_address_equals(const struct resource_address *a,
         return false;
 
     switch (a->type) {
+    case RESOURCE_ADDRESS_NONE:
+        return true;
+
     case RESOURCE_ADDRESS_LOCAL:
         assert(a->u.local.path != NULL);
         assert(b->u.local.path != NULL);
