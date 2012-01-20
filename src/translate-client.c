@@ -780,16 +780,23 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_EXPAND_PATH:
-        if (client->response.regex == NULL ||
-            client->cgi_address == NULL ||
-            client->cgi_address->expand_path != NULL) {
+        if (client->response.regex == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_EXPAND_PATH packet");
+            return false;
+        } else if (client->cgi_address != NULL &&
+                   client->cgi_address->expand_path == NULL) {
+            client->cgi_address->expand_path = payload;
+            return true;
+        } else if (client->file_address != NULL &&
+                   client->file_address->expand_path == NULL) {
+            client->file_address->expand_path = payload;
+            return true;
+        } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_EXPAND_PATH packet");
             return false;
         }
-
-        client->cgi_address->expand_path = payload;
-        return true;
 
     case TRANSLATE_EXPAND_PATH_INFO:
         if (client->response.regex == NULL ||
