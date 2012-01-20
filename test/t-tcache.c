@@ -4,6 +4,8 @@
 #include "translate-request.h"
 #include "translate-response.h"
 #include "async.h"
+#include "transformation.h"
+#include "widget-view.h"
 #include "beng-proxy/translation.h"
 
 #include <event.h>
@@ -783,6 +785,128 @@ test_expand_local(struct pool *pool, struct tcache *cache)
 }
 
 static void
+test_expand_local_filter(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    /* add to cache */
+
+    static const struct translate_request request1 = {
+        .uri = "/regex-expand3/foo/bar.jpg/b=c",
+    };
+    static struct transformation transformation1n = {
+        .type = TRANSFORMATION_FILTER,
+        .u.filter = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/image-processor.cgi",
+                    .expand_path_info = "/\\2",
+                },
+            },
+        },
+    };
+    static struct widget_view view1n = {
+        .transformation = &transformation1n,
+    };
+    static const struct translate_response response1n = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/dummy",
+                    .expand_path = "/var/www/\\1",
+                },
+            },
+        },
+        .base = "/regex-expand3/",
+        .regex = "^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .max_age = -1,
+        .user_max_age = -1,
+        .views = &view1n,
+    };
+
+    static struct transformation transformation1e = {
+        .type = TRANSFORMATION_FILTER,
+        .u.filter = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/image-processor.cgi",
+                    .path_info = "/b=c",
+                    .expand_path_info = "/\\2",
+                },
+            },
+        },
+    };
+    static struct widget_view view1e = {
+        .transformation = &transformation1e,
+    };
+    static const struct translate_response response1e = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/foo/bar.jpg",
+                    .expand_path = "/var/www/\\1",
+                },
+            },
+        },
+        .base = "/regex-expand3/",
+        .regex = "^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .max_age = -1,
+        .user_max_age = -1,
+        .views = &view1e,
+    };
+
+    next_response = &response1n;
+    expected_response = &response1e;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* check match */
+
+    static const struct translate_request request2 = {
+        .uri = "/regex-expand3/x/y/z.jpg/d=e",
+    };
+    static struct transformation transformation2 = {
+        .type = TRANSFORMATION_FILTER,
+        .u.filter = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = {
+                    .path = "/usr/lib/cgi-bin/image-processor.cgi",
+                    .path_info = "/d=e",
+                    .expand_path_info = "/\\2",
+                },
+            },
+        },
+    };
+    static struct widget_view view2 = {
+        .transformation = &transformation2,
+    };
+    static const struct translate_response response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/x/y/z.jpg",
+                },
+            },
+        },
+        .base = "/regex-expand3/",
+        .max_age = -1,
+        .user_max_age = -1,
+        .views = &view2,
+    };
+
+    next_response = NULL;
+    expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, NULL, &async_ref);
+}
+
+static void
 test_auto_base(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
@@ -871,6 +995,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_regex(pool, cache);
     test_expand(pool, cache);
     test_expand_local(pool, cache);
+    test_expand_local_filter(pool, cache);
     test_auto_base(pool, cache);
 
     /* cleanup */
