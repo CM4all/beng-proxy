@@ -43,6 +43,35 @@ cgi_address_uri(struct pool *pool, const struct cgi_address *cgi)
     return p;
 }
 
+const char *
+cgi_address_id(struct pool *pool, const struct cgi_address *address)
+{
+    const char *p = p_strdup(pool, address->path);
+
+    if (address->jail.enabled)
+        p = p_strcat(pool, p, ";j", NULL);
+
+    if (address->interpreter != NULL)
+        p = p_strcat(pool, p, ";i=", address->interpreter, NULL);
+
+    if (address->action != NULL)
+        p = p_strcat(pool, p, ";a=", address->action, NULL);
+
+    for (unsigned i = 0; i < address->num_args; ++i)
+        p = p_strcat(pool, p, "!", address->args[i], NULL);
+
+    if (address->script_name != NULL)
+        p = p_strcat(pool, p, ";s=", address->script_name, NULL);
+
+    if (address->path_info != NULL)
+        p = p_strcat(pool, p, ";p=", address->path_info, NULL);
+
+    if (address->query_string != NULL)
+        p = p_strcat(pool, p, "?", address->query_string, NULL);
+
+    return p;
+}
+
 void
 cgi_address_copy(struct pool *pool, struct cgi_address *dest,
                  const struct cgi_address *src, bool have_address_list)

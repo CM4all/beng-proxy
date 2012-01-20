@@ -62,6 +62,15 @@ gcc_pure
 const char *
 cgi_address_uri(struct pool *pool, const struct cgi_address *cgi);
 
+/**
+ * Generates a string identifying the address.  This can be used as a
+ * key in a hash table.  The string will be allocated by the specified
+ * pool.
+ */
+gcc_pure
+const char *
+cgi_address_id(struct pool *pool, const struct cgi_address *address);
+
 void
 cgi_address_copy(struct pool *pool, struct cgi_address *dest,
                  const struct cgi_address *src, bool have_address_list);
