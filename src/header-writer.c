@@ -14,6 +14,30 @@
 #include <string.h>
 
 void
+header_write_begin(struct growing_buffer *gb, const char *name)
+{
+    assert(gb != NULL);
+    assert(name != NULL);
+    assert(*name != 0);
+
+    size_t name_length = strlen(name);
+    char *dest = growing_buffer_write(gb, name_length + 2);
+
+    memcpy(dest, name, name_length);
+    dest += name_length;
+    *dest++ = ':';
+    *dest++ = ' ';
+}
+
+void
+header_write_finish(struct growing_buffer *gb)
+{
+    assert(gb != NULL);
+
+    growing_buffer_write_buffer(gb, "\r\n", 2);
+}
+
+void
 header_write(struct growing_buffer *gb, const char *key, const char *value)
 {
     size_t key_length, value_length;

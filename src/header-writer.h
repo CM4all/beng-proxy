@@ -11,6 +11,21 @@ struct pool;
 struct strmap;
 struct growing_buffer;
 
+/**
+ * Begin writing a header line.  After this, you may write the value.
+ * Call header_write_finish() when you're done.
+ */
+void
+header_write_begin(struct growing_buffer *gb, const char *name);
+
+/**
+ * Finish the current header line.
+ *
+ * @see header_write_begin().
+ */
+void
+header_write_finish(struct growing_buffer *gb);
+
 void
 header_write(struct growing_buffer *gb, const char *key, const char *value);
 
