@@ -1411,6 +1411,22 @@ translate_handle_packet(struct translate_client *client,
         client->response.secure_cookie = true;
         return true;
 
+    case TRANSLATE_COOKIE_DOMAIN:
+        if (client->response.cookie_domain != NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_COOKIE_DOMAIN packet");
+            return false;
+        }
+
+        if (payload == NULL) {
+            translate_client_error(client,
+                                   "malformed TRANSLATE_COOKIE_DOMAIN packet");
+            return false;
+        }
+
+        client->response.cookie_domain = payload;
+        return true;
+
     case TRANSLATE_ERROR_DOCUMENT:
         client->response.error_document = true;
         return true;

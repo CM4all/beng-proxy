@@ -234,6 +234,11 @@ enum beng_translation_command {
      * replaced.
      */
     TRANSLATE_EXPAND_PATH = 84,
+
+    /**
+     * Set the session cookie's "Domain" attribute.
+     */
+    TRANSLATE_COOKIE_DOMAIN = 85,
 };
 
 struct beng_translation_header {

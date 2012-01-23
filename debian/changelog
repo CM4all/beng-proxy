@@ -3,6 +3,7 @@ cm4all-beng-proxy (2.0.5) unstable; urgency=low
   * merge release 1.4.7
   * translate-client: verify the PROXY and AJP payloads
   * translation: support inserting regex matches into CGI/file path
+  * translation: support customizing the cookie's "Domain" attribute
 
  --   
 

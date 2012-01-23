@@ -63,6 +63,7 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
     dest->www_authenticate = p_strdup_checked(pool, src->www_authenticate);
     dest->authentication_info = p_strdup_checked(pool,
                                                  src->authentication_info);
+    dest->cookie_domain = p_strdup_checked(pool, src->cookie_domain);
     dest->cookie_host = p_strdup_checked(pool, src->cookie_host);
 
     dest->headers = src->headers != NULL

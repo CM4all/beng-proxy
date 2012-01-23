@@ -491,6 +491,14 @@ response_dispatch_direct(struct request *request2,
 
         if (request2->translate.response->secure_cookie)
             growing_buffer_write_string(headers, "; Secure");
+
+        if (request2->translate.response->cookie_domain != NULL) {
+            growing_buffer_write_string(headers, "; Domain=\"");
+            growing_buffer_write_string(headers,
+                                        request2->translate.response->cookie_domain);
+            growing_buffer_write_string(headers, "\"");
+        }
+
         header_write_finish(headers);
 
         session = request_make_session(request2);
@@ -507,6 +515,14 @@ response_dispatch_direct(struct request *request2,
         growing_buffer_write_string(headers,
                                     "=; Discard; HttpOnly; Path=/; Version=1"
                                     "; Max-Age=0");
+
+        if (request2->translate.response->cookie_domain != NULL) {
+            growing_buffer_write_string(headers, "; Domain=\"");
+            growing_buffer_write_string(headers,
+                                        request2->translate.response->cookie_domain);
+            growing_buffer_write_string(headers, "\"");
+        }
+
         header_write_finish(headers);
     }
 
