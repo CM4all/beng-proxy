@@ -87,6 +87,7 @@ request_load_session(struct request *request, const char *session_id)
     struct session *session;
 
     assert(request != NULL);
+    assert(!request->stateless);
     assert(!session_id_is_defined(request->session_id));
     assert(session_id != NULL);
 
@@ -113,6 +114,7 @@ static const char *
 request_get_uri_session_id(const struct request *request)
 {
     assert(request != NULL);
+    assert(!request->stateless);
 
     return strmap_get_checked(request->args, "session");
 }
@@ -120,6 +122,9 @@ request_get_uri_session_id(const struct request *request)
 static const char *
 request_get_cookie_session_id(struct request *request)
 {
+    assert(request != NULL);
+    assert(!request->stateless);
+
     const struct strmap *cookies = request_get_cookies(request);
 
     return strmap_get_checked(cookies,
@@ -219,6 +224,13 @@ request_make_session(struct request *request)
 void
 request_ignore_session(struct request *request)
 {
+    assert(request != NULL);
+
+    if (!session_id_is_defined(request->session_id))
+        return;
+
+    assert(!request->stateless);
+
     if (request->args != NULL)
         strmap_remove(request->args, "session");
 
@@ -228,8 +240,12 @@ request_ignore_session(struct request *request)
 void
 request_discard_session(struct request *request)
 {
+    assert(request != NULL);
+
     if (!session_id_is_defined(request->session_id))
         return;
+
+    assert(!request->stateless);
 
     if (request->args != NULL)
         strmap_remove(request->args, "session");

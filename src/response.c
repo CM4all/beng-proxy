@@ -462,6 +462,7 @@ response_generate_set_cookie(struct request *request2,
                              struct growing_buffer *headers)
 {
     assert(request2 != NULL);
+    assert(!request2->stateless);
     assert(headers != NULL);
 
     if (request2->send_session_cookie) {
@@ -535,7 +536,8 @@ response_dispatch_direct(struct request *request2,
 
     request_discard_body(request2);
 
-    response_generate_set_cookie(request2, headers);
+    if (!request2->stateless)
+        response_generate_set_cookie(request2, headers);
 
 #ifdef SPLICE
     if (body != NULL)

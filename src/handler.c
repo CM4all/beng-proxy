@@ -103,6 +103,7 @@ handle_translated_request(struct request *request,
     request->connection->site_name = response->site;
 
     if (response->transparent) {
+        session_id_clear(&request->session_id);
         request->stateless = true;
         request->args = NULL;
     }

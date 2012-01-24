@@ -44,6 +44,11 @@ struct request {
      */
     const char *session_realm;
 
+    /**
+     * Is this request "stateless", i.e. is session management
+     * disabled?  This is initialized by request_determine_session(),
+     * and may be disabled later by handle_translated_request().
+     */
     bool stateless;
 
     struct {
