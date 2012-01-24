@@ -454,31 +454,17 @@ more_response_headers(const struct request *request2,
     return headers;
 }
 
-/*
- * dispatch
- *
+/**
+ * Generate the Set-Cookie response header for the given request.
  */
-
 static void
-response_dispatch_direct(struct request *request2,
-                         http_status_t status, struct growing_buffer *headers,
-                         struct istream *body)
+response_generate_set_cookie(struct request *request2,
+                             struct growing_buffer *headers)
 {
-    assert(!request2->response_sent);
-    assert(body == NULL || !istream_has_handler(body));
-
-    if (http_status_is_success(status) &&
-        request2->translate.response->www_authenticate != NULL)
-        /* default to "401 Unauthorized" */
-        status = HTTP_STATUS_UNAUTHORIZED;
-
-    headers = more_response_headers(request2, headers);
-
-    request_discard_body(request2);
+    assert(request2 != NULL);
+    assert(headers != NULL);
 
     if (request2->send_session_cookie) {
-        struct session *session;
-
         header_write_begin(headers, "set-cookie");
         growing_buffer_write_string(headers,
                                     request2->connection->instance->config.session_cookie);
@@ -501,7 +487,7 @@ response_dispatch_direct(struct request *request2,
 
         header_write_finish(headers);
 
-        session = request_make_session(request2);
+        struct session *session = request_make_session(request2);
         if (session != NULL) {
             session->cookie_sent = true;
             session_put(session);
@@ -525,6 +511,31 @@ response_dispatch_direct(struct request *request2,
 
         header_write_finish(headers);
     }
+}
+
+/*
+ * dispatch
+ *
+ */
+
+static void
+response_dispatch_direct(struct request *request2,
+                         http_status_t status, struct growing_buffer *headers,
+                         struct istream *body)
+{
+    assert(!request2->response_sent);
+    assert(body == NULL || !istream_has_handler(body));
+
+    if (http_status_is_success(status) &&
+        request2->translate.response->www_authenticate != NULL)
+        /* default to "401 Unauthorized" */
+        status = HTTP_STATUS_UNAUTHORIZED;
+
+    headers = more_response_headers(request2, headers);
+
+    request_discard_body(request2);
+
+    response_generate_set_cookie(request2, headers);
 
 #ifdef SPLICE
     if (body != NULL)
