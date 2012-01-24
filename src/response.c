@@ -463,12 +463,12 @@ response_generate_set_cookie(struct request *request2,
 {
     assert(request2 != NULL);
     assert(!request2->stateless);
+    assert(request2->session_cookie != NULL);
     assert(headers != NULL);
 
     if (request2->send_session_cookie) {
         header_write_begin(headers, "set-cookie");
-        growing_buffer_write_string(headers,
-                                    request2->connection->instance->config.session_cookie);
+        growing_buffer_write_string(headers, request2->session_cookie);
         growing_buffer_write_buffer(headers, "=", 1);
         growing_buffer_write_string(headers,
                                     session_id_format(request2->session_id,
@@ -497,8 +497,7 @@ response_generate_set_cookie(struct request *request2,
                !session_id_is_defined(request2->session_id)) {
         /* delete the cookie for the discarded session */
         header_write_begin(headers, "set-cookie");
-        growing_buffer_write_string(headers,
-                                    request2->connection->instance->config.session_cookie);
+        growing_buffer_write_string(headers, request2->session_cookie);
         growing_buffer_write_string(headers,
                                     "=; Discard; HttpOnly; Path=/; Version=1"
                                     "; Max-Age=0");

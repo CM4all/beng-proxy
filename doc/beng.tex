@@ -109,6 +109,13 @@ settings:
 \verb|session_cookie| & The name of the session cookie.  The
 default value is ``beng\_proxy\_session''. \\ \hline
 
+\verb|dynamic_session_cookie| & Append a suffix to the session cookie
+generated from the ``Host'' request header if set to \texttt{yes}.
+This is a measure to increase sessions separation of different hosts
+under the same domain, accounting for mainstream user agents that are
+known to ignore the ``Domain'' cookie attribute.  It is not guaranteed
+to be collision-free.  \\ \hline
+
 \verb|session_idle_timeout| & After this duration (in seconds), a
 session expires, unless it gets refreshed by a request. \\
 

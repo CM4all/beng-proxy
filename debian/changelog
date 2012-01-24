@@ -4,6 +4,8 @@ cm4all-beng-proxy (2.0.5) unstable; urgency=low
   * translate-client: verify the PROXY and AJP payloads
   * translation: support inserting regex matches into CGI/file path
   * translation: support customizing the cookie's "Domain" attribute
+  * request: new option "dynamic_session_cookie" adds suffix to cookie
+    name
 
  --   
 

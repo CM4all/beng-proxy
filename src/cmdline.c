@@ -152,6 +152,7 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
             const char *name, size_t name_length, const char *value)
 {
     static const char session_cookie[] = "session_cookie";
+    static const char dynamic_session_cookie[] = "dynamic_session_cookie";
     static const char session_idle_timeout[] = "session_idle_timeout";
     static const char max_connections[] = "max_connections";
     static const char tcp_stock_limit[] = "tcp_stock_limit";
@@ -259,6 +260,12 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
             arg_error(argv0, "Invalid value for session_cookie");
 
         config->session_cookie = p_strdup(pool, value);
+    } else if (name_length == sizeof(dynamic_session_cookie) - 1 &&
+               memcmp(name, dynamic_session_cookie, sizeof(dynamic_session_cookie) - 1) == 0) {
+        if (strcmp(value, "yes") == 0)
+            config->dynamic_session_cookie = true;
+        else if (strcmp(value, "no") != 0)
+            arg_error(argv0, "Invalid value for dynamic_session_cookie");
     } else if (name_length == sizeof(session_idle_timeout) - 1 &&
                memcmp(name, session_idle_timeout,
                       sizeof(session_idle_timeout) - 1) == 0) {

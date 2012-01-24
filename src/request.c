@@ -17,6 +17,8 @@
 #include "dpool.h"
 #include "strmap.h"
 #include "istream.h"
+#include "crc.h"
+#include "format.h"
 
 #include <daemon/log.h>
 
@@ -111,6 +113,25 @@ request_load_session(struct request *request, const char *session_id)
 }
 
 static const char *
+build_session_cookie_name(struct pool *pool, const struct config *config,
+                          const struct strmap *headers)
+{
+    if (headers == NULL || !config->dynamic_session_cookie)
+        return config->session_cookie;
+
+    const char *host = strmap_get(headers, "host");
+    if (host == NULL || *host == 0)
+        return config->session_cookie;
+
+    size_t length = strlen(config->session_cookie);
+    char *name = p_malloc(pool, length + 5);
+    memcpy(name, config->session_cookie, length);
+    format_uint16_hex_fixed(name + length, crc16_string(0, host));
+    name[length + 4] = 0;
+    return name;
+}
+
+static const char *
 request_get_uri_session_id(const struct request *request)
 {
     assert(request != NULL);
@@ -124,11 +145,11 @@ request_get_cookie_session_id(struct request *request)
 {
     assert(request != NULL);
     assert(!request->stateless);
+    assert(request->session_cookie != NULL);
 
     const struct strmap *cookies = request_get_cookies(request);
 
-    return strmap_get_checked(cookies,
-                              request->connection->instance->config.session_cookie);
+    return strmap_get_checked(cookies, request->session_cookie);
 }
 
 void
@@ -148,6 +169,11 @@ request_determine_session(struct request *request)
         user_agent_is_bot(user_agent);
     if (request->stateless)
         return;
+
+    request->session_cookie =
+        build_session_cookie_name(request->request->pool,
+                                  &request->connection->instance->config,
+                                  request->request->headers);
 
     session_id = request_get_uri_session_id(request);
     if (session_id == NULL || *session_id == 0) {

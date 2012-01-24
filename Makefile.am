@@ -274,6 +274,7 @@ SRC = src/main.c \
 	src/cmdline.c \
 	src/global.c \
 	src/event2.c \
+	src/crc.h \
 	src/bot.c \
 	src/crash.h \
 	src/crash.c \

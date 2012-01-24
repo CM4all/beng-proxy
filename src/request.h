@@ -28,6 +28,12 @@ struct request {
     struct strmap *args;
 
     struct strmap *cookies;
+
+    /**
+     * The name of the session cookie.
+     */
+    const char *session_cookie;
+
     session_id_t session_id;
     struct session_id_string session_id_string;
     bool send_session_cookie;
