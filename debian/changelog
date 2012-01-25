@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.5) unstable; urgency=low
 
-  * merge release 1.4.7
+  * merge release 1.4.8
   * translate-client: verify the PROXY and AJP payloads
   * translation: support inserting regex matches into CGI/file path
   * translation: support customizing the cookie's "Domain" attribute
@@ -45,6 +45,12 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.8) unstable; urgency=low
+
+  * merge release 1.2.13
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Jan 2012 12:16:53 -0000
 
 cm4all-beng-proxy (1.4.7) unstable; urgency=low
 
@@ -120,6 +126,12 @@ cm4all-beng-proxy (1.3) unstable; urgency=low
   * proxy-widget: client can choose only views that have an address
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 31 Oct 2011 17:41:14 +0100
+
+cm4all-beng-proxy (1.2.13) unstable; urgency=low
+
+  * merge release 1.1.26
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Jan 2012 12:15:19 -0000
 
 cm4all-beng-proxy (1.2.12) unstable; urgency=low
 
@@ -205,6 +217,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.26) unstable; urgency=low
+
+  * merge release 1.0.20
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Jan 2012 12:13:43 -0000
 
 cm4all-beng-proxy (1.1.25) unstable; urgency=low
 
@@ -397,6 +415,15 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.20) unstable; urgency=low
+
+  * ssl: load the whole certificate chain
+  * translate: fix PATH+JAILCGI+SITE check
+  * translate: fix HOME check
+  * resource-address: include all CGI attributes in cache key
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Jan 2012 12:10:43 -0000
+
 cm4all-beng-proxy (1.0.19) unstable; urgency=low
 
   * cookie-client: add a missing out-of-memory check
