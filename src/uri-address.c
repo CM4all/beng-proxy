@@ -219,8 +219,7 @@ uri_address_apply(struct pool *pool, const struct uri_with_address *src,
 
     const char *p = uri_absolute(pool, src->path,
                                  relative, relative_length);
-    if (p == NULL)
-        return NULL;
+    assert(p != NULL);
 
     return uri_address_with_path(pool, src, p);
 }

@@ -24,7 +24,8 @@ uri_compress(struct pool *pool, const char *uri);
 
 /**
  * Append a relative URI to an absolute base URI, and return the
- * resulting absolute URI.
+ * resulting absolute URI.  Will never return NULL, as there is no
+ * error checking.
  */
 gcc_pure gcc_malloc
 const char *

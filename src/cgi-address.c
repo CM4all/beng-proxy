@@ -179,14 +179,10 @@ cgi_address_apply(struct pool *pool, struct cgi_address *dest,
 
     const char *path_info = src->path_info != NULL ? src->path_info : "";
 
-    /* XXX */
-    const char *p = uri_absolute(pool, path_info,
-                                 relative, relative_length);
-    if (p == NULL)
-        return NULL;
-
     cgi_address_copy(pool, dest, src, have_address_list);
-    dest->path_info = p;
+    dest->path_info = uri_absolute(pool, path_info,
+                                   relative, relative_length);
+    assert(dest->path_info != NULL);
     return dest;
 }
 

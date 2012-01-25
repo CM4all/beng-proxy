@@ -177,6 +177,7 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
 
     const char *uri = uri_absolute(pool, base, relative_uri->data,
                                    relative_uri->length);
+    assert(uri != NULL);
     if (!strref_is_empty(relative_uri) && widget->query_string != NULL)
         /* the relative_uri is non-empty, and uri_absolute() has
            removed the query string: re-add the configured query
