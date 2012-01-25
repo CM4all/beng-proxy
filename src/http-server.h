@@ -79,6 +79,10 @@ struct http_server_request {
     char *uri;
     struct strmap *headers;
 
+    /**
+     * The request body.  The handler is responsible for closing this
+     * istream.
+     */
     struct istream *body;
 };
 

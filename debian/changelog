@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.2.13) unstable; urgency=low
 
-  * 
+  * merge release 1.1.26
 
  --   
 
@@ -88,6 +88,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.26) unstable; urgency=low
+
+  * merge release 1.0.20
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Jan 2012 12:13:43 -0000
 
 cm4all-beng-proxy (1.1.25) unstable; urgency=low
 
@@ -280,6 +286,15 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.20) unstable; urgency=low
+
+  * ssl: load the whole certificate chain
+  * translate: fix PATH+JAILCGI+SITE check
+  * translate: fix HOME check
+  * resource-address: include all CGI attributes in cache key
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Jan 2012 12:10:43 -0000
+
 cm4all-beng-proxy (1.0.19) unstable; urgency=low
 
   * cookie-client: add a missing out-of-memory check

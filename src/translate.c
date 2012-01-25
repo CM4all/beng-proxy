@@ -797,7 +797,7 @@ translate_handle_packet(struct translate_client *client,
                  client->resource_address->type == RESOURCE_ADDRESS_WAS ||
                  client->resource_address->type == RESOURCE_ADDRESS_FASTCGI)
             client->resource_address->u.cgi.jail.site_id = payload;
-        else if (client->resource_address->type == RESOURCE_ADDRESS_LOCAL ||
+        else if (client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
                  client->resource_address->u.local.jail.enabled)
             client->resource_address->u.local.jail.site_id = payload;
         else {
@@ -1066,13 +1066,15 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_HOME:
-        if ((client->resource_address->type == RESOURCE_ADDRESS_CGI ||
+        if (client->resource_address != NULL &&
+            (client->resource_address->type == RESOURCE_ADDRESS_CGI ||
              client->resource_address->type == RESOURCE_ADDRESS_WAS ||
              client->resource_address->type == RESOURCE_ADDRESS_FASTCGI) &&
             client->resource_address->u.cgi.jail.enabled &&
             client->resource_address->u.cgi.jail.home_directory == NULL)
             client->resource_address->u.cgi.jail.home_directory = payload;
-        else if (client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
+        else if (client->resource_address != NULL &&
+                 client->resource_address->type == RESOURCE_ADDRESS_LOCAL &&
                  client->resource_address->u.local.jail.enabled &&
                  client->resource_address->u.local.jail.home_directory == NULL)
             client->resource_address->u.local.jail.home_directory = payload;
