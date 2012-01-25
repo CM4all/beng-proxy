@@ -8,6 +8,7 @@
 #include "uri-edit.h"
 #include "uri-base.h"
 #include "uri-relative.h"
+#include "uri-verify.h"
 #include "pool.h"
 #include "strref.h"
 
@@ -42,7 +43,7 @@ uri_address_parse2(struct pool *pool, enum uri_scheme scheme,
     assert(uri != NULL);
 
     const char *path = strchr(uri, '/');
-    if (path == uri) {
+    if (path == uri || !uri_path_verify_quick(path)) {
         g_set_error(error_r, uri_address_quark(), 0,
                     "malformed HTTP URI");
         return NULL;

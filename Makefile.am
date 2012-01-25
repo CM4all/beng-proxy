@@ -912,6 +912,7 @@ test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/uri-address.c src/uri-relative.c \
 	src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri-base.c \
+	src/uri-verify.c \
 	src/address-list.c \
 	src/format.c \
 	$(POOL_SRC)
