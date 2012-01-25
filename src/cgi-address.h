@@ -111,8 +111,8 @@ cgi_address_is_expandable(const struct cgi_address *address)
         address->expand_path_info != NULL;
 }
 
-void
+bool
 cgi_address_expand(struct pool *pool, struct cgi_address *address,
-                   const GMatchInfo *match_info);
+                   const GMatchInfo *match_info, GError **error_r);
 
 #endif

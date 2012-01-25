@@ -126,27 +126,33 @@ widget_view_any_is_expandable(const struct widget_view *view)
     return false;
 }
 
-void
+bool
 widget_view_expand(struct pool *pool, struct widget_view *view,
-                   const GMatchInfo *match_info)
+                   const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(view != NULL);
     assert(match_info != NULL);
 
-    resource_address_expand(pool, &view->address, match_info);
-    transformation_expand_all(pool, view->transformation, match_info);
+    return resource_address_expand(pool, &view->address,
+                                   match_info, error_r) &&
+        transformation_expand_all(pool, view->transformation,
+                                  match_info, error_r);
 }
 
-void
+bool
 widget_view_expand_all(struct pool *pool, struct widget_view *view,
-                       const GMatchInfo *match_info)
+                       const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(match_info != NULL);
 
     while (view != NULL) {
-        widget_view_expand(pool, view, match_info);
+        if (!widget_view_expand(pool, view, match_info, error_r))
+            return false;
+
         view = view->next;
     }
+
+    return true;
 }

@@ -11,8 +11,11 @@
 
 struct pool;
 
+/**
+ * @return NULL on error
+ */
 const char *
 expand_string(struct pool *pool, const char *src,
-              const GMatchInfo *match_info);
+              const GMatchInfo *match_info, GError **error_r);
 
 #endif

@@ -10,16 +10,16 @@
 #include <assert.h>
 
 const char *
-expand_string(struct pool *pool, const char *src, const GMatchInfo *match_info)
+expand_string(struct pool *pool, const char *src,
+              const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(src != NULL);
     assert(match_info != NULL);
 
-    char *p = g_match_info_expand_references(match_info, src, NULL);
+    char *p = g_match_info_expand_references(match_info, src, error_r);
     if (p == NULL)
-        /* XXX an error has occurred; how to report to the caller? */
-        return src;
+        return NULL;
 
     /* move result to the memory pool */
     char *q = p_strdup(pool, p);

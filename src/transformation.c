@@ -74,9 +74,9 @@ transformation_any_is_expandable(const struct transformation *transformation)
     return false;
 }
 
-void
+bool
 transformation_expand(struct pool *pool, struct transformation *transformation,
-                      const GMatchInfo *match_info)
+                      const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(transformation != NULL);
@@ -86,24 +86,31 @@ transformation_expand(struct pool *pool, struct transformation *transformation,
     case TRANSFORMATION_PROCESS:
     case TRANSFORMATION_PROCESS_CSS:
     case TRANSFORMATION_PROCESS_TEXT:
-        break;
+        return true;
 
     case TRANSFORMATION_FILTER:
-        resource_address_expand(pool, &transformation->u.filter, match_info);
-        break;
+        return resource_address_expand(pool, &transformation->u.filter,
+                                       match_info, error_r);
     }
+
+    assert(false);
+    return true;
 }
 
-void
+bool
 transformation_expand_all(struct pool *pool,
                           struct transformation *transformation,
-                          const GMatchInfo *match_info)
+                          const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(match_info != NULL);
 
     while (transformation != NULL) {
-        transformation_expand(pool, transformation, match_info);
+        if (!transformation_expand(pool, transformation, match_info, error_r))
+            return false;
+
         transformation = transformation->next;
     }
+
+    return true;
 }

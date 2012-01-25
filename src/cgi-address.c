@@ -186,18 +186,27 @@ cgi_address_apply(struct pool *pool, struct cgi_address *dest,
     return dest;
 }
 
-void
+bool
 cgi_address_expand(struct pool *pool, struct cgi_address *address,
-                   const GMatchInfo *match_info)
+                   const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(address != NULL);
     assert(match_info != NULL);
 
-    if (address->expand_path != NULL)
-        address->path = expand_string(pool, address->expand_path, match_info);
+    if (address->expand_path != NULL) {
+        address->path = expand_string(pool, address->expand_path,
+                                      match_info, error_r);
+        if (address->path == NULL)
+            return false;
+    }
 
-    if (address->expand_path_info != NULL)
+    if (address->expand_path_info != NULL) {
         address->path_info = expand_string(pool, address->expand_path_info,
-                                           match_info);
+                                           match_info, error_r);
+        if (address->path_info == NULL)
+            return false;
+    }
+
+    return true;
 }

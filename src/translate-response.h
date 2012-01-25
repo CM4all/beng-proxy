@@ -130,9 +130,9 @@ translate_response_is_expandable(const struct translate_response *response);
  * Expand the strings in this response with the specified regex
  * result.
  */
-void
+bool
 translate_response_expand(struct pool *pool,
                           struct translate_response *response,
-                          const GMatchInfo *match_info);
+                          const GMatchInfo *match_info, GError **error_r);
 
 #endif

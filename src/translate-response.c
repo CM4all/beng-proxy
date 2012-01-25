@@ -95,16 +95,17 @@ translate_response_is_expandable(const struct translate_response *response)
          widget_view_any_is_expandable(response->views));
 }
 
-void
+bool
 translate_response_expand(struct pool *pool,
                           struct translate_response *response,
-                          const GMatchInfo *match_info)
+                          const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(response != NULL);
     assert(response->regex != NULL);
     assert(match_info != NULL);
 
-    resource_address_expand(pool, &response->address, match_info);
-    widget_view_expand_all(pool, response->views, match_info);
+    return resource_address_expand(pool, &response->address,
+                                   match_info, error_r) &&
+        widget_view_expand_all(pool, response->views, match_info, error_r);
 }

@@ -63,8 +63,8 @@ gcc_pure
 bool
 file_address_is_expandable(const struct file_address *address);
 
-void
+bool
 file_address_expand(struct pool *pool, struct file_address *address,
-                    const GMatchInfo *match_info);
+                    const GMatchInfo *match_info, GError **error_r);
 
 #endif

@@ -108,16 +108,16 @@ widget_view_any_is_expandable(const struct widget_view *view);
  * Expand the strings in this view (not following the linked list)
  * with the specified regex result.
  */
-void
+bool
 widget_view_expand(struct pool *pool, struct widget_view *view,
-                   const GMatchInfo *match_info);
+                   const GMatchInfo *match_info, GError **error_r);
 
 /**
  * The same as widget_view_expand(), but expand all voews in
  * the linked list.
  */
-void
+bool
 widget_view_expand_all(struct pool *pool, struct widget_view *view,
-                       const GMatchInfo *match_info);
+                       const GMatchInfo *match_info, GError **error_r);
 
 #endif

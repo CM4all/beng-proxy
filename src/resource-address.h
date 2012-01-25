@@ -192,8 +192,8 @@ resource_address_is_expandable(const struct resource_address *address);
 /**
  * Expand the expand_path_info attribute.
  */
-void
+bool
 resource_address_expand(struct pool *pool, struct resource_address *address,
-                        const GMatchInfo *match_info);
+                        const GMatchInfo *match_info, GError **error_r);
 
 #endif

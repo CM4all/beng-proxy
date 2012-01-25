@@ -456,19 +456,20 @@ resource_address_is_expandable(const struct resource_address *address)
 /**
  * Expand EXPAND_PATH_INFO specifications in a #resource_address.
  */
-void
+bool
 resource_address_expand(struct pool *pool, struct resource_address *address,
-                        const GMatchInfo *match_info)
+                        const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(address != NULL);
     assert(match_info != NULL);
 
-    if (address->type == RESOURCE_ADDRESS_LOCAL) {
-        file_address_expand(pool, &address->u.local, match_info);
-        return;
-    }
+    if (address->type == RESOURCE_ADDRESS_LOCAL)
+        return file_address_expand(pool, &address->u.local,
+                                   match_info, error_r);
 
     if (resource_address_is_cgi_alike(address))
-        cgi_address_expand(pool, &address->u.cgi, match_info);
+        return cgi_address_expand(pool, &address->u.cgi, match_info, error_r);
+
+    return true;
 }

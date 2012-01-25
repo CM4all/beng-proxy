@@ -134,27 +134,33 @@ tcache_response_evaluate(const struct translate_response *response)
  * Expand EXPAND_PATH_INFO specifications in all #resource_address
  * instances.
  */
-static void
+static bool
 tcache_expand_response(struct pool *pool, struct translate_response *response,
-                       const struct tcache_item *item, const char *uri)
+                       const struct tcache_item *item, const char *uri,
+                       GError **error_r)
 {
     assert(pool != NULL);
     assert(response != NULL);
     assert(item != NULL);
 
     if (uri == NULL || item->regex == NULL)
-        return;
+        return true;
 
     assert(response->regex != NULL);
     assert(response->base != NULL);
 
     GMatchInfo *match_info;
-    if (!g_regex_match(item->regex, uri, 0, &match_info))
-        /* XXX mismatch; what to do now? */
-        return;
+    if (!g_regex_match(item->regex, uri, 0, &match_info)) {
+        /* shouldn't happen, as this has already been matched */
+        g_set_error(error_r, http_response_quark(),
+                    HTTP_STATUS_BAD_REQUEST, "Regex mismatch");
+        return false;
+    }
 
-    translate_response_expand(pool, response, match_info);
+    bool success = translate_response_expand(pool, response,
+                                             match_info, error_r);
     g_match_info_free(match_info);
+    return success;
 }
 
 /**
@@ -675,7 +681,14 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
             /* create a writable copy and expand it */
             struct translate_response *response2 =
                 p_memdup(pool, response, sizeof(*response));
-            tcache_expand_response(pool, response2, item, tcr->request->uri);
+
+            GError *error = NULL;
+            if (!tcache_expand_response(pool, response2, item,
+                                        tcr->request->uri, &error)) {
+                tcr->handler->error(error, tcr->handler_ctx);
+                return;
+            }
+
             response = response2;
         }
     } else {
@@ -716,8 +729,11 @@ tcache_hit(struct pool *pool, const char *uri, const char *key,
         return;
     }
 
-    if (uri != NULL && translate_response_is_expandable(response))
-        tcache_expand_response(pool, response, item, uri);
+    if (uri != NULL && translate_response_is_expandable(response) &&
+        !tcache_expand_response(pool, response, item, uri, &error)) {
+        handler->error(error, ctx);
+        return;
+    }
 
     handler->response(response, ctx);
 }

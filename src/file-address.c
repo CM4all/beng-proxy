@@ -90,14 +90,20 @@ file_address_is_expandable(const struct file_address *address)
     return address->expand_path != NULL;
 }
 
-void
+bool
 file_address_expand(struct pool *pool, struct file_address *address,
-                    const GMatchInfo *match_info)
+                    const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(address != NULL);
     assert(match_info != NULL);
 
-    if (address->expand_path != NULL)
-        address->path = expand_string(pool, address->expand_path, match_info);
+    if (address->expand_path != NULL) {
+        address->path = expand_string(pool, address->expand_path,
+                                      match_info, error_r);
+        if (address->path == NULL)
+            return false;
+    }
+
+    return true;
 }

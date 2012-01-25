@@ -81,17 +81,17 @@ transformation_any_is_expandable(const struct transformation *transformation);
  * Expand the strings in this transformation (not following the linked
  * lits) with the specified regex result.
  */
-void
+bool
 transformation_expand(struct pool *pool, struct transformation *transformation,
-                      const GMatchInfo *match_info);
+                      const GMatchInfo *match_info, GError **error_r);
 
 /**
  * The same as transformation_expand(), but expand all transformations
  * in the linked list.
  */
-void
+bool
 transformation_expand_all(struct pool *pool,
                           struct transformation *transformation,
-                          const GMatchInfo *match_info);
+                          const GMatchInfo *match_info, GError **error_r);
 
 #endif
