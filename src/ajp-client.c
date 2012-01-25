@@ -850,7 +850,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     assert(protocol != NULL);
     assert(http_method_is_valid(method));
 
-    if (!uri_verify_quick(uri)) {
+    if (!uri_path_verify_quick(uri)) {
         lease_direct_release(lease, lease_ctx, true);
         if (body != NULL)
             istream_close_unused(body);

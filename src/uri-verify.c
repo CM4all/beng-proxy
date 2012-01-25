@@ -118,7 +118,7 @@ uri_path_verify_paranoid(const char *uri)
 }
 
 bool
-uri_verify_quick(const char *uri)
+uri_path_verify_quick(const char *uri)
 {
     if (*uri != '/')
         /* must begin with a slash */

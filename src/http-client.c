@@ -1144,7 +1144,7 @@ http_client_request(struct pool *caller_pool,
     assert(handler != NULL);
     assert(handler->response != NULL);
 
-    if (!uri_verify_quick(uri)) {
+    if (!uri_path_verify_quick(uri)) {
         lease_direct_release(lease, lease_ctx, true);
         if (body != NULL)
             istream_close_unused(body);
