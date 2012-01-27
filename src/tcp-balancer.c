@@ -37,7 +37,7 @@ struct tcp_balancer_request {
     const struct address_list *address_list;
     const struct address_envelope *current_address;
 
-    const struct stock_handler *handler;
+    const struct stock_get_handler *handler;
     void *handler_ctx;
 
     struct async_operation_ref *async_ref;
@@ -45,7 +45,7 @@ struct tcp_balancer_request {
 
 static const struct address_envelope *last_address;
 
-static const struct stock_handler tcp_balancer_stock_handler;
+static const struct stock_get_handler tcp_balancer_stock_handler;
 
 static void
 tcp_balancer_next(struct tcp_balancer_request *request)
@@ -109,7 +109,7 @@ tcp_balancer_stock_error(GError *error, void *ctx)
         request->handler->error(error, request->handler_ctx);
 }
 
-static const struct stock_handler tcp_balancer_stock_handler = {
+static const struct stock_get_handler tcp_balancer_stock_handler = {
     .ready = tcp_balancer_stock_ready,
     .error = tcp_balancer_stock_error,
 };
@@ -133,7 +133,7 @@ void
 tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  unsigned session_sticky,
                  const struct address_list *address_list,
-                 const struct stock_handler *handler, void *handler_ctx,
+                 const struct stock_get_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
     struct tcp_balancer_request *request = p_malloc(pool, sizeof(*request));

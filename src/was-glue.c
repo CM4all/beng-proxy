@@ -98,7 +98,7 @@ was_stock_error(GError *error, void *ctx)
     http_response_handler_invoke_abort(&request->handler, error);
 }
 
-static const struct stock_handler was_stock_handler = {
+static const struct stock_get_handler was_stock_handler = {
     .ready = was_stock_ready,
     .error = was_stock_error,
 };

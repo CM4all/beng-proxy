@@ -64,7 +64,7 @@ delegate_stock_error(GError *error, void *ctx)
     glue->handler->error(error, glue->handler_ctx);
 }
 
-static const struct stock_handler delegate_stock_handler = {
+static const struct stock_get_handler delegate_stock_handler = {
     .ready = delegate_stock_ready,
     .error = delegate_stock_error,
 };

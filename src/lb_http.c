@@ -219,7 +219,7 @@ my_stock_error(GError *error, void *ctx)
                                  "Connection failure");
 }
 
-static const struct stock_handler my_stock_handler = {
+static const struct stock_get_handler my_stock_handler = {
     .ready = my_stock_ready,
     .error = my_stock_error,
 };

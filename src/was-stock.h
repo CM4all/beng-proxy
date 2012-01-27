@@ -14,7 +14,7 @@
 struct pool;
 struct hstock;
 struct stock_item;
-struct stock_handler;
+struct stock_get_handler;
 struct async_operation_ref;
 
 struct hstock *
@@ -24,7 +24,7 @@ void
 was_stock_get(struct hstock *hstock, struct pool *pool,
               const struct jail_params *jail,
               const char *executable_path,
-              const struct stock_handler *handler, void *handler_ctx,
+              const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 
 /**

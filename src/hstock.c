@@ -116,7 +116,7 @@ hstock_free(struct hstock *hstock)
 void
 hstock_get(struct hstock *hstock, struct pool *pool,
            const char *uri, void *info,
-           const struct stock_handler *handler, void *handler_ctx,
+           const struct stock_get_handler *handler, void *handler_ctx,
            struct async_operation_ref *async_ref)
 {
     struct stock *stock;

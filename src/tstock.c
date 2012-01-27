@@ -80,7 +80,7 @@ tstock_stock_error(GError *error, void *ctx)
     r->handler->error(error, r->handler_ctx);
 }
 
-static const struct stock_handler tstock_stock_handler = {
+static const struct stock_get_handler tstock_stock_handler = {
     .ready = tstock_stock_ready,
     .error = tstock_stock_error,
 };

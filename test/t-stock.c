@@ -107,7 +107,7 @@ my_stock_error(GError *error, G_GNUC_UNUSED void *ctx)
     last_item = NULL;
 }
 
-static const struct stock_handler my_stock_handler = {
+static const struct stock_get_handler my_stock_handler = {
     .ready = my_stock_ready,
     .error = my_stock_error,
 };

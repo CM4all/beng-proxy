@@ -57,7 +57,7 @@ struct stock_waiting {
     struct pool *pool;
     void *info;
 
-    const struct stock_handler *handler;
+    const struct stock_get_handler *handler;
     void *handler_ctx;
 
     struct async_operation_ref *async_ref;
@@ -137,11 +137,11 @@ static const struct async_operation_class stock_wait_operation = {
 
 static bool
 stock_get_idle(struct stock *stock,
-               const struct stock_handler *handler, void *handler_ctx);
+               const struct stock_get_handler *handler, void *handler_ctx);
 
 static void
 stock_get_create(struct stock *stock, struct pool *caller_pool, void *info,
-                 const struct stock_handler *handler, void *handler_ctx,
+                 const struct stock_get_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref);
 
 /**
@@ -343,7 +343,7 @@ stock_is_empty(const struct stock *stock)
 
 static bool
 stock_get_idle(struct stock *stock,
-               const struct stock_handler *handler, void *handler_ctx)
+               const struct stock_get_handler *handler, void *handler_ctx)
 {
     while (stock->num_idle > 0) {
         assert(!list_empty(&stock->idle));
@@ -376,7 +376,7 @@ stock_get_idle(struct stock *stock,
 
 static void
 stock_get_create(struct stock *stock, struct pool *caller_pool, void *info,
-                 const struct stock_handler *handler, void *handler_ctx,
+                 const struct stock_get_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
     struct pool *pool;
@@ -401,7 +401,7 @@ stock_get_create(struct stock *stock, struct pool *caller_pool, void *info,
 
 void
 stock_get(struct stock *stock, struct pool *caller_pool, void *info,
-          const struct stock_handler *handler, void *handler_ctx,
+          const struct stock_get_handler *handler, void *handler_ctx,
           struct async_operation_ref *async_ref)
 {
     assert(stock != NULL);
@@ -468,7 +468,7 @@ stock_now_error(GError *error, void *ctx)
     data->error = error;
 }
 
-static const struct stock_handler stock_now_handler = {
+static const struct stock_get_handler stock_now_handler = {
     .ready = stock_now_ready,
     .error = stock_now_error,
 };

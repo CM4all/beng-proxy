@@ -117,7 +117,7 @@ memcached_stock_error(GError *error, void *ctx)
         istream_close_unused(request->value);
 }
 
-static const struct stock_handler memcached_stock_handler = {
+static const struct stock_get_handler memcached_stock_handler = {
     .ready = memcached_stock_ready,
     .error = memcached_stock_error,
 };

@@ -23,7 +23,7 @@ struct pool;
 struct async_operation_ref;
 struct stock_item;
 
-struct stock_handler {
+struct stock_get_handler {
     void (*ready)(struct stock_item *item, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
@@ -37,7 +37,7 @@ struct stock_item {
     bool is_idle;
 #endif
 
-    const struct stock_handler *handler;
+    const struct stock_get_handler *handler;
     void *handler_ctx;
 };
 
@@ -76,7 +76,7 @@ stock_is_empty(const struct stock *stock);
 
 void
 stock_get(struct stock *stock, struct pool *pool, void *info,
-          const struct stock_handler *handler, void *handler_ctx,
+          const struct stock_get_handler *handler, void *handler_ctx,
           struct async_operation_ref *async_ref);
 
 /**
@@ -119,7 +119,7 @@ hstock_free(struct hstock *hstock);
 void
 hstock_get(struct hstock *hstock, struct pool *pool,
            const char *uri, void *info,
-           const struct stock_handler *handler, void *handler_ctx,
+           const struct stock_get_handler *handler, void *handler_ctx,
            struct async_operation_ref *async_ref);
 
 void

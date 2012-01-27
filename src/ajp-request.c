@@ -99,7 +99,7 @@ ajp_request_stock_error(GError *error, void *ctx)
         istream_close_unused(hr->body);
 }
 
-static const struct stock_handler ajp_request_stock_handler = {
+static const struct stock_get_handler ajp_request_stock_handler = {
     .ready = ajp_request_stock_ready,
     .error = ajp_request_stock_error,
 };

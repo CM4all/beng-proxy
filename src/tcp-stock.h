@@ -13,7 +13,7 @@
 struct pool;
 struct balancer;
 struct stock_item;
-struct stock_handler;
+struct stock_get_handler;
 struct async_operation_ref;
 struct sockaddr;
 
@@ -34,7 +34,7 @@ tcp_stock_new(struct pool *pool, unsigned limit);
 void
 tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               const struct sockaddr *address, size_t address_length,
-              const struct stock_handler *handler, void *handler_ctx,
+              const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 
 void

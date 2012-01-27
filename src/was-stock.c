@@ -218,7 +218,7 @@ void
 was_stock_get(struct hstock *hstock, struct pool *pool,
               const struct jail_params *jail,
               const char *executable_path,
-              const struct stock_handler *handler, void *handler_ctx,
+              const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
     if (jail != NULL && jail->enabled && jail->home_directory == NULL) {

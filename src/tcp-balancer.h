@@ -13,7 +13,7 @@ struct hstock;
 struct pool;
 struct balancer;
 struct address_list;
-struct stock_handler;
+struct stock_get_handler;
 struct stock_item;
 struct async_operation_ref;
 
@@ -40,7 +40,7 @@ void
 tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  unsigned session_sticky,
                  const struct address_list *address_list,
-                 const struct stock_handler *handler, void *handler_ctx,
+                 const struct stock_get_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref);
 
 void

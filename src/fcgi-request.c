@@ -114,7 +114,7 @@ fcgi_stock_error(GError *error, void *ctx)
     http_response_handler_invoke_abort(&request->handler, error);
 }
 
-static const struct stock_handler fcgi_stock_handler = {
+static const struct stock_get_handler fcgi_stock_handler = {
     .ready = fcgi_stock_ready,
     .error = fcgi_stock_error,
 };
