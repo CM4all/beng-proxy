@@ -123,7 +123,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     event_base = event_init();
     pool = pool_new_libc(NULL, "root");
 
-    stock = stock_new(pool, &my_stock_class, NULL, NULL, 3);
+    stock = stock_new(pool, &my_stock_class, NULL, NULL, 3, NULL, NULL);
 
     /* create first item */
 

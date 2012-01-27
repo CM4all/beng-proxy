@@ -22,6 +22,15 @@
 struct pool;
 struct async_operation_ref;
 struct stock_item;
+struct stock;
+
+struct stock_handler {
+    /**
+     * The stock has become empty.  It is safe to delete it from
+     * within this method.
+     */
+    void (*empty)(struct stock *stock, const char *uri, void *ctx);
+};
 
 struct stock_get_handler {
     void (*ready)(struct stock_item *item, void *ctx);
@@ -59,9 +68,13 @@ struct stock_class {
 
 struct stock;
 
+/**
+ * @param handler optional handler class
+ */
 struct stock *
 stock_new(struct pool *pool, const struct stock_class *class,
-          void *class_ctx, const char *uri, unsigned limit);
+          void *class_ctx, const char *uri, unsigned limit,
+          const struct stock_handler *handler, void *handler_ctx);
 
 void
 stock_free(struct stock *stock);

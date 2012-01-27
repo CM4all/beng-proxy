@@ -31,6 +31,15 @@ struct stock {
      */
     unsigned limit;
 
+    const struct stock_handler *handler;
+    void *handler_ctx;
+
+    /**
+     * This event is used to move the "empty" check out of the current
+     * stack, to invoke the handler method in a safe environment.
+     */
+    struct event empty_event;
+
     struct event cleanup_event;
     struct event clear_event;
 
@@ -65,6 +74,42 @@ struct stock_waiting {
 
 static void
 destroy_item(struct stock *stock, struct stock_item *item);
+
+/*
+ * The "empty()" handler method.
+ *
+ */
+
+/**
+ * Check if the stock has become empty, and invoke the handler.
+ */
+static void
+stock_check_empty(struct stock *stock)
+{
+    if (stock_is_empty(stock) && stock->handler != NULL &&
+        stock->handler->empty != NULL)
+        stock->handler->empty(stock, stock->uri, stock->handler_ctx);
+}
+
+static void
+stock_empty_event_callback(gcc_unused int fd, short event gcc_unused,
+                           void *ctx)
+{
+    struct stock *stock = ctx;
+
+    stock_check_empty(stock);
+}
+
+static void
+stock_schedule_check_empty(struct stock *stock)
+{
+    static const struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
+
+    if (stock_is_empty(stock) && stock->handler != NULL &&
+        stock->handler->empty != NULL)
+        evtimer_add(&stock->empty_event, &tv);
+}
+
 
 /*
  * cleanup
@@ -108,6 +153,8 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 
     if (stock->num_idle > MAX_IDLE)
         stock_schedule_cleanup(stock);
+    else
+        stock_check_empty(stock);
 }
 
 
@@ -243,6 +290,7 @@ stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
 
     stock->may_clear = true;
     stock_schedule_clear(stock);
+    stock_check_empty(stock);
 }
 
 
@@ -253,7 +301,8 @@ stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
 
 struct stock *
 stock_new(struct pool *pool, const struct stock_class *class,
-          void *class_ctx, const char *uri, unsigned limit)
+          void *class_ctx, const char *uri, unsigned limit,
+          const struct stock_handler *handler, void *handler_ctx)
 {
     struct stock *stock;
 
@@ -273,7 +322,10 @@ stock_new(struct pool *pool, const struct stock_class *class,
     stock->class_ctx = class_ctx;
     stock->uri = uri == NULL ? NULL : p_strdup(pool, uri);
     stock->limit = limit;
+    stock->handler = handler;
+    stock->handler_ctx = handler_ctx;
 
+    evtimer_set(&stock->empty_event, stock_empty_event_callback, stock);
     evtimer_set(&stock->cleanup_event, stock_cleanup_event_callback, stock);
     evtimer_set(&stock->clear_event, stock_clear_event_callback, stock);
 
@@ -326,6 +378,7 @@ stock_free(struct stock *stock)
     /* must not call stock_free() when there are busy items left */
     assert(list_empty(&stock->busy));
 
+    evtimer_del(&stock->empty_event);
     evtimer_del(&stock->cleanup_event);
     evtimer_del(&stock->clear_event);
 
@@ -371,6 +424,7 @@ stock_get_idle(struct stock *stock,
         destroy_item(stock, item);
     }
 
+    stock_schedule_check_empty(stock);
     return false;
 }
 
@@ -523,6 +577,7 @@ stock_item_failed(struct stock_item *item, GError *error)
 
     item->handler->error(error, item->handler_ctx);
     stock_item_free(stock, item);
+    stock_schedule_check_empty(stock);
 
     stock_retry_waiting(stock);
 }
@@ -536,6 +591,7 @@ stock_item_aborted(struct stock_item *item)
     --stock->num_create;
 
     stock_item_free(stock, item);
+    stock_schedule_check_empty(stock);
 
     stock_retry_waiting(stock);
 }
@@ -563,6 +619,7 @@ stock_put(struct stock_item *item, bool destroy)
 
     if (destroy) {
         destroy_item(stock, item);
+        stock_schedule_check_empty(stock);
     } else {
 #ifndef NDEBUG
         item->is_idle = true;
@@ -604,4 +661,5 @@ stock_del(struct stock_item *item)
     --stock->num_idle;
 
     destroy_item(stock, item);
+    stock_schedule_check_empty(stock);
 }

@@ -10,8 +10,6 @@
 
 #include <daemon/log.h>
 
-#include <event.h>
-
 #include <assert.h>
 
 struct hstock {
@@ -25,45 +23,29 @@ struct hstock {
     unsigned limit;
 
     struct hashmap *stocks;
-
-    struct event cleanup_event;
 };
 
-static void
-hstock_schedule_cleanup(struct hstock *hstock)
-{
-    static const struct timeval tv = { .tv_sec = 120, .tv_usec = 0 };
-
-    evtimer_add(&hstock->cleanup_event, &tv);
-}
-
-static bool
-hstock_match_empty_stock(const char *key, void *value, void *ctx)
-{
-    struct hstock *hstock = ctx;
-    struct stock *stock = value;
-
-    if (stock_is_empty(stock)) {
-        daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
-                   (const void *)hstock, (const void *)stock, key);
-
-        stock_free(stock);
-        return true;
-    } else
-        return false;
-}
+/*
+ * stock handler
+ *
+ */
 
 static void
-hstock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
-                              void *ctx)
+hstock_stock_empty(struct stock *stock, const char *uri, void *ctx)
 {
     struct hstock *hstock = ctx;
 
-    daemon_log(6, "hstock_cleanup_event_callback(%p)\n", (const void *)hstock);
+    daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
+               (const void *)hstock, (const void *)stock, uri);
+    gcc_unused void *value = hashmap_remove(hstock->stocks, uri);
+    assert(value == stock);
 
-    hashmap_remove_all_match(hstock->stocks, hstock_match_empty_stock, hstock);
-    hstock_schedule_cleanup(hstock);
+    stock_free(stock);
 }
+
+static const struct stock_handler hstock_stock_handler = {
+    .empty = hstock_stock_empty,
+};
 
 struct hstock *
 hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
@@ -87,9 +69,6 @@ hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
     hstock->limit = limit;
     hstock->stocks = hashmap_new(pool, 64);
 
-    evtimer_set(&hstock->cleanup_event, hstock_cleanup_event_callback, hstock);
-    hstock_schedule_cleanup(hstock);
-
     return hstock;
 }
 
@@ -99,8 +78,6 @@ hstock_free(struct hstock *hstock)
     const struct hashmap_pair *pair;
 
     assert(hstock != NULL);
-
-    evtimer_del(&hstock->cleanup_event);
 
     hashmap_rewind(hstock->stocks);
 
@@ -127,7 +104,8 @@ hstock_get(struct hstock *hstock, struct pool *pool,
 
     if (stock == NULL) {
         stock = stock_new(hstock->pool, hstock->class, hstock->class_ctx, uri,
-                          hstock->limit);
+                          hstock->limit,
+                          &hstock_stock_handler, hstock);
         hashmap_set(hstock->stocks, p_strdup(hstock->pool, uri), stock);
     }
 
