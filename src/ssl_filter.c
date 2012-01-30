@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <poll.h>
+#include <sys/socket.h>
 
 struct ssl_filter {
     struct notify *notify;
@@ -31,7 +32,7 @@ struct ssl_filter {
     pthread_mutex_t mutex;
     pthread_t thread;
 
-    bool running;
+    bool closing;
 };
 
 static inline void
@@ -66,6 +67,8 @@ ssl_set_error(GError **error_r)
 static void
 ssl_filter_close_sockets(struct ssl_filter *ssl)
 {
+    ssl->closing = true;
+
     if (ssl->encrypted_fd >= 0) {
         close(ssl->encrypted_fd);
         ssl->encrypted_fd = -1;
@@ -75,6 +78,24 @@ ssl_filter_close_sockets(struct ssl_filter *ssl)
         close(ssl->plain_fd);
         ssl->plain_fd = -1;
     }
+}
+
+/**
+ * Shut down both sockets.  This is used to wake up the thread; note
+ * that closing the file descriptors will not make poll() return.
+ *
+ * The #ssl_filter object must be locked by the caller.
+ */
+static void
+ssl_filter_shutdown_sockets(struct ssl_filter *ssl)
+{
+    ssl->closing = true;
+
+    if (ssl->encrypted_fd >= 0)
+        shutdown(ssl->encrypted_fd, SHUT_RDWR);
+
+    if (ssl->plain_fd >= 0)
+        shutdown(ssl->plain_fd, SHUT_RDWR);
 }
 
 /**
@@ -94,7 +115,9 @@ ssl_poll(struct ssl_filter *ssl, short events, int timeout_ms,
     ssl_filter_unlock(ssl);
     int ret = poll(&pfd, 1, timeout_ms);
     ssl_filter_lock(ssl);
-    if (ret > 0)
+    if (ssl->closing)
+        return 0;
+    else if (ret > 0)
         return pfd.revents;
     else if (ret == 0) {
         g_set_error(error_r, ssl_quark(), 0, "Timeout");
@@ -109,7 +132,9 @@ ssl_poll(struct ssl_filter *ssl, short events, int timeout_ms,
 static bool
 ssl_filter_do_handshake(struct ssl_filter *ssl, GError **error_r)
 {
-    while (ssl->encrypted_fd >= 0) {
+    while (!ssl->closing) {
+        assert(ssl->encrypted_fd >= 0);
+
         ERR_clear_error();
         int ret = SSL_do_handshake(ssl->ssl);
         if (ret == 1)
@@ -146,8 +171,13 @@ ssl_filter_thread(void *ctx)
 
     GError *error = NULL;
     if (!ssl_filter_do_handshake(ssl, &error)) {
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
+        if (error != NULL) {
+            fprintf(stderr, "%s\n", error->message);
+            g_error_free(error);
+        } else {
+            assert(ssl->closing);
+        }
+
         ssl_filter_close_sockets(ssl);
     }
 
@@ -160,7 +190,10 @@ ssl_filter_thread(void *ctx)
         },
     };
 
-    while (ssl->encrypted_fd >= 0 && ssl->plain_fd >= 0) {
+    while (!ssl->closing) {
+        assert(ssl->encrypted_fd >= 0);
+        assert(ssl->plain_fd >= 0);
+
         pfds[0].events = pfds[1].events = 0;
         pfds[0].revents = pfds[1].revents = 0;
 
@@ -190,7 +223,7 @@ ssl_filter_thread(void *ctx)
         ssl_filter_unlock(ssl);
         int n = poll(p, nfds, -1);
         ssl_filter_lock(ssl);
-        if (n <= 0 || ssl->encrypted_fd < 0 || ssl->plain_fd < 0)
+        if (n <= 0 || ssl->closing)
             break;
 
         if ((pfds[1].revents & POLLIN) != 0 &&
@@ -283,7 +316,7 @@ ssl_filter_new(struct pool *pool, SSL_CTX *ssl_ctx,
 
     pthread_mutex_init(&ssl->mutex, NULL);
 
-    ssl->running = false;
+    ssl->closing = false;
 
     int error = pthread_create(&ssl->thread, NULL, ssl_filter_thread, ssl);
     if (error != 0) {
@@ -306,10 +339,12 @@ ssl_filter_free(struct ssl_filter *ssl)
     if (ssl->ssl != NULL)
         SSL_free(ssl->ssl);
 
-    ssl_filter_close_sockets(ssl);
+    ssl_filter_shutdown_sockets(ssl);
 
     ssl_filter_unlock(ssl);
 
     pthread_join(ssl->thread, NULL);
     pthread_mutex_destroy(&ssl->mutex);
+
+    ssl_filter_close_sockets(ssl);
 }
