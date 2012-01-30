@@ -342,6 +342,9 @@ stock_new(struct pool *pool, const struct stock_class *class,
     if (limit > 0)
         list_init(&stock->waiting);
 
+    stock->may_clear = false;
+    stock_schedule_clear(stock);
+
     return stock;
 }
 
