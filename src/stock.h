@@ -66,6 +66,10 @@ stock_new(pool_t pool, const struct stock_class *class,
 void
 stock_free(struct stock *stock);
 
+G_GNUC_PURE
+const char *
+stock_get_uri(struct stock *stock);
+
 /**
  * Returns true if there are no items in the stock - neither idle nor
  * busy.
