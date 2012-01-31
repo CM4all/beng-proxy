@@ -334,6 +334,14 @@ stock_free(struct stock *stock)
     pool_unref(stock->pool);
 }
 
+const char *
+stock_get_uri(struct stock *stock)
+{
+    assert(stock != NULL);
+
+    return stock->uri;
+}
+
 bool
 stock_is_empty(const struct stock *stock)
 {

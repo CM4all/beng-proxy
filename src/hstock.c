@@ -128,7 +128,7 @@ hstock_get(struct hstock *hstock, struct pool *pool,
     if (stock == NULL) {
         stock = stock_new(hstock->pool, hstock->class, hstock->class_ctx, uri,
                           hstock->limit);
-        hashmap_set(hstock->stocks, p_strdup(hstock->pool, uri), stock);
+        hashmap_set(hstock->stocks, stock_get_uri(stock), stock);
     }
 
     stock_get(stock, pool, info, handler, handler_ctx, async_ref);
