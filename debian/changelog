@@ -4,7 +4,7 @@ cm4all-beng-proxy (1.0.21) unstable; urgency=low
   * notify: fix endless busy loop
   * ssl_filter: fix hang while tearing down connection
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 31 Jan 2012 15:24:50 -0000
 
 cm4all-beng-proxy (1.0.20) unstable; urgency=low
 
