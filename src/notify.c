@@ -34,18 +34,18 @@ notify_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 {
     struct notify *notify = ctx;
 
+    char buffer[32];
+    read(fd, buffer, sizeof(buffer));
+
 #if GCC_CHECK_VERSION(4,6)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wbad-function-cast"
 #endif
-    if (!g_atomic_int_compare_and_exchange(&notify->value, 1, 0))
+    if (g_atomic_int_compare_and_exchange(&notify->value, 1, 0))
 #if GCC_CHECK_VERSION(4,6)
 #pragma GCC diagnostic pop
 #endif
-        return;
-
-    char buffer[32];
-    read(fd, buffer, sizeof(buffer));
+        notify->callback(notify->callback_ctx);
 }
 
 struct notify *
