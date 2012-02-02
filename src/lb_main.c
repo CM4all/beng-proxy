@@ -118,11 +118,12 @@ exit_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
     if (is_watchdog)
         evtimer_del(&launch_worker_event);
 
-    deinit_all_listeners(instance);
     deinit_all_controls(instance);
 
     while (!list_empty(&instance->connections))
         lb_connection_close((struct lb_connection*)instance->connections.next);
+
+    deinit_all_listeners(instance);
 
     lb_hmonitor_deinit();
 
@@ -307,6 +308,8 @@ int main(int argc, char **argv)
     pool_commit();
 
     pool_recycler_clear();
+
+    ssl_global_deinit();
 
     daemonize_cleanup();
 
