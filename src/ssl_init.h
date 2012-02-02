@@ -10,4 +10,7 @@
 void
 ssl_global_init(void);
 
+void
+ssl_global_deinit(void);
+
 #endif

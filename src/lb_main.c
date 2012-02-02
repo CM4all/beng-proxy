@@ -293,6 +293,8 @@ int main(int argc, char **argv)
 
     pool_recycler_clear();
 
+    ssl_global_deinit();
+
     daemonize_cleanup();
 
     if (instance.cmdline.enable_splice)
