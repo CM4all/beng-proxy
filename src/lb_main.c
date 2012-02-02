@@ -117,10 +117,10 @@ exit_event_callback(int fd __attr_unused, short event __attr_unused, void *ctx)
     if (is_watchdog)
         evtimer_del(&launch_worker_event);
 
-    deinit_all_listeners(instance);
-
     while (!list_empty(&instance->connections))
         lb_connection_close((struct lb_connection*)instance->connections.next);
+
+    deinit_all_listeners(instance);
 
     pool_commit();
 
