@@ -1,5 +1,6 @@
 cm4all-beng-proxy (1.0.22) unstable; urgency=low
 
+  * debian/rules: don't run libtool
   * lb: thread safety for the SSL filter
   * lb: fix crash during shutdown
   * http-server: fix uninitialised variable

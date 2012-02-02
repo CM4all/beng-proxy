@@ -17,7 +17,6 @@ debian/stamp-build:
 	dh_testdir
 
 	mkdir -p build
-	libtoolize --automake --copy --force
 	aclocal
 	automake --add-missing --foreign
 	autoconf
