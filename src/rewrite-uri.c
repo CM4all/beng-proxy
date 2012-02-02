@@ -141,6 +141,15 @@ do_rewrite_widget_uri(struct pool *pool,
                       enum uri_mode mode, bool stateful,
                       const char *view)
 {
+    if (widget->class->local_uri != NULL &&
+        value->length >= 2 && value->data[0] == '@' &&
+        value->data[1] == '/')
+        /* relative to widget's "local URI" */
+        return p_strncat(pool, widget->class->local_uri,
+                         strlen(widget->class->local_uri),
+                         value->data + 2, value->length - 2,
+                         NULL);
+
     const char *frame = NULL;
     const char *uri;
 

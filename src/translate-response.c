@@ -32,6 +32,7 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
     dest->scheme = p_strdup_checked(pool, src->scheme);
     dest->host = p_strdup_checked(pool, src->host);
     dest->uri = p_strdup_checked(pool, src->uri);
+    dest->local_uri = p_strdup_checked(pool, src->local_uri);
     dest->untrusted = p_strdup_checked(pool, src->untrusted);
     dest->untrusted_prefix = p_strdup_checked(pool, src->untrusted_prefix);
     dest->untrusted_site_suffix =

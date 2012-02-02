@@ -50,6 +50,8 @@ struct translate_response {
     const char *host;
     const char *uri;
 
+    const char *local_uri;
+
     const char *untrusted;
     const char *untrusted_prefix;
     const char *untrusted_site_suffix;

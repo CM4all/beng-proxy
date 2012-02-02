@@ -106,6 +106,10 @@ class _Lookup:
         if m:
             response.packet(TRANSLATE_COOKIE_HOST, m.group(1))
             return
+        m = re.match(r'^local_uri\s+"(\S*/)"$', line)
+        if m:
+            response.packet(TRANSLATE_LOCAL_URI, m.group(1))
+            return
 
         if line == 'process':
             response.process()

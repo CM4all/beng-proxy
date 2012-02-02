@@ -1,2 +1,3 @@
 server "http://cfatest01.intern.cm-ag/widgets/base.html"
+local_uri "/.cm4all/widget-res/demo_base/"
 process

@@ -239,6 +239,13 @@ enum beng_translation_command {
      * Set the session cookie's "Domain" attribute.
      */
     TRANSLATE_COOKIE_DOMAIN = 85,
+
+    /**
+     * The URI of the "local" location of a widget class.  This may
+     * refer to a location that serves static resources.  It is used
+     * by the processor for rewriting URIs.
+     */
+    TRANSLATE_LOCAL_URI = 86,
 };
 
 struct beng_translation_header {

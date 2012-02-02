@@ -19,6 +19,11 @@ struct widget_class {
     struct widget_view views;
 
     /**
+     * The URI prefix that represents '@/'.
+     */
+    const char *local_uri;
+
+    /**
      * The (beng-proxy) hostname on which requests to this widget are
      * allowed.  If not set, then this is a trusted widget.  Requests
      * from an untrusted widget to a trusted one are forbidden.

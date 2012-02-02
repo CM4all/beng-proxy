@@ -1205,6 +1205,17 @@ and query string \\
 
 \hline
 
+\label{localuri}
+\verb|LOCAL_URI| & The URI of the "local" location of a widget class.
+This may refer to a location that serves static resources.  It is used
+by the processor for rewriting URIs beginning with ``@/'' (see
+\ref{uriat}).  The payload must end with a slash.  \emph{beng-proxy}
+does not process this URI.  It is going to be evaluated by the
+browser, and may be absolute.  For example, it may refer to a
+dedicated resource server. \\
+
+\hline
+
 \verb|DUMP_HEADERS| & Enable header dumps for the widget: on a HTTP
 request, the request and response headers will be logged.  Only for
 debugging purposes. \\
@@ -1849,6 +1860,25 @@ Give a widget served from \texttt{http://widget.server/foo/}, the URI
 This is a proprietary extension in the spirit of the UNIX shell syntax
 (referring to the ``home'' of a widget).  It does not work without
 \emph{beng-proxy}.
+
+\subsubsection{Static Widget Resources}
+\label{uriat}
+
+It is often desirable for widgets to publish static resource files in
+a special global location, served without the processor overhead.
+This location can be configured with the \verb|LOCAL_URI| translation
+packet (see \ref{localuri}).
+
+Within a widget, the URI prefix ``@/'' refers to this location.
+Example:
+
+\begin{verbatim}
+<img src="@/logo.png"/>
+\end{verbatim}
+
+All resources in this location are decoupled from the widget instance
+and from the current document.  Therefore, the URI rewriting mode is
+ignored.
 
 \subsection{Frames}
 \label{frames}

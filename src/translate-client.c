@@ -1582,6 +1582,23 @@ translate_handle_packet(struct translate_client *client,
         transformation = translate_add_transformation(client);
         transformation->type = TRANSFORMATION_PROCESS_TEXT;
         return true;
+
+    case TRANSLATE_LOCAL_URI:
+        if (client->response.local_uri != NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_LOCAL_URI packet");
+            return false;
+        }
+
+        if (payload == NULL || *payload == 0 ||
+            payload[strlen(payload) - 1] != '/') {
+            translate_client_error(client,
+                                   "malformed TRANSLATE_LOCAL_URI packet");
+            return false;
+        }
+
+        client->response.local_uri = payload;
+        return true;
     }
 
     GError *error = g_error_new(translate_quark(), 0,

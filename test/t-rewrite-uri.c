@@ -73,6 +73,7 @@ widget_resolver_new(G_GNUC_UNUSED struct pool *pool, G_GNUC_UNUSED struct pool *
             },
         },
     };
+
     static struct uri_with_address address2 = {
         .scheme = URI_SCHEME_HTTP,
         .host_and_port = "widget-server",
@@ -89,12 +90,32 @@ widget_resolver_new(G_GNUC_UNUSED struct pool *pool, G_GNUC_UNUSED struct pool *
         },
     };
 
+    static struct uri_with_address address3 = {
+        .scheme = URI_SCHEME_HTTP,
+        .host_and_port = "widget-server",
+        .path = "/3",
+    };
+    static const struct widget_class class3 = {
+        .local_uri = "/resources/3/",
+        .views = {
+            .address = {
+                .type = RESOURCE_ADDRESS_HTTP,
+                .u = {
+                    .http = &address3,
+                },
+            },
+        },
+    };
+
     if (strcmp(widget->class_name, "1") == 0) {
         address_list_init(&address1.addresses);
         widget->class = &class1;
     } else if (strcmp(widget->class_name, "2") == 0) {
         address_list_init(&address2.addresses);
         widget->class = &class2;
+    } else if (strcmp(widget->class_name, "3") == 0) {
+        address_list_init(&address3.addresses);
+        widget->class = &class3;
     }
 
     callback(ctx);
@@ -375,6 +396,8 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     strref_set_c(&value, "1");
     widget_set_id(&widget, pool, &value);
 
+    assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_DIRECT,
+                         "http://widget-server/@/foo");
     assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/123");
     assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
@@ -403,6 +426,27 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                           "http://widget-server/2");
     assert_rewrite_check3(pool, &widget, NULL, URI_MODE_FOCUS, false, "foo",
                           "/index.html;focus=1&view=foo");
+
+    /* test the "@/" syntax */
+
+    widget_init(&widget, pool, NULL);
+    widget.class_name = "3";
+    widget.parent = &container;
+    strref_set_c(&value, "id3");
+    widget_set_id(&widget, pool, &value);
+
+    assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
+                         "http://widget-server/123");
+    assert_rewrite_check(pool, &widget, "123", URI_MODE_FOCUS,
+                         NULL);
+    assert_rewrite_check(pool, &widget, "123", URI_MODE_PARTIAL,
+                         NULL);
+    assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_DIRECT,
+                         "/resources/3/foo");
+    assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_FOCUS,
+                         "/resources/3/foo");
+    assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_PARTIAL,
+                         "/resources/3/foo");
 
     /* cleanup */
 

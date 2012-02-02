@@ -69,6 +69,7 @@ widget_translate_response(const struct translate_response *response, void *ctx)
     }
 
     class = p_malloc(lookup->pool, sizeof(*class));
+    class->local_uri = response->local_uri;
     class->untrusted_host = response->untrusted;
     class->untrusted_prefix = response->untrusted_prefix;
     class->untrusted_site_suffix = response->untrusted_site_suffix;
