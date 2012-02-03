@@ -12,14 +12,12 @@
 #include "growing-buffer.h"
 #include "istream-gb.h"
 
-#include <socket/util.h>
-
 #include <string.h>
 
 bool
 http_server_maybe_send_100_continue(struct http_server_connection *connection)
 {
-    assert(connection->fd >= 0);
+    assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == READ_BODY);
 
     if (!connection->request.expect_100_continue)
@@ -33,7 +31,7 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
                                                       "HTTP/1.1 100 Continue\r\n\r\n");
     istream_handler_set(connection->response.istream,
                         &http_server_response_stream_handler, connection,
-                        istream_direct_mask_to(connection->fd_type));
+                        socket_wrapper_direct_mask(&connection->socket));
 
     connection->response.writing_100_continue = true;
 
@@ -163,13 +161,13 @@ http_server_response(const struct http_server_request *request,
     connection->response.istream = body;
     istream_handler_set(connection->response.istream,
                         &http_server_response_stream_handler, connection,
-                        istream_direct_mask_to(connection->fd_type));
+                        socket_wrapper_direct_mask(&connection->socket));
 
     connection->response.writing_100_continue = false;
 
-    socket_set_cork(connection->fd, true);
+    socket_wrapper_set_cork(&connection->socket, true);
     if (http_server_try_write(connection))
-        socket_set_cork(connection->fd, false);
+        socket_wrapper_set_cork(&connection->socket, false);
 }
 
 void

@@ -234,6 +234,7 @@ HDR = \
 	src/shm.h \
 	src/sink-gstring.h \
 	src/sink-impl.h \
+	src/socket_wrapper.c src/socket_wrapper.h \
 	src/static-file.h \
 	src/static-headers.h \
 	src/stock.h \
@@ -563,6 +564,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/ssl_create.c \
 	src/ssl_filter.h \
 	src/ssl_filter.c \
+	src/socket_wrapper.c \
 	src/ping.c src/ping.h \
 	src/lb_global.c \
 	src/lb_cmdline.h \
@@ -1062,6 +1064,7 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 test_t_http_server_SOURCES = test/t-http-server.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
+	src/socket_wrapper.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	$(POOL_SRC) \
@@ -1091,6 +1094,7 @@ test_t_http_server_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
+	src/socket_wrapper.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1117,6 +1121,7 @@ test_t_http_server_mirror_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_t_http_server_hold_SOURCES = test/t-http-server-hold.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
+	src/socket_wrapper.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1144,6 +1149,7 @@ test_t_http_server_hold_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_t_http_server_null_SOURCES = test/t-http-server-null.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
+	src/socket_wrapper.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1171,6 +1177,7 @@ test_t_http_server_null_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
+	src/socket_wrapper.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1199,6 +1206,7 @@ test_t_http_server_dummy_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
+	src/socket_wrapper.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1728,6 +1736,7 @@ test_run_httpd_hello_SOURCES = test/run_httpd_hello.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/http-body.c \
+	src/socket_wrapper.c \
 	src/direct.c src/fd-util.c src/fd_util.c \
 	src/address.c \
 	src/listener.c \

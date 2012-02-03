@@ -95,7 +95,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
         static const char msg[] =
             "This server requires HTTP 1.1.";
 
-        send(connection->fd, msg, sizeof(msg) - 1, MSG_DONTWAIT|MSG_NOSIGNAL);
+        socket_wrapper_write(&connection->socket, msg, sizeof(msg) - 1);
         http_server_done(connection);
         return false;
     }
@@ -342,8 +342,9 @@ http_server_read_to_buffer(struct http_server_connection *connection)
 {
     assert(!fifo_buffer_full(connection->input));
 
-    ssize_t nbytes = recv_to_buffer(connection->fd, connection->input,
-                                    INT_MAX);
+    ssize_t nbytes = socket_wrapper_read_to_buffer(&connection->socket,
+                                                   connection->input,
+                                                   INT_MAX);
     if (nbytes > 0) {
         connection->request.bytes_received += nbytes;
         return true;
@@ -401,14 +402,15 @@ http_server_try_request_direct(struct http_server_connection *connection)
 {
     ssize_t nbytes;
 
-    assert(connection->fd >= 0);
+    assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == READ_BODY);
 
     if (!http_server_maybe_send_100_continue(connection))
         return false;
 
     nbytes = http_body_try_direct(&connection->request.body_reader,
-                                  connection->fd, connection->fd_type);
+                                  connection->socket.fd,
+                                  connection->socket.fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
         return true;
@@ -447,7 +449,8 @@ static bool
 http_server_try_read2(struct http_server_connection *connection)
 {
     if (connection->request.read_state == READ_BODY &&
-        istream_check_direct(&connection->request.body_reader.output, connection->fd_type)) {
+        istream_check_direct(&connection->request.body_reader.output,
+                             connection->socket.fd_type)) {
         if (fifo_buffer_empty(connection->input))
             return http_server_try_request_direct(connection);
         else {
@@ -479,7 +482,7 @@ http_server_try_read(struct http_server_connection *connection)
         assert(connection->request.read_state != READ_HEADERS);
 
         event_del(&connection->timeout);
-        event_del(&connection->request.event);
+        socket_wrapper_unschedule_read(&connection->socket);
     }
 
     return true;

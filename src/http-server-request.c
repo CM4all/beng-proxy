@@ -62,8 +62,7 @@ http_server_request_stream_available(istream_t istream, bool partial)
 {
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
+    assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == READ_BODY);
 
     return http_body_available(&connection->request.body_reader,
@@ -75,8 +74,7 @@ http_server_request_stream_read(istream_t istream)
 {
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
-    assert(connection != NULL);
-    assert(connection->fd >= 0);
+    assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == READ_BODY);
     assert(istream_has_handler(http_body_istream(&connection->request.body_reader)));
     assert(connection->request.request->body != NULL);
@@ -98,7 +96,7 @@ http_server_request_stream_close(istream_t istream)
     assert(connection->request.read_state == READ_BODY);
     assert(!http_body_eof(&connection->request.body_reader));
 
-    event_del(&connection->request.event);
+    socket_wrapper_unschedule_read(&connection->socket);
 
     connection->request.read_state = READ_END;
 

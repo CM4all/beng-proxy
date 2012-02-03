@@ -65,7 +65,7 @@ bool
 http_server_try_write(struct http_server_connection *connection)
 {
     assert(connection != NULL);
-    assert(connection->fd >= 0);
+    assert(http_server_connection_valid(connection));
     assert(connection->request.read_state != READ_START &&
            connection->request.read_state != READ_HEADERS);
     assert(connection->request.request != NULL);
@@ -80,46 +80,11 @@ http_server_try_write(struct http_server_connection *connection)
     return valid;
 }
 
-/**
- * @return false if the connection has been closed
- */
 static bool
-http_server_write_event_callback2(struct http_server_connection *connection,
-                                  short event)
-{
-    if (event & EV_TIMEOUT) {
-        daemon_log(4, "write timeout on HTTP connection from %s\n",
-                   connection->remote_host);
-        http_server_cancel(connection);
-        return false;
-    }
-
-    connection->response.want_write = false;
-
-    if (!http_server_try_write(connection))
-        return false;
-
-    if (!connection->response.want_write)
-        event_del(&connection->response.event);
-
-    return true;
-}
-
-static void
-http_server_write_event_callback(int fd gcc_unused, short event, void *ctx)
+http_server_socket_read(void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
-    http_server_write_event_callback2(connection, event);
-    pool_commit();
-}
-
-/**
- * @return false if the connection has been closed
- */
-static bool
-http_server_read_event_callback2(struct http_server_connection *connection)
-{
     if (connection->request.read_state == READ_END) {
         /* check if the connection was closed by the client while we
            were processing the request */
@@ -143,14 +108,38 @@ http_server_read_event_callback2(struct http_server_connection *connection)
     return http_server_try_read(connection);
 }
 
-static void
-http_server_read_event_callback(gcc_unused int fd, gcc_unused short event, void *ctx)
+static bool
+http_server_socket_write(void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
-    http_server_read_event_callback2(connection);
-    pool_commit();
+    connection->response.want_write = false;
+
+    if (!http_server_try_write(connection))
+        return false;
+
+    if (!connection->response.want_write)
+        socket_wrapper_unschedule_write(&connection->socket);
+
+    return true;
 }
+
+static bool
+http_server_socket_timeout(void *ctx)
+{
+    struct http_server_connection *connection = ctx;
+
+    daemon_log(4, "write timeout on HTTP connection from %s\n",
+               connection->remote_host);
+    http_server_cancel(connection);
+    return false;
+}
+
+static const struct socket_handler http_server_socket_handler = {
+    .read = http_server_socket_read,
+    .write = http_server_socket_write,
+    .timeout = http_server_socket_timeout,
+};
 
 static void
 http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
@@ -190,8 +179,12 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
-    connection->fd = fd;
-    connection->fd_type = fd_type,
+
+    socket_wrapper_init(&connection->socket, fd, fd_type,
+                        NULL, &http_server_write_timeout,
+                        &http_server_socket_handler, connection);
+    socket_wrapper_schedule_read(&connection->socket);
+
     connection->handler = handler;
     connection->handler_ctx = ctx;
     connection->local_address = local_address != NULL
@@ -217,15 +210,6 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     connection->input = fifo_buffer_new(pool, 4096);
 
-    event_set(&connection->request.event, connection->fd,
-              EV_READ|EV_PERSIST,
-              http_server_read_event_callback, connection);
-    event_add(&connection->request.event, NULL);
-
-    event_set(&connection->response.event, connection->fd,
-              EV_WRITE|EV_PERSIST|EV_TIMEOUT,
-              http_server_write_event_callback, connection);
-
     evtimer_set(&connection->timeout,
                 http_server_timeout_callback, connection);
     evtimer_add(&connection->timeout, &http_server_idle_timeout);
@@ -240,13 +224,9 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 static void
 http_server_socket_close(struct http_server_connection *connection)
 {
-    assert(connection->fd >= 0);
+    assert(socket_wrapper_valid(&connection->socket));
 
-    event_del(&connection->request.event);
-    event_del(&connection->response.event);
-
-    close(connection->fd);
-    connection->fd = -1;
+    socket_wrapper_close(&connection->socket);
 
     evtimer_del(&connection->timeout);
 }
@@ -292,7 +272,7 @@ http_server_done(struct http_server_connection *connection)
     assert(connection->handler->free != NULL);
     assert(connection->request.read_state == READ_START);
 
-    if (connection->fd >= 0)
+    if (socket_wrapper_valid(&connection->socket))
         http_server_socket_close(connection);
 
     const struct http_server_connection_handler *handler = connection->handler;
@@ -308,7 +288,7 @@ http_server_cancel(struct http_server_connection *connection)
     assert(connection->handler != NULL);
     assert(connection->handler->free != NULL);
 
-    if (connection->fd >= 0)
+    if (socket_wrapper_valid(&connection->socket))
         http_server_socket_close(connection);
 
     pool_ref(connection->pool);
@@ -331,7 +311,7 @@ http_server_error(struct http_server_connection *connection, GError *error)
     assert(connection->handler != NULL);
     assert(connection->handler->free != NULL);
 
-    if (connection->fd >= 0)
+    if (socket_wrapper_valid(&connection->socket))
         http_server_socket_close(connection);
 
     pool_ref(connection->pool);
@@ -364,7 +344,7 @@ http_server_connection_close(struct http_server_connection *connection)
 {
     assert(connection != NULL);
 
-    if (connection->fd >= 0)
+    if (socket_wrapper_valid(&connection->socket))
         http_server_socket_close(connection);
 
     connection->handler = NULL;

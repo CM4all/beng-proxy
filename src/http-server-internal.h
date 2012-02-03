@@ -11,15 +11,14 @@
 #include "fifo-buffer.h"
 #include "http-body.h"
 #include "async.h"
-
-#include <event.h>
+#include "socket_wrapper.h"
 
 struct http_server_connection {
     struct pool *pool;
 
     /* I/O */
-    int fd;
-    enum istream_direct fd_type;
+    struct socket_wrapper socket;
+
     struct fifo_buffer *input;
 
     /**
@@ -48,8 +47,6 @@ struct http_server_connection {
 
     /* request */
     struct {
-        struct event event;
-
         enum {
             /** there is no request (yet); waiting for the request
                 line */
@@ -90,8 +87,6 @@ struct http_server_connection {
     /** the response; this struct is only valid if
         read_state==READ_BODY||read_state==READ_END */
     struct {
-        struct event event;
-
         bool want_write;
 
         bool writing_100_continue;
@@ -131,9 +126,11 @@ extern const struct timeval http_server_read_timeout;
 extern const struct timeval http_server_write_timeout;
 
 static inline int
-http_server_connection_valid(struct http_server_connection *connection)
+http_server_connection_valid(const struct http_server_connection *connection)
 {
-    return connection->fd >= 0;
+    assert(connection != NULL);
+
+    return socket_wrapper_valid(&connection->socket);
 }
 
 static inline void
@@ -155,14 +152,14 @@ http_server_schedule_read(struct http_server_connection *connection)
     if (timeout != NULL)
         evtimer_add(&connection->timeout, timeout);
 
-    event_add(&connection->request.event, NULL);
+    socket_wrapper_schedule_read(&connection->socket);
 }
 
 static inline void
 http_server_schedule_write(struct http_server_connection *connection)
 {
     connection->response.want_write = true;
-    event_add(&connection->response.event, &http_server_write_timeout);
+    socket_wrapper_schedule_write(&connection->socket);
 }
 
 /**

@@ -21,13 +21,14 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     struct http_server_connection *connection = ctx;
     ssize_t nbytes;
 
-    assert(connection->fd >= 0 || connection->request.request == NULL);
+    assert(socket_wrapper_valid(&connection->socket) ||
+           connection->request.request == NULL);
     assert(connection->response.istream != NULL);
 
-    if (connection->fd < 0)
+    if (!socket_wrapper_valid(&connection->socket))
         return 0;
 
-    nbytes = send(connection->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    nbytes = socket_wrapper_write(&connection->socket, data, length);
 
     if (likely(nbytes >= 0)) {
         connection->response.bytes_sent += nbytes;
@@ -56,15 +57,17 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     struct http_server_connection *connection = ctx;
     ssize_t nbytes;
 
-    assert(connection->fd >= 0 || connection->request.request == NULL);
+    assert(socket_wrapper_valid(&connection->socket) ||
+           connection->request.request == NULL);
     assert(connection->response.istream != NULL);
 
-    if (connection->fd < 0)
+    if (!socket_wrapper_valid(&connection->socket))
         return 0;
 
-    nbytes = istream_direct_to_socket(type, fd, connection->fd, max_length);
+    nbytes = socket_wrapper_write_from(&connection->socket, fd, type,
+                                       max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!fd_ready_for_writing(connection->fd)) {
+        if (!socket_wrapper_ready_for_writing(&connection->socket)) {
             http_server_schedule_write(connection);
             return ISTREAM_RESULT_BLOCKING;
         }
@@ -72,7 +75,8 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = istream_direct_to_socket(type, fd, connection->fd, max_length);
+        nbytes = socket_wrapper_write_from(&connection->socket, fd, type,
+                                           max_length);
     }
 
     if (likely(nbytes > 0)) {
@@ -97,7 +101,7 @@ http_server_response_stream_eof(void *ctx)
 
     connection->response.istream = NULL;
 
-    event_del(&connection->response.event);
+    socket_wrapper_unschedule_write(&connection->socket);
 
     if (connection->response.writing_100_continue)
         /* connection->response.istream contained the string "100
