@@ -8,6 +8,7 @@
 #define BENG_PROXY_SOCKET_WRAPPER_H
 
 #include "istream-direct.h"
+#include "pevent.h"
 
 #include <inline/compiler.h>
 
@@ -41,6 +42,8 @@ struct socket_handler {
 };
 
 struct socket_wrapper {
+    struct pool *pool;
+
     int fd;
     enum istream_direct fd_type;
 
@@ -55,7 +58,7 @@ struct socket_wrapper {
 };
 
 void
-socket_wrapper_init(struct socket_wrapper *s,
+socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
                     int fd, enum istream_direct fd_type,
                     const struct timeval *read_timeout,
                     const struct timeval *write_timeout,
@@ -88,7 +91,7 @@ socket_wrapper_schedule_read(struct socket_wrapper *s)
 {
     assert(socket_wrapper_valid(s));
 
-    event_add(&s->read_event, s->read_timeout);
+    p_event_add(&s->read_event, s->read_timeout, s->pool, "socket_read");
 }
 
 static inline void
@@ -96,7 +99,7 @@ socket_wrapper_unschedule_read(struct socket_wrapper *s)
 {
     assert(socket_wrapper_valid(s));
 
-    event_del(&s->read_event);
+    p_event_del(&s->read_event, s->pool);
 }
 
 static inline void
@@ -104,7 +107,7 @@ socket_wrapper_schedule_write(struct socket_wrapper *s)
 {
     assert(socket_wrapper_valid(s));
 
-    event_add(&s->write_event, s->write_timeout);
+    p_event_add(&s->write_event, s->write_timeout, s->pool, "socket_write");
 }
 
 static inline void
@@ -112,7 +115,7 @@ socket_wrapper_unschedule_write(struct socket_wrapper *s)
 {
     assert(socket_wrapper_valid(s));
 
-    event_del(&s->write_event);
+    p_event_del(&s->write_event, s->pool);
 }
 
 ssize_t

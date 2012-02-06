@@ -9,6 +9,7 @@
 #include "buffered-io.h"
 #include "fd-util.h"
 #include "pool.h"
+#include "pevent.h"
 
 #include <socket/util.h>
 
@@ -19,6 +20,8 @@ static void
 socket_read_event_callback(gcc_unused int fd, short event, void *ctx)
 {
     struct socket_wrapper *s = ctx;
+
+    p_event_consumed(&s->read_event, s->pool);
 
     if (event & EV_TIMEOUT)
         s->handler->timeout(s->handler_ctx);
@@ -34,6 +37,8 @@ socket_write_event_callback(gcc_unused int fd, gcc_unused short event,
 {
     struct socket_wrapper *s = ctx;
 
+    p_event_consumed(&s->write_event, s->pool);
+
     if (event & EV_TIMEOUT)
         s->handler->timeout(s->handler_ctx);
     else
@@ -43,13 +48,14 @@ socket_write_event_callback(gcc_unused int fd, gcc_unused short event,
 }
 
 void
-socket_wrapper_init(struct socket_wrapper *s,
+socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
                     int fd, enum istream_direct fd_type,
                     const struct timeval *read_timeout,
                     const struct timeval *write_timeout,
                     const struct socket_handler *handler, void *ctx)
 {
     assert(s != NULL);
+    assert(pool != NULL);
     assert(fd >= 0);
     assert(handler != NULL);
     assert(handler->read != NULL);
@@ -57,6 +63,7 @@ socket_wrapper_init(struct socket_wrapper *s,
     assert(handler->timeout != NULL || (read_timeout == NULL &&
                                         write_timeout == NULL));
 
+    s->pool = pool;
     s->fd = fd;
     s->fd_type = fd_type;
     s->direct_mask = istream_direct_mask_to(fd_type);
@@ -80,8 +87,8 @@ socket_wrapper_close(struct socket_wrapper *s)
     if (s->fd < 0)
         return;
 
-    event_del(&s->read_event);
-    event_del(&s->write_event);
+    p_event_del(&s->read_event, s->pool);
+    p_event_del(&s->write_event, s->pool);
 
     close(s->fd);
     s->fd = -1;

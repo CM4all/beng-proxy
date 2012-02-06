@@ -180,7 +180,7 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
 
-    socket_wrapper_init(&connection->socket, fd, fd_type,
+    socket_wrapper_init(&connection->socket, pool, fd, fd_type,
                         NULL, &http_server_write_timeout,
                         &http_server_socket_handler, connection);
     socket_wrapper_schedule_read(&connection->socket);
