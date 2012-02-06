@@ -11,12 +11,6 @@
 static inline size_t
 istream_invoke_data(struct istream *istream, const void *data, size_t length)
 {
-#ifndef NDEBUG
-    struct pool_notify notify;
-    const struct istream_handler *handler; /* for post-mortem debugging */
-#endif
-    size_t nbytes;
-
     assert(istream != NULL);
     assert(!istream->destroyed);
     assert(istream->handler != NULL);
@@ -31,14 +25,16 @@ istream_invoke_data(struct istream *istream, const void *data, size_t length)
            (off_t)length <= istream->available_full);
 
 #ifndef NDEBUG
-    handler = istream->handler;
+    /* for post-mortem debugging */
+    const struct istream_handler *handler = istream->handler;
     (void)handler;
 
+    struct pool_notify notify;
     pool_notify(istream->pool, &notify);
     istream->in_data = true;
 #endif
 
-    nbytes = istream->handler->data(data, length, istream->handler_ctx);
+    size_t nbytes = istream->handler->data(data, length, istream->handler_ctx);
     assert(nbytes <= length);
     assert(nbytes == 0 || !istream->eof);
 
@@ -70,12 +66,6 @@ static inline ssize_t
 istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
                       size_t max_length)
 {
-#ifndef NDEBUG
-    struct pool_notify notify;
-    const struct istream_handler *handler; /* for post-mortem debugging */
-#endif
-    ssize_t nbytes;
-
     assert(istream != NULL);
     assert(!istream->destroyed);
     assert(istream->handler != NULL);
@@ -88,14 +78,17 @@ istream_invoke_direct(struct istream *istream, istream_direct_t type, int fd,
     assert(!istream->closing);
 
 #ifndef NDEBUG
-    handler = istream->handler;
+    /* for post-mortem debugging */
+    const struct istream_handler *handler = istream->handler;
     (void)handler;
 
+    struct pool_notify notify;
     pool_notify(istream->pool, &notify);
     istream->in_data = true;
 #endif
 
-    nbytes = istream->handler->direct(type, fd, max_length, istream->handler_ctx);
+    ssize_t nbytes = istream->handler->direct(type, fd, max_length,
+                                              istream->handler_ctx);
     assert(nbytes >= -3);
     assert(nbytes < 0 || (size_t)nbytes <= max_length);
     assert(nbytes == ISTREAM_RESULT_CLOSED || !istream->eof);
