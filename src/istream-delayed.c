@@ -92,7 +92,7 @@ istream_delayed_close(istream_t istream)
     istream_deinit(&delayed->output);
 }
 
-static const struct istream istream_delayed = {
+static const struct istream_class istream_delayed = {
     .available = istream_delayed_available,
     .read = istream_delayed_read,
     .as_fd = istream_delayed_as_fd,

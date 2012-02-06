@@ -237,7 +237,7 @@ http_server_done(struct http_server_connection *connection);
 void
 http_server_cancel(struct http_server_connection *connection);
 
-extern const struct istream http_server_request_stream;
+extern const struct istream_class http_server_request_stream;
 
 extern const struct istream_handler http_server_response_stream_handler;
 

@@ -333,7 +333,7 @@ istream_file_close(istream_t istream)
     istream_deinit(&file->stream);
 }
 
-static const struct istream istream_file = {
+static const struct istream_class istream_file = {
     .available = istream_file_available,
     .skip = istream_file_skip,
     .read = istream_file_read,

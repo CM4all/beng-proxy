@@ -153,7 +153,7 @@ istream_head_close(istream_t istream)
     istream_deinit(&head->output);
 }
 
-static const struct istream istream_head = {
+static const struct istream_class istream_head = {
     .available = istream_head_available,
     .skip = istream_head_skip,
     .read = istream_head_read,

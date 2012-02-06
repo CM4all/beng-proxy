@@ -394,7 +394,7 @@ istream_deflate_close(istream_t istream)
     istream_deinit(&defl->output);
 }
 
-static const struct istream istream_deflate = {
+static const struct istream_class istream_deflate = {
     .read = istream_deflate_read,
     .close = istream_deflate_close,
 };

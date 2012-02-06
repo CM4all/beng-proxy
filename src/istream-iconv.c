@@ -217,7 +217,7 @@ istream_iconv_close(istream_t istream)
     istream_deinit(&ic->output);
 }
 
-static const struct istream istream_iconv = {
+static const struct istream_class istream_iconv = {
     .read = istream_iconv_read,
     .close = istream_iconv_close,
 };

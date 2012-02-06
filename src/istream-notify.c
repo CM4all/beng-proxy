@@ -92,7 +92,7 @@ istream_notify_close(struct istream *istream)
     istream_deinit(&notify->output);
 }
 
-static const struct istream istream_notify = {
+static const struct istream_class istream_notify = {
     .available = istream_notify_available,
     .read = istream_notify_read,
     .close = istream_notify_close,

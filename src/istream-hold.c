@@ -164,7 +164,7 @@ istream_hold_close(istream_t istream)
     }
 }
 
-static const struct istream istream_hold = {
+static const struct istream_class istream_hold = {
     .available = istream_hold_available,
     .read = istream_hold_read,
     .as_fd = istream_hold_as_fd,

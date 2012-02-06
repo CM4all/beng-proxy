@@ -314,7 +314,7 @@ istream_dechunk_close(istream_t istream)
     istream_deinit(&dechunk->output);
 }
 
-static const struct istream istream_dechunk = {
+static const struct istream_class istream_dechunk = {
     .available = istream_dechunk_available,
     .read = istream_dechunk_read,
     .close = istream_dechunk_close,

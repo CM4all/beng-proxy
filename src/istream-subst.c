@@ -670,7 +670,7 @@ istream_subst_close(istream_t istream)
     istream_deinit(&subst->output);
 }
 
-static const struct istream istream_subst = {
+static const struct istream_class istream_subst = {
     .read = istream_subst_read,
     .close = istream_subst_close,
 };

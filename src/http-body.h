@@ -83,7 +83,7 @@ http_body_socket_eof(struct http_body_reader *body,
 
 struct istream *
 http_body_init(struct http_body_reader *body,
-               const struct istream *stream, struct pool *stream_pool,
+               const struct istream_class *stream, struct pool *stream_pool,
                struct pool *pool, off_t content_length, bool chunked);
 
 #endif

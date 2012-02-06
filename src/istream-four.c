@@ -83,7 +83,7 @@ istream_four_close(istream_t istream)
     istream_deinit(&four->output);
 }
 
-static const struct istream istream_four = {
+static const struct istream_class istream_four = {
     .read = istream_four_read,
     .close = istream_four_close,
 };

@@ -151,7 +151,7 @@ http_body_dechunker_eof(void *ctx)
 
 istream_t
 http_body_init(struct http_body_reader *body,
-               const struct istream *stream, struct pool *stream_pool,
+               const struct istream_class *stream, struct pool *stream_pool,
                struct pool *pool, off_t content_length, bool chunked)
 {
     assert(pool_contains(stream_pool, body, sizeof(*body)));

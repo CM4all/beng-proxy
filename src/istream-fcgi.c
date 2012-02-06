@@ -197,7 +197,7 @@ istream_fcgi_close(istream_t istream)
     istream_deinit(&fcgi->output);
 }
 
-static const struct istream istream_fcgi = {
+static const struct istream_class istream_fcgi = {
     .read = istream_fcgi_read,
     .close = istream_fcgi_close,
 };

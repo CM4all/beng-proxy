@@ -61,7 +61,7 @@ istream_gb_close(istream_t istream)
     istream_deinit(&igb->output);
 }
 
-static const struct istream istream_gb = {
+static const struct istream_class istream_gb = {
     .available = istream_gb_available,
     .read = istream_gb_read,
     .close = istream_gb_close,

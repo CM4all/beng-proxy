@@ -306,7 +306,7 @@ istream_chunked_close(istream_t istream)
     istream_deinit(&chunked->output);
 }
 
-static const struct istream istream_chunked = {
+static const struct istream_class istream_chunked = {
     .read = istream_chunked_read,
     .close = istream_chunked_close,
 };

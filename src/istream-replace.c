@@ -569,7 +569,7 @@ istream_replace_close(istream_t istream)
     istream_deinit(&replace->output);
 }
 
-static const struct istream istream_replace = {
+static const struct istream_class istream_replace = {
     .available = istream_replace_available,
     .read = istream_replace_read,
     .close = istream_replace_close,

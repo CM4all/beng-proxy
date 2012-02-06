@@ -149,7 +149,7 @@ istream_trace_close(istream_t istream)
     istream_deinit(&trace->output);
 }
 
-static const struct istream istream_trace = {
+static const struct istream_class istream_trace = {
     .available = istream_trace_available,
     .read = istream_trace_read,
     .close = istream_trace_close,

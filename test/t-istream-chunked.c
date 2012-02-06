@@ -83,7 +83,7 @@ istream_custom_close(struct istream *istream)
     istream_deinit(istream);
 }
 
-static const struct istream istream_custom = {
+static const struct istream_class istream_custom = {
     .available = istream_custom_available,
     .read = istream_custom_read,
     .close = istream_custom_close,

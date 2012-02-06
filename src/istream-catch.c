@@ -176,7 +176,7 @@ istream_catch_close(istream_t istream)
     istream_deinit(&catch->output);
 }
 
-static const struct istream istream_catch = {
+static const struct istream_class istream_catch = {
     .available = istream_catch_available,
     .read = istream_catch_read,
     .close = istream_catch_close,

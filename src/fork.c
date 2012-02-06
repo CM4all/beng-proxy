@@ -347,7 +347,7 @@ istream_fork_close(istream_t istream)
     istream_deinit(&f->output);
 }
 
-static const struct istream istream_fork = {
+static const struct istream_class istream_fork = {
     .read = istream_fork_read,
     .close = istream_fork_close,
 };

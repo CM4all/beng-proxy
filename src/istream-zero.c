@@ -49,7 +49,7 @@ istream_zero_close(struct istream *istream)
     istream_deinit(&zero->stream);
 }
 
-static const struct istream istream_zero = {
+static const struct istream_class istream_zero = {
     .available = istream_zero_available,
     .skip = istream_zero_skip,
     .read = istream_zero_read,

@@ -317,7 +317,7 @@ was_input_istream_close(struct istream *istream)
     input->handler->abort(input->handler_ctx);
 }
 
-static const struct istream was_input_stream = {
+static const struct istream_class was_input_stream = {
     .available = was_input_istream_available,
     .read = was_input_istream_read,
     .close = was_input_istream_close,

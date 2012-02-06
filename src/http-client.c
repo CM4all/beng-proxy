@@ -345,7 +345,7 @@ http_client_response_stream_close(istream_t istream)
     http_client_release(client, false);
 }
 
-static const struct istream http_client_response_stream = {
+static const struct istream_class http_client_response_stream = {
     .available = http_client_response_stream_available,
     .read = http_client_response_stream_read,
     .as_fd = http_client_response_stream_as_fd,

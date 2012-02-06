@@ -106,7 +106,7 @@ istream_optional_close(istream_t istream)
     istream_deinit(&optional->output);
 }
 
-static const struct istream istream_optional = {
+static const struct istream_class istream_optional = {
     .available = istream_optional_available,
     .read = istream_optional_read,
     .as_fd = istream_optional_as_fd,

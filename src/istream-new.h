@@ -10,12 +10,25 @@
 #include <inline/valgrind.h>
 
 static inline void
-istream_init_impl(struct istream *istream, const struct istream *class,
+istream_init_impl(struct istream *istream, const struct istream_class *class,
                   struct pool *pool TRACE_ARGS_DECL)
 {
-    *istream = *class;
-
     istream->pool = pool;
+    istream->class = class;
+    istream->handler = NULL;
+
+#ifndef NDEBUG
+    istream->reading = false;
+    istream->destroyed = false;
+    istream->closing = false;
+    istream->eof = false;
+    istream->in_data = false;
+    istream->available_full_set = false;
+    istream->data_available = 0;
+    istream->available_partial = 0;
+    istream->available_full = 0;
+#endif
+
     pool_ref_fwd(pool);
 }
 
@@ -24,7 +37,7 @@ istream_init_impl(struct istream *istream, const struct istream *class,
 gcc_malloc
 static inline struct istream *
 istream_new_impl(struct pool *pool,
-                 const struct istream *class, size_t size
+                 const struct istream_class *class, size_t size
                  TRACE_ARGS_DECL)
 {
     struct istream *istream;

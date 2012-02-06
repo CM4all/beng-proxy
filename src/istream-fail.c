@@ -35,7 +35,7 @@ istream_fail_close(istream_t istream)
     istream_deinit(&fail->stream);
 }
 
-static const struct istream istream_fail = {
+static const struct istream_class istream_fail = {
     .read = istream_fail_read,
     .close = istream_fail_close,
 };

@@ -169,7 +169,7 @@ istream_socketpair_close(istream_t istream)
     }
 }
 
-static const struct istream istream_socketpair = {
+static const struct istream_class istream_socketpair = {
     .read = istream_socketpair_read,
     .close = istream_socketpair_close,
 };

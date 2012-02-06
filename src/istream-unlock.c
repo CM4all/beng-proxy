@@ -89,7 +89,7 @@ istream_unlock_close(istream_t istream)
     istream_deinit(&unlock->output);
 }
 
-static const struct istream istream_unlock = {
+static const struct istream_class istream_unlock = {
     .available = istream_unlock_available,
     .read = istream_unlock_read,
     .close = istream_unlock_close,

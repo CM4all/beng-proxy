@@ -239,7 +239,7 @@ istream_socket_close(struct istream *istream)
     istream_deinit(&s->output);
 }
 
-static const struct istream istream_socket = {
+static const struct istream_class istream_socket = {
     .available = istream_socket_available,
     .read = istream_socket_read,
     .close = istream_socket_close,

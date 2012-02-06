@@ -168,7 +168,7 @@ istream_request_value_close(istream_t istream)
     istream_deinit(&v->base);
 }
 
-static const struct istream istream_request_value = {
+static const struct istream_class istream_request_value = {
     .available = istream_request_value_available,
     .read = istream_request_value_read,
     .close = istream_request_value_close,

@@ -99,7 +99,7 @@ istream_inject_close(istream_t istream)
     istream_deinit(&inject->output);
 }
 
-static const struct istream istream_inject = {
+static const struct istream_class istream_inject = {
     .available = istream_inject_available,
     .read = istream_inject_read,
     .close = istream_inject_close,

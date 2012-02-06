@@ -303,7 +303,7 @@ istream_memcached_close(struct istream *istream)
     pool_unref(caller_pool);
 }
 
-static const struct istream memcached_response_value = {
+static const struct istream_class memcached_response_value = {
     .available = istream_memcached_available,
     .read = istream_memcached_read,
     .close = istream_memcached_close,

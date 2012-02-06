@@ -232,7 +232,7 @@ istream_cat_close(istream_t istream)
     istream_deinit(&cat->output);
 }
 
-static const struct istream istream_cat = {
+static const struct istream_class istream_cat = {
     .available = istream_cat_available,
     .read = istream_cat_read,
     .as_fd = istream_cat_as_fd,

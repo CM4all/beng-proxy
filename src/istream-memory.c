@@ -56,7 +56,7 @@ istream_memory_close(istream_t istream)
     istream_deinit(&memory->stream);
 }
 
-static const struct istream istream_memory = {
+static const struct istream_class istream_memory = {
     .available = istream_memory_available,
     .read = istream_memory_read,
     .close = istream_memory_close,

@@ -61,7 +61,7 @@ istream_null_close(istream_t istream)
     istream_deinit(&null->stream);
 }
 
-static const struct istream istream_null = {
+static const struct istream_class istream_null = {
     .available = istream_null_available,
     .skip = istream_null_skip,
     .read = istream_null_read,

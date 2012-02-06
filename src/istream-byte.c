@@ -80,7 +80,7 @@ istream_byte_close(istream_t istream)
     istream_deinit(&byte->output);
 }
 
-static const struct istream istream_byte = {
+static const struct istream_class istream_byte = {
     .read = istream_byte_read,
     .close = istream_byte_close,
 };

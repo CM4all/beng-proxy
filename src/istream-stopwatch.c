@@ -101,7 +101,7 @@ istream_stopwatch_close(istream_t istream)
     istream_deinit(&stopwatch->output);
 }
 
-static const struct istream istream_stopwatch = {
+static const struct istream_class istream_stopwatch = {
     .read = istream_stopwatch_read,
     .as_fd = istream_stopwatch_as_fd,
     .close = istream_stopwatch_close,

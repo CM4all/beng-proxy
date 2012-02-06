@@ -108,7 +108,7 @@ http_server_request_stream_close(istream_t istream)
     istream_deinit(&connection->request.body_reader.output);
 }
 
-const struct istream http_server_request_stream = {
+const struct istream_class http_server_request_stream = {
     .available = http_server_request_stream_available,
     .read = http_server_request_stream_read,
     .close = http_server_request_stream_close,

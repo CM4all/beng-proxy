@@ -251,7 +251,7 @@ istream_ajp_close(istream_t istream)
     istream_deinit(&client->response.body);
 }
 
-static const struct istream ajp_response_body = {
+static const struct istream_class ajp_response_body = {
     /* XXX .available */
     .read = istream_ajp_read,
     .close = istream_ajp_close,

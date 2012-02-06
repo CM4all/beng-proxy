@@ -158,7 +158,7 @@ istream_escape_close(istream_t istream)
     istream_deinit(&escape->output);
 }
 
-static const struct istream istream_escape = {
+static const struct istream_class istream_escape = {
     .read = istream_escape_read,
     .close = istream_escape_close,
 };

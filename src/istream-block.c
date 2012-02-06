@@ -32,7 +32,7 @@ istream_block_close(istream_t istream)
     istream_deinit(&block->stream);
 }
 
-static const struct istream istream_block = {
+static const struct istream_class istream_block = {
     .read = istream_block_read,
     .close = istream_block_close,
 };

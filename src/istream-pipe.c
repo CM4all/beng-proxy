@@ -340,7 +340,7 @@ istream_pipe_close(istream_t istream)
     istream_deinit(&p->output);
 }
 
-static const struct istream istream_pipe = {
+static const struct istream_class istream_pipe = {
     .available = istream_pipe_available,
     .read = istream_pipe_read,
     .as_fd = istream_pipe_as_fd,

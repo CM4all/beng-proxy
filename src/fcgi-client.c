@@ -693,7 +693,7 @@ fcgi_client_response_body_close(istream_t istream)
     fcgi_client_close_response_body(client);
 }
 
-static const struct istream fcgi_client_response_body = {
+static const struct istream_class fcgi_client_response_body = {
     .available = fcgi_client_response_body_available,
     .read = fcgi_client_response_body_read,
     .close = fcgi_client_response_body_close,

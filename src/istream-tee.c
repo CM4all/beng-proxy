@@ -270,7 +270,7 @@ istream_tee_close0(istream_t istream)
     istream_deinit(&tee->outputs[0].istream);
 }
 
-static const struct istream istream_tee0 = {
+static const struct istream_class istream_tee0 = {
     .available = istream_tee_available0,
     .read = istream_tee_read0,
     .close = istream_tee_close0,
@@ -351,7 +351,7 @@ istream_tee_close1(istream_t istream)
     istream_deinit(&tee->outputs[1].istream);
 }
 
-static const struct istream istream_tee1 = {
+static const struct istream_class istream_tee1 = {
     .available = istream_tee_available1,
     .read = istream_tee_read1,
     .close = istream_tee_close1,

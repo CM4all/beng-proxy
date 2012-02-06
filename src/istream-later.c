@@ -105,7 +105,7 @@ istream_later_close(istream_t istream)
     istream_deinit(&later->output);
 }
 
-static const struct istream istream_later = {
+static const struct istream_class istream_later = {
     .read = istream_later_read,
     .close = istream_later_close,
 };

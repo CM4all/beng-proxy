@@ -468,7 +468,7 @@ istream_cgi_close(struct istream *istream)
     istream_deinit(&cgi->output);
 }
 
-static const struct istream istream_cgi = {
+static const struct istream_class istream_cgi = {
     .available = istream_cgi_available,
     .read = istream_cgi_read,
     .close = istream_cgi_close,

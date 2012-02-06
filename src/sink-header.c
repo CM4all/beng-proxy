@@ -326,7 +326,7 @@ sink_header_close(struct istream *istream)
     istream_deinit(&header->output);
 }
 
-static const struct istream istream_sink = {
+static const struct istream_class istream_sink = {
     .available = sink_header_available,
     .read = sink_header_read,
     .close = sink_header_close,
