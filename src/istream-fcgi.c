@@ -24,17 +24,14 @@ struct istream_fcgi {
 static bool
 fcgi_write_header(struct istream_fcgi *fcgi)
 {
-    const char *header;
-    size_t length, nbytes;
-
     assert(fcgi->header_sent <= sizeof(fcgi->header));
 
-    length = sizeof(fcgi->header) - fcgi->header_sent;
+    size_t length = sizeof(fcgi->header) - fcgi->header_sent;
     if (length == 0)
         return true;
 
-    header = (char*)&fcgi->header + fcgi->header_sent;
-    nbytes = istream_invoke_data(&fcgi->output, header, length);
+    const char *header = (char*)&fcgi->header + fcgi->header_sent;
+    size_t nbytes = istream_invoke_data(&fcgi->output, header, length);
     if (nbytes > 0)
         fcgi->header_sent += nbytes;
 
@@ -59,23 +56,22 @@ fcgi_start_record(struct istream_fcgi *fcgi, size_t length)
 static size_t
 fcgi_feed(struct istream_fcgi *fcgi, const char *data, size_t length)
 {
-    size_t total = 0, rest, nbytes;
-    bool bret;
-
     assert(fcgi->input != NULL);
 
+    size_t total = 0;
     while (true) {
-        bret = fcgi_write_header(fcgi);
+        bool bret = fcgi_write_header(fcgi);
         if (!bret)
             return fcgi->input == NULL ? 0 : total;
 
         if (fcgi->missing_from_current_record > 0) {
             /* send the record header */
-            rest = length - total;
+            size_t rest = length - total;
             if (rest > fcgi->missing_from_current_record)
                 rest = fcgi->missing_from_current_record;
 
-            nbytes = istream_invoke_data(&fcgi->output, data + total, rest);
+            size_t nbytes = istream_invoke_data(&fcgi->output,
+                                                data + total, rest);
             if (nbytes == 0)
                 return fcgi->input == NULL ? 0 : total;
 
@@ -88,7 +84,7 @@ fcgi_feed(struct istream_fcgi *fcgi, const char *data, size_t length)
                 return total;
         }
 
-        rest = length - total;
+        size_t rest = length - total;
         if (rest == 0)
             return total;
 
@@ -121,7 +117,6 @@ static void
 fcgi_input_eof(void *ctx)
 {
     struct istream_fcgi *fcgi = ctx;
-    bool bret;
 
     assert(fcgi->input != NULL);
     assert(fcgi->missing_from_current_record == 0);
@@ -135,7 +130,7 @@ fcgi_input_eof(void *ctx)
 
     /* flush the buffer */
 
-    bret = fcgi_write_header(fcgi);
+    bool bret = fcgi_write_header(fcgi);
     if (bret)
         istream_deinit_eof(&fcgi->output);
 }
@@ -162,9 +157,8 @@ static void
 istream_fcgi_read(istream_t istream)
 {
     struct istream_fcgi *fcgi = istream_to_fcgi(istream);
-    bool bret;
 
-    bret = fcgi_write_header(fcgi);
+    bool bret = fcgi_write_header(fcgi);
     if (!bret)
         return;
 
@@ -211,11 +205,10 @@ static const struct istream_class istream_fcgi = {
 istream_t
 istream_fcgi_new(struct pool *pool, istream_t input, uint16_t request_id)
 {
-    struct istream_fcgi *fcgi = istream_new_macro(pool, fcgi);
-
     assert(input != NULL);
     assert(!istream_has_handler(input));
 
+    struct istream_fcgi *fcgi = istream_new_macro(pool, fcgi);
     fcgi->missing_from_current_record = 0;
     fcgi->header_sent = sizeof(fcgi->header);
     fcgi->header = (struct fcgi_record_header){
