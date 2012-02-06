@@ -68,7 +68,7 @@ socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
     s->fd_type = fd_type;
     s->direct_mask = istream_direct_mask_to(fd_type);
 
-    event_set(&s->read_event, fd, EV_READ|EV_PERSIST,
+    event_set(&s->read_event, fd, EV_READ|EV_PERSIST|EV_TIMEOUT,
               socket_read_event_callback, s);
 
     event_set(&s->write_event, fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT,
