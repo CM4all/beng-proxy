@@ -24,6 +24,7 @@
 #include "fd_util.h"
 #include "stopwatch.h"
 #include "strmap.h"
+#include "completion.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -576,10 +577,7 @@ http_client_response_finished(struct http_client *client)
                         client->request.istream == NULL);
 }
 
-/**
- * @return false if nothing has been parsed
- */
-static bool
+static enum completion
 http_client_parse_headers(struct http_client *client)
 {
     assert(client != NULL);
@@ -589,7 +587,7 @@ http_client_parse_headers(struct http_client *client)
     size_t length;
     const char *buffer = fifo_buffer_read(client->input, &length);
     if (buffer == NULL)
-        return false;
+        return C_NONE;
 
     assert(length > 0);
     const char *buffer_end = buffer + length;
@@ -606,7 +604,7 @@ http_client_parse_headers(struct http_client *client)
 
         /* handle this line */
         if (!http_client_handle_line(client, start, end - start + 1))
-            return false;
+            return C_CLOSED;
 
         if (client->response.read_state != READ_HEADERS)
             /* header parsing is finished */
@@ -630,13 +628,13 @@ http_client_parse_headers(struct http_client *client)
                                     HTTP_CLIENT_UNSPECIFIED,
                                     "response header too long");
             http_client_abort_response_headers(client, error);
-            return false;
+            return C_CLOSED;
         }
 
         http_client_schedule_read(client);
     }
 
-    return next != NULL;
+    return next != NULL ? C_DONE : C_PARTIAL;
 }
 
 static void
@@ -692,11 +690,7 @@ http_client_consume_body(struct http_client *client)
     return true;
 }
 
-/**
- * Returns false if the client has been closed or if the headers are
- * incomplete.
- */
-static bool
+static enum completion
 http_client_consume_headers(struct http_client *client)
 {
     assert(client != NULL);
@@ -704,8 +698,9 @@ http_client_consume_headers(struct http_client *client)
            client->response.read_state == READ_HEADERS);
 
     do {
-        if (!http_client_parse_headers(client))
-            return false;
+        enum completion c = http_client_parse_headers(client);
+        if (c != C_DONE)
+            return c;
     } while (client->response.read_state == READ_HEADERS);
 
     /* the headers are finished, we can now report the response to
@@ -724,7 +719,7 @@ http_client_consume_headers(struct http_client *client)
             client->response.read_state = READ_STATUS;
 #endif
             http_client_abort_response_headers(client, error);
-            return false;
+            return C_CLOSED;
         }
 
         /* reset read_state, we're now expecting the real response */
@@ -764,14 +759,14 @@ http_client_consume_headers(struct http_client *client)
     pool_unref(client->pool);
 
     if (!valid)
-        return false;
+        return C_CLOSED;
 
     if (client->response.body == NULL) {
         http_client_response_finished(client);
-        return false;
+        return C_CLOSED;
     }
 
-    return true;
+    return C_DONE;
 }
 
 static void
@@ -872,7 +867,7 @@ http_client_try_read_buffered(struct http_client *client)
     }
 
     if (client->response.read_state == READ_BODY ||
-        http_client_consume_headers(client)) {
+        http_client_consume_headers(client) == C_DONE) {
         assert(client->response.body != NULL);
 
         if (client->fd >= 0 &&

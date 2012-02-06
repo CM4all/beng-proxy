@@ -273,6 +273,7 @@ SRC = src/main.c \
 	$(STOPWATCH_SRC) \
 	src/clock.h \
 	src/cmdline.c \
+	src/completion.h \
 	src/global.c \
 	src/event2.c \
 	src/crc.h \
