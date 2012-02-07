@@ -364,6 +364,7 @@ SRC = src/main.c \
 	src/buffered-io.c \
 	src/header-parser.c \
 	src/header-writer.c \
+	src/header-copy.c src/header-copy.h \
 	src/header-forward.c \
 	src/http-quark.h \
 	src/http-response.c src/http-response.h \
@@ -892,6 +893,7 @@ test_t_tcache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 
 test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/header-forward.c src/header-writer.c \
+	src/header-copy.c \
 	src/http-string.c \
 	src/hashmap.c src/strmap.c \
 	src/growing-buffer.c \
@@ -1409,6 +1411,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/resource-tag.c \
 	src/cookie-client.c \
 	src/header-parser.c src/header-forward.c src/header-writer.c \
+	src/header-copy.c \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/strutil.c src/http-string.c src/http-util.c \

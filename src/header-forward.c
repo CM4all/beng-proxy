@@ -5,6 +5,7 @@
  */
 
 #include "header-forward.h"
+#include "header-copy.h"
 #include "header-writer.h"
 #include "strmap.h"
 #include "session.h"
@@ -97,30 +98,12 @@ static const char *const exclude_response_headers[] = {
 };
 
 static void
-header_copy(const struct strmap *in, struct strmap *out, const char *key)
-{
-    const char *value = strmap_get(in, key);
-    while (value != NULL) {
-        strmap_add(out, key, value);
-        value = strmap_get_next(in, key, value);
-    }
-}
-
-static void
-headers_copy2(const struct strmap *in, struct strmap *out,
-              const char *const* keys)
-{
-    for (; *keys != NULL; ++keys)
-        header_copy(in, out, *keys);
-}
-
-static void
 forward_basic_headers(struct strmap *dest, const struct strmap *src,
                       bool with_body)
 {
-    headers_copy2(src, dest, basic_request_headers);
+    header_copy_list(src, dest, basic_request_headers);
     if (with_body)
-        headers_copy2(src, dest, body_request_headers);
+        header_copy_list(src, dest, body_request_headers);
 }
 
 static void
@@ -249,7 +232,7 @@ forward_request_headers(struct pool *pool, struct strmap *src,
         forward_basic_headers(dest, src, with_body);
 
         if (!exclude_host)
-            header_copy(src, dest, "host");
+            header_copy_one(src, dest, "host");
     }
 
     if (src != NULL &&
@@ -270,7 +253,7 @@ forward_request_headers(struct pool *pool, struct strmap *src,
 
     if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
         if (src != NULL)
-            headers_copy2(src, dest, cookie_request_headers);
+            header_copy_list(src, dest, cookie_request_headers);
     } else if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_MANGLE &&
                session != NULL && host_and_port != NULL && uri != NULL)
         cookie_jar_http_header(session->cookies, host_and_port, uri,
@@ -279,7 +262,7 @@ forward_request_headers(struct pool *pool, struct strmap *src,
     if (session != NULL && session->language != NULL)
         strmap_add(dest, "accept-language", p_strdup(pool, session->language));
     else if (src != NULL)
-        headers_copy2(src, dest, language_request_headers);
+        header_copy_list(src, dest, language_request_headers);
 
     if (session != NULL && session->user != NULL)
         strmap_add(dest, "x-cm4all-beng-user", p_strdup(pool, session->user));
@@ -337,13 +320,13 @@ forward_response_headers(struct pool *pool, struct strmap *src,
 
     dest = strmap_new(pool, 61);
     if (src != NULL) {
-        headers_copy2(src, dest, basic_response_headers);
+        header_copy_list(src, dest, basic_response_headers);
 
         if (settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
             forward_other_response_headers(dest, src);
 
         if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES)
-            headers_copy2(src, dest, cookie_response_headers);
+            header_copy_list(src, dest, cookie_response_headers);
     }
 
     /* RFC 2616 3.8: Product Tokens */

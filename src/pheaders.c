@@ -5,20 +5,8 @@
  */
 
 #include "pheaders.h"
+#include "header-copy.h"
 #include "strmap.h"
-
-static void
-headers_copy2(struct strmap *in, struct strmap *out,
-              const char *const* keys)
-{
-    const char *value;
-
-    for (; *keys != NULL; ++keys) {
-        value = strmap_get(in, *keys);
-        if (value != NULL)
-            strmap_set(out, *keys, value);
-    }
-}
 
 struct strmap *
 processor_header_forward(struct pool *pool, struct strmap *headers)
@@ -35,6 +23,6 @@ processor_header_forward(struct pool *pool, struct strmap *headers)
     };
 
     struct strmap *headers2 = strmap_new(pool, 8);
-    headers_copy2(headers, headers2, copy_headers);
+    header_copy_list(headers, headers2, copy_headers);
     return headers2;
 }
