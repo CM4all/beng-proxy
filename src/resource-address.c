@@ -318,6 +318,7 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
             return src;
 
         assert(cgi == &buffer->u.cgi);
+        buffer->type = src->type;
         return buffer;
     }
 
