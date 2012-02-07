@@ -16,4 +16,10 @@ void
 header_copy_list(const struct strmap *in, struct strmap *out,
                  const char *const*keys);
 
+/**
+ * Copy all headers beginning with a certain prefix.
+ */
+void
+header_copy_prefix(struct strmap *in, struct strmap *out, const char *prefix);
+
 #endif
