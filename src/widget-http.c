@@ -6,6 +6,7 @@
 
 #include "widget-http.h"
 #include "http-response.h"
+#include "pheaders.h"
 #include "processor.h"
 #include "css_processor.h"
 #include "text_processor.h"
@@ -260,6 +261,7 @@ widget_response_process(struct embed *embed, http_status_t status,
                                 embed->lookup_handler_ctx,
                                 embed->async_ref);
     else {
+        headers = processor_header_forward(embed->pool, headers);
         body = processor_process(embed->pool, body,
                                  widget, embed->env, options);
 
@@ -304,6 +306,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
         return;
     }
 
+    headers = processor_header_forward(embed->pool, headers);
     body = css_processor(embed->pool, body, widget, embed->env, options);
     widget_response_dispatch(embed, status, headers, body);
 }
@@ -334,6 +337,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
         return;
     }
 
+    headers = processor_header_forward(embed->pool, headers);
     body = text_processor(embed->pool, body, widget, embed->env);
     widget_response_dispatch(embed, status, headers, body);
 }

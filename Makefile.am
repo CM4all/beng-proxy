@@ -1394,6 +1394,7 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 
 test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
+	src/pheaders.c \
 	src/crash.c \
 	src/widget-session.c src/session.c \
 	src/widget-view.c src/widget.c src/widget-init.c \
