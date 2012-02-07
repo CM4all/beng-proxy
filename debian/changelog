@@ -4,7 +4,7 @@ cm4all-beng-proxy (2.0.9) unstable; urgency=low
   * widget-http: filter processor response headers
   * processor: forward Wildfire headers in the debug build
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 07 Feb 2012 12:32:33 -0000
 
 cm4all-beng-proxy (2.0.8) unstable; urgency=low
 
