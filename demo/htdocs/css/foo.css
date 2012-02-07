@@ -18,10 +18,26 @@ div.___bar {
     color: green;
 }
 
+div.__ {
+    background-color: red;
+}
+
+div.___ {
+    background-color: green;
+}
+
 #foo, #__foo {
     color: blue;
 }
 
 #___bar {
     color: yellow;
+}
+
+#__ {
+    background-color: blue;
+}
+
+#___ {
+    background-color: yellow;
 }

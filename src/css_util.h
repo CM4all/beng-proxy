@@ -18,18 +18,10 @@ static inline unsigned
 underscore_prefix(const char *p, const char *end)
 {
     const char *q = p;
-    while (q < end) {
-        if (*q == '_')
-            ++q;
-        else if (is_css_ident_char(*q))
-            return q - p;
-        else
-            /* only underscores */
-            return 0;
-    }
+    while (q < end && *q == '_')
+        ++q;
 
-    /* only underscores (or empty) */
-    return 0;
+    return q - p;
 }
 
 gcc_pure
