@@ -28,6 +28,7 @@
 #include "connection.h"
 #include "instance.h"
 #include "strmap.h"
+#include "pheaders.h"
 #include "processor.h"
 #include "css_processor.h"
 #include "text_processor.h"

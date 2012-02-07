@@ -37,9 +37,6 @@ struct widget_lookup_handler;
 struct async_operation_ref;
 struct processor_env;
 
-struct strmap *
-processor_header_forward(struct pool *pool, struct strmap *headers);
-
 /**
  * Process the specified istream, and return the processed stream.
  *

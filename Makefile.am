@@ -333,6 +333,7 @@ SRC = src/main.c \
 	src/escape_css.c src/escape_css.h \
 	src/istream-escape.c src/istream-escape.h \
 	src/istream-html-escape.c \
+	src/pheaders.c src/pheaders.h \
 	src/processor.c \
 	src/penv.c src/penv.h \
 	src/parser.c \
