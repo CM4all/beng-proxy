@@ -9,6 +9,14 @@
 
 #include <string.h>
 
+bool
+uri_has_protocol(const char *uri, size_t length)
+{
+    const char *colon = memchr(uri, ':', length);
+    return colon != NULL && colon < uri + length - 2 &&
+        colon[1] == '/' && colon[2] == '/';
+}
+
 const char *
 uri_host_and_port(struct pool *pool, const char *uri)
 {

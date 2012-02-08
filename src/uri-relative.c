@@ -109,14 +109,6 @@ uri_compress(struct pool *pool, const char *uri)
     return dest;
 }
 
-static bool
-uri_has_protocol(const char *uri, size_t length)
-{
-    const char *colon = memchr(uri, ':', length);
-    return colon != NULL && colon < uri + length - 2 &&
-        colon[1] == '/' && colon[2] == '/';
-}
-
 static const char *
 uri_after_last_slash(const char *uri)
 {

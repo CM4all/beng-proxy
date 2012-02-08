@@ -9,7 +9,14 @@
 
 #include <inline/compiler.h>
 
+#include <stdbool.h>
+#include <stddef.h>
+
 struct pool;
+
+gcc_pure
+bool
+uri_has_protocol(const char *uri, size_t length);
 
 gcc_pure gcc_malloc
 const char *
