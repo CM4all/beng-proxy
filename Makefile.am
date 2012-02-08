@@ -538,6 +538,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/uri-base.c \
 	src/uri-address.c \
 	src/uri-relative.c \
+	src/uri-extract.c \
 	src/uri-edit.c \
 	src/uri-escape.c \
 	src/fifo-buffer.c \
@@ -929,6 +930,7 @@ test_t_uri_verify_SOURCES = test/t-uri-verify.c \
 
 test_t_uri_relative_SOURCES = test/t-uri-relative.c \
 	src/uri-relative.c \
+	src/uri-extract.c \
 	$(POOL_SRC)
 test_t_uri_relative_LDADD = $(LIBCM4ALL_DAEMON_LIBS)
 
@@ -1048,6 +1050,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/cgi.c src/fork.c \
 	src/cgi-client.c src/cgi-address.c src/cgi-launch.c \
 	src/jail.c src/uri-base.c src/uri-escape.c src/uri-relative.c \
+	src/uri-extract.c \
 	src/regex.c \
 	src/format.c src/address-list.c \
 	$(POOL_SRC) src/tpool.c \

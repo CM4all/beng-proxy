@@ -5,6 +5,7 @@
  */
 
 #include "uri-relative.h"
+#include "uri-extract.h"
 #include "strref.h"
 #include "pool.h"
 
@@ -114,20 +115,6 @@ uri_has_protocol(const char *uri, size_t length)
     const char *colon = memchr(uri, ':', length);
     return colon != NULL && colon < uri + length - 2 &&
         colon[1] == '/' && colon[2] == '/';
-}
-
-static const char *
-uri_path(const char *uri)
-{
-    if (uri[0] == '/')
-        return uri;
-    const char *colon = strchr(uri, ':');
-    if (colon == NULL)
-        return uri;
-    uri = colon + 1;
-    while (*uri == '/')
-        ++uri;
-    return strchr(uri, '/');
 }
 
 static const char *
