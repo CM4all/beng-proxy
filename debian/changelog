@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.11) unstable; urgency=low
 
-  * 
+  * processor: skip rewriting absolute URIs
 
  --   
 

@@ -9,6 +9,7 @@
 #include "penv.h"
 #include "parser.h"
 #include "uri-escape.h"
+#include "uri-extract.h"
 #include "widget.h"
 #include "widget-request.h"
 #include "widget-lookup.h"
@@ -636,6 +637,10 @@ transform_uri_attribute(struct processor *processor,
     const struct strref *value = &attr->value;
     if (strref_starts_with_n(value, "mailto:", 7))
         /* ignore email links */
+        return;
+
+    if (uri_has_protocol(value->data, value->length))
+        /* can't rewrite if the specified URI is absolute */
         return;
 
     struct widget *widget = NULL;
