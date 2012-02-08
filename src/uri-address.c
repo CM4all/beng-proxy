@@ -9,6 +9,7 @@
 #include "uri-base.h"
 #include "uri-relative.h"
 #include "uri-verify.h"
+#include "uri-extract.h"
 #include "pool.h"
 #include "strref.h"
 
@@ -216,6 +217,9 @@ uri_address_apply(struct pool *pool, const struct uri_with_address *src,
 {
     if (relative_length == 0)
         return src;
+
+    if (uri_has_protocol(relative, relative_length))
+        return NULL;
 
     const char *p = uri_absolute(pool, src->path,
                                  relative, relative_length);

@@ -7,6 +7,7 @@
 #include "uri-base.h"
 #include "uri-relative.h"
 #include "uri-escape.h"
+#include "uri-extract.h"
 #include "regex.h"
 
 #include <string.h>
@@ -176,6 +177,9 @@ cgi_address_apply(struct pool *pool, struct cgi_address *dest,
 {
     if (relative_length == 0)
         return src;
+
+    if (uri_has_protocol(relative, relative_length))
+        return NULL;
 
     const char *path_info = src->path_info != NULL ? src->path_info : "";
 
