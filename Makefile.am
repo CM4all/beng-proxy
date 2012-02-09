@@ -396,6 +396,7 @@ SRC = src/main.c \
 	src/regex.c src/regex.h \
 	src/cgi-address.c src/cgi-address.h \
 	src/cgi-quark.h \
+	src/cgi-parser.c src/cgi-parser.h \
 	src/cgi-client.c src/cgi-client.h \
 	src/cgi-launch.c src/cgi-launch.h \
 	src/cgi.c \
@@ -1052,6 +1053,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	$(STOPWATCH_SRC) \
 	src/cgi.c src/fork.c \
 	src/cgi-client.c src/cgi-address.c src/cgi-launch.c \
+	src/cgi-parser.c \
 	src/jail.c src/uri-base.c src/uri-escape.c src/uri-relative.c \
 	src/uri-extract.c \
 	src/regex.c \

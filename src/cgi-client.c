@@ -6,6 +6,7 @@
 
 #include "cgi-client.h"
 #include "cgi-quark.h"
+#include "cgi-parser.h"
 #include "istream-buffer.h"
 #include "async.h"
 #include "header-parser.h"
@@ -24,13 +25,8 @@ struct cgi {
 
     struct istream *input;
     struct fifo_buffer *buffer;
-    struct strmap *headers;
 
-    /**
-     * The remaining number of bytes in the response body, -1 if
-     * unknown.
-     */
-    off_t remaining;
+    struct cgi_parser parser;
 
     /**
      * This flag is true while cgi_parse_headers() is calling
@@ -46,39 +42,18 @@ struct cgi {
     struct http_response_handler_ref handler;
 };
 
+/**
+ * @return false if the connection has been closed
+ */
 static bool
-cgi_handle_line(struct cgi *cgi, const char *line, size_t length)
-{
-    assert(cgi != NULL);
-    assert(cgi->headers != NULL);
-    assert(line != NULL);
-
-    if (length > 0) {
-        header_parse_line(cgi->output.pool, cgi->headers,
-                          line, length);
-        return false;
-    } else
-        return true;
-}
-
-static void
 cgi_return_response(struct cgi *cgi)
 {
-    struct strmap *headers;
-
     async_operation_finished(&cgi->async);
 
-    headers = cgi->headers;
-    cgi->headers = NULL;
-    cgi->in_response_callback = true;
+    http_status_t status = cgi_parser_get_status(&cgi->parser);
+    struct strmap *headers = cgi_parser_get_headers(&cgi->parser);
 
-    http_status_t status = HTTP_STATUS_OK;
-    const char *p = strmap_remove(headers, "status");
-    if (p != NULL) {
-        int i = atoi(p);
-        if (http_status_is_valid(i))
-            status = (http_status_t)i;
-    }
+    cgi->in_response_callback = true;
 
     if (http_status_is_empty(status)) {
         /* this response does not have a response body, as indicated
@@ -88,77 +63,19 @@ cgi_return_response(struct cgi *cgi)
         stopwatch_dump(cgi->stopwatch);
 
         istream_free_handler(&cgi->input);
-        http_response_handler_invoke_response(&cgi->handler,
-                                              status, headers,
+        http_response_handler_invoke_response(&cgi->handler, status, headers,
                                               NULL);
         pool_unref(cgi->output.pool);
     } else {
         stopwatch_event(cgi->stopwatch, "headers");
 
-        p = strmap_remove(headers, "content-length");
-        if (p != NULL) {
-            char *endptr;
-            cgi->remaining = (off_t)strtoull(p, &endptr, 10);
-            if (endptr == p || *endptr != 0 || cgi->remaining < 0)
-                cgi->remaining = -1;
-        } else
-            cgi->remaining = -1;
-
-        if (cgi->remaining != -1) {
-            if ((off_t)fifo_buffer_available(cgi->buffer) > cgi->remaining) {
-                istream_free_handler(&cgi->input);
-
-                GError *error =
-                    g_error_new_literal(cgi_quark(), 0,
-                                        "too much data from CGI script");
-                http_response_handler_invoke_abort(&cgi->handler, error);
-                cgi->in_response_callback = false;
-                pool_unref(cgi->output.pool);
-                return;
-            }
-        }
-
-        http_response_handler_invoke_response(&cgi->handler,
-                                              status, headers,
+        http_response_handler_invoke_response(&cgi->handler, status, headers,
                                               istream_struct_cast(&cgi->output));
     }
 
     cgi->in_response_callback = false;
-}
 
-static void
-cgi_parse_headers(struct cgi *cgi)
-{
-    size_t length;
-    const char *buffer = fifo_buffer_read(cgi->buffer, &length);
-    if (buffer == NULL)
-        return;
-
-    assert(length > 0);
-    const char *buffer_end = buffer + length;
-
-    bool finished = false;
-    const char *start = buffer, *end, *next = NULL;
-    while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
-        next = end + 1;
-        --end;
-        while (end >= start && char_is_whitespace(*end))
-            --end;
-
-        finished = cgi_handle_line(cgi, start, end - start + 1);
-        if (finished)
-            break;
-
-        start = next;
-    }
-
-    if (next == NULL)
-        return;
-
-    fifo_buffer_consume(cgi->buffer, next - buffer);
-
-    if (finished)
-        cgi_return_response(cgi);
+    return cgi->input != NULL;
 }
 
 /**
@@ -175,6 +92,8 @@ cgi_parse_headers(struct cgi *cgi)
 static size_t
 cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
 {
+    assert(!cgi_parser_headers_finished(&cgi->parser));
+
     size_t max_length;
     void *dest = fifo_buffer_write(cgi->buffer, &max_length);
     assert(dest != NULL);
@@ -185,30 +104,34 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
     memcpy(dest, data, length);
     fifo_buffer_append(cgi->buffer, length);
 
-    cgi_parse_headers(cgi);
+    GError *error = NULL;
+    enum completion c = cgi_parser_feed_headers(cgi->output.pool, &cgi->parser,
+                                                cgi->buffer, &error);
+    switch (c) {
+    case C_DONE:
+        if (!cgi_return_response(cgi))
+            return 0;
+        return length;
 
-    /* we check cgi->input here because this is our indicator that
-       cgi->output has been closed; since we are in the cgi->input
-       data handler, this is the only reason why cgi->input can be
-       NULL */
-    if (cgi->input == NULL)
-        return 0;
+    case C_PARTIAL:
+    case C_NONE:
+        return length;
 
-    if (fifo_buffer_full(cgi->buffer)) {
-        /* the buffer is full, and no header could be parsed: this
-           means the current header is too large for the buffer; bail
-           out */
+    case C_ERROR:
         istream_free_handler(&cgi->input);
-
-        GError *error =
-            g_error_new_literal(cgi_quark(), 0,
-                                "CGI response header too long");
         http_response_handler_invoke_abort(&cgi->handler, error);
         pool_unref(cgi->output.pool);
         return 0;
+
+    case C_CLOSED:
+        /* unreachable */
+        assert(false);
+        return 0;
     }
 
-    return length;
+    /* unreachable */
+    assert(false);
+    return 0;
 }
 
 /**
@@ -220,7 +143,7 @@ static size_t
 cgi_feed_headers2(struct cgi *cgi, const char *data, size_t length)
 {
     assert(length > 0);
-    assert(cgi->headers != NULL);
+    assert(!cgi_parser_headers_finished(&cgi->parser));
 
     size_t consumed = 0;
 
@@ -231,7 +154,7 @@ cgi_feed_headers2(struct cgi *cgi, const char *data, size_t length)
             break;
 
         consumed += nbytes;
-    } while (consumed < length && cgi->headers != NULL);
+    } while (consumed < length && !cgi_parser_headers_finished(&cgi->parser));
 
     if (cgi->input == NULL)
         return 0;
@@ -251,7 +174,7 @@ cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
 
     assert(cgi->input != NULL);
 
-    if (cgi->headers != NULL)
+    if (!cgi_parser_headers_finished(&cgi->parser))
         return nbytes;
 
     assert(length > fifo_buffer_available(cgi->buffer));
@@ -261,7 +184,7 @@ cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
        for the response body */
     nbytes -= fifo_buffer_available(cgi->buffer);
 
-    if (cgi->remaining == 0) {
+    if (cgi_parser_eof(&cgi->parser)) {
         /* the response body is already finished (probably because
            it was present, but empty); submit that result to the
            handler immediately */
@@ -280,7 +203,7 @@ cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
 static size_t
 cgi_feed_body(struct cgi *cgi, const char *data, size_t length)
 {
-    if (cgi->remaining != -1 && (off_t)length > cgi->remaining) {
+    if (cgi_parser_is_too_much(&cgi->parser, length)) {
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
@@ -296,17 +219,13 @@ cgi_feed_body(struct cgi *cgi, const char *data, size_t length)
     cgi->had_output = true;
 
     size_t nbytes = istream_invoke_data(&cgi->output, data, length);
-    if (nbytes > 0 && cgi->remaining != -1) {
-        cgi->remaining -= nbytes;
+    if (nbytes > 0 && cgi_parser_body_consumed(&cgi->parser, nbytes)) {
+        stopwatch_event(cgi->stopwatch, "end");
+        stopwatch_dump(cgi->stopwatch);
 
-        if (cgi->remaining == 0) {
-            stopwatch_event(cgi->stopwatch, "end");
-            stopwatch_dump(cgi->stopwatch);
-
-            istream_free_handler(&cgi->input);
-            istream_deinit_eof(&cgi->output);
-            return 0;
-        }
+        istream_free_handler(&cgi->input);
+        istream_deinit_eof(&cgi->output);
+        return 0;
     }
 
     return nbytes;
@@ -326,12 +245,13 @@ cgi_input_data(const void *data, size_t length, void *ctx)
 
     cgi->had_input = true;
 
-    if (cgi->headers != NULL) {
+    if (!cgi_parser_headers_finished(&cgi->parser)) {
         pool_ref(cgi->output.pool);
 
         size_t nbytes = cgi_feed_headers3(cgi, data, length);
 
-        if (nbytes > 0 && nbytes < length && cgi->headers == NULL) {
+        if (nbytes > 0 && nbytes < length &&
+            cgi_parser_headers_finished(&cgi->parser)) {
             /* the headers are finished; now begin sending the
                response body */
             size_t nbytes2 = cgi_feed_body(cgi, (const char *)data + nbytes,
@@ -357,26 +277,23 @@ cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct cgi *cgi = ctx;
 
-    assert(cgi->headers == NULL);
+    assert(cgi_parser_headers_finished(&cgi->parser));
 
     cgi->had_input = true;
     cgi->had_output = true;
 
-    if (cgi->remaining != -1 && (off_t)max_length > cgi->remaining)
-        max_length = (size_t)cgi->remaining;
+    if (cgi_parser_known_length(&cgi->parser) &&
+        (off_t)max_length > cgi_parser_available(&cgi->parser))
+        max_length = (size_t)cgi_parser_available(&cgi->parser);
 
     ssize_t nbytes = istream_invoke_direct(&cgi->output, type, fd, max_length);
-    if (nbytes > 0 && cgi->remaining != -1) {
-        cgi->remaining -= nbytes;
+    if (nbytes > 0 && cgi_parser_body_consumed(&cgi->parser, nbytes)) {
+        stopwatch_event(cgi->stopwatch, "end");
+        stopwatch_dump(cgi->stopwatch);
 
-        if (cgi->remaining == 0) {
-            stopwatch_event(cgi->stopwatch, "end");
-            stopwatch_dump(cgi->stopwatch);
-
-            istream_close_handler(cgi->input);
-            istream_deinit_eof(&cgi->output);
-            return ISTREAM_RESULT_CLOSED;
-        }
+        istream_close_handler(cgi->input);
+        istream_deinit_eof(&cgi->output);
+        return ISTREAM_RESULT_CLOSED;
     }
 
     return nbytes;
@@ -389,7 +306,7 @@ cgi_input_eof(void *ctx)
 
     cgi->input = NULL;
 
-    if (cgi->headers != NULL) {
+    if (!cgi_parser_headers_finished(&cgi->parser)) {
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
@@ -400,7 +317,7 @@ cgi_input_eof(void *ctx)
                                 "premature end of headers from CGI script");
         http_response_handler_invoke_abort(&cgi->handler, error);
         pool_unref(cgi->output.pool);
-    } else if (cgi->remaining > 0) {
+    } else if (cgi_parser_requires_more(&cgi->parser)) {
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
@@ -426,7 +343,7 @@ cgi_input_abort(GError *error, void *ctx)
 
     cgi->input = NULL;
 
-    if (cgi->headers != NULL) {
+    if (!cgi_parser_headers_finished(&cgi->parser)) {
         /* the response hasn't been sent yet: notify the response
            handler */
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
@@ -463,8 +380,8 @@ istream_cgi_available(struct istream *istream, bool partial)
 {
     struct cgi *cgi = istream_to_cgi(istream);
 
-    if (cgi->remaining != -1)
-        return cgi->remaining;
+    if (cgi_parser_known_length(&cgi->parser))
+        return cgi_parser_available(&cgi->parser);
 
     if (cgi->input == NULL)
         return 0;
@@ -572,7 +489,8 @@ cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
                            &cgi_input_handler, cgi, 0);
 
     cgi->buffer = fifo_buffer_new(pool, 4096);
-    cgi->headers = strmap_new(pool, 32);
+
+    cgi_parser_init(pool, &cgi->parser);
 
     http_response_handler_set(&cgi->handler, handler, handler_ctx);
 
