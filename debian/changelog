@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.29) unstable; urgency=low
 
-  * 
+  * merge release 1.0.23
 
  --   
 
@@ -213,6 +213,15 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.23) unstable; urgency=low
+
+  * cgi: detect large response headers
+  * cgi: continue parsing response headers after buffer boundary
+  * cgi: bigger response header buffer
+  * fcgi-client: detect large response headers
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 09 Feb 2012 09:27:50 -0000
+
 cm4all-beng-proxy (1.0.22) unstable; urgency=low
 
   * debian/rules: don't run libtool

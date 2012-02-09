@@ -589,6 +589,38 @@ test_length_too_small_late(pool_t pool, struct context *c)
     assert(c->body_abort);
 }
 
+/**
+ * Test a response header that is too large for the buffer.
+ */
+static void
+test_large_header(pool_t pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/large_header.sh", NULL);
+    else
+        path = "./demo/cgi-bin/large_header.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "large_header.sh", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->aborted);
+    assert(!c->body_abort);
+}
+
 
 /*
  * main
@@ -624,6 +656,7 @@ run_all_tests(pool_t pool)
     run_test(pool, test_length_too_small);
     run_test(pool, test_length_too_big);
     run_test(pool, test_length_too_small_late);
+    run_test(pool, test_large_header);
 }
 
 int main(int argc, char **argv) {
