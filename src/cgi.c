@@ -172,6 +172,43 @@ cgi_parse_headers(struct cgi *cgi)
         cgi_return_response(cgi);
 }
 
+/**
+ * Feed data into the input buffer and continue parsing response
+ * headers from it.  After this function returns, the response may
+ * have been delivered to the response handler, and the caller should
+ * post the rest of the specified buffer to the response body stream.
+ *
+ * Caller must hold pool reference.
+ *
+ * @return the number of bytes consumed from the specified buffer
+ * (moved to the input buffer), 0 if the object has been closed
+ */
+static size_t
+cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
+{
+    size_t max_length;
+    void *dest = fifo_buffer_write(cgi->buffer, &max_length);
+    if (dest == NULL)
+        return 0;
+
+    if (length > max_length)
+        length = max_length;
+
+    memcpy(dest, data, length);
+    fifo_buffer_append(cgi->buffer, length);
+
+    cgi_parse_headers(cgi);
+
+    /* we check cgi->input here because this is our indicator that
+       cgi->output has been closed; since we are in the cgi->input
+       data handler, this is the only reason why cgi->input can be
+       NULL */
+    if (cgi->input == NULL)
+        return 0;
+
+    return length;
+}
+
 /*
  * input handler
  *
@@ -182,32 +219,20 @@ cgi_input_data(const void *data, size_t length, void *ctx)
 {
     struct cgi *cgi = ctx;
 
+    assert(cgi->input != NULL);
+
     cgi->had_input = true;
 
     if (cgi->headers != NULL) {
-        size_t max_length;
-        void *dest = fifo_buffer_write(cgi->buffer, &max_length);
-        if (dest == NULL)
-            return 0;
-
-        if (length > max_length)
-            length = max_length;
-
-        memcpy(dest, data, length);
-        fifo_buffer_append(cgi->buffer, length);
-
         pool_ref(cgi->output.pool);
 
-        cgi_parse_headers(cgi);
-
-        /* we check cgi->input here because this is our indicator that
-           cgi->output has been closed; since we are in the cgi->input
-           data handler, this is the only reason why cgi->input can be
-           NULL */
-        if (cgi->input == NULL) {
+        size_t nbytes = cgi_feed_headers(cgi, data, length);
+        if (nbytes == 0) {
             pool_unref(cgi->output.pool);
             return 0;
         }
+
+        assert(cgi->input != NULL);
 
         if (cgi->headers == NULL && !fifo_buffer_empty(cgi->buffer)) {
             size_t consumed = istream_buffer_send(&cgi->output, cgi->buffer);
@@ -237,7 +262,7 @@ cgi_input_data(const void *data, size_t length, void *ctx)
 
         pool_unref(cgi->output.pool);
 
-        return length;
+        return nbytes;
     } else {
         if (cgi->remaining != -1 && (off_t)length > cgi->remaining) {
             stopwatch_event(cgi->stopwatch, "malformed");
