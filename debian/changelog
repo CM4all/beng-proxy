@@ -3,7 +3,7 @@ cm4all-beng-proxy (2.0.11) unstable; urgency=low
   * merge release 1.4.11
   * processor: skip rewriting absolute URIs
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 09 Feb 2012 09:43:06 -0000
 
 cm4all-beng-proxy (2.0.10) unstable; urgency=low
 
