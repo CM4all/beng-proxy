@@ -781,7 +781,7 @@ cgi_new(pool_t pool, const struct jail_params *jail,
     istream_assign_handler(&cgi->input, input,
                            &cgi_input_handler, cgi, 0);
 
-    cgi->buffer = fifo_buffer_new(pool, 1024);
+    cgi->buffer = fifo_buffer_new(pool, 4096);
     cgi->headers = strmap_new(pool, 32);
 
     http_response_handler_set(&cgi->handler, handler, handler_ctx);
