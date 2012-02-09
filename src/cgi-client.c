@@ -236,6 +236,41 @@ cgi_feed_headers2(struct cgi *cgi, const char *data, size_t length)
     return consumed;
 }
 
+static size_t
+cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
+{
+    size_t nbytes = cgi_feed_headers2(cgi, data, length);
+    if (nbytes == 0)
+        return 0;
+
+    assert(cgi->input != NULL);
+
+    if (cgi->headers == NULL && !fifo_buffer_empty(cgi->buffer)) {
+        size_t consumed = istream_buffer_send(&cgi->output, cgi->buffer);
+        if (consumed == 0 && cgi->input == NULL)
+            /* we have been closed, bail out */
+            return 0;
+
+        cgi->had_output = true;
+    }
+
+    if (cgi->headers == NULL &&
+        cgi->remaining == 0 && fifo_buffer_empty(cgi->buffer)) {
+        /* the response body is already finished (probably because
+           it was present, but empty); submit that result to the
+           handler immediately */
+
+        stopwatch_event(cgi->stopwatch, "end");
+        stopwatch_dump(cgi->stopwatch);
+
+        istream_close_handler(cgi->input);
+        istream_deinit_eof(&cgi->output);
+        return 0;
+    }
+
+    return nbytes;
+}
+
 /*
  * input handler
  *
@@ -253,39 +288,7 @@ cgi_input_data(const void *data, size_t length, void *ctx)
     if (cgi->headers != NULL) {
         pool_ref(cgi->output.pool);
 
-        size_t nbytes = cgi_feed_headers2(cgi, data, length);
-        if (nbytes == 0) {
-            pool_unref(cgi->output.pool);
-            return 0;
-        }
-
-        assert(cgi->input != NULL);
-
-        if (cgi->headers == NULL && !fifo_buffer_empty(cgi->buffer)) {
-            size_t consumed = istream_buffer_send(&cgi->output, cgi->buffer);
-            if (consumed == 0 && cgi->input == NULL) {
-                /* we have been closed, bail out */
-                pool_unref(cgi->output.pool);
-                return 0;
-            }
-
-            cgi->had_output = true;
-        }
-
-        if (cgi->headers == NULL &&
-            cgi->remaining == 0 && fifo_buffer_empty(cgi->buffer)) {
-            /* the response body is already finished (probably because
-               it was present, but empty); submit that result to the
-               handler immediately */
-
-            stopwatch_event(cgi->stopwatch, "end");
-            stopwatch_dump(cgi->stopwatch);
-
-            pool_unref(cgi->output.pool);
-            istream_close_handler(cgi->input);
-            istream_deinit_eof(&cgi->output);
-            return 0;
-        }
+        size_t nbytes = cgi_feed_headers3(cgi, data, length);
 
         pool_unref(cgi->output.pool);
 
