@@ -188,8 +188,7 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
 {
     size_t max_length;
     void *dest = fifo_buffer_write(cgi->buffer, &max_length);
-    if (dest == NULL)
-        return 0;
+    assert(dest != NULL);
 
     if (length > max_length)
         length = max_length;
@@ -205,6 +204,20 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
        NULL */
     if (cgi->input == NULL)
         return 0;
+
+    if (fifo_buffer_full(cgi->buffer)) {
+        /* the buffer is full, and no header could be parsed: this
+           means the current header is too large for the buffer; bail
+           out */
+        istream_free_handler(&cgi->input);
+
+        GError *error =
+            g_error_new_literal(cgi_quark(), 0,
+                                "CGI response header too long");
+        http_response_handler_invoke_abort(&cgi->handler, error);
+        pool_unref(cgi->output.pool);
+        return 0;
+    }
 
     return length;
 }
