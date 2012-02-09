@@ -222,6 +222,29 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
     return length;
 }
 
+/**
+ * Call cgi_feed_headers() in a loop, to parse as much as possible.
+ */
+static size_t
+cgi_feed_headers2(struct cgi *cgi, const char *data, size_t length)
+{
+    size_t consumed = 0;
+
+    while (consumed < length) {
+        size_t nbytes = cgi_feed_headers(cgi, data + consumed,
+                                         length - consumed);
+        if (nbytes == 0)
+            break;
+
+        consumed += nbytes;
+    }
+
+    if (cgi->input == NULL)
+        return 0;
+
+    return consumed;
+}
+
 /*
  * input handler
  *
@@ -239,7 +262,7 @@ cgi_input_data(const void *data, size_t length, void *ctx)
     if (cgi->headers != NULL) {
         pool_ref(cgi->output.pool);
 
-        size_t nbytes = cgi_feed_headers(cgi, data, length);
+        size_t nbytes = cgi_feed_headers2(cgi, data, length);
         if (nbytes == 0) {
             pool_unref(cgi->output.pool);
             return 0;

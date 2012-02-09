@@ -1,6 +1,7 @@
 cm4all-beng-proxy (1.0.23) unstable; urgency=low
 
   * cgi: detect large response headers
+  * cgi: continue parsing response headers after buffer boundary
 
  --   
 
