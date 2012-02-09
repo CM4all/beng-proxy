@@ -318,8 +318,20 @@ fcgi_client_consume_input(struct fcgi_client *client)
                 length = client->content_length;
 
             nbytes = fcgi_client_feed(client, data, length);
-            if (nbytes == 0)
-                return at_headers && !fifo_buffer_full(client->input);
+            if (nbytes == 0) {
+                if (!at_headers)
+                    return false;
+
+                if (fifo_buffer_full(client->input)) {
+                    GError *error =
+                        g_error_new_literal(fcgi_quark(), 0,
+                                            "FastCGI response header too long");
+                    fcgi_client_abort_response_headers(client, error);
+                    return false;
+                }
+
+                return true;
+            }
 
             fifo_buffer_consume(client->input, nbytes);
             length -= nbytes;
