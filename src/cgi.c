@@ -211,13 +211,16 @@ cgi_input_data(const void *data, size_t length, void *ctx)
 
         if (cgi->headers == NULL && !fifo_buffer_empty(cgi->buffer)) {
             size_t consumed = istream_buffer_send(&cgi->output, cgi->buffer);
-            if (consumed == 0 && cgi->input == NULL)
-                length = 0;
+            if (consumed == 0 && cgi->input == NULL) {
+                /* we have been closed, bail out */
+                pool_unref(cgi->output.pool);
+                return 0;
+            }
 
             cgi->had_output = true;
         }
 
-        if (cgi->headers == NULL && cgi->input != NULL &&
+        if (cgi->headers == NULL &&
             cgi->remaining == 0 && fifo_buffer_empty(cgi->buffer)) {
             /* the response body is already finished (probably because
                it was present, but empty); submit that result to the
