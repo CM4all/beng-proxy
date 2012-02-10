@@ -228,16 +228,19 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
 static size_t
 cgi_feed_headers2(struct cgi *cgi, const char *data, size_t length)
 {
+    assert(length > 0);
+    assert(cgi->headers != NULL);
+
     size_t consumed = 0;
 
-    while (consumed < length) {
+    do {
         size_t nbytes = cgi_feed_headers(cgi, data + consumed,
                                          length - consumed);
         if (nbytes == 0)
             break;
 
         consumed += nbytes;
-    }
+    } while (consumed < length && cgi->headers != NULL);
 
     if (cgi->input == NULL)
         return 0;
