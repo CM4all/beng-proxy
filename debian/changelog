@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.0.24) unstable; urgency=low
 
-  * 
+  * cgi: break loop when headers are finished
 
  --   
 
