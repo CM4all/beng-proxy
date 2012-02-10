@@ -257,7 +257,10 @@ cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
 
     assert(cgi->input != NULL);
 
-    if (cgi->headers == NULL && !fifo_buffer_empty(cgi->buffer)) {
+    if (cgi->headers != NULL)
+        return nbytes;
+
+    if (!fifo_buffer_empty(cgi->buffer)) {
         size_t consumed = istream_buffer_send(&cgi->output, cgi->buffer);
         if (consumed == 0 && cgi->input == NULL)
             /* we have been closed, bail out */
@@ -266,8 +269,7 @@ cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
         cgi->had_output = true;
     }
 
-    if (cgi->headers == NULL &&
-        cgi->remaining == 0 && fifo_buffer_empty(cgi->buffer)) {
+    if (cgi->remaining == 0 && fifo_buffer_empty(cgi->buffer)) {
         /* the response body is already finished (probably because
            it was present, but empty); submit that result to the
            handler immediately */
