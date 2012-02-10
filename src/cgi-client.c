@@ -116,8 +116,6 @@ cgi_return_response(struct cgi *cgi)
                 pool_unref(cgi->output.pool);
                 return;
             }
-
-            cgi->remaining -= fifo_buffer_available(cgi->buffer);
         }
 
         http_response_handler_invoke_response(&cgi->handler,
@@ -251,16 +249,14 @@ cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
     if (cgi->headers != NULL)
         return nbytes;
 
-    if (!fifo_buffer_empty(cgi->buffer)) {
-        size_t consumed = istream_buffer_send(&cgi->output, cgi->buffer);
-        if (consumed == 0 && cgi->input == NULL)
-            /* we have been closed, bail out */
-            return 0;
+    assert(length > fifo_buffer_available(cgi->buffer));
+    assert(nbytes > fifo_buffer_available(cgi->buffer));
 
-        cgi->had_output = true;
-    }
+    /* flush the remaining buffer, this is response body, reschedule
+       for the response body */
+    nbytes -= fifo_buffer_available(cgi->buffer);
 
-    if (cgi->remaining == 0 && fifo_buffer_empty(cgi->buffer)) {
+    if (cgi->remaining == 0) {
         /* the response body is already finished (probably because
            it was present, but empty); submit that result to the
            handler immediately */
@@ -290,14 +286,6 @@ cgi_feed_body(struct cgi *cgi, const char *data, size_t length)
                                 "too much data from CGI script");
         istream_deinit_abort(&cgi->output, error);
         return 0;
-    }
-
-    if (cgi->buffer != NULL) {
-        size_t rest = istream_buffer_consume(&cgi->output, cgi->buffer);
-        if (rest > 0)
-            return 0;
-
-        cgi->buffer = NULL;
     }
 
     cgi->had_output = true;
@@ -424,7 +412,7 @@ cgi_input_eof(void *ctx)
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of response body from CGI script");
         istream_deinit_abort(&cgi->output, error);
-    } else if (cgi->buffer == NULL || fifo_buffer_empty(cgi->buffer)) {
+    } else {
         stopwatch_event(cgi->stopwatch, "end");
         stopwatch_dump(cgi->stopwatch);
 
@@ -479,37 +467,19 @@ istream_cgi_available(struct istream *istream, bool partial)
 {
     struct cgi *cgi = istream_to_cgi(istream);
 
-    size_t length;
-    if (cgi->buffer != NULL) {
-        length = fifo_buffer_available(cgi->buffer);
-    } else
-        length = 0;
-
     if (cgi->remaining != -1)
-        return (off_t)length + cgi->remaining;
+        return cgi->remaining;
 
     if (cgi->input == NULL)
-        return length;
+        return 0;
 
-    if (cgi->in_response_callback) {
+    if (cgi->in_response_callback)
         /* this condition catches the case in cgi_parse_headers():
            http_response_handler_invoke_response() might recursively call
            istream_read(cgi->input) */
-        if (partial)
-            return length;
-        else
-            return (off_t)-1;
-    }
+        return (off_t)-1;
 
-    off_t available = istream_available(cgi->input, partial);
-    if (available == (off_t)-1) {
-        if (partial)
-            return length;
-        else
-            return (off_t)-1;
-    }
-
-    return (off_t)length + available;
+    return istream_available(cgi->input, partial);
 }
 
 static void
@@ -537,14 +507,6 @@ istream_cgi_read(struct istream *istream)
                  !cgi->had_output);
 
         pool_unref(cgi->output.pool);
-    } else {
-        size_t rest = istream_buffer_consume(&cgi->output, cgi->buffer);
-        if (rest == 0) {
-            stopwatch_event(cgi->stopwatch, "end");
-            stopwatch_dump(cgi->stopwatch);
-
-            istream_deinit_eof(&cgi->output);
-        }
     }
 }
 
