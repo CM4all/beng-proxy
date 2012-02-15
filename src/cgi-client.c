@@ -213,6 +213,8 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
 
 /**
  * Call cgi_feed_headers() in a loop, to parse as much as possible.
+ *
+ * Caller must hold pool reference.
  */
 static size_t
 cgi_feed_headers2(struct cgi *cgi, const char *data, size_t length)
@@ -237,6 +239,9 @@ cgi_feed_headers2(struct cgi *cgi, const char *data, size_t length)
     return consumed;
 }
 
+/**
+ * Caller must hold pool reference.
+ */
 static size_t
 cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
 {
