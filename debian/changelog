@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.0.25) unstable; urgency=low
 
-  * 
+  * cgi-client: clear the input pointer on close
 
  --   
 
