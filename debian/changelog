@@ -1,5 +1,6 @@
 cm4all-beng-proxy (1.0.24) unstable; urgency=low
 
+  * debian/rules: optimize parallel build
   * cgi: break loop when headers are finished
 
  --   
