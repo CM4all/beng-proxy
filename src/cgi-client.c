@@ -338,6 +338,19 @@ cgi_input_data(const void *data, size_t length, void *ctx)
 
         size_t nbytes = cgi_feed_headers3(cgi, data, length);
 
+        if (nbytes > 0 && nbytes < length && cgi->headers == NULL) {
+            /* the headers are finished; now begin sending the
+               response body */
+            size_t nbytes2 = cgi_feed_body(cgi, (const char *)data + nbytes,
+                                           length - nbytes);
+            if (nbytes2 > 0)
+                /* more data was consumed */
+                nbytes += nbytes2;
+            else if (cgi->input == NULL)
+                /* the connection was closed, must return 0 */
+                nbytes = 0;
+        }
+
         pool_unref(cgi->output.pool);
 
         return nbytes;
