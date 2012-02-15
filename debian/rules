@@ -12,8 +12,7 @@ else
   CFLAGS += -O2 -fno-strict-aliasing
 endif
 
-build: debian/stamp-build
-debian/stamp-build:
+debian/stamp-autogen:
 	dh_testdir
 
 	mkdir -p build
@@ -21,9 +20,10 @@ debian/stamp-build:
 	automake --add-missing --foreign
 	autoconf
 
-	mkdir -p build/debug build/optimized build/toi
+	touch $@
 
-	# ./configure
+debian/stamp-configure-debug: debian/stamp-autogen
+	mkdir -p build/debug
 	cd build/debug && CFLAGS="$(CFLAGS)" ../../configure \
 		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
@@ -32,15 +32,10 @@ debian/stamp-build:
 		--includedir=/usr/include/cm4all/libbeng-proxy-0 \
 		--enable-documentation \
 		--enable-debug
+	touch $@
 
-	# Build
-	$(MAKE) -C build/debug \
-		src/cm4all-beng-lb \
-		src/cm4all-beng-proxy \
-		src/cm4all-beng-proxy-delegate-helper \
-		src/libcm4all-istream.a doc/beng.pdf doc/lb.pdf
-
-	# ./configure
+debian/stamp-configure-optimized: debian/stamp-autogen
+	mkdir -p build/optimized
 	cd build/optimized && CFLAGS="$(CFLAGS)" ../../configure \
 		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
@@ -48,12 +43,10 @@ debian/stamp-build:
 		--sysconfdir=/etc \
 		--disable-documentation \
 		--disable-debug
+	touch $@
 
-	# Build
-	$(MAKE) -C build/optimized \
-		src/cm4all-beng-proxy
-
-	# ./configure
+debian/stamp-configure-toi: debian/stamp-autogen
+	mkdir -p build/toi
 	cd build/toi && CFLAGS="$(CFLAGS)" ../../configure \
 		--host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) \
 		--disable-dependency-tracking \
@@ -62,15 +55,27 @@ debian/stamp-build:
 		--disable-documentation \
 		--disable-debug \
 		--with-session-id=20
+	touch $@
 
-	# Build
+debian/stamp-build-debug: debian/stamp-configure-debug
+	$(MAKE) -C build/debug \
+		src/cm4all-beng-lb \
+		src/cm4all-beng-proxy \
+		src/cm4all-beng-proxy-delegate-helper \
+		src/libcm4all-istream.a doc/beng.pdf doc/lb.pdf
+
+debian/stamp-build-optimized: debian/stamp-configure-optimized
+	$(MAKE) -C build/optimized \
+		src/cm4all-beng-proxy
+
+debian/stamp-build-toi: debian/stamp-configure-toi
 	$(MAKE) -C build/toi \
 		src/cm4all-beng-proxy
 
-	touch $@
+build: debian/stamp-build-debug debian/stamp-build-optimized debian/stamp-build-toi
 
 check: debian/stamp-check
-debian/stamp-check: debian/stamp-build
+debian/stamp-check: debian/stamp-build-debug
 	dh_testdir
 
 	$(MAKE) -C build/debug check

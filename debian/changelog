@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.12) unstable; urgency=low
 
-  * 
+  * merge release 1.4.12
 
  --   
 
@@ -92,6 +92,12 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.12) unstable; urgency=low
+
+  * merge release 1.2.17
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 15 Feb 2012 09:27:50 -0000
 
 cm4all-beng-proxy (1.4.11) unstable; urgency=low
 
@@ -191,6 +197,12 @@ cm4all-beng-proxy (1.3) unstable; urgency=low
   * proxy-widget: client can choose only views that have an address
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 31 Oct 2011 17:41:14 +0100
+
+cm4all-beng-proxy (1.2.17) unstable; urgency=low
+
+  * merge release 1.1.30
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 15 Feb 2012 09:26:45 -0000
 
 cm4all-beng-proxy (1.2.16) unstable; urgency=low
 
@@ -300,6 +312,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.30) unstable; urgency=low
+
+  * merge release 1.0.24
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 15 Feb 2012 09:25:38 -0000
 
 cm4all-beng-proxy (1.1.29) unstable; urgency=low
 
@@ -516,6 +534,13 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.24) unstable; urgency=low
+
+  * debian/rules: optimize parallel build
+  * cgi: break loop when headers are finished
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 15 Feb 2012 09:23:22 -0000
+
 cm4all-beng-proxy (1.0.23) unstable; urgency=low
 
   * cgi: detect large response headers
