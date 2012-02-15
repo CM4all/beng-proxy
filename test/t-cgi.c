@@ -218,6 +218,37 @@ test_normal(struct pool *pool, struct context *c)
 }
 
 static void
+test_tiny(struct pool *pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/tiny.sh", NULL);
+    else
+        path = "./demo/cgi-bin/tiny.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "tiny.sh", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(c->body_eof);
+    assert(!c->body_abort);
+}
+
+static void
 test_close_early(struct pool *pool, struct context *c)
 {
     const char *path;
@@ -644,6 +675,7 @@ static void
 run_all_tests(struct pool *pool)
 {
     run_test(pool, test_normal);
+    run_test(pool, test_tiny);
     run_test(pool, test_close_early);
     run_test(pool, test_close_late);
     run_test(pool, test_close_data);
