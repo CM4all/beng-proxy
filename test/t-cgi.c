@@ -28,7 +28,7 @@ struct context {
     bool released, aborted;
     http_status_t status;
 
-    istream_t body;
+    struct istream *body;
     off_t body_data, body_available;
     bool body_eof, body_abort, body_closed;
 };
@@ -131,7 +131,7 @@ static const struct istream_handler my_istream_handler = {
 
 static void
 my_response(http_status_t status, struct strmap *headers gcc_unused,
-            istream_t body,
+            struct istream *body,
             void *ctx)
 {
     struct context *c = ctx;
@@ -203,6 +203,37 @@ test_normal(struct pool *pool, struct context *c)
             path,
             HTTP_METHOD_GET, "/",
             "env.py", NULL, NULL, "/var/www",
+            NULL, NULL, NULL,
+            NULL, 0,
+            &my_response_handler, c,
+            &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(c->body_eof);
+    assert(!c->body_abort);
+}
+
+static void
+test_tiny(struct pool *pool, struct context *c)
+{
+    const char *path;
+
+    path = getenv("srcdir");
+    if (path != NULL)
+        path = p_strcat(pool, path, "/demo/cgi-bin/tiny.sh", NULL);
+    else
+        path = "./demo/cgi-bin/tiny.sh";
+
+    cgi_new(pool, false, NULL, NULL,
+            path,
+            HTTP_METHOD_GET, "/",
+            "tiny.sh", NULL, NULL, "/var/www",
             NULL, NULL, NULL,
             NULL, 0,
             &my_response_handler, c,
@@ -646,6 +677,7 @@ static void
 run_all_tests(struct pool *pool)
 {
     run_test(pool, test_normal);
+    run_test(pool, test_tiny);
     run_test(pool, test_close_early);
     run_test(pool, test_close_late);
     run_test(pool, test_close_data);
