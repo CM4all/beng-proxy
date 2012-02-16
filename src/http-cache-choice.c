@@ -19,6 +19,7 @@
 #include "istream.h"
 
 #include <glib.h>
+#include <stdio.h>
 
 enum {
     CHOICE_MAGIC = 4,
