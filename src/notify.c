@@ -35,7 +35,7 @@ notify_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
     struct notify *notify = ctx;
 
     char buffer[32];
-    read(fd, buffer, sizeof(buffer));
+    (void)read(fd, buffer, sizeof(buffer));
 
 #if GCC_CHECK_VERSION(4,6)
 #pragma GCC diagnostic push
@@ -90,5 +90,5 @@ notify_signal(struct notify *notify)
 #if GCC_CHECK_VERSION(4,6)
 #pragma GCC diagnostic pop
 #endif
-        write(notify->fds[1], notify, 1);
+        (void)write(notify->fds[1], notify, 1);
 }
