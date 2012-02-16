@@ -11,6 +11,7 @@
 #include "abort-flag.h"
 #include "stopwatch.h"
 #include "http-response.h"
+#include "istream.h"
 
 void
 cgi_new(struct pool *pool, http_method_t method,
