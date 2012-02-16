@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.31) unstable; urgency=low
 
-  * 
+  * merge release 1.0.25
 
  --   
 
@@ -225,6 +225,12 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.25) unstable; urgency=low
+
+  * cgi-client: clear the input pointer on close
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 16 Feb 2012 13:46:13 -0000
+
 cm4all-beng-proxy (1.0.24) unstable; urgency=low
 
   * debian/rules: optimize parallel build
