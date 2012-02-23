@@ -1599,6 +1599,19 @@ translate_handle_packet(struct translate_client *client,
 
         client->response.local_uri = payload;
         return true;
+
+    case TRANSLATE_AUTO_BASE:
+        if (client->resource_address != &client->response.address ||
+            client->cgi_address != &client->response.address.u.cgi ||
+            client->response.address.u.cgi.path_info == NULL ||
+            client->response.auto_base) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_AUTO_BASE packet");
+            return false;
+        }
+
+        client->response.auto_base = true;
+        return true;
     }
 
     GError *error = g_error_new(translate_quark(), 0,

@@ -246,6 +246,11 @@ enum beng_translation_command {
      * by the processor for rewriting URIs.
      */
     TRANSLATE_LOCAL_URI = 86,
+
+    /**
+     * Enable CGI auto-base.
+     */
+    TRANSLATE_AUTO_BASE = 87,
 };
 
 struct beng_translation_header {

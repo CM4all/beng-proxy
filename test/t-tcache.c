@@ -931,6 +931,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
                 },
             },
         },
+        .auto_base = true,
         .max_age = -1,
         .user_max_age = -1,
     };
@@ -945,6 +946,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
                 },
             },
         },
+        .auto_base = true,
         .max_age = -1,
         .user_max_age = -1,
     };
@@ -971,6 +973,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/auto-base/foo.cgi/",
+        .auto_base = true,
         .max_age = -1,
         .user_max_age = -1,
     };

@@ -67,6 +67,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_PATH_INFO, m.group(2))
             if jail:
                 response.packet(TRANSLATE_JAILCGI)
+            response.packet(TRANSLATE_AUTO_BASE)
             return
 
         if path[-4:] == '.cls':
@@ -157,6 +158,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_SCRIPT_NAME, script_name)
             if path_info is not None:
                 response.packet(TRANSLATE_PATH_INFO, path_info)
+                response.packet(TRANSLATE_AUTO_BASE)
         elif uri[:17] == '/cgi-transparent/':
             i = uri.find('/', 17)
             if i > 0:
@@ -172,6 +174,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_SCRIPT_NAME, script_name)
             if path_info is not None:
                 response.packet(TRANSLATE_PATH_INFO, path_info)
+                response.packet(TRANSLATE_AUTO_BASE)
 
             response.packet(TRANSLATE_TRANSPARENT)
         elif raw_uri[:11] == '/cfatest01/':

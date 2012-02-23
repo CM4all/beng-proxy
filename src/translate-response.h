@@ -70,6 +70,8 @@ struct translate_response {
 
     bool transparent;
 
+    bool auto_base;
+
     bool widget_info;
 
     bool anchor_absolute;

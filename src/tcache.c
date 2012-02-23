@@ -238,7 +238,7 @@ tcache_store_response(struct pool *pool, struct translate_response *dest,
     const char *base = src->base;
     char *new_base = NULL;
 
-    if (base == NULL && request->uri != NULL)
+    if (src->auto_base && base == NULL && request->uri != NULL)
         base = new_base = resource_address_auto_base(pool, &src->address,
                                                      request->uri);
 
