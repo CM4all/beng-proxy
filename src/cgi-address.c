@@ -141,7 +141,9 @@ cgi_address_save_base(struct pool *pool, struct cgi_address *dest,
     if (src->path_info == NULL)
         return false;
 
-    size_t uri_length = base_string_unescape(pool, src->uri, suffix);
+    size_t uri_length = src->uri != NULL
+        ? base_string_unescape(pool, src->uri, suffix)
+        : 0;
     if (uri_length == (size_t)-1)
         return false;
 
@@ -150,7 +152,8 @@ cgi_address_save_base(struct pool *pool, struct cgi_address *dest,
         return false;
 
     cgi_address_copy(pool, dest, src, have_address_list);
-    dest->uri = p_strndup(pool, dest->uri, uri_length);
+    if (dest->uri != NULL)
+        dest->uri = p_strndup(pool, dest->uri, uri_length);
     dest->path_info = p_strndup(pool, dest->path_info, length);
     return true;
 }
@@ -170,7 +173,8 @@ cgi_address_load_base(struct pool *pool, struct cgi_address *dest,
     unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
     cgi_address_copy(pool, dest, src, have_address_list);
-    dest->uri = p_strcat(pool, dest->uri, unescaped, NULL);
+    if (dest->uri != NULL)
+        dest->uri = p_strcat(pool, dest->uri, unescaped, NULL);
     dest->path_info = p_strcat(pool, dest->path_info, unescaped, NULL);
 
 }

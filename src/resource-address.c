@@ -185,7 +185,6 @@ resource_address_auto_base(struct pool *pool,
 
     assert(false);
     return NULL;
-
 }
 
 struct resource_address *
