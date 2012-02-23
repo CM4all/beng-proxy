@@ -226,7 +226,7 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
 {
     assert(src != dest);
 
-    size_t length;
+    size_t length, uri_length;
 
     switch (src->type) {
     case RESOURCE_ADDRESS_NONE:
@@ -239,11 +239,16 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
         if (src->u.cgi.path_info == NULL)
             return NULL;
 
+        uri_length = base_string_unescape(pool, src->u.cgi.uri, suffix);
+        if (uri_length == (size_t)-1)
+            return NULL;
+
         length = base_string_unescape(pool, src->u.cgi.path_info, suffix);
         if (length == (size_t)-1)
             return NULL;
 
         resource_address_copy(pool, dest, src);
+        dest->u.cgi.uri = p_strndup(pool, dest->u.cgi.uri, uri_length);
         dest->u.cgi.path_info = p_strndup(pool, dest->u.cgi.path_info, length);
         return dest;
 
@@ -303,6 +308,8 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
         unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
         resource_address_copy(pool, dest, src);
+        dest->u.cgi.uri = p_strcat(pool, dest->u.cgi.uri,
+                                   unescaped, NULL);
         dest->u.cgi.path_info = p_strcat(pool, dest->u.cgi.path_info,
                                          unescaped, NULL);
         return dest;

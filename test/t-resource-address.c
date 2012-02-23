@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
         .u = {
             .cgi = {
                 .path = "/usr/lib/cgi-bin/foo.pl",
+                .uri = "/foo/bar/baz",
                 .path_info = "/bar/baz",
             },
         },
@@ -99,30 +100,35 @@ int main(int argc, char **argv) {
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(b->u.cgi.uri, "/foo/") == 0);
     assert(strcmp(b->u.cgi.path_info, "/") == 0);
 
     b = resource_address_load_base(pool, &dest, a, "xyz");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(b->u.cgi.uri, "/foo/xyz") == 0);
     assert(strcmp(b->u.cgi.path_info, "/xyz") == 0);
 
     a = resource_address_save_base(pool, &dest2, &ra3, "baz");
     assert(a != NULL);
     assert(a->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(a->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(a->u.cgi.uri, "/foo/bar/") == 0);
     assert(strcmp(a->u.cgi.path_info, "/bar/") == 0);
 
     b = resource_address_load_base(pool, &dest, a, "bar/");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(b->u.cgi.uri, "/foo/bar/bar/") == 0);
     assert(strcmp(b->u.cgi.path_info, "/bar/bar/") == 0);
 
     b = resource_address_load_base(pool, &dest, a, "bar/xyz");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_CGI);
     assert(strcmp(b->u.cgi.path, ra3.u.cgi.path) == 0);
+    assert(strcmp(b->u.cgi.uri, "/foo/bar/bar/xyz") == 0);
     assert(strcmp(b->u.cgi.path_info, "/bar/bar/xyz") == 0);
 
     pool_unref(pool);

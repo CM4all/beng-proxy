@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4.14) unstable; urgency=low
 
-  * 
+  * merge release 1.2.19
 
  --   
 
@@ -114,6 +114,12 @@ cm4all-beng-proxy (1.3) unstable; urgency=low
   * proxy-widget: client can choose only views that have an address
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 31 Oct 2011 17:41:14 +0100
+
+cm4all-beng-proxy (1.2.19) unstable; urgency=low
+
+  * merge release 1.1.32
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 23 Feb 2012 15:18:36 -0000
 
 cm4all-beng-proxy (1.2.18) unstable; urgency=low
 
@@ -235,6 +241,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.32) unstable; urgency=low
+
+  * merge release 1.0.26
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 23 Feb 2012 15:14:56 -0000
 
 cm4all-beng-proxy (1.1.31) unstable; urgency=low
 
@@ -463,6 +475,12 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.26) unstable; urgency=low
+
+  * resource-address: apply BASE to the CGI request URI
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 23 Feb 2012 15:11:42 -0000
+
 cm4all-beng-proxy (1.0.25) unstable; urgency=low
 
   * cgi-client: clear the input pointer on close
