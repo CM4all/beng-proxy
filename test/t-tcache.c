@@ -299,6 +299,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             .u = {
                 .cgi = {
                     .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .uri = "/cgi1/foo",
                     .path_info = "x/foo",
                 },
             },
@@ -321,6 +322,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             .u = {
                 .cgi = {
                     .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .uri = "/cgi1/a/b/c",
                     .path_info = "x/a/b/c",
                 },
             },
@@ -344,6 +346,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             .u = {
                 .cgi = {
                     .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .uri = "/cgi2/foo",
                     .path_info = "foo",
                 },
             },
@@ -366,6 +369,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             .u = {
                 .cgi = {
                     .path = "/usr/lib/cgi-bin/cgi.pl",
+                    .uri = "/cgi2/a/b/c",
                     .path_info = "a/b/c",
                 },
             },
@@ -922,6 +926,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
             .u = {
                 .cgi = {
                     .path = "/usr/lib/cgi-bin/foo.cgi",
+                    .uri = "/auto-base/foo.cgi/bar",
                     .path_info = "/bar",
                 },
             },
@@ -935,6 +940,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
             .u = {
                 .cgi = {
                     .path = "/usr/lib/cgi-bin/foo.cgi",
+                    .uri = "/auto-base/foo.cgi/bar",
                     .path_info = "/bar",
                 },
             },
@@ -959,6 +965,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
             .u = {
                 .cgi = {
                     .path = "/usr/lib/cgi-bin/foo.cgi",
+                    .uri = "/auto-base/foo.cgi/check",
                     .path_info = "/check",
                 },
             },
