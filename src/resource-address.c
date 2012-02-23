@@ -193,6 +193,9 @@ resource_address_insert_args(pool_t pool,
 static size_t
 base_string(const char *p, const char *suffix)
 {
+    assert(p != NULL);
+    assert(suffix != NULL);
+
     size_t length = strlen(p), suffix_length = strlen(suffix);
 
     if (length == suffix_length)
@@ -213,6 +216,10 @@ base_string(const char *p, const char *suffix)
 static size_t
 base_string_unescape(pool_t pool, const char *p, const char *suffix)
 {
+    assert(pool != NULL);
+    assert(p != NULL);
+    assert(suffix != NULL);
+
     char *unescaped = p_strdup(pool, suffix);
     unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
@@ -239,7 +246,9 @@ resource_address_save_base(pool_t pool, struct resource_address *dest,
         if (src->u.cgi.path_info == NULL)
             return NULL;
 
-        uri_length = base_string_unescape(pool, src->u.cgi.uri, suffix);
+        uri_length = src->u.cgi.uri != NULL
+            ? base_string_unescape(pool, src->u.cgi.uri, suffix)
+            : 0;
         if (uri_length == (size_t)-1)
             return NULL;
 
@@ -248,7 +257,8 @@ resource_address_save_base(pool_t pool, struct resource_address *dest,
             return NULL;
 
         resource_address_copy(pool, dest, src);
-        dest->u.cgi.uri = p_strndup(pool, dest->u.cgi.uri, uri_length);
+        if (dest->u.cgi.uri != NULL)
+            dest->u.cgi.uri = p_strndup(pool, dest->u.cgi.uri, uri_length);
         dest->u.cgi.path_info = p_strndup(pool, dest->u.cgi.path_info, length);
         return dest;
 
@@ -308,8 +318,9 @@ resource_address_load_base(pool_t pool, struct resource_address *dest,
         unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
         resource_address_copy(pool, dest, src);
-        dest->u.cgi.uri = p_strcat(pool, dest->u.cgi.uri,
-                                   unescaped, NULL);
+        if (dest->u.cgi.uri != NULL)
+            dest->u.cgi.uri = p_strcat(pool, dest->u.cgi.uri,
+                                       unescaped, NULL);
         dest->u.cgi.path_info = p_strcat(pool, dest->u.cgi.path_info,
                                          unescaped, NULL);
         return dest;
