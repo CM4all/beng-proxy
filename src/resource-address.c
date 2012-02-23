@@ -192,6 +192,9 @@ resource_address_insert_args(pool_t pool,
 static size_t
 base_string(const char *p, const char *suffix)
 {
+    assert(p != NULL);
+    assert(suffix != NULL);
+
     size_t length = strlen(p), suffix_length = strlen(suffix);
 
     if (length == suffix_length)
@@ -212,6 +215,10 @@ base_string(const char *p, const char *suffix)
 static size_t
 base_string_unescape(pool_t pool, const char *p, const char *suffix)
 {
+    assert(pool != NULL);
+    assert(p != NULL);
+    assert(suffix != NULL);
+
     char *unescaped = p_strdup(pool, suffix);
     unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
