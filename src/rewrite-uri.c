@@ -29,6 +29,13 @@ parse_uri_mode(const struct strref *s)
         return URI_MODE_FOCUS;
     else if (strref_cmp_literal(s, "partial") == 0)
         return URI_MODE_PARTIAL;
+#ifndef NDEBUG
+    /* temporary kludge for widgets that are still using this feature
+       that has been deprecated since beng-proxy 0.4 */
+    else if (strref_cmp_literal(s, "proxy") == 0 &&
+             g_getenv("MODE_PROXY") != NULL)
+        return URI_MODE_PARTIAL;
+#endif
     else
         return URI_MODE_DIRECT;
 }
