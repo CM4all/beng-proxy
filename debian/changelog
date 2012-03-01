@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.14) unstable; urgency=low
 
-  * 
+  * address-resolver: add missing initialization
 
  --   
 

@@ -45,6 +45,7 @@ address_list_resolve_new(struct pool *pool,
                          GError **error_r)
 {
     struct address_list *address_list = p_malloc(pool, sizeof(*address_list));
+    address_list_init(address_list);
     if (!address_list_resolve(pool, address_list,
                               host_and_port, default_port, hints, error_r)) {
         p_free(pool, address_list);
