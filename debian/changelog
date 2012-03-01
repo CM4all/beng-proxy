@@ -5,7 +5,7 @@ cm4all-beng-proxy (2.0.14) unstable; urgency=low
   * rewrite-uri: allow mode=proxy (optional temporary kludge)
   * widget-http: auto-disable processor (optional temporary kludge)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 01 Mar 2012 18:36:38 -0000
 
 cm4all-beng-proxy (2.0.13) unstable; urgency=low
 
