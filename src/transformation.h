@@ -40,6 +40,14 @@ struct transformation {
 };
 
 /**
+ * Returns true if the chain contains at least one "PROCESS"
+ * transformation.
+ */
+gcc_pure
+bool
+transformation_has_processor(const struct transformation *t);
+
+/**
  * Returns true if the first "PROCESS" transformation in the chain (if
  * any) includes the "CONTAINER" processor option.
  */

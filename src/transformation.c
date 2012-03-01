@@ -10,6 +10,16 @@
 #include <string.h>
 
 bool
+transformation_has_processor(const struct transformation *t)
+{
+    for (; t != NULL; t = t->next)
+        if (t->type == TRANSFORMATION_PROCESS)
+            return true;
+
+    return false;
+}
+
+bool
 transformation_is_container(const struct transformation *t)
 {
     for (; t != NULL; t = t->next)

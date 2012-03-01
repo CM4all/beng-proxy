@@ -567,6 +567,16 @@ widget_response_response(http_status_t status, struct strmap *headers,
         }
     }
 
+#ifndef NDEBUG
+    /* temporary kludge for widgets that are still using the
+       "mode=proxy" feature that has been deprecated since beng-proxy
+       0.4 */
+    if (transformation_has_processor(embed->transformation) &&
+        g_getenv("VERBATIM_UNPROCESSABLE") != NULL &&
+        !processable(headers))
+        embed->transformation = NULL;
+#endif
+
     widget_response_dispatch(embed, status, headers, body);
 }
 
