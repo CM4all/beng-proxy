@@ -643,9 +643,9 @@ translate_handle_packet(struct translate_client *client,
         }
     }
 
-    switch ((enum beng_translation_command)command) {
-        GError *error = NULL;
+    GError *error = NULL;
 
+    switch ((enum beng_translation_command)command) {
     case TRANSLATE_END:
         stopwatch_event(client->stopwatch, "end");
 
@@ -1532,8 +1532,8 @@ translate_handle_packet(struct translate_client *client,
         return true;
     }
 
-    GError *error = g_error_new(translate_quark(), 0,
-                                "unknown translation packet: %u", command);
+    error = g_error_new(translate_quark(), 0,
+                        "unknown translation packet: %u", command);
     translate_client_abort(client, error);
     return false;
 }
@@ -1541,12 +1541,11 @@ translate_handle_packet(struct translate_client *client,
 static void
 translate_try_read(struct translate_client *client, int fd)
 {
+    GError *error = NULL;
     bool bret;
 
     while (true) {
         switch (packet_reader_read(client->pool, &client->reader, fd)) {
-            GError *error;
-
         case PACKET_READER_INCOMPLETE: {
             struct timeval tv = {
                 .tv_sec = 60,

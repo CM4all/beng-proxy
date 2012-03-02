@@ -24,6 +24,7 @@ widget_init(struct widget *widget, struct pool *pool,
     widget->headers = NULL;
     widget->view = NULL;
     widget->session = WIDGET_SESSION_RESOURCE;
+    widget->session_sync_pending = false;
     widget->from_request.focus_ref = NULL;
     widget->from_request.path_info = NULL;
     strref_clear(&widget->from_request.query_string);
