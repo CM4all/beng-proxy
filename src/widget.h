@@ -76,6 +76,14 @@ struct widget {
     } session;
 
     /**
+     * This is set to true by the widget resolver when the widget
+     * class is "stateful".  It means that widget_sync_session() must
+     * be called, which in turn resets the flag.  It protects against
+     * calling widget_sync_session() twice.
+     */
+    bool session_sync_pending;
+
+    /**
      * Parameters that were forwarded from the HTTP request to this
      * widget.
      */

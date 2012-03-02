@@ -1,5 +1,6 @@
 cm4all-beng-proxy (2.0.15) unstable; urgency=low
 
+  * merge release 1.4.16
   * uri-address: fix NULL dereference on certain malformed URIs
 
  --   
@@ -115,6 +116,12 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.16) unstable; urgency=low
+
+  * merge release 1.2.21
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Mar 2012 16:03:51 -0000
 
 cm4all-beng-proxy (1.4.15) unstable; urgency=low
 
@@ -238,6 +245,12 @@ cm4all-beng-proxy (1.3) unstable; urgency=low
   * proxy-widget: client can choose only views that have an address
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 31 Oct 2011 17:41:14 +0100
+
+cm4all-beng-proxy (1.2.21) unstable; urgency=low
+
+  * merge release 1.1.34
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Mar 2012 16:02:00 -0000
 
 cm4all-beng-proxy (1.2.20) unstable; urgency=low
 
@@ -371,6 +384,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.34) unstable; urgency=low
+
+  * merge release 1.0.28
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Mar 2012 15:26:44 -0000
 
 cm4all-beng-proxy (1.1.33) unstable; urgency=low
 
@@ -611,6 +630,14 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.28) unstable; urgency=low
+
+  * widget-resolver: serve responses in the right order
+  * widget-request: fix session related assertion failure
+  * translate: initialize all GError variables
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Mar 2012 15:20:54 -0000
+
 cm4all-beng-proxy (1.0.27) unstable; urgency=low
 
   * resource-address: fix regression when CGI URI is not set

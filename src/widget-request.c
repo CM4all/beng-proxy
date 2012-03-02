@@ -136,6 +136,9 @@ widget_sync_session(struct widget *widget, struct session *session)
     assert(widget->lazy.address == NULL);
     assert(widget->class != NULL);
     assert(widget->class->stateful);
+    assert(widget->session_sync_pending);
+
+    widget->session_sync_pending = false;
 
     /* are we focused? */
 

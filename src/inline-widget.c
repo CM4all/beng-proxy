@@ -207,12 +207,13 @@ inline_widget_set(struct inline_widget *iw)
         return;
     }
 
-    if (widget->class->stateful) {
+    if (widget->session_sync_pending) {
         struct session *session = session_get(iw->env->session_id);
         if (session != NULL) {
             widget_sync_session(widget, session);
             session_put(session);
-        }
+        } else
+            widget->session_sync_pending = false;
     }
 
     widget_http_request(iw->pool, iw->widget, iw->env,
