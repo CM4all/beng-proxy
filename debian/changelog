@@ -1,3 +1,9 @@
+cm4all-beng-proxy (1.0.28) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-beng-proxy (1.0.27) unstable; urgency=low
 
   * resource-address: fix regression when CGI URI is not set
