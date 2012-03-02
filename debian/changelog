@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.0.28) unstable; urgency=low
 
-  * 
+  * widget-resolver: serve responses in the right order
 
  --   
 

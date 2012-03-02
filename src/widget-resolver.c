@@ -237,7 +237,7 @@ widget_resolver_new(pool_t pool, pool_t widget_pool, struct widget *widget,
     listener->aborted = false;
 #endif
 
-    list_add(&listener->siblings, &resolver->listeners);
+    list_add(&listener->siblings, resolver->listeners.prev);
 
 #ifndef NDEBUG
     ++resolver->num_listeners;
