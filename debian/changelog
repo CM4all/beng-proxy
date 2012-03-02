@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.2.21) unstable; urgency=low
 
-  * 
+  * merge release 1.1.34
 
  --   
 
@@ -136,6 +136,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.34) unstable; urgency=low
+
+  * merge release 1.0.28
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Mar 2012 15:26:44 -0000
 
 cm4all-beng-proxy (1.1.33) unstable; urgency=low
 
@@ -376,6 +382,14 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.28) unstable; urgency=low
+
+  * widget-resolver: serve responses in the right order
+  * widget-request: fix session related assertion failure
+  * translate: initialize all GError variables
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Mar 2012 15:20:54 -0000
+
 cm4all-beng-proxy (1.0.27) unstable; urgency=low
 
   * resource-address: fix regression when CGI URI is not set
