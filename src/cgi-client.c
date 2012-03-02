@@ -362,15 +362,6 @@ cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     cgi->had_input = true;
     cgi->had_output = true;
 
-    if (cgi->remaining == 0) {
-        stopwatch_event(cgi->stopwatch, "end");
-        stopwatch_dump(cgi->stopwatch);
-
-        istream_close_handler(cgi->input);
-        istream_deinit_eof(&cgi->output);
-        return ISTREAM_RESULT_CLOSED;
-    }
-
     if (cgi->remaining != -1 && (off_t)max_length > cgi->remaining)
         max_length = (size_t)cgi->remaining;
 
