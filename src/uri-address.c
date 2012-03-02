@@ -44,14 +44,14 @@ uri_address_parse2(struct pool *pool, enum uri_scheme scheme,
     assert(uri != NULL);
 
     const char *path = strchr(uri, '/');
-    if (path == uri || !uri_path_verify_quick(path)) {
-        g_set_error(error_r, uri_address_quark(), 0,
-                    "malformed HTTP URI");
-        return NULL;
-    }
-
     const char *host_and_port;
     if (path != NULL) {
+        if (path == uri || !uri_path_verify_quick(path)) {
+            g_set_error(error_r, uri_address_quark(), 0,
+                        "malformed HTTP URI");
+            return NULL;
+        }
+
         host_and_port = p_strndup(pool, uri, path - uri);
         path = p_strdup(pool, path);
     } else {

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.15) unstable; urgency=low
 
-  * 
+  * uri-address: fix NULL dereference on certain malformed URIs
 
  --   
 
