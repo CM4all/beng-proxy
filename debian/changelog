@@ -3,7 +3,7 @@ cm4all-beng-proxy (2.0.15) unstable; urgency=low
   * merge release 1.4.16
   * uri-address: fix NULL dereference on certain malformed URIs
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 Mar 2012 16:28:54 -0000
 
 cm4all-beng-proxy (2.0.14) unstable; urgency=low
 
