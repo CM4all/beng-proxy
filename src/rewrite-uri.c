@@ -221,12 +221,13 @@ class_lookup_callback(void *ctx)
     if (rwu->widget->class != NULL) {
         const char *uri;
 
-        if (rwu->widget->class->stateful) {
+        if (rwu->widget->session_sync_pending) {
             struct session *session = session_get(rwu->session_id);
             if (session != NULL) {
                 widget_sync_session(rwu->widget, session);
                 session_put(session);
-            }
+            } else
+                rwu->widget->session_sync_pending = false;
         }
 
         struct pool_mark mark;

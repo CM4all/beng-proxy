@@ -9,6 +9,7 @@
 #include "widget-resolver.h"
 #include "widget-registry.h"
 #include "widget.h"
+#include "widget-class.h"
 #include "async.h"
 
 #include <inline/list.h>
@@ -130,6 +131,7 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
 #endif
 
     widget->class = class;
+    widget->session_sync_pending = class->stateful;
 
     do {
         struct widget_resolver_listener *listener =

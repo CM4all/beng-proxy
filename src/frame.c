@@ -43,12 +43,13 @@ frame_top_widget(pool_t pool, struct widget *widget, struct processor_env *env,
         return;
     }
 
-    if (widget->class->stateful) {
+    if (widget->session_sync_pending) {
         struct session *session = session_get(env->session_id);
         if (session != NULL) {
             widget_sync_session(widget, session);
             session_put(session);
-        }
+        } else
+            widget->session_sync_pending = false;
     }
 
     widget_http_request(pool, widget, env,
@@ -83,12 +84,13 @@ frame_parent_widget(pool_t pool, struct widget *widget, const char *id,
         return;
     }
 
-    if (widget->class->stateful) {
+    if (widget->session_sync_pending) {
         struct session *session = session_get(env->session_id);
         if (session != NULL) {
             widget_sync_session(widget, session);
             session_put(session);
-        }
+        } else
+            widget->session_sync_pending = false;
     }
 
     if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
