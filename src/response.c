@@ -33,6 +33,7 @@
 #include "css_processor.h"
 #include "text_processor.h"
 #include "istream.h"
+#include "tvary.h"
 
 #include <daemon/log.h>
 
@@ -747,6 +748,9 @@ response_response(http_status_t status, struct strmap *headers,
     headers = forward_response_headers(request->pool, headers,
                                        request->local_host,
                                        &request2->translate.response->response_header_forward);
+
+    headers = add_translation_vary_header(request->pool, headers,
+                                          request2->translate.response);
 
     request2->product_token = strmap_remove(headers, "server");
 

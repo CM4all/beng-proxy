@@ -300,6 +300,7 @@ SRC = src/main.c \
 	src/transformation.c \
 	src/tstock.c \
 	src/tcache.c \
+	src/tvary.c src/tvary.h \
 	src/request.c \
 	src/request-forward.c \
 	src/response.c \

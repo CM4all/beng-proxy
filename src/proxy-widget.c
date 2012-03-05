@@ -20,6 +20,7 @@
 #include "global.h"
 #include "istream-impl.h"
 #include "istream.h"
+#include "tvary.h"
 
 #include <daemon/log.h>
 
@@ -41,6 +42,9 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     headers = forward_response_headers(request->pool, headers,
                                        request->local_host,
                                        &view->response_header_forward);
+
+    headers = add_translation_vary_header(request->pool, headers,
+                                          request2->translate.response);
 
     request2->product_token = strmap_remove(headers, "server");
 

@@ -15,6 +15,7 @@
 #include "global.h"
 #include "istream-file.h"
 #include "istream.h"
+#include "tvary.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -161,6 +162,8 @@ file_evaluate_request(struct request *request2, int fd, const struct stat *st,
                 struct growing_buffer *headers = NULL;
                 headers = growing_buffer_new(request->pool, 512);
                 file_cache_headers(headers, fd, st);
+                write_translation_vary_header(headers,
+                                              request2->translate.response);
 
                 response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
                                   headers, NULL);
@@ -316,6 +319,7 @@ file_dispatch(struct request *request2, const struct stat *st,
     file_headers(headers, tr, istream_file_fd(body), st,
                  request_processor_enabled(request2),
                  request_processor_first(request2));
+    write_translation_vary_header(headers, request2->translate.response);
 
     status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
@@ -394,6 +398,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
     file_headers(headers, tr, istream_file_fd(body), st,
                  request_processor_enabled(request2),
                  request_processor_first(request2));
+    write_translation_vary_header(headers, request2->translate.response);
 
     header_write(headers, "content-encoding", encoding);
     header_write(headers, "vary", "accept-encoding");
