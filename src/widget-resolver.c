@@ -131,7 +131,7 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
 #endif
 
     widget->class = class;
-    widget->session_sync_pending = class->stateful;
+    widget->session_sync_pending = class != NULL && class->stateful;
 
     do {
         struct widget_resolver_listener *listener =
