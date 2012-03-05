@@ -190,6 +190,9 @@ class Translation(Protocol):
             response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[8:])
             response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
             response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
+        elif raw_uri[:24] == '/vary-user-agent/remote/':
+            response.vary(TRANSLATE_USER_AGENT)
+            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[24:])
         elif raw_uri[:5] == '/ajp/':
             response.ajp('ajp://cfatest01.intern.cm-ag:8009' + raw_uri[4:], 'cfatest01.intern.cm-ag:8009')
         elif uri[:8] == '/fcgi.rb':
@@ -382,6 +385,10 @@ class Translation(Protocol):
             response.proxy('http://sticky/' + raw_uri[8:],
                            ('172.30.0.23:80', '172.30.0.23:8080'))
             response.packet(TRANSLATE_STICKY)
+        elif raw_uri[:23] == '/vary-user-agent/local/':
+            response.vary(TRANSLATE_USER_AGENT)
+            self._handle_local_file('/var/www' + uri[22:], response,
+                                    error_document=True)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
