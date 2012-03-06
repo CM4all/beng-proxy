@@ -1061,11 +1061,17 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
             processor->widget.widget->headers =
                 strmap_new(processor->widget.pool, 16);
 
+        char *value = expansible_buffer_strdup(processor->widget.param.value,
+                                               processor->widget.pool);
+        if (strchr(value, '&') != NULL) {
+            length = html_unescape_inplace(value, strlen(value));
+            value[length] = 0;
+        }
+
         strmap_add(processor->widget.widget->headers,
                    expansible_buffer_strdup(processor->widget.param.name,
                                             processor->widget.pool),
-                   expansible_buffer_strdup(processor->widget.param.value,
-                                            processor->widget.pool));
+                   value);
     } else if (processor->tag == TAG_SCRIPT) {
         if (tag->type == TAG_OPEN)
             parser_script(processor->parser);
