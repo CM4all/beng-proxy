@@ -27,6 +27,7 @@ translation_vary_name(enum beng_translation_command cmd)
         return "authorization";
 
     case TRANSLATE_USER_AGENT:
+    case TRANSLATE_UA_CLASS:
         return "user-agent";
 
     default:

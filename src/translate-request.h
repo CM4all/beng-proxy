@@ -20,6 +20,7 @@ struct translate_request {
     const char *remote_host;
     const char *host;
     const char *user_agent;
+    const char *ua_class;
     const char *accept_language;
 
     /**

@@ -35,6 +35,7 @@ widget_registry_lookup(struct pool *pool,
     request->remote_host = NULL;
     request->host = NULL;
     request->user_agent = NULL;
+    request->ua_class = NULL;
     request->accept_language = NULL;
     request->authorization = NULL;
     request->uri = NULL;

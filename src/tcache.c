@@ -38,6 +38,7 @@ struct tcache_item {
         const char *host;
         const char *accept_language;
         const char *user_agent;
+        const char *ua_class;
         const char *query_string;
     } request;
 
@@ -432,6 +433,10 @@ tcache_vary_match(const struct tcache_item *item,
         return tcache_string_match(item->request.user_agent,
                                    request->user_agent, strict);
 
+    case TRANSLATE_UA_CLASS:
+        return tcache_string_match(item->request.ua_class,
+                                   request->ua_class, strict);
+
     case TRANSLATE_QUERY_STRING:
         return tcache_string_match(item->request.query_string,
                                    request->query_string, strict);
@@ -633,6 +638,9 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
         item->request.user_agent =
             tcache_vary_copy(pool, tcr->request->user_agent,
                              response, TRANSLATE_USER_AGENT);
+        item->request.ua_class =
+            tcache_vary_copy(pool, tcr->request->ua_class,
+                             response, TRANSLATE_UA_CLASS);
         item->request.query_string =
             tcache_vary_copy(pool, tcr->request->query_string,
                              response, TRANSLATE_QUERY_STRING);

@@ -25,6 +25,7 @@
 #include "strmap.h"
 #include "istream.h"
 #include "translate-client.h"
+#include "ua_classification.h"
 
 #include <daemon/log.h>
 
@@ -360,6 +361,9 @@ fill_translate_request(struct translate_request *t,
     t->remote_host = request->remote_address;
     t->host = strmap_get(request->headers, "host");
     t->user_agent = strmap_get(request->headers, "user-agent");
+    t->ua_class = t->user_agent != NULL
+        ? ua_classification_lookup(t->user_agent)
+        : NULL;
     t->accept_language = strmap_get(request->headers, "accept-language");
     t->authorization = strmap_get(request->headers, "authorization");
     t->uri = strref_dup(request->pool, &uri->base);

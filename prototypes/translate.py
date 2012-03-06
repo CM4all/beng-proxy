@@ -121,7 +121,7 @@ class Translation(Protocol):
         username, password = x
         return username == 'hansi' and password == 'hansilein'
 
-    def _handle_http(self, raw_uri, uri, authorization, check, response):
+    def _handle_http(self, raw_uri, uri, authorization, check, ua_class, response):
         if uri[:6] == '/site/':
             x = uri[6:]
             i = x.find('/')
@@ -389,6 +389,12 @@ class Translation(Protocol):
             response.vary(TRANSLATE_USER_AGENT)
             self._handle_local_file('/var/www' + uri[22:], response,
                                     error_document=True)
+        elif raw_uri == '/ua_class':
+            response.vary(TRANSLATE_UA_CLASS)
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'env.py'))
+            response.packet(TRANSLATE_SCRIPT_NAME, uri)
+            if ua_class is not None:
+                response.packet(TRANSLATE_PATH_INFO, ua_class)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
@@ -432,7 +438,7 @@ class Translation(Protocol):
 
         if request.uri is not None:
             self._handle_http(request.raw_uri, request.uri, request.authorization,
-                              request.check, response)
+                              request.check, request.ua_class, response)
 
         return response
 

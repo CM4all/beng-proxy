@@ -466,6 +466,7 @@ SRC = src/main.c \
 	src/abort-unref.c \
 	src/abort-flag.c \
 	src/tpool.c \
+	src/ua_classification.c src/ua_classification.h \
 	src/log-client.c src/log-client.h \
 	src/log-launch.c src/log-launch.h \
 	src/log-glue.c src/log-glue.h \
@@ -765,6 +766,7 @@ noinst_PROGRAMS = \
 	test/fake-memcached-server \
 	test/run-delegate \
 	test/dump-udp test/dump-control test/send-control \
+	test/run_ua_parser \
 	test/run-parser-cdata
 
 FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk \
@@ -1727,6 +1729,10 @@ test_dump_control_LDADD = $(AM_LDADD) \
 
 test_send_control_SOURCES = test/send-control.c
 test_send_control_LDADD = $(LIBCM4ALL_SOCKET_LIBS)
+
+test_run_ua_parser_SOURCES = test/run_ua_parser.c \
+	src/ua_classification.c
+test_run_ua_parser_LDADD = $(AM_LDADD) $(GLIB_LIBS)
 
 test_run_parser_cdata_SOURCES = test/t-parser-cdata.c \
 	src/parser.c src/istream-file.c \

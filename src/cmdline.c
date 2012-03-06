@@ -8,6 +8,7 @@
 #include "address-resolver.h"
 #include "stopwatch.h"
 #include "pool.h"
+#include "ua_classification.h"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -117,6 +118,10 @@ static void usage(void) {
          " --cluster-node N\n"
 #endif
          " -N N           set the index of this node in the beng-lb cluster\n"
+#ifdef __GLIBC__
+         " --ua-classes PATH\n"
+#endif
+         " -a PATH        load the User-Agent classification rules from this file\n"
 #ifdef __GLIBC__
          " --set NAME=VALUE  tweak an internal variable, see manual for details\n"
 #endif
@@ -324,6 +329,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
         {"bulldog-path", 1, NULL, 'B'},
         {"cluster-size", 1, NULL, 'C'},
         {"cluster-node", 1, NULL, 'N'},
+        {"ua-classes", 1, NULL, 'a'},
         {"set", 1, NULL, 's'},
         {NULL,0,NULL,0}
     };
@@ -488,6 +494,15 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             if ((config->cluster_node != 0 || config->cluster_size != 0) &&
                 config->cluster_node >= config->cluster_size)
                 arg_error(argv[0], "Cluster node too large");
+            break;
+
+        case 'a':
+            if (!ua_classification_init(optarg, &error)) {
+                fprintf(stderr, "%s\n", error->message);
+                g_error_free(error);
+                exit(EXIT_FAILURE);
+            }
+
             break;
 
         case 's':

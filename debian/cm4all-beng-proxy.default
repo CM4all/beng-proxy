@@ -23,6 +23,9 @@
 # Path of the translation server socket.
 #TRANSLATION_SOCKET=/var/run/cm4all/beng-proxy-translation.sock
 
+# Path of the User-Agent classification file.
+#UA_CLASSES=/etc/cm4all/beng/proxy/ua_classes.conf
+
 # Other options
 #OPTIONS="-v"
 

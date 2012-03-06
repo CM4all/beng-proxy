@@ -56,6 +56,10 @@ apply_translation_packet(struct translate_request *request,
         request->user_agent = payload;
         break;
 
+    case TRANSLATE_UA_CLASS:
+        request->ua_class = payload;
+        break;
+
     case TRANSLATE_QUERY_STRING:
         request->query_string = payload;
         break;

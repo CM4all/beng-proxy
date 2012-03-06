@@ -276,6 +276,8 @@ marshal_request(struct pool *pool, const struct translate_request *request,
         write_optional_packet(gb, TRANSLATE_HOST, request->host, error_r) &&
         write_optional_packet(gb, TRANSLATE_USER_AGENT, request->user_agent,
                               error_r) &&
+        write_optional_packet(gb, TRANSLATE_UA_CLASS, request->ua_class,
+                              error_r) &&
         write_optional_packet(gb, TRANSLATE_LANGUAGE,
                               request->accept_language, error_r) &&
         write_optional_packet(gb, TRANSLATE_AUTHORIZATION,
@@ -723,6 +725,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_LOCAL_ADDRESS:
     case TRANSLATE_LOCAL_ADDRESS_STRING:
     case TRANSLATE_AUTHORIZATION:
+    case TRANSLATE_UA_CLASS:
         daemon_log(2, "misplaced translate request packet\n");
         return true;
 

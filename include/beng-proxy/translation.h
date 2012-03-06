@@ -251,6 +251,11 @@ enum beng_translation_command {
      * Enable CGI auto-base.
      */
     TRANSLATE_AUTO_BASE = 87,
+
+    /**
+     * A classification for the User-Agent request header.
+     */
+    TRANSLATE_UA_CLASS = 88,
 };
 
 struct beng_translation_header {

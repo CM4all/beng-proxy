@@ -1,1 +1,2 @@
 build/debug/src/cm4all-beng-proxy usr/sbin
+debian/ua_classes.conf etc/cm4all/beng/proxy

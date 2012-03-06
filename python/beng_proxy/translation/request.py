@@ -46,6 +46,7 @@ class Request:
         self.local_port = None
         self.remote_host = None
         self.user_agent = None
+        self.ua_class = None
         self.accept_language = None
         self.authorization = None
         self.status = None
@@ -89,6 +90,8 @@ class Request:
             self.remote_host = packet.payload
         elif packet.command == TRANSLATE_USER_AGENT:
             self.user_agent = packet.payload
+        elif packet.command == TRANSLATE_UA_CLASS:
+            self.ua_class = packet.payload
         elif packet.command == TRANSLATE_LANGUAGE:
             self.accept_language = packet.payload
         elif packet.command == TRANSLATE_AUTHORIZATION:

@@ -32,6 +32,7 @@
 #include "resource-loader.h"
 #include "control-handler.h"
 #include "log-glue.h"
+#include "ua_classification.h"
 
 #include <daemon/daemonize.h>
 
@@ -419,4 +420,6 @@ int main(int argc, char **argv)
 
     if (instance.config.enable_splice)
         direct_global_deinit();
+
+    ua_classification_deinit();
 }
