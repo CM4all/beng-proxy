@@ -109,9 +109,18 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
                                                 cgi->buffer, &error);
     switch (c) {
     case C_DONE:
+        /* the C_DONE status can only be triggered by new data that
+           was just received; therefore, the amount of data still in
+           the buffer (= response body) must be smaller */
+        assert(fifo_buffer_available(cgi->buffer) < length);
+
         if (!cgi_return_response(cgi))
             return 0;
-        return length;
+
+        /* don't consider data still in the buffer (= response body)
+           as "consumed"; the caller will attempt to submit it to the
+           response body handler */
+        return length - fifo_buffer_available(cgi->buffer);
 
     case C_PARTIAL:
     case C_NONE:
@@ -176,13 +185,6 @@ cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
 
     if (!cgi_parser_headers_finished(&cgi->parser))
         return nbytes;
-
-    assert(length > fifo_buffer_available(cgi->buffer));
-    assert(nbytes > fifo_buffer_available(cgi->buffer));
-
-    /* flush the remaining buffer, this is response body, reschedule
-       for the response body */
-    nbytes -= fifo_buffer_available(cgi->buffer);
 
     if (cgi_parser_eof(&cgi->parser)) {
         /* the response body is already finished (probably because
