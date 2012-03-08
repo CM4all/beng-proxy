@@ -53,8 +53,6 @@ cgi_return_response(struct cgi *cgi)
     http_status_t status = cgi_parser_get_status(&cgi->parser);
     struct strmap *headers = cgi_parser_get_headers(&cgi->parser);
 
-    cgi->in_response_callback = true;
-
     if (http_status_is_empty(status)) {
         /* this response does not have a response body, as indicated
            by the HTTP status code */
@@ -66,16 +64,16 @@ cgi_return_response(struct cgi *cgi)
         http_response_handler_invoke_response(&cgi->handler, status, headers,
                                               NULL);
         pool_unref(cgi->output.pool);
+        return false;
     } else {
         stopwatch_event(cgi->stopwatch, "headers");
 
+        cgi->in_response_callback = true;
         http_response_handler_invoke_response(&cgi->handler, status, headers,
                                               istream_struct_cast(&cgi->output));
+        cgi->in_response_callback = false;
+        return cgi->input != NULL;
     }
-
-    cgi->in_response_callback = false;
-
-    return cgi->input != NULL;
 }
 
 /**
