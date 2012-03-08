@@ -185,6 +185,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                     if (is_css_ident_start(*buffer) &&
                         parser->handler->property_keyword != NULL) {
                         parser->state = CSS_PARSER_PROPERTY;
+                        parser->name_start = parser->position + (off_t)(buffer - start);
                         parser->name[0] = *buffer;
                         parser->name_length = 1;
                     }
@@ -285,6 +286,8 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 
                         parser->handler->property_keyword(parser->name,
                                                           parser->value,
+                                                          parser->name_start,
+                                                          parser->position + (off_t)(buffer - start) + 1,
                                                           parser->handler_ctx);
                     }
 
