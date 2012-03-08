@@ -1228,7 +1228,8 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         char *value = expansible_buffer_strdup(processor->widget.param.value,
                                                processor->widget.pool);
         if (strchr(value, '&') != NULL) {
-            length = unescape_inplace(&html_escape_class, value, strlen(value));
+            length = unescape_inplace(&html_escape_class,
+                                      value, strlen(value));
             value[length] = 0;
         }
 
