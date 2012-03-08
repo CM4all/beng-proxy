@@ -1068,6 +1068,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/strutil.c \
 	src/crash.c \
 	src/istream-forward.c \
+	src/istream-null.c \
 	src/istream-file.c src/abort-flag.c src/direct.c
 test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \

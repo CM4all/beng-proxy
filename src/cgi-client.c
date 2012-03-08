@@ -65,6 +65,17 @@ cgi_return_response(struct cgi *cgi)
                                               NULL);
         pool_unref(cgi->output.pool);
         return false;
+    } else if (cgi_parser_eof(&cgi->parser)) {
+        /* the response body is empty */
+
+        stopwatch_event(cgi->stopwatch, "empty");
+        stopwatch_dump(cgi->stopwatch);
+
+        istream_free_handler(&cgi->input);
+        http_response_handler_invoke_response(&cgi->handler, status, headers,
+                                              istream_null_new(cgi->output.pool));
+        pool_unref(cgi->output.pool);
+        return false;
     } else {
         stopwatch_event(cgi->stopwatch, "headers");
 
@@ -176,26 +187,11 @@ static size_t
 cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
 {
     size_t nbytes = cgi_feed_headers2(cgi, data, length);
-    if (nbytes == 0)
-        return 0;
 
-    assert(cgi->input != NULL);
-
-    if (!cgi_parser_headers_finished(&cgi->parser))
-        return nbytes;
-
-    if (cgi_parser_eof(&cgi->parser)) {
-        /* the response body is already finished (probably because
-           it was present, but empty); submit that result to the
-           handler immediately */
-
-        stopwatch_event(cgi->stopwatch, "end");
-        stopwatch_dump(cgi->stopwatch);
-
-        istream_free_handler(&cgi->input);
-        istream_deinit_eof(&cgi->output);
-        return 0;
-    }
+    assert(nbytes == 0 || cgi->input != NULL);
+    assert(nbytes == 0 ||
+           !cgi_parser_headers_finished(&cgi->parser) ||
+           !cgi_parser_eof(&cgi->parser));
 
     return nbytes;
 }
