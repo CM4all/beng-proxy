@@ -185,7 +185,7 @@ css_processor_parser_block(void *ctx)
 
 static void
 css_processor_parser_property_keyword(const char *name, const char *value,
-                                      void *ctx)
+                                      off_t start, off_t end, void *ctx)
 {
     struct css_processor *processor = ctx;
 
@@ -194,12 +194,15 @@ css_processor_parser_property_keyword(const char *name, const char *value,
         struct strref value2;
         strref_set_c(&value2, value);
         processor->uri_rewrite.mode = parse_uri_mode(&value2);
+        css_processor_replace_add(processor, start, end, NULL);
     }
 
     if (css_processor_option_rewrite_url(processor) &&
-        strcmp(name, "-c-view") == 0)
+        strcmp(name, "-c-view") == 0) {
         g_strlcpy(processor->uri_rewrite.view, value,
                   sizeof(processor->uri_rewrite.view));
+        css_processor_replace_add(processor, start, end, NULL);
+    }
 }
 
 static void

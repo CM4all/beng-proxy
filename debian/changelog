@@ -1,6 +1,7 @@
 cm4all-beng-proxy (1.1.35) unstable; urgency=low
 
   * merge release 1.0.29
+  * css_processor: delete "-c-mode" and "-c-view" from output
 
  --   
 
