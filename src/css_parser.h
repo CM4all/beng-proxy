@@ -40,7 +40,8 @@ struct css_parser_handler {
     /**
      * A property value with a keyword value.  Optional method.
      */
-    void (*property_keyword)(const char *name, const char *value, void *ctx);
+    void (*property_keyword)(const char *name, const char *value,
+                             off_t start, off_t end, void *ctx);
 
     /**
      * A property value with a URL was found.  Optional method.
