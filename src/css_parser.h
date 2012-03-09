@@ -49,6 +49,11 @@ struct css_parser_handler {
     void (*url)(const struct css_parser_value *url, void *ctx);
 
     /**
+     * The command "@import" was found.  Optional method.
+     */
+    void (*import)(const struct css_parser_value *url, void *ctx);
+
+    /**
      * The CSS end-of-file was reached.
      */
     void (*eof)(void *ctx, off_t length);

@@ -1,3 +1,5 @@
+local_uri "http://cfatest01.intern.cm-ag/local/css/"
+
 server "http://cfatest01.intern.cm-ag/widgets/css/"
 process
 prefix_css_class

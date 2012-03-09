@@ -22,6 +22,13 @@ enum css_parser_state {
     CSS_PARSER_VALUE,
     CSS_PARSER_PRE_URL,
     CSS_PARSER_URL,
+
+    /**
+     * An '@' was found.  Feeding characters into "name".
+     */
+    CSS_PARSER_AT,
+    CSS_PARSER_PRE_IMPORT,
+    CSS_PARSER_IMPORT,
 };
 
 struct css_parser {
@@ -107,6 +114,14 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                     if (parser->handler->xml_id != NULL) {
                         parser->state = CSS_PARSER_XML_ID;
                         parser->name_start = parser->position + (off_t)(buffer - start) + 1;
+                        parser->name_length = 0;
+                    }
+
+                    break;
+
+                case '@':
+                    if (parser->handler->import != NULL) {
+                        parser->state = CSS_PARSER_AT;
                         parser->name_length = 0;
                     }
 
@@ -378,6 +393,77 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
             url.end = parser->position + (off_t)(p - start);
             strref_set(&url.value, parser->url, parser->url_length);
             parser->handler->url(&url, parser->handler_ctx);
+            if (parser->input == NULL)
+                return 0;
+
+            break;
+
+        case CSS_PARSER_AT:
+            do {
+                if (!is_css_nmchar(*buffer)) {
+                    if (parser->name_length == 6 &&
+                        memcmp(parser->name, "import", 6) == 0)
+                        parser->state = CSS_PARSER_PRE_IMPORT;
+                    else
+                        parser->state = CSS_PARSER_NONE;
+                    break;
+                }
+
+                if (parser->name_length < sizeof(parser->name) - 1)
+                    parser->name[parser->name_length++] = *buffer;
+
+                ++buffer;
+            } while (buffer < end);
+
+            break;
+
+        case CSS_PARSER_PRE_IMPORT:
+            do {
+                if (!char_is_whitespace(*buffer)) {
+                    if (*buffer == '"') {
+                        ++buffer;
+                        parser->state = CSS_PARSER_IMPORT;
+                        parser->url_start = parser->position + (off_t)(buffer - start);
+                        parser->url_length = 0;
+                    } else
+                        parser->state = CSS_PARSER_NONE;
+                    break;
+                }
+
+                ++buffer;
+            } while (buffer < end);
+
+            break;
+
+        case CSS_PARSER_IMPORT:
+            p = memchr(buffer, '"', end - buffer);
+            if (p == NULL) {
+                size_t copy = end - buffer;
+                if (copy > sizeof(parser->url) - parser->url_length)
+                    copy = sizeof(parser->url) - parser->url_length;
+                memcpy(parser->url + parser->url_length, buffer, copy);
+                parser->url_length += copy;
+
+                nbytes = end - start;
+                parser->position += (off_t)nbytes;
+                return nbytes;
+            }
+
+            /* found the end of the URL - copy the rest, and invoke
+               the handler method "import()" */
+            nbytes = p - buffer;
+            if (nbytes > sizeof(parser->url) - parser->url_length)
+                nbytes = sizeof(parser->url) - parser->url_length;
+            memcpy(parser->url + parser->url_length, buffer, nbytes);
+            parser->url_length += nbytes;
+
+            buffer = p + 1;
+            parser->state = CSS_PARSER_NONE;
+
+            url.start = parser->url_start;
+            url.end = parser->position + (off_t)(p - start);
+            strref_set(&url.value, parser->url, parser->url_length);
+            parser->handler->import(&url, parser->handler_ctx);
             if (parser->input == NULL)
                 return 0;
 

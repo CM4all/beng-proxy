@@ -48,6 +48,14 @@ my_parser_url(const struct css_parser_value *url, void *ctx)
 }
 
 static void
+my_parser_import(const struct css_parser_value *url, void *ctx)
+{
+    (void)ctx;
+
+    printf("import %.*s\n", (int)url->value.length, url->value.data);
+}
+
+static void
 my_parser_eof(void *ctx, off_t length)
 {
     (void)ctx;
@@ -71,6 +79,7 @@ static const struct css_parser_handler my_parser_handler = {
     .xml_id = my_parser_xml_id,
     .property_keyword = my_parser_property_keyword,
     .url = my_parser_url,
+    .import = my_parser_import,
     .eof = my_parser_eof,
     .error = my_parser_error,
 };
