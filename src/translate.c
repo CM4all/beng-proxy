@@ -479,6 +479,8 @@ add_view(struct translate_client *client, const char *name)
     view = p_malloc(client->pool, sizeof(*view));
     widget_view_init(view);
     view->name = name;
+    view->request_header_forward = client->response.request_header_forward;
+    view->response_header_forward = client->response.response_header_forward;
 
     client->view = view;
     *client->widget_view_tail = view;

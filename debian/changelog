@@ -1,6 +1,8 @@
 cm4all-beng-proxy (1.0.30) unstable; urgency=low
 
   * widget-view: initialize the header forward settings
+  * translate-client: new view inherits header forward settings from
+    default view
 
  --   
 
