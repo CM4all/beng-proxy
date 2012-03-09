@@ -5,7 +5,7 @@ cm4all-beng-proxy (2.0.17) unstable; urgency=low
   * css_processor: rewrite @import URIs
   * {text_,}processor: new entity &c:local;
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 09 Mar 2012 16:50:19 -0000
 
 cm4all-beng-proxy (2.0.16) unstable; urgency=low
 
