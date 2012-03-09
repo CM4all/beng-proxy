@@ -59,8 +59,7 @@ cgi_parser_finish(struct cgi_parser *parser, struct fifo_buffer *buffer,
     }
 
     if (cgi_parser_is_too_much(parser, fifo_buffer_available(buffer))) {
-        g_set_error_literal(error_r, cgi_quark(), 0,
-                            "too much data from CGI script");
+        g_set_error(error_r, cgi_quark(), 0, "too much data from CGI script");
         return C_ERROR;
     }
 
@@ -115,8 +114,7 @@ cgi_parser_feed_headers(struct pool *pool, struct cgi_parser *parser,
            means the current header is too large for the buffer; bail
            out */
 
-        g_set_error_literal(error_r, cgi_quark(), 0,
-                            "CGI response header too long");
+        g_set_error(error_r, cgi_quark(), 0, "CGI response header too long");
         return C_ERROR;
     }
 
