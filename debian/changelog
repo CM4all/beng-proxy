@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.0.17) unstable; urgency=low
 
   * merge release 1.4.17
+  * css_parser: check for url() following another token
 
  --   
 
