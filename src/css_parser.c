@@ -59,6 +59,13 @@ skip_whitespace(const char *p, const char *end)
     return p;
 }
 
+G_GNUC_PURE
+static bool
+at_url_start(const char *p, size_t length)
+{
+    return length == 4 && memcmp(p, "url(", 4) == 0;
+}
+
 static size_t
 css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 {
@@ -306,8 +313,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 
                     parser->value[parser->value_length++] = *buffer;
                     if (parser->handler->url != NULL &&
-                        parser->value_length == 4 &&
-                        memcmp(parser->value, "url(", 4) == 0)
+                        at_url_start(parser->value, parser->value_length))
                         parser->state = CSS_PARSER_PRE_URL;
                 }
 
