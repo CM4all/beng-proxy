@@ -233,6 +233,30 @@ css_processor_parser_url(const struct css_parser_value *url, void *ctx)
 }
 
 static void
+css_processor_parser_import(const struct css_parser_value *url, void *ctx)
+{
+    struct css_processor *processor = ctx;
+
+    if (!css_processor_option_rewrite_url(processor))
+        return;
+
+    struct istream *istream =
+        rewrite_widget_uri(processor->pool, processor->env->pool,
+                           global_translate_cache,
+                           processor->env->absolute_uri,
+                           processor->env->external_uri,
+                           processor->env->site_name,
+                           processor->env->untrusted_host,
+                           processor->env->args,
+                           processor->container,
+                           processor->env->session_id,
+                           &url->value, URI_MODE_DIRECT, false, NULL,
+                           &css_escape_class);
+    if (istream != NULL)
+        css_processor_replace_add(processor, url->start, url->end, istream);
+}
+
+static void
 css_processor_parser_eof(void *ctx, off_t length gcc_unused)
 {
     struct css_processor *processor = ctx;
@@ -262,6 +286,7 @@ static const struct css_parser_handler css_processor_parser_handler = {
     .block = css_processor_parser_block,
     .property_keyword = css_processor_parser_property_keyword,
     .url = css_processor_parser_url,
+    .import = css_processor_parser_import,
     .eof = css_processor_parser_eof,
     .error = css_processor_parser_error,
 };
