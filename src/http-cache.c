@@ -568,6 +568,11 @@ http_cache_abort(struct async_operation *ao)
     if (request->document != NULL && request->cache->cache != NULL)
         http_cache_unlock(request->cache, request->document);
 
+    if (request->document != NULL && request->cache->cache == NULL &&
+        request->document_body != NULL)
+        /* free the cached document istream (memcached) */
+        istream_close_unused(request->document_body);
+
     pool_unref_denotify(request->caller_pool,
                         &request->caller_pool_notify);
 

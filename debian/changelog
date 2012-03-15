@@ -4,6 +4,7 @@ cm4all-beng-proxy (1.0.30) unstable; urgency=low
   * translate-client: new view inherits header forward settings from
     default view
   * handler: clear transformation after translation error
+  * http-cache: release the memcached response on abort
 
  --   
 
