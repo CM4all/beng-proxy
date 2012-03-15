@@ -5,6 +5,7 @@ cm4all-beng-proxy (1.0.30) unstable; urgency=low
     default view
   * handler: clear transformation after translation error
   * http-cache: release the memcached response on abort
+  * fcgi-request: close the request body on stock failure
 
  --   
 
