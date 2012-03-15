@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4.18) unstable; urgency=low
 
-  * 
+  * merge release 1.2.23
 
  --   
 
@@ -138,6 +138,12 @@ cm4all-beng-proxy (1.3) unstable; urgency=low
   * proxy-widget: client can choose only views that have an address
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 31 Oct 2011 17:41:14 +0100
+
+cm4all-beng-proxy (1.2.23) unstable; urgency=low
+
+  * merge release 1.1.36
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 15 Mar 2012 15:37:10 -0000
 
 cm4all-beng-proxy (1.2.22) unstable; urgency=low
 
@@ -283,6 +289,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.36) unstable; urgency=low
+
+  * merge release 1.0.30
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 15 Mar 2012 15:36:15 -0000
 
 cm4all-beng-proxy (1.1.35) unstable; urgency=low
 
@@ -536,6 +548,17 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.30) unstable; urgency=low
+
+  * widget-view: initialize the header forward settings
+  * translate-client: new view inherits header forward settings from
+    default view
+  * handler: clear transformation after translation error
+  * http-cache: release the memcached response on abort
+  * fcgi-request: close the request body on stock failure
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 15 Mar 2012 15:34:18 -0000
+
 cm4all-beng-proxy (1.0.29) unstable; urgency=low
 
   * processor: unescape custom header values
