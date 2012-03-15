@@ -111,6 +111,9 @@ fcgi_stock_error(GError *error, void *ctx)
     struct fcgi_request *request = ctx;
 
     http_response_handler_invoke_abort(&request->handler, error);
+
+    if (request->body != NULL)
+        istream_close_unused(request->body);
 }
 
 static const struct stock_handler fcgi_stock_handler = {

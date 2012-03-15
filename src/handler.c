@@ -305,6 +305,7 @@ handler_translate_error(GError *error, void *ctx)
     /* a lot of code in response.c dereferences the
        #translate_response pointer, so we need a valid pointer here */
     request->translate.response = &error_response;
+    request->translate.transformation = NULL;
 
     response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                               "Internal server error");
