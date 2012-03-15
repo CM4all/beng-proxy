@@ -18,6 +18,24 @@ widget_view_init(struct widget_view *view)
     view->address.type = RESOURCE_ADDRESS_NONE;
     view->filter_4xx = false;
     view->transformation = NULL;
+
+    view->request_header_forward = (struct header_forward_settings){
+        .modes = {
+            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
+            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+        },
+    };
+
+    view->response_header_forward = (struct header_forward_settings){
+        .modes = {
+            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
+            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+        },
+    };
 }
 
 bool
