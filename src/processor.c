@@ -935,7 +935,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
            we cannot edit attributes followed by a URI attribute */
         !processor->postponed_rewrite.pending &&
         is_html_tag(processor->tag) &&
-        strref_cmp_literal(&attr->name, "id") == 0) {
+        (strref_cmp_literal(&attr->name, "id") == 0 ||
+         strref_cmp_literal(&attr->name, "for") == 0)) {
         handle_id_attribute(processor, attr);
         return;
     }

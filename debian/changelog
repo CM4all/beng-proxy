@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.0.20) unstable; urgency=low
 
   * {css_,}processor: default mode is "partial"
+  * processor: handle underscore prefixes in the "for" attribute
 
  --   
 
