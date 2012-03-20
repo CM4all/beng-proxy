@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.2.24) unstable; urgency=low
 
-  * 
+  * merge release 1.1.37
 
  --   
 
@@ -154,6 +154,12 @@ cm4all-beng-proxy (1.2) unstable; urgency=low
   * lb_control: allow querying node status over control socket
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 27 Sep 2011 12:00:44 +0200
+
+cm4all-beng-proxy (1.1.37) unstable; urgency=low
+
+  * merge release 1.0.31
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 20 Mar 2012 08:31:08 -0000
 
 cm4all-beng-proxy (1.1.36) unstable; urgency=low
 
@@ -413,6 +419,12 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.31) unstable; urgency=low
+
+  * proxy-widget: close the request body when the view doesn't exist
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 20 Mar 2012 08:28:00 -0000
+
 cm4all-beng-proxy (1.0.30) unstable; urgency=low
 
   * widget-view: initialize the header forward settings
