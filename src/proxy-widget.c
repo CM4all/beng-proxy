@@ -102,6 +102,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 
     if (request2->proxy_ref != NULL) {
         if (widget_get_view(widget) == NULL) {
+            widget_cancel(widget);
             response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                       "No such view");
             return;
@@ -123,6 +124,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
         widget->from_request.view = env->view_name;
 
         if (widget_get_view(widget) == NULL) {
+            widget_cancel(widget);
             response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                       "No such view");
             return;
