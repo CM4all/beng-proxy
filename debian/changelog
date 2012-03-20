@@ -3,7 +3,7 @@ cm4all-beng-proxy (2.0.21) unstable; urgency=low
   * css_processor: use mode "partial" for @import
   * rewrite-uri: use mode "partial" on invalid input
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 20 Mar 2012 18:11:28 -0000
 
 cm4all-beng-proxy (2.0.20) unstable; urgency=low
 
