@@ -143,6 +143,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
             daemon_log(2, "view '%s' of widget class '%s' cannot be requested "
                        "because it does not have an address\n",
                        env->view_name, widget->class_name);
+            widget_cancel(widget);
             response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                       "Forbidden");
             return;
