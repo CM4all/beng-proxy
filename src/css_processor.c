@@ -250,7 +250,7 @@ css_processor_parser_import(const struct css_parser_value *url, void *ctx)
                            processor->env->args,
                            processor->container,
                            processor->env->session_id,
-                           &url->value, URI_MODE_DIRECT, false, NULL,
+                           &url->value, URI_MODE_PARTIAL, false, NULL,
                            &css_escape_class);
     if (istream != NULL)
         css_processor_replace_add(processor, url->start, url->end, istream);
