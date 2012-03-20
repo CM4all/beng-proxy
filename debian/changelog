@@ -2,7 +2,7 @@ cm4all-beng-proxy (1.0.31) unstable; urgency=low
 
   * proxy-widget: close the request body when the view doesn't exist
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 20 Mar 2012 08:28:00 -0000
 
 cm4all-beng-proxy (1.0.30) unstable; urgency=low
 
