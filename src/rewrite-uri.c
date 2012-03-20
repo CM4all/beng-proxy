@@ -37,7 +37,7 @@ parse_uri_mode(const struct strref *s)
         return URI_MODE_PARTIAL;
 #endif
     else
-        return URI_MODE_DIRECT;
+        return URI_MODE_PARTIAL;
 }
 
 /*
