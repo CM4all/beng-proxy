@@ -284,7 +284,7 @@ processor_process(struct pool *caller_pool, struct istream *istream,
 
     if (processor_option_rewrite_url(processor)) {
         processor->default_uri_rewrite.base = URI_BASE_TEMPLATE;
-        processor->default_uri_rewrite.mode = URI_MODE_DIRECT;
+        processor->default_uri_rewrite.mode = URI_MODE_PARTIAL;
         processor->default_uri_rewrite.view[0] = 0;
 
         if (options & PROCESSOR_FOCUS_WIDGET) {

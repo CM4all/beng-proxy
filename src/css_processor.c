@@ -180,7 +180,7 @@ css_processor_parser_block(void *ctx)
 {
     struct css_processor *processor = ctx;
 
-    processor->uri_rewrite.mode = URI_MODE_DIRECT;
+    processor->uri_rewrite.mode = URI_MODE_PARTIAL;
     processor->uri_rewrite.view[0] = 0;
 }
 
