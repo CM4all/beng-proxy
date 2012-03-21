@@ -113,6 +113,14 @@ struct widget {
 
         /** the name of the view requested by the client */
         const char *view;
+
+        /**
+         * This flag is set when the view selected by the client is
+         * unauthorized, and will only be allowed when the widget
+         * response is not processable.  If it is, we might expose
+         * internal widget parameters by switching off the processor.
+         */
+        bool unauthorized_view;
     } from_request;
 
     /**
@@ -239,6 +247,13 @@ widget_get_view_name(const struct widget *widget)
 gcc_pure
 const struct widget_view *
 widget_get_view(const struct widget *widget);
+
+/**
+ * Is the effective view a container?
+ */
+gcc_pure
+bool
+widget_is_container(const struct widget *widget);
 
 /**
  * Returns the widget's session object.  The passed session object

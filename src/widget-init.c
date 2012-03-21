@@ -31,6 +31,7 @@ widget_init(struct widget *widget, struct pool *pool,
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
     widget->from_request.view = NULL;
+    widget->from_request.unauthorized_view = false;
     widget->for_focused.body = NULL;
     widget->lazy.path = NULL;
     widget->lazy.prefix = NULL;

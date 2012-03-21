@@ -134,9 +134,6 @@ widget_view_allowed(const struct widget *widget,
 
     /* the client may choose only views that are not "inherited" */
     if (view->inherited) {
-        daemon_log(2, "view '%s' of widget class '%s' cannot be requested "
-                   "because it does not have an address\n",
-                   view->name, widget->class_name);
         return false;
     }
 
@@ -178,10 +175,14 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 
         if (widget->from_request.view != NULL &&
             !widget_view_allowed(widget, view)) {
-            widget_cancel(widget);
-            response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
-                                      "Forbidden");
-            return;
+            if (view->secure) {
+                widget_cancel(widget);
+                response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
+                                          "Forbidden");
+                return;
+            }
+
+            widget->from_request.unauthorized_view = true;
         }
 
         frame_top_widget(request->pool, widget,

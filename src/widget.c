@@ -147,6 +147,13 @@ widget_get_view(const struct widget *widget)
                               widget_get_view_name(widget));
 }
 
+bool
+widget_is_container(const struct widget *widget)
+{
+    const struct widget_view *view = widget_get_view(widget);
+    return view != NULL && widget_view_is_container(view);
+}
+
 struct widget *
 widget_get_child(struct widget *widget, const char *id)
 {

@@ -519,6 +519,19 @@ widget_update_view(struct embed *embed, struct strmap *headers,
 
         /* install the new view */
         embed->transformation = view->transformation;
+    } else if (widget->from_request.unauthorized_view &&
+               processable(headers) &&
+               !widget_is_container(widget)) {
+        /* postponed check from proxy_widget_continue(): an
+           unauthorized view was selected, which is only allowed if
+           the output is not processable; if it is, we may expose
+           internal widget parameters */
+
+        g_set_error(error_r, widget_quark(), WIDGET_ERROR_FORBIDDEN,
+                    "view '%s' of widget class '%s' cannot be requested "
+                    "because it does not have an address",
+                    widget->from_request.view, widget->class_name);
+        return false;
     }
 
     return true;
