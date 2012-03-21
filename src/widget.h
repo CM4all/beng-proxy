@@ -209,6 +209,22 @@ widget_get_path_info(const struct widget *widget)
 }
 
 /**
+ * Returns the view that will be used according to the widget class
+ * and the view specification in the parent.  It ignores the view name
+ * from the request.
+ */
+gcc_pure
+const struct widget_view *
+widget_get_default_view(const struct widget *widget);
+
+/**
+ * Is the default view a container?
+ */
+gcc_pure
+bool
+widget_is_container_by_default(const struct widget *widget);
+
+/**
  * Returns the effective view name, as specified in the template or
  * requested by the client.
  */

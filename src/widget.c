@@ -122,6 +122,22 @@ widget_get_quoted_class_name(struct widget *widget)
 }
 
 const struct widget_view *
+widget_get_default_view(const struct widget *widget)
+{
+    assert(widget != NULL);
+    assert(widget->class != NULL);
+
+    return widget_view_lookup(&widget->class->views, widget->view);
+}
+
+bool
+widget_is_container_by_default(const struct widget *widget)
+{
+    const struct widget_view *view = widget_get_default_view(widget);
+    return view != NULL && widget_view_is_container(view);
+}
+
+const struct widget_view *
 widget_get_view(const struct widget *widget)
 {
     assert(widget != NULL);

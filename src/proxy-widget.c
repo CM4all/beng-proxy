@@ -126,6 +126,12 @@ widget_view_allowed(const struct widget *widget,
         return false;
     }
 
+    /* arbitrary views are allowed when the default view is not a
+       container, i.e. there cannot be secrets in the widget
+       response */
+    if (!widget_is_container_by_default(widget))
+        return true;
+
     /* the client may choose only views that are not "inherited" */
     if (view->inherited) {
         daemon_log(2, "view '%s' of widget class '%s' cannot be requested "
