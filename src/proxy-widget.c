@@ -100,6 +100,27 @@ static const struct http_response_handler widget_response_handler = {
 
 static const struct widget_lookup_handler widget_processor_handler;
 
+/**
+ * Is the client allow to select the specified view?
+ */
+gcc_pure
+static bool
+widget_view_allowed(const struct widget *widget,
+                    const struct widget_view *view)
+{
+    assert(widget != NULL);
+    assert(view != NULL);
+    assert(view->name != NULL);
+
+    if (widget->view != NULL && strcmp(view->name, widget->view) == 0)
+        /* always allow when it's the same view that was specified in
+           the template */
+        return true;
+
+    /* the client may choose only views that are not "inherited" */
+    return !view->inherited;
+}
+
 static void
 proxy_widget_continue(struct request *request2, struct widget *widget)
 {
@@ -133,13 +154,8 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
             return;
         }
 
-        /* the client may choose only views that are not
-           "inherited" */
-        if (env->view_name != NULL && view->inherited &&
-            /* exception from the rule: allow an inherited view when
-               it was specified in the template */
-            (widget->view == NULL || strcmp(env->view_name,
-                                            widget->view) != 0)) {
+        if (widget->from_request.view != NULL &&
+            !widget_view_allowed(widget, view)) {
             daemon_log(2, "view '%s' of widget class '%s' cannot be requested "
                        "because it does not have an address\n",
                        env->view_name, widget->class_name);
