@@ -85,6 +85,13 @@ gcc_pure
 const struct widget_view *
 widget_view_lookup(const struct widget_view *view, const char *name);
 
+/**
+ * Is this view a container?
+ */
+gcc_pure
+bool
+widget_view_is_container(const struct widget_view *view);
+
 gcc_malloc
 struct widget_view *
 widget_view_dup_chain(struct pool *pool, const struct widget_view *src);

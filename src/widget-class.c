@@ -6,7 +6,6 @@
 
 #include "widget-class.h"
 #include "widget-view.h"
-#include "transformation.h"
 
 const struct widget_class root_widget_class = {
     .views = {
@@ -30,5 +29,5 @@ widget_class_is_container(const struct widget_class *class,
         /* shouldn't happen, but may not be checked up to now */
         return false;
 
-    return transformation_is_container(view->transformation);
+    return widget_view_is_container(view);
 }

@@ -90,6 +90,12 @@ widget_view_lookup(const struct widget_view *view, const char *name)
     return NULL;
 }
 
+bool
+widget_view_is_container(const struct widget_view *view)
+{
+    return transformation_is_container(view->transformation);
+}
+
 static struct widget_view *
 widget_view_dup(struct pool *pool, const struct widget_view *src)
 {
