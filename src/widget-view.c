@@ -16,6 +16,7 @@ widget_view_init(struct widget_view *view)
     view->next = NULL;
     view->name = NULL;
     view->address.type = RESOURCE_ADDRESS_NONE;
+    view->secure = false;
     view->filter_4xx = false;
     view->inherited = false;
     view->transformation = NULL;

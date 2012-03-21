@@ -117,6 +117,11 @@ widget_view_allowed(const struct widget *widget,
            the template */
         return true;
 
+    if (view->secure)
+        /* never allow selecting a "secure" view, as this may enable
+           the client to do things he should not be allowed to */
+        return false;
+
     /* the client may choose only views that are not "inherited" */
     return !view->inherited;
 }
