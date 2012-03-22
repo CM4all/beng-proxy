@@ -117,13 +117,24 @@ widget_view_allowed(const struct widget *widget,
            the template */
         return true;
 
-    if (view->secure)
+    if (view->secure) {
         /* never allow selecting a "secure" view, as this may enable
            the client to do things he should not be allowed to */
+        daemon_log(2, "view '%s' of widget class '%s' cannot be requested "
+                   "because it is 'secure'\n",
+                   view->name, widget->class_name);
         return false;
+    }
 
     /* the client may choose only views that are not "inherited" */
-    return !view->inherited;
+    if (view->inherited) {
+        daemon_log(2, "view '%s' of widget class '%s' cannot be requested "
+                   "because it does not have an address\n",
+                   view->name, widget->class_name);
+        return false;
+    }
+
+    return true;
 }
 
 static void
@@ -161,9 +172,6 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 
         if (widget->from_request.view != NULL &&
             !widget_view_allowed(widget, view)) {
-            daemon_log(2, "view '%s' of widget class '%s' cannot be requested "
-                       "because it does not have an address\n",
-                       env->view_name, widget->class_name);
             widget_cancel(widget);
             response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                       "Forbidden");
