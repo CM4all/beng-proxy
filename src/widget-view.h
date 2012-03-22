@@ -29,12 +29,6 @@ struct widget_view {
     struct resource_address address;
 
     /**
-     * Is this a secure view that cannot be selected by the client?
-     * If yes, then it can only be selected in the parent widget.
-     */
-    bool secure;
-
-    /**
      * Filter client error messages?
      */
     bool filter_4xx;
