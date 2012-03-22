@@ -6,6 +6,7 @@ server "http://cfatest01.intern.cm-ag/"
 
 view "date"
 cgi "/usr/share/cm4all/beng-proxy/demo/date2.py"
+secure_view
 
 view "inherit"
 

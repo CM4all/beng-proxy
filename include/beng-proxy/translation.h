@@ -256,6 +256,12 @@ enum beng_translation_command {
      * A classification for the User-Agent request header.
      */
     TRANSLATE_UA_CLASS = 88,
+
+    /**
+     * Mark the current view as "secure", i.e. it may not be requested
+     * by the client.
+     */
+    TRANSLATE_SECURE_VIEW = 89,
 };
 
 struct beng_translation_header {

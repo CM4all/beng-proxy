@@ -966,6 +966,13 @@ no name.  The root template has only the default view. \\
 
 \hline
 
+\verb|SECURE_VIEW| & Mark the current (named) view as ``secure''.
+That means that it is inaccessible to clients, it can only be selected
+in the template or by the widget response header
+\texttt{X-CM4all-View}. \\
+
+\hline
+
 \verb|MAX_AGE| & a 32 bit unsigned integer specifying the number of
 seconds the preceding piece of information is valid without having to
 revalidate.  A value of 0 specifies that \emph{beng-proxy} should not

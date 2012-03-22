@@ -1238,6 +1238,23 @@ translate_handle_packet(struct translate_client *client,
         add_view(client, payload);
         return true;
 
+    case TRANSLATE_SECURE_VIEW:
+        if (client->view == NULL || client->view->name == NULL ||
+            client->view->secure) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_SECURE_VIEW packet");
+            return false;
+        }
+
+        if (*payload != 0) {
+            translate_client_error(client,
+                                   "malformed TRANSLATE_SECURE_VIEW packet");
+            return false;
+        }
+
+        client->view->secure = true;
+        return true;
+
     case TRANSLATE_MAX_AGE:
         if (payload_length != 4) {
             translate_client_error(client,
