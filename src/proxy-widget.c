@@ -105,7 +105,7 @@ static const struct widget_lookup_handler widget_processor_handler;
  */
 gcc_pure
 static bool
-widget_view_allowed(const struct widget *widget,
+widget_view_allowed(struct widget *widget,
                     const struct widget_view *view)
 {
     assert(widget != NULL);
@@ -117,16 +117,20 @@ widget_view_allowed(const struct widget *widget,
            the template */
         return true;
 
-    /* arbitrary views are allowed when the default view is not a
-       container, i.e. there cannot be secrets in the widget
-       response */
-    if (!widget_is_container_by_default(widget))
-        return true;
-
-    /* the client may choose only views that are not "inherited" */
-    if (view->inherited) {
+    /* views with an address must not be selected by the client */
+    if (!view->inherited) {
+        daemon_log(2, "view '%s' of widget class '%s' is forbidden because it has an address\n",
+                   view->name, widget->class_name);
         return false;
     }
+
+    /* if the default view is a container, we must await the widget's
+       response to see if we allow the new view; if the response is
+       processable, it may potentially contain widget elements with
+       parameters that must not be exposed to the client */
+    if (widget_is_container_by_default(widget))
+        /* schedule a check in widget_update_view() */
+        widget->from_request.unauthorized_view = true;
 
     return true;
 }
