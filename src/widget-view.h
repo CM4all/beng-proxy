@@ -86,6 +86,13 @@ const struct widget_view *
 widget_view_lookup(const struct widget_view *view, const char *name);
 
 /**
+ * Does the effective view enable the HTML processor?
+ */
+gcc_pure
+bool
+widget_view_has_processor(const struct widget_view *view);
+
+/**
  * Is this view a container?
  */
 gcc_pure

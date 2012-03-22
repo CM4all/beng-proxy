@@ -136,6 +136,11 @@ widget_should_sync_session(const struct widget *widget)
     if (widget->from_request.body != NULL)
         return false;
 
+    /* save to session only if the effective view features the HTML
+       processor */
+    if (!widget_has_processor(widget))
+        return false;
+
     return true;
 }
 

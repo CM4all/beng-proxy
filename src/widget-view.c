@@ -91,6 +91,12 @@ widget_view_lookup(const struct widget_view *view, const char *name)
 }
 
 bool
+widget_view_has_processor(const struct widget_view *view)
+{
+    return transformation_has_processor(view->transformation);
+}
+
+bool
 widget_view_is_container(const struct widget_view *view)
 {
     return transformation_is_container(view->transformation);

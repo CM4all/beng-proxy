@@ -129,6 +129,14 @@ widget_is_container_by_default(const struct widget *widget)
 }
 
 bool
+widget_has_processor(const struct widget *widget)
+{
+    const struct widget_view *view = widget_get_view(widget);
+    assert(view != NULL);
+    return widget_view_has_processor(view);
+}
+
+bool
 widget_is_container(const struct widget *widget)
 {
     const struct widget_view *view = widget_get_transformation_view(widget);

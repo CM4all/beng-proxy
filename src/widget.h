@@ -267,6 +267,13 @@ widget_get_view(const struct widget *widget)
 }
 
 /**
+ * Does the effective view enable the HTML processor?
+ */
+gcc_pure
+bool
+widget_has_processor(const struct widget *widget);
+
+/**
  * Is the effective view a container?
  */
 gcc_pure
