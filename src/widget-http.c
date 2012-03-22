@@ -496,6 +496,34 @@ widget_collect_cookies(struct cookie_jar *jar, const struct strmap *headers,
     } while (cookies != NULL);
 }
 
+static bool
+widget_update_view(struct embed *embed, struct strmap *headers,
+                   GError **error_r)
+{
+    struct widget *widget = embed->widget;
+
+    const char *view_name = strmap_get(headers, "x-cm4all-view");
+    if (view_name != NULL) {
+        /* yes, look it up in the class */
+
+        const struct widget_view *view =
+            widget_view_lookup(&widget->class->views, view_name);
+        if (view == NULL) {
+            /* the view specified in the response header does not
+               exist, bail out */
+
+            g_set_error(error_r, widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
+                        "No such view: %s", view_name);
+            return false;
+        }
+
+        /* install the new view */
+        embed->transformation = view->transformation;
+    }
+
+    return true;
+}
+
 static void
 widget_response_response(http_status_t status, struct strmap *headers,
                          struct istream *body, void *ctx)
@@ -543,28 +571,13 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
         /* select a new view? */
 
-        const char *view_name = strmap_get(headers, "x-cm4all-view");
-        if (view_name != NULL) {
-            /* yes, look it up in the class */
+        GError *error = NULL;
+        if (!widget_update_view(embed, headers, &error)) {
+            if (body != NULL)
+                istream_close_unused(body);
 
-            const struct widget_view *view =
-                widget_view_lookup(&widget->class->views, view_name);
-            if (view == NULL) {
-                /* the view specified in the response header does not
-                   exist, bail out */
-
-                if (body != NULL)
-                    istream_close_unused(body);
-
-                GError *error =
-                    g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
-                                "No such view: %s", view_name);
-                widget_dispatch_error(embed, error);
-                return;
-            }
-
-            /* install the new view */
-            embed->transformation = view->transformation;
+            widget_dispatch_error(embed, error);
+            return;
         }
     }
 
