@@ -501,12 +501,13 @@ widget_response_response(http_status_t status, struct strmap *headers,
                          struct istream *body, void *ctx)
 {
     struct embed *embed = ctx;
+    struct widget *widget = embed->widget;
     /*const char *translate;*/
 
     if (headers != NULL) {
-        if (embed->widget->class->dump_headers) {
+        if (widget->class->dump_headers) {
             daemon_log(4, "response headers from widget '%s'\n",
-                       widget_path(embed->widget));
+                       widget_path(widget));
             strmap_rewind(headers);
             const struct strmap_pair *pair;
             while ((pair = strmap_next(headers)) != NULL)
@@ -547,7 +548,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
             /* yes, look it up in the class */
 
             const struct widget_view *view =
-                widget_view_lookup(&embed->widget->class->views, view_name);
+                widget_view_lookup(&widget->class->views, view_name);
             if (view == NULL) {
                 /* the view specified in the response header does not
                    exist, bail out */
