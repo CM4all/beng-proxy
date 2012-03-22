@@ -128,6 +128,17 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env,
     return true;
 }
 
+gcc_pure
+static inline bool
+widget_should_save_to_session(const struct widget *widget)
+{
+    /* do not save to session when this is a POST request */
+    if (widget->from_request.body != NULL)
+        return false;
+
+    return true;
+}
+
 void
 widget_sync_session(struct widget *widget, struct session *session)
 {
@@ -145,7 +156,7 @@ widget_sync_session(struct widget *widget, struct session *session)
     if (widget_has_focus(widget)) {
 
         /* do not save to session when this is a POST request */
-        if (widget->from_request.body == NULL) {
+        if (widget_should_save_to_session(widget)) {
             struct widget_session *ws = widget_get_session(widget, session, true);
             if (ws != NULL)
                 widget_to_session(ws, widget);
