@@ -139,8 +139,6 @@ class _Lookup:
             response.packet(TRANSLATE_ANCHOR_ABSOLUTE)
         elif line == 'widget_info':
             response.packet(TRANSLATE_WIDGET_INFO)
-        elif line == 'secure_view':
-            response.packet(TRANSLATE_SECURE_VIEW)
         else:
             raise MalformedLineError(self.path, line)
 

@@ -61,7 +61,6 @@ widget_view_inherit_from(struct pool *pool, struct widget_view *dest,
                          const struct widget_view *src)
 {
     if (widget_view_inherit_address(pool, dest, &src->address)) {
-        dest->secure = src->secure;
         dest->filter_4xx = src->filter_4xx;
 
         dest->request_header_forward = src->request_header_forward;
@@ -106,7 +105,6 @@ widget_view_dup(struct pool *pool, const struct widget_view *src)
 
     dest->name = src->name != NULL ? p_strdup(pool, src->name) : NULL;
     resource_address_copy(pool, &dest->address, &src->address);
-    dest->secure = src->secure;
     dest->filter_4xx = src->filter_4xx;
     dest->inherited = src->inherited;
     dest->transformation = transformation_dup_chain(pool, src->transformation);
