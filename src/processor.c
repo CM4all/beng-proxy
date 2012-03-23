@@ -707,7 +707,7 @@ parser_widget_attr_finished(struct widget *widget,
                             const struct strref *value)
 {
     if (strref_cmp_literal(name, "type") == 0) {
-        widget->class_name = strref_dup(pool, value);
+        widget_set_class_name(widget, pool, value);
     } else if (strref_cmp_literal(name, "id") == 0) {
         if (!strref_is_empty(value))
             widget_set_id(widget, pool, value);

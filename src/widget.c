@@ -106,6 +106,20 @@ widget_set_id(struct widget *widget, struct pool *pool,
                                        "__", NULL);
 }
 
+void
+widget_set_class_name(struct widget *widget, struct pool *pool,
+                      const struct strref *class_name)
+{
+    assert(widget != NULL);
+    assert(widget->parent != NULL);
+    assert(widget->class_name == NULL);
+    assert(widget->class == NULL);
+    assert(pool != NULL);
+    assert(class_name != NULL);
+
+    widget->class_name = strref_dup(pool, class_name);
+}
+
 const char *
 widget_get_quoted_class_name(struct widget *widget)
 {
