@@ -6,7 +6,6 @@ prefix_css_class
 prefix_xml_id
 
 view "css"
-server "http://cfatest01.intern.cm-ag/widgets/css/"
 process_css
 prefix_css_class
 prefix_xml_id
