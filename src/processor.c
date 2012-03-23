@@ -988,8 +988,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
                 return;
             }
 
-            processor->widget.widget->view
-                = strref_dup(processor->widget.pool, &attr->value);
+            processor->widget.widget->view_name =
+                strref_dup(processor->widget.pool, &attr->value);
         }
 
         break;

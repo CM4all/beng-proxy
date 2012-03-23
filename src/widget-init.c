@@ -22,7 +22,7 @@ widget_init(struct widget *widget, struct pool *pool,
     widget->path_info = "";
     widget->query_string = NULL;
     widget->headers = NULL;
-    widget->view = NULL;
+    widget->view_name = NULL;
     widget->session = WIDGET_SESSION_RESOURCE;
     widget->session_sync_pending = false;
     widget->from_request.focus_ref = NULL;
@@ -30,7 +30,7 @@ widget_init(struct widget *widget, struct pool *pool,
     strref_clear(&widget->from_request.query_string);
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
-    widget->from_request.view = NULL;
+    widget->from_request.view_name = NULL;
     widget->from_request.unauthorized_view = false;
     widget->for_focused.body = NULL;
     widget->lazy.path = NULL;

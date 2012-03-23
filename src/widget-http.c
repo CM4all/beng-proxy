@@ -530,7 +530,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_FORBIDDEN,
                     "view '%s' of widget class '%s' cannot be requested "
                     "because the response is processable",
-                    widget->from_request.view, widget->class_name);
+                    widget->from_request.view_name, widget->class_name);
         return false;
     }
 

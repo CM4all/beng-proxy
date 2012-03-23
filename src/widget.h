@@ -64,7 +64,7 @@ struct widget {
     struct strmap *headers;
 
     /** the name of the view specified in the template */
-    const char *view;
+    const char *view_name;
 
     /** what is the scope of session data? */
     enum {
@@ -112,7 +112,7 @@ struct widget {
         struct istream * body;
 
         /** the name of the view requested by the client */
-        const char *view;
+        const char *view_name;
 
         /**
          * This flag is set when the view selected by the client is
@@ -245,9 +245,9 @@ widget_is_container_by_default(const struct widget *widget);
 static inline const char *
 widget_get_view_name(const struct widget *widget)
 {
-    return widget->from_request.view != NULL
-        ? widget->from_request.view
-        : widget->view;
+    return widget->from_request.view_name != NULL
+        ? widget->from_request.view_name
+        : widget->view_name;
 }
 
 gcc_pure

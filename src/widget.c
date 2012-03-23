@@ -127,7 +127,7 @@ widget_get_default_view(const struct widget *widget)
     assert(widget != NULL);
     assert(widget->class != NULL);
 
-    return widget_class_view_lookup(widget->class, widget->view);
+    return widget_class_view_lookup(widget->class, widget->view_name);
 }
 
 bool

@@ -112,7 +112,8 @@ widget_view_allowed(struct widget *widget,
     assert(view != NULL);
     assert(view->name != NULL);
 
-    if (widget->view != NULL && strcmp(view->name, widget->view) == 0)
+    if (widget->view_name != NULL &&
+        strcmp(view->name, widget->view_name) == 0)
         /* always allow when it's the same view that was specified in
            the template */
         return true;
@@ -158,7 +159,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 
         /* the client can select the view; he can never explicitly
            select the default view */
-        widget->from_request.view = env->view_name;
+        widget->from_request.view_name = env->view_name;
 
         const struct widget_view *view = widget_get_view(widget);
         if (view == NULL) {
@@ -168,7 +169,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
             return;
         }
 
-        if (widget->from_request.view != NULL &&
+        if (widget->from_request.view_name != NULL &&
             !widget_view_allowed(widget, view)) {
             widget_cancel(widget);
             response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
