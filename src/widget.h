@@ -208,9 +208,11 @@ widget_prefix(const struct widget *widget)
     return widget->lazy.prefix;
 }
 
-gcc_pure
-const char *
-widget_get_quoted_class_name(struct widget *widget);
+static inline const char *
+widget_get_quoted_class_name(const struct widget *widget)
+{
+    return widget->lazy.quoted_class_name;
+}
 
 static inline const char *
 widget_get_path_info(const struct widget *widget)

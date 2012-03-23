@@ -118,21 +118,7 @@ widget_set_class_name(struct widget *widget, struct pool *pool,
     assert(class_name != NULL);
 
     widget->class_name = strref_dup(pool, class_name);
-}
-
-const char *
-widget_get_quoted_class_name(struct widget *widget)
-{
-    assert(widget != NULL);
-
-    if (widget->class_name == NULL)
-        return NULL;
-
-    if (widget->lazy.quoted_class_name == NULL)
-        widget->lazy.quoted_class_name = quote_prefix(widget->pool,
-                                                      widget->class_name);
-
-    return widget->lazy.quoted_class_name;
+    widget->lazy.quoted_class_name = quote_prefix(pool, widget->class_name);
 }
 
 const struct widget_view *
