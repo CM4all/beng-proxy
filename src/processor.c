@@ -1041,13 +1041,7 @@ static istream_t
 embed_widget(struct processor *processor, struct processor_env *env,
              struct widget *widget)
 {
-    if (widget->class_name == NULL &&
-        (widget->class == NULL ||
-         widget_get_view(widget) == NULL ||
-         widget_get_view(widget)->address.type == RESOURCE_ADDRESS_NONE)) {
-        widget_cancel(widget);
-        return NULL;
-    }
+    assert(widget->class_name != NULL);
 
     if (processor->replace != NULL) {
         if (!widget_copy_from_request(widget, env, NULL)) {
@@ -1095,7 +1089,12 @@ open_widget_element(struct processor *processor, struct widget *widget)
 {
     assert(widget->parent == processor->container);
 
-    if (widget->class_name != NULL && widget_check_recursion(widget->parent)) {
+    if (widget->class_name == NULL) {
+        daemon_log(5, "widget without a class\n");
+        return NULL;
+    }
+
+    if (widget_check_recursion(widget->parent)) {
         daemon_log(5, "maximum widget depth exceeded\n");
         return NULL;
     }
