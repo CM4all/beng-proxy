@@ -530,7 +530,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_FORBIDDEN,
                     "view '%s' of widget class '%s' cannot be requested "
                     "because the response is processable",
-                    widget->from_request.view_name, widget->class_name);
+                    widget_get_view(widget)->name, widget->class_name);
         return false;
     }
 
@@ -641,15 +641,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
     assert(widget->class != NULL);
 
     const struct widget_view *view = widget_get_view(widget);
-    if (view == NULL) {
-        GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
-                        "unknown view name for class '%s': '%s'",
-                        widget->class_name, widget_get_view_name(widget));
-        widget_cancel(widget);
-        http_response_handler_direct_abort(handler, handler_ctx, error);
-        return;
-    }
+    assert(view != NULL);
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
@@ -714,8 +706,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     if (view == NULL) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
-                        "unknown view name for class '%s': '%s'",
-                        widget->class_name, widget_get_view_name(widget));
+                        "No such view");
         handler->error(error, handler_ctx);
         return;
     }

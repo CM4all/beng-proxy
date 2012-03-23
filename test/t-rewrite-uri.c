@@ -118,6 +118,9 @@ widget_resolver_new(G_GNUC_UNUSED struct pool *pool, G_GNUC_UNUSED struct pool *
         widget->class = &class3;
     }
 
+    if (widget->class != NULL)
+        widget->view = widget->from_request.view = &widget->class->views;
+
     callback(ctx);
 }
 

@@ -202,6 +202,15 @@ inline_widget_set(struct inline_widget *iw)
         return;
     }
 
+    if (!widget_has_default_view(widget)) {
+        GError *error =
+            g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
+                        "No such view: %s", widget->view_name);
+        widget_cancel(widget);
+        istream_delayed_set_abort(iw->delayed, error);
+        return;
+    }
+
     if (widget->session_sync_pending) {
         struct session *session = session_get(iw->env->session_id);
         if (session != NULL) {

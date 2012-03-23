@@ -66,6 +66,14 @@ struct widget {
     /** the name of the view specified in the template */
     const char *view_name;
 
+    /**
+     * The view that was specified in the template.  This attribute is
+     * undefined before the widget resolver finishes.  Being NULL is a
+     * fatal error, and means that no operation is possible on this
+     * widget.
+     */
+    const struct widget_view *view;
+
     /** what is the scope of session data? */
     enum {
         /** each resource has its own set of widget sessions */
@@ -111,8 +119,13 @@ struct widget {
         /** the request body (from processor_env.body) */
         struct istream * body;
 
-        /** the name of the view requested by the client */
-        const char *view_name;
+        /**
+         * The view requested by the client.  If no view was
+         * explicitly requested, then this is the view selected by the
+         * template.  This attribute is undefined before the widget
+         * resolver finishes.
+         */
+        const struct widget_view *view;
 
         /**
          * This flag is set when the view selected by the client is
@@ -222,14 +235,22 @@ widget_get_path_info(const struct widget *widget)
         : widget->path_info;
 }
 
+static inline bool
+widget_has_default_view(const struct widget *widget)
+{
+    return widget->view != NULL;
+}
+
 /**
  * Returns the view that will be used according to the widget class
  * and the view specification in the parent.  It ignores the view name
  * from the request.
  */
-gcc_pure
-const struct widget_view *
-widget_get_default_view(const struct widget *widget);
+static inline const struct widget_view *
+widget_get_default_view(const struct widget *widget)
+{
+    return widget->view;
+}
 
 /**
  * Is the default view a container?
@@ -238,21 +259,18 @@ gcc_pure
 bool
 widget_is_container_by_default(const struct widget *widget);
 
-/**
- * Returns the effective view name, as specified in the template or
- * requested by the client.
- */
-static inline const char *
-widget_get_view_name(const struct widget *widget)
+static inline bool
+widget_has_view(const struct widget *widget)
 {
-    return widget->from_request.view_name != NULL
-        ? widget->from_request.view_name
-        : widget->view_name;
+    return widget->from_request.view != NULL;
 }
 
 gcc_pure
-const struct widget_view *
-widget_get_view(const struct widget *widget);
+static inline const struct widget_view *
+widget_get_view(const struct widget *widget)
+{
+    return widget->from_request.view;
+}
 
 /**
  * Is the effective view a container?

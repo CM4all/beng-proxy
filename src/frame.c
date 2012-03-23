@@ -30,6 +30,7 @@ frame_top_widget(struct pool *pool, struct widget *widget,
 {
     assert(widget != NULL);
     assert(widget->class != NULL);
+    assert(widget_has_default_view(widget));
     assert(env != NULL);
 
     if (!widget_check_host(widget, env->untrusted_host,
@@ -64,6 +65,7 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
 {
     assert(widget != NULL);
     assert(widget->class != NULL);
+    assert(widget_has_default_view(widget));
     assert(id != NULL);
     assert(env != NULL);
 

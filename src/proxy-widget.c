@@ -141,14 +141,14 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 {
     struct http_server_request *request = request2->request;
 
-    if (request2->proxy_ref != NULL) {
-        if (widget_get_view(widget) == NULL) {
-            widget_cancel(widget);
-            response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
-                                      "No such view");
-            return;
-        }
+    if (!widget_has_default_view(widget)) {
+        widget_cancel(widget);
+        response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+                                  "No such view");
+        return;
+    }
 
+    if (request2->proxy_ref != NULL) {
         frame_parent_widget(request->pool, widget,
                             request2->proxy_ref->id,
                             &request2->env,
@@ -157,24 +157,26 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
     } else {
         const struct processor_env *env = &request2->env;
 
-        /* the client can select the view; he can never explicitly
-           select the default view */
-        widget->from_request.view_name = env->view_name;
+        if (env->view_name != NULL) {
+            /* the client can select the view; he can never explicitly
+               select the default view */
+            const struct widget_view *view =
+                widget_class_view_lookup(widget->class, env->view_name);
+            if (view == NULL) {
+                widget_cancel(widget);
+                response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+                                          "No such view");
+                return;
+            }
 
-        const struct widget_view *view = widget_get_view(widget);
-        if (view == NULL) {
-            widget_cancel(widget);
-            response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
-                                      "No such view");
-            return;
-        }
+            if (!widget_view_allowed(widget, view)) {
+                widget_cancel(widget);
+                response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
+                                          "Forbidden");
+                return;
+            }
 
-        if (widget->from_request.view_name != NULL &&
-            !widget_view_allowed(widget, view)) {
-            widget_cancel(widget);
-            response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
-                                      "Forbidden");
-            return;
+            widget->from_request.view = view;
         }
 
         frame_top_widget(request->pool, widget,

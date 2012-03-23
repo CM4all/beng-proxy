@@ -100,7 +100,7 @@ processor_subst_beng_widget(struct istream *istream,
                       base_uri(env->pool, env->uri));
     istream_subst_add(istream, "&c:frame;",
                       strmap_get(env->args, "frame"));
-    istream_subst_add(istream, "&c:view;", widget_get_view_name(widget));
+    istream_subst_add(istream, "&c:view;", widget_get_view(widget)->name);
     istream_subst_add(istream, "&c:session;",
                       strmap_get(env->args, "session"));
 }

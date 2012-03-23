@@ -5,6 +5,7 @@
  */
 
 #include "widget.h"
+#include "widget-class.h"
 
 void
 widget_init(struct widget *widget, struct pool *pool,
@@ -23,6 +24,8 @@ widget_init(struct widget *widget, struct pool *pool,
     widget->query_string = NULL;
     widget->headers = NULL;
     widget->view_name = NULL;
+    if (class != NULL)
+        widget->view = &class->views;
     widget->session = WIDGET_SESSION_RESOURCE;
     widget->session_sync_pending = false;
     widget->from_request.focus_ref = NULL;
@@ -30,7 +33,8 @@ widget_init(struct widget *widget, struct pool *pool,
     strref_clear(&widget->from_request.query_string);
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
-    widget->from_request.view_name = NULL;
+    if (class != NULL)
+        widget->from_request.view = widget->view;
     widget->from_request.unauthorized_view = false;
     widget->for_focused.body = NULL;
     widget->lazy.path = NULL;
