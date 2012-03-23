@@ -507,7 +507,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
         /* yes, look it up in the class */
 
         const struct widget_view *view =
-            widget_view_lookup(&widget->class->views, view_name);
+            widget_class_view_lookup(widget->class, view_name);
         if (view == NULL) {
             /* the view specified in the response header does not
                exist, bail out */

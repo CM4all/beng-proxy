@@ -68,4 +68,10 @@ struct widget_class {
 
 extern const struct widget_class root_widget_class;
 
+static inline const struct widget_view *
+widget_class_view_lookup(const struct widget_class *class, const char *name)
+{
+    return widget_view_lookup(&class->views, name);
+}
+
 #endif
