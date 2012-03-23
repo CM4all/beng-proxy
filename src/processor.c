@@ -539,8 +539,6 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         widget_init(processor->widget.widget, processor->widget.pool, NULL);
         expansible_buffer_reset(processor->widget.params);
 
-        list_add(&processor->widget.widget->siblings,
-                 &processor->container->children);
         processor->widget.widget->parent = processor->container;
 
         return true;
@@ -1105,6 +1103,8 @@ open_widget_element(struct processor *processor, struct widget *widget)
     if (!expansible_buffer_is_empty(processor->widget.params))
         widget->query_string = expansible_buffer_strdup(processor->widget.params,
                                                         processor->widget.pool);
+
+    list_add(&widget->siblings, &processor->container->children);
 
     return embed_widget(processor, processor->env, widget);
 }
