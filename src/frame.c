@@ -72,8 +72,7 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
     assert(id != NULL);
     assert(env != NULL);
 
-    if (!widget_class_is_container(widget->class,
-                                   widget_get_view_name(widget))) {
+    if (!widget_is_container(widget)) {
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
 

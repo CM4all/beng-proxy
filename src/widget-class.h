@@ -68,8 +68,4 @@ struct widget_class {
 
 extern const struct widget_class root_widget_class;
 
-bool
-widget_class_is_container(const struct widget_class *class,
-                          const char *view_name);
-
 #endif
