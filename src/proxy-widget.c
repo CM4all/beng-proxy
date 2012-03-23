@@ -169,8 +169,12 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
         }
 
         if (widget->from_request.view != NULL &&
-            !widget_view_allowed(widget, view))
-            widget->from_request.unauthorized_view = true;
+            !widget_view_allowed(widget, view)) {
+            widget_cancel(widget);
+            response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
+                                      "Forbidden");
+            return;
+        }
 
         frame_top_widget(request->pool, widget,
                          &request2->env,
