@@ -6,6 +6,7 @@
 
 #include "inline-widget.h"
 #include "widget-http.h"
+#include "widget-quark.h"
 #include "penv.h"
 #include "widget.h"
 #include "widget-class.h"
@@ -33,12 +34,6 @@ struct inline_widget {
     struct istream *delayed;
 };
 
-static GQuark
-widget_quark(void)
-{
-    return g_quark_from_static_string("widget");
-}
-
 static void
 inline_widget_close(struct inline_widget *iw, GError *error)
 {
@@ -63,7 +58,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
 
     p = strmap_get_checked(headers, "content-encoding");
     if (p != NULL && strcmp(p, "identity") != 0) {
-        g_set_error(error_r, widget_quark(), 0,
+        g_set_error(error_r, widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                     "widget '%s' sent non-identity response, cannot embed",
                     widget_path(widget));
         istream_close_unused(body);
@@ -75,7 +70,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
     if (content_type == NULL ||
         (strncmp(content_type, "text/", 5) != 0 &&
          strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
-        g_set_error(error_r, widget_quark(), 0,
+        g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                     "widget '%s' sent non-text response",
                     widget_path(widget));
         istream_close_unused(body);
@@ -91,7 +86,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         const char *charset2 = strref_dup(pool, charset);
         struct istream *ic = istream_iconv_new(pool, body, "utf-8", charset2);
         if (ic == NULL) {
-            g_set_error(error_r, widget_quark(), 0,
+            g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent unknown charset '%s'",
                         widget_path(widget), charset2);
             istream_close_unused(body);
@@ -147,7 +142,7 @@ inline_widget_response(http_status_t status,
             istream_close_unused(body);
 
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
                         "response status %d from widget '%s'",
                         status, widget_path(iw->widget));
         inline_widget_close(iw, error);
@@ -200,7 +195,7 @@ inline_widget_set(struct inline_widget *iw)
     if (!widget_check_host(widget, iw->env->untrusted_host,
                            iw->env->site_name)) {
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "untrusted host name mismatch");
         widget_cancel(widget);
         istream_delayed_set_abort(iw->delayed, error);
@@ -236,7 +231,7 @@ class_lookup_callback(void *_ctx)
         inline_widget_set(iw);
     } else {
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
                         "failed to look up widget class '%s'",
                         iw->widget->class_name);
         widget_cancel(iw->widget);

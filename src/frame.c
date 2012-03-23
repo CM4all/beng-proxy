@@ -6,6 +6,7 @@
 
 #include "frame.h"
 #include "widget-http.h"
+#include "widget-quark.h"
 #include "penv.h"
 #include "widget.h"
 #include "widget-class.h"
@@ -19,12 +20,6 @@
 #include <daemon/log.h>
 
 #include <assert.h>
-
-static inline GQuark
-widget_quark(void)
-{
-    return g_quark_from_static_string("widget");
-}
 
 void
 frame_top_widget(struct pool *pool, struct widget *widget,
@@ -77,7 +72,7 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
            widget if it is not a container */
 
         GError *error =
-            g_error_new(widget_quark(), 0,
+            g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                         "frame within non-container requested");
         widget_cancel(widget);
         handler->error(error, handler_ctx);
