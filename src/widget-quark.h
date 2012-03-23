@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_WIDGET_QUARK_H
 #define BENG_PROXY_WIDGET_QUARK_H
 
+#include <glib.h>
+
 enum widget_error {
     WIDGET_ERROR_UNSPECIFIED,
 
