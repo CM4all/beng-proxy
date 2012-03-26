@@ -52,7 +52,7 @@ widget_get_original_address(const struct widget *widget)
     assert(widget != NULL);
     assert(widget->class != NULL);
 
-    const struct widget_view *view = widget_get_view(widget);
+    const struct widget_view *view = widget_get_address_view(widget);
     assert(view != NULL);
 
     return &view->address;

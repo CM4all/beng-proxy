@@ -274,6 +274,26 @@ bool
 widget_is_container(const struct widget *widget);
 
 /**
+ * Returns the view that is used to determine the address of the
+ * server.
+ */
+static inline const struct widget_view *
+widget_get_address_view(const struct widget *widget)
+{
+    return widget_get_default_view(widget);
+}
+
+/**
+ * Returns the view that is used to determine the transformations of
+ * the response.
+ */
+static inline const struct widget_view *
+widget_get_transformation_view(const struct widget *widget)
+{
+    return widget_get_view(widget);
+}
+
+/**
  * Returns the widget's session object.  The passed session object
  * must be locked.
  */

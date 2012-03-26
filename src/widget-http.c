@@ -151,7 +151,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (embed->num_redirects >= 8)
         return false;
 
-    const struct widget_view *view = widget_get_view(widget);
+    const struct widget_view *view = widget_get_address_view(widget);
     assert(view != NULL);
 
     if (view->address.type != RESOURCE_ADDRESS_HTTP)
@@ -432,11 +432,11 @@ static bool
 widget_transformation_enabled(const struct widget *widget,
                               http_status_t status)
 {
-    assert(widget_get_view(widget) != NULL);
+    assert(widget_get_transformation_view(widget) != NULL);
 
     return http_status_is_success(status) ||
         (http_status_is_client_error(status) &&
-         widget_get_view(widget)->filter_4xx);
+         widget_get_transformation_view(widget)->filter_4xx);
 }
 
 /**
@@ -532,7 +532,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_FORBIDDEN,
                     "view '%s' of widget class '%s' cannot be requested "
                     "because the response is processable",
-                    widget_get_view(widget)->name, widget->class_name);
+                    widget_get_transformation_view(widget)->name, widget->class_name);
         return false;
     }
 
@@ -642,8 +642,11 @@ widget_http_request(struct pool *pool, struct widget *widget,
     assert(widget != NULL);
     assert(widget->class != NULL);
 
-    const struct widget_view *view = widget_get_view(widget);
-    assert(view != NULL);
+    const struct widget_view *a_view = widget_get_address_view(widget);
+    assert(a_view != NULL);
+
+    const struct widget_view *t_view = widget_get_transformation_view(widget);
+    assert(t_view != NULL);
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
@@ -654,10 +657,10 @@ widget_http_request(struct pool *pool, struct widget *widget,
     embed->env = env;
     embed->host_and_port = widget->class->cookie_host != NULL
         ? widget->class->cookie_host
-        : resource_address_host_and_port(&view->address, pool);
-    embed->transformation = view->transformation;
+        : resource_address_host_and_port(&a_view->address, pool);
+    embed->transformation = t_view->transformation;
 
-    headers = widget_request_headers(embed, view,
+    headers = widget_request_headers(embed, a_view,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,
                                      widget->from_request.body != NULL);
 
@@ -704,8 +707,11 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     assert(handler->not_found != NULL);
     assert(handler->error != NULL);
 
-    const struct widget_view *view = widget_get_view(widget);
-    assert(view != NULL);
+    const struct widget_view *a_view = widget_get_address_view(widget);
+    assert(a_view != NULL);
+
+    const struct widget_view *t_view = widget_get_transformation_view(widget);
+    assert(t_view != NULL);
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;
@@ -716,10 +722,10 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     embed->env = env;
     embed->host_and_port = widget->class->cookie_host != NULL
         ? widget->class->cookie_host
-        : resource_address_host_and_port(&view->address, pool);
-    embed->transformation = view->transformation;
+        : resource_address_host_and_port(&a_view->address, pool);
+    embed->transformation = t_view->transformation;
 
-    headers = widget_request_headers(embed, view,
+    headers = widget_request_headers(embed, a_view,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,
                                      widget->from_request.body != NULL);
 

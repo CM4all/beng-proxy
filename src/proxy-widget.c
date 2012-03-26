@@ -36,7 +36,9 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     assert(widget != NULL);
     assert(widget->class != NULL);
 
-    const struct widget_view *view = widget_get_view(widget);
+    /* XXX shall the address view or the transformation view be used
+       to control response header forwarding? */
+    const struct widget_view *view = widget_get_transformation_view(widget);
     assert(view != NULL);
 
     headers = forward_response_headers(request->pool, headers,

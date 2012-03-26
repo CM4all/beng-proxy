@@ -131,7 +131,7 @@ widget_is_container_by_default(const struct widget *widget)
 bool
 widget_is_container(const struct widget *widget)
 {
-    const struct widget_view *view = widget_get_view(widget);
+    const struct widget_view *view = widget_get_transformation_view(widget);
     return view != NULL && widget_view_is_container(view);
 }
 
