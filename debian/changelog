@@ -9,7 +9,7 @@ cm4all-beng-proxy (2.0.22) unstable; urgency=low
   * widget-http: postpone saving to session after receiving response headers
   * processor: add entities &c:id; &c:type; &c:class;
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Mar 2012 14:05:05 -0000
 
 cm4all-beng-proxy (2.0.21) unstable; urgency=low
 
