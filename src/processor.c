@@ -145,6 +145,18 @@ processor_quark(void)
     return g_quark_from_static_string("processor");
 }
 
+bool
+processable(const struct strmap *headers)
+{
+    const char *content_type;
+
+    content_type = strmap_get_checked(headers, "content-type");
+    return content_type != NULL &&
+        (strncmp(content_type, "text/html", 9) == 0 ||
+         strncmp(content_type, "text/xml", 8) == 0 ||
+         strncmp(content_type, "application/xhtml+xml", 21) == 0);
+}
+
 static inline bool
 processor_option_quiet(const struct processor *processor)
 {

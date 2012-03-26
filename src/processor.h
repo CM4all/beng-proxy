@@ -7,8 +7,11 @@
 #ifndef __BENG_PROCESSOR_H
 #define __BENG_PROCESSOR_H
 
+#include <inline/compiler.h>
 #include <http/method.h>
 #include <http/status.h>
+
+#include <stdbool.h>
 
 /** options for processor_new() */
 enum processor_options {
@@ -36,6 +39,11 @@ struct widget;
 struct widget_lookup_handler;
 struct async_operation_ref;
 struct processor_env;
+struct strmap;
+
+gcc_pure
+bool
+processable(const struct strmap *headers);
 
 /**
  * Process the specified istream, and return the processed stream.

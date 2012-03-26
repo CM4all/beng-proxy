@@ -51,6 +51,12 @@ const struct widget_class root_widget_class;
 static unsigned test_id;
 static bool got_request, got_response;
 
+bool
+processable(gcc_unused const struct strmap *headers)
+{
+    return false;
+}
+
 struct istream *
 processor_process(gcc_unused struct pool *pool, struct istream *istream,
                   gcc_unused struct widget *widget,
