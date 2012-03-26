@@ -152,8 +152,9 @@ widget_response_redirect(struct embed *embed, const char *location,
         return false;
 
     const struct widget_view *view = widget_get_view(widget);
+    assert(view != NULL);
 
-    if (view == NULL || view->address.type != RESOURCE_ADDRESS_HTTP)
+    if (view->address.type != RESOURCE_ADDRESS_HTTP)
         /* a static or CGI widget cannot send redirects */
         return false;
 
@@ -431,9 +432,10 @@ static bool
 widget_transformation_enabled(const struct widget *widget,
                               http_status_t status)
 {
+    assert(widget_get_view(widget) != NULL);
+
     return http_status_is_success(status) ||
         (http_status_is_client_error(status) &&
-         widget_get_view(widget) != NULL &&
          widget_get_view(widget)->filter_4xx);
 }
 
@@ -703,13 +705,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     assert(handler->error != NULL);
 
     const struct widget_view *view = widget_get_view(widget);
-    if (view == NULL) {
-        GError *error =
-            g_error_new(widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
-                        "No such view");
-        handler->error(error, handler_ctx);
-        return;
-    }
+    assert(view != NULL);
 
     embed = p_malloc(pool, sizeof(*embed));
     embed->pool = pool;

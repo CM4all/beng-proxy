@@ -259,12 +259,6 @@ gcc_pure
 bool
 widget_is_container_by_default(const struct widget *widget);
 
-static inline bool
-widget_has_view(const struct widget *widget)
-{
-    return widget->from_request.view != NULL;
-}
-
 gcc_pure
 static inline const struct widget_view *
 widget_get_view(const struct widget *widget)

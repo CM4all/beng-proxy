@@ -53,9 +53,7 @@ widget_get_original_address(const struct widget *widget)
     assert(widget->class != NULL);
 
     const struct widget_view *view = widget_get_view(widget);
-    if (view == NULL)
-        /* fall back to default view */
-        view = &widget->class->views;
+    assert(view != NULL);
 
     return &view->address;
 }
