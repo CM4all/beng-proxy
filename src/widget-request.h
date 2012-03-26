@@ -31,6 +31,14 @@ void
 widget_sync_session(struct widget *widget, struct session *session);
 
 /**
+ * Save the current request to the session.  Call this after you have
+ * received the widget's response if the session_save_pending flag was
+ * set by widget_sync_session().
+ */
+void
+widget_save_session(struct widget *widget, struct session *session);
+
+/**
  * Overwrite request data, copy values from a HTTP redirect location.
  */
 void

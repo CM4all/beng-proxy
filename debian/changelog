@@ -5,6 +5,7 @@ cm4all-beng-proxy (2.0.22) unstable; urgency=low
   * widget-http: allow any view selection for unprocessable response
   * widget-http: inherit the view from the template
   * widget-request: sync with session only if processor is enabled
+  * widget-http: postpone saving to session after receiving response headers
   * processor: add entities &c:id; &c:type; &c:class;
 
  --   

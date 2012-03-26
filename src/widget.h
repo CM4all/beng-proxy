@@ -92,6 +92,14 @@ struct widget {
     bool session_sync_pending;
 
     /**
+     * This is set to true by widget_sync_session(), and is checked by
+     * widget_response_response().  The current request will only be
+     * saved to the session if the actual response from the widget
+     * server is processable.
+     */
+    bool session_save_pending;
+
+    /**
      * Parameters that were forwarded from the HTTP request to this
      * widget.
      */

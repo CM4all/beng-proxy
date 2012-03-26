@@ -594,6 +594,15 @@ widget_response_response(http_status_t status, struct strmap *headers,
         embed->transformation = NULL;
 #endif
 
+    if (widget->session_save_pending &&
+        transformation_has_processor(embed->transformation)) {
+        struct session *session = session_get(embed->env->session_id);
+        if (session != NULL) {
+            widget_save_session(widget, session);
+            session_put(session);
+        }
+    }
+
     widget_response_dispatch(embed, status, headers, body);
 }
 

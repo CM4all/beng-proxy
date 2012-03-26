@@ -153,6 +153,7 @@ widget_sync_session(struct widget *widget, struct session *session)
     assert(widget->class != NULL);
     assert(widget->class->stateful);
     assert(widget->session_sync_pending);
+    assert(!widget->session_save_pending);
 
     widget->session_sync_pending = false;
 
@@ -163,11 +164,11 @@ widget_sync_session(struct widget *widget, struct session *session)
     /* are we focused? */
 
     if (widget_has_focus(widget)) {
+        /* postpone until we have the widget's response; we do not
+           know yet which view will be used until we have checked the
+           response headers */
 
-        /* do not save to session when this is a POST request */
-        struct widget_session *ws = widget_get_session(widget, session, true);
-        if (ws != NULL)
-            widget_to_session(ws, widget);
+        widget->session_save_pending = true;
     } else {
         /* get query string from session */
 
@@ -175,6 +176,27 @@ widget_sync_session(struct widget *widget, struct session *session)
         if (ws != NULL)
             session_to_widget(widget, ws);
     }
+}
+
+void
+widget_save_session(struct widget *widget, struct session *session)
+{
+    assert(widget != NULL);
+    assert(widget->parent != NULL);
+    assert(widget->class != NULL);
+    assert(widget->class->stateful);
+    assert(!widget->session_sync_pending);
+    assert(widget->session_save_pending);
+
+    widget->session_save_pending = false;
+
+    if (!widget_should_sync_session(widget))
+        /* not stateful in this request */
+        return;
+
+    struct widget_session *ws = widget_get_session(widget, session, true);
+    if (ws != NULL)
+        widget_to_session(ws, widget);
 }
 
 void
