@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.1.38) unstable; urgency=low
 
-  * 
+  * merge release 1.0.32
 
  --   
 
@@ -268,6 +268,12 @@ cm4all-beng-proxy (1.1) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 20 Jul 2011 15:04:22 +0200
   
+cm4all-beng-proxy (1.0.32) unstable; urgency=low
+
+  * http-cache: add missing initialization on memcached miss
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Mar 2012 13:35:01 -0000
+
 cm4all-beng-proxy (1.0.31) unstable; urgency=low
 
   * proxy-widget: close the request body when the view doesn't exist
