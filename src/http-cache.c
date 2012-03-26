@@ -1077,6 +1077,7 @@ http_cache_memcached_use(struct http_cache *cache,
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     request->info = info;
+    request->document = NULL;
 
     async_init(&request->operation, &http_cache_async_operation);
     async_ref_set(async_ref, &request->operation);
