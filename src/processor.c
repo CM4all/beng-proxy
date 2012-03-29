@@ -890,7 +890,7 @@ handle_id_attribute(struct processor *processor,
             return;
 
         processor_replace_add(processor, attr->value_start,
-                              attr->value_start + 1,
+                              attr->value_start + 2,
                               istream_string_new(processor->pool,
                                                  class_name));
     }
