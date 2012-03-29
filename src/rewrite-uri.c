@@ -251,7 +251,8 @@ class_lookup_callback(void *ctx)
     struct istream *istream;
 
     bool escape = false;
-    if (rwu->widget->class != NULL) {
+    if (rwu->widget->class != NULL &&
+        widget_has_default_view(rwu->widget)) {
         const char *uri;
 
         if (rwu->widget->session_sync_pending) {
@@ -333,6 +334,11 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
     const char *uri;
 
     if (widget->class != NULL) {
+        if (!widget_has_default_view(widget))
+            /* refuse to rewrite URIs when an invalid view name was
+               specified */
+            return NULL;
+
         struct pool_mark mark;
         struct strref unescaped;
         if (escape != NULL && value != NULL &&
