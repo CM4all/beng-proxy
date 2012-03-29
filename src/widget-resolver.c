@@ -131,11 +131,14 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
 #endif
 
     widget->class = class;
-    widget->session_sync_pending = class != NULL && class->stateful;
 
     widget->view = widget->from_request.view = class != NULL
         ? widget_view_lookup(&class->views, widget->view_name)
         : NULL;
+
+    widget->session_sync_pending = class != NULL && class->stateful &&
+        /* the widget session code requires a valid view */
+        widget->view != NULL;
 
     do {
         struct widget_resolver_listener *listener =
