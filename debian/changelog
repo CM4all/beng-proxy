@@ -4,6 +4,7 @@ cm4all-beng-proxy (2.0.23) unstable; urgency=low
   * widget-resolver: don't sync with session when view is invalid
   * rewrite-uri: check for invalid view name
   * {css_,}processor: eliminate second underscore from class prefix
+  * doc: document the algorithm for replacing two leading underscores
 
  --   
 
