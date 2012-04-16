@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.24) unstable; urgency=low
 
-  * 
+  * processor: optionally invoke CSS processor for <style>
 
  --   
 

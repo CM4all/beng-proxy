@@ -256,6 +256,12 @@ enum beng_translation_command {
      * A classification for the User-Agent request header.
      */
     TRANSLATE_UA_CLASS = 88,
+
+    /**
+     * Shall the XML/HTML processor invoke the CSS processor for
+     * "style" element contents?
+     */
+    TRANSLATE_PROCESS_STYLE = 89,
 };
 
 struct beng_translation_header {

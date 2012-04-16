@@ -115,6 +115,8 @@ class _Lookup:
             response.process()
         elif line == 'container':
             response.packet(TRANSLATE_CONTAINER)
+        elif line == 'process_style':
+            response.packet(TRANSLATE_PROCESS_STYLE)
         elif line == 'process_css':
             response.packet(TRANSLATE_PROCESS_CSS)
         elif line == 'process_text':

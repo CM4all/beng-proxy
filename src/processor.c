@@ -6,6 +6,7 @@
 
 #include "processor.h"
 #include "text_processor.h"
+#include "css_processor.h"
 #include "penv.h"
 #include "parser.h"
 #include "uri-escape.h"
@@ -30,6 +31,7 @@
 #include "css_syntax.h"
 #include "css_util.h"
 #include "istream.h"
+#include "istream-internal.h"
 #include "istream-replace.h"
 
 #include <daemon/log.h>
@@ -68,6 +70,18 @@ enum tag {
     TAG_SCRIPT,
     TAG_PARAM,
     TAG_REWRITE_URI,
+
+    /**
+     * The "style" element.  This value later morphs into
+     * #TAG_STYLE_PROCESS if #PROCESSOR_STYLE is enabled.
+     */
+    TAG_STYLE,
+
+    /**
+     * Only used when #PROCESSOR_STYLE is enabled.  If active, then
+     * CDATA is being fed into the CSS processor.
+     */
+    TAG_STYLE_PROCESS,
 };
 
 struct processor {
@@ -132,6 +146,12 @@ struct processor {
         struct expansible_buffer *params;
     } widget;
 
+    /**
+     * Only valid if #cdata_stream_active is true.
+     */
+    off_t cdata_start;
+    struct istream cdata_stream;
+
     struct async_operation async;
 
     const struct widget_lookup_handler *handler;
@@ -186,6 +206,12 @@ static inline bool
 processor_option_prefix(const struct processor *processor)
 {
     return (processor->options & (PROCESSOR_PREFIX_CSS_CLASS|PROCESSOR_PREFIX_XML_ID)) != 0;
+}
+
+static inline bool
+processor_option_style(const struct processor *processor)
+{
+    return (processor->options & PROCESSOR_STYLE) != 0;
 }
 
 static void
@@ -457,6 +483,51 @@ processor_uri_rewrite_commit(struct processor *processor)
                                 NULL);
 }
 
+/*
+ * CDATA istream
+ *
+ */
+
+static void
+processor_stop_cdata_stream(struct processor *processor)
+{
+    if (processor->tag != TAG_STYLE_PROCESS)
+        return;
+
+    istream_deinit_eof(&processor->cdata_stream);
+    processor->tag = TAG_STYLE;
+}
+
+static inline struct processor *
+cdata_stream_to_processor(struct istream *istream)
+{
+    return (struct processor *)(((char*)istream) - offsetof(struct processor, cdata_stream));
+}
+
+static void
+processor_cdata_read(struct istream *istream)
+{
+    struct processor *processor = cdata_stream_to_processor(istream);
+    assert(processor->tag == TAG_STYLE_PROCESS);
+
+    parser_read(processor->parser);
+}
+
+static void
+processor_cdata_close(struct istream *istream)
+{
+    struct processor *processor = cdata_stream_to_processor(istream);
+    assert(processor->tag == TAG_STYLE_PROCESS);
+
+    istream_deinit(&processor->cdata_stream);
+    processor->tag = TAG_STYLE;
+}
+
+static const struct istream_class processor_cdata_istream = {
+    .read = processor_cdata_read,
+    .close = processor_cdata_close,
+};
+
 
 /*
  * parser callbacks
@@ -522,6 +593,8 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     processor->had_input = true;
 
+    processor_stop_cdata_stream(processor);
+
     if (processor->tag == TAG_SCRIPT &&
         strref_lower_cmp_literal(&tag->name, "script") != 0)
         /* workaround for bugged scripts: ignore all closing tags
@@ -559,6 +632,11 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         processor->tag = TAG_SCRIPT;
         processor_uri_rewrite_init(processor);
 
+        return true;
+    } else if (!processor_option_quiet(processor) &&
+               processor_option_style(processor) &&
+               strref_lower_cmp_literal(&tag->name, "style") == 0) {
+        processor->tag = TAG_STYLE;
         return true;
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
@@ -1035,6 +1113,8 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_REWRITE_URI:
+    case TAG_STYLE:
+    case TAG_STYLE_PROCESS:
         break;
     }
 }
@@ -1260,17 +1340,54 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         processor->default_uri_rewrite = processor->uri_rewrite;
 
         processor_replace_add(processor, tag->start, tag->end, NULL);
+    } else if (processor->tag == TAG_STYLE) {
+        if (tag->type == TAG_OPEN && !processor_option_quiet(processor) &&
+            processor_option_style(processor)) {
+            /* create a CSS processor for the contents of this style
+               element */
+
+            processor->tag = TAG_STYLE_PROCESS;
+
+            unsigned options = 0;
+            if (processor->options & PROCESSOR_REWRITE_URL)
+                options |= CSS_PROCESSOR_REWRITE_URL;
+            if (processor->options & PROCESSOR_PREFIX_CSS_CLASS)
+                options |= CSS_PROCESSOR_PREFIX_CLASS;
+            if (processor->options & PROCESSOR_PREFIX_XML_ID)
+                options |= CSS_PROCESSOR_PREFIX_ID;
+
+            istream_init(&processor->cdata_stream, &processor_cdata_istream,
+                         processor->pool);
+
+            struct istream *istream =
+                css_processor(processor->pool, &processor->cdata_stream,
+                              processor->container, processor->env,
+                              options);
+
+            /* the end offset will be extended later with
+               istream_replace_extend() */
+            processor->cdata_start = tag->end;
+            processor_replace_add(processor, tag->end, tag->end, istream);
+        }
     }
 }
 
 static size_t
 processor_parser_cdata(const char *p gcc_unused, size_t length,
-                       gcc_unused bool escaped, gcc_unused off_t start,
+                       gcc_unused bool escaped, off_t start,
                        void *ctx)
 {
     struct processor *processor = ctx;
 
     processor->had_input = true;
+
+    if (processor->tag == TAG_STYLE_PROCESS) {
+        /* XXX unescape? */
+        length = istream_invoke_data(&processor->cdata_stream, p, length);
+        if (length > 0)
+            istream_replace_extend(processor->replace, processor->cdata_start,
+                                   start + length);
+    }
 
     return length;
 }
@@ -1283,6 +1400,8 @@ processor_parser_eof(void *ctx, off_t length gcc_unused)
     assert(processor->parser != NULL);
 
     processor->parser = NULL;
+
+    processor_stop_cdata_stream(processor);
 
     if (processor->container->for_focused.body != NULL)
         /* the request body could not be submitted to the focused
@@ -1309,6 +1428,8 @@ processor_parser_abort(GError *error, void *ctx)
     assert(processor->parser != NULL);
 
     processor->parser = NULL;
+
+    processor_stop_cdata_stream(processor);
 
     if (processor->container->for_focused.body != NULL)
         /* the request body could not be submitted to the focused

@@ -1562,6 +1562,17 @@ translate_handle_packet(struct translate_client *client,
 
         return true;
 
+    case TRANSLATE_PROCESS_STYLE:
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_PROCESS_STYLE packet");
+            return false;
+        }
+
+        client->transformation->u.processor.options |= PROCESSOR_STYLE;
+        return true;
+
     case TRANSLATE_FOCUS_WIDGET:
         if (client->transformation == NULL ||
             client->transformation->type != TRANSFORMATION_PROCESS) {

@@ -31,6 +31,11 @@ enum processor_options {
 
     /** enable the c:embed element */
     PROCESSOR_CONTAINER = 0x10,
+
+    /**
+     * Invoke the CSS processor for "style" element contents?
+     */
+    PROCESSOR_STYLE = 0x20,
 };
 
 struct pool;
