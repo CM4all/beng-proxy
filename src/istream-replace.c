@@ -4,6 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream-replace.h"
 #include "istream-internal.h"
 #include "growing-buffer.h"
 

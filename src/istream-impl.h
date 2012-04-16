@@ -161,16 +161,6 @@ istream_iconv_new(struct pool *pool, struct istream *input,
                   const char *tocode, const char *fromcode);
 
 struct istream *
-istream_replace_new(struct pool *pool, struct istream *input);
-
-void
-istream_replace_add(struct istream *istream, off_t start, off_t end,
-                    struct istream *contents);
-
-void
-istream_replace_finish(struct istream *istream);
-
-struct istream *
 istream_socketpair_new(struct pool *pool, struct istream *input, int *fd_r);
 
 struct istream *

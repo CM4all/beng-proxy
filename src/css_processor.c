@@ -23,6 +23,7 @@
 #include "expansible-buffer.h"
 #include "escape_css.h"
 #include "istream.h"
+#include "istream-replace.h"
 
 #include <daemon/log.h>
 

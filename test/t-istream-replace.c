@@ -1,4 +1,5 @@
 #include "istream.h"
+#include "istream-replace.h"
 
 #define EXPECTED_RESULT "foo"
 

@@ -30,6 +30,7 @@
 #include "css_syntax.h"
 #include "css_util.h"
 #include "istream.h"
+#include "istream-replace.h"
 
 #include <daemon/log.h>
 
