@@ -651,6 +651,35 @@ istream_replace_add(istream_t istream, off_t start, off_t end,
     replace->append_substitution_p = &s->next;
 }
 
+static struct substitution *
+replace_get_last_substitution(struct istream_replace *replace)
+{
+    struct substitution *substitution = replace->first_substitution;
+    assert(substitution != NULL);
+
+    while (substitution->next != NULL)
+        substitution = substitution->next;
+
+    assert(substitution->end == replace->last_substitution_end);
+    return substitution;
+}
+
+void
+istream_replace_extend(struct istream *istream, G_GNUC_UNUSED off_t start, off_t end)
+{
+    assert(istream != NULL);
+
+    struct istream_replace *replace = istream_to_replace(istream);
+    assert(!replace->finished);
+
+    struct substitution *substitution = replace_get_last_substitution(replace);
+    assert(substitution->start == start);
+    assert(substitution->end == replace->last_substitution_end);
+    assert(end >= substitution->end);
+
+    substitution->end = end;
+}
+
 void
 istream_replace_finish(istream_t istream)
 {

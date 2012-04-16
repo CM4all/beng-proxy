@@ -19,6 +19,17 @@ void
 istream_replace_add(struct istream *istream, off_t start, off_t end,
                     struct istream *contents);
 
+/**
+ * Extend the end position of the latest replacement.
+ *
+ * @param start the start value that was passed to
+ * istream_replace_add()
+ * @param end the new end position; it must not be smaller than the
+ * current end position of the replacement
+ */
+void
+istream_replace_extend(struct istream *istream, off_t start, off_t end);
+
 void
 istream_replace_finish(struct istream *istream);
 
