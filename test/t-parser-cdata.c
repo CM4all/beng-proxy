@@ -37,7 +37,8 @@ parser_attr_finished(const struct parser_attr *attr, void *ctx)
 }
 
 static size_t
-parser_cdata(const char *p, size_t length, bool escaped, void *ctx)
+parser_cdata(const char *p, size_t length, bool escaped,
+             gcc_unused off_t start, void *ctx)
 {
     (void)escaped;
     (void)ctx;

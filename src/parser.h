@@ -48,7 +48,8 @@ struct parser_handler {
 
     void (*tag_finished)(const struct parser_tag *tag, void *ctx);
     void (*attr_finished)(const struct parser_attr *attr, void *ctx);
-    size_t (*cdata)(const char *p, size_t length, bool escaped, void *ctx);
+    size_t (*cdata)(const char *p, size_t length, bool escaped, off_t start,
+                    void *ctx);
     void (*eof)(void *ctx, off_t length);
     void (*abort)(GError *error, void *ctx);
 };
