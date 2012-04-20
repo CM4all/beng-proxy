@@ -1,0 +1,5 @@
+server "http://cfatest01.intern.cm-ag/widgets/style.html"
+process
+process_style
+prefix_css_class
+prefix_xml_id
