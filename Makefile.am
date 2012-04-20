@@ -1010,6 +1010,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/strmap.c src/hashmap.c \
 	src/penv.c src/processor.c \
 	src/text_processor.c \
+	src/css_processor.c src/css_parser.c src/escape_css.c \
 	src/widget-request.c \
 	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/parser.c src/widget-class.c \
@@ -1522,6 +1523,7 @@ test_t_escape_css_SOURCES = \
 test_run_processor_SOURCES = test/run-processor.c \
 	src/processor.c src/penv.c src/parser.c \
 	src/text_processor.c \
+	src/css_processor.c src/css_parser.c src/escape_css.c \
 	src/escape_html.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-init.c src/widget-ref.c \
@@ -1560,6 +1562,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 test_t_processor_SOURCES = test/t-processor.c \
 	src/processor.c src/penv.c src/parser.c \
 	src/text_processor.c \
+	src/css_processor.c src/css_parser.c src/escape_css.c \
 	src/escape_html.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-init.c src/widget-ref.c \
