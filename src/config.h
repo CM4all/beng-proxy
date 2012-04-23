@@ -36,6 +36,8 @@ struct config {
 
     unsigned session_idle_timeout;
 
+    const char *session_save_path;
+
     const char *control_listen, *multicast_group;
 
     const char *document_root;

@@ -159,6 +159,7 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
     static const char session_cookie[] = "session_cookie";
     static const char dynamic_session_cookie[] = "dynamic_session_cookie";
     static const char session_idle_timeout[] = "session_idle_timeout";
+    static const char session_save_path[] = "session_save_path";
     static const char max_connections[] = "max_connections";
     static const char tcp_stock_limit[] = "tcp_stock_limit";
     static const char fcgi_stock_limit[] = "fastcgi_stock_limit";
@@ -279,6 +280,10 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
             arg_error(argv0, "Invalid value for session_idle_timeout");
 
         config->session_idle_timeout = l;
+    } else if (name_length == sizeof(session_save_path) - 1 &&
+               memcmp(name, session_save_path,
+                      sizeof(session_save_path) - 1) == 0) {
+        config->session_save_path = value;
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }

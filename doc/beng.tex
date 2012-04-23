@@ -173,6 +173,13 @@ bugs. \\
 tree for each request into the log file. \\
 
 \hline
+
+\verb|session_save_path| & A file path where all sessions will be
+saved periodically and on shutdown.  On startup, it will attempt to
+load the sessions from there.  This option allows restarting the
+server without losing sessions.  \\
+
+\hline
 \end{longtable}
 
 \label{memcached}

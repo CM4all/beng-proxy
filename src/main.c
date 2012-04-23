@@ -11,6 +11,7 @@
 #include "connection.h"
 #include "crash.h"
 #include "session_manager.h"
+#include "session_save.h"
 #include "tstock.h"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"
@@ -98,6 +99,7 @@ exit_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
     children_shutdown();
     worker_killall(instance);
 
+    session_save_deinit();
     session_manager_deinit();
 
     if (instance->translate_cache != NULL)
@@ -295,6 +297,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "session_manager_init() failed\n");
         exit(2);
     }
+
+    session_save_init(instance.config.session_save_path);
 
     for (unsigned i = 0; i < instance.config.num_ports; ++i)
         add_tcp_listener(&instance, instance.config.ports[i]);

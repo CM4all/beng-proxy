@@ -29,6 +29,9 @@
 # Path of the User-Agent classification file.
 #UA_CLASSES=/etc/cm4all/beng/proxy/ua_classes.conf
 
+# Path of the persistent session file
+#SESSION_SAVE_PATH=
+
 # Other options
 #OPTIONS="-v"
 

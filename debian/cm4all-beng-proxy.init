@@ -30,6 +30,7 @@ WORKERS=4
 DOCUMENT_ROOT=/var/www
 TRANSLATION_SOCKET=/var/run/cm4all/beng-proxy-translation.sock
 UA_CLASSES=
+SESSION_SAVE_PATH=
 OPTIONS="-vv"
 
 test -f /etc/default/cm4all-beng-proxy && source /etc/default/cm4all-beng-proxy
@@ -49,6 +50,10 @@ fi
 
 if test -n "$TRANSLATION_SOCKET"; then
     OPTIONS="$OPTIONS --translation-socket $TRANSLATION_SOCKET"
+fi
+
+if test -n "$SESSION_SAVE_PATH"; then
+    OPTIONS="$OPTIONS --set session_save_path=$SESSION_SAVE_PATH"
 fi
 
 case "$1" in
