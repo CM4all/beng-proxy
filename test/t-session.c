@@ -1,4 +1,5 @@
 #include "session.h"
+#include "session_manager.h"
 #include "cookie-client.h"
 #include "crash.h"
 

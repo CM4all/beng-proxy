@@ -230,7 +230,6 @@ HDR = \
 	src/rewrite-uri.h \
 	src/rwlock.h \
 	src/serialize.h \
-	src/session.h \
 	src/shm.h \
 	src/sink-gstring.h \
 	src/sink-impl.h \
@@ -287,7 +286,9 @@ SRC = src/main.c \
 	src/dpool.c \
 	src/dstring.c \
 	src/random.c \
-	src/session.c \
+	src/session.c src/session.h \
+	src/session_id.c src/session_id.h \
+	src/session_manager.c src/session_manager.h \
 	src/cookie-client.c \
 	src/cookie-server.c \
 	src/connection.c \
@@ -907,7 +908,7 @@ test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \
 	src/crash.c \
-	src/session.c src/format.c \
+	src/session_id.c src/format.c \
 	src/tpool.c $(POOL_SRC)
 test_t_header_forward_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1005,7 +1006,8 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/uri-verify.c src/uri-base.c \
 	src/random.c \
 	src/crash.c \
-	src/session.c src/cookie-client.c \
+	src/session.c src/session_manager.c \
+	src/cookie-client.c \
 	src/http-string.c \
 	src/strmap.c src/hashmap.c \
 	src/penv.c src/processor.c \
@@ -1335,7 +1337,7 @@ test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/format.c \
 	src/random.c src/fd-util.c src/fd_util.c \
 	src/crash.c \
-	src/session.c
+	src/session.c src/session_manager.c
 test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
@@ -1406,7 +1408,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/widget-http.c src/widget-uri.c src/widget-request.c \
 	src/pheaders.c \
 	src/crash.c \
-	src/widget-session.c src/session.c \
+	src/widget-session.c src/session.c src/session_manager.c src/session_id.c \
 	src/widget-view.c src/widget.c src/widget-init.c \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \

@@ -9,6 +9,7 @@
 #include "connection.h"
 #include "instance.h"
 #include "session.h"
+#include "session_manager.h"
 #include "http-server.h"
 #include "cookie-server.h"
 #include "transformation.h"

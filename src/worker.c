@@ -9,7 +9,7 @@
 #include "pool.h"
 #include "instance.h"
 #include "connection.h"
-#include "session.h"
+#include "session_manager.h"
 #include "child.h"
 #include "listener.h"
 #include "control-handler.h"

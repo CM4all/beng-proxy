@@ -4,7 +4,7 @@
 #include "processor.h"
 #include "penv.h"
 #include "uri-parser.h"
-#include "session.h"
+#include "session_manager.h"
 #include "inline-widget.h"
 #include "widget-registry.h"
 #include "uri-address.h"

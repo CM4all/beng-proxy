@@ -8,6 +8,7 @@
 #define __BENG_SESSION_H
 
 #include "lock.h"
+#include "session_id.h"
 
 #include <inline/list.h>
 #include <inline/compiler.h>
@@ -22,29 +23,6 @@
 
 struct dpool;
 struct dhashmap;
-
-#ifdef SESSION_ID_SIZE
-#define SESSION_ID_WORDS (((SESSION_ID_SIZE) + 1) / 4)
-
-typedef struct {
-    uint32_t data[SESSION_ID_WORDS];
-} session_id_t;
-
-#else
-
-typedef uint64_t session_id_t;
-
-#endif
-
-/**
- * Buffer for the function session_id_format().
- */
-struct session_id_string {
-    /**
-     * Two hex characters per byte, plus the terminating zero.
-     */
-    char buffer[sizeof(session_id_t) * 2 + 1];
-};
 
 /**
  * Session data associated with a widget instance (struct widget).
@@ -125,99 +103,20 @@ struct session {
     struct cookie_jar *cookies;
 };
 
-/**
- * Initialize the global session manager or increase the reference
- * counter.
- *
- * @param idle_timeout the idle timeout of sessions [seconds]
- * @param cluster_size the number of nodes in the cluster
- * @param cluster_node the index of this node in the cluster
- */
-bool
-session_manager_init(unsigned idle_timeout,
-                     unsigned cluster_size, unsigned cluster_node);
+gcc_malloc
+struct session *
+session_allocate(struct dpool *pool);
 
-/**
- * Decrease the reference counter and destroy the global session
- * manager if it has become zero.
- */
-void
-session_manager_deinit(void);
+gcc_malloc
+struct session *
+session_dup(struct dpool *pool, const struct session *src);
 
-/**
- * Release the session manager and try not to access the shared
- * memory, because we assume it may be corrupted.
- */
 void
-session_manager_abandon(void);
-
-/**
- * Re-add all libevent events after session_manager_event_del().
- */
-void
-session_manager_event_add(void);
-
-/**
- * Removes all libevent events.  Call this before fork(), or before
- * creating a new event base.  Don't forget to call
- * session_manager_event_add() afterwards.
- */
-void
-session_manager_event_del(void);
+session_destroy(struct session *session);
 
 gcc_pure
-static inline bool
-session_id_is_defined(session_id_t id)
-{
-#ifdef SESSION_ID_WORDS
-    for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
-        if (id.data[i] != 0)
-            return true;
-    return false;
-#else
-    return id != 0;
-#endif
-}
-
-static inline void
-session_id_clear(session_id_t *id_p)
-{
-#ifdef SESSION_ID_WORDS
-    memset(id_p, 0, sizeof(*id_p));
-#else
-    *id_p = 0;
-#endif
-}
-
-/**
- * Parse a session id from a string.
- *
- * @return true on success, false on error
- */
-bool
-session_id_parse(const char *p, session_id_t *id_r);
-
-const char *
-session_id_format(session_id_t id, struct session_id_string *string);
-
-static inline unsigned
-session_id_low(session_id_t id)
-{
-#ifdef SESSION_ID_WORDS
-    return id.data[0];
-#else
-    return (unsigned)id;
-#endif
-}
-
-/**
- * Create a new session with a random session id.
- *
- * The returned session object is locked and must be unlocked with
- * session_put().
- */
-struct session * gcc_malloc
-session_new(void);
+unsigned
+session_purge_score(const struct session *session);
 
 void
 session_clear_translate(struct session *session);

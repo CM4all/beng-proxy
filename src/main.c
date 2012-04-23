@@ -10,7 +10,7 @@
 #include "worker.h"
 #include "connection.h"
 #include "crash.h"
-#include "session.h"
+#include "session_manager.h"
 #include "tstock.h"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"
