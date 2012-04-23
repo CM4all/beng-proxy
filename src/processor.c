@@ -199,7 +199,7 @@ processor_async_abort(struct async_operation *ao)
     if (processor->container->for_focused.body != NULL)
         /* the request body was not yet submitted to the focused
            widget; dispose it now */
-        istream_close_unused(processor->container->for_focused.body);
+        istream_free_unused(&processor->container->for_focused.body);
 
     pool_unref(processor->caller_pool);
 
@@ -1287,7 +1287,7 @@ processor_parser_eof(void *ctx, off_t length gcc_unused)
     if (processor->container->for_focused.body != NULL)
         /* the request body could not be submitted to the focused
            widget, because we didn't find it; dispose it now */
-        istream_close_unused(processor->container->for_focused.body);
+        istream_free_unused(&processor->container->for_focused.body);
 
     if (processor->replace != NULL)
         istream_replace_finish(processor->replace);
@@ -1313,7 +1313,7 @@ processor_parser_abort(GError *error, void *ctx)
     if (processor->container->for_focused.body != NULL)
         /* the request body could not be submitted to the focused
            widget, because we didn't find it; dispose it now */
-        istream_close_unused(processor->container->for_focused.body);
+        istream_free_unused(&processor->container->for_focused.body);
 
     if (processor->lookup_id != NULL) {
         async_operation_finished(&processor->async);
