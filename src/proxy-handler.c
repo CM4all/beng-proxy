@@ -12,7 +12,7 @@
 #include "http-response.h"
 #include "uri-address.h"
 #include "global.h"
-#include "cookie-client.h"
+#include "cookie_client.h"
 #include "uri-extract.h"
 #include "strref-pool.h"
 #include "strmap.h"

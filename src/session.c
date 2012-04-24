@@ -5,7 +5,7 @@
  */
 
 #include "session.h"
-#include "cookie-client.h"
+#include "cookie_client.h"
 #include "dpool.h"
 #include "dhashmap.h"
 #include "lock.h"

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cookie-client.h"
+#include "cookie_client.h"
 #include "strutil.h"
 #include "strref2.h"
 #include "strref-pool.h"

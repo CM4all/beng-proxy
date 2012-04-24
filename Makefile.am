@@ -134,8 +134,6 @@ HDR = \
 	src/client-socket.h \
 	src/config.h \
 	src/connection.h \
-	src/cookie-client.h \
-	src/cookie-server.h \
 	src/date.h \
 	src/dchunk.h \
 	src/defer.h \
@@ -289,8 +287,8 @@ SRC = src/main.c \
 	src/session.c src/session.h \
 	src/session_id.c src/session_id.h \
 	src/session_manager.c src/session_manager.h \
-	src/cookie-client.c \
-	src/cookie-server.c \
+	src/cookie_client.c src/cookie_client.h \
+	src/cookie_server.c src/cookie_server.h \
 	src/connection.c \
 	src/drop.c \
 	src/direct.c \
@@ -557,7 +555,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/control-server.c src/control-server.h \
 	src/direct.c \
 	src/access-log.c \
-	src/cookie-server.c \
+	src/cookie_server.c \
 	src/log-glue.c \
 	src/log-client.c \
 	src/log-launch.c \
@@ -903,7 +901,7 @@ test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/http-string.c \
 	src/hashmap.c src/strmap.c \
 	src/growing-buffer.c \
-	src/cookie-client.c \
+	src/cookie_client.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \
@@ -1007,7 +1005,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/random.c \
 	src/crash.c \
 	src/session.c src/session_manager.c \
-	src/cookie-client.c \
+	src/cookie_client.c \
 	src/http-string.c \
 	src/strmap.c src/hashmap.c \
 	src/penv.c src/processor.c \
@@ -1310,7 +1308,7 @@ test_t_http_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 
 test_t_cookie_client_SOURCES = test/t-cookie-client.c \
 	$(POOL_SRC) src/tpool.c \
-	src/cookie-client.c \
+	src/cookie_client.c \
 	src/http-string.c \
 	src/header-writer.c src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
@@ -1321,7 +1319,7 @@ test_t_cookie_client_LDADD = $(AM_LDADD) \
 
 test_t_cookie_server_SOURCES = test/t-cookie-server.c \
 	$(POOL_SRC) \
-	src/cookie-server.c \
+	src/cookie_server.c \
 	src/http-string.c \
 	src/strmap.c src/hashmap.c
 test_t_cookie_server_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
@@ -1422,7 +1420,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/regex.c \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c src/uri-base.c \
 	src/resource-tag.c \
-	src/cookie-client.c \
+	src/cookie_client.c \
 	src/header-parser.c src/header-forward.c src/header-writer.c \
 	src/header-copy.c \
 	src/strmap.c src/hashmap.c \
@@ -1481,7 +1479,7 @@ test_run_subst_SOURCES = test/run-subst.c \
 test_run_subst_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_cookie_client_SOURCES = test/run-cookie-client.c \
-	src/cookie-client.c src/http-string.c \
+	src/cookie_client.c src/http-string.c \
 	src/header-writer.c src/growing-buffer.c \
 	src/tpool.c src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c \
@@ -1491,7 +1489,7 @@ test_run_cookie_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_cookie_server_SOURCES = test/run-cookie-server.c \
-	src/cookie-server.c src/http-string.c \
+	src/cookie_server.c src/http-string.c \
 	src/strmap.c src/hashmap.c \
 	$(POOL_SRC)
 test_run_cookie_server_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)

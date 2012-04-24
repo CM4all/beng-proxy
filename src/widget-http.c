@@ -17,7 +17,7 @@
 #include "widget-lookup.h"
 #include "widget-quark.h"
 #include "session.h"
-#include "cookie-client.h"
+#include "cookie_client.h"
 #include "async.h"
 #include "dpool.h"
 #include "get.h"
