@@ -1,4 +1,5 @@
 #include "cookie_client.h"
+#include "cookie_jar.h"
 #include "header-writer.h"
 #include "tpool.h"
 #include "shm.h"

@@ -1,6 +1,6 @@
 #include "session.h"
 #include "session_manager.h"
-#include "cookie_client.h"
+#include "cookie_jar.h"
 #include "crash.h"
 
 #include <inline/compiler.h>

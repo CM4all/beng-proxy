@@ -10,18 +10,8 @@
 #include <inline/compiler.h>
 
 struct pool;
-struct dpool;
 struct strmap;
 struct cookie_jar;
-
-struct cookie_jar * gcc_malloc
-cookie_jar_new(struct dpool *pool);
-
-void
-cookie_jar_free(struct cookie_jar *jar);
-
-struct cookie_jar * gcc_malloc
-cookie_jar_dup(struct dpool *pool, const struct cookie_jar *src);
 
 /**
  * Parse a Set-Cookie2 response header and insert new cookies into the
