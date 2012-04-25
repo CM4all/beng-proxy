@@ -62,4 +62,12 @@ session_manager_event_del(void);
 struct session * gcc_malloc
 session_new(void);
 
+/**
+ * Invoke the callback for each session.  The session and the session
+ * manager will be locked during the callback.
+ */
+bool
+session_manager_visit(bool (*callback)(const struct session *session,
+                                       void *ctx), void *ctx);
+
 #endif

@@ -588,3 +588,35 @@ session_delete(session_id_t id)
     rwlock_wunlock(&session_manager->lock);
     crash_unsafe_leave();
 }
+
+bool
+session_manager_visit(bool (*callback)(const struct session *session,
+                                       void *ctx), void *ctx)
+{
+    bool result = true;
+
+    crash_unsafe_enter();
+    rwlock_rlock(&session_manager->lock);
+
+    if (session_manager->abandoned) {
+        rwlock_runlock(&session_manager->lock);
+        crash_unsafe_leave();
+        return false;
+    }
+
+    for (unsigned i = 0; i < SESSION_SLOTS && result; ++i) {
+        struct list_head *slot = &session_manager->sessions[i];
+        for (struct session *session = (struct session *)slot->next;
+             &session->hash_siblings != slot && result;
+             session = (struct session *)session->hash_siblings.next) {
+            lock_lock(&session->lock);
+            result = callback(session, ctx);
+            lock_unlock(&session->lock);
+        }
+    }
+
+    rwlock_runlock(&session_manager->lock);
+    crash_unsafe_leave();
+
+    return result;
+}
