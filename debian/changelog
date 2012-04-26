@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.0.33) unstable; urgency=low
 
-  * 
+  * widget-resolver: fix assertion failure on recursive abort
 
  --   
 
