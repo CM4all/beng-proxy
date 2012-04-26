@@ -783,6 +783,7 @@ check_PROGRAMS = \
 	test/t-shm test/t-dpool test/t-session \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
+	test/t-widget-resolver \
 	test/t-wembed test/t-widget-http \
 	test/t-processor \
 	test/t-memcached-client
@@ -809,6 +810,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-shm test/t-dpool test/t-session \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
+	test/t-widget-resolver \
 	test/t-wembed test/t-widget-http
 
 test_run_ping_SOURCES = test/run-ping.c \
@@ -1321,6 +1323,14 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/uri-extract.c \
 	src/format.c
 test_t_widget_registry_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBEVENT_LIBS) $(GLIB_LIBS)
+
+test_t_widget_resolver_SOURCES = test/t-widget-resolver.c \
+	src/widget-resolver.c \
+	src/widget-init.c \
+	$(POOL_SRC)
+test_t_widget_resolver_LDADD = $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS)
 
