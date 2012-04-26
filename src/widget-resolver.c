@@ -48,6 +48,7 @@ struct widget_resolver {
     bool finished;
 
 #ifndef NDEBUG
+    bool running;
     bool aborted;
 #endif
 };
@@ -75,7 +76,7 @@ wrl_abort(struct async_operation *ao)
     assert(!listener->aborted);
     assert(resolver->widget->resolver == resolver);
     assert(!list_empty(&resolver->listeners));
-    assert(!resolver->finished);
+    assert(!resolver->finished || resolver->running);
     assert(!resolver->aborted);
 
     assert(resolver->num_listeners > 0);
@@ -88,7 +89,7 @@ wrl_abort(struct async_operation *ao)
     list_remove(&listener->siblings);
     pool_unref(listener->pool);
 
-    if (list_empty(&resolver->listeners)) {
+    if (list_empty(&resolver->listeners) && !resolver->finished) {
         /* the last listener has been aborted: abort the widget
            registry */
         assert(resolver->num_listeners == 0);
@@ -124,10 +125,13 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
     assert(resolver->widget == widget);
     assert(!list_empty(&resolver->listeners));
     assert(!resolver->finished);
+    assert(!resolver->running);
     assert(!resolver->aborted);
 
-#ifndef NDEBUG
     resolver->finished = true;
+
+#ifndef NDEBUG
+    resolver->running = true;
 #endif
 
     widget->class = class;
@@ -155,6 +159,10 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
         pool_unref(listener->pool);
     } while (!list_empty(&resolver->listeners));
 
+#ifndef NDEBUG
+    resolver->running = false;
+#endif
+
     assert(resolver->num_listeners == 0);
 
     pool_unref(resolver->pool);
@@ -177,9 +185,11 @@ widget_resolver_alloc(struct pool *pool, struct widget *widget)
     resolver->widget = widget;
     list_init(&resolver->listeners);
 
+    resolver->finished = false;
+
 #ifndef NDEBUG
     resolver->num_listeners = 0;
-    resolver->finished = false;
+    resolver->running = false;
     resolver->aborted = false;
 #endif
 
