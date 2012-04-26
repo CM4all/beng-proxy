@@ -164,7 +164,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
                select the default view */
             const struct widget_view *view =
                 widget_class_view_lookup(widget->class, env->view_name);
-            if (view == NULL) {
+            if (view == NULL || view->name == NULL) {
                 widget_cancel(widget);
                 response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                           "No such view");
