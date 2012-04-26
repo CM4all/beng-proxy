@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.0.25) unstable; urgency=low
 
   * processor: fix double free bug on failed widget lookup
+  * session: don't access the session manager after worker crash
 
  --   
 

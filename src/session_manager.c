@@ -42,6 +42,13 @@ struct session_manager {
     /** this lock protects the following hash table */
     struct rwlock lock;
 
+    /**
+     * Has the session manager been abandoned after the crash of one
+     * worker?  If this is true, then the session manager is disabled,
+     * and the remaining workers will be shut down soon.
+     */
+    bool abandoned;
+
     struct list_head sessions[SESSION_SLOTS];
     unsigned num_sessions;
 };
@@ -111,6 +118,13 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
     crash_unsafe_enter();
     rwlock_wlock(&session_manager->lock);
 
+    if (session_manager->abandoned) {
+        rwlock_wunlock(&session_manager->lock);
+        crash_unsafe_leave();
+        assert(!crash_in_unsafe());
+        return;
+    }
+
     for (i = 0; i < SESSION_SLOTS; ++i) {
         for (session = (struct session *)session_manager->sessions[i].next;
              &session->hash_siblings != &session_manager->sessions[i];
@@ -155,6 +169,8 @@ session_manager_new(unsigned idle_timeout,
     sm->shm = shm;
 
     rwlock_init(&sm->lock);
+
+    sm->abandoned = false;
 
     for (i = 0; i < SESSION_SLOTS; ++i)
         list_init(&sm->sessions[i]);
@@ -237,6 +253,8 @@ session_manager_abandon(void)
 {
     assert(session_manager != NULL);
     assert(session_manager->shm != NULL);
+
+    session_manager->abandoned = true;
 
     event_del(&session_cleanup_event);
 
@@ -359,6 +377,9 @@ session_new_unsafe(void)
     assert(crash_in_unsafe());
     assert(locked_session == NULL);
 
+    if (session_manager->abandoned)
+        return NULL;
+
     pool = dpool_new(session_manager->shm);
     if (pool == NULL) {
         if (!session_manager_purge())
@@ -444,6 +465,9 @@ session_defragment(struct session *src)
 static struct session *
 session_find(session_id_t id)
 {
+    if (session_manager->abandoned)
+        return NULL;
+
     struct list_head *head = session_slot(id);
     struct session *session;
 
