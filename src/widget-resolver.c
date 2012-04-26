@@ -126,9 +126,7 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
     assert(!resolver->finished);
     assert(!resolver->aborted);
 
-#ifndef NDEBUG
     resolver->finished = true;
-#endif
 
     widget->class = class;
     widget->session_sync_pending = class != NULL && class->stateful;
@@ -177,9 +175,10 @@ widget_resolver_alloc(pool_t pool, struct widget *widget)
     resolver->widget = widget;
     list_init(&resolver->listeners);
 
+    resolver->finished = false;
+
 #ifndef NDEBUG
     resolver->num_listeners = 0;
-    resolver->finished = false;
     resolver->aborted = false;
 #endif
 
