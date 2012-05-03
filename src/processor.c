@@ -72,6 +72,14 @@ enum tag {
     TAG_REWRITE_URI,
 
     /**
+     * The "meta" element.  This may morph into #TAG_META_REFRESH when
+     * an http-equiv="refresh" attribute is found.
+     */
+    TAG_META,
+
+    TAG_META_REFRESH,
+
+    /**
      * The "style" element.  This value later morphs into
      * #TAG_STYLE_PROCESS if #PROCESSOR_STYLE is enabled.
      */
@@ -462,6 +470,28 @@ processor_uri_rewrite_attribute(struct processor *processor,
 }
 
 static void
+processor_uri_rewrite_refresh_attribute(struct processor *processor,
+                                        const struct parser_attr *attr)
+{
+    const char *end = strref_end(&attr->value);
+    const char *p = strref_chr(&attr->value, ';');
+    if (p == NULL || p + 7 > end || memcmp(p + 1, "URL='", 5) != 0 ||
+        end[-1] != '\'')
+        return;
+
+    p += 6;
+
+    /* postpone the URI rewrite until the tag is finished: save the
+       attribute value position, save the original attribute value and
+       set the "pending" flag */
+
+    processor_uri_rewrite_postpone(processor,
+                                   attr->value_start + (p - attr->value.data),
+                                   attr->value_end - 1,
+                                   p, end - 1 - p);
+}
+
+static void
 processor_uri_rewrite_commit(struct processor *processor)
 {
     struct parser_attr uri_attribute = {
@@ -681,6 +711,10 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
             return true;
         } else if (strref_lower_cmp_literal(&tag->name, "param") == 0) {
             processor->tag = TAG_PARAM;
+            processor_uri_rewrite_init(processor);
+            return true;
+        } else if (strref_lower_cmp_literal(&tag->name, "meta") == 0) {
+            processor->tag = TAG_META;
             processor_uri_rewrite_init(processor);
             return true;
         } else if (processor_option_prefix(processor)) {
@@ -994,6 +1028,7 @@ is_link_tag(enum tag tag)
 {
     return tag == TAG_A || tag == TAG_FORM ||
          tag == TAG_IMG || tag == TAG_SCRIPT ||
+        tag == TAG_META || tag == TAG_META_REFRESH ||
         tag == TAG_PARAM || tag == TAG_REWRITE_URI;
 }
 
@@ -1017,6 +1052,15 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         is_link_tag(processor->tag) &&
         link_attr_finished(processor, attr))
         return;
+
+    if (!processor_option_quiet(processor) &&
+        processor->tag == TAG_META &&
+        strref_lower_cmp_literal(&attr->name, "http-equiv") == 0 &&
+        strref_lower_cmp_literal(&attr->value, "refresh") == 0) {
+        /* morph TAG_META to TAG_META_REFRESH */
+        processor->tag = TAG_META_REFRESH;
+        return;
+    }
 
     if (!processor_option_quiet(processor) &&
         processor_option_prefix_class(processor) &&
@@ -1123,9 +1167,15 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
             processor_uri_rewrite_attribute(processor, attr);
         break;
 
+    case TAG_META_REFRESH:
+        if (strref_lower_cmp_literal(&attr->name, "content") == 0)
+            processor_uri_rewrite_refresh_attribute(processor, attr);
+        break;
+
     case TAG_REWRITE_URI:
     case TAG_STYLE:
     case TAG_STYLE_PROCESS:
+    case TAG_META:
         break;
     }
 }

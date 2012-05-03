@@ -1,0 +1,72 @@
+<p>
+    c:base=default
+    <meta http-equiv="refresh" content="0;URL='refresh.html/test'">Default</meta>
+    <meta http-equiv="refresh" c:mode="direct" content="0;URL='refresh.html/test'">mode=direct</meta>
+    <meta http-equiv="refresh" c:mode="focus" content="0;URL='refresh.html/test'">mode=focus</meta>
+    <meta http-equiv="refresh" c:mode="partial" content="0;URL='refresh.html/test'">mode=partial</meta>
+</p>
+
+<p>
+    tilde
+    <meta http-equiv="refresh" c:base="widget" content="0;URL='~/refresh.html/test'">Default</meta>
+    <meta http-equiv="refresh" c:base="widget" c:mode="direct" content="0;URL='~/refresh.html/test'">mode=direct</meta>
+    <meta http-equiv="refresh" c:base="widget" c:mode="focus" content="0;URL='~/refresh.html/test'">mode=focus</meta>
+    <meta http-equiv="refresh" c:base="widget" c:mode="partial" content="0;URL='~/refresh.html/test'">mode=partial</meta>
+</p>
+
+<p>
+    at (c:local=&c:local;)
+    <meta http-equiv="refresh" c:base="widget" content="0;URL='@/foo'">Default</meta>
+    <meta http-equiv="refresh" c:base="widget" c:mode="direct" content="0;URL='@/foo'">mode=direct</meta>
+    <meta http-equiv="refresh" c:base="widget" c:mode="focus" content="0;URL='@/foo'">mode=focus</meta>
+    <meta http-equiv="refresh" c:base="widget" c:mode="partial" content="0;URL='@/foo'">mode=partial</meta>
+</p>
+
+<p>
+    view
+    <meta http-equiv="refresh" c:base="widget" c:view="foo" content="0;URL='~/refresh.html/test'">Default</meta>
+    <meta http-equiv="refresh" c:base="widget" c:view="foo" c:mode="direct" content="0;URL='~/refresh.html/test'">mode=direct</meta>
+    <meta http-equiv="refresh" c:base="widget" c:view="foo" c:mode="focus" content="0;URL='~/refresh.html/test'">mode=focus</meta>
+    <meta http-equiv="refresh" c:base="widget" c:view="foo" c:mode="partial" content="0;URL='~/refresh.html/test'">mode=partial</meta>
+</p>
+
+<p>
+    c:base=template
+    <meta http-equiv="refresh" c:base="template" content="0;URL='refresh.html/test'">Default</meta>
+    <meta http-equiv="refresh" c:base="template" c:mode="direct" content="0;URL='refresh.html/test'">mode=direct</meta>
+    <meta http-equiv="refresh" c:base="template" c:mode="focus" content="0;URL='refresh.html/test'">mode=focus</meta>
+    <meta http-equiv="refresh" c:base="template" c:mode="partial" content="0;URL='refresh.html/test'">mode=partial</meta>
+</p>
+
+<p>
+    c:base=widget
+    <meta http-equiv="refresh" c:base="widget" content="0;URL='refresh.html/test'">Default</meta>
+    <meta http-equiv="refresh" c:base="widget" c:mode="direct" content="0;URL='refresh.html/test'">mode=direct</meta>
+    <meta http-equiv="refresh" c:base="widget" c:mode="focus" content="0;URL='refresh.html/test'">mode=focus</meta>
+    <meta http-equiv="refresh" c:base="widget" c:mode="partial" content="0;URL='refresh.html/test'">mode=partial</meta>
+</p>
+
+<p>
+    c:base=parent
+    <meta http-equiv="refresh" c:base="parent" content="0;URL='nested_refresh.html/test'">Default</meta>
+    <meta http-equiv="refresh" c:base="parent" c:mode="direct" content="0;URL='nested_refresh.html/test'">mode=direct</meta>
+    <meta http-equiv="refresh" c:base="parent" c:mode="focus" content="0;URL='nested_refresh.html/test'">mode=focus</meta>
+    <meta http-equiv="refresh" c:base="parent" c:mode="partial" content="0;URL='nested_refresh.html/test'">mode=partial</meta>
+</p>
+
+<p>
+    c:base=widget (swapped order)
+    <meta http-equiv="refresh" content="0;URL='refresh.html/test" c:base="widget'">Default</meta>
+    <meta http-equiv="refresh" content="0;URL='refresh.html/test" c:base="widget" c:mode="direct'">mode=direct</meta>
+    <meta http-equiv="refresh" content="0;URL='refresh.html/test" c:base="widget" c:mode="focus'">mode=focus</meta>
+    <meta http-equiv="refresh" content="0;URL='refresh.html/test" c:base="widget" c:mode="partial'">mode=partial</meta>
+</p>
+
+<?cm4all-rewrite-uri c:base="widget"?>
+<p>
+    c:base=widget (via processing instruction)
+    <meta http-equiv="refresh" content="0;URL='refresh.html/test'">Default</meta>
+    <meta http-equiv="refresh" c:mode="direct" content="0;URL='refresh.html/test'">mode=direct</meta>
+    <meta http-equiv="refresh" c:mode="focus" content="0;URL='refresh.html/test'">mode=focus</meta>
+    <meta http-equiv="refresh" c:mode="partial" content="0;URL='refresh.html/test'">mode=partial</meta>
+</p>

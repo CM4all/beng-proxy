@@ -1,0 +1,2 @@
+server "http://cfatest01.intern.cm-ag/widgets/refresh.html"
+process
