@@ -102,14 +102,21 @@ expansible_buffer_write_string(struct expansible_buffer *eb, const char *p)
 }
 
 void
+expansible_buffer_set(struct expansible_buffer *eb,
+                      const void *p, size_t length)
+{
+    if (length > eb->max_size)
+        expansible_buffer_resize(eb, ((length - 1) | 0x3ff) + 1);
+
+    eb->size = length;
+    memcpy(eb->buffer, p, length);
+}
+
+void
 expansible_buffer_set_strref(struct expansible_buffer *eb,
                              const struct strref *s)
 {
-    if (s->length > eb->max_size)
-        expansible_buffer_resize(eb, ((s->length - 1) | 0x3ff) + 1);
-
-    eb->size = s->length;
-    memcpy(eb->buffer, s->data, s->length);
+    expansible_buffer_set(eb, s->data, s->length);
 }
 
 const void *

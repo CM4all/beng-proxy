@@ -39,6 +39,10 @@ void
 expansible_buffer_write_string(struct expansible_buffer *eb, const char *p);
 
 void
+expansible_buffer_set(struct expansible_buffer *eb,
+                      const void *p, size_t length);
+
+void
 expansible_buffer_set_strref(struct expansible_buffer *eb,
                              const struct strref *s);
 
