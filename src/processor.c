@@ -395,6 +395,30 @@ processor_uri_rewrite_init(struct processor *processor)
 }
 
 static void
+processor_uri_rewrite_postpone(struct processor *processor,
+                               off_t start, off_t end,
+                               const void *value, size_t length)
+{
+    assert(start <= end);
+
+    if (processor->postponed_rewrite.pending)
+        /* cannot rewrite more than one attribute per element */
+        return;
+
+    /* postpone the URI rewrite until the tag is finished: save the
+       attribute value position, save the original attribute value and
+       set the "pending" flag */
+
+    processor->postponed_rewrite.uri_start = start;
+    processor->postponed_rewrite.uri_end = end;
+    expansible_buffer_set(processor->postponed_rewrite.value, value, length);
+
+    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete); ++i)
+        processor->postponed_rewrite.delete[i].start = 0;
+    processor->postponed_rewrite.pending = true;
+}
+
+static void
 processor_uri_rewrite_delete(struct processor *processor,
                              off_t start, off_t end)
 {
@@ -432,22 +456,9 @@ static void
 processor_uri_rewrite_attribute(struct processor *processor,
                                 const struct parser_attr *attr)
 {
-    if (processor->postponed_rewrite.pending)
-        /* cannot rewrite more than one attribute per element */
-        return;
-
-    /* postpone the URI rewrite until the tag is finished: save the
-       attribute value position, save the original attribute value and
-       set the "pending" flag */
-
-    processor->postponed_rewrite.uri_start = attr->value_start;
-    processor->postponed_rewrite.uri_end = attr->value_end;
-    expansible_buffer_set_strref(processor->postponed_rewrite.value,
-                                 &attr->value);
-
-    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete); ++i)
-        processor->postponed_rewrite.delete[i].start = 0;
-    processor->postponed_rewrite.pending = true;
+    processor_uri_rewrite_postpone(processor,
+                                   attr->value_start, attr->value_end,
+                                   attr->value.data, attr->value.length);
 }
 
 static void
