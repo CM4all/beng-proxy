@@ -2,7 +2,7 @@ cm4all-beng-proxy (2.0.26) unstable; urgency=low
 
   * processor: rewrite URIs in META/refresh
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 03 May 2012 14:43:03 -0000
 
 cm4all-beng-proxy (2.0.25) unstable; urgency=low
 
