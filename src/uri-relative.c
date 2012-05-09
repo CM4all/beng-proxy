@@ -149,6 +149,9 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
                              uri, length, NULL);
 
         base_length = base_path - base;
+    } else if (uri[0] == '?') {
+        const char *qmark = strchr(base, '?');
+        base_length = qmark != NULL ? (size_t)(qmark - base) : strlen(base);
     } else {
         const char *base_end = uri_after_last_slash(base);
         if (base_end == NULL)

@@ -52,6 +52,12 @@ test_apply(struct pool *pool)
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/bar") == 0);
+
+    b = uri_address_apply(pool, a, "?query", 6);
+    assert(b != NULL);
+    assert(b->scheme == a->scheme);
+    assert(strcmp(b->host_and_port, a->host_and_port) == 0);
+    assert(strcmp(b->path, "/foo?query") == 0);
 }
 
 int
