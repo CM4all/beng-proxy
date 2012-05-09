@@ -3,7 +3,7 @@ cm4all-beng-proxy (2.0.27) unstable; urgency=low
   * uri-address: fix assertion failures with UNIX domain sockets
   * uri-address: fix redirects with matching absolute URI
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 09 May 2012 16:16:06 -0000
 
 cm4all-beng-proxy (2.0.26) unstable; urgency=low
 
