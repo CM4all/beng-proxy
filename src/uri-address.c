@@ -17,6 +17,12 @@
 
 #include <string.h>
 
+static bool
+uri_scheme_has_host(enum uri_scheme scheme)
+{
+    return scheme != URI_SCHEME_UNIX;
+}
+
 static struct uri_with_address *
 uri_address_new(struct pool *pool, enum uri_scheme scheme,
                 const char *host_and_port, const char *path)
@@ -236,7 +242,7 @@ uri_address_relative(const struct uri_with_address *base,
     if (base->scheme != uwa->scheme)
         return NULL;
 
-    if (base->scheme != URI_SCHEME_UNIX &&
+    if (uri_scheme_has_host(base->scheme) &&
         strcmp(base->host_and_port, uwa->host_and_port) != 0)
         return NULL;
 
