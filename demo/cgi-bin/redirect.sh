@@ -8,6 +8,9 @@ elif test "${REQUEST_URI: -5}" = "/path"; then
 elif test "${REQUEST_URI: -9}" = "/absolute"; then
     echo "Status: 303"
     echo "Location: http://cfatest01.intern.cm-ag${REQUEST_URI}/foo"
+elif test "${REQUEST_URI: -8}" = "/invalid"; then
+    echo "Status: 303"
+    echo "Location: http://example.com/"
 else
     echo "Status: 303"
     echo "Location: foo"
