@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.27) unstable; urgency=low
 
-  * 
+  * uri-address: fix assertion failures with UNIX domain sockets
 
  --   
 

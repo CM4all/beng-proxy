@@ -5,6 +5,17 @@
 #include <string.h>
 
 static void
+test_unix(struct pool *pool)
+{
+    struct uri_with_address *a =
+        uri_address_parse(pool, "unix:/var/run/foo", NULL);
+    assert(a != NULL);
+    assert(a->scheme == URI_SCHEME_UNIX);
+    assert(a->host_and_port == NULL);
+    assert(strcmp(a->path, "/var/run/foo") == 0);
+}
+
+static void
 test_apply(struct pool *pool)
 {
     struct uri_with_address *a =
@@ -42,6 +53,7 @@ main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 {
     struct pool *pool = pool_new_libc(NULL, "root");
 
+    test_unix(pool);
     test_apply(pool);
 
     pool_unref(pool);

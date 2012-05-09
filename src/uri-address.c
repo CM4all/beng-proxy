@@ -28,7 +28,7 @@ uri_address_new(struct pool *pool, enum uri_scheme scheme,
                 const char *host_and_port, const char *path)
 {
     assert(pool != NULL);
-    assert(host_and_port != NULL);
+    assert(uri_scheme_has_host(scheme) == (host_and_port != NULL));
     assert(path != NULL);
 
     struct uri_with_address *uwa = p_malloc(pool, sizeof(*uwa));
