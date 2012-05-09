@@ -75,6 +75,7 @@ test/t-hashmap
 test/t-widget-stream
 test/run-delegate
 test/t-resource-address
+test/t-uri-address
 test/t-tcache
 test/t-uri-relative
 test/t-uri-verify

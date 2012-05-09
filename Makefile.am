@@ -784,6 +784,7 @@ check_PROGRAMS = \
 	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
+	test/t-uri-address \
 	test/t-uri-verify \
 	test/t-uri-relative \
 	test/t-html-escape \
@@ -814,6 +815,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
+	test/t-uri-address \
 	test/t-uri-verify \
 	test/t-uri-relative \
 	test/t-html-escape \
@@ -930,6 +932,16 @@ test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/format.c \
 	$(POOL_SRC)
 test_t_resource_address_LDADD = $(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
+
+test_t_uri_address_SOURCES = test/t-uri-address.c \
+	src/uri-address.c src/uri-relative.c \
+	src/uri-escape.c src/uri-edit.c \
+	src/uri-extract.c src/uri-base.c \
+	src/uri-verify.c \
+	src/address-list.c \
+	src/format.c \
+	$(POOL_SRC)
+test_t_uri_address_LDADD = $(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_uri_verify_SOURCES = test/t-uri-verify.c \
 	src/uri-verify.c
