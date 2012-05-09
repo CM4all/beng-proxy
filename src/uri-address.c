@@ -224,8 +224,22 @@ uri_address_apply(struct pool *pool, const struct uri_with_address *src,
     if (relative_length == 0)
         return src;
 
-    if (uri_has_protocol(relative, relative_length))
-        return NULL;
+    if (uri_has_protocol(relative, relative_length)) {
+        struct uri_with_address *other =
+            uri_address_parse(pool, p_strndup(pool, relative, relative_length),
+                              NULL);
+        if (other == NULL || other->scheme != src->scheme)
+            return NULL;
+
+        if (uri_scheme_has_host(other->scheme) &&
+            strcmp(other->host_and_port, src->host_and_port) != 0)
+            /* if it points to a different host, we cannot apply the
+               address list, and so this function must fail */
+            return NULL;
+
+        address_list_copy(pool, &other->addresses, &src->addresses);
+        return other;
+    }
 
     const char *p = uri_absolute(pool, src->path,
                                  relative, relative_length);

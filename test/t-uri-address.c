@@ -46,6 +46,12 @@ test_apply(struct pool *pool)
 
     b = uri_address_apply(pool, a, "http://example.com/", 29);
     assert(b == NULL);
+
+    b = uri_address_apply(pool, a, "http://localhost/bar", 30);
+    assert(b != NULL);
+    assert(b->scheme == a->scheme);
+    assert(strcmp(b->host_and_port, a->host_and_port) == 0);
+    assert(strcmp(b->path, "/bar") == 0);
 }
 
 int
