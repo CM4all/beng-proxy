@@ -165,8 +165,7 @@ int main(int argc, char **argv) {
                        &parsed_uri,
                        NULL,
                        0xdeadbeef,
-                       HTTP_METHOD_GET, NULL,
-                       NULL);
+                       HTTP_METHOD_GET, NULL);
 
     struct istream *result =
         processor_process(pool,

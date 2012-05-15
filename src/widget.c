@@ -253,4 +253,9 @@ widget_cancel(struct widget *widget)
         /* we are not going to consume the request body, so abort
            it */
         istream_free_unused(&widget->from_request.body);
+
+    if (widget->for_focused.body != NULL)
+        /* the request body was not forwarded to the focused widget,
+           so discard it */
+        istream_free_unused(&widget->for_focused.body);
 }

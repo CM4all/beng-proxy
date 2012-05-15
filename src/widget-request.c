@@ -103,14 +103,17 @@ widget_copy_from_request(struct widget *widget, struct processor_env *env)
         widget->from_request.query_string = env->external_uri->query;
 
         widget->from_request.method = env->method;
-        widget->from_request.body = env->request_body;
-        env->request_body = NULL;
+        widget->from_request.body = widget->parent->for_focused.body;
+        widget->parent->for_focused.body = NULL;
     } else if (widget_descendant_has_focus(widget)) {
         /* we are the parent (or grant-parent) of the focused widget.
            store the relative focus_ref. */
 
         widget->from_request.focus_ref = widget->parent->from_request.focus_ref->next;
         widget->parent->from_request.focus_ref = NULL;
+
+        widget->for_focused = widget->parent->for_focused;
+        widget->parent->for_focused.body = NULL;
     }
 }
 

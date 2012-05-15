@@ -76,9 +76,6 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
         /* this widget cannot possibly be the parent of a framed
            widget if it is not a container */
 
-        if (env->request_body != NULL)
-            istream_free_unused(&env->request_body);
-
         GError *error =
             g_error_new(widget_quark(), 0,
                         "frame within non-container requested");
@@ -94,17 +91,6 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
             session_put(session);
         } else
             widget->session_sync_pending = false;
-    }
-
-    if (env->request_body != NULL && widget->from_request.focus_ref == NULL) {
-        /* the request body is not consumed yet, but the focus is not
-           within the frame: discard the body, because it cannot ever
-           be used */
-        assert(!istream_has_handler(env->request_body));
-
-        daemon_log(4, "discarding non-framed request body\n");
-
-        istream_free_unused(&env->request_body);
     }
 
     widget_http_lookup(pool, widget, id, env,

@@ -97,6 +97,18 @@ struct widget {
         const char *view;
     } from_request;
 
+    /**
+     * Parameters that will forwarded from the HTTP request to the
+     * focused widget (which is an (indirect) child of this widget).
+     */
+    struct {
+        /**
+         * The request body.  This must be closed if it failed to be
+         * submitted to the focused widget.
+         */
+        struct istream * body;
+    } for_focused;
+
     struct {
         const char *path;
 

@@ -73,8 +73,7 @@ create_test(struct pool *pool, istream_t input)
                        &parsed_uri,
                        NULL,
                        session->id,
-                       HTTP_METHOD_GET, NULL,
-                       NULL);
+                       HTTP_METHOD_GET, NULL);
     session_put(session);
 
     return processor_process(pool, input, &widget, &env, PROCESSOR_CONTAINER);

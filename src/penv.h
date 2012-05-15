@@ -52,8 +52,6 @@ struct processor_env {
 
     struct strmap *request_headers;
 
-    struct istream *request_body;
-
     session_id_t session_id;
 };
 
@@ -70,7 +68,6 @@ processor_env_init(struct pool *pool,
                    struct strmap *args,
                    session_id_t session_id,
                    http_method_t method,
-                   struct strmap *request_headers,
-                   struct istream *request_body);
+                   struct strmap *request_headers);
 
 #endif

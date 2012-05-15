@@ -22,11 +22,8 @@ processor_env_init(struct pool *pool, struct processor_env *env,
                    struct strmap *args,
                    session_id_t session_id,
                    http_method_t method,
-                   struct strmap *request_headers,
-                   struct istream *request_body)
+                   struct strmap *request_headers)
 {
-    assert(request_body == NULL || !istream_has_handler(request_body));
-
     env->pool = pool;
     env->site_name = site_name;
     env->untrusted_host = untrusted_host;
@@ -46,7 +43,6 @@ processor_env_init(struct pool *pool, struct processor_env *env,
 
     env->method = method;
     env->request_headers = request_headers;
-    env->request_body = request_body;
 
     env->session_id = session_id;
 }
