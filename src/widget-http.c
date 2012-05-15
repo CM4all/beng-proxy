@@ -60,7 +60,8 @@ struct embed {
     void *lookup_handler_ctx;
 
     struct http_response_handler_ref handler_ref;
-    struct async_operation_ref *async_ref;
+    struct async_operation operation;
+    struct async_operation_ref async_ref;
 };
 
 static inline GQuark
@@ -192,7 +193,7 @@ widget_response_redirect(struct embed *embed, const char *location,
                  embed->pool, session_id_low(embed->env->session_id),
                  HTTP_METHOD_GET, address, HTTP_STATUS_OK, headers, NULL,
                  &widget_response_handler, embed,
-                 embed->async_ref);
+                 &embed->async_ref);
 
     return true;
 }
@@ -262,7 +263,7 @@ widget_response_process(struct embed *embed, http_status_t status,
                                 embed->env, options,
                                 embed->lookup_handler,
                                 embed->lookup_handler_ctx,
-                                embed->async_ref);
+                                &embed->async_ref);
     else {
         body = processor_process(embed->pool, body,
                                  widget, embed->env, options);
@@ -364,7 +365,7 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
     filter_cache_request(global_filter_cache, embed->pool, filter,
                          source_tag, status, headers, body,
                          &widget_response_handler, embed,
-                         embed->async_ref);
+                         &embed->async_ref);
 }
 
 /**
@@ -585,6 +586,32 @@ static const struct http_response_handler widget_response_handler = {
 
 
 /*
+ * async operation
+ *
+ */
+
+static struct embed *
+async_to_embed(struct async_operation *ao)
+{
+    return (struct embed *)(((char*)ao) - offsetof(struct embed, operation));
+}
+
+static void
+widget_http_abort(struct async_operation *ao)
+{
+    struct embed *embed = async_to_embed(ao);
+
+    widget_cancel(embed->widget);
+
+    async_abort(&embed->async_ref);
+}
+
+static const struct async_operation_class widget_http_operation = {
+    .abort = widget_http_abort,
+};
+
+
+/*
  * constructor
  *
  */
@@ -640,7 +667,9 @@ widget_http_request(struct pool *pool, struct widget *widget,
     }
 
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
-    embed->async_ref = async_ref;
+
+    async_init(&embed->operation, &widget_http_operation);
+    async_ref_set(async_ref, &embed->operation);
 
     address = widget_address(widget);
     embed->resource_tag = resource_address_id(address, pool);
@@ -652,7 +681,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
                  address,
                  HTTP_STATUS_OK, headers,
                  widget->from_request.body,
-                 &widget_response_handler, embed, async_ref);
+                 &widget_response_handler, embed, &embed->async_ref);
 }
 
 void
@@ -702,7 +731,9 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
 
     embed->lookup_handler = handler;
     embed->lookup_handler_ctx = handler_ctx;
-    embed->async_ref = async_ref;
+
+    async_init(&embed->operation, &widget_http_operation);
+    async_ref_set(async_ref, &embed->operation);
 
     address = widget_address(widget);
     embed->resource_tag = resource_address_id(address, pool);
@@ -714,5 +745,5 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
                  address,
                  HTTP_STATUS_OK, headers,
                  widget->from_request.body,
-                 &widget_response_handler, embed, async_ref);
+                 &widget_response_handler, embed, &embed->async_ref);
 }
