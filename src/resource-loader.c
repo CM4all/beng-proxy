@@ -23,6 +23,8 @@
 #include "strmap.h"
 #include "istream.h"
 
+#include <socket/parser.h>
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -83,19 +85,13 @@ extract_remote_ip(struct pool *pool, const struct strmap *headers)
     if (p == NULL)
         return p;
 
-    if (*p == 0)
-        return NULL;
-
-    if (*p == '[') {
-        const char *q = strchr(p + 1, ']');
-        return p_strndup(pool, p + 1, q - p - 1);
-    }
-
-    const char *colon = strrchr(p, ':');
-    if (colon == NULL || colon == p)
+    size_t length;
+    const char *endptr;
+    const char *q = socket_extract_hostname(p, &length, &endptr);
+    if (q == p && length == strlen(p))
         return p;
 
-    return p_strndup(pool, p, colon - p);
+    return p_strndup(pool, q, length);
 }
 
 static const char *
