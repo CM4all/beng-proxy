@@ -4,7 +4,7 @@ cm4all-beng-proxy (1.4.22) unstable; urgency=low
   * widget: backport memory leak fix from 2.0
   * widget-http: fix memory leak on abort
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 16 May 2012 10:00:23 -0000
 
 cm4all-beng-proxy (1.4.21) unstable; urgency=low
 
