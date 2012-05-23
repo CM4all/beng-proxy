@@ -12,10 +12,9 @@
 bool
 uri_parse(struct parsed_uri *dest, const char *src)
 {
-    const char *semicolon, *qmark;
+    const char *qmark = strchr(src, '?');
 
-    qmark = strchr(src, '?');
-
+    const char *semicolon;
     if (qmark == NULL)
         semicolon = strchr(src, ';');
     else
