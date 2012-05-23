@@ -181,6 +181,14 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
             widget->from_request.view = view;
         }
 
+        if (widget->class->direct_addressing &&
+            !strref_is_empty(&request2->uri.path_info))
+            /* apply new-style path_info to frame top widget (direct
+               addressing) */
+            widget->from_request.path_info =
+                p_strndup(request->pool, request2->uri.path_info.data + 1,
+                          request2->uri.path_info.length - 1);
+
         frame_top_widget(request->pool, widget,
                          &request2->env,
                          &widget_response_handler, request2,

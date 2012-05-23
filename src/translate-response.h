@@ -56,6 +56,8 @@ struct translate_response {
     const char *untrusted_prefix;
     const char *untrusted_site_suffix;
 
+    bool direct_addressing;
+
     bool stateful;
 
     bool discard_session;

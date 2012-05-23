@@ -1223,6 +1223,15 @@ exactly match this scheme. \\
 
 \hline
 
+\verb|DIRECT_ADDRESSING| & Enable ``direct'' URI addressing for this
+widget.  It is used when the widget is requested in a ``frame''.  It
+is a simpler scheme that is more natural; relative links can be built
+without URI rewriting and without the special \emph{beng-proxy}
+encoding.  In some cases, the processor can therefore be disabled,
+reducing overhead. \\
+
+\hline
+
 \verb|STATEFUL| & remember the state of this widget, i.e. path info
 and query string \\
 

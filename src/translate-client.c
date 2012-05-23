@@ -1005,6 +1005,10 @@ translate_handle_packet(struct translate_client *client,
         client->response.uri = payload;
         return true;
 
+    case TRANSLATE_DIRECT_ADDRESSING:
+        client->response.direct_addressing = true;
+        return true;
+
     case TRANSLATE_STATEFUL:
         client->response.stateful = true;
         return true;

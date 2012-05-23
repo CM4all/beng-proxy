@@ -47,6 +47,14 @@ struct widget_class {
 
     const char *cookie_host;
 
+    /**
+     * Does this widget support new-style direct URI addressing?
+     *
+     * Example: http://localhost/template.html;frame=foo/bar - this
+     * requests the widget "foo" and with path-info "/bar".
+     */
+    bool direct_addressing;
+
     /** does beng-proxy remember the state (path_info and
         query_string) of this widget? */
     bool stateful;

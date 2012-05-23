@@ -262,6 +262,14 @@ enum beng_translation_command {
      * "style" element contents?
      */
     TRANSLATE_PROCESS_STYLE = 89,
+
+    /**
+     * Does this widget support new-style direct URI addressing?
+     *
+     * Example: http://localhost/template.html;frame=foo/bar - this
+     * requests the widget "foo" and with path-info "/bar".
+     */
+    TRANSLATE_DIRECT_ADDRESSING = 90,
 };
 
 struct beng_translation_header {

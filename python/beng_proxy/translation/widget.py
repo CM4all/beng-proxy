@@ -125,6 +125,8 @@ class _Lookup:
             response.packet(TRANSLATE_PREFIX_CSS_CLASS)
         elif line == 'prefix_xml_id':
             response.packet(TRANSLATE_PREFIX_XML_ID)
+        elif line == 'direct_addressing':
+            response.packet(TRANSLATE_DIRECT_ADDRESSING)
         elif line == 'stateful':
             response.packet(TRANSLATE_STATEFUL)
         elif line == 'filter':

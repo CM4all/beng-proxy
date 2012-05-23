@@ -218,6 +218,28 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
     return resource_address_relative(original_address, address, buffer);
 }
 
+/**
+ * Returns true when the widget has the specified widget path.
+ *
+ * @param other the path to compare with; may be NULL (i.e. never
+ * matches)
+ */
+gcc_pure
+static bool
+compare_widget_path(const struct widget *widget, const char *other)
+{
+    assert(widget != NULL);
+
+    if (other == NULL)
+        return false;
+
+    const char *path = widget_path(widget);
+    if (path == NULL)
+        return false;
+
+    return strcmp(path, other) == 0;
+}
+
 const char *
 widget_external_uri(struct pool *pool,
                     const struct parsed_uri *external_uri,
@@ -272,6 +294,15 @@ widget_external_uri(struct pool *pool,
         strref_null(&query_string);
     }
 
+    struct strref suffix;
+    if (p != NULL && widget->class->direct_addressing &&
+        compare_widget_path(widget, frame)) {
+        /* new-style direct URI addressing: append */
+        suffix = *p;
+        p = NULL;
+    } else
+        strref_set_empty(&suffix);
+
     /* the URI is relative to the widget's base URI.  Convert the URI
        into an absolute URI to the template page on this server and
        add the appropriate args. */
@@ -292,6 +323,8 @@ widget_external_uri(struct pool *pool,
                         "&view=", (size_t)(view != NULL ? 6 : 0),
                         view != NULL ? view : "",
                         view != NULL ? strlen(view) : (size_t)0,
+                        "/", (size_t)(suffix.length > 0),
+                        suffix.data, suffix.length,
                         query_string.data, query_string.length,
                         NULL);
 
