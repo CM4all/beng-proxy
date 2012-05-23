@@ -33,6 +33,7 @@ uri_parse(struct parsed_uri *dest, const char *src)
 
     if (semicolon == NULL) {
         strref_clear(&dest->args);
+        strref_clear(&dest->path_info);
     } else {
         /* XXX second semicolon for stuff being forwared? */
         dest->args.data = semicolon + 1;
@@ -40,6 +41,13 @@ uri_parse(struct parsed_uri *dest, const char *src)
             dest->args.length = strlen(dest->args.data);
         else
             dest->args.length = qmark - dest->args.data;
+
+        const char *slash = strref_chr(&dest->args, '/');
+        if (slash != NULL) {
+            strref_set2(&dest->path_info, slash, strref_end(&dest->args));
+            dest->args.length = slash - dest->args.data;
+        } else
+            strref_clear(&dest->path_info);
     }
 
     if (qmark == NULL)

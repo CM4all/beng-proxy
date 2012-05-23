@@ -28,6 +28,12 @@ struct parsed_uri {
     struct strref args;
 
     /**
+     * The URI portion after the arguments, including the leading
+     * slash.
+     */
+    struct strref path_info;
+
+    /**
      * The query string (without the question mark).
      */
     struct strref query;
