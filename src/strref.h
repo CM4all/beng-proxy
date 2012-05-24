@@ -49,6 +49,18 @@ strref_null(struct strref *s)
     s->data = NULL;
 }
 
+/**
+ * Make the string empty, but non-NULL.
+ */
+static gcc_always_inline void
+strref_set_empty(struct strref *s)
+{
+    assert(s != NULL);
+
+    s->length = 0;
+    s->data = "";
+}
+
 static gcc_always_inline void
 strref_set(struct strref *s, const char *p, size_t length)
 {
