@@ -21,6 +21,8 @@
 #include <sys/socket.h>
 
 struct ssl_filter {
+    struct pool *pool;
+
     struct notify *notify;
 
     int encrypted_fd, plain_fd;
@@ -28,6 +30,8 @@ struct ssl_filter {
     struct fifo_buffer *from_encrypted, *from_plain;
 
     SSL *ssl;
+
+    const char *peer_subject;
 
     pthread_mutex_t mutex;
     pthread_t thread;
@@ -162,6 +166,31 @@ ssl_filter_do_handshake(struct ssl_filter *ssl, GError **error_r)
     return false;
 }
 
+static char *
+format_name(struct pool *pool, X509_NAME *name)
+{
+    if (name == NULL)
+        return NULL;
+
+    BIO *bio = BIO_new(BIO_s_mem());
+    if (bio == NULL)
+        return NULL;
+
+    X509_NAME_print_ex(bio, name, 0,
+                       ASN1_STRFLGS_UTF8_CONVERT | XN_FLAG_SEP_COMMA_PLUS);
+    char buffer[1024];
+    int length = BIO_read(bio, buffer, sizeof(buffer) - 1);
+    BIO_free(bio);
+
+    return p_strndup(pool, buffer, length);
+}
+
+static char *
+format_subject_name(struct pool *pool, X509 *cert)
+{
+    return format_name(pool, X509_get_subject_name(cert));
+}
+
 static void *
 ssl_filter_thread(void *ctx)
 {
@@ -179,6 +208,12 @@ ssl_filter_thread(void *ctx)
         }
 
         ssl_filter_close_sockets(ssl);
+    }
+
+    if (!ssl->closing) {
+        X509 *cert = SSL_get_peer_certificate(ssl->ssl);
+        if (cert != NULL)
+            ssl->peer_subject = format_subject_name(ssl->pool, cert);
     }
 
     struct pollfd pfds[2] = {
@@ -299,6 +334,7 @@ ssl_filter_new(struct pool *pool, SSL_CTX *ssl_ctx,
     assert(ssl_ctx != NULL);
 
     struct ssl_filter *ssl = p_malloc(pool, sizeof(*ssl));
+    ssl->pool = pool;
     ssl->notify = notify;
     ssl->encrypted_fd = encrypted_fd;
     ssl->plain_fd = plain_fd;
@@ -317,6 +353,7 @@ ssl_filter_new(struct pool *pool, SSL_CTX *ssl_ctx,
 
     pthread_mutex_init(&ssl->mutex, NULL);
 
+    ssl->peer_subject = NULL;
     ssl->closing = false;
 
     int error = pthread_create(&ssl->thread, NULL, ssl_filter_thread, ssl);
@@ -348,4 +385,16 @@ ssl_filter_free(struct ssl_filter *ssl)
     pthread_mutex_destroy(&ssl->mutex);
 
     ssl_filter_close_sockets(ssl);
+}
+
+const char *
+ssl_filter_get_peer_subject(struct ssl_filter *ssl)
+{
+    assert(ssl != NULL);
+
+    ssl_filter_lock(ssl);
+    const char *peer_subject = ssl->peer_subject;
+    ssl_filter_unlock(ssl);
+
+    return peer_subject;
 }

@@ -7,9 +7,18 @@
 #include "ssl_create.h"
 #include "ssl_config.h"
 
+#include <inline/compiler.h>
+
 #include <openssl/err.h>
 #include <assert.h>
 #include <stdbool.h>
+
+static int
+null_verify_callback(gcc_unused int preverify_ok,
+                     gcc_unused X509_STORE_CTX *ctx)
+{
+    return 1;
+}
 
 static bool
 apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
@@ -31,6 +40,11 @@ apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
                     "Failed to load certificate file %s", config->key_file);
         return false;
     }
+
+    if (config->verify)
+        /* enable client certificates */
+        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER,
+                           null_verify_callback);
 
     return true;
 }

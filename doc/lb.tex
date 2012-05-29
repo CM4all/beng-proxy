@@ -172,6 +172,10 @@ listener ssl {
 
 One pool can be shared by listeners with and without SSL.
 
+The option \verb|ssl_verify| enables client certificates.  The subject
+of the client certificate is copied to the web server in the
+\verb|X-CM4all-BENG-Peer-Subject| request header.
+
 \subsection{Monitors}
 
 A ``monitor'' describes how the availability of nodes in a pool is

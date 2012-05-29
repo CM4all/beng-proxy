@@ -15,6 +15,7 @@
 static const char *const via_request_headers[] = {
     "via",
     "x-forwarded-for",
+    "x-cm4all-beng-peer-subject",
     NULL,
 };
 
@@ -91,15 +92,19 @@ forward_other_headers(struct strmap *dest, struct strmap *src)
 struct strmap *
 lb_forward_request_headers(struct pool *pool, struct strmap *src,
                            const char *local_host, const char *remote_host,
+                           const char *peer_subject,
                            bool mangle_via)
 {
-    if (!mangle_via)
+    if (peer_subject == NULL && !mangle_via)
         return src;
 
     struct strmap *dest = strmap_new(pool, 32);
 
     if (src != NULL)
         forward_other_headers(dest, src);
+
+    if (peer_subject != NULL)
+        strmap_add(dest, "x-cm4all-beng-peer-subject", peer_subject);
 
     if (mangle_via)
         forward_identity(pool, dest, src, local_host, remote_host);

@@ -183,10 +183,15 @@ my_stock_ready(struct stock_item *item, void *ctx)
     request2->stock_item = item;
     request2->current_address = tcp_balancer_get_last();
 
+    const char *peer_subject = request2->connection->ssl_filter != NULL
+        ? ssl_filter_get_peer_subject(request2->connection->ssl_filter)
+        : NULL;
+
     struct strmap *headers =
         lb_forward_request_headers(request->pool, request->headers,
                                    request->local_host,
                                    request->remote_host,
+                                   peer_subject,
                                    request2->connection->listener->cluster->mangle_via);
 
     struct growing_buffer *headers2 = headers_dup(request->pool, headers);

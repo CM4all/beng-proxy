@@ -13,12 +13,15 @@ struct ssl_config {
     const char *cert_file;
 
     const char *key_file;
+
+    bool verify;
 };
 
 static inline void
 ssl_config_clear(struct ssl_config *config)
 {
     config->cert_file = config->key_file = NULL;
+    config->verify = false;
 }
 
 static inline bool

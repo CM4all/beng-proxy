@@ -9,6 +9,8 @@
 
 #include "ssl_quark.h"
 
+#include <inline/compiler.h>
+
 #include <openssl/ssl.h>
 
 struct pool;
@@ -31,5 +33,9 @@ ssl_filter_new(struct pool *pool, SSL_CTX *ssl_ctx,
 
 void
 ssl_filter_free(struct ssl_filter *ssl);
+
+gcc_pure
+const char *
+ssl_filter_get_peer_subject(struct ssl_filter *ssl);
 
 #endif
