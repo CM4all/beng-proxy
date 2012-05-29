@@ -965,7 +965,6 @@ handle_class_attribute(struct processor *processor,
             p += 3;
         } else if (n == 2 && (prefix = widget_get_quoted_class_name(processor->container)) != NULL) {
             expansible_buffer_write_string(buffer, prefix);
-            expansible_buffer_write_buffer(buffer, p, 1);
             p += 2;
         } else {
             /* failure; skip all underscores and find the next
