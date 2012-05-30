@@ -1583,9 +1583,10 @@ The \texttt{Referer} request header is not supported.
 
 \subsection{Views}
 
-A widget class may have a number of named views; only the ``default''
-view has no name.  A view may have a different server address,
-different transformations and other settings.
+A widget class may have a number of named views.  Only the ``default''
+view has no name, and it cannot be selected explicitly.  A view may
+have a different server address, different transformations and other
+settings.
 
 A view other than the default one can be selected in three different
 ways:
@@ -1596,13 +1597,17 @@ ways:
 \item as a HTTP response header from the widget server
 \end{itemize}
 
-For security reasons, the client may only choose views that have a
-different server address (not inherited from the ``default'' view).
-The reason is that a widget server might need to write secret data
-into the HTTP response, to be replaced by a transformation (such as
-parameters for sub-widgets), and choosing a view that was not designed
-for this kind of response would allow disabling the transformation.
-While the designed limitation described above does not guarantee real
+For security reasons, the view a client is allowed to choose is
+limited.  A view that has an address can only be selected by the
+template, to avoid unauthorized access to vulnerable areas.  If the
+view chosen by the template enables the HTML processor with the
+``container'' flag, \emph{beng-proxy} disallows the client to switch
+to another view that is not a ``container'', to avoid exposing the
+template's widget parameters (unless the response is not processable).
+Switching to a view without an address is always allowed if the
+previous view does not make the widget a container.
+
+While the limitations described above do not guarantee real
 security, it was decided that it would be an acceptable compromise.
 
 The widget server can select the view with the response header
