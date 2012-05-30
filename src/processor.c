@@ -681,8 +681,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         return true;
     } else if (!processor_option_quiet(processor) &&
                processor_option_rewrite_url(processor)) {
-        if (strref_lower_cmp_literal(&tag->name, "a") == 0 ||
-            strref_lower_cmp_literal(&tag->name, "link") == 0) {
+        if (strref_lower_cmp_literal(&tag->name, "a") == 0) {
             processor->tag = TAG_A;
             processor_uri_rewrite_init(processor);
             return true;
