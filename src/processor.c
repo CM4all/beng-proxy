@@ -1142,10 +1142,15 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_A:
-        if (strref_lower_cmp_literal(&attr->name, "href") == 0 &&
-            !strref_starts_with_n(&attr->value, "#", 1) &&
-            !strref_starts_with_n(&attr->value, "javascript:", 11))
-            processor_uri_rewrite_attribute(processor, attr);
+        if (strref_lower_cmp_literal(&attr->name, "href") == 0) {
+            if (!strref_starts_with_n(&attr->value, "#", 1) &&
+                !strref_starts_with_n(&attr->value, "javascript:", 11))
+                processor_uri_rewrite_attribute(processor, attr);
+        } else if (processor_option_quiet(processor) &&
+                   processor_option_prefix_id(processor) &&
+                   strref_lower_cmp_literal(&attr->name, "name") == 0)
+            handle_id_attribute(processor, attr);
+
         break;
 
     case TAG_FORM:
