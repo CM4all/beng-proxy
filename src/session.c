@@ -308,12 +308,22 @@ session_dup(struct dpool *pool, const struct session *src)
     return dest;
 }
 
+struct widget_session *
+widget_session_allocate(struct session *session)
+{
+    struct widget_session *ws = d_malloc(session->pool, sizeof(*ws));
+    if (ws == NULL)
+        return NULL;
+
+    ws->session = session;
+    return ws;
+}
+
 static struct widget_session *
 hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
                              const char *id, bool create)
 {
     struct dhashmap *map;
-    struct widget_session *ws;
 
     assert(crash_in_unsafe());
     assert(session != NULL);
@@ -331,7 +341,8 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
         if (map == NULL)
             return NULL;
     } else {
-        ws = (struct widget_session *)dhashmap_get(map, id);
+        struct widget_session *ws =
+            (struct widget_session *)dhashmap_get(map, id);
         if (ws != NULL)
             return ws;
 
@@ -341,12 +352,11 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
 
     assert(create);
 
-    ws = d_malloc(session->pool, sizeof(*ws));
+    struct widget_session *ws = widget_session_allocate(session);
     if (ws == NULL)
         return NULL;
 
     ws->parent = NULL;
-    ws->session = session;
     ws->id = d_strdup(session->pool, id);
     if (ws->id == NULL) {
         d_free(session->pool, ws);

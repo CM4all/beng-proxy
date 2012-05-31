@@ -156,6 +156,10 @@ session_put(struct session *session);
 void
 session_delete(session_id_t id);
 
+gcc_malloc
+struct widget_session *
+widget_session_allocate(struct session *session);
+
 gcc_pure
 struct widget_session *
 session_get_widget(struct session *session, const char *id, bool create);
