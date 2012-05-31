@@ -54,6 +54,24 @@ void
 session_manager_event_del(void);
 
 /**
+ * Create a new #dpool object.  The caller is responsible for
+ * destroying it or adding a new session with this #dpool, see
+ * session_manager_add().
+ */
+struct dpool *
+session_manager_new_dpool(void);
+
+/**
+ * Add an initialized #session object to the session manager.  Its
+ * #dpool will be destroyed automatically when the session expires.
+ * After returning from this function, the session is protected and
+ * the pointer must not be used, unless it is looked up (and thus
+ * locked).
+ */
+void
+session_manager_add(struct session *session);
+
+/**
  * Create a new session with a random session id.
  *
  * The returned session object is locked and must be unlocked with

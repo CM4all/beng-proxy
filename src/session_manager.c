@@ -278,6 +278,12 @@ session_manager_event_del(void)
     event_del(&session_cleanup_event);
 }
 
+struct dpool *
+session_manager_new_dpool(void)
+{
+    return dpool_new(session_manager->shm);
+}
+
 /**
  * Forcefully deletes at least one session.
  */
@@ -336,6 +342,26 @@ session_slot(session_id_t id)
 #else
     return &session_manager->sessions[id % SESSION_SLOTS];
 #endif
+}
+
+void
+session_manager_add(struct session *session)
+{
+    assert(session != NULL);
+
+    rwlock_wlock(&session_manager->lock);
+
+    list_add(&session->hash_siblings, session_slot(session->id));
+    ++session_manager->num_sessions;
+
+    const unsigned num_sessions = session_manager->num_sessions;
+
+    rwlock_wunlock(&session_manager->lock);
+
+    if (num_sessions == 1) {
+        struct timeval tv = cleanup_interval;
+        evtimer_add(&session_cleanup_event, &tv);
+    }
 }
 
 static uint32_t
