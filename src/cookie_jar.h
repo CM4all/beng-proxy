@@ -45,6 +45,12 @@ cookie_jar_free(struct cookie_jar *jar);
 struct cookie_jar * gcc_malloc
 cookie_jar_dup(struct dpool *pool, const struct cookie_jar *src);
 
+static inline void
+cookie_jar_add(struct cookie_jar *jar, struct cookie *cookie)
+{
+    list_add(&cookie->siblings, &jar->cookies);
+}
+
 void
 cookie_delete(struct cookie_jar *jar, struct cookie *cookie);
 

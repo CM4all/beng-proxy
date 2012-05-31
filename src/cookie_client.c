@@ -168,7 +168,7 @@ apply_next_cookie(struct cookie_jar *jar, struct strref *input,
         /* discard expired cookie */
         cookie_free(jar->pool, cookie);
     else
-        list_add(&cookie->siblings, &jar->cookies);
+        cookie_jar_add(jar, cookie);
 
     return true;
 }
