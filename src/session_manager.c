@@ -630,11 +630,22 @@ session_manager_visit(bool (*callback)(const struct session *session,
         return false;
     }
 
+    struct timespec now;
+    if (clock_gettime(CLOCK_MONOTONIC, &now) < 0) {
+        crash_unsafe_leave();
+        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
+                   strerror(errno));
+        return false;
+    }
+
     for (unsigned i = 0; i < SESSION_SLOTS && result; ++i) {
         struct list_head *slot = &session_manager->sessions[i];
         for (struct session *session = (struct session *)slot->next;
              &session->hash_siblings != slot && result;
              session = (struct session *)session->hash_siblings.next) {
+            if (now.tv_sec >= session->expires)
+                continue;
+
             lock_lock(&session->lock);
             result = callback(session, ctx);
             lock_unlock(&session->lock);
