@@ -1,13 +1,13 @@
 # -*- shell-script -*-
 
-# Which user should workshop run as?
+# Which user should beng-proxy run as?
 #DAEMON_USER=cm4all-beng-proxy
 
 # Process which receives the daemon's log messages 
 #LOGGER="exec /usr/bin/multilog t s4194304 n16 /var/log/cm4all/beng-proxy"
 #LOGGER="exec logger -p daemon.info -t cm4all-beng-proxy"
 
-# Which user should workshop run as?
+# Which user should the beng-proxy logger run as?
 #LOGGER_USER=cm4all-logger
 
 # Which port does beng-proxy listen on?
