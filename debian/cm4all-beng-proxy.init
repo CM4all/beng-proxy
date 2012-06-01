@@ -22,6 +22,7 @@ source /lib/lsb/init-functions
 
 PIDFILE=/var/run/cm4all/beng-proxy.pid
 DAEMON_USER=cm4all-beng-proxy
+DAEMON_GROUP=
 LOGGER="exec /usr/bin/multilog t s4194304 n16 /var/log/cm4all/beng-proxy"
 LOGGER_USER=cm4all-logger
 PORT=80
@@ -40,6 +41,10 @@ test -n "$UA_CLASSES" && UASPEC="--ua-classes=${UA_CLASSES}"
 if test -z "$DAEMON_USER"; then
     log_action_msg "No user configured in /etc/default/cm4all-beng-proxy"
     exit 0
+fi
+
+if test -n "$DAEMON_GROUP"; then
+    OPTIONS="$OPTIONS --group $DAEMON_GROUP"
 fi
 
 if test -n "$TRANSLATION_SOCKET"; then

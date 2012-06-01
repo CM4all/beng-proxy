@@ -1,5 +1,6 @@
 cm4all-beng-proxy (2.0.30) unstable; urgency=low
 
+  * init: add --group variable to .default file
   * doc: update view security documentation
   * processor: apply underscore prefix to <A NAME="...">
 
