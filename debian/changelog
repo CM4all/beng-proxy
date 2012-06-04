@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.31) unstable; urgency=low
 
-  * 
+  * lb: publish the SSL peer issuer subject
 
  --   
 
