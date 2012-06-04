@@ -186,12 +186,15 @@ my_stock_ready(struct stock_item *item, void *ctx)
     const char *peer_subject = request2->connection->ssl_filter != NULL
         ? ssl_filter_get_peer_subject(request2->connection->ssl_filter)
         : NULL;
+    const char *peer_issuer_subject = request2->connection->ssl_filter != NULL
+        ? ssl_filter_get_peer_issuer_subject(request2->connection->ssl_filter)
+        : NULL;
 
     struct strmap *headers =
         lb_forward_request_headers(request->pool, request->headers,
                                    request->local_host,
                                    request->remote_host,
-                                   peer_subject,
+                                   peer_subject, peer_issuer_subject,
                                    request2->connection->listener->cluster->mangle_via);
 
     struct growing_buffer *headers2 = headers_dup(request->pool, headers);

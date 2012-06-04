@@ -93,6 +93,7 @@ struct strmap *
 lb_forward_request_headers(struct pool *pool, struct strmap *src,
                            const char *local_host, const char *remote_host,
                            const char *peer_subject,
+                           const char *peer_issuer_subject,
                            bool mangle_via)
 {
     if (peer_subject == NULL && !mangle_via)
@@ -105,6 +106,10 @@ lb_forward_request_headers(struct pool *pool, struct strmap *src,
 
     if (peer_subject != NULL)
         strmap_add(dest, "x-cm4all-beng-peer-subject", peer_subject);
+
+    if (peer_issuer_subject != NULL)
+        strmap_add(dest, "x-cm4all-beng-peer-issuer-subject",
+                   peer_issuer_subject);
 
     if (mangle_via)
         forward_identity(pool, dest, src, local_host, remote_host);

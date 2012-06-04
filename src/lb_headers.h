@@ -16,6 +16,7 @@ struct strmap *
 lb_forward_request_headers(struct pool *pool, struct strmap *src,
                            const char *local_host, const char *remote_host,
                            const char *peer_subject,
+                           const char *peer_issuer_subject,
                            bool mangle_via);
 
 #endif

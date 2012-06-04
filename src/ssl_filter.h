@@ -38,4 +38,8 @@ gcc_pure
 const char *
 ssl_filter_get_peer_subject(struct ssl_filter *ssl);
 
+gcc_pure
+const char *
+ssl_filter_get_peer_issuer_subject(struct ssl_filter *ssl);
+
 #endif
