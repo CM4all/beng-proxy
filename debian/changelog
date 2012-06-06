@@ -3,7 +3,7 @@ cm4all-beng-proxy (2.0.31) unstable; urgency=low
   * lb: publish the SSL peer issuer subject
   * widget-registry: copy the direct_addressing attribute
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 06 Jun 2012 13:36:04 -0000
 
 cm4all-beng-proxy (2.0.30) unstable; urgency=low
 
