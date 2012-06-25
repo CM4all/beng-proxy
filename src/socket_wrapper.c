@@ -21,8 +21,6 @@ socket_read_event_callback(gcc_unused int fd, short event, void *ctx)
 {
     struct socket_wrapper *s = ctx;
 
-    p_event_consumed(&s->read_event, s->pool);
-
     if (event & EV_TIMEOUT)
         s->handler->timeout(s->handler_ctx);
     else
@@ -36,8 +34,6 @@ socket_write_event_callback(gcc_unused int fd, gcc_unused short event,
                             void *ctx)
 {
     struct socket_wrapper *s = ctx;
-
-    p_event_consumed(&s->write_event, s->pool);
 
     if (event & EV_TIMEOUT)
         s->handler->timeout(s->handler_ctx);
