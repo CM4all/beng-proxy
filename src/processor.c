@@ -1251,6 +1251,17 @@ open_widget_element(struct processor *processor, struct widget *widget)
         return NULL;
     }
 
+    /* enforce the SELF_CONTAINER flag */
+    if ((processor->options & PROCESSOR_SELF_CONTAINER) != 0 &&
+        (processor->container->class_name == NULL ||
+         strcmp(processor->container->class_name, widget->class_name) != 0)) {
+        daemon_log(5, "widget '%s'[class='%s'] is not allowed to embed widget class '%s'\n",
+                   widget_path(processor->container),
+                   processor->container->class_name,
+                   widget->class_name);
+        return NULL;
+    }
+
     if (widget_check_recursion(widget->parent)) {
         daemon_log(5, "maximum widget depth exceeded\n");
         return NULL;

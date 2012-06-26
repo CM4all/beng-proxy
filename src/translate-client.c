@@ -933,6 +933,18 @@ translate_handle_packet(struct translate_client *client,
         client->transformation->u.processor.options |= PROCESSOR_CONTAINER;
         return true;
 
+    case TRANSLATE_SELF_CONTAINER:
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_SELF_CONTAINER packet");
+            return false;
+        }
+
+        client->transformation->u.processor.options |=
+            PROCESSOR_SELF_CONTAINER|PROCESSOR_CONTAINER;
+        return true;
+
     case TRANSLATE_UNTRUSTED:
         if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
             translate_client_error(client,

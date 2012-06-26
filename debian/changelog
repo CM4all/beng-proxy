@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.33) unstable; urgency=low
 
-  * 
+  * processor: option SELF_CONTAINER allows widget to only embed itself
 
  --   
 

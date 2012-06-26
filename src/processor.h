@@ -36,6 +36,11 @@ enum processor_options {
      * Invoke the CSS processor for "style" element contents?
      */
     PROCESSOR_STYLE = 0x20,
+
+    /**
+     * Allow this widget to embed more instances of its own class.
+     */
+    PROCESSOR_SELF_CONTAINER = 0x40,
 };
 
 struct pool;

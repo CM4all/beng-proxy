@@ -270,6 +270,11 @@ enum beng_translation_command {
      * requests the widget "foo" and with path-info "/bar".
      */
     TRANSLATE_DIRECT_ADDRESSING = 90,
+
+    /**
+     * Allow this widget to embed more instances of its own class.
+     */
+    TRANSLATE_SELF_CONTAINER = 91,
 };
 
 struct beng_translation_header {
