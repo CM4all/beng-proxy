@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.0.32) unstable; urgency=low
 
   * socket_wrapper: fix two assertion failures
+  * pheaders: emit Cache-Control:no-store to work around IE quirk
 
  --   
 
