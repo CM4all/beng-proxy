@@ -23,9 +23,6 @@ struct pool;
 struct widget;
 struct processor_env;
 
-struct strmap *
-css_processor_header_forward(struct pool *pool, struct strmap *headers);
-
 /**
  * Process the specified istream, and return the processed stream.
  *

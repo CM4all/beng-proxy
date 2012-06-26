@@ -24,9 +24,6 @@ gcc_pure
 bool
 text_processor_allowed(const struct strmap *headers);
 
-struct strmap *
-text_processor_header_forward(struct pool *pool, struct strmap *headers);
-
 /**
  * Process the specified istream, and return the processed stream.
  *
