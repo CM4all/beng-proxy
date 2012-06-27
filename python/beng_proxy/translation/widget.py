@@ -110,6 +110,14 @@ class _Lookup:
         if m:
             response.packet(TRANSLATE_LOCAL_URI, m.group(1))
             return
+        m = re.match(r'^group_container\s+"([-._\w]+)"$', line)
+        if m:
+            response.packet(TRANSLATE_GROUP_CONTAINER, m.group(1))
+            return
+        m = re.match(r'^group\s+"([-._\w]+)"$', line)
+        if m:
+            response.packet(TRANSLATE_WIDGET_GROUP, m.group(1))
+            return
 
         if line == 'process':
             response.process()

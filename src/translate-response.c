@@ -47,6 +47,11 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
     dest->transparent = src->transparent;
     dest->auto_base = src->auto_base;
     dest->widget_info = src->widget_info;
+    dest->widget_group = p_strdup_checked(pool, src->widget_group);
+
+    strset_init(&dest->container_groups);
+    strset_copy(pool, &dest->container_groups, &src->container_groups);
+
     dest->anchor_absolute = src->anchor_absolute;
     dest->dump_headers = src->dump_headers;
     dest->session = NULL;

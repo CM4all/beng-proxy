@@ -12,6 +12,7 @@
 #include "uri-escape.h"
 #include "uri-extract.h"
 #include "widget.h"
+#include "widget-approval.h"
 #include "widget-request.h"
 #include "widget-lookup.h"
 #include "widget-class.h"
@@ -1253,9 +1254,9 @@ open_widget_element(struct processor *processor, struct widget *widget)
     }
 
     /* enforce the SELF_CONTAINER flag */
-    if ((processor->options & PROCESSOR_SELF_CONTAINER) != 0 &&
-        (processor->container->class_name == NULL ||
-         strcmp(processor->container->class_name, widget->class_name) != 0)) {
+    const bool self_container =
+        (processor->options & PROCESSOR_SELF_CONTAINER) != 0;
+    if (!widget_init_approval(widget, self_container)) {
         daemon_log(5, "widget '%s'[class='%s'] is not allowed to embed widget class '%s'\n",
                    widget_path(processor->container),
                    processor->container->class_name,

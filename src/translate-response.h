@@ -10,6 +10,7 @@
 #include "resource-address.h"
 #include "header-forward.h"
 #include "strref.h"
+#include "strset.h"
 
 #include <http/status.h>
 
@@ -112,6 +113,16 @@ struct translate_response {
     struct strmap *headers;
 
     struct widget_view *views;
+
+    /**
+     * From #TRANSLATE_WIDGET_GROUP.
+     */
+    const char *widget_group;
+
+    /**
+     * From #TRANSLATE_GROUP_CONTAINER.
+     */
+    struct strset container_groups;
 
     const uint16_t *vary;
     unsigned num_vary;

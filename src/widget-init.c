@@ -26,6 +26,7 @@ widget_init(struct widget *widget, struct pool *pool,
     widget->view_name = NULL;
     if (class != NULL)
         widget->view = &class->views;
+    widget->approval = WIDGET_APPROVAL_GIVEN;
     widget->session = WIDGET_SESSION_RESOURCE;
     widget->session_sync_pending = false;
     widget->session_save_pending = false;

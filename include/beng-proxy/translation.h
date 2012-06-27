@@ -275,6 +275,19 @@ enum beng_translation_command {
      * Allow this widget to embed more instances of its own class.
      */
     TRANSLATE_SELF_CONTAINER = 91,
+
+    /**
+     * Allow this widget to embed instances of this group.  This can
+     * be specified multiple times to allow more than one group.  It
+     * can be combined with #TRANSLATE_SELF_CONTAINER.
+     */
+    TRANSLATE_GROUP_CONTAINER = 92,
+
+    /**
+     * Assign a group name to the widget type.  This is used by
+     * #TRANSLATE_GROUP_CONTAINER.
+     */
+    TRANSLATE_WIDGET_GROUP = 93,
 };
 
 struct beng_translation_header {

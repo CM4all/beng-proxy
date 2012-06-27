@@ -945,6 +945,48 @@ translate_handle_packet(struct translate_client *client,
             PROCESSOR_SELF_CONTAINER|PROCESSOR_CONTAINER;
         return true;
 
+    case TRANSLATE_GROUP_CONTAINER:
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_GROUP_CONTAINER packet");
+            return false;
+        }
+
+        if (payload == NULL) {
+            translate_client_error(client,
+                                   "malformed TRANSLATE_GROUP_CONTAINER packet");
+            return false;
+        }
+
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_GROUP_CONTAINER packet");
+            return false;
+        }
+
+        client->transformation->u.processor.options |= PROCESSOR_CONTAINER;
+        strset_add(client->pool, &client->response.container_groups, payload);
+        return true;
+
+    case TRANSLATE_WIDGET_GROUP:
+        if (client->transformation == NULL ||
+            client->transformation->type != TRANSFORMATION_PROCESS) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_GROUP_CONTAINER packet");
+            return false;
+        }
+
+        if (payload == NULL) {
+            translate_client_error(client,
+                                   "malformed TRANSLATE_GROUP_CONTAINER packet");
+            return false;
+        }
+
+        client->response.widget_group = payload;
+        return true;
+
     case TRANSLATE_UNTRUSTED:
         if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
             translate_client_error(client,

@@ -73,6 +73,28 @@ struct widget {
      */
     const struct widget_view *view;
 
+    /**
+     * The approval level for embedding this widget into its
+     * container.  This is based on #TRANSLATE_SELF_CONTAINER and
+     * #TRANSLATE_GROUP_CONTAINER.
+     */
+    enum {
+        /**
+         * Approval was given.
+         */
+        WIDGET_APPROVAL_GIVEN,
+
+        /**
+         * Approval was denied.
+         */
+        WIDGET_APPROVAL_DENIED,
+
+        /**
+         * Approval has not been verified yet.
+         */
+        WIDGET_APPROVAL_UNKNOWN,
+    } approval;
+
     /** what is the scope of session data? */
     enum {
         /** each resource has its own set of widget sessions */

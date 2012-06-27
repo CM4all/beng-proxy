@@ -8,6 +8,7 @@
 #define BENG_PROXY_WIDGET_CLASS_H
 
 #include "widget-view.h"
+#include "strset.h"
 
 /**
  * A widget class is a server which provides a widget.
@@ -48,6 +49,20 @@ struct widget_class {
     const char *cookie_host;
 
     /**
+     * The group name from #TRANSLATE_WIDGET_GROUP.  It is used to
+     * determine whether this widget may be embedded inside another
+     * one, see #TRANSLATE_GROUP_CONTAINER and #container_groups.
+     */
+    const char *group;
+
+    /**
+     * If this list is non-empty, then this widget may only embed
+     * widgets from any of the specified groups.  The
+     * #TRANSLATE_SELF_CONTAINER flag adds an exception to this rule.
+     */
+    struct strset container_groups;
+
+    /**
      * Does this widget support new-style direct URI addressing?
      *
      * Example: http://localhost/template.html;frame=foo/bar - this
@@ -80,6 +95,21 @@ static inline const struct widget_view *
 widget_class_view_lookup(const struct widget_class *class, const char *name)
 {
     return widget_view_lookup(&class->views, name);
+}
+
+static inline bool
+widget_class_has_groups(const struct widget_class *class)
+{
+    return !strset_is_empty(&class->container_groups);
+}
+
+static inline bool
+widget_class_may_embed(const struct widget_class *container,
+                       const struct widget_class *child)
+{
+    return strset_is_empty(&container->container_groups) ||
+        (child->group != NULL && strset_contains(&container->container_groups,
+                                                 child->group));
 }
 
 #endif

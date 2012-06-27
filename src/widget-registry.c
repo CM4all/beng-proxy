@@ -78,6 +78,8 @@ widget_translate_response(const struct translate_response *response, void *ctx)
         /* compatibility with v0.7.16 */
         class->untrusted_host = response->host;
     class->cookie_host = response->cookie_host;
+    class->group = response->widget_group;
+    class->container_groups = response->container_groups;
     class->direct_addressing = response->direct_addressing;
     class->stateful = response->stateful;
     class->anchor_absolute = response->anchor_absolute;

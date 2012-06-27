@@ -10,6 +10,7 @@
 #include "penv.h"
 #include "widget.h"
 #include "widget-class.h"
+#include "widget-approval.h"
 #include "widget-resolver.h"
 #include "widget-lookup.h"
 #include "widget-request.h"
@@ -30,6 +31,18 @@ frame_top_widget(struct pool *pool, struct widget *widget,
     assert(widget->class != NULL);
     assert(widget_has_default_view(widget));
     assert(env != NULL);
+
+    if (!widget_check_approval(widget)) {
+        GError *error =
+            g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+                        "widget '%s'[class='%s'] is not allowed to embed widget class '%s'",
+                        widget_path(widget->parent),
+                        widget->parent->class_name,
+                        widget->class_name);
+        widget_cancel(widget);
+        http_response_handler_direct_abort(handler, handler_ctx, error);
+        return;
+    }
 
     if (!widget_check_host(widget, env->untrusted_host,
                            env->site_name)) {
@@ -74,6 +87,18 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                         "frame within non-container requested");
+        widget_cancel(widget);
+        handler->error(error, handler_ctx);
+        return;
+    }
+
+    if (!widget_check_approval(widget)) {
+        GError *error =
+            g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+                        "widget '%s'[class='%s'] is not allowed to embed widget class '%s'",
+                        widget_path(widget->parent),
+                        widget->parent->class_name,
+                        widget->class_name);
         widget_cancel(widget);
         handler->error(error, handler_ctx);
         return;

@@ -11,6 +11,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-resolver.h"
+#include "widget-approval.h"
 #include "widget-request.h"
 #include "async.h"
 #include "global.h"
@@ -191,6 +192,18 @@ static void
 inline_widget_set(struct inline_widget *iw)
 {
     struct widget *widget = iw->widget;
+
+    if (!widget_check_approval(widget)) {
+        GError *error =
+            g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+                        "widget '%s'[class='%s'] is not allowed to embed widget class '%s'",
+                        widget_path(widget->parent),
+                        widget->parent->class_name,
+                        widget->class_name);
+        widget_cancel(widget);
+        istream_delayed_set_abort(iw->delayed, error);
+        return;
+    }
 
     if (!widget_check_host(widget, iw->env->untrusted_host,
                            iw->env->site_name)) {
