@@ -450,6 +450,7 @@ SRC = src/main.c \
 	src/gmtime.c \
 	src/date.c \
 	src/strutil.c \
+	src/strset.c src/strset.h \
 	src/hashmap.c \
 	src/strmap.c \
 	src/dhashmap.c \
