@@ -37,10 +37,6 @@ void
 istream_inject_fault(struct istream *i_fault, GError *error);
 
 struct istream *
-istream_catch_new(struct pool *pool, struct istream *input,
-                  GError *(*callback)(GError *error, void *ctx), void *ctx);
-
-struct istream *
 istream_later_new(struct pool *pool, struct istream *input);
 
 struct istream *gcc_malloc

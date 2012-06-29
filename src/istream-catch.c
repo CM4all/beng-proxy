@@ -5,6 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream-catch.h"
 #include "istream-internal.h"
 
 #include <daemon/log.h>

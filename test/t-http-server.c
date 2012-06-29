@@ -3,6 +3,7 @@
 #include "direct.h"
 #include "pool.h"
 #include "istream.h"
+#include "istream-catch.h"
 
 #include <stdio.h>
 #include <stdlib.h>

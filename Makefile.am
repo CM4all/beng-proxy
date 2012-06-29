@@ -89,7 +89,7 @@ ISTREAM_SRC = \
 	src/istream-trace.c \
 	src/istream-fail.c \
 	src/istream-inject.c \
-	src/istream-catch.c \
+	src/istream-catch.c istream-catch.h \
 	src/istream-later.c \
 	src/istream-head.c \
 	src/istream-tee.c \
