@@ -8,7 +8,6 @@
 #define __BENG_WIDGET_H
 
 #include "strref.h"
-#include "resource-address.h"
 
 #include <inline/list.h>
 #include <inline/compiler.h>

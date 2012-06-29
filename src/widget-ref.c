@@ -5,6 +5,7 @@
  */
 
 #include "widget.h"
+#include "pool.h"
 
 #include <string.h>
 
