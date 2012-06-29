@@ -17,8 +17,6 @@
 #include "http-response.h"
 #include "istream.h"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 
 void
@@ -35,11 +33,11 @@ frame_top_widget(struct pool *pool, struct widget *widget,
 
     if (!widget_check_host(widget, env->untrusted_host,
                            env->site_name)) {
-        daemon_log(4, "untrusted host name mismatch\n");
+        GError *error =
+            g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
+                        "untrusted host name mismatch");
         widget_cancel(widget);
-        http_response_handler_direct_message(handler, handler_ctx,
-                                             pool, HTTP_STATUS_FORBIDDEN,
-                                             "Forbidden");
+        http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 
