@@ -464,7 +464,7 @@ response_generate_set_cookie(struct request *request2,
                                     session_id_format(request2->session_id,
                                                       &request2->session_id_string));
         growing_buffer_write_string(headers,
-                                    "; Discard; HttpOnly; Path=/; Version=1");
+                                    "; HttpOnly; Path=/; Version=1");
 
         if (request2->translate.response->secure_cookie)
             growing_buffer_write_string(headers, "; Secure");
@@ -475,6 +475,9 @@ response_generate_set_cookie(struct request *request2,
                                         request2->translate.response->cookie_domain);
             growing_buffer_write_string(headers, "\"");
         }
+
+        /* "Discard" must be last, to work around an Android bug*/
+        growing_buffer_write_string(headers, "; Discard");
 
         header_write_finish(headers);
 
@@ -489,7 +492,7 @@ response_generate_set_cookie(struct request *request2,
         header_write_begin(headers, "set-cookie");
         growing_buffer_write_string(headers, request2->session_cookie);
         growing_buffer_write_string(headers,
-                                    "=; Discard; HttpOnly; Path=/; Version=1"
+                                    "=; HttpOnly; Path=/; Version=1"
                                     "; Max-Age=0");
 
         if (request2->translate.response->cookie_domain != NULL) {
@@ -498,6 +501,9 @@ response_generate_set_cookie(struct request *request2,
                                         request2->translate.response->cookie_domain);
             growing_buffer_write_string(headers, "\"");
         }
+
+        /* "Discard" must be last, to work around an Android bug*/
+        growing_buffer_write_string(headers, "; Discard");
 
         header_write_finish(headers);
     }

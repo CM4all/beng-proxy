@@ -135,8 +135,9 @@ my_response_response(http_status_t status, struct strmap *headers,
 
     if (request2->new_cookie != 0) {
         char buffer[64];
+        /* "Discard" must be last, to work around an Android bug*/
         snprintf(buffer, sizeof(buffer),
-                 "beng_lb_node=0-%x; Discard; HttpOnly; Path=/; Version=1",
+                 "beng_lb_node=0-%x; HttpOnly; Path=/; Version=1; Discard",
                  request2->new_cookie);
 
         header_write(headers2, "cookie2", "$Version=\"1\"");
