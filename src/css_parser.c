@@ -71,7 +71,7 @@ static bool
 at_url_start(const char *p, size_t length)
 {
     return length >= 4 && memcmp(p + length - 4, "url(", 4) == 0 &&
-        (/* just url(): */ length == 0 ||
+        (/* just url(): */ length == 4 ||
          /* url() after another token: */
          char_is_whitespace(p[length - 5]));
 }
