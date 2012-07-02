@@ -346,6 +346,7 @@ SRC = src/main.c \
 	src/css_util.h \
 	src/css_parser.c src/css_parser.h \
 	src/css_processor.c src/css_processor.h \
+	src/css_rewrite.c src/css_rewrite.h \
 	src/text_processor.c src/text_processor.h \
 	src/rewrite-uri.c \
 	src/resource-loader.c \
@@ -1032,7 +1033,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/strset.c \
 	src/penv.c src/processor.c \
 	src/text_processor.c \
-	src/css_processor.c src/css_parser.c src/escape_css.c \
+	src/css_processor.c src/css_parser.c src/css_rewrite.c src/escape_css.c \
 	src/widget-request.c src/widget-approval.c \
 	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/parser.c src/widget-class.c \
@@ -1558,7 +1559,7 @@ test_t_escape_css_SOURCES = \
 test_run_processor_SOURCES = test/run-processor.c \
 	src/processor.c src/penv.c src/parser.c \
 	src/text_processor.c \
-	src/css_processor.c src/css_parser.c src/escape_css.c \
+	src/css_processor.c src/css_parser.c src/css_rewrite.c src/escape_css.c \
 	src/escape_html.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-init.c src/widget-approval.c src/widget-ref.c \
@@ -1598,7 +1599,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 test_t_processor_SOURCES = test/t-processor.c \
 	src/processor.c src/penv.c src/parser.c \
 	src/text_processor.c \
-	src/css_processor.c src/css_parser.c src/escape_css.c \
+	src/css_processor.c src/css_parser.c src/css_rewrite.c src/escape_css.c \
 	src/escape_html.c \
 	src/istream-replace.c \
 	src/widget.c src/widget-init.c src/widget-approval.c src/widget-ref.c \

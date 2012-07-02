@@ -7,6 +7,7 @@
 #include "processor.h"
 #include "text_processor.h"
 #include "css_processor.h"
+#include "css_rewrite.h"
 #include "penv.h"
 #include "parser.h"
 #include "uri-escape.h"
@@ -1020,6 +1021,28 @@ handle_id_attribute(struct processor *processor,
     }
 }
 
+static void
+handle_style_attribute(struct processor *processor,
+                       const struct parser_attr *attr)
+{
+    struct widget *widget = processor->container;
+    struct istream *result =
+        css_rewrite_block_uris(processor->pool, processor->env->pool,
+                               global_translate_cache,
+                               processor->env->absolute_uri,
+                               processor->env->external_uri,
+                               processor->env->site_name,
+                               processor->env->untrusted_host,
+                               processor->env->args,
+                               widget,
+                               processor->env->session_id,
+                               attr->value,
+                               &html_escape_class);
+    if (result != NULL)
+        processor_replace_add(processor, attr->value_start, attr->value_end,
+                              result);
+}
+
 /**
  * Is this a tag which can have a link attribute?
  */
@@ -1082,6 +1105,18 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         (strref_cmp_literal(&attr->name, "id") == 0 ||
          strref_cmp_literal(&attr->name, "for") == 0)) {
         handle_id_attribute(processor, attr);
+        return;
+    }
+
+    if (!processor_option_quiet(processor) &&
+        processor_option_style(processor) &&
+        processor_option_rewrite_url(processor) &&
+        /* due to a limitation in the processor and istream_replace,
+           we cannot edit attributes followed by a URI attribute */
+        !processor->postponed_rewrite.pending &&
+        is_html_tag(processor->tag) &&
+        strref_cmp_literal(&attr->name, "style") == 0) {
+        handle_style_attribute(processor, attr);
         return;
     }
 
