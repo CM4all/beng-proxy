@@ -34,6 +34,8 @@ enum css_parser_state {
 struct css_parser {
     struct pool *pool;
 
+    bool block;
+
     struct istream *input;
     off_t position;
 
@@ -191,6 +193,9 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
+                    if (parser->block)
+                        break;
+
                     parser->state = CSS_PARSER_NONE;
                     break;
 
@@ -252,6 +257,9 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
+                    if (parser->block)
+                        break;
+
                     parser->state = CSS_PARSER_NONE;
                     break;
 
@@ -277,6 +285,9 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
+                    if (parser->block)
+                        break;
+
                     parser->state = CSS_PARSER_NONE;
                     ++buffer;
                     break;
@@ -299,6 +310,9 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
+                    if (parser->block)
+                        break;
+
                     parser->state = CSS_PARSER_NONE;
                     break;
 
@@ -345,6 +359,9 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                 switch (*buffer) {
                 case '}':
                     /* end of block */
+                    if (parser->block)
+                        break;
+
                     parser->state = CSS_PARSER_NONE;
                     ++buffer;
                     break;
@@ -530,7 +547,7 @@ static const struct istream_handler css_parser_input_handler = {
  */
 
 struct css_parser *
-css_parser_new(struct pool *pool, struct istream *input,
+css_parser_new(struct pool *pool, struct istream *input, bool block,
                const struct css_parser_handler *handler, void *handler_ctx)
 {
     assert(pool != NULL);
@@ -543,6 +560,7 @@ css_parser_new(struct pool *pool, struct istream *input,
 
     struct css_parser *parser = p_malloc(pool, sizeof(*parser));
     parser->pool = pool;
+    parser->block = block;
 
     istream_assign_handler(&parser->input, input,
                            &css_parser_input_handler, parser,
@@ -552,7 +570,7 @@ css_parser_new(struct pool *pool, struct istream *input,
     parser->handler = handler;
     parser->handler_ctx = handler_ctx;
 
-    parser->state = CSS_PARSER_NONE;
+    parser->state = block ? CSS_PARSER_BLOCK : CSS_PARSER_NONE;
 
     return parser;
 }

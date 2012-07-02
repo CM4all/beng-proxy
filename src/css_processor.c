@@ -322,7 +322,7 @@ css_processor(struct pool *caller_pool, struct istream *istream,
     processor->replace = istream_replace_new(processor->pool,
                                              istream_tee_second(istream));
 
-    processor->parser = css_parser_new(processor->pool, istream,
+    processor->parser = css_parser_new(processor->pool, istream, false,
                                        &css_processor_parser_handler,
                                        processor);
     pool_unref(processor->pool);

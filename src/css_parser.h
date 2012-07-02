@@ -64,8 +64,11 @@ struct css_parser_handler {
     void (*error)(GError *error, void *ctx);
 };
 
+/**
+ * @param block true when the input consists of only one block
+ */
 struct css_parser *
-css_parser_new(struct pool *pool, struct istream *input,
+css_parser_new(struct pool *pool, struct istream *input, bool block,
                const struct css_parser_handler *handler, void *handler_ctx);
 
 /**

@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
 
     struct istream *istream = istream_file_new(pool, "/dev/stdin", (off_t)-1);
     struct css_parser *parser =
-        css_parser_new(pool, istream, &my_parser_handler, NULL);
+        css_parser_new(pool, istream, false, &my_parser_handler, NULL);
 
     while (!should_exit)
         css_parser_read(parser);
