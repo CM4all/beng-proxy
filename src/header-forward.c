@@ -275,6 +275,12 @@ forward_request_headers(struct pool *pool, struct strmap *src,
         forward_identity(pool, dest, src, local_host, remote_host,
                          settings->modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
 
+    if (settings->modes[HEADER_GROUP_FORWARD] == HEADER_FORWARD_MANGLE) {
+        const char *host = strmap_get_checked(src, "host");
+        if (host != NULL)
+            strmap_add(dest, "x-forwarded-host", host);
+    }
+
     return dest;
 }
 

@@ -1028,6 +1028,12 @@ request handler.  The payload is a list of group/mode pairs
 \item \texttt{CAPABILITIES}: \texttt{Server}, \texttt{User-Agent},
   \texttt{Accept-*}
 \item \texttt{COOKIE}: \texttt{Cookie[2]}, \texttt{Set-Cookie[2]}
+
+\item \texttt{FORWARD}: forward information about the original
+  request/response that would usually not be visible.  If set to
+  \verb|MANGLE|, then \texttt{Host} is translated to
+  \texttt{X-Forwarded-Host}.
+
 \item \texttt{OTHER}: other end-to-end headers not explicitly
   mentioned here
 \item \texttt{ALL}: all of the above

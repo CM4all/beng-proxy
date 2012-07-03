@@ -26,6 +26,7 @@ widget_view_init(struct widget_view *view)
             [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
             [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
             [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
         },
     };
 
@@ -35,6 +36,7 @@ widget_view_init(struct widget_view *view)
             [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
             [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
             [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
         },
     };
 }

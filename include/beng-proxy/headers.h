@@ -67,6 +67,14 @@ enum beng_header_group {
     HEADER_GROUP_OTHER,
 
     /**
+     * Forward information about the original request/response that
+     * would usually not be visible.  If set to
+     * #HEADER_FORWARD_MANGLE, then "Host" is translated to
+     * "X-Forwarded-Host".
+     */
+    HEADER_GROUP_FORWARD,
+
+    /**
      * Internal definition for estimating the size of an array.
      */
     HEADER_GROUP_MAX,
