@@ -704,13 +704,16 @@ widget_http_request(struct pool *pool, struct widget *widget,
     address = widget_address(widget);
     embed->resource_tag = resource_address_id(address, pool);
 
+    struct istream *request_body = widget->from_request.body;
+    widget->from_request.body = NULL;
+
     resource_get(global_http_cache, global_tcp_balancer,
                  global_fcgi_stock, global_was_stock, global_delegate_stock,
                  pool, session_id_low(embed->env->session_id),
                  widget->from_request.method,
                  address,
                  HTTP_STATUS_OK, headers,
-                 widget->from_request.body,
+                 request_body,
                  &widget_response_handler, embed, &embed->async_ref);
 }
 
@@ -764,12 +767,15 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     address = widget_address(widget);
     embed->resource_tag = resource_address_id(address, pool);
 
+    struct istream *request_body = widget->from_request.body;
+    widget->from_request.body = NULL;
+
     resource_get(global_http_cache, global_tcp_balancer,
                  global_fcgi_stock, global_was_stock, global_delegate_stock,
                  pool, session_id_low(embed->env->session_id),
                  widget->from_request.method,
                  address,
                  HTTP_STATUS_OK, headers,
-                 widget->from_request.body,
+                 request_body,
                  &widget_response_handler, embed, &embed->async_ref);
 }
