@@ -164,6 +164,9 @@ session_save_init(const char *path)
 void
 session_save_deinit(void)
 {
+    if (session_save_path == NULL)
+        return;
+
     evtimer_del(&session_save_timer);
 
     session_save();
