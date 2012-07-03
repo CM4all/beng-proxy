@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.0.34) unstable; urgency=low
 
   * session_save: skip shutdown code if saving is not configured
+  * http-server: fix assertion on I/O error during POST
 
  --   
 

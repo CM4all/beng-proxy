@@ -96,7 +96,16 @@ http_server_request_stream_close(istream_t istream)
     assert(connection->request.read_state == READ_BODY);
     assert(!http_body_eof(&connection->request.body_reader));
 
-    socket_wrapper_unschedule_read(&connection->socket);
+    if (socket_wrapper_valid(&connection->socket)) {
+        socket_wrapper_unschedule_read(&connection->socket);
+    } else {
+        /* this happens when there's an error on the socket while
+           reading the request body before the response gets
+           submitted, and this HTTP server library invokes the
+           handler's abort method; the handler will free the request
+           body, but the socket is already closed */
+        assert(connection->request.request == NULL);
+    }
 
     connection->request.read_state = READ_END;
 
