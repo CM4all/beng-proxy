@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4.23) unstable; urgency=low
 
-  * 
+  * widget-http: fix double free bug when POST is aborted
 
  --   
 
