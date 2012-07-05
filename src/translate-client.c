@@ -975,7 +975,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_WIDGET_GROUP:
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_GROUP_CONTAINER packet");
+                                   "malformed TRANSLATE_WIDGET_GROUP packet");
             return false;
         }
 
