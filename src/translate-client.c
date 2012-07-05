@@ -973,13 +973,6 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_WIDGET_GROUP:
-        if (client->transformation == NULL ||
-            client->transformation->type != TRANSFORMATION_PROCESS) {
-            translate_client_error(client,
-                                   "misplaced TRANSLATE_GROUP_CONTAINER packet");
-            return false;
-        }
-
         if (payload == NULL) {
             translate_client_error(client,
                                    "malformed TRANSLATE_GROUP_CONTAINER packet");
