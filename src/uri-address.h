@@ -128,7 +128,8 @@ gcc_malloc
 struct uri_with_address *
 uri_address_insert_args(struct pool *pool,
                         const struct uri_with_address *uwa,
-                        const char *args, size_t length);
+                        const char *args, size_t args_length,
+                        const char *path, size_t path_length);
 
 gcc_malloc
 struct uri_with_address *

@@ -91,14 +91,16 @@ resource_address_insert_query_string_from(struct pool *pool,
 
 /**
  * Duplicate this #resource_address object, and inserts the URI
- * arguments.  If this resource address does not support URI
- * arguments, the original #resource_address pointer is returned.
+ * arguments and the path suffix.  If this resource address does not
+ * support the operation, the original #resource_address pointer may
+ * be returned.
  */
 gcc_pure gcc_malloc
 const struct resource_address *
 resource_address_insert_args(struct pool *pool,
                              const struct resource_address *src,
-                             const char *args, size_t length);
+                             const char *args, size_t args_length,
+                             const char *path, size_t path_length);
 
 /**
  * Check if a "base" URI can be generated automatically from this

@@ -117,10 +117,13 @@ proxy_handler(struct request *request2)
 
     const struct resource_address *address = &tr->address;
     if (request2->translate.response->transparent &&
-        !strref_is_empty(&request2->uri.args))
+        (!strref_is_empty(&request2->uri.args) ||
+         !strref_is_empty(&request2->uri.path_info)))
         address = resource_address_insert_args(request->pool, address,
                                                request2->uri.args.data,
-                                               request2->uri.args.length);
+                                               request2->uri.args.length,
+                                               request2->uri.path_info.data,
+                                               request2->uri.path_info.length);
 
     if (!request2->processor_focus)
         /* forward query string */

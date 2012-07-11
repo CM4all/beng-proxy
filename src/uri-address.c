@@ -179,11 +179,13 @@ uri_address_insert_query_string(struct pool *pool,
 struct uri_with_address *
 uri_address_insert_args(struct pool *pool,
                         const struct uri_with_address *uwa,
-                        const char *args, size_t length)
+                        const char *args, size_t args_length,
+                        const char *path, size_t path_length)
 {
     return uri_address_with_path(pool, uwa,
                                  uri_insert_args(pool, uwa->path,
-                                                 args, length));
+                                                 args, args_length,
+                                                 path, path_length));
 }
 
 struct uri_with_address *

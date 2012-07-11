@@ -110,7 +110,8 @@ resource_address_insert_query_string_from(struct pool *pool,
 const struct resource_address *
 resource_address_insert_args(struct pool *pool,
                              const struct resource_address *src,
-                             const char *args, size_t length)
+                             const char *args, size_t args_length,
+                             const char *path, size_t path_length)
 {
     struct resource_address *dest;
 
@@ -128,7 +129,8 @@ resource_address_insert_args(struct pool *pool,
         dest = p_malloc(pool, sizeof(*dest));
         dest->type = src->type;
         dest->u.http = uri_address_insert_args(pool, src->u.http,
-                                               args, length);
+                                               args, args_length,
+                                               path, path_length);
         return dest;
 
     case RESOURCE_ADDRESS_CGI:
@@ -144,13 +146,15 @@ resource_address_insert_args(struct pool *pool,
 
         if (src->u.cgi.uri != NULL)
             dest->u.cgi.uri = uri_insert_args(pool, src->u.cgi.uri,
-                                              args, length);
+                                              args, args_length,
+                                              path, path_length);
 
         if (src->u.cgi.path_info != NULL)
             dest->u.cgi.path_info =
                 p_strncat(pool,
                           src->u.cgi.path_info, strlen(src->u.cgi.path_info),
-                          ";", (size_t)1, args, length, NULL);
+                          ";", (size_t)1, args, args_length, path, path_length,
+                          NULL);
 
         return dest;
     }
