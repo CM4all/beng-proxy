@@ -51,6 +51,8 @@ lb_connection_new(struct lb_instance *instance,
     connection->instance = instance;
     connection->listener = listener;
 
+    enum istream_direct fd_type = ISTREAM_TCP;
+
     if (ssl_ctx != NULL) {
         int fds[2];
         if (socketpair_cloexec_nonblock(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
@@ -74,6 +76,7 @@ lb_connection_new(struct lb_instance *instance,
         }
 
         fd = fds[1];
+        fd_type = ISTREAM_SOCKET;
     } else
         connection->ssl_filter = NULL;
 
@@ -82,7 +85,7 @@ lb_connection_new(struct lb_instance *instance,
 
     switch (listener->cluster->protocol) {
     case LB_PROTOCOL_HTTP:
-        http_server_connection_new(pool, fd, ISTREAM_TCP,
+        http_server_connection_new(pool, fd, fd_type,
                                    local_address_length > 0
                                    ? (const struct sockaddr *)&local_address
                                    : NULL,
@@ -95,7 +98,7 @@ lb_connection_new(struct lb_instance *instance,
         break;
 
     case LB_PROTOCOL_TCP:
-        lb_tcp_new(connection, fd);
+        lb_tcp_new(connection, fd, fd_type);
         break;
     }
 

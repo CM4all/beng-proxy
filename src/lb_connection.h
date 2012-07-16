@@ -8,6 +8,7 @@
 #define BENG_PROXY_LB_CONNECTION_H
 
 #include "async.h"
+#include "istream-direct.h"
 
 #include <inline/list.h>
 
@@ -42,6 +43,8 @@ struct lb_connection {
     struct {
         struct {
             int fd;
+
+            enum istream_direct type;
 
             struct sink_socket *sink;
         } peers[2];

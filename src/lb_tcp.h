@@ -7,10 +7,13 @@
 #ifndef BENG_PROXY_LB_TCP_H
 #define BENG_PROXY_LB_TCP_H
 
+#include "istream-direct.h"
+
 struct lb_connection;
 
 void
-lb_tcp_new(struct lb_connection *connection, int fd);
+lb_tcp_new(struct lb_connection *connection, int fd,
+           enum istream_direct fd_type);
 
 void
 lb_tcp_close(struct lb_connection *connection);

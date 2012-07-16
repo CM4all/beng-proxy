@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.37) unstable; urgency=low
 
-  * 
+  * merge release 1.4.24
 
  --   
 
@@ -18,7 +18,6 @@ cm4all-beng-proxy (2.0.35) unstable; urgency=low
 
 cm4all-beng-proxy (2.0.34) unstable; urgency=low
 
-  * merge release 1.4.23
   * session_save: skip shutdown code if saving is not configured
   * http-server: fix assertion on I/O error during POST
   * header-forward: new group FORWARD to forward the "Host" header
@@ -283,6 +282,12 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.24) unstable; urgency=low
+
+  * lb: fix splicing with SSL
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 16 Jul 2012 10:32:17 -0000
 
 cm4all-beng-proxy (1.4.23) unstable; urgency=low
 
