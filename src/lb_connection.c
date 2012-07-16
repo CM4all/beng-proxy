@@ -95,7 +95,7 @@ lb_connection_new(struct lb_instance *instance,
         break;
 
     case LB_PROTOCOL_TCP:
-        lb_tcp_new(connection, fd);
+        lb_tcp_new(connection, fd, ISTREAM_TCP);
         break;
     }
 

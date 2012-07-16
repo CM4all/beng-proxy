@@ -230,7 +230,8 @@ lb_tcp_stock_success(int fd, void *ctx)
 
     struct istream *istream =
         istream_socket_new(connection->pool,
-                           connection->tcp.peers[0].fd, ISTREAM_TCP,
+                           connection->tcp.peers[0].fd,
+                           connection->tcp.peers[0].type,
                            &first_istream_socket_handler, connection);
     istream = istream_pipe_new(connection->pool, istream,
                                connection->instance->pipe_stock);
@@ -246,7 +247,8 @@ lb_tcp_stock_success(int fd, void *ctx)
 
     connection->tcp.peers[0].sink =
         sink_socket_new(connection->pool, istream,
-                        connection->tcp.peers[0].fd, ISTREAM_TCP,
+                        connection->tcp.peers[0].fd,
+                        connection->tcp.peers[0].type,
                         &first_sink_socket_handler, connection);
 }
 
@@ -287,9 +289,11 @@ static const struct client_socket_handler lb_tcp_client_socket_handler = {
  */
 
 void
-lb_tcp_new(struct lb_connection *connection, int fd)
+lb_tcp_new(struct lb_connection *connection, int fd,
+           enum istream_direct fd_type)
 {
     connection->tcp.peers[0].fd = fd;
+    connection->tcp.peers[0].type = fd_type;
 
     client_balancer_connect(connection->pool, connection->instance->balancer,
                             0, &connection->listener->cluster->address_list,
