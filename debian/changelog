@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4.24) unstable; urgency=low
 
-  * 
+  * lb: fix splicing with SSL
 
  --   
 
