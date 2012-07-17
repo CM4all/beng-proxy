@@ -1477,6 +1477,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/istream-string.c src/istream-subst.c src/istream-file.c \
 	src/istream-cat.c src/istream-memory.c \
 	src/istream-hold.c src/istream-dechunk.c src/istream-chunked.c \
+	src/istream-html-escape.c src/istream-escape.c \
 	src/header-writer.c src/args.c src/buffered-io.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
@@ -1512,6 +1513,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/istream-string.c src/istream-subst.c src/istream-block.c \
 	src/istream-cat.c src/istream-memory.c src/istream-delayed.c \
 	src/istream-hold.c src/istream-dechunk.c src/istream-chunked.c \
+	src/istream-html-escape.c src/istream-escape.c \
 	src/header-writer.c src/args.c src/buffered-io.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
