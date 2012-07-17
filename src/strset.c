@@ -30,5 +30,5 @@ void
 strset_copy(struct pool *pool, struct strset *d, const struct strset *s)
 {
     strset_for_each_item(item, s)
-        strset_add(pool, d, item->value);
+        strset_add(pool, d, p_strdup(pool, item->value));
 }

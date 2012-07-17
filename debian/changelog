@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.38) unstable; urgency=low
 
-  * 
+  * strset: fix GROUP_CONTAINER false negatives
 
  --   
 
