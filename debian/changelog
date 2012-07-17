@@ -3,7 +3,7 @@ cm4all-beng-proxy (2.0.38) unstable; urgency=low
   * merge release 1.4.25
   * strset: fix GROUP_CONTAINER false negatives
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Jul 2012 16:03:49 -0000
 
 cm4all-beng-proxy (2.0.37) unstable; urgency=low
 
