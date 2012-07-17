@@ -821,6 +821,17 @@ transform_uri_attribute(struct processor *processor,
     if (widget->class == NULL && widget->class_name == NULL)
         return;
 
+    const char *hash = strref_chr(value, '#');
+    struct strref value_buffer, fragment;
+    if (hash != NULL) {
+        /* save the unescaped fragment part of the URI, don't pass it
+           to rewrite_widget_uri() */
+        strref_set2(&fragment, hash, strref_end(value));
+        strref_set2(&value_buffer, value->data, hash);
+        value = &value_buffer;
+    } else
+        strref_clear(&fragment);
+
     istream = rewrite_widget_uri(processor->pool, processor->env->pool,
                                  global_translate_cache,
                                  processor->env->absolute_uri,
@@ -832,8 +843,22 @@ transform_uri_attribute(struct processor *processor,
                                  value, mode, widget == processor->container,
                                  view,
                                  &html_escape_class);
-    if (istream != NULL)
-        replace_attribute_value(processor, attr, istream);
+    if (istream == NULL)
+        return;
+
+    if (!strref_is_empty(&fragment)) {
+        /* escape and append the fragment to the new URI */
+        struct istream *s = istream_memory_new(processor->pool,
+                                               p_memdup(processor->pool,
+                                                        fragment.data,
+                                                        fragment.length),
+                                               fragment.length);
+        s = istream_html_escape_new(processor->pool, s);
+
+        istream = istream_cat_new(processor->pool, istream, s, NULL);
+    }
+
+    replace_attribute_value(processor, attr, istream);
 }
 
 static void

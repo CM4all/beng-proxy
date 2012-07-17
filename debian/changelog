@@ -1,5 +1,6 @@
 cm4all-beng-proxy (2.0.38) unstable; urgency=low
 
+  * merge release 1.4.25
   * strset: fix GROUP_CONTAINER false negatives
 
  --   
@@ -288,6 +289,12 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.25) unstable; urgency=low
+
+  * processor: don't rewrite the fragment part of the URI
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Jul 2012 15:50:06 -0000
 
 cm4all-beng-proxy (1.4.24) unstable; urgency=low
 
