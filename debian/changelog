@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.39) unstable; urgency=low
 
-  * 
+  * merge release 1.4.26
 
  --   
 
@@ -295,6 +295,12 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.26) unstable; urgency=low
+
+  * processor: fix regression, missing NULL check
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Jul 2012 16:55:24 -0000
 
 cm4all-beng-proxy (1.4.25) unstable; urgency=low
 

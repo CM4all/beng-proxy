@@ -821,7 +821,7 @@ transform_uri_attribute(struct processor *processor,
     if (widget->class == NULL && widget->class_name == NULL)
         return;
 
-    const char *hash = strref_chr(value, '#');
+    const char *hash = value != NULL ? strref_chr(value, '#') : NULL;
     struct strref value_buffer, fragment;
     if (hash != NULL) {
         /* save the unescaped fragment part of the URI, don't pass it
