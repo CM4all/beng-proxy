@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4.27) unstable; urgency=low
 
-  * 
+  * lb: fix hanging SSL connection on bulk transfer
 
  --   
 

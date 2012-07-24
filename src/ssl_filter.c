@@ -284,6 +284,8 @@ ssl_filter_thread(void *ctx)
             break;
 
         if ((pfds[1].revents & POLLIN) != 0) {
+            const bool was_empty = fifo_buffer_empty(ssl->from_plain);
+
             ssize_t nbytes = recv_to_buffer(ssl->plain_fd, ssl->from_plain, 65536);
             assert(nbytes != -2);
 
@@ -292,14 +294,27 @@ ssl_filter_thread(void *ctx)
                 ssl->plain_fd = -1;
                 break;
             }
+
+            if (was_empty && !fifo_buffer_empty(ssl->from_plain))
+                /* try decryption again to see if OpenSSL has waits
+                   for more encrypted data from us */
+                pfds[0].revents |= POLLOUT;
         }
 
-        if ((pfds[1].revents & POLLOUT) != 0 &&
-            send_from_buffer(ssl->plain_fd, ssl->from_encrypted) < 0 &&
-            errno != EAGAIN) {
-            close(ssl->plain_fd);
-            ssl->plain_fd = -1;
-            break;
+        if ((pfds[1].revents & POLLOUT) != 0) {
+            const bool was_full = fifo_buffer_full(ssl->from_encrypted);
+
+            if (send_from_buffer(ssl->plain_fd, ssl->from_encrypted) < 0 &&
+                errno != EAGAIN) {
+                close(ssl->plain_fd);
+                ssl->plain_fd = -1;
+                break;
+            }
+
+            if (was_full && !fifo_buffer_full(ssl->from_encrypted))
+                /* try decryption again to see if OpenSSL has more
+                   decrypted data for us */
+                pfds[0].revents |= POLLIN;
         }
 
         if ((pfds[0].revents & POLLIN) != 0) {
