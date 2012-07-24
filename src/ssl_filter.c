@@ -197,6 +197,63 @@ format_issuer_subject_name(struct pool *pool, X509 *cert)
     return format_name(pool, X509_get_issuer_name(cert));
 }
 
+gcc_const
+static bool
+is_ssl_error(SSL *ssl, int ret)
+{
+    switch (SSL_get_error(ssl, ret)) {
+    case SSL_ERROR_NONE:
+    case SSL_ERROR_WANT_READ:
+    case SSL_ERROR_WANT_WRITE:
+    case SSL_ERROR_WANT_CONNECT:
+    case SSL_ERROR_WANT_ACCEPT:
+        return false;
+
+    default:
+        return true;
+    }
+}
+
+/**
+ * @return false on error
+ */
+static bool
+ssl_decrypt(SSL *ssl, struct fifo_buffer *buffer)
+{
+    size_t length;
+    void *data = fifo_buffer_write(buffer, &length);
+    if (buffer == NULL)
+        return true;
+
+    ERR_clear_error();
+    int ret = SSL_read(ssl, data, length);
+    if (ret > 0) {
+        fifo_buffer_append(buffer, ret);
+        return true;
+    } else
+        return ret < 0 && !is_ssl_error(ssl, ret);
+}
+
+/**
+ * @return false on error
+ */
+static bool
+ssl_encrypt(SSL *ssl, struct fifo_buffer *buffer)
+{
+    size_t length;
+    const void *data = fifo_buffer_read(buffer, &length);
+    if (buffer == NULL)
+        return true;
+
+    ERR_clear_error();
+    int ret = SSL_write(ssl, data, length);
+    if (ret > 0) {
+        fifo_buffer_consume(buffer, ret);
+        return true;
+    } else
+        return ret < 0 && !is_ssl_error(ssl, ret);
+}
+
 static void *
 ssl_filter_thread(void *ctx)
 {
@@ -271,6 +328,8 @@ ssl_filter_thread(void *ctx)
             break;
 
         if ((pfds[1].revents & POLLIN) != 0) {
+            const bool was_empty = fifo_buffer_empty(ssl->from_plain);
+
             ssize_t nbytes = recv_to_buffer(ssl->plain_fd, ssl->from_plain, 65536);
             assert(nbytes != -2);
 
@@ -279,27 +338,33 @@ ssl_filter_thread(void *ctx)
                 ssl->plain_fd = -1;
                 break;
             }
+
+            if (was_empty && !fifo_buffer_empty(ssl->from_plain))
+                /* try decryption again to see if OpenSSL has waits
+                   for more encrypted data from us */
+                pfds[0].revents |= POLLOUT;
         }
 
-        if ((pfds[1].revents & POLLOUT) != 0 &&
-            send_from_buffer(ssl->plain_fd, ssl->from_encrypted) < 0 &&
-            errno != EAGAIN) {
-            close(ssl->plain_fd);
-            ssl->plain_fd = -1;
-            break;
+        if ((pfds[1].revents & POLLOUT) != 0) {
+            const bool was_full = fifo_buffer_full(ssl->from_encrypted);
+
+            if (send_from_buffer(ssl->plain_fd, ssl->from_encrypted) < 0 &&
+                errno != EAGAIN) {
+                close(ssl->plain_fd);
+                ssl->plain_fd = -1;
+                break;
+            }
+
+            if (was_full && !fifo_buffer_full(ssl->from_encrypted))
+                /* try decryption again to see if OpenSSL has more
+                   decrypted data for us */
+                pfds[0].revents |= POLLIN;
         }
 
         if ((pfds[0].revents & POLLIN) != 0) {
-            size_t length;
-            void *buffer = fifo_buffer_write(ssl->from_encrypted, &length);
+            assert(!fifo_buffer_full(ssl->from_encrypted));
 
-            ERR_clear_error();
-            int ret = SSL_read(ssl->ssl, buffer, length);
-            if (ret > 0)
-                fifo_buffer_append(ssl->from_encrypted, ret);
-            else if (ret == 0 ||
-                     (SSL_get_error(ssl->ssl, ret) != SSL_ERROR_WANT_READ &&
-                      SSL_get_error(ssl->ssl, ret) != SSL_ERROR_WANT_WRITE)) {
+            if (!ssl_decrypt(ssl->ssl, ssl->from_encrypted)) {
                 close(ssl->encrypted_fd);
                 ssl->encrypted_fd = -1;
                 break;
@@ -307,16 +372,9 @@ ssl_filter_thread(void *ctx)
         }
 
         if ((pfds[0].revents & POLLOUT) != 0) {
-            size_t length;
-            const void *buffer = fifo_buffer_read(ssl->from_plain, &length);
+            assert(!fifo_buffer_empty(ssl->from_plain));
 
-            ERR_clear_error();
-            int ret = SSL_write(ssl->ssl, buffer, length);
-            if (ret > 0)
-                fifo_buffer_consume(ssl->from_plain, ret);
-            else if (ret == 0 ||
-                       (SSL_get_error(ssl->ssl, ret) != SSL_ERROR_WANT_READ &&
-                        SSL_get_error(ssl->ssl, ret) != SSL_ERROR_WANT_WRITE)) {
+            if (!ssl_encrypt(ssl->ssl, ssl->from_plain)) {
                 close(ssl->encrypted_fd);
                 ssl->encrypted_fd = -1;
                 break;
