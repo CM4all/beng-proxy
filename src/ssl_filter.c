@@ -248,6 +248,7 @@ ssl_filter_thread(void *ctx)
         if ((pfds[0].revents & POLLIN) != 0) {
             size_t length;
             void *buffer = fifo_buffer_write(ssl->from_encrypted, &length);
+            assert(buffer != NULL);
 
             ERR_clear_error();
             int ret = SSL_read(ssl->ssl, buffer, length);
@@ -265,6 +266,7 @@ ssl_filter_thread(void *ctx)
         if ((pfds[0].revents & POLLOUT) != 0) {
             size_t length;
             const void *buffer = fifo_buffer_read(ssl->from_plain, &length);
+            assert(buffer != NULL);
 
             ERR_clear_error();
             int ret = SSL_write(ssl->ssl, buffer, length);
