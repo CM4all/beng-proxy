@@ -242,7 +242,9 @@ pool foo {
 }
 \end{verbatim*}
 
-The ordering of nodes matters.
+The ordering of nodes matters.  \emph{beng-lb} assumes that the first
+node runs with \texttt{--cluster-node=0}, the second node runs with
+\texttt{--cluster-node=1} and so on.
 
 \section{Running}
 
