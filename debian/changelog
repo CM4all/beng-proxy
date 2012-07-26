@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.41) unstable; urgency=low
 
-  * 
+  * session: fix bogus assertion failure when loading expired session
 
  --   
 

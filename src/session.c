@@ -57,8 +57,6 @@ session_allocate(struct dpool *pool)
 void
 session_destroy(struct session *session)
 {
-    assert(crash_in_unsafe());
-
     lock_destroy(&session->lock);
     dpool_destroy(session->pool);
 }
