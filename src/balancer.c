@@ -195,6 +195,7 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
 
     case STICKY_SESSION_MODULO:
     case STICKY_COOKIE:
+    case STICKY_JVM_ROUTE:
         if (session != 0)
             return next_sticky_address_checked(list, session);
         break;

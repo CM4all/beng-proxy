@@ -34,6 +34,11 @@ enum sticky_mode {
      * its requests to the same cluster node.
      */
     STICKY_COOKIE,
+
+    /**
+     * Tomcat with jvmRoute in cookie.
+     */
+    STICKY_JVM_ROUTE,
 };
 
 #endif

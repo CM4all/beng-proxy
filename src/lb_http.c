@@ -10,6 +10,7 @@
 #include "lb_config.h"
 #include "lb_session.h"
 #include "lb_cookie.h"
+#include "lb_jvm_route.h"
 #include "lb_headers.h"
 #include "ssl_filter.h"
 #include "address-envelope.h"
@@ -275,6 +276,10 @@ lb_http_connection_request(struct http_server_request *request,
             request2->new_cookie = session_sticky =
                 generate_cookie(&cluster->address_list);
 
+        break;
+
+    case STICKY_JVM_ROUTE:
+        session_sticky = lb_jvm_route_get(request->headers, cluster);
         break;
     }
 

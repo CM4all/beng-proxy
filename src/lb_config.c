@@ -438,6 +438,7 @@ config_parser_create_node(struct config_parser *parser, char *p,
         p_malloc(parser->config->pool, sizeof(*node));
     node->name = p_strdup(parser->config->pool, name);
     node->envelope = NULL;
+    node->jvm_route = NULL;
 
     parser->state = STATE_NODE;
     parser->node = node;
@@ -484,6 +485,19 @@ config_parser_feed_node(struct config_parser *parser, char *p,
             if (node->envelope == NULL)
                 return throw(error_r, "Could not parse node address");
 
+            return true;
+        } else if (strcmp(word, "jvm_route") == 0) {
+            const char *value = next_value(&p);
+            if (value == NULL)
+                return throw(error_r, "Value expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            if (node->jvm_route != NULL)
+                return throw(error_r, "Duplicate jvm_route");
+
+            node->jvm_route = p_strdup(parser->config->pool, value);
             return true;
         } else
             return throw(error_r, "Unknown option");
@@ -656,6 +670,8 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 cluster->sticky_mode = STICKY_SESSION_MODULO;
             else if (strcmp(sticky_mode, "cookie") == 0)
                 cluster->sticky_mode = STICKY_COOKIE;
+            else if (strcmp(sticky_mode, "jvm_route") == 0)
+                cluster->sticky_mode = STICKY_JVM_ROUTE;
             else
                 return throw(error_r, "Unknown sticky mode");
 
@@ -1138,4 +1154,22 @@ lb_config_find_listener(const struct lb_config *config, const char *name)
             return listener;
 
     return NULL;
+}
+
+int
+lb_config_find_jvm_route(const struct lb_cluster_config *config,
+                         const char *jvm_route)
+{
+    assert(config != NULL);
+    assert(jvm_route != NULL);
+
+    for (unsigned i = 0; i < config->num_members; ++i) {
+        const struct lb_node_config *node = config->members[i].node;
+        assert(node != NULL);
+
+        if (node->jvm_route != NULL && strcmp(node->jvm_route, jvm_route) == 0)
+            return i;
+    }
+
+    return -1;
 }

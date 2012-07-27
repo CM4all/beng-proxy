@@ -171,7 +171,41 @@ Other sticky modes:
   session is used to calculate the node
 \item \texttt{cookie}: a random cookie is generated, and the node is
   chosen from the cookie that is received from the client
+\item \verb|jvm_route|: Tomcat's JSESSIONID is parsed, and its suffix
+  is compared against the \verb|jvm_route| of all member nodes
 \end{itemize}
+
+\subsubsection{Tomcat}
+
+For the \verb|jvm_route| mode, both \emph{beng-lb} and Tomcat must be
+configured properly.  Example \texttt{lb.conf}:
+
+\begin{verbatim*}
+node first {
+   address 192.168.1.101
+   jvm_route jvm1
+}
+
+node second {
+   address 192.168.1.102
+   jvm_route jvm2
+}
+
+pool demo {
+  protocol "http"
+  member "second:http"
+  member "secondd:http"
+  sticky "jvm_route"
+}
+\end{verbatim*}
+
+Example \texttt{server.xml} on the ``first'' Tomcat:
+
+\begin{verbatim*}
+<Engine name="Catalina" defaultHost="localhost" jvmRoute="jvm1">
+\end{verbatim*}
+
+The \verb|jvmRoute| settings must match in \emph{beng-lb} and Tomcat.
 
 \subsection{SSL/TLS}
 

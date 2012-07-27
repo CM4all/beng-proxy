@@ -72,6 +72,12 @@ struct lb_node_config {
     const char *name;
 
     const struct address_envelope *envelope;
+
+    /**
+     * The Tomcat "jvmRoute" setting of this node.  It is used for
+     * #STICKY_JVM_ROUTE.
+     */
+    const char *jvm_route;
 };
 
 struct lb_member_config {
@@ -181,5 +187,14 @@ lb_config_find_cluster(const struct lb_config *config, const char *name);
 G_GNUC_PURE
 const struct lb_listener_config *
 lb_config_find_listener(const struct lb_config *config, const char *name);
+
+/**
+ * Returns the member index of the node with the specified jvm_route
+ * value, or -1 if not found.
+ */
+G_GNUC_PURE
+int
+lb_config_find_jvm_route(const struct lb_cluster_config *config,
+                         const char *jvm_route);
 
 #endif
