@@ -2,7 +2,7 @@ cm4all-beng-proxy (2.1) unstable; urgency=low
 
   * lb: add sticky mode "jvm_route" (Tomcat)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 30 Jul 2012 15:53:43 -0000
 
 cm4all-beng-proxy (2.0.41) unstable; urgency=low
 
