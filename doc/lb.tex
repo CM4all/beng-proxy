@@ -82,30 +82,18 @@ Example:
 
 \begin{verbatim*}
 pool demo {
-  sticky "failover"
   protocol "http"
   member "foo:http"
   member "bar:http"
 }
 \end{verbatim*}
 
-Requests to this pool are always sent to the node named ``foo''.  The
-second node ``bar'' is only used when ``foo'' fails (failover).
-
-Other sticky modes:
-
-\begin{itemize}
-\item \texttt{none}: simple round-robin
-\item \texttt{failover}: the first non-failing node is used
-\item \texttt{session\_modulo}: the modulo of the \texttt{beng-proxy}
-  session is used to calculate the node
-\item \texttt{cookie}: a random cookie is generated, and the node is
-  chosen from the cookie that is received from the client
-\end{itemize}
-
 Instead of referring to a previously defined node name, you can
 configure an IP address instead, and \texttt{beng-lb} creates a new
 node implicitly.
+
+The \verb|sticky| setting specifies how a node is chosen for a
+request, see \ref{sticky} for details.
 
 When all pool members fail, an error message is generated.  You can
 override that behaviour by configuring a ``fallback'':
@@ -155,6 +143,35 @@ listener port80 {
 
 A listener has a name, an socket address to bind to (including the
 port).  To handle requests, it is associated with exactly one pool.
+
+\subsection{Sticky}
+\label{sticky}
+
+A pool's \verb|sticky| setting specifies how a node is chosen for a
+request.  Example:
+
+\begin{verbatim*}
+pool demo {
+  protocol "http"
+  member "foo:http"
+  member "bar:http"
+  sticky "failover"
+}
+\end{verbatim*}
+
+Requests to this pool are always sent to the node named ``foo''.  The
+second node ``bar'' is only used when ``foo'' fails.
+
+Other sticky modes:
+
+\begin{itemize}
+\item \texttt{none}: simple round-robin (the default mode)
+\item \texttt{failover}: the first non-failing node is used
+\item \texttt{session\_modulo}: the modulo of the \texttt{beng-proxy}
+  session is used to calculate the node
+\item \texttt{cookie}: a random cookie is generated, and the node is
+  chosen from the cookie that is received from the client
+\end{itemize}
 
 \subsection{SSL/TLS}
 
