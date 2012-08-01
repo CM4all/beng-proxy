@@ -52,3 +52,16 @@ function beng_widget_uri(base_uri, session_id, frame, focus, mode,
 
     return uri;
 }
+
+(window.cm4all && window.cm4all.widgets) || (function() {
+    window.cm4all = window.cm4all || {};
+    window.cm4all.widgets = window.cm4all.widgets || {};
+    window.cm4all.widgets.register = window.cm4all.widgets.register || function(base, session, frame, path) {
+        window.cm4all.widgets[path] = {
+            url: function(pathInfo, options) {
+                options = options || {};
+                return beng_widget_uri(base, session, frame, path, options.mode || "partial", pathInfo || '');
+            }
+        };
+    };
+})();
