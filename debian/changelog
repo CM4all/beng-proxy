@@ -2,7 +2,7 @@ cm4all-beng-proxy (2.0.42) unstable; urgency=low
 
   * js: new higher-level API
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 01 Aug 2012 11:32:28 -0000
 
 cm4all-beng-proxy (2.0.41) unstable; urgency=low
 
