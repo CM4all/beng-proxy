@@ -1,7 +1,7 @@
 #include "istream.h"
 #include "istream-replace.h"
 
-#define EXPECTED_RESULT "abcfooefghijklmnopqrstuvwxyz"
+#define EXPECTED_RESULT "abcfoofghijklmnopqrstuvwxyz"
 
 static istream_t
 create_input(struct pool *pool)
@@ -16,6 +16,7 @@ create_test(struct pool *pool, istream_t input)
     istream = istream_replace_new(pool, istream);
     istream_replace_add(istream, 3, 3, input);
     istream_replace_extend(istream, 3, 4);
+    istream_replace_extend(istream, 3, 5);
     istream_replace_finish(istream);
     return istream;
 }
