@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4.28) unstable; urgency=low
 
-  * 
+  * worker: reinitialize signal handlers after fork failure
 
  --   
 
