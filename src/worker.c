@@ -139,6 +139,9 @@ worker_new(struct instance *instance)
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
 
+        init_signals(instance);
+        children_event_add();
+
         if (distribute_socket >= 0)
             close(distribute_socket);
 
