@@ -64,12 +64,17 @@ http_server_parse_request_line(struct http_server_connection *connection,
                    line[4] == ' ')) {
             method = HTTP_METHOD_POST;
             line += 5;
-        }
-
-        if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
+        } else if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
             method = HTTP_METHOD_PUT;
             line += 4;
+        } else if (memcmp(line + 1, "ROPFIND ", 8) == 0) {
+            method = HTTP_METHOD_PROPFIND;
+            line += 9;
+        } else if (memcmp(line + 1, "ROPPATCH ", 9) == 0) {
+            method = HTTP_METHOD_PROPPATCH;
+            line += 10;
         }
+
         break;
 
     case 'H':
@@ -77,6 +82,51 @@ http_server_parse_request_line(struct http_server_connection *connection,
                    line[4] == ' ')) {
             method = HTTP_METHOD_HEAD;
             line += 5;
+        }
+        break;
+
+    case 'O':
+        if (memcmp(line + 1, "PTIONS ", 7) == 0) {
+            method = HTTP_METHOD_OPTIONS;
+            line += 8;
+        }
+        break;
+
+    case 'T':
+        if (memcmp(line + 1, "RACE ", 5) == 0) {
+            method = HTTP_METHOD_TRACE;
+            line += 6;
+        }
+        break;
+
+    case 'M':
+        if (memcmp(line + 1, "KCOL ", 5) == 0) {
+            method = HTTP_METHOD_MKCOL;
+            line += 6;
+        } else if (memcmp(line + 1, "OVE ", 4) == 0) {
+            method = HTTP_METHOD_MOVE;
+            line += 5;
+        }
+        break;
+
+    case 'C':
+        if (memcmp(line + 1, "OPY ", 4) == 0) {
+            method = HTTP_METHOD_COPY;
+            line += 5;
+        }
+        break;
+
+    case 'L':
+        if (memcmp(line + 1, "OCK ", 4) == 0) {
+            method = HTTP_METHOD_LOCK;
+            line += 5;
+        }
+        break;
+
+    case 'U':
+        if (memcmp(line + 1, "NLOCK ", 6) == 0) {
+            method = HTTP_METHOD_UNLOCK;
+            line += 7;
         }
         break;
     }

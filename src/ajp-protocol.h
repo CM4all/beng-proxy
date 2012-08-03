@@ -25,6 +25,13 @@ typedef enum {
     AJP_METHOD_PUT = 5,
     AJP_METHOD_DELETE = 6,
     AJP_METHOD_TRACE = 7,
+    AJP_METHOD_PROPFIND = 8,
+    AJP_METHOD_PROPPATCH = 9,
+    AJP_METHOD_MKCOL = 10,
+    AJP_METHOD_COPY = 11,
+    AJP_METHOD_MOVE = 12,
+    AJP_METHOD_LOCK = 13,
+    AJP_METHOD_UNLOCK = 14,
 } ajp_method_t;
 
 enum ajp_header_code {
@@ -95,6 +102,33 @@ to_ajp_method(http_method_t method)
 
     case HTTP_METHOD_DELETE:
         return AJP_METHOD_DELETE;
+
+    case HTTP_METHOD_OPTIONS:
+        return AJP_METHOD_OPTIONS;
+
+    case HTTP_METHOD_TRACE:
+        return AJP_METHOD_TRACE;
+
+    case HTTP_METHOD_PROPFIND:
+        return AJP_METHOD_PROPFIND;
+
+    case HTTP_METHOD_PROPPATCH:
+        return AJP_METHOD_PROPPATCH;
+
+    case HTTP_METHOD_MKCOL:
+        return AJP_METHOD_MKCOL;
+
+    case HTTP_METHOD_COPY:
+        return AJP_METHOD_COPY;
+
+    case HTTP_METHOD_MOVE:
+        return AJP_METHOD_MOVE;
+
+    case HTTP_METHOD_LOCK:
+        return AJP_METHOD_LOCK;
+
+    case HTTP_METHOD_UNLOCK:
+        return AJP_METHOD_UNLOCK;
 
     case HTTP_METHOD_NULL:
     case HTTP_METHOD_INVALID:
