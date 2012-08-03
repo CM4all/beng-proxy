@@ -678,6 +678,9 @@ istream_replace_extend(struct istream *istream, G_GNUC_UNUSED off_t start, off_t
     assert(end >= substitution->end);
 
     substitution->end = end;
+#ifndef NDEBUG
+    replace->last_substitution_end = end;
+#endif
 }
 
 void
