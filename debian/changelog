@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.1.2) unstable; urgency=low
 
-  * 
+  * support extended HTTP status codes from RFC 6585 and WebDAV
 
  --   
 
