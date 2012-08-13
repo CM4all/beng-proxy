@@ -73,21 +73,22 @@ generate_cookie(const struct address_list *list)
 {
     assert(list->size >= 2);
 
-    for (unsigned i = list->size;; --i) {
-        unsigned n = lb_cookie_generate(list->size);
-        assert(n >= 1 && n <= list->size);
+    const unsigned first = lb_cookie_generate(list->size);
 
-        if (i == 0)
-            /* all nodes have failed - choose a random (failed)
-               node */
-            return n;
-
+    unsigned i = first;
+    do {
+        assert(i >= 1 && i <= list->size);
         const struct address_envelope *envelope =
-            list->addresses[n % list->size];
+            list->addresses[i % list->size];
         if (!failure_check(&envelope->address, envelope->length) &&
             bulldog_check(&envelope->address, envelope->length))
-            return n;
-    }
+            return i;
+
+        i = lb_cookie_next(list->size, i);
+    } while (i != first);
+
+    /* all nodes have failed */
+    return first;
 }
 
 /**
