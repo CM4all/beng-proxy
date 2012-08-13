@@ -129,6 +129,7 @@ failure_status_to_string(enum failure_status status)
 
     case FAILURE_RESPONSE:
     case FAILURE_FAILED:
+    case FAILURE_MONITOR:
         break;
     }
 

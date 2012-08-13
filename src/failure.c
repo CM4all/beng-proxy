@@ -63,13 +63,21 @@ failure_deinit(void)
     pool_unref(fl.pool);
 }
 
+gcc_const
+static inline bool
+failure_status_can_expire(enum failure_status status)
+{
+    return status != FAILURE_MONITOR;
+}
+
 gcc_pure
 static inline bool
 failure_is_expired(const struct failure *failure)
 {
     assert(failure != NULL);
 
-    return is_expired(failure->expires);
+    return failure_status_can_expire(failure->status) &&
+        is_expired(failure->expires);
 }
 
 void

@@ -35,6 +35,12 @@ enum failure_status {
      * Host has failed.
      */
     FAILURE_FAILED,
+
+    /**
+     * The failure was submitted by a "monitor", and will not expire
+     * until the monitor
+     */
+    FAILURE_MONITOR,
 };
 
 void
