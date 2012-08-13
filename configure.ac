@@ -195,8 +195,8 @@ AM_CONDITIONAL(GPROF, test x$enable_gprof = xyes)
 AC_ARG_ENABLE(unit-test,
 	AS_HELP_STRING([--enable-unit-test],
 		[Enable the unit test suite]),,
-	enable_test=$enable_debug)
-AM_CONDITIONAL(TEST, test x$enable_test = xyes)
+	enable_unit_test=$enable_debug)
+AM_CONDITIONAL(TEST, test x$enable_unit_test = xyes)
 
 dnl
 dnl Output files
