@@ -123,3 +123,21 @@ bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
 
     return strcmp(value, "alive") == 0;
 }
+
+bool
+bulldog_is_fading(const struct sockaddr *addr, socklen_t addrlen)
+{
+    const char *path = bulldog_node_path(addr, addrlen, "graceful");
+    if (path == NULL)
+        /* disabled */
+        return false;
+
+    char buffer[32];
+    const char *value = read_first_line(path, buffer, sizeof(buffer));
+    if (value == NULL)
+        return false;
+
+    daemon_log(5, "bulldog: %s='%s'\n", path, value);
+
+    return strcmp(value, "1") == 0;
+}

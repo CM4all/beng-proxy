@@ -46,11 +46,20 @@ check_failure(const struct address_envelope *envelope, bool allow_fade)
     return status == FAILURE_OK;
 }
 
+gcc_pure
+static bool
+check_bulldog(const struct address_envelope *envelope, bool allow_fade)
+{
+    return bulldog_check(&envelope->address, envelope->length) &&
+        (allow_fade ||
+         !bulldog_is_fading(&envelope->address, envelope->length));
+}
+
 static bool
 check_envelope(const struct address_envelope *envelope, bool allow_fade)
 {
     return check_failure(envelope, allow_fade) &&
-        bulldog_check(&envelope->address, envelope->length);
+        check_bulldog(envelope, allow_fade);
 }
 
 static const struct address_envelope *
