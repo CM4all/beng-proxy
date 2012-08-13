@@ -72,18 +72,20 @@ generate_cookie(const struct address_list *list)
 {
     assert(list->size >= 2);
 
-    for (unsigned i = list->size; i > 0; --i) {
+    for (unsigned i = list->size;; --i) {
         unsigned n = lb_cookie_generate(list->size);
         assert(n >= 1 && n <= list->size);
+
+        if (i == 0)
+            /* all nodes have failed - choose a random (failed)
+               node */
+            return n;
 
         const struct address_envelope *envelope =
             list->addresses[n % list->size];
         if (!failure_check(&envelope->address, envelope->length))
             return n;
     }
-
-    /* failure */
-    return 0;
 }
 
 /**
