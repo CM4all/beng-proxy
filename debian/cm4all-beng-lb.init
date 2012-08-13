@@ -48,6 +48,7 @@ case "$1" in
             $OPTIONS
 	log_end_msg $?
 	;;
+
     stop)
 	log_begin_msg "Stopping CM4all BENG load balancer daemon"
 	start-stop-daemon --stop --quiet \
@@ -57,10 +58,12 @@ case "$1" in
             --exec /usr/sbin/cm4all-beng-lb
 	log_end_msg $?
 	;;
+
     restart|force-reload)
 	$0 stop
 	$0 start
 	;;
+
     *)
 	log_success_msg "Usage: /etc/init.d/cm4all-beng-lb {start|stop|force-reload|restart}"
 	exit 1
