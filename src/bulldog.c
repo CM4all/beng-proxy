@@ -71,22 +71,47 @@ bulldog_node_path(const struct sockaddr *address, socklen_t address_size,
     return bulldog.path;
 }
 
+gcc_pure
+static const char *
+read_first_line(const char *path, char *buffer, size_t buffer_size)
+{
+    assert(path != NULL);
+    assert(buffer != NULL);
+    assert(buffer_size > 0);
+
+    int fd = open(path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
+    if (fd < 0)
+        return NULL;
+
+    ssize_t nbytes = read(fd, buffer, buffer_size - 1);
+    if (nbytes < 0)
+        return NULL;
+
+    close(fd);
+
+    /* use only the first line */
+    char *p = memchr(buffer, '\n', nbytes);
+    if (p == NULL)
+        p = buffer + nbytes;
+
+    *p = 0;
+
+    return buffer;
+}
+
 bool
 bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
 {
-    int fd;
-    ssize_t nbytes;
-    char buffer[32], *p;
-
     const char *path = bulldog_node_path(addr, addrlen, "status");
     if (path == NULL)
         /* disabled */
         return true;
 
-    fd = open(path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
-    if (fd < 0) {
+    char buffer[32];
+    const char *value = read_first_line(path, buffer, sizeof(buffer));
+    if (value == NULL) {
         if (errno != ENOENT)
-            daemon_log(2, "Failed to open %s: %s\n",
+            daemon_log(2, "Failed to read %s: %s\n",
                        path, strerror(errno));
         else
             daemon_log(4, "No such bulldog-tyke status file: %s\n",
@@ -94,24 +119,7 @@ bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
         return true;
     }
 
-    nbytes = read(fd, buffer, sizeof(buffer));
-    if (nbytes < 0) {
-        daemon_log(2, "Failed to read %s: %s\n",
-                   path, strerror(errno));
-        close(fd);
-        return true;
-    }
+    daemon_log(5, "bulldog: %s='%s'\n", path, value);
 
-    close(fd);
-
-    /* use only the first line */
-    p = memchr(buffer, '\n', nbytes);
-    if (p == NULL)
-        p = buffer + nbytes;
-
-    *p = 0;
-
-    daemon_log(5, "bulldog: %s='%s'\n", path, buffer);
-
-    return strcmp(buffer, "alive") == 0;
+    return strcmp(value, "alive") == 0;
 }
