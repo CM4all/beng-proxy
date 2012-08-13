@@ -132,7 +132,6 @@ AC_ARG_ENABLE(debug,
 	AS_HELP_STRING([--disable-debug],
 		[Disable debugging (default: enabled)]),,
 	enable_debug=yes)
-AM_CONDITIONAL(TEST, test x$enable_test = xyes)
 
 if test x$enable_debug = xyes; then
 	AM_CPPFLAGS="$AM_CPPFLAGS -DPOISON"
