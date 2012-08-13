@@ -128,7 +128,9 @@ lb_monitor_new(struct pool *pool, const char *name,
     async_ref_clear(&monitor->async_ref);
     monitor->state = true;
 
-    evtimer_add(&monitor->timer_event, &monitor->interval);
+    static const struct timeval immediately = { .tv_sec = 0 };
+    evtimer_add(&monitor->timer_event, &immediately);
+
     return monitor;
 }
 
