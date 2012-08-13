@@ -206,6 +206,8 @@ Example \texttt{server.xml} on the ``first'' Tomcat:
 \end{verbatim*}
 
 The \verb|jvmRoute| settings must match in \emph{beng-lb} and Tomcat.
+It is allowed to set \verb|jvm_route| in a node that is used in pools
+without the according \verb|sticky| setting.
 
 \subsection{SSL/TLS}
 
