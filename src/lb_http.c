@@ -25,6 +25,7 @@
 #include "access-log.h"
 #include "strmap.h"
 #include "failure.h"
+#include "bulldog.h"
 
 #include <http/status.h>
 #include <daemon/log.h>
@@ -83,7 +84,8 @@ generate_cookie(const struct address_list *list)
 
         const struct address_envelope *envelope =
             list->addresses[n % list->size];
-        if (!failure_check(&envelope->address, envelope->length))
+        if (!failure_check(&envelope->address, envelope->length) &&
+            bulldog_check(&envelope->address, envelope->length))
             return n;
     }
 }
