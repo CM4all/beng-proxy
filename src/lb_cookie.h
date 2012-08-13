@@ -16,7 +16,10 @@ unsigned
 lb_cookie_get(const struct strmap *request_headers);
 
 /**
- * Extract a node cookie from the request headers.
+ * Select a random worker.
+ *
+ * @param n the number of nodes in the cluster
+ * @return a random number between 1 and n (both including)
  */
 unsigned
 lb_cookie_generate(unsigned n);
