@@ -37,19 +37,19 @@ struct balancer {
 };
 
 static bool
-check_failure(const struct address_envelope *envelope, bool with_session)
+check_failure(const struct address_envelope *envelope, bool allow_fade)
 {
     enum failure_status status = failure_get_status(&envelope->address,
                                                     envelope->length);
-    if (status == FAILURE_FADE && with_session)
+    if (status == FAILURE_FADE && allow_fade)
         status = FAILURE_OK;
     return status == FAILURE_OK;
 }
 
 static bool
-check_envelope(const struct address_envelope *envelope, bool with_session)
+check_envelope(const struct address_envelope *envelope, bool allow_fade)
 {
-    return check_failure(envelope, with_session) &&
+    return check_failure(envelope, allow_fade) &&
         bulldog_check(&envelope->address, envelope->length);
 }
 
@@ -60,7 +60,7 @@ next_failover_address(const struct address_list *list)
 
     for (unsigned i = 0; i < list->size; ++i) {
         const struct address_envelope *envelope = list->addresses[i];
-        if (check_envelope(envelope, false))
+        if (check_envelope(envelope, true))
             return envelope;
     }
 
@@ -85,7 +85,7 @@ next_address(struct balancer_item *item)
 }
 
 static const struct address_envelope *
-next_address_checked(struct balancer_item *item)
+next_address_checked(struct balancer_item *item, bool allow_fade)
 {
     const struct address_envelope *first = next_address(item);
     if (first == NULL)
@@ -93,7 +93,7 @@ next_address_checked(struct balancer_item *item)
 
     const struct address_envelope *ret = first;
     do {
-        if (check_envelope(ret, false))
+        if (check_envelope(ret, allow_fade))
             return ret;
 
         ret = next_address(item);
@@ -110,18 +110,18 @@ next_sticky_address_checked(const struct address_list *al, unsigned session)
     assert(al->size >= 2);
 
     unsigned i = session % al->size;
-    bool with_session = true;
+    bool allow_fade = true;
 
     const struct address_envelope *first = address_list_get_n(al, i);
     assert(first != NULL);
     const struct address_envelope *ret = first;
     do {
-        if (check_envelope(ret, with_session))
+        if (check_envelope(ret, allow_fade))
             return ret;
 
         /* only the first iteration is allowed to override
            FAILURE_FADE */
-        with_session = false;
+        allow_fade = false;
 
         ++i;
         if (i >= al->size)
@@ -216,7 +216,7 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
         cache_put(balancer->cache, p_strdup(pool, key), &item->item);
     }
 
-    return next_address_checked(item);
+    return next_address_checked(item, list->sticky_mode == STICKY_NONE);
 }
 
 void
