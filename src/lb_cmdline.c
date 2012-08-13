@@ -35,6 +35,11 @@ static void usage(void) {
 #endif
          " -q             be quiet\n"
 #ifdef __GLIBC__
+         " --check        check configuration file syntax\n"
+#else
+         " -C             check configuration file syntax\n"
+#endif
+#ifdef __GLIBC__
          " --logger program\n"
 #endif
          " -l program     specifies an error logger program (executed by /bin/sh)\n"
@@ -176,6 +181,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
         {"version", 0, NULL, 'V'},
         {"verbose", 0, NULL, 'v'},
         {"quiet", 0, NULL, 'q'},
+        {"check", 0, NULL, 'C'},
         {"logger", 1, NULL, 'l'},
         {"access-logger", 1, NULL, 'A'},
         {"no-daemon", 0, NULL, 'D'},
@@ -197,10 +203,10 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqDP:l:A:u:g:U:WB:s:",
+        ret = getopt_long(argc, argv, "hVvqCDP:l:A:u:g:U:WB:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqDP:l:A:u:g:U:WB:s:");
+        ret = getopt(argc, argv, "hVvqCDP:l:A:u:g:U:WB:s:");
 #endif
         if (ret == -1)
             break;
@@ -220,6 +226,10 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
 
         case 'q':
             daemon_log_config.verbose = 0;
+            break;
+
+        case 'C':
+            config->check = true;
             break;
 
         case 'D':

@@ -73,6 +73,12 @@ struct config {
     unsigned cluster_size, cluster_node;
 
     /**
+     * If true, then the environment (e.g. the configuration file) is
+     * checked, and the process exits.
+     */
+    bool check;
+
+    /**
      * Use the splice() system call?
      */
     bool enable_splice;

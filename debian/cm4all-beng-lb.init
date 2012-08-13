@@ -64,8 +64,21 @@ case "$1" in
 	$0 start
 	;;
 
+    check)
+        exec /usr/sbin/cm4all-beng-lb \
+            --user "$DAEMON_USER" \
+            $OPTIONS \
+            --check
+	;;
+
+    checkrestart)
+	$0 check || exit $?
+	$0 restart
+	;;
+
+
     *)
-	log_success_msg "Usage: /etc/init.d/cm4all-beng-lb {start|stop|force-reload|restart}"
+	log_success_msg "Usage: /etc/init.d/cm4all-beng-lb {start|stop|force-reload|restart|check|checkrestart}"
 	exit 1
 	;;
 esac
