@@ -63,6 +63,15 @@ failure_deinit(void)
     pool_unref(fl.pool);
 }
 
+gcc_pure
+static inline bool
+failure_is_expired(const struct failure *failure)
+{
+    assert(failure != NULL);
+
+    return is_expired(failure->expires);
+}
+
 void
 failure_set(const struct sockaddr *addr, size_t addrlen,
             enum failure_status status, unsigned duration)
@@ -87,7 +96,7 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
             /* this address is already in our list */
-            if (status < failure->status && !is_expired(failure->expires))
+            if (status < failure->status && !failure_is_expired(failure))
                 /* don't update if the current status is more serious
                    than the new one */
                 return;
@@ -136,7 +145,7 @@ failure_unset(const struct sockaddr *addr, size_t addrlen,
             /* found it: remove it */
 
             if (!match_status(failure->status, status) &&
-                !is_expired(failure->expires))
+                !failure_is_expired(failure))
                 /* don't update if the current status is more serious
                    than the one to be removed */
                 return;
@@ -160,7 +169,7 @@ failure_get_status(const struct sockaddr *address, size_t length)
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next)
         if (failure->envelope.length == length &&
             memcmp(&failure->envelope.address, address, length) == 0) {
-            return !is_expired(failure->expires)
+            return !failure_is_expired(failure)
                 ? failure->status
                 : FAILURE_OK;
         }
