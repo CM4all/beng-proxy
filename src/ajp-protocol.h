@@ -97,6 +97,15 @@ to_ajp_method(http_method_t method)
         return AJP_METHOD_DELETE;
 
     case HTTP_METHOD_NULL:
+    case HTTP_METHOD_OPTIONS:
+    case HTTP_METHOD_TRACE:
+    case HTTP_METHOD_PROPFIND:
+    case HTTP_METHOD_PROPPATCH:
+    case HTTP_METHOD_MKCOL:
+    case HTTP_METHOD_COPY:
+    case HTTP_METHOD_MOVE:
+    case HTTP_METHOD_LOCK:
+    case HTTP_METHOD_UNLOCK:
     case HTTP_METHOD_INVALID:
         break;
     }

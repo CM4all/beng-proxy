@@ -74,7 +74,7 @@ PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.1.2],,
 PKG_CHECK_MODULES([LIBCM4ALL_INLINE], [libcm4all-inline >= 0.1.1],,
 	[AC_MSG_ERROR([libcm4all-inline not found])])
 
-PKG_CHECK_MODULES([LIBCM4ALL_HTTP], [libcm4all-http],,
+PKG_CHECK_MODULES([LIBCM4ALL_HTTP], [libcm4all-http >= 1.1],,
 	[AC_MSG_ERROR([libcm4all-http not found])])
 
 PKG_CHECK_MODULES([LIBCM4ALL_SOCKET], [libcm4all-socket >= 0.3.1],,
