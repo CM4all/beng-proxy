@@ -4,6 +4,8 @@
 #include "direct.h"
 #include "tpool.h"
 
+#include <inline/list.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <event.h>
