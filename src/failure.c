@@ -142,6 +142,20 @@ match_status(enum failure_status current, enum failure_status match)
     return match == FAILURE_OK || current == match;
 }
 
+static void
+failure_unset2(struct pool *pool, struct failure **failure_r,
+               struct failure *failure, enum failure_status status)
+{
+    if (!match_status(failure->status, status) &&
+        !failure_is_expired(failure))
+        /* don't update if the current status is more serious than the
+           one to be removed */
+        return;
+
+    *failure_r = failure->next;
+    p_free(pool, failure);
+}
+
 void
 failure_unset(const struct sockaddr *addr, size_t addrlen,
               enum failure_status status)
@@ -158,15 +172,7 @@ failure_unset(const struct sockaddr *addr, size_t addrlen,
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
             /* found it: remove it */
-
-            if (!match_status(failure->status, status) &&
-                !failure_is_expired(failure))
-                /* don't update if the current status is more serious
-                   than the one to be removed */
-                return;
-
-            *failure_r = failure->next;
-            p_free(fl.pool, failure);
+            failure_unset2(fl.pool, failure_r, failure, status);
             return;
         }
     }
