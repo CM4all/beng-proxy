@@ -177,6 +177,10 @@ global_control_packet(enum beng_control_command command,
         control_tcache_invalidate(instance, payload, payload_length);
         break;
 
+    case CONTROL_DUMP_POOLS:
+        pool_dump_tree(instance->pool);
+        break;
+
     case CONTROL_ENABLE_NODE:
     case CONTROL_FADE_NODE:
     case CONTROL_NODE_STATUS:

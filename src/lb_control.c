@@ -249,6 +249,10 @@ lb_control_packet(enum beng_control_command command,
         query_node_status(control, payload, payload_length,
                           address, address_length);
         break;
+
+    case CONTROL_DUMP_POOLS:
+        pool_dump_tree(control->instance->pool);
+        break;
     }
 }
 

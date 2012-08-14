@@ -47,6 +47,11 @@ enum beng_control_command {
      * the worker status.  Possible values: "ok", "error", "fade".
      */
     CONTROL_NODE_STATUS = 4,
+
+    /**
+     * Dump all memory pools.
+     */
+    CONTROL_DUMP_POOLS = 5,
 };
 
 struct beng_control_header {

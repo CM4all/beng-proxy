@@ -589,6 +589,42 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
     return pool->ref;
 }
 
+static const char *
+pool_type_string(enum pool_type type)
+{
+    switch (type) {
+    case POOL_LIBC:
+        return "libc";
+
+    case POOL_LINEAR:
+        return "linear";
+    }
+
+    assert(false);
+    return NULL;
+}
+
+static void
+pool_dump_node(int indent, const struct pool *pool)
+{
+    daemon_log(2, "%*spool '%s' type=%s ref=%u p=%p\n",
+               indent, "",
+               pool->name, pool_type_string(pool->type), pool->ref,
+               (const void *)pool);
+
+    indent += 2;
+    for (struct pool *child = (struct pool *)pool->children.next;
+         &child->siblings != &pool->children;
+         child = (struct pool *)child->siblings.next)
+        pool_dump_node(indent, child);
+}
+
+void
+pool_dump_tree(const struct pool *pool)
+{
+    pool_dump_node(0, pool);
+}
+
 #ifndef NDEBUG
 
 void
