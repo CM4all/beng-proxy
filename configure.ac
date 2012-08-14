@@ -75,7 +75,7 @@ PKG_CHECK_MODULES([LIBSSL], [openssl],,
 PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.1.2],,
 	[AC_MSG_ERROR([libcm4all-daemon not found])])
 
-PKG_CHECK_MODULES([LIBCM4ALL_INLINE], [libcm4all-inline >= 0.1.1],,
+PKG_CHECK_MODULES([LIBCM4ALL_INLINE], [libcm4all-inline >= 0.3.3],,
 	[AC_MSG_ERROR([libcm4all-inline not found])])
 
 PKG_CHECK_MODULES([LIBCM4ALL_HTTP], [libcm4all-http >= 1.1],,
