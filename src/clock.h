@@ -1,3 +1,7 @@
+/*
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
 #ifndef BENG_PROXY_CLOCK_H
 #define BENG_PROXY_CLOCK_H
 
