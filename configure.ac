@@ -72,7 +72,7 @@ PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],,
 PKG_CHECK_MODULES([LIBSSL], [openssl],,
 	[AC_MSG_ERROR([OpenSSL not found])])
 
-PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.1.2],,
+PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.3],,
 	[AC_MSG_ERROR([libcm4all-daemon not found])])
 
 PKG_CHECK_MODULES([LIBCM4ALL_INLINE], [libcm4all-inline >= 0.3.3],,
