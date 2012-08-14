@@ -923,6 +923,7 @@ test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/fd_util.c \
 	src/crash.c \
 	src/session_id.c src/format.c \
+	src/clock.c \
 	src/tpool.c $(POOL_SRC)
 test_t_header_forward_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1052,6 +1053,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/jail.c \
 	src/regex.c \
 	src/expansible-buffer.c \
+	src/clock.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_processor_LDADD = $(AM_LDADD) \
 	$(T_ISTREAM_FILTER_LIB) \
@@ -1082,6 +1084,7 @@ test_t_balancer_SOURCES = test/t_balancer.cxx \
 	src/balancer.c src/cache.c src/failure.c \
 	src/hashmap.c \
 	src/address-list.c \
+	src/clock.c \
 	$(POOL_SRC)
 test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_balancer_LDADD = $(AM_LDADD) \
@@ -1347,6 +1350,7 @@ test_t_http_cache_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 
 test_t_cookie_client_SOURCES = test/t-cookie-client.c \
 	$(POOL_SRC) src/tpool.c \
+	src/clock.c \
 	src/cookie_client.c src/cookie_jar.c \
 	src/http-string.c \
 	src/header-writer.c src/growing-buffer.c \
@@ -1371,6 +1375,7 @@ test_t_dpool_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/dpool.c src/dstring.c src/dhashmap.c \
+	src/clock.c \
 	src/format.c \
 	src/random.c src/fd-util.c src/fd_util.c \
 	src/crash.c \
@@ -1484,6 +1489,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/istream-null.c \
 	src/transformation.c \
 	src/dpool.c src/dstring.c src/dhashmap.c src/shm.c \
+	src/clock.c \
 	$(POOL_SRC) src/tpool.c
 test_t_widget_http_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1516,6 +1522,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/cgi-address.c \
 	src/regex.c \
 	src/istream-forward.c \
+	src/clock.c \
 	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
@@ -1535,6 +1542,7 @@ test_run_cookie_client_SOURCES = test/run-cookie-client.c \
 	src/header-writer.c src/growing-buffer.c \
 	src/tpool.c src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c \
+	src/clock.c \
 	$(POOL_SRC)
 test_run_cookie_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -1606,6 +1614,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
+	src/clock.c \
 	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
@@ -1648,6 +1657,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
+	src/clock.c \
 	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_t_processor_LDADD = $(AM_LDADD) \
@@ -1666,6 +1676,7 @@ test_run_client_balancer_SOURCES = test/run-client-balancer.c \
 	src/hashmap.c \
 	src/fd_util.c \
 	src/istream-forward.c \
+	src/clock.c \
 	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_run_client_balancer_LDADD = $(LIBEVENT_LIBS) \
@@ -1745,6 +1756,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/hashmap.c src/strmap.c \
 	src/event2.c \
 	src/tpool.c \
+	src/clock.c \
 	$(STOPWATCH_SRC) \
 	$(POOL_SRC)
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \

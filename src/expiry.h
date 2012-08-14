@@ -7,6 +7,8 @@
 #ifndef EXPIRY_H
 #define EXPIRY_H
 
+#include "clock.h"
+
 #include <inline/compiler.h>
 
 #include <stdbool.h>
@@ -15,30 +17,14 @@
 static inline time_t
 expiry_touch(time_t duration)
 {
-    int ret;
-    struct timespec now;
-
-    ret = clock_gettime(CLOCK_MONOTONIC, &now);
-    if (ret < 0)
-        /* system call failed - try to do something not too stupid */
-        return 0;
-
-    return now.tv_sec + duration;
+    return now_s() + duration;
 }
 
 gcc_pure
 static inline bool
 is_expired(time_t expires)
 {
-    int ret;
-    struct timespec now;
-
-    ret = clock_gettime(CLOCK_MONOTONIC, &now);
-    if (ret < 0)
-        /* system call failed - try to do something not too stupid */
-        return true;
-
-    return now.tv_sec >= expires;
+    return now_s() >= expires;
 }
 
 #endif

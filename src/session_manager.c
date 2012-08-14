@@ -13,6 +13,7 @@
 #include "random.h"
 #include "expiry.h"
 #include "crash.h"
+#include "clock.h"
 
 #include <daemon/log.h>
 
@@ -99,8 +100,6 @@ static void
 cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
                        void *ctx gcc_unused)
 {
-    struct timespec now;
-    int ret;
     unsigned i;
     struct session *session, *next;
     bool non_empty;
@@ -108,12 +107,7 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
     assert(!crash_in_unsafe());
     assert(locked_session == NULL);
 
-    ret = clock_gettime(CLOCK_MONOTONIC, &now);
-    if (ret < 0) {
-        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
-                   strerror(errno));
-        return;
-    }
+    const unsigned now = now_s();
 
     crash_unsafe_enter();
     rwlock_wlock(&session_manager->lock);
@@ -130,7 +124,7 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
              &session->hash_siblings != &session_manager->sessions[i];
              session = next) {
             next = (struct session *)session->hash_siblings.next;
-            if (now.tv_sec >= session->expires)
+            if (now >= session->expires)
                 session_remove(session);
         }
     }
@@ -630,20 +624,14 @@ session_manager_visit(bool (*callback)(const struct session *session,
         return false;
     }
 
-    struct timespec now;
-    if (clock_gettime(CLOCK_MONOTONIC, &now) < 0) {
-        crash_unsafe_leave();
-        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
-                   strerror(errno));
-        return false;
-    }
+    const unsigned now = now_s();
 
     for (unsigned i = 0; i < SESSION_SLOTS && result; ++i) {
         struct list_head *slot = &session_manager->sessions[i];
         for (struct session *session = (struct session *)slot->next;
              &session->hash_siblings != slot && result;
              session = (struct session *)session->hash_siblings.next) {
-            if (now.tv_sec >= session->expires)
+            if (now >= session->expires)
                 continue;
 
             lock_lock(&session->lock);

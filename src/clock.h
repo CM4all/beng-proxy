@@ -10,6 +10,13 @@
 #include <stdint.h>
 
 /**
+ * Returns the current monotonic time stamp in seconds.
+ */
+gcc_pure
+unsigned
+now_s(void);
+
+/**
  * Returns the current monotonic time stamp in microseconds.
  */
 gcc_pure

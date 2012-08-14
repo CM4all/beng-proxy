@@ -11,6 +11,7 @@
 #include "session_manager.h"
 #include "session.h"
 #include "dpool.h"
+#include "clock.h"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -22,7 +23,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
-#include <time.h>
 
 /** save all sessions every 2 minutes */
 static const struct timeval session_save_interval = {
@@ -55,12 +55,7 @@ session_manager_load(FILE *file)
     if (!session_read_file_header(file))
         return false;
 
-    struct timespec now;
-    if (clock_gettime(CLOCK_MONOTONIC, &now) < 0) {
-        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
-                   strerror(errno));
-        return false;
-    }
+    const unsigned now = now_s();
 
     unsigned num_added = 0, num_expired = 0;
     while (true) {
@@ -80,7 +75,7 @@ session_manager_load(FILE *file)
             return false;
         }
 
-        if (now.tv_sec >= session->expires) {
+        if (now >= session->expires) {
             /* this session is already expired, discard it
                immediately */
             session_destroy(session);

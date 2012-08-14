@@ -14,6 +14,7 @@
 #include "tpool.h"
 #include "dpool.h"
 #include "expiry.h"
+#include "clock.h"
 
 #include <inline/list.h>
 
@@ -215,8 +216,6 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
     struct cookie *cookie, *next;
     size_t length;
     struct pool_mark mark;
-    struct timespec now;
-    int ret;
     char *value;
 
     assert(domain != NULL);
@@ -230,15 +229,13 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
 
     length = 0;
 
-    ret = clock_gettime(CLOCK_MONOTONIC, &now);
-    if (ret < 0)
-        return NULL;
+    const unsigned now = now_s();
 
     for (cookie = (struct cookie *)jar->cookies.next;
          &cookie->siblings != &jar->cookies;
          cookie = next) {
         next = (struct cookie *)cookie->siblings.next;
-        if (cookie->expires != 0 && cookie->expires < now.tv_sec) {
+        if (cookie->expires != 0 && cookie->expires < now) {
             cookie_delete(jar, cookie);
             continue;
         }

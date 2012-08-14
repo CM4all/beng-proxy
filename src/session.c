@@ -11,6 +11,7 @@
 #include "lock.h"
 #include "expiry.h"
 #include "crash.h"
+#include "expiry.h"
 
 #include <daemon/log.h>
 
@@ -24,16 +25,7 @@
 struct session *
 session_allocate(struct dpool *pool)
 {
-    struct timespec now;
-    int ret;
     struct session *session;
-
-    ret = clock_gettime(CLOCK_MONOTONIC, &now);
-    if (ret < 0) {
-        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
-                   strerror(errno));
-        return NULL;
-    }
 
     session = d_malloc(pool, sizeof(*session));
     if (session == NULL) {
@@ -45,7 +37,7 @@ session_allocate(struct dpool *pool)
 
     session->pool = pool;
     lock_init(&session->lock);
-    session->expires = now.tv_sec + SESSION_TTL_NEW;
+    session->expires = expiry_touch(SESSION_TTL_NEW);
     session->counter = 1;
     session->translate = NULL;
     session->widgets = NULL;

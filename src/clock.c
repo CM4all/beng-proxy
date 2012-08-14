@@ -6,6 +6,16 @@
 
 #include <time.h>
 
+unsigned
+now_s(void)
+{
+    struct timespec t;
+    if (clock_gettime(CLOCK_MONOTONIC, &t) < 0)
+        return 0;
+
+    return t.tv_sec;
+}
+
 uint64_t
 now_us(void)
 {

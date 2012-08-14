@@ -123,24 +123,17 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
 {
     unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure *failure;
-    struct timespec now;
-    int ret;
 
     assert(addr != NULL);
     assert(addrlen >= sizeof(failure->envelope.address));
     assert(status > FAILURE_OK);
 
-    ret = clock_gettime(CLOCK_MONOTONIC, &now);
-    if (ret < 0) {
-        daemon_log(1, "clock_gettime(CLOCK_MONOTONIC) failed: %s\n",
-                   strerror(errno));
-        return;
-    }
+    const unsigned now = now_s();
 
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next) {
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
-            failure_override_status(failure, now.tv_sec, status, duration);
+            failure_override_status(failure, now, status, duration);
             return;
         }
     }
@@ -149,7 +142,7 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
 
     failure = p_malloc(fl.pool, sizeof(*failure)
                        - sizeof(failure->envelope.address) + addrlen);
-    failure->expires = now.tv_sec + duration;
+    failure->expires = now + duration;
     failure->fade_expires = 0;
     failure->status = status;
     failure->envelope.length = addrlen;
