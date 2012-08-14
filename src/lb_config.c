@@ -346,7 +346,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
             return syntax_error(error_r);
 
         if (monitor->type == MONITOR_TCP_EXPECT &&
-            monitor->expect == NULL)
+            (monitor->expect == NULL && monitor->fade_expect == NULL))
             return throw(error_r, "No 'expect' string configured");
 
         list_add(&monitor->siblings, &parser->config->monitors);
@@ -377,6 +377,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                 monitor->type = MONITOR_TCP_EXPECT;
                 monitor->send = NULL;
                 monitor->expect = NULL;
+                monitor->fade_expect = NULL;
             } else
                 return throw(error_r, "Unknown monitor type");
 
@@ -411,6 +412,19 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                 return syntax_error(error_r);
 
             monitor->expect = *value != 0
+                ? p_strdup(parser->config->pool, value)
+                : NULL;
+            return true;
+        } else if (monitor->type == MONITOR_TCP_EXPECT &&
+                   strcmp(word, "expect_graceful") == 0) {
+            const char *value = next_unescape(&p);
+            if (value == NULL)
+                return throw(error_r, "String value expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            monitor->fade_expect = *value != 0
                 ? p_strdup(parser->config->pool, value)
                 : NULL;
             return true;

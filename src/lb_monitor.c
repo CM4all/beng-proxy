@@ -30,6 +30,7 @@ struct lb_monitor {
     struct async_operation_ref async_ref;
 
     bool state;
+    bool fade;
 };
 
 static void
@@ -40,12 +41,39 @@ monitor_handler_success(void *ctx)
 
     if (!monitor->state)
         daemon_log(5, "monitor recovered: %s\n", monitor->name);
+    else if (monitor->fade)
+        daemon_log(5, "monitor finished fade: %s\n", monitor->name);
     else
         daemon_log(6, "monitor ok: %s\n", monitor->name);
 
     monitor->state = true;
+
     failure_unset(monitor->address, monitor->address_length,
                   FAILURE_MONITOR);
+
+    if (monitor->fade) {
+        monitor->fade = false;
+        failure_unset(monitor->address, monitor->address_length,
+                      FAILURE_FADE);
+    }
+
+    evtimer_add(&monitor->timer_event, &monitor->interval);
+}
+
+static void
+monitor_handler_fade(void *ctx)
+{
+    struct lb_monitor *monitor = ctx;
+    async_ref_clear(&monitor->async_ref);
+
+    if (!monitor->fade)
+        daemon_log(5, "monitor fade: %s\n", monitor->name);
+    else
+        daemon_log(6, "monitor still fade: %s\n", monitor->name);
+
+    monitor->fade = true;
+    failure_set(monitor->address, monitor->address_length,
+                FAILURE_FADE, 300);
 
     evtimer_add(&monitor->timer_event, &monitor->interval);
 }
@@ -89,6 +117,7 @@ monitor_handler_error(GError *error, void *ctx)
 
 static const struct lb_monitor_handler monitor_handler = {
     .success = monitor_handler_success,
+    .fade = monitor_handler_fade,
     .timeout = monitor_handler_timeout,
     .error = monitor_handler_error,
 };
@@ -127,6 +156,7 @@ lb_monitor_new(struct pool *pool, const char *name,
     evtimer_set(&monitor->timer_event, lb_monitor_timer_callback, monitor);
     async_ref_clear(&monitor->async_ref);
     monitor->state = true;
+    monitor->fade = false;
 
     static const struct timeval immediately = { .tv_sec = 0 };
     evtimer_add(&monitor->timer_event, &immediately);

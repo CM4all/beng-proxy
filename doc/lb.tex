@@ -282,4 +282,20 @@ monitor "expect_monitor" {
 
 The \texttt{send} setting is optional.
 
+The \verb|expect_graceful| setting can be used for graceful shutdown:
+
+\begin{verbatim*}
+monitor "expect_monitor2" {
+  type "tcp_expect"
+  send "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n"
+  expect "HTTP/1.1 200 OK"
+  expect_graceful "HTTP/1.1 503 Service Unavailable"
+}
+\end{verbatim*}
+
+If the configured string is received, the node will only receive
+``sticky'' requests, but no new sessions.  The \verb|expect| setting
+is ignored if \verb|expect_graceful| was found, and \verb|expect| may
+be omitted.
+
 \end{document}

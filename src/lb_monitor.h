@@ -17,6 +17,7 @@ struct lb_monitor_config;
 
 struct lb_monitor_handler {
     void (*success)(void *ctx);
+    void (*fade)(void *ctx);
     void (*timeout)(void *ctx);
     void (*error)(GError *error, void *ctx);
 };

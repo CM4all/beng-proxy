@@ -64,6 +64,13 @@ struct lb_monitor_config {
      * received from the peer after the #send string has been sent.
      */
     const char *expect;
+
+    /**
+     * For #MONITOR_TCP_EXPECT: if that string is received from the
+     * peer (instead of #expect), then the node is assumed to be
+     * shutting down gracefully, and will only get sticky requests.
+     */
+    const char *fade_expect;
 };
 
 struct lb_node_config {

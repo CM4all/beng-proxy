@@ -94,7 +94,13 @@ expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
                                                 strerror(errno));
             close(fd);
             expect->handler->error(error, expect->handler_ctx);
-        } else if (check_expectation(buffer, nbytes, expect->config->expect)) {
+        } else if (expect->config->fade_expect != NULL &&
+                   check_expectation(buffer, nbytes,
+                                     expect->config->fade_expect)) {
+            close(fd);
+            expect->handler->fade(expect->handler_ctx);
+        } else if (expect->config->expect == NULL ||
+                   check_expectation(buffer, nbytes, expect->config->expect)) {
             close(fd);
             expect->handler->success(expect->handler_ctx);
         } else {
