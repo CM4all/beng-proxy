@@ -10,7 +10,7 @@ cm4all-beng-proxy (2.0.44) unstable; urgency=low
   * balancer, lb: use the Bulldog "graceful" flag
   * control: add packet CONTROL_DUMP_POOLS
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 14 Aug 2012 13:13:01 -0000
 
 cm4all-beng-proxy (2.0.43) unstable; urgency=low
 
