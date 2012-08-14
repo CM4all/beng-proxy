@@ -11,6 +11,7 @@
 
 #include <glib.h>
 
+#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
@@ -18,7 +19,6 @@
 #include <unistd.h>
 
 #define WORKERS "/workers/"
-#define SUFFIX "/status"
 
 static struct {
     char path[4096];
@@ -32,8 +32,7 @@ bulldog_init(const char *path)
     if (path == NULL)
         return;
 
-    if (strlen(path) + sizeof(WORKERS) + sizeof(SUFFIX) >=
-        sizeof(bulldog.path)) {
+    if (strlen(path) + sizeof(WORKERS) + 16 >= sizeof(bulldog.path)) {
         daemon_log(1, "bulldog path is too long\n");
         return;
     }
@@ -48,56 +47,97 @@ bulldog_deinit(void)
 {
 }
 
-bool
-bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
+gcc_pure
+static const char *
+bulldog_node_path(const struct sockaddr *address, socklen_t address_size,
+                  const char *attribute_name)
 {
-    bool success;
-    int fd;
-    ssize_t nbytes;
-    char buffer[32], *p;
+    assert(address != NULL);
+    assert(address_size > 0);
+    assert(attribute_name != NULL);
+    assert(*attribute_name != 0);
 
     if (bulldog.path[0] == 0)
         /* disabled */
-        return true;
+        return NULL;
 
-    success = socket_address_to_string(bulldog.path + bulldog.path_length,
-                                       sizeof(bulldog.path) - bulldog.path_length,
-                                       addr, addrlen);
-    if (!success)
-        /* bail out */
-        return true;
+    if (!socket_address_to_string(bulldog.path + bulldog.path_length,
+                                  sizeof(bulldog.path) - bulldog.path_length,
+                                  address, address_size))
+        return NULL;
 
-    g_strlcat(bulldog.path, SUFFIX, sizeof(bulldog.path));
+    g_strlcat(bulldog.path, "/", sizeof(bulldog.path));
+    g_strlcat(bulldog.path, attribute_name, sizeof(bulldog.path));
+    return bulldog.path;
+}
 
-    fd = open(bulldog.path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
-    if (fd < 0) {
-        if (errno != ENOENT)
-            daemon_log(2, "Failed to open %s: %s\n",
-                       bulldog.path, strerror(errno));
-        else
-            daemon_log(4, "No such bulldog-tyke status file: %s\n",
-                       bulldog.path);
-        return true;
-    }
+gcc_pure
+static const char *
+read_first_line(const char *path, char *buffer, size_t buffer_size)
+{
+    assert(path != NULL);
+    assert(buffer != NULL);
+    assert(buffer_size > 0);
 
-    nbytes = read(fd, buffer, sizeof(buffer));
-    if (nbytes < 0) {
-        daemon_log(2, "Failed to read %s: %s\n",
-                   bulldog.path, strerror(errno));
-        close(fd);
-        return true;
-    }
+    int fd = open(path, O_RDONLY|O_CLOEXEC|O_NOCTTY);
+    if (fd < 0)
+        return NULL;
+
+    ssize_t nbytes = read(fd, buffer, buffer_size - 1);
+    if (nbytes < 0)
+        return NULL;
 
     close(fd);
 
     /* use only the first line */
-    p = memchr(buffer, '\n', nbytes);
+    char *p = memchr(buffer, '\n', nbytes);
     if (p == NULL)
         p = buffer + nbytes;
 
     *p = 0;
 
-    daemon_log(5, "bulldog: %s='%s'\n", bulldog.path, buffer);
+    return buffer;
+}
 
-    return strcmp(buffer, "alive") == 0;
+bool
+bulldog_check(const struct sockaddr *addr, socklen_t addrlen)
+{
+    const char *path = bulldog_node_path(addr, addrlen, "status");
+    if (path == NULL)
+        /* disabled */
+        return true;
+
+    char buffer[32];
+    const char *value = read_first_line(path, buffer, sizeof(buffer));
+    if (value == NULL) {
+        if (errno != ENOENT)
+            daemon_log(2, "Failed to read %s: %s\n",
+                       path, strerror(errno));
+        else
+            daemon_log(4, "No such bulldog-tyke status file: %s\n",
+                       path);
+        return true;
+    }
+
+    daemon_log(5, "bulldog: %s='%s'\n", path, value);
+
+    return strcmp(value, "alive") == 0;
+}
+
+bool
+bulldog_is_fading(const struct sockaddr *addr, socklen_t addrlen)
+{
+    const char *path = bulldog_node_path(addr, addrlen, "graceful");
+    if (path == NULL)
+        /* disabled */
+        return false;
+
+    char buffer[32];
+    const char *value = read_first_line(path, buffer, sizeof(buffer));
+    if (value == NULL)
+        return false;
+
+    daemon_log(5, "bulldog: %s='%s'\n", path, value);
+
+    return strcmp(value, "1") == 0;
 }

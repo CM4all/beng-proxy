@@ -33,4 +33,12 @@ gcc_pure
 bool
 bulldog_check(const struct sockaddr *addr, socklen_t addrlen);
 
+/**
+ * Returns true if the socket address is currently in "graceful"
+ * shutdown.
+ */
+gcc_pure
+bool
+bulldog_is_fading(const struct sockaddr *address, socklen_t address_size);
+
 #endif

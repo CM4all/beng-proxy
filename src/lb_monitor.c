@@ -44,6 +44,9 @@ monitor_handler_success(void *ctx)
         daemon_log(6, "monitor ok: %s\n", monitor->name);
 
     monitor->state = true;
+    failure_unset(monitor->address, monitor->address_length,
+                  FAILURE_MONITOR);
+
     evtimer_add(&monitor->timer_event, &monitor->interval);
 }
 
@@ -57,7 +60,8 @@ monitor_handler_timeout(void *ctx)
                "monitor timeout: %s\n", monitor->name);
 
     monitor->state = false;
-    failure_add(monitor->address, monitor->address_length);
+    failure_set(monitor->address, monitor->address_length,
+                FAILURE_MONITOR, 0);
 
     evtimer_add(&monitor->timer_event, &monitor->interval);
 }
@@ -77,7 +81,8 @@ monitor_handler_error(GError *error, void *ctx)
     g_error_free(error);
 
     monitor->state = false;
-    failure_add(monitor->address, monitor->address_length);
+    failure_set(monitor->address, monitor->address_length,
+                FAILURE_MONITOR, 0);
 
     evtimer_add(&monitor->timer_event, &monitor->interval);
 }
@@ -123,7 +128,9 @@ lb_monitor_new(struct pool *pool, const char *name,
     async_ref_clear(&monitor->async_ref);
     monitor->state = true;
 
-    evtimer_add(&monitor->timer_event, &monitor->interval);
+    static const struct timeval immediately = { .tv_sec = 0 };
+    evtimer_add(&monitor->timer_event, &immediately);
+
     return monitor;
 }
 

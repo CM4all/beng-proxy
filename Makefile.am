@@ -800,6 +800,7 @@ check_PROGRAMS = \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
 	test/t-growing-buffer \
+	test/t_balancer \
 	test/t-cgi \
 	test/t-http-server-mirror test/t-http-server-null \
 	test/t-http-server-dummy \
@@ -831,6 +832,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	$(FILTER_TESTS) \
 	test/t-istream-tee \
 	test/t-growing-buffer \
+	test/t_balancer \
 	test/t-cgi \
 	$(srcdir)/test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
@@ -1073,6 +1075,18 @@ test_t_growing_buffer_SOURCES = test/t-growing-buffer.c \
 	src/istream-gb.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
+
+test_t_balancer_SOURCES = test/t_balancer.cxx \
+	src/bulldog.c \
+	src/balancer.c src/cache.c src/failure.c \
+	src/hashmap.c \
+	src/address-list.c \
+	$(POOL_SRC)
+test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_balancer_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(CPPUNIT_LIBS)
 
 test_t_cgi_SOURCES = test/t-cgi.c \
 	$(STOPWATCH_SRC) \

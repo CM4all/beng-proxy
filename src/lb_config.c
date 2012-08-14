@@ -633,9 +633,10 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
         if (cluster->num_members == 0)
             return throw(error_r, "Pool has no members");
 
-        if (cluster->sticky_mode != STICKY_NONE &&
-            cluster->num_members == 1)
-            return throw(error_r, "Sticky pool has only one member");
+        if (cluster->num_members == 1)
+            /* with only one member, a sticky setting doesn't make
+               sense */
+            cluster->sticky_mode = STICKY_NONE;
 
         list_add(&cluster->siblings, &parser->config->clusters);
         parser->state = STATE_ROOT;

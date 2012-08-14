@@ -55,6 +55,9 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL);
 #define pool_unref(pool) pool_unref_impl(pool TRACE_ARGS)
 #define pool_unref_fwd(pool) pool_unref_impl(pool TRACE_ARGS_FWD)
 
+void
+pool_dump_tree(const struct pool *pool);
+
 #ifndef NDEBUG
 #include <inline/list.h>
 

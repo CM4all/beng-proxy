@@ -228,6 +228,9 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    if (instance.cmdline.check)
+        return EXIT_SUCCESS;
+
     /* initialize */
 
     lb_hmonitor_init(instance.pool);

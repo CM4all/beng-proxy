@@ -118,9 +118,8 @@ struct pool {
     struct list_head allocations;
     struct list_head attachments;
 #endif
-#ifdef DUMP_POOL_SIZE
+
     size_t size;
-#endif
 };
 
 #ifndef NDEBUG
@@ -287,9 +286,8 @@ pool_new(struct pool *parent, const char *name)
     list_init(&pool->allocations);
     list_init(&pool->attachments);
 #endif
-#ifdef DUMP_POOL_SIZE
+
     pool->size = 0;
-#endif
 
     return pool;
 }
@@ -589,6 +587,43 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
     return pool->ref;
 }
 
+static const char *
+pool_type_string(enum pool_type type)
+{
+    switch (type) {
+    case POOL_LIBC:
+        return "libc";
+
+    case POOL_LINEAR:
+        return "linear";
+    }
+
+    assert(false);
+    return NULL;
+}
+
+static void
+pool_dump_node(int indent, const struct pool *pool)
+{
+    daemon_log(2, "%*spool '%s' type=%s ref=%u size=%zu p=%p\n",
+               indent, "",
+               pool->name, pool_type_string(pool->type),
+               pool->ref, pool->size,
+               (const void *)pool);
+
+    indent += 2;
+    for (struct pool *child = (struct pool *)pool->children.next;
+         &child->siblings != &pool->children;
+         child = (struct pool *)child->siblings.next)
+        pool_dump_node(indent, child);
+}
+
+void
+pool_dump_tree(const struct pool *pool)
+{
+    pool_dump_node(0, pool);
+}
+
 #ifndef NDEBUG
 
 void
@@ -883,9 +918,7 @@ internal_malloc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 {
     assert(pool != NULL);
 
-#ifdef DUMP_POOL_SIZE
     pool->size += size;
-#endif
 
     if (likely(pool->type == POOL_LINEAR))
         return p_malloc_linear(pool, size TRACE_ARGS_FWD);

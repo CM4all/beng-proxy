@@ -7,6 +7,8 @@
 #ifndef EXPIRY_H
 #define EXPIRY_H
 
+#include <inline/compiler.h>
+
 #include <stdbool.h>
 #include <time.h>
 
@@ -24,6 +26,7 @@ expiry_touch(time_t duration)
     return now.tv_sec + duration;
 }
 
+gcc_pure
 static inline bool
 is_expired(time_t expires)
 {

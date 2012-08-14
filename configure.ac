@@ -10,6 +10,7 @@ dnl Checks for programs.
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 AC_PROG_CC_C99
+AC_PROG_CXX
 AC_PROG_RANLIB
 
 dnl Checks for LLVM and clang
@@ -62,19 +63,22 @@ AM_CONDITIONAL(HAVE_ATTR_XATTR_H, test x$ac_cv_header_attr_xattr_h = xyes)
 
 dnl Checks for libraries.
 
+PKG_CHECK_MODULES([CPPUNIT], [cppunit],,
+	[AC_MSG_ERROR([cppunit not found])])
+
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],,
 	[AC_MSG_ERROR([glib 2.16 is required])])
 
 PKG_CHECK_MODULES([LIBSSL], [openssl],,
 	[AC_MSG_ERROR([OpenSSL not found])])
 
-PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.1.2],,
+PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.3],,
 	[AC_MSG_ERROR([libcm4all-daemon not found])])
 
-PKG_CHECK_MODULES([LIBCM4ALL_INLINE], [libcm4all-inline >= 0.1.1],,
+PKG_CHECK_MODULES([LIBCM4ALL_INLINE], [libcm4all-inline >= 0.3.3],,
 	[AC_MSG_ERROR([libcm4all-inline not found])])
 
-PKG_CHECK_MODULES([LIBCM4ALL_HTTP], [libcm4all-http],,
+PKG_CHECK_MODULES([LIBCM4ALL_HTTP], [libcm4all-http >= 1.1],,
 	[AC_MSG_ERROR([libcm4all-http not found])])
 
 PKG_CHECK_MODULES([LIBCM4ALL_SOCKET], [libcm4all-socket >= 0.3.1],,
@@ -90,15 +94,25 @@ dnl CFLAGS
 dnl
 
 AC_SUBST(AM_CFLAGS)
+AC_SUBST(AM_CXXFLAGS)
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_LDFLAGS)
 
 AM_CFLAGS="-W -Wall"
+AM_CXXFLAGS="-W -Wall"
 AM_CPPFLAGS="-D_REENTRANT"
 AM_LDFLAGS=""
 
 if test "$am_cv_CC_dependencies_compiler_type" = "gcc3"; then
 	AM_CFLAGS="$AM_CFLAGS -Wall -Wextra -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Wno-long-long -Wstrict-prototypes -Wundef -pedantic"
+
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wextra"
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wwrite-strings -Wcast-qual -Wcast-align -Wfloat-equal"
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wshadow -Wpointer-arith -Wsign-compare"
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute"
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wredundant-decls -Wno-long-long -Wundef"
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wno-variadic-macros"
+	AM_CXXFLAGS="$AM_CXXFLAGS"
 fi
 
 dnl
@@ -132,7 +146,6 @@ AC_ARG_ENABLE(debug,
 	AS_HELP_STRING([--disable-debug],
 		[Disable debugging (default: enabled)]),,
 	enable_debug=yes)
-AM_CONDITIONAL(TEST, test x$enable_test = xyes)
 
 if test x$enable_debug = xyes; then
 	AM_CPPFLAGS="$AM_CPPFLAGS -DPOISON"
@@ -149,6 +162,7 @@ if test x$enable_debug = xyes; then
 	fi
 else
 	AM_CFLAGS="$AM_CFLAGS -ffunction-sections -fdata-sections"
+	AM_CXXFLAGS="$AM_CXXFLAGS -ffunction-sections -fdata-sections"
 	AM_CPPFLAGS="$AM_CPPFLAGS -DNDEBUG"
 	AM_LDFLAGS="$AM_LDFLAGS -Wl,-gc-sections"
 fi
@@ -160,6 +174,10 @@ AC_ARG_ENABLE(werror,
 
 if test x$enable_werror = xyes; then
     AM_CFLAGS="$AM_CFLAGS -Werror -pedantic-errors"
+	AM_CXXFLAGS="$AM_CXXFLAGS -Werror"
+
+	# due to C++ shadow warnings in pool.h:
+	AM_CXXFLAGS="$AM_CXXFLAGS -Wno-error=shadow"
 fi
 
 AC_ARG_ENABLE(dump-pool-size,
@@ -196,8 +214,8 @@ AM_CONDITIONAL(GPROF, test x$enable_gprof = xyes)
 AC_ARG_ENABLE(unit-test,
 	AS_HELP_STRING([--enable-unit-test],
 		[Enable the unit test suite]),,
-	enable_test=$enable_debug)
-AM_CONDITIONAL(TEST, test x$enable_test = xyes)
+	enable_unit_test=$enable_debug)
+AM_CONDITIONAL(TEST, test x$enable_unit_test = xyes)
 
 dnl
 dnl Output files

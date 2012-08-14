@@ -97,6 +97,7 @@ test/send-control
 test/was-mirror
 test/run-was
 test/run-ping
+test/t_balancer
 
 *.aux
 *.log

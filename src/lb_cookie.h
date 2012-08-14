@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_LB_COOKIE_H
 #define BENG_PROXY_LB_COOKIE_H
 
+#include <assert.h>
+
 struct strmap;
 
 /**
@@ -16,9 +18,24 @@ unsigned
 lb_cookie_get(const struct strmap *request_headers);
 
 /**
- * Extract a node cookie from the request headers.
+ * Select a random worker.
+ *
+ * @param n the number of nodes in the cluster
+ * @return a random number between 1 and n (both including)
  */
 unsigned
 lb_cookie_generate(unsigned n);
+
+/**
+ * Calculate the next worker number.
+ */
+static inline unsigned
+lb_cookie_next(unsigned n, unsigned i)
+{
+    assert(n >= 2);
+    assert(i >= 1 && i <= n);
+
+    return (i % n) + 1;
+}
 
 #endif

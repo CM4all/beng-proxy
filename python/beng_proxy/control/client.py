@@ -86,3 +86,6 @@ class Client:
         assert isinstance(port, int)
 
         self.send(CONTROL_NODE_STATUS, '%s:%i' % (node, port))
+
+    def send_dump_pools(self):
+        self.send(CONTROL_DUMP_POOLS)
