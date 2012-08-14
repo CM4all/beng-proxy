@@ -12,17 +12,16 @@
 #include <inline/compiler.h>
 
 #include <stdbool.h>
-#include <time.h>
 
-static inline time_t
-expiry_touch(time_t duration)
+static inline unsigned
+expiry_touch(unsigned duration)
 {
     return now_s() + duration;
 }
 
 gcc_pure
 static inline bool
-is_expired(time_t expires)
+is_expired(unsigned expires)
 {
     return now_s() >= expires;
 }

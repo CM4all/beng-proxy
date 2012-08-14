@@ -75,7 +75,7 @@ session_manager_load(FILE *file)
             return false;
         }
 
-        if (now >= session->expires) {
+        if (now >= (unsigned)session->expires) {
             /* this session is already expired, discard it
                immediately */
             session_destroy(session);

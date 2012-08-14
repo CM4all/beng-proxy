@@ -124,7 +124,7 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
              &session->hash_siblings != &session_manager->sessions[i];
              session = next) {
             next = (struct session *)session->hash_siblings.next;
-            if (now >= session->expires)
+            if (now >= (unsigned)session->expires)
                 session_remove(session);
         }
     }
@@ -631,7 +631,7 @@ session_manager_visit(bool (*callback)(const struct session *session,
         for (struct session *session = (struct session *)slot->next;
              &session->hash_siblings != slot && result;
              session = (struct session *)session->hash_siblings.next) {
-            if (now >= session->expires)
+            if (now >= (unsigned)session->expires)
                 continue;
 
             lock_lock(&session->lock);

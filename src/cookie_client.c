@@ -235,7 +235,7 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
          &cookie->siblings != &jar->cookies;
          cookie = next) {
         next = (struct cookie *)cookie->siblings.next;
-        if (cookie->expires != 0 && cookie->expires < now) {
+        if (cookie->expires != 0 && (unsigned)cookie->expires < now) {
             cookie_delete(jar, cookie);
             continue;
         }
