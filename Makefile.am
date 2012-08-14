@@ -268,7 +268,7 @@ HDR = \
 
 SRC = src/main.c \
 	$(STOPWATCH_SRC) \
-	src/clock.h \
+	src/clock.c src/clock.h \
 	src/cmdline.c \
 	src/completion.h \
 	src/global.c \
@@ -494,6 +494,7 @@ bin_PROGRAMS = src/cm4all-beng-proxy \
 	src/cm4all-beng-proxy-delegate-helper
 
 src_cm4all_beng_lb_SOURCES = \
+	src/clock.c src/clock.h \
 	src/pool.c \
 	src/pstring.c \
 	src/format.c \
