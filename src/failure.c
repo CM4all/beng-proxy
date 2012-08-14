@@ -80,6 +80,20 @@ failure_is_expired(const struct failure *failure)
         is_expired(failure->expires);
 }
 
+static bool
+failure_override_status(struct failure *failure, time_t now,
+                        enum failure_status status, unsigned duration)
+{
+    if (status < failure->status && !failure_is_expired(failure))
+        /* don't update if the current status is more serious than the
+           new one */
+        return false;
+
+    failure->expires = now + duration;
+    failure->status = status;
+    return true;
+}
+
 void
 failure_set(const struct sockaddr *addr, size_t addrlen,
             enum failure_status status, unsigned duration)
@@ -103,14 +117,7 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next) {
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
-            /* this address is already in our list */
-            if (status < failure->status && !failure_is_expired(failure))
-                /* don't update if the current status is more serious
-                   than the new one */
-                return;
-
-            failure->expires = now.tv_sec + duration;
-            failure->status = status;
+            failure_override_status(failure, now.tv_sec, status, duration);
             return;
         }
     }
