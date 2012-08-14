@@ -172,6 +172,15 @@ failure_unset(const struct sockaddr *addr, size_t addrlen,
     }
 }
 
+gcc_pure
+static enum failure_status
+failure_get_status2(const struct failure *failure)
+{
+    return !failure_is_expired(failure)
+        ? failure->status
+        : FAILURE_OK;
+}
+
 enum failure_status
 failure_get_status(const struct sockaddr *address, size_t length)
 {
@@ -183,11 +192,8 @@ failure_get_status(const struct sockaddr *address, size_t length)
 
     for (failure = fl.slots[slot]; failure != NULL; failure = failure->next)
         if (failure->envelope.length == length &&
-            memcmp(&failure->envelope.address, address, length) == 0) {
-            return !failure_is_expired(failure)
-                ? failure->status
-                : FAILURE_OK;
-        }
+            memcmp(&failure->envelope.address, address, length) == 0)
+            return failure_get_status2(failure);
 
     return FAILURE_OK;
 }
