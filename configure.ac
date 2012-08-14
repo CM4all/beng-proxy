@@ -63,6 +63,9 @@ AM_CONDITIONAL(HAVE_ATTR_XATTR_H, test x$ac_cv_header_attr_xattr_h = xyes)
 
 dnl Checks for libraries.
 
+PKG_CHECK_MODULES([CPPUNIT], [cppunit],,
+	[AC_MSG_ERROR([cppunit not found])])
+
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],,
 	[AC_MSG_ERROR([glib 2.16 is required])])
 

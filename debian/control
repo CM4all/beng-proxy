@@ -4,6 +4,7 @@ Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 7), autoconf (>= 2.60), automake (>= 1.10),
  gcc (>= 4.3), g++ (>= 4.3), libc6-dev (>= 2.7),
+ libcppunit-dev,
  libglib2.0-dev (>= 2.16),
  libevent-dev (>= 1.4.8~), libattr1-dev,
  libssl-dev,
