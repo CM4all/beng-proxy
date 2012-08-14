@@ -21,6 +21,8 @@ struct failure {
 
     time_t expires;
 
+    time_t fade_expires;
+
     enum failure_status status;
 
     struct address_envelope envelope;
@@ -80,13 +82,34 @@ failure_is_expired(const struct failure *failure)
         is_expired(failure->expires);
 }
 
+gcc_pure
+static inline bool
+failure_is_fade(const struct failure *failure)
+{
+    assert(failure != NULL);
+
+    return failure->fade_expires > 0 &&
+        !is_expired(failure->fade_expires);
+}
+
 static bool
 failure_override_status(struct failure *failure, time_t now,
                         enum failure_status status, unsigned duration)
 {
-    if (status < failure->status && !failure_is_expired(failure))
-        /* don't update if the current status is more serious than the
-           new one */
+    if (failure_is_expired(failure)) {
+        /* expired: override in any case */
+    } else if (status == failure->status) {
+        /* same status: update expiry */
+    } else if (status == FAILURE_FADE) {
+        /* store "fade" expiry in special attribute, until the other
+           failure status expires */
+        failure->fade_expires = now + duration;
+        return true;
+    } else if (failure->status == FAILURE_FADE) {
+        /* copy the "fade" expiry to the special attribute, and
+           overwrite the FAILURE_FADE status */
+        failure->fade_expires = failure->expires;
+    } else if (status < failure->status)
         return false;
 
     failure->expires = now + duration;
@@ -127,6 +150,7 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
     failure = p_malloc(fl.pool, sizeof(*failure)
                        - sizeof(failure->envelope.address) + addrlen);
     failure->expires = now.tv_sec + duration;
+    failure->fade_expires = 0;
     failure->status = status;
     failure->envelope.length = addrlen;
     memcpy(&failure->envelope.address, addr, addrlen);
@@ -146,14 +170,23 @@ static void
 failure_unset2(struct pool *pool, struct failure **failure_r,
                struct failure *failure, enum failure_status status)
 {
+    if (status == FAILURE_FADE)
+        failure->fade_expires = 0;
+
     if (!match_status(failure->status, status) &&
         !failure_is_expired(failure))
         /* don't update if the current status is more serious than the
            one to be removed */
         return;
 
-    *failure_r = failure->next;
-    p_free(pool, failure);
+    if (status != FAILURE_OK && failure_is_fade(failure)) {
+        failure->status = FAILURE_FADE;
+        failure->expires = failure->fade_expires;
+        failure->fade_expires = 0;
+    } else {
+        *failure_r = failure->next;
+        p_free(pool, failure);
+    }
 }
 
 void
@@ -182,9 +215,12 @@ gcc_pure
 static enum failure_status
 failure_get_status2(const struct failure *failure)
 {
-    return !failure_is_expired(failure)
-        ? failure->status
-        : FAILURE_OK;
+    if (!failure_is_expired(failure))
+        return failure->status;
+    else if (failure_is_fade(failure))
+        return FAILURE_FADE;
+    else
+        return FAILURE_OK;
 }
 
 enum failure_status
