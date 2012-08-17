@@ -24,7 +24,7 @@ struct lb_monitor {
     const struct lb_monitor_class *class;
 
     struct timeval interval;
-    struct event timer_event;
+    struct event interval_event;
 
     struct pool_mark mark;
     struct async_operation_ref async_ref;
@@ -57,7 +57,7 @@ monitor_handler_success(void *ctx)
                       FAILURE_FADE);
     }
 
-    evtimer_add(&monitor->timer_event, &monitor->interval);
+    evtimer_add(&monitor->interval_event, &monitor->interval);
 }
 
 static void
@@ -75,7 +75,7 @@ monitor_handler_fade(void *ctx)
     failure_set(monitor->address, monitor->address_length,
                 FAILURE_FADE, 300);
 
-    evtimer_add(&monitor->timer_event, &monitor->interval);
+    evtimer_add(&monitor->interval_event, &monitor->interval);
 }
 
 static void
@@ -91,7 +91,7 @@ monitor_handler_timeout(void *ctx)
     failure_set(monitor->address, monitor->address_length,
                 FAILURE_MONITOR, 0);
 
-    evtimer_add(&monitor->timer_event, &monitor->interval);
+    evtimer_add(&monitor->interval_event, &monitor->interval);
 }
 
 static void
@@ -112,7 +112,7 @@ monitor_handler_error(GError *error, void *ctx)
     failure_set(monitor->address, monitor->address_length,
                 FAILURE_MONITOR, 0);
 
-    evtimer_add(&monitor->timer_event, &monitor->interval);
+    evtimer_add(&monitor->interval_event, &monitor->interval);
 }
 
 static const struct lb_monitor_handler monitor_handler = {
@@ -123,7 +123,7 @@ static const struct lb_monitor_handler monitor_handler = {
 };
 
 static void
-lb_monitor_timer_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
+lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
                           void *ctx)
 {
     struct lb_monitor *monitor = ctx;
@@ -151,15 +151,18 @@ lb_monitor_new(struct pool *pool, const char *name,
     monitor->address = address;
     monitor->address_length = address_length;
     monitor->class = class;
+
     monitor->interval.tv_sec = config->interval;
     monitor->interval.tv_usec = 0;
-    evtimer_set(&monitor->timer_event, lb_monitor_timer_callback, monitor);
+    evtimer_set(&monitor->interval_event,
+                lb_monitor_interval_callback, monitor);
+
     async_ref_clear(&monitor->async_ref);
     monitor->state = true;
     monitor->fade = false;
 
     static const struct timeval immediately = { .tv_sec = 0 };
-    evtimer_add(&monitor->timer_event, &immediately);
+    evtimer_add(&monitor->interval_event, &immediately);
 
     return monitor;
 }
@@ -167,7 +170,7 @@ lb_monitor_new(struct pool *pool, const char *name,
 void
 lb_monitor_free(struct lb_monitor *monitor)
 {
-    event_del(&monitor->timer_event);
+    event_del(&monitor->interval_event);
 
     if (async_ref_defined(&monitor->async_ref))
         async_abort(&monitor->async_ref);
