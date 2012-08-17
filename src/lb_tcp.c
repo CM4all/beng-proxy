@@ -297,6 +297,7 @@ lb_tcp_new(struct lb_connection *connection, int fd,
 
     client_balancer_connect(connection->pool, connection->instance->balancer,
                             0, &connection->listener->cluster->address_list,
+                            20,
                             &lb_tcp_client_socket_handler, connection,
                             &connection->tcp.connect);
 }

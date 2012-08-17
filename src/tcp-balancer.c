@@ -28,6 +28,8 @@ struct tcp_balancer_request {
      */
     unsigned session_sticky;
 
+    unsigned timeout;
+
     /**
      * The number of remaining connection attempts.  We give up when
      * we get an error and this attribute is already zero.
@@ -68,6 +70,7 @@ tcp_balancer_next(struct tcp_balancer_request *request)
                   NULL,
                   &request->current_address->address,
                   request->current_address->length,
+                  request->timeout,
                   &tcp_balancer_stock_handler, request,
                   request->async_ref);
 }
@@ -133,6 +136,7 @@ void
 tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  unsigned session_sticky,
                  const struct address_list *address_list,
+                 unsigned timeout,
                  const struct stock_get_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
@@ -140,6 +144,7 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
     request->pool = pool;
     request->tcp_balancer = tcp_balancer;
     request->session_sticky = session_sticky;
+    request->timeout = timeout;
 
     if (address_list->size <= 1)
         request->retries = 0;

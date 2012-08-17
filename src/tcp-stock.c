@@ -25,6 +25,8 @@
 struct tcp_stock_request {
     const struct sockaddr *address;
     size_t address_length;
+
+    unsigned timeout;
 };
 
 struct tcp_stock_connection {
@@ -189,7 +191,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
     connection->domain = request->address->sa_family;
     client_socket_new(caller_pool, connection->domain, SOCK_STREAM, 0,
                       request->address, request->address_length,
-                      30,
+                      request->timeout,
                       &tcp_stock_socket_handler, connection,
                       &connection->client_socket);
 }
@@ -255,6 +257,7 @@ tcp_stock_new(struct pool *pool, unsigned limit)
 void
 tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               const struct sockaddr *address, size_t address_length,
+              unsigned timeout,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
@@ -264,6 +267,7 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
     struct tcp_stock_request *request = p_malloc(pool, sizeof(*request));
     request->address = address;
     request->address_length = address_length;
+    request->timeout = timeout;
 
     if (name == NULL) {
         char buffer[1024];

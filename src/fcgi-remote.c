@@ -155,7 +155,7 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
     } else
         request->body = NULL;
 
-    tcp_balancer_get(tcp_balancer, pool, 0, address_list,
+    tcp_balancer_get(tcp_balancer, pool, 0, address_list, 20,
                      &fcgi_remote_stock_handler, request,
                      async_ref);
 }

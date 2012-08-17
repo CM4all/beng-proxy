@@ -23,6 +23,11 @@ struct client_balancer_request {
     unsigned session_sticky;
 
     /**
+     * The connect timeout for each attempt.
+     */
+    unsigned timeout;
+
+    /**
      * The number of remaining connection attempts.  We give up when
      * we get an error and this attribute is already zero.
      */
@@ -50,7 +55,7 @@ client_balancer_next(struct client_balancer_request *request)
     client_socket_new(request->pool,
                       envelope->address.sa_family, SOCK_STREAM, 0,
                       &envelope->address, envelope->length,
-                      30,
+                      request->timeout,
                       &client_balancer_socket_handler, request,
                       request->async_ref);
 }
@@ -121,6 +126,7 @@ void
 client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         unsigned session_sticky,
                         const struct address_list *address_list,
+                        unsigned timeout,
                         const struct client_socket_handler *handler, void *ctx,
                         struct async_operation_ref *async_ref)
 {
@@ -128,6 +134,7 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
     request->pool = pool;
     request->balancer = balancer;
     request->session_sticky = session_sticky;
+    request->timeout = timeout;
 
     if (address_list->size <= 1)
         request->retries = 0;

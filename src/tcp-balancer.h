@@ -35,11 +35,13 @@ tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
 /**
  * @param session_sticky a portion of the session id that is used to
  * select the worker; 0 means disable stickiness
+ * @param timeout the connect timeout for each attempt [seconds]
  */
 void
 tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  unsigned session_sticky,
                  const struct address_list *address_list,
+                 unsigned timeout,
                  const struct stock_get_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref);
 

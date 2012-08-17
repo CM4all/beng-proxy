@@ -30,10 +30,12 @@ tcp_stock_new(struct pool *pool, unsigned limit);
 /**
  * @param name the hstock name; it is auto-generated from the
  * #address_list if NULL is passed here
+ * @param timeout the connect timeout in seconds
  */
 void
 tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               const struct sockaddr *address, size_t address_length,
+              unsigned timeout,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 

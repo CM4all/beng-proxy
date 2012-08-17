@@ -292,6 +292,7 @@ lb_http_connection_request(struct http_server_request *request,
     tcp_balancer_get(request2->balancer, request->pool,
                      session_sticky,
                      &cluster->address_list,
+                     20,
                      &my_stock_handler, request2,
                      async_ref);
 }

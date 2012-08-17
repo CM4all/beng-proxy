@@ -95,6 +95,7 @@ http_request_response_abort(GError *error, void *ctx)
         tcp_balancer_get(hr->tcp_balancer, hr->pool,
                          hr->session_sticky,
                          &hr->uwa->addresses,
+                         30,
                          &http_request_stock_handler, hr,
                          hr->async_ref);
     } else {
@@ -226,6 +227,7 @@ http_request(struct pool *pool,
     hr->retries = 2;
     tcp_balancer_get(tcp_balancer, pool, session_sticky,
                      &uwa->addresses,
+                     30,
                      &http_request_stock_handler, hr,
                      async_ref);
 }

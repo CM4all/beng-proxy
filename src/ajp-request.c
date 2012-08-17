@@ -161,6 +161,7 @@ ajp_stock_request(struct pool *pool,
 
     tcp_balancer_get(tcp_balancer, pool, session_sticky,
                      &uwa->addresses,
+                     20,
                      &ajp_request_stock_handler, hr,
                      async_ref);
 }

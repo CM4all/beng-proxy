@@ -130,6 +130,7 @@ tstock_translate(struct tstock *stock, struct pool *pool,
     tcp_stock_get(stock->tcp_stock, pool, stock->address.sun_path,
                   (const struct sockaddr *)&stock->address,
                   sizeof(stock->address),
+                  10,
                   &tstock_stock_handler, r,
                   async_ref);
 }
