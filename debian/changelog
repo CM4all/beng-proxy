@@ -2,7 +2,7 @@ cm4all-beng-proxy (2.1.4) unstable; urgency=low
 
   * lb_monitor: configurable timeout
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 17 Aug 2012 09:16:36 -0000
 
 cm4all-beng-proxy (2.1.3) unstable; urgency=low
 
