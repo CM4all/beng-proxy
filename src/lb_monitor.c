@@ -127,6 +127,8 @@ lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
                           void *ctx)
 {
     struct lb_monitor *monitor = ctx;
+    assert(!async_ref_defined(&monitor->async_ref));
+
     daemon_log(6, "running monitor %s\n", monitor->name);
 
     struct pool *pool = pool_new_linear(monitor->pool, "monitor_run", 8192);
