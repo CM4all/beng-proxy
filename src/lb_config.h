@@ -45,6 +45,12 @@ struct lb_monitor_config {
      */
     unsigned interval;
 
+    /**
+     * If the monitor does not produce a result after this timeout
+     * [seconds], it is assumed to be negative.
+     */
+    unsigned timeout;
+
     enum {
         MONITOR_NONE,
         MONITOR_PING,

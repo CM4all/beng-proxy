@@ -26,6 +26,9 @@ struct lb_monitor {
     struct timeval interval;
     struct event interval_event;
 
+    struct timeval timeout;
+    struct event timeout_event;
+
     struct pool_mark mark;
     struct async_operation_ref async_ref;
 
@@ -38,6 +41,7 @@ monitor_handler_success(void *ctx)
 {
     struct lb_monitor *monitor = ctx;
     async_ref_clear(&monitor->async_ref);
+    evtimer_del(&monitor->timeout_event);
 
     if (!monitor->state)
         daemon_log(5, "monitor recovered: %s\n", monitor->name);
@@ -65,6 +69,7 @@ monitor_handler_fade(void *ctx)
 {
     struct lb_monitor *monitor = ctx;
     async_ref_clear(&monitor->async_ref);
+    evtimer_del(&monitor->timeout_event);
 
     if (!monitor->fade)
         daemon_log(5, "monitor fade: %s\n", monitor->name);
@@ -83,6 +88,7 @@ monitor_handler_timeout(void *ctx)
 {
     struct lb_monitor *monitor = ctx;
     async_ref_clear(&monitor->async_ref);
+    evtimer_del(&monitor->timeout_event);
 
     daemon_log(monitor->state ? 3 : 6,
                "monitor timeout: %s\n", monitor->name);
@@ -99,6 +105,7 @@ monitor_handler_error(GError *error, void *ctx)
 {
     struct lb_monitor *monitor = ctx;
     async_ref_clear(&monitor->async_ref);
+    evtimer_del(&monitor->timeout_event);
 
     if (monitor->state)
         daemon_log(2, "monitor error: %s: %s\n",
@@ -131,12 +138,34 @@ lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
 
     daemon_log(6, "running monitor %s\n", monitor->name);
 
+    if (monitor->config->timeout > 0)
+        evtimer_add(&monitor->timeout_event, &monitor->timeout);
+
     struct pool *pool = pool_new_linear(monitor->pool, "monitor_run", 8192);
     monitor->class->run(pool, monitor->config,
                         monitor->address, monitor->address_length,
                         &monitor_handler, monitor,
                         &monitor->async_ref);
     pool_unref(pool);
+}
+
+static void
+lb_monitor_timeout_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
+                          void *ctx)
+{
+    struct lb_monitor *monitor = ctx;
+    assert(async_ref_defined(&monitor->async_ref));
+
+    daemon_log(6, "monitor timeout: %s\n", monitor->name);
+
+    async_abort(&monitor->async_ref);
+    async_ref_clear(&monitor->async_ref);
+
+    monitor->state = false;
+    failure_set(monitor->address, monitor->address_length,
+                FAILURE_MONITOR, 0);
+
+    evtimer_add(&monitor->interval_event, &monitor->interval);
 }
 
 struct lb_monitor *
@@ -156,8 +185,13 @@ lb_monitor_new(struct pool *pool, const char *name,
 
     monitor->interval.tv_sec = config->interval;
     monitor->interval.tv_usec = 0;
+
     evtimer_set(&monitor->interval_event,
                 lb_monitor_interval_callback, monitor);
+
+    monitor->timeout.tv_sec = config->timeout;
+    monitor->timeout.tv_usec = 0;
+    evtimer_set(&monitor->timeout_event, lb_monitor_timeout_callback, monitor);
 
     async_ref_clear(&monitor->async_ref);
     monitor->state = true;

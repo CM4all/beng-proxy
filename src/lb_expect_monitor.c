@@ -32,11 +32,6 @@ struct expect_monitor_context {
     struct async_operation async_operation;
 };
 
-static const struct timeval expect_timeout = {
-    .tv_sec = 10,
-    .tv_usec = 0,
-};
-
 static bool
 check_expectation(char *received, size_t received_length,
                   const char *expect)
@@ -137,6 +132,11 @@ expect_monitor_success(int fd, void *ctx)
             return;
         }
     }
+
+    struct timeval expect_timeout = {
+        .tv_sec = expect->config->timeout > 0 ? expect->config->timeout : 10,
+        .tv_usec = 0,
+    };
 
     expect->fd = fd;
     event_set(&expect->event, fd, EV_READ|EV_TIMEOUT,
