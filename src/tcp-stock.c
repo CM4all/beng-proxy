@@ -189,6 +189,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
     connection->domain = request->address->sa_family;
     client_socket_new(caller_pool, connection->domain, SOCK_STREAM, 0,
                       request->address, request->address_length,
+                      30,
                       &tcp_stock_socket_handler, connection,
                       &connection->client_socket);
 }

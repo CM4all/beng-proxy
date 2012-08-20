@@ -129,6 +129,7 @@ void
 client_socket_new(struct pool *pool,
                   int domain, int type, int protocol,
                   const struct sockaddr *addr, size_t addrlen,
+                  unsigned timeout,
                   const struct client_socket_handler *handler, void *ctx,
                   struct async_operation_ref *async_ref)
 {
@@ -174,7 +175,7 @@ client_socket_new(struct pool *pool,
     } else if (errno == EINPROGRESS) {
         struct client_socket *client_socket;
         struct timeval tv = {
-            .tv_sec = 30,
+            .tv_sec = timeout,
             .tv_usec = 0,
         };
 

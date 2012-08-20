@@ -20,10 +20,14 @@ struct client_socket_handler {
     void (*error)(GError *error, void *ctx);
 };
 
+/**
+ * @param timeout the connect timeout in seconds
+ */
 void
 client_socket_new(struct pool *pool,
                   int domain, int type, int protocol,
                   const struct sockaddr *addr, size_t addrlen,
+                  unsigned timeout,
                   const struct client_socket_handler *handler, void *ctx,
                   struct async_operation_ref *async_ref);
 

@@ -311,6 +311,7 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     client_socket_new(caller_pool, AF_UNIX, SOCK_STREAM, 0,
                       (const struct sockaddr*)&child->address,
                       sizeof(child->address),
+                      10,
                       &fcgi_stock_socket_handler, child,
                       &child->connect_operation);
 }

@@ -50,6 +50,7 @@ client_balancer_next(struct client_balancer_request *request)
     client_socket_new(request->pool,
                       envelope->address.sa_family, SOCK_STREAM, 0,
                       &envelope->address, envelope->length,
+                      30,
                       &client_balancer_socket_handler, request,
                       request->async_ref);
 }
