@@ -376,6 +376,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                 monitor->type = MONITOR_CONNECT;
             else if (strcmp(value, "tcp_expect") == 0) {
                 monitor->type = MONITOR_TCP_EXPECT;
+                monitor->connect_timeout = 0;
                 monitor->send = NULL;
                 monitor->expect = NULL;
                 monitor->fade_expect = NULL;
@@ -396,6 +397,14 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                 return throw(error_r, "Positive integer expected");
 
             monitor->timeout = value;
+            return true;
+        } else if (monitor->type == MONITOR_TCP_EXPECT &&
+                   strcmp(word, "connect_timeout") == 0) {
+            unsigned value = next_positive_integer(&p);
+            if (value == 0)
+                return throw(error_r, "Positive integer expected");
+
+            monitor->connect_timeout = value;
             return true;
         } else if (monitor->type == MONITOR_TCP_EXPECT &&
                    strcmp(word, "send") == 0) {

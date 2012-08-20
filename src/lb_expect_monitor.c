@@ -187,9 +187,11 @@ expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
     expect->handler_ctx = handler_ctx;
     expect->async_ref = async_ref;
 
-    const unsigned connect_timeout = config->timeout > 0
-        ? config->timeout
-        : 30;
+    const unsigned connect_timeout = config->connect_timeout > 0
+        ? config->connect_timeout
+        : (config->timeout > 0
+           ? config->timeout
+           : 30);
 
     client_socket_new(pool, address->sa_family, SOCK_STREAM, 0,
                       address, address_length,

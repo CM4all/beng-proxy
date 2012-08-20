@@ -59,6 +59,12 @@ struct lb_monitor_config {
     } type;
 
     /**
+     * The timeout for establishing a connection.  Only applicable for
+     * #MONITOR_TCP_EXPECT.  0 means no special setting present.
+     */
+    unsigned connect_timeout;
+
+    /**
      * For #MONITOR_TCP_EXPECT: a string that is sent to the peer
      * after the connection has been established.  May be NULL or
      * empty.
