@@ -37,6 +37,11 @@ struct proxy_widget {
     const struct widget_ref *ref;
 };
 
+/*
+ * http_response_handler
+ *
+ */
+
 static void
 widget_proxy_response(http_status_t status, struct strmap *headers,
                       struct istream *body, void *ctx)
@@ -109,6 +114,11 @@ static const struct http_response_handler widget_response_handler = {
     .response = widget_proxy_response,
     .abort = widget_proxy_abort,
 };
+
+/*
+ * widget_lookup_handler
+ *
+ */
 
 static const struct widget_lookup_handler widget_processor_handler;
 
@@ -235,6 +245,11 @@ static const struct widget_lookup_handler widget_processor_handler = {
     .not_found = widget_proxy_not_found,
     .error = widget_proxy_error,
 };
+
+/*
+ * constructor
+ *
+ */
 
 void
 proxy_widget(struct request *request2, http_status_t status,
