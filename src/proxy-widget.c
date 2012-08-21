@@ -35,6 +35,9 @@ struct proxy_widget {
      * A reference to the widget that should be proxied.
      */
     const struct widget_ref *ref;
+
+    struct async_operation operation;
+    struct async_operation_ref async_ref;
 };
 
 /*
@@ -140,7 +143,7 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
                             proxy->ref->id,
                             &request2->env,
                             &widget_processor_handler, proxy,
-                            &request2->async_ref);
+                            &proxy->async_ref);
     } else {
         const struct processor_env *env = &request2->env;
 
@@ -161,7 +164,7 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
         frame_top_widget(request->pool, widget,
                          &request2->env,
                          &widget_response_handler, proxy,
-                         &request2->async_ref);
+                         &proxy->async_ref);
     }
 }
 
@@ -199,7 +202,7 @@ widget_proxy_found(struct widget *widget, void *ctx)
         widget_resolver_new(request->pool, request2->env.pool, widget,
                             global_translate_cache,
                             &proxy_widget_resolver_callback, proxy,
-                            &request2->async_ref);
+                            &proxy->async_ref);
         return;
     }
 
@@ -247,6 +250,33 @@ static const struct widget_lookup_handler widget_processor_handler = {
 };
 
 /*
+ * async operation
+ *
+ */
+
+static struct proxy_widget *
+async_to_proxy(struct async_operation *ao)
+{
+    return (struct proxy_widget *)(((char*)ao) - offsetof(struct proxy_widget, operation));
+}
+
+static void
+widget_proxy_operation_abort(struct async_operation *ao)
+{
+    struct proxy_widget *proxy = async_to_proxy(ao);
+
+    /* make sure that all widget resources are freed when the request
+       is cancelled */
+    widget_cancel(proxy->widget);
+
+    async_abort(&proxy->async_ref);
+}
+
+static const struct async_operation_class widget_proxy_operation = {
+    .abort = widget_proxy_operation_abort,
+};
+
+/*
  * constructor
  *
  */
@@ -267,9 +297,12 @@ proxy_widget(struct request *request2, http_status_t status,
     proxy->widget = widget;
     proxy->ref = proxy_ref;
 
+    async_init(&proxy->operation, &widget_proxy_operation);
+    async_ref_set(&request2->async_ref, &proxy->operation);
+
     processor_lookup_widget(request2->request->pool, status, body,
                             widget, proxy_ref->id,
                             &request2->env, options,
                             &widget_processor_handler, proxy,
-                            &request2->async_ref);
+                            &proxy->async_ref);
 }
