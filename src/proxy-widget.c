@@ -24,13 +24,36 @@
 
 #include <daemon/log.h>
 
+struct proxy_widget {
+    struct request *request;
+
+    /**
+     * The widget currently being processed.
+     */
+    struct widget *widget;
+
+    /**
+     * A reference to the widget that should be proxied.
+     */
+    const struct widget_ref *ref;
+
+    struct async_operation operation;
+    struct async_operation_ref async_ref;
+};
+
+/*
+ * http_response_handler
+ *
+ */
+
 static void
 widget_proxy_response(http_status_t status, struct strmap *headers,
                       struct istream *body, void *ctx)
 {
-    struct request *request2 = ctx;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
     struct http_server_request *request = request2->request;
-    struct widget *widget = request2->widget;
+    struct widget *widget = proxy->widget;
     struct growing_buffer *headers2;
 
     assert(widget != NULL);
@@ -81,8 +104,9 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 static void
 widget_proxy_abort(GError *error, void *ctx)
 {
-    struct request *request2 = ctx;
-    struct widget *widget = request2->widget;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
+    struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
                request2->request->uri, error->message);
@@ -99,6 +123,11 @@ static const struct http_response_handler widget_response_handler = {
     .response = widget_proxy_response,
     .abort = widget_proxy_abort,
 };
+
+/*
+ * widget_lookup_handler
+ *
+ */
 
 static const struct widget_lookup_handler widget_processor_handler;
 
@@ -139,8 +168,9 @@ widget_view_allowed(struct widget *widget,
 }
 
 static void
-proxy_widget_continue(struct request *request2, struct widget *widget)
+proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
 {
+    struct request *request2 = proxy->request;
     struct http_server_request *request = request2->request;
 
     if (!widget_has_default_view(widget)) {
@@ -150,12 +180,12 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
         return;
     }
 
-    if (request2->proxy_ref != NULL) {
+    if (proxy->ref != NULL) {
         frame_parent_widget(request->pool, widget,
-                            request2->proxy_ref->id,
+                            proxy->ref->id,
                             &request2->env,
-                            &widget_processor_handler, request2,
-                            &request2->async_ref);
+                            &widget_processor_handler, proxy,
+                            &proxy->async_ref);
     } else {
         const struct processor_env *env = &request2->env;
 
@@ -191,16 +221,17 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 
         frame_top_widget(request->pool, widget,
                          &request2->env,
-                         &widget_response_handler, request2,
-                         &request2->async_ref);
+                         &widget_response_handler, proxy,
+                         &proxy->async_ref);
     }
 }
 
 static void
 proxy_widget_resolver_callback(void *ctx)
 {
-    struct request *request2 = ctx;
-    struct widget *widget = request2->widget;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
+    struct widget *widget = proxy->widget;
 
     if (widget->class == NULL) {
         daemon_log(2, "lookup of widget class '%s' for '%s' failed\n",
@@ -212,39 +243,41 @@ proxy_widget_resolver_callback(void *ctx)
         return;
     }
 
-    proxy_widget_continue(request2, widget);
+    proxy_widget_continue(proxy, widget);
 }
 
 static void
 widget_proxy_found(struct widget *widget, void *ctx)
 {
-    struct request *request2 = ctx;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
     struct http_server_request *request = request2->request;
 
-    request2->widget = widget;
-    request2->proxy_ref = request2->proxy_ref->next;
+    proxy->widget = widget;
+    proxy->ref = proxy->ref->next;
 
     if (widget->class == NULL) {
         widget_resolver_new(request->pool, request2->env.pool, widget,
                             global_translate_cache,
-                            &proxy_widget_resolver_callback, request2,
-                            &request2->async_ref);
+                            &proxy_widget_resolver_callback, proxy,
+                            &proxy->async_ref);
         return;
     }
 
-    proxy_widget_continue(request2, widget);
+    proxy_widget_continue(proxy, widget);
 }
 
 static void
 widget_proxy_not_found(void *ctx)
 {
-    struct request *request2 = ctx;
-    struct widget *widget = request2->widget;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
+    struct widget *widget = proxy->widget;
 
-    assert(request2->proxy_ref != NULL);
+    assert(proxy->ref != NULL);
 
     daemon_log(2, "widget '%s' not found in %s [%s]\n",
-               request2->proxy_ref->id,
+               proxy->ref->id,
                widget_path(widget), request2->request->uri);
 
     widget_cancel(widget);
@@ -255,8 +288,9 @@ widget_proxy_not_found(void *ctx)
 static void
 widget_proxy_error(GError *error, void *ctx)
 {
-    struct request *request2 = ctx;
-    struct widget *widget = request2->widget;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
+    struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
                request2->request->uri, error->message);
@@ -273,6 +307,38 @@ static const struct widget_lookup_handler widget_processor_handler = {
     .error = widget_proxy_error,
 };
 
+/*
+ * async operation
+ *
+ */
+
+static struct proxy_widget *
+async_to_proxy(struct async_operation *ao)
+{
+    return (struct proxy_widget *)(((char*)ao) - offsetof(struct proxy_widget, operation));
+}
+
+static void
+widget_proxy_operation_abort(struct async_operation *ao)
+{
+    struct proxy_widget *proxy = async_to_proxy(ao);
+
+    /* make sure that all widget resources are freed when the request
+       is cancelled */
+    widget_cancel(proxy->widget);
+
+    async_abort(&proxy->async_ref);
+}
+
+static const struct async_operation_class widget_proxy_operation = {
+    .abort = widget_proxy_operation_abort,
+};
+
+/*
+ * constructor
+ *
+ */
+
 void
 proxy_widget(struct request *request2, http_status_t status,
              struct istream *body,
@@ -283,12 +349,18 @@ proxy_widget(struct request *request2, http_status_t status,
     assert(widget != NULL);
     assert(proxy_ref != NULL);
 
-    request2->widget = widget;
-    request2->proxy_ref = proxy_ref;
+    struct proxy_widget *proxy = p_malloc(request2->request->pool,
+                                          sizeof(*proxy));
+    proxy->request = request2;
+    proxy->widget = widget;
+    proxy->ref = proxy_ref;
+
+    async_init(&proxy->operation, &widget_proxy_operation);
+    async_ref_set(&request2->async_ref, &proxy->operation);
 
     processor_lookup_widget(request2->request->pool, status, body,
                             widget, proxy_ref->id,
                             &request2->env, options,
-                            &widget_processor_handler, request2,
-                            &request2->async_ref);
+                            &widget_processor_handler, proxy,
+                            &proxy->async_ref);
 }
