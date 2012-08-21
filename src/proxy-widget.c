@@ -23,13 +23,28 @@
 
 #include <daemon/log.h>
 
+struct proxy_widget {
+    struct request *request;
+
+    /**
+     * The widget currently being processed.
+     */
+    struct widget *widget;
+
+    /**
+     * A reference to the widget that should be proxied.
+     */
+    const struct widget_ref *ref;
+};
+
 static void
 widget_proxy_response(http_status_t status, struct strmap *headers,
                       struct istream *body, void *ctx)
 {
-    struct request *request2 = ctx;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
     struct http_server_request *request = request2->request;
-    struct widget *widget = request2->widget;
+    struct widget *widget = proxy->widget;
     struct growing_buffer *headers2;
 
     assert(widget != NULL);
@@ -75,8 +90,9 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 static void
 widget_proxy_abort(GError *error, void *ctx)
 {
-    struct request *request2 = ctx;
-    struct widget *widget = request2->widget;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
+    struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
                request2->request->uri, error->message);
@@ -97,11 +113,12 @@ static const struct http_response_handler widget_response_handler = {
 static const struct widget_lookup_handler widget_processor_handler;
 
 static void
-proxy_widget_continue(struct request *request2, struct widget *widget)
+proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
 {
+    struct request *request2 = proxy->request;
     struct http_server_request *request = request2->request;
 
-    if (request2->proxy_ref != NULL) {
+    if (proxy->ref != NULL) {
         if (widget_get_view(widget) == NULL) {
             widget_cancel(widget);
             response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
@@ -110,9 +127,9 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
         }
 
         frame_parent_widget(request->pool, widget,
-                            request2->proxy_ref->id,
+                            proxy->ref->id,
                             &request2->env,
-                            &widget_processor_handler, request2,
+                            &widget_processor_handler, proxy,
                             &request2->async_ref);
     } else {
         const struct processor_env *env = &request2->env;
@@ -133,7 +150,7 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 
         frame_top_widget(request->pool, widget,
                          &request2->env,
-                         &widget_response_handler, request2,
+                         &widget_response_handler, proxy,
                          &request2->async_ref);
     }
 }
@@ -141,8 +158,9 @@ proxy_widget_continue(struct request *request2, struct widget *widget)
 static void
 proxy_widget_resolver_callback(void *ctx)
 {
-    struct request *request2 = ctx;
-    struct widget *widget = request2->widget;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
+    struct widget *widget = proxy->widget;
 
     if (widget->class == NULL) {
         daemon_log(2, "lookup of widget class '%s' for '%s' failed\n",
@@ -154,39 +172,41 @@ proxy_widget_resolver_callback(void *ctx)
         return;
     }
 
-    proxy_widget_continue(request2, widget);
+    proxy_widget_continue(proxy, widget);
 }
 
 static void
 widget_proxy_found(struct widget *widget, void *ctx)
 {
-    struct request *request2 = ctx;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
     struct http_server_request *request = request2->request;
 
-    request2->widget = widget;
-    request2->proxy_ref = request2->proxy_ref->next;
+    proxy->widget = widget;
+    proxy->ref = proxy->ref->next;
 
     if (widget->class == NULL) {
         widget_resolver_new(request->pool, request2->env.pool, widget,
                             global_translate_cache,
-                            &proxy_widget_resolver_callback, request2,
+                            &proxy_widget_resolver_callback, proxy,
                             &request2->async_ref);
         return;
     }
 
-    proxy_widget_continue(request2, widget);
+    proxy_widget_continue(proxy, widget);
 }
 
 static void
 widget_proxy_not_found(void *ctx)
 {
-    struct request *request2 = ctx;
-    struct widget *widget = request2->widget;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
+    struct widget *widget = proxy->widget;
 
-    assert(request2->proxy_ref != NULL);
+    assert(proxy->ref != NULL);
 
     daemon_log(2, "widget '%s' not found in %s [%s]\n",
-               request2->proxy_ref->id,
+               proxy->ref->id,
                widget_path(widget), request2->request->uri);
 
     widget_cancel(widget);
@@ -197,8 +217,9 @@ widget_proxy_not_found(void *ctx)
 static void
 widget_proxy_error(GError *error, void *ctx)
 {
-    struct request *request2 = ctx;
-    struct widget *widget = request2->widget;
+    struct proxy_widget *proxy = ctx;
+    struct request *request2 = proxy->request;
+    struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
                request2->request->uri, error->message);
@@ -225,12 +246,15 @@ proxy_widget(struct request *request2, http_status_t status,
     assert(widget != NULL);
     assert(proxy_ref != NULL);
 
-    request2->widget = widget;
-    request2->proxy_ref = proxy_ref;
+    struct proxy_widget *proxy = p_malloc(request2->request->pool,
+                                          sizeof(*proxy));
+    proxy->request = request2;
+    proxy->widget = widget;
+    proxy->ref = proxy_ref;
 
     processor_lookup_widget(request2->request->pool, status, body,
                             widget, proxy_ref->id,
                             &request2->env, options,
-                            &widget_processor_handler, request2,
+                            &widget_processor_handler, proxy,
                             &request2->async_ref);
 }
