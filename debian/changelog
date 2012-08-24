@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.0.46) unstable; urgency=low
 
   * merge release 1.4.30
+  * lb: add option --config-file
 
  --   
 

@@ -205,6 +205,7 @@ int main(int argc, char **argv)
     int gcc_unused ref;
     static struct lb_instance instance = {
         .cmdline = {
+            .config_path = "/etc/cm4all/beng/lb.conf",
             .max_connections = 8192,
             .tcp_stock_limit = 256,
             .enable_splice = true,
@@ -220,7 +221,7 @@ int main(int argc, char **argv)
 
     GError *error = NULL;
     instance.config = lb_config_load(instance.pool,
-                                     "/etc/cm4all/beng/lb.conf",
+                                     instance.cmdline.config_path,
                                      &error);
     if (instance.config == NULL) {
         fprintf(stderr, "%s\n", error->message);

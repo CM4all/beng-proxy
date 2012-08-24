@@ -35,6 +35,10 @@ static void usage(void) {
 #endif
          " -q             be quiet\n"
 #ifdef __GLIBC__
+         " --config-file PATH\n"
+#endif
+         " -f PATH        load this configuration file instead of /etc/cm4all/beng/lb.conf\n"
+#ifdef __GLIBC__
          " --check        check configuration file syntax\n"
 #else
          " -C             check configuration file syntax\n"
@@ -181,6 +185,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
         {"version", 0, NULL, 'V'},
         {"verbose", 0, NULL, 'v'},
         {"quiet", 0, NULL, 'q'},
+        {"config-file", 1, NULL, 'f'},
         {"check", 0, NULL, 'C'},
         {"logger", 1, NULL, 'l'},
         {"access-logger", 1, NULL, 'A'},
@@ -203,10 +208,10 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
 #ifdef __GLIBC__
         int option_index = 0;
 
-        ret = getopt_long(argc, argv, "hVvqCDP:l:A:u:g:U:WB:s:",
+        ret = getopt_long(argc, argv, "hVvqf:CDP:l:A:u:g:U:WB:s:",
                           long_options, &option_index);
 #else
-        ret = getopt(argc, argv, "hVvqCDP:l:A:u:g:U:WB:s:");
+        ret = getopt(argc, argv, "hVvqf:CDP:l:A:u:g:U:WB:s:");
 #endif
         if (ret == -1)
             break;
@@ -226,6 +231,10 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
 
         case 'q':
             daemon_log_config.verbose = 0;
+            break;
+
+        case 'f':
+            config->config_path = optarg;
             break;
 
         case 'C':

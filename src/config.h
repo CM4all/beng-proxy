@@ -24,6 +24,11 @@ extern bool debug_mode;
 #endif
 
 struct config {
+    /**
+     * The configuration file.  Only used by beng-lb.
+     */
+    const char *config_path;
+
     unsigned ports[MAX_PORTS];
     unsigned num_ports;
 
