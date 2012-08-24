@@ -7,6 +7,7 @@
  */
 
 #include "http-server-internal.h"
+#include "http-util.h"
 #include "strutil.h"
 #include "strmap.h"
 #include "buffered-io.h"
@@ -140,7 +141,7 @@ http_server_headers_finished(struct http_server_connection *connection)
        feature was not well-defined and led to problems with some
        clients */
     connection->keep_alive = !connection->request.http_1_0 &&
-        (value == NULL || strcasecmp(value, "keep-alive") == 0);
+        (value == NULL || !http_list_contains_i(value, "close"));
 
     value = strmap_get(request->headers, "transfer-encoding");
     if (value == NULL || strcasecmp(value, "chunked") != 0) {

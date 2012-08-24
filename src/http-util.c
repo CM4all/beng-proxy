@@ -101,6 +101,52 @@ http_list_contains(const char *list, const char *item)
     return false;
 }
 
+static bool
+http_equals_i(const char *a, size_t a_length, const char *b, size_t b_length)
+{
+    /* trim */
+
+    while (a_length > 0 && char_is_whitespace(a[a_length - 1]))
+        --a_length;
+
+    while (a_length > 0 && char_is_whitespace(a[0])) {
+        ++a;
+        --a_length;
+    }
+
+    /* remove quotes from quoted-string */
+
+    if (a_length >= 2 && a[0] == '"' && a[a_length - 1] == '"') {
+        ++a;
+        a_length -= 2;
+    }
+
+    /* finally compare */
+
+    return a_length == b_length && strncasecmp(a, b, a_length) == 0;
+}
+
+bool
+http_list_contains_i(const char *list, const char *item)
+{
+    const char *comma;
+    size_t item_length = strlen(item);
+
+    while (*list != 0) {
+        /* XXX what if the comma is within an quoted-string? */
+        comma = strchr(list, ',');
+        if (comma == NULL)
+            return http_equals(list, strlen(list), item, item_length);
+
+        if (http_equals_i(list, comma - list, item, item_length))
+            return true;
+
+        list = comma + 1;
+    }
+
+    return false;
+}
+
 struct strref *
 http_header_param(struct strref *dest, const char *value, const char *name)
 {
