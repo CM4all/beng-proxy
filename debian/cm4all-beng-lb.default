@@ -10,6 +10,9 @@
 # Which user should workshop run as?
 #LOGGER_USER=cm4all-logger
 
+# Use a different configuration file?
+#CONFIG_FILE="/etc/cm4all/beng/lb.conf"
+
 # Other options
 #OPTIONS="-v"
 

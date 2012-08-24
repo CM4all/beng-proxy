@@ -92,19 +92,6 @@ struct request {
     struct processor_env env;
 
     /**
-     * The widget currently being processed by
-     * processor_lookup_widget() or widget_resolver_new(), see
-     * proxy-widget.c.
-     */
-    struct widget *widget;
-
-    /**
-     * A reference to the widget that should be proxied.  Used by
-     * proxy_widget().
-     */
-    const struct widget_ref *proxy_ref;
-
-    /**
      * A pointer to the request body, or NULL if there is none.  Once
      * the request body has been "used", this pointer gets cleared.
      */
