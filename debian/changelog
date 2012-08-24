@@ -1,6 +1,6 @@
 cm4all-beng-proxy (1.4.30) unstable; urgency=low
 
-  * 
+  * http-server: parse all tokens in the "Connection" request header
 
  --   
 

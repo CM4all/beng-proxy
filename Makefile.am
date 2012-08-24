@@ -519,6 +519,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/http-server-response.c \
 	src/http-client.c \
 	src/http-string.c \
+	src/http-util.c src/http-util.h \
 	src/header-writer.c \
 	src/header-parser.c \
 	src/uri-verify.c \
@@ -1033,6 +1034,7 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_SOURCES = test/t-http-server.c \
+	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/address.c \
@@ -1062,6 +1064,7 @@ test_t_http_server_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
+	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/address.c \
@@ -1088,6 +1091,7 @@ test_t_http_server_mirror_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_hold_SOURCES = test/t-http-server-hold.c \
+	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/address.c \
@@ -1115,6 +1119,7 @@ test_t_http_server_hold_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_null_SOURCES = test/t-http-server-null.c \
+	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/address.c \
@@ -1142,6 +1147,7 @@ test_t_http_server_null_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
+	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/address.c \
@@ -1170,6 +1176,7 @@ test_t_http_server_dummy_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
+	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/address.c \
@@ -1689,6 +1696,7 @@ test_run_css_parser_SOURCES = test/run_css_parser.c \
 test_run_css_parser_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS)
 
 test_run_httpd_hello_SOURCES = test/run_httpd_hello.c \
+	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/http-body.c \
