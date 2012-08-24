@@ -1,3 +1,9 @@
+cm4all-beng-proxy (1.4.30) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-beng-proxy (1.4.29) unstable; urgency=low
 
   * proxy-widget: fix memory leak on aborted POST request
