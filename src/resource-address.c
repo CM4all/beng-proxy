@@ -458,8 +458,6 @@ resource_address_is_expandable(const struct resource_address *address)
         return file_address_is_expandable(&address->u.local);
 
     case RESOURCE_ADDRESS_PIPE:
-        return false;
-
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
@@ -492,8 +490,6 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
                                    match_info, error_r);
 
     case RESOURCE_ADDRESS_PIPE:
-        return true;
-
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
