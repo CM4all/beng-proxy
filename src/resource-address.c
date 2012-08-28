@@ -465,7 +465,7 @@ resource_address_is_expandable(const struct resource_address *address)
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        return false;
+        return uri_address_is_expandable(address->u.http);
     }
 
     /* unreachable */
@@ -482,6 +482,8 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     assert(match_info != NULL);
 
     switch (address->type) {
+        struct uri_with_address *uwa;
+
     case RESOURCE_ADDRESS_NONE:
         return true;
 
@@ -497,7 +499,11 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        return true;
+        /* copy the uri_with_address object (it's a pointer, not
+           in-line) and expand it */
+        address->u.http = uwa = uri_address_dup(pool, address->u.http);
+        return uri_address_expand(pool, uwa,
+                                  match_info, error_r);
     }
 
     /* unreachable */

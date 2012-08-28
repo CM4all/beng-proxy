@@ -36,6 +36,15 @@ string_equals(const char *a, const char *b)
 }
 
 static bool
+uri_address_equals(const struct uri_with_address *a,
+                   const struct uri_with_address *b)
+{
+    return a->scheme == b->scheme &&
+        string_equals(a->host_and_port, b->host_and_port) &&
+        string_equals(a->path, b->path);
+}
+
+static bool
 resource_address_equals(const struct resource_address *a,
                         const struct resource_address *b)
 {
@@ -72,6 +81,13 @@ resource_address_equals(const struct resource_address *a,
             string_equals(a->u.cgi.path_info, b->u.cgi.path_info) &&
             string_equals(a->u.cgi.query_string, b->u.cgi.query_string) &&
             string_equals(a->u.cgi.document_root, b->u.cgi.document_root);
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        assert(a->u.http != NULL);
+        assert(b->u.http != NULL);
+
+        return uri_address_equals(a->u.http, b->u.http);
 
     default:
         /* not implemented */
@@ -911,6 +927,85 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
 }
 
 static void
+test_expand_uri(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    /* add to cache */
+
+    static const struct translate_request request1 = {
+        .uri = "/regex-expand4/foo/bar.jpg/b=c",
+    };
+    static const struct uri_with_address uwa1n = {
+        .scheme = URI_SCHEME_HTTP,
+        .host_and_port = "localhost:8080",
+        .path = "/foo/bar.jpg",
+        .expand_path = "/\\1",
+    };
+    static const struct translate_response response1n = {
+        .address = {
+            .type = RESOURCE_ADDRESS_HTTP,
+            .u = {
+                .http = &uwa1n,
+            },
+        },
+        .base = "/regex-expand4/",
+        .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+    static const struct uri_with_address uwa1e = {
+        .scheme = URI_SCHEME_HTTP,
+        .host_and_port = "localhost:8080",
+        .path = "/foo/bar.jpg",
+    };
+    static const struct translate_response response1e = {
+        .address = {
+            .type = RESOURCE_ADDRESS_HTTP,
+            .u = {
+                .http = &uwa1e,
+            },
+        },
+        .base = "/regex-expand4/",
+        .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = &response1n;
+    expected_response = &response1e;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* check match */
+
+    static const struct translate_request request2 = {
+        .uri = "/regex-expand4/x/y/z.jpg/d=e",
+    };
+    static const struct uri_with_address uwa2 = {
+        .scheme = URI_SCHEME_HTTP,
+        .host_and_port = "localhost:8080",
+        .path = "/x/y/z.jpg",
+    };
+    static const struct translate_response response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_HTTP,
+            .u = {
+                .http = &uwa2,
+            },
+        },
+        .base = "/regex-expand4/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = NULL;
+    expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, NULL, &async_ref);
+}
+
+static void
 test_auto_base(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
@@ -1006,6 +1101,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_expand(pool, cache);
     test_expand_local(pool, cache);
     test_expand_local_filter(pool, cache);
+    test_expand_uri(pool, cache);
     test_auto_base(pool, cache);
 
     /* cleanup */

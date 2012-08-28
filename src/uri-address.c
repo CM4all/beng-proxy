@@ -12,6 +12,7 @@
 #include "uri-extract.h"
 #include "pool.h"
 #include "strref.h"
+#include "regex.h"
 
 #include <socket/address.h>
 
@@ -35,6 +36,7 @@ uri_address_new(struct pool *pool, enum uri_scheme scheme,
     uwa->scheme = scheme;
     uwa->host_and_port = host_and_port;
     uwa->path = path;
+    uwa->expand_path = NULL;
     address_list_init(&uwa->addresses);
     return uwa;
 }
@@ -89,6 +91,7 @@ uri_address_with_path(struct pool *pool, const struct uri_with_address *uwa,
 {
     struct uri_with_address *p =
         uri_address_new(pool, uwa->scheme, uwa->host_and_port, path);
+    p->expand_path = p_strdup_checked(pool, uwa->expand_path);
     address_list_copy(pool, &p->addresses, &uwa->addresses);
     return p;
 }
@@ -104,6 +107,7 @@ uri_address_dup(struct pool *pool, const struct uri_with_address *uwa)
                         p_strdup(pool, uwa->host_and_port),
                         p_strdup(pool, uwa->path));
 
+    p->expand_path = p_strdup_checked(pool, uwa->expand_path);
     address_list_copy(pool, &p->addresses, &uwa->addresses);
 
     return p;
@@ -118,6 +122,7 @@ uri_address_dup_with_path(struct pool *pool,
         uri_address_new(pool, uwa->scheme,
                         p_strdup(pool, uwa->host_and_port),
                         path);
+    p->expand_path = p_strdup_checked(pool, uwa->expand_path);
     address_list_copy(pool, &p->addresses, &uwa->addresses);
     return p;
 }
@@ -213,7 +218,8 @@ uri_address_load_base(struct pool *pool, const struct uri_with_address *src,
     assert(suffix != NULL);
     assert(src->path != NULL);
     assert(*src->path != 0);
-    assert(src->path[strlen(src->path) - 1] == '/');
+    assert(src->expand_path != NULL ||
+           src->path[strlen(src->path) - 1] == '/');
 
     return uri_address_dup_with_path(pool, src,
                                      p_strcat(pool, src->path, suffix, NULL));
@@ -266,4 +272,22 @@ uri_address_relative(const struct uri_with_address *base,
     strref_set_c(&base_uri, base->path);
     strref_set_c(buffer, uwa->path);
     return uri_relative(&base_uri, buffer);
+}
+
+bool
+uri_address_expand(struct pool *pool, struct uri_with_address *uwa,
+                   const GMatchInfo *match_info, GError **error_r)
+{
+    assert(pool != NULL);
+    assert(uwa != NULL);
+    assert(match_info != NULL);
+
+    if (uwa->expand_path != NULL) {
+        uwa->path = expand_string(pool, uwa->expand_path,
+                                  match_info, error_r);
+        if (uwa->path == NULL)
+            return false;
+    }
+
+    return true;
 }

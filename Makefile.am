@@ -547,6 +547,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/header-parser.c \
 	src/uri-verify.c \
 	src/uri-base.c \
+	src/regex.c src/regex.h \
 	src/uri-address.c \
 	src/uri-relative.c \
 	src/uri-extract.c \
@@ -951,6 +952,7 @@ test_t_uri_address_SOURCES = test/t-uri-address.c \
 	src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri-base.c \
 	src/uri-verify.c \
+	src/regex.c \
 	src/address-list.c \
 	src/format.c \
 	$(POOL_SRC)

@@ -47,6 +47,12 @@ struct uri_with_address {
      */
     const char *path;
 
+    /**
+     * The value of #TRANSLATE_EXPAND_PATH.  Only used by the
+     * translation cache.
+     */
+    const char *expand_path;
+
     struct address_list addresses;
 };
 
@@ -154,5 +160,21 @@ const struct strref *
 uri_address_relative(const struct uri_with_address *base,
                      const struct uri_with_address *uwa,
                      struct strref *buffer);
+
+/**
+ * Does this address need to be expanded with uri_address_expand()?
+ */
+gcc_pure
+static inline bool
+uri_address_is_expandable(const struct uri_with_address *address)
+{
+    assert(address != NULL);
+
+    return address->expand_path != NULL;
+}
+
+bool
+uri_address_expand(struct pool *pool, struct uri_with_address *uwa,
+                   const GMatchInfo *match_info, GError **error_r);
 
 #endif

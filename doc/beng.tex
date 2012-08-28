@@ -792,11 +792,12 @@ finding the file \\
 \hline
 
 \verb|EXPAND_PATH| & Override the \verb|PATH| with the given value
-(applicable to static files, CGI, FastCGI, WAS).  Backslash references
-are expanded to the value of the match group of \verb|REGEX|. In the
-presence of this packet, the URI suffix after the base will not be
-appended to other paths.
-\scriptsize{(Since version 2.0.5)} \\
+(applicable to static files, CGI, FastCGI, WAS, \verb|PROXY|,
+\verb|AJP|).
+Backslash references are expanded to the value of the match group of
+\verb|REGEX|. In the presence of this packet, the URI suffix after the
+base will not be appended to other paths.  \scriptsize{(Since version
+  2.0.5)} \\
 
 \hline
 
