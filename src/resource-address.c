@@ -457,9 +457,6 @@ resource_address_is_expandable(const struct resource_address *address)
         cgi_address_is_expandable(&address->u.cgi);
 }
 
-/**
- * Expand EXPAND_PATH_INFO specifications in a #resource_address.
- */
 bool
 resource_address_expand(struct pool *pool, struct resource_address *address,
                         const GMatchInfo *match_info, GError **error_r)
