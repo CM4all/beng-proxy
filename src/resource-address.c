@@ -450,11 +450,29 @@ resource_address_is_expandable(const struct resource_address *address)
 {
     assert(address != NULL);
 
-    if (address->type == RESOURCE_ADDRESS_LOCAL)
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+        return false;
+
+    case RESOURCE_ADDRESS_LOCAL:
         return file_address_is_expandable(&address->u.local);
 
-    return resource_address_is_cgi_alike(address) &&
-        cgi_address_is_expandable(&address->u.cgi);
+    case RESOURCE_ADDRESS_PIPE:
+        return false;
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        return cgi_address_is_expandable(&address->u.cgi);
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        return false;
+    }
+
+    /* unreachable */
+    assert(false);
+    return false;
 }
 
 bool
@@ -465,12 +483,28 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     assert(address != NULL);
     assert(match_info != NULL);
 
-    if (address->type == RESOURCE_ADDRESS_LOCAL)
+    switch (address->type) {
+    case RESOURCE_ADDRESS_NONE:
+        return true;
+
+    case RESOURCE_ADDRESS_LOCAL:
         return file_address_expand(pool, &address->u.local,
                                    match_info, error_r);
 
-    if (resource_address_is_cgi_alike(address))
+    case RESOURCE_ADDRESS_PIPE:
+        return true;
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         return cgi_address_expand(pool, &address->u.cgi, match_info, error_r);
 
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        return true;
+    }
+
+    /* unreachable */
+    assert(false);
     return true;
 }
