@@ -137,7 +137,16 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
     if (uri_has_protocol(uri, length))
         return p_strndup(pool, uri, length);
 
-    if (uri[0] == '/') {
+    if (uri[0] == '/' && uri[1] == '/') {
+        const char *colon = strstr(base, "://");
+        if (colon != NULL)
+            base_length = colon + 1 - base;
+        else {
+            /* fallback, not much else we can do */
+            base = "http:";
+            base_length = 5;
+        }
+    } else if (uri[0] == '/') {
         const char *base_path;
 
         if (base[0] == '/')
