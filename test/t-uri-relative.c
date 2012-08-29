@@ -54,6 +54,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     assert(strcmp(uri_absolute(pool, "/bar", "foo", 3), "/foo") == 0);
     assert(strcmp(uri_absolute(pool, "/bar/", "foo", 3), "/bar/foo") == 0);
     assert(strcmp(uri_absolute(pool, "/bar/", "/foo", 4), "/foo") == 0);
+    assert(strcmp(uri_absolute(pool, "/bar", "?foo", 4), "/bar?foo") == 0);
 
     pool_unref(pool);
     pool_commit();
