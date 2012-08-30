@@ -202,6 +202,7 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
     case STICKY_FAILOVER:
         return next_failover_address(list);
 
+    case STICKY_SOURCE_IP:
     case STICKY_SESSION_MODULO:
     case STICKY_COOKIE:
     case STICKY_JVM_ROUTE:

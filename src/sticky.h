@@ -23,6 +23,11 @@ enum sticky_mode {
     STICKY_FAILOVER,
 
     /**
+     * Select the node with a hash of the client's IP address.
+     */
+    STICKY_SOURCE_IP,
+
+    /**
      * A modulo of the lower 32 bit of the beng-proxy session id is
      * used to determine which worker shall be used.  Requires
      * cooperation from beng-proxy on the nodes.

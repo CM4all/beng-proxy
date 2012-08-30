@@ -14,6 +14,7 @@
 #include "lb_headers.h"
 #include "ssl_filter.h"
 #include "address-envelope.h"
+#include "address_sticky.h"
 #include "http-server.h"
 #include "http-client.h"
 #include "tcp-stock.h"
@@ -282,6 +283,10 @@ lb_http_connection_request(struct http_server_request *request,
     switch (cluster->address_list.sticky_mode) {
     case STICKY_NONE:
     case STICKY_FAILOVER:
+        break;
+
+    case STICKY_SOURCE_IP:
+        session_sticky = socket_address_sticky(request->remote_address);
         break;
 
     case STICKY_SESSION_MODULO:

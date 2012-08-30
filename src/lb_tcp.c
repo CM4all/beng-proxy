@@ -16,6 +16,7 @@
 #include "client-socket.h"
 #include "istream-socket.h"
 #include "sink-socket.h"
+#include "address_sticky.h"
 
 #include <unistd.h>
 
@@ -286,15 +287,43 @@ static const struct client_socket_handler lb_tcp_client_socket_handler = {
  *
  */
 
+gcc_pure
+static unsigned
+lb_tcp_sticky(const struct lb_cluster_config *cluster,
+              const struct sockaddr *remote_address)
+{
+    switch (cluster->address_list.sticky_mode) {
+    case STICKY_NONE:
+    case STICKY_FAILOVER:
+        break;
+
+    case STICKY_SOURCE_IP:
+        return socket_address_sticky(remote_address);
+
+    case STICKY_SESSION_MODULO:
+    case STICKY_COOKIE:
+    case STICKY_JVM_ROUTE:
+        /* not implemented here */
+        break;
+    }
+
+    return 0;
+}
+
 void
 lb_tcp_new(struct lb_connection *connection, int fd,
-           enum istream_direct fd_type)
+           enum istream_direct fd_type,
+           const struct sockaddr *remote_address)
 {
     connection->tcp.peers[0].fd = fd;
     connection->tcp.peers[0].type = fd_type;
 
+    unsigned session_sticky = lb_tcp_sticky(connection->listener->cluster,
+                                            remote_address);
+
     client_balancer_connect(connection->pool, connection->instance->balancer,
-                            0, &connection->listener->cluster->address_list,
+                            session_sticky,
+                            &connection->listener->cluster->address_list,
                             20,
                             &lb_tcp_client_socket_handler, connection,
                             &connection->tcp.connect);

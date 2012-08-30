@@ -660,6 +660,7 @@ validate_protocol_sticky(enum lb_protocol protocol, enum sticky_mode sticky)
         switch (sticky) {
         case STICKY_NONE:
         case STICKY_FAILOVER:
+        case STICKY_SOURCE_IP:
             return true;
 
         case STICKY_SESSION_MODULO:
@@ -725,6 +726,8 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 cluster->sticky_mode = STICKY_NONE;
             else if (strcmp(sticky_mode, "failover") == 0)
                 cluster->sticky_mode = STICKY_FAILOVER;
+            else if (strcmp(sticky_mode, "source_ip") == 0)
+                cluster->sticky_mode = STICKY_SOURCE_IP;
             else if (strcmp(sticky_mode, "session_modulo") == 0)
                 cluster->sticky_mode = STICKY_SESSION_MODULO;
             else if (strcmp(sticky_mode, "cookie") == 0)

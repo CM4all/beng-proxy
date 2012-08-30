@@ -7,6 +7,7 @@ cm4all-beng-proxy (2.1.7) unstable; urgency=low
   * uri-relative: support relative URIs starting with a double slash
   * lb: improve error messages, include listener/pool name
   * lb: validate the selected sticky modde
+  * lb: add sticky mode "source_ip"
 
  --   
 

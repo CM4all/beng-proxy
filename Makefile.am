@@ -526,6 +526,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/address-string.c \
 	src/address-edit.h \
 	src/address-edit.c \
+	src/address_sticky.c src/address_sticky.h \
 	src/listener.c \
 	src/client-socket.c \
 	src/client-balancer.c src/client-balancer.h \

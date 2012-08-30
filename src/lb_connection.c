@@ -97,7 +97,7 @@ lb_connection_new(struct lb_instance *instance,
         break;
 
     case LB_PROTOCOL_TCP:
-        lb_tcp_new(connection, fd, fd_type);
+        lb_tcp_new(connection, fd, fd_type, addr);
         break;
     }
 
