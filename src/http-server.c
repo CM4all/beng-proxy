@@ -53,6 +53,8 @@ http_server_request_new(struct http_server_connection *connection)
     request->connection = connection;
     request->local_address = connection->local_address;
     request->local_address_length = connection->local_address_length;
+    request->remote_address = connection->remote_address;
+    request->remote_address_length = connection->remote_address_length;
     request->local_host_and_port = connection->local_host_and_port;
     request->remote_host_and_port = connection->remote_host_and_port;
     request->remote_host = connection->remote_host;
@@ -187,11 +189,19 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     connection->handler = handler;
     connection->handler_ctx = ctx;
+
     connection->local_address = local_address != NULL
         ? (const struct sockaddr *)p_memdup(pool, local_address,
                                             local_address_length)
         : NULL;
     connection->local_address_length = local_address_length;
+
+    connection->remote_address = remote_address != NULL
+        ? (const struct sockaddr *)p_memdup(pool, remote_address,
+                                            remote_address_length)
+        : NULL;
+    connection->remote_address_length = remote_address_length;
+
     connection->local_host_and_port = local_address != NULL
         ? address_to_string(pool, local_address, local_address_length)
         : NULL;

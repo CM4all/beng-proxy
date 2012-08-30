@@ -59,6 +59,9 @@ struct http_server_request {
     const struct sockaddr *local_address;
     size_t local_address_length;
 
+    const struct sockaddr *remote_address;
+    size_t remote_address_length;
+
     /**
      * The local address (host and port) that was connected to.
      */
