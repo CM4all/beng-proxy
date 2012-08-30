@@ -62,12 +62,12 @@ struct http_server_request {
     /**
      * The local address (host and port) that was connected to.
      */
-    const char *local_host;
+    const char *local_host_and_port;
 
     /**
      * The address (host and port) of the client.
      */
-    const char *remote_address;
+    const char *remote_host_and_port;
 
     /**
      * The address of the client, without the port number.

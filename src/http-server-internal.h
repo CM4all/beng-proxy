@@ -42,8 +42,8 @@ struct http_server_connection {
     const struct sockaddr *local_address;
     size_t local_address_length;
 
-    const char *local_host;
-    const char *remote_address, *remote_host;
+    const char *local_host_and_port;
+    const char *remote_host_and_port, *remote_host;
 
     /* request */
     struct {
