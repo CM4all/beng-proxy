@@ -5,6 +5,7 @@
  */
 
 #include "lb_connection.h"
+#include "lb_log.h"
 #include "lb_config.h"
 #include "lb_instance.h"
 #include "lb_http.h"
@@ -15,8 +16,6 @@
 #include "fd_util.h"
 #include "ssl_filter.h"
 #include "pool.h"
-
-#include <daemon/log.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -69,9 +68,9 @@ lb_connection_new(struct lb_instance *instance,
             close(fd);
             close(fds[0]);
             close(fds[1]);
-            pool_unref(pool);
-            daemon_log(1, "%s\n", error->message);
+            lb_connection_log_gerror(1, connection, "SSL", error);
             g_error_free(error);
+            pool_unref(pool);
             return NULL;
         }
 

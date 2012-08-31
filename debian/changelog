@@ -5,6 +5,7 @@ cm4all-beng-proxy (2.1.7) unstable; urgency=low
   * reduced connect timeouts for translation server, FastCGI and beng-lb
   * uri-relative: support relative URI with just a query string
   * uri-relative: support relative URIs starting with a double slash
+  * lb: improve error messages, include listener/pool name
 
  --   
 

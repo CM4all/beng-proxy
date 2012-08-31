@@ -8,6 +8,7 @@
 #include "lb_connection.h"
 #include "lb_instance.h"
 #include "lb_config.h"
+#include "lb_log.h"
 #include "tcp-balancer.h"
 #include "istream-socket.h"
 #include "sink-socket.h"
@@ -15,8 +16,6 @@
 #include "client-socket.h"
 #include "istream-socket.h"
 #include "sink-socket.h"
-
-#include <daemon/log.h>
 
 #include <unistd.h>
 
@@ -46,7 +45,7 @@ first_istream_socket_error(int error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
-    daemon_log(3, "Receive failed: %s\n", strerror(error));
+    lb_connection_log_errno(3, connection, "Receive failed", error);
     lb_connection_close(connection);
     return false;
 }
@@ -103,7 +102,7 @@ second_istream_socket_error(int error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
-    daemon_log(3, "Receive failed: %s\n", strerror(error));
+    lb_connection_log_errno(3, connection, "Receive failed", error);
     lb_connection_close(connection);
     return false;
 }
@@ -152,7 +151,7 @@ first_sink_input_error(GError *error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
-    daemon_log(3, "%s\n", error->message);
+    lb_connection_log_gerror(3, connection, "Error", error);
     g_error_free(error);
 
     lb_connection_close(connection);
@@ -163,7 +162,7 @@ first_sink_send_error(int error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
-    daemon_log(3, "Send failed: %s\n", strerror(error));
+    lb_connection_log_errno(3, connection, "Send failed", error);
     lb_connection_close(connection);
     return false;
 }
@@ -192,7 +191,7 @@ second_sink_input_error(GError *error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
-    daemon_log(3, "%s\n", error->message);
+    lb_connection_log_gerror(3, connection, "Error", error);
     g_error_free(error);
 
     lb_connection_close(connection);
@@ -203,7 +202,7 @@ second_sink_send_error(int error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
-    daemon_log(3, "Send failed: %s\n", strerror(error));
+    lb_connection_log_errno(3, connection, "Send failed", error);
     lb_connection_close(connection);
     return false;
 }
@@ -259,8 +258,7 @@ lb_tcp_stock_timeout(void *ctx)
 
     close(connection->tcp.peers[0].fd);
 
-    daemon_log(4, "timeout\n");
-
+    lb_connection_log_error(4, connection, "Connect error", "Timeout");
     lb_connection_remove(connection);
 }
 
@@ -271,7 +269,7 @@ lb_tcp_stock_error(GError *error, void *ctx)
 
     close(connection->tcp.peers[0].fd);
 
-    daemon_log(3, "%s\n", error->message);
+    lb_connection_log_gerror(4, connection, "Connect error", error);
     g_error_free(error);
 
     lb_connection_remove(connection);

@@ -46,6 +46,17 @@ struct lb_request {
     unsigned new_cookie;
 };
 
+static void
+log_error(int level, const struct lb_connection *connection,
+          const char *prefix, GError *error)
+{
+    daemon_log(level, "%s (listener='%s' cluster='%s'): %s\n",
+               prefix,
+               connection->listener->name,
+               connection->listener->cluster->name,
+               error->message);
+}
+
 static bool
 send_fallback(struct http_server_request *request,
               const struct lb_fallback_config *fallback)
@@ -158,16 +169,17 @@ static void
 my_response_abort(GError *error, void *ctx)
 {
     struct lb_request *request2 = ctx;
+    const struct lb_connection *connection = request2->connection;
 
     if (is_server_failure(error))
         failure_add(&request2->current_address->address,
                     request2->current_address->length);
 
-    daemon_log(2, "error on %s: %s\n", request2->request->uri, error->message);
+    log_error(2, connection, "Error", error);
     g_error_free(error);
 
     if (!send_fallback(request2->request,
-                       &request2->connection->listener->cluster->fallback))
+                       &connection->listener->cluster->fallback))
         http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
                                  "Server failure");
 }
@@ -222,15 +234,16 @@ static void
 my_stock_error(GError *error, void *ctx)
 {
     struct lb_request *request2 = ctx;
+    const struct lb_connection *connection = request2->connection;
 
-    daemon_log(2, "Connection failure: %s\n", error->message);
+    log_error(2, connection, "Connect error", error);
     g_error_free(error);
 
     if (request2->request->body != NULL)
         istream_close_unused(request2->request->body);
 
     if (!send_fallback(request2->request,
-                       &request2->connection->listener->cluster->fallback))
+                       &connection->listener->cluster->fallback))
         http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
                                  "Connection failure");
 }
@@ -318,7 +331,7 @@ lb_http_connection_error(GError *error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
-    daemon_log(2, "%s\n", error->message);
+    log_error(2, connection, "Error", error);
     g_error_free(error);
 
     assert(connection->http != NULL);
