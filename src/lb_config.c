@@ -648,6 +648,30 @@ parse_port(const char *p, const struct address_envelope *envelope)
     return port;
 }
 
+gcc_pure
+static bool
+validate_protocol_sticky(enum lb_protocol protocol, enum sticky_mode sticky)
+{
+    switch (protocol) {
+    case LB_PROTOCOL_HTTP:
+        return true;
+
+    case LB_PROTOCOL_TCP:
+        switch (sticky) {
+        case STICKY_NONE:
+        case STICKY_FAILOVER:
+            return true;
+
+        case STICKY_SESSION_MODULO:
+        case STICKY_COOKIE:
+        case STICKY_JVM_ROUTE:
+            return false;
+        }
+    }
+
+    return false;
+}
+
 static bool
 config_parser_feed_cluster(struct config_parser *parser, char *p,
                            GError **error_r)
@@ -663,6 +687,9 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
         if (cluster->num_members == 0)
             return throw(error_r, "Pool has no members");
+
+        if (!validate_protocol_sticky(cluster->protocol, cluster->sticky_mode))
+            return throw(error_r, "Sticky mode not available for this protocol");
 
         if (cluster->num_members == 1)
             /* with only one member, a sticky setting doesn't make
