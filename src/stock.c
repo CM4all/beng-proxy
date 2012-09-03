@@ -405,6 +405,13 @@ stock_is_empty(const struct stock *stock)
         stock->num_create == 0;
 }
 
+void
+stock_add_stats(const struct stock *stock, struct stock_stats *data)
+{
+    data->busy += stock->num_busy;
+    data->idle += stock->num_idle;
+}
+
 static bool
 stock_get_idle(struct stock *stock,
                const struct stock_get_handler *handler, void *handler_ctx)

@@ -91,6 +91,19 @@ hstock_free(struct hstock *hstock)
 }
 
 void
+hstock_add_stats(const struct hstock *stock, struct stock_stats *data)
+{
+    struct hashmap *h = stock->stocks;
+    hashmap_rewind(h);
+
+    const struct hashmap_pair *p;
+    while ((p = hashmap_next(h)) != NULL) {
+        const struct stock *s = (const struct stock *)p->value;
+        stock_add_stats(s, data);
+    }
+}
+
+void
 hstock_get(struct hstock *hstock, struct pool *pool,
            const char *uri, void *info,
            const struct stock_get_handler *handler, void *handler_ctx,

@@ -63,6 +63,10 @@ struct stock_class {
     void (*destroy)(void *ctx, struct stock_item *item);
 };
 
+struct stock_stats {
+    unsigned busy, idle;
+};
+
 
 /* stock.c */
 
@@ -90,6 +94,13 @@ stock_get_uri(struct stock *stock);
 gcc_pure
 bool
 stock_is_empty(const struct stock *stock);
+
+/**
+ * Obtain statistics.
+ */
+gcc_pure
+void
+stock_add_stats(const struct stock *stock, struct stock_stats *data);
 
 void
 stock_get(struct stock *stock, struct pool *pool, void *info,
@@ -132,6 +143,13 @@ hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
 
 void
 hstock_free(struct hstock *hstock);
+
+/**
+ * Obtain statistics.
+ */
+gcc_pure
+void
+hstock_add_stats(const struct hstock *stock, struct stock_stats *data);
 
 void
 hstock_get(struct hstock *hstock, struct pool *pool,
