@@ -22,6 +22,8 @@ struct lb_instance {
 
     struct event_base *event_base;
 
+    uint64_t http_request_counter;
+
     struct list_head controls;
     struct list_head listeners;
     struct list_head connections;

@@ -52,6 +52,27 @@ enum beng_control_command {
      * Dump all memory pools.
      */
     CONTROL_DUMP_POOLS = 5,
+
+    /**
+     * Server statistics.
+     */
+    CONTROL_STATS = 6,
+};
+
+struct beng_control_stats {
+    uint32_t incoming_connections, outgoing_connections;
+
+    uint32_t children;
+
+    uint32_t sessions;
+
+    uint64_t http_requests;
+
+    uint64_t translation_cache_size;
+
+    uint64_t http_cache_size;
+
+    uint64_t filter_cache_size;
 };
 
 struct beng_control_header {

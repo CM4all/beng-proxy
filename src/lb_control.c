@@ -7,6 +7,7 @@
 #include "lb_control.h"
 #include "lb_instance.h"
 #include "lb_config.h"
+#include "lb_stats.h"
 #include "control-server.h"
 #include "address-envelope.h"
 #include "address-edit.h"
@@ -225,6 +226,27 @@ query_node_status(struct lb_control *control,
 }
 
 static void
+query_stats(struct lb_control *control,
+            const struct sockaddr *address, size_t address_length)
+{
+    struct beng_control_stats stats;
+    lb_get_stats(control->instance, &stats);
+
+    struct pool_mark mark;
+    pool_mark(tpool, &mark);
+
+    GError *error = NULL;
+    if (!control_server_reply(control->server, tpool, address, address_length,
+                              CONTROL_STATS, &stats, sizeof(stats),
+                              &error)) {
+        daemon_log(3, "%s\n", error->message);
+        g_error_free(error);
+    }
+
+    pool_rewind(tpool, &mark);
+}
+
+static void
 lb_control_packet(enum beng_control_command command,
                   const void *payload, size_t payload_length,
                   const struct sockaddr *address, size_t address_length,
@@ -252,6 +274,10 @@ lb_control_packet(enum beng_control_command command,
 
     case CONTROL_DUMP_POOLS:
         pool_dump_tree(control->instance->pool);
+        break;
+
+    case CONTROL_STATS:
+        query_stats(control, address, address_length);
         break;
     }
 }

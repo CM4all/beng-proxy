@@ -266,6 +266,8 @@ lb_http_connection_request(struct http_server_request *request,
 {
     struct lb_connection *connection = ctx;
 
+    ++connection->instance->http_request_counter;
+
     connection->request_start_time = now_us();
 
     const struct lb_cluster_config *cluster = connection->listener->cluster;

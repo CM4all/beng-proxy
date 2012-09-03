@@ -61,6 +61,8 @@ my_http_server_connection_request(struct http_server_request *request,
 {
     struct client_connection *connection = ctx;
 
+    ++connection->instance->http_request_counter;
+
     connection->site_name = NULL;
     connection->request_start_time = now_us();
 

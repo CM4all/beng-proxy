@@ -193,6 +193,7 @@ HDR = \
 	src/http-util.h \
 	src/control-server.h \
 	src/control-server.c \
+	src/bp_stats.c src/bp_stats.h \
 	src/bp_control.c src/bp_control.h \
 	src/instance.h \
 	src/istream-buffer.h \
@@ -585,6 +586,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_global.c \
 	src/lb_cmdline.h \
 	src/lb_cmdline.c \
+	src/lb_stats.c src/lb_stats.h \
 	src/lb_control.h \
 	src/lb_control.c \
 	src/lb_listener.h \

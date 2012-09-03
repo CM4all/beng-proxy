@@ -89,3 +89,6 @@ class Client:
 
     def send_dump_pools(self):
         self.send(CONTROL_DUMP_POOLS)
+
+    def send_stats(self):
+        self.send(CONTROL_STATS)

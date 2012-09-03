@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.1.8) unstable; urgency=low
 
-  * 
+  * control: publish statistics over the control protocol
 
  --   
 

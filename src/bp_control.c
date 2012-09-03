@@ -5,6 +5,7 @@
  */
 
 #include "bp_control.h"
+#include "bp_stats.h"
 #include "control-server.h"
 #include "control-server.h"
 #include "udp-distribute.h"
@@ -154,6 +155,36 @@ control_tcache_invalidate(struct instance *instance,
 }
 
 static void
+query_stats(struct instance *instance,
+            const struct sockaddr *address, size_t address_length)
+{
+    if (address_length == 0)
+        /* TODO: this packet was forwarded by the master process, and
+           has no source address; however, the master process must get
+           statistics from all worker processes (even those that have
+           exited already) */
+        return;
+
+    struct beng_control_stats stats;
+    bp_get_stats(instance, &stats);
+
+    struct pool_mark mark;
+    pool_mark(tpool, &mark);
+
+    GError *error = NULL;
+    if (!control_server_reply(instance->control_server, tpool,
+                              address, address_length,
+                              CONTROL_STATS, &stats, sizeof(stats),
+                              &error)) {
+        daemon_log(3, "%s\n", error->message);
+        g_error_free(error);
+    }
+
+    pool_rewind(tpool, &mark);
+}
+
+
+static void
 global_control_packet(enum beng_control_command command,
                       const void *payload, size_t payload_length,
                       G_GNUC_UNUSED const struct sockaddr *address,
@@ -185,6 +216,10 @@ global_control_packet(enum beng_control_command command,
     case CONTROL_FADE_NODE:
     case CONTROL_NODE_STATUS:
         /* only for beng-lb */
+        break;
+
+    case CONTROL_STATS:
+        query_stats(instance, address, address_length);
         break;
     }
 }
