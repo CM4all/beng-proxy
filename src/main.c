@@ -140,7 +140,7 @@ exit_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
     if (instance->pipe_stock != NULL)
         stock_free(instance->pipe_stock);
 
-    global_control_handler_deinit();
+    global_control_handler_deinit(instance);
 
     pool_commit();
 }

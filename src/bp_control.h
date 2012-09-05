@@ -16,7 +16,7 @@ bool
 global_control_handler_init(struct pool *pool, struct instance *instance);
 
 void
-global_control_handler_deinit(void);
+global_control_handler_deinit(struct instance *instance);
 
 /**
  * Creates a new socket for a child process which receives forwarded
@@ -25,7 +25,7 @@ global_control_handler_deinit(void);
  * @return the socket for the child process, or -1 on error
  */
 int
-global_control_handler_add_fd(void);
+global_control_handler_add_fd(struct instance *instance);
 
 /**
  * Closes all sockets to child processes, and installs this socket
@@ -36,6 +36,6 @@ global_control_handler_add_fd(void);
  * global_control_handler_add_fd()
  */
 void
-global_control_handler_set_fd(int fd);
+global_control_handler_set_fd(struct instance *instance, int fd);
 
 #endif

@@ -123,7 +123,7 @@ worker_new(struct instance *instance)
 
     int distribute_socket = -1;
     if (instance->config.control_listen != NULL) {
-        distribute_socket = global_control_handler_add_fd();
+        distribute_socket = global_control_handler_add_fd(instance);
         if (distribute_socket < 0) {
             daemon_log(1, "udp_distribute_add() failed: %s\n",
                        strerror(errno));
@@ -153,7 +153,7 @@ worker_new(struct instance *instance)
         global_crash = crash;
 
         if (distribute_socket >= 0)
-            global_control_handler_set_fd(distribute_socket);
+            global_control_handler_set_fd(instance, distribute_socket);
 
         instance->config.num_workers = 0;
 

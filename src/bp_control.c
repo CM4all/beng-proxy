@@ -6,7 +6,7 @@
 
 #include "bp_control.h"
 #include "control-server.h"
-#include "udp-listener.h"
+#include "control-server.h"
 #include "udp-distribute.h"
 #include "instance.h"
 #include "tcache.h"
@@ -196,42 +196,23 @@ global_control_error(GError *error, G_GNUC_UNUSED void *ctx)
     g_error_free(error);
 }
 
-static const struct control_handler global_control_handler = {
-    .packet = global_control_packet,
-    .error = global_control_error,
-};
-
 static struct udp_distribute *global_udp_distribute;
 
 static void
-global_control_udp_datagram(const void *data, size_t length,
-                            const struct sockaddr *address,
-                            size_t address_length,
-                            void *ctx)
+global_control_raw(const void *data, size_t length,
+                   gcc_unused const struct sockaddr *address,
+                   gcc_unused size_t address_length,
+                   gcc_unused void *ctx)
 {
-    struct instance *instance = ctx;
-
     /* forward the packet to all worker processes */
     udp_distribute_packet(global_udp_distribute, data, length);
-
-    /* handle the packet in this process */
-    control_server_decode(data, length, address, address_length,
-                          &global_control_handler, instance);
 }
 
-static void
-global_control_udp_error(GError *error, G_GNUC_UNUSED void *ctx)
-{
-    daemon_log(2, "%s\n", error->message);
-    g_error_free(error);
-}
-
-static const struct udp_handler global_control_udp_handler = {
-    .datagram = global_control_udp_datagram,
-    .error = global_control_udp_error,
+static const struct control_handler global_control_handler = {
+    .raw = global_control_raw,
+    .packet = global_control_packet,
+    .error = global_control_error,
 };
-
-static struct udp_listener *global_udp_listener;
 
 bool
 global_control_handler_init(struct pool *pool, struct instance *instance)
@@ -239,27 +220,23 @@ global_control_handler_init(struct pool *pool, struct instance *instance)
     if (instance->config.control_listen == NULL)
         return true;
 
+    struct in_addr group_buffer;
+    const struct in_addr *group = NULL;
+    if (instance->config.multicast_group != NULL) {
+        group_buffer.s_addr = inet_addr(instance->config.multicast_group);
+        group = &group_buffer;
+    }
+
     GError *error = NULL;
-    global_udp_listener =
-        udp_listener_port_new(pool, instance->config.control_listen, 5478,
-                              &global_control_udp_handler, instance, &error);
-    if (global_udp_listener == NULL) {
+    instance->control_server =
+        control_server_new(pool, instance->config.control_listen, 5478,
+                           group,
+                           &global_control_handler, instance,
+                           &error);
+    if (instance->control_server == NULL) {
         daemon_log(1, "%s\n", error->message);
         g_error_free(error);
         return false;
-    }
-
-    if (instance->config.multicast_group != NULL) {
-        const struct in_addr group = {
-            .s_addr = inet_addr(instance->config.multicast_group),
-        };
-
-        if (!udp_listener_join4(global_udp_listener, &group, &error)) {
-            udp_listener_free(global_udp_listener);
-            daemon_log(1, "%s\n", error->message);
-            g_error_free(error);
-            return false;
-        }
     }
 
     global_udp_distribute = udp_distribute_new(pool);
@@ -268,30 +245,30 @@ global_control_handler_init(struct pool *pool, struct instance *instance)
 }
 
 void
-global_control_handler_deinit(void)
+global_control_handler_deinit(struct instance *instance)
 {
     if (global_udp_distribute != NULL)
         udp_distribute_free(global_udp_distribute);
 
-    if (global_udp_listener != NULL)
-        udp_listener_free(global_udp_listener);
+    if (instance->control_server != NULL)
+        control_server_free(instance->control_server);
 }
 
 int
-global_control_handler_add_fd(void)
+global_control_handler_add_fd(struct instance *instance)
 {
-    assert(global_udp_listener != NULL);
+    assert(instance->control_server != NULL);
     assert(global_udp_distribute != NULL);
 
     return udp_distribute_add(global_udp_distribute);
 }
 
 void
-global_control_handler_set_fd(int fd)
+global_control_handler_set_fd(struct instance *instance, int fd)
 {
-    assert(global_udp_listener != NULL);
+    assert(instance->control_server != NULL);
     assert(global_udp_distribute != NULL);
 
     udp_distribute_clear(global_udp_distribute);
-    udp_listener_set_fd(global_udp_listener, fd);
+    control_server_set_fd(instance->control_server, fd);
 }

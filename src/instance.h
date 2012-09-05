@@ -39,6 +39,8 @@ struct instance {
     struct list_head workers;
     unsigned num_workers;
 
+    struct control_server *control_server;
+
     /* stock */
     struct tcache *translate_cache;
     struct balancer *balancer;
