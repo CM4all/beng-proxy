@@ -55,6 +55,28 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL);
 #define pool_unref(pool) pool_unref_impl(pool TRACE_ARGS)
 #define pool_unref_fwd(pool) pool_unref_impl(pool TRACE_ARGS_FWD)
 
+/**
+ * Returns the total size of all allocations in this pool.
+ */
+gcc_pure
+size_t
+pool_size(const struct pool *pool);
+
+/**
+ * Returns the total size of this pool and all of its descendants
+ * (recursively).
+ */
+gcc_pure
+size_t
+pool_recursive_size(const struct pool *pool);
+
+/**
+ * Returns the total size of all descendants of this pool (recursively).
+ */
+gcc_pure
+size_t
+pool_children_size(const struct pool *pool);
+
 void
 pool_dump_tree(const struct pool *pool);
 

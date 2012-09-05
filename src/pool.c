@@ -595,6 +595,31 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
     return pool->ref;
 }
 
+size_t
+pool_size(const struct pool *pool)
+{
+    return pool->size;
+}
+
+size_t
+pool_recursive_size(const struct pool *pool)
+{
+    return pool_size(pool) + pool_children_size(pool);
+}
+
+size_t
+pool_children_size(const struct pool *pool)
+{
+    size_t size = 0;
+
+    for (const struct pool *child = (const struct pool *)pool->children.next;
+         &child->siblings != &pool->children;
+         child = (const struct pool *)child->siblings.next)
+        size += pool_recursive_size(child);
+
+    return size;
+}
+
 static const char *
 pool_type_string(enum pool_type type)
 {
