@@ -31,7 +31,7 @@
 #include "listener.h"
 #include "pipe-stock.h"
 #include "resource-loader.h"
-#include "control-handler.h"
+#include "bp_control.h"
 #include "log-glue.h"
 #include "ua_classification.h"
 

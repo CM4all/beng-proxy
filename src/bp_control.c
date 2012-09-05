@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "control-handler.h"
+#include "bp_control.h"
 #include "control-server.h"
 #include "udp-listener.h"
 #include "udp-distribute.h"

@@ -12,7 +12,7 @@
 #include "session_manager.h"
 #include "child.h"
 #include "listener.h"
-#include "control-handler.h"
+#include "bp_control.h"
 
 #include <daemon/log.h>
 
