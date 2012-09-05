@@ -528,6 +528,13 @@ filter_cache_close(struct filter_cache *cache)
 }
 
 void
+filter_cache_get_stats(const struct filter_cache *cache,
+                       struct cache_stats *data)
+{
+    cache_get_stats(cache->cache, data);
+}
+
+void
 filter_cache_flush(struct filter_cache *cache)
 {
     cache_flush(cache->cache);

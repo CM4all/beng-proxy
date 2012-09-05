@@ -16,6 +16,7 @@ struct resource_address;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
+struct cache_stats;
 
 struct filter_cache *
 filter_cache_new(struct pool *pool, size_t max_size,
@@ -23,6 +24,10 @@ filter_cache_new(struct pool *pool, size_t max_size,
 
 void
 filter_cache_close(struct filter_cache *cache);
+
+void
+filter_cache_get_stats(const struct filter_cache *cache,
+                       struct cache_stats *data);
 
 void
 filter_cache_flush(struct filter_cache *cache);

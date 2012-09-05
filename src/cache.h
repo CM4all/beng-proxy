@@ -50,6 +50,13 @@ struct cache_class {
     void (*destroy)(struct cache_item *item);
 };
 
+struct cache_stats {
+    /**
+     * The amount of memory allocated by all items in this cache.
+     */
+    size_t size;
+};
+
 gcc_malloc
 struct cache *
 cache_new(struct pool *pool, const struct cache_class *class,
@@ -57,6 +64,13 @@ cache_new(struct pool *pool, const struct cache_class *class,
 
 void
 cache_close(struct cache *cache);
+
+/**
+ * Obtain statistics.
+ */
+gcc_pure
+void
+cache_get_stats(const struct cache *cache, struct cache_stats *data);
 
 void
 cache_flush(struct cache *cache);

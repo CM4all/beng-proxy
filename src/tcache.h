@@ -15,6 +15,7 @@ struct tstock;
 struct translate_handler;
 struct translate_request;
 struct async_operation_ref;
+struct cache_stats;
 
 struct tcache *
 translate_cache_new(struct pool *pool, struct tstock *stock,
@@ -22,6 +23,10 @@ translate_cache_new(struct pool *pool, struct tstock *stock,
 
 void
 translate_cache_close(struct tcache *tcache);
+
+void
+translate_cache_get_stats(const struct tcache *tcache,
+                          struct cache_stats *data);
 
 /**
  * Flush all items from the cache.

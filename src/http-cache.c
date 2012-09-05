@@ -17,6 +17,7 @@
 #include "background.h"
 #include "istream-gb.h"
 #include "istream.h"
+#include "cache.h"
 
 #include <glib.h>
 
@@ -645,6 +646,15 @@ http_cache_close(struct http_cache *cache)
         http_cache_heap_free(cache->cache);
 
     pool_unref(cache->pool);
+}
+
+void
+http_cache_get_stats(const struct http_cache *cache, struct cache_stats *data)
+{
+    if (cache->cache != NULL)
+        cache_get_stats(cache->cache, data);
+    else
+        memset(data, 0, sizeof(*data));
 }
 
 static void

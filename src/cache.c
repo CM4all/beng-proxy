@@ -13,6 +13,8 @@
 #include <event.h>
 
 struct cache {
+    struct pool *pool;
+
     const struct cache_class *class;
     size_t max_size, size;
     struct hashmap *items;
@@ -45,6 +47,7 @@ cache_new(struct pool *pool, const struct cache_class *class,
 
     assert(class != NULL);
 
+    cache->pool = pool;
     cache->class = class;
     cache->max_size = max_size;
     cache->size = 0;
@@ -88,6 +91,12 @@ cache_close(struct cache *cache)
         assert(cache->size == 0);
         assert(list_empty(&cache->sorted_items));
     }
+}
+
+void
+cache_get_stats(const struct cache *cache, struct cache_stats *data)
+{
+    data->size = pool_children_size(cache->pool);
 }
 
 static inline struct cache_item *

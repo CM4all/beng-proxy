@@ -827,6 +827,13 @@ translate_cache_close(struct tcache *tcache)
 }
 
 void
+translate_cache_get_stats(const struct tcache *tcache,
+                          struct cache_stats *data)
+{
+    cache_get_stats(tcache->cache, data);
+}
+
+void
 translate_cache_flush(struct tcache *tcache)
 {
     cache_flush(tcache->cache);
