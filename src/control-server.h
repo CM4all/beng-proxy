@@ -20,6 +20,10 @@ struct sockaddr;
 struct in_addr;
 
 struct control_handler {
+    void (*raw)(const void *data, size_t length,
+                const struct sockaddr *address, size_t address_length,
+                void *ctx);
+
     void (*packet)(enum beng_control_command command,
                    const void *payload, size_t payload_length,
                    const struct sockaddr *address, size_t address_length,

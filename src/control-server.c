@@ -96,6 +96,10 @@ control_server_udp_datagram(const void *data, size_t length,
 {
     struct control_server *cs = ctx;
 
+    if (cs->handler->raw != NULL)
+        cs->handler->raw(data, length, address, address_length,
+                         cs->handler_ctx);
+
     control_server_decode(data, length, address, address_length,
                           cs->handler, cs->handler_ctx);
 }
