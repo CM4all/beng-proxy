@@ -68,7 +68,6 @@ cache_close(struct cache *cache);
 /**
  * Obtain statistics.
  */
-gcc_pure
 void
 cache_get_stats(const struct cache *cache, struct cache_stats *data);
 
