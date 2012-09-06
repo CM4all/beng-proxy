@@ -26,11 +26,14 @@ struct child {
 static bool shutdown_flag = false;
 static struct pool *pool;
 static struct list_head children;
+static unsigned num_children;
 static struct event sigchld_event;
 
 static struct child *
 find_child_by_pid(pid_t pid)
 {
+    assert(list_empty(&children) == (num_children == 0));
+
     struct child *child;
 
     for (child = (struct child*)children.next;
@@ -46,6 +49,8 @@ static void
 child_event_callback(int fd gcc_unused, short event gcc_unused,
                      void *ctx gcc_unused)
 {
+    assert(list_empty(&children) == (num_children == 0));
+
     pid_t pid;
     int status;
 
@@ -54,9 +59,14 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
         if (child == NULL)
             continue;
 
+        assert(num_children > 0);
+        --num_children;
+
         list_remove(&child->siblings);
-        if (shutdown_flag && list_empty(&children))
+        if (shutdown_flag && list_empty(&children)) {
+            assert(num_children == 0);
             children_event_del();
+        }
 
         if (child->callback != NULL)
             child->callback(status, child->callback_ctx);
@@ -74,6 +84,7 @@ children_init(struct pool *_pool)
     pool = _pool;
 
     list_init(&children);
+    num_children = 0;
 
     children_event_add();
 }
@@ -81,6 +92,8 @@ children_init(struct pool *_pool)
 void
 children_shutdown(void)
 {
+    assert(list_empty(&children) == (num_children == 0));
+
     shutdown_flag = true;
 
     if (list_empty(&children))
@@ -110,14 +123,16 @@ children_event_del(void)
 void
 child_register(pid_t pid, child_callback_t callback, void *ctx)
 {
-    struct child *child = p_malloc(pool, sizeof(*child));
-
     assert(!shutdown_flag);
+    assert(list_empty(&children) == (num_children == 0));
+
+    struct child *child = p_malloc(pool, sizeof(*child));
 
     child->pid = pid;
     child->callback = callback;
     child->callback_ctx = ctx;
     list_add(&child->siblings, &children);
+    ++num_children;
 }
 
 void
@@ -129,5 +144,11 @@ child_clear(pid_t pid)
     assert(child->callback != NULL);
 
     child->callback = NULL;
+}
+
+unsigned
+child_get_count(void)
+{
+    return num_children;
 }
 
