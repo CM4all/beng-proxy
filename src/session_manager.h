@@ -54,6 +54,13 @@ void
 session_manager_event_del(void);
 
 /**
+ * Returns the number of sessions.
+ */
+gcc_pure
+unsigned
+session_manager_get_count(void);
+
+/**
  * Create a new #dpool object.  The caller is responsible for
  * destroying it or adding a new session with this #dpool, see
  * session_manager_add().

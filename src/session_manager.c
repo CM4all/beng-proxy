@@ -272,6 +272,12 @@ session_manager_event_del(void)
     event_del(&session_cleanup_event);
 }
 
+unsigned
+session_manager_get_count(void)
+{
+    return session_manager->num_sessions;
+}
+
 struct dpool *
 session_manager_new_dpool(void)
 {
