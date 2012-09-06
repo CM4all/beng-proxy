@@ -7,6 +7,8 @@
 #ifndef __BENG_CHILD_H
 #define __BENG_CHILD_H
 
+#include <inline/compiler.h>
+
 #include <sys/types.h>
 
 struct pool;
@@ -34,5 +36,12 @@ child_register(pid_t pid, child_callback_t callback, void *ctx);
 
 void
 child_clear(pid_t pid);
+
+/**
+ * Returns the number of registered child processes.
+ */
+gcc_pure
+unsigned
+child_get_count(void);
 
 #endif
