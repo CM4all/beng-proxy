@@ -55,6 +55,13 @@ control_server_new_envelope(struct pool *pool,
 void
 control_server_free(struct control_server *cs);
 
+/**
+ * Replaces the socket.  The old one is closed, and the new one is now
+ * owned by this object.
+ */
+void
+control_server_set_fd(struct control_server *cs, int fd);
+
 bool
 control_server_reply(struct control_server *cs, struct pool *pool,
                      const struct sockaddr *address, size_t address_length,

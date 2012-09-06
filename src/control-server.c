@@ -179,6 +179,12 @@ control_server_free(struct control_server *cs)
     udp_listener_free(cs->udp);
 }
 
+void
+control_server_set_fd(struct control_server *cs, int fd)
+{
+    udp_listener_set_fd(cs->udp, fd);
+}
+
 bool
 control_server_reply(struct control_server *cs, struct pool *pool,
                      const struct sockaddr *address, size_t address_length,
