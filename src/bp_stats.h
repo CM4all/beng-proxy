@@ -12,8 +12,6 @@
 struct instance;
 struct beng_control_stats;
 
-extern uint64_t http_request_counter;
-
 void
 bp_get_stats(const struct instance *instance,
              struct beng_control_stats *data);
