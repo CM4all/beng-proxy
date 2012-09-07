@@ -60,18 +60,48 @@ enum beng_control_command {
 };
 
 struct beng_control_stats {
-    uint32_t incoming_connections, outgoing_connections;
+    /**
+     * Number of open incoming connections.
+     */
+    uint32_t incoming_connections;
 
+    /**
+     * Number of open outgoing connections.
+     */
+    uint32_t outgoing_connections;
+
+    /**
+     * Number of child processes.
+     */
     uint32_t children;
 
+    /**
+     * Number of sessions.
+     */
     uint32_t sessions;
 
+    /**
+     * Total number of incoming HTTP requests that were received since
+     * the server was started.
+     */
     uint64_t http_requests;
 
+    /**
+     * The total allocated size of the translation cache in the
+     * server's memory [bytes].
+     */
     uint64_t translation_cache_size;
 
+    /**
+     * The total allocated size of the HTTP cache in the server's
+     * memory [bytes].
+     */
     uint64_t http_cache_size;
 
+    /**
+     * The total allocated size of the filter cache in the server's
+     * memory [bytes].
+     */
     uint64_t filter_cache_size;
 };
 
