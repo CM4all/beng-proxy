@@ -117,7 +117,11 @@ struct pool {
     struct list_head attachments;
 #endif
 
-    size_t size;
+    /**
+     * The number of bytes allocated from this pool, not counting
+     * overhead and not counting p_free().
+     */
+    size_t netto_size;
 };
 
 #ifndef NDEBUG
@@ -279,7 +283,7 @@ pool_new(struct pool *parent, const char *name)
     list_init(&pool->attachments);
 #endif
 
-    pool->size = 0;
+    pool->netto_size = 0;
 
     return pool;
 }
@@ -386,7 +390,7 @@ pool_destroy(struct pool *pool, struct pool *reparent_to)
     assert(pool->parent == NULL);
 
 #ifdef DUMP_POOL_SIZE
-    daemon_log(4, "pool '%s' size=%zu\n", pool->name, pool->size);
+    daemon_log(4, "pool '%s' size=%zu\n", pool->name, pool->netto_size);
 #endif
 
 #ifdef DUMP_POOL_ALLOC_ALL
@@ -579,26 +583,26 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
 }
 
 size_t
-pool_size(const struct pool *pool)
+pool_netto_size(const struct pool *pool)
 {
-    return pool->size;
+    return pool->netto_size;
 }
 
 size_t
-pool_recursive_size(const struct pool *pool)
+pool_recursive_netto_size(const struct pool *pool)
 {
-    return pool_size(pool) + pool_children_size(pool);
+    return pool_netto_size(pool) + pool_children_netto_size(pool);
 }
 
 size_t
-pool_children_size(const struct pool *pool)
+pool_children_netto_size(const struct pool *pool)
 {
     size_t size = 0;
 
     for (const struct pool *child = (const struct pool *)pool->children.next;
          &child->siblings != &pool->children;
          child = (const struct pool *)child->siblings.next)
-        size += pool_recursive_size(child);
+        size += pool_recursive_netto_size(child);
 
     return size;
 }
@@ -624,7 +628,7 @@ pool_dump_node(int indent, const struct pool *pool)
     daemon_log(2, "%*spool '%s' type=%s ref=%u size=%zu p=%p\n",
                indent, "",
                pool->name, pool_type_string(pool->type),
-               pool->ref, pool->size,
+               pool->ref, pool->netto_size,
                (const void *)pool);
 
     indent += 2;
@@ -926,7 +930,7 @@ internal_malloc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 {
     assert(pool != NULL);
 
-    pool->size += size;
+    pool->netto_size += size;
 
     if (likely(pool->type == POOL_LINEAR))
         return p_malloc_linear(pool, size TRACE_ARGS_FWD);

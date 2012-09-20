@@ -98,7 +98,7 @@ cache_close(struct cache *cache)
 void
 cache_get_stats(const struct cache *cache, struct cache_stats *data)
 {
-    data->size = pool_children_size(cache->pool);
+    data->size = pool_children_netto_size(cache->pool);
 }
 
 static inline struct cache_item *
