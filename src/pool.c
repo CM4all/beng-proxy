@@ -895,7 +895,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
         daemon_log(5, "growing linear pool '%s'\n", pool->name);
 #ifdef DEBUG_POOL_GROW
         pool_dump_allocations(pool);
-        daemon_log(6, "+ %s:%u %zu\n", file, line, size - LINEAR_PREFIX);
+        daemon_log(6, "+ %s:%u %zu\n", file, line, original_size);
 #else
         TRACE_ARGS_IGNORE;
 #endif
