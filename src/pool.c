@@ -118,6 +118,11 @@ struct pool {
 #endif
 
     /**
+     * The area size passed to pool_new_linear().
+     */
+    size_t area_size;
+
+    /**
      * The number of bytes allocated from this pool, not counting
      * overhead and not counting p_free().
      */
@@ -354,6 +359,7 @@ pool_new_linear(struct pool *parent, const char *name, size_t initial_size)
 #else
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LINEAR;
+    pool->area_size = initial_size;
 
     pool->current_area.linear = pool_get_linear_area(NULL, initial_size);
 
@@ -921,7 +927,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
         TRACE_ARGS_IGNORE;
 #endif
 
-        size_t new_area_size = area->size;
+        size_t new_area_size = pool->area_size;
         if (size > new_area_size)
             new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
         area = pool_get_linear_area(area, new_area_size);
