@@ -240,10 +240,8 @@ pool_add_child(struct pool *pool, struct pool *child)
 }
 
 static inline void
-pool_remove_child(struct pool *pool, struct pool *child)
+pool_remove_child(gcc_unused struct pool *pool, struct pool *child)
 {
-    (void)pool;
-
     assert(child->parent == pool);
 
     list_remove(&child->siblings);
@@ -484,11 +482,10 @@ pool_destroy(struct pool *pool, struct pool *reparent_to)
 
 #ifdef DEBUG_POOL_REF
 static void
-pool_increment_ref(struct pool *pool, struct list_head *list TRACE_ARGS_DECL)
+pool_increment_ref(gcc_unused struct pool *pool,
+                   struct list_head *list TRACE_ARGS_DECL)
 {
     struct pool_ref *ref;
-
-    (void)pool;
 
     for (ref = (struct pool_ref *)list->next;
          &ref->list_head != list;
@@ -959,12 +956,10 @@ p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL)
 }
 
 static void
-p_free_libc(struct pool *pool, void *ptr)
+p_free_libc(gcc_unused struct pool *pool, void *ptr)
 {
     struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)(((char*)ptr) -
                                                                offsetof(struct libc_pool_chunk, data));
-
-    (void)pool;
 
 #ifndef NDEBUG
     list_remove(&chunk->info.siblings);
