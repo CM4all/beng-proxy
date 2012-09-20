@@ -97,16 +97,14 @@ struct pool {
 #ifndef NDEBUG
     struct list_head notify;
     bool trashed;
+
+    /** this is a major pool, i.e. pool commits are performed after
+        the major pool is freed */
+    bool major;
 #endif
 
     enum pool_type type;
     const char *name;
-
-#ifndef NDEBUG
-    /** this is a major pool, i.e. pool commits are performed after
-        the major pool is freed */
-    int major;
-#endif
 
     union {
         struct list_head libc;
@@ -349,7 +347,7 @@ pool_set_major(struct pool *pool)
     assert(!pool->trashed);
     assert(list_empty(&pool->children));
 
-    pool->major = 1;
+    pool->major = true;
 }
 #endif
 
