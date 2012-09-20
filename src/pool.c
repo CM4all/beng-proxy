@@ -161,11 +161,8 @@ get_linear_allocation_info(void *p)
 void
 pool_recycler_clear(void)
 {
-    struct pool *pool;
-    struct linear_pool_area *linear;
-
     while (recycler.pools != NULL) {
-        pool = recycler.pools;
+        struct pool *pool = recycler.pools;
         recycler.pools = pool->current_area.recycler;
         free(pool);
     }
@@ -173,7 +170,7 @@ pool_recycler_clear(void)
     recycler.num_pools = 0;
 
     while (recycler.linear_areas != NULL) {
-        linear = recycler.linear_areas;
+        struct linear_pool_area *linear = recycler.linear_areas;
         recycler.linear_areas = linear->prev;
         free(linear);
     }
@@ -212,10 +209,9 @@ pool_recycler_put_linear(struct linear_pool_area *area)
 static struct linear_pool_area *
 pool_recycler_get_linear(size_t size)
 {
-    struct linear_pool_area **linear_p, *linear;
-
     assert(size > 0);
 
+    struct linear_pool_area **linear_p, *linear;
     for (linear_p = &recycler.linear_areas, linear = *linear_p;
          linear != NULL;
          linear_p = &linear->prev, linear = *linear_p) {
@@ -732,14 +728,13 @@ pool_trash(struct pool *pool)
 void
 pool_commit(void)
 {
-    struct pool *pool;
-
     if (list_empty(&trash))
         return;
 
     daemon_log(0, "pool_commit(): there are unreleased pools in the trash:\n");
 
-    for (pool = (struct pool *)trash.next; &pool->siblings != &trash;
+    for (struct pool *pool = (struct pool *)trash.next;
+         &pool->siblings != &trash;
          pool = (struct pool *)pool->siblings.next) {
 #ifdef DEBUG_POOL_REF
         pool_dump_refs(pool);
@@ -764,8 +759,6 @@ linear_pool_area_contains(const struct linear_pool_area *area,
 bool
 pool_contains(struct pool *pool, const void *ptr, size_t size)
 {
-    const struct linear_pool_area *area;
-
     assert(pool != NULL);
     assert(ptr != NULL);
     assert(size > 0);
@@ -773,7 +766,8 @@ pool_contains(struct pool *pool, const void *ptr, size_t size)
     if (pool->type != POOL_LINEAR)
         return true;
 
-    for (area = pool->current_area.linear; area != NULL; area = area->prev)
+    for (const struct linear_pool_area *area = pool->current_area.linear;
+         area != NULL; area = area->prev)
         if (linear_pool_area_contains(area, ptr, size))
             return true;
 
@@ -876,11 +870,8 @@ p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 static void
 pool_dump_allocations(struct pool *pool)
 {
-    struct allocation_info *info;
-    size_t sum;
-
-    sum = 0;
-    for (info = (struct allocation_info *)pool->allocations.prev;
+    size_t sum = 0;
+    for (struct allocation_info *info = (struct allocation_info *)pool->allocations.prev;
          info != (struct allocation_info *)&pool->allocations;
          info = (struct allocation_info *)info->siblings.prev) {
         sum += info->size;
@@ -894,10 +885,6 @@ p_malloc_linear(struct pool *pool, const size_t original_size
                 TRACE_ARGS_DECL)
 {
     struct linear_pool_area *area = pool->current_area.linear;
-    void *p;
-#ifndef NDEBUG
-    struct allocation_info *info;
-#endif
 
     assert(area != NULL);
 
@@ -905,7 +892,6 @@ p_malloc_linear(struct pool *pool, const size_t original_size
     size += LINEAR_PREFIX;
 
     if (unlikely(area->used + size > area->size)) {
-        size_t new_area_size = area->size;
         daemon_log(5, "growing linear pool '%s'\n", pool->name);
 #ifdef DEBUG_POOL_GROW
         pool_dump_allocations(pool);
@@ -913,19 +899,21 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 #else
         TRACE_ARGS_IGNORE;
 #endif
+
+        size_t new_area_size = area->size;
         if (size > new_area_size)
             new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
         area = pool_get_linear_area(area, new_area_size);
         pool->current_area.linear = area;
     }
 
-    p = area->data + area->used;
+    void *p = area->data + area->used;
     area->used += size;
 
     poison_undefined(p, size);
 
 #ifndef NDEBUG
-    info = p;
+    struct allocation_info *info = p;
     info->file = file;
     info->line = line;
     info->size = original_size;
