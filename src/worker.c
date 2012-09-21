@@ -223,6 +223,7 @@ worker_killall(struct instance *instance)
          worker != (struct worker*)&instance->workers;
          worker = (struct worker*)worker->siblings.next) {
         if (kill(worker->pid, SIGTERM) < 0)
-            daemon_log(1, "failed to kill worker: %s\n", strerror(errno));
+            daemon_log(1, "failed to kill worker %d: %s\n",
+                       (int)worker->pid, strerror(errno));
     }
 }
