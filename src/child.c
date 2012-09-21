@@ -23,11 +23,23 @@ struct child {
     void *callback_ctx;
 };
 
+static const struct timeval immediately = {
+    .tv_sec = 0,
+};
+
 static bool shutdown_flag = false;
 static struct pool *pool;
 static struct list_head children;
 static unsigned num_children;
 static struct event sigchld_event;
+
+/**
+ * This event is used by children_event_add() to invoke
+ * child_event_callback() as soon as possible.  It is necessary to
+ * catch up with SIGCHLDs that may have been lost while the SIGCHLD
+ * handler was disabled.
+ */
+static struct event defer_event;
 
 static struct child *
 find_child_by_pid(pid_t pid)
@@ -114,12 +126,18 @@ children_event_add(void)
     event_set(&sigchld_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
               child_event_callback, NULL);
     event_add(&sigchld_event, NULL);
+
+    /* schedule an immediate waitpid() run, just in case we lost a
+       SIGCHLD */
+    evtimer_set(&defer_event, child_event_callback, NULL);
+    evtimer_add(&defer_event, &immediately);
 }
 
 void
 children_event_del(void)
 {
     event_del(&sigchld_event);
+    evtimer_del(&defer_event);
 
     /* reset the "shutdown" flag, so the test suite may initialize
        this library more than once */
