@@ -3,7 +3,7 @@ cm4all-beng-proxy (2.1.9) unstable; urgency=low
   * merge release 2.0.47
   * lb: eliminate the duplicate "Date" response header (#1169)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 21 Sep 2012 15:56:06 -0000
 
 cm4all-beng-proxy (2.1.8) unstable; urgency=low
 
