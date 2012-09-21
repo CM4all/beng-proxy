@@ -179,10 +179,8 @@ was_stock_destroy(gcc_unused void *ctx, struct stock_item *item)
     struct was_child *child =
         (struct was_child *)item;
 
-    if (child->process.pid >= 0) {
-        kill(child->process.pid, SIGTERM);
-        child_clear(child->process.pid);
-    }
+    if (child->process.pid >= 0)
+        child_kill(child->process.pid);
 
     if (child->process.control_fd >= 0) {
         p_event_del(&child->event, child->base.pool);

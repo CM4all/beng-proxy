@@ -34,8 +34,11 @@ children_event_del(void);
 void
 child_register(pid_t pid, child_callback_t callback, void *ctx);
 
+/**
+ * Send a SIGTERM to a child process and unregister it.
+ */
 void
-child_clear(pid_t pid);
+child_kill(pid_t pid);
 
 /**
  * Returns the number of registered child processes.

@@ -230,10 +230,8 @@ fcgi_create_abort(struct async_operation *ao)
 
     unlink(child->address.sun_path);
 
-    if (child->pid >= 0) {
-        kill(child->pid, SIGTERM);
-        child_clear(child->pid);
-    }
+    if (child->pid >= 0)
+        child_kill(child->pid);
 
     async_abort(&child->connect_operation);
     stock_item_aborted(&child->base);
@@ -342,10 +340,8 @@ fcgi_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
     struct fcgi_child *child =
         (struct fcgi_child *)item;
 
-    if (child->pid >= 0) {
-        kill(child->pid, SIGTERM);
-        child_clear(child->pid);
-    }
+    if (child->pid >= 0)
+        child_kill(child->pid);
 
     if (async_ref_defined(&child->connect_operation))
         async_abort(&child->connect_operation);

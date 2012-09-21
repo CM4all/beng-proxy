@@ -160,7 +160,7 @@ child_register(pid_t pid, child_callback_t callback, void *ctx)
 }
 
 void
-child_clear(pid_t pid)
+child_kill(pid_t pid)
 {
     struct child *child = find_child_by_pid(pid);
 
@@ -168,6 +168,8 @@ child_clear(pid_t pid)
     assert(child->callback != NULL);
 
     child->callback = NULL;
+
+    kill(pid, SIGTERM);
 }
 
 unsigned
@@ -175,4 +177,3 @@ child_get_count(void)
 {
     return num_children;
 }
-

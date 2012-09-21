@@ -60,11 +60,8 @@ fork_close(struct fork *f)
     close(f->output_fd);
     f->output_fd = -1;
 
-    if (f->pid >= 0) {
-        kill(f->pid, SIGTERM);
-        child_clear(f->pid);
-        /* XXX SIGKILL? */
-    }
+    if (f->pid >= 0)
+        child_kill(f->pid);
 }
 
 /**
