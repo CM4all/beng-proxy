@@ -71,6 +71,16 @@ child_remove(struct child *child)
 }
 
 static void
+child_done(struct child *child, int status)
+{
+    child_remove(child);
+
+    if (child->callback != NULL)
+        child->callback(status, child->callback_ctx);
+    p_free(pool, child);
+}
+
+static void
 child_event_callback(int fd gcc_unused, short event gcc_unused,
                      void *ctx gcc_unused)
 {
@@ -81,14 +91,8 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         struct child *child = find_child_by_pid(pid);
-        if (child == NULL)
-            continue;
-
-        child_remove(child);
-
-        if (child->callback != NULL)
-            child->callback(status, child->callback_ctx);
-        p_free(pool, child);
+        if (child != NULL)
+            child_done(child, status);
     }
 
     pool_commit();
