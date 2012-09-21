@@ -34,6 +34,7 @@
 #include "text_processor.h"
 #include "istream.h"
 #include "tvary.h"
+#include "date.h"
 
 #include <daemon/log.h>
 
@@ -438,6 +439,13 @@ more_response_headers(const struct request *request2,
                  ? request2->product_token
                  : "beng-proxy/" VERSION);
 
+#ifndef NO_DATE_HEADER
+    /* RFC 2616 14.18: Date */
+    header_write(headers, "date", request2->date != NULL
+                 ? request2->date
+                 : http_date_format(time(NULL)));
+#endif
+
     const struct translate_response *tr = request2->translate.response;
     translation_response_headers(headers, tr);
 
@@ -747,6 +755,10 @@ response_response(http_status_t status, struct strmap *headers,
                                           request2->translate.response);
 
     request2->product_token = strmap_remove(headers, "server");
+
+#ifdef NO_DATE_HEADER
+    request2->date = strmap_remove(headers, "date");
+#endif
 
     response_headers = headers != NULL
         ? headers_dup(request->pool, headers)

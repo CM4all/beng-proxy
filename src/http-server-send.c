@@ -100,10 +100,6 @@ http_server_response(const struct http_server_request *request,
     if (headers == NULL)
         headers = growing_buffer_new(request->pool, 256);
 
-#ifndef NO_DATE_HEADER
-    header_write(headers, "date", http_date_format(time(NULL)));
-#endif
-
     /* how will we transfer the body?  determine length and
        transfer-encoding */
 
@@ -177,6 +173,10 @@ http_server_send_message(const struct http_server_request *request,
     struct growing_buffer *headers = growing_buffer_new(request->pool, 256);
     header_write(headers, "content-type", "text/plain");
 
+#ifndef NO_DATE_HEADER
+    header_write(headers, "date", http_date_format(time(NULL)));
+#endif
+
     http_server_response(request, status, headers,
                          istream_string_new(request->pool, msg));
 }
@@ -198,6 +198,10 @@ http_server_send_redirect(const struct http_server_request *request,
     headers = growing_buffer_new(request->pool, 1024);
     header_write(headers, "content-type", "text/plain");
     header_write(headers, "location", location);
+
+#ifndef NO_DATE_HEADER
+    header_write(headers, "date", http_date_format(time(NULL)));
+#endif
 
     http_server_response(request, status, headers,
                          istream_string_new(request->pool, msg));

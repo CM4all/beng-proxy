@@ -73,6 +73,10 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 
     request2->product_token = strmap_remove(headers, "server");
 
+#ifdef NO_DATE_HEADER
+    request2->date = strmap_remove(headers, "date");
+#endif
+
     headers2 = headers_dup(request->pool, headers);
     if (request->method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body

@@ -522,6 +522,9 @@ handle_http_request(struct client_connection *connection,
     request2->connection = connection;
     request2->request = request;
     request2->product_token = NULL;
+#ifndef NO_DATE_HEADER
+    request2->date = NULL;
+#endif
 
     request2->args = NULL;
     request2->cookies = NULL;

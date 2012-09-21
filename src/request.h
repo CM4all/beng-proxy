@@ -82,6 +82,14 @@ struct request {
      */
     const char *product_token;
 
+#ifndef NO_DATE_HEADER
+    /**
+     * The "date" response header (RFC 2616 14.18) being forwarded;
+     * NULL if beng-proxy shall generate one.
+     */
+    const char *date;
+#endif
+
     /**
      * An identifier for the source stream of the current
      * transformation.  This is used by the filter cache to address
