@@ -4,7 +4,7 @@ cm4all-beng-proxy (1.4.31) unstable; urgency=low
   * child: handle lost SIGCHLD events
   * child: ignore stale child processes
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 21 Sep 2012 15:21:20 -0000
 
 cm4all-beng-proxy (1.4.30) unstable; urgency=low
 
