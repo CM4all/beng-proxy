@@ -58,6 +58,32 @@ schedule_respawn(struct instance *instance)
 }
 
 static void
+worker_remove(struct instance *instance, struct worker *worker)
+{
+    list_remove(&worker->siblings);
+
+    assert(instance->num_workers > 0);
+    --instance->num_workers;
+}
+
+static void
+worker_free(struct instance *instance, struct worker *worker)
+{
+    crash_deinit(&worker->crash);
+    p_free(instance->pool, worker);
+}
+
+/**
+ * Remove and free the worker.
+ */
+static void
+worker_dispose(struct instance *instance, struct worker *worker)
+{
+    worker_remove(instance, worker);
+    worker_free(instance, worker);
+}
+
+static void
 worker_child_callback(int status, void *ctx)
 {
     struct worker *worker = ctx;
@@ -76,12 +102,7 @@ worker_child_callback(int status, void *ctx)
                    worker->pid, exit_status);
 
     const bool safe = crash_is_safe(&worker->crash);
-    crash_deinit(&worker->crash);
-    list_remove(&worker->siblings);
-    assert(instance->num_workers > 0);
-    --instance->num_workers;
-
-    p_free(instance->pool, worker);
+    worker_dispose(instance, worker);
 
     if (WIFSIGNALED(status) && !instance->should_exit && !safe) {
         /* a worker has died due to a signal - this is dangerous for
