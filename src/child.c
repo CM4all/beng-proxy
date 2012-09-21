@@ -8,9 +8,12 @@
 #include "crash.h"
 #include "pool.h"
 
+#include <daemon/log.h>
 #include <inline/list.h>
 
 #include <assert.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <event.h>
 
@@ -173,7 +176,10 @@ child_kill(pid_t pid)
 
     child->callback = NULL;
 
-    kill(pid, SIGTERM);
+    if (kill(pid, SIGTERM) < 0) {
+        daemon_log(1, "failed to kill child process %d: %s\n",
+                   (int)pid, strerror(errno));
+    }
 }
 
 unsigned
