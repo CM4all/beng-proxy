@@ -12,6 +12,8 @@
 #include <time.h>
 #include <event.h>
 
+/* #define ENABLE_EXCESSIVE_CACHE_CHECKS */
+
 struct cache {
     struct pool *pool;
 
@@ -108,7 +110,7 @@ list_head_to_cache_item(struct list_head *list_head)
 static void
 cache_check(const struct cache *cache)
 {
-#ifndef NDEBUG
+#if !defined(NDEBUG) && defined(ENABLE_EXCESSIVE_CACHE_CHECKS)
     const struct hashmap_pair *pair;
     size_t size = 0;
 
