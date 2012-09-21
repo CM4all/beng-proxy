@@ -174,7 +174,7 @@ void
 http_server_send_message(const struct http_server_request *request,
                          http_status_t status, const char *msg)
 {
-    struct growing_buffer *headers = growing_buffer_new(request->pool, 40);
+    struct growing_buffer *headers = growing_buffer_new(request->pool, 256);
     header_write(headers, "content-type", "text/plain");
 
     http_server_response(request, status, headers,
