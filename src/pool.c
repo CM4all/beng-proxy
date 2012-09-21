@@ -246,9 +246,12 @@ pool_free_linear_area(struct linear_pool_area *area)
 static void
 pool_dispose_linear_area(struct pool *pool, struct linear_pool_area *area)
 {
-    (void)pool;
-
-    if (!pool_recycler_put_linear(area))
+    if (/* recycle only if the area's size is exactly as big as
+           planned, and was not superseded by a larger allocation;
+           this avoids poisoning the recycler with areas that will
+           probably never be used again */
+        area->size != pool->area_size ||
+        !pool_recycler_put_linear(area))
         pool_free_linear_area(area);
 }
 
