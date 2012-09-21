@@ -189,23 +189,26 @@ pool_recycler_put(struct pool *pool)
     ++recycler.num_pools;
 }
 
-static void
+/**
+ * @return true if the area was moved to the recycler, false if the
+ * caller is responsible for freeing it
+ */
+static bool
 pool_recycler_put_linear(struct linear_pool_area *area)
 {
     assert(area != NULL);
     assert(area->size > 0);
 
-    if (recycler.num_linear_areas < RECYCLER_MAX_LINEAR_AREAS &&
-        area->size <= RECYCLER_MAX_LINEAR_SIZE) {
-        poison_noaccess(area->data, area->used);
+    if (recycler.num_linear_areas >= RECYCLER_MAX_LINEAR_AREAS ||
+        area->size > RECYCLER_MAX_LINEAR_SIZE)
+        return false;
 
-        area->prev = recycler.linear_areas;
-        recycler.linear_areas = area;
-        ++recycler.num_linear_areas;
-    } else {
-        poison_undefined(area->data, area->used);
-        free(area);
-    }
+    poison_noaccess(area->data, area->used);
+
+    area->prev = recycler.linear_areas;
+    recycler.linear_areas = area;
+    ++recycler.num_linear_areas;
+    return true;
 }
 
 static struct linear_pool_area *
@@ -229,11 +232,19 @@ pool_recycler_get_linear(size_t size)
 }
 
 static void
+pool_free_linear_area(struct linear_pool_area *area)
+{
+    poison_undefined(area->data, area->used);
+    free(area);
+}
+
+static void
 pool_dispose_linear_area(struct pool *pool, struct linear_pool_area *area)
 {
     (void)pool;
 
-    pool_recycler_put_linear(area);
+    if (!pool_recycler_put_linear(area))
+        pool_free_linear_area(area);
 }
 
 static inline void
