@@ -228,6 +228,14 @@ pool_recycler_get_linear(size_t size)
     return NULL;
 }
 
+static void
+pool_dispose_linear_area(struct pool *pool, struct linear_pool_area *area)
+{
+    (void)pool;
+
+    pool_recycler_put_linear(area);
+}
+
 static inline void
 pool_add_child(struct pool *pool, struct pool *child)
 {
@@ -467,7 +475,7 @@ pool_destroy(struct pool *pool, struct pool *reparent_to)
         while (pool->current_area.linear != NULL) {
             struct linear_pool_area *area = pool->current_area.linear;
             pool->current_area.linear = area->prev;
-            pool_recycler_put_linear(area);
+            pool_dispose_linear_area(pool, area);
         }
         break;
     }
@@ -831,7 +839,7 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
         pool_remove_allocations(pool, area->data, area->used);
 
         pool->current_area.linear = area->prev;
-        pool_recycler_put_linear(area);
+        pool_dispose_linear_area(pool, area);
     }
 
     pool_remove_allocations(pool, mark->area->data + mark->position,
