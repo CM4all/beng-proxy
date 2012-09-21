@@ -29,7 +29,6 @@ respawn_event_callback(int fd gcc_unused, short event gcc_unused,
                        void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
-    pid_t pid;
 
     if (instance->should_exit ||
         instance->num_workers >= instance->config.num_workers)
@@ -37,7 +36,7 @@ respawn_event_callback(int fd gcc_unused, short event gcc_unused,
 
     daemon_log(2, "respawning child\n");
 
-    pid = worker_new(instance);
+    pid_t pid = worker_new(instance);
     if (pid != 0)
         schedule_respawn(instance);
 }
@@ -91,16 +90,14 @@ worker_child_callback(int status, void *ctx)
            to immediately free all shared memory, kill all workers
            still using it, and spawn new workers with fresh shared
            memory. */
-        bool ret;
 
         daemon_log(1, "abandoning shared memory, preparing to kill and respawn all workers\n");
 
         session_manager_abandon();
 
-        ret = session_manager_init(instance->config.session_idle_timeout,
-                                   instance->config.cluster_size,
-                                   instance->config.cluster_node);
-        if (!ret) {
+        if (!session_manager_init(instance->config.session_idle_timeout,
+                                  instance->config.cluster_size,
+                                  instance->config.cluster_node)) {
             daemon_log(1, "session_manager_init() failed\n");
             _exit(2);
         }
@@ -115,8 +112,6 @@ pid_t
 worker_new(struct instance *instance)
 {
     assert(!crash_in_unsafe());
-
-    pid_t pid;
 
     deinit_signals(instance);
     children_event_del();
@@ -135,7 +130,7 @@ worker_new(struct instance *instance)
     if (!crash_init(&crash))
         return -1;
 
-    pid = fork();
+    pid_t pid = fork();
     if (pid < 0) {
         daemon_log(1, "fork() failed: %s\n", strerror(errno));
 
@@ -178,14 +173,12 @@ worker_new(struct instance *instance)
 
         all_listeners_event_add(instance);
     } else {
-        struct worker *worker;
-
         if (distribute_socket >= 0)
             close(distribute_socket);
 
         event_reinit(instance->event_base);
 
-        worker = p_malloc(instance->pool, sizeof(*worker));
+        struct worker *worker = p_malloc(instance->pool, sizeof(*worker));
         worker->instance = instance;
         worker->pid = pid;
         worker->crash = crash;
@@ -205,14 +198,10 @@ worker_new(struct instance *instance)
 void
 worker_killall(struct instance *instance)
 {
-    struct worker *worker;
-    int ret;
-
-    for (worker = (struct worker*)instance->workers.next;
+    for (struct worker *worker = (struct worker*)instance->workers.next;
          worker != (struct worker*)&instance->workers;
          worker = (struct worker*)worker->siblings.next) {
-        ret = kill(worker->pid, SIGTERM);
-        if (ret < 0)
+        if (kill(worker->pid, SIGTERM) < 0)
             daemon_log(1, "failed to kill worker: %s\n", strerror(errno));
     }
 }
