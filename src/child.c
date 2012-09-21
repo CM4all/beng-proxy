@@ -74,6 +74,13 @@ child_remove(struct child *child)
 }
 
 static void
+child_abandon(struct child *child)
+{
+    child_remove(child);
+    p_free(pool, child);
+}
+
+static void
 child_done(struct child *child, int status)
 {
     child_remove(child);
@@ -179,6 +186,11 @@ child_kill(pid_t pid)
     if (kill(pid, SIGTERM) < 0) {
         daemon_log(1, "failed to kill child process %d: %s\n",
                    (int)pid, strerror(errno));
+
+        /* if we can't kill the process, we can't do much, so let's
+           just ignore the process from now on and don't let it delay
+           the shutdown */
+        child_abandon(child);
     }
 }
 
