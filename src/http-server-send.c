@@ -196,6 +196,7 @@ http_server_send_redirect(const struct http_server_request *request,
         msg = "redirection";
 
     headers = growing_buffer_new(request->pool, 1024);
+    header_write(headers, "content-type", "text/plain");
     header_write(headers, "location", location);
 
     http_server_response(request, status, headers,
