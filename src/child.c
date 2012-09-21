@@ -46,6 +46,19 @@ find_child_by_pid(pid_t pid)
 }
 
 static void
+child_remove(struct child *child)
+{
+    assert(num_children > 0);
+    --num_children;
+
+    list_remove(&child->siblings);
+    if (shutdown_flag && list_empty(&children)) {
+        assert(num_children == 0);
+        children_event_del();
+    }
+}
+
+static void
 child_event_callback(int fd gcc_unused, short event gcc_unused,
                      void *ctx gcc_unused)
 {
@@ -59,14 +72,7 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
         if (child == NULL)
             continue;
 
-        assert(num_children > 0);
-        --num_children;
-
-        list_remove(&child->siblings);
-        if (shutdown_flag && list_empty(&children)) {
-            assert(num_children == 0);
-            children_event_del();
-        }
+        child_remove(child);
 
         if (child->callback != NULL)
             child->callback(status, child->callback_ctx);
