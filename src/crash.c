@@ -20,7 +20,7 @@ crash_init(struct crash *crash)
                       PROT_READ|PROT_WRITE,
                       MAP_ANONYMOUS|MAP_SHARED,
                       -1, 0);
-    if (crash->shm == NULL)
+    if (crash->shm == (struct crash_shm *)-1)
         return false;
 
     g_atomic_int_set(&crash->shm->counter, 0);

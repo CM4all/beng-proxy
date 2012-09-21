@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.47) unstable; urgency=low
 
-  * 
+  * merge release 1.4.31
 
  --   
 
@@ -353,6 +353,14 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.31) unstable; urgency=low
+
+  * shm: fix check for shared memory allocation failure
+  * child: handle lost SIGCHLD events
+  * child: ignore stale child processes
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 21 Sep 2012 15:21:20 -0000
 
 cm4all-beng-proxy (1.4.30) unstable; urgency=low
 
