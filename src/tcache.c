@@ -598,7 +598,8 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
                                    NULL);
 
     if (tcache_response_evaluate(response)) {
-        struct pool *pool = pool_new_linear(tcr->tcache->pool, "tcache_item", 512);
+        struct pool *pool = pool_new_linear(tcr->tcache->pool, "tcache_item",
+                                            2048);
         struct tcache_item *item = p_malloc(pool, sizeof(*item));
         unsigned max_age = response->max_age;
         const char *key;
