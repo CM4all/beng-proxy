@@ -92,6 +92,19 @@ child_abandon(struct child *child)
 static void
 child_done(struct child *child, int status)
 {
+    const int exit_status = WEXITSTATUS(status);
+    if (WIFSIGNALED(status)) {
+        daemon_log(1, "child process '%s' (pid %d) died from signal %d%s\n",
+                   child->name, (int)child->pid,
+                   WTERMSIG(status),
+                   WCOREDUMP(status) ? " (core dumped)" : "");
+    } else if (exit_status == 0)
+        daemon_log(5, "child process '%s' (pid %d) exited with success\n",
+                   child->name, (int)child->pid);
+    else
+        daemon_log(2, "child process '%s' (pid %d) exited with status %d\n",
+                   child->name, (int)child->pid, exit_status);
+
     child_remove(child);
 
     if (child->callback != NULL)
@@ -174,6 +187,8 @@ child_register(pid_t pid, const char *name,
     assert(!shutdown_flag);
     assert(list_empty(&children) == (num_children == 0));
 
+    daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
+
     struct child *child = p_malloc(pool, sizeof(*child));
 
     child->pid = pid;
@@ -191,6 +206,9 @@ child_kill(pid_t pid)
 
     assert(child != NULL);
     assert(child->callback != NULL);
+
+    daemon_log(5, "sending SIGTERM to child process '%s' (pid %d)\n",
+               child->name, (int)pid);
 
     child->callback = NULL;
 
