@@ -107,6 +107,9 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 
         children_init(instance->pool);
         all_listeners_event_add(instance);
+
+        /* run monitors only in the worker process */
+        lb_hmonitor_enable();
         return;
     }
 
@@ -303,6 +306,9 @@ int main(int argc, char **argv)
         is_watchdog = true;
         evtimer_set(&launch_worker_event, launch_worker_callback, &instance);
         evtimer_add(&launch_worker_event, &launch_worker_now);
+    } else {
+        /* this is already the worker process: enable monitors here */
+        lb_hmonitor_enable();
     }
 
     event_dispatch();

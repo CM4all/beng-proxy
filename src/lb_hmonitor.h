@@ -18,6 +18,9 @@ void
 lb_hmonitor_deinit(void);
 
 void
+lb_hmonitor_enable(void);
+
+void
 lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
                 const struct lb_monitor_config *config);
 

@@ -1,5 +1,6 @@
 cm4all-beng-proxy (2.0.48) unstable; urgency=low
 
+  * lb: fix duplicate monitor requests with --watchdog
   * child: verbose logging of child process events
   * log shutdown signal
 
