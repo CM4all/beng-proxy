@@ -61,6 +61,12 @@ find_child_by_pid(pid_t pid)
 }
 
 static void
+child_free(struct child *child)
+{
+    p_free(pool, child);
+}
+
+static void
 child_remove(struct child *child)
 {
     assert(num_children > 0);
@@ -77,7 +83,7 @@ static void
 child_abandon(struct child *child)
 {
     child_remove(child);
-    p_free(pool, child);
+    child_free(child);
 }
 
 static void
@@ -87,7 +93,7 @@ child_done(struct child *child, int status)
 
     if (child->callback != NULL)
         child->callback(status, child->callback_ctx);
-    p_free(pool, child);
+    child_free(child);
 }
 
 static void
