@@ -24,6 +24,7 @@
 #include "ssl_init.h"
 #include "child.h"
 
+#include <daemon/log.h>
 #include <daemon/daemonize.h>
 
 #include <assert.h>
@@ -106,22 +107,28 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 
         children_init(instance->pool);
         all_listeners_event_add(instance);
+
+        /* run monitors only in the worker process */
+        lb_hmonitor_enable();
         return;
     }
 
     init_signals(instance);
     children_event_add();
 
-    child_register(worker_pid, worker_callback, instance);
+    child_register(worker_pid, "worker", worker_callback, instance);
 }
 
 static void
-exit_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
+exit_event_callback(int fd, short event gcc_unused, void *ctx)
 {
     struct lb_instance *instance = ctx;
 
     if (instance->should_exit)
         return;
+
+    daemon_log(2, "caught signal %d, shutting down (pid=%d)\n",
+               fd, (int)getpid());
 
     instance->should_exit = true;
     deinit_signals(instance);
@@ -299,6 +306,9 @@ int main(int argc, char **argv)
         is_watchdog = true;
         evtimer_set(&launch_worker_event, launch_worker_callback, &instance);
         evtimer_add(&launch_worker_event, &launch_worker_now);
+    } else {
+        /* this is already the worker process: enable monitors here */
+        lb_hmonitor_enable();
     }
 
     event_dispatch();

@@ -197,9 +197,6 @@ lb_monitor_new(struct pool *pool, const char *name,
     monitor->state = true;
     monitor->fade = false;
 
-    static const struct timeval immediately = { .tv_sec = 0 };
-    evtimer_add(&monitor->interval_event, &immediately);
-
     return monitor;
 }
 
@@ -212,6 +209,13 @@ lb_monitor_free(struct lb_monitor *monitor)
         async_abort(&monitor->async_ref);
 
     pool_unref(monitor->pool);
+}
+
+void
+lb_monitor_enable(struct lb_monitor *monitor)
+{
+    static const struct timeval immediately = { .tv_sec = 0 };
+    evtimer_add(&monitor->interval_event, &immediately);
 }
 
 bool

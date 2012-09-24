@@ -40,6 +40,17 @@ lb_hmonitor_deinit(void)
 }
 
 void
+lb_hmonitor_enable(void)
+{
+    hashmap_rewind(hmonitor_map);
+    const struct hashmap_pair *pair;
+    while ((pair = hashmap_next(hmonitor_map)) != NULL) {
+        struct lb_monitor *monitor = pair->value;
+        lb_monitor_enable(monitor);
+    }
+}
+
+void
 lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
                 const struct lb_monitor_config *config)
 {

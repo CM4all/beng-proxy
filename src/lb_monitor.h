@@ -38,6 +38,9 @@ lb_monitor_new(struct pool *pool, const char *name,
 void
 lb_monitor_free(struct lb_monitor *monitor);
 
+void
+lb_monitor_enable(struct lb_monitor *monitor);
+
 G_GNUC_PURE
 bool
 lb_monitor_get_state(const struct lb_monitor *monitor);

@@ -22,6 +22,8 @@ struct child {
 
     pid_t pid;
 
+    const char *name;
+
     child_callback_t callback;
     void *callback_ctx;
 };
@@ -61,6 +63,13 @@ find_child_by_pid(pid_t pid)
 }
 
 static void
+child_free(struct child *child)
+{
+    p_free(pool, child->name);
+    p_free(pool, child);
+}
+
+static void
 child_remove(struct child *child)
 {
     assert(num_children > 0);
@@ -77,17 +86,30 @@ static void
 child_abandon(struct child *child)
 {
     child_remove(child);
-    p_free(pool, child);
+    child_free(child);
 }
 
 static void
 child_done(struct child *child, int status)
 {
+    const int exit_status = WEXITSTATUS(status);
+    if (WIFSIGNALED(status)) {
+        daemon_log(1, "child process '%s' (pid %d) died from signal %d%s\n",
+                   child->name, (int)child->pid,
+                   WTERMSIG(status),
+                   WCOREDUMP(status) ? " (core dumped)" : "");
+    } else if (exit_status == 0)
+        daemon_log(5, "child process '%s' (pid %d) exited with success\n",
+                   child->name, (int)child->pid);
+    else
+        daemon_log(2, "child process '%s' (pid %d) exited with status %d\n",
+                   child->name, (int)child->pid, exit_status);
+
     child_remove(child);
 
     if (child->callback != NULL)
         child->callback(status, child->callback_ctx);
-    p_free(pool, child);
+    child_free(child);
 }
 
 static void
@@ -159,14 +181,18 @@ children_event_del(void)
 }
 
 void
-child_register(pid_t pid, child_callback_t callback, void *ctx)
+child_register(pid_t pid, const char *name,
+               child_callback_t callback, void *ctx)
 {
     assert(!shutdown_flag);
     assert(list_empty(&children) == (num_children == 0));
 
+    daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
+
     struct child *child = p_malloc(pool, sizeof(*child));
 
     child->pid = pid;
+    child->name = p_strdup(pool, name);
     child->callback = callback;
     child->callback_ctx = ctx;
     list_add(&child->siblings, &children);
@@ -181,11 +207,14 @@ child_kill(pid_t pid)
     assert(child != NULL);
     assert(child->callback != NULL);
 
+    daemon_log(5, "sending SIGTERM to child process '%s' (pid %d)\n",
+               child->name, (int)pid);
+
     child->callback = NULL;
 
     if (kill(pid, SIGTERM) < 0) {
-        daemon_log(1, "failed to kill child process %d: %s\n",
-                   (int)pid, strerror(errno));
+        daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",
+                   child->name, (int)pid, strerror(errno));
 
         /* if we can't kill the process, we can't do much, so let's
            just ignore the process from now on and don't let it delay

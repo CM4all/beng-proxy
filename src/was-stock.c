@@ -144,7 +144,7 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
         return;
     }
 
-    child_register(child->process.pid, was_child_callback, child);
+    child_register(child->process.pid, key, was_child_callback, child);
 
     event_set(&child->event, child->process.control_fd, EV_READ|EV_TIMEOUT,
               was_child_event_callback, child);
