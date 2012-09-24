@@ -36,6 +36,7 @@
 #include "ua_classification.h"
 
 #include <daemon/daemonize.h>
+#include <daemon/log.h>
 
 #include <assert.h>
 #include <unistd.h>
@@ -79,12 +80,15 @@ all_listeners_event_del(struct instance *instance)
 }
 
 static void
-exit_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
+exit_event_callback(int fd, short event gcc_unused, void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
 
     if (instance->should_exit)
         return;
+
+    daemon_log(2, "caught signal %d, shutting down (pid=%d)\n",
+               fd, (int)getpid());
 
     instance->should_exit = true;
     deinit_signals(instance);
@@ -150,6 +154,9 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
                       void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
+
+    daemon_log(3, "caught signal %d, flushing all caches (pid=%d)\n",
+               fd, (int)getpid());
 
     daemonize_reopen_logfile();
 

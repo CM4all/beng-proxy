@@ -24,6 +24,7 @@
 #include "ssl_init.h"
 #include "child.h"
 
+#include <daemon/log.h>
 #include <daemon/daemonize.h>
 
 #include <assert.h>
@@ -116,12 +117,15 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 }
 
 static void
-exit_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
+exit_event_callback(int fd, short event gcc_unused, void *ctx)
 {
     struct lb_instance *instance = ctx;
 
     if (instance->should_exit)
         return;
+
+    daemon_log(2, "caught signal %d, shutting down (pid=%d)\n",
+               fd, (int)getpid());
 
     instance->should_exit = true;
     deinit_signals(instance);
