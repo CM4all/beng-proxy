@@ -4,7 +4,7 @@ cm4all-beng-proxy (2.0.48) unstable; urgency=low
   * child: verbose logging of child process events
   * log shutdown signal
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 24 Sep 2012 15:36:03 -0000
 
 cm4all-beng-proxy (2.0.47) unstable; urgency=low
 
