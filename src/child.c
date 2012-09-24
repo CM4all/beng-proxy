@@ -22,6 +22,8 @@ struct child {
 
     pid_t pid;
 
+    const char *name;
+
     child_callback_t callback;
     void *callback_ctx;
 };
@@ -63,6 +65,7 @@ find_child_by_pid(pid_t pid)
 static void
 child_free(struct child *child)
 {
+    p_free(pool, child->name);
     p_free(pool, child);
 }
 
@@ -165,7 +168,8 @@ children_event_del(void)
 }
 
 void
-child_register(pid_t pid, child_callback_t callback, void *ctx)
+child_register(pid_t pid, const char *name,
+               child_callback_t callback, void *ctx)
 {
     assert(!shutdown_flag);
     assert(list_empty(&children) == (num_children == 0));
@@ -173,6 +177,7 @@ child_register(pid_t pid, child_callback_t callback, void *ctx)
     struct child *child = p_malloc(pool, sizeof(*child));
 
     child->pid = pid;
+    child->name = p_strdup(pool, name);
     child->callback = callback;
     child->callback_ctx = ctx;
     list_add(&child->siblings, &children);
@@ -190,8 +195,8 @@ child_kill(pid_t pid)
     child->callback = NULL;
 
     if (kill(pid, SIGTERM) < 0) {
-        daemon_log(1, "failed to kill child process %d: %s\n",
-                   (int)pid, strerror(errno));
+        daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",
+                   child->name, (int)pid, strerror(errno));
 
         /* if we can't kill the process, we can't do much, so let's
            just ignore the process from now on and don't let it delay

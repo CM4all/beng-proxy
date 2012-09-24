@@ -26,12 +26,15 @@ fork_quark(void)
  * contents of another istream to the child's standard input.
  * Registers the child process and invokes a callback when it exits.
  *
+ * @param name a symbolic name for the process to be used in log
+ * messages
  * @return 0 in the child process, the child pid in the parent
  * process, or -1 on failure (in this case, #input has not been
  * consumed/closed)
  */
 pid_t
-beng_fork(struct pool *pool, struct istream *input, struct istream **output_r,
+beng_fork(struct pool *pool, const char *name,
+          struct istream *input, struct istream **output_r,
           child_callback_t callback, void *ctx,
           GError **error_r);
 

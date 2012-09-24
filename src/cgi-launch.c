@@ -158,6 +158,21 @@ cgi_child_callback(int status, void *ctx gcc_unused)
                    exit_status);
 }
 
+static const char *
+cgi_address_name(const struct cgi_address *address)
+{
+    if (address->interpreter != NULL)
+        return address->interpreter;
+
+    if (address->action != NULL)
+        return address->action;
+
+    if (address->path != NULL)
+        return address->path;
+
+    return "CGI";
+}
+
 struct istream *
 cgi_launch(struct pool *pool, http_method_t method,
            const struct cgi_address *address,
@@ -172,7 +187,7 @@ cgi_launch(struct pool *pool, http_method_t method,
         : -1;
 
     struct istream *input;
-    pid_t pid = beng_fork(pool, body, &input,
+    pid_t pid = beng_fork(pool, cgi_address_name(address), body, &input,
                           cgi_child_callback, NULL, error_r);
     if (pid < 0) {
         if (body != NULL)

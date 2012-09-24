@@ -31,8 +31,13 @@ children_event_add(void);
 void
 children_event_del(void);
 
+/**
+ * @param name a symbolic name for the process to be used in log
+ * messages
+ */
 void
-child_register(pid_t pid, child_callback_t callback, void *ctx);
+child_register(pid_t pid, const char *name,
+               child_callback_t callback, void *ctx);
 
 /**
  * Send a SIGTERM to a child process and unregister it.

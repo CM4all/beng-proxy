@@ -299,7 +299,7 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
         return;
     }
 
-    child_register(child->pid, fcgi_child_callback, child);
+    child_register(child->pid, key, fcgi_child_callback, child);
 
     child->fd = -1;
 

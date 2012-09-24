@@ -210,7 +210,7 @@ worker_new(struct instance *instance)
         init_signals(instance);
         children_event_add();
 
-        child_register(pid, worker_child_callback, worker);
+        child_register(pid, "worker", worker_child_callback, worker);
     }
 
     return pid;

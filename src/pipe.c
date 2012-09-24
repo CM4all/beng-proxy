@@ -110,7 +110,7 @@ pipe_filter(struct pool *pool, const char *path,
     stopwatch = stopwatch_new(pool, path);
 
     GError *error = NULL;
-    pid = beng_fork(pool, body, &response,
+    pid = beng_fork(pool, path, body, &response,
                     pipe_child_callback, NULL, &error);
     if (pid < 0) {
         istream_close_unused(body);

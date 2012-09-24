@@ -112,7 +112,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
     init_signals(instance);
     children_event_add();
 
-    child_register(worker_pid, worker_callback, instance);
+    child_register(worker_pid, "worker", worker_callback, instance);
 }
 
 static void

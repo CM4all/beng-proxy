@@ -375,7 +375,8 @@ fork_child_callback(int status, void *ctx)
  */
 
 pid_t
-beng_fork(struct pool *pool, istream_t input, istream_t *output_r,
+beng_fork(struct pool *pool, const char *name,
+          istream_t input, istream_t *output_r,
           child_callback_t callback, void *ctx,
           GError **error_r)
 {
@@ -493,7 +494,7 @@ beng_fork(struct pool *pool, istream_t input, istream_t *output_r,
         f->callback = callback;
         f->callback_ctx = ctx;
 
-        child_register(f->pid, fork_child_callback, f);
+        child_register(f->pid, name, fork_child_callback, f);
 
         /* XXX CLOEXEC */
 
