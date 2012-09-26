@@ -228,10 +228,12 @@ cache_get_match(struct cache *cache, const char *key,
                 bool (*match)(const struct cache_item *, void *),
                 void *ctx)
 {
-    struct cache_item *item = NULL;
+    const struct hashmap_pair *pair = NULL;
 
     while (true) {
-        if (item != NULL) {
+        if (pair != NULL) {
+            struct cache_item *item = pair->value;
+
             if (!cache_item_validate(cache, item)) {
                 /* expired cache item: delete it, and re-start the
                    search */
@@ -244,7 +246,7 @@ cache_get_match(struct cache *cache, const char *key,
                 cache_item_removed(cache, item);
                 cache_check(cache);
 
-                item = NULL;
+                pair = NULL;
                 continue;
             }
 
@@ -255,13 +257,13 @@ cache_get_match(struct cache *cache, const char *key,
             }
 
             /* find the next cache_item for this key */
-            item = hashmap_get_next(cache->items, key, item);
+            pair = hashmap_lookup_next(pair);
         } else {
             /* find the first cache_item for this key */
-            item = hashmap_get(cache->items, key);
+            pair = hashmap_lookup_first(cache->items, key);
         }
 
-        if (item == NULL)
+        if (pair == NULL)
             /* no match */
             return NULL;
     };
