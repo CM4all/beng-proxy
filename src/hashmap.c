@@ -47,14 +47,32 @@ hashmap_new(struct pool *pool, unsigned capacity)
     return map;
 }
 
+gcc_pure
+static struct slot *
+hashmap_get_slot(struct hashmap *map, const char *key)
+{
+    assert(map != NULL);
+    assert(key != NULL);
+
+    return &map->slots[calc_hash(key) % map->capacity];
+}
+
+gcc_pure
+static const struct slot *
+hashmap_get_slot_c(const struct hashmap *map, const char *key)
+{
+    assert(map != NULL);
+    assert(key != NULL);
+
+    return &map->slots[calc_hash(key) % map->capacity];
+}
+
 void
 hashmap_add(struct hashmap *map, const char *key, void *value)
 {
-    unsigned hash = calc_hash(key);
-
     assert(value != NULL);
 
-    struct slot *slot = &map->slots[hash % map->capacity];
+    struct slot *slot = hashmap_get_slot(map, key);
     if (slot->pair.key != NULL) {
         struct slot *prev = slot;
         slot = p_malloc(map->pool, sizeof(*slot));
@@ -81,12 +99,10 @@ hashmap_overwrite(struct slot *slot, const char *key, void *value)
 void *
 hashmap_set(struct hashmap *map, const char *key, void *value)
 {
-    unsigned hash = calc_hash(key);
-
     assert(key != NULL);
     assert(value != NULL);
 
-    struct slot *prev = &map->slots[hash % map->capacity];
+    struct slot *prev = hashmap_get_slot(map, key);
     if (prev->pair.key == NULL) {
         prev->pair.key = key;
         prev->pair.value = value;
@@ -113,11 +129,7 @@ hashmap_set(struct hashmap *map, const char *key, void *value)
 void *
 hashmap_remove(struct hashmap *map, const char *key)
 {
-    unsigned hash = calc_hash(key);
-
-    assert(key != NULL);
-
-    struct slot *prev = &map->slots[hash % map->capacity];
+    struct slot *prev = hashmap_get_slot(map, key);
     if (prev->pair.key == NULL)
         return NULL;
 
@@ -153,11 +165,7 @@ hashmap_remove(struct hashmap *map, const char *key)
 bool
 hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
 {
-    unsigned hash = calc_hash(key);
-
-    assert(key != NULL);
-
-    struct slot *prev = &map->slots[hash % map->capacity];
+    struct slot *prev = hashmap_get_slot(map, key);
     if (prev->pair.key == NULL)
         return false;
 
@@ -193,8 +201,7 @@ void
 hashmap_remove_match(struct hashmap *map, const char *key,
                      bool (*match)(void *value, void *ctx), void *ctx)
 {
-    unsigned hash = calc_hash(key);
-    struct slot *const base_slot = &map->slots[hash % map->capacity];
+    struct slot *const base_slot = hashmap_get_slot(map, key);
 
     struct slot *prev = base_slot;
     if (prev->pair.key == NULL)
@@ -276,9 +283,7 @@ hashmap_remove_all_match(struct hashmap *map,
 void *
 hashmap_get(const struct hashmap *map, const char *key)
 {
-    unsigned hash = calc_hash(key);
-
-    const struct slot *slot = &map->slots[hash % map->capacity];
+    const struct slot *slot = hashmap_get_slot_c(map, key);
     if (slot->pair.key != NULL && strcmp(slot->pair.key, key) == 0) {
         assert(slot->pair.value != NULL);
         return slot->pair.value;
