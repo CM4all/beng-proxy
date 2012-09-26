@@ -74,6 +74,8 @@ widget_determine_address(const struct widget *widget, bool stateful)
     const struct resource_address *original_address =
         widget_get_original_address(widget);
     switch (original_address->type) {
+        struct cgi_address *cgi;
+
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
     case RESOURCE_ADDRESS_PIPE:
@@ -115,22 +117,23 @@ widget_determine_address(const struct widget *widget, bool stateful)
             break;
 
         address = resource_address_dup(pool, original_address);
+        cgi = &address->u.cgi;
 
         if (*path_info != 0)
-            address->u.cgi.path_info = address->u.cgi.path_info != NULL
-                ? uri_absolute(pool, address->u.cgi.path_info,
+            cgi->path_info = cgi->path_info != NULL
+                ? uri_absolute(pool, cgi->path_info,
                                path_info, strlen(path_info))
                 : path_info;
 
         if (!stateful)
-            address->u.cgi.query_string = widget->query_string;
+            cgi->query_string = widget->query_string;
         else if (strref_is_empty(&widget->from_request.query_string))
-            address->u.cgi.query_string = widget->query_string;
+            cgi->query_string = widget->query_string;
         else if (widget->query_string == NULL)
-            address->u.cgi.query_string =
+            cgi->query_string =
                 strref_dup(pool, &widget->from_request.query_string);
         else
-            address->u.cgi.query_string =
+            cgi->query_string =
                 p_strncat(pool,
                           widget->from_request.query_string.data,
                           widget->from_request.query_string.length,

@@ -134,22 +134,23 @@ proxy_handler(struct request *request2)
         address->u.cgi.uri == NULL) {
         struct resource_address *copy = resource_address_dup(request->pool,
                                                              address);
+        struct cgi_address *cgi = &copy->u.cgi;
 
         /* pass the "real" request URI to the CGI (but without the
            "args", unless the request is "transparent") */
         if (request2->translate.response->transparent ||
             strref_is_empty(&request2->uri.args))
-            copy->u.cgi.uri = request->uri;
+            cgi->uri = request->uri;
         else if (strref_is_empty(&request2->uri.query))
-            copy->u.cgi.uri = strref_dup(request->pool, &request2->uri.base);
+            cgi->uri = strref_dup(request->pool, &request2->uri.base);
         else
-            copy->u.cgi.uri = p_strncat(request->pool,
-                                        request2->uri.base.data,
-                                        request2->uri.base.length,
-                                        "?", (size_t)1,
-                                        request2->uri.query.data,
-                                        request2->uri.query.length,
-                                        NULL);
+            cgi->uri = p_strncat(request->pool,
+                                 request2->uri.base.data,
+                                 request2->uri.base.length,
+                                 "?", (size_t)1,
+                                 request2->uri.query.data,
+                                 request2->uri.query.length,
+                                 NULL);
 
         address = copy;
     }

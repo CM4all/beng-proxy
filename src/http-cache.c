@@ -123,57 +123,56 @@ struct http_cache_request {
 };
 
 static const char *
-http_cache_cgi_key(struct pool *pool, const struct resource_address *address)
+http_cache_cgi_key(struct pool *pool, const struct cgi_address *cgi)
 {
-    assert(address != NULL);
-    assert(resource_address_is_cgi_alike(address));
+    assert(cgi != NULL);
 
     GString *buffer = g_string_sized_new(2048);
-    if (address->u.cgi.jail.enabled)
+    if (cgi->jail.enabled)
         g_string_append(buffer, "jail:");
 
-    if (address->u.cgi.document_root != NULL) {
+    if (cgi->document_root != NULL) {
         g_string_append_c(buffer, '[');
-        g_string_append(buffer, address->u.cgi.document_root);
+        g_string_append(buffer, cgi->document_root);
         g_string_append_c(buffer, ']');
     }
 
-    if (address->u.cgi.interpreter != NULL) {
+    if (cgi->interpreter != NULL) {
         g_string_append_c(buffer, '#');
-        g_string_append(buffer, address->u.cgi.interpreter);
+        g_string_append(buffer, cgi->interpreter);
         g_string_append_c(buffer, ' ');
     }
 
-    if (address->u.cgi.action != NULL) {
+    if (cgi->action != NULL) {
         g_string_append_c(buffer, '!');
-        g_string_append(buffer, address->u.cgi.action);
+        g_string_append(buffer, cgi->action);
         g_string_append_c(buffer, ' ');
     }
 
-    g_string_append(buffer, address->u.cgi.path);
+    g_string_append(buffer, cgi->path);
     g_string_append_c(buffer, ' ');
 
-    if (address->u.cgi.uri != NULL) {
+    if (cgi->uri != NULL) {
         g_string_append(buffer, "uri=");
-        g_string_append(buffer, address->u.cgi.uri);
-    } else if (address->u.cgi.script_name != NULL) {
+        g_string_append(buffer, cgi->uri);
+    } else if (cgi->script_name != NULL) {
         g_string_append(buffer, "script_name=");
-        g_string_append(buffer, address->u.cgi.script_name);
+        g_string_append(buffer, cgi->script_name);
     }
 
-    for (unsigned i = 0; i < address->u.cgi.num_args; ++i) {
-        g_string_append(buffer, address->u.cgi.args[i]);
+    for (unsigned i = 0; i < cgi->num_args; ++i) {
+        g_string_append(buffer, cgi->args[i]);
         g_string_append_c(buffer, ' ');
     }
 
-    if (address->u.cgi.uri == NULL && address->u.cgi.path_info != NULL) {
+    if (cgi->uri == NULL && cgi->path_info != NULL) {
         g_string_append(buffer, "path_info=");
-        g_string_append(buffer, address->u.cgi.path_info);
+        g_string_append(buffer, cgi->path_info);
     }
 
-    if (address->u.cgi.query_string != NULL) {
+    if (cgi->query_string != NULL) {
         g_string_append(buffer, "query_string=");
-        g_string_append(buffer, address->u.cgi.query_string);
+        g_string_append(buffer, cgi->query_string);
     }
 
     const char *key = p_strndup(pool, buffer->str, buffer->len);
@@ -198,7 +197,7 @@ http_cache_key(struct pool *pool, const struct resource_address *address)
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return http_cache_cgi_key(pool, address);
+        return http_cache_cgi_key(pool, &address->u.cgi);
 
     case RESOURCE_ADDRESS_AJP:
         return NULL;
