@@ -36,10 +36,6 @@ gcc_pure
 const char *
 strmap_get(const struct strmap *map, const char *key);
 
-gcc_pure
-const char *
-strmap_get_next(const struct strmap *map, const char *key, const char *prev);
-
 /**
  * @see hashmap_lookup_first()
  */

@@ -301,40 +301,6 @@ hashmap_get(const struct hashmap *map, const char *key)
     return NULL;
 }
 
-static const struct slot *
-hashmap_find_value(const struct slot *slot, const void *value)
-{
-    assert(slot != NULL);
-
-    while (slot->pair.value != value) {
-        slot = slot->next;
-
-        assert(slot != NULL);
-    }
-
-    return slot;
-}
-
-void *
-hashmap_get_next(const struct hashmap *map, const char *key, const void *prev)
-{
-    unsigned hash = calc_hash(key);
-    const struct slot *slot;
-
-    slot = hashmap_find_value(&map->slots[hash % map->capacity], prev);
-
-    while (slot->next != NULL) {
-        slot = slot->next;
-        assert(slot->pair.key != NULL);
-        assert(slot->pair.value != NULL);
-
-        if (strcmp(slot->pair.key, key) == 0)
-            return slot->pair.value;
-    }
-
-    return NULL;
-}
-
 const struct hashmap_pair *
 hashmap_lookup_first(const struct hashmap *map, const char *key)
 {

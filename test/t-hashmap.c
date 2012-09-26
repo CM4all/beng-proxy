@@ -21,10 +21,6 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     p = hashmap_get(map, key);
     assert(p == &a);
-    p = hashmap_get_next(map, key, p);
-    assert(p == &c);
-    p = hashmap_get_next(map, key, p);
-    assert(p == &b);
 
     pair = hashmap_lookup_first(map, key);
     assert(pair->value == &a);
@@ -38,8 +34,6 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     hashmap_remove_value(map, key, &a);
     p = hashmap_get(map, key);
     assert(p == &c);
-    p = hashmap_get_next(map, key, p);
-    assert(p == &b);
 
     pair = hashmap_lookup_first(map, key);
     assert(pair->value == &c);
@@ -56,8 +50,6 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     hashmap_remove_value(map, key, &b);
     p = hashmap_get(map, key);
     assert(p == &a);
-    p = hashmap_get_next(map, key, p);
-    assert(p == &c);
 
     pair = hashmap_lookup_first(map, key);
     assert(pair->value == &a);
@@ -74,8 +66,6 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     hashmap_remove_value(map, key, &c);
     p = hashmap_get(map, key);
     assert(p == &a);
-    p = hashmap_get_next(map, key, p);
-    assert(p == &b);
 
     pair = hashmap_lookup_first(map, key);
     assert(pair->value == &a);

@@ -81,12 +81,6 @@ strmap_get(const struct strmap *map, const char *key)
     return (const char*)hashmap_get(map->hashmap, key);
 }
 
-const char *
-strmap_get_next(const struct strmap *map, const char *key, const char *prev)
-{
-    return (const char*)hashmap_get_next(map->hashmap, key, prev);
-}
-
 const struct strmap_pair *
 strmap_lookup_first(const struct strmap *map, const char *key)
 {
