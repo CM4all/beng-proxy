@@ -58,6 +58,10 @@ void
 cgi_address_init(struct cgi_address *cgi, const char *path,
                  bool have_address_list);
 
+struct cgi_address *
+cgi_address_new(struct pool *pool, const char *path,
+                bool have_address_list);
+
 gcc_pure
 const char *
 cgi_address_uri(struct pool *pool, const struct cgi_address *cgi);
@@ -75,26 +79,28 @@ void
 cgi_address_copy(struct pool *pool, struct cgi_address *dest,
                  const struct cgi_address *src, bool have_address_list);
 
+struct cgi_address *
+cgi_address_dup(struct pool *pool, const struct cgi_address *old,
+                bool have_address_list);
+
 char *
 cgi_address_auto_base(struct pool *pool, const struct cgi_address *address,
                       const char *uri);
 
-bool
-cgi_address_save_base(struct pool *pool, struct cgi_address *dest,
-                      const struct cgi_address *src, const char *suffix,
-                      bool have_address_list);
+struct cgi_address *
+cgi_address_save_base(struct pool *pool, const struct cgi_address *src,
+                      const char *suffix, bool have_address_list);
 
-void
-cgi_address_load_base(struct pool *pool, struct cgi_address *dest,
-                      const struct cgi_address *src, const char *suffix,
-                      bool have_address_list);
+struct cgi_address *
+cgi_address_load_base(struct pool *pool, const struct cgi_address *src,
+                      const char *suffix, bool have_address_list);
 
 /**
- * @return dest on success, src if no change is needed, NULL on error
+ * @return a new object on success, src if no change is needed, NULL
+ * on error
  */
 const struct cgi_address *
-cgi_address_apply(struct pool *pool, struct cgi_address *dest,
-                  const struct cgi_address *src,
+cgi_address_apply(struct pool *pool, const struct cgi_address *src,
                   const char *relative, size_t relative_length,
                   bool have_address_list);
 

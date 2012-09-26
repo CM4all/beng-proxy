@@ -25,6 +25,14 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
         address_list_init(&cgi->address_list);
 }
 
+struct cgi_address *
+cgi_address_new(struct pool *pool, const char *path, bool have_address_list)
+{
+    struct cgi_address *cgi = p_malloc(pool, sizeof(*cgi));
+    cgi_address_init(cgi, path, have_address_list);
+    return cgi;
+}
+
 const char *
 cgi_address_uri(struct pool *pool, const struct cgi_address *cgi)
 {
@@ -107,6 +115,15 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
         address_list_copy(pool, &dest->address_list, &src->address_list);
 }
 
+struct cgi_address *
+cgi_address_dup(struct pool *pool, const struct cgi_address *old,
+                bool have_address_list)
+{
+    struct cgi_address *n = p_malloc(pool, sizeof(*n));
+    cgi_address_copy(pool, n, old, have_address_list);
+    return n;
+}
+
 char *
 cgi_address_auto_base(struct pool *pool, const struct cgi_address *address,
                       const char *uri)
@@ -128,43 +145,39 @@ cgi_address_auto_base(struct pool *pool, const struct cgi_address *address,
     return p_strndup(pool, uri, length);
 }
 
-bool
-cgi_address_save_base(struct pool *pool, struct cgi_address *dest,
-                      const struct cgi_address *src, const char *suffix,
-                      bool have_address_list)
+struct cgi_address *
+cgi_address_save_base(struct pool *pool, const struct cgi_address *src,
+                      const char *suffix, bool have_address_list)
 {
     assert(pool != NULL);
-    assert(dest != NULL);
     assert(src != NULL);
     assert(suffix != NULL);
 
     if (src->path_info == NULL)
-        return false;
+        return NULL;
 
     size_t uri_length = src->uri != NULL
         ? base_string_unescape(pool, src->uri, suffix)
         : 0;
     if (uri_length == (size_t)-1)
-        return false;
+        return NULL;
 
     size_t length = base_string_unescape(pool, src->path_info, suffix);
     if (length == (size_t)-1)
-        return false;
+        return NULL;
 
-    cgi_address_copy(pool, dest, src, have_address_list);
+    struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
     if (dest->uri != NULL)
         dest->uri = p_strndup(pool, dest->uri, uri_length);
     dest->path_info = p_strndup(pool, dest->path_info, length);
-    return true;
+    return dest;
 }
 
-void
-cgi_address_load_base(struct pool *pool, struct cgi_address *dest,
-                      const struct cgi_address *src, const char *suffix,
-                      bool have_address_list)
+struct cgi_address *
+cgi_address_load_base(struct pool *pool, const struct cgi_address *src,
+                      const char *suffix, bool have_address_list)
 {
     assert(pool != NULL);
-    assert(dest != NULL);
     assert(src != NULL);
     assert(src->path_info != NULL);
     assert(suffix != NULL);
@@ -172,16 +185,15 @@ cgi_address_load_base(struct pool *pool, struct cgi_address *dest,
     char *unescaped = p_strdup(pool, suffix);
     unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
-    cgi_address_copy(pool, dest, src, have_address_list);
+    struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
     if (dest->uri != NULL)
         dest->uri = p_strcat(pool, dest->uri, unescaped, NULL);
     dest->path_info = p_strcat(pool, dest->path_info, unescaped, NULL);
-
+    return dest;
 }
 
 const struct cgi_address *
-cgi_address_apply(struct pool *pool, struct cgi_address *dest,
-                  const struct cgi_address *src,
+cgi_address_apply(struct pool *pool, const struct cgi_address *src,
                   const char *relative, size_t relative_length,
                   bool have_address_list)
 {
@@ -193,7 +205,7 @@ cgi_address_apply(struct pool *pool, struct cgi_address *dest,
 
     const char *path_info = src->path_info != NULL ? src->path_info : "";
 
-    cgi_address_copy(pool, dest, src, have_address_list);
+    struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
     dest->path_info = uri_absolute(pool, path_info,
                                    relative, relative_length);
     assert(dest->path_info != NULL);

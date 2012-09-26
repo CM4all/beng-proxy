@@ -70,17 +70,17 @@ resource_address_equals(const struct resource_address *a,
             string_equals(a->u.local.document_root, b->u.local.document_root);
 
     case RESOURCE_ADDRESS_CGI:
-        assert(a->u.cgi.path != NULL);
-        assert(b->u.cgi.path != NULL);
+        assert(a->u.cgi->path != NULL);
+        assert(b->u.cgi->path != NULL);
 
-        return string_equals(a->u.cgi.path, b->u.cgi.path) &&
-            string_equals(a->u.cgi.interpreter, b->u.cgi.interpreter) &&
-            string_equals(a->u.cgi.action, b->u.cgi.action) &&
-            string_equals(a->u.cgi.uri, b->u.cgi.uri) &&
-            string_equals(a->u.cgi.script_name, b->u.cgi.script_name) &&
-            string_equals(a->u.cgi.path_info, b->u.cgi.path_info) &&
-            string_equals(a->u.cgi.query_string, b->u.cgi.query_string) &&
-            string_equals(a->u.cgi.document_root, b->u.cgi.document_root);
+        return string_equals(a->u.cgi->path, b->u.cgi->path) &&
+            string_equals(a->u.cgi->interpreter, b->u.cgi->interpreter) &&
+            string_equals(a->u.cgi->action, b->u.cgi->action) &&
+            string_equals(a->u.cgi->uri, b->u.cgi->uri) &&
+            string_equals(a->u.cgi->script_name, b->u.cgi->script_name) &&
+            string_equals(a->u.cgi->path_info, b->u.cgi->path_info) &&
+            string_equals(a->u.cgi->query_string, b->u.cgi->query_string) &&
+            string_equals(a->u.cgi->document_root, b->u.cgi->document_root);
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
@@ -309,15 +309,16 @@ test_basic(struct pool *pool, struct tcache *cache)
     static const struct translate_request request6 = {
         .uri = "/cgi1/foo",
     };
+    static const struct cgi_address cgi6 = {
+        .path = "/usr/lib/cgi-bin/cgi.pl",
+        .uri = "/cgi1/foo",
+        .path_info = "x/foo",
+    };
     static const struct translate_response response6 = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/cgi.pl",
-                    .uri = "/cgi1/foo",
-                    .path_info = "x/foo",
-                },
+                .cgi = &cgi6,
             },
         },
         .base = "/cgi1/",
@@ -332,15 +333,16 @@ test_basic(struct pool *pool, struct tcache *cache)
     static const struct translate_request request7 = {
         .uri = "/cgi1/a/b/c",
     };
+    static const struct cgi_address cgi7 = {
+        .path = "/usr/lib/cgi-bin/cgi.pl",
+        .uri = "/cgi1/a/b/c",
+        .path_info = "x/a/b/c",
+    };
     static const struct translate_response response7 = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/cgi.pl",
-                    .uri = "/cgi1/a/b/c",
-                    .path_info = "x/a/b/c",
-                },
+                .cgi = &cgi7,
             },
         },
         .base = "/cgi1/",
@@ -356,15 +358,16 @@ test_basic(struct pool *pool, struct tcache *cache)
     static const struct translate_request request8 = {
         .uri = "/cgi2/foo",
     };
+    static const struct cgi_address cgi8 = {
+        .path = "/usr/lib/cgi-bin/cgi.pl",
+        .uri = "/cgi2/foo",
+        .path_info = "foo",
+    };
     static const struct translate_response response8 = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/cgi.pl",
-                    .uri = "/cgi2/foo",
-                    .path_info = "foo",
-                },
+                .cgi = &cgi8,
             },
         },
         .base = "/cgi2/",
@@ -379,15 +382,16 @@ test_basic(struct pool *pool, struct tcache *cache)
     static const struct translate_request request9 = {
         .uri = "/cgi2/a/b/c",
     };
+    static const struct cgi_address cgi9 = {
+        .path = "/usr/lib/cgi-bin/cgi.pl",
+        .uri = "/cgi2/a/b/c",
+        .path_info = "a/b/c",
+    };
     static const struct translate_response response9 = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/cgi.pl",
-                    .uri = "/cgi2/a/b/c",
-                    .path_info = "a/b/c",
-                },
+                .cgi = &cgi9,
             },
         },
         .base = "/cgi2/",
@@ -670,14 +674,15 @@ test_expand(struct pool *pool, struct tcache *cache)
     static const struct translate_request request1 = {
         .uri = "/regex-expand/b=c",
     };
+    static const struct cgi_address cgi1 = {
+        .path = "/usr/lib/cgi-bin/foo.cgi",
+        .expand_path_info = "/a/\\1",
+    };
     static const struct translate_response response1n = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/foo.cgi",
-                    .expand_path_info = "/a/\\1",
-                },
+                .cgi = &cgi1,
             },
         },
         .base = "/regex-expand/",
@@ -685,15 +690,16 @@ test_expand(struct pool *pool, struct tcache *cache)
         .max_age = -1,
         .user_max_age = -1,
     };
+    static const struct cgi_address cgi1e = {
+        .path = "/usr/lib/cgi-bin/foo.cgi",
+        .path_info = "/a/b=c",
+        .expand_path_info = "/a/\\1",
+    };
     static const struct translate_response response1e = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/foo.cgi",
-                    .path_info = "/a/b=c",
-                    .expand_path_info = "/a/\\1",
-                },
+                .cgi = &cgi1e,
             },
         },
         .base = "/regex-expand/",
@@ -712,14 +718,15 @@ test_expand(struct pool *pool, struct tcache *cache)
     static const struct translate_request request2 = {
         .uri = "/regex-expand/d=e",
     };
+    static const struct cgi_address cgi2 = {
+        .path = "/usr/lib/cgi-bin/foo.cgi",
+        .path_info = "/a/d=e",
+    };
     static const struct translate_response response2 = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/foo.cgi",
-                    .path_info = "/a/d=e",
-                },
+                .cgi = &cgi2,
             },
         },
         .base = "/regex-expand/",
@@ -814,15 +821,16 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     static const struct translate_request request1 = {
         .uri = "/regex-expand3/foo/bar.jpg/b=c",
     };
+    static const struct cgi_address cgi1n = {
+        .path = "/usr/lib/cgi-bin/image-processor.cgi",
+        .expand_path_info = "/\\2",
+    };
     static struct transformation transformation1n = {
         .type = TRANSFORMATION_FILTER,
         .u.filter = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/image-processor.cgi",
-                    .expand_path_info = "/\\2",
-                },
+                .cgi = &cgi1n,
             },
         },
     };
@@ -846,16 +854,17 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         .views = &view1n,
     };
 
+    static const struct cgi_address cgi1e = {
+        .path = "/usr/lib/cgi-bin/image-processor.cgi",
+        .path_info = "/b=c",
+        .expand_path_info = "/\\2",
+    };
     static struct transformation transformation1e = {
         .type = TRANSFORMATION_FILTER,
         .u.filter = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/image-processor.cgi",
-                    .path_info = "/b=c",
-                    .expand_path_info = "/\\2",
-                },
+                .cgi = &cgi1e,
             },
         },
     };
@@ -889,16 +898,17 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     static const struct translate_request request2 = {
         .uri = "/regex-expand3/x/y/z.jpg/d=e",
     };
+    static const struct cgi_address cgi2 = {
+        .path = "/usr/lib/cgi-bin/image-processor.cgi",
+        .path_info = "/d=e",
+        .expand_path_info = "/\\2",
+    };
     static struct transformation transformation2 = {
         .type = TRANSFORMATION_FILTER,
         .u.filter = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/image-processor.cgi",
-                    .path_info = "/d=e",
-                    .expand_path_info = "/\\2",
-                },
+                .cgi = &cgi2,
             },
         },
     };
@@ -1015,15 +1025,16 @@ test_auto_base(struct pool *pool, struct tcache *cache)
     static const struct translate_request request1 = {
         .uri = "/auto-base/foo.cgi/bar",
     };
+    static const struct cgi_address cgi1n = {
+        .path = "/usr/lib/cgi-bin/foo.cgi",
+        .uri = "/auto-base/foo.cgi/bar",
+        .path_info = "/bar",
+    };
     static const struct translate_response response1n = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/foo.cgi",
-                    .uri = "/auto-base/foo.cgi/bar",
-                    .path_info = "/bar",
-                },
+                .cgi = &cgi1n,
             },
         },
         .auto_base = true,
@@ -1034,11 +1045,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/foo.cgi",
-                    .uri = "/auto-base/foo.cgi/bar",
-                    .path_info = "/bar",
-                },
+                .cgi = &cgi1n,
             },
         },
         .auto_base = true,
@@ -1056,15 +1063,16 @@ test_auto_base(struct pool *pool, struct tcache *cache)
     static const struct translate_request request2 = {
         .uri = "/auto-base/foo.cgi/check",
     };
+    static const struct cgi_address cgi2 = {
+        .path = "/usr/lib/cgi-bin/foo.cgi",
+        .uri = "/auto-base/foo.cgi/check",
+        .path_info = "/check",
+    };
     static const struct translate_response response2 = {
         .address = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
-                .cgi = {
-                    .path = "/usr/lib/cgi-bin/foo.cgi",
-                    .uri = "/auto-base/foo.cgi/check",
-                    .path_info = "/check",
-                },
+                .cgi = &cgi2,
             },
         },
         .base = "/auto-base/foo.cgi/",

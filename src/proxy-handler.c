@@ -131,10 +131,10 @@ proxy_handler(struct request *request2)
                                                             request->uri);
 
     if (resource_address_is_cgi_alike(address) &&
-        address->u.cgi.uri == NULL) {
+        address->u.cgi->uri == NULL) {
         struct resource_address *copy = resource_address_dup(request->pool,
                                                              address);
-        struct cgi_address *cgi = &copy->u.cgi;
+        struct cgi_address *cgi = resource_address_get_cgi(copy);
 
         /* pass the "real" request URI to the CGI (but without the
            "args", unless the request is "transparent") */

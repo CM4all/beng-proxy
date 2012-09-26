@@ -31,19 +31,19 @@ print_resource_address(const struct resource_address *address)
         break;
 
     case RESOURCE_ADDRESS_PIPE:
-        printf("pipe=%s\n", address->u.cgi.path);
+        printf("pipe=%s\n", address->u.cgi->path);
         break;
 
     case RESOURCE_ADDRESS_CGI:
-        printf("cgi=%s\n", address->u.cgi.path);
+        printf("cgi=%s\n", address->u.cgi->path);
         break;
 
     case RESOURCE_ADDRESS_FASTCGI:
-        printf("fastcgi=%s\n", address->u.cgi.path);
+        printf("fastcgi=%s\n", address->u.cgi->path);
         break;
 
     case RESOURCE_ADDRESS_WAS:
-        printf("was=%s\n", address->u.cgi.path);
+        printf("was=%s\n", address->u.cgi->path);
         break;
 
     case RESOURCE_ADDRESS_AJP:

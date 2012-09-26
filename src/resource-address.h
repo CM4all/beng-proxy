@@ -38,7 +38,7 @@ struct resource_address {
 
         const struct uri_with_address *http;
 
-        struct cgi_address cgi;
+        const struct cgi_address *cgi;
     } u;
 };
 
@@ -51,6 +51,19 @@ resource_address_is_cgi_alike(const struct resource_address *address)
     return address->type == RESOURCE_ADDRESS_CGI ||
         address->type == RESOURCE_ADDRESS_FASTCGI ||
         address->type == RESOURCE_ADDRESS_WAS;
+}
+
+gcc_const
+static inline struct cgi_address *
+resource_address_get_cgi(struct resource_address *address)
+{
+    assert(resource_address_is_cgi_alike(address));
+
+    union {
+        const struct cgi_address *in;
+        struct cgi_address *out;
+    } u = { .in = address->u.cgi };
+    return u.out;
 }
 
 void

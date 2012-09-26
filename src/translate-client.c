@@ -607,14 +607,15 @@ translate_response_finish(struct translate_response *response,
                           GError **error_r)
 {
     if (resource_address_is_cgi_alike(&response->address)) {
-        if (response->address.u.cgi.uri == NULL)
-            response->address.u.cgi.uri = response->uri;
+        struct cgi_address *cgi = resource_address_get_cgi(&response->address);
 
-        if (response->address.u.cgi.document_root == NULL)
-            response->address.u.cgi.document_root = response->document_root;
+        if (cgi->uri == NULL)
+            cgi->uri = response->uri;
 
-        if (!translate_jail_finish(&response->address.u.cgi.jail, response,
-                                   response->address.u.cgi.document_root,
+        if (cgi->document_root == NULL)
+            cgi->document_root = response->document_root;
+
+        if (!translate_jail_finish(&cgi->jail, response, cgi->document_root,
                                    error_r))
             return false;
     } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
@@ -1092,8 +1093,9 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_PIPE;
-        client->cgi_address = &client->resource_address->u.cgi;
-        cgi_address_init(client->cgi_address, payload, false);
+        client->resource_address->u.cgi = client->cgi_address =
+            cgi_address_new(client->pool, payload, false);
+
         client->jail = &client->cgi_address->jail;
         return true;
 
@@ -1110,8 +1112,9 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_CGI;
-        client->cgi_address = &client->resource_address->u.cgi;
-        cgi_address_init(client->cgi_address, payload, false);
+        client->resource_address->u.cgi = client->cgi_address =
+            cgi_address_new(client->pool, payload, false);
+
         client->cgi_address->document_root = client->response.document_root;
         client->jail = &client->cgi_address->jail;
         return true;
@@ -1131,8 +1134,8 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
-        client->cgi_address = &client->resource_address->u.cgi;
-        cgi_address_init(client->cgi_address, payload, true);
+        client->resource_address->u.cgi = client->cgi_address =
+            cgi_address_new(client->pool, payload, true);
 
         client->jail = &client->cgi_address->jail;
         client->address_list = &client->cgi_address->address_list;
@@ -1516,8 +1519,9 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_WAS;
-        client->cgi_address = &client->resource_address->u.cgi;
-        cgi_address_init(client->cgi_address, payload, false);
+        client->resource_address->u.cgi = client->cgi_address =
+            cgi_address_new(client->pool, payload, false);
+
         client->jail = &client->cgi_address->jail;
         return true;
 
@@ -1672,8 +1676,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_AUTO_BASE:
         if (client->resource_address != &client->response.address ||
-            client->cgi_address != &client->response.address.u.cgi ||
-            client->response.address.u.cgi.path_info == NULL ||
+            client->cgi_address != client->response.address.u.cgi ||
+            client->cgi_address->path_info == NULL ||
             client->response.auto_base) {
             translate_client_error(client,
                                    "misplaced TRANSLATE_AUTO_BASE packet");

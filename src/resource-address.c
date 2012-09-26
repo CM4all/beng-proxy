@@ -34,8 +34,8 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        cgi_address_copy(pool, &dest->u.cgi, &src->u.cgi,
-                         src->type == RESOURCE_ADDRESS_FASTCGI);
+        dest->u.cgi = cgi_address_dup(pool, src->u.cgi,
+                                      src->type == RESOURCE_ADDRESS_FASTCGI);
         break;
     }
 }
@@ -60,6 +60,8 @@ resource_address_insert_query_string_from(struct pool *pool,
     struct resource_address *dest;
 
     switch (src->type) {
+        struct cgi_address *cgi;
+
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
     case RESOURCE_ADDRESS_PIPE:
@@ -84,7 +86,7 @@ resource_address_insert_query_string_from(struct pool *pool,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        assert(src->u.cgi.path != NULL);
+        assert(src->u.cgi->path != NULL);
 
         query_string = strchr(uri, '?');
         if (query_string == NULL || *++query_string == 0)
@@ -92,12 +94,13 @@ resource_address_insert_query_string_from(struct pool *pool,
             return src;
 
         dest = resource_address_dup(pool, src);
+        cgi = resource_address_get_cgi(dest);
 
-        if (dest->u.cgi.query_string != NULL)
-            dest->u.cgi.query_string = p_strcat(pool, query_string, "&",
-                                                dest->u.cgi.query_string, NULL);
+        if (cgi->query_string != NULL)
+            cgi->query_string = p_strcat(pool, query_string, "&",
+                                         cgi->query_string, NULL);
         else
-            dest->u.cgi.query_string = p_strdup(pool, query_string);
+            cgi->query_string = p_strdup(pool, query_string);
         return dest;
     }
 
@@ -115,6 +118,8 @@ resource_address_insert_args(struct pool *pool,
     struct resource_address *dest;
 
     switch (src->type) {
+        struct cgi_address *cgi;
+
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
     case RESOURCE_ADDRESS_PIPE:
@@ -135,22 +140,23 @@ resource_address_insert_args(struct pool *pool,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        assert(src->u.cgi.path != NULL);
+        assert(src->u.cgi->path != NULL);
 
-        if (src->u.cgi.uri == NULL && src->u.cgi.path_info == NULL)
+        if (src->u.cgi->uri == NULL && src->u.cgi->path_info == NULL)
             return src;
 
         dest = resource_address_dup(pool, src);
+        cgi = resource_address_get_cgi(dest);
 
-        if (src->u.cgi.uri != NULL)
-            dest->u.cgi.uri = uri_insert_args(pool, src->u.cgi.uri,
-                                              args, args_length,
-                                              path, path_length);
+        if (cgi->uri != NULL)
+            cgi->uri = uri_insert_args(pool, cgi->uri,
+                                       args, args_length,
+                                       path, path_length);
 
-        if (src->u.cgi.path_info != NULL)
-            dest->u.cgi.path_info =
+        if (cgi->path_info != NULL)
+            cgi->path_info =
                 p_strncat(pool,
-                          src->u.cgi.path_info, strlen(src->u.cgi.path_info),
+                          cgi->path_info, strlen(cgi->path_info),
                           ";", (size_t)1, args, args_length, path, path_length,
                           NULL);
 
@@ -182,7 +188,7 @@ resource_address_auto_base(struct pool *pool,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return cgi_address_auto_base(pool, &address->u.cgi, uri);
+        return cgi_address_auto_base(pool, address->u.cgi, uri);
     }
 
     assert(false);
@@ -204,8 +210,10 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        if (!cgi_address_save_base(pool, &dest->u.cgi, &src->u.cgi, suffix,
-                                   src->type == RESOURCE_ADDRESS_FASTCGI))
+        dest->u.cgi =
+            cgi_address_save_base(pool, src->u.cgi, suffix,
+                                  src->type == RESOURCE_ADDRESS_FASTCGI);
+        if (dest->u.cgi == NULL)
             return NULL;
 
         dest->type = src->type;
@@ -249,9 +257,10 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        cgi_address_load_base(pool, &dest->u.cgi, &src->u.cgi, suffix,
-                              src->type == RESOURCE_ADDRESS_FASTCGI);
         dest->type = src->type;
+        dest->u.cgi =
+            cgi_address_load_base(pool, src->u.cgi, suffix,
+                                  src->type == RESOURCE_ADDRESS_FASTCGI);
         return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
@@ -309,17 +318,17 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        cgi = cgi_address_apply(pool, &buffer->u.cgi, &src->u.cgi,
+        cgi = cgi_address_apply(pool, src->u.cgi,
                                 relative, relative_length,
                                 src->type == RESOURCE_ADDRESS_FASTCGI);
         if (cgi == NULL)
             return NULL;
 
-        if (cgi == &src->u.cgi)
+        if (cgi == src->u.cgi)
             return src;
 
-        assert(cgi == &buffer->u.cgi);
         buffer->type = src->type;
+        buffer->u.cgi = cgi;
         return buffer;
     }
 
@@ -352,10 +361,10 @@ resource_address_relative(const struct resource_address *base,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        strref_set_c(&base_uri, base->u.cgi.path_info != NULL
-                     ? base->u.cgi.path_info : "");
-        strref_set_c(buffer, address->u.cgi.path_info != NULL
-                     ? address->u.cgi.path_info : "");
+        strref_set_c(&base_uri, base->u.cgi->path_info != NULL
+                     ? base->u.cgi->path_info : "");
+        strref_set_c(buffer, address->u.cgi->path_info != NULL
+                     ? address->u.cgi->path_info : "");
         return uri_relative(&base_uri, buffer);
     }
 
@@ -381,7 +390,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return cgi_address_id(pool, &address->u.cgi);
+        return cgi_address_id(pool, address->u.cgi);
     }
 
     assert(false);
@@ -432,10 +441,10 @@ resource_address_uri_path(const struct resource_address *address)
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        if (address->u.cgi.uri != NULL)
-            return address->u.cgi.uri;
+        if (address->u.cgi->uri != NULL)
+            return address->u.cgi->uri;
 
-        return address->u.cgi.script_name;
+        return address->u.cgi->script_name;
     }
 
     /* unreachable */
@@ -459,7 +468,7 @@ resource_address_is_expandable(const struct resource_address *address)
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return cgi_address_is_expandable(&address->u.cgi);
+        return cgi_address_is_expandable(address->u.cgi);
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
@@ -480,6 +489,7 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     assert(match_info != NULL);
 
     switch (address->type) {
+        struct cgi_address *cgi;
         struct uri_with_address *uwa;
 
     case RESOURCE_ADDRESS_NONE:
@@ -493,7 +503,10 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return cgi_address_expand(pool, &address->u.cgi, match_info, error_r);
+        address->u.cgi = cgi =
+            cgi_address_dup(pool, address->u.cgi,
+                            address->type == RESOURCE_ADDRESS_FASTCGI);
+        return cgi_address_expand(pool, cgi, match_info, error_r);
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:

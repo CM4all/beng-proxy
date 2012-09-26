@@ -170,7 +170,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         return;
 
     case RESOURCE_ADDRESS_PIPE:
-        cgi = &address->u.cgi;
+        cgi = address->u.cgi;
         pipe_filter(pool, cgi->path,
                     cgi->args, cgi->num_args,
                     status, headers, body,
@@ -178,14 +178,14 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         return;
 
     case RESOURCE_ADDRESS_CGI:
-        cgi_new(pool, method, &address->u.cgi,
+        cgi_new(pool, method, address->u.cgi,
                 extract_remote_ip(pool, headers),
                 headers, body,
                 handler, handler_ctx, async_ref);
         return;
 
     case RESOURCE_ADDRESS_FASTCGI:
-        cgi = &address->u.cgi;
+        cgi = address->u.cgi;
         if (address_list_is_empty(&cgi->address_list))
             fcgi_request(pool, rl->fcgi_stock,
                          &cgi->jail,
@@ -216,7 +216,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         return;
 
     case RESOURCE_ADDRESS_WAS:
-        cgi = &address->u.cgi;
+        cgi = address->u.cgi;
         was_request(pool, rl->was_stock, &cgi->jail,
                     cgi->action,
                     cgi->path,

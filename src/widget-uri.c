@@ -117,7 +117,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
             break;
 
         address = resource_address_dup(pool, original_address);
-        cgi = &address->u.cgi;
+        cgi = resource_address_get_cgi(address);
 
         if (*path_info != 0)
             cgi->path_info = cgi->path_info != NULL
