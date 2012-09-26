@@ -91,8 +91,7 @@ resource_address_insert_query_string_from(struct pool *pool,
             /* no query string in URI */
             return src;
 
-        dest = p_malloc(pool, sizeof(*dest));
-        resource_address_copy(pool, dest, src);
+        dest = resource_address_dup(pool, src);
 
         if (dest->u.cgi.query_string != NULL)
             dest->u.cgi.query_string = p_strcat(pool, query_string, "&",
@@ -141,8 +140,7 @@ resource_address_insert_args(struct pool *pool,
         if (src->u.cgi.uri == NULL && src->u.cgi.path_info == NULL)
             return src;
 
-        dest = p_malloc(pool, sizeof(*dest));
-        resource_address_copy(pool, dest, src);
+        dest = resource_address_dup(pool, src);
 
         if (src->u.cgi.uri != NULL)
             dest->u.cgi.uri = uri_insert_args(pool, src->u.cgi.uri,
