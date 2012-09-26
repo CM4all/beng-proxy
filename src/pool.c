@@ -921,7 +921,22 @@ p_malloc_linear(struct pool *pool, const size_t original_size
     size_t size = align_size(original_size);
     size += LINEAR_PREFIX;
 
-    if (unlikely(area->used + size > area->size)) {
+    if (unlikely(size > pool->area_size)) {
+        /* this allocation is larger than the standard area size;
+           obtain a new area just for this allocation, and keep on
+           using the last area */
+        daemon_log(5, "big allocation on linear pool '%s' (%zu bytes)\n",
+                   pool->name, original_size);
+#ifdef DEBUG_POOL_GROW
+        pool_dump_allocations(pool);
+        daemon_log(6, "+ %s:%u %zu\n", file, line, original_size);
+#else
+        TRACE_ARGS_IGNORE;
+#endif
+
+        area = pool_get_linear_area(area->prev, size);
+        pool->current_area.linear->prev = area;
+    } else if (unlikely(area->used + size > area->size)) {
         daemon_log(5, "growing linear pool '%s'\n", pool->name);
 #ifdef DEBUG_POOL_GROW
         pool_dump_allocations(pool);
@@ -939,6 +954,8 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 
     void *p = area->data + area->used;
     area->used += size;
+
+    assert(area->used <= area->size);
 
     poison_undefined(p, size);
 
