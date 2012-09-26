@@ -335,6 +335,55 @@ hashmap_get_next(const struct hashmap *map, const char *key, const void *prev)
     return NULL;
 }
 
+const struct hashmap_pair *
+hashmap_lookup_first(const struct hashmap *map, const char *key)
+{
+    assert(key != NULL);
+
+    const struct slot *slot = hashmap_get_slot_c(map, key);
+    if (slot->pair.key == NULL)
+        return NULL;
+
+    do {
+        assert(slot->pair.key != NULL);
+        assert(slot->pair.value != NULL);
+
+        if (strcmp(slot->pair.key, key) == 0)
+            return &slot->pair;
+
+        slot = slot->next;
+    } while (slot != NULL);
+
+    return NULL;
+}
+
+static const struct slot *
+pair_to_slot(const struct hashmap_pair *pair)
+{
+    return (const struct slot*)(((const char*)pair) - offsetof(struct slot, pair));
+}
+
+const struct hashmap_pair *
+hashmap_lookup_next(const struct hashmap_pair *prev)
+{
+    assert(prev != NULL);
+    assert(prev->key != NULL);
+    assert(prev->value != NULL);
+
+    const char *key = prev->key;
+
+    for (const struct slot *slot = pair_to_slot(prev)->next;
+         slot != NULL; slot = slot->next) {
+        assert(slot->pair.key != NULL);
+        assert(slot->pair.value != NULL);
+
+        if (strcmp(slot->pair.key, key) == 0)
+            return &slot->pair;
+    }
+
+    return NULL;
+}
+
 void
 hashmap_rewind(struct hashmap *map)
 {

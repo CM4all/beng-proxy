@@ -71,6 +71,26 @@ gcc_pure
 void *
 hashmap_get_next(const struct hashmap *map, const char *key, const void *prev);
 
+/**
+ * Find the first value for this key.  The return value can be used
+ * with hashmap_lookup_next() to iterate over all values for a certain
+ * key efficiently.
+ */
+gcc_pure
+const struct hashmap_pair *
+hashmap_lookup_first(const struct hashmap *map, const char *key);
+
+/**
+ * Returns another value for the same key.
+ *
+ * @param prev the previous value returned by hashmap_lookup_first()
+ * or this function
+ * @return the next value, or NULL if there are no more
+ */
+gcc_pure
+const struct hashmap_pair *
+hashmap_lookup_next(const struct hashmap_pair *prev);
+
 void
 hashmap_rewind(struct hashmap *map);
 

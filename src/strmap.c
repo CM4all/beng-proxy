@@ -87,6 +87,19 @@ strmap_get_next(const struct strmap *map, const char *key, const char *prev)
     return (const char*)hashmap_get_next(map->hashmap, key, prev);
 }
 
+const struct strmap_pair *
+strmap_lookup_first(const struct strmap *map, const char *key)
+{
+    return (const struct strmap_pair *)hashmap_lookup_first(map->hashmap, key);
+}
+
+const struct strmap_pair *
+strmap_lookup_next(const struct strmap_pair *pair)
+{
+    return (const struct strmap_pair *)
+        hashmap_lookup_next((const struct hashmap_pair *)pair);
+}
+
 void
 strmap_rewind(struct strmap *map)
 {

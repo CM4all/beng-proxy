@@ -40,6 +40,20 @@ gcc_pure
 const char *
 strmap_get_next(const struct strmap *map, const char *key, const char *prev);
 
+/**
+ * @see hashmap_lookup_first()
+ */
+gcc_pure
+const struct strmap_pair *
+strmap_lookup_first(const struct strmap *map, const char *key);
+
+/**
+ * @see hashmap_lookup_next()
+ */
+gcc_pure
+const struct strmap_pair *
+strmap_lookup_next(const struct strmap_pair *pair);
+
 void
 strmap_rewind(struct strmap *map);
 
