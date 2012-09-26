@@ -23,17 +23,15 @@ static void
 proxy_collect_cookies(struct request *request2, const struct strmap *headers)
 {
     const struct translate_response *tr = request2->translate.response;
-    const char *key = "set-cookie2";
-    const char *cookies;
     struct session *session;
 
     if (headers == NULL)
         return;
 
-    cookies = strmap_get(headers, key);
+    const struct strmap_pair *cookies =
+        strmap_lookup_first(headers, "set-cookie2");
     if (cookies == NULL) {
-        key = "set-cookie";
-        cookies = strmap_get(headers, key);
+        cookies = strmap_lookup_first(headers, "set-cookie");
         if (cookies == NULL)
             return;
     }
@@ -54,9 +52,10 @@ proxy_collect_cookies(struct request *request2, const struct strmap *headers)
         return;
 
     do {
-        cookie_jar_set_cookie2(session->cookies, cookies, host_and_port, path);
+        cookie_jar_set_cookie2(session->cookies, cookies->value,
+                               host_and_port, path);
 
-        cookies = strmap_get_next(headers, key, cookies);
+        cookies = strmap_lookup_next(cookies);
     } while (cookies != NULL);
 
     session_put(session);
