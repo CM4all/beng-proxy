@@ -7,6 +7,7 @@
 #include "fcgi-launch.h"
 #include "exec.h"
 #include "jail.h"
+#include "sigutil.h"
 
 #include <daemon/log.h>
 #include <inline/compiler.h>
@@ -54,17 +55,29 @@ fcgi_spawn_child(const struct jail_params *jail,
                  const char *executable_path, int fd,
                  GError **error_r)
 {
+    /* avoid race condition due to libevent signal handler in child
+       process */
+    sigset_t signals;
+    enter_signal_section(&signals);
+
     pid_t pid = fork();
     if (pid < 0) {
         g_set_error(error_r, g_file_error_quark(), errno,
                     "fork() failed: %s", strerror(errno));
+        leave_signal_section(&signals);
         return -1;
     }
 
-    if (pid == 0)
+    if (pid == 0) {
+        install_default_signal_handlers();
+        leave_signal_section(&signals);
+
         fcgi_run(jail,
                  executable_path,
                  fd);
+    }
+
+    leave_signal_section(&signals);
 
     return pid;
 }

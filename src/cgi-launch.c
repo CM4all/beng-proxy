@@ -10,6 +10,7 @@
 #include "fork.h"
 #include "strutil.h"
 #include "strmap.h"
+#include "sigutil.h"
 
 #include <daemon/log.h>
 
@@ -186,10 +187,17 @@ cgi_launch(struct pool *pool, http_method_t method,
         ? istream_available(body, false)
         : -1;
 
+    /* avoid race condition due to libevent signal handler in child
+       process */
+    sigset_t signals;
+    enter_signal_section(&signals);
+
     struct istream *input;
     pid_t pid = beng_fork(pool, cgi_address_name(address), body, &input,
                           cgi_child_callback, NULL, error_r);
     if (pid < 0) {
+        leave_signal_section(&signals);
+
         if (body != NULL)
             /* beng_fork() left the request body open - free this
                resource, because our caller always assume that we have
@@ -199,7 +207,10 @@ cgi_launch(struct pool *pool, http_method_t method,
         return NULL;
     }
 
-    if (pid == 0)
+    if (pid == 0) {
+        install_default_signal_handlers();
+        leave_signal_section(&signals);
+
         cgi_run(&address->jail, address->interpreter, address->action,
                 address->path, method, uri,
                 address->script_name, address->path_info,
@@ -207,6 +218,9 @@ cgi_launch(struct pool *pool, http_method_t method,
                 remote_addr,
                 headers, available,
                 address->args, address->num_args);
+    }
+
+    leave_signal_section(&signals);
 
     return input;
 }

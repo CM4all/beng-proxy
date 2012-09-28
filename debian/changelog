@@ -7,6 +7,12 @@ cm4all-beng-proxy (2.2) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (2.1.11) unstable; urgency=low
+
+  * merge release 2.0.49
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 28 Sep 2012 15:04:36 -0000
+
 cm4all-beng-proxy (2.1.10) unstable; urgency=low
 
   * merge release 2.0.48
@@ -82,6 +88,12 @@ cm4all-beng-proxy (2.1) unstable; urgency=low
   * lb: add sticky mode "jvm_route" (Tomcat)
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 30 Jul 2012 15:53:43 -0000
+
+cm4all-beng-proxy (2.0.49) unstable; urgency=low
+
+  * merge release 1.4.32
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 28 Sep 2012 15:01:26 -0000
 
 cm4all-beng-proxy (2.0.48) unstable; urgency=low
 
@@ -447,6 +459,12 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.32) unstable; urgency=low
+
+  * cgi: fix spontaneous shutdown due to misrouted SIGTERM signal
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 28 Sep 2012 14:39:13 -0000
 
 cm4all-beng-proxy (1.4.31) unstable; urgency=low
 
