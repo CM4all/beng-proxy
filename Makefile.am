@@ -426,6 +426,7 @@ SRC = src/main.c \
 	src/serialize.c \
 	src/duplex.c \
 	$(ISTREAM_SRC) \
+	src/sigutil.h \
 	src/fork.c \
 	src/delegate-stock.c \
 	src/delegate-client.c \

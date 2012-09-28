@@ -9,6 +9,7 @@
 #include "fd-util.h"
 #include "exec.h"
 #include "jail.h"
+#include "sigutil.h"
 
 #include <daemon/log.h>
 #include <inline/compiler.h>
@@ -74,8 +75,15 @@ was_launch(struct was_process *process,
         return false;
     }
 
+    /* avoid race condition due to libevent signal handler in child
+       process */
+    sigset_t signals;
+    enter_signal_section(&signals);
+
     pid_t pid = fork();
     if (pid < 0) {
+        leave_signal_section(&signals);
+
         g_set_error(error_r, g_file_error_quark(), errno,
                     "fork failed: %s", strerror(errno));
         close(control_fds[0]);
@@ -87,9 +95,15 @@ was_launch(struct was_process *process,
         return false;
     }
 
-    if (pid == 0)
+    if (pid == 0) {
+        install_default_signal_handlers();
+        leave_signal_section(&signals);
+
         was_run(executable_path, jail,
                 control_fds[1], output_fds[0], input_fds[1]);
+    }
+
+    leave_signal_section(&signals);
 
     close(control_fds[1]);
     close(input_fds[1]);
