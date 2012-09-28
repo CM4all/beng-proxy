@@ -14,6 +14,7 @@
 #include "strmap.h"
 #include "http-response.h"
 #include "istream.h"
+#include "sigutil.h"
 
 #include <daemon/log.h>
 
@@ -191,11 +192,18 @@ cgi_new(struct pool *pool, const struct jail_params *jail,
 
     stopwatch = stopwatch_new(pool, path);
 
+    /* avoid race condition due to libevent signal handler in child
+       process */
+    sigset_t signals;
+    enter_signal_section(&signals);
+
     struct istream *input;
     GError *error = NULL;
     pid_t pid = beng_fork(pool, body, &input,
                           cgi_child_callback, NULL, &error);
     if (pid < 0) {
+        leave_signal_section(&signals);
+
         if (body != NULL) {
             /* beng_fork() left the request body open - free this
                resource, because our caller always assume that we have
@@ -217,12 +225,18 @@ cgi_new(struct pool *pool, const struct jail_params *jail,
         return;
     }
 
-    if (pid == 0)
+    if (pid == 0) {
+        install_default_signal_handlers();
+        leave_signal_section(&signals);
+
         cgi_run(jail, interpreter, action, path, method, uri,
                 script_name, path_info, query_string, document_root,
                 remote_addr,
                 headers, available,
                 params, num_params);
+    }
+
+    leave_signal_section(&signals);
 
     stopwatch_event(stopwatch, "fork");
 
