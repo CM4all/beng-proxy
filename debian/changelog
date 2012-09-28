@@ -2,7 +2,7 @@ cm4all-beng-proxy (1.4.32) unstable; urgency=low
 
   * cgi: fix spontaneous shutdown due to misrouted SIGTERM signal
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 28 Sep 2012 14:39:13 -0000
 
 cm4all-beng-proxy (1.4.31) unstable; urgency=low
 
