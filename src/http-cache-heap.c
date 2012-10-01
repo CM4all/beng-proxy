@@ -68,12 +68,10 @@ http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
                     struct strmap *response_headers,
                     const struct growing_buffer *body)
 {
-    struct http_cache_item *item;
-    time_t expires;
-
     pool = pool_new_linear(pool, "http_cache_item", 1024);
-    item = p_malloc(pool, sizeof(*item));
+    struct http_cache_item *item = p_malloc(pool, sizeof(*item));
 
+    time_t expires;
     if (info->expires == (time_t)-1)
         /* there is no Expires response header; keep it in the cache
            for 1 hour, but check with If-Modified-Since */
@@ -144,13 +142,12 @@ http_cache_heap_istream(struct pool *pool, struct cache *cache,
                         struct http_cache_document *document)
 {
     struct http_cache_item *item = document_to_item(document);
-    struct istream *istream;
 
     if (item->data == NULL)
         /* don't lock the item */
         return istream_null_new(pool);
 
-    istream = istream_memory_new(pool, item->data, item->size);
+    struct istream *istream = istream_memory_new(pool, item->data, item->size);
     return istream_unlock_new(pool, istream,
                               cache, &item->item);
 }
