@@ -653,7 +653,7 @@ void
 http_cache_get_stats(const struct http_cache *cache, struct cache_stats *data)
 {
     if (cache->cache != NULL)
-        cache_get_stats(cache->cache, data);
+        http_cache_heap_get_stats(cache->cache, data);
     else
         memset(data, 0, sizeof(*data));
 }

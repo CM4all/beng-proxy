@@ -201,3 +201,10 @@ http_cache_heap_free(struct cache *cache)
 {
     cache_close(cache);
 }
+
+void
+http_cache_heap_get_stats(const struct cache *cache,
+                          struct cache_stats *data)
+{
+    cache_get_stats(cache, data);
+}

@@ -13,6 +13,7 @@
 
 struct pool;
 struct strmap;
+struct cache_stats;
 struct growing_buffer;
 struct http_cache_info;
 
@@ -21,6 +22,10 @@ http_cache_heap_new(struct pool *pool, size_t max_size);
 
 void
 http_cache_heap_free(struct cache *cache);
+
+void
+http_cache_heap_get_stats(const struct cache *cache,
+                          struct cache_stats *data);
 
 struct http_cache_document *
 http_cache_heap_get(struct cache *cache, const char *uri,
