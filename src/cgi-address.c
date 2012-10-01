@@ -60,6 +60,9 @@ cgi_address_id(struct pool *pool, const struct cgi_address *address)
     if (address->jail.enabled)
         p = p_strcat(pool, p, ";j", NULL);
 
+    if (address->document_root != NULL)
+        p = p_strcat(pool, p, ";d=", address->document_root, NULL);
+
     if (address->interpreter != NULL)
         p = p_strcat(pool, p, ";i=", address->interpreter, NULL);
 
@@ -69,7 +72,9 @@ cgi_address_id(struct pool *pool, const struct cgi_address *address)
     for (unsigned i = 0; i < address->num_args; ++i)
         p = p_strcat(pool, p, "!", address->args[i], NULL);
 
-    if (address->script_name != NULL)
+    if (address->uri != NULL)
+        p = p_strcat(pool, p, ";u=", address->uri, NULL);
+    else if (address->script_name != NULL)
         p = p_strcat(pool, p, ";s=", address->script_name, NULL);
 
     if (address->path_info != NULL)
