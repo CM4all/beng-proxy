@@ -4,8 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-cache-internal.h"
+#include "http-cache-memcached.h"
 #include "http-cache-choice.h"
+#include "http-cache-internal.h"
 #include "memcached-stock.h"
 #include "memcached-client.h"
 #include "growing-buffer.h"

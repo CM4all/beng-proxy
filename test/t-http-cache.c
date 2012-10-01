@@ -1,5 +1,5 @@
 #include "http-cache.h"
-#include "http-cache-internal.h"
+#include "http-cache-memcached.h"
 #include "resource-loader.h"
 #include "resource-address.h"
 #include "growing-buffer.h"

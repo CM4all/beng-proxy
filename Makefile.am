@@ -461,9 +461,9 @@ SRC = src/main.c \
 	src/istream-unlock.c \
 	src/http-cache.c \
 	src/http-cache-document.c \
-	src/http-cache-heap.c \
+	src/http-cache-heap.c src/http-cache-heap.h \
 	src/http-cache-info.c \
-	src/http-cache-memcached.c \
+	src/http-cache-memcached.c src/http-cache-memcached.h \
 	src/http-cache-choice.c \
 	src/http-cache-rfc.c \
 	src/fcache.c \

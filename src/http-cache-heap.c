@@ -1,9 +1,10 @@
 /*
- * Caching HTTP responses.
+ * Caching HTTP responses in heap memory.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "http-cache-heap.h"
 #include "http-cache-internal.h"
 #include "cache.h"
 #include "growing-buffer.h"

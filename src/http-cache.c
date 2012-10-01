@@ -5,6 +5,8 @@
  */
 
 #include "http-cache-internal.h"
+#include "http-cache-heap.h"
+#include "http-cache-memcached.h"
 #include "resource-loader.h"
 #include "strmap.h"
 #include "http-response.h"
