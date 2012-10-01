@@ -776,6 +776,7 @@ noinst_PROGRAMS = \
 	test/run-client-balancer \
 	test/run-ajp-client \
 	test/run-memcached-client \
+	test/run_http_cache \
 	test/dump-memcached-choice \
 	test/cleanup-memcached-choice \
 	test/fake-memcached-server \
@@ -1720,6 +1721,31 @@ test_run_ajp_client_LDADD = $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(GLIB_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
+
+test_run_http_cache_SOURCES = test/run_http_cache.c \
+	src/http-cache-heap.c \
+	src/http-cache-info.c \
+	src/http-cache-rfc.c \
+	src/http-cache-document.c \
+	src/http-util.c \
+	src/uri-address.c src/uri-verify.c src/uri-edit.c \
+	src/uri-base.c src/uri-relative.c src/uri-extract.c \
+	src/uri-escape.c \
+	src/regex.c \
+	src/address-list.c \
+	src/istream-null.c src/istream-memory.c \
+	src/istream-unlock.c \
+	src/istream-forward.c \
+	src/growing-buffer.c \
+	src/strmap.c src/hashmap.c \
+	src/cache.c \
+	src/date.c src/format.c src/gmtime.c src/strutil.c \
+	src/tpool.c \
+	$(POOL_SRC)
+test_run_http_cache_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \

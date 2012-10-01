@@ -98,6 +98,7 @@ test/was-mirror
 test/run-was
 test/run-ping
 test/t_balancer
+test/run_http_cache
 
 *.aux
 *.log
