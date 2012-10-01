@@ -284,6 +284,7 @@ SRC = src/main.c \
 	src/dpool.c \
 	src/dstring.c \
 	src/rubber.c src/rubber.h \
+	src/istream_rubber.c src/istream_rubber.h \
 	src/random.c \
 	src/session.c src/session.h \
 	src/session_id.c src/session_id.h \
