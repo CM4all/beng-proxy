@@ -9,18 +9,26 @@
 #include "cache.h"
 #include "growing-buffer.h"
 #include "istream.h"
+#include "rubber.h"
+#include "istream_rubber.h"
 
 #include <time.h>
+#include <string.h>
+#include <errno.h>
+#include <stdio.h>
+#include <unistd.h>
 
 struct http_cache_item {
     struct cache_item item;
+
+    struct http_cache_heap *cache;
 
     struct pool *pool;
 
     struct http_cache_document document;
 
     size_t size;
-    unsigned char *data;
+    unsigned rubber_id;
 };
 
 /**
@@ -69,7 +77,31 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     struct strmap *response_headers,
                     const struct growing_buffer *body)
 {
-    struct pool *pool = pool_new_linear(cache->pool, "http_cache_item", 1024);
+    const size_t size = body != NULL
+        ? growing_buffer_size(body)
+        : 0;
+
+    unsigned rubber_id;
+    if (size > 0) {
+        rubber_id = rubber_add(cache->rubber, size);
+        if (rubber_id == 0)
+            return;
+
+        uint8_t *dest = rubber_write(cache->rubber, rubber_id);
+
+        struct growing_buffer_reader reader;
+        growing_buffer_reader_init(&reader, body);
+        size_t length;
+        const void *p;
+        while ((p = growing_buffer_reader_read(&reader, &length)) != NULL) {
+            memcpy(dest, p, length);
+            growing_buffer_reader_consume(&reader, length);
+            dest += length;
+        }
+    } else
+        rubber_id = 0;
+
+    struct pool *pool = pool_new_linear(cache->pool, "http_cache_item", 256);
     struct http_cache_item *item = p_malloc(pool, sizeof(*item));
 
     time_t expires;
@@ -84,13 +116,13 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     http_cache_item_base_size +
                     (body != NULL ? growing_buffer_size(body) : 0));
 
+    item->cache = cache;
     item->pool = pool;
 
     http_cache_document_init(&item->document, pool, info,
                              request_headers, status, response_headers);
-    item->data = body != NULL
-        ? growing_buffer_dup(body, pool, &item->size)
-        : NULL;
+    item->size = size;
+    item->rubber_id = rubber_id;
 
     cache_put_match(cache->cache, p_strdup(pool, url),
                     &item->item,
@@ -120,6 +152,7 @@ void
 http_cache_heap_flush(struct http_cache_heap *cache)
 {
     cache_flush(cache->cache);
+    rubber_compress(cache->rubber);
 }
 
 void
@@ -145,11 +178,13 @@ http_cache_heap_istream(struct pool *pool, struct http_cache_heap *cache,
 {
     struct http_cache_item *item = document_to_item(document);
 
-    if (item->data == NULL)
+    if (item->rubber_id == 0)
         /* don't lock the item */
         return istream_null_new(pool);
 
-    struct istream *istream = istream_memory_new(pool, item->data, item->size);
+    struct istream *istream =
+        istream_rubber_new(pool, item->cache->rubber, item->rubber_id,
+                           0, item->size);
     return istream_unlock_new(pool, istream,
                               cache->cache, &item->item);
 }
@@ -174,6 +209,9 @@ http_cache_item_destroy(struct cache_item *_item)
 {
     struct http_cache_item *item = (struct http_cache_item *)_item;
 
+    if (item->rubber_id != 0)
+        rubber_remove(item->cache->rubber, item->rubber_id);
+
     pool_unref(item->pool);
 }
 
@@ -194,6 +232,13 @@ http_cache_heap_init(struct http_cache_heap *cache,
 {
     cache->pool = pool;
     cache->cache = cache_new(pool, &http_cache_class, 65521, max_size);
+
+    cache->rubber = rubber_new(max_size);
+    if (cache->rubber == NULL) {
+        fprintf(stderr, "Failed to allocate HTTP cache: %s\n",
+                strerror(errno));
+        _exit(2);
+    }
 }
 
 
@@ -201,6 +246,7 @@ void
 http_cache_heap_deinit(struct http_cache_heap *cache)
 {
     cache_close(cache->cache);
+    rubber_free(cache->rubber);
 }
 
 void
@@ -208,4 +254,7 @@ http_cache_heap_get_stats(const struct http_cache_heap *cache,
                           struct cache_stats *data)
 {
     cache_get_stats(cache->cache, data);
+
+    data->netto_size += rubber_get_netto_size(cache->rubber);
+    data->brutto_size += rubber_get_brutto_size(cache->rubber);
 }

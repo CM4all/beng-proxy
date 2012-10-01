@@ -15,9 +15,12 @@ struct http_cache_heap {
     struct pool *pool;
 
     struct cache *cache;
+
+    struct rubber *rubber;
 };
 
 struct pool;
+struct rubber;
 struct strmap;
 struct cache_stats;
 struct growing_buffer;

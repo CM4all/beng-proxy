@@ -1340,11 +1340,13 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/fifo-buffer.c src/header-parser.c \
 	src/growing-buffer.c \
 	src/strutil.c \
+	src/istream_rubber.c \
 	src/istream-gb.c \
 	src/istream-memory.c src/istream-string.c \
 	src/http-cache.c src/http-cache-rfc.c \
 	src/http-cache-info.c src/http-cache-document.c \
 	src/http-cache-heap.c \
+	src/rubber.c \
 	src/resource-address.c src/uri-address.c \
 	src/file-address.c \
 	src/cgi-address.c \
@@ -1743,6 +1745,8 @@ test_run_http_cache_SOURCES = test/run_http_cache.c \
 	src/cache.c \
 	src/date.c src/format.c src/gmtime.c src/strutil.c \
 	src/tpool.c \
+	src/rubber.c \
+	src/istream_rubber.c \
 	$(POOL_SRC)
 test_run_http_cache_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
