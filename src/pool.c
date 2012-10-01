@@ -616,10 +616,43 @@ pool_netto_size(const struct pool *pool)
     return pool->netto_size;
 }
 
+static size_t
+pool_linear_brutto_size(const struct pool *pool)
+{
+    size_t size = 0;
+
+    for (const struct linear_pool_area *area = pool->current_area.linear;
+         area != NULL; area = area->prev)
+        size += area->size;
+
+    return size;
+}
+
+size_t
+pool_brutto_size(const struct pool *pool)
+{
+    switch (pool->type) {
+    case POOL_LIBC:
+        return pool_netto_size(pool);
+
+    case POOL_LINEAR:
+        return pool_linear_brutto_size(pool);
+    }
+
+    assert(false);
+    return 0;
+}
+
 size_t
 pool_recursive_netto_size(const struct pool *pool)
 {
     return pool_netto_size(pool) + pool_children_netto_size(pool);
+}
+
+size_t
+pool_recursive_brutto_size(const struct pool *pool)
+{
+    return pool_brutto_size(pool) + pool_children_brutto_size(pool);
 }
 
 size_t
@@ -631,6 +664,19 @@ pool_children_netto_size(const struct pool *pool)
          &child->siblings != &pool->children;
          child = (const struct pool *)child->siblings.next)
         size += pool_recursive_netto_size(child);
+
+    return size;
+}
+
+size_t
+pool_children_brutto_size(const struct pool *pool)
+{
+    size_t size = 0;
+
+    for (const struct pool *child = (const struct pool *)pool->children.next;
+         &child->siblings != &pool->children;
+         child = (const struct pool *)child->siblings.next)
+        size += pool_recursive_brutto_size(child);
 
     return size;
 }

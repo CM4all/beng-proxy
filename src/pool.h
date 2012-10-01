@@ -63,6 +63,13 @@ size_t
 pool_netto_size(const struct pool *pool);
 
 /**
+ * Returns the total amount of memory allocated by this pool.
+ */
+gcc_pure
+size_t
+pool_brutto_size(const struct pool *pool);
+
+/**
  * Returns the total size of this pool and all of its descendants
  * (recursively).
  */
@@ -70,12 +77,20 @@ gcc_pure
 size_t
 pool_recursive_netto_size(const struct pool *pool);
 
+gcc_pure
+size_t
+pool_recursive_brutto_size(const struct pool *pool);
+
 /**
  * Returns the total size of all descendants of this pool (recursively).
  */
 gcc_pure
 size_t
 pool_children_netto_size(const struct pool *pool);
+
+gcc_pure
+size_t
+pool_children_brutto_size(const struct pool *pool);
 
 void
 pool_dump_tree(const struct pool *pool);
