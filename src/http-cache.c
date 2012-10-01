@@ -29,8 +29,11 @@
 
 struct http_cache {
     struct pool *pool;
-    struct cache *cache;
+
+    struct http_cache_heap heap;
+
     struct memcached_stock *memcached_stock;
+
     struct resource_loader *resource_loader;
 
     /**
@@ -231,8 +234,8 @@ http_cache_put(struct http_cache_request *request)
 
     cache_log(4, "http_cache: put %s\n", request->key);
 
-    if (request->cache->cache != NULL)
-        http_cache_heap_put(request->cache->cache, request->cache->pool, request->key,
+    if (http_cache_heap_is_defined(&request->cache->heap))
+        http_cache_heap_put(&request->cache->heap, request->key,
                             request->info, request->headers, request->response.status,
                             request->response.headers, request->response.output);
     else if (request->cache->memcached_stock != NULL) {
@@ -260,16 +263,16 @@ static void
 http_cache_remove(struct http_cache *cache, const char *url,
                   struct http_cache_document *document)
 {
-    if (cache->cache != NULL)
-        http_cache_heap_remove(cache->cache, url, document);
+    if (http_cache_heap_is_defined(&cache->heap))
+        http_cache_heap_remove(&cache->heap, url, document);
 }
 
 static void
 http_cache_remove_url(struct http_cache *cache, const char *url,
                       struct strmap *headers)
 {
-    if (cache->cache != NULL)
-        http_cache_heap_remove_url(cache->cache, url, headers);
+    if (http_cache_heap_is_defined(&cache->heap))
+        http_cache_heap_remove_url(&cache->heap, url, headers);
     else if (cache->memcached_stock != NULL)
         http_cache_memcached_remove_uri_match(cache->memcached_stock,
                                               cache->pool, &cache->background,
@@ -286,7 +289,7 @@ static void
 http_cache_unlock(struct http_cache *cache,
                   struct http_cache_document *document)
 {
-    http_cache_heap_unlock(cache->cache, document);
+    http_cache_heap_unlock(&cache->heap, document);
 }
 
 static void
@@ -374,7 +377,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     struct http_cache_request *request = ctx;
     struct http_cache *cache = request->cache;
     struct http_cache_document *locked_document =
-        cache->cache ? request->document : NULL;
+        http_cache_heap_is_defined(&cache->heap) ? request->document : NULL;
     off_t available;
 
     if (request->document != NULL && status == HTTP_STATUS_NOT_MODIFIED) {
@@ -426,7 +429,8 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     if (request->document != NULL)
         http_cache_remove(request->cache, request->key, request->document);
 
-    if (request->document != NULL && request->cache->cache == NULL &&
+    if (request->document != NULL &&
+        !http_cache_heap_is_defined(&cache->heap) &&
         request->document_body != NULL)
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
@@ -524,10 +528,12 @@ http_cache_response_abort(GError *error, void *ctx)
 
     g_prefix_error(&error, "http_cache %s: ", request->key);
 
-    if (request->document != NULL && request->cache->cache != NULL)
+    if (request->document != NULL &&
+        http_cache_heap_is_defined(&request->cache->heap))
         http_cache_unlock(request->cache, request->document);
 
-    if (request->document != NULL && request->cache->cache == NULL &&
+    if (request->document != NULL &&
+        !http_cache_heap_is_defined(&request->cache->heap) &&
         request->document_body != NULL)
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
@@ -566,10 +572,12 @@ http_cache_abort(struct async_operation *ao)
 {
     struct http_cache_request *request = async_to_request(ao);
 
-    if (request->document != NULL && request->cache->cache != NULL)
+    if (request->document != NULL &&
+        http_cache_heap_is_defined(&request->cache->heap))
         http_cache_unlock(request->cache, request->document);
 
-    if (request->document != NULL && request->cache->cache == NULL &&
+    if (request->document != NULL &&
+        !http_cache_heap_is_defined(&request->cache->heap) &&
         request->document_body != NULL)
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
@@ -599,9 +607,12 @@ http_cache_new(struct pool *pool, size_t max_size,
 
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
-    cache->cache = memcached_stock == NULL && max_size > 0
-        ? http_cache_heap_new(pool, max_size)
-        : NULL;
+
+    if (memcached_stock == NULL && max_size > 0)
+        http_cache_heap_init(&cache->heap, pool, max_size);
+    else
+        http_cache_heap_clear(&cache->heap);
+
     cache->memcached_stock = memcached_stock;
     cache->resource_loader = resource_loader;
 
@@ -643,8 +654,8 @@ http_cache_close(struct http_cache *cache)
 
     background_manager_abort_all(&cache->background);
 
-    if (cache->cache != NULL)
-        http_cache_heap_free(cache->cache);
+    if (http_cache_heap_is_defined(&cache->heap))
+        http_cache_heap_deinit(&cache->heap);
 
     pool_unref(cache->pool);
 }
@@ -652,8 +663,8 @@ http_cache_close(struct http_cache *cache)
 void
 http_cache_get_stats(const struct http_cache *cache, struct cache_stats *data)
 {
-    if (cache->cache != NULL)
-        http_cache_heap_get_stats(cache->cache, data);
+    if (http_cache_heap_is_defined(&cache->heap))
+        http_cache_heap_get_stats(&cache->heap, data);
     else
         memset(data, 0, sizeof(*data));
 }
@@ -678,8 +689,8 @@ http_cache_flush_callback(bool success, GError *error, void *ctx)
 void
 http_cache_flush(struct http_cache *cache)
 {
-    if (cache->cache != NULL)
-        http_cache_heap_flush(cache->cache);
+    if (http_cache_heap_is_defined(&cache->heap))
+        http_cache_heap_flush(&cache->heap);
     else if (cache->memcached_stock != NULL) {
         struct pool *pool = pool_new_linear(cache->pool,
                                             "http_cache_memcached_flush", 1024);
@@ -755,7 +766,7 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
  * Caller pool is left unchanged.
  */
 static void
-http_cache_heap_serve(struct cache *cache,
+http_cache_heap_serve(struct http_cache_heap *cache,
                       struct http_cache_document *document,
                       struct pool *pool,
                       const char *key gcc_unused,
@@ -800,8 +811,8 @@ http_cache_memcached_serve(struct http_cache_request *request)
 static void
 http_cache_serve(struct http_cache_request *request)
 {
-    if (request->cache->cache != NULL)
-        http_cache_heap_serve(request->cache->cache, request->document,
+    if (http_cache_heap_is_defined(&request->cache->heap))
+        http_cache_heap_serve(&request->cache->heap, request->document,
                               request->pool, request->key,
                               request->handler.handler, request->handler.ctx);
     else if (request->cache->memcached_stock != NULL)
@@ -914,7 +925,7 @@ http_cache_found(struct http_cache *cache,
                  struct async_operation_ref *async_ref)
 {
     if (http_cache_may_serve(info, document))
-        http_cache_heap_serve(cache->cache, document, pool,
+        http_cache_heap_serve(&cache->heap, document, pool,
                               http_cache_key(pool, address),
                               handler, handler_ctx);
     else
@@ -941,7 +952,7 @@ http_cache_heap_use(struct http_cache *cache,
                     struct async_operation_ref *async_ref)
 {
     struct http_cache_document *document
-        = http_cache_heap_get(cache->cache, http_cache_key(pool, address),
+        = http_cache_heap_get(&cache->heap, http_cache_key(pool, address),
                               headers);
 
     if (document == NULL)
@@ -1131,13 +1142,14 @@ http_cache_request(struct http_cache *cache,
 
     struct http_cache_info *info;
 
-    info = cache->cache != NULL || cache->memcached_stock != NULL
+    info = http_cache_heap_is_defined(&cache->heap) ||
+        cache->memcached_stock != NULL
         ? http_cache_request_evaluate(pool, method, address, headers, body)
         : NULL;
     if (info != NULL) {
         assert(body == NULL);
 
-        if (cache->cache != NULL)
+        if (http_cache_heap_is_defined(&cache->heap))
             http_cache_heap_use(cache, pool, session_sticky,
                                 method, address, headers, info,
                                 handler, handler_ctx, async_ref);

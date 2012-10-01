@@ -47,11 +47,11 @@ http_cache_item_match(const struct cache_item *_item, void *ctx)
 }
 
 struct http_cache_document *
-http_cache_heap_get(struct cache *cache, const char *uri,
+http_cache_heap_get(struct http_cache_heap *cache, const char *uri,
                     struct strmap *request_headers)
 {
     struct http_cache_item *item
-        = (struct http_cache_item *)cache_get_match(cache, uri,
+        = (struct http_cache_item *)cache_get_match(cache->cache, uri,
                                                     http_cache_item_match,
                                                     request_headers);
     if (item == NULL)
@@ -61,14 +61,15 @@ http_cache_heap_get(struct cache *cache, const char *uri,
 }
 
 void
-http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
+http_cache_heap_put(struct http_cache_heap *cache,
+                    const char *url,
                     const struct http_cache_info *info,
                     struct strmap *request_headers,
                     http_status_t status,
                     struct strmap *response_headers,
                     const struct growing_buffer *body)
 {
-    pool = pool_new_linear(pool, "http_cache_item", 1024);
+    struct pool *pool = pool_new_linear(cache->pool, "http_cache_item", 1024);
     struct http_cache_item *item = p_malloc(pool, sizeof(*item));
 
     time_t expires;
@@ -91,33 +92,34 @@ http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
         ? growing_buffer_dup(body, pool, &item->size)
         : NULL;
 
-    cache_put_match(cache, p_strdup(pool, url),
+    cache_put_match(cache->cache, p_strdup(pool, url),
                     &item->item,
                     http_cache_item_match, request_headers);
 }
 
 void
-http_cache_heap_remove(struct cache *cache, const char *url,
+http_cache_heap_remove(struct http_cache_heap *cache, const char *url,
                        struct http_cache_document *document)
 {
+    struct cache *cache2 = cache->cache;
     struct http_cache_item *item = document_to_item(document);
 
-    cache_remove_item(cache, url, &item->item);
-    cache_item_unlock(cache, &item->item);
+    cache_remove_item(cache2, url, &item->item);
+    cache_item_unlock(cache2, &item->item);
 }
 
 void
-http_cache_heap_remove_url(struct cache *cache, const char *url,
+http_cache_heap_remove_url(struct http_cache_heap *cache, const char *url,
                            struct strmap *headers)
 {
-    cache_remove_match(cache, url,
+    cache_remove_match(cache->cache, url,
                        http_cache_item_match, headers);
 }
 
 void
-http_cache_heap_flush(struct cache *cache)
+http_cache_heap_flush(struct http_cache_heap *cache)
 {
-    cache_flush(cache);
+    cache_flush(cache->cache);
 }
 
 void
@@ -129,16 +131,16 @@ http_cache_heap_lock(struct http_cache_document *document)
 }
 
 void
-http_cache_heap_unlock(struct cache *cache,
+http_cache_heap_unlock(struct http_cache_heap *cache,
                        struct http_cache_document *document)
 {
     struct http_cache_item *item = document_to_item(document);
 
-    cache_item_unlock(cache, &item->item);
+    cache_item_unlock(cache->cache, &item->item);
 }
 
 struct istream *
-http_cache_heap_istream(struct pool *pool, struct cache *cache,
+http_cache_heap_istream(struct pool *pool, struct http_cache_heap *cache,
                         struct http_cache_document *document)
 {
     struct http_cache_item *item = document_to_item(document);
@@ -149,7 +151,7 @@ http_cache_heap_istream(struct pool *pool, struct cache *cache,
 
     struct istream *istream = istream_memory_new(pool, item->data, item->size);
     return istream_unlock_new(pool, istream,
-                              cache, &item->item);
+                              cache->cache, &item->item);
 }
 
 
@@ -186,22 +188,24 @@ static const struct cache_class http_cache_class = {
  *
  */
 
-struct cache *
-http_cache_heap_new(struct pool *pool, size_t max_size)
+void
+http_cache_heap_init(struct http_cache_heap *cache,
+                     struct pool *pool, size_t max_size)
 {
-    return cache_new(pool, &http_cache_class, 65521, max_size);
+    cache->pool = pool;
+    cache->cache = cache_new(pool, &http_cache_class, 65521, max_size);
 }
 
 
 void
-http_cache_heap_free(struct cache *cache)
+http_cache_heap_deinit(struct http_cache_heap *cache)
 {
-    cache_close(cache);
+    cache_close(cache->cache);
 }
 
 void
-http_cache_heap_get_stats(const struct cache *cache,
+http_cache_heap_get_stats(const struct http_cache_heap *cache,
                           struct cache_stats *data)
 {
-    cache_get_stats(cache, data);
+    cache_get_stats(cache->cache, data);
 }
