@@ -128,84 +128,21 @@ struct http_cache_request {
 };
 
 static const char *
-http_cache_cgi_key(struct pool *pool, const struct cgi_address *cgi)
-{
-    assert(cgi != NULL);
-
-    GString *buffer = g_string_sized_new(2048);
-    if (cgi->jail.enabled)
-        g_string_append(buffer, "jail:");
-
-    if (cgi->document_root != NULL) {
-        g_string_append_c(buffer, '[');
-        g_string_append(buffer, cgi->document_root);
-        g_string_append_c(buffer, ']');
-    }
-
-    if (cgi->interpreter != NULL) {
-        g_string_append_c(buffer, '#');
-        g_string_append(buffer, cgi->interpreter);
-        g_string_append_c(buffer, ' ');
-    }
-
-    if (cgi->action != NULL) {
-        g_string_append_c(buffer, '!');
-        g_string_append(buffer, cgi->action);
-        g_string_append_c(buffer, ' ');
-    }
-
-    g_string_append(buffer, cgi->path);
-    g_string_append_c(buffer, ' ');
-
-    if (cgi->uri != NULL) {
-        g_string_append(buffer, "uri=");
-        g_string_append(buffer, cgi->uri);
-    } else if (cgi->script_name != NULL) {
-        g_string_append(buffer, "script_name=");
-        g_string_append(buffer, cgi->script_name);
-    }
-
-    for (unsigned i = 0; i < cgi->num_args; ++i) {
-        g_string_append(buffer, cgi->args[i]);
-        g_string_append_c(buffer, ' ');
-    }
-
-    if (cgi->uri == NULL && cgi->path_info != NULL) {
-        g_string_append(buffer, "path_info=");
-        g_string_append(buffer, cgi->path_info);
-    }
-
-    if (cgi->query_string != NULL) {
-        g_string_append(buffer, "query_string=");
-        g_string_append(buffer, cgi->query_string);
-    }
-
-    const char *key = p_strndup(pool, buffer->str, buffer->len);
-    g_string_free(buffer, true);
-    return key;
-}
-
-static const char *
 http_cache_key(struct pool *pool, const struct resource_address *address)
 {
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
+        /* not cacheable */
         return NULL;
 
     case RESOURCE_ADDRESS_HTTP:
-        return uri_address_absolute(pool, address->u.http);
-
-    case RESOURCE_ADDRESS_PIPE:
-        return NULL;
-
+    case RESOURCE_ADDRESS_AJP:
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return http_cache_cgi_key(pool, address->u.cgi);
-
-    case RESOURCE_ADDRESS_AJP:
-        return NULL;
+        return resource_address_id(address, pool);
     }
 
     /* unreachable */
