@@ -14,7 +14,7 @@
 struct istream_optional {
     struct istream output;
 
-    istream_t input;
+    struct istream *input;
 
     bool resumed;
 };
@@ -60,13 +60,13 @@ static const struct istream_handler optional_input_handler = {
  */
 
 static inline struct istream_optional *
-istream_to_optional(istream_t istream)
+istream_to_optional(struct istream *istream)
 {
     return (struct istream_optional *)(((char*)istream) - offsetof(struct istream_optional, output));
 }
 
 static off_t
-istream_optional_available(istream_t istream, bool partial)
+istream_optional_available(struct istream *istream, bool partial)
 {
     struct istream_optional *optional = istream_to_optional(istream);
 
@@ -76,7 +76,7 @@ istream_optional_available(istream_t istream, bool partial)
 }
 
 static void
-istream_optional_read(istream_t istream)
+istream_optional_read(struct istream *istream)
 {
     struct istream_optional *optional = istream_to_optional(istream);
 
@@ -88,7 +88,7 @@ istream_optional_read(istream_t istream)
 }
 
 static int
-istream_optional_as_fd(istream_t istream)
+istream_optional_as_fd(struct istream *istream)
 {
     struct istream_optional *optional = istream_to_optional(istream);
 
@@ -98,7 +98,7 @@ istream_optional_as_fd(istream_t istream)
 }
 
 static void
-istream_optional_close(istream_t istream)
+istream_optional_close(struct istream *istream)
 {
     struct istream_optional *optional = istream_to_optional(istream);
 
@@ -119,8 +119,8 @@ static const struct istream_class istream_optional = {
  *
  */
 
-istream_t
-istream_optional_new(struct pool *pool, istream_t input)
+struct istream *
+istream_optional_new(struct pool *pool, struct istream *input)
 {
     struct istream_optional *optional = istream_new_macro(pool, optional);
 
@@ -134,7 +134,7 @@ istream_optional_new(struct pool *pool, istream_t input)
 }
 
 void
-istream_optional_resume(istream_t istream)
+istream_optional_resume(struct istream *istream)
 {
     struct istream_optional *optional = (struct istream_optional *)istream;
 
@@ -144,7 +144,7 @@ istream_optional_resume(istream_t istream)
 }
 
 void
-istream_optional_discard(istream_t istream)
+istream_optional_discard(struct istream *istream)
 {
     struct istream_optional *optional = (struct istream_optional *)istream;
 

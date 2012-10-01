@@ -27,7 +27,7 @@
 
 struct istream_socketpair {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 
     int fd;
 
@@ -139,13 +139,13 @@ static const struct istream_handler socketpair_input_handler = {
  */
 
 static inline struct istream_socketpair *
-istream_to_socketpair(istream_t istream)
+istream_to_socketpair(struct istream *istream)
 {
     return (struct istream_socketpair *)(((char*)istream) - offsetof(struct istream_socketpair, output));
 }
 
 static void
-istream_socketpair_read(istream_t istream)
+istream_socketpair_read(struct istream *istream)
 {
     struct istream_socketpair *sp = istream_to_socketpair(istream);
 
@@ -155,7 +155,7 @@ istream_socketpair_read(istream_t istream)
 }
 
 static void
-istream_socketpair_close(istream_t istream)
+istream_socketpair_close(struct istream *istream)
 {
     struct istream_socketpair *sp = istream_to_socketpair(istream);
 
@@ -256,8 +256,8 @@ socketpair_send_callback(int fd gcc_unused, short event gcc_unused,
  *
  */
 
-istream_t
-istream_socketpair_new(struct pool *pool, istream_t input, int *fd_r)
+struct istream *
+istream_socketpair_new(struct pool *pool, struct istream *input, int *fd_r)
 {
     struct istream_socketpair *sp;
     int ret, fds[2];

@@ -14,7 +14,7 @@
 
 struct istream_catch {
     struct istream output;
-    istream_t input;
+    struct istream *input;
     off_t available;
 
     GError *(*callback)(GError *error, void *ctx);
@@ -134,13 +134,13 @@ static const struct istream_handler catch_input_handler = {
  */
 
 static inline struct istream_catch *
-istream_to_catch(istream_t istream)
+istream_to_catch(struct istream *istream)
 {
     return (struct istream_catch *)(((char*)istream) - offsetof(struct istream_catch, output));
 }
 
 static off_t 
-istream_catch_available(istream_t istream, bool partial)
+istream_catch_available(struct istream *istream, bool partial)
 {
     struct istream_catch *catch = istream_to_catch(istream);
 
@@ -155,7 +155,7 @@ istream_catch_available(istream_t istream, bool partial)
 }
 
 static void
-istream_catch_read(istream_t istream)
+istream_catch_read(struct istream *istream)
 {
     struct istream_catch *catch = istream_to_catch(istream);
 
@@ -167,7 +167,7 @@ istream_catch_read(istream_t istream)
 }
 
 static void
-istream_catch_close(istream_t istream)
+istream_catch_close(struct istream *istream)
 {
     struct istream_catch *catch = istream_to_catch(istream);
 
@@ -189,8 +189,8 @@ static const struct istream_class istream_catch = {
  *
  */
 
-istream_t
-istream_catch_new(struct pool *pool, istream_t input,
+struct istream *
+istream_catch_new(struct pool *pool, struct istream *input,
                   GError *(*callback)(GError *error, void *ctx), void *ctx)
 {
     struct istream_catch *catch = istream_new_macro(pool, catch);

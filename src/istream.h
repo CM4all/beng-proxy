@@ -46,8 +46,6 @@ enum istream_result {
     ISTREAM_RESULT_CLOSED = -3,
 };
 
-typedef struct istream *istream_t;
-
 /** data sink for an istream */
 struct istream_handler {
     /**

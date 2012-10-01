@@ -13,7 +13,7 @@
 
 struct istream_fcgi {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 
     size_t missing_from_current_record;
 
@@ -148,13 +148,13 @@ static const struct istream_handler fcgi_input_handler = {
  */
 
 static inline struct istream_fcgi *
-istream_to_fcgi(istream_t istream)
+istream_to_fcgi(struct istream *istream)
 {
     return (struct istream_fcgi *)(((char*)istream) - offsetof(struct istream_fcgi, output));
 }
 
 static void
-istream_fcgi_read(istream_t istream)
+istream_fcgi_read(struct istream *istream)
 {
     struct istream_fcgi *fcgi = istream_to_fcgi(istream);
 
@@ -181,7 +181,7 @@ istream_fcgi_read(istream_t istream)
 }
 
 static void
-istream_fcgi_close(istream_t istream)
+istream_fcgi_close(struct istream *istream)
 {
     struct istream_fcgi *fcgi = istream_to_fcgi(istream);
 
@@ -202,8 +202,8 @@ static const struct istream_class istream_fcgi = {
  *
  */
 
-istream_t
-istream_fcgi_new(struct pool *pool, istream_t input, uint16_t request_id)
+struct istream *
+istream_fcgi_new(struct pool *pool, struct istream *input, uint16_t request_id)
 {
     assert(input != NULL);
     assert(!istream_has_handler(input));

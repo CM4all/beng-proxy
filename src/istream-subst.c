@@ -27,7 +27,7 @@ struct subst_node {
 
 struct istream_subst {
     struct istream output;
-    istream_t input;
+    struct istream *input;
     bool had_input, had_output;
 
     bool send_first;
@@ -597,13 +597,13 @@ static const struct istream_handler subst_input_handler = {
  */
 
 static inline struct istream_subst *
-istream_to_subst(istream_t istream)
+istream_to_subst(struct istream *istream)
 {
     return (struct istream_subst *)(((char*)istream) - offsetof(struct istream_subst, output));
 }
 
 static void
-istream_subst_read(istream_t istream)
+istream_subst_read(struct istream *istream)
 {
     struct istream_subst *subst = istream_to_subst(istream);
     size_t nbytes;
@@ -658,7 +658,7 @@ istream_subst_read(istream_t istream)
 }
 
 static void
-istream_subst_close(istream_t istream)
+istream_subst_close(struct istream *istream)
 {
     struct istream_subst *subst = istream_to_subst(istream);
 
@@ -681,8 +681,8 @@ static const struct istream_class istream_subst = {
  *
  */
 
-istream_t
-istream_subst_new(struct pool *pool, istream_t input)
+struct istream *
+istream_subst_new(struct pool *pool, struct istream *input)
 {
     struct istream_subst *subst = istream_new_macro(pool, subst);
 
@@ -701,7 +701,7 @@ istream_subst_new(struct pool *pool, istream_t input)
 }
 
 bool
-istream_subst_add_n(istream_t istream, const char *a0,
+istream_subst_add_n(struct istream *istream, const char *a0,
                     const char *b, size_t b_length)
 {
     struct istream_subst *subst = istream_to_subst(istream);
@@ -765,7 +765,7 @@ istream_subst_add_n(istream_t istream, const char *a0,
 }
 
 bool
-istream_subst_add(istream_t istream, const char *a, const char *b)
+istream_subst_add(struct istream *istream, const char *a, const char *b)
 {
     return istream_subst_add_n(istream, a, b, b == NULL ? 0 : strlen(b));
 }

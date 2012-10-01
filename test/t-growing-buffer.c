@@ -131,7 +131,7 @@ run_istream(struct pool *pool, struct istream *istream)
     run_istream_ctx(&ctx, pool, istream);
 }
 
-static istream_t
+static struct istream *
 create_test(struct pool *pool)
 {
     struct growing_buffer *gb = growing_buffer_new(pool, 64);
@@ -139,7 +139,7 @@ create_test(struct pool *pool)
     return istream_gb_new(pool, gb);
 }
 
-static istream_t
+static struct istream *
 create_empty(struct pool *pool)
 {
     struct growing_buffer *gb = growing_buffer_new(pool, 64);

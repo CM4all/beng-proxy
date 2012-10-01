@@ -21,7 +21,8 @@ struct istream_tee {
 
         bool enabled;
     } outputs[2];
-    istream_t input;
+
+    struct istream *input;
 
     /**
      * These flags control whether istream_tee_close[12]() may restart
@@ -201,13 +202,13 @@ static const struct istream_handler tee_input_handler = {
 #endif
 
 static inline struct istream_tee *
-istream_to_tee0(istream_t istream)
+istream_to_tee0(struct istream *istream)
 {
     return (struct istream_tee *)(((char*)istream) - offsetof(struct istream_tee, outputs[0].istream));
 }
 
 static off_t
-istream_tee_available0(istream_t istream, bool partial)
+istream_tee_available0(struct istream *istream, bool partial)
 {
     struct istream_tee *tee = istream_to_tee0(istream);
 
@@ -217,7 +218,7 @@ istream_tee_available0(istream_t istream, bool partial)
 }
 
 static void
-istream_tee_read0(istream_t istream)
+istream_tee_read0(struct istream *istream)
 {
     struct istream_tee *tee = istream_to_tee0(istream);
 
@@ -234,7 +235,7 @@ istream_tee_read0(istream_t istream)
 }
 
 static void
-istream_tee_close0(istream_t istream)
+istream_tee_close0(struct istream *istream)
 {
     struct istream_tee *tee = istream_to_tee0(istream);
 
@@ -283,13 +284,13 @@ static const struct istream_class istream_tee0 = {
  */
 
 static inline struct istream_tee *
-istream_to_tee1(istream_t istream)
+istream_to_tee1(struct istream *istream)
 {
     return (struct istream_tee *)(((char*)istream) - offsetof(struct istream_tee, outputs[1].istream));
 }
 
 static off_t
-istream_tee_available1(istream_t istream, bool partial)
+istream_tee_available1(struct istream *istream, bool partial)
 {
     struct istream_tee *tee = istream_to_tee1(istream);
 
@@ -299,7 +300,7 @@ istream_tee_available1(istream_t istream, bool partial)
 }
 
 static void
-istream_tee_read1(istream_t istream)
+istream_tee_read1(struct istream *istream)
 {
     struct istream_tee *tee = istream_to_tee1(istream);
 
@@ -315,7 +316,7 @@ istream_tee_read1(istream_t istream)
 }
 
 static void
-istream_tee_close1(istream_t istream)
+istream_tee_close1(struct istream *istream)
 {
     struct istream_tee *tee = istream_to_tee1(istream);
 
@@ -363,8 +364,8 @@ static const struct istream_class istream_tee1 = {
  *
  */
 
-istream_t
-istream_tee_new(struct pool *pool, istream_t input,
+struct istream *
+istream_tee_new(struct pool *pool, struct istream *input,
                 bool first_weak, bool second_weak)
 {
     struct istream_tee *tee = (struct istream_tee *)
@@ -391,8 +392,8 @@ istream_tee_new(struct pool *pool, istream_t input,
     return istream_struct_cast(&tee->outputs[0].istream);
 }
 
-istream_t
-istream_tee_second(istream_t istream)
+struct istream *
+istream_tee_second(struct istream *istream)
 {
     struct istream_tee *tee = istream_to_tee0(istream);
 

@@ -12,7 +12,7 @@
 
 struct istream_four {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 };
 
 
@@ -57,13 +57,13 @@ static const struct istream_handler four_input_handler = {
  */
 
 static inline struct istream_four *
-istream_to_four(istream_t istream)
+istream_to_four(struct istream *istream)
 {
     return (struct istream_four *)(((char*)istream) - offsetof(struct istream_four, output));
 }
 
 static void
-istream_four_read(istream_t istream)
+istream_four_read(struct istream *istream)
 {
     struct istream_four *four = istream_to_four(istream);
 
@@ -73,7 +73,7 @@ istream_four_read(istream_t istream)
 }
 
 static void
-istream_four_close(istream_t istream)
+istream_four_close(struct istream *istream)
 {
     struct istream_four *four = istream_to_four(istream);
 
@@ -94,8 +94,8 @@ static const struct istream_class istream_four = {
  *
  */
 
-istream_t
-istream_four_new(struct pool *pool, istream_t input)
+struct istream *
+istream_four_new(struct pool *pool, struct istream *input)
 {
     struct istream_four *four = istream_new_macro(pool, four);
 

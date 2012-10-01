@@ -11,7 +11,7 @@
 
 struct istream_head {
     struct istream output;
-    istream_t input;
+    struct istream *input;
     off_t rest;
 };
 
@@ -95,13 +95,13 @@ static const struct istream_handler head_input_handler = {
  */
 
 static inline struct istream_head *
-istream_to_head(istream_t istream)
+istream_to_head(struct istream *istream)
 {
     return (struct istream_head *)(((char*)istream) - offsetof(struct istream_head, output));
 }
 
 static off_t
-istream_head_available(gcc_unused istream_t istream, bool partial)
+istream_head_available(gcc_unused struct istream *istream, bool partial)
 {
     struct istream_head *head = istream_to_head(istream);
     off_t available = istream_available(head->input, partial);
@@ -113,7 +113,7 @@ istream_head_available(gcc_unused istream_t istream, bool partial)
 }
 
 static off_t
-istream_head_skip(istream_t istream, off_t length)
+istream_head_skip(struct istream *istream, off_t length)
 {
     struct istream_head *head = istream_to_head(istream);
 
@@ -130,7 +130,7 @@ istream_head_skip(istream_t istream, off_t length)
 }
 
 static void
-istream_head_read(istream_t istream)
+istream_head_read(struct istream *istream)
 {
     struct istream_head *head = istream_to_head(istream);
 
@@ -145,7 +145,7 @@ istream_head_read(istream_t istream)
 }
 
 static void
-istream_head_close(istream_t istream)
+istream_head_close(struct istream *istream)
 {
     struct istream_head *head = istream_to_head(istream);
 
@@ -166,8 +166,8 @@ static const struct istream_class istream_head = {
  *
  */
 
-istream_t
-istream_head_new(struct pool *pool, istream_t input, size_t size)
+struct istream *
+istream_head_new(struct pool *pool, struct istream *input, size_t size)
 {
     struct istream_head *head = istream_new_macro(pool, head);
 

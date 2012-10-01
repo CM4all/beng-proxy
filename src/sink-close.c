@@ -14,7 +14,7 @@ static size_t
 sink_close_data(gcc_unused const void *data, gcc_unused size_t length,
                 void *ctx)
 {
-    istream_t istream = ctx;
+    struct istream *istream = ctx;
 
     istream_close_handler(istream);
     return 0;
@@ -47,7 +47,7 @@ static const struct istream_handler sink_close_handler = {
 };
 
 void
-sink_close_new(istream_t istream)
+sink_close_new(struct istream *istream)
 {
     istream_handler_set(istream, &sink_close_handler, istream, 0);
 }

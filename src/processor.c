@@ -308,7 +308,7 @@ processor_new(struct pool *caller_pool,
     return processor;
 }
 
-istream_t
+struct istream *
 processor_process(struct pool *caller_pool, struct istream *istream,
                   struct widget *widget,
                   struct processor_env *env,
@@ -1256,7 +1256,7 @@ widget_catch_callback(GError *error, void *ctx)
     return NULL;
 }
 
-static istream_t
+static struct istream *
 embed_widget(struct processor *processor, struct processor_env *env,
              struct widget *widget)
 {
@@ -1303,7 +1303,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
     }
 }
 
-static istream_t
+static struct istream *
 open_widget_element(struct processor *processor, struct widget *widget)
 {
     assert(widget->parent == processor->container);

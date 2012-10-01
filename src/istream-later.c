@@ -12,7 +12,7 @@
 
 struct istream_later {
     struct istream output;
-    istream_t input;
+    struct istream *input;
     struct event event;
 };
 
@@ -78,13 +78,13 @@ static const struct istream_handler later_input_handler = {
  */
 
 static inline struct istream_later *
-istream_to_later(istream_t istream)
+istream_to_later(struct istream *istream)
 {
     return (struct istream_later *)(((char*)istream) - offsetof(struct istream_later, output));
 }
 
 static void
-istream_later_read(istream_t istream)
+istream_later_read(struct istream *istream)
 {
     struct istream_later *later = istream_to_later(istream);
 
@@ -92,7 +92,7 @@ istream_later_read(istream_t istream)
 }
 
 static void
-istream_later_close(istream_t istream)
+istream_later_close(struct istream *istream)
 {
     struct istream_later *later = istream_to_later(istream);
 
@@ -116,8 +116,8 @@ static const struct istream_class istream_later = {
  *
  */
 
-istream_t
-istream_later_new(struct pool *pool, istream_t input)
+struct istream *
+istream_later_new(struct pool *pool, struct istream *input)
 {
     struct istream_later *later = istream_new_macro(pool, later);
 

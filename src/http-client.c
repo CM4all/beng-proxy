@@ -57,9 +57,9 @@ struct http_client {
          * An "istream_optional" which blocks sending the request body
          * until the server has confirmed "100 Continue".
          */
-        istream_t body;
+        struct istream *body;
 
-        istream_t istream;
+        struct istream *istream;
         char content_length_buffer[32];
 
         struct http_response_handler_ref handler;
@@ -90,7 +90,7 @@ struct http_client {
 
         http_status_t status;
         struct strmap *headers;
-        istream_t body;
+        struct istream *body;
         struct http_body_reader body_reader;
     } response;
 
@@ -255,13 +255,13 @@ http_client_abort_response(struct http_client *client, GError *error)
 #endif
 
 static inline struct http_client *
-response_stream_to_http_client(istream_t istream)
+response_stream_to_http_client(struct istream *istream)
 {
     return (struct http_client *)(((char*)istream) - offsetof(struct http_client, response.body_reader.output));
 }
 
 static off_t
-http_client_response_stream_available(istream_t istream, bool partial)
+http_client_response_stream_available(struct istream *istream, bool partial)
 {
     struct http_client *client = response_stream_to_http_client(istream);
 
@@ -278,7 +278,7 @@ http_client_response_stream_available(istream_t istream, bool partial)
 }
 
 static void
-http_client_response_stream_read(istream_t istream)
+http_client_response_stream_read(struct istream *istream)
 {
     struct http_client *client = response_stream_to_http_client(istream);
 
@@ -300,7 +300,7 @@ http_client_response_stream_read(istream_t istream)
 }
 
 static int
-http_client_response_stream_as_fd(istream_t istream)
+http_client_response_stream_as_fd(struct istream *istream)
 {
     struct http_client *client = response_stream_to_http_client(istream);
 
@@ -328,7 +328,7 @@ http_client_response_stream_as_fd(istream_t istream)
 }
 
 static void
-http_client_response_stream_close(istream_t istream)
+http_client_response_stream_close(struct istream *istream)
 {
     struct http_client *client = response_stream_to_http_client(istream);
 
@@ -1129,7 +1129,7 @@ http_client_request(struct pool *caller_pool,
                     const struct lease *lease, void *lease_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
-                    istream_t body, bool expect_100,
+                    struct istream *body, bool expect_100,
                     const struct http_response_handler *handler,
                     void *ctx,
                     struct async_operation_ref *async_ref)
@@ -1184,11 +1184,11 @@ http_client_request(struct pool *caller_pool,
     const char *p = p_strcat(client->pool,
                              http_method_to_string(method), " ", uri,
                              " HTTP/1.1\r\n", NULL);
-    istream_t request_line_stream = istream_string_new(client->pool, p);
+    struct istream *request_line_stream = istream_string_new(client->pool, p);
 
     /* headers */
 
-    istream_t header_stream = headers != NULL
+    struct istream *header_stream = headers != NULL
         ? istream_gb_new(client->pool, headers)
         : istream_null_new(client->pool);
 
@@ -1222,7 +1222,7 @@ http_client_request(struct pool *caller_pool,
 
     growing_buffer_write_buffer(headers2, "\r\n", 2);
 
-    istream_t header_stream2 = istream_gb_new(client->pool, headers2);
+    struct istream *header_stream2 = istream_gb_new(client->pool, headers2);
 
     /* request istream */
 

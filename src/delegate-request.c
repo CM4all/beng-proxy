@@ -38,7 +38,7 @@ delegate_get_callback(int fd, void *ctx)
     int ret;
     struct stat st;
     struct strmap *headers;
-    istream_t body;
+    struct istream *body;
 
     ret = fstat(fd, &st);
     if (ret < 0) {

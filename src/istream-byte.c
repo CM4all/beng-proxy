@@ -11,7 +11,7 @@
 
 struct istream_byte {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 };
 
 
@@ -54,13 +54,13 @@ static const struct istream_handler byte_input_handler = {
  */
 
 static inline struct istream_byte *
-istream_to_byte(istream_t istream)
+istream_to_byte(struct istream *istream)
 {
     return (struct istream_byte *)(((char*)istream) - offsetof(struct istream_byte, output));
 }
 
 static void
-istream_byte_read(istream_t istream)
+istream_byte_read(struct istream *istream)
 {
     struct istream_byte *byte = istream_to_byte(istream);
 
@@ -70,7 +70,7 @@ istream_byte_read(istream_t istream)
 }
 
 static void
-istream_byte_close(istream_t istream)
+istream_byte_close(struct istream *istream)
 {
     struct istream_byte *byte = istream_to_byte(istream);
 
@@ -91,8 +91,8 @@ static const struct istream_class istream_byte = {
  *
  */
 
-istream_t
-istream_byte_new(struct pool *pool, istream_t input)
+struct istream *
+istream_byte_new(struct pool *pool, struct istream *input)
 {
     struct istream_byte *byte = istream_new_macro(pool, byte);
 

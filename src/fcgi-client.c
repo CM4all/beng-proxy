@@ -56,7 +56,7 @@ struct fcgi_client {
     struct {
         struct event event;
 
-        istream_t istream;
+        struct istream *istream;
     } request;
 
     struct {
@@ -353,7 +353,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
                         status = (http_status_t)i;
                 }
 
-                istream_t body;
+                struct istream *body;
                 if (!http_status_is_empty(status)) {
                     fcgi_client_response_body_init(client);
                     body = istream_struct_cast(&client->response.body);
@@ -670,13 +670,13 @@ static const struct istream_handler fcgi_request_stream_handler = {
 #endif
 
 static inline struct fcgi_client *
-response_stream_to_client(istream_t istream)
+response_stream_to_client(struct istream *istream)
 {
     return (struct fcgi_client *)(((char*)istream) - offsetof(struct fcgi_client, response.body));
 }
 
 static off_t
-fcgi_client_response_body_available(istream_t istream, bool partial)
+fcgi_client_response_body_available(struct istream *istream, bool partial)
 {
     struct fcgi_client *client = response_stream_to_client(istream);
 
@@ -689,7 +689,7 @@ fcgi_client_response_body_available(istream_t istream, bool partial)
 }
 
 static void
-fcgi_client_response_body_read(istream_t istream)
+fcgi_client_response_body_read(struct istream *istream)
 {
     struct fcgi_client *client = response_stream_to_client(istream);
 
@@ -698,7 +698,7 @@ fcgi_client_response_body_read(istream_t istream)
 }
 
 static void
-fcgi_client_response_body_close(istream_t istream)
+fcgi_client_response_body_close(struct istream *istream)
 {
     struct fcgi_client *client = response_stream_to_client(istream);
 
@@ -765,7 +765,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
                     const char *query_string,
                     const char *document_root,
                     const char *remote_addr,
-                    struct strmap *headers, istream_t body,
+                    struct strmap *headers, struct istream *body,
                     const char *const params[], unsigned num_params,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
@@ -871,7 +871,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     header.content_length = htons(0);
     growing_buffer_write_buffer(buffer, &header, sizeof(header));
 
-    istream_t request;
+    struct istream *request;
 
     if (body != NULL)
         /* format the request body */

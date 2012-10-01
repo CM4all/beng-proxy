@@ -18,7 +18,7 @@ struct istream_gb {
 };
 
 static off_t
-istream_gb_available(istream_t istream, bool partial gcc_unused)
+istream_gb_available(struct istream *istream, bool partial gcc_unused)
 {
     struct istream_gb *igb = (struct istream_gb *)istream;
 
@@ -26,7 +26,7 @@ istream_gb_available(istream_t istream, bool partial gcc_unused)
 }
 
 static void
-istream_gb_read(istream_t istream)
+istream_gb_read(struct istream *istream)
 {
     struct istream_gb *igb = (struct istream_gb *)istream;
 
@@ -54,7 +54,7 @@ istream_gb_read(istream_t istream)
 }
 
 static void
-istream_gb_close(istream_t istream)
+istream_gb_close(struct istream *istream)
 {
     struct istream_gb *igb = (struct istream_gb *)istream;
 
@@ -67,7 +67,7 @@ static const struct istream_class istream_gb = {
     .close = istream_gb_close,
 };
 
-istream_t
+struct istream *
 istream_gb_new(struct pool *pool, const struct growing_buffer *gb)
 {
     assert(gb != NULL);

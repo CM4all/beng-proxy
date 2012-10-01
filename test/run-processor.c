@@ -61,7 +61,7 @@ parse_uri_mode(G_GNUC_UNUSED const struct strref *s)
     return URI_MODE_DIRECT;
 }
 
-istream_t
+struct istream *
 rewrite_widget_uri(gcc_unused struct pool *pool,
                    gcc_unused struct pool *widget_pool,
                    gcc_unused struct tcache *translate_cache,

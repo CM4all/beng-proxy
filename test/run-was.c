@@ -136,7 +136,7 @@ static const struct http_response_handler my_response_handler = {
     .abort = my_response_abort,
 };
 
-static istream_t
+static struct istream *
 request_body(struct pool *pool)
 {
     struct stat st;

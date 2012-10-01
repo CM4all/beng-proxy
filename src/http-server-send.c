@@ -63,11 +63,11 @@ void
 http_server_response(const struct http_server_request *request,
                      http_status_t status,
                      struct growing_buffer *headers,
-                     istream_t body)
+                     struct istream *body)
 {
     struct http_server_connection *connection = request->connection;
     off_t content_length;
-    istream_t status_stream, header_stream;
+    struct istream *status_stream, *header_stream;
 
     assert(connection->score != HTTP_SERVER_NEW);
     assert(connection->request.request == request);

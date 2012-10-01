@@ -27,21 +27,21 @@ widget_class_lookup(gcc_unused struct pool *pool, gcc_unused struct pool *widget
     callback(NULL, ctx);
 }
 
-istream_t
+struct istream *
 embed_inline_widget(struct pool *pool, gcc_unused struct processor_env *env,
                     struct widget *widget)
 {
     return istream_string_new(pool, p_strdup(pool, widget->class_name));
 }
 
-static istream_t
+static struct istream *
 create_input(struct pool *pool)
 {
     return istream_string_new(pool, "foo &c:url; <script><c:widget id=\"foo\" type=\"bar\"/></script> <c:widget id=\"foo\" type=\"bar\"/>");
 }
 
-static istream_t
-create_test(struct pool *pool, istream_t input)
+static struct istream *
+create_test(struct pool *pool, struct istream *input)
 {
     bool ret;
     const char *uri;

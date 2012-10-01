@@ -53,18 +53,18 @@ static const struct http_server_connection_handler catch_close_handler = {
 static void
 test_catch(struct pool *pool)
 {
-    istream_t request, sock;
     int fd;
     struct http_server_connection *connection;
 
     pool = pool_new_libc(pool, "catch");
 
-    request = istream_cat_new(pool,
-                              istream_string_new(pool,
-                                                 "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo"),
-                              istream_block_new(pool),
-                              NULL);
-    sock = istream_socketpair_new(pool, request, &fd);
+    struct istream *request =
+        istream_cat_new(pool,
+                        istream_string_new(pool,
+                                           "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo"),
+                        istream_block_new(pool),
+                        NULL);
+    struct istream *sock = istream_socketpair_new(pool, request, &fd);
     sink_null_new(sock);
 
     http_server_connection_new(pool, fd, ISTREAM_SOCKET,

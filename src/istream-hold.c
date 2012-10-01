@@ -17,7 +17,7 @@
 
 struct istream_hold {
     struct istream output;
-    istream_t input;
+    struct istream *input;
     bool input_eof;
 
     GError *input_error;
@@ -99,13 +99,13 @@ static const struct istream_handler hold_input_handler = {
  */
 
 static inline struct istream_hold *
-istream_to_hold(istream_t istream)
+istream_to_hold(struct istream *istream)
 {
     return (struct istream_hold *)(((char*)istream) - offsetof(struct istream_hold, output));
 }
 
 static off_t
-istream_hold_available(istream_t istream, bool partial)
+istream_hold_available(struct istream *istream, bool partial)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 
@@ -118,7 +118,7 @@ istream_hold_available(istream_t istream, bool partial)
 }
 
 static void
-istream_hold_read(istream_t istream)
+istream_hold_read(struct istream *istream)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 
@@ -135,7 +135,7 @@ istream_hold_read(istream_t istream)
 }
 
 static int
-istream_hold_as_fd(istream_t istream)
+istream_hold_as_fd(struct istream *istream)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 
@@ -147,7 +147,7 @@ istream_hold_as_fd(istream_t istream)
 }
 
 static void
-istream_hold_close(istream_t istream)
+istream_hold_close(struct istream *istream)
 {
     struct istream_hold *hold = istream_to_hold(istream);
 
@@ -177,8 +177,8 @@ static const struct istream_class istream_hold = {
  *
  */
 
-istream_t
-istream_hold_new(struct pool *pool, istream_t input)
+struct istream *
+istream_hold_new(struct pool *pool, struct istream *input)
 {
     struct istream_hold *hold = istream_new_macro(pool, hold);
 

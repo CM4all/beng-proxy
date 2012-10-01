@@ -5,7 +5,7 @@
 
 #define EXPECTED_RESULT "foo"
 
-static istream_t
+static struct istream *
 create_input(struct pool *pool)
 {
     return istream_string_new(pool, "foo");
@@ -22,10 +22,10 @@ static const struct async_operation_class my_delayed_operation = {
     .abort = my_delayed_abort,
 };
 
-static istream_t
-create_test(struct pool *pool, istream_t input)
+static struct istream *
+create_test(struct pool *pool, struct istream *input)
 {
-    istream_t istream;
+    struct istream *istream;
     static struct async_operation async;
 
     async_init(&async, &my_delayed_operation);

@@ -41,7 +41,7 @@ static const struct sink_header_handler my_sink_header_handler = {
     .error = my_sink_header_error,
 };
 
-static istream_t
+static struct istream *
 create_test(struct pool *pool, struct istream *input)
 {
     struct istream *delayed, *hold;

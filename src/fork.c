@@ -31,7 +31,7 @@ struct fork {
     struct event output_event;
     struct fifo_buffer *buffer;
 
-    istream_t input;
+    struct istream *input;
     int input_fd;
     struct event input_event;
 
@@ -318,13 +318,13 @@ fork_output_event_callback(int fd gcc_unused, short event gcc_unused,
  */
 
 static inline struct fork *
-istream_to_fork(istream_t istream)
+istream_to_fork(struct istream *istream)
 {
     return (struct fork *)(((char*)istream) - offsetof(struct fork, output));
 }
 
 static void
-istream_fork_read(istream_t istream)
+istream_fork_read(struct istream *istream)
 {
     struct fork *f = istream_to_fork(istream);
 
@@ -334,7 +334,7 @@ istream_fork_read(istream_t istream)
 }
 
 static void
-istream_fork_close(istream_t istream)
+istream_fork_close(struct istream *istream)
 {
     struct fork *f = istream_to_fork(istream);
 
@@ -376,7 +376,7 @@ fork_child_callback(int status, void *ctx)
 
 pid_t
 beng_fork(struct pool *pool, const char *name,
-          istream_t input, istream_t *output_r,
+          struct istream *input, struct istream **output_r,
           child_callback_t callback, void *ctx,
           GError **error_r)
 {

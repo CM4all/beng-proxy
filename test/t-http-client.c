@@ -124,13 +124,13 @@ struct context {
     char *content_length;
     off_t available;
 
-    istream_t delayed;
+    struct istream *delayed;
 
-    istream_t body;
+    struct istream *body;
     off_t body_data, consumed_body_data;
     bool body_eof, body_abort, body_closed;
 
-    istream_t request_body;
+    struct istream *request_body;
     bool close_request_body_early, close_request_body_eof;
     GError *body_error;
 };
@@ -223,7 +223,7 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static void
-my_response(http_status_t status, struct strmap *headers, istream_t body,
+my_response(http_status_t status, struct strmap *headers, struct istream *body,
             void *ctx)
 {
     struct context *c = ctx;
@@ -426,7 +426,7 @@ test_close_response_body_data(struct pool *pool, struct context *c)
 static void
 test_close_request_body_early(struct pool *pool, struct context *c)
 {
-    istream_t request_body = istream_delayed_new(pool);
+    struct istream *request_body = istream_delayed_new(pool);
 
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
@@ -456,8 +456,8 @@ test_close_request_body_early(struct pool *pool, struct context *c)
 static void
 test_close_request_body_fail(struct pool *pool, struct context *c)
 {
-    istream_t delayed = istream_delayed_new(pool);
-    istream_t request_body =
+    struct istream *delayed = istream_delayed_new(pool);
+    struct istream *request_body =
         istream_cat_new(pool,
                         istream_head_new(pool, istream_zero_new(pool), 8192),
                         delayed,
@@ -837,7 +837,7 @@ test_twice_100(struct pool *pool, struct context *c)
 static void
 test_hold(struct pool *pool, struct context *c)
 {
-    istream_t request_body = istream_block_new(pool);
+    struct istream *request_body = istream_block_new(pool);
 
     c->fd = connect_hold();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,

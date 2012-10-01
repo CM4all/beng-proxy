@@ -46,10 +46,10 @@ struct ajp_client {
     struct {
         struct event event;
 
-        istream_t istream;
+        struct istream *istream;
 
         /** an istream_ajp_body */
-        istream_t ajp_body;
+        struct istream *ajp_body;
 
         struct http_response_handler_ref handler;
         struct async_operation async;
@@ -217,13 +217,13 @@ ajp_client_abort_response(struct ajp_client *client, GError *error)
 #endif
 
 static inline struct ajp_client *
-istream_to_ajp(istream_t istream)
+istream_to_ajp(struct istream *istream)
 {
     return (struct ajp_client *)(((char*)istream) - offsetof(struct ajp_client, response.body));
 }
 
 static void
-istream_ajp_read(istream_t istream)
+istream_ajp_read(struct istream *istream)
 {
     struct ajp_client *client = istream_to_ajp(istream);
 
@@ -239,7 +239,7 @@ istream_ajp_read(istream_t istream)
 }
 
 static void
-istream_ajp_close(istream_t istream)
+istream_ajp_close(struct istream *istream)
 {
     struct ajp_client *client = istream_to_ajp(istream);
 
@@ -272,7 +272,7 @@ ajp_consume_send_headers(struct ajp_client *client,
 {
     http_status_t status;
     unsigned num_headers;
-    istream_t body;
+    struct istream *body;
     struct strref packet;
     struct strmap *headers;
 
@@ -830,7 +830,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                    unsigned server_port, bool is_ssl,
                    http_method_t method, const char *uri,
                    struct strmap *headers,
-                   istream_t body,
+                   struct istream *body,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
@@ -844,7 +844,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     } prefix_and_method;
     struct growing_buffer *headers_buffer = NULL;
     unsigned num_headers;
-    istream_t request;
+    struct istream *request;
     size_t requested;
 
     assert(protocol != NULL);

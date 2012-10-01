@@ -29,7 +29,7 @@ struct context {
     bool idle, reuse, aborted;
     http_status_t status;
 
-    istream_t body;
+    struct istream *body;
     bool body_eof, body_abort, body_closed;
 };
 
@@ -114,7 +114,7 @@ static const struct istream_handler my_istream_handler = {
 
 static void
 my_response(http_status_t status, struct strmap *headers gcc_unused,
-            istream_t body gcc_unused,
+            struct istream *body gcc_unused,
             void *ctx)
 {
     struct context *c = ctx;
@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
     struct event_base *event_base;
     struct pool *root_pool, *pool;
     http_method_t method;
-    istream_t request_body;
+    struct istream *request_body;
     static struct context ctx;
     struct async_operation_ref async_ref;
 

@@ -22,7 +22,7 @@
 
 struct istream_pipe {
     struct istream output;
-    istream_t input;
+    struct istream *input;
     struct stock *stock;
     struct stock_item *stock_item;
     int fds[2];
@@ -259,13 +259,13 @@ static const struct istream_handler pipe_input_handler = {
  */
 
 static inline struct istream_pipe *
-istream_to_pipe(istream_t istream)
+istream_to_pipe(struct istream *istream)
 {
     return (struct istream_pipe *)(((char*)istream) - offsetof(struct istream_pipe, output));
 }
 
 static off_t
-istream_pipe_available(istream_t istream, bool partial)
+istream_pipe_available(struct istream *istream, bool partial)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
 
@@ -287,7 +287,7 @@ istream_pipe_available(istream_t istream, bool partial)
 }
 
 static void
-istream_pipe_read(istream_t istream)
+istream_pipe_read(struct istream *istream)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
     istream_direct_t mask;
@@ -310,7 +310,7 @@ istream_pipe_read(istream_t istream)
 }
 
 static int
-istream_pipe_as_fd(istream_t istream)
+istream_pipe_as_fd(struct istream *istream)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
 
@@ -328,7 +328,7 @@ istream_pipe_as_fd(istream_t istream)
 }
 
 static void
-istream_pipe_close(istream_t istream)
+istream_pipe_close(struct istream *istream)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
 
@@ -353,8 +353,9 @@ static const struct istream_class istream_pipe = {
  *
  */
 
-istream_t
-istream_pipe_new(struct pool *pool, istream_t input, struct stock *pipe_stock)
+struct istream *
+istream_pipe_new(struct pool *pool, struct istream *input,
+                 struct stock *pipe_stock)
 {
     struct istream_pipe *p = istream_new_macro(pool, pipe);
 

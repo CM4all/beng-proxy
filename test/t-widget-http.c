@@ -126,7 +126,7 @@ filter_cache_request(gcc_unused struct filter_cache *cache,
 
 struct stock *global_pipe_stock;
 
-istream_t
+struct istream *
 istream_pipe_new(gcc_unused struct pool *pool, struct istream *input,
                  gcc_unused struct stock *pipe_stock)
 {

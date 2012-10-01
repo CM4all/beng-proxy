@@ -46,7 +46,7 @@ inline_widget_close(struct inline_widget *iw, GError *error)
  * HTML/XML document.  Returns NULL (and closes body) if that is
  * impossible.
  */
-static istream_t
+static struct istream *
 widget_response_format(struct pool *pool, const struct widget *widget,
                        struct strmap **headers_r, struct istream *body,
                        GError **error_r)

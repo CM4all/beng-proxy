@@ -72,9 +72,9 @@ struct context {
     bool released, reuse, got_response;
     enum memcached_response_status status;
 
-    istream_t delayed;
+    struct istream *delayed;
 
-    istream_t value;
+    struct istream *value;
     off_t value_data, consumed_value_data;
     bool value_eof, value_abort, value_closed;
 
@@ -121,13 +121,13 @@ struct request_value {
 };
 
 static inline struct request_value *
-istream_to_value(istream_t istream)
+istream_to_value(struct istream *istream)
 {
     return (struct request_value *)(((char*)istream) - offsetof(struct request_value, base));
 }
 
 static off_t
-istream_request_value_available(istream_t istream, G_GNUC_UNUSED bool partial)
+istream_request_value_available(struct istream *istream, G_GNUC_UNUSED bool partial)
 {
     const struct request_value *v = istream_to_value(istream);
 
@@ -135,7 +135,7 @@ istream_request_value_available(istream_t istream, G_GNUC_UNUSED bool partial)
 }
 
 static void
-istream_request_value_read(istream_t istream)
+istream_request_value_read(struct istream *istream)
 {
     struct request_value *v = istream_to_value(istream);
 
@@ -161,7 +161,7 @@ istream_request_value_read(istream_t istream)
 }
 
 static void
-istream_request_value_close(istream_t istream)
+istream_request_value_close(struct istream *istream)
 {
     struct request_value *v = istream_to_value(istream);
 
@@ -174,7 +174,7 @@ static const struct istream_class istream_request_value = {
     .close = istream_request_value_close,
 };
 
-static istream_t
+static struct istream *
 request_value_new(struct pool *pool, bool read_close, bool read_abort)
 {
     struct request_value *v = (struct request_value *)
@@ -188,7 +188,7 @@ request_value_new(struct pool *pool, bool read_close, bool read_abort)
 }
 
 static struct async_operation_ref *
-request_value_async_ref(istream_t istream)
+request_value_async_ref(struct istream *istream)
 {
     struct request_value *v = istream_to_value(istream);
 
@@ -260,7 +260,7 @@ my_mcd_response(enum memcached_response_status status,
                 G_GNUC_UNUSED size_t extras_length,
                 G_GNUC_UNUSED const void *key,
                 G_GNUC_UNUSED size_t key_length,
-                istream_t value, void *ctx)
+                struct istream *value, void *ctx)
 {
     struct context *c = ctx;
 
@@ -446,7 +446,7 @@ test_abort(struct pool *pool, struct context *c)
 static void
 test_request_value(struct pool *pool, struct context *c)
 {
-    istream_t value;
+    struct istream *value;
 
     c->fd = connect_fake_server();
 
@@ -476,7 +476,7 @@ test_request_value(struct pool *pool, struct context *c)
 static void
 test_request_value_close(struct pool *pool, struct context *c)
 {
-    istream_t value;
+    struct istream *value;
 
     c->fd = connect_fake_server();
 
@@ -502,7 +502,7 @@ test_request_value_close(struct pool *pool, struct context *c)
 static void
 test_request_value_abort(struct pool *pool, struct context *c)
 {
-    istream_t value;
+    struct istream *value;
 
     c->fd = connect_fake_server();
 

@@ -13,7 +13,7 @@
 
 struct istream_escape {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 
     const struct escape_class *class;
 
@@ -129,13 +129,13 @@ static const struct istream_handler escape_input_handler = {
  */
 
 static inline struct istream_escape *
-istream_to_escape(istream_t istream)
+istream_to_escape(struct istream *istream)
 {
     return (struct istream_escape *)(((char*)istream) - offsetof(struct istream_escape, output));
 }
 
 static void
-istream_escape_read(istream_t istream)
+istream_escape_read(struct istream *istream)
 {
     struct istream_escape *escape = istream_to_escape(istream);
 
@@ -148,7 +148,7 @@ istream_escape_read(istream_t istream)
 }
 
 static void
-istream_escape_close(istream_t istream)
+istream_escape_close(struct istream *istream)
 {
     struct istream_escape *escape = istream_to_escape(istream);
 

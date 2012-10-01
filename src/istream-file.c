@@ -234,13 +234,13 @@ file_event_callback(gcc_unused int fd, gcc_unused short event,
  */
 
 static inline struct file *
-istream_to_file(istream_t istream)
+istream_to_file(struct istream *istream)
 {
     return (struct file *)(((char*)istream) - offsetof(struct file, stream));
 }
 
 static off_t
-istream_file_available(istream_t istream, bool partial)
+istream_file_available(struct istream *istream, bool partial)
 {
     struct file *file = istream_to_file(istream);
     off_t available = 0;
@@ -265,7 +265,7 @@ istream_file_available(istream_t istream, bool partial)
 }
 
 static off_t
-istream_file_skip(istream_t istream, off_t length)
+istream_file_skip(struct istream *istream, off_t length)
 {
     struct file *file = istream_to_file(istream);
 
@@ -300,7 +300,7 @@ istream_file_skip(istream_t istream, off_t length)
 }
 
 static void
-istream_file_read(istream_t istream)
+istream_file_read(struct istream *istream)
 {
     struct file *file = istream_to_file(istream);
 
@@ -312,7 +312,7 @@ istream_file_read(istream_t istream)
 }
 
 static int
-istream_file_as_fd(istream_t istream)
+istream_file_as_fd(struct istream *istream)
 {
     struct file *file = istream_to_file(istream);
     int fd = file->fd;
@@ -324,7 +324,7 @@ istream_file_as_fd(istream_t istream)
 }
 
 static void
-istream_file_close(istream_t istream)
+istream_file_close(struct istream *istream)
 {
     struct file *file = istream_to_file(istream);
 
@@ -347,7 +347,7 @@ static const struct istream_class istream_file = {
  *
  */
 
-istream_t
+struct istream *
 istream_file_fd_new(struct pool *pool, const char *path,
                     int fd, enum istream_direct fd_type, off_t length)
 {
@@ -368,7 +368,7 @@ istream_file_fd_new(struct pool *pool, const char *path,
     return istream_struct_cast(&file->stream);
 }
 
-istream_t
+struct istream *
 istream_file_stat_new(struct pool *pool, const char *path, struct stat *st)
 {
     int fd, ret;
@@ -396,7 +396,7 @@ istream_file_stat_new(struct pool *pool, const char *path, struct stat *st)
     return istream_file_fd_new(pool, path, fd, ISTREAM_FILE, st->st_size);
 }
 
-istream_t
+struct istream *
 istream_file_new(struct pool *pool, const char *path, off_t length)
 {
     int fd;
@@ -414,7 +414,7 @@ istream_file_new(struct pool *pool, const char *path, off_t length)
 }
 
 int
-istream_file_fd(istream_t istream)
+istream_file_fd(struct istream *istream)
 {
     struct file *file = istream_to_file(istream);
 

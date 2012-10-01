@@ -13,13 +13,13 @@ struct istream_fail {
 };
 
 static inline struct istream_fail *
-istream_to_fail(istream_t istream)
+istream_to_fail(struct istream *istream)
 {
     return (struct istream_fail *)(((char*)istream) - offsetof(struct istream_fail, stream));
 }
 
 static void
-istream_fail_read(istream_t istream)
+istream_fail_read(struct istream *istream)
 {
     struct istream_fail *fail = istream_to_fail(istream);
 
@@ -27,7 +27,7 @@ istream_fail_read(istream_t istream)
 }
 
 static void
-istream_fail_close(istream_t istream)
+istream_fail_close(struct istream *istream)
 {
     struct istream_fail *fail = istream_to_fail(istream);
 
@@ -40,7 +40,7 @@ static const struct istream_class istream_fail = {
     .close = istream_fail_close,
 };
 
-istream_t
+struct istream *
 istream_fail_new(struct pool *pool, GError *error)
 {
     assert(pool != NULL);

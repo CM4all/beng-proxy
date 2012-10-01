@@ -16,13 +16,13 @@ struct istream_memory {
 
 
 static inline struct istream_memory *
-istream_to_memory(istream_t istream)
+istream_to_memory(struct istream *istream)
 {
     return (struct istream_memory *)(((char*)istream) - offsetof(struct istream_memory, stream));
 }
 
 static off_t
-istream_memory_available(istream_t istream, bool partial gcc_unused)
+istream_memory_available(struct istream *istream, bool partial gcc_unused)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 
@@ -30,7 +30,7 @@ istream_memory_available(istream_t istream, bool partial gcc_unused)
 }
 
 static void
-istream_memory_read(istream_t istream)
+istream_memory_read(struct istream *istream)
 {
     struct istream_memory *memory = istream_to_memory(istream);
     size_t nbytes;
@@ -49,7 +49,7 @@ istream_memory_read(istream_t istream)
 }
 
 static void
-istream_memory_close(istream_t istream)
+istream_memory_close(struct istream *istream)
 {
     struct istream_memory *memory = istream_to_memory(istream);
 
@@ -62,7 +62,7 @@ static const struct istream_class istream_memory = {
     .close = istream_memory_close,
 };
 
-istream_t
+struct istream *
 istream_memory_new(struct pool *pool, const void *data, size_t length)
 {
     struct istream_memory *memory = istream_new_macro(pool, memory);

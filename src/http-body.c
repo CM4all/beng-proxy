@@ -149,7 +149,7 @@ http_body_dechunker_eof(void *ctx)
     body->rest = -2;
 }
 
-istream_t
+struct istream *
 http_body_init(struct http_body_reader *body,
                const struct istream_class *stream, struct pool *stream_pool,
                struct pool *pool, off_t content_length, bool chunked)
@@ -164,7 +164,7 @@ http_body_init(struct http_body_reader *body,
     body->socket_eof = false;
 #endif
 
-    istream_t istream = http_body_istream(body);
+    struct istream *istream = http_body_istream(body);
     if (chunked) {
         assert(content_length == (off_t)-1);
 

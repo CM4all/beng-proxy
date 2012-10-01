@@ -17,12 +17,12 @@ struct substitution {
     struct substitution *next;
     struct istream_replace *replace;
     off_t start, end;
-    istream_t istream;
+    struct istream *istream;
 };
 
 struct istream_replace {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 
     bool finished, read_locked;
     bool had_input, had_output;
@@ -474,13 +474,13 @@ static const struct istream_handler replace_input_handler = {
  */
 
 static inline struct istream_replace *
-istream_to_replace(istream_t istream)
+istream_to_replace(struct istream *istream)
 {
     return (struct istream_replace *)(((char*)istream) - offsetof(struct istream_replace, output));
 }
 
 static off_t
-istream_replace_available(istream_t istream, bool partial)
+istream_replace_available(struct istream *istream, bool partial)
 {
     struct istream_replace *replace = istream_to_replace(istream);
     const struct substitution *subst;
@@ -533,7 +533,7 @@ istream_replace_available(istream_t istream, bool partial)
 }
 
 static void
-istream_replace_read(istream_t istream)
+istream_replace_read(struct istream *istream)
 {
     struct istream_replace *replace = istream_to_replace(istream);
 
@@ -558,7 +558,7 @@ istream_replace_read(istream_t istream)
 }
 
 static void
-istream_replace_close(istream_t istream)
+istream_replace_close(struct istream *istream)
 {
     struct istream_replace *replace = istream_to_replace(istream);
 
@@ -582,8 +582,8 @@ static const struct istream_class istream_replace = {
  *
  */
 
-istream_t
-istream_replace_new(struct pool *pool, istream_t input)
+struct istream *
+istream_replace_new(struct pool *pool, struct istream *input)
 {
     struct istream_replace *replace = istream_new_macro(pool, replace);
 
@@ -614,8 +614,8 @@ istream_replace_new(struct pool *pool, istream_t input)
 }
 
 void
-istream_replace_add(istream_t istream, off_t start, off_t end,
-                    istream_t contents)
+istream_replace_add(struct istream *istream, off_t start, off_t end,
+                    struct istream *contents)
 {
     struct istream_replace *replace = istream_to_replace(istream);
     struct substitution *s;
@@ -684,7 +684,7 @@ istream_replace_extend(struct istream *istream, G_GNUC_UNUSED off_t start, off_t
 }
 
 void
-istream_replace_finish(istream_t istream)
+istream_replace_finish(struct istream *istream)
 {
     struct istream_replace *replace = istream_to_replace(istream);
 

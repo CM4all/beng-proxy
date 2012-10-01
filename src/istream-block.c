@@ -11,13 +11,13 @@ struct istream_block {
 };
 
 static inline struct istream_block *
-istream_to_block(istream_t istream)
+istream_to_block(struct istream *istream)
 {
     return (struct istream_block *)(((char*)istream) - offsetof(struct istream_block, stream));
 }
 
 static void
-istream_block_read(istream_t istream)
+istream_block_read(struct istream *istream)
 {
     struct istream_block *block = istream_to_block(istream);
 
@@ -25,7 +25,7 @@ istream_block_read(istream_t istream)
 }
 
 static void
-istream_block_close(istream_t istream)
+istream_block_close(struct istream *istream)
 {
     struct istream_block *block = istream_to_block(istream);
 
@@ -37,7 +37,7 @@ static const struct istream_class istream_block = {
     .close = istream_block_close,
 };
 
-istream_t
+struct istream *
 istream_block_new(struct pool *pool)
 {
     struct istream_block *block = istream_new_macro(pool, block);

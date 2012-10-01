@@ -13,7 +13,7 @@
 
 struct istream_iconv {
     struct istream output;
-    istream_t input;
+    struct istream *input;
     iconv_t iconv;
     struct fifo_buffer *buffer;
 };
@@ -183,13 +183,13 @@ static const struct istream_handler iconv_input_handler = {
  */
 
 static inline struct istream_iconv *
-istream_to_iconv(istream_t istream)
+istream_to_iconv(struct istream *istream)
 {
     return (struct istream_iconv *)(((char*)istream) - offsetof(struct istream_iconv, output));
 }
 
 static void
-istream_iconv_read(istream_t istream)
+istream_iconv_read(struct istream *istream)
 {
     struct istream_iconv *ic = istream_to_iconv(istream);
 
@@ -205,7 +205,7 @@ istream_iconv_read(istream_t istream)
 }
 
 static void
-istream_iconv_close(istream_t istream)
+istream_iconv_close(struct istream *istream)
 {
     struct istream_iconv *ic = istream_to_iconv(istream);
 
@@ -228,9 +228,8 @@ static const struct istream_class istream_iconv = {
  *
  */
 
-
-istream_t
-istream_iconv_new(struct pool *pool, istream_t input,
+struct istream *
+istream_iconv_new(struct pool *pool, struct istream *input,
                   const char *tocode, const char *fromcode)
 {
     struct istream_iconv *ic = istream_new_macro(pool, iconv);

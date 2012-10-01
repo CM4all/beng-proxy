@@ -14,7 +14,7 @@
 
 struct istream_deflate {
     struct istream output;
-    istream_t input;
+    struct istream *input;
     struct fifo_buffer *buffer;
     bool z_initialized, z_stream_end;
     z_stream z;
@@ -363,13 +363,13 @@ static const struct istream_handler deflate_input_handler = {
  */
 
 static inline struct istream_deflate *
-istream_to_deflate(istream_t istream)
+istream_to_deflate(struct istream *istream)
 {
     return (struct istream_deflate *)(((char*)istream) - offsetof(struct istream_deflate, output));
 }
 
 static void
-istream_deflate_read(istream_t istream)
+istream_deflate_read(struct istream *istream)
 {
     struct istream_deflate *defl = istream_to_deflate(istream);
 
@@ -382,7 +382,7 @@ istream_deflate_read(istream_t istream)
 }
 
 static void
-istream_deflate_close(istream_t istream)
+istream_deflate_close(struct istream *istream)
 {
     struct istream_deflate *defl = istream_to_deflate(istream);
 
@@ -405,8 +405,8 @@ static const struct istream_class istream_deflate = {
  *
  */
 
-istream_t
-istream_deflate_new(struct pool *pool, istream_t input)
+struct istream *
+istream_deflate_new(struct pool *pool, struct istream *input)
 {
     struct istream_deflate *defl = istream_new_macro(pool, deflate);
 

@@ -11,7 +11,7 @@
 
 struct istream_trace {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 };
 
 
@@ -107,13 +107,13 @@ static const struct istream_handler trace_input_handler = {
  */
 
 static inline struct istream_trace *
-istream_to_trace(istream_t istream)
+istream_to_trace(struct istream *istream)
 {
     return (struct istream_trace *)(((char*)istream) - offsetof(struct istream_trace, output));
 }
 
 static off_t 
-istream_trace_available(istream_t istream, bool partial)
+istream_trace_available(struct istream *istream, bool partial)
 {
     struct istream_trace *trace = istream_to_trace(istream);
     off_t available;
@@ -127,7 +127,7 @@ istream_trace_available(istream_t istream, bool partial)
 }
 
 static void
-istream_trace_read(istream_t istream)
+istream_trace_read(struct istream *istream)
 {
     struct istream_trace *trace = istream_to_trace(istream);
 
@@ -139,7 +139,7 @@ istream_trace_read(istream_t istream)
 }
 
 static void
-istream_trace_close(istream_t istream)
+istream_trace_close(struct istream *istream)
 {
     struct istream_trace *trace = istream_to_trace(istream);
 
@@ -161,8 +161,8 @@ static const struct istream_class istream_trace = {
  *
  */
 
-istream_t
-istream_trace_new(struct pool *pool, istream_t input)
+struct istream *
+istream_trace_new(struct pool *pool, struct istream *input)
 {
     struct istream_trace *trace = istream_new_macro(pool, trace);
 

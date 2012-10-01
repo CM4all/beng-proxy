@@ -13,26 +13,26 @@ struct istream_null {
 };
 
 static inline struct istream_null *
-istream_to_null(istream_t istream)
+istream_to_null(struct istream *istream)
 {
     return (struct istream_null *)(((char*)istream) - offsetof(struct istream_null, stream));
 }
 
 static off_t
-istream_null_available(istream_t istream gcc_unused,
+istream_null_available(struct istream *istream gcc_unused,
                        bool partial gcc_unused)
 {
     return 0;
 }
 
 static off_t
-istream_null_skip(istream_t istream gcc_unused, off_t length gcc_unused)
+istream_null_skip(struct istream *istream gcc_unused, off_t length gcc_unused)
 {
     return 0;
 }
 
 static void
-istream_null_read(istream_t istream)
+istream_null_read(struct istream *istream)
 {
     struct istream_null *null = istream_to_null(istream);
 
@@ -40,7 +40,7 @@ istream_null_read(istream_t istream)
 }
 
 static int
-istream_null_as_fd(istream_t istream)
+istream_null_as_fd(struct istream *istream)
 {
     struct istream_null *null = istream_to_null(istream);
 
@@ -54,7 +54,7 @@ istream_null_as_fd(istream_t istream)
 }
 
 static void
-istream_null_close(istream_t istream)
+istream_null_close(struct istream *istream)
 {
     struct istream_null *null = istream_to_null(istream);
 
@@ -69,7 +69,7 @@ static const struct istream_class istream_null = {
     .close = istream_null_close,
 };
 
-istream_t
+struct istream *
 istream_null_new(struct pool *pool)
 {
     struct istream_null *null = istream_new_macro(pool, null);

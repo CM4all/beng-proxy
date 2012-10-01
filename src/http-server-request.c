@@ -52,13 +52,13 @@ http_server_consume_body(struct http_server_connection *connection)
 #endif
 
 static inline struct http_server_connection *
-response_stream_to_connection(istream_t istream)
+response_stream_to_connection(struct istream *istream)
 {
     return (struct http_server_connection *)(((char*)istream) - offsetof(struct http_server_connection, request.body_reader.output));
 }
 
 static off_t
-http_server_request_stream_available(istream_t istream, bool partial)
+http_server_request_stream_available(struct istream *istream, bool partial)
 {
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
@@ -70,7 +70,7 @@ http_server_request_stream_available(istream_t istream, bool partial)
 }
 
 static void
-http_server_request_stream_read(istream_t istream)
+http_server_request_stream_read(struct istream *istream)
 {
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
@@ -86,7 +86,7 @@ http_server_request_stream_read(istream_t istream)
 }
 
 static void
-http_server_request_stream_close(istream_t istream)
+http_server_request_stream_close(struct istream *istream)
 {
     struct http_server_connection *connection = response_stream_to_connection(istream);
 

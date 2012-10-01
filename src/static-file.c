@@ -27,7 +27,7 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
     int ret;
     struct stat st;
     off_t size;
-    istream_t body;
+    struct istream *body;
     struct strmap *headers;
 
     assert(path != NULL);

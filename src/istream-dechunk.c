@@ -12,7 +12,9 @@
 
 struct istream_dechunk {
     struct istream output;
-    istream_t input;
+
+    struct istream *input;
+
     enum {
         NONE,
         CLOSED,
@@ -267,13 +269,13 @@ static const struct istream_handler dechunk_input_handler = {
  */
 
 static inline struct istream_dechunk *
-istream_to_dechunk(istream_t istream)
+istream_to_dechunk(struct istream *istream)
 {
     return (struct istream_dechunk *)(((char*)istream) - offsetof(struct istream_dechunk, output));
 }
 
 static off_t 
-istream_dechunk_available(istream_t istream, bool partial)
+istream_dechunk_available(struct istream *istream, bool partial)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 
@@ -284,7 +286,7 @@ istream_dechunk_available(istream_t istream, bool partial)
 }
 
 static void
-istream_dechunk_read(istream_t istream)
+istream_dechunk_read(struct istream *istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 
@@ -302,7 +304,7 @@ istream_dechunk_read(istream_t istream)
 }
 
 static void
-istream_dechunk_close(istream_t istream)
+istream_dechunk_close(struct istream *istream)
 {
     struct istream_dechunk *dechunk = istream_to_dechunk(istream);
 
@@ -326,8 +328,8 @@ static const struct istream_class istream_dechunk = {
  *
  */
 
-istream_t
-istream_dechunk_new(struct pool *pool, istream_t input,
+struct istream *
+istream_dechunk_new(struct pool *pool, struct istream *input,
                     void (*eof_callback)(void *ctx), void *callback_ctx)
 {
     struct istream_dechunk *dechunk = istream_new_macro(pool, dechunk);

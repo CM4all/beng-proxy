@@ -12,7 +12,7 @@
 struct istream_stopwatch {
     struct istream output;
 
-    istream_t input;
+    struct istream *input;
 
     struct stopwatch *stopwatch;
 };
@@ -59,13 +59,13 @@ static const struct istream_handler stopwatch_input_handler = {
  */
 
 static inline struct istream_stopwatch *
-istream_to_stopwatch(istream_t istream)
+istream_to_stopwatch(struct istream *istream)
 {
     return (struct istream_stopwatch *)(((char*)istream) - offsetof(struct istream_stopwatch, output));
 }
 
 static void
-istream_stopwatch_read(istream_t istream)
+istream_stopwatch_read(struct istream *istream)
 {
     struct istream_stopwatch *stopwatch = istream_to_stopwatch(istream);
 
@@ -76,7 +76,7 @@ istream_stopwatch_read(istream_t istream)
 }
 
 static int
-istream_stopwatch_as_fd(istream_t istream)
+istream_stopwatch_as_fd(struct istream *istream)
 {
     struct istream_stopwatch *stopwatch = istream_to_stopwatch(istream);
 
@@ -91,7 +91,7 @@ istream_stopwatch_as_fd(istream_t istream)
 }
 
 static void
-istream_stopwatch_close(istream_t istream)
+istream_stopwatch_close(struct istream *istream)
 {
     struct istream_stopwatch *stopwatch = istream_to_stopwatch(istream);
 
@@ -113,8 +113,8 @@ static const struct istream_class istream_stopwatch = {
  *
  */
 
-istream_t
-istream_stopwatch_new(struct pool *pool, istream_t input,
+struct istream *
+istream_stopwatch_new(struct pool *pool, struct istream *input,
                       struct stopwatch *_stopwatch)
 {
     struct istream_stopwatch *stopwatch;

@@ -141,7 +141,7 @@ static const struct lease my_socket_lease = {
 
 static void
 my_response_response(http_status_t status, struct strmap *headers,
-                     istream_t body, void *ctx)
+                     struct istream *body, void *ctx)
 {
     struct lb_request *request2 = ctx;
     struct http_server_request *request = request2->request;

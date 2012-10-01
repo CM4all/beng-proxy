@@ -56,7 +56,7 @@ static const struct istream_class istream_zero = {
     .close = istream_zero_close,
 };
 
-istream_t
+struct istream *
 istream_zero_new(struct pool *pool)
 {
     struct istream_zero *zero = istream_new_macro(pool, zero);

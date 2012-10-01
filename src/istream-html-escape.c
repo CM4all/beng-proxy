@@ -9,8 +9,8 @@
 #include "istream-escape.h"
 #include "escape_html.h"
 
-istream_t
-istream_html_escape_new(struct pool *pool, istream_t input)
+struct istream *
+istream_html_escape_new(struct pool *pool, struct istream *input)
 {
     return istream_escape_new(pool, input, &html_escape_class);
 }

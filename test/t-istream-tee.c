@@ -76,12 +76,11 @@ test_block1(struct pool *pool)
         .eof = false,
         .aborted = false,
     };
-    istream_t delayed, tee, second;
     struct async_operation_ref async_ref;
 
-    delayed = istream_delayed_new(pool);
-    tee = istream_tee_new(pool, delayed, false, false);
-    second = istream_tee_second(tee);
+    struct istream *delayed = istream_delayed_new(pool);
+    struct istream *tee = istream_tee_new(pool, delayed, false, false);
+    struct istream *second = istream_tee_second(tee);
 
     istream_handler_set(tee, &block_istream_handler, &ctx, 0);
 
@@ -118,13 +117,13 @@ test_close_data(struct pool *pool)
         .eof = false,
         .aborted = false,
     };
-    istream_t tee, second;
     struct async_operation_ref async_ref;
 
-    tee = istream_tee_new(pool, istream_string_new(pool, "foo"), false, false);
+    struct istream *tee =
+        istream_tee_new(pool, istream_string_new(pool, "foo"), false, false);
 
     sink_close_new(tee);
-    second = istream_tee_second(tee);
+    struct istream *second = istream_tee_second(tee);
 
     sink_gstring_new(pool, second, buffer_callback, &ctx, &async_ref);
     assert(ctx.value == NULL);

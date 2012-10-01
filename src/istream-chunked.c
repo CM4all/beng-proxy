@@ -12,7 +12,7 @@
 
 struct istream_chunked {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 
     /**
      * This flag is true while writing the buffer inside
@@ -262,13 +262,13 @@ static const struct istream_handler chunked_input_handler = {
  */
 
 static inline struct istream_chunked *
-istream_to_chunked(istream_t istream)
+istream_to_chunked(struct istream *istream)
 {
     return (struct istream_chunked *)(((char*)istream) - offsetof(struct istream_chunked, output));
 }
 
 static void
-istream_chunked_read(istream_t istream)
+istream_chunked_read(struct istream *istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
 
@@ -296,7 +296,7 @@ istream_chunked_read(istream_t istream)
 }
 
 static void
-istream_chunked_close(istream_t istream)
+istream_chunked_close(struct istream *istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
 
@@ -317,8 +317,8 @@ static const struct istream_class istream_chunked = {
  *
  */
 
-istream_t
-istream_chunked_new(struct pool *pool, istream_t input)
+struct istream *
+istream_chunked_new(struct pool *pool, struct istream *input)
 {
     struct istream_chunked *chunked = istream_new_macro(pool, chunked);
 

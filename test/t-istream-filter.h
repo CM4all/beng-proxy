@@ -38,7 +38,7 @@ struct ctx {
     char buffer[sizeof(EXPECTED_RESULT) * 2];
     size_t buffer_length;
 #endif
-    istream_t abort_istream;
+    struct istream *abort_istream;
     int abort_after;
 
     int block_after;
@@ -150,14 +150,14 @@ static const struct istream_handler my_istream_handler = {
  */
 
 static int
-istream_read_event(istream_t istream)
+istream_read_event(struct istream *istream)
 {
     istream_read(istream);
     return event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
 }
 
 static inline void
-istream_read_expect(struct ctx *ctx, istream_t istream)
+istream_read_expect(struct ctx *ctx, struct istream *istream)
 {
     int ret;
 
@@ -173,7 +173,7 @@ istream_read_expect(struct ctx *ctx, istream_t istream)
 }
 
 static void
-run_istream_ctx(struct ctx *ctx, struct pool *pool, istream_t istream)
+run_istream_ctx(struct ctx *ctx, struct pool *pool, struct istream *istream)
 {
     ctx->eof = false;
 
@@ -205,7 +205,8 @@ run_istream_ctx(struct ctx *ctx, struct pool *pool, istream_t istream)
 }
 
 static void
-run_istream_block(struct pool *pool, istream_t istream, bool record gcc_unused,
+run_istream_block(struct pool *pool, struct istream *istream,
+                  gcc_unused bool record,
                   int block_after)
 {
     struct ctx ctx = {
@@ -220,7 +221,7 @@ run_istream_block(struct pool *pool, istream_t istream, bool record gcc_unused,
 }
 
 static void
-run_istream(struct pool *pool, istream_t istream, bool record)
+run_istream(struct pool *pool, struct istream *istream, bool record)
 {
     run_istream_block(pool, istream, record, -1);
 }
@@ -235,7 +236,7 @@ run_istream(struct pool *pool, istream_t istream, bool record)
 static void
 test_normal(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -253,7 +254,7 @@ test_block(struct pool *parent_pool)
     struct pool *pool;
 
     for (int n = 1; n < 8; ++n) {
-        istream_t istream;
+        struct istream *istream;
 
         pool = pool_new_linear(parent_pool, "test", 8192);
 
@@ -269,7 +270,7 @@ test_block(struct pool *parent_pool)
 static void
 test_byte(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -300,7 +301,7 @@ test_half(struct pool *pool)
 static void
 test_fail(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -313,7 +314,7 @@ test_fail(struct pool *pool)
 static void
 test_fail_1byte(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -330,7 +331,7 @@ test_fail_1byte(struct pool *pool)
 static void
 test_abort_without_handler(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -363,7 +364,7 @@ test_abort_in_handler(struct pool *pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     ctx.abort_istream = istream_inject_new(pool, create_input(pool));
-    istream_t istream = create_test(pool, ctx.abort_istream);
+    struct istream *istream = create_test(pool, ctx.abort_istream);
     istream_handler_set(istream, &my_istream_handler, &ctx, 0);
     pool_unref(pool);
     pool_commit();
@@ -396,7 +397,7 @@ test_abort_in_handler_half(struct pool *pool)
     pool = pool_new_linear(pool, "test", 8192);
 
     ctx.abort_istream = istream_inject_new(pool, istream_four_new(pool, create_input(pool)));
-    istream_t istream = create_test(pool, istream_byte_new(pool, ctx.abort_istream));
+    struct istream *istream = create_test(pool, istream_byte_new(pool, ctx.abort_istream));
     istream_handler_set(istream, &my_istream_handler, &ctx, 0);
     pool_unref(pool);
     pool_commit();
@@ -418,7 +419,7 @@ test_abort_in_handler_half(struct pool *pool)
 static void
 test_abort_1byte(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -433,7 +434,7 @@ test_abort_1byte(struct pool *pool)
 static void
 test_later(struct pool *pool)
 {
-    istream_t istream;
+    struct istream *istream;
 
     pool = pool_new_linear(pool, "test", 8192);
 
@@ -446,16 +447,14 @@ test_later(struct pool *pool)
 static void
 test_big_hold(struct pool *pool)
 {
-    istream_t istream, hold;
-
     pool = pool_new_linear(pool, "test", 8192);
 
-    istream = create_input(pool);
+    struct istream *istream = create_input(pool);
     for (unsigned i = 0; i < 1024; ++i)
         istream = istream_cat_new(pool, istream, create_input(pool), NULL);
 
     istream = create_test(pool, istream);
-    hold = istream_hold_new(pool, istream);
+    struct istream *hold = istream_hold_new(pool, istream);
 
     istream_read(istream);
 

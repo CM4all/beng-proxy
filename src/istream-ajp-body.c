@@ -13,7 +13,7 @@
 
 struct istream_ajp_body {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 
     size_t requested, packet_remaining;
 
@@ -190,13 +190,13 @@ static const struct istream_handler ajp_body_input_handler = {
  */
 
 static inline struct istream_ajp_body *
-istream_to_ab(istream_t istream)
+istream_to_ab(struct istream *istream)
 {
     return (struct istream_ajp_body *)(((char*)istream) - offsetof(struct istream_ajp_body, output));
 }
 
 static off_t
-istream_ajp_body_available(istream_t istream, bool partial)
+istream_ajp_body_available(struct istream *istream, bool partial)
 {
     struct istream_ajp_body *ab = istream_to_ab(istream);
 
@@ -207,7 +207,7 @@ istream_ajp_body_available(istream_t istream, bool partial)
 }
 
 static void
-istream_ajp_body_read(istream_t istream)
+istream_ajp_body_read(struct istream *istream)
 {
     struct istream_ajp_body *ab = istream_to_ab(istream);
 
@@ -226,7 +226,7 @@ istream_ajp_body_read(istream_t istream)
 }
 
 static void
-istream_ajp_body_close(istream_t istream)
+istream_ajp_body_close(struct istream *istream)
 {
     struct istream_ajp_body *ab = istream_to_ab(istream);
 
@@ -246,8 +246,8 @@ static const struct istream_class istream_ajp_body = {
  *
  */
 
-istream_t
-istream_ajp_body_new(struct pool *pool, istream_t input)
+struct istream *
+istream_ajp_body_new(struct pool *pool, struct istream *input)
 {
     struct istream_ajp_body *ab = istream_new_macro(pool, ajp_body);
 
@@ -265,7 +265,7 @@ istream_ajp_body_new(struct pool *pool, istream_t input)
 }
 
 void
-istream_ajp_body_request(istream_t istream, size_t length)
+istream_ajp_body_request(struct istream *istream, size_t length)
 {
     struct istream_ajp_body *ab = istream_to_ab(istream);
 

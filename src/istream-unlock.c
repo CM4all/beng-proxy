@@ -13,7 +13,7 @@
 struct istream_unlock {
     struct istream output;
 
-    istream_t input;
+    struct istream *input;
 
     struct cache *cache;
     struct cache_item *item;
@@ -57,13 +57,13 @@ static const struct istream_handler unlock_input_handler = {
  */
 
 static inline struct istream_unlock *
-istream_to_unlock(istream_t istream)
+istream_to_unlock(struct istream *istream)
 {
     return (struct istream_unlock *)(((char*)istream) - offsetof(struct istream_unlock, output));
 }
 
 static off_t
-istream_unlock_available(istream_t istream, bool partial)
+istream_unlock_available(struct istream *istream, bool partial)
 {
     struct istream_unlock *unlock = istream_to_unlock(istream);
 
@@ -71,7 +71,7 @@ istream_unlock_available(istream_t istream, bool partial)
 }
 
 static void
-istream_unlock_read(istream_t istream)
+istream_unlock_read(struct istream *istream)
 {
     struct istream_unlock *unlock = istream_to_unlock(istream);
 
@@ -80,7 +80,7 @@ istream_unlock_read(istream_t istream)
 }
 
 static void
-istream_unlock_close(istream_t istream)
+istream_unlock_close(struct istream *istream)
 {
     struct istream_unlock *unlock = istream_to_unlock(istream);
 
@@ -101,8 +101,8 @@ static const struct istream_class istream_unlock = {
  *
  */
 
-istream_t
-istream_unlock_new(struct pool *pool, istream_t input,
+struct istream *
+istream_unlock_new(struct pool *pool, struct istream *input,
                    struct cache *cache, struct cache_item *item)
 {
     struct istream_unlock *unlock = istream_new_macro(pool, unlock);

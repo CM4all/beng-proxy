@@ -382,7 +382,7 @@ was_input_free_unused(struct was_input *input)
     istream_deinit(&input->output);
 }
 
-istream_t
+struct istream *
 was_input_enable(struct was_input *input)
 {
     was_input_schedule_read(input);

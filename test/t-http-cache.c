@@ -122,7 +122,7 @@ http_cache_memcached_put(G_GNUC_UNUSED struct pool *pool,
                          G_GNUC_UNUSED struct strmap *request_headers,
                          G_GNUC_UNUSED http_status_t status,
                          G_GNUC_UNUSED struct strmap *response_headers,
-                         G_GNUC_UNUSED istream_t value,
+                         G_GNUC_UNUSED struct istream *value,
                          G_GNUC_UNUSED http_cache_memcached_put_t put,
                          G_GNUC_UNUSED void *callback_ctx,
                          G_GNUC_UNUSED struct async_operation_ref *async_ref)
@@ -181,7 +181,7 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
                         http_method_t method,
                         gcc_unused const struct resource_address *address,
                         gcc_unused http_status_t status, struct strmap *headers,
-                        istream_t body,
+                        struct istream *body,
                         const struct http_response_handler *handler,
                         void *handler_ctx,
                         gcc_unused struct async_operation_ref *async_ref)
@@ -189,7 +189,7 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
     const struct request *request = &requests[current_request];
     struct strmap *expected_rh;
     struct strmap *response_headers;
-    istream_t response_body;
+    struct istream *response_body;
 
     assert(!got_request);
     assert(!got_response);
@@ -268,7 +268,7 @@ static const struct istream_handler my_response_body_handler = {
 
 static void
 my_http_response(http_status_t status, struct strmap *headers,
-                 istream_t body, void *ctx)
+                 struct istream *body, void *ctx)
 {
     struct pool *pool = ctx;
     const struct request *request = &requests[current_request];
@@ -330,7 +330,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
         },
     };
     struct strmap *headers;
-    istream_t body;
+    struct istream *body;
     struct async_operation_ref async_ref;
 
     current_request = num;

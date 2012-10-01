@@ -202,7 +202,7 @@ istream_to_socket(struct istream *istream)
 }
 
 static off_t
-istream_socket_available(istream_t istream, bool partial)
+istream_socket_available(struct istream *istream, bool partial)
 {
     struct istream_socket *s = istream_to_socket(istream);
 

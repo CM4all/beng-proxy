@@ -138,12 +138,12 @@ http_cache_heap_unlock(struct cache *cache,
     cache_item_unlock(cache, &item->item);
 }
 
-istream_t
+struct istream *
 http_cache_heap_istream(struct pool *pool, struct cache *cache,
                         struct http_cache_document *document)
 {
     struct http_cache_item *item = document_to_item(document);
-    istream_t istream;
+    struct istream *istream;
 
     if (item->data == NULL)
         /* don't lock the item */

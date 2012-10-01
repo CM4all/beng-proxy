@@ -13,7 +13,7 @@
 
 struct istream_inject {
     struct istream output;
-    istream_t input;
+    struct istream *input;
 };
 
 
@@ -58,13 +58,13 @@ static const struct istream_handler inject_input_handler = {
  */
 
 static inline struct istream_inject *
-istream_to_inject(istream_t istream)
+istream_to_inject(struct istream *istream)
 {
     return (struct istream_inject *)(((char*)istream) - offsetof(struct istream_inject, output));
 }
 
 static off_t
-istream_inject_available(istream_t istream, bool partial)
+istream_inject_available(struct istream *istream, bool partial)
 {
     struct istream_inject *inject = istream_to_inject(istream);
 
@@ -77,7 +77,7 @@ istream_inject_available(istream_t istream, bool partial)
 }
 
 static void
-istream_inject_read(istream_t istream)
+istream_inject_read(struct istream *istream)
 {
     struct istream_inject *inject = istream_to_inject(istream);
 
@@ -89,7 +89,7 @@ istream_inject_read(istream_t istream)
 }
 
 static void
-istream_inject_close(istream_t istream)
+istream_inject_close(struct istream *istream)
 {
     struct istream_inject *inject = istream_to_inject(istream);
 
@@ -111,8 +111,8 @@ static const struct istream_class istream_inject = {
  *
  */
 
-istream_t
-istream_inject_new(struct pool *pool, istream_t input)
+struct istream *
+istream_inject_new(struct pool *pool, struct istream *input)
 {
     assert(pool != NULL);
     assert(input != NULL);
@@ -127,7 +127,7 @@ istream_inject_new(struct pool *pool, istream_t input)
 }
 
 void
-istream_inject_fault(istream_t i_inject, GError *error)
+istream_inject_fault(struct istream *i_inject, GError *error)
 {
     struct istream_inject *inject = (struct istream_inject *)i_inject;
 

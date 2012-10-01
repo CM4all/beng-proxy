@@ -12,7 +12,7 @@
 
 struct istream_delayed {
     struct istream output;
-    istream_t input;
+    struct istream *input;
     struct async_operation_ref async;
 };
 
@@ -36,13 +36,13 @@ static const struct istream_handler delayed_input_handler = {
  */
 
 static inline struct istream_delayed *
-istream_to_delayed(istream_t istream)
+istream_to_delayed(struct istream *istream)
 {
     return (struct istream_delayed *)(((char*)istream) - offsetof(struct istream_delayed, output));
 }
 
 static off_t
-istream_delayed_available(istream_t istream, bool partial)
+istream_delayed_available(struct istream *istream, bool partial)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
@@ -53,7 +53,7 @@ istream_delayed_available(istream_t istream, bool partial)
 }
 
 static void
-istream_delayed_read(istream_t istream)
+istream_delayed_read(struct istream *istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
@@ -65,7 +65,7 @@ istream_delayed_read(istream_t istream)
 }
 
 static int
-istream_delayed_as_fd(istream_t istream)
+istream_delayed_as_fd(struct istream *istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
@@ -80,7 +80,7 @@ istream_delayed_as_fd(istream_t istream)
 }
 
 static void
-istream_delayed_close(istream_t istream)
+istream_delayed_close(struct istream *istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
@@ -105,7 +105,7 @@ static const struct istream_class istream_delayed = {
  *
  */
 
-istream_t
+struct istream *
 istream_delayed_new(struct pool *pool)
 {
     struct istream_delayed *delayed = istream_new_macro(pool, delayed);
@@ -115,7 +115,7 @@ istream_delayed_new(struct pool *pool)
 }
 
 struct async_operation_ref *
-istream_delayed_async_ref(istream_t i_delayed)
+istream_delayed_async_ref(struct istream *i_delayed)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 
@@ -123,7 +123,7 @@ istream_delayed_async_ref(istream_t i_delayed)
 }
 
 void
-istream_delayed_set(istream_t i_delayed, istream_t input)
+istream_delayed_set(struct istream *i_delayed, struct istream *input)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 
@@ -140,7 +140,7 @@ istream_delayed_set(istream_t i_delayed, istream_t input)
 }
 
 void
-istream_delayed_set_eof(istream_t i_delayed)
+istream_delayed_set_eof(struct istream *i_delayed)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 
@@ -153,7 +153,7 @@ istream_delayed_set_eof(istream_t i_delayed)
 }
 
 void
-istream_delayed_set_abort(istream_t i_delayed, GError *error)
+istream_delayed_set_abort(struct istream *i_delayed, GError *error)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 

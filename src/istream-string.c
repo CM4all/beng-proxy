@@ -8,7 +8,7 @@
 
 #include <string.h>
 
-istream_t
+struct istream *
 istream_string_new(struct pool *pool, const char *s)
 {
     return istream_memory_new(pool, s, strlen(s));
