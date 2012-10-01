@@ -37,9 +37,9 @@ bp_get_stats(const struct instance *instance,
     data->children = GUINT32_TO_BE(child_get_count());
     data->sessions = GUINT32_TO_BE(session_manager_get_count());
     data->http_requests = GUINT64_TO_BE(instance->http_request_counter);
-    data->translation_cache_size = GUINT64_TO_BE(tcache_stats.size);
-    data->http_cache_size = GUINT64_TO_BE(http_cache_stats.size);
-    data->filter_cache_size = GUINT64_TO_BE(fcache_stats.size);
+    data->translation_cache_size = GUINT64_TO_BE(tcache_stats.netto_size);
+    data->http_cache_size = GUINT64_TO_BE(http_cache_stats.netto_size);
+    data->filter_cache_size = GUINT64_TO_BE(fcache_stats.netto_size);
 
     /* TODO: add stats from all worker processes;  */
 }

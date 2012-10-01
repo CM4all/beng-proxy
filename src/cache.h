@@ -52,9 +52,14 @@ struct cache_class {
 
 struct cache_stats {
     /**
-     * The amount of memory allocated by all items in this cache.
+     * The total size of all items in this cache.
      */
-    size_t size;
+    size_t netto_size;
+
+    /**
+     * The total amount of memory allocated by this cache.
+     */
+    size_t brutto_size;
 };
 
 gcc_malloc
