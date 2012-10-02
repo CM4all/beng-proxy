@@ -20,11 +20,16 @@
 #include "resource-address.h"
 #include "resource-loader.h"
 #include "istream.h"
+#include "rubber.h"
+#include "istream_rubber.h"
+
+#include <event.h>
 
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
-#include <event.h>
+#include <errno.h>
+#include <unistd.h>
 
 #ifdef CACHE_LOG
 #include <daemon/log.h>
@@ -47,6 +52,7 @@ static const struct timeval fcache_timeout = { .tv_sec = 60 };
 struct filter_cache {
     struct pool *pool;
     struct cache *cache;
+    struct rubber *rubber;
 
     struct resource_loader *resource_loader;
 
@@ -70,7 +76,9 @@ struct filter_cache_item {
 
     http_status_t status;
     struct strmap *headers;
-    unsigned char *data;
+
+    struct rubber *rubber;
+    unsigned rubber_id;
 };
 
 struct filter_cache_request {
@@ -211,15 +219,30 @@ filter_cache_put(struct filter_cache_request *request)
     item->status = request->response.status;
     item->headers = strmap_dup(pool, request->response.headers);
 
-    if (request->response.length == 0) {
-        item->data = NULL;
-    } else {
-        size_t length;
+    unsigned rubber_id = 0;
+    if (request->response.length > 0) {
+        struct rubber *rubber = request->cache->rubber;
+        struct growing_buffer *body = request->response.output;
+        rubber_id = rubber_add(rubber, growing_buffer_size(body));
+        if (rubber_id == 0)
+            return;
 
-        item->data = growing_buffer_dup(request->response.output, pool,
-                                        &length);
-        assert(length == item->item.size - fcache_item_base_size);
+        uint8_t *dest = rubber_write(rubber, rubber_id);
+
+        struct growing_buffer_reader reader;
+        growing_buffer_reader_init(&reader, body);
+        size_t length;
+        const void *p;
+        while ((p = growing_buffer_reader_read(&reader, &length)) != NULL) {
+            memcpy(dest, p, length);
+            growing_buffer_reader_consume(&reader, length);
+            dest += length;
+        }
+
+        item->rubber = rubber;
     }
+
+    item->rubber_id = rubber_id;
 
     cache_put(request->cache->cache,
               item->info.key, &item->item);
@@ -468,6 +491,9 @@ filter_cache_item_destroy(struct cache_item *_item)
 {
     struct filter_cache_item *item = (struct filter_cache_item *)_item;
 
+    if (item->rubber_id != 0)
+        rubber_remove(item->rubber, item->rubber_id);
+
     pool_unref(item->pool);
 }
 
@@ -491,6 +517,14 @@ filter_cache_new(struct pool *pool, size_t max_size,
     struct filter_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
     cache->cache = cache_new(pool, &filter_cache_class, 65521, max_size);
+
+    cache->rubber = rubber_new(max_size);
+    if (cache->rubber == NULL) {
+        fprintf(stderr, "Failed to allocate filter cache: %s\n",
+                strerror(errno));
+        _exit(2);
+    }
+
     cache->resource_loader = resource_loader;
     list_init(&cache->requests);
     return cache;
@@ -523,6 +557,7 @@ filter_cache_close(struct filter_cache *cache)
     }
 
     cache_close(cache->cache);
+    rubber_free(cache->rubber);
 
     pool_unref(cache->pool);
 }
@@ -538,6 +573,7 @@ void
 filter_cache_flush(struct filter_cache *cache)
 {
     cache_flush(cache->cache);
+    rubber_compress(cache->rubber);
 }
 
 static void
@@ -594,10 +630,10 @@ filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
     /* XXX hold reference on item */
 
     assert(item->item.size >= fcache_item_base_size);
-    size_t size = item->item.size - fcache_item_base_size;
 
-    response_body = size > 0
-        ? istream_memory_new(pool, item->data, size)
+    response_body = item->rubber_id != 0
+        ? istream_rubber_new(pool, cache->rubber, item->rubber_id,
+                             0, item->item.size - fcache_item_base_size)
         : istream_null_new(pool);
 
     response_body = istream_unlock_new(pool, response_body,
