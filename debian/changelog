@@ -2,6 +2,7 @@ cm4all-beng-proxy (2.0.50) unstable; urgency=low
 
   * pool: reduce memory overhead of debug data
   * fcgi-client: fix assertion failure due to redundant read event
+  * lb: fix crash after pipe-to-socket splice I/O error
 
  --   
 
