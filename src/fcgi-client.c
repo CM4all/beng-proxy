@@ -267,6 +267,12 @@ fcgi_client_parse_headers(struct fcgi_client *client,
     return next != NULL ? next - data : 0;
 }
 
+/**
+ * Feed data into the FastCGI protocol parser.
+ *
+ * @return the number of bytes consumed, or 0 if this object has been
+ * destructed
+ */
 static size_t
 fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
 {
@@ -295,8 +301,10 @@ fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
 }
 
 /**
- * Consume data from the input buffer.  Returns false if the buffer is
- * full or if this object has been destructed.
+ * Consume data from the input buffer.
+ *
+ * @return false if the buffer is full or if this object has been
+ * destructed
  */
 static bool
 fcgi_client_consume_input(struct fcgi_client *client)
@@ -480,6 +488,10 @@ fcgi_client_consume_input(struct fcgi_client *client)
  *
  */
 
+/**
+ * Read data from the FastCGI connection into the input buffer and
+ * attempt to consume it.  The buffer must not be full already.
+ */
 static bool
 fcgi_client_try_read(struct fcgi_client *client)
 {
