@@ -105,6 +105,14 @@ fcgi_client_schedule_read(struct fcgi_client *client)
 }
 
 static void
+fcgi_client_unschedule_read(struct fcgi_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_del(&client->response.event, client->pool);
+}
+
+static void
 fcgi_client_schedule_write(struct fcgi_client *client)
 {
     assert(client->fd >= 0);
@@ -704,6 +712,11 @@ static void
 fcgi_client_response_body_read(istream_t istream)
 {
     struct fcgi_client *client = response_stream_to_client(istream);
+
+    /* cancel any scheduled read event before doing anything else,
+       just in case this function fills the buffer completely; if not,
+       the read will be re-scheduled anyway */
+    fcgi_client_unschedule_read(client);
 
     if (fcgi_client_consume_input(client))
         fcgi_client_try_read(client);
