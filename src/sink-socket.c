@@ -34,6 +34,10 @@ struct sink_socket {
      * responsible for querying more data.
      */
     bool got_event;
+
+#ifndef NDEBUG
+    bool valid;
+#endif
 };
 
 static void
@@ -103,6 +107,10 @@ sink_socket_eof(void *ctx)
 {
     struct sink_socket *ss = ctx;
 
+#ifndef NDEBUG
+    ss->valid = false;
+#endif
+
     p_event_del(&ss->event, ss->pool);
 
     ss->handler->input_eof(ss->handler_ctx);
@@ -112,6 +120,10 @@ static void
 sink_socket_abort(GError *error, void *ctx)
 {
     struct sink_socket *ss = ctx;
+
+#ifndef NDEBUG
+    ss->valid = false;
+#endif
 
     p_event_del(&ss->event, ss->pool);
 
@@ -178,6 +190,10 @@ sink_socket_new(struct pool *pool, struct istream *istream,
 
     ss->got_event = false;
 
+#ifndef NDEBUG
+    ss->valid = true;
+#endif
+
     return ss;
 }
 
@@ -185,6 +201,7 @@ void
 sink_socket_read(struct sink_socket *ss)
 {
     assert(ss != NULL);
+    assert(ss->valid);
     assert(ss->input != NULL);
 
     istream_read(ss->input);
@@ -194,7 +211,12 @@ void
 sink_socket_close(struct sink_socket *ss)
 {
     assert(ss != NULL);
+    assert(ss->valid);
     assert(ss->input != NULL);
+
+#ifndef NDEBUG
+    ss->valid = false;
+#endif
 
     p_event_del(&ss->event, ss->pool);
     istream_close(ss->input);
