@@ -4,7 +4,7 @@ cm4all-beng-proxy (2.0.50) unstable; urgency=low
   * fcgi-client: fix assertion failure due to redundant read event
   * lb: fix crash after pipe-to-socket splice I/O error
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 05 Oct 2012 12:23:15 -0000
 
 cm4all-beng-proxy (2.0.49) unstable; urgency=low
 
