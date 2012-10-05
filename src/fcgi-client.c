@@ -105,6 +105,14 @@ fcgi_client_schedule_read(struct fcgi_client *client)
 }
 
 static void
+fcgi_client_unschedule_read(struct fcgi_client *client)
+{
+    assert(client->fd >= 0);
+
+    p_event_del(&client->response.event, client->pool);
+}
+
+static void
 fcgi_client_schedule_write(struct fcgi_client *client)
 {
     assert(client->fd >= 0);
@@ -267,6 +275,12 @@ fcgi_client_parse_headers(struct fcgi_client *client,
     return next != NULL ? next - data : 0;
 }
 
+/**
+ * Feed data into the FastCGI protocol parser.
+ *
+ * @return the number of bytes consumed, or 0 if this object has been
+ * destructed
+ */
 static size_t
 fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
 {
@@ -295,8 +309,10 @@ fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
 }
 
 /**
- * Consume data from the input buffer.  Returns false if the buffer is
- * full or if this object has been destructed.
+ * Consume data from the input buffer.
+ *
+ * @return false if the buffer is full or if this object has been
+ * destructed
  */
 static bool
 fcgi_client_consume_input(struct fcgi_client *client)
@@ -480,6 +496,10 @@ fcgi_client_consume_input(struct fcgi_client *client)
  *
  */
 
+/**
+ * Read data from the FastCGI connection into the input buffer and
+ * attempt to consume it.  The buffer must not be full already.
+ */
 static bool
 fcgi_client_try_read(struct fcgi_client *client)
 {
@@ -692,6 +712,11 @@ static void
 fcgi_client_response_body_read(struct istream *istream)
 {
     struct fcgi_client *client = response_stream_to_client(istream);
+
+    /* cancel any scheduled read event before doing anything else,
+       just in case this function fills the buffer completely; if not,
+       the read will be re-scheduled anyway */
+    fcgi_client_unschedule_read(client);
 
     if (fcgi_client_consume_input(client))
         fcgi_client_try_read(client);

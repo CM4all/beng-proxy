@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 struct lease {
     void (*release)(bool reuse, void *ctx);
