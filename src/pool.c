@@ -455,6 +455,14 @@ pool_destroy(struct pool *pool, struct pool *reparent_to)
     }
 #endif
 
+#ifndef NDEBUG
+    while (!list_empty(&pool->attachments)) {
+        struct list_head *next = pool->unrefs.next;
+        list_remove(next);
+        free(next);
+    }
+#endif
+
     switch (pool->type) {
     case POOL_LIBC:
         while (!list_empty(&pool->current_area.libc)) {
@@ -1041,7 +1049,7 @@ pool_attach(struct pool *pool, const void *p, const char *name)
     assert(p != NULL);
     assert(name != NULL);
 
-    struct attachment *attachment = p_malloc(pool, sizeof(*attachment));
+    struct attachment *attachment = xmalloc(sizeof(*attachment));
     attachment->value = p;
     attachment->name = name;
 
@@ -1080,6 +1088,7 @@ pool_detach(struct pool *pool, const void *p)
     assert(attachment != NULL);
 
     list_remove(&attachment->siblings);
+    free(attachment);
 }
 
 void
@@ -1090,6 +1099,7 @@ pool_detach_checked(struct pool *pool, const void *p)
         return;
 
     list_remove(&attachment->siblings);
+    free(attachment);
 }
 
 const char *

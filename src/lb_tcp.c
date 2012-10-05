@@ -152,6 +152,8 @@ first_sink_input_error(GError *error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
+    connection->tcp.peers[0].sink = NULL;
+
     lb_connection_log_gerror(3, connection, "Error", error);
     g_error_free(error);
 
@@ -162,6 +164,8 @@ static bool
 first_sink_send_error(int error, void *ctx)
 {
     struct lb_connection *connection = ctx;
+
+    connection->tcp.peers[0].sink = NULL;
 
     lb_connection_log_errno(3, connection, "Send failed", error);
     lb_connection_close(connection);
@@ -192,6 +196,8 @@ second_sink_input_error(GError *error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
+    connection->tcp.peers[1].sink = NULL;
+
     lb_connection_log_gerror(3, connection, "Error", error);
     g_error_free(error);
 
@@ -202,6 +208,8 @@ static bool
 second_sink_send_error(int error, void *ctx)
 {
     struct lb_connection *connection = ctx;
+
+    connection->tcp.peers[1].sink = NULL;
 
     lb_connection_log_errno(3, connection, "Send failed", error);
     lb_connection_close(connection);
@@ -335,8 +343,12 @@ lb_tcp_close(struct lb_connection *connection)
     if (async_ref_defined(&connection->tcp.connect))
         async_abort(&connection->tcp.connect);
     else {
-        sink_socket_close(connection->tcp.peers[0].sink);
-        sink_socket_close(connection->tcp.peers[1].sink);
+        if (connection->tcp.peers[0].sink != NULL)
+            sink_socket_close(connection->tcp.peers[0].sink);
+
+        if (connection->tcp.peers[1].sink != NULL)
+            sink_socket_close(connection->tcp.peers[1].sink);
+
         close(connection->tcp.peers[0].fd);
         close(connection->tcp.peers[1].fd);
     }
