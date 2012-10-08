@@ -40,9 +40,7 @@ struct shm {
 static inline unsigned
 calc_header_pages(size_t page_size, unsigned num_pages)
 {
-    size_t header_size;
-
-    header_size = sizeof(struct shm) +
+    size_t header_size = sizeof(struct shm) +
         (num_pages - 1) * sizeof(struct page);
     return (header_size + page_size - 1) / page_size;
 }
@@ -59,21 +57,18 @@ shm_data(struct shm *shm)
 struct shm *
 shm_new(size_t page_size, unsigned num_pages)
 {
-    struct shm *shm;
-    unsigned header_pages;
-    unsigned char *p;
-
     assert(page_size >= sizeof(size_t));
     assert(num_pages > 0);
 
-    header_pages = calc_header_pages(page_size, num_pages);
-    p = mmap(NULL, page_size * (header_pages + num_pages),
-             PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED|MAP_NORESERVE,
-             -1, 0);
+    const unsigned header_pages = calc_header_pages(page_size, num_pages);
+    unsigned char *p = mmap(NULL, page_size * (header_pages + num_pages),
+                            PROT_READ|PROT_WRITE,
+                            MAP_ANONYMOUS|MAP_SHARED|MAP_NORESERVE,
+                            -1, 0);
     if (p == (unsigned char *)-1)
         return NULL;
 
-    shm = (struct shm *)p;
+    struct shm *shm = (struct shm *)p;
     refcount_init(&shm->ref);
     shm->page_size = page_size;
     shm->num_pages = num_pages;
@@ -124,9 +119,7 @@ shm_page_size(const struct shm *shm)
 static struct page *
 shm_find_available(struct shm *shm, unsigned num_pages)
 {
-    struct page *page;
-
-    for (page = (struct page *)shm->available.next;
+    for (struct page *page = (struct page *)shm->available.next;
          &page->siblings != &shm->available;
          page = (struct page *)page->siblings.next)
         if (page->num_pages >= num_pages)
@@ -152,13 +145,11 @@ shm_split_page(const struct shm *shm, struct page *page, unsigned num_pages)
 void *
 shm_alloc(struct shm *shm, unsigned num_pages)
 {
-    struct page *page;
-
     assert(num_pages > 0);
 
     lock_lock(&shm->lock);
 
-    page = shm_find_available(shm, num_pages);
+    struct page *page = shm_find_available(shm, num_pages);
     if (page == NULL) {
         lock_unlock(&shm->lock);
         return NULL;
@@ -201,11 +192,10 @@ static void
 shm_merge(struct shm *shm, struct page *page)
 {
     unsigned page_number = shm_page_number(shm, page->data);
-    struct page *other;
 
     /* merge with previous page? */
 
-    other = (struct page *)page->siblings.prev;
+    struct page *other = (struct page *)page->siblings.prev;
     if (&other->siblings != &shm->available &&
         shm_page_number(shm, other->data) + other->num_pages == page_number) {
         other->num_pages += page->num_pages;
