@@ -13,6 +13,7 @@
 #include <daemon/log.h>
 
 #include <assert.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <errno.h>
 #include <string.h>
@@ -21,7 +22,7 @@ struct page {
     struct list_head siblings;
 
     unsigned num_pages;
-    unsigned char *data;
+    uint8_t *data;
 };
 
 struct shm {
@@ -45,11 +46,11 @@ calc_header_pages(size_t page_size, unsigned num_pages)
     return (header_size + page_size - 1) / page_size;
 }
 
-static unsigned char *
+static uint8_t *
 shm_data(struct shm *shm)
 {
     unsigned header_pages = calc_header_pages(shm->page_size, shm->num_pages);
-    unsigned char *base = (unsigned char*)shm;
+    uint8_t *base = (uint8_t *)shm;
 
     return base + shm->page_size * header_pages;
 }
@@ -61,11 +62,11 @@ shm_new(size_t page_size, unsigned num_pages)
     assert(num_pages > 0);
 
     const unsigned header_pages = calc_header_pages(page_size, num_pages);
-    unsigned char *p = mmap(NULL, page_size * (header_pages + num_pages),
-                            PROT_READ|PROT_WRITE,
-                            MAP_ANONYMOUS|MAP_SHARED|MAP_NORESERVE,
-                            -1, 0);
-    if (p == (unsigned char *)-1)
+    uint8_t *p = mmap(NULL, page_size * (header_pages + num_pages),
+                      PROT_READ|PROT_WRITE,
+                      MAP_ANONYMOUS|MAP_SHARED|MAP_NORESERVE,
+                      -1, 0);
+    if (p == (uint8_t *)-1)
         return NULL;
 
     struct shm *shm = (struct shm *)p;
@@ -177,7 +178,7 @@ shm_alloc(struct shm *shm, unsigned num_pages)
 static unsigned
 shm_page_number(struct shm *shm, const void *p)
 {
-    ptrdiff_t difference = (const unsigned char*)p - shm_data(shm);
+    ptrdiff_t difference = (const uint8_t *)p - shm_data(shm);
     unsigned page_number = difference / shm->page_size;
     assert(difference % shm->page_size == 0);
 
