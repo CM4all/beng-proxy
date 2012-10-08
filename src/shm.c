@@ -87,7 +87,11 @@ shm_new(size_t page_size, unsigned num_pages)
     shm->pages[0].num_pages = num_pages;
     shm->pages[0].data = shm_data(shm);
 
+#if 0
+    /* disabled because this causes page faults and immediately
+       allocates physical memory for the areas that aren't used yet */
     poison_noaccess(shm_data(shm), page_size * num_pages);
+#endif
 
     return shm;
 }

@@ -4,6 +4,7 @@ cm4all-beng-proxy (2.2) unstable; urgency=low
   * pool: reduce overhead
   * pool: optimize the linear area recycler
   * resource-address: reduce memory overhead
+  * session: reduce memory usage
 
  --   
 
