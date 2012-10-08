@@ -46,13 +46,19 @@ calc_header_pages(size_t page_size, unsigned num_pages)
     return (header_size + page_size - 1) / page_size;
 }
 
+gcc_const
+static uint8_t *
+shm_at(struct shm *shm, size_t offset)
+{
+    return (uint8_t *)shm + offset;
+}
+
 static uint8_t *
 shm_data(struct shm *shm)
 {
     unsigned header_pages = calc_header_pages(shm->page_size, shm->num_pages);
-    uint8_t *base = (uint8_t *)shm;
 
-    return base + shm->page_size * header_pages;
+    return shm_at(shm, shm->page_size * header_pages);
 }
 
 struct shm *
