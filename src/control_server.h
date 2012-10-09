@@ -15,7 +15,6 @@
 #include <stdbool.h>
 
 struct pool;
-struct address_envelope;
 struct sockaddr;
 struct in_addr;
 
@@ -40,17 +39,17 @@ control_server_quark(void)
 }
 
 struct control_server *
+control_server_new(struct pool *pool,
+                   const struct sockaddr *address, size_t address_length,
+                   const struct control_handler *handler, void *ctx,
+                   GError **error_r);
+
+struct control_server *
 control_server_new_port(struct pool *pool,
                         const char *host_and_port, int default_port,
                         const struct in_addr *group,
                         const struct control_handler *handler, void *ctx,
                         GError **error_r);
-
-struct control_server *
-control_server_new_envelope(struct pool *pool,
-                            const struct address_envelope *envelope,
-                            const struct control_handler *handler, void *ctx,
-                            GError **error_r);
 
 void
 control_server_free(struct control_server *cs);

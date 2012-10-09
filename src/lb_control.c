@@ -306,9 +306,10 @@ lb_control_new(struct lb_instance *instance,
     control->instance = instance;
 
     control->server =
-        control_server_new_envelope(pool, config->envelope,
-                                    &lb_control_handler, control,
-                                    error_r);
+        control_server_new(pool, &config->envelope->address,
+                           config->envelope->length,
+                           &lb_control_handler, control,
+                           error_r);
     if (control->server == NULL) {
         pool_unref(pool);
         return NULL;

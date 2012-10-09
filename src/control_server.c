@@ -6,7 +6,6 @@
 
 #include "control_server.h"
 #include "udp-listener.h"
-#include "address-envelope.h"
 
 #include <glib.h>
 #include <assert.h>
@@ -150,19 +149,18 @@ control_server_new_port(struct pool *pool,
 }
 
 struct control_server *
-control_server_new_envelope(struct pool *pool,
-                            const struct address_envelope *envelope,
-                            const struct control_handler *handler, void *ctx,
-                            GError **error_r)
+control_server_new(struct pool *pool,
+                   const struct sockaddr *address, size_t address_length,
+                   const struct control_handler *handler, void *ctx,
+                   GError **error_r)
 {
     assert(pool != NULL);
-    assert(envelope != NULL);
     assert(handler != NULL);
     assert(handler->packet != NULL);
     assert(handler->error != NULL);
 
     struct control_server *cs = p_malloc(pool, sizeof(*cs));
-    cs->udp = udp_listener_new(pool, &envelope->address, envelope->length,
+    cs->udp = udp_listener_new(pool, address, address_length,
                                &control_server_udp_handler, cs,
                                error_r);
     if (cs->udp == NULL)
