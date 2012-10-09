@@ -6,15 +6,15 @@
 
 #include "udp-listener.h"
 #include "fd_util.h"
+#include "address_string.h"
+#include "address_envelope.h"
 
-#include <socket/resolver.h>
 #include <socket/address.h>
 
 #include <glib.h>
 #include <event.h>
 
 #include <assert.h>
-#include <netdb.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/socket.h>
@@ -115,25 +115,16 @@ udp_listener_port_new(struct pool *pool,
     assert(handler->datagram != NULL);
     assert(handler->error != NULL);
 
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_flags = AI_PASSIVE;
-    hints.ai_socktype = SOCK_DGRAM;
-
-    struct addrinfo *ai;
-    int ret = socket_resolve_host_port(host_and_port, default_port,
-                                       &hints, &ai);
-    if (ret != 0) {
-        g_set_error(error_r, udp_listener_quark(), ret,
-                    "Failed to resolve %s: %s",
-                    host_and_port, gai_strerror(ret));
+    struct address_envelope *envelope =
+        address_envelope_parse(pool, host_and_port, default_port,
+                               true, error_r);
+    if (envelope == NULL)
         return NULL;
-    }
 
     struct udp_listener *udp =
-        udp_listener_new(pool, ai->ai_addr, ai->ai_addrlen,
+        udp_listener_new(pool, &envelope->address, envelope->length,
                          handler, ctx, error_r);
-    freeaddrinfo(ai);
+    p_free(pool, envelope);
     return udp;
 }
 

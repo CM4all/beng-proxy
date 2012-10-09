@@ -1831,6 +1831,7 @@ test_run_delegate_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
 test_dump_udp_SOURCES = test/dump-udp.c \
 	src/udp-listener.c \
+	src/address_string.c \
 	src/fd_util.c \
 	$(POOL_SRC)
 test_dump_udp_LDADD = $(AM_LDADD) \
@@ -1839,6 +1840,7 @@ test_dump_udp_LDADD = $(AM_LDADD) \
 
 test_dump_control_SOURCES = test/dump-control.c \
 	src/udp-listener.c \
+	src/address_string.c \
 	src/fd_util.c \
 	src/control_server.c \
 	$(POOL_SRC)
