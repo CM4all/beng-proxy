@@ -19,7 +19,10 @@ struct sockaddr;
 struct in_addr;
 
 struct control_handler {
-    void (*raw)(const void *data, size_t length,
+    /**
+     * @return false if the datagram shall be discarded
+     */
+    bool (*raw)(const void *data, size_t length,
                 const struct sockaddr *address, size_t address_length,
                 void *ctx);
 

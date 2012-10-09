@@ -232,7 +232,7 @@ global_control_error(GError *error, G_GNUC_UNUSED void *ctx)
 
 static struct udp_distribute *global_udp_distribute;
 
-static void
+static bool
 global_control_raw(const void *data, size_t length,
                    gcc_unused const struct sockaddr *address,
                    gcc_unused size_t address_length,
@@ -240,6 +240,8 @@ global_control_raw(const void *data, size_t length,
 {
     /* forward the packet to all worker processes */
     udp_distribute_packet(global_udp_distribute, data, length);
+
+    return true;
 }
 
 static const struct control_handler global_control_handler = {
