@@ -9,6 +9,7 @@
 
 #include <socket/resolver.h>
 
+#include <assert.h>
 #include <netdb.h>
 #include <string.h>
 #include <sys/un.h>
@@ -36,6 +37,26 @@ address_envelope_parse(struct pool *pool, const char *p, int default_port,
 {
     if (*p == '/')
         return address_envelope_sun(pool, p);
+
+    if (*p == '@') {
+#ifdef __linux
+        /* abstract unix domain socket */
+
+        struct address_envelope *envelope = address_envelope_sun(pool, p);
+        assert(envelope != NULL);
+
+        /* replace the '@' with a null byte to make it "abstract" */
+        struct sockaddr_un *sun = (struct sockaddr_un *)&envelope->address;
+        assert(sun->sun_path[0] == '@');
+        sun->sun_path[0] = '\0';
+        return envelope;
+#else
+        /* Linux specific feature */
+        g_set_error_literal(error_r, resolver_quark(), 0,
+                            "Abstract sockets supported only on Linux");
+        return NULL;
+#endif
+    }
 
     static const struct addrinfo hints = {
         .ai_flags = AI_NUMERICHOST,
