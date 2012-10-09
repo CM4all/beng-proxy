@@ -6,6 +6,7 @@
 
 #include "control_server.h"
 #include "udp-listener.h"
+#include "address-envelope.h"
 
 #include <glib.h>
 #include <assert.h>
@@ -161,9 +162,9 @@ control_server_new_envelope(struct pool *pool,
     assert(handler->error != NULL);
 
     struct control_server *cs = p_malloc(pool, sizeof(*cs));
-    cs->udp = udp_listener_envelope_new(pool, envelope,
-                                        &control_server_udp_handler, cs,
-                                        error_r);
+    cs->udp = udp_listener_new(pool, &envelope->address, envelope->length,
+                               &control_server_udp_handler, cs,
+                               error_r);
     if (cs->udp == NULL)
         return NULL;
 

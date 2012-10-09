@@ -13,7 +13,6 @@
 
 #include <stddef.h>
 
-struct address_envelope;
 struct sockaddr;
 struct in_addr;
 
@@ -33,10 +32,10 @@ udp_listener_quark(void)
 }
 
 struct udp_listener *
-udp_listener_envelope_new(struct pool *pool,
-                          const struct address_envelope *envelope,
-                          const struct udp_handler *handler, void *ctx,
-                          GError **error_r);
+udp_listener_new(struct pool *pool,
+                 const struct sockaddr *address, size_t address_length,
+                 const struct udp_handler *handler, void *ctx,
+                 GError **error_r);
 
 struct udp_listener *
 udp_listener_port_new(struct pool *pool,

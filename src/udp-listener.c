@@ -6,7 +6,6 @@
 
 #include "udp-listener.h"
 #include "fd_util.h"
-#include "address-envelope.h"
 
 #include <socket/resolver.h>
 #include <socket/address.h>
@@ -55,18 +54,19 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 }
 
 struct udp_listener *
-udp_listener_envelope_new(struct pool *pool,
-                          const struct address_envelope *envelope,
-                          const struct udp_handler *handler, void *ctx,
-                          GError **error_r)
+udp_listener_new(struct pool *pool,
+                 const struct sockaddr *address, size_t address_length,
+                 const struct udp_handler *handler, void *ctx,
+                 GError **error_r)
 {
-    assert(envelope != NULL);
+    assert(address != NULL);
+    assert(address_length > 0);
     assert(handler != NULL);
     assert(handler->datagram != NULL);
     assert(handler->error != NULL);
 
     struct udp_listener *udp = p_malloc(pool, sizeof(*udp));
-    udp->fd = socket_cloexec_nonblock(envelope->address.sa_family,
+    udp->fd = socket_cloexec_nonblock(address->sa_family,
                                       SOCK_DGRAM, 0);
     if (udp->fd < 0) {
         g_set_error(error_r, udp_listener_quark(), errno,
@@ -74,23 +74,22 @@ udp_listener_envelope_new(struct pool *pool,
         return NULL;
     }
 
-    if (envelope->address.sa_family == AF_UNIX) {
-        const struct sockaddr_un *sun =
-            (const struct sockaddr_un *)&envelope->address;
+    if (address->sa_family == AF_UNIX) {
+        const struct sockaddr_un *sun = (const struct sockaddr_un *)address;
         unlink(sun->sun_path);
     }
 
-    if (bind(udp->fd, &envelope->address, envelope->length) < 0) {
+    if (bind(udp->fd, address, address_length) < 0) {
         char buffer[256];
-        const char *address =
+        const char *address_string =
             socket_address_to_string(buffer, sizeof(buffer),
-                                     &envelope->address, envelope->length)
+                                     address, address_length)
             ? buffer
             : "?";
 
         g_set_error(error_r, udp_listener_quark(), errno,
                     "Failed to bind to %s: %s",
-                    address, strerror(errno));
+                    address_string, strerror(errno));
         close(udp->fd);
         return NULL;
     }
