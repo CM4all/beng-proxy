@@ -12,13 +12,6 @@ struct pool;
 struct address_list;
 struct addrinfo;
 
-G_GNUC_CONST
-static inline GQuark
-resolver_quark(void)
-{
-    return g_quark_from_static_string("resolver");
-}
-
 /**
  * Resolve a "host[:port]" specification, and add all addresses to the
  * specified #address_list.

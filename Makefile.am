@@ -436,6 +436,7 @@ SRC = src/main.c \
 	src/delegate-handler.c \
 	src/address_list.h \
 	src/address_list.c \
+	src/address_quark.h \
 	src/address_resolver.c src/address_resolver.h \
 	src/address_string.h \
 	src/address_string.c \
