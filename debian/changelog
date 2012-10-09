@@ -8,6 +8,7 @@ cm4all-beng-proxy (2.2) unstable; urgency=low
   * http-cache, filter-cache: return free memory to operating system
   * control_server: support local and abstract sockets
   * python/control: support abstract sockets
+  * bp_control: create implicit control channel for each worker process
   * require automake 1.11
 
  --   

@@ -144,6 +144,7 @@ exit_event_callback(int fd, short event gcc_unused, void *ctx)
     if (instance->pipe_stock != NULL)
         stock_free(instance->pipe_stock);
 
+    local_control_handler_deinit(instance);
     global_control_handler_deinit(instance);
 
     pool_commit();
@@ -315,6 +316,9 @@ int main(int argc, char **argv)
 
     if (!global_control_handler_init(instance.pool, &instance))
         exit(2);
+
+    local_control_handler_init(&instance);
+    local_control_handler_open(&instance);
 
     instance.balancer = balancer_new(instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.pool,

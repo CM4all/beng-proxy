@@ -171,6 +171,10 @@ worker_new(struct instance *instance)
         if (distribute_socket >= 0)
             global_control_handler_set_fd(instance, distribute_socket);
 
+        /* open a new implicit control channel in the new worker
+           process */
+        local_control_handler_open(instance);
+
         instance->config.num_workers = 0;
 
         list_init(&instance->workers);

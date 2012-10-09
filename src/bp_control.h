@@ -38,4 +38,13 @@ global_control_handler_add_fd(struct instance *instance);
 void
 global_control_handler_set_fd(struct instance *instance, int fd);
 
+void
+local_control_handler_init(struct instance *instance);
+
+void
+local_control_handler_deinit(struct instance *instance);
+
+bool
+local_control_handler_open(struct instance *instance);
+
 #endif

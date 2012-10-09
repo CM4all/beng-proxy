@@ -192,6 +192,7 @@ HDR = \
 	src/http-string.h \
 	src/http-util.h \
 	src/control_server.c src/control_server.h \
+	src/control_local.c src/control_local.h \
 	src/bp_stats.c src/bp_stats.h \
 	src/bp_control.c src/bp_control.h \
 	src/instance.h \

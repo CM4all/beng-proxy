@@ -7,6 +7,7 @@
 #include "bp_control.h"
 #include "bp_stats.h"
 #include "control_server.h"
+#include "control_local.h"
 #include "udp-distribute.h"
 #include "instance.h"
 #include "tcache.h"
@@ -314,4 +315,54 @@ global_control_handler_set_fd(struct instance *instance, int fd)
 
     udp_distribute_clear(global_udp_distribute);
     control_server_set_fd(instance->control_server, fd);
+}
+
+/*
+ * local (implicit) control channel
+ */
+
+static void
+local_control_packet(enum beng_control_command command,
+                     const void *payload, size_t payload_length,
+                     const struct sockaddr *address, size_t address_length,
+                     void *ctx)
+{
+    struct instance *instance = ctx;
+
+    handle_control_packet(instance,
+                          control_local_get(instance->local_control_server),
+                          command, payload, payload_length,
+                          address, address_length);
+}
+
+static const struct control_handler local_control_handler = {
+    .packet = local_control_packet,
+    .error = global_control_error,
+};
+
+void
+local_control_handler_init(struct instance *instance)
+{
+    instance->local_control_server =
+        control_local_new(instance->pool, "beng_control:pid=",
+                          &local_control_handler, instance);
+}
+
+void
+local_control_handler_deinit(struct instance *instance)
+{
+    control_local_free(instance->local_control_server);
+}
+
+bool
+local_control_handler_open(struct instance *instance)
+{
+    GError *error = NULL;
+    if (!control_local_open(instance->local_control_server, &error)) {
+        daemon_log(1, "%s\n", error->message);
+        g_error_free(error);
+        return false;
+    }
+
+    return true;
 }

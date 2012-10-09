@@ -47,6 +47,13 @@ struct instance {
      */
     struct control_server *control_server;
 
+    /**
+     * The implicit per-process control server.  It listens on a local
+     * socket "@beng-proxy:PID" and will accept connections only from
+     * root or the beng-proxy user.
+     */
+    struct control_local *local_control_server;
+
     /* stock */
     struct tcache *translate_cache;
     struct balancer *balancer;

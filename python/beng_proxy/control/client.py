@@ -13,6 +13,14 @@ class Client:
         assert isinstance(host, str)
         assert isinstance(port, int)
 
+        if host:
+            try:
+                # connect to a specific process by its PID
+                pid = int(host)
+                host = '@beng_control:pid=%d' % pid
+            except ValueError:
+                pass
+
         if host and host[0] in '/@':
             self._socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
             self._socket.settimeout(timeout)
