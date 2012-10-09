@@ -130,34 +130,10 @@ udp_listener_port_new(struct pool *pool,
         return NULL;
     }
 
-    struct udp_listener *udp = p_malloc(pool, sizeof(*udp));
-    udp->fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype,
-                                      ai->ai_protocol);
-    if (udp->fd < 0) {
-        g_set_error(error_r, udp_listener_quark(), errno,
-                    "Failed to create socket: %s", g_strerror(errno));
-        freeaddrinfo(ai);
-        return NULL;
-    }
-
-    if (bind(udp->fd, ai->ai_addr, ai->ai_addrlen) < 0) {
-        g_set_error(error_r, udp_listener_quark(), errno,
-                    "Failed to bind to %s: %s",
-                    host_and_port, strerror(errno));
-        close(udp->fd);
-        freeaddrinfo(ai);
-        return NULL;
-    }
-
+    struct udp_listener *udp =
+        udp_listener_new(pool, ai->ai_addr, ai->ai_addrlen,
+                         handler, ctx, error_r);
     freeaddrinfo(ai);
-
-    event_set(&udp->event, udp->fd,
-              EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
-    event_add(&udp->event, NULL);
-
-    udp->handler = handler;
-    udp->handler_ctx = ctx;
-
     return udp;
 }
 
