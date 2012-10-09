@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS = foreign 1.10 dist-bzip2 subdir-objects
+AUTOMAKE_OPTIONS = foreign 1.11 dist-bzip2 subdir-objects
 
 EXTRA_DIST = \
 	doc/lb.tex \
