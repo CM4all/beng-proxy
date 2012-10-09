@@ -299,9 +299,10 @@ config_parser_feed_control(struct config_parser *parser, char *p,
                 return syntax_error(error_r);
 
             control->envelope = address_envelope_parse(parser->config->pool,
-                                                       address, 80, true);
+                                                       address, 80, true,
+                                                       error_r);
             if (control->envelope == NULL)
-                return throw(error_r, "Could not parse control address");
+                return false;
 
             return true;
         } else
@@ -488,9 +489,10 @@ config_parser_feed_node(struct config_parser *parser, char *p,
 
         if (node->envelope == NULL) {
             node->envelope = address_envelope_parse(parser->config->pool,
-                                                    node->name, 80, false);
+                                                    node->name, 80, false,
+                                                    error_r);
             if (node->envelope == NULL)
-                return throw(error_r, "Could not parse node address from name");
+                return false;
         }
 
         list_add(&node->siblings, &parser->config->nodes);
@@ -512,9 +514,9 @@ config_parser_feed_node(struct config_parser *parser, char *p,
                 return throw(error_r, "Duplicate node address");
 
             node->envelope = address_envelope_parse(parser->config->pool,
-                                                    value, 80, false);
+                                                    value, 80, false, error_r);
             if (node->envelope == NULL)
-                return throw(error_r, "Could not parse node address");
+                return false;
 
             return true;
         } else if (strcmp(word, "jvm_route") == 0) {
@@ -541,12 +543,9 @@ auto_create_node(struct config_parser *parser, const char *name,
                  GError **error_r)
 {
     const struct address_envelope *envelope =
-        address_envelope_parse(parser->config->pool, name, 80, false);
-    if (envelope == NULL) {
-        g_set_error(error_r, lb_config_quark(), 0,
-                    "Failed to parse node address");
+        address_envelope_parse(parser->config->pool, name, 80, false, error_r);
+    if (envelope == NULL)
         return NULL;
-    }
 
     struct lb_node_config *node =
         p_malloc(parser->config->pool, sizeof(*node));
@@ -933,9 +932,10 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
                 return syntax_error(error_r);
 
             listener->envelope = address_envelope_parse(parser->config->pool,
-                                                        address, 80, true);
+                                                        address, 80, true,
+                                                        error_r);
             if (listener->envelope == NULL)
-                return throw(error_r, "Could not parse listener address");
+                return false;
 
             return true;
         } else if (strcmp(word, "pool") == 0) {

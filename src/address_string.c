@@ -4,6 +4,7 @@
 
 #include "address_string.h"
 #include "address_envelope.h"
+#include "address_quark.h"
 #include "pool.h"
 
 #include <socket/resolver.h>
@@ -31,7 +32,7 @@ address_envelope_sun(struct pool *pool, const char *path)
 
 struct address_envelope *
 address_envelope_parse(struct pool *pool, const char *p, int default_port,
-                       bool passive)
+                       bool passive, GError **error_r)
 {
     if (*p == '/')
         return address_envelope_sun(pool, p);
@@ -51,8 +52,12 @@ address_envelope_parse(struct pool *pool, const char *p, int default_port,
     int result = socket_resolve_host_port(p, default_port,
                                           passive ? &passive_hints : &hints,
                                           &ai);
-    if (result != 0)
+    if (result != 0) {
+        g_set_error(error_r, resolver_quark(), result,
+                    "Failed to resolve '%s': %s",
+                    p, gai_strerror(result));
         return NULL;
+    }
 
     struct address_envelope *e = p_malloc(pool, sizeof(*e) -
                                           sizeof(e->address) + ai->ai_addrlen);

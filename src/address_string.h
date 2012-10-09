@@ -5,6 +5,8 @@
 #ifndef BENG_PROXY_ADDRESS_STRING_H
 #define BENG_PROXY_ADDRESS_STRING_H
 
+#include <glib.h>
+
 #include <stdbool.h>
 
 struct pool;
@@ -19,6 +21,6 @@ struct addrinfo;
  */
 struct address_envelope *
 address_envelope_parse(struct pool *pool, const char *p, int default_port,
-                       bool passive);
+                       bool passive, GError **error_r);
 
 #endif

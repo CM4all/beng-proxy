@@ -47,10 +47,12 @@ int main(int argc, char **argv)
     struct pool *root_pool = pool_new_libc(NULL, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
+    GError *error = NULL;
     struct address_envelope *envelope =
-        address_envelope_parse(pool, argv[1], 0, false);
+        address_envelope_parse(pool, argv[1], 0, false, &error);
     if (envelope == NULL) {
-        fprintf(stderr, "Could not parse IP address\n");
+        fprintf(stderr, "%s\n", error->message);
+        g_error_free(error);
         pool_unref(pool);
         pool_unref(root_pool);
         return EXIT_FAILURE;
