@@ -92,13 +92,13 @@ static void
 control_server_udp_datagram(const void *data, size_t length,
                             const struct sockaddr *address,
                             size_t address_length,
-                            gcc_unused int uid,
+                            int uid,
                             void *ctx)
 {
     struct control_server *cs = ctx;
 
     if (cs->handler->raw != NULL &&
-        !cs->handler->raw(data, length, address, address_length,
+        !cs->handler->raw(data, length, address, address_length, uid,
                           cs->handler_ctx))
         /* discard datagram if raw() returns false */
         return;

@@ -236,6 +236,7 @@ static bool
 global_control_raw(const void *data, size_t length,
                    gcc_unused const struct sockaddr *address,
                    gcc_unused size_t address_length,
+                   gcc_unused int uid,
                    gcc_unused void *ctx)
 {
     /* forward the packet to all worker processes */

@@ -24,6 +24,7 @@ struct control_handler {
      */
     bool (*raw)(const void *data, size_t length,
                 const struct sockaddr *address, size_t address_length,
+                int uid,
                 void *ctx);
 
     void (*packet)(enum beng_control_command command,
