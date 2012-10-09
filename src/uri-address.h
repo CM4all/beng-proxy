@@ -7,7 +7,7 @@
 #ifndef __BENG_URI_ADDRESS_H
 #define __BENG_URI_ADDRESS_H
 
-#include "address-list.h"
+#include "address_list.h"
 
 #include <inline/compiler.h>
 

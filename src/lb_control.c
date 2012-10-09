@@ -9,8 +9,8 @@
 #include "lb_config.h"
 #include "lb_stats.h"
 #include "control_server.h"
-#include "address-envelope.h"
-#include "address-edit.h"
+#include "address_envelope.h"
+#include "address_edit.h"
 #include "failure.h"
 #include "tpool.h"
 

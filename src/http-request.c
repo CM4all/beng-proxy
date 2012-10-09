@@ -17,7 +17,7 @@
 #include "lease.h"
 #include "abort-close.h"
 #include "failure.h"
-#include "address-envelope.h"
+#include "address_envelope.h"
 #include "istream.h"
 
 #include <inline/compiler.h>

@@ -11,7 +11,7 @@
 #include "notify.h"
 #include "ssl_create.h"
 #include "listener.h"
-#include "address-envelope.h"
+#include "address_envelope.h"
 #include "pool.h"
 
 #include <daemon/log.h>

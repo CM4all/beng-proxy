@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "address-list.h"
-#include "address-envelope.h"
+#include "address_list.h"
+#include "address_envelope.h"
 #include "pool.h"
 
 #include <socket/address.h>

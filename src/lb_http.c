@@ -13,7 +13,7 @@
 #include "lb_jvm_route.h"
 #include "lb_headers.h"
 #include "ssl_filter.h"
-#include "address-envelope.h"
+#include "address_envelope.h"
 #include "address_sticky.h"
 #include "http-server.h"
 #include "http-client.h"

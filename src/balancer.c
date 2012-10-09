@@ -6,8 +6,8 @@
 
 #include "balancer.h"
 #include "cache.h"
-#include "address-list.h"
-#include "address-envelope.h"
+#include "address_list.h"
+#include "address_envelope.h"
 #include "failure.h"
 #include "bulldog.h"
 

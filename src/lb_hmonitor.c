@@ -13,8 +13,8 @@
 #include "pool.h"
 #include "tpool.h"
 #include "hashmap.h"
-#include "address-envelope.h"
-#include "address-edit.h"
+#include "address_envelope.h"
+#include "address_edit.h"
 
 static struct pool *hmonitor_pool;
 static struct hashmap *hmonitor_map;

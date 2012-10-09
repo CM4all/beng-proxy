@@ -4,7 +4,7 @@
 #include "async.h"
 #include "balancer.h"
 #include "failure.h"
-#include "address-list.h"
+#include "address_list.h"
 
 #include <socket/resolver.h>
 #include <socket/util.h>

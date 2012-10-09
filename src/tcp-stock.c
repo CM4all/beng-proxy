@@ -8,8 +8,8 @@
 #include "stock.h"
 #include "async.h"
 #include "client-socket.h"
-#include "address-list.h"
-#include "address-envelope.h"
+#include "address_list.h"
+#include "address_envelope.h"
 #include "pevent.h"
 
 #include <daemon/log.h>

@@ -6,7 +6,7 @@
 #define BENG_PROXY_CGI_ADDRESS_H
 
 #include "jail.h"
-#include "address-list.h"
+#include "address_list.h"
 
 #include <inline/compiler.h>
 

@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "address-resolver.h"
-#include "address-list.h"
+#include "address_resolver.h"
+#include "address_list.h"
 #include "pool.h"
 
 #include <socket/resolver.h>

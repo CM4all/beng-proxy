@@ -9,7 +9,7 @@
 #include "stock.h"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"
-#include "address-list.h"
+#include "address_list.h"
 #include "lease.h"
 #include "pool.h"
 #include "istream.h"

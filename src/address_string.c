@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "address-string.h"
-#include "address-envelope.h"
+#include "address_string.h"
+#include "address_envelope.h"
 #include "pool.h"
 
 #include <socket/resolver.h>

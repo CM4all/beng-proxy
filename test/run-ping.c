@@ -1,8 +1,8 @@
 #include "ping.h"
 #include "pool.h"
 #include "async.h"
-#include "address-string.h"
-#include "address-envelope.h"
+#include "address_string.h"
+#include "address_envelope.h"
 
 #include <event.h>
 #include <stdio.h>

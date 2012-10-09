@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "address-edit.h"
+#include "address_edit.h"
 #include "pool.h"
 
 #include <sys/socket.h>

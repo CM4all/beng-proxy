@@ -6,9 +6,9 @@
 
 #include "lb_config.h"
 #include "pool.h"
-#include "address-string.h"
-#include "address-envelope.h"
-#include "address-edit.h"
+#include "address_string.h"
+#include "address_envelope.h"
+#include "address_edit.h"
 
 #include <assert.h>
 #include <stdio.h>

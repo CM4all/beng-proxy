@@ -6,8 +6,8 @@
 
 #include "client-balancer.h"
 #include "client-socket.h"
-#include "address-envelope.h"
-#include "address-list.h"
+#include "address_envelope.h"
+#include "address_list.h"
 #include "balancer.h"
 #include "failure.h"
 #include "async.h"

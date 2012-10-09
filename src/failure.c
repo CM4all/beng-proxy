@@ -6,7 +6,7 @@
 
 #include "failure.h"
 #include "expiry.h"
-#include "address-envelope.h"
+#include "address_envelope.h"
 #include "pool.h"
 
 #include <daemon/log.h>

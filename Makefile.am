@@ -434,11 +434,11 @@ SRC = src/main.c \
 	src/delegate-glue.c \
 	src/delegate-request.c \
 	src/delegate-handler.c \
-	src/address-list.h \
-	src/address-list.c \
-	src/address-resolver.c src/address-resolver.h \
-	src/address-string.h \
-	src/address-string.c \
+	src/address_list.h \
+	src/address_list.c \
+	src/address_resolver.c src/address_resolver.h \
+	src/address_string.h \
+	src/address_string.c \
 	src/uri-edit.c \
 	src/uri-extract.c \
 	src/uri-relative.c \
@@ -522,12 +522,12 @@ src_cm4all_beng_lb_SOURCES = \
 	src/failure.c \
 	src/balancer.c \
 	src/address.c \
-	src/address-list.c \
-	src/address-resolver.c src/address-resolver.h \
-	src/address-string.h \
-	src/address-string.c \
-	src/address-edit.h \
-	src/address-edit.c \
+	src/address_list.c \
+	src/address_resolver.c src/address_resolver.h \
+	src/address_string.h \
+	src/address_string.c \
+	src/address_edit.h \
+	src/address_edit.c \
 	src/address_sticky.c src/address_sticky.h \
 	src/listener.c \
 	src/client-socket.c \
@@ -858,7 +858,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 
 test_run_ping_SOURCES = test/run-ping.c \
 	src/ping.c \
-	src/address-string.c \
+	src/address_string.c \
 	$(POOL_SRC)
 test_run_ping_LDADD = $(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -911,7 +911,7 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/strset.c \
 	src/uri-relative.c src/uri-edit.c src/uri-verify.c src/uri-escape.c \
 	src/uri-extract.c src/uri-base.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/format.c \
 	src/transformation.c \
 	$(POOL_SRC)
@@ -948,7 +948,7 @@ test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri-base.c \
 	src/uri-verify.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/format.c \
 	$(POOL_SRC)
 test_t_resource_address_LDADD = $(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
@@ -959,7 +959,7 @@ test_t_uri_address_SOURCES = test/t-uri-address.c \
 	src/uri-extract.c src/uri-base.c \
 	src/uri-verify.c \
 	src/regex.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/format.c \
 	$(POOL_SRC)
 test_t_uri_address_LDADD = $(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
@@ -1054,7 +1054,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/widget-view.c \
 	src/tpool.c src/rewrite-uri.c src/widget-resolver.c \
 	src/uri-address.c src/uri-extract.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
 	src/resource-address.c src/global.c src/transformation.c \
 	src/file-address.c \
@@ -1092,7 +1092,7 @@ test_t_balancer_SOURCES = test/t_balancer.cxx \
 	src/bulldog.c \
 	src/balancer.c src/cache.c src/failure.c \
 	src/hashmap.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/clock.c \
 	$(POOL_SRC)
 test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
@@ -1109,7 +1109,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/jail.c src/uri-base.c src/uri-escape.c src/uri-relative.c \
 	src/uri-extract.c \
 	src/regex.c \
-	src/format.c src/address-list.c \
+	src/format.c src/address_list.c \
 	$(POOL_SRC) src/tpool.c \
 	src/fifo-buffer.c src/buffered-io.c src/growing-buffer.c \
 	src/header-parser.c \
@@ -1353,7 +1353,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/regex.c \
 	src/uri-edit.c src/uri-relative.c src/uri-escape.c src/uri-verify.c \
 	src/uri-extract.c src/uri-base.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/format.c \
 	src/abort-unref.c src/cache.c \
 	src/header-writer.c src/http-util.c \
@@ -1416,7 +1416,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/resource-address.c src/uri-address.c \
 	src/file-address.c \
 	src/cgi-address.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/jail.c \
 	src/regex.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
@@ -1430,7 +1430,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/widget-registry.c src/stock.c \
 	$(POOL_SRC) \
 	src/uri-address.c src/transformation.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/tcache.c src/cache.c \
 	src/translate-response.c \
 	src/widget-view.c \
@@ -1487,7 +1487,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/resource-address.c src/uri-address.c \
 	src/file-address.c \
 	src/cgi-address.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/jail.c \
 	src/regex.c \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c src/uri-base.c \
@@ -1531,7 +1531,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/uri-address.c src/uri-edit.c src/uri-base.c \
 	src/uri-escape.c src/uri-relative.c src/uri-verify.c \
 	src/uri-extract.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/format.c \
 	src/widget-view.c \
 	src/resource-address.c src/transformation.c src/jail.c \
@@ -1627,7 +1627,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/istream-tee.c src/istream-null.c \
 	src/event2.c src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
@@ -1670,7 +1670,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/event2.c src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \
 	src/uri-extract.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/expansible-buffer.c \
 	src/istream-forward.c src/istream-catch.c \
@@ -1683,7 +1683,7 @@ test_t_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_client_balancer_SOURCES = test/run-client-balancer.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/client-balancer.c \
 	src/client-socket.c \
 	src/balancer.c \
@@ -1735,7 +1735,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.c \
 	src/uri-base.c src/uri-relative.c src/uri-extract.c \
 	src/uri-escape.c \
 	src/regex.c \
-	src/address-list.c \
+	src/address_list.c \
 	src/istream-null.c src/istream-memory.c \
 	src/istream-unlock.c \
 	src/istream-forward.c \
@@ -1781,7 +1781,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
-	src/address-list.c src/address-resolver.c \
+	src/address_list.c src/address_resolver.c \
 	src/failure.c src/bulldog.c src/balancer.c \
 	src/tcp-stock.c src/tcp-balancer.c \
 	src/cache.c \
