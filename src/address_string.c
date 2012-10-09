@@ -20,9 +20,9 @@ address_envelope_sun(struct pool *pool, const char *path)
     struct sockaddr_un *sun;
 
     const size_t path_length = strlen(path);
-    size_t length = sizeof(*sun) - sizeof(sun->sun_path) + path_length + 1;
+    size_t length = sizeof(*sun) - sizeof(sun->sun_path) + path_length;
     struct address_envelope *envelope =
-        p_malloc(pool, sizeof(*envelope) - sizeof(envelope->address) + length);
+        p_malloc(pool, sizeof(*envelope) - sizeof(envelope->address) + length + 1);
     envelope->length = length;
 
     sun = (struct sockaddr_un *)&envelope->address;
