@@ -154,7 +154,7 @@ control_tcache_invalidate(struct instance *instance,
 }
 
 static void
-query_stats(struct instance *instance,
+query_stats(struct instance *instance, struct control_server *server,
             const struct sockaddr *address, size_t address_length)
 {
     if (address_length == 0)
@@ -171,7 +171,7 @@ query_stats(struct instance *instance,
     pool_mark(tpool, &mark);
 
     GError *error = NULL;
-    if (!control_server_reply(instance->control_server, tpool,
+    if (!control_server_reply(server, tpool,
                               address, address_length,
                               CONTROL_STATS, &stats, sizeof(stats),
                               &error)) {
@@ -182,19 +182,12 @@ query_stats(struct instance *instance,
     pool_rewind(tpool, &mark);
 }
 
-
 static void
-global_control_packet(enum beng_control_command command,
+handle_control_packet(struct instance *instance, struct control_server *server,
+                      enum beng_control_command command,
                       const void *payload, size_t payload_length,
-                      G_GNUC_UNUSED const struct sockaddr *address,
-                      G_GNUC_UNUSED size_t address_length,
-                      void *ctx)
+                      const struct sockaddr *address, size_t address_length)
 {
-    struct instance *instance = ctx;
-
-    (void)payload;
-    (void)instance;
-
     daemon_log(5, "control command=%d payload_length=%zu\n",
                command, payload_length);
 
@@ -218,9 +211,22 @@ global_control_packet(enum beng_control_command command,
         break;
 
     case CONTROL_STATS:
-        query_stats(instance, address, address_length);
+        query_stats(instance, server, address, address_length);
         break;
     }
+}
+
+static void
+global_control_packet(enum beng_control_command command,
+                      const void *payload, size_t payload_length,
+                      const struct sockaddr *address, size_t address_length,
+                      void *ctx)
+{
+    struct instance *instance = ctx;
+
+    handle_control_packet(instance, instance->control_server,
+                          command, payload, payload_length,
+                          address, address_length);
 }
 
 static void
