@@ -191,8 +191,7 @@ HDR = \
 	src/http-server.h \
 	src/http-string.h \
 	src/http-util.h \
-	src/control-server.h \
-	src/control-server.c \
+	src/control_server.c src/control_server.h \
 	src/bp_stats.c src/bp_stats.h \
 	src/bp_control.c src/bp_control.h \
 	src/instance.h \
@@ -566,7 +565,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/fd-util.c \
 	$(STOPWATCH_SRC) \
 	src/udp-listener.c src/udp-listener.h \
-	src/control-server.c src/control-server.h \
+	src/control_server.c src/control_server.h \
 	src/direct.c \
 	src/access-log.c \
 	src/cookie_server.c \
@@ -1840,7 +1839,7 @@ test_dump_udp_LDADD = $(AM_LDADD) \
 test_dump_control_SOURCES = test/dump-control.c \
 	src/udp-listener.c \
 	src/fd_util.c \
-	src/control-server.c \
+	src/control_server.c \
 	$(POOL_SRC)
 test_dump_control_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \

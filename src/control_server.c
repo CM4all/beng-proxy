@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "control-server.h"
+#include "control_server.h"
 #include "udp-listener.h"
 
 #include <glib.h>

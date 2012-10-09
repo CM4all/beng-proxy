@@ -6,8 +6,7 @@
 
 #include "bp_control.h"
 #include "bp_stats.h"
-#include "control-server.h"
-#include "control-server.h"
+#include "control_server.h"
 #include "udp-distribute.h"
 #include "instance.h"
 #include "tcache.h"

@@ -1,4 +1,4 @@
-#include "control-server.h"
+#include "control_server.h"
 #include "pool.h"
 
 #include <daemon/log.h>
