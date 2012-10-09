@@ -76,7 +76,9 @@ udp_listener_new(struct pool *pool,
 
     if (address->sa_family == AF_UNIX) {
         const struct sockaddr_un *sun = (const struct sockaddr_un *)address;
-        unlink(sun->sun_path);
+        if (sun->sun_path[0] != '\0')
+            /* delete non-abstract socket files before reusing them */
+            unlink(sun->sun_path);
     }
 
     if (bind(udp->fd, address, address_length) < 0) {
