@@ -59,9 +59,9 @@ int main(int argc, char **argv) {
 
     GError *error = NULL;
     struct control_server *cs =
-            control_server_new(pool, listen_host, 1234,
-                               mcast_group != NULL ? &mcast_group_addr : NULL,
-                               &dump_control_handler, NULL, &error);
+        control_server_new_port(pool, listen_host, 1234,
+                                mcast_group != NULL ? &mcast_group_addr : NULL,
+                                &dump_control_handler, NULL, &error);
     if (cs == NULL) {
         g_printerr("%s\n", error->message);
         g_error_free(error);
