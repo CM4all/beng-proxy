@@ -102,7 +102,7 @@ fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
     }
 
     ret = bind(fd, (const struct sockaddr*)&child->address,
-               sizeof(child->address));
+               SUN_LEN(&child->address));
     if (ret < 0) {
         g_set_error(error_r, g_file_error_quark(), errno,
                     "bind(%s) failed: %s",

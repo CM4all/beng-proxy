@@ -408,7 +408,7 @@ parse_address_string(struct pool *pool, struct address_list *list, const char *p
         memcpy(sun.sun_path, p, path_length + 1);
 
         address_list_add(pool, list,
-                         (const struct sockaddr *)&sun, sizeof(sun));
+                         (const struct sockaddr *)&sun, SUN_LEN(&sun));
         return true;
     }
 
