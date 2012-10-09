@@ -17,8 +17,12 @@ struct sockaddr;
 struct in_addr;
 
 struct udp_handler {
+    /**
+     * @param uid the peer process uid, or -1 if unknown
+     */
     void (*datagram)(const void *data, size_t length,
                      const struct sockaddr *addres, size_t address_length,
+                     int uid,
                      void *ctx);
 
     void (*error)(GError *error, void *ctx);

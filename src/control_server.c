@@ -92,6 +92,7 @@ static void
 control_server_udp_datagram(const void *data, size_t length,
                             const struct sockaddr *address,
                             size_t address_length,
+                            gcc_unused int uid,
                             void *ctx)
 {
     struct control_server *cs = ctx;

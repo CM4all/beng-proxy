@@ -4,6 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+/* for struct ucred */
+#define _GNU_SOURCE 1
+
 #include "udp-listener.h"
 #include "fd_util.h"
 #include "address_string.h"
@@ -35,10 +38,22 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
     struct udp_listener *udp = ctx;
 
     char buffer[4096];
+    struct iovec iov;
+    iov.iov_base = buffer;
+    iov.iov_len = sizeof(buffer);
+
     struct sockaddr_storage sa;
-    socklen_t sa_len = sizeof(sa);
-    ssize_t nbytes = recvfrom(fd, buffer, sizeof(buffer), MSG_DONTWAIT,
-                              (struct sockaddr *)&sa, &sa_len);
+    char cbuffer[CMSG_SPACE(1024)];
+    struct msghdr msg = {
+        .msg_name = &sa,
+        .msg_namelen = sizeof(sa),
+        .msg_iov = &iov,
+        .msg_iovlen = 1,
+        .msg_control = cbuffer,
+        .msg_controllen = sizeof(cbuffer),
+    };
+
+    ssize_t nbytes = recvmsg_cloexec(fd, &msg, MSG_DONTWAIT);
     if (nbytes < 0) {
         GError *error = g_error_new(udp_listener_quark(), errno,
                                     "recv() failed: %s", g_strerror(errno));
@@ -46,8 +61,29 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
         return;
     }
 
+    int uid = -1;
+
+    struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
+    while (cmsg != NULL) {
+        if (cmsg->cmsg_level == SOL_SOCKET &&
+            cmsg->cmsg_type == SCM_CREDENTIALS) {
+            const struct ucred *cred = (const struct ucred *)CMSG_DATA(cmsg);
+            uid = cred->uid;
+        } else if (cmsg->cmsg_level == SOL_SOCKET &&
+                   cmsg->cmsg_type == SCM_RIGHTS) {
+            const int *fds = (const int *)CMSG_DATA(cmsg);
+            const unsigned n = (cmsg->cmsg_len - CMSG_LEN(0)) / sizeof(fds[0]);
+
+            for (unsigned i = 0; i < n; ++i)
+                close(fds[i]);
+        }
+
+        cmsg = CMSG_NXTHDR(&msg, cmsg);
+    }
+
     udp->handler->datagram(buffer, nbytes,
-                           (struct sockaddr *)&sa, sa_len,
+                           (struct sockaddr *)&sa, msg.msg_namelen,
+                           uid,
                            udp->handler_ctx);
 }
 
@@ -77,6 +113,10 @@ udp_listener_new(struct pool *pool,
         if (sun->sun_path[0] != '\0')
             /* delete non-abstract socket files before reusing them */
             unlink(sun->sun_path);
+
+        /* we want to receive the client's UID */
+        int value = 1;
+        setsockopt(udp->fd, SOL_SOCKET, SO_PASSCRED, &value, sizeof(value));
     }
 
     if (bind(udp->fd, address, address_length) < 0) {

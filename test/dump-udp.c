@@ -15,9 +15,10 @@ static void
 dump_udp_datagram(G_GNUC_UNUSED const void *data, size_t length,
                   G_GNUC_UNUSED const struct sockaddr *addr,
                   G_GNUC_UNUSED size_t addrlen,
+                  int uid,
                   G_GNUC_UNUSED void *ctx)
 {
-    printf("packet: %zu\n", length);
+    printf("packet: %zu uid=%d\n", length, uid);
 }
 
 static void
