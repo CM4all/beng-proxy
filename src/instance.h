@@ -41,6 +41,10 @@ struct instance {
     struct list_head workers;
     unsigned num_workers;
 
+    /**
+     * The configured control channel server (see --control-listen),
+     * NULL if none was configured.
+     */
     struct control_server *control_server;
 
     /* stock */
