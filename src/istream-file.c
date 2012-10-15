@@ -422,6 +422,9 @@ istream_file_new(struct pool *pool, const char *path, off_t length)
 int
 istream_file_fd(istream_t istream)
 {
+    assert(istream != NULL);
+    assert(istream->read == istream_file_read);
+
     struct file *file = istream_to_file(istream);
 
     assert(file->fd >= 0);
