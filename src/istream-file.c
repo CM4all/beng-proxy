@@ -108,8 +108,14 @@ istream_file_try_data(struct file *file)
     ssize_t nbytes;
 
     if (file->buffer == NULL) {
-        if (file->rest != 0)
-            file->buffer = fifo_buffer_new(file->stream.pool, 4096);
+        if (file->rest != 0) {
+            size_t size = 4096;
+            if (file->rest < (off_t)size)
+                size = file->rest;
+
+            file->buffer = fifo_buffer_new(file->stream.pool, size);
+        }
+
         rest = 0;
     } else
         rest = istream_file_invoke_data(file);
