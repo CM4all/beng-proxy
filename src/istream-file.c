@@ -432,3 +432,23 @@ istream_file_fd(istream_t istream)
     return file->fd;
 }
 
+bool
+istream_file_set_range(struct istream *istream, off_t start, off_t end)
+{
+    assert(istream != NULL);
+    assert(istream->read == istream_file_read);
+    assert(start >= 0);
+    assert(end >= start);
+
+    struct file *file = istream_to_file(istream);
+    assert(file->fd >= 0);
+    assert(file->rest >= 0);
+    assert(file->buffer == NULL);
+    assert(end <= file->rest);
+
+    if (start > 0 && lseek(file->fd, start, SEEK_CUR) < 0)
+        return false;
+
+    file->rest = end - start;
+    return true;
+}
