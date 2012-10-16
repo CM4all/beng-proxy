@@ -332,7 +332,8 @@ file_dispatch(struct request *request2, const struct stat *st,
         break;
 
     case RANGE_VALID:
-        istream_skip(body, file_request->skip);
+        istream_file_set_range(body, file_request->skip,
+                               file_request->size);
 
         assert(istream_available(body, false) ==
                file_request->size - file_request->skip);
@@ -489,10 +490,6 @@ file_callback(struct request *request2)
         return;
 
     /* build the response */
-
-    if (file_request.range == RANGE_VALID &&
-        file_request.size < (off_t)st.st_size)
-        body = istream_head_new(request->pool, body, file_request.size);
 
     file_dispatch(request2, &st, &file_request, body);
 }
