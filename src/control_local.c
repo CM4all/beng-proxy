@@ -103,8 +103,8 @@ control_local_close(struct control_local *cl)
     }
 
     if (cl->server_pool != NULL) {
-        pool_unref(cl->server_pool);
         pool_trash(cl->server_pool);
+        pool_unref(cl->server_pool);
         cl->server_pool = NULL;
     }
 }

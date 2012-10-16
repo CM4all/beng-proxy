@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.2.1) unstable; urgency=low
 
-  * 
+  * control_local: fix assertion failure
 
  --   
 
