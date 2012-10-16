@@ -175,6 +175,18 @@ control_server_free(struct control_server *cs)
     udp_listener_free(cs->udp);
 }
 
+void
+control_server_enable(struct control_server *cs)
+{
+    udp_listener_enable(cs->udp);
+}
+
+void
+control_server_disable(struct control_server *cs)
+{
+    udp_listener_disable(cs->udp);
+}
+
 bool
 control_server_reply(struct control_server *cs, struct pool *pool,
                      const struct sockaddr *address, size_t address_length,

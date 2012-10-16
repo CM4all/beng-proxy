@@ -51,6 +51,12 @@ control_server_new_envelope(struct pool *pool,
 void
 control_server_free(struct control_server *cs);
 
+void
+control_server_enable(struct control_server *cs);
+
+void
+control_server_disable(struct control_server *cs);
+
 bool
 control_server_reply(struct control_server *cs, struct pool *pool,
                      const struct sockaddr *address, size_t address_length,
