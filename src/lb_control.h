@@ -31,4 +31,10 @@ lb_control_new(struct lb_instance *instance,
 void
 lb_control_free(struct lb_control *control);
 
+void
+lb_control_enable(struct lb_control *control);
+
+void
+lb_control_disable(struct lb_control *control);
+
 #endif

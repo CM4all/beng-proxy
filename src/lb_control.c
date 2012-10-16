@@ -324,3 +324,15 @@ lb_control_free(struct lb_control *control)
 
     pool_unref(control->pool);
 }
+
+void
+lb_control_enable(struct lb_control *control)
+{
+    control_server_enable(control->server);
+}
+
+void
+lb_control_disable(struct lb_control *control)
+{
+    control_server_disable(control->server);
+}
