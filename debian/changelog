@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.0.51) unstable; urgency=low
 
   * processor: fix assertion failure with embedded CSS
+  * lb: move control channel handler to worker process
 
  --   
 
