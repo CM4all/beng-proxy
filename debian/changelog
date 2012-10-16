@@ -4,7 +4,7 @@ cm4all-beng-proxy (1.4.33) unstable; urgency=low
   * file-handler: fix xattr usage on ranged file request (possible
     assertion failure)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 16 Oct 2012 15:28:57 -0000
 
 cm4all-beng-proxy (1.4.32) unstable; urgency=low
 
