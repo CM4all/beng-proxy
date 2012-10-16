@@ -1,5 +1,6 @@
 cm4all-beng-proxy (2.2.1) unstable; urgency=low
 
+  * merge release 2.1.13
   * control_local: fix assertion failure
 
  --   
@@ -18,6 +19,12 @@ cm4all-beng-proxy (2.2) unstable; urgency=low
   * require automake 1.11
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 09 Oct 2012 15:11:24 -0000
+
+cm4all-beng-proxy (2.1.13) unstable; urgency=low
+
+  * merge release 2.0.51
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 16 Oct 2012 15:41:58 -0000
 
 cm4all-beng-proxy (2.1.12) unstable; urgency=low
 
@@ -106,6 +113,14 @@ cm4all-beng-proxy (2.1) unstable; urgency=low
   * lb: add sticky mode "jvm_route" (Tomcat)
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 30 Jul 2012 15:53:43 -0000
+
+cm4all-beng-proxy (2.0.51) unstable; urgency=low
+
+  * merge release 1.4.33
+  * processor: fix assertion failure with embedded CSS
+  * lb: move control channel handler to worker process
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 16 Oct 2012 15:39:32 -0000
 
 cm4all-beng-proxy (2.0.50) unstable; urgency=low
 
@@ -485,6 +500,14 @@ cm4all-beng-proxy (2.0) unstable; urgency=low
   * proxy-widget: reapply 'client can choose only views that have an address'
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 17 Nov 2011 08:22:39 +0100
+
+cm4all-beng-proxy (1.4.33) unstable; urgency=low
+
+  * istream-file: reduce memory usage for small files
+  * file-handler: fix xattr usage on ranged file request (possible
+    assertion failure)
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 16 Oct 2012 15:28:57 -0000
 
 cm4all-beng-proxy (1.4.32) unstable; urgency=low
 

@@ -34,4 +34,11 @@ istream_file_new(struct pool *pool, const char *path, off_t length);
 int
 istream_file_fd(struct istream * istream);
 
+/**
+ * Select a range of the file.  This must be the first call after
+ * creating the object.
+ */
+bool
+istream_file_set_range(struct istream *istream, off_t start, off_t end);
+
 #endif

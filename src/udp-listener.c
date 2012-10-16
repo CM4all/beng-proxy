@@ -179,6 +179,24 @@ udp_listener_free(struct udp_listener *udp)
 }
 
 void
+udp_listener_enable(struct udp_listener *udp)
+{
+    assert(udp != NULL);
+    assert(udp->fd >= 0);
+
+    event_add(&udp->event, NULL);
+}
+
+void
+udp_listener_disable(struct udp_listener *udp)
+{
+    assert(udp != NULL);
+    assert(udp->fd >= 0);
+
+    event_del(&udp->event);
+}
+
+void
 udp_listener_set_fd(struct udp_listener *udp, int fd)
 {
     assert(udp != NULL);

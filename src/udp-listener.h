@@ -51,8 +51,25 @@ void
 udp_listener_free(struct udp_listener *udp);
 
 /**
+ * Enable the object after it has been disabled by
+ * udp_listener_disable().  A new object is enabled by default.
+ */
+void
+udp_listener_enable(struct udp_listener *udp);
+
+/**
+ * Disable the object temporarily.  To undo this, call
+ * udp_listener_enable().
+ */
+void
+udp_listener_disable(struct udp_listener *udp);
+
+/**
  * Replaces the socket.  The old one is closed, and the new one is now
  * owned by this object.
+ *
+ * This may only be called on an object that is "enabled", see
+ * udp_listener_enable().
  */
 void
 udp_listener_set_fd(struct udp_listener *udp, int fd);

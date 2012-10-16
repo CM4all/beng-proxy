@@ -58,6 +58,12 @@ control_server_new_port(struct pool *pool,
 void
 control_server_free(struct control_server *cs);
 
+void
+control_server_enable(struct control_server *cs);
+
+void
+control_server_disable(struct control_server *cs);
+
 /**
  * Replaces the socket.  The old one is closed, and the new one is now
  * owned by this object.

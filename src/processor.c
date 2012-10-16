@@ -325,9 +325,10 @@ processor_process(struct pool *caller_pool, struct istream *istream,
     /* the text processor will expand entities */
     istream = text_processor(processor->pool, istream, widget, env);
 
-    istream = istream_tee_new(processor->pool, istream, true, true);
-    processor->replace = istream_replace_new(processor->pool,
-                                             istream_tee_second(istream));
+    struct istream *tee = istream_tee_new(processor->pool, istream,
+                                          true, true);
+    istream = istream_tee_second(tee);
+    processor->replace = istream_replace_new(processor->pool, tee);
 
     processor_parser_init(processor, istream);
     pool_unref(processor->pool);

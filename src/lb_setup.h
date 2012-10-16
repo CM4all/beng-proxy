@@ -30,4 +30,7 @@ init_all_controls(struct lb_instance *instance, GError **error_r);
 void
 deinit_all_controls(struct lb_instance *instance);
 
+void
+enable_all_controls(struct lb_instance *instance);
+
 #endif
