@@ -512,10 +512,27 @@ struct filter_cache *
 filter_cache_new(struct pool *pool, size_t max_size,
                  struct resource_loader *resource_loader)
 {
+    if (max_size == 0) {
+        /* the filter cache is disabled, return a NULLed object */
+        struct filter_cache *cache = p_malloc(pool, sizeof(*cache));
+        cache->pool = pool;
+        cache->cache = NULL;
+        cache->resource_loader = resource_loader;
+        return cache;
+    }
+
     pool = pool_new_libc(pool, "filter_cache");
 
     struct filter_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
+
+    if (max_size == 0) {
+        /* the filter cache is disabled, return a NULLed object */
+
+        cache->cache = NULL;
+        return cache;
+    }
+
     cache->cache = cache_new(pool, &filter_cache_class, 65521, max_size);
 
     cache->rubber = rubber_new(max_size);
@@ -549,6 +566,12 @@ filter_cache_request_close(struct filter_cache_request *request)
 void
 filter_cache_close(struct filter_cache *cache)
 {
+    if (cache->cache == NULL) {
+        /* filter cache is disabled */
+        p_free(cache->pool, cache);
+        return;
+    }
+
     while (!list_empty(&cache->requests)) {
         struct filter_cache_request *request =
             list_head_to_request(cache->requests.next);
@@ -566,12 +589,20 @@ void
 filter_cache_get_stats(const struct filter_cache *cache,
                        struct cache_stats *data)
 {
-    cache_get_stats(cache->cache, data);
+    if (cache->cache != NULL)
+        cache_get_stats(cache->cache, data);
+    else
+        /* filter cache is disabled */
+        memset(data, 0, sizeof(*data));
 }
 
 void
 filter_cache_flush(struct filter_cache *cache)
 {
+    if (cache->cache == NULL)
+        /* filter cache is disabled */
+        return;
+
     cache_flush(cache->cache);
     rubber_compress(cache->rubber);
 }
@@ -664,9 +695,9 @@ filter_cache_request(struct filter_cache *cache,
                      void *handler_ctx,
                      struct async_operation_ref *async_ref)
 {
-    struct filter_cache_info *info;
-
-    info = filter_cache_request_evaluate(pool, address, source_id);
+    struct filter_cache_info *info = cache->cache != NULL
+        ? filter_cache_request_evaluate(pool, address, source_id)
+        : NULL;
     if (info != NULL) {
         struct filter_cache_item *item
             = (struct filter_cache_item *)cache_get(cache->cache, info->key);
