@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.2.2) unstable; urgency=low
 
-  * 
+  * http-cache: reduce overhead when cache is disabled
 
  --   
 
