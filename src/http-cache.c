@@ -1061,7 +1061,10 @@ http_cache_request(struct http_cache *cache,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    const char *key = http_cache_key(pool, address);
+    const char *key = http_cache_heap_is_defined(&cache->heap) ||
+        cache->memcached_stock != NULL
+        ? http_cache_key(pool, address)
+        : NULL;
     if (/* this address type cannot be cached; skip the rest of this
            library */
         key == NULL ||
@@ -1077,12 +1080,8 @@ http_cache_request(struct http_cache *cache,
         return;
     }
 
-    struct http_cache_info *info;
-
-    info = http_cache_heap_is_defined(&cache->heap) ||
-        cache->memcached_stock != NULL
-        ? http_cache_request_evaluate(pool, method, address, headers, body)
-        : NULL;
+    struct http_cache_info *info =
+        http_cache_request_evaluate(pool, method, address, headers, body);
     if (info != NULL) {
         assert(body == NULL);
 
