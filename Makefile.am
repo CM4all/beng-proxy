@@ -283,6 +283,7 @@ SRC = src/main.c \
 	src/shm.c \
 	src/dpool.c \
 	src/dstring.c \
+	src/slice.c src/slice.h \
 	src/rubber.c src/rubber.h \
 	src/istream_rubber.c src/istream_rubber.h \
 	src/sink_rubber.c src/sink_rubber.h \
