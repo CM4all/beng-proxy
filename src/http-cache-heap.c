@@ -22,13 +22,6 @@ struct http_cache_item {
     unsigned char *data;
 };
 
-/**
- * This constant is added to each cache_item's response body size, to
- * account for the cost of the supplemental attributes (such as
- * headers).
- */
-static const size_t http_cache_item_base_size = 1024;
-
 static inline struct http_cache_item *
 document_to_item(struct http_cache_document *document)
 {
@@ -80,10 +73,6 @@ http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
     else
         expires = info->expires;
 
-    cache_item_init(&item->item, expires,
-                    http_cache_item_base_size +
-                    (body != NULL ? growing_buffer_size(body) : 0));
-
     item->pool = pool;
 
     http_cache_document_init(&item->document, pool, info,
@@ -91,6 +80,8 @@ http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
     item->data = body != NULL
         ? growing_buffer_dup(body, pool, &item->size)
         : NULL;
+
+    cache_item_init(&item->item, expires, pool_size(pool));
 
     cache_put_match(cache, p_strdup(pool, url),
                     &item->item,
