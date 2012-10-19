@@ -7,6 +7,8 @@
 #include "http-cache-age.h"
 #include "http-cache-internal.h"
 
+#include <string.h>
+
 /**
  * Returns the upper "maximum age" limit.  If the server specifies a
  * bigger maximum age, it will be clipped at this return value.
@@ -26,6 +28,11 @@ http_cache_age_limit(const struct http_cache_info *info)
     if (info->vary != NULL) {
         /* if there's a "Vary" response header, we may assume that the
            response is much more volatile, and lower limits apply */
+
+        if (strstr(info->vary, "x-widgetid") != NULL ||
+            strstr(info->vary, "x-widgethref") != NULL)
+            /* this response is specific to one widget instance */
+            return 30 * MINUTE;
 
         return HOUR;
     }
