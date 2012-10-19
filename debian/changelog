@@ -3,6 +3,7 @@ cm4all-beng-proxy (2.0.52) unstable; urgency=low
   * {http,filter}-cache: include headers in cache size calculation
   * {http,filter}-cache: reduce headers memory usage
   * http-cache: limit maximum age to 1 week
+    - 1 hour when "Vary" is used
   * cache: reduce number of system calls during lookup
 
  --   

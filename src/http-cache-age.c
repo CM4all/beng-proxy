@@ -13,7 +13,7 @@
  */
 gcc_pure
 static time_t
-http_cache_age_limit(void)
+http_cache_age_limit(const struct http_cache_info *info)
 {
     enum {
         SECOND = 1,
@@ -22,6 +22,13 @@ http_cache_age_limit(void)
         DAY = 24 * HOUR,
         WEEK = 7 * DAY,
     };
+
+    if (info->vary != NULL) {
+        /* if there's a "Vary" response header, we may assume that the
+           response is much more volatile, and lower limits apply */
+
+        return HOUR;
+    }
 
     return WEEK;
 }
@@ -45,7 +52,7 @@ http_cache_calc_expires(const struct http_cache_info *info)
         max_age = info->expires - now;
     }
 
-    const time_t age_limit = http_cache_age_limit();
+    const time_t age_limit = http_cache_age_limit(info);
     if (age_limit < max_age)
         max_age = age_limit;
 
