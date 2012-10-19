@@ -5,6 +5,7 @@
  */
 
 #include "http-cache-internal.h"
+#include "http-cache-age.h"
 #include "cache.h"
 #include "growing-buffer.h"
 #include "istream.h"
@@ -63,14 +64,6 @@ http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
     pool = pool_new_linear(pool, "http_cache_item", 1024);
     struct http_cache_item *item = p_malloc(pool, sizeof(*item));
 
-    time_t expires;
-    if (info->expires == (time_t)-1)
-        /* there is no Expires response header; keep it in the cache
-           for 1 hour, but check with If-Modified-Since */
-        expires = time(NULL) + 3600;
-    else
-        expires = info->expires;
-
     item->pool = pool;
 
     http_cache_document_init(&item->document, pool, info,
@@ -79,7 +72,8 @@ http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
         ? growing_buffer_dup(body, pool, &item->size)
         : NULL;
 
-    cache_item_init(&item->item, expires, pool_size(pool));
+    cache_item_init(&item->item, http_cache_calc_expires(info),
+                    pool_size(pool));
 
     cache_put_match(cache, p_strdup(pool, url),
                     &item->item,
