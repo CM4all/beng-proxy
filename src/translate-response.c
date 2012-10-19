@@ -75,7 +75,7 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
     dest->cookie_host = p_strdup_checked(pool, src->cookie_host);
 
     dest->headers = src->headers != NULL
-        ? strmap_dup(pool, src->headers)
+        ? strmap_dup(pool, src->headers, 17)
         : NULL;
 
     dest->views = src->views != NULL

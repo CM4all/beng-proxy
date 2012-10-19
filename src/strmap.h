@@ -21,7 +21,7 @@ struct strmap *gcc_malloc
 strmap_new(struct pool *pool, unsigned capacity);
 
 struct strmap *gcc_malloc
-strmap_dup(struct pool *pool, struct strmap *src);
+strmap_dup(struct pool *pool, struct strmap *src, unsigned capacity);
 
 void
 strmap_add(struct strmap *map, const char *key, const char *value);

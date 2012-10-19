@@ -16,8 +16,6 @@ struct slot {
 };
 
 struct strmap {
-    unsigned capacity;
-
     struct hashmap *hashmap;
 };
 
@@ -27,16 +25,15 @@ strmap_new(struct pool *pool, unsigned capacity)
     struct strmap *map = p_calloc(pool, sizeof(*map));
     assert(capacity > 1);
 
-    map->capacity = capacity;
     map->hashmap = hashmap_new(pool, capacity);
 
     return map;
 }
 
 struct strmap *gcc_malloc
-strmap_dup(struct pool *pool, struct strmap *src)
+strmap_dup(struct pool *pool, struct strmap *src, unsigned capacity)
 {
-    struct strmap *dest = strmap_new(pool, src->capacity);
+    struct strmap *dest = strmap_new(pool, capacity);
     const struct strmap_pair *pair;
 
     strmap_rewind(src);

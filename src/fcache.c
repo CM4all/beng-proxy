@@ -202,7 +202,7 @@ filter_cache_put(struct filter_cache_request *request)
     filter_cache_info_copy(pool, &item->info, request->info);
 
     item->status = request->response.status;
-    item->headers = strmap_dup(pool, request->response.headers);
+    item->headers = strmap_dup(pool, request->response.headers, 7);
 
     item->data = request->response.length > 0
         ? growing_buffer_dup(request->response.output, pool, &item->size)
@@ -383,7 +383,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         body = istream_tee_new(request->pool, body, false, true);
 
         request->response.status = status;
-        request->response.headers = strmap_dup(request->pool, headers);
+        request->response.headers = strmap_dup(request->pool, headers, 17);
         request->response.length = 0;
 
         istream_assign_handler(&request->response.input,
