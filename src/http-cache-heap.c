@@ -72,7 +72,8 @@ http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
         ? growing_buffer_dup(body, pool, &item->size)
         : NULL;
 
-    cache_item_init(&item->item, http_cache_calc_expires(info),
+    cache_item_init(&item->item,
+                    http_cache_calc_expires(info, request_headers),
                     pool_size(pool));
 
     cache_put_match(cache, p_strdup(pool, url),

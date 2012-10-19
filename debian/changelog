@@ -5,6 +5,7 @@ cm4all-beng-proxy (2.0.52) unstable; urgency=low
   * http-cache: limit maximum age to 1 week
     - 1 hour when "Vary" is used
     - 30 minutes when "Vary" includes "X-WidgetId" or "X-WidgetHref"
+    - 5 minutes when "Vary" includes "X-CM4all-BENG-User"
   * cache: reduce number of system calls during lookup
 
  --   

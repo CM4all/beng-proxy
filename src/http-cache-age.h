@@ -12,6 +12,7 @@
 #include <time.h>
 
 struct http_cache_info;
+struct strmap;
 
 /**
  * Calculate the "expires" value for the new cache item, based on the
@@ -19,6 +20,7 @@ struct http_cache_info;
  */
 gcc_pure
 time_t
-http_cache_calc_expires(const struct http_cache_info *info);
+http_cache_calc_expires(const struct http_cache_info *info,
+                        const struct strmap *request_headers);
 
 #endif

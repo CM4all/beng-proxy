@@ -414,7 +414,7 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
     /* type */
     serialize_uint32(gb, TYPE_DOCUMENT);
 
-    serialize_uint64(gb, http_cache_calc_expires(info));
+    serialize_uint64(gb, http_cache_calc_expires(info, request_headers));
     serialize_strmap(gb, vary);
 
     /* serialize status + response headers */

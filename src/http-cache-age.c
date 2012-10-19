@@ -6,6 +6,7 @@
 
 #include "http-cache-age.h"
 #include "http-cache-internal.h"
+#include "strmap.h"
 
 #include <string.h>
 
@@ -15,7 +16,8 @@
  */
 gcc_pure
 static time_t
-http_cache_age_limit(const struct http_cache_info *info)
+http_cache_age_limit(const struct http_cache_info *info,
+                     const struct strmap *request_headers)
 {
     enum {
         SECOND = 1,
@@ -29,6 +31,14 @@ http_cache_age_limit(const struct http_cache_info *info)
         /* if there's a "Vary" response header, we may assume that the
            response is much more volatile, and lower limits apply */
 
+        if (request_headers != NULL &&
+            strstr(info->vary, "x-cm4all-beng-user") != NULL &&
+            strmap_get(request_headers, "x-cm4all-beng-user") != NULL)
+            /* this response is specific to this one authenticated
+               user, and caching it for a long time will not be
+               helpful */
+            return 5 * MINUTE;
+
         if (strstr(info->vary, "x-widgetid") != NULL ||
             strstr(info->vary, "x-widgethref") != NULL)
             /* this response is specific to one widget instance */
@@ -41,7 +51,8 @@ http_cache_age_limit(const struct http_cache_info *info)
 }
 
 time_t
-http_cache_calc_expires(const struct http_cache_info *info)
+http_cache_calc_expires(const struct http_cache_info *info,
+                        const struct strmap *request_headers)
 {
     const time_t now = time(NULL);
 
@@ -59,7 +70,7 @@ http_cache_calc_expires(const struct http_cache_info *info)
         max_age = info->expires - now;
     }
 
-    const time_t age_limit = http_cache_age_limit(info);
+    const time_t age_limit = http_cache_age_limit(info, request_headers);
     if (age_limit < max_age)
         max_age = age_limit;
 
