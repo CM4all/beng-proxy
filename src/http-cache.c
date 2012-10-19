@@ -452,7 +452,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
     request->response.status = status;
     request->response.headers = headers != NULL
-        ? strmap_dup(request->pool, headers)
+        ? strmap_dup(request->pool, headers, 17)
         : NULL;
 
     if (body == NULL) {
@@ -728,7 +728,7 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
     request->session_sticky = session_sticky;
     request->cache = cache;
     request->key = http_cache_key(pool, address);
-    request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
+    request->headers = headers == NULL ? NULL : strmap_dup(pool, headers, 17);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     request->document = NULL;
@@ -868,7 +868,7 @@ http_cache_heap_test(struct http_cache *cache, struct pool *caller_pool,
     request->session_sticky = session_sticky;
     request->cache = cache;
     request->key = http_cache_key(pool, address);
-    request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
+    request->headers = headers == NULL ? NULL : strmap_dup(pool, headers, 17);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     http_cache_lock(document);
@@ -1083,7 +1083,7 @@ http_cache_memcached_use(struct http_cache *cache,
     request->method = method;
     request->address = resource_address_dup(pool, address);
     request->key = http_cache_key(pool, request->address);
-    request->headers = headers == NULL ? NULL : strmap_dup(pool, headers);
+    request->headers = headers == NULL ? NULL : strmap_dup(pool, headers, 17);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
     request->info = info;

@@ -5,6 +5,7 @@
  */
 
 #include "http-cache-internal.h"
+#include "http-cache-age.h"
 #include "cache.h"
 #include "growing-buffer.h"
 #include "istream.h"
@@ -21,13 +22,6 @@ struct http_cache_item {
     size_t size;
     unsigned char *data;
 };
-
-/**
- * This constant is added to each cache_item's response body size, to
- * account for the cost of the supplemental attributes (such as
- * headers).
- */
-static const size_t http_cache_item_base_size = 1024;
 
 static inline struct http_cache_item *
 document_to_item(struct http_cache_document *document)
@@ -67,22 +61,8 @@ http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
                     struct strmap *response_headers,
                     const struct growing_buffer *body)
 {
-    struct http_cache_item *item;
-    time_t expires;
-
     pool = pool_new_linear(pool, "http_cache_item", 1024);
-    item = p_malloc(pool, sizeof(*item));
-
-    if (info->expires == (time_t)-1)
-        /* there is no Expires response header; keep it in the cache
-           for 1 hour, but check with If-Modified-Since */
-        expires = time(NULL) + 3600;
-    else
-        expires = info->expires;
-
-    cache_item_init(&item->item, expires,
-                    http_cache_item_base_size +
-                    (body != NULL ? growing_buffer_size(body) : 0));
+    struct http_cache_item *item = p_malloc(pool, sizeof(*item));
 
     item->pool = pool;
 
@@ -91,6 +71,10 @@ http_cache_heap_put(struct cache *cache, struct pool *pool, const char *url,
     item->data = body != NULL
         ? growing_buffer_dup(body, pool, &item->size)
         : NULL;
+
+    cache_item_init(&item->item,
+                    http_cache_calc_expires(info, request_headers),
+                    pool_size(pool));
 
     cache_put_match(cache, p_strdup(pool, url),
                     &item->item,
@@ -143,13 +127,12 @@ http_cache_heap_istream(struct pool *pool, struct cache *cache,
                         struct http_cache_document *document)
 {
     struct http_cache_item *item = document_to_item(document);
-    istream_t istream;
 
     if (item->data == NULL)
         /* don't lock the item */
         return istream_null_new(pool);
 
-    istream = istream_memory_new(pool, item->data, item->size);
+    struct istream *istream = istream_memory_new(pool, item->data, item->size);
     return istream_unlock_new(pool, istream,
                               cache, &item->item);
 }

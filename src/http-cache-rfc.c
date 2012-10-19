@@ -201,6 +201,16 @@ http_status_cacheable(http_status_t status)
         status == HTTP_STATUS_GONE;
 }
 
+gcc_pure
+static const char *
+strmap_get_non_empty(const struct strmap *map, const char *key)
+{
+    const char *value = strmap_get(map, key);
+    if (value != NULL && *value == 0)
+        value = NULL;
+    return value;
+}
+
 bool
 http_cache_response_evaluate(struct http_cache_info *info,
                              http_status_t status, const struct strmap *headers,
@@ -288,7 +298,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     info->last_modified = strmap_get(headers, "last-modified");
     info->etag = strmap_get(headers, "etag");
 
-    info->vary = strmap_get(headers, "vary");
+    info->vary = strmap_get_non_empty(headers, "vary");
     if (info->vary != NULL && strcmp(info->vary, "*") == 0)
         /* RFC 2616 13.6: A Vary header field-value of "*" always
            fails to match and subsequent requests on that resource can
