@@ -8,7 +8,7 @@ cm4all-beng-proxy (2.0.52) unstable; urgency=low
     - 5 minutes when "Vary" includes "X-CM4all-BENG-User"
   * cache: reduce number of system calls during lookup
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 19 Oct 2012 12:07:10 -0000
 
 cm4all-beng-proxy (2.0.51) unstable; urgency=low
 
