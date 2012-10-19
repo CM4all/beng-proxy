@@ -63,7 +63,10 @@ else
 STOPWATCH_SRC =
 endif
 
-POOL_SRC = src/pool.c src/pstring.c
+POOL_SRC = \
+	src/slice.c src/slice.h \
+	src/pstring.c \
+	src/pool.c
 
 ISTREAM_SRC = \
 	src/istream-forward.c \
@@ -283,7 +286,6 @@ SRC = src/main.c \
 	src/shm.c \
 	src/dpool.c \
 	src/dstring.c \
-	src/slice.c src/slice.h \
 	src/rubber.c src/rubber.h \
 	src/istream_rubber.c src/istream_rubber.h \
 	src/sink_rubber.c src/sink_rubber.h \
@@ -501,8 +503,7 @@ bin_PROGRAMS = src/cm4all-beng-proxy \
 
 src_cm4all_beng_lb_SOURCES = \
 	src/clock.c src/clock.h \
-	src/pool.c \
-	src/pstring.c \
+	$(POOL_SRC) \
 	src/format.c \
 	src/date.c \
 	src/gmtime.c \

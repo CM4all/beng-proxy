@@ -5,6 +5,7 @@
  */
 
 #include "pool.h"
+#include "slice.h"
 
 #include <inline/poison.h>
 #include <inline/list.h>
@@ -72,6 +73,13 @@ static const size_t LIBC_POOL_CHUNK_HEADER =
 
 struct linear_pool_area {
     struct linear_pool_area *prev;
+
+    /**
+     * The slice_area that was used to allocated this pool area.  It
+     * is NULL if this area was allocated from the libc heap.
+     */
+    struct slice_area *slice_area;
+
     size_t size, used;
     unsigned char data[sizeof(size_t)];
 };
@@ -122,6 +130,8 @@ struct pool {
     struct list_head allocations;
     struct list_head attachments;
 #endif
+
+    struct slice_pool *slice_pool;
 
     /**
      * The area size passed to pool_new_linear().
@@ -209,6 +219,7 @@ pool_recycler_put_linear(struct linear_pool_area *area)
 {
     assert(area != NULL);
     assert(area->size > 0);
+    assert(area->slice_area == NULL);
 
     if (recycler.num_linear_areas >= RECYCLER_MAX_LINEAR_AREAS ||
         area->size > RECYCLER_MAX_LINEAR_SIZE)
@@ -245,8 +256,23 @@ pool_recycler_get_linear(size_t size)
 static void
 pool_free_linear_area(struct linear_pool_area *area)
 {
+    assert(area->slice_area == NULL);
+
     poison_undefined(area->data, area->used);
     free(area);
+}
+
+static bool
+pool_dispose_slice_area(struct slice_pool *slice_pool,
+                        struct linear_pool_area *area)
+{
+    if (area->slice_area == NULL)
+        return false;
+
+    assert(slice_pool != NULL);
+
+    slice_free(slice_pool, area->slice_area, area);
+    return true;
 }
 
 static void
@@ -257,7 +283,8 @@ pool_dispose_linear_area(struct pool *pool, struct linear_pool_area *area)
            this avoids poisoning the recycler with areas that will
            probably never be used again */
         area->size != pool->area_size ||
-        !pool_recycler_put_linear(area))
+        (!pool_dispose_slice_area(pool->slice_pool, area) &&
+         !pool_recycler_put_linear(area)))
         pool_free_linear_area(area);
 }
 
@@ -330,12 +357,36 @@ pool_new_libc(struct pool *parent, const char *name)
     return pool;
 }
 
+gcc_malloc
+static struct linear_pool_area *
+pool_new_slice_area(struct slice_pool *slice_pool,
+                    struct linear_pool_area *prev)
+{
+    struct slice_area *slice_area = slice_pool_get_area(slice_pool);
+    assert(slice_area != NULL);
+
+    struct linear_pool_area *area = slice_alloc(slice_pool, slice_area);
+    assert(area != NULL);
+
+    area->prev = prev;
+    area->slice_area = slice_area;
+    area->size = slice_pool_get_slice_size(slice_pool)
+        - LINEAR_POOL_AREA_HEADER;
+    area->used = 0;
+
+    poison_noaccess(area->data, area->size);
+
+    return area;
+}
+
 static struct linear_pool_area * gcc_malloc
 pool_new_linear_area(struct linear_pool_area *prev, size_t size)
 {
     struct linear_pool_area *area = xmalloc(LINEAR_POOL_AREA_HEADER + size);
     if (area == NULL)
         abort();
+
+    area->slice_area = NULL;
     area->prev = prev;
     area->size = size;
     area->used = 0;
@@ -369,9 +420,32 @@ pool_new_linear(struct pool *parent, const char *name, size_t initial_size)
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LINEAR;
     pool->area_size = initial_size;
+    pool->slice_pool = NULL;
     pool->current_area.linear = NULL;
 
     assert(parent != NULL);
+
+    return pool;
+#endif
+}
+
+struct pool *
+pool_new_slice(struct pool *parent, const char *name,
+               struct slice_pool *slice_pool)
+{
+    assert(parent != NULL);
+    assert(slice_pool_get_slice_size(slice_pool) > LINEAR_POOL_AREA_HEADER);
+
+#ifdef POOL_LIBC_ONLY
+    (void)initial_size;
+
+    return pool_new_libc(parent, name);
+#else
+    struct pool *pool = pool_new(parent, name);
+    pool->type = POOL_LINEAR;
+    pool->area_size = slice_pool_get_slice_size(slice_pool) - LINEAR_POOL_AREA_HEADER;
+    pool->slice_pool = slice_pool;
+    pool->current_area.linear = NULL;
 
     return pool;
 #endif
@@ -1006,7 +1080,9 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 #endif
         }
 
-        area = pool_get_linear_area(area, pool->area_size);
+        area = pool->slice_pool != NULL
+            ? pool_new_slice_area(pool->slice_pool, area)
+            : pool_get_linear_area(area, pool->area_size);
         pool->current_area.linear = area;
     }
 

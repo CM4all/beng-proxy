@@ -15,6 +15,7 @@
 #include <stdbool.h>
 
 struct pool;
+struct slice_pool;
 
 struct pool_mark {
     struct linear_pool_area *area;
@@ -31,6 +32,11 @@ pool_new_libc(struct pool *parent, const char *name);
 gcc_malloc
 struct pool *
 pool_new_linear(struct pool *parent, const char *name, size_t initial_size);
+
+gcc_malloc
+struct pool *
+pool_new_slice(struct pool *parent, const char *name,
+               struct slice_pool *slice_pool);
 
 #ifdef NDEBUG
 
