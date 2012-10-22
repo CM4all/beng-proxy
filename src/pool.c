@@ -363,8 +363,7 @@ pool_new_linear(struct pool *parent, const char *name, size_t initial_size)
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LINEAR;
     pool->area_size = initial_size;
-
-    pool->current_area.linear = pool_get_linear_area(NULL, initial_size);
+    pool->current_area.linear = NULL;
 
     assert(parent != NULL);
 
@@ -867,7 +866,7 @@ pool_mark(struct pool *pool, struct pool_mark *mark)
     assert(pool->type == POOL_LINEAR);
 
     mark->area = pool->current_area.linear;
-    mark->position = mark->area->used;
+    mark->position = mark->area != NULL ? mark->area->used : 0;
 #else
     (void)pool;
     (void)mark;
@@ -903,8 +902,8 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
 {
 #ifndef POOL_LIBC_ONLY
     assert(pool->type == POOL_LINEAR);
-    assert(mark->area != NULL);
-    assert(mark->position <= mark->area->used);
+    assert(mark->area == NULL || mark->position <= mark->area->used);
+    assert(mark->area != NULL || mark->position == 0);
 
     while (pool->current_area.linear != mark->area) {
         struct linear_pool_area *area = pool->current_area.linear;
@@ -916,13 +915,15 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
         pool_dispose_linear_area(pool, area);
     }
 
-    pool_remove_allocations(pool, mark->area->data + mark->position,
-                            mark->area->used - mark->position);
+    if (mark->area != NULL) {
+        pool_remove_allocations(pool, mark->area->data + mark->position,
+                                mark->area->used - mark->position);
 
-    poison_noaccess(mark->area->data + mark->position,
-                    mark->area->used - mark->position);
+        poison_noaccess(mark->area->data + mark->position,
+                        mark->area->used - mark->position);
 
-    mark->area->used = mark->position;
+        mark->area->used = mark->position;
+    }
 #else
     (void)pool;
     (void)mark;
@@ -970,8 +971,6 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 {
     struct linear_pool_area *area = pool->current_area.linear;
 
-    assert(area != NULL);
-
     size_t size = align_size(original_size);
     size += LINEAR_PREFIX;
 
@@ -990,14 +989,16 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 
         area = pool_get_linear_area(area->prev, size);
         pool->current_area.linear->prev = area;
-    } else if (unlikely(area->used + size > area->size)) {
-        daemon_log(5, "growing linear pool '%s'\n", pool->name);
+    } else if (unlikely(area == NULL || area->used + size > area->size)) {
+        if (area != NULL) {
+            daemon_log(5, "growing linear pool '%s'\n", pool->name);
 #ifdef DEBUG_POOL_GROW
-        pool_dump_allocations(pool);
-        daemon_log(6, "+ %s:%u %zu\n", file, line, original_size);
+            pool_dump_allocations(pool);
+            daemon_log(6, "+ %s:%u %zu\n", file, line, original_size);
 #else
-        TRACE_ARGS_IGNORE;
+            TRACE_ARGS_IGNORE;
 #endif
+        }
 
         size_t new_area_size = pool->area_size;
         if (size > new_area_size)
