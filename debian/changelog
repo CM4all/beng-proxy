@@ -1,4 +1,4 @@
-cm4all-beng-proxy (2.2.2) unstable; urgency=low
+cm4all-beng-proxy (3.0) unstable; urgency=low
 
   * {http,filter}-cache: reduce overhead when cache is disabled
   * pool: further overhead reduction
