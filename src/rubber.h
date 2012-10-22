@@ -44,6 +44,14 @@ gcc_pure
 const void *
 rubber_read(const struct rubber *r, unsigned id);
 
+/**
+ * Shrink an object.  The new size must be smaller (or equal) to the
+ * current size.  This is done in-place, possibly leaving a gap that
+ * can only be used again after rubber_compress() has been called.
+ */
+void
+rubber_shrink(struct rubber *r, unsigned id, size_t new_size);
+
 void
 rubber_remove(struct rubber *r, unsigned id);
 

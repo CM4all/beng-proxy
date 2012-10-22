@@ -280,6 +280,26 @@ rubber_table_add(struct rubber_table *t, size_t offset, size_t size)
 }
 
 /**
+ * @return the amount of memory that was freed
+ */
+static size_t
+rubber_table_shrink(struct rubber_table *t, unsigned id, size_t new_size)
+{
+    assert(t != NULL);
+    assert(t->entries[0].offset == 0);
+    assert(t->entries[0].size >= sizeof(*t));
+    assert(id > 0);
+    assert(id < t->initialized_tail);
+    assert(t->entries[id].allocated);
+    assert(t->entries[id].size >= new_size);
+
+    size_t delta = t->entries[id].size - new_size;
+    t->entries[id].size = new_size;
+
+    return delta;
+}
+
+/**
  * @return the size of the allocation
  */
 static size_t
@@ -460,6 +480,12 @@ rubber_read(const struct rubber *r, unsigned id)
     const size_t offset = rubber_table_offset(r->table, id);
     assert(offset < r->max_size);
     return rubber_read_at(r, offset);
+}
+
+void
+rubber_shrink(struct rubber *r, unsigned id, size_t new_size)
+{
+    r->netto_size -= rubber_table_shrink(r->table, id, align_size(new_size));
 }
 
 void

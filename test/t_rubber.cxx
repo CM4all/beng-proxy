@@ -58,6 +58,7 @@ CheckRubber(rubber *r, unsigned id, size_t length)
 class RubberTest : public CppUnit::TestFixture {
     CPPUNIT_TEST_SUITE(RubberTest);
     CPPUNIT_TEST(TestBasic);
+    CPPUNIT_TEST(TestShrink);
     CPPUNIT_TEST(TestFullTable);
     CPPUNIT_TEST_SUITE_END();
 
@@ -154,6 +155,75 @@ public:
         CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), size_t(0u));
         CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), size_t(0u));
 
+        rubber_free(r);
+    }
+
+    void TestShrink() {
+        size_t total = 4 * 1024 * 1024;
+
+        rubber *r = rubber_new(total);
+        CPPUNIT_ASSERT(r != NULL);
+
+        /* fill the whole "rubber" object */
+
+        unsigned a = AddFillRubber(r, total * 3 / 4);
+        CPPUNIT_ASSERT(a > 0);
+
+        unsigned b = AddFillRubber(r, total / 4);
+        CPPUNIT_ASSERT(b > 0);
+
+        CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), total);
+        CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total);
+
+        /* another allocation must fail */
+
+        CPPUNIT_ASSERT_EQUAL(AddFillRubber(r, 1), 0u);
+
+        CPPUNIT_ASSERT(CheckRubber(r, a, total * 3 / 4));
+        CPPUNIT_ASSERT(CheckRubber(r, b, total / 4));
+
+        /* shrink the first allocation, try again */
+
+        rubber_shrink(r, a, total / 4);
+
+        CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), total / 2);
+        CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total);
+
+        unsigned c = AddFillRubber(r, total / 2);
+        CPPUNIT_ASSERT(c > 0);
+
+        CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), total);
+        CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total);
+
+        CPPUNIT_ASSERT(CheckRubber(r, a, total / 4));
+        CPPUNIT_ASSERT(CheckRubber(r, b, total / 4));
+        CPPUNIT_ASSERT(CheckRubber(r, c, total / 2));
+
+        /* shrink the third allocation, verify rubber_compress() */
+
+        rubber_shrink(r, c, total / 4);
+
+        CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), total * 3 / 4);
+        CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total);
+
+        CPPUNIT_ASSERT(CheckRubber(r, a, total / 4));
+        CPPUNIT_ASSERT(CheckRubber(r, b, total / 4));
+        CPPUNIT_ASSERT(CheckRubber(r, c, total / 4));
+
+        rubber_compress(r);
+
+        CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), total * 3 / 4);
+        CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total * 3 / 4);
+
+        CPPUNIT_ASSERT(CheckRubber(r, a, total / 4));
+        CPPUNIT_ASSERT(CheckRubber(r, b, total / 4));
+        CPPUNIT_ASSERT(CheckRubber(r, c, total / 4));
+
+        /* clean up */
+
+        rubber_remove(r, a);
+        rubber_remove(r, b);
+        rubber_remove(r, c);
         rubber_free(r);
     }
 
