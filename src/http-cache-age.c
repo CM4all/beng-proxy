@@ -10,6 +10,20 @@
 
 #include <string.h>
 
+gcc_pure
+static bool
+vary_exists(const char *vary, const struct strmap *request_headers,
+            const char *key)
+{
+    assert(vary != NULL);
+    assert(key != NULL);
+    assert(*key != 0);
+
+    return request_headers != NULL &&
+        strstr(vary, key) != NULL &&
+        strmap_get(request_headers, key) != NULL;
+}
+
 /**
  * Returns the upper "maximum age" limit.  If the server specifies a
  * bigger maximum age, it will be clipped at this return value.
@@ -31,9 +45,9 @@ http_cache_age_limit(const struct http_cache_info *info,
         /* if there's a "Vary" response header, we may assume that the
            response is much more volatile, and lower limits apply */
 
-        if (request_headers != NULL &&
-            strstr(info->vary, "x-cm4all-beng-user") != NULL &&
-            strmap_get(request_headers, "x-cm4all-beng-user") != NULL)
+        if (vary_exists(info->vary, request_headers, "x-cm4all-beng-user") ||
+            vary_exists(info->vary, request_headers, "cookie") ||
+            vary_exists(info->vary, request_headers, "cookie2"))
             /* this response is specific to this one authenticated
                user, and caching it for a long time will not be
                helpful */
