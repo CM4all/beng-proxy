@@ -45,7 +45,9 @@ http_cache_age_limit(const struct http_cache_info *info,
         /* if there's a "Vary" response header, we may assume that the
            response is much more volatile, and lower limits apply */
 
-        if (vary_exists(info->vary, request_headers, "x-cm4all-beng-user"))
+        if (vary_exists(info->vary, request_headers, "x-cm4all-beng-user") ||
+            vary_exists(info->vary, request_headers, "cookie") ||
+            vary_exists(info->vary, request_headers, "cookie2"))
             /* this response is specific to this one authenticated
                user, and caching it for a long time will not be
                helpful */
