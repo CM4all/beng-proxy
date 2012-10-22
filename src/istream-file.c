@@ -108,8 +108,14 @@ istream_file_try_data(struct file *file)
     ssize_t nbytes;
 
     if (file->buffer == NULL) {
-        if (file->rest != 0)
-            file->buffer = fifo_buffer_new(file->stream.pool, 4096);
+        if (file->rest != 0) {
+            size_t size = 4096;
+            if (file->rest < (off_t)size)
+                size = file->rest;
+
+            file->buffer = fifo_buffer_new(file->stream.pool, size);
+        }
+
         rest = 0;
     } else
         rest = istream_file_invoke_data(file);
@@ -416,6 +422,9 @@ istream_file_new(struct pool *pool, const char *path, off_t length)
 int
 istream_file_fd(struct istream *istream)
 {
+    assert(istream != NULL);
+    assert(istream->class == &istream_file);
+
     struct file *file = istream_to_file(istream);
 
     assert(file->fd >= 0);
@@ -423,3 +432,23 @@ istream_file_fd(struct istream *istream)
     return file->fd;
 }
 
+bool
+istream_file_set_range(struct istream *istream, off_t start, off_t end)
+{
+    assert(istream != NULL);
+    assert(istream->class == &istream_file);
+    assert(start >= 0);
+    assert(end >= start);
+
+    struct file *file = istream_to_file(istream);
+    assert(file->fd >= 0);
+    assert(file->rest >= 0);
+    assert(file->buffer == NULL);
+    assert(end <= file->rest);
+
+    if (start > 0 && lseek(file->fd, start, SEEK_CUR) < 0)
+        return false;
+
+    file->rest = end - start;
+    return true;
+}

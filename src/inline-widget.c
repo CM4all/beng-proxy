@@ -98,7 +98,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
                    widget_path(widget), charset2);
         body = ic;
 
-        headers = strmap_dup(pool, headers);
+        headers = strmap_dup(pool, headers, 17);
         strmap_set(headers, "content-type", "text/html; charset=utf-8");
     }
 

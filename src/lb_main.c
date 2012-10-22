@@ -108,6 +108,8 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         children_init(instance->pool);
         all_listeners_event_add(instance);
 
+        enable_all_controls(instance);
+
         /* run monitors only in the worker process */
         lb_hmonitor_enable();
         return;

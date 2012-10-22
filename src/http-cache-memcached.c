@@ -7,6 +7,7 @@
 #include "http-cache-memcached.h"
 #include "http-cache-choice.h"
 #include "http-cache-internal.h"
+#include "http-cache-age.h"
 #include "memcached-stock.h"
 #include "memcached-client.h"
 #include "growing-buffer.h"
@@ -414,7 +415,7 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
     /* type */
     serialize_uint32(gb, TYPE_DOCUMENT);
 
-    serialize_uint64(gb, info->expires);
+    serialize_uint64(gb, http_cache_calc_expires(info, request_headers));
     serialize_strmap(gb, vary);
 
     /* serialize status + response headers */
@@ -574,7 +575,7 @@ http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
     data->background_pool = background_pool;
     data->background = background;
     data->uri = p_strdup(pool, uri);
-    data->headers = strmap_dup(pool, headers);
+    data->headers = strmap_dup(pool, headers, 17);
 
     http_cache_choice_filter(pool, stock, uri,
                              mcd_delete_filter_callback, data,

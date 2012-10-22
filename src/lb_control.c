@@ -111,8 +111,8 @@ fade_node(const struct lb_instance *instance,
                              node->envelope->length);
     daemon_log(4, "fading node %s (%s)\n", node_name, buffer);
 
-    /* set status "FADE" for 5 minutes */
-    failure_set(with_port, node->envelope->length, FAILURE_FADE, 300);
+    /* set status "FADE" for 3 hours */
+    failure_set(with_port, node->envelope->length, FAILURE_FADE, 3 * 3600);
 
     pool_rewind(tpool, &mark);
 }
@@ -323,4 +323,16 @@ lb_control_free(struct lb_control *control)
     control_server_free(control->server);
 
     pool_unref(control->pool);
+}
+
+void
+lb_control_enable(struct lb_control *control)
+{
+    control_server_enable(control->server);
+}
+
+void
+lb_control_disable(struct lb_control *control)
+{
+    control_server_disable(control->server);
 }

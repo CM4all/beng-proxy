@@ -184,16 +184,17 @@ cache_flush(struct cache *cache)
 }
 
 static bool
-cache_item_validate(const struct cache *cache, struct cache_item *item)
+cache_item_validate(const struct cache *cache, struct cache_item *item,
+                    time_t now)
 {
-    return time(NULL) < item->expires &&
+    return now < item->expires &&
         (cache->class->validate == NULL || cache->class->validate(item));
 }
 
 static void
-cache_refresh_item(struct cache *cache, struct cache_item *item)
+cache_refresh_item(struct cache *cache, struct cache_item *item, time_t now)
 {
-    item->last_accessed = time(NULL);
+    item->last_accessed = now;
 
     /* move to the front of the linked list */
     list_remove(&item->sorted_siblings);
@@ -207,7 +208,9 @@ cache_get(struct cache *cache, const char *key)
     if (item == NULL)
         return NULL;
 
-    if (!cache_item_validate(cache, item)) {
+    const time_t now = time(NULL);
+
+    if (!cache_item_validate(cache, item, now)) {
         bool found;
 
         cache_check(cache);
@@ -220,7 +223,7 @@ cache_get(struct cache *cache, const char *key)
         return NULL;
     }
 
-    cache_refresh_item(cache, item);
+    cache_refresh_item(cache, item, now);
     return item;
 }
 
@@ -229,13 +232,14 @@ cache_get_match(struct cache *cache, const char *key,
                 bool (*match)(const struct cache_item *, void *),
                 void *ctx)
 {
+    const time_t now = time(NULL);
     const struct hashmap_pair *pair = NULL;
 
     while (true) {
         if (pair != NULL) {
             struct cache_item *item = pair->value;
 
-            if (!cache_item_validate(cache, item)) {
+            if (!cache_item_validate(cache, item, now)) {
                 /* expired cache item: delete it, and re-start the
                    search */
                 bool found;
@@ -253,7 +257,7 @@ cache_get_match(struct cache *cache, const char *key,
 
             if (match(item, ctx)) {
                 /* this one matches: return it to the caller */
-                cache_refresh_item(cache, item);
+                cache_refresh_item(cache, item, now);
                 return item;
             }
 

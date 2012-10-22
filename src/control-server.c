@@ -180,6 +180,18 @@ control_server_free(struct control_server *cs)
 }
 
 void
+control_server_enable(struct control_server *cs)
+{
+    udp_listener_enable(cs->udp);
+}
+
+void
+control_server_disable(struct control_server *cs)
+{
+    udp_listener_disable(cs->udp);
+}
+
+void
 control_server_set_fd(struct control_server *cs, int fd)
 {
     udp_listener_set_fd(cs->udp, fd);
