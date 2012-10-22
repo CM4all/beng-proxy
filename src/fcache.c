@@ -575,7 +575,7 @@ filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
 
     /* XXX hold reference on item */
 
-    assert(item->item.size >= item->size);
+    assert(item->data == NULL || item->item.size >= item->size);
 
     response_body = item->data != NULL
         ? istream_memory_new(pool, item->data, item->size)

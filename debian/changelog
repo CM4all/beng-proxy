@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.53) unstable; urgency=low
 
-  * 
+  * filter-cache: fix assertion failure on serving empty response
 
  --   
 
