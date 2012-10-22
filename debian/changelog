@@ -1,5 +1,7 @@
-cm4all-beng-proxy (2.2) unstable; urgency=low
+cm4all-beng-proxy (2.3) unstable; urgency=low
 
+  * new stable branch based on v2.1.x, without the work-in-progress
+    improvements from v2.2.x
   * cache: optimize lookups
   * pool: reduce overhead
   * pool: optimize the linear area recycler
