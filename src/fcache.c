@@ -40,13 +40,6 @@
 
 static const off_t cacheable_size_limit = 256 * 1024;
 
-/**
- * This constant is added to each cache_item's response body size, to
- * account for the cost of the supplemental attributes (such as
- * headers).
- */
-static const size_t fcache_item_base_size = 1024;
-
 static const struct timeval fcache_timeout = { .tv_sec = 60 };
 
 struct filter_cache {
@@ -77,6 +70,7 @@ struct filter_cache_item {
     http_status_t status;
     struct strmap *headers;
 
+    size_t size;
     struct rubber *rubber;
     unsigned rubber_id;
 };
@@ -211,13 +205,11 @@ filter_cache_put(struct filter_cache_request *request)
 
     pool = pool_new_linear(request->cache->pool, "filter_cache_item", 1024);
     item = p_malloc(pool, sizeof(*item));
-    cache_item_init(&item->item, expires,
-                    fcache_item_base_size + request->response.length);
     item->pool = pool;
     filter_cache_info_copy(pool, &item->info, request->info);
 
     item->status = request->response.status;
-    item->headers = strmap_dup(pool, request->response.headers);
+    item->headers = strmap_dup(pool, request->response.headers, 7);
 
     unsigned rubber_id = 0;
     if (request->response.length > 0) {
@@ -242,7 +234,10 @@ filter_cache_put(struct filter_cache_request *request)
         item->rubber = rubber;
     }
 
+    item->size = request->response.length;
     item->rubber_id = rubber_id;
+
+    cache_item_init(&item->item, expires, pool_netto_size(pool) + item->size);
 
     cache_put(request->cache->cache,
               item->info.key, &item->item);
@@ -417,7 +412,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         body = istream_tee_new(request->pool, body, false, true);
 
         request->response.status = status;
-        request->response.headers = strmap_dup(request->pool, headers);
+        request->response.headers = strmap_dup(request->pool, headers, 17);
         request->response.length = 0;
 
         istream_assign_handler(&request->response.input,
@@ -660,11 +655,11 @@ filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
 
     /* XXX hold reference on item */
 
-    assert(item->item.size >= fcache_item_base_size);
+    assert(item->rubber_id == 0 || item->item.size >= item->size);
 
     response_body = item->rubber_id != 0
         ? istream_rubber_new(pool, cache->rubber, item->rubber_id,
-                             0, item->item.size - fcache_item_base_size)
+                             0, item->size)
         : istream_null_new(pool);
 
     response_body = istream_unlock_new(pool, response_body,

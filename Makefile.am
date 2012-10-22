@@ -464,6 +464,7 @@ SRC = src/main.c \
 	src/istream-unlock.c \
 	src/http-cache.c \
 	src/http-cache-document.c \
+	src/http-cache-age.c src/http-cache-age.h \
 	src/http-cache-heap.c src/http-cache-heap.h \
 	src/http-cache-info.c \
 	src/http-cache-memcached.c src/http-cache-memcached.h \
@@ -1346,7 +1347,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/istream-memory.c src/istream-string.c \
 	src/http-cache.c src/http-cache-rfc.c \
 	src/http-cache-info.c src/http-cache-document.c \
-	src/http-cache-heap.c \
+	src/http-cache-heap.c src/http-cache-age.c \
 	src/rubber.c \
 	src/resource-address.c src/uri-address.c \
 	src/file-address.c \
@@ -1732,6 +1733,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.c \
 	src/http-cache-info.c \
 	src/http-cache-rfc.c \
 	src/http-cache-document.c \
+	src/http-cache-age.c \
 	src/http-util.c \
 	src/uri-address.c src/uri-verify.c src/uri-edit.c \
 	src/uri-base.c src/uri-relative.c src/uri-extract.c \

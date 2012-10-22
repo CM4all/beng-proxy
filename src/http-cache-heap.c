@@ -6,6 +6,7 @@
 
 #include "http-cache-heap.h"
 #include "http-cache-internal.h"
+#include "http-cache-age.h"
 #include "cache.h"
 #include "growing-buffer.h"
 #include "istream.h"
@@ -30,13 +31,6 @@ struct http_cache_item {
     size_t size;
     unsigned rubber_id;
 };
-
-/**
- * This constant is added to each cache_item's response body size, to
- * account for the cost of the supplemental attributes (such as
- * headers).
- */
-static const size_t http_cache_item_base_size = 1024;
 
 static inline struct http_cache_item *
 document_to_item(struct http_cache_document *document)
@@ -104,18 +98,6 @@ http_cache_heap_put(struct http_cache_heap *cache,
     struct pool *pool = pool_new_linear(cache->pool, "http_cache_item", 256);
     struct http_cache_item *item = p_malloc(pool, sizeof(*item));
 
-    time_t expires;
-    if (info->expires == (time_t)-1)
-        /* there is no Expires response header; keep it in the cache
-           for 1 hour, but check with If-Modified-Since */
-        expires = time(NULL) + 3600;
-    else
-        expires = info->expires;
-
-    cache_item_init(&item->item, expires,
-                    http_cache_item_base_size +
-                    (body != NULL ? growing_buffer_size(body) : 0));
-
     item->cache = cache;
     item->pool = pool;
 
@@ -123,6 +105,10 @@ http_cache_heap_put(struct http_cache_heap *cache,
                              request_headers, status, response_headers);
     item->size = size;
     item->rubber_id = rubber_id;
+
+    cache_item_init(&item->item,
+                    http_cache_calc_expires(info, request_headers),
+                    pool_netto_size(pool) + item->size);
 
     cache_put_match(cache->cache, p_strdup(pool, url),
                     &item->item,
