@@ -67,11 +67,17 @@ struct libc_pool_chunk {
     unsigned char data[sizeof(size_t)];
 };
 
+static const size_t LIBC_POOL_CHUNK_HEADER =
+    offsetof(struct libc_pool_chunk, data);
+
 struct linear_pool_area {
     struct linear_pool_area *prev;
     size_t size, used;
     unsigned char data[sizeof(size_t)];
 };
+
+static const size_t LINEAR_POOL_AREA_HEADER =
+    offsetof(struct linear_pool_area, data);
 
 #ifdef DEBUG_POOL_REF
 struct pool_ref {
@@ -327,7 +333,7 @@ pool_new_libc(struct pool *parent, const char *name)
 static struct linear_pool_area * gcc_malloc
 pool_new_linear_area(struct linear_pool_area *prev, size_t size)
 {
-    struct linear_pool_area *area = xmalloc(sizeof(*area) - sizeof(area->data) + size);
+    struct linear_pool_area *area = xmalloc(LINEAR_POOL_AREA_HEADER + size);
     if (area == NULL)
         abort();
     area->prev = prev;
@@ -492,7 +498,7 @@ pool_destroy(struct pool *pool, struct pool *reparent_to)
             struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)pool->current_area.libc.next;
             list_remove(&chunk->siblings);
 #ifdef POISON
-            poison_undefined(chunk, sizeof(*chunk) - sizeof(chunk->data) + chunk->size);
+            poison_undefined(chunk, LIBC_POOL_CHUNK_HEADER + chunk->size);
 #endif
             free(chunk);
         }
