@@ -4,7 +4,7 @@ cm4all-beng-proxy (2.0.53) unstable; urgency=low
   * http-cache: limit maximum age to 5 minutes if "Vary" includes cookies
   * lb: FADE_NODE lasts for 3 hours
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 22 Oct 2012 12:21:18 -0000
 
 cm4all-beng-proxy (2.0.52) unstable; urgency=low
 
