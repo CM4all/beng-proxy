@@ -99,6 +99,7 @@ test/run-was
 test/run-ping
 test/t_balancer
 test/t_rubber
+test/t_sink_rubber
 test/run_http_cache
 
 *.aux

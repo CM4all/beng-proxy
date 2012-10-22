@@ -285,6 +285,7 @@ SRC = src/main.c \
 	src/dstring.c \
 	src/rubber.c src/rubber.h \
 	src/istream_rubber.c src/istream_rubber.h \
+	src/sink_rubber.c src/sink_rubber.h \
 	src/random.c \
 	src/session.c src/session.h \
 	src/session_id.c src/session_id.h \
@@ -824,7 +825,7 @@ check_PROGRAMS = \
 	test/t-cookie-client \
 	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
-	test/t_rubber \
+	test/t_rubber test/t_sink_rubber \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-widget-resolver \
@@ -855,7 +856,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	$(srcdir)/test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
-	test/t_rubber \
+	test/t_rubber test/t_sink_rubber \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-widget-resolver \
@@ -1408,6 +1409,20 @@ test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 test_t_rubber_SOURCES = test/t_rubber.cxx src/rubber.c
 test_t_rubber_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_rubber_LDADD = $(AM_LDADD) \
+	$(CPPUNIT_LIBS)
+
+test_t_sink_rubber_SOURCES = \
+	$(POOL_SRC) \
+	src/rubber.c src/sink_rubber.c \
+	src/istream-memory.c src/istream-string.c \
+	src/istream-fail.c src/istream-four.c \
+	src/istream-null.c src/istream-delayed.c \
+	src/istream-cat.c \
+	src/istream-forward.c \
+	test/t_sink_rubber.cxx
+test_t_sink_rubber_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_sink_rubber_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(CPPUNIT_LIBS)
 
 test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
