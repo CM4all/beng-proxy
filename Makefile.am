@@ -824,6 +824,7 @@ check_PROGRAMS = \
 	test/t-cookie-client \
 	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
+	test/t_rubber \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-widget-resolver \
@@ -854,6 +855,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	$(srcdir)/test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
+	test/t_rubber \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-widget-resolver \
@@ -1098,7 +1100,7 @@ test_t_balancer_SOURCES = test/t_balancer.cxx \
 	src/address_list.c \
 	src/clock.c \
 	$(POOL_SRC)
-test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS)$ (CPPUNIT_CFLAGS)
 test_t_balancer_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
@@ -1401,6 +1403,11 @@ test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/crash.c \
 	src/session.c src/session_manager.c
 test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
+
+test_t_rubber_SOURCES = test/t_rubber.cxx src/rubber.c
+test_t_rubber_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_rubber_LDADD = $(AM_LDADD) \
+	$(CPPUNIT_LIBS)
 
 test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	$(POOL_SRC) src/tpool.c \
