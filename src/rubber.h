@@ -47,10 +47,16 @@ rubber_read(const struct rubber *r, unsigned id);
 void
 rubber_remove(struct rubber *r, unsigned id);
 
+/**
+ * Returns the total size of all allocations.
+ */
 gcc_pure
 size_t
 rubber_get_netto_size(const struct rubber *r);
 
+/**
+ * Returns the memory consumed by this object.
+ */
 gcc_pure
 size_t
 rubber_get_brutto_size(const struct rubber *r);
