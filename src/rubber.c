@@ -437,10 +437,13 @@ rubber_add(struct rubber *r, size_t size)
             return 0;
     }
 
-    r->brutto_size += size;
-    r->netto_size += size;
+    const unsigned id = rubber_table_add(r->table, offset, size);
+    if (id > 0) {
+        r->brutto_size += size;
+        r->netto_size += size;
+    }
 
-    return rubber_table_add(r->table, offset, size);
+    return id;
 }
 
 void *
