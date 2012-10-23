@@ -388,7 +388,7 @@ rubber_new(size_t size)
     r->table = p;
 
     const size_t table_size = rubber_table_init(r->table, size / 1024);
-    r->brutto_size = r->netto_size = table_size;
+    r->brutto_size = r->netto_size = 0;
 
 #ifdef MADV_HUGEPAGE
     /* allow the Linux kernel to use "Huge Pages" for the cache, which
@@ -403,7 +403,7 @@ void
 rubber_free(struct rubber *r)
 {
     assert(rubber_table_is_empty(r->table));
-    assert(r->netto_size == rubber_table_size(r->table));
+    assert(r->netto_size == 0);
 
     rubber_table_deinit(r->table);
     munmap(r->table, r->max_size);
@@ -517,8 +517,8 @@ rubber_compress(struct rubber *r)
         offset += o->size;
     }
 
-    assert(offset == r->netto_size);
-    r->brutto_size = offset;
+    assert(offset == r->netto_size + rubber_table_size(r->table));
+    r->brutto_size = offset - rubber_table_size(r->table);
 
     /* tell the kernel that we won't need the data after our last
        allocation */

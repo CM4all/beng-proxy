@@ -55,7 +55,8 @@ size_t
 rubber_get_netto_size(const struct rubber *r);
 
 /**
- * Returns the memory consumed by this object.
+ * Returns the memory consumed by this object, not including the
+ * allocation table.
  */
 gcc_pure
 size_t
