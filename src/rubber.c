@@ -121,7 +121,7 @@ align_size(size_t size)
  */
 gcc_const
 static inline size_t
-rubber_table_size(unsigned n)
+rubber_table_required_size(unsigned n)
 {
     assert(n > 0);
 
@@ -153,7 +153,8 @@ rubber_table_init(struct rubber_table *t, unsigned max_entries)
 
     /* round to nearest "huge page", so the first real allocation
        starts at a "huge page" boundary */
-    const size_t table_size = align_page_size(rubber_table_size(max_entries));
+    const size_t table_size =
+        align_page_size(rubber_table_required_size(max_entries));
 
     t->entries[0] = (struct rubber_object){
         .next = 0,
