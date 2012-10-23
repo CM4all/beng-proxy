@@ -162,7 +162,7 @@ rubber_table_init(struct rubber_table *t, unsigned max_entries)
         .size = table_size,
     };
 
-    t->max_entries = rubber_table_capacity(t->entries[0].size);
+    t->max_entries = rubber_table_capacity(table_size);
 
     t->free_head = 0;
 
@@ -177,6 +177,26 @@ static void
 rubber_table_deinit(gcc_unused struct rubber_table *t)
 {
     assert(t->allocated_tail == 0);
+}
+
+gcc_unused
+static bool
+rubber_table_is_empty(const struct rubber_table *t)
+{
+    return t->allocated_tail == 0;
+}
+
+/**
+ * Returns the allocated size of the table object.  At the same time,
+ * this is the offset of the first allocation.
+ */
+gcc_pure gcc_unused
+static size_t
+rubber_table_size(const struct rubber_table *t)
+{
+    assert(t->entries[0].offset == 0);
+
+    return t->entries[0].size;
 }
 
 static struct rubber_object *
@@ -248,7 +268,7 @@ rubber_table_add(struct rubber_table *t, size_t offset, size_t size)
     struct rubber_object *tail = &t->entries[t->allocated_tail];
     assert(tail->allocated);
     assert(tail->next == 0);
-    assert(t->allocated_tail == 0 ||
+    assert(rubber_table_is_empty(t) ||
            t->entries[tail->previous].next == t->allocated_tail);
     assert(offset == tail->offset + tail->size);
 
@@ -266,8 +286,7 @@ static size_t
 rubber_table_remove(struct rubber_table *t, unsigned id)
 {
     assert(t != NULL);
-    assert(t->entries[0].offset == 0);
-    assert(t->entries[0].size >= sizeof(*t));
+    assert(rubber_table_size(t) >= sizeof(*t));
     assert(id > 0);
     assert(id < t->max_entries);
 
@@ -314,15 +333,14 @@ static size_t
 rubber_table_offset(const struct rubber_table *t, unsigned id)
 {
     assert(t != NULL);
-    assert(t->entries[0].offset == 0);
-    assert(t->entries[0].size >= sizeof(*t));
+    assert(rubber_table_size(t) >= sizeof(*t));
     assert(id > 0);
     assert(id < t->max_entries);
     assert(id < t->initialized_tail);
 
     const struct rubber_object *o = &t->entries[id];
     assert(o->offset > 0);
-    assert(o->offset >= t->entries[0].size);
+    assert(o->offset >= rubber_table_size(t));
     assert(t->entries[o->previous].offset < o->offset);
     assert(o->next == 0 || t->entries[o->next].offset > o->offset);
     assert(o->next == 0 || t->entries[o->next].offset >= o->offset + o->size);
@@ -384,7 +402,8 @@ rubber_new(size_t size)
 void
 rubber_free(struct rubber *r)
 {
-    assert(r->netto_size == r->table->entries[0].size);
+    assert(rubber_table_is_empty(r->table));
+    assert(r->netto_size == rubber_table_size(r->table));
 
     rubber_table_deinit(r->table);
     munmap(r->table, r->max_size);
