@@ -12,7 +12,6 @@
 #include "http-response.h"
 #include "date.h"
 #include "strref.h"
-#include "growing-buffer.h"
 #include "abort-unref.h"
 #include "tpool.h"
 #include "http-util.h"
@@ -22,6 +21,8 @@
 #include "istream.h"
 #include "rubber.h"
 #include "istream_rubber.h"
+#include "sink_rubber.h"
+#include "async.h"
 
 #include <event.h>
 
@@ -87,9 +88,12 @@ struct filter_cache_request {
     struct {
         http_status_t status;
         struct strmap *headers;
-        struct istream *input;
-        size_t length;
-        struct growing_buffer *output;
+
+        /**
+         * A handle to abort the sink_rubber that copies response body
+         * data into a new rubber allocation.
+         */
+        struct async_operation_ref async_ref;
     } response;
 
     /**
@@ -116,7 +120,7 @@ static void
 filter_cache_request_release(struct filter_cache_request *request)
 {
     assert(request != NULL);
-    assert(request->response.input == NULL);
+    assert(!async_ref_defined(&request->response.async_ref));
 
     evtimer_del(&request->timeout);
 
@@ -131,9 +135,10 @@ static void
 filter_cache_request_abort(struct filter_cache_request *request)
 {
     assert(request != NULL);
-    assert(request->response.input != NULL);
+    assert(async_ref_defined(&request->response.async_ref));
 
-    istream_free_handler(&request->response.input);
+    async_abort(&request->response.async_ref);
+    async_ref_clear(&request->response.async_ref);
     filter_cache_request_release(request);
 }
 
@@ -187,7 +192,8 @@ filter_cache_request_dup(struct pool *pool,
 }
 
 static void
-filter_cache_put(struct filter_cache_request *request)
+filter_cache_put(struct filter_cache_request *request,
+                 unsigned rubber_id, size_t size)
 {
     time_t expires;
     struct pool *pool;
@@ -211,30 +217,8 @@ filter_cache_put(struct filter_cache_request *request)
     item->status = request->response.status;
     item->headers = strmap_dup(pool, request->response.headers, 7);
 
-    unsigned rubber_id = 0;
-    if (request->response.length > 0) {
-        struct rubber *rubber = request->cache->rubber;
-        struct growing_buffer *body = request->response.output;
-        rubber_id = rubber_add(rubber, growing_buffer_size(body));
-        if (rubber_id == 0)
-            return;
-
-        uint8_t *dest = rubber_write(rubber, rubber_id);
-
-        struct growing_buffer_reader reader;
-        growing_buffer_reader_init(&reader, body);
-        size_t length;
-        const void *p;
-        while ((p = growing_buffer_reader_read(&reader, &length)) != NULL) {
-            memcpy(dest, p, length);
-            growing_buffer_reader_consume(&reader, length);
-            dest += length;
-        }
-
-        item->rubber = rubber;
-    }
-
-    item->size = request->response.length;
+    item->size = size;
+    item->rubber = request->cache->rubber;
     item->rubber_id = rubber_id;
 
     cache_item_init(&item->item, expires, pool_netto_size(pool) + item->size);
@@ -313,59 +297,52 @@ fcache_timeout_callback(int fd gcc_unused, short event gcc_unused,
 }
 
 /*
- * istream handler
+ * sink_rubber handler
  *
  */
 
-static size_t
-filter_cache_response_body_data(const void *data, size_t length, void *ctx)
-{
-    struct filter_cache_request *request = ctx;
-
-    request->response.length += length;
-    if (request->response.length > (size_t)cacheable_size_limit) {
-        filter_cache_request_abort(request);
-        return 0;
-    }
-
-    growing_buffer_write_buffer(request->response.output, data, length);
-    return length;
-}
-
 static void
-filter_cache_response_body_eof(void *ctx)
+filter_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
 {
     struct filter_cache_request *request = ctx;
-
-    request->response.input = NULL;
+    async_ref_clear(&request->response.async_ref);
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    filter_cache_put(request);
+    filter_cache_put(request, rubber_id, size);
 
     filter_cache_request_release(request);
 }
 
 static void
-filter_cache_response_body_abort(GError *error, void *ctx)
+filter_cache_rubber_no_store(void *ctx)
 {
     struct filter_cache_request *request = ctx;
+    async_ref_clear(&request->response.async_ref);
+
+    cache_log(4, "filter_cache: nocache %s\n", request->info->key);
+    filter_cache_request_release(request);
+}
+
+static void
+filter_cache_rubber_error(GError *error, void *ctx)
+{
+    struct filter_cache_request *request = ctx;
+    async_ref_clear(&request->response.async_ref);
 
     cache_log(4, "filter_cache: body_abort %s: %s\n",
               request->info->key, error->message);
     g_error_free(error);
 
-    request->response.input = NULL;
-
     filter_cache_request_release(request);
 }
 
-static const struct istream_handler filter_cache_response_body_handler = {
-    .data = filter_cache_response_body_data,
-    .eof = filter_cache_response_body_eof,
-    .abort = filter_cache_response_body_abort,
+static const struct sink_rubber_handler filter_cache_rubber_handler = {
+    .done = filter_cache_rubber_done,
+    .out_of_memory = filter_cache_rubber_no_store,
+    .too_large = filter_cache_rubber_no_store,
+    .error = filter_cache_rubber_error,
 };
-
 
 /*
  * http response handler
@@ -395,11 +372,10 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
     }
 
     if (body == NULL) {
-        request->response.output = NULL;
-        filter_cache_put(request);
+        async_ref_clear(&request->response.async_ref);
+        filter_cache_put(request, 0, 0);
     } else {
         struct pool *pool;
-        size_t buffer_size;
 
         /* move all this stuff to a new pool, so istream_tee's second
            head can continue to fill the cache even if our caller gave
@@ -413,27 +389,17 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
         request->response.status = status;
         request->response.headers = strmap_dup(request->pool, headers, 17);
-        request->response.length = 0;
-
-        istream_assign_handler(&request->response.input,
-                               istream_tee_second(body),
-                               &filter_cache_response_body_handler, request,
-                               0);
-
-        if (available == (off_t)-1 || available < 256)
-            buffer_size = 1024;
-        else if (available > 16384)
-            buffer_size = 16384;
-        else
-            buffer_size = (size_t)available;
-        request->response.output = growing_buffer_new(request->pool,
-                                                      buffer_size);
 
         pool_ref(request->pool);
         list_add(&request->siblings, &request->cache->requests);
 
         evtimer_set(&request->timeout, fcache_timeout_callback, request);
         evtimer_add(&request->timeout, &fcache_timeout);
+
+        sink_rubber_new(pool, istream_tee_second(body),
+                        request->cache->rubber, cacheable_size_limit,
+                        &filter_cache_rubber_handler, request,
+                        &request->response.async_ref);
     }
 
     http_response_handler_invoke_response(&request->handler, status,
@@ -441,10 +407,10 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
     pool_unref(caller_pool);
 
     if (body != NULL) {
-        if (request->response.input != NULL)
+        if (async_ref_defined(&request->response.async_ref))
             /* just in case our handler has closed the body without
                looking at it: call istream_read() to start reading */
-            istream_read(request->response.input);
+            istream_read(istream_tee_second(body));
 
         pool_unref(request->pool);
     }
@@ -548,16 +514,6 @@ list_head_to_request(struct list_head *head)
     return (struct filter_cache_request *)(((char*)head) - offsetof(struct filter_cache_request, siblings));
 }
 
-static void
-filter_cache_request_close(struct filter_cache_request *request)
-{
-    assert(request != NULL);
-    assert(request->response.input != NULL);
-    assert(request->response.output != NULL);
-
-    filter_cache_request_abort(request);
-}
-
 void
 filter_cache_close(struct filter_cache *cache)
 {
@@ -571,7 +527,7 @@ filter_cache_close(struct filter_cache *cache)
         struct filter_cache_request *request =
             list_head_to_request(cache->requests.next);
 
-        filter_cache_request_close(request);
+        filter_cache_request_abort(request);
     }
 
     cache_close(cache->cache);
