@@ -1100,7 +1100,7 @@ test_t_balancer_SOURCES = test/t_balancer.cxx \
 	src/address_list.c \
 	src/clock.c \
 	$(POOL_SRC)
-test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS)$ (CPPUNIT_CFLAGS)
+test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS)$ $(CPPUNIT_CFLAGS)
 test_t_balancer_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
