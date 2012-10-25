@@ -31,6 +31,15 @@ unsigned
 rubber_add(struct rubber *r, size_t size);
 
 /**
+ * Returns the size of an allocation.  Due to padding, the returned
+ * value may be a bit bigger than the size that was passed to
+ * rubber_add().
+ */
+gcc_pure
+size_t
+rubber_size_of(const struct rubber *r, unsigned id);
+
+/**
  * Return a writable pointer to the object.
  */
 gcc_pure

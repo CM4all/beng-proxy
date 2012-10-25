@@ -73,18 +73,22 @@ public:
 
         unsigned a = AddFillRubber(r, total / 4);
         CPPUNIT_ASSERT(a > 0);
+        CPPUNIT_ASSERT_EQUAL(rubber_size_of(r, a), total / 4);
 
         unsigned b = AddFillRubber(r, total / 4);
         CPPUNIT_ASSERT(b > 0);
+        CPPUNIT_ASSERT_EQUAL(rubber_size_of(r, b), total / 4);
 
         CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), total / 2);
         CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total / 2);
 
         unsigned c = AddFillRubber(r, total / 4);
         CPPUNIT_ASSERT(c > 0);
+        CPPUNIT_ASSERT_EQUAL(rubber_size_of(r, c), total / 4);
 
         unsigned d = AddFillRubber(r, total / 4);
         CPPUNIT_ASSERT(d > 0);
+        CPPUNIT_ASSERT_EQUAL(rubber_size_of(r, d), total / 4);
 
         CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), total);
         CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total);
@@ -168,6 +172,7 @@ public:
 
         unsigned a = AddFillRubber(r, total * 3 / 4);
         CPPUNIT_ASSERT(a > 0);
+        CPPUNIT_ASSERT_EQUAL(rubber_size_of(r, a), total * 3 / 4);
 
         unsigned b = AddFillRubber(r, total / 4);
         CPPUNIT_ASSERT(b > 0);
@@ -185,6 +190,7 @@ public:
         /* shrink the first allocation, try again */
 
         rubber_shrink(r, a, total / 4);
+        CPPUNIT_ASSERT_EQUAL(rubber_size_of(r, a), total / 4);
 
         CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), total / 2);
         CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total);

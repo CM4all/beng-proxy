@@ -279,6 +279,19 @@ rubber_table_add(struct rubber_table *t, size_t offset, size_t size)
     return id;
 }
 
+static size_t
+rubber_table_size_of(const struct rubber_table *t, unsigned id)
+{
+    assert(t != NULL);
+    assert(t->entries[0].offset == 0);
+    assert(t->entries[0].size >= sizeof(*t));
+    assert(id > 0);
+    assert(id < t->initialized_tail);
+    assert(t->entries[id].allocated);
+
+    return t->entries[id].size;
+}
+
 /**
  * @return the amount of memory that was freed
  */
@@ -464,6 +477,15 @@ rubber_add(struct rubber *r, size_t size)
     }
 
     return id;
+}
+
+size_t
+rubber_size_of(const struct rubber *r, unsigned id)
+{
+    assert(r != NULL);
+    assert(id > 0);
+
+    return rubber_table_size_of(r->table, id);
 }
 
 void *
