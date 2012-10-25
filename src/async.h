@@ -42,7 +42,7 @@ struct async_operation_class {
 };
 
 struct async_operation {
-    struct async_operation_class class;
+    struct async_operation_class cls;
 
 #ifndef NDEBUG
     bool finished;
@@ -64,9 +64,9 @@ struct async_operation_ref {
 
 static inline void
 async_init(struct async_operation *ao,
-           const struct async_operation_class *class)
+           const struct async_operation_class *cls)
 {
-    ao->class = *class;
+    ao->cls = *cls;
 
 #ifndef NDEBUG
     ao->finished = false;
@@ -143,7 +143,7 @@ async_operation_abort(struct async_operation *ao)
     ao->aborted = true;
 #endif
 
-    ao->class.abort(ao);
+    ao->cls.abort(ao);
 }
 
 static inline void
