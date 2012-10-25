@@ -423,7 +423,7 @@ int
 istream_file_fd(struct istream *istream)
 {
     assert(istream != NULL);
-    assert(istream->class == &istream_file);
+    assert(istream->cls == &istream_file);
 
     struct file *file = istream_to_file(istream);
 
@@ -436,7 +436,7 @@ bool
 istream_file_set_range(struct istream *istream, off_t start, off_t end)
 {
     assert(istream != NULL);
-    assert(istream->class == &istream_file);
+    assert(istream->cls == &istream_file);
     assert(start >= 0);
     assert(end >= start);
 
