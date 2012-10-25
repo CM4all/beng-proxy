@@ -1,3 +1,5 @@
+#include "PoolTest.hxx"
+
 extern "C" {
 #include "failure.h"
 #include "balancer.h"
@@ -23,28 +25,6 @@ extern "C" {
 #include <string.h>
 #include <stdlib.h>
 #include <netdb.h>
-
-class PoolTest : public CppUnit::TestFixture {
-    struct pool *root_pool, *pool;
-
-protected:
-    struct pool *GetPool() {
-        return pool;
-    }
-
-public:
-    virtual void setUp() {
-        root_pool = pool_new_libc(NULL, "root");
-        pool = pool_new_libc(root_pool, "test");
-    }
-
-    virtual void tearDown() {
-        pool_unref(root_pool);
-        pool_unref(pool);
-        pool_commit();
-        pool_recycler_clear();
-    }
-};
 
 class FailureTest : public PoolTest {
 public:

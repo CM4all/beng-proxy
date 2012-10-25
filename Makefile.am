@@ -1094,6 +1094,7 @@ test_t_growing_buffer_SOURCES = test/t-growing-buffer.c \
 test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_balancer_SOURCES = test/t_balancer.cxx \
+	test/PoolTest.hxx \
 	src/bulldog.c \
 	src/balancer.c src/cache.c src/failure.c \
 	src/hashmap.c \
