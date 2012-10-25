@@ -99,7 +99,7 @@ struct istream {
     /** the memory pool which allocated this object */
     struct pool *pool;
 
-    const struct istream_class *class;
+    const struct istream_class *cls;
 
     /** data sink */
     const struct istream_handler *handler;
@@ -199,10 +199,10 @@ istream_available(struct istream *istream, bool partial)
     istream->reading = true;
 #endif
 
-    if (istream->class->available == NULL)
+    if (istream->cls->available == NULL)
         available = (off_t)-1;
     else
-        available = istream->class->available(istream, partial);
+        available = istream->cls->available(istream, partial);
 
 #ifndef NDEBUG
     assert(available >= -1);
@@ -247,10 +247,10 @@ istream_skip(struct istream *istream, off_t length)
     istream->reading = true;
 #endif
 
-    if (istream->class->skip == NULL)
+    if (istream->cls->skip == NULL)
         nbytes = (off_t)-1;
     else
-        nbytes = istream->class->skip(istream, length);
+        nbytes = istream->cls->skip(istream, length);
 
     assert(nbytes <= length);
 
@@ -293,7 +293,7 @@ istream_read(struct istream *istream)
     istream->reading = true;
 #endif
 
-    istream->class->read(istream);
+    istream->cls->read(istream);
 
 #ifndef NDEBUG
     if (pool_denotify(&notify) || istream->destroyed)
@@ -318,7 +318,7 @@ istream_as_fd(struct istream *istream)
     assert(!istream->in_data);
 #endif
 
-    if (istream->class->as_fd == NULL)
+    if (istream->cls->as_fd == NULL)
         return -1;
 
 #ifndef NDEBUG
@@ -326,7 +326,7 @@ istream_as_fd(struct istream *istream)
     istream->reading = true;
 #endif
 
-    int fd = istream->class->as_fd(istream);
+    int fd = istream->cls->as_fd(istream);
 
 #ifndef NDEBUG
     assert(!pool_denotify(&notify) || fd >= 0);
@@ -350,7 +350,7 @@ istream_close(struct istream *istream)
     istream->closing = true;
 #endif
 
-    istream->class->close(istream);
+    istream->cls->close(istream);
 }
 
 static inline void

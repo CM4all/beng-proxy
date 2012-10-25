@@ -10,11 +10,11 @@
 #include <inline/valgrind.h>
 
 static inline void
-istream_init_impl(struct istream *istream, const struct istream_class *class,
+istream_init_impl(struct istream *istream, const struct istream_class *cls,
                   struct pool *pool TRACE_ARGS_DECL)
 {
     istream->pool = pool;
-    istream->class = class;
+    istream->cls = cls;
     istream->handler = NULL;
 
 #ifndef NDEBUG
@@ -32,12 +32,12 @@ istream_init_impl(struct istream *istream, const struct istream_class *class,
     pool_ref_fwd(pool);
 }
 
-#define istream_init(istream, class, pool) istream_init_impl(istream, class, pool TRACE_ARGS)
+#define istream_init(istream, cls, pool) istream_init_impl(istream, cls, pool TRACE_ARGS)
 
 gcc_malloc
 static inline struct istream *
 istream_new_impl(struct pool *pool,
-                 const struct istream_class *class, size_t size
+                 const struct istream_class *cls, size_t size
                  TRACE_ARGS_DECL)
 {
     struct istream *istream;
@@ -49,7 +49,7 @@ istream_new_impl(struct pool *pool,
 #endif
 
     istream = p_malloc_fwd(pool, size);
-    istream_init_impl(istream, class, pool TRACE_ARGS_FWD);
+    istream_init_impl(istream, cls, pool TRACE_ARGS_FWD);
 
 #ifdef ISTREAM_POOL
     pool_unref(pool);
@@ -58,7 +58,7 @@ istream_new_impl(struct pool *pool,
     return istream;
 }
 
-#define istream_new(pool, class, size) istream_new_impl(pool, class, size TRACE_ARGS)
+#define istream_new(pool, cls, size) istream_new_impl(pool, cls, size TRACE_ARGS)
 
 #define istream_new_macro(pool, class_name) \
     ((struct istream_ ## class_name *) istream_new(pool, &istream_ ## class_name, sizeof(struct istream_ ## class_name)))
