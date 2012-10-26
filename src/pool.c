@@ -999,10 +999,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
         TRACE_ARGS_IGNORE;
 #endif
 
-        size_t new_area_size = pool->area_size;
-        if (size > new_area_size)
-            new_area_size = ((size + new_area_size - 1) / new_area_size) * new_area_size;
-        area = pool_get_linear_area(area, new_area_size);
+        area = pool_get_linear_area(area, pool->area_size);
         pool->current_area.linear = area;
     }
 
