@@ -988,7 +988,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
         TRACE_ARGS_IGNORE;
 #endif
 
-        area = pool_get_linear_area(area->prev, size);
+        area = pool_new_linear_area(area->prev, size);
         pool->current_area.linear->prev = area;
     } else if (unlikely(area->used + size > area->size)) {
         daemon_log(5, "growing linear pool '%s'\n", pool->name);
