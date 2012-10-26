@@ -28,7 +28,6 @@
 
 #define RECYCLER_MAX_POOLS 256
 #define RECYCLER_MAX_LINEAR_AREAS 256
-#define RECYCLER_MAX_LINEAR_SIZE 65536
 
 #ifndef NDEBUG
 struct allocation_info {
@@ -204,8 +203,7 @@ pool_recycler_put_linear(struct linear_pool_area *area)
     assert(area != NULL);
     assert(area->size > 0);
 
-    if (recycler.num_linear_areas >= RECYCLER_MAX_LINEAR_AREAS ||
-        area->size > RECYCLER_MAX_LINEAR_SIZE)
+    if (recycler.num_linear_areas >= RECYCLER_MAX_LINEAR_AREAS)
         return false;
 
     poison_noaccess(area->data, area->used);
