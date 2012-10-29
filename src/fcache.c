@@ -20,6 +20,7 @@
 #include "resource-loader.h"
 #include "istream.h"
 #include "rubber.h"
+#include "slice.h"
 #include "istream_rubber.h"
 #include "sink_rubber.h"
 #include "async.h"
@@ -47,6 +48,7 @@ struct filter_cache {
     struct pool *pool;
     struct cache *cache;
     struct rubber *rubber;
+    struct slice_pool *slice_pool;
 
     struct resource_loader *resource_loader;
 
@@ -209,7 +211,8 @@ filter_cache_put(struct filter_cache_request *request,
     else
         expires = request->info->expires;
 
-    pool = pool_new_linear(request->cache->pool, "filter_cache_item", 1024);
+    pool = pool_new_slice(request->cache->pool, "filter_cache_item",
+                          request->cache->slice_pool);
     item = p_malloc(pool, sizeof(*item));
     item->pool = pool;
     filter_cache_info_copy(pool, &item->info, request->info);
@@ -503,6 +506,8 @@ filter_cache_new(struct pool *pool, size_t max_size,
         _exit(2);
     }
 
+    cache->slice_pool = slice_pool_new(1024, 65536);
+
     cache->resource_loader = resource_loader;
     list_init(&cache->requests);
     return cache;
@@ -531,6 +536,7 @@ filter_cache_close(struct filter_cache *cache)
     }
 
     cache_close(cache->cache);
+    slice_pool_free(cache->slice_pool);
     rubber_free(cache->rubber);
 
     pool_unref(cache->pool);
@@ -556,6 +562,7 @@ filter_cache_flush(struct filter_cache *cache)
 
     cache_flush(cache->cache);
     rubber_compress(cache->rubber);
+    slice_pool_compress(cache->slice_pool);
 }
 
 static void
