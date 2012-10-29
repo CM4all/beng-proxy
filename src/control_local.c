@@ -90,6 +90,7 @@ control_local_new(struct pool *pool, const char *prefix,
     cl->handler = handler;
     cl->handler_ctx = ctx;
     cl->server = NULL;
+    cl->server_pool = NULL;
 
     return cl;
 }
