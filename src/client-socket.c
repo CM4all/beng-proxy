@@ -174,7 +174,7 @@ client_socket_new(struct pool *pool,
         handler->success(fd, ctx);
     } else if (errno == EINPROGRESS) {
         struct client_socket *client_socket;
-        struct timeval tv = {
+        const struct timeval tv = {
             .tv_sec = timeout,
             .tv_usec = 0,
         };

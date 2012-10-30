@@ -176,7 +176,7 @@ delegate_stock_release(void *ctx gcc_unused, struct stock_item *item)
 {
     struct delegate_process *process =
         (struct delegate_process *)item;
-    struct timeval tv = {
+    static const struct timeval tv = {
         .tv_sec = 60,
         .tv_usec = 0,
     };

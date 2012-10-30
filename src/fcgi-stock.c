@@ -327,7 +327,7 @@ static void
 fcgi_stock_release(void *ctx gcc_unused, struct stock_item *item)
 {
     struct fcgi_child *child = (struct fcgi_child *)item;
-    struct timeval tv = {
+    static const struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
     };

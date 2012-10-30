@@ -45,7 +45,6 @@ cache_new(struct pool *pool, const struct cache_class *class,
           unsigned hashtable_capacity, size_t max_size)
 {
     struct cache *cache = p_malloc(pool, sizeof(*cache));
-    struct timeval tv = cache_expire_interval;
 
     assert(class != NULL);
 
@@ -57,7 +56,7 @@ cache_new(struct pool *pool, const struct cache_class *class,
     list_init(&cache->sorted_items);
 
     evtimer_set(&cache->expire_event, cache_expire_event_callback, cache);
-    evtimer_add(&cache->expire_event, &tv);
+    evtimer_add(&cache->expire_event, &cache_expire_interval);
 
     return cache;
 }
@@ -522,7 +521,6 @@ cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
     struct cache *cache = ctx;
     struct cache_item *item;
     const time_t now = time(NULL);
-    struct timeval tv = cache_expire_interval;
 
     cache_check(cache);
 
@@ -546,14 +544,13 @@ cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
 
     cache_check(cache);
 
-    evtimer_add(&cache->expire_event, &tv);
+    evtimer_add(&cache->expire_event, &cache_expire_interval);
 }
 
 void
 cache_event_add(struct cache *cache)
 {
-    struct timeval tv = cache_expire_interval;
-    evtimer_add(&cache->expire_event, &tv);
+    evtimer_add(&cache->expire_event, &cache_expire_interval);
 }
 
 void

@@ -1703,7 +1703,7 @@ translate_try_read(struct translate_client *client, int fd)
     while (true) {
         switch (packet_reader_read(client->pool, &client->reader, fd)) {
         case PACKET_READER_INCOMPLETE: {
-            struct timeval tv = {
+            static const struct timeval tv = {
                 .tv_sec = 60,
                 .tv_usec = 0,
             };
@@ -1764,7 +1764,7 @@ static void
 translate_try_write(struct translate_client *client, int fd)
 {
     ssize_t nbytes;
-    struct timeval tv = {
+    static const struct timeval tv = {
         .tv_sec = 10,
         .tv_usec = 0,
     };

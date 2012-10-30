@@ -31,7 +31,7 @@ later_event_callback(int fd gcc_unused, short event gcc_unused,
 
 static void later_schedule(struct istream_later *later)
 {
-    struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
+    static const struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
 
     if (evtimer_pending(&later->event, NULL) == 0)
         evtimer_add(&later->event, &tv);

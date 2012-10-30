@@ -78,7 +78,7 @@ defer(struct pool *pool, defer_callback_t callback, void *ctx,
       struct async_operation_ref *async_ref)
 {
     struct defer *d = p_malloc(pool, sizeof(*d));
-    struct timeval tv = {
+    static const struct timeval tv = {
         .tv_sec = 0,
         .tv_usec = 0,
     };

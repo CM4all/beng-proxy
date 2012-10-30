@@ -165,7 +165,7 @@ static void
 was_stock_release(gcc_unused void *ctx, struct stock_item *item)
 {
     struct was_child *child = (struct was_child *)item;
-    struct timeval tv = {
+    static const struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
     };

@@ -47,7 +47,7 @@ schedule_respawn(struct instance *instance)
     if (!instance->should_exit &&
         instance->num_workers < instance->config.num_workers &&
         evtimer_pending(&instance->respawn_event, NULL) == 0) {
-        static struct timeval tv = {
+        static const struct timeval tv = {
             .tv_sec = 1,
             .tv_usec = 0,
         };

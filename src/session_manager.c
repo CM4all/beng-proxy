@@ -135,10 +135,8 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
     crash_unsafe_leave();
     assert(!crash_in_unsafe());
 
-    if (non_empty) {
-        struct timeval tv = cleanup_interval;
-        evtimer_add(&session_cleanup_event, &tv);
-    }
+    if (non_empty)
+        evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
 static struct session_manager *
@@ -260,10 +258,8 @@ session_manager_abandon(void)
 void
 session_manager_event_add(void)
 {
-    if (session_manager->num_sessions == 0) {
-        struct timeval tv = cleanup_interval;
-        evtimer_add(&session_cleanup_event, &tv);
-    }
+    if (session_manager->num_sessions == 0)
+        evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
 void
@@ -358,10 +354,8 @@ session_manager_add(struct session *session)
 
     rwlock_wunlock(&session_manager->lock);
 
-    if (num_sessions == 1) {
-        struct timeval tv = cleanup_interval;
-        evtimer_add(&session_cleanup_event, &tv);
-    }
+    if (num_sessions == 1)
+        evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
 static uint32_t
@@ -439,10 +433,8 @@ session_new_unsafe(void)
     lock_lock(&session->lock);
     rwlock_wunlock(&session_manager->lock);
 
-    if (num_sessions == 1) {
-        struct timeval tv = cleanup_interval;
-        evtimer_add(&session_cleanup_event, &tv);
-    }
+    if (num_sessions == 1)
+        evtimer_add(&session_cleanup_event, &cleanup_interval);
 
     return session;
 }
