@@ -552,12 +552,12 @@ cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
 void
 cache_event_add(struct cache *cache)
 {
-    evtimer_del(&cache->expire_event);
+    struct timeval tv = cache_expire_interval;
+    evtimer_add(&cache->expire_event, &tv);
 }
 
 void
 cache_event_del(struct cache *cache)
 {
-    struct timeval tv = cache_expire_interval;
-    evtimer_add(&cache->expire_event, &tv);
+    evtimer_del(&cache->expire_event);
 }
