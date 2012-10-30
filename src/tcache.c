@@ -17,6 +17,7 @@
 #include "uri-address.h"
 #include "uri-verify.h"
 #include "strref-pool.h"
+#include "slice.h"
 #include "beng-proxy/translation.h"
 
 #include <time.h>
@@ -49,6 +50,7 @@ struct tcache_item {
 
 struct tcache {
     struct pool *pool;
+    struct slice_pool *slice_pool;
 
     struct cache *cache;
 
@@ -598,8 +600,8 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
                                    NULL);
 
     if (tcache_response_evaluate(response)) {
-        struct pool *pool = pool_new_linear(tcr->tcache->pool, "tcache_item",
-                                            2048);
+        struct pool *pool = pool_new_slice(tcr->tcache->pool, "tcache_item",
+                                           tcr->tcache->slice_pool);
         struct tcache_item *item = p_malloc(pool, sizeof(*item));
         unsigned max_age = response->max_age;
         const char *key;
@@ -809,6 +811,7 @@ translate_cache_new(struct pool *pool, struct tstock *stock,
     assert(stock != NULL);
 
     tcache->pool = pool;
+    tcache->slice_pool = slice_pool_new(1024, 65536);
     tcache->cache = cache_new(pool, &tcache_class, 65521, max_size);
     tcache->stock = stock;
 
@@ -823,6 +826,7 @@ translate_cache_close(struct tcache *tcache)
     assert(tcache->stock != NULL);
 
     cache_close(tcache->cache);
+    slice_pool_free(tcache->slice_pool);
 
     pool_unref(tcache->pool);
 }
@@ -838,6 +842,7 @@ void
 translate_cache_flush(struct tcache *tcache)
 {
     cache_flush(tcache->cache);
+    slice_pool_compress(tcache->slice_pool);
 }
 
 

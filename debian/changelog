@@ -3,7 +3,7 @@ cm4all-beng-proxy (3.0) unstable; urgency=low
   * {http,filter}-cache: reduce overhead when cache is disabled
   * {http,filter}-cache: exclude allocator table from reported size
   * filter-cache: reduce memory usage while storing
-  * {http,filter}-cache: return more free memory to operating system
+  * {http,filter,translate}-cache: return more free memory to operating system
   * pool: further overhead reduction
   * pool: reduce CPU overhead for large areas
   * rubber: fix assertion failure
