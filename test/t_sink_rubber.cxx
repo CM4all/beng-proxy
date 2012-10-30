@@ -22,7 +22,7 @@ extern "C" {
 #include <stdlib.h>
 
 struct Data {
-    enum {
+    enum Result {
         NONE, DONE, OOM, TOO_LARGE, ERROR
     } result;
 
