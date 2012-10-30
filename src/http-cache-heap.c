@@ -12,6 +12,7 @@
 #include "istream.h"
 #include "rubber.h"
 #include "istream_rubber.h"
+#include "slice.h"
 
 #include <time.h>
 #include <string.h>
@@ -95,7 +96,8 @@ http_cache_heap_put(struct http_cache_heap *cache,
     } else
         rubber_id = 0;
 
-    struct pool *pool = pool_new_linear(cache->pool, "http_cache_item", 256);
+    struct pool *pool = pool_new_slice(cache->pool, "http_cache_item",
+                                       cache->slice_pool);
     struct http_cache_item *item = p_malloc(pool, sizeof(*item));
 
     item->cache = cache;
@@ -139,6 +141,7 @@ http_cache_heap_flush(struct http_cache_heap *cache)
 {
     cache_flush(cache->cache);
     rubber_compress(cache->rubber);
+    slice_pool_compress(cache->slice_pool);
 }
 
 void
@@ -225,6 +228,8 @@ http_cache_heap_init(struct http_cache_heap *cache,
                 strerror(errno));
         _exit(2);
     }
+
+    cache->slice_pool = slice_pool_new(1024, 65536);
 }
 
 
@@ -232,6 +237,7 @@ void
 http_cache_heap_deinit(struct http_cache_heap *cache)
 {
     cache_close(cache->cache);
+    slice_pool_free(cache->slice_pool);
     rubber_free(cache->rubber);
 }
 
