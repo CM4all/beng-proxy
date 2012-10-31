@@ -255,6 +255,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/worker.h \
 	$(STOPWATCH_SRC) \
 	src/clock.c src/clock.h \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/cmdline.c \
 	src/completion.h \
 	src/crc.h \
@@ -355,6 +356,7 @@ src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 
 src_cm4all_beng_lb_SOURCES = \
 	src/clock.c src/clock.h \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/format.c \
 	src/date.c \
 	src/gmtime.c \
@@ -777,7 +779,9 @@ test_was_mirror_LDADD = $(AM_LDADD) \
 test_t_hashmap_SOURCES = test/t-hashmap.c src/hashmap.c
 test_t_hashmap_LDADD = $(AM_LDADD) libpool.a libmemory.a $(LIBCM4ALL_DAEMON_LIBS)
 
-test_t_cache_SOURCES = test/t-cache.c src/cache.c src/hashmap.c
+test_t_cache_SOURCES = test/t-cache.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cache.c src/hashmap.c
 test_t_cache_LDADD = $(AM_LDADD) libpool.a libmemory.a $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
@@ -794,6 +798,7 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/uri-extract.c src/uri-base.c \
 	src/address_list.c \
 	src/format.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/transformation.c
 test_t_tcache_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -983,6 +988,7 @@ test_t_balancer_SOURCES = test/t_balancer.cxx \
 	src/balancer.c src/cache.c src/failure.c \
 	src/hashmap.c \
 	src/address_list.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/clock.c
 test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS)$ $(CPPUNIT_CFLAGS)
 test_t_balancer_LDADD = $(AM_LDADD) \
@@ -1233,6 +1239,7 @@ test_t_http_util_LDADD = $(AM_LDADD) \
 
 test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/tpool.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/header-parser.c \
 	src/growing-buffer.c \
@@ -1350,6 +1357,7 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 
 test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/widget-registry.c src/stock.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/uri-address.c src/transformation.c \
 	src/address_list.c \
 	src/tcache.c src/cache.c \
@@ -1445,6 +1453,7 @@ test_format_http_date_SOURCES = test/format-http-date.c \
 	src/gmtime.c src/date.c
 
 test_request_translation_SOURCES = test/request-translation.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/translate-client.c src/tstock.c src/growing-buffer.c src/gb-io.c \
 	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
 	src/tcp-stock.c src/client-socket.c \
@@ -1553,6 +1562,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/istream-tee.c src/istream-null.c \
 	src/event2.c src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/address_list.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/expansible-buffer.c \
@@ -1595,6 +1605,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/istream-tee.c src/istream-null.c \
 	src/event2.c src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/uri-extract.c \
 	src/address_list.c \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
@@ -1616,6 +1627,7 @@ test_run_client_balancer_SOURCES = test/run-client-balancer.c \
 	src/failure.c \
 	src/bulldog.c \
 	src/cache.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/hashmap.c \
 	src/fd_util.c \
 	src/istream-forward.c \
@@ -1671,6 +1683,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.c \
 	src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
 	src/cache.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/date.c src/format.c src/gmtime.c src/strutil.c \
 	src/tpool.c \
 	src/rubber.c \
@@ -1715,6 +1728,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/failure.c src/bulldog.c src/balancer.c \
 	src/tcp-stock.c src/tcp-balancer.c \
 	src/cache.c \
+	src/cleanup_timer.c src/cleanup_timer.h \
 	src/client-socket.c src/fd_util.c \
 	src/stock.c src/hstock.c \
 	src/memcached-client.c src/memcached-packet.c \

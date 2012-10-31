@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "hashmap.h"
 #include "pool.h"
+#include "cleanup_timer.h"
 
 #include <assert.h>
 #include <time.h>
@@ -27,7 +28,7 @@ struct cache {
      */
     struct list_head sorted_items;
 
-    struct event expire_event;
+    struct cleanup_timer cleanup_timer;
 };
 
 /** clean up expired cache items every 60 seconds */
@@ -36,9 +37,8 @@ static const struct timeval cache_expire_interval = {
     .tv_usec = 0,
 };
 
-static void
-cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
-                            void *ctx);
+static bool
+cache_expire_callback(void *ctx);
 
 struct cache *
 cache_new(struct pool *pool, const struct cache_class *class,
@@ -55,8 +55,8 @@ cache_new(struct pool *pool, const struct cache_class *class,
     cache->items = hashmap_new(pool, hashtable_capacity);
     list_init(&cache->sorted_items);
 
-    evtimer_set(&cache->expire_event, cache_expire_event_callback, cache);
-    evtimer_add(&cache->expire_event, &cache_expire_interval);
+    cleanup_timer_init(&cache->cleanup_timer, 60,
+                       cache_expire_callback, cache);
 
     return cache;
 }
@@ -69,7 +69,7 @@ cache_close(struct cache *cache)
 {
     const struct hashmap_pair *pair;
 
-    evtimer_del(&cache->expire_event);
+    cleanup_timer_deinit(&cache->cleanup_timer);
 
     cache_check(cache);
 
@@ -156,6 +156,9 @@ cache_item_removed(struct cache *cache, struct cache_item *item)
     else
         /* this item is locked - postpone the destroy() call */
         item->removed = true;
+
+    if (cache->size == 0)
+        cleanup_timer_disable(&cache->cleanup_timer);
 }
 
 void
@@ -327,6 +330,8 @@ cache_add(struct cache *cache, const char *key,
     item->last_accessed = time(NULL);
 
     cache_check(cache);
+
+    cleanup_timer_enable(&cache->cleanup_timer);
 }
 
 void
@@ -361,6 +366,8 @@ cache_put(struct cache *cache, const char *key,
     list_add(&item->sorted_siblings, &cache->sorted_items);
 
     cache_check(cache);
+
+    cleanup_timer_enable(&cache->cleanup_timer);
 }
 
 void
@@ -514,9 +521,8 @@ cache_item_unlock(struct cache *cache, struct cache_item *item)
 }
 
 /** clean up expired cache items every 60 seconds */
-static void
-cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
-                            void *ctx)
+static bool
+cache_expire_callback(void *ctx)
 {
     struct cache *cache = ctx;
     struct cache_item *item;
@@ -544,17 +550,18 @@ cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
 
     cache_check(cache);
 
-    evtimer_add(&cache->expire_event, &cache_expire_interval);
+    return cache->size > 0;
 }
 
 void
 cache_event_add(struct cache *cache)
 {
-    evtimer_add(&cache->expire_event, &cache_expire_interval);
+    if (cache->size > 0)
+        cleanup_timer_enable(&cache->cleanup_timer);
 }
 
 void
 cache_event_del(struct cache *cache)
 {
-    evtimer_del(&cache->expire_event);
+    cleanup_timer_disable(&cache->cleanup_timer);
 }
