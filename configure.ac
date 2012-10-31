@@ -205,12 +205,6 @@ if test x$enable_stopwatch = xyes; then
 	AC_DEFINE(ENABLE_STOPWATCH, 1)
 fi
 
-AC_ARG_ENABLE(gprof,
-	AS_HELP_STRING([--enable-gprof],
-		[enable profiling via gprof (default: disabled)]),,
-	enable_gprof=no)
-AM_CONDITIONAL(GPROF, test x$enable_gprof = xyes)
-
 AC_ARG_ENABLE(unit-test,
 	AS_HELP_STRING([--enable-unit-test],
 		[Enable the unit test suite]),,

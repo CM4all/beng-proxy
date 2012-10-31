@@ -647,13 +647,6 @@ src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBZ_LIBS)
 src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 
-if GPROF
-AM_CFLAGS += -pg
-AM_CPPFLAGS += -DPROFILE
-src_cm4all_beng_proxy_LDADD += -lc_p
-src_cm4all_beng_proxy_LDFLAGS += -pg
-endif
-
 src_cm4all_beng_proxy_log_cat_SOURCES = \
 	src/log-server.c \
 	src/log-cat.c
