@@ -742,22 +742,15 @@ endif
 # Libraries
 #
 
-lib_LIBRARIES = src/libcm4all-istream.a
-src_libcm4all_istream_a_SOURCES = $(ISTREAM_SRC)
+noinst_LIBRARIES = libistream.a
+libistream_a_SOURCES = $(ISTREAM_SRC)
 
 pkginclude_HEADERS = \
-	src/istream-buffer.h \
-	src/istream-forward.h \
-	src/istream-impl.h \
-	src/istream-internal.h \
-	src/istream-invoke.h \
-	src/istream-new.h \
-	src/istream.h \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libcm4all-beng-proxy.pc libcm4all-istream.pc
+pkgconfig_DATA = libcm4all-beng-proxy.pc
 
 
 #

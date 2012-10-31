@@ -62,7 +62,7 @@ debian/stamp-build-debug: debian/stamp-configure-debug
 		src/cm4all-beng-lb \
 		src/cm4all-beng-proxy \
 		src/cm4all-beng-proxy-delegate-helper \
-		src/libcm4all-istream.a doc/beng.pdf doc/lb.pdf
+		doc/beng.pdf doc/lb.pdf
 
 debian/stamp-build-optimized: debian/stamp-configure-optimized
 	$(MAKE) -C build/optimized \

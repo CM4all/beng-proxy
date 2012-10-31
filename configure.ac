@@ -224,5 +224,4 @@ dnl
 AC_OUTPUT(
 Makefile
 libcm4all-beng-proxy.pc
-libcm4all-istream.pc
 )
