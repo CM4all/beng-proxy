@@ -66,7 +66,7 @@ endif
 POOL_SRC = \
 	src/slice.c src/slice.h \
 	src/pstring.c \
-	src/pool.c
+	src/pool.c src/pool.h
 
 ISTREAM_SRC = \
 	src/istream-forward.c \
@@ -101,99 +101,134 @@ ISTREAM_SRC = \
 	src/istream-socketpair.c \
 	src/istream-notify.h \
 	src/istream-notify.c \
-	src/format.c \
-	src/fifo-buffer.c \
+	src/format.c src/format.h \
+	src/fifo-buffer.c src/fifo-buffer.h \
 	src/sink-null.c \
 	src/sink-buffer.c \
 	src/sink-header.c \
 	src/sink-socket.c src/sink-socket.h \
 	$(POOL_SRC)
 
-HDR = \
+#
+# Programs
+#
+
+bin_PROGRAMS = src/cm4all-beng-proxy \
+	src/cm4all-beng-lb \
+	src/cm4all-beng-proxy-log-cat \
+	src/cm4all-beng-proxy-log-traffic \
+	src/cm4all-beng-proxy-log-split \
+	src/cm4all-beng-proxy-log-forward \
+	src/cm4all-beng-proxy-log-exec \
+	src/cm4all-beng-proxy-delegate-helper
+
+src_cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
-	src/abort-close.h \
-	src/abort-flag.h \
-	src/abort-unref.h \
-	src/access-log.h \
-	src/address.h \
-	src/ajp-client.h \
-	src/ajp-headers.h \
-	src/ajp-protocol.h \
+	src/abort-close.c src/abort-close.h \
+	src/abort-flag.c src/abort-flag.h \
+	src/abort-unref.c src/abort-unref.h \
+	src/access-log.c src/access-log.h \
+	src/address.c src/address.h \
+	src/ajp-client.c src/ajp-client.h \
+	src/ajp-headers.c src/ajp-headers.h \
+	src/ajp-protocol.c src/ajp-protocol.h \
 	src/ajp-read.h \
-	src/ajp-request.h \
-	src/ajp-serialize.h \
+	src/ajp-request.c src/ajp-request.h \
+	src/ajp-serialize.c src/ajp-serialize.h \
 	src/ajp-util.h \
-	src/args.h \
+	src/args.c src/args.h \
 	src/async.h \
 	src/background.h \
-	src/balancer.h \
-	src/bot.h \
-	src/buffered-io.h \
-	src/bulldog.h \
-	src/cache.h \
-	src/cgi.h \
-	src/child.h \
-	src/client-socket.h \
+	src/balancer.c src/balancer.h \
+	src/bot.c src/bot.h \
+	src/buffered-io.c src/buffered-io.h \
+	src/bulldog.c src/bulldog.h \
+	src/cache.c src/cache.h \
+	src/cgi.c src/cgi.h \
+	src/cgi-address.c src/cgi-address.h \
+	src/cgi-quark.h \
+	src/cgi-parser.c src/cgi-parser.h \
+	src/cgi-client.c src/cgi-client.h \
+	src/cgi-launch.c src/cgi-launch.h \
+	src/child.c src/child.h \
+	src/client-socket.c src/client-socket.h \
 	src/config.h \
-	src/connection.h \
-	src/date.h \
+	src/connection.c src/connection.h \
+	src/date.c src/date.h \
 	src/dchunk.h \
-	src/defer.h \
+	src/defer.c src/defer.h \
+	src/delegate-client.c \
 	src/delegate-client.h \
-	src/delegate-glue.h \
+	src/delegate-glue.c src/delegate-glue.h \
 	src/delegate-protocol.h \
-	src/delegate-request.h \
-	src/delegate-stock.h \
+	src/delegate-request.c src/delegate-request.h \
+	src/delegate-stock.c src/delegate-stock.h \
+	src/delegate-handler.c \
 	src/dhashmap.h \
-	src/direct.h \
-	src/dpool.h \
-	src/drop.h \
-	src/duplex.h \
-	src/embed.h \
-	src/event2.h \
-	src/expansible-buffer.h \
+	src/direct.c src/direct.h \
+	src/dpool.c src/dpool.h \
+	src/drop.c src/drop.h \
+	src/duplex.c src/duplex.h \
+	src/event2.c src/event2.h \
+	src/expansible-buffer.c src/expansible-buffer.h \
 	src/expiry.h \
-	src/failure.h \
-	src/fcache.h \
-	src/fcgi-client.h \
+	src/failure.c src/failure.h \
+	src/fcache.c src/fcache.h \
+	src/fcgi-client.c src/fcgi-client.h \
+	src/fcgi-launch.c src/fcgi-launch.h \
+	src/fcgi-remote.c src/fcgi-remote.h \
 	src/fcgi-protocol.h \
-	src/fcgi-request.h \
-	src/fcgi-serialize.h \
-	src/fcgi-stock.h \
-	src/was-control.h \
-	src/was-output.h \
-	src/was-input.h \
-	src/was-client.h \
-	src/was-stock.h \
-	src/fd-util.h \
-	src/fifo-buffer.h \
-	src/file-handler.h \
-	src/fork.h \
-	src/format.h \
-	src/gb-io.h \
-	src/get.h \
-	src/global.h \
-	src/gmtime.h \
-	src/growing-buffer.h \
-	src/handler.h \
-	src/hashmap.h \
-	src/header-forward.h \
-	src/header-parser.h \
-	src/header-writer.h \
-	src/hostname.h \
+	src/fcgi-request.c src/fcgi-request.h \
+	src/fcgi-serialize.c src/fcgi-serialize.h \
+	src/fcgi-stock.c src/fcgi-stock.h \
+	src/was-control.c src/was-control.h \
+	src/was-output.c src/was-output.h \
+	src/was-input.c src/was-input.h \
+	src/was-client.c src/was-client.h \
+	src/was-stock.c src/was-stock.h \
+	src/was-launch.c \
+	src/was-glue.c \
+	src/fd-util.c src/fd-util.h \
+	src/fd_util.c src/fd_util.h \
+	src/file-handler.c src/file-handler.h \
+	src/fork.c src/fork.h \
+	src/gb-io.c src/gb-io.h \
+	src/get.c src/get.h \
+	src/global.c src/global.h \
+	src/gmtime.c src/gmtime.h \
+	src/growing-buffer.c src/growing-buffer.h \
+	src/handler.c src/handler.h \
+	src/hashmap.c src/hashmap.h \
+	src/header-forward.c src/header-forward.h \
+	src/header-parser.c src/header-parser.h \
+	src/header-writer.c src/header-writer.h \
+	src/header-copy.c src/header-copy.h \
+	src/hostname.c src/hostname.h \
 	src/html-chars.h \
-	src/http-body.h \
-	src/http-cache-choice.h \
+	src/http-body.c src/http-body.h \
+	src/http-cache.c src/http-cache.h \
+	src/http-cache-choice.c src/http-cache-choice.h \
 	src/http-cache-internal.h \
-	src/http-cache.h \
-	src/http-client.h \
-	src/http-error.h \
-	src/http-request.h \
+	src/http-cache-document.c \
+	src/http-cache-age.c src/http-cache-age.h \
+	src/http-cache-heap.c src/http-cache-heap.h \
+	src/http-cache-info.c \
+	src/http-cache-memcached.c src/http-cache-memcached.h \
+	src/http-cache-rfc.c \
+	src/http-client.c src/http-client.h \
+	src/http-error.c src/http-error.h \
+	src/http-request.c src/http-request.h \
 	src/http-server-internal.h \
-	src/http-server.h \
-	src/http-string.h \
-	src/http-util.h \
+	src/http-server.c src/http-server.h \
+	src/http-server-send.c \
+	src/http-server-request.c \
+	src/http-server-read.c \
+	src/http-server-response.c \
+	src/http-string.c src/http-string.h \
+	src/http-util.c src/http-util.h \
+	src/http-quark.h \
+	src/http-response.c src/http-response.h \
 	src/control_server.c src/control_server.h \
 	src/control_local.c src/control_local.h \
 	src/bp_stats.c src/bp_stats.h \
@@ -207,49 +242,55 @@ HDR = \
 	src/istream-new.h \
 	src/istream-direct.h \
 	src/istream.h \
-	src/jail.h \
+	src/jail.c src/jail.h \
 	src/lease.h \
-	src/listener.h \
+	src/listener.c src/listener.h \
 	src/lock.h \
-	src/memcached-client.h \
+	src/memcached-client.c src/memcached-client.h \
 	src/memcached-packet.h \
 	src/memcached-protocol.h \
-	src/memcached-stock.h \
-	src/parser.h \
+	src/memcached-stock.c src/memcached-stock.h \
+	src/memcached-packet.c \
+	src/parser.c src/parser.h \
 	src/pevent.h \
-	src/pipe-stock.h \
-	src/pipe.h \
-	src/pool.h \
-	src/processor.h \
-	src/proxy-widget.h \
-	src/random.h \
+	src/pipe-stock.c src/pipe-stock.h \
+	src/pipe.c src/pipe.h \
+	src/tpool.c \
+	src/processor.c src/processor.h \
+	src/penv.c src/penv.h \
+	src/proxy-widget.c src/proxy-widget.h \
+	src/random.c src/random.h \
 	src/refcount.h \
-	src/request-forward.h \
-	src/request.h \
-	src/resource-address.h \
-	src/resource-tag.h \
-	src/rewrite-uri.h \
+	src/request-forward.c src/request-forward.h \
+	src/request.c src/request.h \
+	src/rerror.c \
+	src/response.c \
+	src/resource-address.c src/resource-address.h \
+	src/resource-tag.c src/resource-tag.h \
+	src/rewrite-uri.c src/rewrite-uri.h \
 	src/rwlock.h \
-	src/serialize.h \
-	src/shm.h \
+	src/serialize.c src/serialize.h \
+	src/shm.c src/shm.h \
 	src/sink-gstring.h \
 	src/sink-impl.h \
 	src/socket_wrapper.c src/socket_wrapper.h \
-	src/static-file.h \
-	src/static-headers.h \
-	src/stock.h \
-	src/strmap.h \
+	src/static-file.c src/static-file.h \
+	src/static-headers.c src/static-headers.h \
+	src/stock.c src/stock.h \
+	src/hstock.c src/hstock.h \
+	src/strmap.c src/strmap.h \
 	src/strref-dpool.h \
 	src/strref-pool.h \
 	src/strref.h \
 	src/strref2.h \
-	src/strutil.h \
-	src/tcache.h \
-	src/tcp-stock.h \
+	src/strutil.c src/strutil.h \
+	src/tcache.c src/tcache.h \
+	src/tcp-stock.c src/tcp-stock.h \
+	src/tcp-balancer.c src/tcp-balancer.h \
 	src/tpool.h \
 	src/trace.h \
-	src/transformation.h \
-	src/tstock.h \
+	src/transformation.c src/transformation.h \
+	src/tstock.c src/tstock.h \
 	src/udp-listener.h \
 	src/udp-distribute.h \
 	src/uri-address.h \
@@ -266,30 +307,18 @@ HDR = \
 	src/widget-resolver.h \
 	src/widget.h \
 	src/worker.h \
-	test/libcore-gmtime.h \
-	test/t-istream-filter.h
-
-SRC = src/main.c \
 	$(STOPWATCH_SRC) \
 	src/clock.c src/clock.h \
 	src/cmdline.c \
 	src/completion.h \
-	src/global.c \
-	src/event2.c \
 	src/crc.h \
-	src/bot.c \
 	src/crash.h \
 	src/crash.c \
-	src/child.c \
-	src/defer.c \
 	src/worker.c \
-	src/shm.c \
-	src/dpool.c \
 	src/dstring.c \
 	src/rubber.c src/rubber.h \
 	src/istream_rubber.c src/istream_rubber.h \
 	src/sink_rubber.c src/sink_rubber.h \
-	src/random.c \
 	src/session.c src/session.h \
 	src/session_id.c src/session_id.h \
 	src/session_manager.c src/session_manager.h \
@@ -299,29 +328,13 @@ SRC = src/main.c \
 	src/cookie_jar.c src/cookie_jar.h \
 	src/cookie_client.c src/cookie_client.h \
 	src/cookie_server.c src/cookie_server.h \
-	src/connection.c \
-	src/drop.c \
-	src/direct.c \
-	src/jail.c \
 	src/translate-client.c src/translate-client.h \
 	src/translate-request.h \
 	src/translate-response.c rc/translate-response.h \
-	src/transformation.c \
-	src/tstock.c \
-	src/tcache.c \
 	src/tvary.c src/tvary.h \
-	src/request.c \
-	src/request-forward.c \
-	src/response.c \
-	src/rerror.c \
-	src/handler.c \
-	src/file-handler.c \
 	src/file-address.c src/file-address.h \
 	src/proxy-handler.c \
 	src/errdoc.c \
-	src/ajp-protocol.c \
-	src/ajp-serialize.c \
-	src/ajp-headers.c \
 	src/widget.c \
 	src/widget-init.c \
 	src/widget-root.c \
@@ -337,7 +350,6 @@ SRC = src/main.c \
 	src/widget-approval.c src/widget-approval.h \
 	src/widget-dump.h \
 	src/widget-dump.c \
-	src/proxy-widget.c \
 	src/escape_class.h \
 	src/escape_pool.c src/escape_pool.h \
 	src/escape_html.c src/escape_html.h \
@@ -345,100 +357,24 @@ SRC = src/main.c \
 	src/istream-escape.c src/istream-escape.h \
 	src/istream-html-escape.c \
 	src/pheaders.c src/pheaders.h \
-	src/processor.c \
-	src/penv.c src/penv.h \
-	src/parser.c \
 	src/css_syntax.h \
 	src/css_util.h \
 	src/css_parser.c src/css_parser.h \
 	src/css_processor.c src/css_processor.h \
 	src/css_rewrite.c src/css_rewrite.h \
 	src/text_processor.c src/text_processor.h \
-	src/rewrite-uri.c \
 	src/resource-loader.c \
-	src/get.c \
-	src/static-headers.c \
-	src/static-file.c \
 	src/widget-http.c \
 	src/inline-widget.c \
 	src/frame.c \
-	src/fd-util.c \
-	src/fd_util.c \
-	src/fd_util.h \
-	src/hostname.c \
-	src/address.c \
-	src/resource-address.c \
-	src/resource-tag.c \
-	src/listener.c \
-	src/client-socket.c \
 	src/udp-listener.c \
 	src/udp-distribute.c \
-	src/buffered-io.c \
-	src/header-parser.c \
-	src/header-writer.c \
-	src/header-copy.c src/header-copy.h \
-	src/header-forward.c \
-	src/http-quark.h \
-	src/http-response.c src/http-response.h \
-	src/http-string.c \
-	src/http-body.c \
-	src/http-server.c \
-	src/http-server-send.c \
-	src/http-server-request.c \
-	src/http-server-read.c \
-	src/http-server-response.c \
-	src/http-client.c \
-	src/http-util.c \
 	src/istream-ajp-body.c \
 	src/istream-gb.h \
 	src/istream-gb.c \
-	src/ajp-client.c \
-	src/access-log.c \
-	src/tcp-stock.c \
-	src/tcp-balancer.h \
-	src/tcp-balancer.c \
-	src/http-request.c \
-	src/http-error.c \
-	src/ajp-request.c \
-	src/memcached-client.c \
-	src/memcached-packet.c \
-	src/memcached-stock.c \
-	src/pipe.c \
 	src/regex.c src/regex.h \
-	src/cgi-address.c src/cgi-address.h \
-	src/cgi-quark.h \
-	src/cgi-parser.c src/cgi-parser.h \
-	src/cgi-client.c src/cgi-client.h \
-	src/cgi-launch.c src/cgi-launch.h \
-	src/cgi.c \
-	src/fcgi-launch.h \
-	src/fcgi-launch.c \
-	src/fcgi-stock.c \
-	src/fcgi-serialize.c \
-	src/fcgi-client.c \
-	src/fcgi-request.c \
-	src/fcgi-remote.h \
-	src/fcgi-remote.c \
-	src/was-control.c \
-	src/was-output.c \
-	src/was-input.c \
-	src/was-client.c \
-	src/was-launch.c \
-	src/was-stock.c \
-	src/was-glue.c \
-	src/growing-buffer.c \
-	src/expansible-buffer.c \
-	src/gb-io.c \
-	src/serialize.c \
-	src/duplex.c \
 	$(ISTREAM_SRC) \
 	src/sigutil.h \
-	src/fork.c \
-	src/delegate-stock.c \
-	src/delegate-client.c \
-	src/delegate-glue.c \
-	src/delegate-request.c \
-	src/delegate-handler.c \
 	src/address_list.h \
 	src/address_list.c \
 	src/address_quark.h \
@@ -453,53 +389,23 @@ SRC = src/main.c \
 	src/uri-parser.c \
 	src/uri-address.c \
 	src/uri-escape.c \
-	src/failure.c \
-	src/bulldog.c \
-	src/balancer.c \
-	src/args.c \
-	src/gmtime.c \
-	src/date.c \
-	src/strutil.c \
 	src/strset.c src/strset.h \
-	src/hashmap.c \
-	src/strmap.c \
 	src/dhashmap.c \
-	src/cache.c \
 	src/istream-unlock.c \
-	src/http-cache.c \
-	src/http-cache-document.c \
-	src/http-cache-age.c src/http-cache-age.h \
-	src/http-cache-heap.c src/http-cache-heap.h \
-	src/http-cache-info.c \
-	src/http-cache-memcached.c src/http-cache-memcached.h \
-	src/http-cache-choice.c \
-	src/http-cache-rfc.c \
-	src/fcache.c \
-	src/stock.c \
-	src/hstock.c \
-	src/pipe-stock.c \
-	src/abort-close.c \
-	src/abort-unref.c \
-	src/abort-flag.c \
-	src/tpool.c \
 	src/ua_classification.c src/ua_classification.h \
 	src/log-client.c src/log-client.h \
 	src/log-launch.c src/log-launch.h \
 	src/log-glue.c src/log-glue.h \
-	$(HDR)
-
-#
-# Programs
-#
-
-bin_PROGRAMS = src/cm4all-beng-proxy \
-	src/cm4all-beng-lb \
-	src/cm4all-beng-proxy-log-cat \
-	src/cm4all-beng-proxy-log-traffic \
-	src/cm4all-beng-proxy-log-split \
-	src/cm4all-beng-proxy-log-forward \
-	src/cm4all-beng-proxy-log-exec \
-	src/cm4all-beng-proxy-delegate-helper
+	src/main.c
+src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_INLINE_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBEVENT_LIBS) \
+	$(LIBATTR_LIBS) \
+	$(LIBZ_LIBS)
+src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 
 src_cm4all_beng_lb_SOURCES = \
 	src/clock.c src/clock.h \
@@ -635,17 +541,6 @@ src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBSSL_LIBS) \
 	$(LIBEVENT_LIBS)
 src_cm4all_beng_lb_LDFLAGS = $(AM_LDFLAGS)
-
-src_cm4all_beng_proxy_SOURCES = $(SRC)
-src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
-	$(LIBCM4ALL_DAEMON_LIBS) \
-	$(LIBCM4ALL_INLINE_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS) \
-	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBEVENT_LIBS) \
-	$(LIBATTR_LIBS) \
-	$(LIBZ_LIBS)
-src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 
 src_cm4all_beng_proxy_log_cat_SOURCES = \
 	src/log-server.c \
