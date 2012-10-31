@@ -641,13 +641,6 @@ src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBZ_LIBS)
 src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 
-if GPROF
-AM_CFLAGS += -pg
-AM_CPPFLAGS += -DPROFILE
-src_cm4all_beng_proxy_LDADD += -lc_p
-src_cm4all_beng_proxy_LDFLAGS += -pg
-endif
-
 src_cm4all_beng_proxy_log_cat_SOURCES = \
 	src/log-server.c \
 	src/log-cat.c
@@ -1965,11 +1958,6 @@ benchmark: src/cm4all-beng-proxy
 	./src/cm4all-beng-proxy -D -u max -p 8080 -w 4
 
 .PHONY: debug valgrind perf benchmark
-
-#profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -DNO_ACCESS_LOG -g -pg
-#profile: LDFLAGS = -lc_p -pg
-#profile: src/cm4all-beng-proxy
-#	./src/cm4all-beng-proxy -D -u max -p 8080
 
 #
 # Documentation

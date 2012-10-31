@@ -377,11 +377,9 @@ int main(int argc, char **argv)
 
     /* daemonize */
 
-#ifndef PROFILE
     ret = daemonize();
     if (ret < 0)
         exit(2);
-#endif
 
     /* create worker processes */
 
@@ -414,9 +412,7 @@ int main(int argc, char **argv)
 
     free_all_listeners(&instance);
 
-#ifndef PROFILE
     event_base_free(instance.event_base);
-#endif
 
     tpool_deinit();
     ref = pool_unref(instance.pool);
