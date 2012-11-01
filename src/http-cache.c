@@ -12,7 +12,6 @@
 #include "http-response.h"
 #include "resource-address.h"
 #include "strref2.h"
-#include "growing-buffer.h"
 #include "tpool.h"
 #include "http-util.h"
 #include "async.h"
@@ -21,6 +20,8 @@
 #include "istream.h"
 #include "cache.h"
 #include "rubber.h"
+#include "sink_rubber.h"
+#include "istream_rubber.h"
 
 #include <glib.h>
 
@@ -107,24 +108,6 @@ struct http_cache_request {
     struct {
         http_status_t status;
         struct strmap *headers;
-
-        /**
-         * The response body istream we got from the http_request()
-         * callback.
-         */
-        struct istream *input;
-
-        /**
-         * The current size of #output.  We could use
-         * growing_buffer_size() here, but that would be too
-         * expensive.
-         */
-        size_t length;
-
-        /**
-         * A sink for the response body, read from #input.
-         */
-        struct growing_buffer *output;
     } response;
 
     struct async_operation operation;
@@ -168,7 +151,8 @@ http_cache_memcached_put_callback(GError *error, void *ctx)
 }
 
 static void
-http_cache_put(struct http_cache_request *request)
+http_cache_put(struct http_cache_request *request,
+               unsigned rubber_id, size_t size)
 {
     assert(request != NULL);
     assert(request->info != NULL);
@@ -179,13 +163,13 @@ http_cache_put(struct http_cache_request *request)
         http_cache_heap_put(&request->cache->heap, request->key,
                             request->info, request->headers, request->response.status,
                             request->response.headers,
-                            request->cache->rubber,
-                            request->response.output);
+                            request->cache->rubber, rubber_id, size);
     else if (request->cache->memcached_stock != NULL) {
         struct background_job *job = p_malloc(request->pool, sizeof(*job));
 
-        struct istream *value = request->response.output != NULL
-            ? istream_gb_new(request->pool, request->response.output)
+        struct istream *value = rubber_id != 0
+            ? istream_rubber_new(request->pool, request->cache->rubber,
+                                 rubber_id, 0, size, true)
             : NULL;
 
         http_cache_memcached_put(request->pool, request->cache->memcached_stock,
@@ -238,74 +222,65 @@ http_cache_unlock(struct http_cache *cache,
 static void
 http_cache_serve(struct http_cache_request *request);
 
-static void
-http_cache_request_abort(struct http_cache_request *request)
-{
-    assert(request->response.input != NULL);
-
-    list_remove(&request->siblings);
-
-    istream_free_handler(&request->response.input);
-}
-
-
 /*
- * istream handler
+ * sink_rubber handler
  *
  */
 
-static size_t
-http_cache_response_body_data(const void *data, size_t length, void *ctx)
-{
-    struct http_cache_request *request = ctx;
-
-    request->response.length += length;
-    if (request->response.length > (size_t)cacheable_size_limit) {
-        cache_log(4, "http_cache: too large %s\n", request->key);
-        http_cache_request_abort(request);
-        return 0;
-    }
-
-    growing_buffer_write_buffer(request->response.output, data, length);
-    return length;
-}
-
 static void
-http_cache_response_body_eof(void *ctx)
+http_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
 {
     struct http_cache_request *request = ctx;
 
-    request->response.input = NULL;
-
+    async_ref_clear(&request->async_ref);
     list_remove(&request->siblings);
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
-    http_cache_put(request);
+    http_cache_put(request, rubber_id, size);
 }
 
 static void
-http_cache_response_body_abort(GError *error, void *ctx)
+http_cache_rubber_oom(void *ctx)
 {
     struct http_cache_request *request = ctx;
 
-    if (request->response.length <= (size_t)cacheable_size_limit) {
-        cache_log(4, "http_cache: body_abort %s: %s\n",
-                  request->key, error->message);
-        g_error_free(error);
-    }
+    cache_log(4, "http_cache: oom %s\n", request->key);
 
-    request->response.input = NULL;
-
+    async_ref_clear(&request->async_ref);
     list_remove(&request->siblings);
 }
 
-static const struct istream_handler http_cache_response_body_handler = {
-    .data = http_cache_response_body_data,
-    .eof = http_cache_response_body_eof,
-    .abort = http_cache_response_body_abort,
-};
+static void
+http_cache_rubber_too_large(void *ctx)
+{
+    struct http_cache_request *request = ctx;
 
+    cache_log(4, "http_cache: too large %s\n", request->key);
+
+    async_ref_clear(&request->async_ref);
+    list_remove(&request->siblings);
+}
+
+static void
+http_cache_rubber_error(GError *error, void *ctx)
+{
+    struct http_cache_request *request = ctx;
+
+    cache_log(4, "http_cache: body_abort %s: %s\n",
+              request->key, error->message);
+    g_error_free(error);
+
+    async_ref_clear(&request->async_ref);
+    list_remove(&request->siblings);
+}
+
+static const struct sink_rubber_handler http_cache_rubber_handler = {
+    .done = http_cache_rubber_done,
+    .out_of_memory = http_cache_rubber_oom,
+    .too_large = http_cache_rubber_too_large,
+    .error = http_cache_rubber_error,
+};
 
 /*
  * http response handler
@@ -403,12 +378,10 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         ? strmap_dup(request->pool, headers, 17)
         : NULL;
 
+    struct istream *const input = body;
     if (body == NULL) {
-        request->response.output = NULL;
-        http_cache_put(request);
+        http_cache_put(request, 0, 0);
     } else {
-        size_t buffer_size;
-
         /* request->info was allocated from the caller pool; duplicate
            it to keep it alive even after the caller pool is
            destroyed */
@@ -419,28 +392,17 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
            cache */
         body = istream_tee_new(request->pool, body, false, false);
 
-        request->response.length = 0;
-
-        istream_assign_handler(&request->response.input,
-                               istream_tee_second(body),
-                               &http_cache_response_body_handler, request,
-                               0);
-
-        if (available == (off_t)-1 || available < 256)
-            buffer_size = 1024;
-        else if (available > 16384)
-            buffer_size = 16384;
-        else
-            buffer_size = (size_t)available;
-        request->response.output = growing_buffer_new(request->pool,
-                                                      buffer_size);
-
         list_add(&request->siblings, &request->cache->requests);
 
         /* we need this pool reference because the http-client will
            release our pool when our response handler closes the "tee"
            body stream within the callback */
         pool_ref(request->pool);
+
+        sink_rubber_new(request->pool, istream_tee_second(body),
+                        cache->rubber, cacheable_size_limit,
+                        &http_cache_rubber_handler, request,
+                        &request->async_ref);
     }
 
     struct pool *caller_pool = request->caller_pool;
@@ -454,11 +416,11 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
     pool_unref_denotify(caller_pool, &notify);
 
-    if (body != NULL) {
-        if (request->response.input != NULL)
+    if (input != NULL) {
+        if (async_ref_defined(&request->async_ref))
             /* just in case our handler has closed the body without
                looking at it: call istream_read() to start reading */
-            istream_read(request->response.input);
+            istream_read(input);
 
         pool_unref(request->pool);
     }
@@ -589,13 +551,9 @@ static void
 http_cache_request_close(struct http_cache_request *request)
 {
     assert(request != NULL);
-    assert(request->response.input != NULL || request->cache->memcached_stock != NULL);
-    assert(request->response.output != NULL);
 
-    if (request->response.input != NULL)
-        http_cache_request_abort(request);
-    else
-        async_abort(&request->async_ref);
+    list_remove(&request->siblings);
+    async_abort(&request->async_ref);
 }
 
 void

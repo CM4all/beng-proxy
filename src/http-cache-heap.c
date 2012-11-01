@@ -8,7 +8,6 @@
 #include "http-cache-internal.h"
 #include "http-cache-age.h"
 #include "cache.h"
-#include "growing-buffer.h"
 #include "istream.h"
 #include "rubber.h"
 #include "istream_rubber.h"
@@ -70,32 +69,8 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     struct strmap *request_headers,
                     http_status_t status,
                     struct strmap *response_headers,
-                    struct rubber *rubber,
-                    const struct growing_buffer *body)
+                    struct rubber *rubber, unsigned rubber_id, size_t size)
 {
-    const size_t size = body != NULL
-        ? growing_buffer_size(body)
-        : 0;
-
-    unsigned rubber_id;
-    if (size > 0) {
-        rubber_id = rubber_add(rubber, size);
-        if (rubber_id == 0)
-            return;
-
-        uint8_t *dest = rubber_write(rubber, rubber_id);
-
-        struct growing_buffer_reader reader;
-        growing_buffer_reader_init(&reader, body);
-        size_t length;
-        const void *p;
-        while ((p = growing_buffer_reader_read(&reader, &length)) != NULL) {
-            memcpy(dest, p, length);
-            growing_buffer_reader_consume(&reader, length);
-            dest += length;
-        }
-    } else
-        rubber_id = 0;
 
     struct pool *pool = pool_new_slice(cache->pool, "http_cache_item",
                                        cache->slice_pool);

@@ -23,7 +23,6 @@ struct pool;
 struct rubber;
 struct strmap;
 struct cache_stats;
-struct growing_buffer;
 struct http_cache_info;
 
 static inline void
@@ -61,8 +60,7 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     struct strmap *request_headers,
                     http_status_t status,
                     struct strmap *response_headers,
-                    struct rubber *rubber,
-                    const struct growing_buffer *body);
+                    struct rubber *rubber, unsigned rubber_id, size_t size);
 
 void
 http_cache_heap_remove(struct http_cache_heap *cache, const char *url,

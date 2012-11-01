@@ -4,7 +4,6 @@
 #include "http-cache-heap.h"
 #include "http-cache-internal.h"
 #include "strmap.h"
-#include "growing-buffer.h"
 #include "rubber.h"
 
 #include <inline/compiler.h>
@@ -32,6 +31,16 @@ put_random(struct http_cache_heap *cache, struct rubber *rubber)
         .vary = "x-foo",
     };
 
+    size_t length = random() % (random() % (random() % (64 * 1024) + 1) + 1);
+    unsigned rubber_id = 0;
+    if (length > 0) {
+        rubber_id = rubber_add(rubber, length);
+        if (rubber_id == 0) {
+            fprintf(stderr, "rubber_add(%zu) failed\n", length);
+            return;
+        }
+    }
+
     struct strmap *request_headers = strmap_new(tpool, 7);
 
     if (random() % 3 == 0) {
@@ -41,14 +50,6 @@ put_random(struct http_cache_heap *cache, struct rubber *rubber)
         strmap_add(request_headers, "x-foo", values[random() % 8]);
     }
 
-    struct growing_buffer *body = growing_buffer_new(tpool, 1024);
-    size_t length = random() % (random() % (random() % (64 * 1024) + 1) + 1);
-    while (length > 0) {
-        size_t l = length < 4096 ? length : 4096;
-        length -= l;
-        growing_buffer_write(body, l);
-    }
-
     struct strmap *response_headers = strmap_new(tpool, 7);
     strmap_add(response_headers, "content-type", "text/plain");
     strmap_add(response_headers, "x-foo", "bar");
@@ -56,7 +57,7 @@ put_random(struct http_cache_heap *cache, struct rubber *rubber)
 
     http_cache_heap_put(cache, uri, &info, request_headers,
                         HTTP_STATUS_OK, response_headers,
-                        rubber, body);
+                        rubber, rubber_id, length);
 
     pool_rewind(tpool, &mark);
 }

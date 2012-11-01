@@ -1238,6 +1238,7 @@ test_t_http_util_LDADD = $(AM_LDADD) \
 
 test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/tpool.c \
+	src/sink_rubber.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/header-parser.c \
