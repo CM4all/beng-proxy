@@ -23,13 +23,13 @@
 struct http_cache_item {
     struct cache_item item;
 
-    struct http_cache_heap *cache;
-
     struct pool *pool;
 
     struct http_cache_document document;
 
     size_t size;
+
+    struct rubber *rubber;
     unsigned rubber_id;
 };
 
@@ -100,12 +100,12 @@ http_cache_heap_put(struct http_cache_heap *cache,
                                        cache->slice_pool);
     struct http_cache_item *item = p_malloc(pool, sizeof(*item));
 
-    item->cache = cache;
     item->pool = pool;
 
     http_cache_document_init(&item->document, pool, info,
                              request_headers, status, response_headers);
     item->size = size;
+    item->rubber = cache->rubber;
     item->rubber_id = rubber_id;
 
     cache_item_init(&item->item,
@@ -172,7 +172,7 @@ http_cache_heap_istream(struct pool *pool, struct http_cache_heap *cache,
         return istream_null_new(pool);
 
     struct istream *istream =
-        istream_rubber_new(pool, item->cache->rubber, item->rubber_id,
+        istream_rubber_new(pool, item->rubber, item->rubber_id,
                            0, item->size);
     return istream_unlock_new(pool, istream,
                               cache->cache, &item->item);
@@ -199,7 +199,7 @@ http_cache_item_destroy(struct cache_item *_item)
     struct http_cache_item *item = (struct http_cache_item *)_item;
 
     if (item->rubber_id != 0)
-        rubber_remove(item->cache->rubber, item->rubber_id);
+        rubber_remove(item->rubber, item->rubber_id);
 
     pool_unref(item->pool);
 }
