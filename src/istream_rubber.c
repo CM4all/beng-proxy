@@ -13,10 +13,12 @@
 struct istream_rubber {
     struct istream base;
 
-    const struct rubber *rubber;
+    struct rubber *rubber;
     unsigned id;
 
     size_t position, end;
+
+    bool auto_remove;
 };
 
 static inline struct istream_rubber *
@@ -68,14 +70,21 @@ istream_rubber_read(struct istream *istream)
         r->position += nbytes;
     }
 
-    if (r->position == r->end)
+    if (r->position == r->end) {
+        if (r->auto_remove)
+            rubber_remove(r->rubber, r->id);
+
         istream_deinit_eof(&r->base);
+    }
 }
 
 static void
 istream_rubber_close(struct istream *istream)
 {
     struct istream_rubber *r = istream_to_rubber(istream);
+
+    if (r->auto_remove)
+        rubber_remove(r->rubber, r->id);
 
     istream_deinit(&r->base);
 }
@@ -88,8 +97,9 @@ static const struct istream_class istream_rubber = {
 };
 
 struct istream *
-istream_rubber_new(struct pool *pool, const struct rubber *rubber,
-                   unsigned id, size_t start, size_t end)
+istream_rubber_new(struct pool *pool, struct rubber *rubber,
+                   unsigned id, size_t start, size_t end,
+                   bool auto_remove)
 {
     assert(rubber != NULL);
     assert(id > 0);
@@ -100,6 +110,7 @@ istream_rubber_new(struct pool *pool, const struct rubber *rubber,
     r->id = id;
     r->position = start;
     r->end = end;
+    r->auto_remove = auto_remove;
 
     return istream_struct_cast(&r->base);
 }

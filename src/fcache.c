@@ -622,7 +622,7 @@ filter_cache_serve(struct filter_cache *cache, struct filter_cache_item *item,
 
     response_body = item->rubber_id != 0
         ? istream_rubber_new(pool, cache->rubber, item->rubber_id,
-                             0, item->size)
+                             0, item->size, false)
         : istream_null_new(pool);
 
     response_body = istream_unlock_new(pool, response_body,

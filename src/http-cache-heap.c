@@ -173,7 +173,7 @@ http_cache_heap_istream(struct pool *pool, struct http_cache_heap *cache,
 
     struct istream *istream =
         istream_rubber_new(pool, item->rubber, item->rubber_id,
-                           0, item->size);
+                           0, item->size, false);
     return istream_unlock_new(pool, istream,
                               cache->cache, &item->item);
 }
