@@ -5,6 +5,7 @@
 #include "http-cache-internal.h"
 #include "strmap.h"
 #include "growing-buffer.h"
+#include "rubber.h"
 
 #include <inline/compiler.h>
 
@@ -13,7 +14,7 @@
 #include <stdlib.h>
 
 static void
-put_random(struct http_cache_heap *cache)
+put_random(struct http_cache_heap *cache, struct rubber *rubber)
 {
     struct pool_mark mark;
     pool_mark(tpool, &mark);
@@ -54,7 +55,8 @@ put_random(struct http_cache_heap *cache)
     strmap_add(response_headers, "x-bar", "foo");
 
     http_cache_heap_put(cache, uri, &info, request_headers,
-                        HTTP_STATUS_OK, response_headers, body);
+                        HTTP_STATUS_OK, response_headers,
+                        rubber, body);
 
     pool_rewind(tpool, &mark);
 }
@@ -69,6 +71,10 @@ main(gcc_unused int argc, gcc_unused char **argv)
 {
     static const size_t max_size = 256 * 1024 * 1024;
 
+    struct rubber *rubber = rubber_new(max_size);
+    if (rubber == NULL)
+        return EXIT_FAILURE;
+
     struct event_base *event_base = event_init();
 
     struct pool *pool = pool_new_libc(NULL, "root");
@@ -80,10 +86,10 @@ main(gcc_unused int argc, gcc_unused char **argv)
     http_cache_heap_init(&cache, pool2, max_size);
 
     for (unsigned i = 0; i < 32 * 1024; ++i)
-        put_random(&cache);
+        put_random(&cache, rubber);
 
     struct cache_stats stats;
-    http_cache_heap_get_stats(&cache, &stats);
+    http_cache_heap_get_stats(&cache, rubber, &stats);
     printf("netto=%zu brutto=%zu ratio=%f\n",
            stats.netto_size, stats.brutto_size,
            (double)stats.netto_size / stats.brutto_size);
@@ -98,6 +104,8 @@ main(gcc_unused int argc, gcc_unused char **argv)
     pool_recycler_clear();
 
     event_base_free(event_base);
+
+    rubber_free(rubber);
 
     return EXIT_SUCCESS;
 }

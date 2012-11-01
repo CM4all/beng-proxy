@@ -70,6 +70,7 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     struct strmap *request_headers,
                     http_status_t status,
                     struct strmap *response_headers,
+                    struct rubber *rubber,
                     const struct growing_buffer *body)
 {
     const size_t size = body != NULL
@@ -78,11 +79,11 @@ http_cache_heap_put(struct http_cache_heap *cache,
 
     unsigned rubber_id;
     if (size > 0) {
-        rubber_id = rubber_add(cache->rubber, size);
+        rubber_id = rubber_add(rubber, size);
         if (rubber_id == 0)
             return;
 
-        uint8_t *dest = rubber_write(cache->rubber, rubber_id);
+        uint8_t *dest = rubber_write(rubber, rubber_id);
 
         struct growing_buffer_reader reader;
         growing_buffer_reader_init(&reader, body);
@@ -105,7 +106,7 @@ http_cache_heap_put(struct http_cache_heap *cache,
     http_cache_document_init(&item->document, pool, info,
                              request_headers, status, response_headers);
     item->size = size;
-    item->rubber = cache->rubber;
+    item->rubber = rubber;
     item->rubber_id = rubber_id;
 
     cache_item_init(&item->item,
@@ -140,7 +141,6 @@ void
 http_cache_heap_flush(struct http_cache_heap *cache)
 {
     cache_flush(cache->cache);
-    rubber_compress(cache->rubber);
     slice_pool_compress(cache->slice_pool);
 }
 
@@ -222,13 +222,6 @@ http_cache_heap_init(struct http_cache_heap *cache,
     cache->pool = pool;
     cache->cache = cache_new(pool, &http_cache_class, 65521, max_size);
 
-    cache->rubber = rubber_new(max_size);
-    if (cache->rubber == NULL) {
-        fprintf(stderr, "Failed to allocate HTTP cache: %s\n",
-                strerror(errno));
-        _exit(2);
-    }
-
     cache->slice_pool = slice_pool_new(1024, 65536);
 }
 
@@ -238,15 +231,15 @@ http_cache_heap_deinit(struct http_cache_heap *cache)
 {
     cache_close(cache->cache);
     slice_pool_free(cache->slice_pool);
-    rubber_free(cache->rubber);
 }
 
 void
 http_cache_heap_get_stats(const struct http_cache_heap *cache,
+                          const struct rubber *rubber,
                           struct cache_stats *data)
 {
     cache_get_stats(cache->cache, data);
 
-    data->netto_size += rubber_get_netto_size(cache->rubber);
-    data->brutto_size += rubber_get_brutto_size(cache->rubber);
+    data->netto_size += rubber_get_netto_size(rubber);
+    data->brutto_size += rubber_get_brutto_size(rubber);
 }

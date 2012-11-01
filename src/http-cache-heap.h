@@ -16,8 +16,6 @@ struct http_cache_heap {
 
     struct cache *cache;
 
-    struct rubber *rubber;
-
     struct slice_pool *slice_pool;
 };
 
@@ -49,6 +47,7 @@ http_cache_heap_deinit(struct http_cache_heap *cache);
 
 void
 http_cache_heap_get_stats(const struct http_cache_heap *cache,
+                          const struct rubber *rubber,
                           struct cache_stats *data);
 
 struct http_cache_document *
@@ -62,6 +61,7 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     struct strmap *request_headers,
                     http_status_t status,
                     struct strmap *response_headers,
+                    struct rubber *rubber,
                     const struct growing_buffer *body);
 
 void

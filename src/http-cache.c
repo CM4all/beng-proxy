@@ -20,15 +20,19 @@
 #include "istream-gb.h"
 #include "istream.h"
 #include "cache.h"
+#include "rubber.h"
 
 #include <glib.h>
 
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <errno.h>
 
 struct http_cache {
     struct pool *pool;
+
+    struct rubber *rubber;
 
     struct http_cache_heap heap;
 
@@ -174,7 +178,9 @@ http_cache_put(struct http_cache_request *request)
     if (http_cache_heap_is_defined(&request->cache->heap))
         http_cache_heap_put(&request->cache->heap, request->key,
                             request->info, request->headers, request->response.status,
-                            request->response.headers, request->response.output);
+                            request->response.headers,
+                            request->cache->rubber,
+                            request->response.output);
     else if (request->cache->memcached_stock != NULL) {
         struct background_job *job = p_malloc(request->pool, sizeof(*job));
 
@@ -545,6 +551,20 @@ http_cache_new(struct pool *pool, size_t max_size,
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
 
+    if (max_size > 0) {
+        static const size_t max_memcached_rubber = 64 * 1024 * 1024;
+        size_t rubber_size = max_size;
+        if (memcached_stock != NULL && rubber_size > max_memcached_rubber)
+            rubber_size = max_memcached_rubber;
+
+        cache->rubber = rubber_new(rubber_size);
+        if (cache->rubber == NULL) {
+            fprintf(stderr, "Failed to allocate HTTP cache: %s\n",
+                    strerror(errno));
+            exit(2);
+        }
+    }
+
     if (memcached_stock == NULL && max_size > 0)
         http_cache_heap_init(&cache->heap, pool, max_size);
     else
@@ -594,6 +614,7 @@ http_cache_close(struct http_cache *cache)
     if (http_cache_heap_is_defined(&cache->heap))
         http_cache_heap_deinit(&cache->heap);
 
+    rubber_free(cache->rubber);
     pool_unref(cache->pool);
 }
 
@@ -601,7 +622,7 @@ void
 http_cache_get_stats(const struct http_cache *cache, struct cache_stats *data)
 {
     if (http_cache_heap_is_defined(&cache->heap))
-        http_cache_heap_get_stats(&cache->heap, data);
+        http_cache_heap_get_stats(&cache->heap, cache->rubber, data);
     else
         memset(data, 0, sizeof(*data));
 }
@@ -639,6 +660,9 @@ http_cache_flush(struct http_cache *cache)
                                                       &flush->background));
         pool_unref(pool);
     }
+
+    if (cache->rubber != NULL)
+        rubber_compress(cache->rubber);
 }
 
 /**
