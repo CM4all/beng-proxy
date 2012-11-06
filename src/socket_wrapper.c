@@ -20,6 +20,7 @@ static void
 socket_read_event_callback(gcc_unused int fd, short event, void *ctx)
 {
     struct socket_wrapper *s = ctx;
+    assert(socket_wrapper_valid(s));
 
     if (event & EV_TIMEOUT)
         s->handler->timeout(s->handler_ctx);
@@ -34,6 +35,7 @@ socket_write_event_callback(gcc_unused int fd, gcc_unused short event,
                             void *ctx)
 {
     struct socket_wrapper *s = ctx;
+    assert(socket_wrapper_valid(s));
 
     if (event & EV_TIMEOUT)
         s->handler->timeout(s->handler_ctx);
