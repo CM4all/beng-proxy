@@ -443,6 +443,18 @@ rubber_free(struct rubber *r)
     free(r);
 }
 
+void
+rubber_fork_cow(struct rubber *r, bool inherit)
+{
+#ifdef MADV_DONTFORK
+    /* don't copy these pages to a forked child process */
+    madvise(r->table, r->max_size, inherit ? MADV_DOFORK : MADV_DONTFORK);
+#else
+    (void)r;
+    (void)inherit;
+#endif
+}
+
 unsigned
 rubber_add(struct rubber *r, size_t size)
 {

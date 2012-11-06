@@ -403,6 +403,8 @@ int main(int argc, char **argv)
             if (pid <= 0)
                 break;
         }
+    } else {
+        instance_fork_cow(&instance, false);
     }
 
     /* main loop */

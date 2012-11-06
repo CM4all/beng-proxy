@@ -543,6 +543,15 @@ filter_cache_close(struct filter_cache *cache)
 }
 
 void
+filter_cache_fork_cow(struct filter_cache *cache, bool inherit)
+{
+    if (cache->cache == NULL)
+        return;
+
+    rubber_fork_cow(cache->rubber, inherit);
+}
+
+void
 filter_cache_get_stats(const struct filter_cache *cache,
                        struct cache_stats *data)
 {

@@ -9,6 +9,7 @@
 
 #include <http/method.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -29,6 +30,9 @@ http_cache_new(struct pool *pool, size_t max_size,
 
 void
 http_cache_close(struct http_cache *cache);
+
+void
+http_cache_fork_cow(struct http_cache *cache, bool inherit);
 
 void
 http_cache_get_stats(const struct http_cache *cache, struct cache_stats *data);

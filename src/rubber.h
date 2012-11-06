@@ -11,6 +11,7 @@
 
 #include <inline/compiler.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 
 struct rubber;
@@ -20,6 +21,13 @@ rubber_new(size_t size);
 
 void
 rubber_free(struct rubber *r);
+
+/**
+ * Controls whether forked child processes inherit the allocator.
+ * This is enabled by default.
+ */
+void
+rubber_fork_cow(struct rubber *r, bool inherit);
 
 /**
  * Add a new object with the specified size.  Use rubber_write() to

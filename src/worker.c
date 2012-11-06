@@ -168,6 +168,8 @@ worker_new(struct instance *instance)
         crash_deinit(&global_crash);
         global_crash = crash;
 
+        instance_fork_cow(instance, false);
+
         if (distribute_socket >= 0)
             global_control_handler_set_fd(instance, distribute_socket);
 

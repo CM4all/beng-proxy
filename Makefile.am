@@ -187,7 +187,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/control_local.c src/control_local.h \
 	src/bp_stats.c src/bp_stats.h \
 	src/bp_control.c src/bp_control.h \
-	src/instance.h \
 	src/jail.c src/jail.h \
 	src/lease.h \
 	src/listener.c src/listener.h \
@@ -341,6 +340,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/log-client.c src/log-client.h \
 	src/log-launch.c src/log-launch.h \
 	src/log-glue.c src/log-glue.h \
+	src/instance.c src/instance.h \
 	src/main.c
 src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \

@@ -577,6 +577,14 @@ http_cache_close(struct http_cache *cache)
 }
 
 void
+http_cache_fork_cow(struct http_cache *cache, bool inherit)
+{
+    if (http_cache_heap_is_defined(&cache->heap) ||
+        cache->memcached_stock != NULL)
+        rubber_fork_cow(cache->rubber, inherit);
+}
+
+void
 http_cache_get_stats(const struct http_cache *cache, struct cache_stats *data)
 {
     if (http_cache_heap_is_defined(&cache->heap))

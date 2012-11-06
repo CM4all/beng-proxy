@@ -91,4 +91,7 @@ all_listeners_event_add(struct instance *instance);
 void
 all_listeners_event_del(struct instance *instance);
 
+void
+instance_fork_cow(struct instance *instance, bool inherit);
+
 #endif
