@@ -1206,6 +1206,7 @@ test_t_http_server_fixed_LDADD = $(AM_LDADD) \
 
 test_t_http_client_SOURCES = test/t-http-client.c \
 	src/http-client.c \
+	src/socket_wrapper.c \
 	$(STOPWATCH_SRC) \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
