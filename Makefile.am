@@ -263,7 +263,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/crash.c \
 	src/worker.c \
 	src/dstring.c \
-	src/rubber.c src/rubber.h \
 	src/istream_rubber.c src/istream_rubber.h \
 	src/sink_rubber.c src/sink_rubber.h \
 	src/session.c src/session.h \
@@ -1250,7 +1249,6 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/http-cache.c src/http-cache-rfc.c \
 	src/http-cache-info.c src/http-cache-document.c \
 	src/http-cache-heap.c src/http-cache-age.c \
-	src/rubber.c \
 	src/resource-address.c src/uri-address.c \
 	src/file-address.c \
 	src/cgi-address.c \
@@ -1308,13 +1306,14 @@ test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/session.c src/session_manager.c
 test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
-test_t_rubber_SOURCES = test/t_rubber.cxx src/rubber.c
+test_t_rubber_SOURCES = test/t_rubber.cxx
 test_t_rubber_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_rubber_LDADD = $(AM_LDADD) \
+	libmemory.a \
 	$(CPPUNIT_LIBS)
 
 test_t_sink_rubber_SOURCES = \
-	src/rubber.c src/sink_rubber.c \
+	src/sink_rubber.c \
 	src/istream-memory.c src/istream-string.c \
 	src/istream-fail.c src/istream-four.c \
 	src/istream-null.c src/istream-delayed.c \
@@ -1686,7 +1685,6 @@ test_run_http_cache_SOURCES = test/run_http_cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/date.c src/format.c src/gmtime.c src/strutil.c \
 	src/tpool.c \
-	src/rubber.c \
 	src/istream_rubber.c
 test_run_http_cache_LDADD = $(LIBEVENT_LIBS) \
 	libpool.a libmemory.a \
