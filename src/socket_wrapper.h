@@ -87,11 +87,18 @@ socket_wrapper_direct_mask(const struct socket_wrapper *s)
 }
 
 static inline void
-socket_wrapper_schedule_read(struct socket_wrapper *s)
+socket_wrapper_schedule_read_timeout(struct socket_wrapper *s,
+                                     const struct timeval *timeout)
 {
     assert(socket_wrapper_valid(s));
 
-    p_event_add(&s->read_event, s->read_timeout, s->pool, "socket_read");
+    p_event_add(&s->read_event, timeout, s->pool, "socket_read");
+}
+
+static inline void
+socket_wrapper_schedule_read(struct socket_wrapper *s)
+{
+    socket_wrapper_schedule_read_timeout(s, s->read_timeout);
 }
 
 static inline void
