@@ -97,8 +97,6 @@ socket_wrapper_schedule_read(struct socket_wrapper *s)
 static inline void
 socket_wrapper_unschedule_read(struct socket_wrapper *s)
 {
-    assert(socket_wrapper_valid(s));
-
     p_event_del(&s->read_event, s->pool);
 }
 
@@ -113,8 +111,6 @@ socket_wrapper_schedule_write(struct socket_wrapper *s)
 static inline void
 socket_wrapper_unschedule_write(struct socket_wrapper *s)
 {
-    assert(socket_wrapper_valid(s));
-
     p_event_del(&s->write_event, s->pool);
 }
 
