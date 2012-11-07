@@ -92,6 +92,17 @@ socket_wrapper_close(struct socket_wrapper *s)
     s->fd = -1;
 }
 
+void
+socket_wrapper_abandon(struct socket_wrapper *s)
+{
+    assert(s->fd >= 0);
+
+    p_event_del(&s->read_event, s->pool);
+    p_event_del(&s->write_event, s->pool);
+
+    s->fd = -1;
+}
+
 ssize_t
 socket_wrapper_read_to_buffer(struct socket_wrapper *s,
                               struct fifo_buffer *buffer, size_t length)

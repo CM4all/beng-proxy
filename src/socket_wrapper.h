@@ -67,6 +67,14 @@ socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
 void
 socket_wrapper_close(struct socket_wrapper *s);
 
+/**
+ * Just like socket_wrapper_close(), but do not actually close the
+ * socket.  The caller is responsible for closing the socket (or
+ * scheduling it for reuse).
+ */
+void
+socket_wrapper_abandon(struct socket_wrapper *s);
+
 static inline bool
 socket_wrapper_valid(const struct socket_wrapper *s)
 {
