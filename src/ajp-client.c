@@ -6,6 +6,7 @@
 
 #include "ajp-client.h"
 #include "ajp-headers.h"
+#include "socket_wrapper.h"
 #include "http-response.h"
 #include "async.h"
 #include "fifo-buffer.h"
@@ -39,13 +40,11 @@ struct ajp_client {
     struct pool *pool;
 
     /* I/O */
-    int fd;
+    struct socket_wrapper socket;
     struct lease_ref lease_ref;
 
     /* request */
     struct {
-        struct event event;
-
         struct istream *istream;
 
         /** an istream_ajp_body */
@@ -57,8 +56,6 @@ struct ajp_client {
 
     /* response */
     struct {
-        struct event event;
-
         enum {
             READ_BEGIN,
             READ_BODY,
@@ -90,12 +87,6 @@ static const struct ajp_header empty_body_chunk = {
     .a = 0x12, .b = 0x34,
 };
 
-static inline bool
-ajp_connection_valid(struct ajp_client *client)
-{
-    return client->fd >= 0;
-}
-
 static void
 ajp_consume_input(struct ajp_client *client);
 
@@ -105,22 +96,17 @@ ajp_try_read(struct ajp_client *client);
 static void
 ajp_client_schedule_read(struct ajp_client *client)
 {
-    assert(client->fd >= 0);
     assert(!fifo_buffer_full(client->response.input));
 
-    p_event_add(&client->response.event,
-                client->request.istream != NULL
-                ? NULL : &ajp_client_timeout,
-                client->pool, "ajp_client_response");
+    socket_wrapper_schedule_read_timeout(&client->socket,
+                                         client->request.istream != NULL
+                                         ? NULL : &ajp_client_timeout);
 }
 
 static void
 ajp_client_schedule_write(struct ajp_client *client)
 {
-    assert(client->fd >= 0);
-
-    p_event_add(&client->request.event, &ajp_client_timeout,
-                client->pool, "ajp_client_request");
+    socket_wrapper_schedule_write(&client->socket);
 }
 
 /**
@@ -131,13 +117,10 @@ static void
 ajp_client_release(struct ajp_client *client, bool reuse)
 {
     assert(client != NULL);
-    assert(client->fd >= 0);
+    assert(socket_wrapper_valid(&client->socket));
     assert(client->response.read_state == READ_END);
 
-    p_event_del(&client->request.event, client->pool);
-    p_event_del(&client->response.event, client->pool);
-
-    client->fd = -1;
+    socket_wrapper_abandon(&client->socket);
 
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
@@ -150,7 +133,7 @@ static void
 ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
-    assert(client->fd >= 0);
+    assert(socket_wrapper_valid(&client->socket));
     assert(client->response.read_state == READ_BEGIN);
 
     pool_ref(client->pool);
@@ -171,7 +154,7 @@ static void
 ajp_client_abort_response_body(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
-    assert(client->fd >= 0);
+    assert(socket_wrapper_valid(&client->socket));
     assert(client->response.read_state == READ_BODY);
 
     pool_ref(client->pool);
@@ -188,7 +171,7 @@ static void
 ajp_client_abort_response(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
-    assert(client->fd >= 0);
+    assert(socket_wrapper_valid(&client->socket));
     assert(client->response.read_state != READ_END);
 
     switch (client->response.read_state) {
@@ -329,7 +312,7 @@ ajp_consume_send_headers(struct ajp_client *client,
                                           headers, body);
     client->response.in_handler = false;
 
-    return client->fd >= 0;
+    return socket_wrapper_valid(&client->socket);
 }
 
 /**
@@ -583,10 +566,9 @@ ajp_consume_input(struct ajp_client *client)
 static bool
 ajp_fill_buffer(struct ajp_client *client)
 {
-    ssize_t nbytes;
-
-    nbytes = recv_to_buffer(client->fd, client->response.input,
-                            INT_MAX);
+    ssize_t nbytes =
+        socket_wrapper_read_to_buffer(&client->socket, client->response.input,
+                                      INT_MAX);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
@@ -626,59 +608,12 @@ ajp_try_read(struct ajp_client *client)
 
     ajp_consume_input(client);
 
-    if (ajp_connection_valid(client) &&
+    if (socket_wrapper_valid(&client->socket) &&
         !fifo_buffer_full(client->response.input))
         ajp_client_schedule_read(client);
 
     pool_unref(client->pool);
 }
-
-static void
-ajp_client_send_event_callback(int fd gcc_unused, short event, void *ctx)
-{
-    struct ajp_client *client = ctx;
-
-    p_event_consumed(&client->request.event, client->pool);
-
-    if (unlikely(event & EV_TIMEOUT)) {
-        GError *error =
-            g_error_new_literal(ajp_client_quark(), 0,
-                                "timeout");
-        ajp_client_abort_response(client, error);
-        return;
-    }
-
-    pool_ref(client->pool);
-
-    socket_set_cork(client->fd, true);
-    istream_read(client->request.istream);
-    if (client->fd >= 0)
-        socket_set_cork(client->fd, false);
-
-    pool_unref(client->pool);
-    pool_commit();
-}
-
-static void
-ajp_client_recv_event_callback(int fd gcc_unused, short event, void *ctx)
-{
-    struct ajp_client *client = ctx;
-
-    p_event_consumed(&client->response.event, client->pool);
-
-    if (unlikely(event & EV_TIMEOUT)) {
-        GError *error =
-            g_error_new_literal(ajp_client_quark(), 0,
-                                "timeout");
-        ajp_client_abort_response(client, error);
-        return;
-    }
-
-    ajp_try_read(client);
-
-    pool_commit();
-}
-
 
 /*
  * istream handler for the request
@@ -689,15 +624,14 @@ static size_t
 ajp_request_stream_data(const void *data, size_t length, void *ctx)
 {
     struct ajp_client *client = ctx;
-    ssize_t nbytes;
 
     assert(client != NULL);
-    assert(client->fd >= 0);
+    assert(socket_wrapper_valid(&client->socket));
     assert(client->request.istream != NULL);
     assert(data != NULL);
     assert(length > 0);
 
-    nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    ssize_t nbytes = socket_wrapper_write(&client->socket, data, length);
     if (likely(nbytes >= 0)) {
         ajp_client_schedule_write(client);
         return (size_t)nbytes;
@@ -721,15 +655,15 @@ ajp_request_stream_direct(istream_direct_t type, int fd, size_t max_length,
                           void *ctx)
 {
     struct ajp_client *client = ctx;
-    ssize_t nbytes;
 
     assert(client != NULL);
-    assert(client->fd >= 0);
+    assert(socket_wrapper_valid(&client->socket));
     assert(client->request.istream != NULL);
 
-    nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
+    ssize_t nbytes = socket_wrapper_write_from(&client->socket, fd, type,
+                                               max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!fd_ready_for_writing(client->fd)) {
+        if (!socket_wrapper_ready_for_writing(&client->socket)) {
             ajp_client_schedule_write(client);
             return ISTREAM_RESULT_BLOCKING;
         }
@@ -737,7 +671,8 @@ ajp_request_stream_direct(istream_direct_t type, int fd, size_t max_length,
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = istream_direct_to_socket(type, fd, client->fd, max_length);
+        nbytes = socket_wrapper_write_from(&client->socket, fd, type,
+                                           max_length);
     }
 
     if (likely(nbytes > 0))
@@ -755,7 +690,7 @@ ajp_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    p_event_del(&client->request.event, client->pool);
+    socket_wrapper_unschedule_write(&client->socket);
 
     if (!fifo_buffer_full(client->response.input))
         ajp_client_schedule_read(client);
@@ -786,6 +721,54 @@ static const struct istream_handler ajp_request_stream_handler = {
     .abort = ajp_request_stream_abort,
 };
 
+/*
+ * socket_wrapper handler
+ *
+ */
+
+static bool
+ajp_client_socket_write(void *ctx)
+{
+    struct ajp_client *client = ctx;
+
+    pool_ref(client->pool);
+
+    istream_read(client->request.istream);
+
+    bool result = socket_wrapper_valid(&client->socket);
+    pool_unref(client->pool);
+    return result;
+}
+
+static bool
+ajp_client_socket_read(void *ctx)
+{
+    struct ajp_client *client = ctx;
+
+    pool_ref(client->pool);
+
+    ajp_try_read(client);
+
+    bool result = socket_wrapper_valid(&client->socket);
+    pool_unref(client->pool);
+    return result;
+}
+
+static bool
+ajp_client_socket_timeout(void *ctx)
+{
+    struct ajp_client *client = ctx;
+
+    GError *error = g_error_new_literal(ajp_client_quark(), 0, "timeout");
+    ajp_client_abort_response(client, error);
+    return false;
+}
+
+static const struct socket_handler ajp_client_socket_handler = {
+    .read = ajp_client_socket_read,
+    .write = ajp_client_socket_write,
+    .timeout = ajp_client_socket_timeout,
+};
 
 /*
  * async operation
@@ -865,14 +848,13 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     pool_ref(pool);
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
-    client->fd = fd;
+
+    socket_wrapper_init(&client->socket, pool, fd, fd_type,
+                        NULL, &ajp_client_timeout,
+                        &ajp_client_socket_handler, client);
+
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "ajp_client_lease");
-
-    event_set(&client->request.event, fd, EV_WRITE|EV_TIMEOUT,
-              ajp_client_send_event_callback, client);
-    event_set(&client->response.event, fd, EV_READ|EV_TIMEOUT,
-              ajp_client_recv_event_callback, client);
 
     gb = growing_buffer_new(pool, 256);
 
@@ -999,13 +981,5 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     client->response.headers = NULL;
 
     ajp_client_schedule_read(client);
-
-    pool_ref(client->pool);
-
-    socket_set_cork(client->fd, true);
     istream_read(client->request.istream);
-    if (client->fd >= 0)
-        socket_set_cork(client->fd, false);
-
-    pool_unref(client->pool);
 }

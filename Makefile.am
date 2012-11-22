@@ -1645,6 +1645,7 @@ test_run_client_balancer_LDADD = $(AM_LDADD) \
 test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \
+	src/socket_wrapper.c \
 	src/serialize.c \
 	src/uri-verify.c \
 	src/buffered-io.c src/fifo-buffer.c \
