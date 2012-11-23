@@ -422,6 +422,10 @@ src_cm4all_beng_lb_SOURCES = \
 	src/sticky.h \
 	src/notify.h \
 	src/notify.c \
+	src/thread_job.h \
+	src/thread_queue.c src/thread_queue.h \
+	src/thread_worker.c src/thread_worker.h \
+	src/thread_pool.c src/thread_pool.h \
 	src/ssl_quark.h \
 	src/ssl_init.h \
 	src/ssl_init.c \

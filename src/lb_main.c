@@ -23,6 +23,7 @@
 #include "lb_hmonitor.h"
 #include "ssl_init.h"
 #include "child.h"
+#include "thread_pool.h"
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
@@ -105,6 +106,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         event_reinit(instance->event_base);
         init_signals(instance);
 
+        thread_pool_start();
         children_init(instance->pool);
         all_listeners_event_add(instance);
 
@@ -134,11 +136,15 @@ exit_event_callback(int fd, short event gcc_unused, void *ctx)
 
     instance->should_exit = true;
     deinit_signals(instance);
+    thread_pool_stop();
 
     if (is_watchdog && worker_pid > 0)
         kill(worker_pid, SIGTERM);
 
     children_shutdown();
+
+    thread_pool_join();
+    thread_pool_deinit();
 
     if (is_watchdog)
         evtimer_del(&launch_worker_event);
@@ -258,6 +264,7 @@ int main(int argc, char **argv)
 
     init_signals(&instance);
 
+    thread_pool_init(instance.pool);
     children_init(instance.pool);
 
     instance.balancer = balancer_new(instance.pool);
@@ -311,6 +318,8 @@ int main(int argc, char **argv)
     } else {
         /* this is already the worker process: enable monitors here */
         lb_hmonitor_enable();
+
+        thread_pool_start();
     }
 
     event_dispatch();
