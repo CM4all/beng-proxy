@@ -18,7 +18,13 @@ struct ssl_config;
 struct ssl_filter;
 
 /**
- * Create a new SSL filter.  It is run in a new thread.
+ * A module for #thread_socket_filter that encrypts all data with
+ * SSL/TLS.  Call ssl_filter_new() to create an instance.
+ */
+extern const struct ThreadSocketFilterHandler ssl_thread_socket_filter;
+
+/**
+ * Create a new SSL filter, to be used with #ssl_thread_socket_filter.
  *
  * @param encrypted_fd the encrypted side of the filter
  * @param plain_fd the plain-text side of the filter (socketpair
@@ -26,12 +32,7 @@ struct ssl_filter;
  */
 struct ssl_filter *
 ssl_filter_new(struct pool *pool, struct ssl_factory *factory,
-               int encrypted_fd, int plain_fd,
-               struct notify *notify,
                GError **error_r);
-
-void
-ssl_filter_free(struct ssl_filter *ssl);
 
 gcc_pure
 const char *

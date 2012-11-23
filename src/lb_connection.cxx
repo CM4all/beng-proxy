@@ -13,9 +13,10 @@
 #include "strmap.h"
 #include "http-server.h"
 #include "drop.h"
-#include "fd_util.h"
 #include "ssl_filter.hxx"
 #include "pool.h"
+#include "thread_socket_filter.hxx"
+#include "thread_pool.h"
 
 #include <assert.h>
 #include <unistd.h>
@@ -77,7 +78,7 @@ static const struct lb_tcp_handler tcp_handler = {
 struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
-                  struct ssl_factory *ssl_factory, struct notify *notify,
+                  struct ssl_factory *ssl_factory,
                   int fd, const struct sockaddr *addr, size_t addrlen)
 {
     /* determine the local socket address */
@@ -103,29 +104,21 @@ lb_connection_new(struct lb_instance *instance,
     void *filter_ctx = nullptr;
 
     if (ssl_factory != nullptr) {
-        int fds[2];
-        if (socketpair_cloexec_nonblock(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
-            close(fd);
-            pool_unref(pool);
-            return nullptr;
-        }
-
         GError *error = nullptr;
         connection->ssl_filter = ssl_filter_new(pool, ssl_factory,
-                                                fd, fds[0], notify,
                                                 &error);
         if (connection->ssl_filter == nullptr) {
             close(fd);
-            close(fds[0]);
-            close(fds[1]);
             lb_connection_log_gerror(1, connection, "SSL", error);
             g_error_free(error);
             pool_unref(pool);
             return nullptr;
         }
 
-        fd = fds[1];
-        fd_type = ISTREAM_SOCKET;
+        filter = &thread_socket_filter;
+        filter_ctx = thread_socket_filter_new(pool, global_thread_queue,
+                                              &ssl_thread_socket_filter,
+                                              connection->ssl_filter);
     } else
         connection->ssl_filter = nullptr;
 
@@ -168,9 +161,6 @@ lb_connection_remove(struct lb_connection *connection)
 
     list_remove(&connection->siblings);
     --connection->instance->num_connections;
-
-    if (connection->ssl_filter != nullptr)
-        ssl_filter_free(connection->ssl_filter);
 
     struct pool *pool = connection->pool;
     pool_trash(pool);

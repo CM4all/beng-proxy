@@ -37,7 +37,7 @@ lb_listener_connected(int fd,
     struct lb_listener *listener = (struct lb_listener *)ctx;
 
     lb_connection_new(listener->instance, listener->config,
-                      listener->ssl_factory, listener->notify,
+                      listener->ssl_factory,
                       fd, address, address_length);
 }
 

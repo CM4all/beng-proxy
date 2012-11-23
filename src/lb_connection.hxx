@@ -14,7 +14,6 @@
 
 struct pool;
 struct ssl_factory;
-struct notify;
 struct sockaddr;
 
 struct lb_connection {
@@ -42,7 +41,7 @@ struct lb_connection {
 struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
-                  struct ssl_factory *ssl_factory, struct notify *notify,
+                  struct ssl_factory *ssl_factory,
                   int fd, const struct sockaddr *addr, size_t addrlen);
 
 void

@@ -8,7 +8,7 @@
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
 #include "ssl_quark.hxx"
-#include "notify.h"
+#include "thread_socket_filter.hxx"
 #include "pool.h"
 #include "fifo-buffer.h"
 #include "buffered_io.h"
@@ -18,43 +18,30 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include <pthread.h>
 #include <assert.h>
-#include <unistd.h>
 #include <string.h>
-#include <poll.h>
-#include <sys/socket.h>
 
 struct ssl_filter {
     struct pool *pool;
 
-    struct notify *notify;
+    /**
+     * Buffers which can be accessed from within the thread without
+     * holding locks.  These will be copied to/from the accordding
+     * #thread_socket_filter buffers.
+     */
+    struct fifo_buffer *decrypted_input, *plain_output;
 
-    int encrypted_fd, plain_fd;
-
-    struct fifo_buffer *from_encrypted, *from_plain;
+    /**
+     * Memory BIOs for passing data to/from OpenSSL.
+     */
+    BIO *encrypted_input, *encrypted_output;
 
     SSL *ssl;
 
+    bool handshaking;
+
     const char *peer_subject, *peer_issuer_subject;
-
-    pthread_mutex_t mutex;
-    pthread_t thread;
-
-    bool closing;
 };
-
-static inline void
-ssl_filter_lock(struct ssl_filter *ssl)
-{
-    pthread_mutex_lock(&ssl->mutex);
-}
-
-static inline void
-ssl_filter_unlock(struct ssl_filter *ssl)
-{
-    pthread_mutex_unlock(&ssl->mutex);
-}
 
 static void
 ssl_set_error(GError **error_r)
@@ -69,106 +56,60 @@ ssl_set_error(GError **error_r)
 }
 
 /**
- * Close both sockets.
- *
- * The #ssl_filter object must be locked by the caller.
+ * Copy data from #src to #dest.
  */
 static void
-ssl_filter_close_sockets(struct ssl_filter *ssl)
+copy_fifo_buffer(struct fifo_buffer *dest, struct fifo_buffer *src)
 {
-    ssl->closing = true;
+    size_t length;
+    const void *s = fifo_buffer_read(src, &length);
+    if (s == NULL)
+        return;
 
-    if (ssl->encrypted_fd >= 0) {
-        close(ssl->encrypted_fd);
-        ssl->encrypted_fd = -1;
-    }
+    size_t max_length;
+    void *d = fifo_buffer_write(dest, &max_length);
+    if (d == NULL)
+        return;
 
-    if (ssl->plain_fd >= 0) {
-        close(ssl->plain_fd);
-        ssl->plain_fd = -1;
-    }
+    if (length > max_length)
+        length = max_length;
+
+    memcpy(d, s, length);
+    fifo_buffer_append(dest, length);
+    fifo_buffer_consume(src, length);
 }
 
 /**
- * Shut down both sockets.  This is used to wake up the thread; note
- * that closing the file descriptors will not make poll() return.
- *
- * The #ssl_filter object must be locked by the caller.
+ * Copy data from #src to #dest.
  */
 static void
-ssl_filter_shutdown_sockets(struct ssl_filter *ssl)
+copy_fifo_buffer_to_bio(BIO *dest, fifo_buffer *src)
 {
-    ssl->closing = true;
+    size_t length;
+    const void *data = fifo_buffer_read(src, &length);
+    if (data == nullptr)
+        return;
 
-    if (ssl->encrypted_fd >= 0)
-        shutdown(ssl->encrypted_fd, SHUT_RDWR);
-
-    if (ssl->plain_fd >= 0)
-        shutdown(ssl->plain_fd, SHUT_RDWR);
+    int nbytes = BIO_write(dest, data, length);
+    if (nbytes > 0)
+        fifo_buffer_consume(src, nbytes);
 }
 
-/**
- * Wait for events on the encrypted socket.
- *
- * The #ssl_filter object must be locked by the caller.
- */
-static short
-ssl_poll(struct ssl_filter *ssl, short events, int timeout_ms,
-         GError **error_r)
+static void
+copy_bio_to_fifo_buffer(fifo_buffer *dest, BIO *src)
 {
-    struct pollfd pfd = {
-        ssl->encrypted_fd,
-        events,
-        0,
-    };
+    while (true) {
+        size_t max_length;
+        void *data = fifo_buffer_write(dest, &max_length);
+        if (data == nullptr)
+            return;
 
-    ssl_filter_unlock(ssl);
-    int ret = poll(&pfd, 1, timeout_ms);
-    ssl_filter_lock(ssl);
-    if (ssl->closing)
-        return 0;
-    else if (ret > 0)
-        return pfd.revents;
-    else if (ret == 0) {
-        g_set_error(error_r, ssl_quark(), 0, "Timeout");
-        return 0;
-    } else {
-        set_error_errno_msg(error_r, "poll() failed");
-        return 0;
+        int nbytes = BIO_read(src, data, max_length);
+        if (nbytes <= 0)
+            return;
+
+        fifo_buffer_append(dest, nbytes);
     }
-}
-
-static bool
-ssl_filter_do_handshake(struct ssl_filter *ssl, GError **error_r)
-{
-    while (!ssl->closing) {
-        assert(ssl->encrypted_fd >= 0);
-
-        ERR_clear_error();
-        int ret = SSL_do_handshake(ssl->ssl);
-        if (ret == 1)
-            return true;
-
-        if (ret == 0) {
-            ssl_set_error(error_r);
-            return false;
-        }
-
-        int error = SSL_get_error(ssl->ssl, ret);
-        if (error == SSL_ERROR_WANT_READ) {
-            if (ssl_poll(ssl, POLLIN, -1, error_r) == 0)
-                return false;
-        } else if (error == SSL_ERROR_WANT_WRITE) {
-            if (ssl_poll(ssl, POLLOUT, -1, error_r) == 0)
-                return false;
-        } else {
-            ssl_set_error(error_r);
-            return false;
-        }
-    }
-
-    g_set_error(error_r, ssl_quark(), 0, "Closed");
-    return false;
 }
 
 static char *
@@ -219,183 +160,139 @@ is_ssl_error(SSL *ssl, int ret)
     }
 }
 
+static bool
+check_ssl_error(SSL *ssl, int result, GError **error_r)
+{
+    if (is_ssl_error(ssl, result)) {
+        ssl_set_error(error_r);
+        return false;
+    } else
+        return true;
+}
+
 /**
  * @return false on error
  */
 static bool
-ssl_decrypt(SSL *ssl, struct fifo_buffer *buffer)
+ssl_decrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
 {
     size_t length;
     void *data = fifo_buffer_write(buffer, &length);
-    if (buffer == NULL)
+    if (data == NULL)
         return true;
 
-    ERR_clear_error();
-    int ret = SSL_read(ssl, data, length);
-    if (ret > 0) {
-        fifo_buffer_append(buffer, ret);
-        return true;
-    } else
-        return ret < 0 && !is_ssl_error(ssl, ret);
+    int result = SSL_read(ssl, data, length);
+    if (result < 0 && !check_ssl_error(ssl, result, error_r))
+        return false;
+
+    if (result > 0)
+        fifo_buffer_append(buffer, result);
+
+    return true;
 }
 
 /**
  * @return false on error
  */
 static bool
-ssl_encrypt(SSL *ssl, struct fifo_buffer *buffer)
+ssl_encrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
 {
     size_t length;
     const void *data = fifo_buffer_read(buffer, &length);
-    if (buffer == NULL)
+    if (data == NULL)
         return true;
 
-    ERR_clear_error();
-    int ret = SSL_write(ssl, data, length);
-    if (ret > 0) {
-        fifo_buffer_consume(buffer, ret);
-        return true;
-    } else
-        return ret < 0 && !is_ssl_error(ssl, ret);
+    int result = SSL_write(ssl, data, length);
+    if (result < 0 && !check_ssl_error(ssl, result, error_r))
+        return false;
+
+    if (result > 0)
+        fifo_buffer_consume(buffer, result);
+
+    return true;
 }
 
-static void *
-ssl_filter_thread(void *ctx)
+/*
+ * thread_socket_filter_handler
+ *
+ */
+
+static bool
+ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
+                             void *ctx)
 {
     struct ssl_filter *ssl = (struct ssl_filter *)ctx;
 
-    ssl_filter_lock(ssl);
+    /* copy input (and output to make room for more output) */
 
-    GError *error = NULL;
-    if (!ssl_filter_do_handshake(ssl, &error)) {
-        if (error != NULL) {
-            fprintf(stderr, "%s\n", error->message);
-            g_error_free(error);
-        } else {
-            assert(ssl->closing);
-        }
+    pthread_mutex_lock(&f.mutex);
+    copy_fifo_buffer(f.decrypted_input, ssl->decrypted_input);
+    copy_fifo_buffer(ssl->plain_output, f.plain_output);
+    copy_fifo_buffer_to_bio(ssl->encrypted_input, f.encrypted_input);
+    copy_bio_to_fifo_buffer(f.encrypted_output, ssl->encrypted_output);
+    pthread_mutex_unlock(&f.mutex);
 
-        ssl_filter_close_sockets(ssl);
-    }
-
-    if (!ssl->closing) {
-        X509 *cert = SSL_get_peer_certificate(ssl->ssl);
-        if (cert != NULL)
-            ssl->peer_subject = format_subject_name(ssl->pool, cert);
-        if (cert != NULL)
-            ssl->peer_issuer_subject =
-                format_issuer_subject_name(ssl->pool, cert);
-    }
-
-    struct pollfd pfds[2] = {
-        { ssl->encrypted_fd, 0, 0 },
-        { ssl->plain_fd, 0, 0 },
-    };
-
-    while (!ssl->closing) {
-        assert(ssl->encrypted_fd >= 0);
-        assert(ssl->plain_fd >= 0);
-
-        pfds[0].events = pfds[1].events = 0;
-        pfds[0].revents = pfds[1].revents = 0;
-
-        if (!fifo_buffer_full(ssl->from_encrypted))
-            pfds[0].events |= POLLIN;
-
-        if (!fifo_buffer_empty(ssl->from_encrypted))
-            pfds[1].events |= POLLOUT;
-
-        if (!fifo_buffer_full(ssl->from_plain))
-            pfds[1].events |= POLLIN;
-
-        if (!fifo_buffer_empty(ssl->from_plain))
-            pfds[0].events |= POLLOUT;
-
-        struct pollfd *p;
-        nfds_t nfds;
-        if (pfds[0].events != 0) {
-            p = pfds;
-            nfds = pfds[1].events != 0 ? 2 : 1;
-        } else {
-            assert(pfds[1].events != 0);
-            p = pfds + 1;
-            nfds = 1;
-        }
-
-        ssl_filter_unlock(ssl);
-        int n = poll(p, nfds, -1);
-        ssl_filter_lock(ssl);
-        if (n <= 0 || ssl->closing)
-            break;
-
-        if ((pfds[1].revents & POLLIN) != 0) {
-            const bool was_empty = fifo_buffer_empty(ssl->from_plain);
-
-            ssize_t nbytes = recv_to_buffer(ssl->plain_fd, ssl->from_plain, 65536);
-            assert(nbytes != -2);
-
-            if (nbytes == 0 || (nbytes < 0 && errno != EAGAIN)) {
-                close(ssl->plain_fd);
-                ssl->plain_fd = -1;
-                break;
-            }
-
-            if (was_empty && !fifo_buffer_empty(ssl->from_plain))
-                /* try decryption again to see if OpenSSL has waits
-                   for more encrypted data from us */
-                pfds[0].revents |= POLLOUT;
-        }
-
-        if ((pfds[1].revents & POLLOUT) != 0) {
-            const bool was_full = fifo_buffer_full(ssl->from_encrypted);
-
-            if (send_from_buffer(ssl->plain_fd, ssl->from_encrypted) < 0 &&
-                errno != EAGAIN) {
-                close(ssl->plain_fd);
-                ssl->plain_fd = -1;
-                break;
-            }
-
-            if (was_full && !fifo_buffer_full(ssl->from_encrypted))
-                /* try decryption again to see if OpenSSL has more
-                   decrypted data for us */
-                pfds[0].revents |= POLLIN;
-        }
-
-        if ((pfds[0].revents & POLLIN) != 0) {
-            assert(!fifo_buffer_full(ssl->from_encrypted));
-
-            if (!ssl_decrypt(ssl->ssl, ssl->from_encrypted)) {
-                close(ssl->encrypted_fd);
-                ssl->encrypted_fd = -1;
-                break;
-            }
-        }
-
-        if ((pfds[0].revents & POLLOUT) != 0) {
-            assert(!fifo_buffer_empty(ssl->from_plain));
-
-            if (!ssl_encrypt(ssl->ssl, ssl->from_plain)) {
-                close(ssl->encrypted_fd);
-                ssl->encrypted_fd = -1;
-                break;
-            }
-        }
-    }
-
-    ssl_filter_close_sockets(ssl);
-    ssl_filter_unlock(ssl);
+    /* let OpenSSL work */
 
     ERR_clear_error();
 
-    notify_signal(ssl->notify);
-    return NULL;
+    if (gcc_unlikely(ssl->handshaking)) {
+        int result = SSL_do_handshake(ssl->ssl);
+        if (result == 1) {
+            ssl->handshaking = false;
+
+            X509 *cert = SSL_get_peer_certificate(ssl->ssl);
+            if (cert != nullptr) {
+                ssl->peer_subject = format_subject_name(ssl->pool, cert);
+                ssl->peer_issuer_subject =
+                    format_issuer_subject_name(ssl->pool, cert);
+            }
+        } else if (result == 0) {
+            ssl_set_error(error_r);
+            return false;
+        } else if (!check_ssl_error(ssl->ssl, result, error_r))
+            return false;
+    }
+
+    if (gcc_likely(!ssl->handshaking) &&
+        (!ssl_encrypt(ssl->ssl, ssl->plain_output, error_r) ||
+         !ssl_decrypt(ssl->ssl, ssl->decrypted_input, error_r)))
+        return false;
+
+    /* copy output */
+
+    pthread_mutex_lock(&f.mutex);
+    copy_fifo_buffer(f.decrypted_input, ssl->decrypted_input);
+    copy_bio_to_fifo_buffer(f.encrypted_output, ssl->encrypted_output);
+    pthread_mutex_unlock(&f.mutex);
+
+    return true;
 }
+
+static void
+ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
+{
+    struct ssl_filter *ssl = (struct ssl_filter *)ctx;
+
+    if (ssl->ssl != NULL)
+        SSL_free(ssl->ssl);
+
+    fb_pool_free(ssl->decrypted_input);
+    fb_pool_free(ssl->plain_output);
+}
+
+const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
+    ssl_thread_socket_filter_run,
+    ssl_thread_socket_filter_destroy,
+};
+
+/*
+ * constructor
+ *
+ */
 
 struct ssl_filter *
 ssl_filter_new(struct pool *pool, struct ssl_factory *factory,
-               int encrypted_fd, int plain_fd,
-               struct notify *notify,
                GError **error_r)
 {
     assert(pool != NULL);
@@ -403,64 +300,26 @@ ssl_filter_new(struct pool *pool, struct ssl_factory *factory,
 
     struct ssl_filter *ssl = (struct ssl_filter *)p_malloc(pool, sizeof(*ssl));
     ssl->pool = pool;
-    ssl->notify = notify;
-    ssl->encrypted_fd = encrypted_fd;
-    ssl->plain_fd = plain_fd;
-
-    ssl->from_encrypted = fb_pool_alloc();
-    ssl->from_plain = fb_pool_alloc();
 
     ssl->ssl = ssl_factory_make(factory);
     if (ssl->ssl == NULL) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed");
-        fb_pool_free(ssl->from_encrypted);
-        fb_pool_free(ssl->from_plain);
         return NULL;
     }
 
-    SSL_set_accept_state(ssl->ssl);
-    SSL_set_fd(ssl->ssl, encrypted_fd);
+    ssl->decrypted_input = fb_pool_alloc();
+    ssl->plain_output = fb_pool_alloc();
+    ssl->encrypted_input = BIO_new(BIO_s_mem());
+    ssl->encrypted_output = BIO_new(BIO_s_mem());
 
-    pthread_mutex_init(&ssl->mutex, NULL);
+    SSL_set_accept_state(ssl->ssl);
+    SSL_set_bio(ssl->ssl, ssl->encrypted_input, ssl->encrypted_output);
 
     ssl->peer_subject = NULL;
     ssl->peer_issuer_subject = NULL;
-    ssl->closing = false;
-
-    int error = pthread_create(&ssl->thread, NULL, ssl_filter_thread, ssl);
-    if (error != 0) {
-        SSL_free(ssl->ssl);
-        fb_pool_free(ssl->from_encrypted);
-        fb_pool_free(ssl->from_plain);
-        g_set_error(error_r, ssl_quark(), error,
-                    "Failed to create thread: %s", strerror(error));
-        return NULL;
-    }
+    ssl->handshaking = true;
 
     return ssl;
-}
-
-void
-ssl_filter_free(struct ssl_filter *ssl)
-{
-    assert(ssl != NULL);
-
-    ssl_filter_lock(ssl);
-
-    if (ssl->ssl != NULL)
-        SSL_free(ssl->ssl);
-
-    fb_pool_free(ssl->from_encrypted);
-    fb_pool_free(ssl->from_plain);
-
-    ssl_filter_shutdown_sockets(ssl);
-
-    ssl_filter_unlock(ssl);
-
-    pthread_join(ssl->thread, NULL);
-    pthread_mutex_destroy(&ssl->mutex);
-
-    ssl_filter_close_sockets(ssl);
 }
 
 const char *
@@ -468,11 +327,7 @@ ssl_filter_get_peer_subject(struct ssl_filter *ssl)
 {
     assert(ssl != NULL);
 
-    ssl_filter_lock(ssl);
-    const char *peer_subject = ssl->peer_subject;
-    ssl_filter_unlock(ssl);
-
-    return peer_subject;
+    return ssl->peer_subject;
 }
 
 const char *
@@ -480,9 +335,5 @@ ssl_filter_get_peer_issuer_subject(struct ssl_filter *ssl)
 {
     assert(ssl != NULL);
 
-    ssl_filter_lock(ssl);
-    const char *subject = ssl->peer_issuer_subject;
-    ssl_filter_unlock(ssl);
-
-    return subject;
+    return ssl->peer_issuer_subject;
 }
