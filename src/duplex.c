@@ -11,7 +11,7 @@
 #include "fd-util.h"
 #include "fifo-buffer.h"
 #include "event2.h"
-#include "buffered-io.h"
+#include "buffered_io.h"
 #include "fd_util.h"
 #include "pool.h"
 

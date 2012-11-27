@@ -6,7 +6,7 @@
 
 #include "socket_wrapper.h"
 #include "direct.h"
-#include "buffered-io.h"
+#include "buffered_io.h"
 #include "fd-util.h"
 #include "pool.h"
 #include "pevent.h"

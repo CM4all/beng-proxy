@@ -7,7 +7,7 @@
 #include "was-control.h"
 #include "was-quark.h"
 #include "fifo-buffer.h"
-#include "buffered-io.h"
+#include "buffered_io.h"
 #include "pevent.h"
 #include "strmap.h"
 

@@ -8,7 +8,7 @@
 #include "istream-internal.h"
 #include "istream-buffer.h"
 #include "fifo-buffer.h"
-#include "buffered-io.h"
+#include "buffered_io.h"
 #include "pevent.h"
 
 #include <event.h>

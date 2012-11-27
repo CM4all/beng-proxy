@@ -7,7 +7,7 @@
 #include "fork.h"
 #include "fd_util.h"
 #include "istream-buffer.h"
-#include "buffered-io.h"
+#include "buffered_io.h"
 #include "fd-util.h"
 #include "direct.h"
 #include "pevent.h"

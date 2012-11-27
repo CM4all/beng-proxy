@@ -10,7 +10,7 @@
 #include "http-util.h"
 #include "strutil.h"
 #include "strmap.h"
-#include "buffered-io.h"
+#include "buffered_io.h"
 #include "header-parser.h"
 #include "istream-internal.h"
 

@@ -9,7 +9,7 @@
 #include "notify.h"
 #include "pool.h"
 #include "fifo-buffer.h"
-#include "buffered-io.h"
+#include "buffered_io.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>

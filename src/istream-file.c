@@ -6,7 +6,7 @@
 
 #include "istream-file.h"
 #include "istream-buffer.h"
-#include "buffered-io.h"
+#include "buffered_io.h"
 #include "fd_util.h"
 
 #include <daemon/log.h>

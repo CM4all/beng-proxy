@@ -5,7 +5,6 @@
  */
 
 #include "http-server-internal.h"
-#include "buffered-io.h"
 #include "istream-internal.h"
 #include "strmap.h"
 #include "address.h"

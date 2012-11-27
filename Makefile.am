@@ -96,7 +96,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/background.h \
 	src/balancer.c src/balancer.h \
 	src/bot.c src/bot.h \
-	src/buffered-io.c src/buffered-io.h \
+	src/buffered_io.c src/buffered_io.h \
 	src/bulldog.c src/bulldog.h \
 	src/cache.c src/cache.h \
 	src/cgi.c src/cgi.h \
@@ -406,7 +406,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/fifo-buffer.c \
 	src/growing-buffer.c \
 	src/istream-gb.c \
-	src/buffered-io.c \
+	src/buffered_io.c \
 	src/event2.c \
 	src/fd_util.c \
 	src/fd-util.c \
@@ -752,7 +752,7 @@ test_run_was_SOURCES = test/run-was.c \
 	src/was-launch.c src/was-client.c src/was-control.c src/was-input.c src/was-output.c \
 	src/jail.c \
 	src/strmap.c src/hashmap.c \
-	src/fifo-buffer.c src/buffered-io.c \
+	src/fifo-buffer.c src/buffered_io.c \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c \
 	src/istream-file.c
@@ -766,7 +766,7 @@ test_run_was_LDADD = $(AM_LDADD) \
 test_was_mirror_SOURCES = test/was-mirror.c \
 	src/was-server.c src/was-control.c src/was-input.c src/was-output.c \
 	src/fifo-buffer.c \
-	src/buffered-io.c \
+	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/istream-forward.c src/istream-string.c src/istream-memory.c \
 	src/istream-cat.c src/istream-null.c \
@@ -875,7 +875,7 @@ test_t_expansible_buffer_LDADD = $(AM_LDADD) \
 
 T_ISTREAM_FILTER_SRC = \
 	src/direct.c \
-	src/buffered-io.c src/event2.c \
+	src/buffered_io.c src/event2.c \
 	src/pipe-stock.c src/stock.c \
 	src/fd_util.c \
 	src/growing-buffer.c src/fd-util.c
@@ -1010,7 +1010,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/regex.c \
 	src/format.c src/address_list.c \
 	src/tpool.c \
-	src/fifo-buffer.c src/buffered-io.c src/growing-buffer.c \
+	src/fifo-buffer.c src/buffered_io.c src/growing-buffer.c \
 	src/header-parser.c \
 	src/strmap.c src/hashmap.c \
 	src/event2.c \
@@ -1033,7 +1033,7 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/socket_wrapper.c \
 	src/address.c \
 	src/fifo-buffer.c \
-	src/buffered-io.c \
+	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
 	src/istream-gb.c \
@@ -1066,7 +1066,7 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
-	src/buffered-io.c \
+	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
 	src/istream-gb.c \
@@ -1095,7 +1095,7 @@ test_t_http_server_hold_SOURCES = test/t-http-server-hold.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
-	src/buffered-io.c \
+	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
 	src/istream-gb.c \
@@ -1125,7 +1125,7 @@ test_t_http_server_null_SOURCES = test/t-http-server-null.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
-	src/buffered-io.c \
+	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
 	src/istream-gb.c \
@@ -1155,7 +1155,7 @@ test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
-	src/buffered-io.c \
+	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
 	src/istream-gb.c \
@@ -1186,7 +1186,7 @@ test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
-	src/buffered-io.c \
+	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
 	src/istream-gb.c \
@@ -1225,7 +1225,7 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/direct.c \
 	src/http-body.c src/header-parser.c \
 	src/format.c src/strutil.c \
-	src/buffered-io.c src/fd_util.c src/fd-util.c \
+	src/buffered_io.c src/fd_util.c src/fd-util.c \
 	src/uri-verify.c \
 	src/tpool.c src/event2.c
 test_t_http_client_LDADD = $(AM_LDADD) \
@@ -1488,7 +1488,7 @@ test_request_translation_LDADD = $(AM_LDADD) \
 
 test_run_subst_SOURCES = test/run-subst.c \
 	src/istream-subst.c src/istream-file.c \
-	src/fifo-buffer.c src/buffered-io.c \
+	src/fifo-buffer.c src/buffered_io.c \
 	src/fd_util.c
 test_run_subst_LDADD = $(AM_LDADD) libpool.a libmemory.a $(LIBCM4ALL_DAEMON_LIBS)
 
@@ -1554,7 +1554,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/istream-cat.c src/istream-memory.c \
 	src/istream-hold.c src/istream-dechunk.c src/istream-chunked.c \
 	src/istream-html-escape.c src/istream-escape.c \
-	src/header-writer.c src/args.c src/buffered-io.c \
+	src/header-writer.c src/args.c src/buffered_io.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/format.c src/header-parser.c src/strutil.c \
@@ -1597,7 +1597,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/istream-cat.c src/istream-memory.c src/istream-delayed.c \
 	src/istream-hold.c src/istream-dechunk.c src/istream-chunked.c \
 	src/istream-html-escape.c src/istream-escape.c \
-	src/header-writer.c src/args.c src/buffered-io.c \
+	src/header-writer.c src/args.c src/buffered_io.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/format.c src/header-parser.c src/strutil.c \
@@ -1652,7 +1652,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/socket_wrapper.c \
 	src/serialize.c \
 	src/uri-verify.c \
-	src/buffered-io.c src/fifo-buffer.c \
+	src/buffered_io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/fd-util.c src/fd_util.c \
 	src/strmap.c src/hashmap.c \
 	src/strutil.c \
@@ -1702,7 +1702,7 @@ test_run_http_cache_LDADD = $(LIBEVENT_LIBS) \
 
 test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
-	src/buffered-io.c src/fifo-buffer.c \
+	src/buffered_io.c src/fifo-buffer.c \
 	src/fd-util.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
 	src/istream-string.c \
@@ -1714,7 +1714,7 @@ test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 
 test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/memcached-client.c src/memcached-packet.c \
-	src/buffered-io.c src/fifo-buffer.c \
+	src/buffered_io.c src/fifo-buffer.c \
 	src/fd-util.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
 	src/istream-string.c \
@@ -1745,7 +1745,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/istream-null.c src/istream-memory.c src/istream-cat.c \
 	src/sink-buffer.c \
 	src/growing-buffer.c \
-	src/buffered-io.c src/fifo-buffer.c \
+	src/buffered_io.c src/fifo-buffer.c \
 	src/hashmap.c src/strmap.c \
 	src/event2.c \
 	src/tpool.c \
@@ -1761,7 +1761,7 @@ test_fake_memcached_server_SOURCES = test/fake-memcached-server.c
 test_t_memcached_client_SOURCES = test/t-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/direct.c \
-	src/fifo-buffer.c src/buffered-io.c \
+	src/fifo-buffer.c src/buffered_io.c \
 	src/fd-util.c src/fd_util.c \
 	src/event2.c \
 	src/istream-memory.c src/istream-null.c src/istream-cat.c
@@ -1807,7 +1807,7 @@ test_run_ua_parser_LDADD = $(AM_LDADD) $(GLIB_LIBS)
 
 test_run_parser_cdata_SOURCES = test/t-parser-cdata.c \
 	src/parser.c src/istream-file.c \
-	src/fifo-buffer.c src/buffered-io.c src/expansible-buffer.c \
+	src/fifo-buffer.c src/buffered_io.c src/expansible-buffer.c \
 	src/fd_util.c
 test_run_parser_cdata_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1815,7 +1815,7 @@ test_run_parser_cdata_LDADD = $(AM_LDADD) \
 
 test_run_css_parser_SOURCES = test/run_css_parser.c \
 	src/css_parser.c src/istream-file.c \
-	src/fifo-buffer.c src/buffered-io.c \
+	src/fifo-buffer.c src/buffered_io.c \
 	src/fd_util.c
 test_run_css_parser_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1833,7 +1833,7 @@ test_run_httpd_hello_SOURCES = test/run_httpd_hello.c \
 	src/strutil.c src/format.c src/date.c src/gmtime.c \
 	src/header-parser.c src/header-writer.c \
 	src/fifo-buffer.c \
-	src/buffered-io.c \
+	src/buffered_io.c \
 	src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
 	src/istream-cat.c src/istream-chunked.c src/istream-dechunk.c \

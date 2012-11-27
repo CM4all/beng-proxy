@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "buffered-io.h"
+#include "buffered_io.h"
 #include "fifo-buffer.h"
 
 #include <assert.h>

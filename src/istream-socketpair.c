@@ -13,7 +13,7 @@
 #include "fd_util.h"
 #include "fd-util.h"
 #include "fifo-buffer.h"
-#include "buffered-io.h"
+#include "buffered_io.h"
 #include "pevent.h"
 
 #include <daemon/log.h>

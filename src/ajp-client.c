@@ -13,7 +13,6 @@
 #include "growing-buffer.h"
 #include "pevent.h"
 #include "format.h"
-#include "buffered-io.h"
 #include "istream-internal.h"
 #include "istream-gb.h"
 #include "ajp-protocol.h"
