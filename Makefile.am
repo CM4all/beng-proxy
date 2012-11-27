@@ -220,6 +220,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/sink-gstring.h \
 	src/sink-impl.h \
 	src/socket_wrapper.c src/socket_wrapper.h \
+	src/buffered_socket.c src/buffered_socket.h \
 	src/static-file.c src/static-file.h \
 	src/static-headers.c src/static-headers.h \
 	src/stock.c src/stock.h \
