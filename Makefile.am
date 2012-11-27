@@ -1703,7 +1703,9 @@ test_run_http_cache_LDADD = $(LIBEVENT_LIBS) \
 test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/buffered_io.c src/fifo-buffer.c \
+	src/socket_wrapper.c \
 	src/fd-util.c \
+	src/direct.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
 	src/istream-string.c \
 	src/event2.c
@@ -1715,7 +1717,9 @@ test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/buffered_io.c src/fifo-buffer.c \
+	src/socket_wrapper.c \
 	src/fd-util.c \
+	src/direct.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
 	src/istream-string.c \
 	src/event2.c \
@@ -1732,9 +1736,11 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/address_list.c src/address_resolver.c \
 	src/failure.c src/bulldog.c src/balancer.c \
 	src/tcp-stock.c src/tcp-balancer.c \
+	src/socket_wrapper.c \
+	src/direct.c \
 	src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
-	src/client-socket.c src/fd_util.c \
+	src/client-socket.c src/fd_util.c src/fd-util.c \
 	src/stock.c src/hstock.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/memcached-stock.c \
@@ -1760,6 +1766,7 @@ test_fake_memcached_server_SOURCES = test/fake-memcached-server.c
 
 test_t_memcached_client_SOURCES = test/t-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
+	src/socket_wrapper.c \
 	src/direct.c \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/fd-util.c src/fd_util.c \
@@ -1767,6 +1774,7 @@ test_t_memcached_client_SOURCES = test/t-memcached-client.c \
 	src/istream-memory.c src/istream-null.c src/istream-cat.c
 test_t_memcached_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
+	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_delegate_SOURCES = test/run-delegate.c \

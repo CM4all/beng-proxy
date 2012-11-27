@@ -13,6 +13,7 @@
 #include "tpool.h"
 #include "serialize.h"
 #include "sink-impl.h"
+#include "direct.h"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -69,6 +70,7 @@ int main(int argc, char **argv) {
 
     signal(SIGPIPE, SIG_IGN);
 
+    direct_global_init();
     event_base = event_init();
 
     root_pool = pool_new_libc(NULL, "root");
@@ -115,6 +117,7 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     event_base_free(event_base);
+    direct_global_deinit();
 
     return ctx.value_eof ? 0 : 2;
 }

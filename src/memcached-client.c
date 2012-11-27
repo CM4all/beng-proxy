@@ -6,6 +6,7 @@
 
 #include "memcached-client.h"
 #include "memcached-packet.h"
+#include "socket_wrapper.h"
 #include "please.h"
 #include "async.h"
 #include "pevent.h"
@@ -25,14 +26,11 @@ struct memcached_client {
     struct pool *pool, *caller_pool;
 
     /* I/O */
-    int fd;
-    enum istream_direct fd_type;
+    struct socket_wrapper socket;
     struct lease_ref lease_ref;
 
     /* request */
     struct {
-        struct event event;
-
         const struct memcached_client_handler *handler;
         void *handler_ctx;
 
@@ -43,8 +41,6 @@ struct memcached_client {
 
     /* response */
     struct {
-        struct event event;
-
         enum {
             READ_HEADER,
             READ_EXTRAS,
@@ -105,31 +101,27 @@ memcached_client_socket_is_done(const struct memcached_client *client)
 static inline bool
 memcached_client_check_direct(const struct memcached_client *client)
 {
-    assert(client->fd >= 0);
+    assert(socket_wrapper_valid(&client->socket));
     assert(client->response.read_state == READ_VALUE);
 
-    return istream_check_direct(&client->response.value, client->fd_type);
+    return istream_check_direct(&client->response.value,
+                                client->socket.fd_type);
 }
 
 static void
 memcached_client_schedule_read(struct memcached_client *client)
 {
-    assert(client->fd >= 0);
     assert(!fifo_buffer_full(client->response.input));
 
-    p_event_add(&client->response.event,
-                client->request.istream != NULL
-                ? NULL : &memcached_client_timeout,
-                client->pool, "memcached_client_response");
+    socket_wrapper_schedule_read_timeout(&client->socket,
+                                         client->request.istream != NULL
+                                         ? NULL : &memcached_client_timeout);
 }
 
 static void
 memcached_client_schedule_write(struct memcached_client *client)
 {
-    assert(client->fd >= 0);
-
-    p_event_add(&client->request.event, &memcached_client_timeout,
-                client->pool, "memcached_client_request");
+    socket_wrapper_schedule_write(&client->socket);
 }
 
 /**
@@ -139,11 +131,8 @@ static void
 memcached_client_release_socket(struct memcached_client *client, bool reuse)
 {
     assert(client != NULL);
-    assert(client->fd >= 0);
 
-    p_event_del(&client->request.event, client->pool);
-    p_event_del(&client->response.event, client->pool);
-    client->fd = -1;
+    socket_wrapper_abandon(&client->socket);
     p_lease_release(&client->lease_ref, reuse, client->pool);
 }
 
@@ -158,7 +147,7 @@ memcached_client_release(struct memcached_client *client, bool reuse)
 
     client->response.input = NULL;
 
-    if (client->fd >= 0)
+    if (socket_wrapper_valid(&client->socket))
         memcached_client_release_socket(client, reuse);
 
     pool_unref(client->pool);
@@ -177,7 +166,7 @@ memcached_connection_abort_response_header(struct memcached_client *client,
 
     client->response.input = NULL;
 
-    if (client->fd >= 0)
+    if (socket_wrapper_valid(&client->socket))
         memcached_client_release_socket(client, false);
 
     client->request.handler->error(error, client->request.handler_ctx);
@@ -201,7 +190,7 @@ memcached_connection_abort_response_value(struct memcached_client *client,
 
     client->response.input = NULL;
 
-    if (client->fd >= 0)
+    if (socket_wrapper_valid(&client->socket))
         memcached_client_release_socket(client, false);
 
     client->response.read_state = READ_END;
@@ -507,7 +496,7 @@ memcached_consume_value(struct memcached_client *client)
     if (data == NULL)
         return false;
 
-    if (client->fd >= 0 && length >= client->response.remaining)
+    if (socket_wrapper_valid(&client->socket) && length >= client->response.remaining)
         memcached_client_release_socket(client,
                                         length == client->response.remaining);
 
@@ -524,7 +513,7 @@ memcached_consume_value(struct memcached_client *client)
     if (client->response.remaining > 0)
         return true;
 
-    assert(client->fd < 0);
+    assert(!socket_wrapper_valid(&client->socket));
     assert(client->request.istream == NULL);
 
     client->response.read_state = READ_END;
@@ -572,13 +561,14 @@ memcached_consume_input(struct memcached_client *client)
 static bool
 memcached_client_fill_buffer(struct memcached_client *client)
 {
-    assert(client->fd >= 0);
+    assert(socket_wrapper_valid(&client->socket));
     assert(client->response.input != NULL);
     assert(client->response.read_state != READ_END);
     assert(!fifo_buffer_full(client->response.input));
 
-    ssize_t nbytes = recv_to_buffer(client->fd, client->response.input,
-                                    G_MAXINT);
+    const ssize_t nbytes =
+        socket_wrapper_read_to_buffer(&client->socket, client->response.input,
+                                      G_MAXINT);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
@@ -612,7 +602,7 @@ memcached_client_try_read_buffered(struct memcached_client *client)
     if (!memcached_client_fill_buffer(client))
         return;
 
-    if (memcached_consume_input(client) && client->fd >= 0)
+    if (memcached_consume_input(client) && socket_wrapper_valid(&client->socket))
         memcached_client_schedule_read(client);
 }
 
@@ -624,7 +614,8 @@ memcached_client_try_read_direct(struct memcached_client *client)
     assert(fifo_buffer_empty(client->response.input));
 
     ssize_t nbytes = istream_invoke_direct(&client->response.value,
-                                           client->fd_type, client->fd,
+                                           client->socket.fd_type,
+                                           client->socket.fd,
                                            client->response.remaining);
     if (likely(nbytes > 0)) {
         client->response.remaining -= nbytes;
@@ -679,52 +670,39 @@ memcached_client_try_direct(struct memcached_client *client)
     memcached_client_try_read_direct(client);
 }
 
+/*
+ * socket_wrapper handler
+ *
+ */
+
 /**
  * The libevent callback for sending the request to the socket.
  */
-static void
-memcached_client_send_event_callback(G_GNUC_UNUSED int fd, short event,
-                                     void *ctx)
+static bool
+memcached_client_socket_write(void *ctx)
 {
     struct memcached_client *client = ctx;
-
-    assert(client->fd >= 0);
     assert(client->response.read_state != READ_END);
 
-    if (unlikely(event & EV_TIMEOUT)) {
-        GError *error =
-            g_error_new_literal(memcached_client_quark(), 0, "send timeout");
-        memcached_connection_abort_response(client, error);
-        return;
-    }
-
-    p_event_consumed(&client->request.event, client->pool);
+    pool_ref(client->pool);
 
     istream_read(client->request.istream);
 
-    pool_commit();
+    bool result = socket_wrapper_valid(&client->socket);
+    pool_unref(client->pool);
+    return result;
 }
 
 /**
  * The libevent callback for receiving the response from the socket.
  */
-static void
-memcached_client_recv_event_callback(G_GNUC_UNUSED int fd, short event,
-                                     void *ctx)
+static bool
+memcached_client_socket_read(void *ctx)
 {
     struct memcached_client *client = ctx;
-
-    assert(client->fd >= 0);
     assert(client->response.read_state != READ_END);
 
-    if (unlikely(event & EV_TIMEOUT)) {
-        GError *error =
-            g_error_new_literal(memcached_client_quark(), 0, "receive timeout");
-        memcached_connection_abort_response(client, error);
-        return;
-    }
-
-    p_event_consumed(&client->response.event, client->pool);
+    pool_ref(client->pool);
 
     if (client->response.read_state == READ_VALUE &&
         memcached_client_check_direct(client))
@@ -732,8 +710,27 @@ memcached_client_recv_event_callback(G_GNUC_UNUSED int fd, short event,
     else
         memcached_client_try_read_buffered(client);
 
-    pool_commit();
+    bool result = socket_wrapper_valid(&client->socket);
+    pool_unref(client->pool);
+    return result;
 }
+
+static bool
+memcached_client_socket_timeout(void *ctx)
+{
+    struct memcached_client *client = ctx;
+
+    GError *error = g_error_new_literal(memcached_client_quark(), 0,
+                                        "timeout");
+    memcached_connection_abort_response(client, error);
+    return false;
+}
+
+static const struct socket_handler memcached_client_socket_handler = {
+    .read = memcached_client_socket_read,
+    .write = memcached_client_socket_write,
+    .timeout = memcached_client_socket_timeout,
+};
 
 /*
  * istream handler for the request
@@ -746,7 +743,6 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
     struct memcached_client *client = ctx;
     ssize_t nbytes;
 
-    assert(client->fd >= 0);
     assert(client->request.istream != NULL);
     assert(client->response.read_state == READ_HEADER ||
            client->response.read_state == READ_EXTRAS ||
@@ -754,7 +750,7 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
     assert(data != NULL);
     assert(length > 0);
 
-    nbytes = send(client->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    nbytes = socket_wrapper_write(&client->socket, data, length);
     if (nbytes < 0) {
         if (errno == EAGAIN) {
             memcached_client_schedule_write(client);
@@ -785,7 +781,7 @@ memcached_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    p_event_del(&client->request.event, client->pool);
+    socket_wrapper_unschedule_write(&client->socket);
 
     if (!fifo_buffer_full(client->response.input))
         memcached_client_schedule_read(client);
@@ -890,15 +886,13 @@ memcached_client_invoke(struct pool *caller_pool,
     client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
     client->caller_pool = caller_pool;
-    client->fd = fd;
-    client->fd_type = fd_type;
+
+    socket_wrapper_init(&client->socket, pool, fd, fd_type,
+                        NULL, &memcached_client_timeout,
+                        &memcached_client_socket_handler, client);
+
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "memcached_client_lease");
-
-    event_set(&client->request.event, client->fd, EV_WRITE|EV_TIMEOUT,
-              memcached_client_send_event_callback, client);
-    event_set(&client->response.event, client->fd, EV_READ|EV_TIMEOUT,
-              memcached_client_recv_event_callback, client);
 
     istream_assign_handler(&client->request.istream, request,
                            &memcached_request_stream_handler, client,

@@ -3,6 +3,7 @@
 #include "async.h"
 #include "fd-util.h"
 #include "istream.h"
+#include "direct.h"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -187,6 +188,8 @@ int main(int argc, char **argv) {
         extras_length = 0;
     }
 
+    direct_global_init();
+
     /* connect socket */
 
     memset(&hints, 0, sizeof(hints));
@@ -249,6 +252,7 @@ int main(int argc, char **argv) {
     pool_recycler_clear();
 
     event_base_free(event_base);
+    direct_global_deinit();
 
     return ctx.value_eof ? 0 : 2;
 }
