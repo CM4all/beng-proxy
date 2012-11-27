@@ -11,6 +11,7 @@
 #include "pevent.h"
 #include "istream-internal.h"
 #include "buffered-io.h"
+#include "fifo-buffer.h"
 
 #include <daemon/log.h>
 

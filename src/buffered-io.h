@@ -7,9 +7,9 @@
 #ifndef __BENG_BUFFERED_IO_H
 #define __BENG_BUFFERED_IO_H
 
-#include "fifo-buffer.h"
-
 #include <sys/types.h>
+
+struct fifo_buffer;
 
 /**
  * Appends data from a file to the buffer.

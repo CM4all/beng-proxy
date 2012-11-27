@@ -12,7 +12,7 @@
 #include "growing-buffer.h"
 #include "http-response.h"
 #include "async.h"
-#include "buffered-io.h"
+#include "fifo-buffer.h"
 #include "istream-internal.h"
 #include "istream-gb.h"
 #include "please.h"
