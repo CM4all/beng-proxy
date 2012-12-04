@@ -15,6 +15,7 @@
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "pevent.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 
@@ -95,9 +96,7 @@ socketpair_input_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    GError *error =
-        g_error_new(g_file_error_quark(), errno,
-                    "write error on socket pair: %s", strerror(errno));
+    GError *error = new_error_errno_msg("write error on socket pair");
     socketpair_close(sp, error);
     return 0;
 }
@@ -190,9 +189,7 @@ socketpair_read(struct istream_socketpair *sp)
         return;
 
     if (nbytes < 0) {
-        GError *error =
-            g_error_new(g_file_error_quark(), errno,
-                        "read error on socket pair: %s", strerror(errno));
+        GError *error = new_error_errno_msg("read error on socket pair");
         socketpair_close(sp, error);
         return;
     }

@@ -11,6 +11,7 @@
 #include "fd-util.h"
 #include "direct.h"
 #include "pevent.h"
+#include "gerrno.h"
 
 #ifdef __linux
 #include <fcntl.h>
@@ -233,9 +234,8 @@ fork_read_from_output(struct fork *f)
                 /* the CGI may be waiting for more data from stdin */
                 istream_read(f->input);
         } else {
-            GError *error = g_error_new(g_file_error_quark(), errno,
-                                        "failed to read from sub process: %s",
-                                        strerror(errno));
+            GError *error =
+                new_error_errno_msg("failed to read from sub process");
             fork_close(f);
             istream_deinit_abort(&f->output, error);
         }
@@ -275,9 +275,8 @@ fork_read_from_output(struct fork *f)
                 /* the CGI may be waiting for more data from stdin */
                 istream_read(f->input);
         } else {
-            GError *error = g_error_new(g_file_error_quark(), errno,
-                                        "failed to read from sub process: %s",
-                                        strerror(errno));
+            GError *error =
+                new_error_errno_msg("failed to read from sub process");
             fork_close(f);
             istream_deinit_abort(&f->output, error);
         }

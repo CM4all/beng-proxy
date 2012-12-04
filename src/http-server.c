@@ -8,14 +8,13 @@
 #include "istream-internal.h"
 #include "strmap.h"
 #include "address.h"
+#include "gerrno.h"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
 
 #include <assert.h>
 #include <unistd.h>
-#include <string.h>
-#include <errno.h>
 
 const struct timeval http_server_idle_timeout = {
     .tv_sec = 30,
@@ -365,8 +364,7 @@ http_server_connection_close(struct http_server_connection *connection)
 void
 http_server_errno(struct http_server_connection *connection, const char *msg)
 {
-    GError *error = g_error_new(g_file_error_quark(), errno,
-                                "%s: %s", msg, strerror(errno));
+    GError *error = new_error_errno_msg(msg);
     http_server_error(connection, error);
 }
 

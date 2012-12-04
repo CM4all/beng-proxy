@@ -10,6 +10,7 @@
 #include "client-socket.h"
 #include "pool.h"
 #include "async.h"
+#include "gerrno.h"
 
 #include <event.h>
 #include <unistd.h>
@@ -85,8 +86,7 @@ expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
         ssize_t nbytes = recv(expect->fd, buffer, sizeof(buffer),
                               MSG_DONTWAIT);
         if (nbytes < 0) {
-            GError *error = g_error_new_literal(g_file_error_quark(), errno,
-                                                strerror(errno));
+            GError *error = new_error_errno();
             close(fd);
             expect->handler->error(error, expect->handler_ctx);
         } else if (expect->config->fade_expect != NULL &&
@@ -125,8 +125,7 @@ expect_monitor_success(int fd, void *ctx)
                               strlen(expect->config->send),
                               MSG_DONTWAIT);
         if (nbytes < 0) {
-            GError *error = g_error_new_literal(g_file_error_quark(), errno,
-                                                strerror(errno));
+            GError *error = new_error_errno();
             close(fd);
             expect->handler->error(error, expect->handler_ctx);
             return;

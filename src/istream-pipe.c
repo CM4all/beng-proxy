@@ -11,6 +11,7 @@
 #include "direct.h"
 #include "pipe-stock.h"
 #include "stock.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 
@@ -76,9 +77,7 @@ pipe_consume(struct istream_pipe *p)
         return nbytes;
 
     if (unlikely(nbytes == ISTREAM_RESULT_ERRNO && errno != EAGAIN)) {
-        GError *error =
-            g_error_new(g_file_error_quark(), errno,
-                        "read from pipe failed: %s", strerror(errno));
+        GError *error = new_error_errno_msg("read from pipe failed");
         pipe_abort(p, error);
         return ISTREAM_RESULT_CLOSED;
     }

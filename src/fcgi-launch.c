@@ -8,6 +8,7 @@
 #include "exec.h"
 #include "jail.h"
 #include "sigutil.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 #include <inline/compiler.h>
@@ -62,8 +63,7 @@ fcgi_spawn_child(const struct jail_params *jail,
 
     pid_t pid = fork();
     if (pid < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "fork() failed: %s", strerror(errno));
+        set_error_errno_msg(error_r, "fork() failed");
         leave_signal_section(&signals);
         return -1;
     }

@@ -10,6 +10,7 @@
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "pevent.h"
+#include "gerrno.h"
 
 #include <event.h>
 #include <errno.h>
@@ -138,8 +139,7 @@ socket_try_direct(struct istream_socket *s)
         if (!s->handler->error(e, s->handler_ctx))
             return;
 
-        GError *error = g_error_new(g_file_error_quark(), e,
-                                    "recv error: %s", strerror(e));
+        GError *error = new_error_errno_msg2(e, "recv error");
         s->fd = -1;
         istream_deinit_abort(&s->output, error);
     }
@@ -174,8 +174,7 @@ socket_try_buffered(struct istream_socket *s)
         if (!s->handler->error(e, s->handler_ctx))
             return;
 
-        GError *error = g_error_new(g_file_error_quark(), e,
-                                    "recv error: %s", strerror(e));
+        GError *error = new_error_errno_msg2(e, "recv error");
         s->fd = -1;
         istream_deinit_abort(&s->output, error);
     }

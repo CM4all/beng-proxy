@@ -10,6 +10,7 @@
 #include "exec.h"
 #include "jail.h"
 #include "sigutil.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 #include <inline/compiler.h>
@@ -52,22 +53,19 @@ was_launch(struct was_process *process,
     int control_fds[2], input_fds[2], output_fds[2];
 
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, control_fds) < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "failed to create socket pair: %s", strerror(errno));
+        set_error_errno_msg(error_r, "failed to create socket pair");
         return false;
     }
 
     if (pipe_cloexec(input_fds) < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "failed to create first pipe: %s", strerror(errno));
+        set_error_errno_msg(error_r, "failed to create first pipe");
         close(control_fds[0]);
         close(control_fds[1]);
         return false;
     }
 
     if (pipe_cloexec(output_fds) < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "failed to create second pipe: %s", strerror(errno));
+        set_error_errno_msg(error_r, "failed to create second pipe");
         close(control_fds[0]);
         close(control_fds[1]);
         close(input_fds[0]);
@@ -84,8 +82,7 @@ was_launch(struct was_process *process,
     if (pid < 0) {
         leave_signal_section(&signals);
 
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "fork failed: %s", strerror(errno));
+        set_error_errno_msg(error_r, "fork() failed");
         close(control_fds[0]);
         close(control_fds[1]);
         close(input_fds[0]);

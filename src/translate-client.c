@@ -21,6 +21,7 @@
 #include "stopwatch.h"
 #include "beng-proxy/translation.h"
 #include "pevent.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -1713,9 +1714,7 @@ translate_try_read(struct translate_client *client, int fd)
         }
 
         case PACKET_READER_ERROR:
-            error = g_error_new(g_file_error_quark(), errno,
-                                "read error from translation server: %s",
-                                strerror(errno));
+            error = new_error_errno_msg("read error from translation server");
             translate_client_abort(client, error);
             return;
 
@@ -1774,9 +1773,7 @@ translate_try_write(struct translate_client *client, int fd)
 
     if (nbytes < 0) {
         GError *error =
-            g_error_new(g_file_error_quark(), errno,
-                        "write error to translation server: %s",
-                        strerror(errno));
+            new_error_errno_msg("read write error to translation server");
         translate_client_abort(client, error);
         return;
     }

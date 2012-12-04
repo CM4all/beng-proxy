@@ -79,6 +79,7 @@ bin_PROGRAMS = src/cm4all-beng-proxy \
 src_cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
+	src/gerrno.h \
 	src/abort-close.c src/abort-close.h \
 	src/abort-flag.c src/abort-flag.h \
 	src/abort-unref.c src/abort-unref.h \

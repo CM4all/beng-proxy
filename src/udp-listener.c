@@ -11,6 +11,7 @@
 #include "fd_util.h"
 #include "address_string.h"
 #include "address_envelope.h"
+#include "gerrno.h"
 
 #include <socket/address.h>
 
@@ -55,8 +56,7 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 
     ssize_t nbytes = recvmsg_cloexec(fd, &msg, MSG_DONTWAIT);
     if (nbytes < 0) {
-        GError *error = g_error_new(udp_listener_quark(), errno,
-                                    "recv() failed: %s", g_strerror(errno));
+        GError *error = new_error_errno_msg("recv() failed");
         udp->handler->error(error, udp->handler_ctx);
         return;
     }
@@ -103,8 +103,7 @@ udp_listener_new(struct pool *pool,
     udp->fd = socket_cloexec_nonblock(address->sa_family,
                                       SOCK_DGRAM, 0);
     if (udp->fd < 0) {
-        g_set_error(error_r, udp_listener_quark(), errno,
-                    "Failed to create socket: %s", g_strerror(errno));
+        set_error_errno_msg(error_r, "Failed to create socket");
         return NULL;
     }
 
@@ -127,7 +126,7 @@ udp_listener_new(struct pool *pool,
             ? buffer
             : "?";
 
-        g_set_error(error_r, udp_listener_quark(), errno,
+        g_set_error(error_r, errno_quark(), errno,
                     "Failed to bind to %s: %s",
                     address_string, strerror(errno));
         close(udp->fd);
@@ -224,9 +223,7 @@ udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
 
     if (setsockopt(udp->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                    &r, sizeof(r)) < 0) {
-        g_set_error(error_r, udp_listener_quark(), errno,
-                    "Failed to join multicast group: %s",
-                    g_strerror(errno));
+        set_error_errno_msg(error_r, "Failed to join multicast group");
         return false;
     }
 
@@ -248,9 +245,7 @@ udp_listener_reply(struct udp_listener *udp,
                             MSG_DONTWAIT|MSG_NOSIGNAL,
                             address, address_length);
     if (G_UNLIKELY(nbytes < 0)) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "Failed to send UDP packet: %s",
-                    g_strerror(errno));
+        set_error_errno_msg(error_r, "Failed to send UDP packet");
         return false;
     }
 

@@ -11,6 +11,7 @@
 #include "address_list.h"
 #include "address_envelope.h"
 #include "pevent.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -131,7 +132,7 @@ tcp_stock_socket_timeout(void *ctx)
     async_ref_clear(&connection->client_socket);
     async_operation_finished(&connection->create_operation);
 
-    GError *error = g_error_new(g_file_error_quark(), ETIMEDOUT,
+    GError *error = g_error_new(errno_quark(), ETIMEDOUT,
                                 "failed to connect to '%s': timeout",
                                 connection->uri);
     stock_item_failed(&connection->stock_item, error);

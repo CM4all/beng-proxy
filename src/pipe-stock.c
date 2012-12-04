@@ -8,6 +8,7 @@
 #include "stock.h"
 #include "fd_util.h"
 #include "pool.h"
+#include "gerrno.h"
 
 #include <glib.h>
 
@@ -16,8 +17,6 @@
 #include <assert.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <string.h>
 
 struct pipe_stock_item {
     struct stock_item base;
@@ -54,8 +53,7 @@ pipe_stock_create(void *ctx gcc_unused, struct stock_item *_item,
 
     ret = pipe_cloexec_nonblock(item->fds);
     if (ret < 0) {
-        GError *error = g_error_new(g_file_error_quark(), errno,
-                                    "pipe() failed: %s", strerror(errno));
+        GError *error = new_error_errno_msg("pipe() failed");
         stock_item_failed(&item->base, error);
         return;
     }

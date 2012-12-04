@@ -13,6 +13,7 @@
 #include "client-socket.h"
 #include "jail.h"
 #include "pevent.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 
@@ -87,7 +88,7 @@ fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
 {
     int ret = unlink(child->address.sun_path);
     if (ret != 0 && errno != ENOENT) {
-        g_set_error(error_r, g_file_error_quark(), errno,
+        g_set_error(error_r, errno_quark(), errno,
                     "failed to unlink %s: %s",
                     child->address.sun_path, strerror(errno));
         return -1;
@@ -95,7 +96,7 @@ fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
 
     int fd = socket(PF_UNIX, SOCK_STREAM, 0);
     if (fd < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
+        g_set_error(error_r, errno_quark(), errno,
                     "failed to create unix socket %s: %s",
                     child->address.sun_path, strerror(errno));
         return -1;
@@ -104,7 +105,7 @@ fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
     ret = bind(fd, (const struct sockaddr*)&child->address,
                SUN_LEN(&child->address));
     if (ret < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
+        g_set_error(error_r, errno_quark(), errno,
                     "bind(%s) failed: %s",
                     child->address.sun_path, strerror(errno));
         close(fd);
@@ -113,8 +114,7 @@ fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
 
     ret = listen(fd, 8);
     if (ret < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "listen() failed: %s", strerror(errno));
+        set_error_errno_msg(error_r, "listen() failed");
         close(fd);
         return -1;
     }
@@ -183,7 +183,7 @@ fcgi_stock_socket_timeout(void *ctx)
 
     unlink(child->address.sun_path);
 
-    GError *error = g_error_new(g_file_error_quark(), ETIMEDOUT,
+    GError *error = g_error_new(errno_quark(), ETIMEDOUT,
                                 "failed to connect to FastCGI server '%s': timeout",
                                 child->key);
     stock_item_failed(&child->base, error);

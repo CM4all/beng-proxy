@@ -3,6 +3,7 @@
  */
 
 #include "ua_classification.h"
+#include "gerrno.h"
 
 #include <assert.h>
 #include <string.h>
@@ -90,7 +91,7 @@ ua_classification_init(const char *path, GError **error_r)
 
     FILE *file = fopen(path, "r");
     if (file == NULL) {
-        g_set_error(error_r, g_file_error_quark(), errno,
+        g_set_error(error_r, errno_quark(), errno,
                     "Failed to open %s: %s", path, g_strerror(errno));
         return false;
     }

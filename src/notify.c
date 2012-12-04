@@ -7,14 +7,13 @@
 #include "notify.h"
 #include "fd_util.h"
 #include "pool.h"
+#include "gerrno.h"
 
 #include <inline/compiler.h>
 
 #include <stdbool.h>
 #include <assert.h>
 #include <unistd.h>
-#include <errno.h>
-#include <string.h>
 #include <glib.h>
 #include <event.h>
 
@@ -58,8 +57,7 @@ notify_new(struct pool *pool, notify_callback_t callback, void *ctx,
     notify->callback_ctx = ctx;
 
     if (pipe_cloexec_nonblock(notify->fds)) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "pipe() failed: %s", strerror(errno));
+        set_error_errno_msg(error_r, "pipe() failed");
         return NULL;
     }
 

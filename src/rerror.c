@@ -17,6 +17,7 @@
 #include "http-response.h"
 #include "http-server.h"
 #include "http-quark.h"
+#include "gerrno.h"
 
 void
 response_dispatch_error(struct request *request, GError *error)
@@ -69,7 +70,7 @@ response_dispatch_error(struct request *request, GError *error)
              error->domain == was_quark())
         response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,
                                   "Script failed");
-    else if (error->domain == g_file_error_quark()) {
+    else if (error->domain == errno_quark()) {
         struct http_response_handler_ref ref;
         http_response_handler_set(&ref, &response_handler, request);
         http_response_handler_invoke_errno(&ref, request->request->pool,

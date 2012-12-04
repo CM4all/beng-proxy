@@ -10,6 +10,7 @@
 #include "pool.h"
 #include "fifo-buffer.h"
 #include "buffered_io.h"
+#include "gerrno.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -127,8 +128,7 @@ ssl_poll(struct ssl_filter *ssl, short events, int timeout_ms,
         g_set_error(error_r, ssl_quark(), 0, "Timeout");
         return 0;
     } else {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "poll() failed: %s", strerror(errno));
+        set_error_errno_msg(error_r, "poll() failed");
         return 0;
     }
 }

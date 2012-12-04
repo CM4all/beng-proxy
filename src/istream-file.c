@@ -8,6 +8,7 @@
 #include "istream-buffer.h"
 #include "buffered_io.h"
 #include "fd_util.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 
@@ -142,7 +143,7 @@ istream_file_try_data(struct file *file)
         return;
     } else if (nbytes == -1) {
         GError *error =
-            g_error_new(g_file_error_quark(), errno,
+            g_error_new(errno_quark(), errno,
                         "failed to read from '%s': %s",
                         file->path, strerror(errno));
         file_abort(file, error);
@@ -208,7 +209,7 @@ istream_file_try_direct(struct file *file)
     } else {
         /* XXX */
         GError *error =
-            g_error_new(g_file_error_quark(), errno,
+            g_error_new(errno_quark(), errno,
                         "failed to read from '%s': %s",
                         file->path, strerror(errno));
         file_abort(file, error);

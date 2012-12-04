@@ -7,6 +7,7 @@
 #include "listener.h"
 #include "fd_util.h"
 #include "pool.h"
+#include "gerrno.h"
 
 #include <socket/util.h>
 #include <socket/address.h>
@@ -44,9 +45,7 @@ listener_event_callback(int fd, short event gcc_unused, void *ctx)
     remote_fd = accept_cloexec_nonblock(fd, (struct sockaddr*)&sa, &sa_len);
     if (remote_fd < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            GError *error = g_error_new(g_file_error_quark(), errno,
-                                        "accept() failed: %s",
-                                        g_strerror(errno));
+            GError *error = new_error_errno_msg("accept() failed");
             listener->handler->error(error, listener->handler_ctx);
         }
 
@@ -54,9 +53,8 @@ listener_event_callback(int fd, short event gcc_unused, void *ctx)
     }
 
     if (!socket_set_nodelay(remote_fd, true)) {
-        GError *error = g_error_new(g_file_error_quark(), errno,
-                                    "setsockopt(TCP_NODELAY) failed: %s",
-                                    g_strerror(errno));
+        GError *error = new_error_errno_msg("setsockopt(TCP_NODELAY) failed");
+
         close(remote_fd);
         listener->handler->error(error, listener->handler_ctx);
         return;
@@ -102,16 +100,14 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
     listener = p_calloc(pool, sizeof(*listener));
     listener->fd = socket_cloexec_nonblock(family, socktype, protocol);
     if (listener->fd < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "Failed to create socket: %s", strerror(errno));
+        set_error_errno_msg(error_r, "Failed to create socket");
         return NULL;
     }
 
     param = 1;
     ret = setsockopt(listener->fd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
     if (ret < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "Failed to configure SO_REUSEADDR: %s", strerror(errno));
+        set_error_errno_msg(error_r, "Failed to configure SO_REUSEADDR");
         close(listener->fd);
         return NULL;
     }
@@ -128,7 +124,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
         char buffer[64];
         socket_address_to_string(buffer, sizeof(buffer),
                                  address, address_length);
-        g_set_error(error_r, g_file_error_quark(), errno,
+        g_set_error(error_r, errno_quark(), errno,
                     "Failed to bind to '%s': %s", buffer, strerror(errno));
         close(listener->fd);
         return NULL;
@@ -136,8 +132,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
 
     ret = listen(listener->fd, 16);
     if (ret < 0) {
-        g_set_error(error_r, g_file_error_quark(), errno,
-                    "Failed to listen: %s", strerror(errno));
+        set_error_errno_msg(error_r, "Failed to listen");
         close(listener->fd);
         return NULL;
     }

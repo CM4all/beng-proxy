@@ -11,13 +11,13 @@
 #include "please.h"
 #include "fd_util.h"
 #include "pevent.h"
+#include "gerrno.h"
 
 #ifdef __linux
 #include <fcntl.h>
 #endif
 
 #include <assert.h>
-#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
@@ -124,7 +124,7 @@ delegate_handle_errno(struct delegate_client *d,
     if (nbytes == sizeof(e)) {
         delegate_release_socket(d, true);
 
-        error = g_error_new_literal(g_file_error_quark(), e, g_strerror(e));
+        error = new_error_errno2(e);
     } else {
         delegate_release_socket(d, false);
 
@@ -186,9 +186,7 @@ delegate_try_read(struct delegate_client *d)
 
         delegate_release_socket(d, false);
 
-        GError *error = g_error_new(g_file_error_quark(), errno,
-                                    "recvmsg() failed: %s\n",
-                                    g_strerror(errno));
+        GError *error = new_error_errno_msg("recvmsg() failed");
         d->handler->error(error, d->handler_ctx);
         pool_unref(d->pool);
         return;
@@ -228,13 +226,8 @@ delegate_try_write(struct delegate_client *d)
 
     nbytes = send(d->fd, d->payload, d->payload_rest, MSG_DONTWAIT);
     if (nbytes < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-        int e = errno;
-
+        GError *error = new_error_errno_msg("failed to send to delegate");
         delegate_release_socket(d, false);
-
-        GError *error = g_error_new(g_file_error_quark(), e,
-                                    "failed to send to delegate: %s\n",
-                                    g_strerror(e));
         d->handler->error(error, d->handler_ctx);
         pool_unref(d->pool);
         return;
@@ -318,12 +311,8 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
 
     nbytes = send(d->fd, &header, sizeof(header), MSG_DONTWAIT);
     if (nbytes < 0) {
-        int e = -errno;
+        GError *error = new_error_errno_msg("failed to send to delegate");
         delegate_release_socket(d, false);
-
-        GError *error = g_error_new(g_file_error_quark(), e,
-                                    "failed to send to delegate: %s\n",
-                                    g_strerror(e));
         handler->error(error, ctx);
         return;
     }

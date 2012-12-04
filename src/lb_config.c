@@ -9,6 +9,7 @@
 #include "address_string.h"
 #include "address_envelope.h"
 #include "address_edit.h"
+#include "gerrno.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -1145,7 +1146,7 @@ lb_config_load(struct pool *pool, const char *path,
 {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
-        g_set_error(error_r, g_file_error_quark(), errno,
+        g_set_error(error_r, errno_quark(), errno,
                     "Failed to open file %s: %s",
                     path, strerror(errno));
         return NULL;

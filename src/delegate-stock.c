@@ -12,12 +12,11 @@
 #include "pevent.h"
 #include "exec.h"
 #include "jail.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 
 #include <assert.h>
-#include <errno.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/un.h>
 #include <stdlib.h>
@@ -114,17 +113,14 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
 
     ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds);
     if (ret < 0) {
-        GError *error = g_error_new(g_file_error_quark(), errno,
-                                    "socketpair() failed: %s",
-                                    strerror(errno));
+        GError *error = new_error_errno_msg("socketpair() failed: %s");
         stock_item_failed(item, error);
         return;
     }
 
     pid = fork();
     if (pid < 0) {
-        GError *error = g_error_new(g_file_error_quark(), errno,
-                                    "fork failed: %s", strerror(errno));
+        GError *error = new_error_errno_msg("fork() failed");
         close(fds[0]);
         close(fds[1]);
         stock_item_failed(item, error);

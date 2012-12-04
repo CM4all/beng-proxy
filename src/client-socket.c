@@ -9,6 +9,7 @@
 #include "fd_util.h"
 #include "stopwatch.h"
 #include "pevent.h"
+#include "gerrno.h"
 
 #include <inline/poison.h>
 #include <socket/util.h>
@@ -110,8 +111,7 @@ client_socket_event_callback(int fd, short event gcc_unused, void *ctx)
     } else {
         close(fd);
 
-        GError *error = g_error_new_literal(g_file_error_quark(), s_err,
-                                            strerror(s_err));
+        GError *error = new_error_errno2(s_err);
         client_socket->handler->error(error, client_socket->handler_ctx);
     }
 
@@ -144,16 +144,14 @@ client_socket_new(struct pool *pool,
 
     fd = socket_cloexec_nonblock(domain, type, protocol);
     if (fd < 0) {
-        GError *error = g_error_new_literal(g_file_error_quark(), errno,
-                                            strerror(errno));
+        GError *error = new_error_errno();
         handler->error(error, ctx);
         return;
     }
 
     if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM) {
         if (!socket_set_nodelay(fd, true)) {
-            GError *error = g_error_new_literal(g_file_error_quark(), errno,
-                                                strerror(errno));
+            GError *error = new_error_errno();
             close(fd);
             handler->error(error, ctx);
             return;
@@ -199,8 +197,7 @@ client_socket_new(struct pool *pool,
         p_event_add(&client_socket->event, &tv,
                     client_socket->pool, "client_socket_event");
     } else {
-        GError *error = g_error_new_literal(g_file_error_quark(), errno,
-                                            strerror(errno));
+        GError *error = new_error_errno();
         close(fd);
         handler->error(error, ctx);
     }
