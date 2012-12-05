@@ -299,7 +299,7 @@ global_control_handler_deinit(struct instance *instance)
 }
 
 int
-global_control_handler_add_fd(struct instance *instance)
+global_control_handler_add_fd(gcc_unused struct instance *instance)
 {
     assert(instance->control_server != NULL);
     assert(global_udp_distribute != NULL);
