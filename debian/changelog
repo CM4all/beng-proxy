@@ -4,7 +4,7 @@ cm4all-beng-proxy (3.0.1) unstable; urgency=low
   * {http,filter}-cache: reduce fork overhead
   * pool: fix crash when first allocation is large
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 05 Dec 2012 14:05:28 -0000
 
 cm4all-beng-proxy (3.0) unstable; urgency=low
 
