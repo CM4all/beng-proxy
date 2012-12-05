@@ -702,6 +702,7 @@ check_PROGRAMS = \
 	test/t-http-cache \
 	test/t-cookie-client \
 	test/t-cookie-server \
+	test/t_pool \
 	test/t-shm test/t-dpool test/t-session \
 	test/t_rubber test/t_sink_rubber \
 	test/t-rewrite-uri \
@@ -734,6 +735,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	$(srcdir)/test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
+	test/t_pool \
 	test/t_rubber test/t_sink_rubber \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
@@ -1312,6 +1314,13 @@ test_t_session_SOURCES = test/t-session.c src/shm.c \
 	src/crash.c \
 	src/session.c src/session_manager.c
 test_t_session_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
+
+test_t_pool_SOURCES = test/t_pool.cxx
+test_t_pool_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_pool_LDADD = $(AM_LDADD) \
+	libpool.a libmemory.a \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(CPPUNIT_LIBS)
 
 test_t_rubber_SOURCES = test/t_rubber.cxx
 test_t_rubber_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
