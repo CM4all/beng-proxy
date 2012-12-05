@@ -9,6 +9,8 @@
 
 #include <inline/compiler.h>
 
+#include <stddef.h>
+
 static void
 cleanup_timer_event_callback(gcc_unused int fd, gcc_unused short event,
                              void *ctx)
