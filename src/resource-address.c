@@ -398,11 +398,9 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
 }
 
 const char *
-resource_address_host_and_port(const struct resource_address *address,
-                               struct pool *pool)
+resource_address_host_and_port(const struct resource_address *address)
 {
     assert(address != NULL);
-    assert(pool != NULL);
 
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:

@@ -679,7 +679,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
     embed->env = env;
     embed->host_and_port = widget->class->cookie_host != NULL
         ? widget->class->cookie_host
-        : resource_address_host_and_port(&a_view->address, pool);
+        : resource_address_host_and_port(&a_view->address);
     embed->transformation = t_view->transformation;
 
     headers = widget_request_headers(embed, a_view,
@@ -749,7 +749,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     embed->env = env;
     embed->host_and_port = widget->class->cookie_host != NULL
         ? widget->class->cookie_host
-        : resource_address_host_and_port(&a_view->address, pool);
+        : resource_address_host_and_port(&a_view->address);
     embed->transformation = t_view->transformation;
 
     headers = widget_request_headers(embed, a_view,

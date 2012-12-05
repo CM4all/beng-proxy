@@ -185,8 +185,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool);
  */
 gcc_pure
 const char *
-resource_address_host_and_port(const struct resource_address *address,
-                               struct pool *pool);
+resource_address_host_and_port(const struct resource_address *address);
 
 /**
  * Determine the URI path.  May return NULL if unknown or not
