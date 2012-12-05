@@ -17,10 +17,14 @@
 struct pool;
 struct slice_pool;
 
+#ifndef __cplusplus
+
 struct pool_mark {
     struct linear_pool_area *area;
     size_t position;
 };
+
+#endif
 
 void
 pool_recycler_clear(void);
@@ -237,11 +241,15 @@ pool_attachment_name(struct pool *pool, const void *p);
 
 #endif
 
+#ifndef __cplusplus
+
 void
 pool_mark(struct pool *pool, struct pool_mark *mark);
 
 void
 pool_rewind(struct pool *pool, const struct pool_mark *mark);
+
+#endif
 
 gcc_malloc
 void *
