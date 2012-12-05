@@ -15,7 +15,7 @@ struct widget;
 struct widget_ref;
 
 void
-proxy_widget(struct request *request2, http_status_t status,
+proxy_widget(struct request *request2,
              struct istream *body,
              struct widget *widget, const struct widget_ref *proxy_ref,
              unsigned options);

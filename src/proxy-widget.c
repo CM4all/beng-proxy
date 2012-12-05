@@ -344,7 +344,7 @@ static const struct async_operation_class widget_proxy_operation = {
  */
 
 void
-proxy_widget(struct request *request2, http_status_t status,
+proxy_widget(struct request *request2,
              struct istream *body,
              struct widget *widget, const struct widget_ref *proxy_ref,
              unsigned options)
@@ -362,7 +362,7 @@ proxy_widget(struct request *request2, http_status_t status,
     async_init(&proxy->operation, &widget_proxy_operation);
     async_ref_set(&request2->async_ref, &proxy->operation);
 
-    processor_lookup_widget(request2->request->pool, status, body,
+    processor_lookup_widget(request2->request->pool, body,
                             widget, proxy_ref->id,
                             &request2->env, options,
                             &widget_processor_handler, proxy,

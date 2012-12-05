@@ -223,7 +223,7 @@ response_invoke_processor(struct request *request2,
     if (proxy_ref != NULL) {
         /* the client requests a widget in proxy mode */
 
-        proxy_widget(request2, status, body,
+        proxy_widget(request2, body,
                      widget, proxy_ref, transformation->u.processor.options);
     } else {
         /* the client requests the whole template */

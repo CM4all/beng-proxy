@@ -244,7 +244,7 @@ widget_response_process(struct embed *embed, http_status_t status,
     }
 
     if (embed->lookup_id != NULL)
-        processor_lookup_widget(embed->pool, status, body,
+        processor_lookup_widget(embed->pool, body,
                                 widget, embed->lookup_id,
                                 embed->env, options,
                                 embed->lookup_handler,

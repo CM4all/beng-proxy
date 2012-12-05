@@ -141,7 +141,7 @@ test_proxy_abort(struct pool *pool)
                        HTTP_METHOD_GET, NULL);
 
     struct async_operation_ref async_ref;
-    processor_lookup_widget(pool, HTTP_STATUS_OK, istream_block_new(pool),
+    processor_lookup_widget(pool, istream_block_new(pool),
                             &widget, "foo", &env, PROCESSOR_CONTAINER,
                             &my_widget_lookup_handler, NULL,
                             &async_ref);

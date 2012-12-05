@@ -73,7 +73,7 @@ processor_process(struct pool *pool, struct istream *istream,
  * @param id the id of the widget to be looked up
  */
 void
-processor_lookup_widget(struct pool *pool, http_status_t status,
+processor_lookup_widget(struct pool *pool,
                         struct istream *istream,
                         struct widget *widget, const char *id,
                         struct processor_env *env,

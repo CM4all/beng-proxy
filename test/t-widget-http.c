@@ -69,7 +69,6 @@ processor_process(gcc_unused struct pool *pool, struct istream *istream,
 
 void
 processor_lookup_widget(gcc_unused struct pool *pool,
-                        gcc_unused http_status_t status,
                         gcc_unused struct istream *istream,
                         gcc_unused struct widget *widget,
                         gcc_unused const char *id,

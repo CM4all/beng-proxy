@@ -349,7 +349,7 @@ processor_process(struct pool *caller_pool, struct istream *istream,
 }
 
 void
-processor_lookup_widget(struct pool *caller_pool, http_status_t status,
+processor_lookup_widget(struct pool *caller_pool,
                         struct istream *istream,
                         struct widget *widget, const char *id,
                         struct processor_env *env,
@@ -358,7 +358,6 @@ processor_lookup_widget(struct pool *caller_pool, http_status_t status,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref)
 {
-    assert(!http_status_is_empty(status));
     assert(istream != NULL);
     assert(!istream_has_handler(istream));
     assert(widget != NULL);
