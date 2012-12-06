@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.0.54) unstable; urgency=low
 
-  * 
+  * http-cache: fix revalidation of memcached entries
 
  --   
 
