@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.2) unstable; urgency=low
 
-  * 
+  * merge release 2.3.1
 
  --   
 
@@ -46,6 +46,13 @@ cm4all-beng-proxy (2.2) unstable; urgency=low
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 09 Oct 2012 15:11:24 -0000
 
+cm4all-beng-proxy (2.3.1) unstable; urgency=low
+
+  * merge release 2.1.16
+  * pool: reduce CPU overhead for large areas
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 06 Dec 2012 16:40:02 -0000
+
 cm4all-beng-proxy (2.3) unstable; urgency=low
 
   * new stable branch based on v2.1.x, without the work-in-progress
@@ -58,6 +65,12 @@ cm4all-beng-proxy (2.3) unstable; urgency=low
   * {http,filter}-cache: reduce overhead when cache is disabled
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 22 Oct 2012 13:48:20 -0000
+
+cm4all-beng-proxy (2.1.16) unstable; urgency=low
+
+  * merge release 2.0.54
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 06 Dec 2012 16:35:17 -0000
 
 cm4all-beng-proxy (2.1.15) unstable; urgency=low
 
@@ -164,6 +177,12 @@ cm4all-beng-proxy (2.1) unstable; urgency=low
   * lb: add sticky mode "jvm_route" (Tomcat)
 
  -- Max Kellermann <mk@cm4all.com>  Mon, 30 Jul 2012 15:53:43 -0000
+
+cm4all-beng-proxy (2.0.54) unstable; urgency=low
+
+  * http-cache: fix revalidation of memcached entries
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 06 Dec 2012 16:31:23 -0000
 
 cm4all-beng-proxy (2.0.53) unstable; urgency=low
 
