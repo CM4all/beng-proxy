@@ -14,10 +14,9 @@
 #include <stdbool.h>
 
 static int
-null_verify_callback(gcc_unused int preverify_ok,
-                     gcc_unused X509_STORE_CTX *ctx)
+verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
 {
-    return 1;
+    return ok;
 }
 
 static bool
@@ -43,8 +42,7 @@ apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
 
     if (config->verify)
         /* enable client certificates */
-        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER,
-                           null_verify_callback);
+        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verify_callback);
 
     return true;
 }

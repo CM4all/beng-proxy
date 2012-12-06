@@ -225,10 +225,14 @@ listener ssl {
 
 One pool can be shared by listeners with and without SSL.
 
-The option \verb|ssl_verify| enables client certificates.  The subject
-of the client certificate is copied to the web server in the
-\verb|X-CM4all-BENG-Peer-Subject| request header, and its issuer uses
-the \verb|X-CM4all-BENG-Peer-Issuer-Subject| request header.
+The option \verb|ssl_verify| enables client certificates.  The client
+certificate will only be accepted if its issuer can be validated by
+the server.  By default, the CA certificates in \verb|/etc/ssl/certs/|
+are used for this.
+
+The subject of the client certificate is copied to the web server in
+the \verb|X-CM4all-BENG-Peer-Subject| request header, and its issuer
+uses the \verb|X-CM4all-BENG-Peer-Issuer-Subject| request header.
 
 \subsection{Monitors}
 
