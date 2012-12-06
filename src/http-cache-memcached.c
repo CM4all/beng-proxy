@@ -6,7 +6,6 @@
 
 #include "http-cache-internal.h"
 #include "http-cache-choice.h"
-#include "http-cache-age.h"
 #include "memcached-stock.h"
 #include "memcached-client.h"
 #include "growing-buffer.h"
@@ -414,7 +413,7 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
     /* type */
     serialize_uint32(gb, TYPE_DOCUMENT);
 
-    serialize_uint64(gb, http_cache_calc_expires(info, request_headers));
+    serialize_uint64(gb, info->expires);
     serialize_strmap(gb, vary);
 
     /* serialize status + response headers */
