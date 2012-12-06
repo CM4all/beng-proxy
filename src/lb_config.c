@@ -1002,6 +1002,23 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             listener->ssl_config.key_file =
                 p_strdup(parser->config->pool, path);
             return true;
+        } else if (strcmp(word, "ssl_ca_cert") == 0) {
+            if (!listener->ssl)
+                return throw(error_r, "SSL is not enabled");
+
+            if (listener->ssl_config.ca_cert_file != NULL)
+                return throw(error_r, "Certificate already configured");
+
+            const char *path = next_value(&p);
+            if (path == NULL)
+                return throw(error_r, "Path expected");
+
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            listener->ssl_config.ca_cert_file =
+                p_strdup(parser->config->pool, path);
+            return true;
         } else if (strcmp(word, "ssl_verify") == 0) {
             if (!listener->ssl)
                 return throw(error_r, "SSL is not enabled");

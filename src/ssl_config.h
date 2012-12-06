@@ -14,6 +14,8 @@ struct ssl_config {
 
     const char *key_file;
 
+    const char *ca_cert_file;
+
     bool verify;
 };
 
@@ -21,6 +23,7 @@ static inline void
 ssl_config_clear(struct ssl_config *config)
 {
     config->cert_file = config->key_file = NULL;
+    config->ca_cert_file = NULL;
     config->verify = false;
 }
 

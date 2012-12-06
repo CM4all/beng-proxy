@@ -3,6 +3,7 @@ cm4all-beng-proxy (3.0.2) unstable; urgency=low
   * merge release 2.3.1
   * lb: verify the client certificate issuer (option "ssl_verify")
   * lb: client certificate is mandatory if "ssl_verify" is enabled
+  * lb: support extra CA certificate file (option "ssl_ca_cert")
 
  --   
 

@@ -40,6 +40,30 @@ apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
         return false;
     }
 
+    if (config->ca_cert_file != NULL) {
+        if (SSL_CTX_load_verify_locations(ssl_ctx, config->ca_cert_file,
+                                          NULL) != 1) {
+            g_set_error(error_r, ssl_quark(), 0,
+                        "Failed to load CA certificate file %s",
+                        config->ca_cert_file);
+            return false;
+        }
+
+        /* send all certificates from this file to the client (list of
+           acceptable CA certificates) */
+
+        STACK_OF(X509_NAME) *list =
+            SSL_load_client_CA_file(config->ca_cert_file);
+        if (list == NULL) {
+            g_set_error(error_r, ssl_quark(), 0,
+                        "Failed to load CA certificate list from file %s",
+                        config->ca_cert_file);
+            return false;
+        }
+
+        SSL_CTX_set_client_CA_list(ssl_ctx, list);
+    }
+
     if (config->verify)
         /* enable client certificates */
         SSL_CTX_set_verify(ssl_ctx,

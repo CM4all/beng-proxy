@@ -229,7 +229,21 @@ The option \verb|ssl_verify| enables client certificates.  A
 connection without a client certificate will be rejected.  The client
 certificate will only be accepted if its issuer can be validated by
 the server.  By default, the CA certificates in \verb|/etc/ssl/certs/|
-are used for this.
+are used for this.  You can specify a custom CA file with the option
+\verb|ssl_ca_cert|, which refers to a PEM file containing one or more
+concatenated acceptable CA certificates.  Example:
+
+\begin{verbatim*}
+listener ssl {
+  bind "*:443"
+  pool "demo"
+  ssl "yes"
+  ssl_cert "/etc/cm4all/beng/lb/cert.pem"
+  ssl_key "/etc/cm4all/beng/lb/key.pem"
+  ssl_verify "yes"
+  ssl_ca_cert "/etc/cm4all/beng/lb/ca.pem"
+}
+\end{verbatim*}
 
 The subject of the client certificate is copied to the web server in
 the \verb|X-CM4all-BENG-Peer-Subject| request header, and its issuer
