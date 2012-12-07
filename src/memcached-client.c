@@ -271,8 +271,7 @@ istream_memcached_read(struct istream *istream)
 
     if (!fifo_buffer_empty(client->response.input))
         memcached_consume_value(client);
-    else if (client->response.read_state == READ_VALUE &&
-             memcached_client_check_direct(client))
+    else if (memcached_client_check_direct(client))
         memcached_client_try_read_direct(client);
     else if (memcached_client_fill_buffer(client))
         memcached_consume_value(client);
