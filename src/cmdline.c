@@ -152,6 +152,8 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
     exit(1);
 }
 
+static bool http_cache_size_set = false;
+
 static void
 handle_set2(struct config *config, struct pool *pool, const char *argv0,
             const char *name, size_t name_length, const char *value)
@@ -215,6 +217,7 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
             arg_error(argv0, "Invalid value for http_cache_size");
 
         config->http_cache_size = l;
+        http_cache_size_set = true;
     } else if (name_length == sizeof(filter_cache_size) - 1 &&
                memcmp(name, filter_cache_size,
                       sizeof(filter_cache_size) - 1) == 0) {
@@ -537,4 +540,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
         arg_error(argv[0], "cannot set --group without --user");
     else if (!debug_mode)
         arg_error(argv[0], "no user name specified (-u)");
+
+    if (config->memcached_server != NULL && http_cache_size_set)
+        arg_error(argv[0], "can't specify both --memcached-server and http_cache_size");
 }
