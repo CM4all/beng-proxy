@@ -514,7 +514,7 @@ http_cache_new(struct pool *pool, size_t max_size,
     struct http_cache *cache = p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
 
-    if (max_size > 0) {
+    if (memcached_stock != NULL || max_size > 0) {
         static const size_t max_memcached_rubber = 64 * 1024 * 1024;
         size_t rubber_size = max_size;
         if (memcached_stock != NULL && rubber_size > max_memcached_rubber)
