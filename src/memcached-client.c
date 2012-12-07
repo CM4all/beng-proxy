@@ -592,6 +592,9 @@ memcached_client_fill_buffer(struct memcached_client *client)
         return false;
     }
 
+    if (fifo_buffer_full(client->response.input))
+        socket_wrapper_unschedule_read(&client->socket);
+
     return true;
 }
 
