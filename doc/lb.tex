@@ -225,7 +225,8 @@ listener ssl {
 
 One pool can be shared by listeners with and without SSL.
 
-The option \verb|ssl_verify| enables client certificates.  The client
+The option \verb|ssl_verify| enables client certificates.  A
+connection without a client certificate will be rejected.  The client
 certificate will only be accepted if its issuer can be validated by
 the server.  By default, the CA certificates in \verb|/etc/ssl/certs/|
 are used for this.

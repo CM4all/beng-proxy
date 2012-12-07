@@ -42,7 +42,9 @@ apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
 
     if (config->verify)
         /* enable client certificates */
-        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verify_callback);
+        SSL_CTX_set_verify(ssl_ctx,
+                           SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                           verify_callback);
 
     return true;
 }
