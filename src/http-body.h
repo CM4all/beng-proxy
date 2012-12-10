@@ -15,6 +15,7 @@
 
 struct pool;
 struct fifo_buffer;
+struct buffered_socket;
 
 struct http_body_reader {
     struct istream output;
@@ -50,6 +51,11 @@ off_t
 http_body_available(const struct http_body_reader *body,
                     const struct fifo_buffer *buffer, bool partial);
 
+gcc_pure
+off_t
+http_body_available2(const struct http_body_reader *body,
+                     const struct buffered_socket *s, bool partial);
+
 size_t
 http_body_feed_body(struct http_body_reader *body,
                     const void *data, size_t length);
@@ -73,7 +79,7 @@ http_body_try_direct(struct http_body_reader *body, int fd,
 gcc_pure
 bool
 http_body_socket_is_done(struct http_body_reader *body,
-                         const struct fifo_buffer *buffer);
+                         const struct buffered_socket *s);
 
 /**
  * The underlying socket has been closed by the remote.
@@ -82,8 +88,7 @@ http_body_socket_is_done(struct http_body_reader *body,
  * has been finished (with or without error)
  */
 bool
-http_body_socket_eof(struct http_body_reader *body,
-                     struct fifo_buffer *buffer);
+http_body_socket_eof(struct http_body_reader *body, size_t remaining);
 
 struct istream *
 http_body_init(struct http_body_reader *body,

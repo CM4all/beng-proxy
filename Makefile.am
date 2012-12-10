@@ -434,7 +434,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/ssl_create.c \
 	src/ssl_filter.h \
 	src/ssl_filter.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/ping.c src/ping.h \
 	src/shutdown_listener.c src/shutdown_listener.h \
 	src/lb_global.c \
@@ -1031,7 +1031,7 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/buffered_io.c \
@@ -1058,7 +1058,7 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c src/duplex.h \
@@ -1084,7 +1084,7 @@ test_t_http_server_hold_SOURCES = test/t-http-server-hold.c \
 	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c\
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1110,7 +1110,7 @@ test_t_http_server_null_SOURCES = test/t-http-server-null.c \
 	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1136,7 +1136,7 @@ test_t_http_server_dummy_SOURCES = test/t-http-server-dummy.c \
 	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1162,7 +1162,7 @@ test_t_http_server_fixed_SOURCES = test/t-http-server-fixed.c \
 	src/http-util.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1187,7 +1187,7 @@ test_t_http_server_fixed_LDADD = $(AM_LDADD) \
 test_t_http_client_SOURCES = test/t-http-client.c \
 	src/t_client.h \
 	src/http-client.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	$(STOPWATCH_SRC) \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
@@ -1813,7 +1813,7 @@ test_run_httpd_hello_SOURCES = test/run_httpd_hello.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/http-body.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/direct.c src/fd-util.c src/fd_util.c \
 	src/address.c \
 	src/listener.c \

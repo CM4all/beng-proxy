@@ -24,7 +24,7 @@
 #include "stopwatch.h"
 #include "strmap.h"
 #include "completion.h"
-#include "socket_wrapper.h"
+#include "buffered_socket.h"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -44,9 +44,8 @@ struct http_client {
     struct stopwatch *stopwatch;
 
     /* I/O */
-    struct socket_wrapper socket;
+    struct buffered_socket socket;
     struct lease_ref lease_ref;
-    struct fifo_buffer *input;
 
     /* request */
     struct {
@@ -118,42 +117,38 @@ static const struct timeval http_client_timeout = {
 static inline bool
 http_client_valid(const struct http_client *client)
 {
-    return client->input != NULL;
+    return buffered_socket_valid(&client->socket);
 }
 
 static inline bool
 http_client_check_direct(const struct http_client *client)
 {
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_BODY);
 
     return istream_check_direct(&client->response.body_reader.output,
-                                client->socket.fd_type);
+                                client->socket.base.fd_type);
 }
 
-static bool
-http_client_consume_body(struct http_client *client);
-
-static void
-http_client_try_read(struct http_client *client);
-
+#if 0
 static void
 http_client_schedule_read(struct http_client *client)
 {
     assert(client->input != NULL);
     assert(!fifo_buffer_full(client->input));
 
-    socket_wrapper_schedule_read_timeout(&client->socket,
-                                         client->request.istream != NULL
-                                         ? NULL : &http_client_timeout);
+    buffered_socket_schedule_read_timeout(&client->socket,
+                                          client->request.istream != NULL
+                                          ? NULL : &http_client_timeout);
 }
+#endif
 
 static void
 http_client_schedule_write(struct http_client *client)
 {
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
 
-    socket_wrapper_schedule_write(&client->socket);
+    buffered_socket_schedule_write(&client->socket);
 }
 
 /**
@@ -162,9 +157,7 @@ http_client_schedule_write(struct http_client *client)
 static void
 http_client_release_socket(struct http_client *client, bool reuse)
 {
-    assert(socket_wrapper_valid(&client->socket));
-
-    socket_wrapper_abandon(&client->socket);
+    buffered_socket_abandon(&client->socket);
     p_lease_release(&client->lease_ref, reuse, client->pool);
 }
 
@@ -179,10 +172,10 @@ http_client_release(struct http_client *client, bool reuse)
 
     stopwatch_dump(client->stopwatch);
 
-    client->input = NULL;
-
-    if (socket_wrapper_valid(&client->socket))
+    if (buffered_socket_connected(&client->socket))
         http_client_release_socket(client, reuse);
+
+    buffered_socket_destroy(&client->socket);
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -194,11 +187,11 @@ http_client_release(struct http_client *client, bool reuse)
 static void
 http_client_abort_response_headers(struct http_client *client, GError *error)
 {
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
-    if (socket_wrapper_valid(&client->socket))
+    if (buffered_socket_connected(&client->socket))
         http_client_release_socket(client, false);
 
     if (client->request.istream != NULL)
@@ -263,15 +256,14 @@ http_client_response_stream_available(struct istream *istream, bool partial)
     struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client != NULL);
-    assert(client->input != NULL);
-    assert(socket_wrapper_valid(&client->socket) ||
+    assert(buffered_socket_connected(&client->socket) ||
            http_body_socket_is_done(&client->response.body_reader,
-                                    client->input));
+                                    &client->socket));
     assert(client->response.read_state == READ_BODY);
     assert(http_response_handler_used(&client->request.handler));
 
-    return http_body_available(&client->response.body_reader,
-                               client->input, partial);
+    return http_body_available2(&client->response.body_reader,
+                                &client->socket, partial);
 }
 
 static void
@@ -280,10 +272,9 @@ http_client_response_stream_read(struct istream *istream)
     struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client != NULL);
-    assert(client->input != NULL);
-    assert(socket_wrapper_valid(&client->socket) ||
+    assert(buffered_socket_connected(&client->socket) ||
            http_body_socket_is_done(&client->response.body_reader,
-                                    client->input));
+                                    &client->socket));
     assert(client->response.read_state == READ_BODY);
     assert(client->response.body_reader.output.handler != NULL);
     assert(http_response_handler_used(&client->request.handler));
@@ -293,13 +284,7 @@ http_client_response_stream_read(struct istream *istream)
            continue parsing the response if possible */
         return;
 
-    bool bret = http_client_consume_body(client);
-    if (!bret)
-        return;
-
-    if (client->response.read_state == READ_BODY &&
-        socket_wrapper_valid(&client->socket))
-        http_client_try_read(client);
+    buffered_socket_read(&client->socket);
 }
 
 static int
@@ -308,20 +293,19 @@ http_client_response_stream_as_fd(struct istream *istream)
     struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client != NULL);
-    assert(client->input != NULL);
-    assert(socket_wrapper_valid(&client->socket) ||
+    assert(buffered_socket_connected(&client->socket) ||
            http_body_socket_is_done(&client->response.body_reader,
-                                    client->input));
+                                    &client->socket));
     assert(client->response.read_state == READ_BODY);
     assert(http_response_handler_used(&client->request.handler));
 
-    if (!socket_wrapper_valid(&client->socket) || client->input == NULL ||
-        !fifo_buffer_empty(client->input) || client->keep_alive ||
+    if (!buffered_socket_connected(&client->socket) ||
+        client->keep_alive ||
         /* must not be chunked */
         http_body_istream(&client->response.body_reader) != client->response.body)
         return -1;
 
-    int fd = socket_wrapper_as_fd(&client->socket);
+    int fd = buffered_socket_as_fd(&client->socket);
     if (fd < 0)
         return -1;
 
@@ -361,7 +345,7 @@ static inline void
 http_client_cork(struct http_client *client)
 {
     assert(client != NULL);
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
 
 #ifdef __linux
     if (!client->cork) {
@@ -380,7 +364,7 @@ http_client_uncork(struct http_client *client)
 
 #ifdef __linux
     if (client->cork) {
-        assert(socket_wrapper_valid(&client->socket));
+        assert(buffered_socket_connected(&client->socket));
         client->cork = false;
         socket_set_cork(client->fd, client->cork);
     }
@@ -568,7 +552,7 @@ http_client_response_finished(struct http_client *client)
 
     stopwatch_event(client->stopwatch, "end");
 
-    if (client->input != NULL && !fifo_buffer_empty(client->input)) {
+    if (!buffered_socket_empty(&client->socket)) {
         daemon_log(2, "excess data after HTTP response\n");
         client->keep_alive = false;
     }
@@ -580,19 +564,17 @@ http_client_response_finished(struct http_client *client)
                         client->request.istream == NULL);
 }
 
-static enum completion
-http_client_parse_headers(struct http_client *client)
+static enum buffered_result
+http_client_parse_headers(struct http_client *client,
+                          const void *_data, size_t length)
 {
     assert(client != NULL);
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
-
-    size_t length;
-    const char *buffer = fifo_buffer_read(client->input, &length);
-    if (buffer == NULL)
-        return C_MORE;
-
+    assert(_data != NULL);
     assert(length > 0);
+
+    const char *const buffer = _data;
     const char *buffer_end = buffer + length;
 
     /* parse line by line */
@@ -607,33 +589,20 @@ http_client_parse_headers(struct http_client *client)
 
         /* handle this line */
         if (!http_client_handle_line(client, start, end - start + 1))
-            return C_CLOSED;
+            return BUFFERED_CLOSED;
 
         if (client->response.read_state != READ_HEADERS) {
             /* header parsing is finished */
-            fifo_buffer_consume(client->input, next - buffer);
-            return C_DONE;
+            buffered_socket_consumed(&client->socket, next - buffer);
+            return BUFFERED_AGAIN;
         }
 
         start = next;
     }
 
     /* remove the parsed part of the buffer */
-    fifo_buffer_consume(client->input, start - buffer);
-
-    if (fifo_buffer_full(client->input)) {
-        /* the line is too large for our input buffer */
-        GError *error =
-            g_error_new_literal(http_client_quark(),
-                                HTTP_CLIENT_UNSPECIFIED,
-                                "response header too long");
-        http_client_abort_response_headers(client, error);
-        return C_CLOSED;
-    }
-
-    http_client_schedule_read(client);
-
-    return C_MORE;
+    buffered_socket_consumed(&client->socket, start - buffer);
+    return BUFFERED_MORE;
 }
 
 static void
@@ -660,45 +629,48 @@ http_client_response_stream_eof(struct http_client *client)
  * Returns true if data has been consumed; false if nothing has been
  * consumed or if the client has been closed.
  */
-static bool
-http_client_consume_body(struct http_client *client)
+static enum buffered_result
+http_client_feed_body(struct http_client *client,
+                      const void *data, size_t length)
 {
     assert(client != NULL);
     assert(client->response.read_state == READ_BODY);
 
-    if (fifo_buffer_full(client->input))
-        /* remove the "READ" event - if the buffer is full, and
-           http_body_consume_body() blocks, I don't want to check if
-           the connection has been closed, so we're just removing this
-           event now; it will be added again at the end of this
-           function */
-        socket_wrapper_unschedule_read(&client->socket);
-
-    size_t nbytes = http_body_consume_body(&client->response.body_reader,
-                                           client->input);
+    size_t nbytes = http_body_feed_body(&client->response.body_reader,
+                                        data, length);
     if (nbytes == 0)
-        return false;
+        return buffered_socket_valid(&client->socket)
+            ? BUFFERED_BLOCKING
+            : BUFFERED_CLOSED;
+
+    buffered_socket_consumed(&client->socket, nbytes);
 
     if (http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
-        return false;
+        return BUFFERED_CLOSED;
     }
 
-    if (socket_wrapper_valid(&client->socket))
-        http_client_schedule_read(client);
-    return true;
+    if (nbytes < length)
+        return BUFFERED_PARTIAL;
+
+    if (client->response.body_reader.rest > 0)
+        return BUFFERED_MORE;
+
+    return BUFFERED_OK;
 }
 
-static enum completion
-http_client_consume_headers(struct http_client *client)
+static enum buffered_result
+http_client_feed_headers(struct http_client *client,
+                         const void *data, size_t length)
 {
     assert(client != NULL);
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
-    const enum completion c = http_client_parse_headers(client);
-    if (c != C_DONE)
-        return c;
+    const enum buffered_result result =
+        http_client_parse_headers(client, data, length);
+    if (result != BUFFERED_AGAIN)
+        return result;
 
     /* the headers are finished, we can now report the response to
        the handler */
@@ -716,7 +688,7 @@ http_client_consume_headers(struct http_client *client)
             client->response.read_state = READ_STATUS;
 #endif
             http_client_abort_response_headers(client, error);
-            return C_CLOSED;
+            return BUFFERED_CLOSED;
         }
 
         /* reset read_state, we're now expecting the real response */
@@ -725,11 +697,10 @@ http_client_consume_headers(struct http_client *client)
         istream_optional_resume(client->request.body);
         client->request.body = NULL;
 
-        http_client_schedule_read(client);
         http_client_schedule_write(client);
 
         /* try again */
-        return http_client_consume_headers(client);
+        return BUFFERED_AGAIN;
     } else if (client->request.body != NULL) {
         /* the server begins sending a response - he's not interested
            in the request body, discard it now */
@@ -738,7 +709,8 @@ http_client_consume_headers(struct http_client *client)
     }
 
     if (client->response.body == NULL ||
-        http_body_socket_is_done(&client->response.body_reader, client->input))
+        http_body_socket_is_done(&client->response.body_reader,
+                                 &client->socket))
         /* we don't need the socket anymore, we've got everything we
            need in the input buffer */
         http_client_release_socket(client, client->keep_alive);
@@ -758,32 +730,34 @@ http_client_consume_headers(struct http_client *client)
     pool_unref(client->pool);
 
     if (!valid)
-        return C_CLOSED;
+        return BUFFERED_CLOSED;
 
     if (client->response.body == NULL) {
         http_client_response_finished(client);
-        return C_CLOSED;
+        return BUFFERED_CLOSED;
     }
 
-    return C_DONE;
+    /* now do the response body */
+    return BUFFERED_AGAIN;
 }
 
 /**
- * @return false if the HTTP client has been closed
+ * @return false if the HTTP client has been closed or if the
+ * destination socket blocks
  */
 static bool
-http_client_try_response_direct(struct http_client *client)
+http_client_try_response_direct(struct http_client *client,
+                                int fd, enum istream_direct fd_type)
 {
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_BODY);
     assert(http_client_check_direct(client));
 
     ssize_t nbytes = http_body_try_direct(&client->response.body_reader,
-                                          client->socket.fd,
-                                          client->socket.fd_type);
+                                          fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
-        return true;
+        return false;
 
     if (nbytes == ISTREAM_RESULT_CLOSED)
         /* the stream (and the whole connection) has been closed
@@ -791,11 +765,9 @@ http_client_try_response_direct(struct http_client *client)
         return false;
 
     if (nbytes < 0) {
-        if (errno == EAGAIN) {
+        if (errno == EAGAIN)
             /* the source fd (= ours) blocks */
-            http_client_schedule_read(client);
             return true;
-        }
 
         GError *error = g_error_new(http_client_quark(), errno,
                                     "read error: %s", strerror(errno));
@@ -807,7 +779,7 @@ http_client_try_response_direct(struct http_client *client)
     }
 
     if (nbytes == ISTREAM_RESULT_EOF) {
-        http_body_socket_eof(&client->response.body_reader, NULL);
+        http_body_socket_eof(&client->response.body_reader, 0);
         http_client_release(client, false);
         return false;
    }
@@ -817,116 +789,85 @@ http_client_try_response_direct(struct http_client *client)
         return false;
     }
 
-    http_client_schedule_read(client);
     return true;
 }
 
-static void
-http_client_try_read_buffered(struct http_client *client)
+static enum buffered_result
+http_client_feed(struct http_client *client, const void *data, size_t length)
 {
-    ssize_t nbytes = socket_wrapper_read_to_buffer(&client->socket,
-                                                   client->input,
-                                                   INT_MAX);
-    assert(nbytes != -2);
+    switch (client->response.read_state) {
+    case READ_STATUS:
+    case READ_HEADERS:
+        return http_client_feed_headers(client, data, length);
 
-    if (nbytes == 0) {
-        if (client->response.read_state == READ_BODY) {
-            stopwatch_event(client->stopwatch, "end");
-
-            if (client->request.istream != NULL)
-                istream_close_handler(client->request.istream);
-
-            if (http_body_socket_eof(&client->response.body_reader,
-                                     client->input))
-                /* there's data left in the buffer: only release the
-                   socket, continue serving the buffer */
-                http_client_release_socket(client, false);
-            else
-                /* finished: close the HTTP client */
-                http_client_release(client, false);
-        } else if (client->response.read_state == READ_STATUS &&
-                   fifo_buffer_empty(client->input)) {
-            stopwatch_event(client->stopwatch, "error");
-
-            GError *error =
-                g_error_new_literal(http_client_quark(), HTTP_CLIENT_REFUSED,
-                                    "server refused request");
-            http_client_abort_response_headers(client, error);
-        } else {
-            stopwatch_event(client->stopwatch, "error");
-
-            GError *error =
-                g_error_new_literal(http_client_quark(),
-                                    HTTP_CLIENT_PREMATURE,
-                                    "server closed connection "
-                                    "during response headers");
-            http_client_abort_response_headers(client, error);
-        }
-
-        return;
-    }
-
-    if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            http_client_schedule_read(client);
-            return;
-        }
-
-        stopwatch_event(client->stopwatch, "error");
-
-        GError *error = g_error_new(http_client_quark(),
-                                    HTTP_CLIENT_IO,
-                                    "read error (%s)", strerror(errno));
-        http_client_abort_response(client, error);
-        return;
-    }
-
-    if (client->response.read_state == READ_BODY ||
-        http_client_consume_headers(client) == C_DONE) {
+    case READ_BODY:
         assert(client->response.body != NULL);
 
-        if (socket_wrapper_valid(&client->socket) &&
-            http_body_socket_is_done(&client->response.body_reader, client->input))
-            /* we don't need the socket anymore, we've got everything we
-               need in the input buffer */
+        if (buffered_socket_connected(&client->socket) &&
+            http_body_socket_is_done(&client->response.body_reader,
+                                     &client->socket))
+            /* we don't need the socket anymore, we've got everything
+               we need in the input buffer */
             http_client_release_socket(client, client->keep_alive);
 
-        http_client_consume_body(client);
+        return http_client_feed_body(client, data, length);
     }
-}
 
-static void
-http_client_try_read(struct http_client *client)
-{
-    assert(socket_wrapper_valid(&client->socket));
-
-    if (client->response.read_state == READ_BODY &&
-        http_client_check_direct(client)) {
-        if (!fifo_buffer_empty(client->input)) {
-            /* there is still data in the body, which we have to
-               consume before we do direct splice() */
-            if (!http_client_consume_body(client) ||
-                !fifo_buffer_empty(client->input))
-                return;
-
-            /* at this point, the handler might have changed, and the
-               new handler might not support "direct" transfer - check
-               again */
-            if (!http_client_check_direct(client)) {
-                http_client_schedule_read(client);
-                return;
-            }
-        }
-
-        http_client_try_response_direct(client);
-    } else
-        http_client_try_read_buffered(client);
+    /* unreachable */
+    assert(false);
+    return BUFFERED_CLOSED;
 }
 
 /*
  * socket_wrapper handler
  *
  */
+
+static enum buffered_result
+http_client_socket_data(const void *buffer, size_t size, void *ctx)
+{
+    struct http_client *client = ctx;
+
+    pool_ref(client->pool);
+    enum buffered_result result = http_client_feed(client, buffer, size);
+    pool_unref(client->pool);
+
+    return result;
+}
+
+static bool
+http_client_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
+{
+    struct http_client *client = ctx;
+
+    return http_client_try_response_direct(client, fd, fd_type);
+
+}
+
+static bool
+http_client_socket_closed(size_t remaining, void *ctx)
+{
+    struct http_client *client = ctx;
+
+    /* only READ_BODY could have blocked */
+    assert(client->response.read_state == READ_BODY);
+
+    stopwatch_event(client->stopwatch, "end");
+
+    if (client->request.istream != NULL)
+        istream_close_handler(client->request.istream);
+
+    if (http_body_socket_eof(&client->response.body_reader, remaining)) {
+        /* there's data left in the buffer: only release the
+           socket, continue serving the buffer */
+        http_client_release_socket(client, false);
+        return true;
+    } else {
+        /* finished: close the HTTP client */
+        http_client_release(client, false);
+        return false;
+    }
+}
 
 static bool
 http_client_socket_write(void *ctx)
@@ -937,43 +878,27 @@ http_client_socket_write(void *ctx)
 
     istream_read(client->request.istream);
 
-    bool result = socket_wrapper_valid(&client->socket);
+    bool result = buffered_socket_connected(&client->socket);
     pool_unref(client->pool);
     return result;
 }
 
-static bool
-http_client_socket_read(void *ctx)
+static void
+http_client_socket_error(GError *error, void *ctx)
 {
     struct http_client *client = ctx;
 
-    pool_ref(client->pool);
-
-    http_client_try_read(client);
-
-    bool result = socket_wrapper_valid(&client->socket);
-    pool_unref(client->pool);
-    return result;
-}
-
-static bool
-http_client_socket_timeout(void *ctx)
-{
-    struct http_client *client = ctx;
-
-    stopwatch_event(client->stopwatch, "timeout");
-
-    GError *error = g_error_new_literal(http_client_quark(),
-                                        HTTP_CLIENT_TIMEOUT,
-                                        "receive timeout");
+    stopwatch_event(client->stopwatch, "error");
+    g_prefix_error(&error, "HTTP connection failed: ");
     http_client_abort_response(client, error);
-    return false;
 }
 
-static const struct socket_handler http_client_socket_handler = {
-    .read = http_client_socket_read,
+static const struct buffered_socket_handler http_client_socket_handler = {
+    .data = http_client_socket_data,
+    .direct = http_client_socket_direct,
+    .closed = http_client_socket_closed,
     .write = http_client_socket_write,
-    .timeout = http_client_socket_timeout,
+    .error = http_client_socket_error,
 };
 
 
@@ -987,9 +912,9 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 {
     struct http_client *client = ctx;
 
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
 
-    ssize_t nbytes = socket_wrapper_write(&client->socket, data, length);
+    ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
     if (likely(nbytes >= 0)) {
         http_client_schedule_write(client);
         return (size_t)nbytes;
@@ -1010,7 +935,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
         pool_ref(client->pool);
         /* see if we can receive the full response now */
-        http_client_try_read(client);
+        buffered_socket_read(&client->socket);
         valid = http_client_valid(client);
         pool_unref(client->pool);
 
@@ -1037,12 +962,12 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
 {
     struct http_client *client = ctx;
 
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
 
-    ssize_t nbytes = socket_wrapper_write_from(&client->socket, fd, type,
-                                               max_length);
+    ssize_t nbytes = buffered_socket_write_from(&client->socket, fd, type,
+                                                max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!socket_wrapper_ready_for_writing(&client->socket)) {
+        if (!buffered_socket_ready_for_writing(&client->socket)) {
             http_client_schedule_write(client);
             return ISTREAM_RESULT_BLOCKING;
         }
@@ -1050,8 +975,8 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = socket_wrapper_write_from(&client->socket, fd, type,
-                                           max_length);
+        nbytes = buffered_socket_write_from(&client->socket, fd, type,
+                                            max_length);
     }
 
     if (likely(nbytes > 0))
@@ -1067,12 +992,11 @@ http_client_request_stream_eof(void *ctx)
 
     stopwatch_event(client->stopwatch, "request");
 
+    assert(client->request.istream != NULL);
     client->request.istream = NULL;
 
-    socket_wrapper_unschedule_write(&client->socket);
-
-    if (!fifo_buffer_full(client->input))
-        http_client_schedule_read(client);
+    buffered_socket_unschedule_write(&client->socket);
+    buffered_socket_read(&client->socket);
 }
 
 static void
@@ -1179,16 +1103,14 @@ http_client_request(struct pool *caller_pool,
     client->stopwatch = stopwatch_fd_new(pool, fd, uri);
     client->pool = pool;
 
-    socket_wrapper_init(&client->socket, pool, fd, fd_type,
-                        NULL, &http_client_timeout,
-                        &http_client_socket_handler, client);
+    buffered_socket_init(&client->socket, pool, fd, fd_type,
+                         &http_client_timeout, &http_client_timeout,
+                         &http_client_socket_handler, client);
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "http_client_lease");
 
     client->response.read_state = READ_STATUS;
     client->response.no_body = http_method_is_empty(method);
-
-    client->input = fifo_buffer_new(client->pool, 4096);
 
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;
@@ -1254,7 +1176,6 @@ http_client_request(struct pool *caller_pool,
                         &http_client_request_stream_handler, client,
                         istream_direct_mask_to(fd_type));
 
-    http_client_schedule_read(client);
-
+    buffered_socket_schedule_read_no_timeout(&client->socket);
     istream_read(client->request.istream);
 }

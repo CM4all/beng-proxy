@@ -8,6 +8,7 @@
 #include "http-error.h"
 #include "istream-internal.h"
 #include "fifo-buffer.h"
+#include "buffered_socket.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -23,6 +24,21 @@ http_body_available(const struct http_body_reader *body,
 
     return partial
         ? (off_t)fifo_buffer_available(buffer)
+        : -1;
+}
+
+gcc_pure
+off_t
+http_body_available2(const struct http_body_reader *body,
+                     const struct buffered_socket *s, bool partial)
+{
+    assert(body->rest != -2);
+
+    if (body->rest >= 0)
+        return body->rest;
+
+    return partial
+        ? (off_t)buffered_socket_available(s)
         : -1;
 }
 
@@ -100,36 +116,33 @@ http_body_try_direct(struct http_body_reader *body, int fd,
 
 bool
 http_body_socket_is_done(struct http_body_reader *body,
-                         const struct fifo_buffer *buffer)
+                         const struct buffered_socket *s)
 {
     return body->rest != -1 &&
         (http_body_eof(body) ||
-         (off_t)fifo_buffer_available(buffer) >= body->rest);
+         (off_t)buffered_socket_available(s) >= body->rest);
 }
 
 bool
-http_body_socket_eof(struct http_body_reader *body, struct fifo_buffer *buffer)
+http_body_socket_eof(struct http_body_reader *body, size_t remaining)
 {
 #ifndef NDEBUG
     body->socket_eof = true;
 #endif
 
-    /* see how much is left in the buffer */
-    size_t length = buffer != NULL ? fifo_buffer_available(buffer) : 0;
-
     if (body->rest == -1) {
-        if (length > 0) {
+        if (remaining > 0) {
             /* serve the rest of the buffer, then end the body
                stream */
-            body->rest = length;
+            body->rest = remaining;
             return true;
         }
 
         /* the socket is closed, which ends the body */
         istream_deinit_eof(&body->output);
         return false;
-    } else if (body->rest == (off_t)length || body->rest == -2) {
-        if (length > 0)
+    } else if (body->rest == (off_t)remaining || body->rest == -2) {
+        if (remaining > 0)
             /* serve the rest of the buffer, then end the body
                stream */
             return true;
