@@ -8,11 +8,10 @@
 #include "fcgi-quark.h"
 #include "fcgi-protocol.h"
 #include "fcgi-serialize.h"
-#include "socket_wrapper.h"
+#include "buffered_socket.h"
 #include "growing-buffer.h"
 #include "http-response.h"
 #include "async.h"
-#include "fifo-buffer.h"
 #include "istream-internal.h"
 #include "istream-gb.h"
 #include "please.h"
@@ -45,7 +44,7 @@
 struct fcgi_client {
     struct pool *pool, *caller_pool;
 
-    struct socket_wrapper socket;
+    struct buffered_socket socket;
 
     struct lease_ref lease_ref;
 
@@ -112,7 +111,6 @@ struct fcgi_client {
         bool stderr;
     } response;
 
-    struct fifo_buffer *input;
     size_t content_length, skip_length;
 };
 
@@ -124,10 +122,10 @@ static const struct timeval fcgi_client_timeout = {
 static void
 fcgi_client_response_body_init(struct fcgi_client *client);
 
+/*
 static void
 fcgi_client_schedule_read(struct fcgi_client *client)
 {
-    assert(socket_wrapper_valid(&client->socket));
     assert(!fifo_buffer_full(client->input));
 
     socket_wrapper_schedule_read_timeout(&client->socket,
@@ -142,6 +140,7 @@ fcgi_client_schedule_write(struct fcgi_client *client)
 
     socket_wrapper_schedule_write(&client->socket);
 }
+*/
 
 /**
  * Release the socket held by this object.
@@ -150,9 +149,8 @@ static void
 fcgi_client_release_socket(struct fcgi_client *client, bool reuse)
 {
     assert(client != NULL);
-    assert(socket_wrapper_valid(&client->socket));
 
-    socket_wrapper_abandon(&client->socket);
+    buffered_socket_abandon(&client->socket);
     p_lease_release(&client->lease_ref, reuse, client->pool);
 }
 
@@ -165,11 +163,10 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
 {
     assert(client != NULL);
 
-    if (socket_wrapper_valid(&client->socket))
+    if (buffered_socket_connected(&client->socket))
         fcgi_client_release_socket(client, reuse);
 
-    /* mark the fcgi_client object as "invalid" */
-    client->input = NULL;
+    buffered_socket_destroy(&client->socket);
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -206,7 +203,7 @@ fcgi_client_abort_response_body(struct fcgi_client *client, GError *error)
 {
     assert(client->response.read_state == READ_BODY);
 
-    if (socket_wrapper_valid(&client->socket))
+    if (buffered_socket_connected(&client->socket))
         fcgi_client_release_socket(client, false);
 
     if (client->request.istream != NULL)
@@ -244,7 +241,7 @@ fcgi_client_close_response_body(struct fcgi_client *client)
 {
     assert(client->response.read_state == READ_BODY);
 
-    if (socket_wrapper_valid(&client->socket))
+    if (buffered_socket_connected(&client->socket))
         fcgi_client_release_socket(client, false);
 
     if (client->request.istream != NULL)
@@ -402,11 +399,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
 
     pool_unref(caller_pool);
 
-    if (client->input == NULL)
-        /* response body was closed */
-        return false;
-
-    return true;
+    return buffered_socket_valid(&client->socket);
 }
 
 /**
@@ -417,7 +410,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
 static bool
 fcgi_client_check_more_data(struct fcgi_client *client)
 {
-    if (socket_wrapper_valid(&client->socket))
+    if (buffered_socket_connected(&client->socket))
         /* we can still receive more data from the server,
            everything's fine */
         return true;
@@ -445,7 +438,7 @@ fcgi_client_handle_end(struct fcgi_client *client, size_t remaining)
         return;
     }
 
-    if (socket_wrapper_valid(&client->socket)) {
+    if (buffered_socket_connected(&client->socket)) {
         /* if the socket is still alive at this point, release it, and
            allow reusing it only if the remaining buffer provides
            enough to finish the END_REQUEST payload */
@@ -525,41 +518,40 @@ fcgi_client_handle_header(struct fcgi_client *client,
  * @return false if the buffer is full or if this object has been
  * destructed
  */
-static bool
-fcgi_client_consume_input(struct fcgi_client *client)
+static size_t
+fcgi_client_consume_input(struct fcgi_client *client,
+                          const uint8_t *data0, size_t length0)
 {
-    while (true) {
-        size_t length;
-        const void *data = fifo_buffer_read(client->input, &length);
-        if (data == NULL)
-            return fcgi_client_check_more_data(client);
+    const uint8_t *data = data0, *const end = data0 + length0;
 
+    do {
         if (client->content_length > 0) {
             bool at_headers = client->response.read_state == READ_HEADERS;
 
+            size_t length = end - data;
             if (length > client->content_length)
                 length = client->content_length;
 
             size_t nbytes = fcgi_client_feed(client, data, length);
             if (nbytes == 0) {
                 if (!at_headers)
-                    return false;
+                    return 0;
 
-                if (fifo_buffer_full(client->input)) {
+                if (data == data0 && buffered_socket_full(&client->socket)) {
                     GError *error =
                         g_error_new_literal(fcgi_quark(), 0,
                                             "FastCGI response header too long");
                     fcgi_client_abort_response_headers(client, error);
-                    return false;
+                    return 0;
                 }
 
                 return client->response.read_state == READ_BODY ||
                     fcgi_client_check_more_data(client);
             }
 
-            fifo_buffer_consume(client->input, nbytes);
-            length -= nbytes;
+            data += nbytes;
             client->content_length -= nbytes;
+            buffered_socket_consumed(&client->socket, nbytes);
 
             if (at_headers && client->response.read_state == READ_BODY) {
                 /* the read_state has been switched from HEADERS to
@@ -574,16 +566,19 @@ fcgi_client_consume_input(struct fcgi_client *client)
             }
 
             if (client->content_length > 0)
-                return true;
+                break;
 
             continue;
         }
 
         if (client->skip_length > 0) {
-            if (length > client->skip_length)
-                length = client->skip_length;
-            fifo_buffer_consume(client->input, length);
-            client->skip_length -= length;
+            size_t nbytes = end - data;
+            if (nbytes > client->skip_length)
+                nbytes = client->skip_length;
+
+            data += nbytes;
+            client->skip_length -= nbytes;
+            buffered_socket_consumed(&client->socket, nbytes);
 
             if (client->skip_length > 0)
                 return true;
@@ -591,69 +586,21 @@ fcgi_client_consume_input(struct fcgi_client *client)
             continue;
         }
 
-        const struct fcgi_record_header *header = data;
-        if (length < sizeof(*header))
+        const struct fcgi_record_header *header =
+            (const struct fcgi_record_header *)data;
+        const size_t remaining = end - data;
+        if (remaining < sizeof(*header))
             return true;
 
-        length -= sizeof(*header);
-        fifo_buffer_consume(client->input, sizeof(*header));
+        data += sizeof(*header);
+        buffered_socket_consumed(&client->socket, sizeof(*header));
 
-        if (!fcgi_client_handle_header(client, header, length))
+        if (!fcgi_client_handle_header(client, header, end - data))
             return false;
-    }
-}
-
-
-/*
- * socket i/o
- *
- */
-
-/**
- * Read data from the FastCGI connection into the input buffer and
- * attempt to consume it.  The buffer must not be full already.
- */
-static bool
-fcgi_client_try_read(struct fcgi_client *client)
-{
-    ssize_t nbytes = socket_wrapper_read_to_buffer(&client->socket,
-                                                   client->input, 4096);
-    assert(nbytes != -2);
-
-    if (nbytes == 0) {
-        if (client->response.read_state == READ_BODY &&
-            !fifo_buffer_empty(client->input)) {
-            fcgi_client_release_socket(client, false);
-            return fcgi_client_consume_input(client);
-        }
-
-        GError *error =
-            g_error_new_literal(fcgi_quark(), 0,
-                                "FastCGI server closed the connection");
-        fcgi_client_abort_response(client, error);
-        return false;
-    }
-
-    if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            fcgi_client_schedule_read(client);
-            return true;
-        }
-
-        GError *error =
-            g_error_new(fcgi_quark(), errno,
-                        "read error on FastCGI connection: %s",
-                        strerror(errno));
-        fcgi_client_abort_response(client, error);
-        return false;
-    }
-
-    if (fcgi_client_consume_input(client))
-        fcgi_client_schedule_read(client);
+    } while (data != end);
 
     return true;
 }
-
 
 /*
  * istream handler for the request
@@ -665,17 +612,17 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
 {
     struct fcgi_client *client = ctx;
 
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->request.istream != NULL);
 
     client->request.got_data = true;
 
-    ssize_t nbytes = socket_wrapper_write(&client->socket, data, length);
+    ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
     if (nbytes > 0)
-        fcgi_client_schedule_write(client);
+        buffered_socket_schedule_write(&client->socket);
     else if (nbytes < 0) {
         if (errno == EAGAIN) {
-            fcgi_client_schedule_write(client);
+            buffered_socket_schedule_write(&client->socket);
             return 0;
         }
 
@@ -695,30 +642,30 @@ fcgi_request_stream_direct(istream_direct_t type, int fd,
 {
     struct fcgi_client *client = ctx;
 
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
 
     client->request.got_data = true;
 
-    ssize_t nbytes = socket_wrapper_write_from(&client->socket, fd, type,
-                                               max_length);
+    ssize_t nbytes = buffered_socket_write_from(&client->socket, fd, type,
+                                                max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!socket_wrapper_ready_for_writing(&client->socket)) {
-            fcgi_client_schedule_write(client);
+        if (!buffered_socket_ready_for_writing(&client->socket)) {
+            buffered_socket_schedule_write(&client->socket);
             return ISTREAM_RESULT_BLOCKING;
         }
 
         /* try again, just in case client->fd has become ready between
            the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = socket_wrapper_write_from(&client->socket, type, fd,
-                                           max_length);
+        nbytes = buffered_socket_write_from(&client->socket, type, fd,
+                                            max_length);
     }
 
     if (likely(nbytes > 0))
-        fcgi_client_schedule_write(client);
+        buffered_socket_schedule_write(&client->socket);
     else if (nbytes < 0 && errno == EAGAIN) {
         client->request.got_data = false;
-        socket_wrapper_unschedule_write(&client->socket);
+        buffered_socket_unschedule_write(&client->socket);
     }
 
     return nbytes;
@@ -733,7 +680,7 @@ fcgi_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    socket_wrapper_unschedule_write(&client->socket);
+    buffered_socket_unschedule_write(&client->socket);
 }
 
 static void
@@ -796,17 +743,7 @@ fcgi_client_response_body_read(struct istream *istream)
            continue parsing the response if possible */
         return;
 
-    /* cancel any scheduled read event before doing anything else,
-       just in case this function fills the buffer completely; if not,
-       the read will be re-scheduled anyway */
-    socket_wrapper_unschedule_read(&client->socket);
-
-    if (fcgi_client_consume_input(client)) {
-        if (socket_wrapper_valid(&client->socket))
-            fcgi_client_try_read(client);
-        // TODO:
-        //else if (fifo_buffer_empty(client->input))
-    }
+    buffered_socket_read(&client->socket);
 }
 
 static void
@@ -836,6 +773,52 @@ fcgi_client_response_body_init(struct fcgi_client *client)
  */
 
 static bool
+fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
+{
+    struct fcgi_client *client = ctx;
+
+    pool_ref(client->pool);
+    const bool result = fcgi_client_consume_input(client, buffer, size);
+    pool_unref(client->pool);
+    return result;
+}
+
+static bool
+fcgi_client_socket_closed(size_t remaining, void *ctx)
+{
+    struct fcgi_client *client = ctx;
+
+    if (remaining > 0 &&
+        /* only READ_BODY could have blocked */
+        client->response.read_state == READ_BODY &&
+        remaining >= client->content_length + client->skip_length) {
+        /* the rest of the response may already be in the input
+           buffer */
+        fcgi_client_release_socket(client, false);
+        return true;
+    }
+
+    GError *error =
+        g_error_new_literal(fcgi_quark(), 0,
+                            "FastCGI server closed the connection prematurely");
+    fcgi_client_abort_response(client, error);
+    return false;
+}
+
+static void
+fcgi_client_socket_end(void *ctx)
+{
+    struct fcgi_client *client = ctx;
+
+    assert(client->response.read_state == READ_BODY);
+
+    GError *error =
+        g_error_new_literal(fcgi_quark(), 0,
+                            "FastCGI server closed the connection prematurely");
+    fcgi_client_abort_response_body(client, error);
+}
+
+static bool
 fcgi_client_socket_write(void *ctx)
 {
     struct fcgi_client *client = ctx;
@@ -845,28 +828,14 @@ fcgi_client_socket_write(void *ctx)
     client->request.got_data = false;
     istream_read(client->request.istream);
 
-    const bool result = socket_wrapper_valid(&client->socket);
+    const bool result = buffered_socket_valid(&client->socket);
     if (result && client->request.istream != NULL) {
         if (client->request.got_data)
-            socket_wrapper_schedule_write(&client->socket);
+            buffered_socket_schedule_write(&client->socket);
         else
-            socket_wrapper_unschedule_write(&client->socket);
+            buffered_socket_unschedule_write(&client->socket);
     }
 
-    pool_unref(client->pool);
-    return result;
-}
-
-static bool
-fcgi_client_socket_read(void *ctx)
-{
-    struct fcgi_client *client = ctx;
-
-    pool_ref(client->pool);
-
-    fcgi_client_try_read(client);
-
-    bool result = socket_wrapper_valid(&client->socket);
     pool_unref(client->pool);
     return result;
 }
@@ -876,16 +845,26 @@ fcgi_client_socket_timeout(void *ctx)
 {
     struct fcgi_client *client = ctx;
 
-    GError *error = g_error_new_literal(fcgi_quark(), 0,
-                                        "receive timeout");
+    GError *error = g_error_new_literal(fcgi_quark(), 0, "timeout");
     fcgi_client_abort_response(client, error);
     return false;
 }
 
-static const struct socket_handler fcgi_client_socket_handler = {
-    .read = fcgi_client_socket_read,
+static void
+fcgi_client_socket_error(GError *error, void *ctx)
+{
+    struct fcgi_client *client = ctx;
+
+    fcgi_client_abort_response(client, error);
+}
+
+static const struct buffered_socket_handler fcgi_client_socket_handler = {
+    .data = fcgi_client_socket_data,
+    .closed = fcgi_client_socket_closed,
+    .end = fcgi_client_socket_end,
     .write = fcgi_client_socket_write,
     .timeout = fcgi_client_socket_timeout,
+    .error = fcgi_client_socket_error,
 };
 
 /*
@@ -964,9 +943,9 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;
 
-    socket_wrapper_init(&client->socket, pool, fd, fd_type,
-                        NULL, &fcgi_client_timeout,
-                        &fcgi_client_socket_handler, client);
+    buffered_socket_init(&client->socket, pool, fd, fd_type,
+                         &fcgi_client_timeout, &fcgi_client_timeout,
+                         &fcgi_client_socket_handler, client);
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "fcgi_client_lease");
@@ -981,7 +960,6 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     client->response.read_state = READ_HEADERS;
     client->response.headers = strmap_new(client->caller_pool, 17);
     client->response.no_body = http_method_is_empty(method);
-    client->input = fifo_buffer_new(pool, 4096);
     client->content_length = 0;
     client->skip_length = 0;
 
@@ -1061,6 +1039,6 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
                            &fcgi_request_stream_handler, client,
                            istream_direct_mask_to(fd_type));
 
-    fcgi_client_schedule_read(client);
+    buffered_socket_schedule_read_no_timeout(&client->socket);
     istream_read(client->request.istream);
 }
