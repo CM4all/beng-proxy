@@ -2,7 +2,7 @@ cm4all-beng-proxy (3.0.4) unstable; urgency=low
 
   * {http,filter}-cache: fix garbled data on large cache entries
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 11 Dec 2012 15:17:17 -0000
 
 cm4all-beng-proxy (3.0.3) unstable; urgency=low
 
