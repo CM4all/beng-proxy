@@ -63,7 +63,8 @@ istream_rubber_read(struct istream *istream)
     const size_t remaining = r->end - r->position;
 
     if (remaining > 0) {
-        size_t nbytes = istream_invoke_data(&r->base, data, remaining);
+        size_t nbytes = istream_invoke_data(&r->base, data + r->position,
+                                            remaining);
         if (nbytes == 0)
             return;
 
