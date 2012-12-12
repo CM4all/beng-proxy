@@ -148,10 +148,10 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 
     async_operation_finished(&client->async);
 
+    fcgi_client_release_socket(client, false);
+
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
-
-    fcgi_client_release_socket(client, false);
 
     http_response_handler_invoke_abort(&client->handler, error);
 
@@ -455,10 +455,10 @@ fcgi_client_consume_input(struct fcgi_client *client)
             fifo_buffer_consume(client->input, sizeof(*header));
             length -= sizeof(*header);
 
+            fcgi_client_release_socket(client, length == client->skip_length);
+
             if (client->request.istream != NULL)
                 istream_close_handler(client->request.istream);
-
-            fcgi_client_release_socket(client, length == client->skip_length);
 
             istream_deinit_eof(&client->response.body);
             client->response.read_state = READ_END;

@@ -120,11 +120,11 @@ ajp_client_release(struct ajp_client *client, bool reuse)
     assert(client->response.read_state == READ_END);
 
     socket_wrapper_abandon(&client->socket);
+    p_lease_release(&client->lease_ref, reuse, client->pool);
 
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
 
-    p_lease_release(&client->lease_ref, reuse, client->pool);
     pool_unref(client->pool);
 }
 

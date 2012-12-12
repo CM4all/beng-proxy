@@ -190,11 +190,11 @@ http_client_abort_response_headers(struct http_client *client, GError *error)
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
-    if (client->request.istream != NULL)
-        istream_close_handler(client->request.istream);
-
     if (socket_wrapper_valid(&client->socket))
         http_client_release_socket(client, false);
+
+    if (client->request.istream != NULL)
+        istream_close_handler(client->request.istream);
 
     http_response_handler_invoke_abort(&client->request.handler, error);
     http_client_release(client, false);
