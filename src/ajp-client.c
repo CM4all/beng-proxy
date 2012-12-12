@@ -392,20 +392,18 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
 static bool
 ajp_consume_body_chunk(struct ajp_client *client)
 {
-    const char *data;
-    size_t length, nbytes;
-
     assert(client->response.read_state == READ_BODY);
     assert(client->response.chunk_length > 0);
 
-    data = fifo_buffer_read(client->response.input, &length);
+    size_t length;
+    const char *data = fifo_buffer_read(client->response.input, &length);
     if (data == NULL)
         return false;
 
     if (length > client->response.chunk_length)
         length = client->response.chunk_length;
 
-    nbytes = istream_invoke_data(&client->response.body, data, length);
+    size_t nbytes = istream_invoke_data(&client->response.body, data, length);
     if (nbytes == 0)
         return false;
 
@@ -422,14 +420,12 @@ ajp_consume_body_chunk(struct ajp_client *client)
 static bool
 ajp_consume_body_junk(struct ajp_client *client)
 {
-    const char *data;
-    size_t length;
-
     assert(client->response.read_state == READ_BODY);
     assert(client->response.chunk_length == 0);
     assert(client->response.junk_length > 0);
 
-    data = fifo_buffer_read(client->response.input, &length);
+    size_t length;
+    const char *data = fifo_buffer_read(client->response.input, &length);
     if (data == NULL)
         return false;
 
@@ -450,12 +446,6 @@ ajp_consume_body_junk(struct ajp_client *client)
 static void
 ajp_consume_input(struct ajp_client *client)
 {
-    const char *data;
-    size_t length, header_length;
-    const struct ajp_header *header;
-    ajp_code_t code;
-    bool bret;
-
     assert(client != NULL);
     assert(client->response.read_state == READ_BEGIN ||
            client->response.read_state == READ_BODY);
@@ -472,13 +462,14 @@ ajp_consume_input(struct ajp_client *client)
                 return;
         }
 
-        data = fifo_buffer_read(client->response.input, &length);
-        if (data == NULL || length < sizeof(*header))
+        size_t length;
+        const char *data = fifo_buffer_read(client->response.input, &length);
+        if (data == NULL || length < sizeof(struct ajp_header))
             /* we need a full header */
             return;
 
-        header = (const struct ajp_header*)data;
-        header_length = ntohs(header->length);
+        const struct ajp_header *header = (const struct ajp_header*)data;
+        size_t header_length = ntohs(header->length);
 
         if (header->a != 'A' || header->b != 'B' || header_length == 0) {
             GError *error =
@@ -492,7 +483,7 @@ ajp_consume_input(struct ajp_client *client)
             /* we need the prefix code */
             return;
 
-        code = data[sizeof(*header)];
+        ajp_code_t code = data[sizeof(*header)];
 
         if (code == AJP_CODE_SEND_BODY_CHUNK) {
             const struct ajp_send_body_chunk *chunk =
@@ -546,8 +537,9 @@ ajp_consume_input(struct ajp_client *client)
             return;
         }
 
-        bret = ajp_consume_packet(client, code,
-                                  data + sizeof(*header) + 1, header_length - 1);
+        bool bret = ajp_consume_packet(client, code,
+                                       data + sizeof(*header) + 1,
+                                       header_length - 1);
         if (!bret)
             return;
 
@@ -817,18 +809,6 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    struct ajp_client *client;
-    struct growing_buffer *gb;
-    struct ajp_header *header;
-    ajp_method_t ajp_method;
-    struct {
-        uint8_t prefix_code, method;
-    } prefix_and_method;
-    struct growing_buffer *headers_buffer = NULL;
-    unsigned num_headers;
-    struct istream *request;
-    size_t requested;
-
     assert(protocol != NULL);
     assert(http_method_is_valid(method));
 
@@ -845,7 +825,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     }
 
     pool_ref(pool);
-    client = p_malloc(pool, sizeof(*client));
+    struct ajp_client *client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
 
     socket_wrapper_init(&client->socket, pool, fd, fd_type,
@@ -855,13 +835,13 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "ajp_client_lease");
 
-    gb = growing_buffer_new(pool, 256);
+    struct growing_buffer *gb = growing_buffer_new(pool, 256);
 
-    header = growing_buffer_write(gb, sizeof(*header));
+    struct ajp_header *header = growing_buffer_write(gb, sizeof(*header));
     header->a = 0x12;
     header->b = 0x34;
 
-    ajp_method = to_ajp_method(method);
+    ajp_method_t ajp_method = to_ajp_method(method);
     if (ajp_method == AJP_METHOD_NULL) {
         /* invalid or unknown method */
         p_lease_release(&client->lease_ref, true, client->pool);
@@ -875,6 +855,9 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
         return;
     }
 
+    struct {
+        uint8_t prefix_code, method;
+    } prefix_and_method;
     prefix_and_method.prefix_code = AJP_PREFIX_FORWARD_REQUEST;
     prefix_and_method.method = (uint8_t)ajp_method;
 
@@ -893,14 +876,15 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     serialize_ajp_integer(gb, server_port);
     serialize_ajp_bool(gb, is_ssl);
 
+    struct growing_buffer *headers_buffer = NULL;
+    unsigned num_headers = 0;
     if (headers != NULL) {
         /* serialize the request headers - note that
            serialize_ajp_headers() ignores the Content-Length header,
            we will append it later */
         headers_buffer = growing_buffer_new(pool, 2048);
         num_headers = serialize_ajp_headers(headers_buffer, headers);
-    } else
-        num_headers = 0;
+    }
 
     /* Content-Length */
     ++num_headers;
@@ -910,8 +894,8 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
         growing_buffer_cat(gb, headers_buffer);
 
     off_t available = 0;
-    char buffer[32];
 
+    size_t requested;
     if (body != NULL) {
         available = istream_available(body, false);
         if (available == -1) {
@@ -932,6 +916,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
             requested = 1024;
     }
 
+    char buffer[32];
     format_uint64(buffer, (uint64_t)available);
     serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
     serialize_ajp_string(gb, buffer);
@@ -945,12 +930,12 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     }
 
     growing_buffer_write_buffer(gb, "\xff", 1);
-    
+
     /* XXX is this correct? */
 
     header->length = htons(growing_buffer_size(gb) - sizeof(*header));
 
-    request = istream_gb_new(pool, gb);
+    struct istream *request = istream_gb_new(pool, gb);
     if (body != NULL) {
         client->request.ajp_body = istream_ajp_body_new(pool, body);
         istream_ajp_body_request(client->request.ajp_body, requested);
