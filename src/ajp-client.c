@@ -6,10 +6,9 @@
 
 #include "ajp-client.h"
 #include "ajp-headers.h"
-#include "socket_wrapper.h"
+#include "buffered_socket.h"
 #include "http-response.h"
 #include "async.h"
-#include "fifo-buffer.h"
 #include "growing-buffer.h"
 #include "pevent.h"
 #include "format.h"
@@ -39,7 +38,7 @@ struct ajp_client {
     struct pool *pool;
 
     /* I/O */
-    struct socket_wrapper socket;
+    struct buffered_socket socket;
     struct lease_ref lease_ref;
 
     /* request */
@@ -69,7 +68,6 @@ struct ajp_client {
          */
         bool in_handler;
 
-        struct fifo_buffer *input;
         http_status_t status;
         struct strmap *headers;
         struct istream body;
@@ -86,12 +84,7 @@ static const struct ajp_header empty_body_chunk = {
     .a = 0x12, .b = 0x34,
 };
 
-static void
-ajp_consume_input(struct ajp_client *client);
-
-static void
-ajp_try_read(struct ajp_client *client);
-
+/*
 static void
 ajp_client_schedule_read(struct ajp_client *client)
 {
@@ -101,11 +94,12 @@ ajp_client_schedule_read(struct ajp_client *client)
                                          client->request.istream != NULL
                                          ? NULL : &ajp_client_timeout);
 }
+*/
 
 static void
 ajp_client_schedule_write(struct ajp_client *client)
 {
-    socket_wrapper_schedule_write(&client->socket);
+    buffered_socket_schedule_write(&client->socket);
 }
 
 /**
@@ -116,10 +110,12 @@ static void
 ajp_client_release(struct ajp_client *client, bool reuse)
 {
     assert(client != NULL);
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_END);
 
-    socket_wrapper_abandon(&client->socket);
+    buffered_socket_abandon(&client->socket);
+    buffered_socket_destroy(&client->socket);
+
     p_lease_release(&client->lease_ref, reuse, client->pool);
 
     if (client->request.istream != NULL)
@@ -132,7 +128,7 @@ static void
 ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_BEGIN);
 
     pool_ref(client->pool);
@@ -153,7 +149,7 @@ static void
 ajp_client_abort_response_body(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_BODY);
 
     pool_ref(client->pool);
@@ -170,7 +166,7 @@ static void
 ajp_client_abort_response(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state != READ_END);
 
     switch (client->response.read_state) {
@@ -214,10 +210,7 @@ istream_ajp_read(struct istream *istream)
     if (client->response.in_handler)
         return;
 
-    if (fifo_buffer_full(client->response.input))
-        ajp_consume_input(client);
-    else
-        ajp_try_read(client);
+    buffered_socket_read(&client->socket);
 }
 
 static void
@@ -311,7 +304,7 @@ ajp_consume_send_headers(struct ajp_client *client,
                                           headers, body);
     client->response.in_handler = false;
 
-    return socket_wrapper_valid(&client->socket);
+    return buffered_socket_connected(&client->socket);
 }
 
 /**
@@ -334,7 +327,7 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
         return false;
 
     case AJP_CODE_SEND_BODY_CHUNK:
-        assert(0); /* already handled in ajp_consume_input() */
+        assert(0); /* already handled in ajp_client_feed() */
         return false;
 
     case AJP_CODE_SEND_HEADERS:
@@ -387,86 +380,84 @@ ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
 /**
  * Consume response body chunk data.
  *
- * @return true if the chunk has been consumed completely
+ * @return the number of bytes consumed
  */
-static bool
-ajp_consume_body_chunk(struct ajp_client *client)
+static size_t
+ajp_consume_body_chunk(struct ajp_client *client,
+                       const void *data, size_t length)
 {
     assert(client->response.read_state == READ_BODY);
     assert(client->response.chunk_length > 0);
-
-    size_t length;
-    const uint8_t *data = fifo_buffer_read(client->response.input, &length);
-    if (data == NULL)
-        return false;
+    assert(data != NULL);
+    assert(length > 0);
 
     if (length > client->response.chunk_length)
         length = client->response.chunk_length;
 
     size_t nbytes = istream_invoke_data(&client->response.body, data, length);
-    if (nbytes == 0)
-        return false;
+    if (nbytes > 0)
+        client->response.chunk_length -= nbytes;
 
-    fifo_buffer_consume(client->response.input, nbytes);
-    client->response.chunk_length -= nbytes;
-    return client->response.chunk_length == 0;
+    return nbytes;
 }
 
 /**
  * Discard junk data after a response body chunk.
  *
- * @return true if the junk has been consumed completely
+ * @return the number of bytes consumed
  */
-static bool
-ajp_consume_body_junk(struct ajp_client *client)
+static size_t
+ajp_consume_body_junk(struct ajp_client *client, size_t length)
 {
     assert(client->response.read_state == READ_BODY);
     assert(client->response.chunk_length == 0);
     assert(client->response.junk_length > 0);
-
-    size_t length;
-    const uint8_t *data = fifo_buffer_read(client->response.input, &length);
-    if (data == NULL)
-        return false;
+    assert(length > 0);
 
     if (length > client->response.junk_length)
         length = client->response.junk_length;
 
-    fifo_buffer_consume(client->response.input, length);
     client->response.junk_length -= length;
-    return client->response.junk_length == 0;
+    return length;
 }
 
 /**
  * Handle the remaining data in the input buffer.
  *
- * @return false if the buffer is full or if this object has been
- * destructed.
+ * @return the number of bytes consumed, or 0 if the connection has
+ * been closed
  */
-static void
-ajp_consume_input(struct ajp_client *client)
+static size_t
+ajp_client_feed(struct ajp_client *client,
+                const uint8_t *const data0, const size_t length)
 {
     assert(client != NULL);
     assert(client->response.read_state == READ_BEGIN ||
            client->response.read_state == READ_BODY);
+    assert(data0 != NULL);
+    assert(length > 0);
 
-    while (true) {
+    const uint8_t *data = data0, *const end = data0 + length;
+
+    do {
         if (client->response.read_state == READ_BODY) {
             /* there is data left from the previous body chunk */
-            if (client->response.chunk_length > 0 &&
-                !ajp_consume_body_chunk(client))
-                return;
+            if (client->response.chunk_length > 0) {
+                data += ajp_consume_body_chunk(client, data, end - data);
+                if (data == end || client->response.chunk_length > 0)
+                    break;
+            }
 
-            if (client->response.junk_length > 0 &&
-                !ajp_consume_body_junk(client))
-                return;
+            if (client->response.junk_length > 0) {
+                data += ajp_consume_body_junk(client, end - data);
+                if (data == end || client->response.junk_length > 0)
+                    break;
+            }
         }
 
-        size_t length;
-        const uint8_t *data = fifo_buffer_read(client->response.input, &length);
-        if (data == NULL || length < sizeof(struct ajp_header))
+        if (data + sizeof(struct ajp_header) + 1 > end)
             /* we need a full header */
-            return;
+            break;
 
         const struct ajp_header *header = (const struct ajp_header*)data;
         size_t header_length = ntohs(header->length);
@@ -476,12 +467,8 @@ ajp_consume_input(struct ajp_client *client)
                 g_error_new_literal(ajp_client_quark(), 0,
                                     "malformed AJP response packet");
             ajp_client_abort_response(client, error);
-            return;
+            return 0;
         }
-
-        if (length < sizeof(*header) + 1)
-            /* we need the prefix code */
-            return;
 
         ajp_code_t code = data[sizeof(*header)];
 
@@ -494,12 +481,12 @@ ajp_consume_input(struct ajp_client *client)
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "unexpected SEND_BODY_CHUNK packet from AJP server");
                 ajp_client_abort_response(client, error);
-                return;
+                return 0;
             }
 
-            if (length < sizeof(*header) + sizeof(*chunk))
+            if (data + sizeof(*header) + sizeof(*chunk) > end)
                 /* we need the chunk length */
-                return;
+                break;
 
             client->response.chunk_length = ntohs(chunk->length);
             if (sizeof(*chunk) + client->response.chunk_length > header_length) {
@@ -507,95 +494,38 @@ ajp_consume_input(struct ajp_client *client)
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "malformed AJP SEND_BODY_CHUNK packet");
                 ajp_client_abort_response(client, error);
-                return;
+                return 0;
             }
 
             client->response.junk_length = header_length - sizeof(*chunk) - client->response.chunk_length;
 
-            fifo_buffer_consume(client->response.input, sizeof(*header) + sizeof(*chunk));
+            data += sizeof(*header) + sizeof(*chunk);
             continue;
         }
 
-        if (length < sizeof(*header) + header_length) {
+        if (data + sizeof(*header) + header_length > end) {
             /* the packet is not complete yet */
 
-            if (fifo_buffer_full(client->response.input)) {
+            if (data == data0 && buffered_socket_full(&client->socket)) {
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "too large packet from AJP server");
                 ajp_client_abort_response(client, error);
+                return 0;
             }
 
-            return;
+            break;
         }
 
-        bool bret = ajp_consume_packet(client, code,
-                                       data + sizeof(*header) + 1,
-                                       header_length - 1);
-        if (!bret)
-            return;
+        if (!ajp_consume_packet(client, code,
+                                data + sizeof(*header) + 1,
+                                header_length - 1))
+            return 0;
 
-        fifo_buffer_consume(client->response.input,
-                            sizeof(*header) + header_length);
-    }
-}
+        data += sizeof(*header) + header_length;
+    } while (data != end);
 
-/**
- * Fill the input buffer.
- *
- * @return true if there is data in the buffer, false if it is empty
- * or if the connection was closed
- */
-static bool
-ajp_fill_buffer(struct ajp_client *client)
-{
-    ssize_t nbytes =
-        socket_wrapper_read_to_buffer(&client->socket, client->response.input,
-                                      INT_MAX);
-    assert(nbytes != -2);
-
-    if (nbytes == 0) {
-        GError *error =
-            g_error_new_literal(ajp_client_quark(), 0,
-                                "AJP server closed the connection");
-        ajp_client_abort_response(client, error);
-        return false;
-    }
-
-    if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            if (fifo_buffer_empty(client->response.input)) {
-                ajp_client_schedule_read(client);
-                return false;
-            } else
-                return true;
-        }
-
-        GError *error =
-            g_error_new(ajp_client_quark(), 0,
-                        "read error on AJP connection: %s", strerror(errno));
-        ajp_client_abort_response(client, error);
-        return false;
-    }
-
-    return true;
-}
-
-static void
-ajp_try_read(struct ajp_client *client)
-{
-    if (!ajp_fill_buffer(client))
-        return;
-
-    pool_ref(client->pool);
-
-    ajp_consume_input(client);
-
-    if (socket_wrapper_valid(&client->socket) &&
-        !fifo_buffer_full(client->response.input))
-        ajp_client_schedule_read(client);
-
-    pool_unref(client->pool);
+    return data - data0;
 }
 
 /*
@@ -609,12 +539,12 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
     struct ajp_client *client = ctx;
 
     assert(client != NULL);
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->request.istream != NULL);
     assert(data != NULL);
     assert(length > 0);
 
-    ssize_t nbytes = socket_wrapper_write(&client->socket, data, length);
+    ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
     if (likely(nbytes >= 0)) {
         ajp_client_schedule_write(client);
         return (size_t)nbytes;
@@ -640,13 +570,13 @@ ajp_request_stream_direct(istream_direct_t type, int fd, size_t max_length,
     struct ajp_client *client = ctx;
 
     assert(client != NULL);
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->request.istream != NULL);
 
-    ssize_t nbytes = socket_wrapper_write_from(&client->socket, fd, type,
-                                               max_length);
+    ssize_t nbytes = buffered_socket_write_from(&client->socket, fd, type,
+                                                max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!socket_wrapper_ready_for_writing(&client->socket)) {
+        if (!buffered_socket_ready_for_writing(&client->socket)) {
             ajp_client_schedule_write(client);
             return ISTREAM_RESULT_BLOCKING;
         }
@@ -654,8 +584,8 @@ ajp_request_stream_direct(istream_direct_t type, int fd, size_t max_length,
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = socket_wrapper_write_from(&client->socket, fd, type,
-                                           max_length);
+        nbytes = buffered_socket_write_from(&client->socket, fd, type,
+                                            max_length);
     }
 
     if (likely(nbytes > 0))
@@ -673,10 +603,8 @@ ajp_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    socket_wrapper_unschedule_write(&client->socket);
-
-    if (!fifo_buffer_full(client->response.input))
-        ajp_client_schedule_read(client);
+    buffered_socket_unschedule_write(&client->socket);
+    buffered_socket_read(&client->socket);
 }
 
 static void
@@ -709,6 +637,32 @@ static const struct istream_handler ajp_request_stream_handler = {
  *
  */
 
+static size_t
+ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
+{
+    struct ajp_client *client = ctx;
+
+    pool_ref(client->pool);
+    size_t nbytes = ajp_client_feed(client, buffer, size);
+    if (!buffered_socket_valid(&client->socket))
+        nbytes = 0;
+    pool_unref(client->pool);
+
+    return nbytes;
+}
+
+static bool
+ajp_client_socket_closed(void *ctx)
+{
+    struct ajp_client *client = ctx;
+
+    GError *error =
+        g_error_new_literal(ajp_client_quark(), 0,
+                            "AJP server closed the connection prematurely");
+    ajp_client_abort_response(client, error);
+    return false;
+}
+
 static bool
 ajp_client_socket_write(void *ctx)
 {
@@ -718,39 +672,25 @@ ajp_client_socket_write(void *ctx)
 
     istream_read(client->request.istream);
 
-    bool result = socket_wrapper_valid(&client->socket);
+    bool result = buffered_socket_connected(&client->socket);
     pool_unref(client->pool);
     return result;
 }
 
-static bool
-ajp_client_socket_read(void *ctx)
+static void
+ajp_client_socket_error(GError *error, void *ctx)
 {
     struct ajp_client *client = ctx;
 
-    pool_ref(client->pool);
-
-    ajp_try_read(client);
-
-    bool result = socket_wrapper_valid(&client->socket);
-    pool_unref(client->pool);
-    return result;
-}
-
-static bool
-ajp_client_socket_timeout(void *ctx)
-{
-    struct ajp_client *client = ctx;
-
-    GError *error = g_error_new_literal(ajp_client_quark(), 0, "timeout");
+    g_prefix_error(&error, "AJP connection failed: ");
     ajp_client_abort_response(client, error);
-    return false;
 }
 
-static const struct socket_handler ajp_client_socket_handler = {
-    .read = ajp_client_socket_read,
+static const struct buffered_socket_handler ajp_client_socket_handler = {
+    .data = ajp_client_socket_data,
+    .closed = ajp_client_socket_closed,
     .write = ajp_client_socket_write,
-    .timeout = ajp_client_socket_timeout,
+    .error = ajp_client_socket_error,
 };
 
 /*
@@ -820,9 +760,9 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     struct ajp_client *client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
 
-    socket_wrapper_init(&client->socket, pool, fd, fd_type,
-                        NULL, &ajp_client_timeout,
-                        &ajp_client_socket_handler, client);
+    buffered_socket_init(&client->socket, pool, fd, fd_type,
+                         &ajp_client_timeout, &ajp_client_timeout,
+                         &ajp_client_socket_handler, client);
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "ajp_client_lease");
@@ -953,9 +893,8 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
 
     client->response.read_state = READ_BEGIN;
     client->response.in_handler = false;
-    client->response.input = fifo_buffer_new(client->pool, 8192);
     client->response.headers = NULL;
 
-    ajp_client_schedule_read(client);
+    buffered_socket_schedule_write(&client->socket);
     istream_read(client->request.istream);
 }
