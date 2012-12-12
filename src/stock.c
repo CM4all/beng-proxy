@@ -35,6 +35,13 @@ struct stock {
     void *handler_ctx;
 
     /**
+     * This event is used to move the "retry waiting" code out of the
+     * current stack, to invoke the handler method in a safe
+     * environment.
+     */
+    struct event retry_event;
+
+    /**
      * This event is used to move the "empty" check out of the current
      * stack, to invoke the handler method in a safe environment.
      */
@@ -241,6 +248,25 @@ stock_retry_waiting(struct stock *stock)
     }
 }
 
+static void
+stock_retry_event_callback(gcc_unused int fd, gcc_unused short event,
+                           void *ctx)
+{
+    struct stock *stock = ctx;
+
+    stock_retry_waiting(stock);
+}
+
+static void
+stock_schedule_retry_waiting(struct stock *stock)
+{
+    static const struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
+
+    if (!list_empty(&stock->waiting) &&
+        stock->num_busy - stock->num_create < stock->limit)
+        evtimer_add(&stock->retry_event, &tv);
+}
+
 
 /*
  * clear after 60 seconds idle
@@ -325,6 +351,7 @@ stock_new(struct pool *pool, const struct stock_class *class,
     stock->handler = handler;
     stock->handler_ctx = handler_ctx;
 
+    evtimer_set(&stock->retry_event, stock_retry_event_callback, stock);
     evtimer_set(&stock->empty_event, stock_empty_event_callback, stock);
     evtimer_set(&stock->cleanup_event, stock_cleanup_event_callback, stock);
     evtimer_set(&stock->clear_event, stock_clear_event_callback, stock);
@@ -381,6 +408,7 @@ stock_free(struct stock *stock)
     /* must not call stock_free() when there are busy items left */
     assert(list_empty(&stock->busy));
 
+    evtimer_del(&stock->retry_event);
     evtimer_del(&stock->empty_event);
     evtimer_del(&stock->cleanup_event);
     evtimer_del(&stock->clear_event);
@@ -597,7 +625,7 @@ stock_item_failed(struct stock_item *item, GError *error)
     stock_item_free(stock, item);
     stock_schedule_check_empty(stock);
 
-    stock_retry_waiting(stock);
+    stock_schedule_retry_waiting(stock);
 }
 
 void
@@ -611,7 +639,7 @@ stock_item_aborted(struct stock_item *item)
     stock_item_free(stock, item);
     stock_schedule_check_empty(stock);
 
-    stock_retry_waiting(stock);
+    stock_schedule_retry_waiting(stock);
 }
 
 void
@@ -652,7 +680,7 @@ stock_put(struct stock_item *item, bool destroy)
         stock->class->release(stock->class_ctx, item);
     }
 
-    stock_retry_waiting(stock);
+    stock_schedule_retry_waiting(stock);
 }
 
 void

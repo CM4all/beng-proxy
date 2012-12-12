@@ -137,6 +137,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* release first item */
 
     stock_put(item, false);
+    event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 1 && num_fail == 0);
     assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
 
@@ -204,6 +205,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* return third item */
 
     stock_put(third, false);
+    event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 0);
     assert(got_item);
@@ -214,6 +216,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     got_item = false;
     last_item = NULL;
     stock_put(second, true);
+    event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
     assert(got_item);
