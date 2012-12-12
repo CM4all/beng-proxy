@@ -7,6 +7,7 @@
 #include "translate-client.h"
 #include "translate-request.h"
 #include "translate-response.h"
+#include "buffered_socket.h"
 #include "transformation.h"
 #include "widget-class.h"
 #include "please.h"
@@ -15,12 +16,10 @@
 #include "css_processor.h"
 #include "async.h"
 #include "uri-address.h"
-#include "gb-io.h"
 #include "strutil.h"
 #include "strmap.h"
 #include "stopwatch.h"
 #include "beng-proxy/translation.h"
-#include "pevent.h"
 #include "gerrno.h"
 
 #include <daemon/log.h>
@@ -34,7 +33,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <event.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -44,16 +42,17 @@
 #include <stdbool.h>
 #include <netdb.h>
 
-enum packet_reader_result {
-    PACKET_READER_EOF,
-    PACKET_READER_ERROR,
-    PACKET_READER_INCOMPLETE,
-    PACKET_READER_SUCCESS
+enum packet_reader_state {
+    PACKET_READER_HEADER,
+    PACKET_READER_PAYLOAD,
+    PACKET_READER_COMPLETE,
 };
 
 struct packet_reader {
+    enum packet_reader_state state;
+
     struct beng_translation_header header;
-    size_t header_position;
+
     char *payload;
     size_t payload_position;
 };
@@ -63,11 +62,8 @@ struct translate_client {
 
     struct stopwatch *stopwatch;
 
-    int fd;
+    struct buffered_socket socket;
     struct lease_ref lease_ref;
-
-    /** events for the socket */
-    struct event event;
 
     /** the marshalled translate request */
     struct growing_buffer_reader request;
@@ -112,6 +108,30 @@ struct translate_client {
     struct async_operation async;
 };
 
+static const struct timeval translate_read_timeout = {
+    .tv_sec = 60,
+    .tv_usec = 0,
+};
+
+static const struct timeval translate_write_timeout = {
+    .tv_sec = 10,
+    .tv_usec = 0,
+};
+
+static void
+translate_client_release_socket(struct translate_client *client, bool reuse)
+{
+    assert(client != NULL);
+    assert(buffered_socket_connected(&client->socket));
+
+    stopwatch_dump(client->stopwatch);
+
+    buffered_socket_abandon(&client->socket);
+    buffered_socket_destroy(&client->socket);
+
+    p_lease_release(&client->lease_ref, reuse, client->pool);
+}
+
 /**
  * Release resources held by this object: the event object, the socket
  * lease, and the pool reference.
@@ -121,10 +141,7 @@ translate_client_release(struct translate_client *client, bool reuse)
 {
     assert(client != NULL);
 
-    stopwatch_dump(client->stopwatch);
-
-    p_event_del(&client->event, client->pool);
-    p_lease_release(&client->lease_ref, reuse, client->pool);
+    translate_client_release_socket(client, reuse);
     pool_unref(client->pool);
 }
 
@@ -133,9 +150,11 @@ translate_client_abort(struct translate_client *client, GError *error)
 {
     stopwatch_event(client->stopwatch, "error");
 
+    translate_client_release_socket(client, false);
+
     async_operation_finished(&client->async);
     client->handler->error(error, client->handler_ctx);
-    translate_client_release(client, false);
+    pool_unref(client->pool);
 }
 
 static void
@@ -311,66 +330,71 @@ marshal_request(struct pool *pool, const struct translate_request *request,
 static void
 packet_reader_init(struct packet_reader *reader)
 {
-    reader->header_position = 0;
+    reader->state = PACKET_READER_HEADER;
 }
 
 /**
  * Read a packet from the socket.
  *
- * @return 0 on EOF, -1 on error, -2 when the packet is incomplete, 1 if the packet is complete
+ * @return the number of bytes consumed
  */
-static enum packet_reader_result
-packet_reader_read(struct pool *pool, struct packet_reader *reader, int fd)
+static size_t
+packet_reader_feed(struct pool *pool, struct packet_reader *reader,
+                   const uint8_t *data, size_t length)
 {
-    ssize_t nbytes;
+    assert(reader->state == PACKET_READER_HEADER ||
+           reader->state == PACKET_READER_PAYLOAD ||
+           reader->state == PACKET_READER_COMPLETE);
 
-    if (reader->header_position < sizeof(reader->header)) {
-        char *p = (char*)&reader->header;
+    /* discard the packet that was completed (and consumed) by the
+       previous call */
+    if (reader->state == PACKET_READER_COMPLETE)
+        reader->state = PACKET_READER_HEADER;
 
-        nbytes = recv(fd, p + reader->header_position,
-                      sizeof(reader->header) - reader->header_position,
-                      MSG_DONTWAIT);
-        if (nbytes < 0 && errno == EAGAIN)
-            return PACKET_READER_INCOMPLETE;
+    size_t consumed = 0;
 
-        if (nbytes <= 0)
-            return (int)nbytes;
+    if (reader->state == PACKET_READER_HEADER) {
+        if (length < sizeof(reader->header))
+            /* need more data */
+            return 0;
 
-        reader->header_position += (size_t)nbytes;
-        if (reader->header_position < sizeof(reader->header))
-            return PACKET_READER_INCOMPLETE;
-
-        reader->payload_position = 0;
+        memcpy(&reader->header, data, sizeof(reader->header));
 
         if (reader->header.length == 0) {
             reader->payload = NULL;
-            return PACKET_READER_SUCCESS;
+            reader->state = PACKET_READER_COMPLETE;
+            return sizeof(reader->header);
         }
 
+        consumed += sizeof(reader->header);
+        data += sizeof(reader->header);
+        length -= sizeof(reader->header);
+
+        reader->state = PACKET_READER_PAYLOAD;
+
+        reader->payload_position = 0;
         reader->payload = p_malloc(pool, reader->header.length + 1);
+        reader->payload[reader->header.length] = 0;
+
+        if (length == 0)
+            return consumed;
     }
+
+    assert(reader->state == PACKET_READER_PAYLOAD);
 
     assert(reader->payload_position < reader->header.length);
 
-    nbytes = recv(fd, reader->payload + reader->payload_position,
-                  reader->header.length - reader->payload_position,
-                  MSG_DONTWAIT);
-    if (nbytes == 0)
-        return PACKET_READER_EOF;
+    size_t nbytes = reader->header.length - reader->payload_position;
+    if (nbytes > length)
+        nbytes = length;
 
-    if (nbytes < 0) {
-        if (errno == EAGAIN)
-            return PACKET_READER_INCOMPLETE;
-        else
-            return PACKET_READER_ERROR;
-    }
+    memcpy(reader->payload + reader->payload_position, data, nbytes);
+    reader->payload_position += nbytes;
+    if (reader->payload_position == reader->header.length)
+        reader->state = PACKET_READER_COMPLETE;
 
-    reader->payload_position += (size_t)nbytes;
-    if (reader->payload_position < reader->header.length)
-        return PACKET_READER_INCOMPLETE;
-
-    reader->payload[reader->header.length] = 0;
-    return PACKET_READER_SUCCESS;
+    consumed += nbytes;
+    return consumed;
 }
 
 
@@ -676,9 +700,11 @@ translate_handle_packet(struct translate_client *client,
 
         finish_view(client);
 
+        translate_client_release_socket(client, true);
+
         async_operation_finished(&client->async);
         client->handler->response(&client->response, client->handler_ctx);
-        translate_client_release(client, true);
+        pool_unref(client->pool);
         return false;
 
     case TRANSLATE_BEGIN:
@@ -1695,122 +1721,117 @@ translate_handle_packet(struct translate_client *client,
     return false;
 }
 
-static void
-translate_try_read(struct translate_client *client, int fd)
+static size_t
+translate_client_feed(struct translate_client *client,
+                      const uint8_t *data, size_t length)
 {
-    GError *error = NULL;
-    bool bret;
-
-    while (true) {
-        switch (packet_reader_read(client->pool, &client->reader, fd)) {
-        case PACKET_READER_INCOMPLETE: {
-            static const struct timeval tv = {
-                .tv_sec = 60,
-                .tv_usec = 0,
-            };
-
-            p_event_add(&client->event, &tv, client->pool, "translate_event");
-            return;
-        }
-
-        case PACKET_READER_ERROR:
-            error = new_error_errno_msg("read error from translation server");
-            translate_client_abort(client, error);
-            return;
-
-        case PACKET_READER_EOF:
-            translate_client_error(client, "translation server aborted the connection");
-            return;
-
-        case PACKET_READER_SUCCESS:
-            break;
-        }
-
-        bret = translate_handle_packet(client,
-                                       client->reader.header.command,
-                                       client->reader.payload == NULL
-                                       ? "" : client->reader.payload,
-                                       client->reader.header.length);
-        if (!bret)
+    size_t consumed = 0;
+    while (consumed < length) {
+        size_t nbytes = packet_reader_feed(client->pool, &client->reader,
+                                           data + consumed, length - consumed);
+        consumed += nbytes;
+        if (client->reader.state != PACKET_READER_COMPLETE)
             break;
 
-        packet_reader_init(&client->reader);
-    }
-}
-
-static void
-translate_read_event_callback(int fd, short event, void *ctx)
-{
-    struct translate_client *client = ctx;
-
-    p_event_consumed(&client->event, client->pool);
-
-    if (event == EV_TIMEOUT) {
-        translate_client_error(client, "translation read timeout");
-        return;
+        if (!translate_handle_packet(client,
+                                     client->reader.header.command,
+                                     client->reader.payload == NULL
+                                     ? "" : client->reader.payload,
+                                     client->reader.header.length))
+            return 0;
     }
 
-    translate_try_read(client, fd);
+    return consumed;
 }
-
 
 /*
  * send requests
  *
  */
 
-static void
-translate_try_write(struct translate_client *client, int fd)
+static bool
+translate_try_write(struct translate_client *client)
 {
-    ssize_t nbytes;
-    static const struct timeval tv = {
-        .tv_sec = 10,
-        .tv_usec = 0,
-    };
+    size_t length;
+    const void *data = growing_buffer_reader_read(&client->request, &length);
+    assert(data != NULL);
 
-    nbytes = send_from_gb(fd, &client->request);
-    assert(nbytes != -2);
-
-    if (nbytes < 0) {
+    ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
+    if (nbytes < 0 && errno != EAGAIN) {
         GError *error =
             new_error_errno_msg("read write error to translation server");
         translate_client_abort(client, error);
-        return;
+        return false;
     }
 
-    if (nbytes == 0 && growing_buffer_reader_eof(&client->request)) {
-        /* the buffer is empty, i.e. the request has been sent -
-           start reading the response */
+    if (nbytes <= 0) {
+        buffered_socket_schedule_write(&client->socket);
+        return true;
+    }
+
+    growing_buffer_reader_consume(&client->request, nbytes);
+    if (growing_buffer_reader_eof(&client->request)) {
+        /* the buffer is empty, i.e. the request has been sent */
 
         stopwatch_event(client->stopwatch, "request");
 
-        packet_reader_init(&client->reader);
+        buffered_socket_unschedule_write(&client->socket);
 
-        p_event_del(&client->event, client->pool);
-        event_set(&client->event, fd, EV_READ|EV_TIMEOUT,
-                  translate_read_event_callback, client);
-        translate_try_read(client, fd);
-        return;
+        packet_reader_init(&client->reader);
+        return buffered_socket_read(&client->socket);
     }
 
-    p_event_add(&client->event, &tv, client->pool, "translate_event");
+    buffered_socket_schedule_write(&client->socket);
+    return true;
 }
 
-static void
-translate_write_event_callback(int fd, short event, void *ctx)
+
+/*
+ * buffered_socket handler
+ *
+ */
+
+static size_t
+translate_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct translate_client *client = ctx;
 
-    p_event_consumed(&client->event, client->pool);
-
-    if (event == EV_TIMEOUT) {
-        translate_client_error(client, "translation write timeout");
-        return;
-    }
-
-    translate_try_write(client, fd);
+    return translate_client_feed(client, buffer, size);
 }
 
+static bool
+translate_client_socket_closed(void *ctx)
+{
+    struct translate_client *client = ctx;
+
+    translate_client_error(client,
+                           "translation server closed the connection prematurely");
+    return false;
+}
+
+static bool
+translate_client_socket_write(void *ctx)
+{
+    struct translate_client *client = ctx;
+
+    return translate_try_write(client);
+}
+
+static void
+translate_client_socket_error(GError *error, void *ctx)
+{
+    struct translate_client *client = ctx;
+
+    g_prefix_error(&error, "Translation server connection failed: ");
+    translate_client_abort(client, error);
+}
+
+static const struct buffered_socket_handler translate_client_socket_handler = {
+    .data = translate_client_socket_data,
+    .closed = translate_client_socket_closed,
+    .write = translate_client_socket_write,
+    .error = translate_client_socket_error,
+};
 
 /*
  * async operation
@@ -1876,12 +1897,12 @@ translate(struct pool *pool, int fd,
     client->stopwatch = stopwatch_fd_new(pool, fd,
                                          request->uri != NULL ? request->uri
                                          : request->widget_type);
-    client->fd = fd;
+    buffered_socket_init(&client->socket, pool, fd, ISTREAM_SOCKET,
+                         &translate_read_timeout,
+                         &translate_write_timeout,
+                         &translate_client_socket_handler, client);
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "translate_lease");
-
-    event_set(&client->event, fd, EV_WRITE|EV_TIMEOUT,
-              translate_write_event_callback, client);
 
     growing_buffer_reader_init(&client->request, gb);
     client->handler = handler;
@@ -1892,5 +1913,5 @@ translate(struct pool *pool, int fd,
     async_ref_set(async_ref, &client->async);
 
     pool_ref(client->pool);
-    translate_try_write(client, fd);
+    translate_try_write(client);
 }

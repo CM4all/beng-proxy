@@ -1469,6 +1469,8 @@ test_format_http_date_SOURCES = test/format-http-date.c \
 	src/gmtime.c src/date.c
 
 test_request_translation_SOURCES = test/request-translation.c \
+	src/socket_wrapper.c src/buffered_socket.c \
+	src/fifo-buffer.c src/buffered_io.c src/direct.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/translate-client.c src/tstock.c src/growing-buffer.c src/gb-io.c \
 	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
