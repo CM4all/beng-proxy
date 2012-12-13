@@ -250,7 +250,7 @@ static const struct istream_class ajp_response_body = {
  */
 static bool
 ajp_consume_send_headers(struct ajp_client *client,
-                         const char *data, size_t length)
+                         const uint8_t *data, size_t length)
 {
     http_status_t status;
     unsigned num_headers;
@@ -266,7 +266,7 @@ ajp_consume_send_headers(struct ajp_client *client,
         return false;
     }
 
-    strref_set(&packet, data, length);
+    strref_set(&packet, (const char *)data, length);
     status = deserialize_uint16(&packet);
     deserialize_ajp_string(&packet);
     num_headers = deserialize_uint16(&packet);
@@ -319,7 +319,7 @@ ajp_consume_send_headers(struct ajp_client *client,
  */
 static bool
 ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
-                   const char *data, size_t length)
+                   const uint8_t *data, size_t length)
 {
     const struct ajp_get_body_chunk *chunk;
     GError *error;
@@ -396,7 +396,7 @@ ajp_consume_body_chunk(struct ajp_client *client)
     assert(client->response.chunk_length > 0);
 
     size_t length;
-    const char *data = fifo_buffer_read(client->response.input, &length);
+    const uint8_t *data = fifo_buffer_read(client->response.input, &length);
     if (data == NULL)
         return false;
 
@@ -425,7 +425,7 @@ ajp_consume_body_junk(struct ajp_client *client)
     assert(client->response.junk_length > 0);
 
     size_t length;
-    const char *data = fifo_buffer_read(client->response.input, &length);
+    const uint8_t *data = fifo_buffer_read(client->response.input, &length);
     if (data == NULL)
         return false;
 
@@ -463,7 +463,7 @@ ajp_consume_input(struct ajp_client *client)
         }
 
         size_t length;
-        const char *data = fifo_buffer_read(client->response.input, &length);
+        const uint8_t *data = fifo_buffer_read(client->response.input, &length);
         if (data == NULL || length < sizeof(struct ajp_header))
             /* we need a full header */
             return;
