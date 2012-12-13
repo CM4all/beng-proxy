@@ -513,14 +513,6 @@ ajp_consume_input(struct ajp_client *client)
             client->response.junk_length = header_length - sizeof(*chunk) - client->response.chunk_length;
 
             fifo_buffer_consume(client->response.input, sizeof(*header) + sizeof(*chunk));
-            if (client->response.chunk_length > 0 &&
-                !ajp_consume_body_chunk(client))
-                return;
-
-            if (client->response.junk_length > 0 &&
-                !ajp_consume_body_junk(client))
-                return;
-
             continue;
         }
 
