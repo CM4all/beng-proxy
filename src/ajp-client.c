@@ -133,6 +133,21 @@ ajp_client_schedule_write(struct ajp_client *client)
 }
 
 /**
+ * Release the AJP connection socket.
+ */
+static void
+ajp_client_release_socket(struct ajp_client *client, bool reuse)
+{
+    assert(client != NULL);
+    assert(buffered_socket_connected(&client->socket));
+    assert(client->response.read_state == READ_BODY ||
+           client->response.read_state == READ_END);
+
+    buffered_socket_abandon(&client->socket);
+    p_lease_release(&client->lease_ref, reuse, client->pool);
+}
+
+/**
  * Release resources held by this object: the event object, the socket
  * lease, the request body and the pool reference.
  */
@@ -140,13 +155,13 @@ static void
 ajp_client_release(struct ajp_client *client, bool reuse)
 {
     assert(client != NULL);
-    assert(buffered_socket_connected(&client->socket));
+    assert(buffered_socket_valid(&client->socket));
     assert(client->response.read_state == READ_END);
 
-    buffered_socket_abandon(&client->socket);
-    buffered_socket_destroy(&client->socket);
+    if (buffered_socket_connected(&client->socket))
+        ajp_client_release_socket(client, reuse);
 
-    p_lease_release(&client->lease_ref, reuse, client->pool);
+    buffered_socket_destroy(&client->socket);
 
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
@@ -776,15 +791,38 @@ ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
 }
 
 static bool
-ajp_client_socket_closed(gcc_unused size_t remaining, void *ctx)
+ajp_client_socket_closed(size_t remaining, void *ctx)
 {
     struct ajp_client *client = ctx;
+
+    if (remaining > 0 &&
+        /* only READ_BODY could have blocked */
+        client->response.read_state == READ_BODY &&
+        remaining >= client->response.chunk_length + client->response.junk_length) {
+        /* the rest of the response may already be in the input
+           buffer */
+        ajp_client_release_socket(client, false);
+        return true;
+    }
 
     GError *error =
         g_error_new_literal(ajp_client_quark(), 0,
                             "AJP server closed the connection prematurely");
     ajp_client_abort_response(client, error);
     return false;
+}
+
+static void
+ajp_client_socket_end(void *ctx)
+{
+    struct ajp_client *client = ctx;
+
+    assert(client->response.read_state == READ_BODY);
+
+    GError *error =
+        g_error_new_literal(ajp_client_quark(), 0,
+                            "AJP server closed the connection prematurely");
+    ajp_client_abort_response_body(client, error);
 }
 
 static bool
@@ -821,6 +859,7 @@ ajp_client_socket_error(GError *error, void *ctx)
 static const struct buffered_socket_handler ajp_client_socket_handler = {
     .data = ajp_client_socket_data,
     .closed = ajp_client_socket_closed,
+    .end = ajp_client_socket_end,
     .write = ajp_client_socket_write,
     .error = ajp_client_socket_error,
 };
