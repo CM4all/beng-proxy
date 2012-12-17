@@ -266,7 +266,8 @@ fcgi_client_parse_headers(struct fcgi_client *client,
  * destructed
  */
 static size_t
-fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
+fcgi_client_feed(struct fcgi_client *client,
+                 const uint8_t *data, size_t length)
 {
     if (client->response.stderr) {
         ssize_t nbytes = fwrite(data, 1, length, stderr);
@@ -279,7 +280,7 @@ fcgi_client_feed(struct fcgi_client *client, const char *data, size_t length)
         break;
 
     case READ_HEADERS:
-        return fcgi_client_parse_headers(client, data, length);
+        return fcgi_client_parse_headers(client, (const char *)data, length);
 
     case READ_BODY:
         return istream_invoke_data(&client->response.body, data, length);
