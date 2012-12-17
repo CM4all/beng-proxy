@@ -13,10 +13,6 @@
 #include <stdint.h>
 
 typedef enum {
-    AJP_PREFIX_FORWARD_REQUEST = 0x02,
-} ajp_prefix_code_t;
-
-typedef enum {
     AJP_METHOD_NULL = 0,
     AJP_METHOD_OPTIONS = 1,
     AJP_METHOD_GET = 2,

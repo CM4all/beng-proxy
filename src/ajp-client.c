@@ -790,7 +790,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     struct {
         uint8_t prefix_code, method;
     } prefix_and_method;
-    prefix_and_method.prefix_code = AJP_PREFIX_FORWARD_REQUEST;
+    prefix_and_method.prefix_code = AJP_CODE_FORWARD_REQUEST;
     prefix_and_method.method = (uint8_t)ajp_method;
 
     growing_buffer_write_buffer(gb, &prefix_and_method, sizeof(prefix_and_method));
