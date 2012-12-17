@@ -311,7 +311,7 @@ ajp_consume_send_headers(struct ajp_client *client,
  * @return false if the #ajp_client has been closed
  */
 static bool
-ajp_consume_packet(struct ajp_client *client, ajp_code_t code,
+ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
                    const uint8_t *data, size_t length)
 {
     const struct ajp_get_body_chunk *chunk;
@@ -470,7 +470,7 @@ ajp_client_feed(struct ajp_client *client,
             return 0;
         }
 
-        ajp_code_t code = data[sizeof(*header)];
+        const enum ajp_code code = data[sizeof(*header)];
 
         if (code == AJP_CODE_SEND_BODY_CHUNK) {
             const struct ajp_send_body_chunk *chunk =
@@ -773,7 +773,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     header->a = 0x12;
     header->b = 0x34;
 
-    ajp_method_t ajp_method = to_ajp_method(method);
+    const enum ajp_method ajp_method = to_ajp_method(method);
     if (ajp_method == AJP_METHOD_NULL) {
         /* invalid or unknown method */
         p_lease_release(&client->lease_ref, true, client->pool);

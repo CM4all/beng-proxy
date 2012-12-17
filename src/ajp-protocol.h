@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 
-typedef enum {
+enum ajp_method {
     AJP_METHOD_NULL = 0,
     AJP_METHOD_OPTIONS = 1,
     AJP_METHOD_GET = 2,
@@ -28,7 +28,7 @@ typedef enum {
     AJP_METHOD_MOVE = 12,
     AJP_METHOD_LOCK = 13,
     AJP_METHOD_UNLOCK = 14,
-} ajp_method_t;
+};
 
 enum ajp_header_code {
     AJP_HEADER_NONE,
@@ -53,7 +53,7 @@ enum ajp_attribute_code {
     AJP_ATTRIBUTE_QUERY_STRING = 0x05,
 };
 
-typedef enum {
+enum ajp_code {
     AJP_CODE_FORWARD_REQUEST = 2,
     AJP_CODE_SEND_BODY_CHUNK = 3,
     AJP_CODE_SEND_HEADERS = 4,
@@ -62,7 +62,7 @@ typedef enum {
     AJP_CODE_SHUTDOWN = 7,
     AJP_CODE_CPONG_REPLY = 9,
     AJP_CODE_CPING = 10
-} ajp_code_t;
+};
 
 struct ajp_header {
     uint8_t a, b;
@@ -80,7 +80,7 @@ struct ajp_get_body_chunk {
 } gcc_packed;
 
 gcc_pure
-static inline ajp_method_t
+static inline enum ajp_method
 to_ajp_method(http_method_t method)
 {
     switch (method) {
