@@ -8,6 +8,60 @@
 
 #include <string.h>
 
+enum ajp_method
+to_ajp_method(http_method_t method)
+{
+    switch (method) {
+    case HTTP_METHOD_HEAD:
+        return AJP_METHOD_HEAD;
+
+    case HTTP_METHOD_GET:
+        return AJP_METHOD_GET;
+
+    case HTTP_METHOD_POST:
+        return AJP_METHOD_POST;
+
+    case HTTP_METHOD_PUT:
+        return AJP_METHOD_PUT;
+
+    case HTTP_METHOD_DELETE:
+        return AJP_METHOD_DELETE;
+
+    case HTTP_METHOD_OPTIONS:
+        return AJP_METHOD_OPTIONS;
+
+    case HTTP_METHOD_TRACE:
+        return AJP_METHOD_TRACE;
+
+    case HTTP_METHOD_PROPFIND:
+        return AJP_METHOD_PROPFIND;
+
+    case HTTP_METHOD_PROPPATCH:
+        return AJP_METHOD_PROPPATCH;
+
+    case HTTP_METHOD_MKCOL:
+        return AJP_METHOD_MKCOL;
+
+    case HTTP_METHOD_COPY:
+        return AJP_METHOD_COPY;
+
+    case HTTP_METHOD_MOVE:
+        return AJP_METHOD_MOVE;
+
+    case HTTP_METHOD_LOCK:
+        return AJP_METHOD_LOCK;
+
+    case HTTP_METHOD_UNLOCK:
+        return AJP_METHOD_UNLOCK;
+
+    case HTTP_METHOD_NULL:
+    case HTTP_METHOD_INVALID:
+        break;
+    }
+
+    return AJP_METHOD_NULL;
+}
+
 static const struct {
     enum ajp_header_code code;
     const char *name;
