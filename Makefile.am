@@ -124,8 +124,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/direct.c src/direct.h \
 	src/dpool.c src/dpool.h \
 	src/drop.c src/drop.h \
-	src/duplex.c src/duplex.h \
-	src/event2.c src/event2.h \
 	src/expansible-buffer.c src/expansible-buffer.h \
 	src/expiry.h \
 	src/failure.c src/failure.h \
@@ -409,7 +407,6 @@ src_cm4all_beng_lb_SOURCES = \
 	src/growing-buffer.c \
 	src/istream-gb.c \
 	src/buffered_io.c \
-	src/event2.c \
 	src/fd_util.c \
 	src/fd-util.c \
 	$(STOPWATCH_SRC) \
@@ -879,7 +876,7 @@ test_t_expansible_buffer_LDADD = $(AM_LDADD) \
 
 T_ISTREAM_FILTER_SRC = \
 	src/direct.c \
-	src/buffered_io.c src/event2.c \
+	src/buffered_io.c \
 	src/pipe-stock.c src/stock.c \
 	src/fd_util.c \
 	src/growing-buffer.c src/fd-util.c
@@ -1017,7 +1014,6 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/fifo-buffer.c src/buffered_io.c src/growing-buffer.c \
 	src/header-parser.c \
 	src/strmap.c src/hashmap.c \
-	src/event2.c \
 	src/fd_util.c src/fd-util.c \
 	src/child.c \
 	src/strutil.c \
@@ -1054,7 +1050,7 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/gmtime.c \
 	src/tpool.c \
 	src/istream-socketpair.c src/istream-block.c src/istream-catch.c \
-	src/sink-null.c src/event2.c
+	src/sink-null.c
 test_t_http_server_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS) \
@@ -1069,7 +1065,7 @@ test_t_http_server_mirror_SOURCES = test/t-http-server-mirror.c \
 	src/socket_wrapper.c \
 	src/address.c \
 	src/fifo-buffer.c \
-	src/duplex.c \
+	src/duplex.c src/duplex.h \
 	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/header-writer.c \
@@ -1231,7 +1227,7 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/format.c src/strutil.c \
 	src/buffered_io.c src/fd_util.c src/fd-util.c \
 	src/uri-verify.c \
-	src/tpool.c src/event2.c
+	src/tpool.c
 test_t_http_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(GLIB_LIBS) \
@@ -1578,7 +1574,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/cgi-address.c \
 	src/regex.c \
 	src/istream-tee.c src/istream-null.c \
-	src/event2.c src/failure.c src/bulldog.c \
+	src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/address_list.c \
@@ -1621,7 +1617,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/cgi-address.c \
 	src/regex.c \
 	src/istream-tee.c src/istream-null.c \
-	src/event2.c src/failure.c src/bulldog.c \
+	src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/uri-extract.c \
@@ -1675,7 +1671,6 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/istream-memory.c \
 	src/istream-forward.c \
 	src/istream-ajp-body.c \
-	src/event2.c \
 	src/direct.c 
 test_run_ajp_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1720,8 +1715,7 @@ test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/fd-util.c \
 	src/direct.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
-	src/istream-string.c \
-	src/event2.c
+	src/istream-string.c
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1735,7 +1729,6 @@ test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/direct.c \
 	src/istream-cat.c src/istream-memory.c src/istream-null.c \
 	src/istream-string.c \
-	src/event2.c \
 	src/serialize.c \
 	src/growing-buffer.c src/sink-buffer.c \
 	src/strmap.c src/hashmap.c \
@@ -1766,7 +1759,6 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/growing-buffer.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/hashmap.c src/strmap.c \
-	src/event2.c \
 	src/tpool.c \
 	src/clock.c \
 	$(STOPWATCH_SRC)
@@ -1783,7 +1775,6 @@ test_t_memcached_client_SOURCES = test/t-memcached-client.c \
 	src/direct.c \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/fd-util.c src/fd_util.c \
-	src/event2.c \
 	src/istream-memory.c src/istream-null.c src/istream-cat.c
 test_t_memcached_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1861,8 +1852,7 @@ test_run_httpd_hello_SOURCES = test/run_httpd_hello.c \
 	src/istream-memory.c src/istream-string.c \
 	src/istream-null.c \
 	src/istream-gb.c \
-	src/tpool.c \
-	src/event2.c
+	src/tpool.c
 test_run_httpd_hello_LDADD = \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
