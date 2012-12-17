@@ -698,6 +698,7 @@ check_PROGRAMS = \
 	test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
+	test/t_ajp_client \
 	test/t-cookie-client \
 	test/t-cookie-server \
 	test/t_pool \
@@ -728,6 +729,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	$(srcdir)/test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
+	test/t_ajp_client \
 	test/t-processor \
 	test/t-memcached-client \
 	$(srcdir)/test/t-cookie-client.py test/t-cookie-client \
@@ -1590,6 +1592,26 @@ test_run_client_balancer_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
+
+test_t_ajp_client_SOURCES = test/t_ajp_client.c \
+	src/ajp-client.c src/ajp-serialize.c \
+	src/ajp-headers.c src/ajp-protocol.c \
+	src/socket_wrapper.c src/buffered_socket.c \
+	src/serialize.c \
+	src/uri-verify.c \
+	src/buffered_io.c src/fifo-buffer.c \
+	src/growing-buffer.c src/fd-util.c src/fd_util.c \
+	src/strmap.c src/hashmap.c \
+	src/strutil.c \
+	src/istream-gb.c \
+	src/istream-ajp-body.c \
+	src/direct.c 
+test_t_ajp_client_LDADD = $(AM_LDADD) \
+	libistream.a libpool.a libmemory.a \
+	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(GLIB_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/ajp-client.c src/ajp-serialize.c \
