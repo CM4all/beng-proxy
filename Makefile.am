@@ -1179,6 +1179,7 @@ test_t_http_server_fixed_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_client_SOURCES = test/t-http-client.c \
+	src/t_client.h \
 	src/http-client.c \
 	src/socket_wrapper.c \
 	$(STOPWATCH_SRC) \
