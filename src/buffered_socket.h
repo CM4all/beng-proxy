@@ -37,10 +37,13 @@ struct buffered_socket_handler {
      * method must close/abandon the socket.  There may still be data
      * in the input buffer, so don't give up on this object yet.
      *
+     * @param remaining the remaining number of bytes in the input
+     * buffer (may be used by the method to see if there's not enough
+     * / too much data in the buffer)
      * @return false if no more data shall be delivered to the
      * handler; the #end method will also not be invoked
      */
-    bool (*closed)(void *ctx);
+    bool (*closed)(size_t remaining, void *ctx);
 
     /**
      * The buffer has become empty after the socket has been closed by

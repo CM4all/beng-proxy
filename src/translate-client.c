@@ -1800,8 +1800,10 @@ translate_client_socket_data(const void *buffer, size_t size, void *ctx)
 }
 
 static bool
-translate_client_socket_closed(void *ctx)
+translate_client_socket_closed(gcc_unused size_t remaining, void *ctx)
 {
+    assert(remaining > 0);
+
     struct translate_client *client = ctx;
 
     translate_client_error(client,

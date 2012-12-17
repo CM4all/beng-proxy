@@ -101,11 +101,14 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
     if (nbytes == 0) {
         /* socket closed */
 
-        if (!s->handler->closed(s->handler_ctx))
+        const size_t remaining = fifo_buffer_available(buffer);
+
+        if (!s->handler->closed(remaining, s->handler_ctx))
             return false;
 
         assert(!buffered_socket_connected(s));
         assert(s->input == buffer);
+        assert(remaining == fifo_buffer_available(buffer));
         assert(s->handler->end != NULL);
 
         if (fifo_buffer_empty(buffer)) {

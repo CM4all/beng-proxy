@@ -652,7 +652,7 @@ ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
 }
 
 static bool
-ajp_client_socket_closed(void *ctx)
+ajp_client_socket_closed(gcc_unused size_t remaining, void *ctx)
 {
     struct ajp_client *client = ctx;
 
