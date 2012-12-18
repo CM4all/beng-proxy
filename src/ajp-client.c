@@ -273,7 +273,8 @@ ajp_consume_send_headers(struct ajp_client *client,
 
     if (num_headers > 0) {
         headers = strmap_new(client->pool, 17);
-        deserialize_ajp_headers(client->pool, headers, &packet, num_headers);
+        deserialize_ajp_response_headers(client->pool, headers,
+                                         &packet, num_headers);
     } else
         headers = NULL;
 

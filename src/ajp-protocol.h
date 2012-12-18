@@ -49,6 +49,22 @@ enum ajp_header_code {
     AJP_HEADER_USER_AGENT = 0xa00e,
 };
 
+enum ajp_response_header_code {
+    AJP_RESPONSE_HEADER_NONE,
+    AJP_RESPONSE_HEADER_CODE_START = 0xa000,
+    AJP_RESPONSE_HEADER_CONTENT_TYPE = 0xa001,
+    AJP_RESPONSE_HEADER_CONTENT_LANGUAGE = 0xa002,
+    AJP_RESPONSE_HEADER_CONTENT_LENGTH = 0xa003,
+    AJP_RESPONSE_HEADER_DATE = 0xa004,
+    AJP_RESPONSE_HEADER_LAST_MODIFIED = 0xa005,
+    AJP_RESPONSE_HEADER_LOCATION = 0xa006,
+    AJP_RESPONSE_HEADER_SET_COOKIE = 0xa007,
+    AJP_RESPONSE_HEADER_SET_COOKIE2 = 0xa008,
+    AJP_RESPONSE_HEADER_SERVLET_ENGINE = 0xa009,
+    AJP_RESPONSE_HEADER_STATUS = 0xa00a,
+    AJP_RESPONSE_HEADER_WWW_AUTHENTICATE = 0xa00b,
+};
+
 enum ajp_attribute_code {
     AJP_ATTRIBUTE_QUERY_STRING = 0x05,
 };
@@ -90,5 +106,13 @@ ajp_encode_header_name(const char *name);
 gcc_pure
 const char *
 ajp_decode_header_name(enum ajp_header_code code);
+
+gcc_pure
+enum ajp_response_header_code
+ajp_encode_response_header_name(const char *name);
+
+gcc_pure
+const char *
+ajp_decode_response_header_name(enum ajp_response_header_code code);
 
 #endif

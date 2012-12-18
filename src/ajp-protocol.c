@@ -102,3 +102,43 @@ ajp_decode_header_name(enum ajp_header_code code)
 
     return NULL;
 }
+
+static const struct {
+    enum ajp_response_header_code code;
+    const char *name;
+} response_header_map[] = {
+    { AJP_RESPONSE_HEADER_CONTENT_TYPE, "content-type" },
+    { AJP_RESPONSE_HEADER_CONTENT_LANGUAGE, "content-language" },
+    { AJP_RESPONSE_HEADER_CONTENT_LENGTH, "content-length" },
+    { AJP_RESPONSE_HEADER_DATE, "date" },
+    { AJP_RESPONSE_HEADER_LAST_MODIFIED, "last-modified" },
+    { AJP_RESPONSE_HEADER_LOCATION, "location" },
+    { AJP_RESPONSE_HEADER_SET_COOKIE, "set-cookie" },
+    { AJP_RESPONSE_HEADER_SET_COOKIE2, "set-cookie2" },
+    { AJP_RESPONSE_HEADER_SERVLET_ENGINE, "servlet-engine" },
+    { AJP_RESPONSE_HEADER_STATUS, "status" },
+    { AJP_RESPONSE_HEADER_WWW_AUTHENTICATE, "www-authenticate" },
+    { AJP_RESPONSE_HEADER_NONE, NULL },
+};
+
+enum ajp_response_header_code
+ajp_encode_response_header_name(const char *name)
+{
+    for (unsigned i = 0;
+         response_header_map[i].code != AJP_RESPONSE_HEADER_NONE; ++i)
+        if (strcmp(response_header_map[i].name, name) == 0)
+            return response_header_map[i].code;
+
+    return AJP_RESPONSE_HEADER_NONE;
+}
+
+const char *
+ajp_decode_response_header_name(enum ajp_response_header_code code)
+{
+    for (unsigned i = 0;
+         response_header_map[i].code != AJP_RESPONSE_HEADER_NONE; ++i)
+        if (response_header_map[i].code == code)
+            return response_header_map[i].name;
+
+    return NULL;
+}

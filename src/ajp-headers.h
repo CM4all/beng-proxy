@@ -24,4 +24,8 @@ void
 deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
                         struct strref *input, unsigned num_headers);
 
+void
+deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
+                                 struct strref *input, unsigned num_headers);
+
 #endif

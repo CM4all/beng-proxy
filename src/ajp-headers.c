@@ -84,3 +84,40 @@ deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
         strmap_add(headers, lname, value);
     }
 }
+
+void
+deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
+                                 struct strref *input, unsigned num_headers)
+{
+    while (num_headers-- > 0) {
+        unsigned length = deserialize_uint16(input);
+        const char *name, *value;
+        char *lname;
+
+        if (strref_is_null(input))
+            break;
+
+        if (length >= AJP_RESPONSE_HEADER_CODE_START) {
+            name = ajp_decode_response_header_name(length);
+            if (name == NULL) {
+                /* unknown - ignore it, it's the best we can do now */
+                deserialize_ajp_string(input);
+                continue;
+            }
+        } else {
+            name = input->data;
+            strref_skip(input, length + 1);
+        }
+
+        value = deserialize_ajp_string(input);
+        if (value == NULL)
+            break;
+
+        assert(name != NULL);
+
+        lname = p_strdup(pool, name);
+        str_to_lower(lname);
+
+        strmap_add(headers, lname, value);
+    }
+}
