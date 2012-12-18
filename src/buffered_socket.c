@@ -297,6 +297,15 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
 }
 
 bool
+buffered_socket_empty(const struct buffered_socket *s)
+{
+    assert(s != NULL);
+    assert(!s->ended);
+
+    return s->input == NULL || fifo_buffer_empty(s->input);
+}
+
+bool
 buffered_socket_full(const struct buffered_socket *s)
 {
     return buffered_socket_input_full(s);

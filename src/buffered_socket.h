@@ -194,6 +194,13 @@ buffered_socket_valid(const struct buffered_socket *s)
 }
 
 /**
+ * Is the input buffer empty?
+ */
+gcc_pure
+bool
+buffered_socket_empty(const struct buffered_socket *s);
+
+/**
  * Is the input buffer full?
  */
 gcc_pure
