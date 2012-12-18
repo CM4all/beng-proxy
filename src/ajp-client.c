@@ -304,7 +304,7 @@ ajp_consume_send_headers(struct ajp_client *client,
                                           headers, body);
     client->response.in_handler = false;
 
-    return buffered_socket_connected(&client->socket);
+    return buffered_socket_valid(&client->socket);
 }
 
 /**
