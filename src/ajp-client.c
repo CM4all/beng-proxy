@@ -29,6 +29,7 @@
 
 #include <netinet/in.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -79,6 +80,11 @@ struct ajp_client {
         struct strmap *headers;
         struct istream body;
         size_t chunk_length, junk_length;
+
+        /**
+         * The remaining response body, -1 if unknown.
+         */
+        off_t remaining;
     } response;
 };
 
@@ -207,6 +213,25 @@ istream_to_ajp(struct istream *istream)
     return (struct ajp_client *)(((char*)istream) - offsetof(struct ajp_client, response.body));
 }
 
+static off_t
+istream_ajp_available(struct istream *istream, bool partial)
+{
+    struct ajp_client *client = istream_to_ajp(istream);
+
+    assert(client->response.read_state == READ_BODY);
+
+    if (client->response.remaining >= 0)
+        /* the Content-Length was announced by the AJP server */
+        return client->response.remaining;
+
+    if (partial)
+        /* we only know how much is left in the current chunk */
+        return client->response.chunk_length;
+
+    /* no clue */
+    return -1;
+}
+
 static void
 istream_ajp_read(struct istream *istream)
 {
@@ -234,7 +259,7 @@ istream_ajp_close(struct istream *istream)
 }
 
 static const struct istream_class ajp_response_body = {
-    /* XXX .available */
+    .available = istream_ajp_available,
     .read = istream_ajp_read,
     .close = istream_ajp_close,
 };
@@ -294,6 +319,20 @@ ajp_consume_send_headers(struct ajp_client *client,
         return false;
     }
 
+    const char *content_length = strmap_remove_checked(headers, "content-length");
+    if (content_length != NULL) {
+        char *endptr;
+        client->response.remaining = strtoul(content_length, &endptr, 10);
+        if (endptr == content_length || *endptr != 0) {
+            GError *error =
+                g_error_new_literal(ajp_client_quark(), 0,
+                                    "Malformed Content-Length from AJP server");
+            ajp_client_abort_response_headers(client, error);
+            return false;
+        }
+    } else
+        client->response.remaining = -1;
+
     if (http_status_is_empty(status)) {
         body = NULL;
         client->response.read_state = READ_END;
@@ -343,6 +382,13 @@ ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
 
     case AJP_CODE_END_RESPONSE:
         if (client->response.read_state == READ_BODY) {
+            if (client->response.remaining > 0) {
+                error = g_error_new_literal(ajp_client_quark(), 0,
+                                            "premature end of response AJP server");
+                ajp_client_abort_response(client, error);
+                return false;
+            }
+
             client->response.read_state = READ_END;
             ajp_client_release(client, true);
             istream_deinit_eof(&client->response.body);
@@ -403,8 +449,10 @@ ajp_consume_body_chunk(struct ajp_client *client,
         length = client->response.chunk_length;
 
     size_t nbytes = istream_invoke_data(&client->response.body, data, length);
-    if (nbytes > 0)
+    if (nbytes > 0) {
         client->response.chunk_length -= nbytes;
+        client->response.remaining -= nbytes;
+    }
 
     return nbytes;
 }
@@ -517,6 +565,15 @@ ajp_client_feed(struct ajp_client *client,
                                         "malformed AJP SEND_BODY_CHUNK packet");
                 ajp_client_abort_response(client, error);
                 return false;
+            }
+
+            if (client->response.remaining >= 0 &&
+                (off_t)client->response.chunk_length > client->response.remaining) {
+                GError *error =
+                    g_error_new_literal(ajp_client_quark(), 0,
+                                        "excess chunk length in AJP SEND_BODY_CHUNK packet");
+                ajp_client_abort_response(client, error);
+                return 0;
             }
 
             client->response.junk_length = header_length - sizeof(*chunk) - client->response.chunk_length;
