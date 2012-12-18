@@ -459,7 +459,8 @@ test_close_request_body_fail(struct pool *pool, struct context *c)
     struct istream *delayed = istream_delayed_new(pool);
     struct istream *request_body =
         istream_cat_new(pool,
-                        istream_head_new(pool, istream_zero_new(pool), 8192),
+                        istream_head_new(pool, istream_zero_new(pool),
+                                         8192, true),
                         delayed,
                         NULL);
 
@@ -500,7 +501,8 @@ test_data_blocking(struct pool *pool, struct context *c)
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", NULL,
-                        istream_head_new(pool, istream_zero_new(pool), 65536),
+                        istream_head_new(pool, istream_zero_new(pool),
+                                         65536, false),
                         false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);
@@ -548,7 +550,8 @@ test_data_blocking2(struct pool *pool, struct context *c)
     c->fd = connect_mirror();
     http_client_request(pool, c->fd, ISTREAM_SOCKET, &my_lease, c,
                         HTTP_METHOD_GET, "/foo", request_headers,
-                        istream_head_new(pool, istream_zero_new(pool), 256),
+                        istream_head_new(pool, istream_zero_new(pool),
+                                         256, false),
                         false,
                         &my_response_handler, c, &c->async_ref);
     pool_unref(pool);

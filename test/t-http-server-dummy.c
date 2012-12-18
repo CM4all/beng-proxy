@@ -21,7 +21,7 @@ my_request(struct http_server_request *request, void *ctx,
     struct istream *body =
         istream_head_new(request->pool,
                          istream_zero_new(request->pool),
-                         256);
+                         256, false);
     body = istream_byte_new(request->pool, body);
 
     http_server_response(request, HTTP_STATUS_OK, NULL, body);

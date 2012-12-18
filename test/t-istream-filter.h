@@ -321,7 +321,8 @@ test_fail_1byte(struct pool *pool)
     GError *error = g_error_new_literal(test_quark(), 0, "test_fail");
     istream = create_test(pool,
                           istream_cat_new(pool,
-                                          istream_head_new(pool, create_input(pool), 1),
+                                          istream_head_new(pool, create_input(pool),
+                                                           1, false),
                                           istream_fail_new(pool, error),
                                           NULL));
     run_istream(pool, istream, false);
@@ -426,7 +427,7 @@ test_abort_1byte(struct pool *pool)
     istream = istream_head_new(pool,
                                create_test(pool,
                                            create_input(pool)),
-                               1);
+                               1, false);
     run_istream(pool, istream, false);
 }
 

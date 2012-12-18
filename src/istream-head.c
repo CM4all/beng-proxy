@@ -13,6 +13,7 @@ struct istream_head {
     struct istream output;
     struct istream *input;
     off_t rest;
+    bool authoritative;
 };
 
 
@@ -104,6 +105,12 @@ static off_t
 istream_head_available(gcc_unused struct istream *istream, bool partial)
 {
     struct istream_head *head = istream_to_head(istream);
+    if (head->authoritative) {
+        assert(istream_available(head->input, partial) < 0 ||
+               istream_available(head->input, partial) >= (off_t)head->rest);
+        return head->rest;
+    }
+
     off_t available = istream_available(head->input, partial);
 
     if (available > (off_t)head->rest)
@@ -167,7 +174,8 @@ static const struct istream_class istream_head = {
  */
 
 struct istream *
-istream_head_new(struct pool *pool, struct istream *input, size_t size)
+istream_head_new(struct pool *pool, struct istream *input,
+                 size_t size, bool authoritative)
 {
     struct istream_head *head = istream_new_macro(pool, head);
 
@@ -179,6 +187,7 @@ istream_head_new(struct pool *pool, struct istream *input, size_t size)
                            0);
 
     head->rest = size;
+    head->authoritative = authoritative;
 
     return istream_struct_cast(&head->output);
 }

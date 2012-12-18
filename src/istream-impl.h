@@ -133,8 +133,12 @@ istream_four_new(struct pool *pool, struct istream *input);
 struct istream *
 istream_trace_new(struct pool *pool, struct istream *input);
 
+/**
+ * @param authoritative is the specified size authoritative?
+ */
 struct istream *
-istream_head_new(struct pool *pool, struct istream *input, size_t size);
+istream_head_new(struct pool *pool, struct istream *input, size_t size,
+                 bool authoritative);
 
 /**
  * Create two new streams fed from one input.
