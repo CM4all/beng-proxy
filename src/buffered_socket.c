@@ -30,6 +30,16 @@ buffered_socket_input_full(const struct buffered_socket *s)
     return s->input != NULL && fifo_buffer_full(s->input);
 }
 
+void
+buffered_socket_consumed(struct buffered_socket *s, size_t nbytes)
+{
+    assert(s != NULL);
+    assert(!s->ended);
+    assert(s->input != NULL);
+
+    fifo_buffer_consume(s->input, nbytes);
+}
+
 static bool
 buffered_socket_submit_from_buffer(struct buffered_socket *s)
 {
@@ -45,25 +55,26 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
 
     pool_ref(s->base.pool);
 
-    size_t consumed = s->handler->data(data, length, s->handler_ctx);
-    assert(consumed == 0 || buffered_socket_valid(s));
+    bool result = s->handler->data(data, length, s->handler_ctx);
+    const bool valid = buffered_socket_valid(s);
+    assert(!result || valid);
 
-    bool result = consumed > 0 || buffered_socket_valid(s);
     pool_unref(s->base.pool);
 
-    if (consumed > 0) {
-        fifo_buffer_consume(s->input, consumed);
+    if (!valid)
+        /* the buffered_socket object has been destroyed by the
+           handler */
+        return false;
 
-        if (fifo_buffer_empty(s->input) && !buffered_socket_connected(s)) {
-            assert(s->handler->end != NULL);
+    if (fifo_buffer_empty(s->input) && !buffered_socket_connected(s)) {
+        assert(s->handler->end != NULL);
 
 #ifndef NDEBUG
-            s->ended = true;
+        s->ended = true;
 #endif
 
-            s->handler->end(s->handler_ctx);
-            result = false;
-        }
+        s->handler->end(s->handler_ctx);
+        result = false;
     }
 
     if (result && !buffered_socket_connected(s))

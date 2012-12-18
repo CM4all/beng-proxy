@@ -15,12 +15,15 @@ struct fifo_buffer;
 
 struct buffered_socket_handler {
     /**
-     * Data has been read from the socket.
+     * Data has been read from the socket into the input buffer.  Call
+     * buffered_socket_consumed() each time you consume data from the
+     * given buffer.
      *
-     * @return the number of bytes consumed, 0 if the socket has been
-     * closed (or if nothing could be used)
+     * @return true if more data shall be read from the socket, false
+     * when the socket has been closed or if the output is currently
+     * unable to consume data
      */
-    size_t (*data)(const void *buffer, size_t size, void *ctx);
+    bool (*data)(const void *buffer, size_t size, void *ctx);
 
     /**
      * The socket is ready for reading.  It is suggested to attempt a
@@ -206,6 +209,15 @@ buffered_socket_empty(const struct buffered_socket *s);
 gcc_pure
 bool
 buffered_socket_full(const struct buffered_socket *s);
+
+/**
+ * Mark the specified number of bytes of the input buffer as
+ * "consumed".  Call this in the data() method.  Note that this method
+ * does not invalidate the buffer passed to data().  It may be called
+ * repeatedly.
+ */
+void
+buffered_socket_consumed(struct buffered_socket *s, size_t nbytes);
 
 /**
  * Returns the istream_direct mask for splicing data into this socket.

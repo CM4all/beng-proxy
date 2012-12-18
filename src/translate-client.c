@@ -1721,7 +1721,7 @@ translate_handle_packet(struct translate_client *client,
     return false;
 }
 
-static size_t
+static bool
 translate_client_feed(struct translate_client *client,
                       const uint8_t *data, size_t length)
 {
@@ -1729,19 +1729,26 @@ translate_client_feed(struct translate_client *client,
     while (consumed < length) {
         size_t nbytes = packet_reader_feed(client->pool, &client->reader,
                                            data + consumed, length - consumed);
+        if (nbytes == 0)
+            /* need more data */
+            return true;
+
         consumed += nbytes;
+        buffered_socket_consumed(&client->socket, nbytes);
+
         if (client->reader.state != PACKET_READER_COMPLETE)
-            break;
+            /* need more data */
+            return true;
 
         if (!translate_handle_packet(client,
                                      client->reader.header.command,
                                      client->reader.payload == NULL
                                      ? "" : client->reader.payload,
                                      client->reader.header.length))
-            return 0;
+            return false;
     }
 
-    return consumed;
+    return true;
 }
 
 /*
@@ -1791,7 +1798,7 @@ translate_try_write(struct translate_client *client)
  *
  */
 
-static size_t
+static bool
 translate_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct translate_client *client = ctx;
