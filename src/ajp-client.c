@@ -64,6 +64,15 @@ struct ajp_client {
     struct {
         enum {
             READ_BEGIN,
+
+            /**
+             * The #AJP_CODE_SEND_HEADERS indicates that there is no
+             * response body.  Waiting for the #AJP_CODE_END_RESPONSE
+             * packet, and then we'll forward the response to the
+             * #http_response_handler.
+             */
+            READ_NO_BODY,
+
             READ_BODY,
             READ_END,
         } read_state;
@@ -76,8 +85,16 @@ struct ajp_client {
          */
         bool in_handler;
 
+        /**
+         * Only used when read_state==READ_NO_BODY.
+         */
         http_status_t status;
+
+        /**
+         * Only used when read_state==READ_NO_BODY.
+         */
         struct strmap *headers;
+
         struct istream body;
         size_t chunk_length, junk_length;
 
@@ -142,7 +159,8 @@ ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
     assert(buffered_socket_connected(&client->socket));
-    assert(client->response.read_state == READ_BEGIN);
+    assert(client->response.read_state == READ_BEGIN ||
+           client->response.read_state == READ_NO_BODY);
 
     pool_ref(client->pool);
 
@@ -184,6 +202,7 @@ ajp_client_abort_response(struct ajp_client *client, GError *error)
 
     switch (client->response.read_state) {
     case READ_BEGIN:
+    case READ_NO_BODY:
         ajp_client_abort_response_headers(client, error);
         break;
 
@@ -319,6 +338,13 @@ ajp_consume_send_headers(struct ajp_client *client,
         return false;
     }
 
+    if (http_status_is_empty(status)) {
+        client->response.read_state = READ_NO_BODY;
+        client->response.status = status;
+        client->response.headers = headers;
+        return true;
+    }
+
     const char *content_length = strmap_remove_checked(headers, "content-length");
     if (content_length != NULL) {
         char *endptr;
@@ -333,16 +359,11 @@ ajp_consume_send_headers(struct ajp_client *client,
     } else
         client->response.remaining = -1;
 
-    if (http_status_is_empty(status)) {
-        body = NULL;
-        client->response.read_state = READ_END;
-    } else {
-        istream_init(&client->response.body, &ajp_response_body, client->pool);
-        body = istream_struct_cast(&client->response.body);
-        client->response.read_state = READ_BODY;
-        client->response.chunk_length = 0;
-        client->response.junk_length = 0;
-    }
+    istream_init(&client->response.body, &ajp_response_body, client->pool);
+    body = istream_struct_cast(&client->response.body);
+    client->response.read_state = READ_BODY;
+    client->response.chunk_length = 0;
+    client->response.junk_length = 0;
 
     async_operation_finished(&client->request.async);
 
@@ -392,6 +413,14 @@ ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
             client->response.read_state = READ_END;
             ajp_client_release(client, true);
             istream_deinit_eof(&client->response.body);
+        } else if (client->response.read_state == READ_NO_BODY) {
+            client->response.read_state = READ_END;
+            ajp_client_release(client, buffered_socket_empty(&client->socket));
+
+            http_response_handler_invoke_response(&client->request.handler,
+                                                  client->response.status,
+                                                  client->response.headers,
+                                                  NULL);
         } else
             ajp_client_release(client, true);
 
@@ -490,6 +519,7 @@ ajp_client_feed(struct ajp_client *client,
 {
     assert(client != NULL);
     assert(client->response.read_state == READ_BEGIN ||
+           client->response.read_state == READ_NO_BODY ||
            client->response.read_state == READ_BODY);
     assert(data != NULL);
     assert(length > 0);
@@ -999,7 +1029,6 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
 
     client->response.read_state = READ_BEGIN;
     client->response.in_handler = false;
-    client->response.headers = NULL;
 
     buffered_socket_schedule_read_no_timeout(&client->socket);
     istream_read(client->request.istream);
