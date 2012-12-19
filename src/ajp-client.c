@@ -48,6 +48,13 @@ struct ajp_client {
         /** an istream_ajp_body */
         struct istream *ajp_body;
 
+        /**
+         * This flag is set when the request istream has submitted
+         * data.  It is used to check whether the request istream is
+         * unavailable, to unschedule the socket write event.
+         */
+        bool got_data;
+
         struct http_response_handler_ref handler;
         struct async_operation async;
     } request;
@@ -565,6 +572,8 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
     assert(data != NULL);
     assert(length > 0);
 
+    client->request.got_data = true;
+
     ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
     if (likely(nbytes >= 0)) {
         ajp_client_schedule_write(client);
@@ -594,6 +603,8 @@ ajp_request_stream_direct(istream_direct_t type, int fd, size_t max_length,
     assert(buffered_socket_connected(&client->socket));
     assert(client->request.istream != NULL);
 
+    client->request.got_data = true;
+
     ssize_t nbytes = buffered_socket_write_from(&client->socket, fd, type,
                                                 max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
@@ -611,6 +622,10 @@ ajp_request_stream_direct(istream_direct_t type, int fd, size_t max_length,
 
     if (likely(nbytes > 0))
         ajp_client_schedule_write(client);
+    else if (nbytes < 0 && errno == EAGAIN) {
+        client->request.got_data = false;
+        buffered_socket_unschedule_write(&client->socket);
+    }
 
     return nbytes;
 }
@@ -691,9 +706,17 @@ ajp_client_socket_write(void *ctx)
 
     pool_ref(client->pool);
 
+    client->request.got_data = false;
     istream_read(client->request.istream);
 
     bool result = buffered_socket_connected(&client->socket);
+    if (result && client->request.istream != NULL) {
+        if (client->request.got_data)
+            ajp_client_schedule_write(client);
+        else
+            buffered_socket_unschedule_write(&client->socket);
+    }
+
     pool_unref(client->pool);
     return result;
 }
@@ -916,6 +939,5 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     client->response.in_handler = false;
     client->response.headers = NULL;
 
-    buffered_socket_schedule_write(&client->socket);
     istream_read(client->request.istream);
 }
