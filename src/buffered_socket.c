@@ -157,6 +157,7 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
 static bool
 buffered_socket_try_read2(struct buffered_socket *s)
 {
+    assert(buffered_socket_valid(s));
     assert(!s->destroyed);
     assert(!s->ended);
     assert(s->reading);
@@ -204,7 +205,7 @@ buffered_socket_try_read2(struct buffered_socket *s)
 static bool
 buffered_socket_try_read(struct buffered_socket *s)
 {
-    assert(buffered_socket_connected(s));
+    assert(buffered_socket_valid(s));
     assert(!s->destroyed);
     assert(!s->ended);
     assert(!s->reading);
