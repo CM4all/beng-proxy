@@ -922,7 +922,8 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     }
 
     /* Content-Length */
-    ++num_headers;
+    if (body != NULL)
+        ++num_headers;
 
     serialize_ajp_integer(gb, num_headers);
     if (headers != NULL)
@@ -951,10 +952,12 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
             requested = 1024;
     }
 
-    char buffer[32];
-    format_uint64(buffer, (uint64_t)available);
-    serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
-    serialize_ajp_string(gb, buffer);
+    if (body != NULL) {
+        char buffer[32];
+        format_uint64(buffer, (uint64_t)available);
+        serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
+        serialize_ajp_string(gb, buffer);
+    }
 
     /* attributes */
 
