@@ -998,5 +998,6 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     client->response.in_handler = false;
     client->response.headers = NULL;
 
+    buffered_socket_schedule_read_no_timeout(&client->socket);
     istream_read(client->request.istream);
 }
