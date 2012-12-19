@@ -1,6 +1,7 @@
 cm4all-beng-proxy (3.0.5) unstable; urgency=low
 
-  * 
+  * translate-client: reduce number of system calls (optimization)
+  * http-client: release the socket earlier for reusal
 
  --   
 
