@@ -106,7 +106,8 @@ istream_head_available(gcc_unused struct istream *istream, bool partial)
 {
     struct istream_head *head = istream_to_head(istream);
     if (head->authoritative) {
-        assert(istream_available(head->input, partial) < 0 ||
+        assert(partial ||
+               istream_available(head->input, partial) < 0 ||
                istream_available(head->input, partial) >= (off_t)head->rest);
         return head->rest;
     }
