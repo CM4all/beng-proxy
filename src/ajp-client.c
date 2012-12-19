@@ -78,6 +78,13 @@ struct ajp_client {
         } read_state;
 
         /**
+         * This flag is true in HEAD requests.  HEAD responses may
+         * contain a Content-Length header, but no response body will
+         * follow (RFC 2616 4.3).
+         */
+        bool no_body;
+
+        /**
          * This flag is true if ajp_consume_send_headers() is
          * currently calling the HTTP response handler.  During this
          * period, istream_ajp_read() does nothing, to prevent
@@ -353,7 +360,7 @@ ajp_consume_send_headers(struct ajp_client *client,
         return false;
     }
 
-    if (http_status_is_empty(status)) {
+    if (client->response.no_body || http_status_is_empty(status)) {
         client->response.read_state = READ_NO_BODY;
         client->response.status = status;
         client->response.headers = headers;
@@ -1067,6 +1074,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     /* XXX append request body */
 
     client->response.read_state = READ_BEGIN;
+    client->response.no_body = http_method_is_empty(method);
     client->response.in_handler = false;
 
     buffered_socket_schedule_read_no_timeout(&client->socket);

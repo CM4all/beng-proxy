@@ -6,6 +6,7 @@ cm4all-beng-proxy (3.0.5) unstable; urgency=low
   * ajp-client: wait for "end" packet before delivering empty response
   * ajp-client: use the Content-Length response header
   * ajp-client: send Content-Length request header only if body present
+  * ajp-client: support HEAD requests
 
  --   
 
