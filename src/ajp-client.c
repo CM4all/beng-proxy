@@ -814,7 +814,8 @@ ajp_client_request_abort(struct async_operation *ao)
     
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(client->response.read_state == READ_BEGIN);
+    assert(client->response.read_state == READ_BEGIN ||
+           client->response.read_state == READ_NO_BODY);
 
     client->response.read_state = READ_END;
     ajp_client_release(client, false);
