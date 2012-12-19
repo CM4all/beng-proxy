@@ -842,7 +842,8 @@ ajp_client_socket_write(void *ctx)
     client->request.got_data = false;
     istream_read(client->request.istream);
 
-    bool result = buffered_socket_connected(&client->socket);
+    const bool result = buffered_socket_valid(&client->socket) &&
+        buffered_socket_connected(&client->socket);
     if (result && client->request.istream != NULL) {
         if (client->request.got_data)
             ajp_client_schedule_write(client);
