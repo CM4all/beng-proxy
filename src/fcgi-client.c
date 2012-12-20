@@ -71,6 +71,13 @@ struct fcgi_client {
         struct istream body;
 
         /**
+         * This flag is true in HEAD requests.  HEAD responses may
+         * contain a Content-Length header, but no response body will
+         * follow (RFC 2616 4.3).
+         */
+        bool no_body;
+
+        /**
          * Is the FastCGI application currently sending a STDERR
          * packet?
          */
@@ -355,7 +362,8 @@ fcgi_client_consume_input(struct fcgi_client *client)
                 }
 
                 struct istream *body;
-                if (!http_status_is_empty(status)) {
+                if (!http_status_is_empty(status) &&
+                    !client->response.no_body) {
                     fcgi_client_response_body_init(client);
                     body = istream_struct_cast(&client->response.body);
                 } else {
@@ -822,6 +830,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     client->response.read_state = READ_HEADERS;
     client->response.headers = strmap_new(client->caller_pool, 17);
+    client->response.no_body = http_method_is_empty(method);
     client->input = fifo_buffer_new(pool, 4096);
     client->content_length = 0;
     client->skip_length = 0;
