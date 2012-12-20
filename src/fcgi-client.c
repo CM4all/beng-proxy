@@ -142,6 +142,9 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
     if (socket_wrapper_valid(&client->socket))
         fcgi_client_release_socket(client, reuse);
 
+    /* mark the fcgi_client object as "invalid" */
+    client->input = NULL;
+
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
@@ -415,15 +418,19 @@ fcgi_client_consume_input(struct fcgi_client *client)
 
                 pool_unref(caller_pool);
 
-                if (body == NULL)
+                if (body == NULL) {
                     /* XXX when there is no response body, we cannot
                        finish reading the response here - we would
                        have to do that in background.  This is
                        complicated to implement, and until that is
                        done, we just bail out */
                     fcgi_client_release(client, false);
+                    return false;
+                }
 
-                return false;
+                if (client->input == NULL)
+                    /* response body was closed */
+                    return false;
             }
 
             if (client->content_length > 0)
