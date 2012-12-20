@@ -1,3 +1,4 @@
+#include "tio.h"
 #include "t_client.h"
 #include "ajp-client.h"
 #include "ajp-protocol.h"
@@ -69,45 +70,6 @@ struct ajp_request {
     size_t length, requested, received;
 };
 
-static void
-read_full(void *_p, size_t length)
-{
-    uint8_t *p = _p, *const end = p + length;
-
-    while (p < end) {
-        ssize_t nbytes = recv(0, p, length, MSG_WAITALL);
-        if (nbytes <= 0)
-            exit(EXIT_FAILURE);
-        p += nbytes;
-    }
-}
-
-static uint8_t
-read_byte(size_t *remaining_r)
-{
-    uint8_t value;
-
-    if (*remaining_r < sizeof(value))
-        exit(EXIT_FAILURE);
-
-    read_full(&value, sizeof(value));
-    (*remaining_r) -= sizeof(value);
-    return value;
-}
-
-static uint16_t
-read_short(size_t *remaining_r)
-{
-    uint16_t value;
-
-    if (*remaining_r < sizeof(value))
-        exit(EXIT_FAILURE);
-
-    read_full(&value, sizeof(value));
-    (*remaining_r) -= sizeof(value);
-    return ntohs(value);
-}
-
 static char *
 read_string_n(struct pool *pool, size_t length, size_t *remaining_r)
 {
@@ -142,45 +104,6 @@ read_ajp_header(struct ajp_header *header)
 }
 
 static void
-discard(size_t length)
-{
-    while (length > 0) {
-        uint8_t buffer[1024];
-        size_t nbytes = length;
-        if (nbytes > sizeof(buffer))
-            nbytes = sizeof(buffer);
-        read_full(buffer, nbytes);
-        length -= nbytes;
-    }
-}
-
-static void
-write_full(const void *_p, size_t length)
-{
-    const uint8_t *p = _p, *const end = p + length;
-
-    while (p < end) {
-        ssize_t nbytes = send(0, p, length, MSG_NOSIGNAL);
-        if (nbytes <= 0)
-            exit(EXIT_FAILURE);
-        p += nbytes;
-    }
-}
-
-static void
-write_byte(const uint8_t value)
-{
-    write_full(&value, sizeof(value));
-}
-
-static void
-write_short(uint16_t value)
-{
-    const uint16_t buffer = htons(value);
-    write_full(&buffer, sizeof(buffer));
-}
-
-static void
 write_string(const char *value)
 {
     if (value != NULL) {
@@ -193,19 +116,6 @@ write_string(const char *value)
         write_byte(0);
     } else
         write_short(0xffff);
-}
-
-static void
-fill(size_t length)
-{
-    while (length > 0) {
-        static const uint8_t buffer[1024];
-        size_t nbytes = length;
-        if (nbytes > sizeof(buffer))
-            nbytes = sizeof(buffer);
-        write_full(buffer, nbytes);
-        length -= nbytes;
-    }
 }
 
 static void

@@ -1594,6 +1594,7 @@ test_run_client_balancer_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 
 test_t_ajp_client_SOURCES = test/t_ajp_client.c \
+	src/t_client.h src/tio.h \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \
 	src/socket_wrapper.c src/buffered_socket.c \
