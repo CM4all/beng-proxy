@@ -70,6 +70,8 @@ struct fcgi_client {
 
         struct istream body;
 
+        off_t available;
+
         /**
          * This flag is true in HEAD requests.  HEAD responses may
          * contain a Content-Length header, but no response body will
@@ -282,6 +284,8 @@ fcgi_client_feed(struct fcgi_client *client,
     }
 
     switch (client->response.read_state) {
+        size_t consumed;
+
     case READ_END:
         assert(false);
         break;
@@ -290,7 +294,23 @@ fcgi_client_feed(struct fcgi_client *client,
         return fcgi_client_parse_headers(client, (const char *)data, length);
 
     case READ_BODY:
-        return istream_invoke_data(&client->response.body, data, length);
+        if (client->response.available == 0)
+            /* discard following data */
+            /* TODO: emit an error when that happens */
+            return length;
+
+        if (client->response.available > 0 &&
+            (off_t)length > client->response.available)
+            /* TODO: emit an error when that happens */
+            length = client->response.available;
+
+        consumed = istream_invoke_data(&client->response.body, data, length);
+        if (consumed > 0 && client->response.available >= 0) {
+            assert((off_t)consumed <= client->response.available);
+            client->response.available -= consumed;
+        }
+
+        return consumed;
 
     case READ_DISCARD:
         return length;
@@ -359,6 +379,21 @@ fcgi_client_consume_input(struct fcgi_client *client)
                     int i = atoi(p);
                     if (http_status_is_valid(i))
                         status = (http_status_t)i;
+                }
+
+                if (http_status_is_empty(status) ||
+                    client->response.no_body) {
+                    client->response.available = 0;
+                } else {
+                    client->response.available = -1;
+                    p = strmap_remove(client->response.headers,
+                                      "content-length");
+                    if (p != NULL) {
+                        char *endptr;
+                        unsigned long long l = strtoull(p, &endptr, 10);
+                        if (endptr > p && *endptr == 0)
+                            client->response.available = l;
+                    }
                 }
 
                 struct istream *body;
@@ -645,7 +680,8 @@ fcgi_client_response_body_available(struct istream *istream, bool partial)
 {
     struct fcgi_client *client = response_stream_to_client(istream);
 
-    /* XXX optimize this */
+    if (client->response.available >= 0)
+        return client->response.available;
 
     if (!partial)
         return -1;
