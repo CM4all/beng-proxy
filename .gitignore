@@ -64,6 +64,7 @@ test/t-wembed
 test/run-client-balancer
 test/run-ajp-client
 test/t_ajp_client
+test/t_fcgi_client
 test/run-memcached-client
 test/t-http-util
 test/t-http-cache
