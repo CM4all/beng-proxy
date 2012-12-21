@@ -903,11 +903,16 @@ test_hold(struct pool *pool, struct context *c)
 
 static void
 run_test(struct pool *pool, void (*test)(struct pool *pool, struct context *c)) {
-    struct context c;
+    struct pool *parent = pool_new_libc(pool, "parent");
+    pool_set_major(parent);
 
+    struct context c;
     memset(&c, 0, sizeof(c));
-    c.pool = pool_new_linear(pool, "test", 16384);
+    c.pool = pool_new_linear(parent, "test", 16384);
+
     test(c.pool, &c);
+
+    pool_unref(parent);
     pool_commit();
 }
 
