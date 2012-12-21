@@ -866,6 +866,38 @@ test_twice_100(struct pool *pool, struct context *c)
 
 #endif
 
+/**
+ * Receive an empty response from the server while still sending the
+ * request body.
+ */
+static void
+test_no_body_while_sending(struct pool *pool, struct context *c)
+{
+    struct istream *request_body = istream_block_new(pool);
+
+    c->connection = connect_null();
+    client_request(pool, c->connection, &my_lease, c,
+                   HTTP_METHOD_GET, "/foo", NULL,
+                   wrap_fake_request_body(pool, request_body),
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, c, &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+    assert(c->request_error == NULL);
+    assert(c->body_error == NULL);
+}
+
 static void
 test_hold(struct pool *pool, struct context *c)
 {
@@ -941,5 +973,6 @@ run_all_tests(struct pool *pool)
     run_test(pool, test_bogus_100);
     run_test(pool, test_twice_100);
 #endif
+    run_test(pool, test_no_body_while_sending);
     run_test(pool, test_hold);
 }
