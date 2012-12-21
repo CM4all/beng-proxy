@@ -1,3 +1,6 @@
+#define ENABLE_PREMATURE_CLOSE_HEADERS
+#define ENABLE_PREMATURE_CLOSE_BODY
+
 #include "tio.h"
 #include "t_client.h"
 #include "ajp-client.h"
@@ -492,6 +495,52 @@ static struct connection *
 connect_hold(void)
 {
     return connect_server(ajp_server_hold);
+}
+
+static void
+ajp_server_premature_close_headers(gcc_unused struct pool *pool)
+{
+    struct ajp_request request;
+    read_ajp_request(pool, &request);
+
+    const struct ajp_header header = {
+        .a = 'A',
+        .b = 'B',
+        .length = htons(256),
+    };
+
+    write_full(&header, sizeof(header));
+}
+
+static struct connection *
+connect_premature_close_headers(void)
+{
+    return connect_server(ajp_server_premature_close_headers);
+}
+
+static void
+ajp_server_premature_close_body(gcc_unused struct pool *pool)
+{
+    struct ajp_request request;
+    read_ajp_request(pool, &request);
+
+    write_headers(HTTP_STATUS_OK, NULL);
+
+    const struct ajp_header header = {
+        .a = 'A',
+        .b = 'B',
+        .length = htons(256),
+    };
+
+    write_full(&header, sizeof(header));
+    write_byte(AJP_CODE_SEND_BODY_CHUNK);
+    write_short(200);
+}
+
+static struct connection *
+connect_premature_close_body(void)
+{
+    return connect_server(ajp_server_premature_close_body);
 }
 
 /*

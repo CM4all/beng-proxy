@@ -47,6 +47,16 @@ connect_twice_100(void);
 static struct connection *
 connect_hold(void);
 
+#ifdef ENABLE_PREMATURE_CLOSE_HEADERS
+static struct connection *
+connect_premature_close_headers(void);
+#endif
+
+#ifdef ENABLE_PREMATURE_CLOSE_BODY
+static struct connection *
+connect_premature_close_body(void);
+#endif
+
 static void
 connection_close(struct connection *c);
 
@@ -968,6 +978,72 @@ test_hold(struct pool *pool, struct context *c)
     g_error_free(c->body_error);
 }
 
+#ifdef ENABLE_PREMATURE_CLOSE_HEADERS
+
+/**
+ * The server closes the connection before it finishes sending the
+ * response headers.
+ */
+static void
+test_premature_close_headers(struct pool *pool, struct context *c)
+{
+    c->connection = connect_premature_close_headers();
+    client_request(pool, c->connection, &my_lease, c,
+                   HTTP_METHOD_GET, "/foo", NULL, NULL,
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, c, &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->status == 0);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+    assert(c->request_error != NULL);
+    g_error_free(c->request_error);
+}
+
+#endif
+
+#ifdef ENABLE_PREMATURE_CLOSE_BODY
+
+/**
+ * The server closes the connection before it finishes sending the
+ * response body.
+ */
+static void
+test_premature_close_body(struct pool *pool, struct context *c)
+{
+    c->connection = connect_premature_close_body();
+    client_request(pool, c->connection, &my_lease, c,
+                   HTTP_METHOD_GET, "/foo", NULL, NULL,
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, c, &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(!c->body_eof);
+    assert(c->body_abort);
+    assert(c->request_error == NULL);
+    assert(c->body_error != NULL);
+    g_error_free(c->body_error);
+}
+
+#endif
+
 
 /*
  * main
@@ -1017,4 +1093,10 @@ run_all_tests(struct pool *pool)
 #endif
     run_test(pool, test_no_body_while_sending);
     run_test(pool, test_hold);
+#ifdef ENABLE_PREMATURE_CLOSE_HEADERS
+    run_test(pool, test_premature_close_headers);
+#endif
+#ifdef ENABLE_PREMATURE_CLOSE_BODY
+    run_test(pool, test_premature_close_body);
+#endif
 }

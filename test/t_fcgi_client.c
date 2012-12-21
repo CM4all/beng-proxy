@@ -1,3 +1,6 @@
+#define ENABLE_PREMATURE_CLOSE_HEADERS
+#define ENABLE_PREMATURE_CLOSE_BODY
+
 #include "t_client.h"
 #include "tio.h"
 #include "fcgi-client.h"
@@ -442,6 +445,62 @@ static struct connection *
 connect_hold(void)
 {
     return connect_server(fcgi_server_hold);
+}
+
+static void
+fcgi_server_premature_close_headers(struct pool *pool)
+{
+    struct fcgi_request request;
+    read_fcgi_request(pool, &request);
+    discard_fcgi_request_body(&request);
+
+    const struct fcgi_record_header header = {
+        .version = FCGI_VERSION_1,
+        .type = FCGI_STDOUT,
+        .request_id = request.id,
+        .content_length = htons(1024),
+        .padding_length = 0,
+        .reserved = 0,
+    };
+
+    write_full(&header, sizeof(header));
+
+    const char *data = "Foo: 1\nBar: 1\nX: ";
+    write_full(data, strlen(data));
+}
+
+static struct connection *
+connect_premature_close_headers(void)
+{
+    return connect_server(fcgi_server_premature_close_headers);
+}
+
+static void
+fcgi_server_premature_close_body(struct pool *pool)
+{
+    struct fcgi_request request;
+    read_fcgi_request(pool, &request);
+    discard_fcgi_request_body(&request);
+
+    const struct fcgi_record_header header = {
+        .version = FCGI_VERSION_1,
+        .type = FCGI_STDOUT,
+        .request_id = request.id,
+        .content_length = htons(1024),
+        .padding_length = 0,
+        .reserved = 0,
+    };
+
+    write_full(&header, sizeof(header));
+
+    const char *data = "Foo: 1\nBar: 1\n\nFoo Bar";
+    write_full(data, strlen(data));
+}
+
+static struct connection *
+connect_premature_close_body(void)
+{
+    return connect_server(fcgi_server_premature_close_body);
 }
 
 /*
