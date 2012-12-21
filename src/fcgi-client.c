@@ -410,6 +410,26 @@ fcgi_client_submit_response(struct fcgi_client *client)
 }
 
 /**
+ * Call this when you need more data to check whether this is
+ * possible.  If the socket has been closed already, then the request
+ * is aborted with an error.
+ */
+static bool
+fcgi_client_check_more_data(struct fcgi_client *client)
+{
+    if (socket_wrapper_valid(&client->socket))
+        /* we can still receive more data from the server,
+           everything's fine */
+        return true;
+
+    GError *error = g_error_new_literal(fcgi_quark(), 0,
+                                        "premature disconnect "
+                                        "from FastCGI application");
+    fcgi_client_abort_response(client, error);
+    return false;
+}
+
+/**
  * Consume data from the input buffer.
  *
  * @return false if the buffer is full or if this object has been
@@ -425,7 +445,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
     while (true) {
         data = fifo_buffer_read(client->input, &length);
         if (data == NULL)
-            return true;
+            return fcgi_client_check_more_data(client);
 
         if (client->content_length > 0) {
             bool at_headers = client->response.read_state == READ_HEADERS;
@@ -447,7 +467,8 @@ fcgi_client_consume_input(struct fcgi_client *client)
                     return false;
                 }
 
-                return true;
+                return client->response.read_state == READ_BODY ||
+                    fcgi_client_check_more_data(client);
             }
 
             fifo_buffer_consume(client->input, nbytes);
