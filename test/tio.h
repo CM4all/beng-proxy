@@ -4,6 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include <inline/compiler.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdlib.h>
