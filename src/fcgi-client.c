@@ -509,7 +509,9 @@ fcgi_client_consume_input(struct fcgi_client *client)
             fifo_buffer_consume(client->input, sizeof(*header));
             length -= sizeof(*header);
 
-            fcgi_client_release_socket(client, length == client->skip_length);
+            if (socket_wrapper_valid(&client->socket))
+                fcgi_client_release_socket(client,
+                                           length == client->skip_length);
 
             if (client->request.istream != NULL)
                 istream_close_handler(client->request.istream);
@@ -548,6 +550,12 @@ fcgi_client_try_read(struct fcgi_client *client)
     assert(nbytes != -2);
 
     if (nbytes == 0) {
+        if (client->response.read_state == READ_BODY &&
+            !fifo_buffer_empty(client->input)) {
+            fcgi_client_release_socket(client, false);
+            return fcgi_client_consume_input(client);
+        }
+
         GError *error =
             g_error_new_literal(fcgi_quark(), 0,
                                 "FastCGI server closed the connection");
@@ -709,8 +717,12 @@ fcgi_client_response_body_read(struct istream *istream)
        the read will be re-scheduled anyway */
     socket_wrapper_unschedule_read(&client->socket);
 
-    if (fcgi_client_consume_input(client))
-        fcgi_client_try_read(client);
+    if (fcgi_client_consume_input(client)) {
+        if (socket_wrapper_valid(&client->socket))
+            fcgi_client_try_read(client);
+        // TODO:
+        //else if (fifo_buffer_empty(client->input))
+    }
 }
 
 static void
