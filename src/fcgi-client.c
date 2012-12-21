@@ -424,6 +424,9 @@ fcgi_client_consume_input(struct fcgi_client *client)
                        have to do that in background.  This is
                        complicated to implement, and until that is
                        done, we just bail out */
+                    if (client->request.istream != NULL)
+                        istream_free_handler(&client->request.istream);
+
                     fcgi_client_release(client, false);
                     return false;
                 }
