@@ -257,12 +257,12 @@ static size_t
 fcgi_client_parse_headers(struct fcgi_client *client,
                           const char *data, size_t length)
 {
-    const char *p, *data_end, *eol, *next = NULL;
+    const char *p = data, *const data_end = data + length;
+
+    const char *next = NULL;
     bool finished = false;
 
-    p = data;
-    data_end = data + length;
-
+    const char *eol;
     while ((eol = memchr(p, '\n', data_end - p)) != NULL) {
         next = eol + 1;
         --eol;
@@ -438,23 +438,19 @@ fcgi_client_check_more_data(struct fcgi_client *client)
 static bool
 fcgi_client_consume_input(struct fcgi_client *client)
 {
-    const void *data;
-    size_t length;
-    const struct fcgi_record_header *header;
-
     while (true) {
-        data = fifo_buffer_read(client->input, &length);
+        size_t length;
+        const void *data = fifo_buffer_read(client->input, &length);
         if (data == NULL)
             return fcgi_client_check_more_data(client);
 
         if (client->content_length > 0) {
             bool at_headers = client->response.read_state == READ_HEADERS;
-            size_t nbytes;
 
             if (length > client->content_length)
                 length = client->content_length;
 
-            nbytes = fcgi_client_feed(client, data, length);
+            size_t nbytes = fcgi_client_feed(client, data, length);
             if (nbytes == 0) {
                 if (!at_headers)
                     return false;
@@ -518,6 +514,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
             continue;
         }
 
+        const struct fcgi_record_header *header;
         if (length < sizeof(*header))
             return true;
 
@@ -594,10 +591,8 @@ fcgi_client_consume_input(struct fcgi_client *client)
 static bool
 fcgi_client_try_read(struct fcgi_client *client)
 {
-    ssize_t nbytes;
-
-    nbytes = socket_wrapper_read_to_buffer(&client->socket,
-                                           client->input, 4096);
+    ssize_t nbytes = socket_wrapper_read_to_buffer(&client->socket,
+                                                   client->input, 4096);
     assert(nbytes != -2);
 
     if (nbytes == 0) {
@@ -917,13 +912,12 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
         .role = macro_htons(FCGI_RESPONDER),
         .flags = FCGI_KEEP_CONN,
     };
-    struct pool *pool;
-    struct fcgi_client *client;
 
     assert(http_method_is_valid(method));
 
-    pool = pool_new_linear(caller_pool, "fcgi_client_request", 8192);
-    client = p_malloc(pool, sizeof(*client));
+    struct pool *pool = pool_new_linear(caller_pool, "fcgi_client_request",
+                                        8192);
+    struct fcgi_client *client = p_malloc(pool, sizeof(*client));
     client->pool = pool;
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;
