@@ -446,6 +446,10 @@ fcgi_client_handle_end(struct fcgi_client *client, size_t remaining)
     }
 
     if (socket_wrapper_valid(&client->socket)) {
+        /* if the socket is still alive at this point, release it, and
+           allow reusing it only if the remaining buffer provides
+           enough to finish the END_REQUEST payload */
+
         const size_t payload_length =
             client->content_length + client->skip_length;
         fcgi_client_release_socket(client,
