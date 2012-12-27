@@ -518,7 +518,7 @@ fcgi_client_handle_header(struct fcgi_client *client,
  * @return false if the buffer is full or if this object has been
  * destructed
  */
-static size_t
+static bool
 fcgi_client_consume_input(struct fcgi_client *client,
                           const uint8_t *data0, size_t length0)
 {
@@ -535,14 +535,14 @@ fcgi_client_consume_input(struct fcgi_client *client,
             size_t nbytes = fcgi_client_feed(client, data, length);
             if (nbytes == 0) {
                 if (!at_headers)
-                    return 0;
+                    return false;
 
                 if (data == data0 && buffered_socket_full(&client->socket)) {
                     GError *error =
                         g_error_new_literal(fcgi_quark(), 0,
                                             "FastCGI response header too long");
                     fcgi_client_abort_response_headers(client, error);
-                    return 0;
+                    return false;
                 }
 
                 return client->response.read_state == READ_BODY ||
