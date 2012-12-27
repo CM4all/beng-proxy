@@ -430,6 +430,38 @@ fcgi_client_check_more_data(struct fcgi_client *client)
 }
 
 /**
+ * Handle an END_REQUEST packet.  This function will always destroy
+ * the client.
+ */
+static void
+fcgi_client_handle_end(struct fcgi_client *client, size_t remaining)
+{
+    if (client->response.read_state == READ_HEADERS) {
+        GError *error =
+            g_error_new_literal(fcgi_quark(), 0,
+                                "premature end of headers "
+                                "from FastCGI application");
+        fcgi_client_abort_response_headers(client, error);
+        return;
+    }
+
+    client->skip_length += client->content_length;
+    client->content_length = 0;
+
+    if (socket_wrapper_valid(&client->socket))
+        fcgi_client_release_socket(client,
+                                   remaining == client->skip_length);
+
+    if (client->request.istream != NULL)
+        istream_close_handler(client->request.istream);
+
+    istream_deinit_eof(&client->response.body);
+    client->response.read_state = READ_END;
+
+    fcgi_client_release(client, false);
+}
+
+/**
  * A packet header was received.
  *
  * @param remaining the remaining length of the input buffer (not
@@ -461,29 +493,7 @@ fcgi_client_handle_header(struct fcgi_client *client,
         return true;
 
     case FCGI_END_REQUEST:
-        if (client->response.read_state == READ_HEADERS) {
-            GError *error =
-                g_error_new_literal(fcgi_quark(), 0,
-                                    "premature end of headers "
-                                    "from FastCGI application");
-            fcgi_client_abort_response_headers(client, error);
-            return false;
-        }
-
-        client->skip_length += client->content_length;
-        client->content_length = 0;
-
-        if (socket_wrapper_valid(&client->socket))
-            fcgi_client_release_socket(client,
-                                       remaining == client->skip_length);
-
-        if (client->request.istream != NULL)
-            istream_close_handler(client->request.istream);
-
-        istream_deinit_eof(&client->response.body);
-        client->response.read_state = READ_END;
-
-        fcgi_client_release(client, false);
+        fcgi_client_handle_end(client, remaining);
         return false;
 
     default:
