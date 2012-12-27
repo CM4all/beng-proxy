@@ -66,6 +66,13 @@ struct context {
     struct pool *pool;
 
     unsigned data_blocking;
+
+    /**
+     * Call istream_read() on the response body from inside the
+     * response callback.
+     */
+    bool read_response_body;
+
     bool close_response_body_early, close_response_body_late, close_response_body_data;
     bool response_body_byte;
     struct async_operation_ref async_ref;
@@ -207,6 +214,9 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
     else if (body != NULL)
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
 
+    if (c->read_response_body)
+        istream_read(c->body);
+
     if (c->close_response_body_late) {
         c->body_closed = true;
         istream_free_handler(&c->body);
@@ -286,6 +296,37 @@ test_body(struct pool *pool, struct context *c)
 
     if (c->body != NULL)
         istream_read(c->body);
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length == NULL);
+    assert(c->available == 6);
+    assert(c->body_eof);
+    assert(c->body_data == 6);
+    assert(c->request_error == NULL);
+    assert(c->body_error == NULL);
+}
+
+/**
+ * Call istream_read() on the response body from inside the response
+ * callback.
+ */
+static void
+test_read_body(struct pool *pool, struct context *c)
+{
+    c->read_response_body = true;
+    c->connection = connect_mirror();
+    client_request(pool, c->connection, &my_lease, c,
+                   HTTP_METHOD_GET, "/foo", NULL,
+                   istream_string_new(pool, "foobar"),
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
 
     event_dispatch();
 
@@ -953,6 +994,7 @@ run_all_tests(struct pool *pool)
 {
     run_test(pool, test_empty);
     run_test(pool, test_body);
+    run_test(pool, test_read_body);
     run_test(pool, test_close_response_body_early);
     run_test(pool, test_close_response_body_late);
     run_test(pool, test_close_response_body_data);
