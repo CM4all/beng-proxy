@@ -430,6 +430,70 @@ fcgi_client_check_more_data(struct fcgi_client *client)
 }
 
 /**
+ * A packet header was received.
+ *
+ * @param remaining the remaining length of the input buffer (not
+ * including the header)
+ * @return false if the client has been destroyed
+ */
+static bool
+fcgi_client_handle_header(struct fcgi_client *client,
+                          const struct fcgi_record_header *header,
+                          size_t remaining)
+{
+    client->content_length = ntohs(header->content_length);
+    client->skip_length = header->padding_length;
+
+    if (header->request_id != client->id) {
+        /* wrong request id; discard this packet */
+        client->skip_length += client->content_length;
+        client->content_length = 0;
+        return true;
+    }
+
+    switch (header->type) {
+    case FCGI_STDOUT:
+        client->response.stderr = false;
+        return true;
+
+    case FCGI_STDERR:
+        client->response.stderr = true;
+        return true;
+
+    case FCGI_END_REQUEST:
+        if (client->response.read_state == READ_HEADERS) {
+            GError *error =
+                g_error_new_literal(fcgi_quark(), 0,
+                                    "premature end of headers "
+                                    "from FastCGI application");
+            fcgi_client_abort_response_headers(client, error);
+            return false;
+        }
+
+        client->skip_length += client->content_length;
+        client->content_length = 0;
+
+        if (socket_wrapper_valid(&client->socket))
+            fcgi_client_release_socket(client,
+                                       remaining == client->skip_length);
+
+        if (client->request.istream != NULL)
+            istream_close_handler(client->request.istream);
+
+        istream_deinit_eof(&client->response.body);
+        client->response.read_state = READ_END;
+
+        fcgi_client_release(client, false);
+        return false;
+
+    default:
+        client->skip_length += client->content_length;
+        client->content_length = 0;
+        return true;
+    }
+}
+
+/**
  * Consume data from the input buffer.
  *
  * @return false if the buffer is full or if this object has been
@@ -514,64 +578,15 @@ fcgi_client_consume_input(struct fcgi_client *client)
             continue;
         }
 
-        const struct fcgi_record_header *header;
+        const struct fcgi_record_header *header = data;
         if (length < sizeof(*header))
             return true;
-
-        header = data;
-        client->content_length = ntohs(header->content_length);
-        client->skip_length = header->padding_length;
 
         length -= sizeof(*header);
         fifo_buffer_consume(client->input, sizeof(*header));
 
-        if (header->request_id != client->id) {
-            /* wrong request id; discard this packet */
-            client->skip_length += client->content_length;
-            client->content_length = 0;
-            continue;
-        }
-
-        switch (header->type) {
-        case FCGI_STDOUT:
-            client->response.stderr = false;
-            break;
-
-        case FCGI_STDERR:
-            client->response.stderr = true;
-            break;
-
-        case FCGI_END_REQUEST:
-            if (client->response.read_state == READ_HEADERS) {
-                GError *error =
-                    g_error_new_literal(fcgi_quark(), 0,
-                                        "premature end of headers "
-                                        "from FastCGI application");
-                fcgi_client_abort_response_headers(client, error);
-                return false;
-            }
-
-            client->skip_length += client->content_length;
-            client->content_length = 0;
-
-            if (socket_wrapper_valid(&client->socket))
-                fcgi_client_release_socket(client,
-                                           length == client->skip_length);
-
-            if (client->request.istream != NULL)
-                istream_close_handler(client->request.istream);
-
-            istream_deinit_eof(&client->response.body);
-            client->response.read_state = READ_END;
-
-            fcgi_client_release(client, false);
+        if (!fcgi_client_handle_header(client, header, length))
             return false;
-
-        default:
-            client->skip_length += client->content_length;
-            client->content_length = 0;
-            break;
-        }
     }
 }
 
