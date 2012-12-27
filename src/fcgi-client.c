@@ -56,6 +56,13 @@ struct fcgi_client {
 
     struct {
         struct istream *istream;
+
+        /**
+         * This flag is set when the request istream has submitted
+         * data.  It is used to check whether the request istream is
+         * unavailable, to unschedule the socket write event.
+         */
+        bool got_data;
     } request;
 
     struct {
@@ -649,6 +656,8 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
     assert(socket_wrapper_valid(&client->socket));
     assert(client->request.istream != NULL);
 
+    client->request.got_data = true;
+
     ssize_t nbytes = socket_wrapper_write(&client->socket, data, length);
     if (nbytes > 0)
         fcgi_client_schedule_write(client);
@@ -676,6 +685,8 @@ fcgi_request_stream_direct(istream_direct_t type, int fd,
 
     assert(socket_wrapper_valid(&client->socket));
 
+    client->request.got_data = true;
+
     ssize_t nbytes = socket_wrapper_write_from(&client->socket, fd, type,
                                                max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
@@ -693,6 +704,10 @@ fcgi_request_stream_direct(istream_direct_t type, int fd,
 
     if (likely(nbytes > 0))
         fcgi_client_schedule_write(client);
+    else if (nbytes < 0 && errno == EAGAIN) {
+        client->request.got_data = false;
+        socket_wrapper_unschedule_write(&client->socket);
+    }
 
     return nbytes;
 }
@@ -815,9 +830,17 @@ fcgi_client_socket_write(void *ctx)
 
     pool_ref(client->pool);
 
+    client->request.got_data = false;
     istream_read(client->request.istream);
 
-    bool result = socket_wrapper_valid(&client->socket);
+    const bool result = socket_wrapper_valid(&client->socket);
+    if (result && client->request.istream != NULL) {
+        if (client->request.got_data)
+            socket_wrapper_schedule_write(&client->socket);
+        else
+            socket_wrapper_unschedule_write(&client->socket);
+    }
+
     pool_unref(client->pool);
     return result;
 }
