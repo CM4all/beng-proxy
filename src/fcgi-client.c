@@ -519,28 +519,26 @@ fcgi_client_consume_input(struct fcgi_client *client)
             return true;
 
         header = data;
+        client->content_length = ntohs(header->content_length);
+        client->skip_length = header->padding_length;
+
+        length -= sizeof(*header);
+        fifo_buffer_consume(client->input, sizeof(*header));
 
         if (header->request_id != client->id) {
             /* wrong request id; discard this packet */
-            client->skip_length =
-                ntohs(header->content_length) + header->padding_length;
-            fifo_buffer_consume(client->input, sizeof(*header));
+            client->skip_length += client->content_length;
+            client->content_length = 0;
             continue;
         }
 
         switch (header->type) {
         case FCGI_STDOUT:
-            client->content_length = ntohs(header->content_length);
-            client->skip_length = header->padding_length;
             client->response.stderr = false;
-            fifo_buffer_consume(client->input, sizeof(*header));
             break;
 
         case FCGI_STDERR:
-            client->content_length = ntohs(header->content_length);
-            client->skip_length = header->padding_length;
             client->response.stderr = true;
-            fifo_buffer_consume(client->input, sizeof(*header));
             break;
 
         case FCGI_END_REQUEST:
@@ -553,9 +551,8 @@ fcgi_client_consume_input(struct fcgi_client *client)
                 return false;
             }
 
-            client->skip_length = ntohs(header->content_length) + header->padding_length;
-            fifo_buffer_consume(client->input, sizeof(*header));
-            length -= sizeof(*header);
+            client->skip_length += client->content_length;
+            client->content_length = 0;
 
             if (socket_wrapper_valid(&client->socket))
                 fcgi_client_release_socket(client,
@@ -571,8 +568,8 @@ fcgi_client_consume_input(struct fcgi_client *client)
             return false;
 
         default:
-            client->skip_length = ntohs(header->content_length) + header->padding_length;
-            fifo_buffer_consume(client->input, sizeof(*header));
+            client->skip_length += client->content_length;
+            client->content_length = 0;
             break;
         }
     }
