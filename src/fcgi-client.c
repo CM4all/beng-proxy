@@ -63,7 +63,6 @@ struct fcgi_client {
             READ_HEADERS,
             READ_BODY,
             READ_DISCARD,
-            READ_END
         } read_state;
 
         struct strmap *headers;
@@ -297,10 +296,6 @@ fcgi_client_feed(struct fcgi_client *client,
     switch (client->response.read_state) {
         size_t consumed;
 
-    case READ_END:
-        assert(false);
-        break;
-
     case READ_HEADERS:
         return fcgi_client_parse_headers(client, (const char *)data, length);
 
@@ -460,8 +455,6 @@ fcgi_client_handle_end(struct fcgi_client *client, size_t remaining)
         istream_close_handler(client->request.istream);
 
     istream_deinit_eof(&client->response.body);
-    client->response.read_state = READ_END;
-
     fcgi_client_release(client, false);
 }
 
@@ -564,14 +557,6 @@ fcgi_client_consume_input(struct fcgi_client *client)
             if (client->content_length > 0)
                 return true;
 
-            if (client->response.read_state == READ_END) {
-                /* reuse the socket only if the remaining buffer
-                   length is exactly the padding (which is very
-                   likely) */
-                fcgi_client_release(client, length == client->skip_length);
-                return false;
-            }
-
             continue;
         }
 
@@ -583,11 +568,6 @@ fcgi_client_consume_input(struct fcgi_client *client)
 
             if (client->skip_length > 0)
                 return true;
-
-            if (client->response.read_state == READ_END) {
-                fcgi_client_release(client, fifo_buffer_empty(client->input));
-                return false;
-            }
 
             continue;
         }
