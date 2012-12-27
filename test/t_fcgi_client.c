@@ -323,8 +323,8 @@ fcgi_server_null(struct pool *pool)
     struct fcgi_request request;
     read_fcgi_request(pool, &request);
     write_fcgi_headers(&request, HTTP_STATUS_NO_CONTENT, NULL);
-    discard_fcgi_request_body(&request);
     write_fcgi_end(&request);
+    discard_fcgi_request_body(&request);
 }
 
 static struct connection *
