@@ -80,6 +80,14 @@ struct fcgi_client {
         bool no_body;
 
         /**
+         * This flag is true if fcgi_client_submit_response() is
+         * currently calling the HTTP response handler.  During this
+         * period, fcgi_client_response_body_read() does nothing, to
+         * prevent recursion.
+         */
+        bool in_handler;
+
+        /**
          * Is the FastCGI application currently sending a STDERR
          * packet?
          */
@@ -373,9 +381,11 @@ fcgi_client_submit_response(struct fcgi_client *client)
     struct pool *caller_pool = client->caller_pool;
     pool_ref(caller_pool);
 
+    client->response.in_handler = true;
     http_response_handler_invoke_response(&client->handler, status,
                                           client->response.headers,
                                           body);
+    client->response.in_handler = false;
 
     pool_unref(caller_pool);
 
@@ -731,6 +741,11 @@ static void
 fcgi_client_response_body_read(struct istream *istream)
 {
     struct fcgi_client *client = response_stream_to_client(istream);
+
+    if (client->response.in_handler)
+        /* avoid recursion; the http_response_handler caller will
+           continue parsing the response if possible */
+        return;
 
     /* cancel any scheduled read event before doing anything else,
        just in case this function fills the buffer completely; if not,
