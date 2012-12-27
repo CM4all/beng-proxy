@@ -434,6 +434,10 @@ fcgi_client_consume_input(struct fcgi_client *client)
                 if (client->input == NULL)
                     /* response body was closed */
                     return false;
+
+                /* continue parsing the response body from the
+                   buffer */
+                continue;
             }
 
             if (client->content_length > 0)
