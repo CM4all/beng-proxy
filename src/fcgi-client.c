@@ -68,9 +68,21 @@ struct fcgi_client {
     struct {
         enum {
             READ_HEADERS,
+
+            /**
+             * There is no response body.  Waiting for the
+             * #FCGI_END_REQUEST packet, and then we'll forward the
+             * response to the #http_response_handler.
+             */
+            READ_NO_BODY,
+
             READ_BODY,
-            READ_DISCARD,
         } read_state;
+
+        /**
+         * Only used when read_state==READ_NO_BODY.
+         */
+        http_status_t status;
 
         struct strmap *headers;
 
@@ -170,7 +182,8 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
 static void
 fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 {
-    assert(client->response.read_state == READ_HEADERS);
+    assert(client->response.read_state == READ_HEADERS ||
+           client->response.read_state == READ_NO_BODY);
 
     async_operation_finished(&client->async);
 
@@ -212,6 +225,7 @@ static void
 fcgi_client_abort_response(struct fcgi_client *client, GError *error)
 {
     assert(client->response.read_state == READ_HEADERS ||
+           client->response.read_state == READ_NO_BODY ||
            client->response.read_state == READ_BODY);
 
     if (client->response.read_state != READ_BODY)
@@ -306,6 +320,11 @@ fcgi_client_feed(struct fcgi_client *client,
     case READ_HEADERS:
         return fcgi_client_parse_headers(client, (const char *)data, length);
 
+    case READ_NO_BODY:
+        /* unreachable */
+        assert(false);
+        return 0;
+
     case READ_BODY:
         if (client->response.available == 0)
             /* discard following data */
@@ -324,12 +343,10 @@ fcgi_client_feed(struct fcgi_client *client,
         }
 
         return consumed;
-
-    case READ_DISCARD:
-        return length;
     }
 
     /* unreachable */
+    assert(false);
     return 0;
 }
 
@@ -343,8 +360,6 @@ fcgi_client_submit_response(struct fcgi_client *client)
 {
     assert(client->response.read_state == READ_BODY);
 
-    async_operation_finished(&client->async);
-
     http_status_t status = HTTP_STATUS_OK;
 
     const char *p = strmap_remove(client->response.headers,
@@ -355,30 +370,26 @@ fcgi_client_submit_response(struct fcgi_client *client)
             status = (http_status_t)i;
     }
 
-    if (http_status_is_empty(status) ||
-        client->response.no_body) {
-        client->response.available = 0;
-    } else {
-        client->response.available = -1;
-        p = strmap_remove(client->response.headers,
-                          "content-length");
-        if (p != NULL) {
-            char *endptr;
-            unsigned long long l = strtoull(p, &endptr, 10);
-            if (endptr > p && *endptr == 0)
-                client->response.available = l;
-        }
+    if (http_status_is_empty(status) || client->response.no_body) {
+        client->response.read_state = READ_NO_BODY;
+        client->response.status = status;
+        return true;
     }
 
-    struct istream *body;
-    if (!http_status_is_empty(status) &&
-        !client->response.no_body) {
-        fcgi_client_response_body_init(client);
-        body = istream_struct_cast(&client->response.body);
-    } else {
-        body = NULL;
-        client->response.read_state = READ_DISCARD;
+    client->response.available = -1;
+    p = strmap_remove(client->response.headers,
+                      "content-length");
+    if (p != NULL) {
+        char *endptr;
+        unsigned long long l = strtoull(p, &endptr, 10);
+        if (endptr > p && *endptr == 0)
+            client->response.available = l;
     }
+
+    async_operation_finished(&client->async);
+
+    fcgi_client_response_body_init(client);
+    struct istream *body = body = istream_struct_cast(&client->response.body);
 
     struct pool *caller_pool = client->caller_pool;
     pool_ref(caller_pool);
@@ -390,19 +401,6 @@ fcgi_client_submit_response(struct fcgi_client *client)
     client->response.in_handler = false;
 
     pool_unref(caller_pool);
-
-    if (body == NULL) {
-        /* XXX when there is no response body, we cannot
-           finish reading the response here - we would
-           have to do that in background.  This is
-           complicated to implement, and until that is
-           done, we just bail out */
-        if (client->request.istream != NULL)
-            istream_free_handler(&client->request.istream);
-
-        fcgi_client_release(client, false);
-        return false;
-    }
 
     if (client->input == NULL)
         /* response body was closed */
@@ -461,7 +459,15 @@ fcgi_client_handle_end(struct fcgi_client *client, size_t remaining)
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
 
-    istream_deinit_eof(&client->response.body);
+    if (client->response.read_state == READ_NO_BODY) {
+        async_operation_finished(&client->async);
+        http_response_handler_invoke_response(&client->handler,
+                                              client->response.status,
+                                              client->response.headers,
+                                              NULL);
+    } else
+        istream_deinit_eof(&client->response.body);
+
     fcgi_client_release(client, false);
 }
 
@@ -485,6 +491,12 @@ fcgi_client_handle_header(struct fcgi_client *client,
         client->skip_length += client->content_length;
         client->content_length = 0;
         return true;
+    }
+
+    if (client->response.read_state == READ_NO_BODY) {
+        /* ignore all payloads until #FCGI_END_REQUEST */
+        client->skip_length += client->content_length;
+        client->content_length = 0;
     }
 
     switch (header->type) {
@@ -895,7 +907,8 @@ fcgi_client_request_abort(struct async_operation *ao)
     
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(client->response.read_state == READ_HEADERS);
+    assert(client->response.read_state == READ_HEADERS ||
+           client->response.read_state == READ_NO_BODY);
 
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
