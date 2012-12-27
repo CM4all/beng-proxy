@@ -324,6 +324,82 @@ fcgi_client_feed(struct fcgi_client *client,
 }
 
 /**
+ * Submit the response metadata to the #http_response_handler.
+ *
+ * @return false if the connection was closed
+ */
+static bool
+fcgi_client_submit_response(struct fcgi_client *client)
+{
+    assert(client->response.read_state == READ_BODY);
+
+    async_operation_finished(&client->async);
+
+    http_status_t status = HTTP_STATUS_OK;
+
+    const char *p = strmap_remove(client->response.headers,
+                                  "status");
+    if (p != NULL) {
+        int i = atoi(p);
+        if (http_status_is_valid(i))
+            status = (http_status_t)i;
+    }
+
+    if (http_status_is_empty(status) ||
+        client->response.no_body) {
+        client->response.available = 0;
+    } else {
+        client->response.available = -1;
+        p = strmap_remove(client->response.headers,
+                          "content-length");
+        if (p != NULL) {
+            char *endptr;
+            unsigned long long l = strtoull(p, &endptr, 10);
+            if (endptr > p && *endptr == 0)
+                client->response.available = l;
+        }
+    }
+
+    struct istream *body;
+    if (!http_status_is_empty(status) &&
+        !client->response.no_body) {
+        fcgi_client_response_body_init(client);
+        body = istream_struct_cast(&client->response.body);
+    } else {
+        body = NULL;
+        client->response.read_state = READ_DISCARD;
+    }
+
+    struct pool *caller_pool = client->caller_pool;
+    pool_ref(caller_pool);
+
+    http_response_handler_invoke_response(&client->handler, status,
+                                          client->response.headers,
+                                          body);
+
+    pool_unref(caller_pool);
+
+    if (body == NULL) {
+        /* XXX when there is no response body, we cannot
+           finish reading the response here - we would
+           have to do that in background.  This is
+           complicated to implement, and until that is
+           done, we just bail out */
+        if (client->request.istream != NULL)
+            istream_free_handler(&client->request.istream);
+
+        fcgi_client_release(client, false);
+        return false;
+    }
+
+    if (client->input == NULL)
+        /* response body was closed */
+        return false;
+
+    return true;
+}
+
+/**
  * Consume data from the input buffer.
  *
  * @return false if the buffer is full or if this object has been
@@ -372,67 +448,7 @@ fcgi_client_consume_input(struct fcgi_client *client)
                 /* the read_state has been switched from HEADERS to
                    BODY: we have to deliver the response now */
 
-                async_operation_finished(&client->async);
-
-                http_status_t status = HTTP_STATUS_OK;
-
-                const char *p = strmap_remove(client->response.headers,
-                                              "status");
-                if (p != NULL) {
-                    int i = atoi(p);
-                    if (http_status_is_valid(i))
-                        status = (http_status_t)i;
-                }
-
-                if (http_status_is_empty(status) ||
-                    client->response.no_body) {
-                    client->response.available = 0;
-                } else {
-                    client->response.available = -1;
-                    p = strmap_remove(client->response.headers,
-                                      "content-length");
-                    if (p != NULL) {
-                        char *endptr;
-                        unsigned long long l = strtoull(p, &endptr, 10);
-                        if (endptr > p && *endptr == 0)
-                            client->response.available = l;
-                    }
-                }
-
-                struct istream *body;
-                if (!http_status_is_empty(status) &&
-                    !client->response.no_body) {
-                    fcgi_client_response_body_init(client);
-                    body = istream_struct_cast(&client->response.body);
-                } else {
-                    body = NULL;
-                    client->response.read_state = READ_DISCARD;
-                }
-
-                struct pool *caller_pool = client->caller_pool;
-                pool_ref(caller_pool);
-
-                http_response_handler_invoke_response(&client->handler, status,
-                                                      client->response.headers,
-                                                      body);
-
-                pool_unref(caller_pool);
-
-                if (body == NULL) {
-                    /* XXX when there is no response body, we cannot
-                       finish reading the response here - we would
-                       have to do that in background.  This is
-                       complicated to implement, and until that is
-                       done, we just bail out */
-                    if (client->request.istream != NULL)
-                        istream_free_handler(&client->request.istream);
-
-                    fcgi_client_release(client, false);
-                    return false;
-                }
-
-                if (client->input == NULL)
-                    /* response body was closed */
+                if (!fcgi_client_submit_response(client))
                     return false;
 
                 /* continue parsing the response body from the
