@@ -445,12 +445,12 @@ fcgi_client_handle_end(struct fcgi_client *client, size_t remaining)
         return;
     }
 
-    client->skip_length += client->content_length;
-    client->content_length = 0;
-
-    if (socket_wrapper_valid(&client->socket))
+    if (socket_wrapper_valid(&client->socket)) {
+        const size_t payload_length =
+            client->content_length + client->skip_length;
         fcgi_client_release_socket(client,
-                                   remaining == client->skip_length);
+                                   remaining == payload_length);
+    }
 
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
