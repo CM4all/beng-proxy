@@ -78,7 +78,7 @@ cgi_parser_feed_headers(struct pool *pool, struct cgi_parser *parser,
     size_t length;
     const char *data = fifo_buffer_read(buffer, &length);
     if (data == NULL)
-        return C_NONE;
+        return C_MORE;
 
     assert(length > 0);
     const char *data_end = data + length;
@@ -106,7 +106,7 @@ cgi_parser_feed_headers(struct pool *pool, struct cgi_parser *parser,
 
     if (next != NULL) {
         fifo_buffer_consume(buffer, next - data);
-        return C_PARTIAL;
+        return C_MORE;
     }
 
     if (fifo_buffer_full(buffer)) {
@@ -118,5 +118,5 @@ cgi_parser_feed_headers(struct pool *pool, struct cgi_parser *parser,
         return C_ERROR;
     }
 
-    return C_NONE;
+    return C_MORE;
 }

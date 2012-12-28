@@ -131,8 +131,7 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
            response body handler */
         return length - fifo_buffer_available(cgi->buffer);
 
-    case C_PARTIAL:
-    case C_NONE:
+    case C_MORE:
         return length;
 
     case C_ERROR:

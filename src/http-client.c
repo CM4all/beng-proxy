@@ -577,7 +577,7 @@ http_client_parse_headers(struct http_client *client)
     size_t length;
     const char *buffer = fifo_buffer_read(client->input, &length);
     if (buffer == NULL)
-        return C_NONE;
+        return C_MORE;
 
     assert(length > 0);
     const char *buffer_end = buffer + length;
@@ -624,7 +624,7 @@ http_client_parse_headers(struct http_client *client)
         http_client_schedule_read(client);
     }
 
-    return next != NULL ? C_DONE : C_PARTIAL;
+    return next != NULL ? C_DONE : C_MORE;
 }
 
 static void

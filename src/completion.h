@@ -21,12 +21,7 @@ enum completion {
      * socket may be closed already), the recipient of this value
      * shall abort the operation.
      */
-    C_PARTIAL,
-
-    /**
-     * No progress this time.
-     */
-    C_NONE,
+    C_MORE,
 
     /**
      * An error has occurred.  Details are returned in a GError object.
