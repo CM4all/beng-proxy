@@ -684,11 +684,9 @@ http_client_consume_headers(struct http_client *client)
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
-    do {
-        enum completion c = http_client_parse_headers(client);
-        if (c != C_DONE)
-            return c;
-    } while (client->response.read_state == READ_HEADERS);
+    const enum completion c = http_client_parse_headers(client);
+    if (c != C_DONE)
+        return c;
 
     /* the headers are finished, we can now report the response to
        the handler */
