@@ -611,7 +611,7 @@ http_client_parse_headers(struct http_client *client)
         /* not enough data to finish this line, let libevent handle
            this */
 
-        if (next == NULL && fifo_buffer_full(client->input)) {
+        if (fifo_buffer_full(client->input)) {
             /* the line is too large for our input buffer */
             GError *error =
                 g_error_new_literal(http_client_quark(),
