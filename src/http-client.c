@@ -583,9 +583,9 @@ http_client_parse_headers(struct http_client *client)
     const char *buffer_end = buffer + length;
 
     /* parse line by line */
-    const char *start = buffer, *end, *next = NULL;
+    const char *start = buffer, *end;
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
-        next = end + 1;
+        const char *const next = end + 1;
 
         /* strip the line */
         --end;
@@ -606,8 +606,7 @@ http_client_parse_headers(struct http_client *client)
     }
 
     /* remove the parsed part of the buffer */
-    if (next != NULL)
-        fifo_buffer_consume(client->input, next - buffer);
+    fifo_buffer_consume(client->input, start - buffer);
 
     if (fifo_buffer_full(client->input)) {
         /* the line is too large for our input buffer */
