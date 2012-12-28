@@ -16,7 +16,10 @@ enum completion {
     C_DONE,
 
     /**
-     * Partial completion.
+     * Partial completion.  More data is needed to complete the
+     * operation.  If no more data can be obtained (e.g. because the
+     * socket may be closed already), the recipient of this value
+     * shall abort the operation.
      */
     C_PARTIAL,
 
