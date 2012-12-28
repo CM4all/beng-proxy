@@ -596,9 +596,11 @@ http_client_parse_headers(struct http_client *client)
         if (!http_client_handle_line(client, start, end - start + 1))
             return C_CLOSED;
 
-        if (client->response.read_state != READ_HEADERS)
+        if (client->response.read_state != READ_HEADERS) {
             /* header parsing is finished */
-            break;
+            fifo_buffer_consume(client->input, next - buffer);
+            return C_DONE;
+        }
 
         start = next;
     }
@@ -624,7 +626,7 @@ http_client_parse_headers(struct http_client *client)
         http_client_schedule_read(client);
     }
 
-    return next != NULL ? C_DONE : C_MORE;
+    return C_MORE;
 }
 
 static void
