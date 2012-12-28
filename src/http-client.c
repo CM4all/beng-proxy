@@ -609,22 +609,17 @@ http_client_parse_headers(struct http_client *client)
     if (next != NULL)
         fifo_buffer_consume(client->input, next - buffer);
 
-    if (end == NULL) {
-        /* not enough data to finish this line, let libevent handle
-           this */
-
-        if (fifo_buffer_full(client->input)) {
-            /* the line is too large for our input buffer */
-            GError *error =
-                g_error_new_literal(http_client_quark(),
-                                    HTTP_CLIENT_UNSPECIFIED,
-                                    "response header too long");
-            http_client_abort_response_headers(client, error);
-            return C_CLOSED;
-        }
-
-        http_client_schedule_read(client);
+    if (fifo_buffer_full(client->input)) {
+        /* the line is too large for our input buffer */
+        GError *error =
+            g_error_new_literal(http_client_quark(),
+                                HTTP_CLIENT_UNSPECIFIED,
+                                "response header too long");
+        http_client_abort_response_headers(client, error);
+        return C_CLOSED;
     }
+
+    http_client_schedule_read(client);
 
     return C_MORE;
 }
