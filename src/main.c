@@ -80,15 +80,12 @@ all_listeners_event_del(struct instance *instance)
 }
 
 static void
-exit_event_callback(int fd, short event gcc_unused, void *ctx)
+shutdown_callback(void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
 
     if (instance->should_exit)
         return;
-
-    daemon_log(2, "caught signal %d, shutting down (pid=%d)\n",
-               fd, (int)getpid());
 
     instance->should_exit = true;
     deinit_signals(instance);
@@ -171,17 +168,8 @@ init_signals(struct instance *instance)
 {
     signal(SIGPIPE, SIG_IGN);
 
-    event_set(&instance->sigterm_event, SIGTERM, EV_SIGNAL|EV_PERSIST,
-              exit_event_callback, instance);
-    event_add(&instance->sigterm_event, NULL);
-
-    event_set(&instance->sigint_event, SIGINT, EV_SIGNAL|EV_PERSIST,
-              exit_event_callback, instance);
-    event_add(&instance->sigint_event, NULL);
-
-    event_set(&instance->sigquit_event, SIGQUIT, EV_SIGNAL|EV_PERSIST,
-              exit_event_callback, instance);
-    event_add(&instance->sigquit_event, NULL);
+    shutdown_listener_init(&instance->shutdown_listener,
+                           shutdown_callback, instance);
 
     event_set(&instance->sighup_event, SIGHUP, EV_SIGNAL|EV_PERSIST,
               reload_event_callback, instance);
@@ -191,9 +179,7 @@ init_signals(struct instance *instance)
 void
 deinit_signals(struct instance *instance)
 {
-    event_del(&instance->sigterm_event);
-    event_del(&instance->sigint_event);
-    event_del(&instance->sigquit_event);
+    shutdown_listener_deinit(&instance->shutdown_listener);
     event_del(&instance->sighup_event);
 }
 

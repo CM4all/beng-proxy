@@ -8,6 +8,7 @@
 #define __BENG_INSTANCE_H
 
 #include "config.h"
+#include "shutdown_listener.h"
 
 #include <inline/list.h>
 
@@ -33,7 +34,7 @@ struct instance {
     unsigned num_connections;
 
     bool should_exit;
-    struct event sigterm_event, sigint_event, sigquit_event;
+    struct shutdown_listener shutdown_listener;
     struct event sighup_event;
 
     /* child management */

@@ -341,6 +341,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/log-launch.c src/log-launch.h \
 	src/log-glue.c src/log-glue.h \
 	src/instance.c src/instance.h \
+	src/shutdown_listener.c src/shutdown_listener.h \
 	src/main.c
 src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -435,6 +436,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/ssl_filter.c \
 	src/socket_wrapper.c \
 	src/ping.c src/ping.h \
+	src/shutdown_listener.c src/shutdown_listener.h \
 	src/lb_global.c \
 	src/lb_cmdline.h \
 	src/lb_cmdline.c \
