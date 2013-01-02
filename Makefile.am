@@ -657,7 +657,7 @@ noinst_PROGRAMS = \
 	test/run-html-unescape test/run-html-escape \
 	test/run-processor \
 	test/run-client-balancer \
-	test/run-ajp-client \
+	test/run_client \
 	test/run-memcached-client \
 	test/run_http_cache \
 	test/dump-memcached-choice \
@@ -1636,8 +1636,10 @@ test_t_ajp_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_run_ajp_client_SOURCES = test/run-ajp-client.c \
+test_run_client_SOURCES = test/run_client.c \
 	src/client-socket.c \
+	src/http-client.c src/http-body.c \
+	src/header-writer.c src/header-parser.c \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \
 	src/socket_wrapper.c src/buffered_socket.c \
@@ -1651,8 +1653,9 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/istream-ajp-body.c \
 	src/shutdown_listener.c \
 	src/stopwatch.c \
+	src/tpool.c \
 	src/direct.c 
-test_run_ajp_client_LDADD = $(AM_LDADD) \
+test_run_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(GLIB_LIBS) \

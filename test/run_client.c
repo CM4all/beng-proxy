@@ -1,5 +1,7 @@
 #include "ajp-client.h"
 #include "strmap.h"
+#include "header-writer.h"
+#include "http-client.h"
 #include "http-response.h"
 #include "async.h"
 #include "fd_util.h"
@@ -9,6 +11,7 @@
 #include "istream.h"
 #include "shutdown_listener.h"
 #include "client-socket.h"
+#include "tpool.h"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -27,7 +30,13 @@
 #include <errno.h>
 
 struct parsed_url {
+    enum {
+        HTTP, AJP,
+    } protocol;
+
     char *host;
+
+    int default_port;
 
     const char *uri;
 };
@@ -40,6 +49,12 @@ parse_url(struct parsed_url *dest, const char *url)
 
     if (memcmp(url, "ajp://", 6) == 0) {
         url += 6;
+        dest->protocol = AJP;
+        dest->default_port = 8009;
+    } else if (memcmp(url, "http://", 7) == 0) {
+        url += 7;
+        dest->protocol = HTTP;
+        dest->default_port = 80;
     } else
         return false;
 
@@ -216,12 +231,25 @@ my_client_socket_success(int fd, void *ctx)
     struct strmap *headers = strmap_new(c->pool, 17);
     strmap_add(headers, "host", c->url.host);
 
-    ajp_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
-                       "http", "127.0.0.1", "localhost",
-                       "localhost", 80, false,
-                       c->method, c->url.uri, headers, c->request_body,
-                       &my_response_handler, c,
-                       &c->async_ref);
+    switch (c->url.protocol) {
+    case AJP:
+        ajp_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
+                           "http", "127.0.0.1", "localhost",
+                           "localhost", 80, false,
+                           c->method, c->url.uri, headers, c->request_body,
+                           &my_response_handler, c,
+                           &c->async_ref);
+        break;
+
+    case HTTP:
+        http_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
+                            c->method, c->url.uri,
+                            headers_dup(c->pool, headers),
+                            c->request_body, false,
+                            &my_response_handler, c,
+                            &c->async_ref);
+        break;
+    }
 }
 
 static void
@@ -289,7 +317,8 @@ main(int argc, char **argv)
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
-    int ret = socket_resolve_host_port(ctx.url.host, 8009, &hints, &ai);
+    int ret = socket_resolve_host_port(ctx.url.host, ctx.url.default_port,
+                                       &hints, &ai);
     if (ret != 0) {
         fprintf(stderr, "Failed to resolve host name\n");
         return EXIT_FAILURE;
@@ -304,6 +333,8 @@ main(int argc, char **argv)
     shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
 
     struct pool *root_pool = pool_new_libc(NULL, "root");
+    tpool_init(root_pool);
+
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
     ctx.pool = pool;
 
@@ -349,6 +380,7 @@ main(int argc, char **argv)
     pool_unref(pool);
     pool_commit();
 
+    tpool_deinit();
     pool_unref(root_pool);
     pool_commit();
     pool_recycler_clear();

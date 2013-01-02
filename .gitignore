@@ -62,7 +62,7 @@ test/t-session
 test/run-header-parser
 test/t-wembed
 test/run-client-balancer
-test/run-ajp-client
+test/run_client
 test/t_ajp_client
 test/t_fcgi_client
 test/run-memcached-client
