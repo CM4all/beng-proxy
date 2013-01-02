@@ -753,7 +753,10 @@ http_client_consume_headers(struct http_client *client)
     return C_DONE;
 }
 
-static void
+/**
+ * @return false if the HTTP client has been closed
+ */
+static bool
 http_client_try_response_direct(struct http_client *client)
 {
     assert(socket_wrapper_valid(&client->socket));
@@ -763,16 +766,20 @@ http_client_try_response_direct(struct http_client *client)
     ssize_t nbytes = http_body_try_direct(&client->response.body_reader,
                                           client->socket.fd,
                                           client->socket.fd_type);
-    if (nbytes == ISTREAM_RESULT_BLOCKING || nbytes == ISTREAM_RESULT_CLOSED)
-        /* either the destination fd blocks (-2) or the stream (and
-           the whole connection) has been closed during the direct()
-           callback (-3); no further checks */
-        return;
+    if (nbytes == ISTREAM_RESULT_BLOCKING)
+        /* the destination fd blocks */
+        return true;
+
+    if (nbytes == ISTREAM_RESULT_CLOSED)
+        /* the stream (and the whole connection) has been closed
+           during the direct() callback */
+        return false;
 
     if (nbytes < 0) {
         if (errno == EAGAIN) {
+            /* the source fd (= ours) blocks */
             http_client_schedule_read(client);
-            return;
+            return true;
         }
 
         GError *error = g_error_new(http_client_quark(), errno,
@@ -781,16 +788,19 @@ http_client_try_response_direct(struct http_client *client)
         stopwatch_event(client->stopwatch, "error");
 
         http_client_abort_response_body(client, error);
-        return;
+        return false;
     }
 
     if (nbytes == ISTREAM_RESULT_EOF)
-        return;
+        return true;
 
-    if (http_body_eof(&client->response.body_reader))
+    if (http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
-    else
-        http_client_schedule_read(client);
+        return false;
+    }
+
+    http_client_schedule_read(client);
+    return true;
 }
 
 static void
