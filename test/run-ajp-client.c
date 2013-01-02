@@ -43,6 +43,7 @@ shutdown_callback(void *ctx)
 {
     struct context *c = ctx;
 
+    c->aborted = true;
     async_abort(&c->async_ref);
 }
 
