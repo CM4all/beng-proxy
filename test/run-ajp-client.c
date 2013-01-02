@@ -150,6 +150,8 @@ static const struct http_response_handler my_response_handler = {
 int
 main(int argc, char **argv)
 {
+    struct context ctx;
+
     if (argc < 3 || argc > 4) {
         fprintf(stderr, "usage: run-ajp-client HOST[:PORT] URI [BODY]\n");
         return 1;
@@ -169,14 +171,14 @@ main(int argc, char **argv)
         return 2;
     }
 
-    int fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype,
+    ctx.fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype,
                                      ai->ai_protocol);
-    if (fd < 0) {
+    if (ctx.fd < 0) {
         fprintf(stderr, "socket() failed: %s\n", strerror(errno));
         return 2;
     }
 
-    ret = connect(fd, ai->ai_addr, ai->ai_addrlen);
+    ret = connect(ctx.fd, ai->ai_addr, ai->ai_addrlen);
     if (ret < 0) {
         fprintf(stderr, "connect() failed: %s\n", strerror(errno));
         return 2;
@@ -216,9 +218,8 @@ main(int argc, char **argv)
 
     /* run test */
 
-    struct context ctx;
     struct async_operation_ref async_ref;
-    ajp_client_request(pool, fd, ISTREAM_TCP, &ajp_socket_lease, &ctx,
+    ajp_client_request(pool, ctx.fd, ISTREAM_TCP, &ajp_socket_lease, &ctx,
                        "http", "127.0.0.1", "localhost",
                        "localhost", 80, false,
                        method, argv[2], NULL, request_body,
