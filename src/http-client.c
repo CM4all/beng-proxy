@@ -1160,10 +1160,6 @@ http_client_request(struct pool *caller_pool,
     client->response.read_state = READ_STATUS;
     client->response.no_body = http_method_is_empty(method);
 
-    socket_wrapper_init(&client->socket, pool, fd, fd_type,
-                        NULL, &http_client_timeout,
-                        &http_client_socket_handler, client);
-
     client->input = fifo_buffer_new(client->pool, 4096);
 
     pool_ref(caller_pool);
