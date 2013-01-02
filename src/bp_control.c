@@ -214,6 +214,11 @@ handle_control_packet(struct instance *instance, struct control_server *server,
     case CONTROL_STATS:
         query_stats(instance, server, address, address_length);
         break;
+
+    case CONTROL_VERBOSE:
+        if (payload_length == 1)
+            daemon_log_config.verbose = *(const uint8_t *)payload;
+        break;
     }
 }
 

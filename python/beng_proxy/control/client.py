@@ -104,3 +104,10 @@ class Client:
 
     def send_stats(self):
         self.send(CONTROL_STATS)
+
+    def send_verbose(self, verbose):
+        assert isinstance(verbose, int)
+        assert verbose >= 0
+        assert verbose <= 0xff
+
+        self.send(CONTROL_VERBOSE, struct.pack('B', verbose))

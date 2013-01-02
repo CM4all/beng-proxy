@@ -57,6 +57,13 @@ enum beng_control_command {
      * Server statistics.
      */
     CONTROL_STATS = 6,
+
+    /**
+     * Set the logger verbosity.  The payload is one byte: 0 means
+     * quiet, 1 is the default, and bigger values make the daemon more
+     * verbose.
+     */
+    CONTROL_VERBOSE = 7,
 };
 
 struct beng_control_stats {

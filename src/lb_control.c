@@ -279,6 +279,11 @@ lb_control_packet(enum beng_control_command command,
     case CONTROL_STATS:
         query_stats(control, address, address_length);
         break;
+
+    case CONTROL_VERBOSE:
+        if (payload_length == 1)
+            daemon_log_config.verbose = *(const uint8_t *)payload;
+        break;
     }
 }
 
