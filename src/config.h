@@ -84,11 +84,6 @@ struct config {
     bool check;
 
     /**
-     * Use the splice() system call?
-     */
-    bool enable_splice;
-
-    /**
      * Dump widget trees to the log file?
      */
     bool dump_widget_tree;

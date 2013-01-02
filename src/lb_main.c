@@ -223,7 +223,6 @@ int main(int argc, char **argv)
             .config_path = "/etc/cm4all/beng/lb.conf",
             .max_connections = 8192,
             .tcp_stock_limit = 256,
-            .enable_splice = true,
         },
     };
 
@@ -253,8 +252,7 @@ int main(int argc, char **argv)
 
     ssl_global_init();
 
-    if (instance.cmdline.enable_splice)
-        direct_global_init();
+    direct_global_init();
 
     instance.event_base = event_init();
 
@@ -354,6 +352,5 @@ int main(int argc, char **argv)
 
     daemonize_cleanup();
 
-    if (instance.cmdline.enable_splice)
-        direct_global_deinit();
+    direct_global_deinit();
 }

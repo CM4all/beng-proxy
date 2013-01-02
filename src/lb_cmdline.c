@@ -116,7 +116,6 @@ handle_set2(struct config *config, const char *argv0,
     static const char max_connections[] = "max_connections";
     static const char tcp_stock_limit[] = "tcp_stock_limit";
     static const char stopwatch[] = "stopwatch";
-    static const char enable_splice[] = "enable_splice";
     static const char dump_widget_tree[] = "dump_widget_tree";
     char *endptr;
     long l;
@@ -142,12 +141,6 @@ handle_set2(struct config *config, const char *argv0,
             stopwatch_enable();
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for stopwatch");
-    } else if (name_length == sizeof(enable_splice) - 1 &&
-               memcmp(name, enable_splice, sizeof(enable_splice) - 1) == 0) {
-        if (strcmp(value, "no") == 0)
-            config->enable_splice = false;
-        else if (strcmp(value, "yes") != 0)
-            arg_error(argv0, "Invalid value for enable_splice");
     } else if (name_length == sizeof(dump_widget_tree) - 1 &&
                memcmp(name, dump_widget_tree,
                       sizeof(dump_widget_tree) - 1) == 0) {
