@@ -1,5 +1,4 @@
 #include "ajp-client.h"
-#include "http-client.h"
 #include "http-response.h"
 #include "async.h"
 #include "fd_util.h"
