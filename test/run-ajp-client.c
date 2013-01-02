@@ -67,9 +67,8 @@ static size_t
 my_istream_data(const void *data, size_t length, void *ctx)
 {
     struct context *c = ctx;
-    ssize_t nbytes;
 
-    nbytes = write(1, data, length);
+    ssize_t nbytes = write(1, data, length);
     if (nbytes <= 0) {
         c->body_closed = true;
         istream_free_handler(&c->body);
@@ -148,16 +147,9 @@ static const struct http_response_handler my_response_handler = {
  *
  */
 
-int main(int argc, char **argv) {
-    int fd, ret;
-    struct addrinfo hints, *ai;
-    struct event_base *event_base;
-    struct pool *root_pool, *pool;
-    http_method_t method;
-    struct istream *request_body;
-    static struct context ctx;
-    struct async_operation_ref async_ref;
-
+int
+main(int argc, char **argv)
+{
     if (argc < 3 || argc > 4) {
         fprintf(stderr, "usage: run-ajp-client HOST[:PORT] URI [BODY]\n");
         return 1;
@@ -167,16 +159,18 @@ int main(int argc, char **argv) {
 
     /* connect socket */
 
+    struct addrinfo hints, *ai;
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = socket_resolve_host_port(argv[1], 8009, &hints, &ai);
+    int ret = socket_resolve_host_port(argv[1], 8009, &hints, &ai);
     if (ret != 0) {
         fprintf(stderr, "Failed to resolve host name\n");
         return 2;
     }
 
-    fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    int fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype,
+                                     ai->ai_protocol);
     if (fd < 0) {
         fprintf(stderr, "socket() failed: %s\n", strerror(errno));
         return 2;
@@ -194,13 +188,15 @@ int main(int argc, char **argv) {
 
     signal(SIGPIPE, SIG_IGN);
 
-    event_base = event_init();
+    struct event_base *event_base = event_init();
 
-    root_pool = pool_new_libc(NULL, "root");
-    pool = pool_new_linear(root_pool, "test", 8192);
+    struct pool *root_pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
     /* open request body */
 
+    http_method_t method;
+    struct istream *request_body;
     if (argc >= 4) {
         struct stat st;
 
@@ -220,6 +216,8 @@ int main(int argc, char **argv) {
 
     /* run test */
 
+    struct context ctx;
+    struct async_operation_ref async_ref;
     ajp_client_request(pool, fd, ISTREAM_TCP, &ajp_socket_lease, &ctx,
                        "http", "127.0.0.1", "localhost",
                        "localhost", 80, false,
