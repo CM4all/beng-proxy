@@ -6,6 +6,7 @@
 #include "direct.h"
 #include "istream-file.h"
 #include "istream.h"
+#include "shutdown_listener.h"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -24,6 +25,10 @@
 #include <errno.h>
 
 struct context {
+    struct shutdown_listener shutdown_listener;
+
+    struct async_operation_ref async_ref;
+
     int fd;
     bool idle, reuse, aborted;
     http_status_t status;
@@ -32,6 +37,14 @@ struct context {
     bool body_eof, body_abort, body_closed;
 };
 
+
+static void
+shutdown_callback(void *ctx)
+{
+    struct context *c = ctx;
+
+    async_abort(&c->async_ref);
+}
 
 /*
  * socket lease
@@ -85,6 +98,8 @@ my_istream_eof(void *ctx)
 
     c->body = NULL;
     c->body_eof = true;
+
+    shutdown_listener_deinit(&c->shutdown_listener);
 }
 
 static void
@@ -96,6 +111,8 @@ my_istream_abort(GError *error, void *ctx)
 
     c->body = NULL;
     c->body_abort = true;
+
+    shutdown_listener_deinit(&c->shutdown_listener);
 }
 
 static const struct istream_handler my_istream_handler = {
@@ -134,6 +151,8 @@ my_response_abort(GError *error, void *ctx)
     g_error_free(error);
 
     c->aborted = true;
+
+    shutdown_listener_deinit(&c->shutdown_listener);
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -192,6 +211,8 @@ main(int argc, char **argv)
 
     struct event_base *event_base = event_init();
 
+    shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
+
     struct pool *root_pool = pool_new_libc(NULL, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
@@ -218,13 +239,12 @@ main(int argc, char **argv)
 
     /* run test */
 
-    struct async_operation_ref async_ref;
     ajp_client_request(pool, ctx.fd, ISTREAM_TCP, &ajp_socket_lease, &ctx,
                        "http", "127.0.0.1", "localhost",
                        "localhost", 80, false,
                        method, argv[2], NULL, request_body,
                        &my_response_handler, &ctx,
-                       &async_ref);
+                       &ctx.async_ref);
 
     event_dispatch();
 

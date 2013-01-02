@@ -1648,6 +1648,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/strutil.c \
 	src/istream-gb.c \
 	src/istream-ajp-body.c \
+	src/shutdown_listener.c \
 	src/direct.c 
 test_run_ajp_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
