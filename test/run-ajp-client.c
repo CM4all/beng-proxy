@@ -43,8 +43,13 @@ shutdown_callback(void *ctx)
 {
     struct context *c = ctx;
 
-    c->aborted = true;
-    async_abort(&c->async_ref);
+    if (c->body != NULL) {
+        istream_free_handler(&c->body);
+        c->body_abort = true;
+    } else {
+        c->aborted = true;
+        async_abort(&c->async_ref);
+    }
 }
 
 /*
