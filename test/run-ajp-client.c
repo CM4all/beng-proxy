@@ -7,6 +7,7 @@
 #include "istream-file.h"
 #include "istream.h"
 #include "shutdown_listener.h"
+#include "client-socket.h"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -25,9 +26,15 @@
 #include <errno.h>
 
 struct context {
+    struct pool *pool;
+
     struct shutdown_listener shutdown_listener;
 
     struct async_operation_ref async_ref;
+
+    http_method_t method;
+    const char *uri;
+    struct istream *request_body;
 
     int fd;
     bool idle, reuse, aborted;
@@ -168,6 +175,63 @@ static const struct http_response_handler my_response_handler = {
 
 
 /*
+ * client_socket_handler
+ *
+ */
+
+static void
+my_client_socket_success(int fd, void *ctx)
+{
+    struct context *c = ctx;
+
+    c->fd = fd;
+
+    ajp_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
+                       "http", "127.0.0.1", "localhost",
+                       "localhost", 80, false,
+                       c->method, c->uri, NULL, c->request_body,
+                       &my_response_handler, c,
+                       &c->async_ref);
+}
+
+static void
+my_client_socket_timeout(void *ctx)
+{
+    struct context *c = ctx;
+
+    g_printerr("Connect timeout\n");
+
+    c->aborted = true;
+
+    if (c->request_body != NULL)
+        istream_close_unused(c->request_body);
+
+    shutdown_listener_deinit(&c->shutdown_listener);
+}
+
+static void
+my_client_socket_error(GError *error, void *ctx)
+{
+    struct context *c = ctx;
+
+    g_printerr("%s\n", error->message);
+    g_error_free(error);
+
+    c->aborted = true;
+
+    if (c->request_body != NULL)
+        istream_close_unused(c->request_body);
+
+    shutdown_listener_deinit(&c->shutdown_listener);
+}
+
+static const struct client_socket_handler my_client_socket_handler = {
+    .success = my_client_socket_success,
+    .timeout = my_client_socket_timeout,
+    .error = my_client_socket_error,
+};
+
+/*
  * main
  *
  */
@@ -196,21 +260,6 @@ main(int argc, char **argv)
         return 2;
     }
 
-    ctx.fd = socket_cloexec_nonblock(ai->ai_family, ai->ai_socktype,
-                                     ai->ai_protocol);
-    if (ctx.fd < 0) {
-        fprintf(stderr, "socket() failed: %s\n", strerror(errno));
-        return 2;
-    }
-
-    ret = connect(ctx.fd, ai->ai_addr, ai->ai_addrlen);
-    if (ret < 0) {
-        fprintf(stderr, "connect() failed: %s\n", strerror(errno));
-        return 2;
-    }
-
-    freeaddrinfo(ai);
-
     /* initialize */
 
     signal(SIGPIPE, SIG_IGN);
@@ -221,11 +270,10 @@ main(int argc, char **argv)
 
     struct pool *root_pool = pool_new_libc(NULL, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
+    ctx.pool = pool;
 
     /* open request body */
 
-    http_method_t method;
-    struct istream *request_body;
     if (argc >= 4) {
         struct stat st;
 
@@ -236,21 +284,26 @@ main(int argc, char **argv)
             return 2;
         }
 
-        method = HTTP_METHOD_POST;
-        request_body = istream_file_new(pool, argv[3], st.st_size);
+        ctx.method = HTTP_METHOD_POST;
+        ctx.request_body = istream_file_new(pool, argv[3], st.st_size);
     } else {
-        method = HTTP_METHOD_GET;
-        request_body = NULL;
+        ctx.method = HTTP_METHOD_GET;
+        ctx.request_body = NULL;
     }
 
-    /* run test */
+    ctx.uri = argv[2];
 
-    ajp_client_request(pool, ctx.fd, ISTREAM_TCP, &ajp_socket_lease, &ctx,
-                       "http", "127.0.0.1", "localhost",
-                       "localhost", 80, false,
-                       method, argv[2], NULL, request_body,
-                       &my_response_handler, &ctx,
-                       &ctx.async_ref);
+    /* connect */
+
+    client_socket_new(pool,
+                      ai->ai_family, ai->ai_socktype, ai->ai_protocol,
+                      ai->ai_addr, ai->ai_addrlen,
+                      30,
+                      &my_client_socket_handler, &ctx,
+                      &ctx.async_ref);
+    freeaddrinfo(ai);
+
+    /* run test */
 
     event_dispatch();
 

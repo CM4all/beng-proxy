@@ -1637,6 +1637,7 @@ test_t_ajp_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_ajp_client_SOURCES = test/run-ajp-client.c \
+	src/client-socket.c \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \
 	src/socket_wrapper.c src/buffered_socket.c \
@@ -1649,6 +1650,7 @@ test_run_ajp_client_SOURCES = test/run-ajp-client.c \
 	src/istream-gb.c \
 	src/istream-ajp-body.c \
 	src/shutdown_listener.c \
+	src/stopwatch.c \
 	src/direct.c 
 test_run_ajp_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
