@@ -169,7 +169,7 @@ static const struct http_response_handler my_response_handler = {
 int
 main(int argc, char **argv)
 {
-    struct context ctx;
+    static struct context ctx;
 
     if (argc < 3 || argc > 4) {
         fprintf(stderr, "usage: run-ajp-client HOST[:PORT] URI [BODY]\n");
