@@ -490,15 +490,16 @@ fcgi_client_handle_header(struct fcgi_client *client,
         return true;
     }
 
-    if (client->response.read_state == READ_NO_BODY) {
-        /* ignore all payloads until #FCGI_END_REQUEST */
-        client->skip_length += client->content_length;
-        client->content_length = 0;
-    }
-
     switch (header->type) {
     case FCGI_STDOUT:
         client->response.stderr = false;
+
+        if (client->response.read_state == READ_NO_BODY) {
+            /* ignore all payloads until #FCGI_END_REQUEST */
+            client->skip_length += client->content_length;
+            client->content_length = 0;
+        }
+
         return true;
 
     case FCGI_STDERR:
