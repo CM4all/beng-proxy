@@ -364,6 +364,8 @@ ajp_consume_send_headers(struct ajp_client *client,
         client->response.read_state = READ_NO_BODY;
         client->response.status = status;
         client->response.headers = headers;
+        client->response.chunk_length = 0;
+        client->response.junk_length = 0;
         return true;
     }
 
@@ -516,7 +518,8 @@ ajp_consume_body_chunk(struct ajp_client *client,
 static size_t
 ajp_consume_body_junk(struct ajp_client *client, size_t length)
 {
-    assert(client->response.read_state == READ_BODY);
+    assert(client->response.read_state == READ_BODY ||
+           client->response.read_state == READ_NO_BODY);
     assert(client->response.chunk_length == 0);
     assert(client->response.junk_length > 0);
     assert(length > 0);
@@ -549,7 +552,8 @@ ajp_client_feed(struct ajp_client *client,
     const uint8_t *const end = data + length;
 
     do {
-        if (client->response.read_state == READ_BODY) {
+        if (client->response.read_state == READ_BODY ||
+            client->response.read_state == READ_NO_BODY) {
             /* there is data left from the previous body chunk */
             if (client->response.chunk_length > 0) {
                 size_t nbytes = ajp_consume_body_chunk(client, data,
@@ -597,7 +601,8 @@ ajp_client_feed(struct ajp_client *client,
             const struct ajp_send_body_chunk *chunk =
                 (const struct ajp_send_body_chunk *)(header + 1);
 
-            if (client->response.read_state != READ_BODY) {
+            if (client->response.read_state != READ_BODY &&
+                client->response.read_state != READ_NO_BODY) {
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "unexpected SEND_BODY_CHUNK packet from AJP server");
@@ -619,6 +624,14 @@ ajp_client_feed(struct ajp_client *client,
                 return false;
             }
 
+            client->response.junk_length = header_length - sizeof(*chunk) - client->response.chunk_length;
+
+            if (client->response.read_state == READ_NO_BODY) {
+                /* discard all response body chunks after HEAD request */
+                client->response.junk_length += client->response.chunk_length;
+                client->response.chunk_length = 0;
+            }
+
             if (client->response.remaining >= 0 &&
                 (off_t)client->response.chunk_length > client->response.remaining) {
                 GError *error =
@@ -627,8 +640,6 @@ ajp_client_feed(struct ajp_client *client,
                 ajp_client_abort_response(client, error);
                 return 0;
             }
-
-            client->response.junk_length = header_length - sizeof(*chunk) - client->response.chunk_length;
 
             /* consume the body chunk header and start sending the
                body */
