@@ -371,6 +371,23 @@ connect_fixed(void)
 }
 
 static void
+fcgi_server_tiny(struct pool *pool)
+{
+    struct fcgi_request request;
+    read_fcgi_request(pool, &request);
+
+    discard_fcgi_request_body(&request);
+    write_fcgi_stdout_string(&request, "content-length: 5\n\nhello");
+    write_fcgi_end(&request);
+}
+
+static struct connection *
+connect_tiny(void)
+{
+    return connect_server(fcgi_server_tiny);
+}
+
+static void
 mirror_data(size_t length)
 {
     char buffer[4096];

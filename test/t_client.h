@@ -35,9 +35,11 @@ gcc_unused
 static struct connection *
 connect_dummy(void);
 
-gcc_unused
 static struct connection *
 connect_fixed(void);
+
+static struct connection *
+connect_tiny(void);
 
 #ifdef HAVE_EXPECT_100
 static struct connection *
@@ -697,6 +699,69 @@ test_head(struct pool *pool, struct context *c)
     assert(c->body_error == NULL);
 }
 
+/**
+ * Send a HEAD request.  The server sends a response body, and the
+ * client library is supposed to discard it.
+ */
+static void
+test_head_discard(struct pool *pool, struct context *c)
+{
+    c->connection = connect_fixed();
+    client_request(pool, c->connection, &my_lease, c,
+                   HTTP_METHOD_HEAD, "/foo", NULL,
+                   NULL,
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->connection == NULL);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+    assert(c->request_error == NULL);
+    assert(c->body_error == NULL);
+}
+
+/**
+ * Same as test_head_discard(), but uses connect_tiny().
+ */
+static void
+test_head_discard2(struct pool *pool, struct context *c)
+{
+    c->connection = connect_tiny();
+    client_request(pool, c->connection, &my_lease, c,
+                   HTTP_METHOD_HEAD, "/foo", NULL,
+                   NULL,
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->connection == NULL);
+    assert(c->status == HTTP_STATUS_OK);
+    assert(c->content_length != NULL);
+    assert(strcmp(c->content_length, "5") == 0 ||
+           strcmp(c->content_length, "256") == 0);
+    free(c->content_length);
+    assert(c->body == NULL);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+    assert(c->request_error == NULL);
+    assert(c->body_error == NULL);
+}
+
 static void
 test_ignored_body(struct pool *pool, struct context *c)
 {
@@ -1080,6 +1145,8 @@ run_all_tests(struct pool *pool)
     run_test(pool, test_data_blocking2);
     run_test(pool, test_body_fail);
     run_test(pool, test_head);
+    run_test(pool, test_head_discard);
+    run_test(pool, test_head_discard2);
     run_test(pool, test_ignored_body);
 #ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
     run_test(pool, test_close_ignored_request_body);

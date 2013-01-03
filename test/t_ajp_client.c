@@ -436,6 +436,29 @@ connect_fixed(void)
 }
 
 static void
+ajp_server_tiny(struct pool *pool)
+{
+    struct ajp_request request;
+    read_ajp_request(pool, &request);
+
+    if (request.code != AJP_CODE_FORWARD_REQUEST)
+        exit(EXIT_FAILURE);
+
+    struct strmap *headers = strmap_new(pool, 17);
+    strmap_add(headers, "content-length", "5");
+
+    write_headers(HTTP_STATUS_OK, headers);
+    write_body_chunk("hello", 5, 0);
+    write_end();
+}
+
+static struct connection *
+connect_tiny(void)
+{
+    return connect_server(ajp_server_tiny);
+}
+
+static void
 ajp_server_mirror(struct pool *pool)
 {
     struct ajp_request request;

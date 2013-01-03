@@ -132,6 +132,12 @@ connect_fixed(void)
 }
 
 static struct connection *
+connect_tiny(void)
+{
+    return connect_fixed();
+}
+
+static struct connection *
 connect_twice_100(void)
 {
     return connect_server("./test/twice_100.sh");
