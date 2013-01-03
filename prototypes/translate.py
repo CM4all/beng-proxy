@@ -289,6 +289,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_PATH_INFO, uri[14:])
             response.packet(TRANSLATE_BASE, '/ticket/upload/')
             response.pair('TICKET_VAR', ticket_database_uri)
+            #response.pair('TICKET_FTP_USE_EPSV', '0')
         elif uri[:16] == '/ticket/control/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'control'))
