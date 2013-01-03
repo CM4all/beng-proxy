@@ -16,6 +16,7 @@ Build-Depends: debhelper (>= 7), autoconf (>= 2.60), automake (>= 1.11),
 Standards-Version: 3.9.1
 XS-Python-Standards-Version: 0.4
 XS-Python-Version: all
+Vcs-git: git.intern.cm-ag:/srv/git/master/beng-proxy.git
 
 Package: cm4all-beng-proxy
 Architecture: any
