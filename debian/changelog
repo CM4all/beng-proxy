@@ -3,6 +3,7 @@ cm4all-beng-proxy (3.0.6) unstable; urgency=low
   * control: new command "VERBOSE" manipulates logger verbosity
   * cmdline: remove obsolete option "enable_splice"
   * ajp-client: discard response body after HEAD request
+  * fcgi-client: fix assertion failure after malformed HEAD response
 
  --   
 

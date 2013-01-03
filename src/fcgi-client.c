@@ -370,6 +370,10 @@ fcgi_client_submit_response(struct fcgi_client *client)
     if (http_status_is_empty(status) || client->response.no_body) {
         client->response.read_state = READ_NO_BODY;
         client->response.status = status;
+
+        /* ignore the rest of this STDOUT payload */
+        client->skip_length += client->content_length;
+        client->content_length = 0;
         return true;
     }
 
