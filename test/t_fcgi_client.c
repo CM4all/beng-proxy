@@ -244,6 +244,13 @@ write_fcgi_stdout(const struct fcgi_request *r,
 }
 
 static void
+write_fcgi_stdout_string(const struct fcgi_request *r,
+                         const char *data)
+{
+    write_fcgi_stdout(r, data, strlen(data));
+}
+
+static void
 write_fcgi_headers(const struct fcgi_request *r, http_status_t status,
                    struct strmap *headers)
 {
@@ -341,7 +348,7 @@ fcgi_server_hello(struct pool *pool)
 
     write_fcgi_headers(&request, HTTP_STATUS_OK, NULL);
     discard_fcgi_request_body(&request);
-    write_fcgi_stdout(&request, "hello", 5);
+    write_fcgi_stdout_string(&request, "hello");
     write_fcgi_end(&request);
 }
 
