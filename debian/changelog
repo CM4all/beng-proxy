@@ -5,6 +5,7 @@ cm4all-beng-proxy (3.0.6) unstable; urgency=low
   * ajp-client: discard response body after HEAD request
   * fcgi-client: fix assertion failure after malformed HEAD response
   * fcgi-client: don't ignore log messages after HEAD request
+  * translate-client: fix assertion failure after connection reset
 
  --   
 
