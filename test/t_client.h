@@ -752,8 +752,8 @@ test_head_discard2(struct pool *pool, struct context *c)
     assert(c->connection == NULL);
     assert(c->status == HTTP_STATUS_OK);
     assert(c->content_length != NULL);
-    assert(strcmp(c->content_length, "5") == 0 ||
-           strcmp(c->content_length, "256") == 0);
+    unsigned long content_length = strtoul(c->content_length, NULL, 10);
+    assert(content_length == 5 || content_length == 256);
     free(c->content_length);
     assert(c->body == NULL);
     assert(!c->body_eof);
