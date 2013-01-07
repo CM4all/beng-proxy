@@ -150,4 +150,15 @@ gcc_pure
 ssize_t
 direct_available(int fd, istream_direct_t fd_type, size_t max_length);
 
+/**
+ * Attempt to guess the type of the file descriptor.  Use only for
+ * testing.  In production code, the type shall be passed as a
+ * parameter.
+ *
+ * @return 0 if unknown
+ */
+gcc_pure
+enum istream_direct
+guess_fd_type(int fd);
+
 #endif

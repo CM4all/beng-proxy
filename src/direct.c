@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -129,4 +130,26 @@ direct_available(int fd, istream_direct_t fd_type, size_t max_length)
     close(fds[1]);
 
     return nbytes;
+}
+
+enum istream_direct
+guess_fd_type(int fd)
+{
+    struct stat st;
+    if (fstat(fd, &st) < 0)
+        return 0;
+
+    if (S_ISREG(st.st_mode))
+        return ISTREAM_FILE;
+
+    if (S_ISCHR(st.st_mode))
+        return ISTREAM_CHARDEV;
+
+    if (S_ISFIFO(st.st_mode))
+        return ISTREAM_PIPE;
+
+    if (S_ISSOCK(st.st_mode))
+        return ISTREAM_SOCKET;
+
+    return 0;
 }
