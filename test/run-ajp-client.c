@@ -243,7 +243,7 @@ main(int argc, char **argv)
 
     if (argc < 3 || argc > 4) {
         fprintf(stderr, "usage: run-ajp-client HOST[:PORT] URI [BODY]\n");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     direct_global_init();
@@ -257,7 +257,7 @@ main(int argc, char **argv)
     int ret = socket_resolve_host_port(argv[1], 8009, &hints, &ai);
     if (ret != 0) {
         fprintf(stderr, "Failed to resolve host name\n");
-        return 2;
+        return EXIT_FAILURE;
     }
 
     /* initialize */
@@ -281,7 +281,7 @@ main(int argc, char **argv)
         if (ret < 0) {
             fprintf(stderr, "Failed to stat %s: %s\n",
                     argv[3], strerror(errno));
-            return 2;
+            return EXIT_FAILURE;
         }
 
         ctx.method = HTTP_METHOD_POST;
@@ -323,5 +323,5 @@ main(int argc, char **argv)
     event_base_free(event_base);
     direct_global_deinit();
 
-    return ctx.body_eof ? 0 : 2;
+    return ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
 }
