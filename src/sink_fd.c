@@ -13,6 +13,7 @@
 #include <event.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <errno.h>
 
 struct sink_fd {
@@ -62,7 +63,9 @@ sink_fd_data(const void *data, size_t length, void *ctx)
 {
     struct sink_fd *ss = ctx;
 
-    ssize_t nbytes = send(ss->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    ssize_t nbytes = (ss->fd_type & ISTREAM_ANY_SOCKET) != 0
+        ? send(ss->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
+        : write(ss->fd, data, length);
     if (nbytes >= 0) {
         sink_fd_schedule_write(ss);
         return nbytes;
@@ -81,7 +84,8 @@ sink_fd_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct sink_fd *ss = ctx;
 
-    ssize_t nbytes = istream_direct_to_socket(type, fd, ss->fd, max_length);
+    ssize_t nbytes = istream_direct_to(fd, type, ss->fd, ss->fd_type,
+                                       max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
         if (!fd_ready_for_writing(ss->fd)) {
             sink_fd_schedule_write(ss);
@@ -91,7 +95,7 @@ sink_fd_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = istream_direct_to_socket(type, fd, ss->fd, max_length);
+        nbytes = istream_direct_to(fd, type, ss->fd, ss->fd_type, max_length);
     }
 
     if (likely(nbytes > 0) && (ss->got_event || type == ISTREAM_FILE))
@@ -178,7 +182,8 @@ sink_fd_new(struct pool *pool, struct istream *istream,
     ss->pool = pool;
 
     istream_assign_handler(&ss->input, istream,
-                           &sink_fd_handler, ss, ISTREAM_TO_SOCKET);
+                           &sink_fd_handler, ss,
+                           istream_direct_mask_to(fd_type));
 
     ss->fd = fd;
     ss->fd_type = fd_type;
