@@ -626,7 +626,7 @@ libistream_a_SOURCES = \
 	src/sink-null.c \
 	src/sink-buffer.c \
 	src/sink-header.c \
-	src/sink-socket.c src/sink-socket.h
+	src/sink_fd.c src/sink_fd.h
 
 pkginclude_HEADERS = \
 	include/beng-proxy/headers.h \

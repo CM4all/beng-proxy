@@ -46,7 +46,7 @@ struct lb_connection {
 
             enum istream_direct type;
 
-            struct sink_socket *sink;
+            struct sink_fd *sink;
         } peers[2];
 
         struct async_operation_ref connect;

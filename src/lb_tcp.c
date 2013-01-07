@@ -11,11 +11,10 @@
 #include "lb_log.h"
 #include "tcp-balancer.h"
 #include "istream-socket.h"
-#include "sink-socket.h"
+#include "sink_fd.h"
 #include "client-balancer.h"
 #include "client-socket.h"
 #include "istream-socket.h"
-#include "sink-socket.h"
 #include "address_sticky.h"
 
 #include <unistd.h>
@@ -30,7 +29,7 @@ first_istream_socket_read(void *ctx)
 {
     struct lb_connection *connection = ctx;
 
-    sink_socket_read(connection->tcp.peers[0].sink);
+    sink_fd_read(connection->tcp.peers[0].sink);
 }
 
 static void
@@ -87,7 +86,7 @@ second_istream_socket_read(void *ctx)
 {
     struct lb_connection *connection = ctx;
 
-    sink_socket_read(connection->tcp.peers[1].sink);
+    sink_fd_read(connection->tcp.peers[1].sink);
 }
 
 static void
@@ -135,7 +134,7 @@ static const struct istream_socket_handler second_istream_socket_handler = {
 };
 
 /*
- * first sink_socket handler
+ * first sink_fd handler
  *
  */
 
@@ -172,14 +171,14 @@ first_sink_send_error(int error, void *ctx)
     return false;
 }
 
-static const struct sink_socket_handler first_sink_socket_handler = {
+static const struct sink_fd_handler first_sink_fd_handler = {
     .input_eof = first_sink_input_eof,
     .input_error = first_sink_input_error,
     .send_error = first_sink_send_error,
 };
 
 /*
- * second sink_socket handler
+ * second sink_fd handler
  *
  */
 
@@ -216,7 +215,7 @@ second_sink_send_error(int error, void *ctx)
     return false;
 }
 
-static const struct sink_socket_handler second_sink_socket_handler = {
+static const struct sink_fd_handler second_sink_fd_handler = {
     .input_eof = second_sink_input_eof,
     .input_error = second_sink_input_error,
     .send_error = second_sink_send_error,
@@ -245,8 +244,8 @@ lb_tcp_client_socket_success(int fd, void *ctx)
                                connection->instance->pipe_stock);
 
     connection->tcp.peers[1].sink =
-        sink_socket_new(connection->pool, istream, fd, ISTREAM_TCP,
-                        &second_sink_socket_handler, connection);
+        sink_fd_new(connection->pool, istream, fd, ISTREAM_TCP,
+                    &second_sink_fd_handler, connection);
 
     istream = istream_socket_new(connection->pool, fd, ISTREAM_TCP,
                                  &second_istream_socket_handler, connection);
@@ -254,10 +253,10 @@ lb_tcp_client_socket_success(int fd, void *ctx)
                                connection->instance->pipe_stock);
 
     connection->tcp.peers[0].sink =
-        sink_socket_new(connection->pool, istream,
-                        connection->tcp.peers[0].fd,
-                        connection->tcp.peers[0].type,
-                        &first_sink_socket_handler, connection);
+        sink_fd_new(connection->pool, istream,
+                    connection->tcp.peers[0].fd,
+                    connection->tcp.peers[0].type,
+                    &first_sink_fd_handler, connection);
 }
 
 static void
@@ -344,10 +343,10 @@ lb_tcp_close(struct lb_connection *connection)
         async_abort(&connection->tcp.connect);
     else {
         if (connection->tcp.peers[0].sink != NULL)
-            sink_socket_close(connection->tcp.peers[0].sink);
+            sink_fd_close(connection->tcp.peers[0].sink);
 
         if (connection->tcp.peers[1].sink != NULL)
-            sink_socket_close(connection->tcp.peers[1].sink);
+            sink_fd_close(connection->tcp.peers[1].sink);
 
         close(connection->tcp.peers[0].fd);
         close(connection->tcp.peers[1].fd);
