@@ -228,7 +228,7 @@ static const struct sink_socket_handler second_sink_socket_handler = {
  */
 
 static void
-lb_tcp_stock_success(int fd, void *ctx)
+lb_tcp_client_socket_success(int fd, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
@@ -261,7 +261,7 @@ lb_tcp_stock_success(int fd, void *ctx)
 }
 
 static void
-lb_tcp_stock_timeout(void *ctx)
+lb_tcp_client_socket_timeout(void *ctx)
 {
     struct lb_connection *connection = ctx;
 
@@ -272,7 +272,7 @@ lb_tcp_stock_timeout(void *ctx)
 }
 
 static void
-lb_tcp_stock_error(GError *error, void *ctx)
+lb_tcp_client_socket_error(GError *error, void *ctx)
 {
     struct lb_connection *connection = ctx;
 
@@ -285,9 +285,9 @@ lb_tcp_stock_error(GError *error, void *ctx)
 }
 
 static const struct client_socket_handler lb_tcp_client_socket_handler = {
-    .success = lb_tcp_stock_success,
-    .timeout = lb_tcp_stock_timeout,
-    .error = lb_tcp_stock_error,
+    .success = lb_tcp_client_socket_success,
+    .timeout = lb_tcp_client_socket_timeout,
+    .error = lb_tcp_client_socket_error,
 };
 
 /*
