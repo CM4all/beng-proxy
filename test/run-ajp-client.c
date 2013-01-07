@@ -1,4 +1,5 @@
 #include "ajp-client.h"
+#include "strmap.h"
 #include "http-response.h"
 #include "async.h"
 #include "fd_util.h"
@@ -212,10 +213,13 @@ my_client_socket_success(int fd, void *ctx)
 
     c->fd = fd;
 
+    struct strmap *headers = strmap_new(c->pool, 17);
+    strmap_add(headers, "host", c->url.host);
+
     ajp_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
                        "http", "127.0.0.1", "localhost",
                        "localhost", 80, false,
-                       c->method, c->url.uri, NULL, c->request_body,
+                       c->method, c->url.uri, headers, c->request_body,
                        &my_response_handler, c,
                        &c->async_ref);
 }
