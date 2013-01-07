@@ -67,11 +67,6 @@ istream_direct_to_socket(istream_direct_t src_type, int src_fd,
 #endif
 }
 
-#ifdef SPLICE
-ssize_t
-istream_direct_pipe_to_pipe(int src_fd, int dest_fd, size_t max_length);
-#endif
-
 static inline ssize_t
 istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
                        int dest_fd, size_t max_length)
