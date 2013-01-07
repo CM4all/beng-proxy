@@ -25,15 +25,41 @@
 #include <netdb.h>
 #include <errno.h>
 
+struct parsed_url {
+    char *host;
+
+    const char *uri;
+};
+
+static bool
+parse_url(struct parsed_url *dest, const char *url)
+{
+    assert(dest != NULL);
+    assert(url != NULL);
+
+    if (memcmp(url, "ajp://", 6) == 0) {
+        url += 6;
+    } else
+        return false;
+
+    dest->uri = strchr(url, '/');
+    if (dest->uri == NULL || dest->uri == url)
+        return false;
+
+    dest->host = g_strndup(url, dest->uri - url);
+    return true;
+}
+
 struct context {
     struct pool *pool;
+
+    struct parsed_url url;
 
     struct shutdown_listener shutdown_listener;
 
     struct async_operation_ref async_ref;
 
     http_method_t method;
-    const char *uri;
     struct istream *request_body;
 
     int fd;
@@ -189,7 +215,7 @@ my_client_socket_success(int fd, void *ctx)
     ajp_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
                        "http", "127.0.0.1", "localhost",
                        "localhost", 80, false,
-                       c->method, c->uri, NULL, c->request_body,
+                       c->method, c->url.uri, NULL, c->request_body,
                        &my_response_handler, c,
                        &c->async_ref);
 }
@@ -241,8 +267,13 @@ main(int argc, char **argv)
 {
     static struct context ctx;
 
-    if (argc < 3 || argc > 4) {
-        fprintf(stderr, "usage: run-ajp-client HOST[:PORT] URI [BODY]\n");
+    if (argc < 2 || argc > 3) {
+        fprintf(stderr, "usage: run-ajp-client URL [BODY]\n");
+        return EXIT_FAILURE;
+    }
+
+    if (!parse_url(&ctx.url, argv[1])) {
+        fprintf(stderr, "Invalid or unsupported URL.\n");
         return EXIT_FAILURE;
     }
 
@@ -254,7 +285,7 @@ main(int argc, char **argv)
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
 
-    int ret = socket_resolve_host_port(argv[1], 8009, &hints, &ai);
+    int ret = socket_resolve_host_port(ctx.url.host, 8009, &hints, &ai);
     if (ret != 0) {
         fprintf(stderr, "Failed to resolve host name\n");
         return EXIT_FAILURE;
@@ -274,24 +305,22 @@ main(int argc, char **argv)
 
     /* open request body */
 
-    if (argc >= 4) {
+    if (argc >= 3) {
         struct stat st;
 
-        ret = stat(argv[3], &st);
+        ret = stat(argv[2], &st);
         if (ret < 0) {
             fprintf(stderr, "Failed to stat %s: %s\n",
-                    argv[3], strerror(errno));
+                    argv[2], strerror(errno));
             return EXIT_FAILURE;
         }
 
         ctx.method = HTTP_METHOD_POST;
-        ctx.request_body = istream_file_new(pool, argv[3], st.st_size);
+        ctx.request_body = istream_file_new(pool, argv[2], st.st_size);
     } else {
         ctx.method = HTTP_METHOD_GET;
         ctx.request_body = NULL;
     }
-
-    ctx.uri = argv[2];
 
     /* connect */
 
@@ -322,6 +351,8 @@ main(int argc, char **argv)
 
     event_base_free(event_base);
     direct_global_deinit();
+
+    g_free(ctx.url.host);
 
     return ctx.body_eof ? EXIT_SUCCESS : EXIT_FAILURE;
 }
