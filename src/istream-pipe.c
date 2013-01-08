@@ -68,7 +68,7 @@ pipe_consume(struct istream_pipe *p)
 
     assert(p->fds[0] >= 0);
     assert(p->piped > 0);
-    assert(p->stock_item != NULL);
+    assert(p->stock_item != NULL || p->stock == NULL);
 
     nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
     if (unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
