@@ -104,10 +104,7 @@ http_body_socket_eof(struct http_body_reader *body, struct fifo_buffer *buffer)
 #endif
 
     /* see how much is left in the buffer */
-    size_t length;
-    const void *data = fifo_buffer_read(buffer, &length);
-    if (data == NULL)
-        length = 0;
+    size_t length = fifo_buffer_available(buffer);
 
     if (body->rest == -1) {
         if (length > 0) {
