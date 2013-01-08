@@ -1651,6 +1651,7 @@ test_run_client_SOURCES = test/run_client.c \
 	src/strutil.c \
 	src/istream-gb.c \
 	src/istream-ajp-body.c \
+	src/stock.c src/pipe-stock.c \
 	src/shutdown_listener.c \
 	src/stopwatch.c \
 	src/tpool.c \

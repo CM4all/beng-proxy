@@ -9,6 +9,8 @@
 #include "direct.h"
 #include "istream-file.h"
 #include "istream.h"
+#include "sink_fd.h"
+#include "direct.h"
 #include "shutdown_listener.h"
 #include "client-socket.h"
 #include "tpool.h"
@@ -82,7 +84,7 @@ struct context {
     bool idle, reuse, aborted;
     http_status_t status;
 
-    struct istream *body;
+    struct sink_fd *body;
     bool body_eof, body_abort, body_closed;
 };
 
@@ -93,7 +95,8 @@ shutdown_callback(void *ctx)
     struct context *c = ctx;
 
     if (c->body != NULL) {
-        istream_free_handler(&c->body);
+        sink_fd_close(c->body);
+        c->body = NULL;
         c->body_abort = true;
     } else {
         c->aborted = true;
@@ -131,23 +134,8 @@ static const struct lease ajp_socket_lease = {
  *
  */
 
-static size_t
-my_istream_data(const void *data, size_t length, void *ctx)
-{
-    struct context *c = ctx;
-
-    ssize_t nbytes = write(1, data, length);
-    if (nbytes <= 0) {
-        c->body_closed = true;
-        istream_free_handler(&c->body);
-        return 0;
-    }
-
-    return (size_t)nbytes;
-}
-
 static void
-my_istream_eof(void *ctx)
+my_sink_fd_input_eof(void *ctx)
 {
     struct context *c = ctx;
 
@@ -158,10 +146,11 @@ my_istream_eof(void *ctx)
 }
 
 static void
-my_istream_abort(GError *error, void *ctx)
+my_sink_fd_input_error(GError *error, void *ctx)
 {
     struct context *c = ctx;
 
+    g_printerr("%s\n", error->message);
     g_error_free(error);
 
     c->body = NULL;
@@ -170,10 +159,24 @@ my_istream_abort(GError *error, void *ctx)
     shutdown_listener_deinit(&c->shutdown_listener);
 }
 
-static const struct istream_handler my_istream_handler = {
-    .data = my_istream_data,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
+static bool
+my_sink_fd_send_error(int error, void *ctx)
+{
+    struct context *c = ctx;
+
+    g_printerr("%s\n", g_strerror(error));
+
+    c->body = NULL;
+    c->body_abort = true;
+
+    shutdown_listener_deinit(&c->shutdown_listener);
+    return true;
+}
+
+static const struct sink_fd_handler my_sink_fd_handler = {
+    .input_eof = my_sink_fd_input_eof,
+    .input_error = my_sink_fd_input_error,
+    .send_error = my_sink_fd_send_error,
 };
 
 
@@ -184,16 +187,19 @@ static const struct istream_handler my_istream_handler = {
 
 static void
 my_response(http_status_t status, struct strmap *headers gcc_unused,
-            struct istream *body gcc_unused,
+            struct istream *body,
             void *ctx)
 {
     struct context *c = ctx;
 
     c->status = status;
 
-    if (body != NULL)
-        istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
-    else
+    if (body != NULL) {
+        body = istream_pipe_new(c->pool, body, NULL);
+        c->body = sink_fd_new(c->pool, body, 1, guess_fd_type(1),
+                              &my_sink_fd_handler, c);
+        istream_read(body);
+    } else
         c->body_eof = true;
 }
 
