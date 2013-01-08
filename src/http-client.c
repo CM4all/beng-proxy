@@ -791,8 +791,11 @@ http_client_try_response_direct(struct http_client *client)
         return false;
     }
 
-    if (nbytes == ISTREAM_RESULT_EOF)
-        return true;
+    if (nbytes == ISTREAM_RESULT_EOF) {
+        http_body_socket_eof(&client->response.body_reader, NULL);
+        http_client_release(client, false);
+        return false;
+   }
 
     if (http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
