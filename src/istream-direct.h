@@ -17,6 +17,7 @@ enum istream_direct {
 
 enum {
     ISTREAM_ANY = (ISTREAM_FILE | ISTREAM_PIPE | ISTREAM_SOCKET | ISTREAM_TCP),
+    ISTREAM_ANY_SOCKET = (ISTREAM_SOCKET | ISTREAM_TCP),
 };
 
 typedef unsigned istream_direct_t;

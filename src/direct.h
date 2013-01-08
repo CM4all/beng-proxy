@@ -81,6 +81,15 @@ istream_direct_to_pipe(istream_direct_t src_type, int src_fd,
 #endif
 }
 
+static inline ssize_t
+istream_direct_to(int src_fd, istream_direct_t src_type,
+                  int dest_fd, istream_direct_t dest_type, size_t max_length)
+{
+    return (dest_type & ISTREAM_ANY_SOCKET) != 0
+        ? istream_direct_to_socket(src_type, src_fd, dest_fd, max_length)
+        : istream_direct_to_pipe(src_type, src_fd, dest_fd, max_length);
+}
+
 gcc_const
 static inline enum istream_direct
 istream_direct_mask_to(enum istream_direct type)
