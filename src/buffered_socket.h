@@ -13,17 +13,47 @@
 
 struct fifo_buffer;
 
+enum buffered_result {
+    /**
+     * The handler has consumed all data successfully, and is willing
+     * to receive more data.
+     */
+    BUFFERED_OK,
+
+    /**
+     * The handler has consumed some data successfully, and is willing
+     * to receive more data.
+     */
+    BUFFERED_PARTIAL,
+
+    /**
+     * The handler needs more data to finish the operation.  If no
+     * more data can be obtained (because the socket has been closed
+     * already), the caller is responsible for generating an error.
+     * If the input buffer is already full, an error will be
+     * generated, too.
+     */
+    BUFFERED_MORE,
+
+    /**
+     * The handler blocks.  The handler is responsible for calling
+     * buffered_socket_read() as soon as it's ready for more data.
+     */
+    BUFFERED_BLOCKING,
+
+    /**
+     * The buffered_socket object has been closed by the handler.
+     */
+    BUFFERED_CLOSED,
+};
+
 struct buffered_socket_handler {
     /**
      * Data has been read from the socket into the input buffer.  Call
      * buffered_socket_consumed() each time you consume data from the
      * given buffer.
-     *
-     * @return true if more data shall be read from the socket, false
-     * when the socket has been closed or if the output is currently
-     * unable to consume data
      */
-    bool (*data)(const void *buffer, size_t size, void *ctx);
+    enum buffered_result (*data)(const void *buffer, size_t size, void *ctx);
 
     /**
      * The socket is ready for reading.  It is suggested to attempt a
@@ -52,6 +82,9 @@ struct buffered_socket_handler {
      * The buffer has become empty after the socket has been closed by
      * the peer.  This may be called right after #closed if the input
      * buffer was empty.
+     *
+     * If this method is not implemented, a "closed prematurely" error
+     * is thrown.
      */
     void (*end)(void *ctx);
 
@@ -107,6 +140,12 @@ struct buffered_socket {
      * Attempt to do "direct" transfers?
      */
     bool direct;
+
+    /**
+     * Does the handler expect more data?  It announced this by
+     * returning BUFFERED_MORE.
+     */
+    bool expect_more;
 
 #ifndef NDEBUG
     bool reading, ended, destroyed;

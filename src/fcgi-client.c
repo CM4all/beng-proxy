@@ -407,26 +407,6 @@ fcgi_client_submit_response(struct fcgi_client *client)
 }
 
 /**
- * Call this when you need more data to check whether this is
- * possible.  If the socket has been closed already, then the request
- * is aborted with an error.
- */
-static bool
-fcgi_client_check_more_data(struct fcgi_client *client)
-{
-    if (buffered_socket_connected(&client->socket))
-        /* we can still receive more data from the server,
-           everything's fine */
-        return true;
-
-    GError *error = g_error_new_literal(fcgi_quark(), 0,
-                                        "premature disconnect "
-                                        "from FastCGI application");
-    fcgi_client_abort_response(client, error);
-    return false;
-}
-
-/**
  * Handle an END_REQUEST packet.  This function will always destroy
  * the client.
  */
@@ -519,11 +499,8 @@ fcgi_client_handle_header(struct fcgi_client *client,
 
 /**
  * Consume data from the input buffer.
- *
- * @return false if the buffer is full or if this object has been
- * destructed
  */
-static bool
+static enum buffered_result
 fcgi_client_consume_input(struct fcgi_client *client,
                           const uint8_t *data0, size_t length0)
 {
@@ -539,19 +516,20 @@ fcgi_client_consume_input(struct fcgi_client *client,
 
             size_t nbytes = fcgi_client_feed(client, data, length);
             if (nbytes == 0) {
-                if (!at_headers)
-                    return false;
-
-                if (data == data0 && buffered_socket_full(&client->socket)) {
-                    GError *error =
-                        g_error_new_literal(fcgi_quark(), 0,
-                                            "FastCGI response header too long");
-                    fcgi_client_abort_response_headers(client, error);
-                    return false;
+                if (at_headers) {
+                    /* incomplete header line received, want more
+                       data */
+                    assert(client->response.read_state == READ_HEADERS);
+                    assert(buffered_socket_valid(&client->socket));
+                    return BUFFERED_MORE;
                 }
 
-                return client->response.read_state == READ_BODY ||
-                    fcgi_client_check_more_data(client);
+                if (!buffered_socket_valid(&client->socket))
+                    return BUFFERED_CLOSED;
+
+                /* the response body handler blocks, wait for it to
+                   become ready */
+                return BUFFERED_BLOCKING;
             }
 
             data += nbytes;
@@ -563,7 +541,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
                    BODY: we have to deliver the response now */
 
                 if (!fcgi_client_submit_response(client))
-                    return false;
+                    return BUFFERED_CLOSED;
 
                 /* continue parsing the response body from the
                    buffer */
@@ -571,7 +549,11 @@ fcgi_client_consume_input(struct fcgi_client *client,
             }
 
             if (client->content_length > 0)
-                break;
+                return data < end && client->response.read_state != READ_HEADERS
+                    /* some was consumed, try again later */
+                    ? BUFFERED_PARTIAL
+                    /* all input was consumed, want more */
+                    : BUFFERED_MORE;
 
             continue;
         }
@@ -586,7 +568,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
             buffered_socket_consumed(&client->socket, nbytes);
 
             if (client->skip_length > 0)
-                return true;
+                return BUFFERED_MORE;
 
             continue;
         }
@@ -595,16 +577,16 @@ fcgi_client_consume_input(struct fcgi_client *client,
             (const struct fcgi_record_header *)data;
         const size_t remaining = end - data;
         if (remaining < sizeof(*header))
-            return true;
+            return BUFFERED_MORE;
 
         data += sizeof(*header);
         buffered_socket_consumed(&client->socket, sizeof(*header));
 
         if (!fcgi_client_handle_header(client, header, end - data))
-            return false;
+            return BUFFERED_CLOSED;
     } while (data != end);
 
-    return true;
+    return BUFFERED_MORE;
 }
 
 /*
@@ -777,50 +759,29 @@ fcgi_client_response_body_init(struct fcgi_client *client)
  *
  */
 
-static bool
+static enum buffered_result
 fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct fcgi_client *client = ctx;
 
     pool_ref(client->pool);
-    const bool result = fcgi_client_consume_input(client, buffer, size);
+    const enum buffered_result result =
+        fcgi_client_consume_input(client, buffer, size);
     pool_unref(client->pool);
     return result;
 }
 
 static bool
-fcgi_client_socket_closed(size_t remaining, void *ctx)
+fcgi_client_socket_closed(gcc_unused size_t remaining, void *ctx)
 {
     struct fcgi_client *client = ctx;
 
-    if (remaining > 0 &&
-        /* only READ_BODY could have blocked */
-        client->response.read_state == READ_BODY &&
-        remaining >= client->content_length + client->skip_length) {
-        /* the rest of the response may already be in the input
-           buffer */
-        fcgi_client_release_socket(client, false);
-        return true;
-    }
-
-    GError *error =
-        g_error_new_literal(fcgi_quark(), 0,
-                            "FastCGI server closed the connection prematurely");
-    fcgi_client_abort_response(client, error);
-    return false;
-}
-
-static void
-fcgi_client_socket_end(void *ctx)
-{
-    struct fcgi_client *client = ctx;
-
+    /* only READ_BODY could have blocked */
     assert(client->response.read_state == READ_BODY);
 
-    GError *error =
-        g_error_new_literal(fcgi_quark(), 0,
-                            "FastCGI server closed the connection prematurely");
-    fcgi_client_abort_response_body(client, error);
+    /* the rest of the response may already be in the input buffer */
+    fcgi_client_release_socket(client, false);
+    return true;
 }
 
 static bool
@@ -866,7 +827,6 @@ fcgi_client_socket_error(GError *error, void *ctx)
 static const struct buffered_socket_handler fcgi_client_socket_handler = {
     .data = fcgi_client_socket_data,
     .closed = fcgi_client_socket_closed,
-    .end = fcgi_client_socket_end,
     .write = fcgi_client_socket_write,
     .timeout = fcgi_client_socket_timeout,
     .error = fcgi_client_socket_error,

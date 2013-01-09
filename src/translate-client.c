@@ -1721,7 +1721,7 @@ translate_handle_packet(struct translate_client *client,
     return false;
 }
 
-static bool
+static enum buffered_result
 translate_client_feed(struct translate_client *client,
                       const uint8_t *data, size_t length)
 {
@@ -1731,24 +1731,24 @@ translate_client_feed(struct translate_client *client,
                                            data + consumed, length - consumed);
         if (nbytes == 0)
             /* need more data */
-            return true;
+            break;
 
         consumed += nbytes;
         buffered_socket_consumed(&client->socket, nbytes);
 
         if (client->reader.state != PACKET_READER_COMPLETE)
             /* need more data */
-            return true;
+            break;
 
         if (!translate_handle_packet(client,
                                      client->reader.header.command,
                                      client->reader.payload == NULL
                                      ? "" : client->reader.payload,
                                      client->reader.header.length))
-            return false;
+            return BUFFERED_CLOSED;
     }
 
-    return true;
+    return BUFFERED_MORE;
 }
 
 /*
@@ -1798,22 +1798,12 @@ translate_try_write(struct translate_client *client)
  *
  */
 
-static bool
+static enum buffered_result
 translate_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct translate_client *client = ctx;
 
     return translate_client_feed(client, buffer, size);
-}
-
-static bool
-translate_client_socket_closed(gcc_unused size_t remaining, void *ctx)
-{
-    struct translate_client *client = ctx;
-
-    translate_client_error(client,
-                           "translation server closed the connection prematurely");
-    return false;
 }
 
 static bool
@@ -1835,7 +1825,6 @@ translate_client_socket_error(GError *error, void *ctx)
 
 static const struct buffered_socket_handler translate_client_socket_handler = {
     .data = translate_client_socket_data,
-    .closed = translate_client_socket_closed,
     .write = translate_client_socket_write,
     .error = translate_client_socket_error,
 };

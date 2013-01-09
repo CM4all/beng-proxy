@@ -121,18 +121,6 @@ static const struct ajp_header empty_body_chunk = {
     .a = 0x12, .b = 0x34,
 };
 
-/*
-static void
-ajp_client_schedule_read(struct ajp_client *client)
-{
-    assert(!fifo_buffer_full(client->response.input));
-
-    socket_wrapper_schedule_read_timeout(&client->socket,
-                                         client->request.istream != NULL
-                                         ? NULL : &ajp_client_timeout);
-}
-*/
-
 static void
 ajp_client_schedule_write(struct ajp_client *client)
 {
@@ -180,7 +168,6 @@ static void
 ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
-    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_BEGIN ||
            client->response.read_state == READ_NO_BODY);
 
@@ -202,7 +189,6 @@ static void
 ajp_client_abort_response_body(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
-    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_BODY);
 
     pool_ref(client->pool);
@@ -219,7 +205,6 @@ static void
 ajp_client_abort_response(struct ajp_client *client, GError *error)
 {
     assert(client != NULL);
-    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state != READ_END);
 
     switch (client->response.read_state) {
@@ -533,12 +518,8 @@ ajp_consume_body_junk(struct ajp_client *client, size_t length)
 
 /**
  * Handle the remaining data in the input buffer.
- *
- * @return true if more data shall be read from the socket, false when
- * the socket has been closed or if the output is currently unable to
- * consume data
  */
-static bool
+static enum buffered_result
 ajp_client_feed(struct ajp_client *client,
                 const uint8_t *data, const size_t length)
 {
@@ -556,16 +537,21 @@ ajp_client_feed(struct ajp_client *client,
             client->response.read_state == READ_NO_BODY) {
             /* there is data left from the previous body chunk */
             if (client->response.chunk_length > 0) {
+                const size_t remaining = end - data;
                 size_t nbytes = ajp_consume_body_chunk(client, data,
-                                                       end - data);
+                                                       remaining);
                 if (nbytes == 0)
-                    return false;
+                    return buffered_socket_valid(&client->socket)
+                        ? BUFFERED_BLOCKING
+                        : BUFFERED_CLOSED;
 
                 data += nbytes;
                 buffered_socket_consumed(&client->socket, nbytes);
                 if (data == end || client->response.chunk_length > 0)
                     /* want more data */
-                    return true;
+                    return nbytes < remaining
+                        ? BUFFERED_PARTIAL
+                        : BUFFERED_MORE;
             }
 
             if (client->response.junk_length > 0) {
@@ -576,13 +562,13 @@ ajp_client_feed(struct ajp_client *client,
                 buffered_socket_consumed(&client->socket, nbytes);
                 if (data == end || client->response.chunk_length > 0)
                     /* want more data */
-                    return true;
+                    return BUFFERED_MORE;
             }
         }
 
         if (data + sizeof(struct ajp_header) + 1 > end)
             /* we need a full header */
-            return true;
+            return BUFFERED_MORE;
 
         const struct ajp_header *header = (const struct ajp_header*)data;
         size_t header_length = ntohs(header->length);
@@ -592,7 +578,7 @@ ajp_client_feed(struct ajp_client *client,
                 g_error_new_literal(ajp_client_quark(), 0,
                                     "malformed AJP response packet");
             ajp_client_abort_response(client, error);
-            return false;
+            return BUFFERED_CLOSED;
         }
 
         const enum ajp_code code = data[sizeof(*header)];
@@ -607,13 +593,13 @@ ajp_client_feed(struct ajp_client *client,
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "unexpected SEND_BODY_CHUNK packet from AJP server");
                 ajp_client_abort_response(client, error);
-                return false;
+                return BUFFERED_CLOSED;
             }
 
             const size_t nbytes = sizeof(*header) + sizeof(*chunk);
             if (data + nbytes > end)
                 /* we need the chunk length */
-                return true;
+                return BUFFERED_MORE;
 
             client->response.chunk_length = ntohs(chunk->length);
             if (sizeof(*chunk) + client->response.chunk_length > header_length) {
@@ -621,7 +607,7 @@ ajp_client_feed(struct ajp_client *client,
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "malformed AJP SEND_BODY_CHUNK packet");
                 ajp_client_abort_response(client, error);
-                return false;
+                return BUFFERED_CLOSED;
             }
 
             client->response.junk_length = header_length - sizeof(*chunk) - client->response.chunk_length;
@@ -638,7 +624,7 @@ ajp_client_feed(struct ajp_client *client,
                     g_error_new_literal(ajp_client_quark(), 0,
                                         "excess chunk length in AJP SEND_BODY_CHUNK packet");
                 ajp_client_abort_response(client, error);
-                return 0;
+                return BUFFERED_CLOSED;
             }
 
             /* consume the body chunk header and start sending the
@@ -650,31 +636,21 @@ ajp_client_feed(struct ajp_client *client,
 
         const size_t nbytes = sizeof(*header) + header_length;
 
-        if (data + nbytes > end) {
+        if (data + nbytes > end)
             /* the packet is not complete yet */
-
-            if (buffered_socket_full(&client->socket)) {
-                GError *error =
-                    g_error_new_literal(ajp_client_quark(), 0,
-                                        "too large packet from AJP server");
-                ajp_client_abort_response(client, error);
-                return false;
-            }
-
-            return true;
-        }
+            return BUFFERED_MORE;
 
         buffered_socket_consumed(&client->socket, nbytes);
 
         if (!ajp_consume_packet(client, code,
                                 data + sizeof(*header) + 1,
                                 header_length - 1))
-            return false;
+            return BUFFERED_CLOSED;
 
         data += nbytes;
     } while (data != end);
 
-    return true;
+    return BUFFERED_MORE;
 }
 
 /*
@@ -794,51 +770,29 @@ static const struct istream_handler ajp_request_stream_handler = {
  *
  */
 
-static bool
+static enum buffered_result
 ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct ajp_client *client = ctx;
 
     pool_ref(client->pool);
-    bool result = ajp_client_feed(client, buffer, size);
+    enum buffered_result result = ajp_client_feed(client, buffer, size);
     pool_unref(client->pool);
 
     return result;
 }
 
 static bool
-ajp_client_socket_closed(size_t remaining, void *ctx)
+ajp_client_socket_closed(gcc_unused size_t remaining, void *ctx)
 {
     struct ajp_client *client = ctx;
 
-    if (remaining > 0 &&
-        /* only READ_BODY could have blocked */
-        client->response.read_state == READ_BODY &&
-        remaining >= client->response.chunk_length + client->response.junk_length) {
-        /* the rest of the response may already be in the input
-           buffer */
-        ajp_client_release_socket(client, false);
-        return true;
-    }
-
-    GError *error =
-        g_error_new_literal(ajp_client_quark(), 0,
-                            "AJP server closed the connection prematurely");
-    ajp_client_abort_response(client, error);
-    return false;
-}
-
-static void
-ajp_client_socket_end(void *ctx)
-{
-    struct ajp_client *client = ctx;
-
+    /* only READ_BODY could have blocked */
     assert(client->response.read_state == READ_BODY);
 
-    GError *error =
-        g_error_new_literal(ajp_client_quark(), 0,
-                            "AJP server closed the connection prematurely");
-    ajp_client_abort_response_body(client, error);
+    /* the rest of the response may already be in the input buffer */
+    ajp_client_release_socket(client, false);
+    return true;
 }
 
 static bool
@@ -876,7 +830,6 @@ ajp_client_socket_error(GError *error, void *ctx)
 static const struct buffered_socket_handler ajp_client_socket_handler = {
     .data = ajp_client_socket_data,
     .closed = ajp_client_socket_closed,
-    .end = ajp_client_socket_end,
     .write = ajp_client_socket_write,
     .error = ajp_client_socket_error,
 };

@@ -12,6 +12,28 @@
 #include <limits.h>
 #include <errno.h>
 
+static void
+buffered_socket_closed_prematurely(struct buffered_socket *s)
+{
+    GError *error =
+        g_error_new_literal(buffered_socket_quark(), 0,
+                            "Peer closed the socket prematurely");
+    s->handler->error(error, s->handler_ctx);
+}
+
+static void
+buffered_socket_ended(struct buffered_socket *s)
+{
+#ifndef NDEBUG
+    s->ended = true;
+#endif
+
+    if (s->handler->end == NULL)
+        buffered_socket_closed_prematurely(s);
+    else
+        s->handler->end(s->handler_ctx);
+}
+
 static bool
 buffered_socket_input_empty(const struct buffered_socket *s)
 {
@@ -75,34 +97,58 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
         return true;
     }
 
-    pool_ref(s->base.pool);
+    enum buffered_result result =
+        s->handler->data(data, length, s->handler_ctx);
+    assert((result == BUFFERED_CLOSED) || buffered_socket_valid(s));
 
-    bool result = s->handler->data(data, length, s->handler_ctx);
-    const bool valid = buffered_socket_valid(s);
-    assert(!result || valid);
+    switch (result) {
+    case BUFFERED_OK:
+        assert(fifo_buffer_empty(s->input));
+        assert(!s->expect_more);
 
-    pool_unref(s->base.pool);
+        if (!buffered_socket_connected(s)) {
+            buffered_socket_ended(s);
+            return false;
+        }
 
-    if (!valid)
+        return true;
+
+    case BUFFERED_PARTIAL:
+        assert(!fifo_buffer_empty(s->input));
+
+        return buffered_socket_connected(s);
+
+    case BUFFERED_MORE:
+        s->expect_more = true;
+
+        if (!buffered_socket_connected(s)) {
+            buffered_socket_closed_prematurely(s);
+            return false;
+        }
+
+        if (buffered_socket_full(s)) {
+            GError *error =
+                g_error_new_literal(buffered_socket_quark(), 0,
+                                    "Input buffer overflow");
+            s->handler->error(error, s->handler_ctx);
+            return false;
+        }
+
+        return true;
+
+    case BUFFERED_BLOCKING:
+        socket_wrapper_unschedule_read(&s->base);
+        return false;
+
+    case BUFFERED_CLOSED:
         /* the buffered_socket object has been destroyed by the
            handler */
         return false;
-
-    if (fifo_buffer_empty(s->input) && !buffered_socket_connected(s)) {
-        assert(s->handler->end != NULL);
-
-#ifndef NDEBUG
-        s->ended = true;
-#endif
-
-        s->handler->end(s->handler_ctx);
-        result = false;
     }
 
-    if (result && !buffered_socket_connected(s))
-        result = false;
-
-    return result;
+    /* unreachable */
+    assert(false);
+    return false;
 }
 
 /**
@@ -113,6 +159,8 @@ buffered_socket_submit_direct(struct buffered_socket *s)
 {
     assert(buffered_socket_connected(s));
     assert(buffered_socket_input_empty(s));
+
+    s->expect_more = false;
 
     return s->handler->direct(s->base.fd, s->base.fd_type, s->handler_ctx);
 }
@@ -127,12 +175,21 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
         buffer = s->input = fifo_buffer_new(s->base.pool, 8192);
 
     ssize_t nbytes = socket_wrapper_read_to_buffer(&s->base, buffer, INT_MAX);
-    if (gcc_likely(nbytes > 0))
+    if (gcc_likely(nbytes > 0)) {
         /* success: data was added to the buffer */
+        s->expect_more = false;
         return true;
+    }
 
     if (nbytes == 0) {
         /* socket closed */
+
+        if (s->expect_more) {
+            buffered_socket_closed_prematurely(s);
+            return false;
+        }
+
+        assert(s->handler->closed != NULL);
 
         const size_t remaining = fifo_buffer_available(buffer);
 
@@ -142,14 +199,9 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
         assert(!buffered_socket_connected(s));
         assert(s->input == buffer);
         assert(remaining == fifo_buffer_available(buffer));
-        assert(s->handler->end != NULL);
 
         if (fifo_buffer_empty(buffer)) {
-#ifndef NDEBUG
-            s->ended = true;
-#endif
-
-            s->handler->end(s->handler_ctx);
+            buffered_socket_ended(s);
             return false;
         }
 
@@ -323,6 +375,7 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
     s->handler_ctx = ctx;
     s->input = NULL;
     s->direct = false;
+    s->expect_more = true;
 
 #ifndef NDEBUG
     s->reading = false;
