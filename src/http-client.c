@@ -79,6 +79,14 @@ struct http_client {
         bool no_body;
 
         /**
+         * This flag is true if we are currently calling the HTTP
+         * response handler.  During this period,
+         * http_client_response_stream_read() does nothing, to prevent
+         * recursion.
+         */
+        bool in_handler;
+
+        /**
          * Has the server sent a HTTP/1.0 response?
          */
         bool http_1_0;
@@ -279,6 +287,11 @@ http_client_response_stream_read(struct istream *istream)
     assert(client->response.read_state == READ_BODY);
     assert(client->response.body_reader.output.handler != NULL);
     assert(http_response_handler_used(&client->request.handler));
+
+    if (client->response.in_handler)
+        /* avoid recursion; the http_response_handler caller will
+           continue parsing the response if possible */
+        return;
 
     bool bret = http_client_consume_body(client);
     if (!bret)
@@ -733,10 +746,12 @@ http_client_consume_headers(struct http_client *client)
     pool_ref(client->pool);
     pool_ref(client->caller_pool);
 
+    client->response.in_handler = true;
     http_response_handler_invoke_response(&client->request.handler,
                                           client->response.status,
                                           client->response.headers,
                                           client->response.body);
+    client->response.in_handler = false;
 
     bool valid = http_client_valid(client);
     pool_unref(client->caller_pool);
