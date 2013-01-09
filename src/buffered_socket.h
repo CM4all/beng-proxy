@@ -113,6 +113,13 @@ struct buffered_socket {
 #endif
 };
 
+gcc_const
+static inline GQuark
+buffered_socket_quark(void)
+{
+    return g_quark_from_static_string("buffered_socket");
+}
+
 void
 buffered_socket_init(struct buffered_socket *s, struct pool *pool,
                      int fd, enum istream_direct fd_type,

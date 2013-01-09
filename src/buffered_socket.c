@@ -285,7 +285,8 @@ buffered_socket_wrapper_timeout(void *ctx)
     if (s->handler->timeout != NULL)
         return s->handler->timeout(s->handler_ctx);
 
-    s->handler->error(g_error_new_literal(errno_quark(), ETIMEDOUT, "Timeout"),
+    s->handler->error(g_error_new_literal(buffered_socket_quark(), 0,
+                                          "Timeout"),
                       s->handler_ctx);
     return false;
 }
