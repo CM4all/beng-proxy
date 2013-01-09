@@ -800,12 +800,10 @@ ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
     struct ajp_client *client = ctx;
 
     pool_ref(client->pool);
-    size_t nbytes = ajp_client_feed(client, buffer, size);
-    if (!buffered_socket_valid(&client->socket))
-        nbytes = 0;
+    bool result = ajp_client_feed(client, buffer, size);
     pool_unref(client->pool);
 
-    return nbytes;
+    return result;
 }
 
 static bool
