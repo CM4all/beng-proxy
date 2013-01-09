@@ -1694,7 +1694,7 @@ test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/socket_wrapper.c \
-	src/fd-util.c \
+	src/fd-util.c src/fd_util.c \
 	src/direct.c
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a \
@@ -1705,7 +1705,7 @@ test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/socket_wrapper.c \
-	src/fd-util.c \
+	src/fd-util.c src/fd_util.c \
 	src/direct.c \
 	src/serialize.c \
 	src/growing-buffer.c src/sink-buffer.c \

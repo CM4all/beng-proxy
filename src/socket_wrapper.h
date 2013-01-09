@@ -75,6 +75,12 @@ socket_wrapper_close(struct socket_wrapper *s);
 void
 socket_wrapper_abandon(struct socket_wrapper *s);
 
+/**
+ * Returns the socket descriptor and calls socket_wrapper_abandon().
+ */
+int
+socket_wrapper_as_fd(struct socket_wrapper *s);
+
 static inline bool
 socket_wrapper_valid(const struct socket_wrapper *s)
 {

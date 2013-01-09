@@ -8,6 +8,7 @@
 #include "direct.h"
 #include "buffered_io.h"
 #include "fd-util.h"
+#include "fd_util.h"
 #include "pool.h"
 #include "pevent.h"
 
@@ -101,6 +102,16 @@ socket_wrapper_abandon(struct socket_wrapper *s)
     p_event_del(&s->write_event, s->pool);
 
     s->fd = -1;
+}
+
+int
+socket_wrapper_as_fd(struct socket_wrapper *s)
+{
+    assert(socket_wrapper_valid(s));
+
+    const int fd = dup_cloexec(s->fd);
+    socket_wrapper_abandon(s);
+    return fd;
 }
 
 ssize_t

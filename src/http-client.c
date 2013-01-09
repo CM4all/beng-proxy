@@ -308,7 +308,7 @@ http_client_response_stream_as_fd(struct istream *istream)
         http_body_istream(&client->response.body_reader) != client->response.body)
         return -1;
 
-    int fd = dup_cloexec(client->socket.fd);
+    int fd = socket_wrapper_as_fd(&client->socket);
     if (fd < 0)
         return -1;
 
