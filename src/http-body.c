@@ -52,6 +52,20 @@ http_body_consumed(struct http_body_reader *body, size_t nbytes)
 }
 
 size_t
+http_body_feed_body(struct http_body_reader *body,
+                    const void *data, size_t length)
+{
+    assert(length > 0);
+
+    length = http_body_max_read(body, length);
+    size_t consumed = istream_invoke_data(&body->output, data, length);
+    if (consumed > 0)
+        http_body_consumed(body, consumed);
+
+    return consumed;
+}
+
+size_t
 http_body_consume_body(struct http_body_reader *body,
                        struct fifo_buffer *buffer)
 {
@@ -60,12 +74,9 @@ http_body_consume_body(struct http_body_reader *body,
     if (data == NULL)
         return (size_t)-1;
 
-    length = http_body_max_read(body, length);
-    size_t consumed = istream_invoke_data(&body->output, data, length);
-    if (consumed > 0) {
+    size_t consumed = http_body_feed_body(body, data, length);
+    if (consumed > 0)
         fifo_buffer_consume(buffer, consumed);
-        http_body_consumed(body, consumed);
-    }
 
     return consumed;
 }

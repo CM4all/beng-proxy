@@ -50,6 +50,10 @@ off_t
 http_body_available(const struct http_body_reader *body,
                     const struct fifo_buffer *buffer, bool partial);
 
+size_t
+http_body_feed_body(struct http_body_reader *body,
+                    const void *data, size_t length);
+
 /**
  * Returne (size_t)-1 if the buffer is empty.
  */
