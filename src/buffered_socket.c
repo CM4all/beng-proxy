@@ -99,8 +99,22 @@ buffered_socket_invoke_data(struct buffered_socket *s)
         if (data == NULL)
             return BUFFERED_MORE;
 
+#ifndef NDEBUG
+        struct pool_notify notify;
+        pool_notify(s->base.pool, &notify);
+#endif
+
         enum buffered_result result =
             s->handler->data(data, length, s->handler_ctx);
+
+#ifndef NDEBUG
+        if (pool_denotify(&notify)) {
+            assert(result == BUFFERED_CLOSED);
+        } else {
+            assert((result == BUFFERED_CLOSED) == !buffered_socket_valid(s));
+        }
+#endif
+
         if (result != BUFFERED_AGAIN)
             return result;
     }
