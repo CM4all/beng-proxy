@@ -36,6 +36,16 @@ enum buffered_result {
     BUFFERED_MORE,
 
     /**
+     * The handler wants to be called again immediately, without
+     * attempting to read more data from the socket.  This result code
+     * can be used to simplify the handler code.
+     *
+     * If the input buffer is empty, this return value behaves like
+     * #BUFFERED_MORE.
+     */
+    BUFFERED_AGAIN,
+
+    /**
      * The handler blocks.  The handler is responsible for calling
      * buffered_socket_read() as soon as it's ready for more data.
      */

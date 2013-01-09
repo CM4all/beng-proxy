@@ -84,21 +84,35 @@ buffered_socket_consumed(struct buffered_socket *s, size_t nbytes)
     fifo_buffer_consume(s->input, nbytes);
 }
 
+/**
+ * Invokes the data handler, and takes care for #BUFFERED_AGAIN.
+ */
+static enum buffered_result
+buffered_socket_invoke_data(struct buffered_socket *s)
+{
+    assert(!buffered_socket_input_empty(s));
+
+    while (true) {
+        size_t length;
+        const void *data = fifo_buffer_read(s->input, &length);
+        data = fifo_buffer_read(s->input, &length);
+        if (data == NULL)
+            return BUFFERED_MORE;
+
+        enum buffered_result result =
+            s->handler->data(data, length, s->handler_ctx);
+        if (result != BUFFERED_AGAIN)
+            return result;
+    }
+}
+
 static bool
 buffered_socket_submit_from_buffer(struct buffered_socket *s)
 {
-    if (s->input == NULL)
+    if (buffered_socket_input_empty(s))
         return true;
 
-    size_t length;
-    const void *data = fifo_buffer_read(s->input, &length);
-    if (data == NULL) {
-        assert(buffered_socket_connected(s));
-        return true;
-    }
-
-    enum buffered_result result =
-        s->handler->data(data, length, s->handler_ctx);
+    enum buffered_result result = buffered_socket_invoke_data(s);
     assert((result == BUFFERED_CLOSED) || buffered_socket_valid(s));
 
     switch (result) {
@@ -135,6 +149,12 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
         }
 
         return true;
+
+    case BUFFERED_AGAIN:
+        /* unreachable, has been handled by
+           buffered_socket_invoke_data() */
+        assert(false);
+        return false;
 
     case BUFFERED_BLOCKING:
         socket_wrapper_unschedule_read(&s->base);
