@@ -166,6 +166,13 @@ buffered_socket_destroy(struct buffered_socket *s)
 }
 
 /**
+ * Returns the socket descriptor and calls buffered_socket_abandon().
+ * Returns -1 if the input buffer is not empty.
+ */
+int
+buffered_socket_as_fd(struct buffered_socket *s);
+
+/**
  * Is the socket still connected?  This does not actually check
  * whether the socket is connected, just whether it is known to be
  * closed.

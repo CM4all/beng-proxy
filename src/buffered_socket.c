@@ -30,6 +30,17 @@ buffered_socket_input_full(const struct buffered_socket *s)
     return s->input != NULL && fifo_buffer_full(s->input);
 }
 
+int
+buffered_socket_as_fd(struct buffered_socket *s)
+{
+    if (!buffered_socket_input_empty(s))
+        /* can switch to the raw socket descriptor only if the input
+           buffer is empty */
+        return -1;
+
+    return socket_wrapper_as_fd(&s->base);
+}
+
 size_t
 buffered_socket_available(const struct buffered_socket *s)
 {
