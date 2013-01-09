@@ -30,6 +30,17 @@ buffered_socket_input_full(const struct buffered_socket *s)
     return s->input != NULL && fifo_buffer_full(s->input);
 }
 
+size_t
+buffered_socket_available(const struct buffered_socket *s)
+{
+    assert(s != NULL);
+    assert(!s->ended);
+
+    return s->input != NULL
+        ? fifo_buffer_available(s->input)
+        : 0;
+}
+
 void
 buffered_socket_consumed(struct buffered_socket *s, size_t nbytes)
 {

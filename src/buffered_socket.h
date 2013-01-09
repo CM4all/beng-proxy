@@ -211,6 +211,13 @@ bool
 buffered_socket_full(const struct buffered_socket *s);
 
 /**
+ * Returns the number of bytes in the input buffer.
+ */
+gcc_pure
+size_t
+buffered_socket_available(const struct buffered_socket *s);
+
+/**
  * Mark the specified number of bytes of the input buffer as
  * "consumed".  Call this in the data() method.  Note that this method
  * does not invalidate the buffer passed to data().  It may be called
