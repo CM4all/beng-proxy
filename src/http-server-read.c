@@ -146,7 +146,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
         static const char msg[] =
             "This server requires HTTP 1.1.";
 
-        socket_wrapper_write(&connection->socket, msg, sizeof(msg) - 1);
+        buffered_socket_write(&connection->socket, msg, sizeof(msg) - 1);
         http_server_done(connection);
         return false;
     }
@@ -157,10 +157,6 @@ http_server_parse_request_line(struct http_server_connection *connection,
     connection->request.read_state = READ_HEADERS;
     connection->request.http_1_0 = space + 9 <= line + length &&
         space[8] == '0' && space[7] == '.' && space[6] == '1';
-
-    /* install the header timeout event when we start reading the
-       headers */
-    evtimer_add(&connection->timeout, &http_server_header_timeout);
 
     return true;
 }
@@ -176,7 +172,9 @@ http_server_headers_finished(struct http_server_connection *connection)
     off_t content_length;
     bool chunked;
 
-    evtimer_del(&connection->timeout);
+    /* disable the idle+headers timeout; the request body timeout will
+       be tracked by buffered_socket (auto-refreshing) */
+    evtimer_del(&connection->idle_timeout);
 
     value = strmap_get(request->headers, "expect");
     connection->request.expect_100_continue = value != NULL &&
@@ -243,6 +241,12 @@ http_server_headers_finished(struct http_server_connection *connection)
                                    content_length, chunked);
 
     connection->request.read_state = READ_BODY;
+
+    /* for the response body, the buffered_socket class tracks
+       inactivity timeout */
+    buffered_socket_schedule_read_timeout(&connection->socket,
+                                          &http_server_read_timeout);
+
     return true;
 }
 
@@ -276,15 +280,10 @@ http_server_handle_line(struct http_server_connection *connection,
     }
 }
 
-/**
- * @return false if the connection has been closed
- */
-static bool
-http_server_parse_headers(struct http_server_connection *connection)
+static enum buffered_result
+http_server_feed_headers(struct http_server_connection *connection,
+                         const void *_data, size_t length)
 {
-    const char *buffer, *buffer_end, *start, *end, *next = NULL;
-    size_t length;
-
     assert(connection->request.read_state == READ_START ||
            connection->request.read_state == READ_HEADERS);
 
@@ -294,14 +293,11 @@ http_server_parse_headers(struct http_server_connection *connection)
         return false;
     }
 
-    buffer = fifo_buffer_read(connection->input, &length);
+    const char *const buffer = _data, *const buffer_end = buffer + length;
     if (buffer == NULL)
         return true;
 
-    assert(length > 0);
-    buffer_end = buffer + length;
-
-    start = buffer;
+    const char *start = buffer, *end, *next = NULL;
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
         --end;
@@ -309,7 +305,7 @@ http_server_parse_headers(struct http_server_connection *connection)
             --end;
 
         if (!http_server_handle_line(connection, start, end - start + 1))
-            return false;
+            return BUFFERED_CLOSED;
 
         if (connection->request.read_state != READ_HEADERS)
             break;
@@ -317,18 +313,15 @@ http_server_parse_headers(struct http_server_connection *connection)
         start = next;
     }
 
-    if (next == NULL) {
-        if (fifo_buffer_full(connection->input)) {
-            /* the line is too large for our input buffer */
-            http_server_error_message(connection, "request header too long");
-            return false;
-        }
-
-        return true;
+    size_t consumed = 0;
+    if (next != NULL) {
+        consumed = next - buffer;
+        buffered_socket_consumed(&connection->socket, consumed);
     }
 
-    fifo_buffer_consume(connection->input, next - buffer);
-    return true;
+    return connection->request.read_state == READ_HEADERS
+        ? BUFFERED_MORE
+        : (consumed == length ? BUFFERED_OK : BUFFERED_PARTIAL);
 }
 
 /**
@@ -340,7 +333,7 @@ http_server_submit_request(struct http_server_connection *connection)
     if (connection->request.read_state == READ_END)
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        http_server_schedule_read(connection);
+        buffered_socket_schedule_read_no_timeout(&connection->socket);
 
     pool_ref(connection->pool);
 
@@ -362,96 +355,61 @@ http_server_submit_request(struct http_server_connection *connection)
     return ret;
 }
 
-bool
-http_server_consume_input(struct http_server_connection *connection)
+enum buffered_result
+http_server_feed(struct http_server_connection *connection,
+                  const void *data, size_t length)
 {
-    if (connection->request.read_state == READ_START ||
-        connection->request.read_state == READ_HEADERS) {
-        if (!http_server_parse_headers(connection))
-            return false;
+    switch (connection->request.read_state) {
+        enum buffered_result result;
 
-        if ((connection->request.read_state == READ_BODY ||
-             connection->request.read_state == READ_END) &&
-            !http_server_submit_request(connection))
-            return false;
-    } else if (connection->request.read_state == READ_BODY) {
-        if (!http_server_consume_body(connection))
-            return false;
+    case READ_START:
+    case READ_HEADERS:
+        if (connection->score == HTTP_SERVER_NEW)
+            connection->score = HTTP_SERVER_FIRST;
+
+        result = http_server_feed_headers(connection, data, length);
+        if ((result == BUFFERED_OK || result == BUFFERED_PARTIAL) &&
+            (connection->request.read_state == READ_BODY ||
+             connection->request.read_state == READ_END)) {
+            result = BUFFERED_AGAIN;
+
+            if (!http_server_submit_request(connection))
+                result = BUFFERED_CLOSED;
+        }
+
+        return result;
+
+    case READ_BODY:
+        return http_server_feed_body(connection, data, length);
+
+    case READ_END:
+        /* check if the connection was closed by the client while we
+           were processing the request */
+
+        if (buffered_socket_full(&connection->socket))
+            /* the buffer is full, the peer has been pipelining too
+               much - that would disallow us to detect a disconnect;
+               let's disable keep-alive now and discard all data */
+            connection->keep_alive = false;
+
+        if (!connection->keep_alive) {
+            /* discard all pipelined input when keep-alive has been
+               disabled */
+            buffered_socket_consumed(&connection->socket, length);
+            return BUFFERED_OK;
+        }
+
+        return BUFFERED_MORE;
     }
 
-    assert(http_server_connection_valid(connection));
-
-    if ((connection->request.read_state == READ_START ||
-         connection->request.read_state == READ_HEADERS ||
-         connection->request.read_state == READ_BODY) &&
-        !fifo_buffer_full(connection->input))
-        http_server_schedule_read(connection);
-
-    return true;
+    /* unreachable */
+    assert(false);
+    return BUFFERED_BLOCKING;
 }
 
-bool
-http_server_read_to_buffer(struct http_server_connection *connection)
-{
-    assert(!fifo_buffer_full(connection->input));
-
-    ssize_t nbytes = socket_wrapper_read_to_buffer(&connection->socket,
-                                                   connection->input,
-                                                   INT_MAX);
-    if (nbytes > 0) {
-        connection->request.bytes_received += nbytes;
-        return true;
-    } else if (nbytes == 0) {
-        /* the client closed the connection; do the same on our side */
-        http_server_cancel(connection);
-        return false;
-    } else if (nbytes == -2) {
-        assert(false);
-        return true;
-    } else if (errno == EAGAIN) {
-        http_server_schedule_read(connection);
-        return true;
-    } else {
-        http_server_errno(connection, "read error on HTTP connection");
-        return false;
-    }
-}
-
-/**
- * @return true if data is available in the buffer
- */
-static bool
-http_server_fill_buffer(struct http_server_connection *connection)
-{
-    return fifo_buffer_full(connection->input) ||
-        (http_server_read_to_buffer(connection) &&
-         !fifo_buffer_empty(connection->input));
-}
-
-static void
-http_server_try_read_buffered(struct http_server_connection *connection)
-{
-    if (connection->request.read_state == READ_BODY &&
-        !http_server_maybe_send_100_continue(connection))
-        return;
-
-    if (!http_server_fill_buffer(connection))
-        return;
-
-    if (connection->score == HTTP_SERVER_NEW)
-        connection->score = HTTP_SERVER_FIRST;
-
-    http_server_consume_input(connection);
-}
-
-/**
- * Attempt a "direct" transfer of the request body.  Caller must hold
- * an additional pool reference.
- *
- * @return false if the connection has been closed
- */
-static bool
-http_server_try_request_direct(struct http_server_connection *connection)
+enum direct_result
+http_server_try_request_direct(struct http_server_connection *connection,
+                               int fd, enum istream_direct fd_type)
 {
     ssize_t nbytes;
 
@@ -459,84 +417,39 @@ http_server_try_request_direct(struct http_server_connection *connection)
     assert(connection->request.read_state == READ_BODY);
 
     if (!http_server_maybe_send_100_continue(connection))
-        return false;
+        return DIRECT_CLOSED;
 
     nbytes = http_body_try_direct(&connection->request.body_reader,
-                                  connection->socket.fd,
-                                  connection->socket.fd_type);
+                                  fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
-        return true;
+        return DIRECT_BLOCKING;
 
     if (nbytes == ISTREAM_RESULT_CLOSED)
         /* the stream (and the whole connection) has been closed
            during the direct() callback (-3); no further checks */
-        return false;
+        return DIRECT_CLOSED;
 
     if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            http_server_schedule_read(connection);
-            return true;
-        }
+        if (errno == EAGAIN)
+            return DIRECT_EMPTY;
 
         http_server_errno(connection, "read error on HTTP connection");
-        return false;
+        return DIRECT_CLOSED;
     }
 
     if (nbytes == ISTREAM_RESULT_EOF)
-        return true;
+        return DIRECT_END;
 
     connection->request.bytes_received += nbytes;
 
     if (http_body_eof(&connection->request.body_reader)) {
         connection->request.read_state = READ_END;
         istream_deinit_eof(&connection->request.body_reader.output);
-        return http_server_connection_valid(connection);
+        return http_server_connection_valid(connection)
+            ? DIRECT_OK
+            : DIRECT_CLOSED;
     } else {
-        http_server_schedule_read(connection);
-        return true;
+        return DIRECT_OK;
     }
-}
-
-static bool
-http_server_try_read2(struct http_server_connection *connection)
-{
-    if (connection->request.read_state == READ_BODY &&
-        istream_check_direct(&connection->request.body_reader.output,
-                             connection->socket.fd_type)) {
-        if (fifo_buffer_empty(connection->input))
-            return http_server_try_request_direct(connection);
-        else {
-            pool_ref(connection->pool);
-            bool valid = http_server_consume_body(connection) ||
-                http_server_connection_valid(connection);
-            pool_unref(connection->pool);
-            return valid;
-        }
-    } else {
-        pool_ref(connection->pool);
-        http_server_try_read_buffered(connection);
-        bool valid = http_server_connection_valid(connection);
-        pool_unref(connection->pool);
-        return valid;
-    }
-}
-
-bool
-http_server_try_read(struct http_server_connection *connection)
-{
-    connection->request.want_read = false;
-
-    if (!http_server_try_read2(connection))
-        return false;
-
-    if (!connection->request.want_read) {
-        /* the event must always be enabled while reading headers */
-        assert(connection->request.read_state != READ_HEADERS);
-
-        event_del(&connection->timeout);
-        socket_wrapper_unschedule_read(&connection->socket);
-    }
-
-    return true;
 }

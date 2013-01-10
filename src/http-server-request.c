@@ -9,11 +9,10 @@
 #include "http-server-internal.h"
 #include "istream-internal.h"
 
-bool
-http_server_consume_body(struct http_server_connection *connection)
+enum buffered_result
+http_server_feed_body(struct http_server_connection *connection,
+                      const void *data, size_t length)
 {
-    size_t nbytes;
-
     assert(connection != NULL);
     assert(connection->request.read_state == READ_BODY);
     assert(connection->request.request->body != NULL);
@@ -23,13 +22,16 @@ http_server_consume_body(struct http_server_connection *connection)
        http_body_reader */
     if (!istream_has_handler(connection->request.request->body))
         /* the handler is not yet connected */
-        return false;
+        return BUFFERED_BLOCKING;
 
-    nbytes = http_body_consume_body(&connection->request.body_reader, connection->input);
+    size_t nbytes = http_body_feed_body(&connection->request.body_reader,
+                                        data, length);
     if (nbytes == 0)
-        return false;
+        return buffered_socket_valid(&connection->socket)
+            ? BUFFERED_BLOCKING
+            : BUFFERED_CLOSED;
 
-    assert(!fifo_buffer_full(connection->input));
+    buffered_socket_consumed(&connection->socket, nbytes);
 
     if (connection->request.read_state == READ_BODY &&
         http_body_eof(&connection->request.body_reader)) {
@@ -37,14 +39,16 @@ http_server_consume_body(struct http_server_connection *connection)
 
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        http_server_schedule_read(connection);
+        buffered_socket_schedule_read_no_timeout(&connection->socket);
 
         istream_deinit_eof(&connection->request.body_reader.output);
         if (!http_server_connection_valid(connection))
-            return false;
+            return BUFFERED_CLOSED;
     }
 
-    return true;
+    return nbytes == length
+        ? BUFFERED_OK
+        : BUFFERED_PARTIAL;
 }
 
 #ifdef __clang__
@@ -65,8 +69,8 @@ http_server_request_stream_available(struct istream *istream, bool partial)
     assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == READ_BODY);
 
-    return http_body_available(&connection->request.body_reader,
-                               connection->input, partial);
+    return http_body_available2(&connection->request.body_reader,
+                                &connection->socket, partial);
 }
 
 static void
@@ -84,9 +88,7 @@ http_server_request_stream_read(struct istream *istream)
         /* avoid recursion */
         return;
 
-    if (http_server_consume_body(connection) &&
-        connection->request.read_state == READ_BODY)
-        http_server_try_read(connection);
+    buffered_socket_read(&connection->socket);
 }
 
 static void
@@ -100,9 +102,8 @@ http_server_request_stream_close(struct istream *istream)
     assert(connection->request.read_state == READ_BODY);
     assert(!http_body_eof(&connection->request.body_reader));
 
-    if (socket_wrapper_valid(&connection->socket)) {
-        socket_wrapper_unschedule_read(&connection->socket);
-    } else {
+    if (!buffered_socket_valid(&connection->socket) ||
+        !buffered_socket_connected(&connection->socket)) {
         /* this happens when there's an error on the socket while
            reading the request body before the response gets
            submitted, and this HTTP server library invokes the

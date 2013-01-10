@@ -11,25 +11,20 @@
 #include "fifo-buffer.h"
 #include "http-body.h"
 #include "async.h"
-#include "socket_wrapper.h"
+#include "buffered_socket.h"
 
 struct http_server_connection {
     struct pool *pool;
 
     /* I/O */
-    struct socket_wrapper socket;
-
-    struct fifo_buffer *input;
+    struct buffered_socket socket;
 
     /**
-     * The timeout for receiving data from the client.  Only active
-     * while we're expecting data from the client.
-     *
-     * While receiving request headers, this timeout is not
-     * reinitialized, and is a total timeout for receiving all of the
-     * request headers.
+     * Track the total time for idle periods plus receiving all
+     * headers from the client.  Unlike the #buffered_socket read
+     * timeout, it is not refreshed after receiving some header data.
      */
-    struct event timeout;
+    struct event idle_timeout;
 
     enum http_server_score score;
 
@@ -64,8 +59,6 @@ struct http_server_connection {
             /** the request has been consumed, and we are going to send the response */
             READ_END
         } read_state;
-
-        bool want_read;
 
         /**
          * This flag is true if we are currently calling the HTTP
@@ -140,37 +133,15 @@ http_server_connection_valid(const struct http_server_connection *connection)
 {
     assert(connection != NULL);
 
-    return socket_wrapper_valid(&connection->socket);
-}
-
-static inline void
-http_server_schedule_read(struct http_server_connection *connection)
-{
-    connection->request.want_read = true;
-
-    const struct timeval *timeout =
-        gcc_likely(connection->request.read_state == READ_START)
-        ? &http_server_idle_timeout
-        : (gcc_likely(connection->request.read_state == READ_BODY)
-           ? &http_server_read_timeout
-           : NULL);
-
-    /* don't refresh timeout for READ_HEADERS */
-    /* no timeout for READ_END, because this event is only there to
-       detect a closing socket */
-
-    if (timeout != NULL)
-        evtimer_add(&connection->timeout, timeout);
-
-    socket_wrapper_schedule_read(&connection->socket, NULL);
+    return buffered_socket_valid(&connection->socket) &&
+        buffered_socket_connected(&connection->socket);
 }
 
 static inline void
 http_server_schedule_write(struct http_server_connection *connection)
 {
     connection->response.want_write = true;
-    socket_wrapper_schedule_write(&connection->socket,
-                                  &http_server_write_timeout);
+    buffered_socket_schedule_write(&connection->socket);
 }
 
 /**
@@ -204,36 +175,27 @@ bool
 http_server_maybe_send_100_continue(struct http_server_connection *connection);
 
 /**
- * @return true if something has been consumed; false if nothing has
- * been read or the connection has been closed (= do not continue)
- */
-bool
-http_server_consume_input(struct http_server_connection *connection);
-
-/**
- * Read data into the input buffer.
- *
  * @return false if the connection has been closed
  */
-bool
-http_server_read_to_buffer(struct http_server_connection *connection);
+enum buffered_result
+http_server_feed(struct http_server_connection *connection,
+                 const void *data, size_t length);
 
 /**
- * @return false if the connection has been closed
+ * Attempt a "direct" transfer of the request body.  Caller must hold
+ * an additional pool reference.
  */
-bool
-http_server_try_read(struct http_server_connection *connection);
+enum direct_result
+http_server_try_request_direct(struct http_server_connection *connection,
+                               int fd, enum istream_direct fd_type);
 
 /**
  * Send data from the input buffer to the request body istream
  * handler.
- *
- * @return true if something has been consumed (might also return true
- * when the input buffer is empty), false if nothing has been read or
- * the connection has been closed (= do not continue)
  */
-bool
-http_server_consume_body(struct http_server_connection *connection);
+enum buffered_result
+http_server_feed_body(struct http_server_connection *connection,
+                      const void *data, size_t length);
 
 /**
  * The last response on this connection is finished, and it should be

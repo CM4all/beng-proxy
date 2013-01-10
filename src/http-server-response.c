@@ -21,14 +21,14 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     struct http_server_connection *connection = ctx;
     ssize_t nbytes;
 
-    assert(socket_wrapper_valid(&connection->socket) ||
+    assert(buffered_socket_connected(&connection->socket) ||
            connection->request.request == NULL);
     assert(connection->response.istream != NULL);
 
-    if (!socket_wrapper_valid(&connection->socket))
+    if (!buffered_socket_connected(&connection->socket))
         return 0;
 
-    nbytes = socket_wrapper_write(&connection->socket, data, length);
+    nbytes = buffered_socket_write(&connection->socket, data, length);
 
     if (likely(nbytes >= 0)) {
         connection->response.bytes_sent += nbytes;
@@ -53,17 +53,17 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     struct http_server_connection *connection = ctx;
     ssize_t nbytes;
 
-    assert(socket_wrapper_valid(&connection->socket) ||
+    assert(buffered_socket_connected(&connection->socket) ||
            connection->request.request == NULL);
     assert(connection->response.istream != NULL);
 
-    if (!socket_wrapper_valid(&connection->socket))
+    if (!buffered_socket_connected(&connection->socket))
         return 0;
 
-    nbytes = socket_wrapper_write_from(&connection->socket, fd, type,
-                                       max_length);
+    nbytes = buffered_socket_write_from(&connection->socket, fd, type,
+                                        max_length);
     if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!socket_wrapper_ready_for_writing(&connection->socket)) {
+        if (!buffered_socket_ready_for_writing(&connection->socket)) {
             http_server_schedule_write(connection);
             return ISTREAM_RESULT_BLOCKING;
         }
@@ -71,8 +71,8 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
         /* try again, just in case connection->fd has become ready
            between the first istream_direct_to_socket() call and
            fd_ready_for_writing() */
-        nbytes = socket_wrapper_write_from(&connection->socket, fd, type,
-                                           max_length);
+        nbytes = buffered_socket_write_from(&connection->socket, fd, type,
+                                            max_length);
     }
 
     if (likely(nbytes > 0)) {
@@ -97,7 +97,7 @@ http_server_response_stream_eof(void *ctx)
 
     connection->response.istream = NULL;
 
-    socket_wrapper_unschedule_write(&connection->socket);
+    buffered_socket_unschedule_write(&connection->socket);
 
     if (connection->handler->log != NULL)
         connection->handler->log(connection->request.request,
@@ -136,7 +136,8 @@ http_server_response_stream_eof(void *ctx)
         /* handle pipelined request (if any), or set up events for
            next request */
 
-        http_server_consume_input(connection);
+        buffered_socket_schedule_read_no_timeout(&connection->socket);
+        evtimer_add(&connection->idle_timeout, &http_server_idle_timeout);
     } else {
         /* keepalive disabled and response is finished: we must close
            the connection */

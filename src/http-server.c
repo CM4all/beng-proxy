@@ -80,32 +80,26 @@ http_server_try_write(struct http_server_connection *connection)
     return valid;
 }
 
-static bool
-http_server_socket_read(void *ctx)
+/*
+ * buffered_socket handler
+ *
+ */
+
+static enum buffered_result
+http_server_socket_data(const void *data, size_t length, void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
-    if (connection->request.read_state == READ_END) {
-        /* check if the connection was closed by the client while we
-           were processing the request */
+    return http_server_feed(connection, data, length);
+}
 
-        if (fifo_buffer_full(connection->input)) {
-            /* the buffer is full, the peer has been pipelining too
-               much - that would disallow us to detect a disconnect;
-               let's disable keep-alive now and discard all data */
-            connection->keep_alive = false;
-            fifo_buffer_clear(connection->input);
-        }
+static enum direct_result
+http_server_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
+{
+    struct http_server_connection *connection = ctx;
+    assert(connection->request.read_state != READ_END);
 
-        if (!http_server_read_to_buffer(connection))
-            /* client has disconnected */
-            return false;
-
-        /* read more (no need to reschedule due to EV_PERSIST) */
-        return true;
-    }
-
-    return http_server_try_read(connection);
+    return http_server_try_request_direct(connection, fd, fd_type);
 }
 
 static bool
@@ -119,7 +113,7 @@ http_server_socket_write(void *ctx)
         return false;
 
     if (!connection->response.want_write)
-        socket_wrapper_unschedule_write(&connection->socket);
+        buffered_socket_unschedule_write(&connection->socket);
 
     return true;
 }
@@ -129,16 +123,36 @@ http_server_socket_timeout(void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
-    daemon_log(4, "write timeout on HTTP connection from %s\n",
+    daemon_log(4, "timeout on HTTP connection from %s\n",
                connection->remote_host);
     http_server_cancel(connection);
     return false;
 }
 
-static const struct socket_handler http_server_socket_handler = {
-    .read = http_server_socket_read,
-    .write = http_server_socket_write,
+static bool
+http_server_socket_closed(gcc_unused size_t remaining, void *ctx)
+{
+    struct http_server_connection *connection = ctx;
+
+    http_server_cancel(connection);
+    return false;
+}
+
+static void
+http_server_socket_error(GError *error, void *ctx)
+{
+    struct http_server_connection *connection = ctx;
+
+    http_server_error(connection, error);
+}
+
+static const struct buffered_socket_handler http_server_socket_handler = {
+    .data = http_server_socket_data,
+    .direct = http_server_socket_direct,
+    .closed = http_server_socket_closed,
     .timeout = http_server_socket_timeout,
+    .write = http_server_socket_write,
+    .error = http_server_socket_error,
 };
 
 static void
@@ -180,9 +194,9 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
 
-    socket_wrapper_init(&connection->socket, pool, fd, fd_type,
-                        &http_server_socket_handler, connection);
-    socket_wrapper_schedule_read(&connection->socket, NULL);
+    buffered_socket_init(&connection->socket, pool, fd, fd_type,
+                         NULL, &http_server_write_timeout,
+                         &http_server_socket_handler, connection);
 
     connection->handler = handler;
     connection->handler_ctx = ctx;
@@ -215,27 +229,36 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     connection->response.istream = NULL;
     connection->response.bytes_sent = 0;
 
-    connection->input = fifo_buffer_new(pool, 4096);
-
-    evtimer_set(&connection->timeout,
+    evtimer_set(&connection->idle_timeout,
                 http_server_timeout_callback, connection);
-    evtimer_add(&connection->timeout, &http_server_idle_timeout);
+    evtimer_add(&connection->idle_timeout, &http_server_idle_timeout);
 
     connection->score = HTTP_SERVER_NEW;
 
     *connection_r = connection;
 
-    http_server_try_read(connection);
+    buffered_socket_read(&connection->socket);
 }
 
 static void
 http_server_socket_close(struct http_server_connection *connection)
 {
-    assert(socket_wrapper_valid(&connection->socket));
+    assert(buffered_socket_connected(&connection->socket));
 
-    socket_wrapper_close(&connection->socket);
+    buffered_socket_close(&connection->socket);
 
-    evtimer_del(&connection->timeout);
+    evtimer_del(&connection->idle_timeout);
+}
+
+static void
+http_server_socket_destroy(struct http_server_connection *connection)
+{
+    assert(buffered_socket_valid(&connection->socket));
+
+    if (buffered_socket_connected(&connection->socket))
+        http_server_socket_close(connection);
+
+    buffered_socket_destroy(&connection->socket);
 }
 
 static void
@@ -271,8 +294,7 @@ http_server_done(struct http_server_connection *connection)
     assert(connection->handler->free != NULL);
     assert(connection->request.read_state == READ_START);
 
-    if (socket_wrapper_valid(&connection->socket))
-        http_server_socket_close(connection);
+    http_server_socket_destroy(connection);
 
     const struct http_server_connection_handler *handler = connection->handler;
     connection->handler = NULL;
@@ -287,8 +309,7 @@ http_server_cancel(struct http_server_connection *connection)
     assert(connection->handler != NULL);
     assert(connection->handler->free != NULL);
 
-    if (socket_wrapper_valid(&connection->socket))
-        http_server_socket_close(connection);
+    http_server_socket_destroy(connection);
 
     pool_ref(connection->pool);
 
@@ -310,8 +331,7 @@ http_server_error(struct http_server_connection *connection, GError *error)
     assert(connection->handler != NULL);
     assert(connection->handler->free != NULL);
 
-    if (socket_wrapper_valid(&connection->socket))
-        http_server_socket_close(connection);
+    http_server_socket_destroy(connection);
 
     pool_ref(connection->pool);
 
@@ -343,8 +363,7 @@ http_server_connection_close(struct http_server_connection *connection)
 {
     assert(connection != NULL);
 
-    if (socket_wrapper_valid(&connection->socket))
-        http_server_socket_close(connection);
+    http_server_socket_destroy(connection);
 
     connection->handler = NULL;
 
