@@ -312,6 +312,12 @@ buffered_socket_direct_mask(const struct buffered_socket *s)
 bool
 buffered_socket_read(struct buffered_socket *s);
 
+static inline void
+buffered_socket_set_cork(struct buffered_socket *s, bool cork)
+{
+    socket_wrapper_set_cork(&s->base, cork);
+}
+
 static inline ssize_t
 buffered_socket_write(struct buffered_socket *s,
                       const void *data, size_t length)
