@@ -284,6 +284,9 @@ http_client_response_stream_read(struct istream *istream)
            continue parsing the response if possible */
         return;
 
+    if (buffered_socket_connected(&client->socket))
+        client->socket.direct = http_client_check_direct(client);
+
     buffered_socket_read(&client->socket);
 }
 
@@ -519,6 +522,7 @@ http_client_headers_finished(struct http_client *client)
                          chunked);
 
     client->response.read_state = READ_BODY;
+    client->socket.direct = http_client_check_direct(client);
     return true;
 }
 
