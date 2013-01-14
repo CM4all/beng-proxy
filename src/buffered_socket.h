@@ -342,6 +342,16 @@ buffered_socket_ready_for_writing(const struct buffered_socket *s)
     return socket_wrapper_ready_for_writing(&s->base);
 }
 
+static inline void
+buffered_socket_schedule_read_timeout(struct buffered_socket *s,
+                                      const struct timeval *timeout)
+{
+    assert(!s->ended);
+    assert(!s->destroyed);
+
+    socket_wrapper_schedule_read_timeout(&s->base, timeout);
+}
+
 /**
  * Schedules reading on the socket with timeout disabled, to indicate
  * that you are willing to read, but do not expect it yet.  No direct
@@ -352,10 +362,7 @@ buffered_socket_ready_for_writing(const struct buffered_socket *s)
 static inline void
 buffered_socket_schedule_read_no_timeout(struct buffered_socket *s)
 {
-    assert(!s->ended);
-    assert(!s->destroyed);
-
-    socket_wrapper_schedule_read_timeout(&s->base, NULL);
+    buffered_socket_schedule_read_timeout(s, NULL);
 }
 
 static inline void
