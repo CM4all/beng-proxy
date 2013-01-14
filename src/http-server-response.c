@@ -99,13 +99,6 @@ http_server_response_stream_eof(void *ctx)
 
     socket_wrapper_unschedule_write(&connection->socket);
 
-    if (connection->response.writing_100_continue)
-        /* connection->response.istream contained the string "100
-           Continue", and not a full response - return here, because
-           we do not want the request/response pair to be
-           destructed */
-        return;
-
     if (connection->handler->log != NULL)
         connection->handler->log(connection->request.request,
                                  connection->response.status,

@@ -254,8 +254,7 @@ http_server_request_close(struct http_server_connection *connection)
 
     if ((connection->request.read_state == READ_BODY ||
          connection->request.read_state == READ_END) &&
-        (connection->response.writing_100_continue ||
-         connection->response.istream == NULL) &&
+        connection->response.istream == NULL &&
         async_ref_defined(&connection->request.async_ref))
         async_abort(&connection->request.async_ref);
 

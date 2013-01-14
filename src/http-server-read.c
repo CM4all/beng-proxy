@@ -179,7 +179,6 @@ http_server_headers_finished(struct http_server_connection *connection)
     evtimer_del(&connection->timeout);
 
     value = strmap_get(request->headers, "expect");
-    connection->response.writing_100_continue = false;
     connection->request.expect_100_continue = value != NULL &&
         strcmp(value, "100-continue") == 0;
     connection->request.expect_failed = value != NULL &&

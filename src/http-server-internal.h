@@ -100,7 +100,6 @@ struct http_server_connection {
     struct {
         bool want_write;
 
-        bool writing_100_continue;
         http_status_t status;
         char status_buffer[64];
         char content_length_buffer[32];

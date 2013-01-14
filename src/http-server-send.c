@@ -27,15 +27,22 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
 
     connection->request.expect_100_continue = false;
 
-    connection->response.istream = istream_string_new(connection->request.request->pool,
-                                                      "HTTP/1.1 100 Continue\r\n\r\n");
-    istream_handler_set(connection->response.istream,
-                        &http_server_response_stream_handler, connection,
-                        socket_wrapper_direct_mask(&connection->socket));
+    /* this string is simple enough to expect that we don't need to
+       check for partial writes, not before we have sent a single byte
+       of response to the peer */
+    static const char *const response = "HTTP/1.1 100 Continue\r\n\r\n";
+    const size_t length = strlen(response);
+    ssize_t nbytes = socket_wrapper_write(&connection->socket,
+                                          response, length);
+    if (gcc_likely(nbytes == (ssize_t)length))
+        return true;
 
-    connection->response.writing_100_continue = true;
-
-    return http_server_try_write(connection);
+    if (nbytes < 0)
+        http_server_errno(connection, "write error on HTTP connection");
+    else
+        http_server_error_message(connection,
+                                  "write error on HTTP connection");
+    return false;
 }
 
 static size_t
@@ -140,26 +147,10 @@ http_server_response(const struct http_server_request *request,
     body = istream_cat_new(request->pool, status_stream,
                            header_stream, body, NULL);
 
-    if (connection->response.istream != NULL) {
-        /* we havn't yet finished writing "100 Continue" yet;
-           concatenate this stream and the response stream now  */
-        assert(connection->response.writing_100_continue);
-
-        connection->response.writing_100_continue = false;
-
-        istream_handler_clear(connection->response.istream);
-        connection->response.length -=
-            istream_available(connection->response.istream, false);
-
-        body = istream_cat_new(request->pool, connection->response.istream, body);
-    }
-
     connection->response.istream = body;
     istream_handler_set(connection->response.istream,
                         &http_server_response_stream_handler, connection,
                         socket_wrapper_direct_mask(&connection->socket));
-
-    connection->response.writing_100_continue = false;
 
     socket_wrapper_set_cork(&connection->socket, true);
     if (http_server_try_write(connection))
