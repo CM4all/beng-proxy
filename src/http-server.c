@@ -253,22 +253,15 @@ http_server_request_close(struct http_server_connection *connection)
     connection->request.request = NULL;
 
     if ((connection->request.read_state == READ_BODY ||
-         connection->request.read_state == READ_END) &&
-        connection->response.istream == NULL &&
-        async_ref_defined(&connection->request.async_ref))
-        async_abort(&connection->request.async_ref);
+         connection->request.read_state == READ_END)) {
+        if (connection->response.istream != NULL)
+            istream_free_handler(&connection->response.istream);
+        else
+            async_abort(&connection->request.async_ref);
+    }
 
-    if (connection->request.read_state == READ_BODY) {
-        connection->request.read_state = READ_START;
-        GError *error =
-            g_error_new_literal(http_server_quark(), 0,
-                                "connection closed");
-        istream_deinit_abort(&connection->request.body_reader.output, error);
-    } else
-        connection->request.read_state = READ_START;
-
-    if (connection->response.istream != NULL)
-        istream_free_handler(&connection->response.istream);
+    /* the handler must have closed the request body */
+    assert(connection->request.read_state != READ_BODY);
 }
 
 void
