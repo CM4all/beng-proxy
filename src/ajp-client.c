@@ -1026,7 +1026,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
 
     istream_assign_handler(&client->request.istream, request,
                            &ajp_request_stream_handler, client,
-                           istream_direct_mask_to(fd_type));
+                           buffered_socket_direct_mask(&client->socket));
 
     http_response_handler_set(&client->request.handler, handler, handler_ctx);
 

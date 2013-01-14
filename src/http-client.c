@@ -1174,7 +1174,7 @@ http_client_request(struct pool *caller_pool,
 
     istream_handler_set(client->request.istream,
                         &http_client_request_stream_handler, client,
-                        istream_direct_mask_to(fd_type));
+                        buffered_socket_direct_mask(&client->socket));
 
     buffered_socket_schedule_read_no_timeout(&client->socket);
     istream_read(client->request.istream);
