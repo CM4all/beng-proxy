@@ -349,10 +349,13 @@ http_server_submit_request(struct http_server_connection *connection)
         http_server_send_message(connection->request.request,
                                  HTTP_STATUS_EXPECTATION_FAILED,
                                  "Unrecognized expectation");
-    else
+    else {
+        connection->request.in_handler = true;
         connection->handler->request(connection->request.request,
                                      connection->handler_ctx,
                                      &connection->request.async_ref);
+        connection->request.in_handler = false;
+    }
 
     bool ret = http_server_connection_valid(connection);
     pool_unref(connection->pool);

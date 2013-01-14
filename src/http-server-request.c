@@ -80,6 +80,10 @@ http_server_request_stream_read(struct istream *istream)
     assert(connection->request.request->body != NULL);
     assert(istream_has_handler(connection->request.request->body));
 
+    if (connection->request.in_handler)
+        /* avoid recursion */
+        return;
+
     if (http_server_consume_body(connection) &&
         connection->request.read_state == READ_BODY)
         http_server_try_read(connection);

@@ -67,6 +67,14 @@ struct http_server_connection {
 
         bool want_read;
 
+        /**
+         * This flag is true if we are currently calling the HTTP
+         * request handler.  During this period,
+         * http_server_request_stream_read() does nothing, to prevent
+         * recursion.
+         */
+        bool in_handler;
+
         /** has the client sent a HTTP/1.0 request? */
         bool http_1_0;
 
