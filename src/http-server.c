@@ -364,6 +364,12 @@ http_server_connection_close(struct http_server_connection *connection)
 void
 http_server_errno(struct http_server_connection *connection, const char *msg)
 {
+    if (errno == ECONNRESET) {
+        /* don't report this common problem */
+        http_server_cancel(connection);
+        return;
+    }
+
     GError *error = new_error_errno_msg(msg);
     http_server_error(connection, error);
 }

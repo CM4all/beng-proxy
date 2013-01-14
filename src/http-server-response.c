@@ -42,11 +42,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
         return 0;
     }
 
-    if (errno == ECONNRESET)
-        http_server_cancel(connection);
-    else
-        http_server_errno(connection, "write error on HTTP connection");
-
+    http_server_errno(connection, "write error on HTTP connection");
     return 0;
 }
 
