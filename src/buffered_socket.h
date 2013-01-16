@@ -57,6 +57,36 @@ enum buffered_result {
     BUFFERED_CLOSED,
 };
 
+enum direct_result {
+    /**
+     * Some data has been read from the provided socket.
+     */
+    DIRECT_OK,
+
+    /**
+     * The handler blocks.  The handler is responsible for calling
+     * buffered_socket_read() as soon as it's ready for more data.
+     */
+    DIRECT_BLOCKING,
+
+    /**
+     * The provided socket blocks.  The caller is responsible for
+     * listening on the socket.
+     */
+    DIRECT_EMPTY,
+
+    /**
+     * The handler has determined that no more data can be received on
+     * the provided socket, because the peer has closed it.
+     */
+    DIRECT_END,
+
+    /**
+     * The buffered_socket object has been closed by the handler.
+     */
+    DIRECT_CLOSED,
+};
+
 struct buffered_socket_handler {
     /**
      * Data has been read from the socket into the input buffer.  Call
@@ -68,12 +98,9 @@ struct buffered_socket_handler {
     /**
      * The socket is ready for reading.  It is suggested to attempt a
      * "direct" tansfer.
-     *
-     * @return true if more data shall be read from the socket, false
-     * when the socket has been closed or if the output is currently
-     * unable to consume data
      */
-    bool (*direct)(int fd, enum istream_direct fd_type, void *ctx);
+    enum direct_result (*direct)(int fd, enum istream_direct fd_type,
+                                 void *ctx);
 
     /**
      * The peer has finished sending and has closed the socket.  The

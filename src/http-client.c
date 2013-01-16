@@ -745,11 +745,7 @@ http_client_feed_headers(struct http_client *client,
     return BUFFERED_AGAIN;
 }
 
-/**
- * @return false if the HTTP client has been closed or if the
- * destination socket blocks
- */
-static bool
+static enum direct_result
 http_client_try_response_direct(struct http_client *client,
                                 int fd, enum istream_direct fd_type)
 {
@@ -761,17 +757,17 @@ http_client_try_response_direct(struct http_client *client,
                                           fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
-        return false;
+        return DIRECT_BLOCKING;
 
     if (nbytes == ISTREAM_RESULT_CLOSED)
         /* the stream (and the whole connection) has been closed
            during the direct() callback */
-        return false;
+        return DIRECT_CLOSED;
 
     if (nbytes < 0) {
         if (errno == EAGAIN)
             /* the source fd (= ours) blocks */
-            return true;
+            return DIRECT_EMPTY;
 
         GError *error = g_error_new(http_client_quark(), errno,
                                     "read error: %s", strerror(errno));
@@ -779,21 +775,21 @@ http_client_try_response_direct(struct http_client *client,
         stopwatch_event(client->stopwatch, "error");
 
         http_client_abort_response_body(client, error);
-        return false;
+        return DIRECT_CLOSED;
     }
 
     if (nbytes == ISTREAM_RESULT_EOF) {
         http_body_socket_eof(&client->response.body_reader, 0);
         http_client_release(client, false);
-        return false;
+        return DIRECT_CLOSED;
    }
 
     if (http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
-        return false;
+        return DIRECT_CLOSED;
     }
 
-    return true;
+    return DIRECT_OK;
 }
 
 static enum buffered_result
@@ -839,7 +835,7 @@ http_client_socket_data(const void *buffer, size_t size, void *ctx)
     return result;
 }
 
-static bool
+static enum direct_result
 http_client_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
 {
     struct http_client *client = ctx;

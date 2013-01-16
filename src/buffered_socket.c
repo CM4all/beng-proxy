@@ -196,7 +196,30 @@ buffered_socket_submit_direct(struct buffered_socket *s)
 
     s->expect_more = false;
 
-    return s->handler->direct(s->base.fd, s->base.fd_type, s->handler_ctx);
+    const enum direct_result result =
+        s->handler->direct(s->base.fd, s->base.fd_type, s->handler_ctx);
+    switch (result) {
+    case DIRECT_OK:
+        return true;
+
+    case DIRECT_BLOCKING:
+        socket_wrapper_unschedule_read(&s->base);
+        return true;
+
+    case DIRECT_EMPTY:
+        return true;
+
+    case DIRECT_END:
+        buffered_socket_ended(s);
+        return false;
+
+    case DIRECT_CLOSED:
+        return false;
+    }
+
+    /* unreachable */
+    assert(false);
+    return false;
 }
 
 static bool
