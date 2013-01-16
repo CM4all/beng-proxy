@@ -29,6 +29,11 @@ struct sink_fd {
     struct event event;
 
     /**
+     * Set to true each time data was received from the istream.
+     */
+    bool got_data;
+
+    /**
      * This flag is used to determine if the EV_WRITE event shall be
      * scheduled after a splice().  We need to add the event only if
      * the splice() was triggered by EV_WRITE, because then we're
@@ -63,6 +68,8 @@ sink_fd_data(const void *data, size_t length, void *ctx)
 {
     struct sink_fd *ss = ctx;
 
+    ss->got_data = true;
+
     ssize_t nbytes = (ss->fd_type & ISTREAM_ANY_SOCKET) != 0
         ? send(ss->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL)
         : write(ss->fd, data, length);
@@ -84,6 +91,8 @@ static ssize_t
 sink_fd_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct sink_fd *ss = ctx;
+
+    ss->got_data = true;
 
     ssize_t nbytes = istream_direct_to(fd, type, ss->fd, ss->fd_type,
                                        max_length);
@@ -112,6 +121,8 @@ sink_fd_eof(void *ctx)
 {
     struct sink_fd *ss = ctx;
 
+    ss->got_data = true;
+
 #ifndef NDEBUG
     ss->valid = false;
 #endif
@@ -125,6 +136,8 @@ static void
 sink_fd_abort(GError *error, void *ctx)
 {
     struct sink_fd *ss = ctx;
+
+    ss->got_data = true;
 
 #ifndef NDEBUG
     ss->valid = false;
@@ -155,9 +168,18 @@ socket_event_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
 
     assert(fd == ss->fd);
 
+    pool_ref(ss->pool);
+
     ss->got_event = true;
+    ss->got_data = false;
     istream_read(ss->input);
 
+    if (!ss->got_data)
+        /* the fd is ready for writing, but the istream is blocking -
+           don't try again for now */
+        p_event_del(&ss->event, ss->pool);
+
+    pool_unref(ss->pool);
     pool_commit();
 }
 
@@ -191,7 +213,7 @@ sink_fd_new(struct pool *pool, struct istream *istream,
     ss->handler = handler;
     ss->handler_ctx = ctx;
 
-    event_set(&ss->event, fd, EV_WRITE, socket_event_callback, ss);
+    event_set(&ss->event, fd, EV_WRITE|EV_PERSIST, socket_event_callback, ss);
     sink_fd_schedule_write(ss);
 
     ss->got_event = false;
