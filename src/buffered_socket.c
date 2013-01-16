@@ -144,7 +144,10 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
     case BUFFERED_PARTIAL:
         assert(!fifo_buffer_empty(s->input));
 
-        return buffered_socket_connected(s);
+        if (!buffered_socket_connected(s))
+            return false;
+
+        return true;
 
     case BUFFERED_MORE:
         s->expect_more = true;
@@ -200,13 +203,19 @@ buffered_socket_submit_direct(struct buffered_socket *s)
         s->handler->direct(s->base.fd, s->base.fd_type, s->handler_ctx);
     switch (result) {
     case DIRECT_OK:
+        /* some data was transferred: refresh the read timeout */
+        socket_wrapper_schedule_read(&s->base, s->read_timeout);
         return true;
 
     case DIRECT_BLOCKING:
         socket_wrapper_unschedule_read(&s->base);
-        return true;
+        return false;
 
     case DIRECT_EMPTY:
+        /* schedule read, but don't refresh timeout of old scheduled
+           read */
+        if (!socket_wrapper_is_read_pending(&s->base))
+            socket_wrapper_schedule_read(&s->base, s->read_timeout);
         return true;
 
     case DIRECT_END:
@@ -235,6 +244,8 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
     if (gcc_likely(nbytes > 0)) {
         /* success: data was added to the buffer */
         s->expect_more = false;
+        s->got_data = true;
+
         return true;
     }
 
@@ -273,7 +284,10 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
 
     if (nbytes == -1) {
         if (errno == EAGAIN) {
-            socket_wrapper_schedule_read(&s->base, s->read_timeout);
+            /* schedule read, but don't refresh timeout of old
+               scheduled read */
+            if (!socket_wrapper_is_read_pending(&s->base))
+                socket_wrapper_schedule_read(&s->base, s->read_timeout);
             return true;
         } else {
             GError *error = new_error_errno_msg("recv() failed");
@@ -316,19 +330,19 @@ buffered_socket_try_read2(struct buffered_socket *s)
             return true;
         }
 
-        if (!buffered_socket_submit_direct(s))
-            return false;
-
-        socket_wrapper_schedule_read(&s->base, s->read_timeout);
-        return true;
+        return buffered_socket_submit_direct(s);
     } else {
+        s->got_data = false;
+
         if (!buffered_socket_fill_buffer(s))
             return false;
 
         if (!buffered_socket_submit_from_buffer(s))
             return false;
 
-        socket_wrapper_schedule_read(&s->base, s->read_timeout);
+        if (s->got_data)
+            /* refresh the timeout each time data was received */
+            socket_wrapper_schedule_read(&s->base, s->read_timeout);
         return true;
     }
 }

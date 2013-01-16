@@ -186,6 +186,11 @@ struct buffered_socket {
      */
     bool expect_more;
 
+    /**
+     * Set to true each time data was received from the socket.
+     */
+    bool got_data;
+
 #ifndef NDEBUG
     bool reading, ended, destroyed;
 #endif
