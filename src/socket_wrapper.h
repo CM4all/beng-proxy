@@ -126,6 +126,20 @@ socket_wrapper_unschedule_write(struct socket_wrapper *s)
     p_event_del(&s->write_event, s->pool);
 }
 
+gcc_pure
+static inline bool
+socket_wrapper_is_read_pending(const struct socket_wrapper *s)
+{
+    return event_pending(&s->read_event, EV_READ, NULL);
+}
+
+gcc_pure
+static inline bool
+socket_wrapper_is_write_pending(const struct socket_wrapper *s)
+{
+    return event_pending(&s->write_event, EV_WRITE, NULL);
+}
+
 ssize_t
 socket_wrapper_read_to_buffer(struct socket_wrapper *s,
                               struct fifo_buffer *buffer, size_t length);
