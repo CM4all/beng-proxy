@@ -162,14 +162,15 @@ http_server_schedule_read(struct http_server_connection *connection)
     if (timeout != NULL)
         evtimer_add(&connection->timeout, timeout);
 
-    socket_wrapper_schedule_read(&connection->socket);
+    socket_wrapper_schedule_read(&connection->socket, NULL);
 }
 
 static inline void
 http_server_schedule_write(struct http_server_connection *connection)
 {
     connection->response.want_write = true;
-    socket_wrapper_schedule_write(&connection->socket);
+    socket_wrapper_schedule_write(&connection->socket,
+                                  &http_server_write_timeout);
 }
 
 /**

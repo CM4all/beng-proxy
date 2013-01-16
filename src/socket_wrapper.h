@@ -51,8 +51,6 @@ struct socket_wrapper {
 
     struct event read_event, write_event;
 
-    const struct timeval *read_timeout, *write_timeout;
-
     const struct socket_handler *handler;
     void *handler_ctx;
 };
@@ -60,8 +58,6 @@ struct socket_wrapper {
 void
 socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
                     int fd, enum istream_direct fd_type,
-                    const struct timeval *read_timeout,
-                    const struct timeval *write_timeout,
                     const struct socket_handler *handler, void *ctx);
 
 void
@@ -101,18 +97,12 @@ socket_wrapper_direct_mask(const struct socket_wrapper *s)
 }
 
 static inline void
-socket_wrapper_schedule_read_timeout(struct socket_wrapper *s,
-                                     const struct timeval *timeout)
+socket_wrapper_schedule_read(struct socket_wrapper *s,
+                             const struct timeval *timeout)
 {
     assert(socket_wrapper_valid(s));
 
     p_event_add(&s->read_event, timeout, s->pool, "socket_read");
-}
-
-static inline void
-socket_wrapper_schedule_read(struct socket_wrapper *s)
-{
-    socket_wrapper_schedule_read_timeout(s, s->read_timeout);
 }
 
 static inline void
@@ -122,11 +112,12 @@ socket_wrapper_unschedule_read(struct socket_wrapper *s)
 }
 
 static inline void
-socket_wrapper_schedule_write(struct socket_wrapper *s)
+socket_wrapper_schedule_write(struct socket_wrapper *s,
+                              const struct timeval *timeout)
 {
     assert(socket_wrapper_valid(s));
 
-    p_event_add(&s->write_event, s->write_timeout, s->pool, "socket_write");
+    p_event_add(&s->write_event, timeout, s->pool, "socket_write");
 }
 
 static inline void

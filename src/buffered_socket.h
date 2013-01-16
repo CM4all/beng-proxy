@@ -141,6 +141,8 @@ struct buffered_socket_handler {
 struct buffered_socket {
     struct socket_wrapper base;
 
+    const struct timeval *read_timeout, *write_timeout;
+
     const struct buffered_socket_handler *handler;
     void *handler_ctx;
 
@@ -349,7 +351,8 @@ buffered_socket_schedule_read_timeout(struct buffered_socket *s,
     assert(!s->ended);
     assert(!s->destroyed);
 
-    socket_wrapper_schedule_read_timeout(&s->base, timeout);
+    s->read_timeout = timeout;
+    socket_wrapper_schedule_read(&s->base, timeout);
 }
 
 /**
@@ -371,7 +374,7 @@ buffered_socket_schedule_write(struct buffered_socket *s)
     assert(!s->ended);
     assert(!s->destroyed);
 
-    socket_wrapper_schedule_write(&s->base);
+    socket_wrapper_schedule_write(&s->base, s->write_timeout);
 }
 
 static inline void

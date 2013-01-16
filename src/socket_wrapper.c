@@ -49,8 +49,6 @@ socket_write_event_callback(gcc_unused int fd, gcc_unused short event,
 void
 socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
                     int fd, enum istream_direct fd_type,
-                    const struct timeval *read_timeout,
-                    const struct timeval *write_timeout,
                     const struct socket_handler *handler, void *ctx)
 {
     assert(s != NULL);
@@ -59,8 +57,6 @@ socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
     assert(handler != NULL);
     assert(handler->read != NULL);
     assert(handler->write != NULL);
-    assert(handler->timeout != NULL || (read_timeout == NULL &&
-                                        write_timeout == NULL));
 
     s->pool = pool;
     s->fd = fd;
@@ -72,9 +68,6 @@ socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
 
     event_set(&s->write_event, fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT,
               socket_write_event_callback, s);
-
-    s->read_timeout = read_timeout;
-    s->write_timeout = write_timeout;
 
     s->handler = handler;
     s->handler_ctx = ctx;

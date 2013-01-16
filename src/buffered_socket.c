@@ -250,7 +250,7 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
 
     if (nbytes == -1) {
         if (errno == EAGAIN) {
-            socket_wrapper_schedule_read(&s->base);
+            socket_wrapper_schedule_read(&s->base, s->read_timeout);
             return true;
         } else {
             GError *error = new_error_errno_msg("recv() failed");
@@ -296,7 +296,7 @@ buffered_socket_try_read2(struct buffered_socket *s)
         if (!buffered_socket_submit_direct(s))
             return false;
 
-        socket_wrapper_schedule_read(&s->base);
+        socket_wrapper_schedule_read(&s->base, s->read_timeout);
         return true;
     } else {
         if (!buffered_socket_fill_buffer(s))
@@ -305,7 +305,7 @@ buffered_socket_try_read2(struct buffered_socket *s)
         if (!buffered_socket_submit_from_buffer(s))
             return false;
 
-        socket_wrapper_schedule_read(&s->base);
+        socket_wrapper_schedule_read(&s->base, s->read_timeout);
         return true;
     }
 }
@@ -402,8 +402,10 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
     assert(handler->error != NULL);
 
     socket_wrapper_init(&s->base, pool, fd, fd_type,
-                        read_timeout, write_timeout,
                         &buffered_socket_handler, s);
+
+    s->read_timeout = read_timeout;
+    s->write_timeout = write_timeout;
 
     s->handler = handler;
     s->handler_ctx = ctx;

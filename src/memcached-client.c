@@ -113,15 +113,16 @@ memcached_client_schedule_read(struct memcached_client *client)
 {
     assert(!fifo_buffer_full(client->response.input));
 
-    socket_wrapper_schedule_read_timeout(&client->socket,
-                                         client->request.istream != NULL
-                                         ? NULL : &memcached_client_timeout);
+    socket_wrapper_schedule_read(&client->socket,
+                                 client->request.istream != NULL
+                                 ? NULL : &memcached_client_timeout);
 }
 
 static void
 memcached_client_schedule_write(struct memcached_client *client)
 {
-    socket_wrapper_schedule_write(&client->socket);
+    socket_wrapper_schedule_write(&client->socket,
+                                  &memcached_client_timeout);
 }
 
 /**
@@ -890,7 +891,6 @@ memcached_client_invoke(struct pool *caller_pool,
     client->caller_pool = caller_pool;
 
     socket_wrapper_init(&client->socket, pool, fd, fd_type,
-                        NULL, &memcached_client_timeout,
                         &memcached_client_socket_handler, client);
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
