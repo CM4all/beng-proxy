@@ -304,6 +304,77 @@ static const struct istream_class memcached_response_value = {
  *
  */
 
+static bool
+memcached_submit_response(struct memcached_client *client)
+{
+    assert(client->response.read_state == READ_KEY);
+
+    async_operation_finished(&client->request.async);
+
+    if (client->request.istream != NULL) {
+        /* at this point, the request must have been sent */
+        GError *error =
+            g_error_new_literal(memcached_client_quark(), 0,
+                                "memcached server sends response too early");
+        memcached_connection_abort_response_header(client, error);
+        return false;
+    }
+
+    if (client->response.remaining > 0) {
+        /* there's a value: pass it to the callback, continue
+           reading */
+        struct istream *value;
+        bool valid;
+
+        if (fifo_buffer_empty(client->response.input))
+            memcached_client_schedule_read(client);
+
+        client->response.read_state = READ_VALUE;
+
+        istream_init(&client->response.value, &memcached_response_value,
+                     client->pool);
+        value = istream_struct_cast(&client->response.value);
+
+        pool_ref(client->pool);
+
+        /* we need this additional reference in case the handler
+           closes the body */
+        pool_ref(client->caller_pool);
+        client->request.handler->response(g_ntohs(client->response.header.status),
+                                          client->response.extras,
+                                          client->response.header.extras_length,
+                                          client->response.key.buffer,
+                                          g_ntohs(client->response.header.key_length),
+                                          value, client->request.handler_ctx);
+        pool_unref(client->caller_pool);
+
+        /* check if the callback has closed the value istream */
+        valid = memcached_connection_valid(client);
+        pool_unref(client->pool);
+
+        return valid;
+    } else {
+        /* no value: invoke the callback, quit */
+
+        memcached_client_release_socket(client,
+                                        fifo_buffer_empty(client->response.input));
+
+        client->response.read_state = READ_END;
+        client->response.input = NULL;
+
+        client->request.handler->response(g_ntohs(client->response.header.status),
+                                          client->response.extras,
+                                          client->response.header.extras_length,
+                                          client->response.key.buffer,
+                                          g_ntohs(client->response.header.key_length),
+                                          NULL, client->request.handler_ctx);
+        pool_unref(client->caller_pool);
+
+        pool_unref(client->pool);
+        return false;
+    }
+}
+
 /**
  * @return true if the stream is still open and non-blocking (header
  * finished or more data is needed)
@@ -412,70 +483,7 @@ memcached_consume_key(struct memcached_client *client)
             return true;
     }
 
-    if (client->request.istream != NULL) {
-        /* at this point, the request must have been sent */
-        GError *error =
-            g_error_new_literal(memcached_client_quark(), 0,
-                                "memcached server sends response too early");
-        memcached_connection_abort_response_header(client, error);
-        return false;
-    }
-
-    async_operation_finished(&client->request.async);
-
-    if (client->response.remaining > 0) {
-        /* there's a value: pass it to the callback, continue
-           reading */
-        struct istream *value;
-        bool valid;
-
-        if (fifo_buffer_empty(client->response.input))
-            memcached_client_schedule_read(client);
-
-        client->response.read_state = READ_VALUE;
-
-        istream_init(&client->response.value, &memcached_response_value,
-                     client->pool);
-        value = istream_struct_cast(&client->response.value);
-
-        pool_ref(client->pool);
-
-        /* we need this additional reference in case the handler
-           closes the body */
-        pool_ref(client->caller_pool);
-        client->request.handler->response(g_ntohs(client->response.header.status),
-                                          client->response.extras,
-                                          client->response.header.extras_length,
-                                          client->response.key.buffer,
-                                          g_ntohs(client->response.header.key_length),
-                                          value, client->request.handler_ctx);
-        pool_unref(client->caller_pool);
-
-        /* check if the callback has closed the value istream */
-        valid = memcached_connection_valid(client);
-        pool_unref(client->pool);
-
-        return valid;
-    } else {
-        /* no value: invoke the callback, quit */
-
-        memcached_client_release_socket(client,
-                                        fifo_buffer_empty(client->response.input));
-
-        client->response.read_state = READ_END;
-        client->response.input = NULL;
-
-        client->request.handler->response(g_ntohs(client->response.header.status),
-                                          client->response.extras,
-                                          client->response.header.extras_length,
-                                          client->response.key.buffer,
-                                          g_ntohs(client->response.header.key_length),
-                                          NULL, client->request.handler_ctx);
-        pool_unref(client->caller_pool);
-
-        pool_unref(client->pool);
-        return false;
-    }
+    return memcached_submit_response(client);
 }
 
 /**
