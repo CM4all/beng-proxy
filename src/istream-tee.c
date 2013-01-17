@@ -264,6 +264,7 @@ istream_tee_close0(istream_t istream)
     }
 
     if (tee->input != NULL && tee->outputs[1].enabled &&
+        istream_has_handler(&tee->outputs[1].istream) &&
         !tee->in_data && !tee->reading)
         istream_read(tee->input);
 
@@ -345,6 +346,7 @@ istream_tee_close1(istream_t istream)
     }
 
     if (tee->input != NULL && tee->outputs[0].enabled &&
+        istream_has_handler(&tee->outputs[0].istream) &&
         !tee->in_data && !tee->reading)
         istream_read(tee->input);
 
