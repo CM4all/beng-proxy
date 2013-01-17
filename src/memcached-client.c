@@ -6,7 +6,7 @@
 
 #include "memcached-client.h"
 #include "memcached-packet.h"
-#include "socket_wrapper.h"
+#include "buffered_socket.h"
 #include "please.h"
 #include "async.h"
 #include "pevent.h"
@@ -26,7 +26,7 @@ struct memcached_client {
     struct pool *pool, *caller_pool;
 
     /* I/O */
-    struct socket_wrapper socket;
+    struct buffered_socket socket;
     struct lease_ref lease_ref;
 
     /* request */
@@ -59,8 +59,6 @@ struct memcached_client {
 
         struct memcached_response_header header;
 
-        struct fifo_buffer *input;
-
         unsigned char *extras;
 
         struct {
@@ -87,50 +85,23 @@ static const struct timeval memcached_client_timeout = {
 static inline bool
 memcached_connection_valid(const struct memcached_client *client)
 {
-    return client->response.input != NULL;
-}
-
-/**
- * Is I/O on the socket finished?  Is the rest of the response already
- * in the buffer?
- *
- * Call this method only while reading the response value.
- */
-static bool
-memcached_client_socket_is_done(const struct memcached_client *client)
-{
-    assert(client->response.read_state == READ_VALUE);
-    assert(client->request.istream == NULL);
-
-    return client->response.remaining ==
-        fifo_buffer_available(client->response.input);
+    return buffered_socket_valid(&client->socket);
 }
 
 static inline bool
 memcached_client_check_direct(const struct memcached_client *client)
 {
-    assert(socket_wrapper_valid(&client->socket));
+    assert(buffered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_VALUE);
 
     return istream_check_direct(&client->response.value,
-                                client->socket.fd_type);
-}
-
-static void
-memcached_client_schedule_read(struct memcached_client *client)
-{
-    assert(!fifo_buffer_full(client->response.input));
-
-    socket_wrapper_schedule_read(&client->socket,
-                                 client->request.istream != NULL
-                                 ? NULL : &memcached_client_timeout);
+                                client->socket.base.fd_type);
 }
 
 static void
 memcached_client_schedule_write(struct memcached_client *client)
 {
-    socket_wrapper_schedule_write(&client->socket,
-                                  &memcached_client_timeout);
+    buffered_socket_schedule_write(&client->socket);
 }
 
 /**
@@ -141,8 +112,18 @@ memcached_client_release_socket(struct memcached_client *client, bool reuse)
 {
     assert(client != NULL);
 
-    socket_wrapper_abandon(&client->socket);
+    buffered_socket_abandon(&client->socket);
     p_lease_release(&client->lease_ref, reuse, client->pool);
+}
+
+static void
+memcached_client_destroy_socket(struct memcached_client *client, bool reuse)
+{
+    assert(client != NULL);
+
+    if (buffered_socket_connected(&client->socket))
+        memcached_client_release_socket(client, reuse);
+    buffered_socket_destroy(&client->socket);
 }
 
 /**
@@ -154,10 +135,8 @@ memcached_client_release(struct memcached_client *client, bool reuse)
 {
     assert(client != NULL);
 
-    client->response.input = NULL;
-
-    if (socket_wrapper_valid(&client->socket))
-        memcached_client_release_socket(client, reuse);
+    if (buffered_socket_valid(&client->socket))
+        memcached_client_destroy_socket(client, reuse);
 
     pool_unref(client->pool);
 }
@@ -173,10 +152,8 @@ memcached_connection_abort_response_header(struct memcached_client *client,
 
     async_operation_finished(&client->request.async);
 
-    client->response.input = NULL;
-
-    if (socket_wrapper_valid(&client->socket))
-        memcached_client_release_socket(client, false);
+    if (buffered_socket_valid(&client->socket))
+        memcached_client_destroy_socket(client, false);
 
     client->request.handler->error(error, client->request.handler_ctx);
     pool_unref(client->caller_pool);
@@ -197,10 +174,8 @@ memcached_connection_abort_response_value(struct memcached_client *client,
     assert(client->response.read_state == READ_VALUE);
     assert(client->request.istream == NULL);
 
-    client->response.input = NULL;
-
-    if (socket_wrapper_valid(&client->socket))
-        memcached_client_release_socket(client, false);
+    if (buffered_socket_valid(&client->socket))
+        memcached_client_destroy_socket(client, false);
 
     client->response.read_state = READ_END;
     istream_deinit_abort(&client->response.value, error);
@@ -234,15 +209,6 @@ memcached_connection_abort_response(struct memcached_client *client,
     /* unreachable */
     assert(false);
 }
-
-static bool
-memcached_consume_value(struct memcached_client *client);
-
-static void
-memcached_client_try_read_direct(struct memcached_client *client);
-
-static bool
-memcached_client_fill_buffer(struct memcached_client *client);
 
 /*
  * response value istream
@@ -283,12 +249,10 @@ istream_memcached_read(struct istream *istream)
            continue parsing the response if possible */
         return;
 
-    if (!fifo_buffer_empty(client->response.input))
-        memcached_consume_value(client);
-    else if (memcached_client_check_direct(client))
-        memcached_client_try_read_direct(client);
-    else if (memcached_client_fill_buffer(client))
-        memcached_consume_value(client);
+    if (buffered_socket_connected(&client->socket))
+        client->socket.direct = memcached_client_check_direct(client);
+
+    buffered_socket_read(&client->socket);
 }
 
 static void
@@ -300,7 +264,7 @@ istream_memcached_close(struct istream *istream)
     assert(client->response.read_state == READ_VALUE);
     assert(client->request.istream == NULL);
 
-    memcached_client_release(client, memcached_client_socket_is_done(client));
+    memcached_client_release(client, false);
 
     istream_deinit(&client->response.value);
     pool_unref(caller_pool);
@@ -317,7 +281,7 @@ static const struct istream_class memcached_response_value = {
  *
  */
 
-static bool
+static enum buffered_result
 memcached_submit_response(struct memcached_client *client)
 {
     assert(client->response.read_state == READ_KEY);
@@ -330,7 +294,7 @@ memcached_submit_response(struct memcached_client *client)
             g_error_new_literal(memcached_client_quark(), 0,
                                 "memcached server sends response too early");
         memcached_connection_abort_response_header(client, error);
-        return false;
+        return BUFFERED_CLOSED;
     }
 
     if (client->response.remaining > 0) {
@@ -338,9 +302,6 @@ memcached_submit_response(struct memcached_client *client)
            reading */
         struct istream *value;
         bool valid;
-
-        if (fifo_buffer_empty(client->response.input))
-            memcached_client_schedule_read(client);
 
         client->response.read_state = READ_VALUE;
 
@@ -367,17 +328,22 @@ memcached_submit_response(struct memcached_client *client)
 
         /* check if the callback has closed the value istream */
         valid = memcached_connection_valid(client);
+
+        if (valid && buffered_socket_connected(&client->socket))
+            client->socket.direct = memcached_client_check_direct(client);
+
         pool_unref(client->pool);
 
-        return valid;
+        return valid
+            ? BUFFERED_AGAIN
+            : BUFFERED_CLOSED;
     } else {
         /* no value: invoke the callback, quit */
 
-        memcached_client_release_socket(client,
-                                        fifo_buffer_empty(client->response.input));
+        memcached_client_destroy_socket(client,
+                                        buffered_socket_empty(&client->socket));
 
         client->response.read_state = READ_END;
-        client->response.input = NULL;
 
         client->request.handler->response(g_ntohs(client->response.header.status),
                                           client->response.extras,
@@ -387,30 +353,45 @@ memcached_submit_response(struct memcached_client *client)
                                           NULL, client->request.handler_ctx);
         pool_unref(client->caller_pool);
 
-        pool_unref(client->pool);
-        return false;
+        memcached_client_release(client, false);
+        return BUFFERED_CLOSED;
     }
 }
 
-/**
- * @return true if the stream is still open and non-blocking (header
- * finished or more data is needed)
- */
-static bool
-memcached_consume_header(struct memcached_client *client)
+static enum buffered_result
+memcached_begin_key(struct memcached_client *client)
 {
-    size_t length;
-    const void *data = fifo_buffer_read(client->response.input, &length);
+    assert(client->response.read_state == READ_EXTRAS);
 
+    client->response.read_state = READ_KEY;
+
+    client->response.key.remaining =
+        g_ntohs(client->response.header.key_length);
+    if (client->response.key.remaining == 0) {
+        client->response.key.buffer = NULL;
+        return memcached_submit_response(client);
+    }
+
+    client->response.key.buffer
+        = client->response.key.tail
+        = p_malloc(client->pool, client->response.key.remaining);
+
+    return BUFFERED_AGAIN;
+}
+
+static enum buffered_result
+memcached_feed_header(struct memcached_client *client,
+                      const void *data, size_t length)
+{
     assert(client->response.read_state == READ_HEADER);
 
-    if (data == NULL || length < sizeof(client->response.header))
+    if (length < sizeof(client->response.header))
         /* not enough data yet */
-        return true;
+        return BUFFERED_MORE;
 
     memcpy(&client->response.header, data, sizeof(client->response.header));
-    fifo_buffer_consume(client->response.input,
-                        sizeof(client->response.header));
+    buffered_socket_consumed(&client->socket, sizeof(client->response.header));
+
     client->response.read_state = READ_EXTRAS;
 
     client->response.remaining = g_ntohl(client->response.header.body_length);
@@ -422,280 +403,166 @@ memcached_consume_header(struct memcached_client *client)
             g_error_new_literal(memcached_client_quark(), 0,
                                 "memcached protocol error");
         memcached_connection_abort_response_header(client, error);
-        return false;
+        return BUFFERED_CLOSED;
     }
 
-    return true;
+    if (client->response.header.extras_length == 0) {
+        client->response.extras = NULL;
+        return memcached_begin_key(client);
+    }
+
+    return BUFFERED_AGAIN;
 }
 
-/**
- * @return true if the stream is still open and non-blocking (extras
- * finished or more data is needed)
- */
-static bool
-memcached_consume_extras(struct memcached_client *client)
+static enum buffered_result
+memcached_feed_extras(struct memcached_client *client,
+                      const void *data, size_t length)
 {
     assert(client->response.read_state == READ_EXTRAS);
+    assert(client->response.header.extras_length > 0);
 
-    if (client->response.header.extras_length > 0) {
-        size_t length;
-        const void *data = fifo_buffer_read(client->response.input, &length);
+    if (data == NULL ||
+        length < sizeof(client->response.header.extras_length))
+        return BUFFERED_MORE;
 
-        if (data == NULL ||
-            length < sizeof(client->response.header.extras_length))
-            return true;
+    client->response.extras = p_malloc(client->pool,
+                                       client->response.header.extras_length);
+    memcpy(client->response.extras, data,
+           client->response.header.extras_length);
 
-        client->response.extras = p_malloc(client->pool,
-                                           client->response.header.extras_length);
-        memcpy(client->response.extras, data,
-               client->response.header.extras_length);
+    buffered_socket_consumed(&client->socket,
+                             client->response.header.extras_length);
+    client->response.remaining -= client->response.header.extras_length;
 
-        fifo_buffer_consume(client->response.input,
-                            client->response.header.extras_length);
-        client->response.remaining -= client->response.header.extras_length;
-    } else
-        client->response.extras = NULL;
-
-    client->response.read_state = READ_KEY;
-    client->response.key.remaining =
-        g_ntohs(client->response.header.key_length);
-    if (client->response.key.remaining > 0)
-        client->response.key.buffer
-            = client->response.key.tail
-            = p_malloc(client->pool, client->response.key.remaining);
-    else
-        client->response.key.buffer = NULL;
-
-    return true;
+    return memcached_begin_key(client);
 }
 
-/**
- * @return true if the stream is still open and non-blocking (key
- * finished or more data is needed)
- */
-static bool
-memcached_consume_key(struct memcached_client *client)
+static enum buffered_result
+memcached_feed_key(struct memcached_client *client,
+                   const void *data, size_t length)
 {
     assert(client->response.read_state == READ_KEY);
+    assert(client->response.key.remaining > 0);
 
-    if (client->response.key.remaining > 0) {
-        size_t length;
-        const void *data = fifo_buffer_read(client->response.input, &length);
+    if (length > client->response.key.remaining)
+        length = client->response.key.remaining;
 
-        if (data == NULL)
-            return true;
+    memcpy(client->response.key.tail, data, length);
+    client->response.key.tail += length;
+    client->response.key.remaining -= length;
+    client->response.remaining -=
+        g_ntohs(client->response.header.key_length);
 
-        if (length > client->response.key.remaining)
-            length = client->response.key.remaining;
+    buffered_socket_consumed(&client->socket, length);
 
-        memcpy(client->response.key.tail, data, length);
-        client->response.key.tail += length;
-        client->response.key.remaining -= length;
-        client->response.remaining -=
-            g_ntohs(client->response.header.key_length);
+    if (client->response.key.remaining == 0)
+        return memcached_submit_response(client);
 
-        fifo_buffer_consume(client->response.input, length);
-
-        if (client->response.key.remaining > 0)
-            return true;
-    }
-
-    return memcached_submit_response(client);
+    return BUFFERED_MORE;
 }
 
-/**
- * @return true if at least one byte has been consumed and the stream
- * is still open; false if nothing has been consumed (istream handler
- * blocks), or if an error has occurred, or if the stream is finished
- */
-static bool
-memcached_consume_value(struct memcached_client *client)
+static enum buffered_result
+memcached_feed_value(struct memcached_client *client,
+                     const void *data, size_t length)
 {
-    size_t length, nbytes;
-    const void *data;
-
     assert(client->response.read_state == READ_VALUE);
     assert(client->response.remaining > 0);
 
-    data = fifo_buffer_read(client->response.input, &length);
-    if (data == NULL)
-        return false;
-
-    if (socket_wrapper_valid(&client->socket) && length >= client->response.remaining)
+    if (buffered_socket_connected(&client->socket) &&
+        length >= client->response.remaining)
         memcached_client_release_socket(client,
                                         length == client->response.remaining);
 
     if (length > client->response.remaining)
         length = client->response.remaining;
 
-    nbytes = istream_invoke_data(&client->response.value, data, length);
+    size_t nbytes = istream_invoke_data(&client->response.value, data, length);
     if (nbytes == 0)
-        return false;
+        return memcached_connection_valid(client)
+            ? BUFFERED_BLOCKING
+            : BUFFERED_CLOSED;
 
-    fifo_buffer_consume(client->response.input, nbytes);
+    buffered_socket_consumed(&client->socket, nbytes);
 
     client->response.remaining -= nbytes;
     if (client->response.remaining > 0)
-        return true;
+        return BUFFERED_MORE;
 
-    assert(!socket_wrapper_valid(&client->socket));
+    assert(!buffered_socket_connected(&client->socket));
     assert(client->request.istream == NULL);
 
     client->response.read_state = READ_END;
     istream_deinit_eof(&client->response.value);
     pool_unref(client->caller_pool);
 
-    pool_unref(client->pool);
-    return false;
+    memcached_client_release(client, false);
+    return BUFFERED_CLOSED;
 }
 
-/**
- * @return true if the response is finished, false if more data is
- * needed or if an error has occurred
- */
-static bool
-memcached_consume_input(struct memcached_client *client)
+static enum buffered_result
+memcached_feed(struct memcached_client *client,
+               const void *data, size_t length)
 {
-    if (client->response.read_state == READ_HEADER &&
-        !memcached_consume_header(client))
-        return false;
+    switch (client->response.read_state) {
+    case READ_HEADER:
+        return memcached_feed_header(client, data, length);
 
-    if (client->response.read_state == READ_EXTRAS &&
-        !memcached_consume_extras(client))
-        return false;
+    case READ_EXTRAS:
+        return memcached_feed_extras(client, data, length);
 
-    if (client->response.read_state == READ_KEY &&
-        !memcached_consume_key(client))
-        return false;
+    case READ_KEY:
+        return memcached_feed_key(client, data, length);
 
-    if (client->response.read_state == READ_VALUE &&
-        !memcached_consume_value(client))
-        return false;
+    case READ_VALUE:
+        return memcached_feed_value(client, data, length);
 
-    assert(!fifo_buffer_full(client->response.input));
-
-    return true;
-}
-
-/**
- * Read more data from the socket into the input buffer.
- *
- * @return true if at least one byte has been read, false if no data
- * is available or if an error has occurred
- */
-static bool
-memcached_client_fill_buffer(struct memcached_client *client)
-{
-    assert(socket_wrapper_valid(&client->socket));
-    assert(client->response.input != NULL);
-    assert(client->response.read_state != READ_END);
-    assert(!fifo_buffer_full(client->response.input));
-
-    const ssize_t nbytes =
-        socket_wrapper_read_to_buffer(&client->socket, client->response.input,
-                                      G_MAXINT);
-    assert(nbytes != -2);
-
-    if (nbytes == 0) {
-        GError *error =
-            g_error_new_literal(memcached_client_quark(), 0,
-                                "memcached server closed the connection");
-        memcached_connection_abort_response(client, error);
-        return false;
+    case READ_END:
+        /* unreachable */
+        assert(false);
+        return BUFFERED_CLOSED;
     }
 
-    if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            memcached_client_schedule_read(client);
-            return false;
-        }
-
-        GError *error =
-            g_error_new(memcached_client_quark(), 0,
-                        "read error on memcached connection: %s",
-                        strerror(errno));
-        memcached_connection_abort_response(client, error);
-        return false;
-    }
-
-    if (fifo_buffer_full(client->response.input))
-        socket_wrapper_unschedule_read(&client->socket);
-
-    return true;
+    /* unreachable */
+    assert(false);
+    return BUFFERED_CLOSED;
 }
 
-static void
-memcached_client_try_read_buffered(struct memcached_client *client)
-{
-    if (!memcached_client_fill_buffer(client))
-        return;
-
-    if (memcached_consume_input(client) && socket_wrapper_valid(&client->socket))
-        memcached_client_schedule_read(client);
-}
-
-static void
-memcached_client_try_read_direct(struct memcached_client *client)
+static enum direct_result
+memcached_client_try_read_direct(struct memcached_client *client,
+                                 int fd, istream_direct_t type)
 {
     assert(client->response.read_state == READ_VALUE);
     assert(client->response.remaining > 0);
-    assert(fifo_buffer_empty(client->response.input));
 
-    ssize_t nbytes = istream_invoke_direct(&client->response.value,
-                                           client->socket.fd_type,
-                                           client->socket.fd,
+    ssize_t nbytes = istream_invoke_direct(&client->response.value, type, fd,
                                            client->response.remaining);
     if (likely(nbytes > 0)) {
         client->response.remaining -= nbytes;
 
         if (client->response.remaining == 0) {
-            memcached_client_release_socket(client, true);
+            memcached_client_destroy_socket(client, true);
             istream_deinit_eof(&client->response.value);
             pool_unref(client->caller_pool);
             pool_unref(client->pool);
+            return DIRECT_CLOSED;
         } else
-            memcached_client_schedule_read(client);
+            return DIRECT_OK;
     } else if (unlikely(nbytes == ISTREAM_RESULT_EOF)) {
-        GError *error =
-            g_error_new_literal(memcached_client_quark(), 0,
-                                "memcached server closed the connection");
-        memcached_connection_abort_response_value(client, error);
-    } else if (nbytes == ISTREAM_RESULT_BLOCKING ||
-               nbytes == ISTREAM_RESULT_CLOSED) {
-        /* either the destination fd blocks (-2) or the stream (and
-           the whole connection) has been closed during the direct()
-           callback (-3); no further checks */
+        return DIRECT_END;
+    } else if (nbytes == ISTREAM_RESULT_BLOCKING) {
+        return DIRECT_BLOCKING;
+    } else if (nbytes == ISTREAM_RESULT_CLOSED) {
+        return DIRECT_CLOSED;
     } else if (errno == EAGAIN) {
-        memcached_client_schedule_read(client);
+        return DIRECT_EMPTY;
     } else {
         GError *error =
             g_error_new(memcached_client_quark(), 0,
                         "read error on memcached connection: %s",
                         strerror(errno));
         memcached_connection_abort_response_value(client, error);
+        return DIRECT_CLOSED;
     }
-}
-
-static void
-memcached_client_try_direct(struct memcached_client *client)
-{
-    assert(client->response.read_state == READ_VALUE);
-    assert(client->response.remaining > 0);
-
-    if (!fifo_buffer_empty(client->response.input)) {
-        if (!memcached_consume_value(client))
-            return;
-
-        /* at this point, the handler might have changed, and the new
-           handler might not support "direct" transfer - check
-           again */
-        if (!memcached_client_check_direct(client)) {
-            memcached_client_schedule_read(client);
-            return;
-        }
-    }
-
-    memcached_client_try_read_direct(client);
 }
 
 /*
@@ -716,48 +583,63 @@ memcached_client_socket_write(void *ctx)
 
     istream_read(client->request.istream);
 
-    bool result = socket_wrapper_valid(&client->socket);
+    bool result = buffered_socket_valid(&client->socket) &&
+        buffered_socket_connected(&client->socket);
     pool_unref(client->pool);
     return result;
 }
 
-/**
- * The libevent callback for receiving the response from the socket.
- */
-static bool
-memcached_client_socket_read(void *ctx)
+static enum buffered_result
+memcached_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct memcached_client *client = ctx;
     assert(client->response.read_state != READ_END);
 
     pool_ref(client->pool);
-
-    if (client->response.read_state == READ_VALUE &&
-        memcached_client_check_direct(client))
-        memcached_client_try_direct(client);
-    else
-        memcached_client_try_read_buffered(client);
-
-    bool result = socket_wrapper_valid(&client->socket);
+    enum buffered_result result = memcached_feed(client, buffer, size);
     pool_unref(client->pool);
     return result;
 }
 
+static enum direct_result
+memcached_client_socket_direct(int fd, istream_direct_t type, void *ctx)
+{
+    struct memcached_client *client = ctx;
+    assert(client->response.read_state == READ_VALUE);
+    assert(client->response.remaining > 0);
+    assert(memcached_client_check_direct(client));
+
+    return memcached_client_try_read_direct(client, fd, type);
+}
+
 static bool
-memcached_client_socket_timeout(void *ctx)
+memcached_client_socket_closed(gcc_unused size_t remaining, void *ctx)
 {
     struct memcached_client *client = ctx;
 
-    GError *error = g_error_new_literal(memcached_client_quark(), 0,
-                                        "timeout");
-    memcached_connection_abort_response(client, error);
-    return false;
+    /* only READ_VALUE could have blocked */
+    assert(client->response.read_state == READ_VALUE);
+
+    /* the rest of the response may already be in the input buffer */
+    memcached_client_release_socket(client, false);
+    return true;
 }
 
-static const struct socket_handler memcached_client_socket_handler = {
-    .read = memcached_client_socket_read,
+static void
+memcached_client_socket_error(GError *error, void *ctx)
+{
+    struct memcached_client *client = ctx;
+
+    g_prefix_error(&error, "memcached connection failed: ");
+    memcached_connection_abort_response(client, error);
+}
+
+static const struct buffered_socket_handler memcached_client_socket_handler = {
+    .data = memcached_client_socket_data,
+    .direct = memcached_client_socket_direct,
+    .closed = memcached_client_socket_closed,
     .write = memcached_client_socket_write,
-    .timeout = memcached_client_socket_timeout,
+    .error = memcached_client_socket_error,
 };
 
 /*
@@ -769,7 +651,6 @@ static size_t
 memcached_request_stream_data(const void *data, size_t length, void *ctx)
 {
     struct memcached_client *client = ctx;
-    ssize_t nbytes;
 
     assert(client->request.istream != NULL);
     assert(client->response.read_state == READ_HEADER ||
@@ -778,7 +659,7 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
     assert(data != NULL);
     assert(length > 0);
 
-    nbytes = socket_wrapper_write(&client->socket, data, length);
+    ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
     if (nbytes < 0) {
         if (errno == EAGAIN) {
             memcached_client_schedule_write(client);
@@ -809,10 +690,8 @@ memcached_request_stream_eof(void *ctx)
 
     client->request.istream = NULL;
 
-    socket_wrapper_unschedule_write(&client->socket);
-
-    if (!fifo_buffer_full(client->response.input))
-        memcached_client_schedule_read(client);
+    buffered_socket_unschedule_write(&client->socket);
+    buffered_socket_read(&client->socket);
 }
 
 static void
@@ -915,8 +794,9 @@ memcached_client_invoke(struct pool *caller_pool,
     client->pool = pool;
     client->caller_pool = caller_pool;
 
-    socket_wrapper_init(&client->socket, pool, fd, fd_type,
-                        &memcached_client_socket_handler, client);
+    buffered_socket_init(&client->socket, pool, fd, fd_type,
+                         NULL, &memcached_client_timeout,
+                         &memcached_client_socket_handler, client);
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "memcached_client_lease");
@@ -932,7 +812,6 @@ memcached_client_invoke(struct pool *caller_pool,
     async_ref_set(async_ref, &client->request.async);
 
     client->response.read_state = READ_HEADER;
-    client->response.input = fifo_buffer_new(client->pool, 8192);
 
     istream_read(client->request.istream);
 }

@@ -1693,7 +1693,7 @@ test_run_http_cache_LDADD = $(LIBEVENT_LIBS) \
 test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/buffered_io.c src/fifo-buffer.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/stock.c src/pipe-stock.c \
 	src/fd-util.c src/fd_util.c \
 	src/direct.c
@@ -1705,7 +1705,7 @@ test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/buffered_io.c src/fifo-buffer.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/fd-util.c src/fd_util.c \
 	src/direct.c \
 	src/serialize.c \
@@ -1721,7 +1721,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/address_list.c src/address_resolver.c \
 	src/failure.c src/bulldog.c src/balancer.c \
 	src/tcp-stock.c src/tcp-balancer.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/direct.c \
 	src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
@@ -1748,7 +1748,7 @@ test_fake_memcached_server_SOURCES = test/fake-memcached-server.c
 
 test_t_memcached_client_SOURCES = test/t-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
-	src/socket_wrapper.c \
+	src/socket_wrapper.c src/buffered_socket.c \
 	src/direct.c \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/fd-util.c src/fd_util.c
