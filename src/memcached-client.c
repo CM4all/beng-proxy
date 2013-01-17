@@ -49,6 +49,14 @@ struct memcached_client {
             READ_END,
         } read_state;
 
+        /**
+         * This flag is true if we are currently calling the
+         * #memcached_client_handler.  During this period,
+         * memcached_client_socket_read() does nothing, to prevent
+         * recursion.
+         */
+        bool in_handler;
+
         struct memcached_response_header header;
 
         struct fifo_buffer *input;
@@ -270,6 +278,11 @@ istream_memcached_read(struct istream *istream)
     assert(client->response.read_state == READ_VALUE);
     assert(client->request.istream == NULL);
 
+    if (client->response.in_handler)
+        /* avoid recursion; the memcached_client_handler caller will
+           continue parsing the response if possible */
+        return;
+
     if (!fifo_buffer_empty(client->response.input))
         memcached_consume_value(client);
     else if (memcached_client_check_direct(client))
@@ -340,12 +353,16 @@ memcached_submit_response(struct memcached_client *client)
         /* we need this additional reference in case the handler
            closes the body */
         pool_ref(client->caller_pool);
+
+        client->response.in_handler = true;
         client->request.handler->response(g_ntohs(client->response.header.status),
                                           client->response.extras,
                                           client->response.header.extras_length,
                                           client->response.key.buffer,
                                           g_ntohs(client->response.header.key_length),
                                           value, client->request.handler_ctx);
+        client->response.in_handler = false;
+
         pool_unref(client->caller_pool);
 
         /* check if the callback has closed the value istream */
