@@ -35,11 +35,7 @@ test/run-html-unescape
 test/run-html-escape
 test/t-html-escape
 test/t-escape-css
-test/t-http-server-mirror
-test/t-http-server-hold
-test/t-http-server-null
-test/t-http-server-dummy
-test/t-http-server-fixed
+test/run_http_server
 test/run-processor
 test/t-istream-processor
 test/t-istream-replace

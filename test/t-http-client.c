@@ -60,7 +60,7 @@ connection_close(struct connection *c)
 }
 
 static struct connection *
-connect_server(const char *path)
+connect_server(const char *path, const char *mode)
 {
     int ret, sv[2];
     pid_t pid;
@@ -82,14 +82,14 @@ connect_server(const char *path)
         close(sv[0]);
         close(sv[1]);
         execl(path, path,
-              "0", "0", NULL);
+              "0", "0", mode, NULL);
 
         const char *srcdir = getenv("srcdir");
         if (srcdir != NULL) {
             /* support automake out-of-tree build */
             chdir(srcdir);
             execl(path, path,
-                  "0", "0", NULL);
+                  "0", "0", mode, NULL);
         }
 
         perror("exec() failed");
@@ -110,25 +110,25 @@ connect_server(const char *path)
 static struct connection *
 connect_mirror(void)
 {
-    return connect_server("./test/t-http-server-mirror");
+    return connect_server("./test/run_http_server", "mirror");
 }
 
 static struct connection *
 connect_null(void)
 {
-    return connect_server("./test/t-http-server-null");
+    return connect_server("./test/run_http_server", "null");
 }
 
 static struct connection *
 connect_dummy(void)
 {
-    return connect_server("./test/t-http-server-dummy");
+    return connect_server("./test/run_http_server", "dummy");
 }
 
 static struct connection *
 connect_fixed(void)
 {
-    return connect_server("./test/t-http-server-fixed");
+    return connect_server("./test/run_http_server", "fixed");
 }
 
 static struct connection *
@@ -140,13 +140,13 @@ connect_tiny(void)
 static struct connection *
 connect_twice_100(void)
 {
-    return connect_server("./test/twice_100.sh");
+    return connect_server("./test/twice_100.sh", NULL);
 }
 
 static struct connection *
 connect_hold(void)
 {
-    return connect_server("./test/t-http-server-hold");
+    return connect_server("./test/run_http_server", "hold");
 }
 
 /*

@@ -36,7 +36,7 @@ def start_server(path, *args):
     return pid, from_server[0], to_server[1]
 
 def start_mirror():
-    return start_server('./test/t-http-server-mirror', '0', '1')
+    return start_server('./test/run_http_server', '0', '1', 'mirror')
 
 server = Server(*start_mirror())
 
