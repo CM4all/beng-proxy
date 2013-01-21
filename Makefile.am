@@ -1067,6 +1067,7 @@ test_run_http_server_SOURCES = test/run_http_server.c \
 	src/direct.c \
 	src/http-body.c src/date.c \
 	src/fd_util.c src/fd-util.c \
+	src/shutdown_listener.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
 	src/strutil.c src/gmtime.c src/tpool.c src/event2.c

@@ -5,6 +5,7 @@
 #include "istream.h"
 #include "pool.h"
 #include "async.h"
+#include "shutdown_listener.h"
 
 #include <event.h>
 
@@ -14,6 +15,8 @@
 
 struct context {
     struct async_operation operation;
+
+    struct shutdown_listener shutdown_listener;
 
     enum {
         MODE_NULL,
@@ -31,12 +34,21 @@ struct context {
 };
 
 static void
+shutdown_callback(void *ctx)
+{
+    struct context *c = ctx;
+
+    http_server_connection_close(c->connection);
+}
+
+static void
 timer_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
                            void *_ctx)
 {
     struct context *ctx = _ctx;
 
     http_server_connection_close(ctx->connection);
+    shutdown_listener_deinit(&ctx->shutdown_listener);
 }
 
 /*
@@ -127,9 +139,12 @@ my_request(struct http_server_request *request, void *_ctx,
 }
 
 static void
-my_error(GError *error, void *ctx)
+my_error(GError *error, void *_ctx)
 {
-    (void)ctx;
+    struct context *ctx = _ctx;
+
+    evtimer_del(&ctx->timer);
+    shutdown_listener_deinit(&ctx->shutdown_listener);
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -141,6 +156,7 @@ my_free(void *_ctx)
     struct context *ctx = _ctx;
 
     evtimer_del(&ctx->timer);
+    shutdown_listener_deinit(&ctx->shutdown_listener);
 }
 
 static const struct http_server_connection_handler handler = {
@@ -167,6 +183,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     struct event_base *event_base = event_init();
+    shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
     evtimer_set(&ctx.timer, timer_callback, &ctx);
 
     struct pool *pool = pool_new_libc(NULL, "root");
