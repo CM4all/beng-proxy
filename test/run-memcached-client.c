@@ -5,6 +5,7 @@
 #include "istream.h"
 #include "sink_fd.h"
 #include "direct.h"
+#include "shutdown_listener.h"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -22,6 +23,9 @@
 struct context {
     struct pool *pool;
 
+    struct shutdown_listener shutdown_listener;
+    struct async_operation_ref async_ref;
+
     int fd;
     bool idle, reuse, aborted;
     enum memcached_response_status status;
@@ -29,6 +33,21 @@ struct context {
     struct sink_fd *value;
     bool value_eof, value_abort, value_closed;
 };
+
+static void
+shutdown_callback(void *ctx)
+{
+    struct context *c = ctx;
+
+    if (c->value != NULL) {
+        sink_fd_close(c->value);
+        c->value = NULL;
+        c->value_abort = true;
+    } else {
+        c->aborted = true;
+        async_abort(&c->async_ref);
+    }
+}
 
 
 /*
@@ -68,6 +87,8 @@ my_sink_fd_input_eof(void *ctx)
 
     c->value = NULL;
     c->value_eof = true;
+
+    shutdown_listener_deinit(&c->shutdown_listener);
 }
 
 static void
@@ -80,6 +101,8 @@ my_sink_fd_input_error(GError *error, void *ctx)
 
     c->value = NULL;
     c->value_abort = true;
+
+    shutdown_listener_deinit(&c->shutdown_listener);
 }
 
 static bool
@@ -91,6 +114,8 @@ my_sink_fd_send_error(int error, void *ctx)
 
     c->value = NULL;
     c->value_abort = true;
+
+    shutdown_listener_deinit(&c->shutdown_listener);
 
     return true;
 }
@@ -126,8 +151,10 @@ my_mcd_response(enum memcached_response_status status,
                                1, guess_fd_type(1),
                                &my_sink_fd_handler, c);
         istream_read(value);
-    } else
+    } else {
         c->value_eof = true;
+        shutdown_listener_deinit(&c->shutdown_listener);
+    }
 }
 
 static void
@@ -139,6 +166,8 @@ my_mcd_error(GError *error, void *ctx)
 
     c->status = -1;
     c->value_eof = true;
+
+    shutdown_listener_deinit(&c->shutdown_listener);
 }
 
 static const struct memcached_client_handler my_mcd_handler = {
@@ -162,7 +191,6 @@ int main(int argc, char **argv) {
     size_t extras_length;
     struct memcached_set_extras set_extras;
     static struct context ctx;
-    struct async_operation_ref async_ref;
 
     if (argc < 3 || argc > 5) {
         fprintf(stderr, "usage: run-memcached-client HOST[:PORT] OPCODE [KEY] [VALUE]\n");
@@ -228,6 +256,7 @@ int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
 
     event_base = event_init();
+    shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
 
     root_pool = pool_new_libc(NULL, "root");
     ctx.pool = pool = pool_new_linear(root_pool, "test", 8192);
@@ -241,7 +270,7 @@ int main(int argc, char **argv) {
                             key, key != NULL ? strlen(key) : 0,
                             value != NULL ? istream_string_new(pool, value) : NULL,
                             &my_mcd_handler, &ctx,
-                            &async_ref);
+                            &ctx.async_ref);
 
     event_dispatch();
 
