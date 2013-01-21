@@ -199,8 +199,10 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
         c->body = sink_fd_new(c->pool, body, 1, guess_fd_type(1),
                               &my_sink_fd_handler, c);
         istream_read(body);
-    } else
+    } else {
         c->body_eof = true;
+        shutdown_listener_deinit(&c->shutdown_listener);
+    }
 }
 
 static void
