@@ -3,6 +3,7 @@
 #include "async.h"
 #include "fd-util.h"
 #include "istream.h"
+#include "sink_fd.h"
 #include "direct.h"
 
 #include <socket/resolver.h>
@@ -19,11 +20,13 @@
 #include <string.h>
 
 struct context {
+    struct pool *pool;
+
     int fd;
     bool idle, reuse, aborted;
     enum memcached_response_status status;
 
-    struct istream *value;
+    struct sink_fd *value;
     bool value_eof, value_abort, value_closed;
 };
 
@@ -54,28 +57,12 @@ static const struct lease memcached_socket_lease = {
 
 
 /*
- * istream handler
+ * sink_fd handler
  *
  */
 
-static size_t
-my_istream_data(const void *data, size_t length, void *ctx)
-{
-    struct context *c = ctx;
-    ssize_t nbytes;
-
-    nbytes = write(1, data, length);
-    if (nbytes <= 0) {
-        c->value_closed = true;
-        istream_free_handler(&c->value);
-        return 0;
-    }
-
-    return (size_t)nbytes;
-}
-
 static void
-my_istream_eof(void *ctx)
+my_sink_fd_input_eof(void *ctx)
 {
     struct context *c = ctx;
 
@@ -84,20 +71,34 @@ my_istream_eof(void *ctx)
 }
 
 static void
-my_istream_abort(GError *error, void *ctx)
+my_sink_fd_input_error(GError *error, void *ctx)
 {
     struct context *c = ctx;
 
+    g_printerr("%s\n", error->message);
     g_error_free(error);
 
     c->value = NULL;
     c->value_abort = true;
 }
 
-static const struct istream_handler my_istream_handler = {
-    .data = my_istream_data,
-    .eof = my_istream_eof,
-    .abort = my_istream_abort,
+static bool
+my_sink_fd_send_error(int error, void *ctx)
+{
+    struct context *c = ctx;
+
+    g_printerr("%s\n", g_strerror(error));
+
+    c->value = NULL;
+    c->value_abort = true;
+
+    return true;
+}
+
+static const struct sink_fd_handler my_sink_fd_handler = {
+    .input_eof = my_sink_fd_input_eof,
+    .input_error = my_sink_fd_input_error,
+    .send_error = my_sink_fd_send_error,
 };
 
 /*
@@ -119,9 +120,13 @@ my_mcd_response(enum memcached_response_status status,
 
     c->status = status;
 
-    if (value != NULL)
-        istream_assign_handler(&c->value, value, &my_istream_handler, c, 0);
-    else
+    if (value != NULL) {
+        value = istream_pipe_new(c->pool, value, NULL);
+        c->value = sink_fd_new(c->pool, value,
+                               1, guess_fd_type(1),
+                               &my_sink_fd_handler, c);
+        istream_read(value);
+    } else
         c->value_eof = true;
 }
 
@@ -225,7 +230,7 @@ int main(int argc, char **argv) {
     event_base = event_init();
 
     root_pool = pool_new_libc(NULL, "root");
-    pool = pool_new_linear(root_pool, "test", 8192);
+    ctx.pool = pool = pool_new_linear(root_pool, "test", 8192);
 
     /* run test */
 

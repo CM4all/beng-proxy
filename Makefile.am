@@ -1694,6 +1694,7 @@ test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/socket_wrapper.c \
+	src/stock.c src/pipe-stock.c \
 	src/fd-util.c src/fd_util.c \
 	src/direct.c
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
