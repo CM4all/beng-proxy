@@ -254,14 +254,12 @@ subst_feed_mismatch(struct istream_subst *subst)
 static bool
 subst_write_mismatch(struct istream_subst *subst)
 {
-    size_t nbytes;
-
     assert(subst->input == NULL || subst->state == STATE_NONE);
     assert(!strref_is_empty(&subst->mismatch));
 
-    nbytes = istream_invoke_data(&subst->output,
-                                 subst->mismatch.data,
-                                 subst->mismatch.length);
+    size_t nbytes = istream_invoke_data(&subst->output,
+                                        subst->mismatch.data,
+                                        subst->mismatch.length);
     if (nbytes == 0)
         return true;
 
@@ -291,9 +289,7 @@ static size_t
 subst_invoke_data(struct istream_subst *subst, const char *start,
                   const char *p, size_t length)
 {
-    size_t nbytes;
-
-    nbytes = istream_invoke_data(&subst->output, p, length);
+    size_t nbytes = istream_invoke_data(&subst->output, p, length);
     if (nbytes == 0 && subst->state == STATE_CLOSED)
         /* stream has been closed - we must return 0 */
         return 0;
@@ -313,9 +309,7 @@ static size_t
 subst_invoke_data_final(struct istream_subst *subst, const char *start,
                         const char *end, const char *p)
 {
-    size_t nbytes;
-
-    nbytes = istream_invoke_data(&subst->output, p, end - p);
+    size_t nbytes = istream_invoke_data(&subst->output, p, end - p);
     if (nbytes > 0 || subst->state != STATE_CLOSED) {
         subst->had_output = true;
         nbytes += (p - start);
