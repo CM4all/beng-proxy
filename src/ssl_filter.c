@@ -11,6 +11,7 @@
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "gerrno.h"
+#include "fb_pool.h"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -406,12 +407,14 @@ ssl_filter_new(struct pool *pool, SSL_CTX *ssl_ctx,
     ssl->encrypted_fd = encrypted_fd;
     ssl->plain_fd = plain_fd;
 
-    ssl->from_encrypted = fifo_buffer_new(pool, 4096);
-    ssl->from_plain = fifo_buffer_new(pool, 4096);
+    ssl->from_encrypted = fb_pool_alloc();
+    ssl->from_plain = fb_pool_alloc();
 
     ssl->ssl = SSL_new(ssl_ctx);
     if (ssl->ssl == NULL) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed");
+        fb_pool_free(ssl->from_encrypted);
+        fb_pool_free(ssl->from_plain);
         return NULL;
     }
 
@@ -427,6 +430,8 @@ ssl_filter_new(struct pool *pool, SSL_CTX *ssl_ctx,
     int error = pthread_create(&ssl->thread, NULL, ssl_filter_thread, ssl);
     if (error != 0) {
         SSL_free(ssl->ssl);
+        fb_pool_free(ssl->from_encrypted);
+        fb_pool_free(ssl->from_plain);
         g_set_error(error_r, ssl_quark(), error,
                     "Failed to create thread: %s", strerror(error));
         return NULL;
@@ -444,6 +449,9 @@ ssl_filter_free(struct ssl_filter *ssl)
 
     if (ssl->ssl != NULL)
         SSL_free(ssl->ssl);
+
+    fb_pool_free(ssl->from_encrypted);
+    fb_pool_free(ssl->from_plain);
 
     ssl_filter_shutdown_sockets(ssl);
 

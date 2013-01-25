@@ -8,6 +8,7 @@
 #include "tcp-stock.h"
 #include "async.h"
 #include "config.h"
+#include "fb_pool.h"
 
 #include <stdio.h>
 #include <event.h>
@@ -128,6 +129,7 @@ int main(int argc, char **argv) {
     (void)argv;
 
     event_init();
+    fb_pool_init(false);
 
     pool = pool_new_libc(NULL, "root");
 
@@ -138,4 +140,5 @@ int main(int argc, char **argv) {
                      &request, &my_translate_handler, NULL, &async_ref);
 
     event_dispatch();
+    fb_pool_deinit();
 }

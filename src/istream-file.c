@@ -9,6 +9,7 @@
 #include "buffered_io.h"
 #include "fd_util.h"
 #include "gerrno.h"
+#include "fb_pool.h"
 
 #include <daemon/log.h>
 
@@ -67,9 +68,20 @@ file_close(struct file *file)
 }
 
 static void
-file_abort(struct file *file, GError *error)
+file_destroy(struct file *file)
 {
     file_close(file);
+
+    if (file->buffer != NULL) {
+        fb_pool_free(file->buffer);
+        file->buffer = NULL;
+    }
+}
+
+static void
+file_abort(struct file *file, GError *error)
+{
+    file_destroy(file);
 
     istream_deinit_abort(&file->stream, error);
 }
@@ -88,7 +100,7 @@ istream_file_eof_detected(struct file *file)
 {
     assert(file->fd >= 0);
 
-    file_close(file);
+    file_destroy(file);
 
     istream_deinit_eof(&file->stream);
 }
@@ -109,13 +121,8 @@ istream_file_try_data(struct file *file)
     ssize_t nbytes;
 
     if (file->buffer == NULL) {
-        if (file->rest != 0) {
-            size_t size = 4096;
-            if (file->rest < (off_t)size)
-                size = file->rest;
-
-            file->buffer = fifo_buffer_new(file->stream.pool, size);
-        }
+        if (file->rest != 0)
+            file->buffer = fb_pool_alloc();
 
         rest = 0;
     } else
@@ -335,7 +342,7 @@ istream_file_close(struct istream *istream)
 {
     struct file *file = istream_to_file(istream);
 
-    file_close(file);
+    file_destroy(file);
 
     istream_deinit(&file->stream);
 }

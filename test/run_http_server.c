@@ -6,6 +6,7 @@
 #include "pool.h"
 #include "async.h"
 #include "shutdown_listener.h"
+#include "fb_pool.h"
 
 #include <event.h>
 
@@ -183,6 +184,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     struct event_base *event_base = event_init();
+    fb_pool_init(false);
     shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
     evtimer_set(&ctx.timer, timer_callback, &ctx);
 
@@ -225,6 +227,7 @@ int main(int argc, char **argv) {
     pool_commit();
     pool_recycler_clear();
 
+    fb_pool_deinit();
     event_base_free(event_base);
     direct_global_deinit();
 

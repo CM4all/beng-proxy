@@ -7,6 +7,7 @@
 
 #include "buffered_socket.h"
 #include "fifo-buffer.h"
+#include "fb_pool.h"
 #include "gerrno.h"
 
 #include <limits.h>
@@ -238,7 +239,7 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
 
     struct fifo_buffer *buffer = s->input;
     if (buffer == NULL)
-        buffer = s->input = fifo_buffer_new(s->base.pool, 8192);
+        buffer = s->input = fb_pool_alloc();
 
     ssize_t nbytes = socket_wrapper_read_to_buffer(&s->base, buffer, INT_MAX);
     if (gcc_likely(nbytes > 0)) {
@@ -454,6 +455,22 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
     s->reading = false;
     s->ended = false;
     s->destroyed = false;
+#endif
+}
+
+void
+buffered_socket_destroy(struct buffered_socket *s)
+{
+    assert(!socket_wrapper_valid(&s->base));
+    assert(!s->destroyed);
+
+    if (s->input != NULL) {
+        fb_pool_free(s->input);
+        s->input = NULL;
+    }
+
+#ifndef NDEBUG
+    s->destroyed = true;
 #endif
 }
 

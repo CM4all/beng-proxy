@@ -10,6 +10,7 @@
 #include "worker.h"
 #include "connection.h"
 #include "crash.h"
+#include "fb_pool.h"
 #include "session_manager.h"
 #include "session_save.h"
 #include "tstock.h"
@@ -144,6 +145,8 @@ shutdown_callback(void *ctx)
     local_control_handler_deinit(instance);
     global_control_handler_deinit(instance);
 
+    fb_pool_disable();
+
     pool_commit();
 }
 
@@ -161,6 +164,7 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
     translate_cache_flush(instance->translate_cache);
     http_cache_flush(instance->http_cache);
     filter_cache_flush(instance->filter_cache);
+    fb_pool_compress();
 }
 
 void
@@ -268,6 +272,7 @@ int main(int argc, char **argv)
     direct_global_init();
 
     instance.event_base = event_init();
+    fb_pool_init(true);
 
     list_init(&instance.listeners);
     list_init(&instance.connections);
@@ -403,6 +408,8 @@ int main(int argc, char **argv)
     failure_deinit();
 
     free_all_listeners(&instance);
+
+    fb_pool_deinit();
 
 #ifndef PROFILE
     event_base_free(instance.event_base);

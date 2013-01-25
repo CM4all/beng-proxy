@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.8) unstable; urgency=low
 
-  * 
+  * return unused I/O buffers to operating system
 
  --   
 

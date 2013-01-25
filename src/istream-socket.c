@@ -11,6 +11,7 @@
 #include "buffered_io.h"
 #include "pevent.h"
 #include "gerrno.h"
+#include "fb_pool.h"
 
 #include <event.h>
 #include <errno.h>
@@ -111,8 +112,13 @@ socket_try_direct(struct istream_socket *s)
 {
     assert(socket_valid(s));
 
-    if (s->buffer != NULL && socket_buffer_consume(s))
-        return;
+    if (s->buffer != NULL) {
+        if (socket_buffer_consume(s))
+            return;
+
+        fb_pool_free(s->buffer);
+        s->buffer = NULL;
+    }
 
     ssize_t nbytes = istream_invoke_direct(&s->output, s->fd_type, s->fd,
                                            G_MAXINT);
@@ -151,7 +157,7 @@ socket_try_buffered(struct istream_socket *s)
     assert(socket_valid(s));
 
     if (s->buffer == NULL)
-        s->buffer = fifo_buffer_new(s->output.pool, 8192);
+        s->buffer = fb_pool_alloc();
     else if (socket_buffer_consume(s))
         return;
 
@@ -164,6 +170,7 @@ socket_try_buffered(struct istream_socket *s)
     } else if (nbytes == 0) {
         if (s->handler->depleted(s->handler_ctx) &&
             s->handler->finished(s->handler_ctx)) {
+            fb_pool_free(s->buffer);
             s->fd = -1;
             istream_deinit_eof(&s->output);
         }
@@ -171,6 +178,10 @@ socket_try_buffered(struct istream_socket *s)
         socket_schedule_read(s);
     } else {
         const int e = errno;
+
+        fb_pool_free(s->buffer);
+        s->buffer = NULL;
+
         if (!s->handler->error(e, s->handler_ctx))
             return;
 
@@ -229,6 +240,11 @@ istream_socket_close(struct istream *istream)
     struct istream_socket *s = istream_to_socket(istream);
 
     assert(socket_valid(s));
+
+    if (s->buffer != NULL) {
+        fb_pool_free(s->buffer);
+        s->buffer = NULL;
+    }
 
     p_event_del(&s->event, s->output.pool);
     s->fd = -1;

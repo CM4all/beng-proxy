@@ -6,6 +6,7 @@
 #include "async.h"
 #include "istream.h"
 #include "istream-file.h"
+#include "fb_pool.h"
 
 #include <daemon/log.h>
 
@@ -173,6 +174,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     struct event_base *event_base = event_init();
+    fb_pool_init(false);
 
     static struct context context;
     if (!was_launch(&context.process, argv[1], NULL, &error)) {
@@ -204,6 +206,7 @@ int main(int argc, char **argv) {
     pool_commit();
     pool_recycler_clear();
 
+    fb_pool_deinit();
     event_base_free(event_base);
     direct_global_deinit();
 

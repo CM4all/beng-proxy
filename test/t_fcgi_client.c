@@ -16,6 +16,7 @@
 #include "strmap.h"
 #include "strutil.h"
 #include "tpool.h"
+#include "fb_pool.h"
 
 #include <inline/compiler.h>
 
@@ -543,6 +544,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     event_base = event_init();
+    fb_pool_init(false);
 
     pool = pool_new_libc(NULL, "root");
     tpool_init(pool);
@@ -554,6 +556,7 @@ int main(int argc, char **argv) {
     pool_commit();
     pool_recycler_clear();
 
+    fb_pool_deinit();
     event_base_free(event_base);
     direct_global_deinit();
 

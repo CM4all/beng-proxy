@@ -242,18 +242,8 @@ buffered_socket_abandon(struct buffered_socket *s)
  * calling either buffered_socket_close() or
  * buffered_socket_abandon().
  */
-static inline void
-buffered_socket_destroy(struct buffered_socket *s)
-{
-    assert(!socket_wrapper_valid(&s->base));
-    assert(!s->destroyed);
-
-    s->input = NULL;
-
-#ifndef NDEBUG
-    s->destroyed = true;
-#endif
-}
+void
+buffered_socket_destroy(struct buffered_socket *s);
 
 /**
  * Returns the socket descriptor and calls buffered_socket_abandon().

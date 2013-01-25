@@ -757,6 +757,7 @@ test_run_was_SOURCES = test/run-was.c \
 	src/jail.c \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/buffered_io.c \
+	src/cleanup_timer.c \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c
 test_run_was_LDADD = $(AM_LDADD) \
@@ -1008,6 +1009,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/cgi-parser.c \
 	src/jail.c src/uri-base.c src/uri-escape.c src/uri-relative.c \
 	src/uri-extract.c \
+	src/cleanup_timer.c \
 	src/regex.c \
 	src/format.c src/address_list.c \
 	src/tpool.c \
@@ -1029,6 +1031,7 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/http-server.c src/http-server-send.c src/http-server-request.c \
 	src/http-server-read.c src/http-server-response.c \
 	src/socket_wrapper.c src/buffered_socket.c \
+	src/cleanup_timer.c \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/buffered_io.c \
@@ -1067,6 +1070,7 @@ test_run_http_server_SOURCES = test/run_http_server.c \
 	src/direct.c \
 	src/http-body.c src/date.c \
 	src/fd_util.c src/fd-util.c \
+	src/cleanup_timer.c \
 	src/shutdown_listener.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
@@ -1082,6 +1086,7 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/t_client.h \
 	src/http-client.c \
 	src/socket_wrapper.c src/buffered_socket.c \
+	src/cleanup_timer.c \
 	$(STOPWATCH_SRC) \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
@@ -1345,6 +1350,7 @@ test_request_translation_LDADD = $(AM_LDADD) \
 
 test_run_subst_SOURCES = test/run-subst.c \
 	src/fifo-buffer.c src/buffered_io.c \
+	src/cleanup_timer.c \
 	src/fd_util.c
 test_run_subst_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1495,6 +1501,7 @@ test_t_fcgi_client_SOURCES = test/t_fcgi_client.c \
 	src/fcgi-client.c src/fcgi-serialize.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/buffered_io.c src/fifo-buffer.c \
+	src/cleanup_timer.c \
 	src/strmap.c src/hashmap.c \
 	src/strutil.c \
 	src/header-parser.c \
@@ -1514,6 +1521,7 @@ test_t_ajp_client_SOURCES = test/t_ajp_client.c \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \
 	src/socket_wrapper.c src/buffered_socket.c \
+	src/cleanup_timer.c \
 	src/serialize.c \
 	src/uri-verify.c \
 	src/buffered_io.c src/fifo-buffer.c \
@@ -1539,6 +1547,7 @@ test_run_client_SOURCES = test/run_client.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/serialize.c \
 	src/uri-verify.c \
+	src/cleanup_timer.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/fd-util.c src/fd_util.c \
 	src/strmap.c src/hashmap.c \
@@ -1590,6 +1599,7 @@ test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/stock.c src/pipe-stock.c \
 	src/fd-util.c src/fd_util.c \
+	src/cleanup_timer.c \
 	src/shutdown_listener.c \
 	src/direct.c
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
@@ -1602,6 +1612,7 @@ test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/fd-util.c src/fd_util.c \
+	src/cleanup_timer.c \
 	src/direct.c \
 	src/serialize.c \
 	src/growing-buffer.c src/sink-buffer.c \
@@ -1644,6 +1655,7 @@ test_fake_memcached_server_SOURCES = test/fake-memcached-server.c
 test_t_memcached_client_SOURCES = test/t-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/socket_wrapper.c src/buffered_socket.c \
+	src/cleanup_timer.c \
 	src/direct.c \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/fd-util.c src/fd_util.c
@@ -1691,6 +1703,7 @@ test_run_ua_parser_LDADD = $(AM_LDADD) $(GLIB_LIBS)
 test_run_parser_cdata_SOURCES = test/t-parser-cdata.c \
 	src/parser.c \
 	src/fifo-buffer.c src/buffered_io.c src/expansible-buffer.c \
+	src/cleanup_timer.c \
 	src/fd_util.c
 test_run_parser_cdata_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1699,6 +1712,7 @@ test_run_parser_cdata_LDADD = $(AM_LDADD) \
 test_run_css_parser_SOURCES = test/run_css_parser.c \
 	src/css_parser.c \
 	src/fifo-buffer.c src/buffered_io.c \
+	src/cleanup_timer.c \
 	src/fd_util.c
 test_run_css_parser_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \

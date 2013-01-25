@@ -12,6 +12,7 @@
 #include "direct.h"
 #include "pevent.h"
 #include "gerrno.h"
+#include "fb_pool.h"
 
 #ifdef __linux
 #include <fcntl.h>
@@ -65,6 +66,16 @@ fork_close(struct fork *f)
         child_kill(f->pid);
 }
 
+static void
+fork_free_buffer(struct fork *f)
+{
+    if (f->buffer == NULL)
+        return;
+
+    fb_pool_free(f->buffer);
+    f->buffer = NULL;
+}
+
 /**
  * Send data from the buffer.  Invokes the "eof" callback when the
  * buffer becomes empty and the pipe has been closed already.
@@ -80,8 +91,11 @@ fork_buffer_send(struct fork *f)
         return false;
 
     if (f->output_fd < 0) {
-        if (fifo_buffer_empty(f->buffer))
+        if (fifo_buffer_empty(f->buffer)) {
+            fork_free_buffer(f);
             istream_deinit_eof(&f->output);
+        }
+
         return false;
     }
 
@@ -178,6 +192,8 @@ fork_input_abort(GError *error, void *ctx)
     assert(f->input != NULL);
     assert(f->input_fd >= 0);
 
+    fork_free_buffer(f);
+
     p_event_del(&f->input_event, f->output.pool);
     close(f->input_fd);
     f->input = NULL;
@@ -212,7 +228,7 @@ fork_read_from_output(struct fork *f)
 
     if (!fork_check_direct(f)) {
         if (f->buffer == NULL)
-            f->buffer = fifo_buffer_new(f->output.pool, 1024);
+            f->buffer = fb_pool_alloc();
 
         ssize_t nbytes = read_to_buffer(f->output_fd, f->buffer, INT_MAX);
         if (nbytes == -2) {
@@ -224,8 +240,10 @@ fork_read_from_output(struct fork *f)
         } else if (nbytes == 0) {
             fork_close(f);
 
-            if (fifo_buffer_empty(f->buffer))
+            if (fifo_buffer_empty(f->buffer)) {
+                fork_free_buffer(f);
                 istream_deinit_eof(&f->output);
+            }
         } else if (errno == EAGAIN) {
             p_event_add(&f->output_event, NULL,
                         f->output.pool, "fork_output_event");
@@ -236,6 +254,7 @@ fork_read_from_output(struct fork *f)
         } else {
             GError *error =
                 new_error_errno_msg("failed to read from sub process");
+            fork_free_buffer(f);
             fork_close(f);
             istream_deinit_abort(&f->output, error);
         }
@@ -265,6 +284,7 @@ fork_read_from_output(struct fork *f)
             p_event_add(&f->output_event, NULL,
                         f->output.pool, "fork_output_event");
         } else if (nbytes == ISTREAM_RESULT_EOF) {
+            fork_free_buffer(f);
             fork_close(f);
             istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
@@ -277,6 +297,7 @@ fork_read_from_output(struct fork *f)
         } else {
             GError *error =
                 new_error_errno_msg("failed to read from sub process");
+            fork_free_buffer(f);
             fork_close(f);
             istream_deinit_abort(&f->output, error);
         }
@@ -336,6 +357,8 @@ static void
 istream_fork_close(struct istream *istream)
 {
     struct fork *f = istream_to_fork(istream);
+
+    fork_free_buffer(f);
 
     if (f->output_fd >= 0)
         fork_close(f);

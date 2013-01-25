@@ -9,6 +9,7 @@
 #include "fd-util.h"
 #include "direct.h"
 #include "fd_util.h"
+#include "fb_pool.h"
 
 #include <sys/wait.h>
 
@@ -165,6 +166,7 @@ int main(int argc, char **argv) {
 
     direct_global_init();
     event_base = event_init();
+    fb_pool_init(false);
 
     pool = pool_new_libc(NULL, "root");
 
@@ -174,6 +176,7 @@ int main(int argc, char **argv) {
     pool_commit();
     pool_recycler_clear();
 
+    fb_pool_deinit();
     event_base_free(event_base);
     direct_global_deinit();
 }

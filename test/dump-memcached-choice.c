@@ -10,6 +10,7 @@
 #include "sink-buffer.h"
 #include "istream.h"
 #include "direct.h"
+#include "fb_pool.h"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -218,6 +219,7 @@ int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
 
     event_base = event_init();
+    fb_pool_init(false);
 
     root_pool = pool_new_libc(NULL, "root");
     tpool_init(root_pool);
@@ -250,6 +252,7 @@ int main(int argc, char **argv) {
     pool_commit();
     pool_recycler_clear();
 
+    fb_pool_deinit();
     event_base_free(event_base);
     direct_global_deinit();
 

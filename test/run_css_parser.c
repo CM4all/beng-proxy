@@ -1,6 +1,7 @@
 #include "css_parser.h"
 #include "istream.h"
 #include "istream-file.h"
+#include "fb_pool.h"
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -94,6 +95,8 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
+    fb_pool_init(false);
+
     struct pool *root_pool = pool_new_libc(NULL, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
@@ -109,4 +112,6 @@ int main(int argc, char **argv) {
     pool_commit();
 
     pool_recycler_clear();
+
+    fb_pool_deinit();
 }

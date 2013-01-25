@@ -14,6 +14,7 @@
 #include "shutdown_listener.h"
 #include "client-socket.h"
 #include "tpool.h"
+#include "fb_pool.h"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -337,6 +338,7 @@ main(int argc, char **argv)
     signal(SIGPIPE, SIG_IGN);
 
     struct event_base *event_base = event_init();
+    fb_pool_init(false);
 
     shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
 
@@ -393,6 +395,7 @@ main(int argc, char **argv)
     pool_commit();
     pool_recycler_clear();
 
+    fb_pool_deinit();
     event_base_free(event_base);
     direct_global_deinit();
 

@@ -1,5 +1,6 @@
 #include "istream.h"
 #include "istream-file.h"
+#include "fb_pool.h"
 
 #include <inline/compiler.h>
 
@@ -69,6 +70,8 @@ int main(int argc, char **argv) {
     struct istream *istream;
     int i;
 
+    fb_pool_init(false);
+
     root_pool = pool_new_libc(NULL, "root");
 
     pool = pool_new_linear(root_pool, "test", 8192);
@@ -96,4 +99,6 @@ int main(int argc, char **argv) {
     pool_commit();
 
     pool_recycler_clear();
+
+    fb_pool_deinit();
 }

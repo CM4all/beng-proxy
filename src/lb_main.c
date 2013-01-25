@@ -24,6 +24,7 @@
 #include "ssl_init.h"
 #include "child.h"
 #include "thread_pool.h"
+#include "fb_pool.h"
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
@@ -166,6 +167,8 @@ shutdown_callback(void *ctx)
     if (instance->pipe_stock != NULL)
         stock_free(instance->pipe_stock);
 
+    fb_pool_disable();
+
     pool_commit();
 }
 
@@ -178,6 +181,7 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
     (void)instance;
 
     daemonize_reopen_logfile();
+    fb_pool_compress();
 }
 
 void
@@ -241,6 +245,7 @@ int main(int argc, char **argv)
     direct_global_init();
 
     instance.event_base = event_init();
+    fb_pool_init(true);
 
     list_init(&instance.controls);
     list_init(&instance.listeners);
@@ -320,6 +325,7 @@ int main(int argc, char **argv)
     deinit_all_listeners(&instance);
     deinit_all_controls(&instance);
 
+    fb_pool_deinit();
 #ifndef PROFILE
     event_base_free(instance.event_base);
 #endif

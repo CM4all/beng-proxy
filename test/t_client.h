@@ -3,6 +3,7 @@
 #include "lease.h"
 #include "istream.h"
 #include "strmap.h"
+#include "fb_pool.h"
 
 #ifdef HAVE_EXPECT_100
 #include "http-client.h"
@@ -240,6 +241,8 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
         istream_delayed_set(c->delayed, istream_fail_new(c->pool, error));
         istream_read(c->delayed);
     }
+
+    fb_pool_compress();
 }
 
 static void

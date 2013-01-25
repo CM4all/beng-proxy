@@ -14,6 +14,7 @@
 #include "stopwatch.h"
 #include "strmap.h"
 #include "http-response.h"
+#include "fb_pool.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -60,6 +61,7 @@ cgi_return_response(struct cgi *cgi)
         stopwatch_event(cgi->stopwatch, "empty");
         stopwatch_dump(cgi->stopwatch);
 
+        fb_pool_free(cgi->buffer);
         istream_free_handler(&cgi->input);
         http_response_handler_invoke_response(&cgi->handler, status, headers,
                                               NULL);
@@ -71,6 +73,7 @@ cgi_return_response(struct cgi *cgi)
         stopwatch_event(cgi->stopwatch, "empty");
         stopwatch_dump(cgi->stopwatch);
 
+        fb_pool_free(cgi->buffer);
         istream_free_handler(&cgi->input);
         http_response_handler_invoke_response(&cgi->handler, status, headers,
                                               istream_null_new(cgi->output.pool));
@@ -135,6 +138,7 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
         return length;
 
     case C_ERROR:
+        fb_pool_free(cgi->buffer);
         istream_free_handler(&cgi->input);
         http_response_handler_invoke_abort(&cgi->handler, error);
         pool_unref(cgi->output.pool);
@@ -202,6 +206,7 @@ cgi_feed_body(struct cgi *cgi, const char *data, size_t length)
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
+        fb_pool_free(cgi->buffer);
         istream_free_handler(&cgi->input);
 
         GError *error =
@@ -218,6 +223,7 @@ cgi_feed_body(struct cgi *cgi, const char *data, size_t length)
         stopwatch_event(cgi->stopwatch, "end");
         stopwatch_dump(cgi->stopwatch);
 
+        fb_pool_free(cgi->buffer);
         istream_free_handler(&cgi->input);
         istream_deinit_eof(&cgi->output);
         return 0;
@@ -286,6 +292,7 @@ cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
         stopwatch_event(cgi->stopwatch, "end");
         stopwatch_dump(cgi->stopwatch);
 
+        fb_pool_free(cgi->buffer);
         istream_close_handler(cgi->input);
         istream_deinit_eof(&cgi->output);
         return ISTREAM_RESULT_CLOSED;
@@ -307,6 +314,8 @@ cgi_input_eof(void *ctx)
 
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
 
+        fb_pool_free(cgi->buffer);
+
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of headers from CGI script");
@@ -316,6 +325,8 @@ cgi_input_eof(void *ctx)
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
+        fb_pool_free(cgi->buffer);
+
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of response body from CGI script");
@@ -324,6 +335,7 @@ cgi_input_eof(void *ctx)
         stopwatch_event(cgi->stopwatch, "end");
         stopwatch_dump(cgi->stopwatch);
 
+        fb_pool_free(cgi->buffer);
         istream_deinit_eof(&cgi->output);
     }
 }
@@ -343,12 +355,16 @@ cgi_input_abort(GError *error, void *ctx)
            handler */
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
 
+        fb_pool_free(cgi->buffer);
+
         g_prefix_error(&error, "CGI request body failed: ");
         http_response_handler_invoke_abort(&cgi->handler, error);
         pool_unref(cgi->output.pool);
-    } else
+    } else {
         /* response has been sent: abort only the output stream */
+        fb_pool_free(cgi->buffer);
         istream_deinit_abort(&cgi->output, error);
+    }
 }
 
 static const struct istream_handler cgi_input_handler = {
@@ -423,6 +439,8 @@ istream_cgi_close(struct istream *istream)
 {
     struct cgi *cgi = istream_to_cgi(istream);
 
+    fb_pool_free(cgi->buffer);
+
     if (cgi->input != NULL)
         istream_free_handler(&cgi->input);
 
@@ -454,6 +472,7 @@ cgi_async_abort(struct async_operation *ao)
 
     assert(cgi->input != NULL);
 
+    fb_pool_free(cgi->buffer);
     istream_close_handler(cgi->input);
     pool_unref(cgi->output.pool);
 }
@@ -483,7 +502,7 @@ cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
     istream_assign_handler(&cgi->input, input,
                            &cgi_input_handler, cgi, 0);
 
-    cgi->buffer = fifo_buffer_new(pool, 4096);
+    cgi->buffer = fb_pool_alloc();
 
     cgi_parser_init(pool, &cgi->parser);
 
