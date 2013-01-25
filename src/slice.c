@@ -435,6 +435,8 @@ void
 slice_free(struct slice_pool *pool, struct slice_area *area, void *p)
 {
     unsigned i = slice_area_index(pool, area, p);
+    assert(slice_slot_is_allocated(&area->slices[i]));
+
     area->slices[i].next = area->free_head;
     area->free_head = i;
 
