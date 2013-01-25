@@ -31,6 +31,14 @@ struct fifo_buffer;
 extern "C" {
 #endif
 
+/**
+ * Initialize a #fifo_buffer object that was allocated by the caller.
+ *
+ * @param size the total size of the allocation
+ */
+void
+fifo_buffer_init(struct fifo_buffer *buffer, size_t size);
+
 struct fifo_buffer *gcc_malloc
 fifo_buffer_new(struct pool *pool, size_t size);
 

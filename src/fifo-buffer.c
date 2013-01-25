@@ -28,6 +28,17 @@ struct fifo_buffer {
     unsigned char buffer[sizeof(size_t)];
 };
 
+void
+fifo_buffer_init(struct fifo_buffer *buffer, size_t size)
+{
+    assert(buffer != NULL);
+    assert(size >= sizeof(*buffer));
+
+    buffer->size = size + sizeof(buffer->buffer) - sizeof(*buffer);
+    buffer->start = 0;
+    buffer->end = 0;
+}
+
 struct fifo_buffer *
 fifo_buffer_new(struct pool *pool, size_t size)
 {
