@@ -42,7 +42,7 @@ lb_connection_new(struct lb_instance *instance,
         local_address_length = 0;
 
     struct pool *pool = pool_new_linear(instance->pool, "client_connection",
-                                        16384);
+                                        2048);
     pool_set_major(pool);
 
     connection = p_malloc(pool, sizeof(*connection));

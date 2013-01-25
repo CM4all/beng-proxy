@@ -217,7 +217,7 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
     if (item == NULL) {
         /* create a new cache item */
 
-        pool = pool_new_linear(balancer->pool, "balancer_item", 512);
+        pool = pool_new_linear(balancer->pool, "balancer_item", 1024);
         item = p_malloc(pool, sizeof(*item));
         cache_item_init(&item->item, time(NULL) + 1800, 1);
         item->pool = pool;

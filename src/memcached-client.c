@@ -774,7 +774,7 @@ memcached_client_invoke(struct pool *caller_pool,
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);
 
-    struct pool *pool = pool_new_linear(caller_pool, "memcached_client", 16384);
+    struct pool *pool = pool_new_linear(caller_pool, "memcached_client", 4096);
 
     request = memcached_request_packet(pool, opcode, extras, extras_length,
                                        key, key_length, value,

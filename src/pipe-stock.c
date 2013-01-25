@@ -39,7 +39,7 @@ static struct pool *
 pipe_stock_pool(G_GNUC_UNUSED void *ctx, struct pool *parent,
                 G_GNUC_UNUSED const char *uri)
 {
-    return pool_new_linear(parent, "pipe_stock", 64);
+    return pool_new_linear(parent, "pipe_stock", 128);
 }
 
 static void

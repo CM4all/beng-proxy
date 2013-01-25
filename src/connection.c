@@ -148,7 +148,7 @@ http_listener_connected(int fd,
     if (ret < 0)
         local_address_length = 0;
 
-    pool = pool_new_linear(instance->pool, "client_connection", 16384);
+    pool = pool_new_linear(instance->pool, "client_connection", 2048);
     pool_set_major(pool);
 
     connection = p_malloc(pool, sizeof(*connection));
