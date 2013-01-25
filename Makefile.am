@@ -574,6 +574,7 @@ endif
 noinst_LIBRARIES = libmemory.a libpool.a libistream.a
 
 libmemory_a_SOURCES = \
+	src/fb_pool.c src/fb_pool.h \
 	src/slice.c src/slice.h \
 	src/rubber.c src/rubber.h
 
