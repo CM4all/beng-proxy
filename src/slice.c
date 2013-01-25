@@ -183,7 +183,7 @@ slice_area_get_slice(const struct slice_pool *pool, struct slice_area *area,
     assert(slice < pool->slices_per_area);
     assert(slice_slot_is_allocated(&area->slices[slice]));
 
-    unsigned page = slice / pool->slices_per_page;
+    unsigned page = (slice / pool->slices_per_page) * pool->pages_per_slice;
     slice %= pool->slices_per_page;
 
     return (uint8_t *)slice_area_get_page(pool, area, page)
@@ -210,7 +210,8 @@ slice_area_index(const struct slice_pool *pool, struct slice_area *area,
     offset %= PAGE_SIZE;
     assert(offset % pool->slice_size == 0);
 
-    return page * pool->slices_per_page + offset / pool->slice_size;
+    return page * pool->slices_per_page / pool->pages_per_slice
+        + offset / pool->slice_size;
 }
 
 /**
