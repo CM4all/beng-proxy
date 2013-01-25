@@ -126,7 +126,7 @@ slice_area_new(struct slice_pool *pool)
                    PROT_READ|PROT_WRITE, flags,
                    -1, 0);
     if (p == (void *)-1) {
-        fprintf(stderr, "Out of adress space\n");
+        fputs("Out of adress space\n", stderr);
         abort();
     }
 
