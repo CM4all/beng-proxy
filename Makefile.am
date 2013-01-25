@@ -644,7 +644,6 @@ if TEST
 
 noinst_PROGRAMS = \
 	test/run_css_parser \
-	test/run_httpd_hello \
 	test/run-ping \
 	test/run-was \
 	test/was-mirror \
@@ -1703,31 +1702,6 @@ test_run_css_parser_SOURCES = test/run_css_parser.c \
 test_run_css_parser_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(GLIB_LIBS)
-
-test_run_httpd_hello_SOURCES = test/run_httpd_hello.c \
-	src/http-util.c \
-	src/http-server.c src/http-server-send.c src/http-server-request.c \
-	src/http-server-read.c src/http-server-response.c \
-	src/http-body.c \
-	src/socket_wrapper.c src/buffered_socket.c \
-	src/direct.c src/fd-util.c src/fd_util.c \
-	src/address.c \
-	src/listener.c \
-	src/strutil.c src/format.c src/date.c src/gmtime.c \
-	src/header-parser.c src/header-writer.c \
-	src/fifo-buffer.c \
-	src/buffered_io.c \
-	src/growing-buffer.c \
-	src/strmap.c src/hashmap.c \
-	src/istream-gb.c \
-	src/tpool.c
-test_run_httpd_hello_LDADD = \
-	libistream.a libpool.a libmemory.a \
-	$(LIBCM4ALL_DAEMON_LIBS) \
-	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS) \
-	$(GLIB_LIBS) \
-	$(LIBEVENT_LIBS)
 
 endif
 
