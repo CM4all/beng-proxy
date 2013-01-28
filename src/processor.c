@@ -349,7 +349,8 @@ processor_process(struct pool *caller_pool, struct istream *istream,
 }
 
 void
-processor_lookup_widget(struct pool *caller_pool, http_status_t status,
+processor_lookup_widget(struct pool *caller_pool,
+                        gcc_unused http_status_t status,
                         struct istream *istream,
                         struct widget *widget, const char *id,
                         struct processor_env *env,

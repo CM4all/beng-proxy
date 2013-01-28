@@ -67,11 +67,13 @@ proxy_response(http_status_t status, struct strmap *headers,
                struct istream *body, void *ctx)
 {
     struct request *request2 = ctx;
-    const struct translate_response *tr = request2->translate.response;
 
+#ifndef NDEBUG
+    const struct translate_response *tr = request2->translate.response;
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
            resource_address_is_cgi_alike(&tr->address));
+#endif
 
     proxy_collect_cookies(request2, headers);
 
