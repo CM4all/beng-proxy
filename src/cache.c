@@ -168,7 +168,7 @@ cache_flush(struct cache *cache)
     for (item = (struct cache_item *)cache->sorted_items.next;
          &item->sorted_siblings != &cache->sorted_items;
          item = (struct cache_item *)item->sorted_siblings.next) {
-        bool found;
+        gcc_unused bool found;
         struct cache_item *item2;
 
         found = hashmap_remove_value(cache->items, item->key, item);
@@ -210,7 +210,7 @@ cache_get(struct cache *cache, const char *key)
     const time_t now = time(NULL);
 
     if (!cache_item_validate(cache, item, now)) {
-        bool found;
+        gcc_unused bool found;
 
         cache_check(cache);
         found = hashmap_remove_value(cache->items, key, item);
@@ -239,7 +239,7 @@ cache_get_match(struct cache *cache, const char *key,
             if (!cache_item_validate(cache, item, now)) {
                 /* expired cache item: delete it, and re-start the
                    search */
-                bool found;
+                gcc_unused bool found;
 
                 cache_check(cache);
                 found = hashmap_remove_value(cache->items, key, item);
@@ -275,7 +275,7 @@ static void
 cache_destroy_oldest_item(struct cache *cache)
 {
     struct cache_item *item;
-    bool found;
+    gcc_unused bool found;
 
     if (list_empty(&cache->sorted_items))
         return;
@@ -432,7 +432,7 @@ void
 cache_remove_item(struct cache *cache, const char *key,
                   struct cache_item *item)
 {
-    bool found;
+    gcc_unused bool found;
 
     if (item->removed) {
         /* item has already been removed by somebody else */
@@ -526,7 +526,7 @@ cache_expire_event_callback(int fd gcc_unused, short event gcc_unused,
     for (item = (struct cache_item *)cache->sorted_items.next;
          &item->sorted_siblings != &cache->sorted_items;
          item = (struct cache_item *)item->sorted_siblings.next) {
-        bool found;
+        gcc_unused bool found;
         struct cache_item *item2;
 
         if (item->expires > now)

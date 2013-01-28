@@ -573,6 +573,7 @@ translate_cache_invalidate(struct tcache *tcache,
         .site = site,
     };
 
+    gcc_unused
     unsigned removed = cache_remove_all_match(tcache->cache,
                                               tcache_invalidate_match, &data);
     cache_log(4, "translate_cache: invalidated %u cache items\n", removed);

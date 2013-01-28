@@ -21,7 +21,7 @@ tpool_init(struct pool *parent)
 void
 tpool_deinit(void)
 {
-    unsigned ref;
+    gcc_unused unsigned ref;
     ref = pool_unref(tpool);
     assert(ref == 0);
 }
