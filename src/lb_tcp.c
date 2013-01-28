@@ -19,6 +19,7 @@
 #include <daemon/log.h>
 
 #include <unistd.h>
+#include <string.h>
 
 /*
  * first istream_socket handler

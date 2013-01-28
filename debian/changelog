@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.0.55) unstable; urgency=low
 
   * istream-tee: fix crash due to erroneous read
+  * fix random crashes in the optimized build
 
  --   
 

@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <event.h>
