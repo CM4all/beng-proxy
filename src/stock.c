@@ -549,11 +549,11 @@ struct stock_item *
 stock_get_now(struct stock *stock, struct pool *pool, void *info,
               GError **error_r)
 {
-    struct now_data data = {
+    struct now_data data;
 #ifndef NDEBUG
-        .created = false
+    data.created = false;
 #endif
-    };
+
     struct async_operation_ref async_ref;
 
     /* cannot call this on a limited stock */

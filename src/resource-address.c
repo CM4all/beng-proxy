@@ -399,7 +399,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
 
 const char *
 resource_address_host_and_port(const struct resource_address *address,
-                               struct pool *pool)
+                               gcc_unused struct pool *pool)
 {
     assert(address != NULL);
     assert(pool != NULL);
