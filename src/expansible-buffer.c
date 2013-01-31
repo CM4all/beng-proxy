@@ -24,9 +24,9 @@ struct expansible_buffer {
 struct expansible_buffer *
 expansible_buffer_new(struct pool *pool, size_t initial_size)
 {
-    struct expansible_buffer *eb = p_malloc(pool, sizeof(*eb));
-
     assert(initial_size > 0);
+
+    struct expansible_buffer *eb = p_malloc(pool, sizeof(*eb));
 
     eb->pool = pool;
     eb->buffer = p_malloc(pool, initial_size);
@@ -59,12 +59,10 @@ expansible_buffer_length(const struct expansible_buffer *eb)
 static void
 expansible_buffer_resize(struct expansible_buffer *eb, size_t max_size)
 {
-    char *buffer;
-
     assert(eb != NULL);
     assert(max_size > eb->max_size);
 
-    buffer = p_malloc(eb->pool, max_size);
+    char *buffer = p_malloc(eb->pool, max_size);
     memcpy(buffer, eb->buffer, eb->size);
 
     p_free(eb->pool, eb->buffer);
@@ -77,12 +75,10 @@ void *
 expansible_buffer_write(struct expansible_buffer *eb, size_t length)
 {
     size_t new_size = eb->size + length;
-    char *dest;
-
     if (new_size > eb->max_size)
         expansible_buffer_resize(eb, ((new_size - 1) | 0x3ff) + 1);
 
-    dest = eb->buffer + eb->size;
+    char *dest = eb->buffer + eb->size;
     eb->size = new_size;
 
     return dest;
