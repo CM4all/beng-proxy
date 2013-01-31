@@ -875,6 +875,7 @@ pool_mark(struct pool *pool, struct pool_mark *mark)
     assert(pool->type == POOL_LINEAR);
 
     mark->area = pool->current_area.linear;
+    mark->prev = mark->area->prev;
     mark->position = mark->area->used;
 
 #ifndef NDEBUG
@@ -928,6 +929,21 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
         pool_remove_allocations(pool, area->data, area->used);
 
         pool->current_area.linear = area->prev;
+        pool_dispose_linear_area(pool, area);
+    }
+
+    /* dispose all (large) areas that were inserted before the marked
+       one */
+    while (marked_area->prev != mark->prev) {
+        struct linear_pool_area *area = marked_area->prev;
+        assert(area != NULL);
+        /* only large areas get inserted before the current one */
+        assert(area->size > pool->area_size);
+        assert(area->used > pool->area_size);
+
+        pool_remove_allocations(pool, area->data, area->used);
+
+        marked_area->prev = area->prev;
         pool_dispose_linear_area(pool, area);
     }
 

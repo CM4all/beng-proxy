@@ -23,6 +23,12 @@ struct pool_mark {
     struct linear_pool_area *area;
 
     /**
+     * The area before #area.  This is used to dispose areas that were
+     * inserted before the current area due to a large allocation.
+     */
+    struct linear_pool_area *prev;
+
+    /**
      * The position within the current area when the mark was set.
      */
     size_t position;
