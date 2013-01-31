@@ -918,8 +918,10 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
     assert(mark->area != NULL);
     assert(mark->position <= mark->area->used);
 
+    struct linear_pool_area *const marked_area = mark->area;
+
     /* dispose all areas newer than the marked one */
-    while (pool->current_area.linear != mark->area) {
+    while (pool->current_area.linear != marked_area) {
         struct linear_pool_area *area = pool->current_area.linear;
         assert(area != NULL);
 
@@ -930,13 +932,13 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
     }
 
     /* rewind the marked area */
-    pool_remove_allocations(pool, mark->area->data + mark->position,
-                            mark->area->used - mark->position);
+    pool_remove_allocations(pool, marked_area->data + mark->position,
+                            marked_area->used - mark->position);
 
-    poison_noaccess(mark->area->data + mark->position,
-                    mark->area->used - mark->position);
+    poison_noaccess(marked_area->data + mark->position,
+                    marked_area->used - mark->position);
 
-    mark->area->used = mark->position;
+    marked_area->used = mark->position;
 
     /* if the pool was empty before pool_mark(), it must be empty
        again after pool_rewind() */
