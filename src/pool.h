@@ -26,6 +26,14 @@ struct pool_mark {
      * The position within the current area when the mark was set.
      */
     size_t position;
+
+#ifndef NDEBUG
+    /**
+     * Used in an assertion: if the pool was empty before pool_mark(),
+     * it must be empty again after pool_rewind().
+     */
+    bool was_empty;
+#endif
 };
 
 void

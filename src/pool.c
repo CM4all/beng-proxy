@@ -371,6 +371,16 @@ pool_new_linear(struct pool *parent, const char *name, size_t initial_size)
 }
 
 #ifndef NDEBUG
+
+static bool
+pool_linear_is_empty(const struct pool *pool)
+{
+    assert(pool->type == POOL_LINEAR);
+
+    const struct linear_pool_area *area = pool->current_area.linear;
+    return area == NULL || (area->prev == NULL && area->used == 0);
+}
+
 void
 pool_set_major(struct pool *pool)
 {
@@ -866,6 +876,10 @@ pool_mark(struct pool *pool, struct pool_mark *mark)
 
     mark->area = pool->current_area.linear;
     mark->position = mark->area->used;
+
+#ifndef NDEBUG
+    mark->was_empty = pool_linear_is_empty(pool);
+#endif
 #else
     (void)pool;
     (void)mark;
@@ -923,6 +937,16 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
                     mark->area->used - mark->position);
 
     mark->area->used = mark->position;
+
+    /* if the pool was empty before pool_mark(), it must be empty
+       again after pool_rewind() */
+#ifndef NDEBUG
+    assert(mark->was_empty == pool_linear_is_empty(pool));
+#endif
+
+    /* if the pool is empty again, the allocation list must be empty,
+       too */
+    assert(!pool_linear_is_empty(pool) || list_empty(&pool->allocations));
 #else
     (void)pool;
     (void)mark;
