@@ -56,8 +56,16 @@ sink_rubber_eof(struct sink_rubber *s)
     if (s->input != NULL)
         istream_free_handler(&s->input);
 
-    rubber_shrink(s->rubber, s->rubber_id, s->position);
-    s->handler->done(s->rubber_id, s->position, s->handler_ctx);
+    unsigned rubber_id = s->rubber_id;
+    if (s->position == 0) {
+        /* the stream was empty; remove the object from the rubber
+           allocator */
+        rubber_remove(s->rubber, rubber_id);
+        rubber_id = 0;
+    } else
+        rubber_shrink(s->rubber, rubber_id, s->position);
+
+    s->handler->done(rubber_id, s->position, s->handler_ctx);
 }
 
 /*
