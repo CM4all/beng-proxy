@@ -519,6 +519,8 @@ rubber_read(const struct rubber *r, unsigned id)
 void
 rubber_shrink(struct rubber *r, unsigned id, size_t new_size)
 {
+    assert(new_size > 0);
+
     r->netto_size -= rubber_table_shrink(r->table, id, align_size(new_size));
 }
 

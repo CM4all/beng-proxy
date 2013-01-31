@@ -33,6 +33,7 @@ rubber_fork_cow(struct rubber *r, bool inherit);
  * Add a new object with the specified size.  Use rubber_write() to
  * actually copy data to the object.
  *
+ * @param size the size, must be positive
  * @return the object id, or 0 on error
  */
 unsigned
@@ -65,6 +66,8 @@ rubber_read(const struct rubber *r, unsigned id);
  * Shrink an object.  The new size must be smaller (or equal) to the
  * current size.  This is done in-place, possibly leaving a gap that
  * can only be used again after rubber_compress() has been called.
+ *
+ * @param new_size the new size, must be positive
  */
 void
 rubber_shrink(struct rubber *r, unsigned id, size_t new_size);
