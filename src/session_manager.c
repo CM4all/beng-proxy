@@ -20,6 +20,7 @@
 #include <event.h>
 
 #include <errno.h>
+#include <string.h>
 #include <stdlib.h>
 
 #define SHM_PAGE_SIZE 4096

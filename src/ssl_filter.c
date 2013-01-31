@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include <unistd.h>
+#include <string.h>
 #include <poll.h>
 #include <sys/socket.h>
 

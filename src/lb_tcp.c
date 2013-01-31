@@ -18,6 +18,7 @@
 #include "address_sticky.h"
 
 #include <unistd.h>
+#include <string.h>
 
 /*
  * first istream_socket handler
