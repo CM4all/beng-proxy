@@ -904,6 +904,7 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
     assert(mark->area != NULL);
     assert(mark->position <= mark->area->used);
 
+    /* dispose all areas newer than the marked one */
     while (pool->current_area.linear != mark->area) {
         struct linear_pool_area *area = pool->current_area.linear;
         assert(area != NULL);
@@ -914,6 +915,7 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
         pool_dispose_linear_area(pool, area);
     }
 
+    /* rewind the marked area */
     pool_remove_allocations(pool, mark->area->data + mark->position,
                             mark->area->used - mark->position);
 

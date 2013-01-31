@@ -17,7 +17,14 @@
 struct pool;
 
 struct pool_mark {
+    /**
+     * The area that was current when the mark was set.
+     */
     struct linear_pool_area *area;
+
+    /**
+     * The position within the current area when the mark was set.
+     */
     size_t position;
 };
 
