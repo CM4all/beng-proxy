@@ -15,7 +15,7 @@ tpool_init(struct pool *parent)
 {
     assert(tpool == NULL);
 
-    tpool = pool_new_linear(parent, "temporary_pool", 8192);
+    tpool = pool_new_linear(parent, "temporary_pool", 32768);
 }
 
 void
