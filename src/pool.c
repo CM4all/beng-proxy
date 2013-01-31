@@ -450,6 +450,16 @@ pool_new_slice(struct pool *parent, const char *name,
 }
 
 #ifndef NDEBUG
+
+static bool
+pool_linear_is_empty(const struct pool *pool)
+{
+    assert(pool->type == POOL_LINEAR);
+
+    const struct linear_pool_area *area = pool->current_area.linear;
+    return area == NULL || (area->prev == NULL && area->used == 0);
+}
+
 void
 pool_set_major(struct pool *pool)
 {
@@ -944,7 +954,12 @@ pool_mark(struct pool *pool, struct pool_mark *mark)
     assert(pool->type == POOL_LINEAR);
 
     mark->area = pool->current_area.linear;
+    mark->prev = mark->area != NULL ? mark->area->prev : NULL;
     mark->position = mark->area != NULL ? mark->area->used : 0;
+
+#ifndef NDEBUG
+    mark->was_empty = pool_linear_is_empty(pool);
+#endif
 #else
     (void)pool;
     (void)mark;
@@ -983,7 +998,10 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
     assert(mark->area == NULL || mark->position <= mark->area->used);
     assert(mark->area != NULL || mark->position == 0);
 
-    while (pool->current_area.linear != mark->area) {
+    struct linear_pool_area *const marked_area = mark->area;
+
+    /* dispose all areas newer than the marked one */
+    while (pool->current_area.linear != marked_area) {
         struct linear_pool_area *area = pool->current_area.linear;
         assert(area != NULL);
 
@@ -993,15 +1011,42 @@ pool_rewind(struct pool *pool, const struct pool_mark *mark)
         pool_dispose_linear_area(pool, area);
     }
 
-    if (mark->area != NULL) {
-        pool_remove_allocations(pool, mark->area->data + mark->position,
-                                mark->area->used - mark->position);
+    if (marked_area != NULL) {
+        /* dispose all (large) areas that were inserted before the marked
+           one */
+        while (marked_area->prev != mark->prev) {
+            struct linear_pool_area *area = marked_area->prev;
+            assert(area != NULL);
+            /* only large areas get inserted before the current one */
+            assert(area->size > pool->area_size);
+            assert(area->used > pool->area_size);
 
-        poison_noaccess(mark->area->data + mark->position,
-                        mark->area->used - mark->position);
+            pool_remove_allocations(pool, area->data, area->used);
 
-        mark->area->used = mark->position;
+            marked_area->prev = area->prev;
+            pool_dispose_linear_area(pool, area);
+        }
+
+        /* rewind the marked area */
+
+        pool_remove_allocations(pool, marked_area->data + mark->position,
+                                marked_area->used - mark->position);
+
+        poison_noaccess(marked_area->data + mark->position,
+                        marked_area->used - mark->position);
+
+        marked_area->used = mark->position;
     }
+
+    /* if the pool was empty before pool_mark(), it must be empty
+       again after pool_rewind() */
+#ifndef NDEBUG
+    assert(mark->was_empty == pool_linear_is_empty(pool));
+#endif
+
+    /* if the pool is empty again, the allocation list must be empty,
+       too */
+    assert(!pool_linear_is_empty(pool) || list_empty(&pool->allocations));
 #else
     (void)pool;
     (void)mark;

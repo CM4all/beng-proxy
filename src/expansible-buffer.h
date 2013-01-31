@@ -16,8 +16,12 @@ struct pool;
 struct expansible_buffer;
 struct strref;
 
+/**
+ * @param hard_limit the buffer will refuse to grow beyond this size
+ */
 struct expansible_buffer *
-expansible_buffer_new(struct pool *pool, size_t initial_size);
+expansible_buffer_new(struct pool *pool, size_t initial_size,
+                      size_t hard_limit);
 
 void
 expansible_buffer_reset(struct expansible_buffer *eb);
@@ -28,21 +32,36 @@ expansible_buffer_is_empty(const struct expansible_buffer *eb);
 size_t
 expansible_buffer_length(const struct expansible_buffer *eb);
 
+/**
+ * @return NULL if the operation would exceed the hard limit
+ */
 void *
 expansible_buffer_write(struct expansible_buffer *eb, size_t length);
 
-void
+/**
+ * @return false if the operation would exceed the hard limit
+ */
+bool
 expansible_buffer_write_buffer(struct expansible_buffer *eb,
                                const void *p, size_t length);
 
-void
+/**
+ * @return false if the operation would exceed the hard limit
+ */
+bool
 expansible_buffer_write_string(struct expansible_buffer *eb, const char *p);
 
-void
+/**
+ * @return false if the operation would exceed the hard limit
+ */
+bool
 expansible_buffer_set(struct expansible_buffer *eb,
                       const void *p, size_t length);
 
-void
+/**
+ * @return false if the operation would exceed the hard limit
+ */
+bool
 expansible_buffer_set_strref(struct expansible_buffer *eb,
                              const struct strref *s);
 

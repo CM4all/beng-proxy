@@ -18,18 +18,22 @@
 struct expansible_buffer {
     struct pool *pool;
     char *buffer;
+    size_t hard_limit;
     size_t max_size, size;
 };
 
 struct expansible_buffer *
-expansible_buffer_new(struct pool *pool, size_t initial_size)
+expansible_buffer_new(struct pool *pool, size_t initial_size,
+                      size_t hard_limit)
 {
-    struct expansible_buffer *eb = p_malloc(pool, sizeof(*eb));
-
     assert(initial_size > 0);
+    assert(hard_limit >= initial_size);
+
+    struct expansible_buffer *eb = p_malloc(pool, sizeof(*eb));
 
     eb->pool = pool;
     eb->buffer = p_malloc(pool, initial_size);
+    eb->hard_limit = hard_limit;
     eb->max_size = initial_size;
     eb->size = 0;
 
@@ -56,67 +60,75 @@ expansible_buffer_length(const struct expansible_buffer *eb)
     return eb->size;
 }
 
-static void
+static bool
 expansible_buffer_resize(struct expansible_buffer *eb, size_t max_size)
 {
-    char *buffer;
-
     assert(eb != NULL);
     assert(max_size > eb->max_size);
 
-    buffer = p_malloc(eb->pool, max_size);
+    if (max_size > eb->hard_limit)
+        return false;
+
+    char *buffer = p_malloc(eb->pool, max_size);
     memcpy(buffer, eb->buffer, eb->size);
 
     p_free(eb->pool, eb->buffer);
 
     eb->buffer = buffer;
     eb->max_size = max_size;
+    return true;
 }
 
 void *
 expansible_buffer_write(struct expansible_buffer *eb, size_t length)
 {
     size_t new_size = eb->size + length;
-    char *dest;
+    if (new_size > eb->max_size &&
+        !expansible_buffer_resize(eb, ((new_size - 1) | 0x3ff) + 1))
+        return NULL;
 
-    if (new_size > eb->max_size)
-        expansible_buffer_resize(eb, ((new_size - 1) | 0x3ff) + 1);
-
-    dest = eb->buffer + eb->size;
+    char *dest = eb->buffer + eb->size;
     eb->size = new_size;
 
     return dest;
 }
 
-void
+bool
 expansible_buffer_write_buffer(struct expansible_buffer *eb,
                                const void *p, size_t length)
 {
-    memcpy(expansible_buffer_write(eb, length), p, length);
+    void *q = expansible_buffer_write(eb, length);
+    if (q == NULL)
+        return false;
+
+    memcpy(q, p, length);
+    return true;
 }
 
-void
+bool
 expansible_buffer_write_string(struct expansible_buffer *eb, const char *p)
 {
-    expansible_buffer_write_buffer(eb, p, strlen(p));
+    return expansible_buffer_write_buffer(eb, p, strlen(p));
 }
 
-void
+bool
 expansible_buffer_set(struct expansible_buffer *eb,
                       const void *p, size_t length)
 {
-    if (length > eb->max_size)
-        expansible_buffer_resize(eb, ((length - 1) | 0x3ff) + 1);
+    if (length > eb->max_size &&
+        !expansible_buffer_resize(eb, ((length - 1) | 0x3ff) + 1))
+        return false;
 
     eb->size = length;
     memcpy(eb->buffer, p, length);
+    return true;
 }
 
-void
+bool
 expansible_buffer_set_strref(struct expansible_buffer *eb,
                              const struct strref *s)
 {
-    expansible_buffer_set(eb, s->data, s->length);
+    return expansible_buffer_set(eb, s->data, s->length);
 }
 
 const void *

@@ -16,7 +16,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     pool = pool_new_libc(NULL, "root");
 
-    eb = expansible_buffer_new(pool, 4);
+    eb = expansible_buffer_new(pool, 4, 1024);
     assert(expansible_buffer_is_empty(eb));
 
     p = expansible_buffer_read(eb, &size);
@@ -53,6 +53,13 @@ main(gcc_unused int argc, gcc_unused char **argv)
     assert(p == q);
     assert(size == 6);
     assert(memcmp(q, "abcdef", 6) == 0);
+
+    p = expansible_buffer_write(eb, 512);
+    assert(p != NULL);
+
+    /* this call hits the hard limit */
+    p = expansible_buffer_write(eb, 512);
+    assert(p == NULL);
 
     pool_commit();
 

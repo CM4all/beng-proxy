@@ -20,8 +20,29 @@ struct slice_pool;
 #ifndef __cplusplus
 
 struct pool_mark {
+    /**
+     * The area that was current when the mark was set.
+     */
     struct linear_pool_area *area;
+
+    /**
+     * The area before #area.  This is used to dispose areas that were
+     * inserted before the current area due to a large allocation.
+     */
+    struct linear_pool_area *prev;
+
+    /**
+     * The position within the current area when the mark was set.
+     */
     size_t position;
+
+#ifndef NDEBUG
+    /**
+     * Used in an assertion: if the pool was empty before pool_mark(),
+     * it must be empty again after pool_rewind().
+     */
+    bool was_empty;
+#endif
 };
 
 #endif
