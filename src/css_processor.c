@@ -316,7 +316,8 @@ css_processor(struct pool *caller_pool, struct istream *istream,
     processor->options = options;
 
     processor->postponed_rewrite.pending = false;
-    processor->postponed_rewrite.value = expansible_buffer_new(pool, 1024);
+    processor->postponed_rewrite.value =
+        expansible_buffer_new(pool, 1024, 8192);
 
     istream = istream_tee_new(processor->pool, istream, true, true);
     processor->replace = istream_replace_new(processor->pool,

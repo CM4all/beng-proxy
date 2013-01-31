@@ -1757,6 +1757,12 @@ standard XML entities \texttt{amp}, \texttt{quot}, \texttt{apos},
 There may be one \texttt{path-info} element whose value is appended to
 the widget URI, if none was sent by the browser.
 
+This is not a reliable way to transfer bulk data.  Only very short
+values should be passed this way to a widget.  There is no guarantee
+that \emph{beng-proxy} or other web servers can cope with URIs longer
+than 2 kB.  If your widget comes even close, you should reconsider
+your approach.
+
 As usual: never trust user input!  The widget server cannot see if
 input came from the template or from the user's browser.
 

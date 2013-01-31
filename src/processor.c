@@ -295,15 +295,16 @@ processor_new(struct pool *caller_pool,
     processor->options = options;
     processor->tag = TAG_NONE;
 
-    processor->buffer = expansible_buffer_new(pool, 512);
+    processor->buffer = expansible_buffer_new(pool, 128, 2048);
 
     processor->postponed_rewrite.pending = false;
-    processor->postponed_rewrite.value = expansible_buffer_new(pool, 1024);
+    processor->postponed_rewrite.value =
+        expansible_buffer_new(pool, 1024, 8192);
 
     processor->widget.widget = NULL;
-    processor->widget.param.name = expansible_buffer_new(pool, 128);
-    processor->widget.param.value = expansible_buffer_new(pool, 512);
-    processor->widget.params = expansible_buffer_new(pool, 1024);
+    processor->widget.param.name = expansible_buffer_new(pool, 128, 512);
+    processor->widget.param.value = expansible_buffer_new(pool, 512, 4096);
+    processor->widget.params = expansible_buffer_new(pool, 1024, 8192);
 
     return processor;
 }
@@ -424,11 +425,13 @@ processor_uri_rewrite_postpone(struct processor *processor,
 
     processor->postponed_rewrite.uri_start = start;
     processor->postponed_rewrite.uri_end = end;
-    expansible_buffer_set(processor->postponed_rewrite.value, value, length);
+
+    bool success = expansible_buffer_set(processor->postponed_rewrite.value,
+                                         value, length);
 
     for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete); ++i)
         processor->postponed_rewrite.delete[i].start = 0;
-    processor->postponed_rewrite.pending = true;
+    processor->postponed_rewrite.pending = success;
 }
 
 static void
@@ -984,16 +987,22 @@ handle_class_attribute(struct processor *processor,
     expansible_buffer_reset(buffer);
 
     do {
-        expansible_buffer_write_buffer(buffer, p, u - p);
+        if (!expansible_buffer_write_buffer(buffer, p, u - p))
+            return;
+
         p = u;
 
         const unsigned n = underscore_prefix(p, end);
         const char *prefix;
         if (n == 3 && (prefix = widget_prefix(processor->container)) != NULL) {
-            expansible_buffer_write_string(buffer, prefix);
+            if (!expansible_buffer_write_string(buffer, prefix))
+                return;
+
             p += 3;
         } else if (n == 2 && (prefix = widget_get_quoted_class_name(processor->container)) != NULL) {
-            expansible_buffer_write_string(buffer, prefix);
+            if (!expansible_buffer_write_string(buffer, prefix))
+                return;
+
             p += 2;
         } else {
             /* failure; skip all underscores and find the next
@@ -1001,14 +1010,17 @@ handle_class_attribute(struct processor *processor,
             while (u < end && *u == '_')
                 ++u;
 
-            expansible_buffer_write_buffer(buffer, p, u - p);
+            if (!expansible_buffer_write_buffer(buffer, p, u - p))
+                return;
+
             p = u;
         }
 
         u = find_underscore(p, end);
     } while (u != NULL);
 
-    expansible_buffer_write_buffer(buffer, p, end - p);
+    if (!expansible_buffer_write_buffer(buffer, p, end - p))
+        return;
 
     const size_t length = expansible_buffer_length(buffer);
     void *q = expansible_buffer_dup(buffer, processor->pool);

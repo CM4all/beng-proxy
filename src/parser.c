@@ -363,7 +363,12 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
                 } else {
-                    expansible_buffer_write_buffer(parser->attr_value, buffer, 1);
+                    if (!expansible_buffer_write_buffer(parser->attr_value,
+                                                        buffer, 1)) {
+                        parser->state = PARSER_ELEMENT_TAG;
+                        break;
+                    }
+
                     ++buffer;
                 }
             } while (buffer < end);
@@ -374,7 +379,12 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             /* wait till the value is finished */
             do {
                 if (!char_is_whitespace(*buffer) && *buffer != '>') {
-                    expansible_buffer_write_buffer(parser->attr_value, buffer, 1);
+                    if (!expansible_buffer_write_buffer(parser->attr_value,
+                                                        buffer, 1)) {
+                        parser->state = PARSER_ELEMENT_TAG;
+                        break;
+                    }
+
                     ++buffer;
                 } else {
                     parser->attr.value_end = parser->attr.end =
@@ -669,7 +679,7 @@ parser_new(struct pool *pool, struct istream *input,
     parser->state = PARSER_NONE;
     parser->handler = handler;
     parser->handler_ctx = handler_ctx;
-    parser->attr_value = expansible_buffer_new(pool, 512);
+    parser->attr_value = expansible_buffer_new(pool, 512, 8192);
 
     return parser;
 }
