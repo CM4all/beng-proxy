@@ -354,24 +354,27 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
         case PARSER_ATTR_VALUE:
             /* wait till we find the delimiter */
-            do {
-                if (*buffer == parser->attr_value_delimiter) {
-                    parser->attr.value_end = parser->position + (off_t)(buffer - start);
-                    ++buffer;
-                    parser->attr.end = parser->position + (off_t)(buffer - start);
-                    parser_invoke_attr_finished(parser);
+            p = memchr(buffer, parser->attr_value_delimiter, end - buffer);
+            if (p == NULL) {
+                if (!expansible_buffer_write_buffer(parser->attr_value,
+                                                    buffer, end - buffer)) {
                     parser->state = PARSER_ELEMENT_TAG;
                     break;
-                } else {
-                    if (!expansible_buffer_write_buffer(parser->attr_value,
-                                                        buffer, 1)) {
-                        parser->state = PARSER_ELEMENT_TAG;
-                        break;
-                    }
-
-                    ++buffer;
                 }
-            } while (buffer < end);
+
+                buffer = end;
+            } else {
+                if (!expansible_buffer_write_buffer(parser->attr_value,
+                                                    buffer, p - buffer)) {
+                    parser->state = PARSER_ELEMENT_TAG;
+                    break;
+                }
+
+                buffer = p + 1;
+                parser->attr.end = parser->position + (off_t)(buffer - start);
+                parser_invoke_attr_finished(parser);
+                parser->state = PARSER_ELEMENT_TAG;
+            }
 
             break;
 
