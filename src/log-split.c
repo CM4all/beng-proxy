@@ -18,11 +18,19 @@
 #include <errno.h>
 #include <limits.h>
 
+static bool use_local_time = false;
+
 static bool
 string_equals(const char *a, size_t a_length, const char *b)
 {
     size_t b_length = strlen(b);
     return a_length == b_length && memcmp(a, b, a_length) == 0;
+}
+
+static struct tm *
+split_time_t(time_t t)
+{
+    return use_local_time ? localtime(&t) : gmtime(&t);
 }
 
 static const char *
@@ -33,7 +41,7 @@ expand_timestamp(const char *fmt, const struct log_datagram *d)
 
     time_t t = (time_t)(d->timestamp / 1000000);
     static char buffer[64];
-    strftime(buffer, sizeof(buffer), fmt, gmtime(&t));
+    strftime(buffer, sizeof(buffer), fmt, split_time_t(t));
     return buffer;
 }
 
@@ -207,7 +215,7 @@ dump_http(int fd, const struct log_datagram *d)
     if (d->valid_timestamp) {
         time_t t = d->timestamp / 1000000;
         strftime(stamp_buffer, sizeof(stamp_buffer),
-                 "%d/%b/%Y:%H:%M:%S %z", gmtime(&t));
+                 "%d/%b/%Y:%H:%M:%S %z", split_time_t(t));
         stamp = stamp_buffer;
     }
 
@@ -238,15 +246,21 @@ dump(int fd, const struct log_datagram *d)
 
 int main(int argc, char **argv)
 {
-    if (argc < 2) {
-        fprintf(stderr, "Usage: log-split TEMPLATE [...]\n");
+    int argi = 1;
+    if (argi < argc && strcmp(argv[argi], "--localtime") == 0) {
+        ++argi;
+        use_local_time = true;
+    }
+
+    if (argi >= argc) {
+        fprintf(stderr, "Usage: log-split [--localtime] TEMPLATE [...]\n");
         return EXIT_FAILURE;
     }
 
     struct log_server *server = log_server_new(0);
     const struct log_datagram *d;
     while ((d = log_server_receive(server)) != NULL) {
-        for (int i = 1; i < argc; ++i) {
+        for (int i = argi; i < argc; ++i) {
             const char *path = generate_path(argv[i], d);
             if (path == NULL)
                 continue;
