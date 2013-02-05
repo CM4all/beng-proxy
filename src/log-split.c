@@ -194,6 +194,28 @@ optional_string(const char *p)
     return p;
 }
 
+static bool
+harmless_char(signed char ch)
+{
+    return ch >= 0x20 && ch != '"' && ch != '\\';
+}
+
+static const char *
+escape_string(const char *value, char *const buffer, size_t buffer_size)
+{
+    char *p = buffer, *const buffer_limit = buffer + buffer_size - 4;
+    char ch;
+    while (p < buffer_limit && (ch = *value++) != 0) {
+        if (harmless_char(ch))
+            *p++ = ch;
+        else
+            p += sprintf(p, "\\x%02X", ch);
+    }
+
+    *p = 0;
+    return buffer;
+}
+
 static void
 dump_http(int fd, const struct log_datagram *d)
 {
@@ -219,15 +241,20 @@ dump_http(int fd, const struct log_datagram *d)
         length = length_buffer;
     }
 
+    char escaped_uri[4096], escaped_referer[2048], escaped_ua[1024];
+
     static char buffer[8192];
     snprintf(buffer, sizeof(buffer),
              "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\"\n",
              optional_string(d->site),
              optional_string(d->remote_host),
-             stamp, method, d->http_uri,
+             stamp, method,
+             escape_string(d->http_uri, escaped_uri, sizeof(escaped_uri)),
              d->http_status, length,
-             optional_string(d->http_referer),
-             optional_string(d->user_agent));
+             escape_string(optional_string(d->http_referer),
+                           escaped_referer, sizeof(escaped_referer)),
+             escape_string(optional_string(d->user_agent),
+                           escaped_ua, sizeof(escaped_ua)));
     write(fd, buffer, strlen(buffer));
 }
 
