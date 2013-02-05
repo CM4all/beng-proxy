@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 
 static bool
 string_equals(const char *a, size_t a_length, const char *b)
@@ -144,6 +145,17 @@ make_parent_directory(const char *path)
 static int
 open_log_file(const char *path)
 {
+    static int cache_fd = -1;
+    static char cache_path[PATH_MAX];
+
+    if (cache_fd >= 0) {
+        if (strcmp(path, cache_path) == 0)
+            return cache_fd;
+
+        close(cache_fd);
+        cache_fd = -1;
+    }
+
     int fd = open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOCTTY, 0666);
     if (fd < 0 && errno == ENOENT) {
         if (!make_parent_directory(path))
@@ -158,6 +170,9 @@ open_log_file(const char *path)
                 path, strerror(errno));
         return -1;
     }
+
+    cache_fd = fd;
+    strcpy(cache_path, path);
 
     return fd;
 }
@@ -241,7 +256,6 @@ int main(int argc, char **argv)
                 break;
 
             dump(fd, d);
-            close(fd);
             break;
         }
     }

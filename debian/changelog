@@ -1,6 +1,7 @@
 cm4all-beng-proxy (2.3.4) unstable; urgency=low
 
   * log-split: print referer and user agent
+  * log-split: cache the last file
 
  --   
 
