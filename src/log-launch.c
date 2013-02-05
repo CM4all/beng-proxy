@@ -7,6 +7,7 @@
 #include "log-launch.h"
 #include "fd_util.h"
 
+#include <daemon/user.h>
 #include <daemon/log.h>
 #include <inline/compiler.h>
 
@@ -30,7 +31,8 @@ log_run(const char *program, int fd)
 }
 
 bool
-log_launch(struct log_process *process, const char *program)
+log_launch(struct log_process *process, const char *program,
+           const struct daemon_user *user)
 {
     int fds[2];
 
@@ -49,8 +51,12 @@ log_launch(struct log_process *process, const char *program)
         return false;
     }
 
-    if (pid == 0)
+    if (pid == 0) {
+        if (user != NULL && daemon_user_set(user) < 0)
+            _exit(EXIT_FAILURE);
+
         log_run(program, fds[1]);
+    }
 
     close(fds[1]);
 

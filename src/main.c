@@ -383,6 +383,11 @@ int main(int argc, char **argv)
     if (!log_global_init(instance.config.access_logger))
         return EXIT_FAILURE;
 
+    /* daemonize II */
+
+    if (daemon_user_set(&instance.config.user) < 0)
+        return EXIT_FAILURE;
+
     /* create worker processes */
 
     if (instance.config.num_workers > 0) {

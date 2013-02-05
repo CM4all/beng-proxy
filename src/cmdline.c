@@ -531,8 +531,8 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
     /* check completeness */
 
     if (user_name != NULL) {
-        daemon_user_by_name(&daemon_config.user, user_name, group_name);
-        if (!daemon_user_defined(&daemon_config.user))
+        daemon_user_by_name(&config->user, user_name, group_name);
+        if (!daemon_user_defined(&config->user))
             arg_error(argv[0], "refusing to run as root");
     } else if (group_name != NULL)
         arg_error(argv[0], "cannot set --group without --user");
