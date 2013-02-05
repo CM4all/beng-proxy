@@ -288,14 +288,16 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (!log_global_init(instance.cmdline.access_logger))
-        return EXIT_FAILURE;
-
     /* daemonize */
 
     ret = daemonize();
     if (ret < 0)
         exit(2);
+
+    /* launch the access logger */
+
+    if (!log_global_init(instance.cmdline.access_logger))
+        return EXIT_FAILURE;
 
     /* main loop */
 

@@ -372,14 +372,16 @@ int main(int argc, char **argv)
     global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;
 
-    if (!log_global_init(instance.config.access_logger))
-        return 2;
-
     /* daemonize */
 
     ret = daemonize();
     if (ret < 0)
         exit(2);
+
+    /* launch the access logger */
+
+    if (!log_global_init(instance.config.access_logger))
+        return EXIT_FAILURE;
 
     /* create worker processes */
 
