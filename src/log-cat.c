@@ -19,6 +19,28 @@ optional_string(const char *p)
     return p;
 }
 
+static bool
+harmless_char(signed char ch)
+{
+    return ch >= 0x20 && ch != '"' && ch != '\\';
+}
+
+static const char *
+escape_string(const char *value, char *const buffer, size_t buffer_size)
+{
+    char *p = buffer, *const buffer_limit = buffer + buffer_size - 4;
+    char ch;
+    while (p < buffer_limit && (ch = *value++) != 0) {
+        if (harmless_char(ch))
+            *p++ = ch;
+        else
+            p += sprintf(p, "\\x%02X", ch);
+    }
+
+    *p = 0;
+    return buffer;
+}
+
 static void
 dump_http(const struct log_datagram *d)
 {
@@ -26,14 +48,6 @@ dump_http(const struct log_datagram *d)
         http_method_is_valid(d->http_method)
         ? http_method_to_string(d->http_method)
         : "?";
-
-    const char *remote_host = d->remote_host;
-    if (remote_host == NULL)
-        remote_host = "-";
-
-    const char *site = d->site;
-    if (site == NULL)
-        site = "-";
 
     char stamp_buffer[32];
     const char *stamp = "-";
@@ -60,11 +74,18 @@ dump_http(const struct log_datagram *d)
         duration = duration_buffer;
     }
 
+    char escaped_uri[4096], escaped_referer[2048], escaped_ua[1024];
+
     printf("%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\" %s\n",
-           site, remote_host, stamp, method, d->http_uri,
+           optional_string(d->site),
+           optional_string(d->remote_host),
+           stamp, method,
+           escape_string(d->http_uri, escaped_uri, sizeof(escaped_uri)),
            d->http_status, length,
-           optional_string(d->http_referer),
-           optional_string(d->user_agent),
+           escape_string(optional_string(d->http_referer),
+                         escaped_referer, sizeof(escaped_referer)),
+           escape_string(optional_string(d->user_agent),
+                         escaped_ua, sizeof(escaped_ua)),
            duration);
 }
 

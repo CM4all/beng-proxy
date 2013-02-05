@@ -16,12 +16,21 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
+
+static bool use_local_time = false;
 
 static bool
 string_equals(const char *a, size_t a_length, const char *b)
 {
     size_t b_length = strlen(b);
     return a_length == b_length && memcmp(a, b, a_length) == 0;
+}
+
+static struct tm *
+split_time_t(time_t t)
+{
+    return use_local_time ? localtime(&t) : gmtime(&t);
 }
 
 static const char *
@@ -32,7 +41,7 @@ expand_timestamp(const char *fmt, const struct log_datagram *d)
 
     time_t t = (time_t)(d->timestamp / 1000000);
     static char buffer[64];
-    strftime(buffer, sizeof(buffer), fmt, gmtime(&t));
+    strftime(buffer, sizeof(buffer), fmt, split_time_t(t));
     return buffer;
 }
 
@@ -144,6 +153,17 @@ make_parent_directory(const char *path)
 static int
 open_log_file(const char *path)
 {
+    static int cache_fd = -1;
+    static char cache_path[PATH_MAX];
+
+    if (cache_fd >= 0) {
+        if (strcmp(path, cache_path) == 0)
+            return cache_fd;
+
+        close(cache_fd);
+        cache_fd = -1;
+    }
+
     int fd = open(path, O_CREAT|O_APPEND|O_WRONLY|O_NOCTTY, 0666);
     if (fd < 0 && errno == ENOENT) {
         if (!make_parent_directory(path))
@@ -159,7 +179,41 @@ open_log_file(const char *path)
         return -1;
     }
 
+    cache_fd = fd;
+    strcpy(cache_path, path);
+
     return fd;
+}
+
+static const char *
+optional_string(const char *p)
+{
+    if (p == NULL)
+        return "-";
+
+    return p;
+}
+
+static bool
+harmless_char(signed char ch)
+{
+    return ch >= 0x20 && ch != '"' && ch != '\\';
+}
+
+static const char *
+escape_string(const char *value, char *const buffer, size_t buffer_size)
+{
+    char *p = buffer, *const buffer_limit = buffer + buffer_size - 4;
+    char ch;
+    while (p < buffer_limit && (ch = *value++) != 0) {
+        if (harmless_char(ch))
+            *p++ = ch;
+        else
+            p += sprintf(p, "\\x%02X", ch);
+    }
+
+    *p = 0;
+    return buffer;
 }
 
 static void
@@ -170,20 +224,12 @@ dump_http(int fd, const struct log_datagram *d)
         ? http_method_to_string(d->http_method)
         : "?";
 
-    const char *remote_host = d->remote_host;
-    if (remote_host == NULL)
-        remote_host = "-";
-
-    const char *site = d->site;
-    if (site == NULL)
-        site = "-";
-
     char stamp_buffer[32];
     const char *stamp = "-";
     if (d->valid_timestamp) {
         time_t t = d->timestamp / 1000000;
         strftime(stamp_buffer, sizeof(stamp_buffer),
-                 "%d/%b/%Y:%H:%M:%S %z", gmtime(&t));
+                 "%d/%b/%Y:%H:%M:%S %z", split_time_t(t));
         stamp = stamp_buffer;
     }
 
@@ -195,11 +241,20 @@ dump_http(int fd, const struct log_datagram *d)
         length = length_buffer;
     }
 
+    char escaped_uri[4096], escaped_referer[2048], escaped_ua[1024];
+
     static char buffer[8192];
     snprintf(buffer, sizeof(buffer),
-             "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s\n",
-             site, remote_host, stamp, method, d->http_uri,
-             d->http_status, length);
+             "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\"\n",
+             optional_string(d->site),
+             optional_string(d->remote_host),
+             stamp, method,
+             escape_string(d->http_uri, escaped_uri, sizeof(escaped_uri)),
+             d->http_status, length,
+             escape_string(optional_string(d->http_referer),
+                           escaped_referer, sizeof(escaped_referer)),
+             escape_string(optional_string(d->user_agent),
+                           escaped_ua, sizeof(escaped_ua)));
     write(fd, buffer, strlen(buffer));
 }
 
@@ -212,15 +267,21 @@ dump(int fd, const struct log_datagram *d)
 
 int main(int argc, char **argv)
 {
-    if (argc < 2) {
-        fprintf(stderr, "Usage: log-split TEMPLATE [...]\n");
+    int argi = 1;
+    if (argi < argc && strcmp(argv[argi], "--localtime") == 0) {
+        ++argi;
+        use_local_time = true;
+    }
+
+    if (argi >= argc) {
+        fprintf(stderr, "Usage: log-split [--localtime] TEMPLATE [...]\n");
         return EXIT_FAILURE;
     }
 
     struct log_server *server = log_server_new(0);
     const struct log_datagram *d;
     while ((d = log_server_receive(server)) != NULL) {
-        for (int i = 1; i < argc; ++i) {
+        for (int i = argi; i < argc; ++i) {
             const char *path = generate_path(argv[i], d);
             if (path == NULL)
                 continue;
@@ -230,7 +291,6 @@ int main(int argc, char **argv)
                 break;
 
             dump(fd, d);
-            close(fd);
             break;
         }
     }

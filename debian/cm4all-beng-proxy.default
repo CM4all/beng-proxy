@@ -13,6 +13,9 @@
 # Which user should the beng-proxy logger run as?
 #LOGGER_USER=cm4all-logger
 
+# Process which receives the access log
+#ACCESS_LOGGER="exec /usr/bin/cm4all-beng-proxy-log-split /var/log/cm4all/access-log/access_log-%{year}%{month}%{day}"
+
 # Which port does beng-proxy listen on?
 #PORT=80
 
