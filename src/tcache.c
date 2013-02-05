@@ -84,12 +84,19 @@ static const GRegexCompileFlags default_regex_compile_flags =
 #endif
 
 static const char *
-tcache_uri_key(struct pool *pool, const char *uri, http_status_t status,
+tcache_uri_key(struct pool *pool, const char *uri, const char *host,
+               http_status_t status,
                const struct strref *check)
 {
     const char *key = status != 0
         ? p_sprintf(pool, "ERR%u_%s", status, uri)
         : uri;
+
+    if (host != NULL)
+        /* workaround for a scalability problem in a large hosting
+           environment: include the Host request header in the cache
+           key */
+        key = p_strcat(pool, host, ":", key, NULL);
 
     if (check != NULL && !strref_is_null(check))
         key = p_strncat(pool, key, strlen(key),
@@ -105,7 +112,8 @@ static const char *
 tcache_request_key(struct pool *pool, const struct translate_request *request)
 {
     return request->uri != NULL
-        ? tcache_uri_key(pool, request->uri, request->error_document_status,
+        ? tcache_uri_key(pool, request->uri, request->host,
+                         request->error_document_status,
                          &request->check)
         : request->widget_type;
 }
@@ -268,7 +276,8 @@ tcache_store_response(struct pool *pool, struct translate_response *dest,
     }
 
     if (key != NULL)
-        key = tcache_uri_key(pool, key, request->error_document_status,
+        key = tcache_uri_key(pool, key, request->host,
+                             request->error_document_status,
                              &request->check);
 
     return key;
