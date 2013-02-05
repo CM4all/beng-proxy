@@ -6,7 +6,7 @@ cm4all-beng-proxy (2.3.5) unstable; urgency=low
   * auto-close the access logger
   * debian/rules: compile with -fno-omit-frame-pointer
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 05 Feb 2013 16:27:46 -0000
 
 cm4all-beng-proxy (2.3.4) unstable; urgency=low
 
