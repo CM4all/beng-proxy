@@ -162,6 +162,15 @@ open_log_file(const char *path)
     return fd;
 }
 
+static const char *
+optional_string(const char *p)
+{
+    if (p == NULL)
+        return "-";
+
+    return p;
+}
+
 static void
 dump_http(int fd, const struct log_datagram *d)
 {
@@ -197,9 +206,11 @@ dump_http(int fd, const struct log_datagram *d)
 
     static char buffer[8192];
     snprintf(buffer, sizeof(buffer),
-             "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s\n",
+             "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\"\n",
              site, remote_host, stamp, method, d->http_uri,
-             d->http_status, length);
+             d->http_status, length,
+             optional_string(d->http_referer),
+             optional_string(d->user_agent));
     write(fd, buffer, strlen(buffer));
 }
 
