@@ -202,14 +202,6 @@ dump_http(int fd, const struct log_datagram *d)
         ? http_method_to_string(d->http_method)
         : "?";
 
-    const char *remote_host = d->remote_host;
-    if (remote_host == NULL)
-        remote_host = "-";
-
-    const char *site = d->site;
-    if (site == NULL)
-        site = "-";
-
     char stamp_buffer[32];
     const char *stamp = "-";
     if (d->valid_timestamp) {
@@ -230,7 +222,9 @@ dump_http(int fd, const struct log_datagram *d)
     static char buffer[8192];
     snprintf(buffer, sizeof(buffer),
              "%s %s - - [%s] \"%s %s HTTP/1.1\" %u %s \"%s\" \"%s\"\n",
-             site, remote_host, stamp, method, d->http_uri,
+             optional_string(d->site),
+             optional_string(d->remote_host),
+             stamp, method, d->http_uri,
              d->http_status, length,
              optional_string(d->http_referer),
              optional_string(d->user_agent));
