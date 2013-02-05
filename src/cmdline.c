@@ -387,7 +387,8 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'A':
-            config->access_logger = optarg;
+            config->access_logger = *optarg == 0
+                ? NULL : optarg;
             break;
 
         case 'u':
