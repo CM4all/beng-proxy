@@ -2,6 +2,7 @@ cm4all-beng-proxy (2.3.5) unstable; urgency=low
 
   * launch the access logger after daemonizing
   * user the configured logger user for the access logger
+  * auto-close the access logger
 
  --   
 

@@ -36,7 +36,7 @@ log_launch(struct log_process *process, const char *program,
 {
     int fds[2];
 
-    if (socketpair_cloexec(AF_UNIX, SOCK_DGRAM, 0, fds) < 0)
+    if (socketpair_cloexec(AF_UNIX, SOCK_SEQPACKET, 0, fds) < 0)
         return false;
 
     /* we need an unidirectional socket only */
