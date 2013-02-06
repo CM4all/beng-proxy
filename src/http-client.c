@@ -776,13 +776,7 @@ http_client_try_response_direct(struct http_client *client,
             /* the source fd (= ours) blocks */
             return DIRECT_EMPTY;
 
-        GError *error = g_error_new(http_client_quark(), errno,
-                                    "read error: %s", strerror(errno));
-
-        stopwatch_event(client->stopwatch, "error");
-
-        http_client_abort_response_body(client, error);
-        return DIRECT_CLOSED;
+        return DIRECT_ERRNO;
     }
 
     if (nbytes == ISTREAM_RESULT_EOF) {
