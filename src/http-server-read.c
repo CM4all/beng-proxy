@@ -434,8 +434,7 @@ http_server_try_request_direct(struct http_server_connection *connection,
         if (errno == EAGAIN)
             return DIRECT_EMPTY;
 
-        http_server_errno(connection, "read error on HTTP connection");
-        return DIRECT_CLOSED;
+        return DIRECT_ERRNO;
     }
 
     if (nbytes == ISTREAM_RESULT_EOF)
