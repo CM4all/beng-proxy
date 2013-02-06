@@ -16,6 +16,7 @@ istream_init_impl(struct istream *istream, const struct istream_class *cls,
     istream->pool = pool;
     istream->cls = cls;
     istream->handler = NULL;
+    istream->handler_direct = 0;
 
 #ifndef NDEBUG
     istream->reading = false;
