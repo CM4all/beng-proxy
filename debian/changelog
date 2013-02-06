@@ -9,7 +9,7 @@ cm4all-beng-proxy (3.0.9) unstable; urgency=low
   * istream: clear the "direct" flag set on new streams
   * slice_pool: fix slice size and slices per area calculation
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 06 Feb 2013 17:48:47 -0000
 
 cm4all-beng-proxy (3.0.8) unstable; urgency=low
 
