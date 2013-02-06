@@ -38,10 +38,9 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
         return true;
 
     if (nbytes < 0)
-        http_server_errno(connection, "write error on HTTP connection");
+        http_server_errno(connection, "write error");
     else
-        http_server_error_message(connection,
-                                  "write error on HTTP connection");
+        http_server_error_message(connection, "write error");
     return false;
 }
 

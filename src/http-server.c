@@ -123,8 +123,8 @@ http_server_socket_timeout(void *ctx)
 {
     struct http_server_connection *connection = ctx;
 
-    daemon_log(4, "timeout on HTTP connection from %s\n",
-               connection->remote_host);
+    daemon_log(4, "timeout on HTTP connection from '%s'\n",
+               connection->remote_host_and_port);
     http_server_cancel(connection);
     return false;
 }
@@ -161,12 +161,12 @@ http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
 {
     struct http_server_connection *connection = ctx;
 
-    daemon_log(4, "%s timeout on HTTP connection from %s\n",
+    daemon_log(4, "%s timeout on HTTP connection from '%s'\n",
                connection->request.read_state == READ_START
                ? "idle"
                : (connection->request.read_state == READ_HEADERS
                   ? "header" : "read"),
-               connection->remote_host);
+               connection->remote_host_and_port);
     http_server_cancel(connection);
     pool_commit();
 }
@@ -343,6 +343,9 @@ http_server_error(struct http_server_connection *connection, GError *error)
         http_server_request_close(connection);
 
     if (connection->handler != NULL) {
+        g_prefix_error(&error, "error on HTTP connection from '%s': ",
+                       connection->remote_host_and_port);
+
         const struct http_server_connection_handler *handler = connection->handler;
         void *handler_ctx = connection->handler_ctx;
         connection->handler = NULL;
