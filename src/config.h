@@ -7,6 +7,8 @@
 #ifndef __BENG_CONFIG_H
 #define __BENG_CONFIG_H
 
+#include <daemon/user.h>
+
 #include <sys/types.h>
 #include <stdbool.h>
 
@@ -24,6 +26,8 @@ extern bool debug_mode;
 #endif
 
 struct config {
+    struct daemon_user user;
+
     /**
      * The configuration file.  Only used by beng-lb.
      */

@@ -365,16 +365,21 @@ int main(int argc, char **argv)
     global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;
 
-    if (!log_global_init(instance.config.access_logger))
-        return 2;
-
     /* daemonize */
 
-#ifndef PROFILE
     ret = daemonize();
     if (ret < 0)
         exit(2);
-#endif
+
+    /* launch the access logger */
+
+    if (!log_global_init(instance.config.access_logger))
+        return EXIT_FAILURE;
+
+    /* daemonize II */
+
+    if (daemon_user_set(&instance.config.user) < 0)
+        return EXIT_FAILURE;
 
     /* create worker processes */
 
@@ -411,9 +416,7 @@ int main(int argc, char **argv)
 
     fb_pool_deinit();
 
-#ifndef PROFILE
     event_base_free(instance.event_base);
-#endif
 
     tpool_deinit();
     ref = pool_unref(instance.pool);

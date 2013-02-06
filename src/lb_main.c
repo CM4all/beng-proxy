@@ -284,16 +284,21 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (!log_global_init(instance.cmdline.access_logger))
-        return EXIT_FAILURE;
-
     /* daemonize */
 
-#ifndef PROFILE
     ret = daemonize();
     if (ret < 0)
         exit(2);
-#endif
+
+    /* launch the access logger */
+
+    if (!log_global_init(instance.cmdline.access_logger))
+        return EXIT_FAILURE;
+
+    /* daemonize II */
+
+    if (daemon_user_set(&instance.cmdline.user) < 0)
+        return EXIT_FAILURE;
 
     /* main loop */
 
@@ -327,9 +332,8 @@ int main(int argc, char **argv)
     deinit_all_controls(&instance);
 
     fb_pool_deinit();
-#ifndef PROFILE
+
     event_base_free(instance.event_base);
-#endif
 
     tpool_deinit();
     ref = pool_unref(instance.config->pool);

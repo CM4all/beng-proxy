@@ -1792,11 +1792,6 @@ benchmark: src/cm4all-beng-proxy
 
 .PHONY: debug valgrind perf benchmark
 
-#profile: CFLAGS = -O3 -DNDEBUG -DSPLICE -DPROFILE -DNO_ACCESS_LOG -g -pg
-#profile: LDFLAGS = -lc_p -pg
-#profile: src/cm4all-beng-proxy
-#	./src/cm4all-beng-proxy -D -u max -p 8080
-
 #
 # Documentation
 #

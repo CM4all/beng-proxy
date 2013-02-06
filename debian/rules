@@ -12,6 +12,8 @@ else
   CFLAGS += -O2 -fno-strict-aliasing
 endif
 
+CFLAGS += -fno-omit-frame-pointer
+
 debian/stamp-autogen:
 	dh_testdir
 

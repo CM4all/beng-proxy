@@ -8,6 +8,8 @@
 #include "log-launch.h"
 #include "log-client.h"
 
+#include <daemon/daemonize.h>
+
 #include <glib.h>
 #include <assert.h>
 
@@ -22,7 +24,7 @@ log_global_init(const char *program)
         return true;
 
     struct log_process lp;
-    if (!log_launch(&lp, program))
+    if (!log_launch(&lp, program, &daemon_config.logger_user))
         return false;
 
     assert(lp.fd >= 0);
