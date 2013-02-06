@@ -129,6 +129,11 @@ struct translate_response {
 
     const uint16_t *invalidate;
     unsigned num_invalidate;
+
+    struct {
+        uint64_t mtime;
+        const char *path;
+    } validate_mtime;
 };
 
 void

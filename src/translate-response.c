@@ -93,6 +93,10 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
         dest->invalidate = (const uint16_t *)
             p_memdup(pool, src->invalidate,
                      dest->num_invalidate * sizeof(dest->invalidate[0]));
+
+    dest->validate_mtime.mtime = src->validate_mtime.mtime;
+    dest->validate_mtime.path =
+        p_strdup_checked(pool, src->validate_mtime.path);
 }
 
 bool

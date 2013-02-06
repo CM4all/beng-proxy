@@ -288,6 +288,17 @@ enum beng_translation_command {
      * #TRANSLATE_GROUP_CONTAINER.
      */
     TRANSLATE_WIDGET_GROUP = 93,
+
+    /**
+     * A cached response is valid only if the file specified in this
+     * packet is not modified.
+     *
+     * The first 8 bytes is the mtime (seconds since UNIX epoch), the
+     * rest is the absolute path to a regular file (symlinks not
+     * supported).  The translation fails when the file does not exist
+     * or is inaccessible.
+     */
+    TRANSLATE_VALIDATE_MTIME = 94,
 };
 
 struct beng_translation_header {

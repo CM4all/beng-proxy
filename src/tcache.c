@@ -23,6 +23,8 @@
 #include <time.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 struct tcache_item {
     struct cache_item item;
@@ -781,11 +783,55 @@ tcache_miss(struct pool *pool, struct tcache *tcache,
                      request, &tcache_handler, tcr, async_ref);
 }
 
+gcc_pure
+static bool
+tcache_validate_mtime(const struct translate_response *response,
+                      gcc_unused const char *key)
+{
+    if (response->validate_mtime.path == NULL)
+        return true;
+
+    cache_log(6, "translate_cache: [%s] validate_mtime %llu %s\n",
+              key, (unsigned long long)response->validate_mtime.mtime,
+              response->validate_mtime.path);
+
+    struct stat st;
+    if (lstat(response->validate_mtime.path, &st) < 0) {
+        cache_log(3, "translate_cache: [%s] failed to stat '%s': %s\n",
+                  key, response->validate_mtime.path, g_strerror(errno));
+        return false;
+    }
+
+    if (!S_ISREG(st.st_mode)) {
+        cache_log(3, "translate_cache: [%s] not a regular file: %s\n",
+                  key, response->validate_mtime.path);
+        return false;
+    }
+
+    if (st.st_mtime == (time_t)response->validate_mtime.mtime) {
+        cache_log(6, "translate_cache: [%s] validate_mtime unmodified %s\n",
+                  key, response->validate_mtime.path);
+        return true;
+    } else {
+        cache_log(5, "translate_cache: [%s] validate_mtime modified %s\n",
+                  key, response->validate_mtime.path);
+        return false;
+    }
+}
+
 
 /*
  * cache class
  *
  */
+
+static bool
+tcache_validate(struct cache_item *_item)
+{
+    struct tcache_item *item = (struct tcache_item *)_item;
+
+    return tcache_validate_mtime(&item->response, item->item.key);
+}
 
 static void
 tcache_destroy(struct cache_item *_item)
@@ -802,6 +848,7 @@ tcache_destroy(struct cache_item *_item)
 }
 
 static const struct cache_class tcache_class = {
+    .validate = tcache_validate,
     .destroy = tcache_destroy,
 };
 

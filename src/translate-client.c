@@ -1713,6 +1713,19 @@ translate_handle_packet(struct translate_client *client,
 
         client->response.auto_base = true;
         return true;
+
+    case TRANSLATE_VALIDATE_MTIME:
+        if (payload_length < 10 || payload[8] != '/' ||
+            memchr(payload + 9, 0, payload_length - 9) != NULL) {
+            translate_client_error(client,
+                                   "malformed TRANSLATE_VALIDATE_MTIME packet");
+            return false;
+        }
+
+        client->response.validate_mtime.mtime = *(const uint64_t *)payload;
+        client->response.validate_mtime.path =
+            p_strndup(client->pool, payload + 8, payload_length - 8);
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

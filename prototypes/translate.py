@@ -5,7 +5,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 
 import re
-import os.path
+import os
 from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import Protocol, Factory
@@ -369,6 +369,10 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
+        elif uri == '/validate_mtime':
+            response.path(os.path.join(demo_path, 'hello.txt'))
+            stamp_path = '/tmp/stamp'
+            response.validate_mtime(os.stat(stamp_path).st_mtime, stamp_path)
         elif uri == '/check':
             if check is None:
                 response.packet(TRANSLATE_CHECK, 'ok')

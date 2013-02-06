@@ -174,3 +174,7 @@ class Response:
 
     def header(self, name, value):
         return self.packet(TRANSLATE_HEADER, name + ':' + value)
+
+    def validate_mtime(self, mtime, path):
+        return self.packet(TRANSLATE_VALIDATE_MTIME,
+                           struct.pack('L', mtime) + path)
