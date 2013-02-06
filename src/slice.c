@@ -321,7 +321,7 @@ slice_pool_new(size_t slice_size, unsigned slices_per_area)
     if (slice_size <= PAGE_SIZE / 2) {
         pool->slice_size = align_size(slice_size);
 
-        pool->slices_per_page = PAGE_SIZE / slice_size;
+        pool->slices_per_page = PAGE_SIZE / pool->slice_size;
         pool->pages_per_slice = 1;
 
         pool->pages_per_area = divide_round_up(slices_per_area,
@@ -330,7 +330,7 @@ slice_pool_new(size_t slice_size, unsigned slices_per_area)
         pool->slice_size = align_page_size(slice_size);
 
         pool->slices_per_page = 1;
-        pool->pages_per_slice = slice_size / PAGE_SIZE;
+        pool->pages_per_slice = pool->slice_size / PAGE_SIZE;
 
         pool->pages_per_area = slices_per_area * pool->pages_per_slice;
     }

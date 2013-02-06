@@ -7,6 +7,7 @@ cm4all-beng-proxy (3.0.9) unstable; urgency=low
   * http-server: fix spurious "closed prematurely" log messages
   * http-{server,client}: improve error messages
   * istream: clear the "direct" flag set on new streams
+  * slice_pool: fix slice size calculation
 
  --   
 
