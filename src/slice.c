@@ -360,6 +360,8 @@ slice_pool_free(struct slice_pool *pool)
         list_remove(&area->siblings);
         slice_area_free(pool, area);
     }
+
+    free(pool);
 }
 
 size_t
