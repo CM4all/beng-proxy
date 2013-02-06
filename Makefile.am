@@ -704,6 +704,7 @@ check_PROGRAMS = \
 	test/t_pool \
 	test/t-shm test/t-dpool test/t-session \
 	test/t_rubber test/t_sink_rubber \
+	test/t_slice \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-widget-resolver \
@@ -738,6 +739,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-shm test/t-dpool test/t-session \
 	test/t_pool \
 	test/t_rubber test/t_sink_rubber \
+	test/t_slice \
 	test/t-rewrite-uri \
 	test/t-widget-registry \
 	test/t-widget-resolver \
@@ -1200,6 +1202,12 @@ test_t_sink_rubber_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_sink_rubber_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(CPPUNIT_LIBS)
+
+test_t_slice_SOURCES = test/t_slice.cxx
+test_t_slice_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_slice_LDADD = $(AM_LDADD) \
+	libmemory.a \
 	$(CPPUNIT_LIBS)
 
 test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
