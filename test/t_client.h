@@ -948,7 +948,7 @@ test_bogus_100(struct pool *pool, struct context *c)
     assert(c->request_error != NULL);
     assert(c->request_error->domain == http_client_quark());
     assert(c->request_error->code == HTTP_CLIENT_UNSPECIFIED);
-    assert(strcmp(c->request_error->message, "unexpected status 100") == 0);
+    assert(strstr(c->request_error->message, "unexpected status 100") != NULL);
     g_error_free(c->request_error);
     assert(c->body_error == NULL);
 }
@@ -978,7 +978,7 @@ test_twice_100(struct pool *pool, struct context *c)
     assert(c->request_error != NULL);
     assert(c->request_error->domain == http_client_quark());
     assert(c->request_error->code == HTTP_CLIENT_UNSPECIFIED);
-    assert(strcmp(c->request_error->message, "unexpected status 100") == 0);
+    assert(strstr(c->request_error->message, "unexpected status 100") != NULL);
     g_error_free(c->request_error);
     assert(c->body_error == NULL);
 }

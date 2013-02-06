@@ -29,6 +29,7 @@
 #include <inline/compiler.h>
 #include <inline/poison.h>
 #include <daemon/log.h>
+#include <socket/address.h>
 
 #include <assert.h>
 #include <limits.h>
@@ -40,6 +41,8 @@
 
 struct http_client {
     struct pool *pool, *caller_pool;
+
+    const char *peer_name;
 
     struct stopwatch *stopwatch;
 
@@ -121,6 +124,22 @@ static const struct timeval http_client_timeout = {
     .tv_usec = 0,
 };
 
+static const char *
+get_peer_name(int fd)
+{
+     struct sockaddr_storage address;
+     socklen_t address_length = sizeof(address);
+
+     static char buffer[64];
+     if (getpeername(fd, (struct sockaddr *)&address, &address_length) < 0 ||
+         !socket_address_to_string(buffer, sizeof(buffer),
+                                   (const struct sockaddr *)&address,
+                                   address_length))
+         return "unknown";
+
+     return buffer;
+}
+
 static inline bool
 http_client_valid(const struct http_client *client)
 {
@@ -188,6 +207,13 @@ http_client_release(struct http_client *client, bool reuse)
     pool_unref(client->pool);
 }
 
+static void
+http_client_prefix_error(struct http_client *client, GError **error_r)
+{
+    g_prefix_error(error_r, "error on HTTP connection to '%s': ",
+                   client->peer_name);
+}
+
 /**
  * Abort receiving the response status/headers from the HTTP server.
  */
@@ -204,6 +230,7 @@ http_client_abort_response_headers(struct http_client *client, GError *error)
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
 
+    http_client_prefix_error(client, &error);
     http_response_handler_invoke_abort(&client->request.handler, error);
     http_client_release(client, false);
 }
@@ -220,6 +247,7 @@ http_client_abort_response_body(struct http_client *client, GError *error)
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
 
+    http_client_prefix_error(client, &error);
     istream_deinit_abort(&client->response.body_reader.output, error);
     http_client_release(client, false);
 }
@@ -899,7 +927,6 @@ http_client_socket_error(GError *error, void *ctx)
     struct http_client *client = ctx;
 
     stopwatch_event(client->stopwatch, "error");
-    g_prefix_error(&error, "HTTP connection failed: ");
     http_client_abort_response(client, error);
 }
 
@@ -1120,6 +1147,7 @@ http_client_request(struct pool *caller_pool,
     struct http_client *client = p_malloc(pool, sizeof(*client));
     client->stopwatch = stopwatch_fd_new(pool, fd, uri);
     client->pool = pool;
+    client->peer_name = p_strdup(pool, get_peer_name(fd));
 
     buffered_socket_init(&client->socket, pool, fd, fd_type,
                          &http_client_timeout, &http_client_timeout,
