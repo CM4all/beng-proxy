@@ -335,7 +335,8 @@ slice_pool_new(size_t slice_size, unsigned slices_per_area)
         pool->pages_per_area = slices_per_area * pool->pages_per_slice;
     }
 
-    pool->slices_per_area = pool->pages_per_area * pool->slices_per_page;
+    pool->slices_per_area = (pool->pages_per_area / pool->pages_per_slice)
+        * pool->slices_per_page;
 
     const struct slice_area *area = NULL;
     const size_t header_size = sizeof(*area)
