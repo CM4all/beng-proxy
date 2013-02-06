@@ -372,6 +372,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
                 buffer = p + 1;
                 parser->attr.end = parser->position + (off_t)(buffer - start);
+                parser->attr.value_end = parser->attr.end - 1;
                 parser_invoke_attr_finished(parser);
                 parser->state = PARSER_ELEMENT_TAG;
             }
