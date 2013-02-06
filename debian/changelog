@@ -4,6 +4,7 @@ cm4all-beng-proxy (3.0.9) unstable; urgency=low
   * parser: fix malformed attribute value bounds
   * translation: packet VALIDATE_MTIME discards cache items after a file
     has been modified
+  * http-server: fix spurious "closed prematurely" log messages
 
  --   
 

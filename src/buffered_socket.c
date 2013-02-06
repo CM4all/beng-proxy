@@ -98,7 +98,9 @@ buffered_socket_invoke_data(struct buffered_socket *s)
         const void *data = fifo_buffer_read(s->input, &length);
         data = fifo_buffer_read(s->input, &length);
         if (data == NULL)
-            return BUFFERED_MORE;
+            return s->expect_more
+                ? BUFFERED_MORE
+                : BUFFERED_OK;
 
 #ifndef NDEBUG
         struct pool_notify notify;
