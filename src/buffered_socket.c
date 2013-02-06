@@ -227,6 +227,10 @@ buffered_socket_submit_direct(struct buffered_socket *s)
 
     case DIRECT_CLOSED:
         return false;
+
+    case DIRECT_ERRNO:
+        s->handler->error(new_error_errno(), s->handler_ctx);
+        return false;
     }
 
     /* unreachable */

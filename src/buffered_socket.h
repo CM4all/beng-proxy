@@ -85,6 +85,13 @@ enum direct_result {
      * The buffered_socket object has been closed by the handler.
      */
     DIRECT_CLOSED,
+
+    /**
+     * There was an I/O error on the socket and errno contains the
+     * error code.  The caller will create a GError object and will
+     * invoke the error() handler method.
+     */
+    DIRECT_ERRNO,
 };
 
 struct buffered_socket_handler {
