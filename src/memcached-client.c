@@ -556,12 +556,7 @@ memcached_client_try_read_direct(struct memcached_client *client,
     } else if (errno == EAGAIN) {
         return DIRECT_EMPTY;
     } else {
-        GError *error =
-            g_error_new(memcached_client_quark(), 0,
-                        "read error on memcached connection: %s",
-                        strerror(errno));
-        memcached_connection_abort_response_value(client, error);
-        return DIRECT_CLOSED;
+        return DIRECT_ERRNO;
     }
 }
 
