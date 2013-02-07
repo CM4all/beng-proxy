@@ -70,6 +70,13 @@ struct rubber_table {
     unsigned free_head;
 
     /**
+     * The start index when searching for a hole for a new allocation.
+     * This should be the table index with the smallest offset
+     * followed by a hole.
+     */
+    unsigned hole_head;
+
+    /**
      * The first entry (index 0) is the table itself.
      */
     struct rubber_object entries[1];
@@ -165,6 +172,7 @@ rubber_table_init(struct rubber_table *t, unsigned max_entries)
     t->max_entries = rubber_table_capacity(table_size);
 
     t->free_head = 0;
+    t->hole_head = 0;
 
 #ifndef NDEBUG
     t->entries[0].allocated = true;
@@ -284,6 +292,10 @@ rubber_table_add(struct rubber_table *t, size_t offset, size_t size)
 
     t->allocated_tail = tail->next = id;
 
+    if (o->previous == t->hole_head) {
+        t->hole_head = id;
+    }
+
     /* done */
 
     return id;
@@ -294,20 +306,29 @@ rubber_table_add_in_hole(struct rubber_table *t, size_t size)
 {
     assert(t != NULL);
 
-    unsigned previous_id = 0, next_id;
+    bool saw_hole = false;
+
+    unsigned previous_id = t->hole_head, next_id;
     struct rubber_object *previous = &t->entries[previous_id], *next;
     while (true) {
         assert(previous->allocated);
 
         next_id = previous->next;
-        if (next_id == 0)
+        if (next_id == 0) {
             /* no hole found */
+            t->hole_head = previous_id;
             return 0;
+        }
 
         next = &t->entries[next_id];
         assert(next->allocated);
 
         size_t distance = next->offset - previous->offset - previous->size;
+        if (distance > 0 && !saw_hole) {
+            saw_hole = true;
+            t->hole_head = previous_id;
+        }
+
         if (distance >= size)
             break;
 
@@ -334,6 +355,7 @@ rubber_table_add_in_hole(struct rubber_table *t, size_t size)
 
     previous->next = id;
     next->previous = id;
+    t->hole_head = id;
 
     return id;
 }
@@ -349,6 +371,33 @@ rubber_table_size_of(const struct rubber_table *t, unsigned id)
     assert(t->entries[id].allocated);
 
     return t->entries[id].size;
+}
+
+static void
+rubber_table_update_hole_head(struct rubber_table *t, unsigned candidate_id)
+{
+    struct rubber_object *hole = &t->entries[t->hole_head];
+    assert(hole->allocated);
+
+    struct rubber_object *candidate = &t->entries[candidate_id];
+    assert(candidate->allocated);
+
+    if (hole->offset <= candidate->offset)
+        /* candidate failed because it is after the current hole head */
+        return;
+
+    struct rubber_object *next = rubber_table_next(t, candidate);
+    if (next == NULL)
+        /* after the last object there is no hole, by definition */
+        return;
+
+    assert(next->allocated);
+    assert(next->offset >= candidate->offset + candidate->size);
+    if (next->offset == candidate->offset + candidate->size)
+        /* no hole here */
+        return;
+
+    t->hole_head = candidate_id;
 }
 
 /**
@@ -367,6 +416,8 @@ rubber_table_shrink(struct rubber_table *t, unsigned id, size_t new_size)
 
     size_t delta = t->entries[id].size - new_size;
     t->entries[id].size = new_size;
+
+    rubber_table_update_hole_head(t, id);
 
     return delta;
 }
@@ -402,7 +453,8 @@ rubber_table_remove(struct rubber_table *t, unsigned id)
         t->allocated_tail = o->previous;
     }
 
-    struct rubber_object *previous = &t->entries[o->previous];
+    const unsigned previous_id = o->previous;
+    struct rubber_object *previous = &t->entries[previous_id];
     assert(previous->allocated);
     assert(previous->offset < o->offset);
     assert(previous->next == id);
@@ -417,6 +469,11 @@ rubber_table_remove(struct rubber_table *t, unsigned id)
 #ifndef NDEBUG
     o->allocated = false;
 #endif
+
+    if (id == t->hole_head)
+        t->hole_head = previous_id;
+    else
+        rubber_table_update_hole_head(t, previous_id);
 
     return o->size;
 }
