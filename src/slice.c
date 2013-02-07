@@ -265,7 +265,7 @@ slice_area_find_allocated(const struct slice_pool *pool,
  */
 static void
 slice_area_punch_slice_range(struct slice_pool *pool, struct slice_area *area,
-                             unsigned start, unsigned end)
+                             unsigned start, gcc_unused unsigned end)
 {
     assert(start <= end);
 
