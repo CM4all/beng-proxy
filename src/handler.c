@@ -21,6 +21,7 @@
 #include "transformation.h"
 #include "expiry.h"
 #include "uri-escape.h"
+#include "uri-verify.h"
 #include "strutil.h"
 #include "strmap.h"
 #include "istream.h"
@@ -329,7 +330,8 @@ request_uri_parse(struct request *request2, struct parsed_uri *dest)
 {
     const struct http_server_request *request = request2->request;
 
-    if (!uri_parse(dest, request->uri)) {
+    if (!uri_path_verify_quick(request->uri) ||
+        !uri_parse(dest, request->uri)) {
         /* response_dispatch() assumes that we have a translation
            response, and will dereference it - at this point, the
            translation server hasn't been queried yet, so we just
