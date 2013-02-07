@@ -151,7 +151,11 @@ cgi_child_callback(int status, void *ctx gcc_unused)
     int exit_status = WEXITSTATUS(status);
 
     if (WIFSIGNALED(status)) {
-        daemon_log(1, "CGI died from signal %d%s\n",
+        int level = 1;
+        if (!WCOREDUMP(status) && WTERMSIG(status) == SIGTERM)
+            level = 4;
+
+        daemon_log(level, "CGI died from signal %d%s\n",
                    WTERMSIG(status),
                    WCOREDUMP(status) ? " (core dumped)" : "");
     } else if (exit_status != 0)

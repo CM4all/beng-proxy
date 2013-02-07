@@ -94,7 +94,12 @@ child_done(struct child *child, int status)
 {
     const int exit_status = WEXITSTATUS(status);
     if (WIFSIGNALED(status)) {
-        daemon_log(1, "child process '%s' (pid %d) died from signal %d%s\n",
+        int level = 1;
+        if (!WCOREDUMP(status) && WTERMSIG(status) == SIGTERM)
+            level = 4;
+
+        daemon_log(level,
+                   "child process '%s' (pid %d) died from signal %d%s\n",
                    child->name, (int)child->pid,
                    WTERMSIG(status),
                    WCOREDUMP(status) ? " (core dumped)" : "");

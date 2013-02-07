@@ -91,7 +91,11 @@ worker_child_callback(int status, void *ctx)
     int exit_status = WEXITSTATUS(status);
 
     if (WIFSIGNALED(status)) {
-        daemon_log(1, "worker %d died from signal %d%s\n",
+        int level = 1;
+        if (!WCOREDUMP(status) && WTERMSIG(status) == SIGTERM)
+            level = 3;
+
+        daemon_log(level, "worker %d died from signal %d%s\n",
                    worker->pid, WTERMSIG(status),
                    WCOREDUMP(status) ? " (core dumped)" : "");
     } else if (exit_status == 0)
