@@ -226,30 +226,40 @@ rubber_table_tail_offset(const struct rubber_table *t)
     return tail->offset + tail->size;
 }
 
+/**
+ * Allocate a new object id.  The caller must initialise the object.
+ */
 static unsigned
-rubber_table_add(struct rubber_table *t, size_t offset, size_t size)
+rubber_table_add_id(struct rubber_table *t)
 {
-    assert(t != NULL);
-    assert(t->allocated_tail < t->max_entries);
-
-    unsigned id;
-
     if (t->free_head == 0) {
         if (t->initialized_tail >= t->max_entries)
             /* no more entries in the table (though there may still be
                enough space in the memory map) */
             return 0;
 
-        id = t->initialized_tail++;
+        return t->initialized_tail++;
     } else {
 
         /* remove the first item from the "free" list .. */
 
-        id = t->free_head;
+        unsigned id = t->free_head;
         struct rubber_object *o = &t->entries[id];
         assert(!o->allocated);
         t->free_head = o->next;
+        return id;
     }
+}
+
+static unsigned
+rubber_table_add(struct rubber_table *t, size_t offset, size_t size)
+{
+    assert(t != NULL);
+    assert(t->allocated_tail < t->max_entries);
+
+    unsigned id = rubber_table_add_id(t);
+    if (id == 0)
+        return 0;
 
     struct rubber_object *o = &t->entries[id];
 
