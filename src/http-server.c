@@ -282,7 +282,9 @@ http_server_request_close(struct http_server_connection *connection)
          connection->request.read_state == READ_END)) {
         if (connection->response.istream != NULL)
             istream_free_handler(&connection->response.istream);
-        else
+        else if (async_ref_defined(&connection->request.async_ref))
+            /* don't call this if coming from
+               _response_stream_abort() */
             async_abort(&connection->request.async_ref);
     }
 
