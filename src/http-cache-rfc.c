@@ -282,7 +282,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
 
         info->expires = parse_translate_time(strmap_get(headers, "expires"), offset);
         if (info->expires != (time_t)-1 && info->expires < now)
-            cache_log(2, "invalid 'expires' header\n");
+            cache_log(4, "invalid 'expires' header\n");
     }
 
     if (info->has_query_string && info->expires == (time_t)-1)
