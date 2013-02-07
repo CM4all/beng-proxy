@@ -3,6 +3,7 @@ cm4all-beng-proxy (3.0.10) unstable; urgency=low
   * child: reduce verbosity of SIGTERM log message
   * connection: reduce verbosity of ECONNRESET log message
   * http-server: fix duplicate abort call
+  * http-server: add missing pool reference in request body eof
 
  --   
 

@@ -41,8 +41,12 @@ http_server_feed_body(struct http_server_connection *connection,
            we're processing the request */
         buffered_socket_schedule_read_no_timeout(&connection->socket);
 
+        pool_ref(connection->pool);
         istream_deinit_eof(&connection->request.body_reader.output);
-        if (!http_server_connection_valid(connection))
+        const bool valid = http_server_connection_valid(connection);
+        pool_unref(connection->pool);
+
+        if (!valid)
             return BUFFERED_CLOSED;
     }
 
