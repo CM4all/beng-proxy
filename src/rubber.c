@@ -289,6 +289,55 @@ rubber_table_add(struct rubber_table *t, size_t offset, size_t size)
     return id;
 }
 
+static unsigned
+rubber_table_add_in_hole(struct rubber_table *t, size_t size)
+{
+    assert(t != NULL);
+
+    unsigned previous_id = 0, next_id;
+    struct rubber_object *previous = &t->entries[previous_id], *next;
+    while (true) {
+        assert(previous->allocated);
+
+        next_id = previous->next;
+        if (next_id == 0)
+            /* no hole found */
+            return 0;
+
+        next = &t->entries[next_id];
+        assert(next->allocated);
+
+        size_t distance = next->offset - previous->offset - previous->size;
+        if (distance >= size)
+            break;
+
+        previous_id = next_id;
+        previous = next;
+    }
+
+    /* found a hole */
+
+    unsigned id = rubber_table_add_id(t);
+    if (id == 0)
+        return 0;
+
+    struct rubber_object *o = &t->entries[id];
+    *o = (struct rubber_object){
+        .next = next_id,
+        .previous = previous_id,
+        .offset = previous->offset + previous->size,
+        .size = size,
+#ifndef NDEBUG
+        .allocated = true,
+#endif
+    };
+
+    previous->next = id;
+    next->previous = id;
+
+    return id;
+}
+
 static size_t
 rubber_table_size_of(const struct rubber_table *t, unsigned id)
 {
@@ -465,6 +514,26 @@ rubber_fork_cow(struct rubber *r, bool inherit)
 #endif
 }
 
+/**
+ * Try to find a hole between two objects, and insert a new
+ * object there.
+ *
+ * @return the object id, or 0 on error
+ */
+static unsigned
+rubber_add_in_hole(struct rubber *r, size_t size)
+{
+    assert(size < r->max_size);
+
+    unsigned id = rubber_table_add_in_hole(r->table, size);
+    if (id != 0) {
+        r->netto_size += size;
+        assert(r->netto_size <= r->brutto_size);
+    }
+
+    return id;
+}
+
 unsigned
 rubber_add(struct rubber *r, size_t size)
 {
@@ -475,11 +544,17 @@ rubber_add(struct rubber *r, size_t size)
         /* sanity check to avoid integer overflows */
         return 0;
 
+    size = align_size(size);
+
+    if (r->netto_size + size <= r->brutto_size) {
+        unsigned id = rubber_add_in_hole(r, size);
+        if (id != 0)
+            return id;
+    }
+
     if (r->brutto_size / 3 >= r->netto_size)
         /* auto-compress when a lot of allocations have been freed */
         rubber_compress(r);
-
-    size = align_size(size);
 
     size_t offset = rubber_table_tail_offset(r->table);
     if (offset + size > r->max_size) {
