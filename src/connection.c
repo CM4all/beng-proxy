@@ -13,6 +13,7 @@
 #include "drop.h"
 #include "clock.h"
 #include "listener.h"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 
@@ -91,7 +92,12 @@ my_http_server_connection_error(GError *error, void *ctx)
 {
     struct client_connection *connection = ctx;
 
-    daemon_log(2, "%s\n", error->message);
+    int level = 2;
+
+    if (error->domain == errno_quark() && error->code == ECONNRESET)
+        level = 4;
+
+    daemon_log(level, "%s\n", error->message);
     g_error_free(error);
 
     remove_connection(connection);
