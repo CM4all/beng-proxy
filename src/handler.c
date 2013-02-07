@@ -99,8 +99,6 @@ handle_translated_request(struct request *request,
         request_ignore_session(request);
     }
 
-    struct session *session;
-
     request->connection->site_name = response->site;
 
     if (response->transparent) {
@@ -138,6 +136,7 @@ handle_translated_request(struct request *request,
         return;
     }
 
+    struct session *session;
     if (response->session != NULL || response->user != NULL ||
         response->language != NULL || response->views->transformation != NULL)
         session = request_get_session(request);
@@ -329,10 +328,8 @@ static bool
 request_uri_parse(struct request *request2, struct parsed_uri *dest)
 {
     const struct http_server_request *request = request2->request;
-    bool ret;
 
-    ret = uri_parse(dest, request->uri);
-    if (!ret) {
+    if (!uri_parse(dest, request->uri)) {
         /* response_dispatch() assumes that we have a translation
            response, and will dereference it - at this point, the
            translation server hasn't been queried yet, so we just
@@ -346,9 +343,10 @@ request_uri_parse(struct request *request2, struct parsed_uri *dest)
 
         response_dispatch_message(request2, HTTP_STATUS_BAD_REQUEST,
                                   "Malformed URI");
+        return false;
     }
 
-    return ret;
+    return true;
 }
 
 static void
@@ -403,16 +401,15 @@ serve_document_root_file(struct request *request2,
                          const struct config *config)
 {
     struct http_server_request *request = request2->request;
-    struct parsed_uri *uri;
-    struct translate_response *tr;
+
+    struct parsed_uri *uri = &request2->uri;
+
+    struct translate_response *tr = p_calloc(request->pool,
+                                             sizeof(*request2->translate.response));
+    request2->translate.response = tr;
+
     const char *index_file = NULL;
     bool process;
-
-    uri = &request2->uri;
-
-    request2->translate.response = tr = p_calloc(request->pool,
-                                                 sizeof(*request2->translate.response));
-
     if (uri->base.data[uri->base.length - 1] == '/') {
         index_file = "index.html";
         process = true;
@@ -513,12 +510,9 @@ handle_http_request(struct client_connection *connection,
                     struct http_server_request *request,
                     struct async_operation_ref *async_ref)
 {
-    struct request *request2;
-    bool ret;
-
     assert(request != NULL);
 
-    request2 = p_malloc(request->pool, sizeof(*request2));
+    struct request *request2 = p_malloc(request->pool, sizeof(*request2));
     request2->connection = connection;
     request2->request = request;
     request2->product_token = NULL;
@@ -545,8 +539,7 @@ handle_http_request(struct client_connection *connection,
     request2->response_sent = false;
 #endif
 
-    ret = request_uri_parse(request2, &request2->uri);
-    if (!ret)
+    if (!request_uri_parse(request2, &request2->uri))
         return;
 
     assert(!strref_is_empty(&request2->uri.base));
