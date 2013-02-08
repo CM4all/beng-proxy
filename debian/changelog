@@ -8,7 +8,7 @@ cm4all-beng-proxy (3.0.10) unstable; urgency=low
   * rubber: allocate from holes, avoid costly compression steps
   * http-cache: reserve some space in the rubber allocator
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 08 Feb 2013 13:15:31 -0000
 
 cm4all-beng-proxy (3.0.9) unstable; urgency=low
 
