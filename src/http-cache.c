@@ -529,7 +529,10 @@ http_cache_new(struct pool *pool, size_t max_size,
     }
 
     if (memcached_stock == NULL && max_size > 0)
-        http_cache_heap_init(&cache->heap, pool, max_size);
+        /* leave 12.5% of the rubber allocator empty, to increase the
+           chances that a hole can be found for a new allocation, to
+           reduce the pressure that rubber_compress() creates */
+        http_cache_heap_init(&cache->heap, pool, max_size * 7 / 8);
     else
         http_cache_heap_clear(&cache->heap);
 

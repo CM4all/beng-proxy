@@ -6,6 +6,7 @@ cm4all-beng-proxy (3.0.10) unstable; urgency=low
   * http-server: add missing pool reference in request body eof
   * handler: catch malformed URIs earlier
   * rubber: allocate from holes, avoid costly compression steps
+  * http-cache: reserve some space in the rubber allocator
 
  --   
 
