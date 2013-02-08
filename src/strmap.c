@@ -22,7 +22,7 @@ struct strmap {
 struct strmap *
 strmap_new(struct pool *pool, unsigned capacity)
 {
-    struct strmap *map = p_calloc(pool, sizeof(*map));
+    struct strmap *map = p_malloc(pool, sizeof(*map));
     assert(capacity > 1);
 
     map->hashmap = hashmap_new(pool, capacity);
