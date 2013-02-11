@@ -251,6 +251,38 @@ fcgi_client_close_response_body(struct fcgi_client *client)
     fcgi_client_release(client, false);
 }
 
+/**
+ * Find the #FCGI_END_REQUEST packet matching the current request, and
+ * returns the offset where it ends, or 0 if none was found.
+ */
+gcc_pure
+static size_t
+fcgi_client_find_end_request(struct fcgi_client *client,
+                             const uint8_t *const data0, size_t size)
+{
+    const uint8_t *data = data0, *const end = data0 + size;
+
+    /* skip the rest of the current packet */
+    data += client->content_length + client->skip_length;
+
+    while (true) {
+        const struct fcgi_record_header *header =
+            (const struct fcgi_record_header *)data;
+        data = (const uint8_t *)(header + 1);
+        if (data > end)
+            /* reached the end of the given buffer: not found */
+            return 0;
+
+        data += ntohs(header->content_length);
+        data += header->padding_length;
+
+        if (header->request_id == client->id &&
+            header->type == FCGI_END_REQUEST)
+            /* found it: return the packet end offset */
+            return data - data0;
+    }
+}
+
 static bool
 fcgi_client_handle_line(struct fcgi_client *client,
                         const char *line, size_t length)
@@ -411,8 +443,10 @@ fcgi_client_submit_response(struct fcgi_client *client)
  * the client.
  */
 static void
-fcgi_client_handle_end(struct fcgi_client *client, size_t remaining)
+fcgi_client_handle_end(struct fcgi_client *client)
 {
+    assert(!buffered_socket_connected(&client->socket));
+
     if (client->response.read_state == READ_HEADERS) {
         GError *error =
             g_error_new_literal(fcgi_quark(), 0,
@@ -420,17 +454,6 @@ fcgi_client_handle_end(struct fcgi_client *client, size_t remaining)
                                 "from FastCGI application");
         fcgi_client_abort_response_headers(client, error);
         return;
-    }
-
-    if (buffered_socket_connected(&client->socket)) {
-        /* if the socket is still alive at this point, release it, and
-           allow reusing it only if the remaining buffer provides
-           enough to finish the END_REQUEST payload */
-
-        const size_t payload_length =
-            client->content_length + client->skip_length;
-        fcgi_client_release_socket(client,
-                                   remaining == payload_length);
     }
 
     if (client->request.istream != NULL)
@@ -451,14 +474,11 @@ fcgi_client_handle_end(struct fcgi_client *client, size_t remaining)
 /**
  * A packet header was received.
  *
- * @param remaining the remaining length of the input buffer (not
- * including the header)
  * @return false if the client has been destroyed
  */
 static bool
 fcgi_client_handle_header(struct fcgi_client *client,
-                          const struct fcgi_record_header *header,
-                          size_t remaining)
+                          const struct fcgi_record_header *header)
 {
     client->content_length = ntohs(header->content_length);
     client->skip_length = header->padding_length;
@@ -487,7 +507,7 @@ fcgi_client_handle_header(struct fcgi_client *client,
         return true;
 
     case FCGI_END_REQUEST:
-        fcgi_client_handle_end(client, remaining);
+        fcgi_client_handle_end(client);
         return false;
 
     default:
@@ -582,7 +602,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
         data += sizeof(*header);
         buffered_socket_consumed(&client->socket, sizeof(*header));
 
-        if (!fcgi_client_handle_header(client, header, end - data))
+        if (!fcgi_client_handle_header(client, header))
             return BUFFERED_CLOSED;
     } while (data != end);
 
@@ -763,6 +783,16 @@ static enum buffered_result
 fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct fcgi_client *client = ctx;
+
+    if (buffered_socket_connected(&client->socket)) {
+        /* check if the #FCGI_END_REQUEST packet can be found in the
+           following data chunk */
+        size_t offset = fcgi_client_find_end_request(client, buffer, size);
+        if (offset > 0)
+            /* found it: we no longer need the socket, everything we
+               need is already in the given buffer */
+            fcgi_client_release_socket(client, offset == size);
+    }
 
     pool_ref(client->pool);
     const enum buffered_result result =
