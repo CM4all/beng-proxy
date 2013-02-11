@@ -143,6 +143,8 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 {
     struct stock *stock = ctx;
 
+    assert(stock->num_idle > MAX_IDLE);
+
     /* destroy half of the idle items */
 
     for (unsigned i = (stock->num_idle + 1) / 2; i > 0; --i) {
