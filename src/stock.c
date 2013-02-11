@@ -126,7 +126,7 @@ stock_schedule_check_empty(struct stock *stock)
 static void
 stock_schedule_cleanup(struct stock *stock)
 {
-    static const struct timeval tv = { .tv_sec = 5, .tv_usec = 0 };
+    static const struct timeval tv = { .tv_sec = 20, .tv_usec = 0 };
 
     evtimer_add(&stock->cleanup_event, &tv);
 }
@@ -145,9 +145,9 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 
     assert(stock->num_idle > MAX_IDLE);
 
-    /* destroy half of the idle items */
+    /* destroy one third of the idle items */
 
-    for (unsigned i = (stock->num_idle + 1) / 2; i > 0; --i) {
+    for (unsigned i = (stock->num_idle + 2) / 3; i > 0; --i) {
         struct stock_item *item = (struct stock_item *)stock->idle.next;
 
         assert(!list_empty(&stock->idle));
