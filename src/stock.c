@@ -14,10 +14,6 @@
 
 #include <assert.h>
 
-enum {
-    MAX_IDLE = 8,
-};
-
 struct stock {
     struct pool *pool;
     const struct stock_class *class;
@@ -30,6 +26,12 @@ struct stock {
      * checked as soon as stock_put() is called.
      */
     unsigned limit;
+
+    /**
+     * The maximum number of permanent idle items.  If there are more
+     * than that, a timer will incrementally kill excess items.
+     */
+    unsigned max_idle;
 
     const struct stock_handler *handler;
     void *handler_ctx;
@@ -143,7 +145,7 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 {
     struct stock *stock = ctx;
 
-    assert(stock->num_idle > MAX_IDLE);
+    assert(stock->num_idle > stock->max_idle);
 
     /* destroy one third of the idle items */
 
@@ -160,7 +162,7 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 
     /* schedule next cleanup */
 
-    if (stock->num_idle > MAX_IDLE)
+    if (stock->num_idle > stock->max_idle)
         stock_schedule_cleanup(stock);
     else
         stock_check_empty(stock);
@@ -329,7 +331,7 @@ stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
 
 struct stock *
 stock_new(struct pool *pool, const struct stock_class *class,
-          void *class_ctx, const char *uri, unsigned limit,
+          void *class_ctx, const char *uri, unsigned limit, unsigned max_idle,
           const struct stock_handler *handler, void *handler_ctx)
 {
     struct stock *stock;
@@ -342,6 +344,7 @@ stock_new(struct pool *pool, const struct stock_class *class,
     assert(class->borrow != NULL);
     assert(class->release != NULL);
     assert(class->destroy != NULL);
+    assert(max_idle > 0);
 
     pool = pool_new_linear(pool, "stock", 1024);
     stock = p_malloc(pool, sizeof(*stock));
@@ -350,6 +353,7 @@ stock_new(struct pool *pool, const struct stock_class *class,
     stock->class_ctx = class_ctx;
     stock->uri = uri == NULL ? NULL : p_strdup(pool, uri);
     stock->limit = limit;
+    stock->max_idle = max_idle;
     stock->handler = handler;
     stock->handler_ctx = handler_ctx;
 
@@ -455,7 +459,7 @@ stock_get_idle(struct stock *stock,
         list_remove(&item->list_head);
         --stock->num_idle;
 
-        if (stock->num_idle == MAX_IDLE)
+        if (stock->num_idle == stock->max_idle)
             stock_unschedule_cleanup(stock);
 
         if (stock->class->borrow(stock->class_ctx, item)) {
@@ -673,7 +677,7 @@ stock_put(struct stock_item *item, bool destroy)
         item->is_idle = true;
 #endif
 
-        if (stock->num_idle == MAX_IDLE)
+        if (stock->num_idle == stock->max_idle)
             stock_schedule_cleanup(stock);
 
         list_add(&item->list_head, &stock->idle);
@@ -702,7 +706,7 @@ stock_del(struct stock_item *item)
     assert(item->list_head.next->prev == &item->list_head);
     assert(item->list_head.prev->next == &item->list_head);
 
-    if (stock->num_idle == MAX_IDLE)
+    if (stock->num_idle == stock->max_idle)
         stock_unschedule_cleanup(stock);
 
     list_remove(&item->list_head);

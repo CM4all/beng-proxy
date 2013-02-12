@@ -368,9 +368,9 @@ static const struct stock_class fcgi_stock_class = {
  */
 
 struct hstock *
-fcgi_stock_new(struct pool *pool, unsigned limit)
+fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    return hstock_new(pool, &fcgi_stock_class, NULL, limit);
+    return hstock_new(pool, &fcgi_stock_class, NULL, limit, max_idle);
 }
 
 void

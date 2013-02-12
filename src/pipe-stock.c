@@ -113,7 +113,7 @@ static const struct stock_class pipe_stock_class = {
 struct stock *
 pipe_stock_new(struct pool *pool)
 {
-    return stock_new(pool, &pipe_stock_class, NULL, NULL, 0, NULL, NULL);
+    return stock_new(pool, &pipe_stock_class, NULL, NULL, 0, 64, NULL, NULL);
 }
 
 void

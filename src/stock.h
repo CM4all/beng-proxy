@@ -77,7 +77,7 @@ struct stock;
  */
 struct stock *
 stock_new(struct pool *pool, const struct stock_class *class,
-          void *class_ctx, const char *uri, unsigned limit,
+          void *class_ctx, const char *uri, unsigned limit, unsigned max_idle,
           const struct stock_handler *handler, void *handler_ctx);
 
 void
@@ -139,7 +139,7 @@ struct hstock;
 gcc_malloc
 struct hstock *
 hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
-           unsigned limit);
+           unsigned limit, unsigned max_idle);
 
 void
 hstock_free(struct hstock *hstock);

@@ -22,6 +22,11 @@ struct hstock {
      */
     unsigned limit;
 
+    /**
+     * The maximum number of permanent idle items in each stock.
+     */
+    unsigned max_idle;
+
     struct hashmap *stocks;
 };
 
@@ -49,7 +54,7 @@ static const struct stock_handler hstock_stock_handler = {
 
 struct hstock *
 hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
-           unsigned limit)
+           unsigned limit, unsigned max_idle)
 {
     struct hstock *hstock;
 
@@ -60,6 +65,7 @@ hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
     assert(class->borrow != NULL);
     assert(class->release != NULL);
     assert(class->destroy != NULL);
+    assert(max_idle > 0);
 
     pool = pool_new_linear(pool, "hstock", 4096);
     hstock = p_malloc(pool, sizeof(*hstock));
@@ -67,6 +73,7 @@ hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
     hstock->class = class;
     hstock->class_ctx = class_ctx;
     hstock->limit = limit;
+    hstock->max_idle = max_idle;
     hstock->stocks = hashmap_new(pool, 64);
 
     return hstock;
@@ -117,7 +124,7 @@ hstock_get(struct hstock *hstock, struct pool *pool,
 
     if (stock == NULL) {
         stock = stock_new(hstock->pool, hstock->class, hstock->class_ctx, uri,
-                          hstock->limit,
+                          hstock->limit, hstock->max_idle,
                           &hstock_stock_handler, hstock);
         hashmap_set(hstock->stocks, stock_get_uri(stock), stock);
     }

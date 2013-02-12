@@ -245,6 +245,8 @@ int main(int argc, char **argv)
             .http_cache_size = 512 * 1024 * 1024,
             .filter_cache_size = 128 * 1024 * 1024,
             .translate_cache_size = 131072,
+            .fcgi_stock_max_idle = 16,
+            .was_stock_max_idle = 16,
         },
     };
 
@@ -329,10 +331,12 @@ int main(int argc, char **argv)
                                                        instance.config.translate_cache_size);
     }
     instance.fcgi_stock = fcgi_stock_new(instance.pool,
-                                         instance.config.fcgi_stock_limit);
+                                         instance.config.fcgi_stock_limit,
+                                         instance.config.fcgi_stock_max_idle);
 
     instance.was_stock = was_stock_new(instance.pool,
-                                       instance.config.was_stock_limit);
+                                       instance.config.was_stock_limit,
+                                       instance.config.was_stock_max_idle);
 
     instance.delegate_stock = delegate_stock_new(instance.pool);
     instance.resource_loader = resource_loader_new(instance.pool,

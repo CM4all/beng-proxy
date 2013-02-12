@@ -252,7 +252,7 @@ static const struct stock_class tcp_stock_class = {
 struct hstock *
 tcp_stock_new(struct pool *pool, unsigned limit)
 {
-    return hstock_new(pool, &tcp_stock_class, NULL, limit);
+    return hstock_new(pool, &tcp_stock_class, NULL, limit, 16);
 }
 
 void

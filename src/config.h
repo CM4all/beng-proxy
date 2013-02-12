@@ -75,9 +75,9 @@ struct config {
 
     unsigned tcp_stock_limit;
 
-    unsigned fcgi_stock_limit;
+    unsigned fcgi_stock_limit, fcgi_stock_max_idle;
 
-    unsigned was_stock_limit;
+    unsigned was_stock_limit, was_stock_max_idle;
 
     unsigned cluster_size, cluster_node;
 

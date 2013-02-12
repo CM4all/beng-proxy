@@ -17,7 +17,7 @@ struct jail_params;
 struct async_operation_ref;
 
 struct hstock *
-fcgi_stock_new(struct pool *pool, unsigned limit);
+fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
 /**
  * @param account_id the customer account id (JailCGI)

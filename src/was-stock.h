@@ -18,7 +18,7 @@ struct stock_get_handler;
 struct async_operation_ref;
 
 struct hstock *
-was_stock_new(struct pool *pool, unsigned limit);
+was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
 void
 was_stock_get(struct hstock *hstock, struct pool *pool,

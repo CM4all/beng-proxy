@@ -136,8 +136,20 @@ for one FastCGI application.  0 means unlimited. \\
 
 \hline
 
+\verb|fastcgi_stock_max_idle| & The maximum number of idle child
+processes for one FastCGI application.  If there are more than that, a
+timer will incrementally kill excess processes. \\
+
+\hline
+
 \verb|was_stock_limit| & The maximum number of child processes for
 one WAS application.  0 means unlimited. \\
+
+\hline
+
+\verb|was_stock_max_idle| & The maximum number of idle child processes
+for one WAS application.  If there are more than that, a timer will
+incrementally kill excess processes. \\
 
 \hline
 

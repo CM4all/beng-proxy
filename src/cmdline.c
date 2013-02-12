@@ -165,7 +165,9 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
     static const char max_connections[] = "max_connections";
     static const char tcp_stock_limit[] = "tcp_stock_limit";
     static const char fcgi_stock_limit[] = "fastcgi_stock_limit";
+    static const char fcgi_stock_max_idle[] = "fastcgi_stock_max_idle";
     static const char was_stock_limit[] = "was_stock_limit";
+    static const char was_stock_max_idle[] = "was_stock_max_idle";
     static const char http_cache_size[] = "http_cache_size";
     static const char filter_cache_size[] = "filter_cache_size";
     static const char translate_cache_size[] = "translate_cache_size";
@@ -200,6 +202,14 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
             arg_error(argv0, "Invalid value for fastcgi_stock_limit");
 
         config->fcgi_stock_limit = l;
+    } else if (name_length == sizeof(fcgi_stock_max_idle) - 1 &&
+               memcmp(name, fcgi_stock_max_idle,
+                      sizeof(fcgi_stock_max_idle) - 1) == 0) {
+        l = strtol(value, &endptr, 10);
+        if (*endptr != 0 || l < 0)
+            arg_error(argv0, "Invalid value for fastcgi_stock_max_idle");
+
+        config->fcgi_stock_max_idle = l;
     } else if (name_length == sizeof(was_stock_limit) - 1 &&
                memcmp(name, was_stock_limit,
                       sizeof(was_stock_limit) - 1) == 0) {
@@ -208,6 +218,14 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
             arg_error(argv0, "Invalid value for was_stock_limit");
 
         config->was_stock_limit = l;
+    } else if (name_length == sizeof(was_stock_max_idle) - 1 &&
+               memcmp(name, was_stock_max_idle,
+                      sizeof(was_stock_max_idle) - 1) == 0) {
+        l = strtol(value, &endptr, 10);
+        if (*endptr != 0 || l < 0)
+            arg_error(argv0, "Invalid value for was_stock_max_idle");
+
+        config->was_stock_max_idle = l;
     } else if (name_length == sizeof(http_cache_size) - 1 &&
                memcmp(name, http_cache_size,
                       sizeof(http_cache_size) - 1) == 0) {
