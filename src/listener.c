@@ -17,6 +17,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -129,6 +130,21 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
         close(listener->fd);
         return NULL;
     }
+
+#ifdef __linux
+    /* enable TCP Fast Open (requires Linux 3.7) */
+
+#ifndef TCP_FASTOPEN
+#define TCP_FASTOPEN 23
+#endif
+
+    if ((family == AF_INET || family == AF_INET6) &&
+        socktype == SOCK_STREAM) {
+        int qlen = 16;
+        setsockopt(listener->fd, SOL_TCP, TCP_FASTOPEN,
+                   &qlen, sizeof(qlen));
+    }
+#endif
 
     ret = listen(listener->fd, 16);
     if (ret < 0) {

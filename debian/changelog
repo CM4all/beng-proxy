@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.12) unstable; urgency=low
 
-  * 
+  * listener: enable TCP Fast Open (requires Linux 3.7)
 
  --   
 
