@@ -108,11 +108,13 @@ struct rubber {
     struct rubber_table *table;
 };
 
+static const size_t PAGE_SIZE = 2 * 1024 * 1024;
+
 gcc_const
 static inline size_t
 align_page_size(size_t size)
 {
-    return ((size - 1) | 0x3fffff) + 1;
+    return ((size - 1) | (PAGE_SIZE - 1)) + 1;
 }
 
 gcc_const
@@ -516,7 +518,7 @@ rubber_read_at(const struct rubber *r, size_t offset)
 struct rubber *
 rubber_new(size_t size)
 {
-    size = align_page_size(1) + align_page_size(size);
+    size = PAGE_SIZE + align_page_size(size);
     assert(size > sizeof(struct rubber));
 
     struct rubber *r = malloc(sizeof(*r));
