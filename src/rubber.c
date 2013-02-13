@@ -108,7 +108,11 @@ struct rubber {
     struct rubber_table *table;
 };
 
+#ifdef MADV_HUGEPAGE
 static const size_t PAGE_SIZE = 2 * 1024 * 1024;
+#else
+static const size_t PAGE_SIZE = 4 * 1024;
+#endif
 
 gcc_const
 static inline size_t
