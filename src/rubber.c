@@ -122,6 +122,13 @@ align_page_size(size_t size)
 }
 
 gcc_const
+static inline size_t
+align_page_size_down(size_t size)
+{
+    return size & ~(PAGE_SIZE - 1);
+}
+
+gcc_const
 static inline void *
 align_page_size_ptr(void *p)
 {
@@ -558,7 +565,8 @@ rubber_new(size_t size)
 #ifdef MADV_HUGEPAGE
     /* allow the Linux kernel to use "Huge Pages" for the cache, which
        reduces page table overhead for this big chunk of data */
-    madvise(rubber_write_at(r, table_size), size - table_size, MADV_HUGEPAGE);
+    madvise(rubber_write_at(r, table_size),
+            align_page_size_down(size - table_size), MADV_HUGEPAGE);
 #endif
 
     return r;
