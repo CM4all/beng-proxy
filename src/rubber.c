@@ -682,6 +682,12 @@ rubber_remove(struct rubber *r, unsigned id)
 }
 
 size_t
+rubber_get_max_size(const struct rubber *r)
+{
+    return r->max_size - rubber_table_size(r->table);
+}
+
+size_t
 rubber_get_brutto_size(const struct rubber *r)
 {
     return r->brutto_size;

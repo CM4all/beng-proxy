@@ -76,6 +76,13 @@ void
 rubber_remove(struct rubber *r, unsigned id);
 
 /**
+ * Returns the maximum total size of all allocations.
+ */
+gcc_pure
+size_t
+rubber_get_max_size(const struct rubber *r);
+
+/**
  * Returns the total size of all allocations.
  */
 gcc_pure

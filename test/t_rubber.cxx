@@ -69,6 +69,8 @@ public:
         rubber *r = rubber_new(total);
         CPPUNIT_ASSERT(r != NULL);
 
+        total = rubber_get_max_size(r);
+
         /* fill the whole "rubber" object with four quarters */
 
         unsigned a = AddFillRubber(r, total / 4);
@@ -168,6 +170,8 @@ public:
         rubber *r = rubber_new(total);
         CPPUNIT_ASSERT(r != NULL);
 
+        total = rubber_get_max_size(r);
+
         /* fill the whole "rubber" object */
 
         unsigned a = AddFillRubber(r, total * 3 / 4);
@@ -242,6 +246,8 @@ public:
 
         rubber *r = rubber_new(total);
         CPPUNIT_ASSERT(r != NULL);
+
+        total = rubber_get_max_size(r);
 
         static const size_t max = 300000;
         static unsigned ids[max], n = 0;
