@@ -6,6 +6,7 @@
  */
 
 #include "slice.h"
+#include "mmap.h"
 
 #include <inline/list.h>
 
@@ -14,7 +15,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/mman.h>
 
 static const unsigned ALLOCATED = -1;
 static const unsigned END_OF_LIST = -2;
@@ -61,8 +61,6 @@ struct slice_pool {
     struct list_head areas;
 };
 
-#define PAGE_SIZE 0x1000
-
 gcc_const
 static inline size_t
 align_size(size_t size)
@@ -74,7 +72,7 @@ gcc_const
 static inline size_t
 align_page_size(size_t size)
 {
-    return ((size - 1) | (PAGE_SIZE - 1)) + 1;
+    return ((size - 1) | (mmap_page_size() - 1)) + 1;
 }
 
 gcc_const
@@ -121,10 +119,7 @@ slice_area_is_empty(const struct slice_area *area)
 static struct slice_area *
 slice_area_new(struct slice_pool *pool)
 {
-    int flags = MAP_ANONYMOUS|MAP_PRIVATE;
-    void *p = mmap(NULL, pool->area_size,
-                   PROT_READ|PROT_WRITE, flags,
-                   -1, 0);
+    void *p = mmap_alloc_anonymous(pool->area_size);
     if (p == (void *)-1) {
         fputs("Out of adress space\n", stderr);
         abort();
@@ -162,7 +157,7 @@ slice_area_free(struct slice_pool *pool, struct slice_area *area)
     }
 #endif
 
-    munmap(area, pool->area_size);
+    mmap_free(area, pool->area_size);
 }
 
 gcc_pure
@@ -172,7 +167,7 @@ slice_area_get_page(const struct slice_pool *pool, struct slice_area *area,
 {
     assert(page <= pool->pages_per_area);
 
-    return (uint8_t *)area + (pool->header_pages + page) * PAGE_SIZE;
+    return (uint8_t *)area + (pool->header_pages + page) * mmap_page_size();
 }
 
 gcc_pure
@@ -206,8 +201,8 @@ slice_area_index(const struct slice_pool *pool, struct slice_area *area,
                                               pool->pages_per_area));
 
     size_t offset = p - (const uint8_t *)area;
-    const unsigned page = offset / PAGE_SIZE - pool->header_pages;
-    offset %= PAGE_SIZE;
+    const unsigned page = offset / mmap_page_size() - pool->header_pages;
+    offset %= mmap_page_size();
     assert(offset % pool->slice_size == 0);
 
     return page * pool->slices_per_page / pool->pages_per_slice
@@ -280,7 +275,7 @@ slice_area_punch_slice_range(struct slice_pool *pool, struct slice_area *area,
     uint8_t *start_pointer = slice_area_get_page(pool, area, start_page);
     uint8_t *end_pointer = slice_area_get_page(pool, area, end_page);
 
-    madvise(start_pointer, end_pointer - start_pointer, MADV_DONTNEED);
+    mmap_discard_pages(start_pointer, end_pointer - start_pointer);
 }
 
 static void
@@ -318,10 +313,10 @@ slice_pool_new(size_t slice_size, unsigned slices_per_area)
         abort();
     }
 
-    if (slice_size <= PAGE_SIZE / 2) {
+    if (slice_size <= mmap_page_size() / 2) {
         pool->slice_size = align_size(slice_size);
 
-        pool->slices_per_page = PAGE_SIZE / pool->slice_size;
+        pool->slices_per_page = mmap_page_size() / pool->slice_size;
         pool->pages_per_slice = 1;
 
         pool->pages_per_area = divide_round_up(slices_per_area,
@@ -330,7 +325,7 @@ slice_pool_new(size_t slice_size, unsigned slices_per_area)
         pool->slice_size = align_page_size(slice_size);
 
         pool->slices_per_page = 1;
-        pool->pages_per_slice = pool->slice_size / PAGE_SIZE;
+        pool->pages_per_slice = pool->slice_size / mmap_page_size();
 
         pool->pages_per_area = slices_per_area * pool->pages_per_slice;
     }
@@ -341,9 +336,10 @@ slice_pool_new(size_t slice_size, unsigned slices_per_area)
     const struct slice_area *area = NULL;
     const size_t header_size = sizeof(*area)
         + sizeof(area->slices[0]) * (pool->slices_per_area - 1);
-    pool->header_pages = divide_round_up(header_size, PAGE_SIZE);
+    pool->header_pages = divide_round_up(header_size, mmap_page_size());
 
-    pool->area_size = PAGE_SIZE * (pool->header_pages + pool->pages_per_area);
+    pool->area_size = mmap_page_size()
+        * (pool->header_pages + pool->pages_per_area);
 
     list_init(&pool->areas);
     return pool;

@@ -7,13 +7,13 @@
  */
 
 #include "rubber.h"
+#include "mmap.h"
 
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
 
 struct rubber_object {
     /**
@@ -108,24 +108,18 @@ struct rubber {
     struct rubber_table *table;
 };
 
-#ifdef MADV_HUGEPAGE
-static const size_t PAGE_SIZE = 2 * 1024 * 1024;
-#else
-static const size_t PAGE_SIZE = 4 * 1024;
-#endif
-
 gcc_const
 static inline size_t
 align_page_size(size_t size)
 {
-    return ((size - 1) | (PAGE_SIZE - 1)) + 1;
+    return ((size - 1) | (mmap_huge_page_size() - 1)) + 1;
 }
 
 gcc_const
 static inline size_t
 align_page_size_down(size_t size)
 {
-    return size & ~(PAGE_SIZE - 1);
+    return size & ~(mmap_huge_page_size() - 1);
 }
 
 gcc_const
@@ -539,18 +533,14 @@ rubber_read_at(const struct rubber *r, size_t offset)
 struct rubber *
 rubber_new(size_t size)
 {
-    size = PAGE_SIZE + align_page_size(size);
+    size = mmap_huge_page_size() + align_page_size(size);
     assert(size > sizeof(struct rubber));
 
     struct rubber *r = malloc(sizeof(*r));
     if (r == NULL)
         return NULL;
 
-    int flags = MAP_ANONYMOUS|MAP_PRIVATE;
-
-    void *p = mmap(NULL, size,
-                   PROT_READ|PROT_WRITE, flags,
-                   -1, 0);
+    void *p = mmap_alloc_anonymous(size);
     if (p == (void *)-1) {
         free(r);
         return NULL;
@@ -562,12 +552,8 @@ rubber_new(size_t size)
     const size_t table_size = rubber_table_init(r->table, size / 1024);
     r->brutto_size = r->netto_size = 0;
 
-#ifdef MADV_HUGEPAGE
-    /* allow the Linux kernel to use "Huge Pages" for the cache, which
-       reduces page table overhead for this big chunk of data */
-    madvise(rubber_write_at(r, table_size),
-            align_page_size_down(size - table_size), MADV_HUGEPAGE);
-#endif
+    mmap_enable_huge_pages(rubber_write_at(r, table_size),
+                           align_page_size_down(size - table_size));
 
     return r;
 }
@@ -579,20 +565,14 @@ rubber_free(struct rubber *r)
     assert(r->netto_size == 0);
 
     rubber_table_deinit(r->table);
-    munmap(r->table, r->max_size);
+    mmap_free(r->table, r->max_size);
     free(r);
 }
 
 void
 rubber_fork_cow(struct rubber *r, bool inherit)
 {
-#ifdef MADV_DONTFORK
-    /* don't copy these pages to a forked child process */
-    madvise(r->table, r->max_size, inherit ? MADV_DOFORK : MADV_DONTFORK);
-#else
-    (void)r;
-    (void)inherit;
-#endif
+    mmap_enable_fork(r->table, r->max_size, inherit);
 }
 
 /**
@@ -761,6 +741,6 @@ rubber_compress(struct rubber *r)
        allocation */
     const size_t allocated = align_page_size(offset);
     if (allocated < r->max_size)
-        madvise(rubber_write_at(r, allocated), r->max_size - allocated,
-                MADV_DONTNEED);
+        mmap_discard_pages(rubber_write_at(r, allocated),
+                           r->max_size - allocated);
 }
