@@ -101,6 +101,8 @@ struct rubber {
     struct rubber_table *table;
 };
 
+static const size_t RUBBER_ALIGN = 0x20;
+
 gcc_const
 static inline size_t
 align_page_size(size_t size)
@@ -126,7 +128,7 @@ gcc_const
 static inline size_t
 align_size(size_t size)
 {
-    return ((size - 1) | 0x1f) + 1;
+    return ((size - 1) | (RUBBER_ALIGN - 1)) + 1;
 }
 
 /**
