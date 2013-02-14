@@ -1,6 +1,6 @@
 cm4all-beng-proxy (2.3.6) unstable; urgency=low
 
-  * 
+  * shm: reserve swap space, avoids theoretical crash
 
  --   
 
