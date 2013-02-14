@@ -112,7 +112,7 @@ public:
         rubber_remove(r, d);
 
         CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), total / 2);
-        CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total);
+        CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total * 3 / 4);
 
         unsigned e = AddFillRubber(r, total / 2);
         CPPUNIT_ASSERT(e > 0);
@@ -154,7 +154,7 @@ public:
         rubber_remove(r, e);
 
         CPPUNIT_ASSERT_EQUAL(rubber_get_netto_size(r), size_t(0u));
-        CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), total / 2);
+        CPPUNIT_ASSERT_EQUAL(rubber_get_brutto_size(r), size_t(0u));
 
         rubber_compress(r);
 

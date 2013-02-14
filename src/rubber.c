@@ -90,13 +90,6 @@ struct rubber {
     size_t max_size;
 
     /**
-     * The offset of the first free byte after the last allocation.
-     * This is the amount of physical memory allocated by the kernel
-     * for our memory map.
-     */
-    size_t brutto_size;
-
-    /**
      * The sum of all allocation sizes.
      */
     size_t netto_size;
@@ -222,6 +215,15 @@ rubber_table_size(const struct rubber_table *t)
     assert(t->entries[0].offset == 0);
 
     return t->entries[0].size;
+}
+
+gcc_pure
+static size_t
+rubber_table_get_brutto_size(const struct rubber_table *t)
+{
+    const struct rubber_object *tail = &t->entries[t->allocated_tail];
+
+    return tail->offset + tail->size - rubber_table_size(t);
 }
 
 static struct rubber_object *
@@ -550,7 +552,7 @@ rubber_new(size_t size)
     r->table = p;
 
     const size_t table_size = rubber_table_init(r->table, size / 1024);
-    r->brutto_size = r->netto_size = 0;
+    r->netto_size = 0;
 
     mmap_enable_huge_pages(rubber_write_at(r, table_size),
                            align_page_size_down(size - table_size));
@@ -589,7 +591,6 @@ rubber_add_in_hole(struct rubber *r, size_t size)
     unsigned id = rubber_table_add_in_hole(r->table, size);
     if (id != 0) {
         r->netto_size += size;
-        assert(r->netto_size <= r->brutto_size);
     }
 
     return id;
@@ -607,13 +608,13 @@ rubber_add(struct rubber *r, size_t size)
 
     size = align_size(size);
 
-    if (r->netto_size + size <= r->brutto_size) {
+    if (r->netto_size + size <= rubber_get_brutto_size(r)) {
         unsigned id = rubber_add_in_hole(r, size);
         if (id != 0)
             return id;
     }
 
-    if (r->brutto_size / 3 >= r->netto_size)
+    if (rubber_get_brutto_size(r) / 3 >= r->netto_size)
         /* auto-compress when a lot of allocations have been freed */
         rubber_compress(r);
 
@@ -630,7 +631,6 @@ rubber_add(struct rubber *r, size_t size)
 
     const unsigned id = rubber_table_add(r->table, offset, size);
     if (id > 0) {
-        r->brutto_size += size;
         r->netto_size += size;
     }
 
@@ -688,7 +688,7 @@ rubber_get_max_size(const struct rubber *r)
 size_t
 rubber_get_brutto_size(const struct rubber *r)
 {
-    return r->brutto_size;
+    return rubber_table_get_brutto_size(r->table);
 }
 
 size_t
@@ -718,9 +718,9 @@ rubber_compress(struct rubber *r)
 {
     assert(r != NULL);
 
-    assert(r->brutto_size >= r->netto_size);
+    assert(rubber_get_brutto_size(r) >= r->netto_size);
 
-    if (r->brutto_size == r->netto_size)
+    if (rubber_get_brutto_size(r) == r->netto_size)
         return;
 
     /* relocate all items, eliminate spaces */
@@ -735,7 +735,7 @@ rubber_compress(struct rubber *r)
     }
 
     assert(offset == r->netto_size + rubber_table_size(r->table));
-    r->brutto_size = offset - rubber_table_size(r->table);
+    assert(r->netto_size == rubber_get_brutto_size(r));
 
     /* tell the kernel that we won't need the data after our last
        allocation */
