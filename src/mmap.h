@@ -7,6 +7,11 @@
 #ifndef BENG_PROXY_MMAP_H
 #define BENG_PROXY_MMAP_H
 
+#ifdef VALGRIND
+#include <valgrind/memcheck.h>
+#include <stdlib.h>
+#endif
+
 #include <stdbool.h>
 #include <sys/mman.h>
 
@@ -14,6 +19,11 @@ gcc_const
 static inline size_t
 mmap_page_size(void)
 {
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND)
+        return 0x20;
+#endif
+
     return 4096;
 }
 
@@ -21,6 +31,11 @@ gcc_const
 static inline size_t
 mmap_huge_page_size(void)
 {
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND)
+        return 0x20;
+#endif
+
 #ifdef __linux
     return 512 * mmap_page_size();
 #else
@@ -31,6 +46,11 @@ mmap_huge_page_size(void)
 static inline void *
 mmap_alloc_anonymous(size_t size)
 {
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND)
+        return malloc(size);
+#endif
+
     int flags = MAP_ANONYMOUS|MAP_PRIVATE;
 
     return mmap(NULL, size, PROT_READ|PROT_WRITE, flags, -1, 0);
@@ -39,6 +59,13 @@ mmap_alloc_anonymous(size_t size)
 static inline void
 mmap_free(void *p, size_t size)
 {
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND) {
+        free(p);
+        return;
+    }
+#endif
+
     munmap(p, size);
 }
 
@@ -49,6 +76,11 @@ mmap_free(void *p, size_t size)
 static inline void
 mmap_enable_huge_pages(void *p, size_t size)
 {
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND)
+        return;
+#endif
+
 #ifdef __linux
     madvise(p, size, MADV_HUGEPAGE);
 #else
@@ -63,6 +95,11 @@ mmap_enable_huge_pages(void *p, size_t size)
 static inline void
 mmap_enable_fork(void *p, size_t size, bool inherit)
 {
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND)
+        return;
+#endif
+
 #ifdef __linux
     madvise(p, size, inherit ? MADV_DOFORK : MADV_DONTFORK);
 #else
@@ -80,6 +117,13 @@ mmap_enable_fork(void *p, size_t size, bool inherit)
 static inline void
 mmap_discard_pages(void *p, size_t size)
 {
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND) {
+        VALGRIND_MAKE_MEM_UNDEFINED(p, size);
+        return;
+    }
+#endif
+
 #ifdef __linux
     madvise(p, size, MADV_DONTNEED);
 #else
