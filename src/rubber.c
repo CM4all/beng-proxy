@@ -546,7 +546,7 @@ rubber_new(size_t size)
     if (r == NULL)
         return NULL;
 
-    int flags = MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE;
+    int flags = MAP_ANONYMOUS|MAP_PRIVATE;
 
     void *p = mmap(NULL, size,
                    PROT_READ|PROT_WRITE, flags,

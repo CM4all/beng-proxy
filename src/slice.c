@@ -121,7 +121,7 @@ slice_area_is_empty(const struct slice_area *area)
 static struct slice_area *
 slice_area_new(struct slice_pool *pool)
 {
-    int flags = MAP_ANONYMOUS|MAP_PRIVATE|MAP_NORESERVE;
+    int flags = MAP_ANONYMOUS|MAP_PRIVATE;
     void *p = mmap(NULL, pool->area_size,
                    PROT_READ|PROT_WRITE, flags,
                    -1, 0);
