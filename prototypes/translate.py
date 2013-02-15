@@ -373,6 +373,13 @@ class Translation(Protocol):
             response.path(os.path.join(demo_path, 'hello.txt'))
             stamp_path = '/tmp/stamp'
             response.validate_mtime(os.stat(stamp_path).st_mtime, stamp_path)
+        elif uri == '/per_host/invalidate':
+            response.path(os.path.join(demo_path, 'hello.txt'))
+            response.invalidate(TRANSLATE_HOST)
+            response.max_age(0)
+        elif uri[:10] == '/per_host/':
+            response.path(os.path.join(demo_path, 'hello.txt'))
+            response.vary(TRANSLATE_HOST)
         elif uri == '/check':
             if check is None:
                 response.packet(TRANSLATE_CHECK, 'ok')

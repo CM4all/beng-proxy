@@ -136,6 +136,18 @@ struct translate_response {
     } validate_mtime;
 };
 
+gcc_pure
+static inline bool
+translate_response_vary_contains(const struct translate_response *response,
+                                 uint16_t cmd)
+{
+    for (unsigned i = 0; i < response->num_vary; ++i)
+        if (response->vary[i] == cmd)
+            return true;
+
+    return false;
+}
+
 void
 translate_response_copy(struct pool *pool, struct translate_response *dest,
                         const struct translate_response *src);

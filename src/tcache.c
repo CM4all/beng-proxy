@@ -13,12 +13,14 @@
 #include "widget-class.h"
 #include "cache.h"
 #include "stock.h"
-#include "strmap.h"
+#include "hashmap.h"
 #include "uri-address.h"
 #include "uri-verify.h"
 #include "strref-pool.h"
 #include "slice.h"
 #include "beng-proxy/translation.h"
+
+#include <inline/list.h>
 
 #include <time.h>
 #include <string.h>
@@ -28,6 +30,14 @@
 
 struct tcache_item {
     struct cache_item item;
+
+    /**
+     * A double linked list of cache items with the same HOST request
+     * string.  Only those that had VARY=HOST in the response are
+     * added to the list.  Check list_empty() on this attribute to
+     * check whether this item lives in such a list.
+     */
+    struct list_head per_host_siblings;
 
     struct pool *pool;
 
@@ -50,11 +60,35 @@ struct tcache_item {
     GRegex *regex, *inverse_regex;
 };
 
+struct tcache_per_host {
+    /**
+     * A double-linked list of #tcache_items (by its attribute
+     * per_host_siblings).
+     *
+     * This must be the first attribute in the struct.
+     */
+    struct list_head items;
+
+    struct tcache *tcache;
+
+    /**
+     * A pointer to the hashmap key, for use with p_free().
+     */
+    char *host;
+};
+
 struct tcache {
     struct pool *pool;
     struct slice_pool *slice_pool;
 
     struct cache *cache;
+
+    /**
+     * This hash table maps each host name to a #tcache_per.  This is
+     * used to optimize the common INVALIDATE=HOST response, to avoid
+     * traversing the whole cache.
+     */
+    struct hashmap *per_host;
 
     struct tstock *stock;
 };
@@ -86,6 +120,66 @@ static const GRegexCompileFlags default_regex_compile_flags =
 #else
 #define cache_log(...) do {} while (0)
 #endif
+
+static struct tcache_item *
+cast_per_host_sibling_to_item(struct list_head *lh)
+{
+    return (struct tcache_item *)(((char *)lh) - offsetof(struct tcache_item,
+                                                          per_host_siblings));
+}
+
+static void
+tcache_add_per_host(struct tcache *tcache, struct tcache_item *item)
+{
+    assert(translate_response_vary_contains(&item->response, TRANSLATE_HOST));
+
+    const char *host = item->request.host;
+    if (host == NULL)
+        host = "";
+
+    struct tcache_per_host *per_host = hashmap_get(tcache->per_host, host);
+    if (per_host == NULL) {
+        per_host = p_malloc(tcache->pool, sizeof(*per_host));
+        list_init(&per_host->items);
+        per_host->tcache = tcache;
+        per_host->host = p_strdup(tcache->pool, host);
+
+        hashmap_add(tcache->per_host, per_host->host, per_host);
+    }
+
+    list_add(&item->per_host_siblings, &per_host->items);
+}
+
+static void
+tcache_remove_per_host(struct tcache_item *item)
+{
+    assert(!list_empty(&item->per_host_siblings));
+    assert(translate_response_vary_contains(&item->response, TRANSLATE_HOST));
+
+    struct list_head *next = item->per_host_siblings.next;
+    list_remove(&item->per_host_siblings);
+
+    if (list_empty(next)) {
+        /* if the next item is now empty, this can only be the
+           per_host object - delete it */
+        struct tcache_per_host *per_host = (struct tcache_per_host *)next;
+
+        const char *host = item->request.host;
+        if (host == NULL)
+            host = "";
+
+        assert(strcmp(per_host->host, host) == 0);
+
+        struct tcache *tcache = per_host->tcache;
+
+        gcc_unused
+        const void *old = hashmap_remove(tcache->per_host, host);
+        assert(old == per_host);
+
+        p_free(tcache->pool, per_host->host);
+        p_free(tcache->pool, per_host);
+    }
+}
 
 static const char *
 tcache_uri_key(struct pool *pool, const char *uri, const char *host,
@@ -573,6 +667,40 @@ tcache_invalidate_match(const struct cache_item *_item, void *ctx)
     return true;
 }
 
+static unsigned
+translate_cache_invalidate_host(struct tcache *tcache, const char *host)
+{
+    if (host == NULL)
+        host = "";
+
+    struct tcache_per_host *per_host = hashmap_get(tcache->per_host, host);
+    if (per_host == NULL)
+        return 0;
+
+    assert(per_host->tcache == tcache);
+    assert(strcmp(per_host->host, host) == 0);
+
+    unsigned n_removed = 0;
+    bool done;
+    do {
+        assert(!list_empty(&per_host->items));
+
+        struct tcache_item *item =
+            cast_per_host_sibling_to_item(per_host->items.next);
+
+        /* we're done when we're about to remove the last item - the
+           last item will destroy the #tcache_per_host object, so we
+           need to check the condition before removing the cache
+           item */
+        done = item->per_host_siblings.next == &per_host->items;
+
+        cache_remove_item(tcache->cache, item->item.key, &item->item);
+        ++n_removed;
+    } while (!done);
+
+    return n_removed;
+}
+
 void
 translate_cache_invalidate(struct tcache *tcache,
                            const struct translate_request *request,
@@ -586,9 +714,13 @@ translate_cache_invalidate(struct tcache *tcache,
         .site = site,
     };
 
+    /* TODO: optimize the case when there is more than just
+       TRANSLATE_HOST */
     gcc_unused
-    unsigned removed = cache_remove_all_match(tcache->cache,
-                                              tcache_invalidate_match, &data);
+    unsigned removed = num_vary == 1 && vary[0] == TRANSLATE_HOST
+        ? translate_cache_invalidate_host(tcache, request->host)
+        : cache_remove_all_match(tcache->cache,
+                                 tcache_invalidate_match, &data);
     cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
 }
 
@@ -695,6 +827,11 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
             }
         } else
             item->inverse_regex = NULL;
+
+        if (translate_response_vary_contains(response, TRANSLATE_HOST))
+            tcache_add_per_host(tcr->tcache, item);
+        else
+            list_init(&item->per_host_siblings);
 
         cache_put_match(tcr->tcache->cache, key, &item->item,
                         tcache_item_match, tcr);
@@ -838,6 +975,9 @@ tcache_destroy(struct cache_item *_item)
 {
     struct tcache_item *item = (struct tcache_item *)_item;
 
+    if (!list_empty(&item->per_host_siblings))
+        tcache_remove_per_host(item);
+
     if (item->regex != NULL)
         g_regex_unref(item->regex);
 
@@ -870,6 +1010,7 @@ translate_cache_new(struct pool *pool, struct tstock *stock,
     tcache->pool = pool;
     tcache->slice_pool = slice_pool_new(1024, 65536);
     tcache->cache = cache_new(pool, &tcache_class, 65521, max_size);
+    tcache->per_host = hashmap_new(pool, 3779);
     tcache->stock = stock;
 
     return tcache;
