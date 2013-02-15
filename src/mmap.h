@@ -47,8 +47,13 @@ static inline void *
 mmap_alloc_anonymous(size_t size)
 {
 #ifdef VALGRIND
-    if (RUNNING_ON_VALGRIND)
-        return malloc(size);
+    if (RUNNING_ON_VALGRIND) {
+        void *p = malloc(size);
+        if (p == NULL)
+            /* emulate mmap() error value */
+            p = (void *)-1;
+        return p;
+    }
 #endif
 
     int flags = MAP_ANONYMOUS|MAP_PRIVATE;
