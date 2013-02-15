@@ -4,6 +4,7 @@ cm4all-beng-proxy (3.0.12) unstable; urgency=low
   * rubber: optimize huge page allocation
   * rubber: optimize hole search
   * translate-cache: optimize INVALIDATE=HOST
+  * filter-cache: reserve some space in the rubber allocator
 
  --   
 
