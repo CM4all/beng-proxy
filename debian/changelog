@@ -6,7 +6,7 @@ cm4all-beng-proxy (3.0.12) unstable; urgency=low
   * translate-cache: optimize INVALIDATE=HOST
   * filter-cache: reserve some space in the rubber allocator
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 15 Feb 2013 09:57:51 -0000
 
 cm4all-beng-proxy (3.0.11) unstable; urgency=low
 
