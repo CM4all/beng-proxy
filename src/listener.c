@@ -146,7 +146,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
     }
 #endif
 
-    ret = listen(listener->fd, 16);
+    ret = listen(listener->fd, 64);
     if (ret < 0) {
         set_error_errno_msg(error_r, "Failed to listen");
         close(listener->fd);
