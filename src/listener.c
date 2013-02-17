@@ -132,7 +132,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
         return NULL;
     }
 
-    ret = listen(listener->fd, 16);
+    ret = listen(listener->fd, 64);
     if (ret < 0) {
         g_set_error(error_r, g_file_error_quark(), errno,
                     "Failed to listen: %s", strerror(errno));
