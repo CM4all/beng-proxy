@@ -3,7 +3,7 @@ cm4all-beng-proxy (2.3.6) unstable; urgency=low
   * listener: increase the backlog to 64
   * shm: reserve swap space, avoids theoretical crash
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Sun, 17 Feb 2013 09:29:24 -0000
 
 cm4all-beng-proxy (2.3.5) unstable; urgency=low
 
