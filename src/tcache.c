@@ -884,7 +884,7 @@ tcache_hit(struct pool *pool, const char *uri, const char *key,
     cache_log(4, "translate_cache: hit %s\n", key);
 
     GError *error = NULL;
-    if (!tcache_load_response(pool, response, &item->response, key, &error)) {
+    if (!tcache_load_response(pool, response, &item->response, uri, &error)) {
         handler->error(error, ctx);
         return;
     }
