@@ -4,7 +4,7 @@ cm4all-beng-proxy (3.0.13) unstable; urgency=low
   * uri-verify: allow double slashes
   * change product token to "CM4all Webserver"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 18 Feb 2013 11:35:29 -0000
 
 cm4all-beng-proxy (3.0.12) unstable; urgency=low
 
