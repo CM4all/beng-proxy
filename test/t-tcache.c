@@ -303,6 +303,20 @@ test_basic(struct pool *pool, struct tcache *cache)
     static const struct translate_request request10 = {
         .uri = "/foo//bar",
     };
+    static const struct translate_response response10 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/srv/foo//bar",
+                },
+            },
+        },
+        .base = "/foo/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+    expected_response = &response10;
     translate_cache(pool, cache, &request10,
                     &my_translate_handler, NULL, &async_ref);
 

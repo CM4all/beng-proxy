@@ -31,11 +31,6 @@ uri_path_verify(const char *src, size_t length)
         /* path must begin with slash */
         return false;
 
-    if (length >= 2 && src[1] == '/')
-        /* double slash is not allowed in the first path segment, see
-           RFC 2396 3.3 */
-        return false;
-
     ++src;
     while (src < end) {
         slash = memchr(src, '/', end - src);
@@ -85,9 +80,6 @@ uri_path_verify_paranoid(const char *uri)
                 return false;
         } else if (*uri == '/') {
             ++uri;
-
-            if (*uri == '/')
-                return false;
 
             if (is_encoded_dot(uri))
                 /* encoded dot after a slash - what's this client
