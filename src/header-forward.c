@@ -12,6 +12,7 @@
 #include "cookie_client.h"
 #include "growing-buffer.h"
 #include "pool.h"
+#include "product.h"
 
 #ifndef NDEBUG
 #include <daemon/log.h>
@@ -116,7 +117,7 @@ forward_user_agent(struct strmap *dest, const struct strmap *src,
         ? strmap_get_checked(src, "user-agent")
         : NULL;
     if (p == NULL)
-        p = "beng-proxy v" VERSION;
+        p = PRODUCT_TOKEN;
 
     strmap_add(dest, "user-agent", p);
 }

@@ -35,6 +35,7 @@
 #include "istream.h"
 #include "tvary.h"
 #include "date.h"
+#include "product.h"
 
 #include <daemon/log.h>
 
@@ -437,7 +438,7 @@ more_response_headers(const struct request *request2,
     /* RFC 2616 3.8: Product Tokens */
     header_write(headers, "server", request2->product_token != NULL
                  ? request2->product_token
-                 : "beng-proxy/" VERSION);
+                 : PRODUCT_TOKEN);
 
 #ifndef NO_DATE_HEADER
     /* RFC 2616 14.18: Date */

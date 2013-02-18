@@ -21,6 +21,7 @@
 #include "direct.h"
 #include "fd-util.h"
 #include "strmap.h"
+#include "product.h"
 
 #include <glib.h>
 
@@ -972,7 +973,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
                           "PATH_INFO", path_info,
                           "QUERY_STRING", query_string,
                           "DOCUMENT_ROOT", document_root,
-                          "SERVER_SOFTWARE", "beng-proxy v" VERSION,
+                          "SERVER_SOFTWARE", PRODUCT_TOKEN,
                           NULL);
 
     if (remote_addr != NULL)

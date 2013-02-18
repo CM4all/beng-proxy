@@ -11,6 +11,7 @@
 #include "strutil.h"
 #include "strmap.h"
 #include "sigutil.h"
+#include "product.h"
 
 #include <daemon/log.h>
 
@@ -76,7 +77,7 @@ cgi_run(const struct jail_params *jail,
     setenv("PATH_INFO", path_info, 1);
     setenv("QUERY_STRING", query_string, 1);
     setenv("DOCUMENT_ROOT", document_root, 1);
-    setenv("SERVER_SOFTWARE", "beng-proxy v" VERSION, 1);
+    setenv("SERVER_SOFTWARE", PRODUCT_TOKEN, 1);
 
     if (remote_addr != NULL)
         setenv("REMOTE_ADDR", remote_addr, 1);

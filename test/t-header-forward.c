@@ -1,6 +1,7 @@
 #include "header-forward.h"
 #include "tpool.h"
 #include "strmap.h"
+#include "product.h"
 
 #include <glib.h>
 
@@ -94,7 +95,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   false, false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
-    assert(g_str_has_prefix(strmap_remove(out, "user-agent"), "beng-proxy"));
+    assert(strcmp(strmap_remove(out, "user-agent"), PRODUCT_TOKEN) == 0);
     check_strmap(out, "accept-charset=utf-8;"
                  "via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
 
@@ -167,7 +168,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   false, false, false, false,
                                   &settings,
                                   NULL, NULL, NULL);
-    assert(g_str_has_prefix(strmap_remove(out, "user-agent"), "beng-proxy"));
+    assert(strcmp(strmap_remove(out, "user-agent"), PRODUCT_TOKEN) == 0);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
