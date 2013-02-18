@@ -5,6 +5,6 @@
 #ifndef BENG_PROXY_PRODUCT_H
 #define BENG_PROXY_PRODUCT_H
 
-#define PRODUCT_TOKEN "beng-proxy v" VERSION
+#define PRODUCT_TOKEN "CM4all Webserver v" VERSION
 
 #endif
