@@ -300,6 +300,9 @@ stock_clear_idle(struct stock *stock)
         list_remove(&item->list_head);
         --stock->num_idle;
 
+        if (stock->num_idle == stock->max_idle)
+            stock_unschedule_cleanup(stock);
+
         destroy_item(stock, item);
     }
 
