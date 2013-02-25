@@ -1,6 +1,7 @@
 cm4all-beng-proxy (3.0.14) unstable; urgency=low
 
   * stock: fix assertion failure during idle cleanup
+  * http-server: count bytes received, fixes regression
 
  --   
 

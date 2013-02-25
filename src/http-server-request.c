@@ -31,6 +31,7 @@ http_server_feed_body(struct http_server_connection *connection,
             ? BUFFERED_BLOCKING
             : BUFFERED_CLOSED;
 
+    connection->request.bytes_received += nbytes;
     buffered_socket_consumed(&connection->socket, nbytes);
 
     if (connection->request.read_state == READ_BODY &&

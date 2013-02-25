@@ -316,6 +316,7 @@ http_server_feed_headers(struct http_server_connection *connection,
     size_t consumed = 0;
     if (next != NULL) {
         consumed = next - buffer;
+        connection->request.bytes_received += consumed;
         buffered_socket_consumed(&connection->socket, consumed);
     }
 
