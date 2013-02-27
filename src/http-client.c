@@ -739,6 +739,7 @@ http_client_feed_headers(struct http_client *client,
         http_client_schedule_write(client);
 
         /* try again */
+        client->socket.expect_more = true;
         return BUFFERED_AGAIN;
     } else if (client->request.body != NULL) {
         /* the server begins sending a response - he's not interested
