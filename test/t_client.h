@@ -45,6 +45,9 @@ connect_tiny(void);
 #ifdef HAVE_EXPECT_100
 static struct connection *
 connect_twice_100(void);
+
+static struct connection *
+connect_close_100(void);
 #endif
 
 static struct connection *
@@ -983,6 +986,33 @@ test_twice_100(struct pool *pool, struct context *c)
     assert(c->body_error == NULL);
 }
 
+/**
+ * The server sends "100 Continue" and closes the socket.
+ */
+static void
+test_close_100(struct pool *pool, struct context *c)
+{
+    struct istream *request_body = istream_delayed_new(pool);
+    async_ref_clear(istream_delayed_async_ref(request_body));
+
+    c->connection = connect_close_100();
+    client_request(pool, c->connection, &my_lease, c,
+                   HTTP_METHOD_POST, "/foo", NULL, request_body, true,
+                   &my_response_handler, c, &c->async_ref);
+
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->aborted);
+    assert(c->request_error != NULL);
+    assert(strstr(c->request_error->message, "closed the socket prematurely") != NULL);
+    g_error_free(c->request_error);
+    assert(c->body_error == NULL);
+}
+
 #endif
 
 /**
@@ -1160,6 +1190,7 @@ run_all_tests(struct pool *pool)
 #ifdef HAVE_EXPECT_100
     run_test(pool, test_bogus_100);
     run_test(pool, test_twice_100);
+    run_test(pool, test_close_100);
 #endif
     run_test(pool, test_no_body_while_sending);
     run_test(pool, test_hold);

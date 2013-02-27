@@ -145,6 +145,40 @@ connect_twice_100(void)
 }
 
 static struct connection *
+connect_close_100(void)
+{
+    int sv[2];
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, sv) < 0) {
+        perror("socketpair() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork() failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid == 0) {
+        close(sv[0]);
+
+        static const char response[] = "HTTP/1.1 100 Continue\n\n";
+        write(sv[1], response, sizeof(response) - 1);
+        shutdown(sv[1], SHUT_WR);
+        exit(EXIT_SUCCESS);
+    }
+
+    close(sv[1]);
+
+    fd_set_nonblock(sv[0], 1);
+
+    static struct connection c;
+    c.pid = pid;
+    c.fd = sv[0];
+    return &c;
+}
+
+static struct connection *
 connect_hold(void)
 {
     return connect_server("./test/run_http_server", "hold");
