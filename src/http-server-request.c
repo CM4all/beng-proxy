@@ -93,6 +93,9 @@ http_server_request_stream_read(struct istream *istream)
         /* avoid recursion */
         return;
 
+    if (!http_server_maybe_send_100_continue(connection))
+        return;
+
     buffered_socket_read(&connection->socket);
 }
 
