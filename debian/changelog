@@ -5,7 +5,7 @@ cm4all-beng-proxy (3.0.14) unstable; urgency=low
   * http-server: send "100 Continue", fixes regression
   * http-client: fix potential assertion failure after "100 Continue"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 01 Mar 2013 16:53:54 -0000
 
 cm4all-beng-proxy (3.0.13) unstable; urgency=low
 
