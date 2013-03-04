@@ -18,19 +18,6 @@ struct istream_delayed {
 
 
 /*
- * istream handler
- *
- */
-
-static const struct istream_handler delayed_input_handler = {
-    .data = istream_forward_data,
-    .direct = istream_forward_direct,
-    .eof = istream_forward_eof,
-    .abort = istream_forward_abort,
-};
-
-
-/*
  * istream implementation
  *
  */
