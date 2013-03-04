@@ -22,6 +22,7 @@
 #include "strmap.h"
 #include "http-response.h"
 #include "istream.h"
+#include "istream_pause.h"
 
 #include <daemon/log.h>
 
@@ -283,6 +284,17 @@ embed_inline_widget(struct pool *pool, struct processor_env *env,
         return NULL;
     }
 
+    struct istream *request_body = NULL;
+    if (widget->from_request.body != NULL)
+        /* use a "paused" stream, to avoid a recursion bug: when
+           somebody within this stack frame attempts to read from it,
+           and the HTTP server trips on an I/O error, the HTTP request
+           gets cancelled, but the event cannot reach this stack
+           frame; by preventing reads on the request body, this
+           situation is avoided */
+        request_body = widget->from_request.body =
+            istream_pause_new(pool, widget->from_request.body);
+
     iw->pool = pool;
     iw->env = env;
     iw->widget = widget;
@@ -297,6 +309,9 @@ embed_inline_widget(struct pool *pool, struct processor_env *env,
                             istream_delayed_async_ref(iw->delayed));
     else
         inline_widget_set(iw);
+
+    if (request_body != NULL)
+        istream_pause_resume(request_body);
 
     return hold;
 }
