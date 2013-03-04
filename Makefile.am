@@ -585,6 +585,7 @@ libpool_a_SOURCES = \
 	src/pool.c src/pool.h
 
 libistream_a_SOURCES = \
+	src/istream_pause.c src/istream_pause.h \
 	src/istream-buffer.h \
 	src/istream-impl.h \
 	src/istream-internal.h \
