@@ -709,11 +709,11 @@ stock_del(struct stock_item *item)
     assert(item->list_head.next->prev == &item->list_head);
     assert(item->list_head.prev->next == &item->list_head);
 
-    if (stock->num_idle == stock->max_idle)
-        stock_unschedule_cleanup(stock);
-
     list_remove(&item->list_head);
     --stock->num_idle;
+
+    if (stock->num_idle == stock->max_idle)
+        stock_unschedule_cleanup(stock);
 
     destroy_item(stock, item);
     stock_schedule_check_empty(stock);

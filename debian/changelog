@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.15) unstable; urgency=low
 
-  * 
+  * stock: fix another assertion failure during idle cleanup
 
  --   
 
