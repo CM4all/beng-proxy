@@ -285,15 +285,19 @@ embed_inline_widget(struct pool *pool, struct processor_env *env,
     }
 
     struct istream *request_body = NULL;
-    if (widget->from_request.body != NULL)
+    if (widget->from_request.body != NULL) {
         /* use a "paused" stream, to avoid a recursion bug: when
            somebody within this stack frame attempts to read from it,
            and the HTTP server trips on an I/O error, the HTTP request
            gets cancelled, but the event cannot reach this stack
            frame; by preventing reads on the request body, this
            situation is avoided */
-        request_body = widget->from_request.body =
-            istream_pause_new(pool, widget->from_request.body);
+        request_body = istream_pause_new(pool, widget->from_request.body);
+
+        /* wrap it in istream_hold, because (most likely) the original
+           request body was an istream_hold, too */
+        widget->from_request.body = istream_hold_new(pool, request_body);
+    }
 
     iw->pool = pool;
     iw->env = env;
