@@ -3,7 +3,7 @@ cm4all-beng-proxy (3.0.15) unstable; urgency=low
   * stock: fix another assertion failure during idle cleanup
   * inline-widget: avoid unrecoverable I/O errors during initialisation
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 05 Mar 2013 07:11:46 -0000
 
 cm4all-beng-proxy (3.0.14) unstable; urgency=low
 
