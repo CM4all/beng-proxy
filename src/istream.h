@@ -206,9 +206,9 @@ istream_available(struct istream *istream, bool partial)
 
 #ifndef NDEBUG
     assert(available >= -1);
-
-    if (pool_denotify(&notify) || istream->destroyed)
-        return available;
+    assert(!pool_denotify(&notify));
+    assert(!istream->destroyed);
+    assert(istream->reading);
 
     istream->reading = false;
 
