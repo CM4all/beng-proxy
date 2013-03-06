@@ -161,10 +161,10 @@ http_request_stock_error(GError *error, void *ctx)
 {
     struct http_request *hr = ctx;
 
-    http_response_handler_invoke_abort(&hr->handler, error);
-
     if (hr->body != NULL)
         istream_close_unused(hr->body);
+
+    http_response_handler_invoke_abort(&hr->handler, error);
 }
 
 static const struct stock_get_handler http_request_stock_handler = {
