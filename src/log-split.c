@@ -209,7 +209,7 @@ escape_string(const char *value, char *const buffer, size_t buffer_size)
         if (harmless_char(ch))
             *p++ = ch;
         else
-            p += sprintf(p, "\\x%02X", ch);
+            p += sprintf(p, "\\x%02X", (unsigned char)ch);
     }
 
     *p = 0;
