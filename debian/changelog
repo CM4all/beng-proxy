@@ -3,7 +3,7 @@ cm4all-beng-proxy (3.0.16) unstable; urgency=low
   * http-request: fix assertion failure
   * log-{cat,split}: use unsigned characters in backslash-escape
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 07 Mar 2013 15:26:26 -0000
 
 cm4all-beng-proxy (3.0.15) unstable; urgency=low
 
