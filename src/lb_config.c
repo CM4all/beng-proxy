@@ -1023,14 +1023,20 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (!listener->ssl)
                 return throw(error_r, "SSL is not enabled");
 
-            bool value = false;
-            if (!next_bool(&p, &value, error_r))
-                return false;
+            const char *value = next_value(&p);
+            if (value == NULL)
+                return throw(error_r, "yes/no expected");
+
+            if (strcmp(value, "yes") == 0)
+                listener->ssl_config.verify = SSL_VERIFY_YES;
+            else if (strcmp(value, "no") == 0)
+                listener->ssl_config.verify = SSL_VERIFY_NO;
+            else
+                return throw(error_r, "yes/no expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            listener->ssl_config.verify = value;
             return true;
         } else if (strcmp(word, "protocol") == 0 ||
                    strcmp(word, "profile") == 0 ||

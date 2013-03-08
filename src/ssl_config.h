@@ -9,6 +9,11 @@
 
 #include <stdbool.h>
 
+enum ssl_verify {
+    SSL_VERIFY_NO,
+    SSL_VERIFY_YES,
+};
+
 struct ssl_config {
     const char *cert_file;
 
@@ -16,7 +21,7 @@ struct ssl_config {
 
     const char *ca_cert_file;
 
-    bool verify;
+    enum ssl_verify verify;
 };
 
 static inline void
@@ -24,7 +29,7 @@ ssl_config_clear(struct ssl_config *config)
 {
     config->cert_file = config->key_file = NULL;
     config->ca_cert_file = NULL;
-    config->verify = false;
+    config->verify = SSL_VERIFY_NO;
 }
 
 static inline bool

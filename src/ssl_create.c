@@ -64,7 +64,7 @@ apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
         SSL_CTX_set_client_CA_list(ssl_ctx, list);
     }
 
-    if (config->verify)
+    if (config->verify != SSL_VERIFY_NO)
         /* enable client certificates */
         SSL_CTX_set_verify(ssl_ctx,
                            SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
