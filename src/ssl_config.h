@@ -12,6 +12,7 @@
 enum ssl_verify {
     SSL_VERIFY_NO,
     SSL_VERIFY_YES,
+    SSL_VERIFY_OPTIONAL,
 };
 
 struct ssl_config {

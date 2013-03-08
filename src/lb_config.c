@@ -1031,6 +1031,8 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
                 listener->ssl_config.verify = SSL_VERIFY_YES;
             else if (strcmp(value, "no") == 0)
                 listener->ssl_config.verify = SSL_VERIFY_NO;
+            else if (strcmp(value, "optional") == 0)
+                listener->ssl_config.verify = SSL_VERIFY_OPTIONAL;
             else
                 return throw(error_r, "yes/no expected");
 

@@ -64,11 +64,15 @@ apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
         SSL_CTX_set_client_CA_list(ssl_ctx, list);
     }
 
-    if (config->verify != SSL_VERIFY_NO)
+    if (config->verify != SSL_VERIFY_NO) {
         /* enable client certificates */
-        SSL_CTX_set_verify(ssl_ctx,
-                           SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
-                           verify_callback);
+        int mode = SSL_VERIFY_PEER;
+
+        if (config->verify == SSL_VERIFY_YES)
+            mode |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
+
+        SSL_CTX_set_verify(ssl_ctx, mode, verify_callback);
+    }
 
     return true;
 }
