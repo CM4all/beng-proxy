@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.18) unstable; urgency=low
 
-  * 
+  * bot: detect more crawler/bot user-agents
 
  --   
 
