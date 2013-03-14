@@ -126,5 +126,3 @@ aclocal.m4
 *.pc
 perf.data
 perf.data.old
-
-cm4all-beng-proxy-*
