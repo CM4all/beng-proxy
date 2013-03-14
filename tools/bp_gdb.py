@@ -168,9 +168,6 @@ class DumpPoolStats(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "bp_dump_pool_stats", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
 
-    def _dump_refs(self, head):
-        pass
-
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
         if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
@@ -178,12 +175,28 @@ class DumpPoolStats(gdb.Command):
             return
 
         print "pool '%s' type=%d" % (pool['name'].string(), pool['type'])
-        #print "refs:"
-        #self._dump_refs(pool['refs'])
-        #print "unrefs:"
-        #self._dump_refs(pool['unrefs'])
         print "size", pool_sizes(pool)
         print "recursive_size", pool_recursive_sizes(pool)
+
+class DumpPoolRefs(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_dump_pool_refs", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
+
+    def _dump_refs(self, pool, label, head):
+        print "pool '%s' %s:" % (pool['name'].string(), label)
+
+        ref_pointer = gdb.lookup_type('struct pool_ref').pointer()
+        for r in for_each_list_item_reverse(head, ref_pointer):
+            print '%4u %s:%u' % (r['count'], r['file'].string().replace('../', ''), r['line'])
+
+    def invoke(self, arg, from_tty):
+        pool = gdb.parse_and_eval(arg)
+        if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
+            print "%s is not a pool*" % arg_list[0]
+            return
+
+        for i in ('refs', 'unrefs'):
+            self._dump_refs(pool, i, pool[i])
 
 class DumpPoolAllocations(gdb.Command):
     def __init__(self):
@@ -192,7 +205,7 @@ class DumpPoolAllocations(gdb.Command):
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
         if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
-            print "%s is not a strmap*" % arg_list[0]
+            print "%s is not a pool*" % arg_list[0]
             return
 
         allocation_pointer = gdb.lookup_type('struct allocation_info').pointer()
@@ -229,5 +242,6 @@ DumpHashmap()
 DumpHashmap2()
 DumpStrmap()
 DumpPoolStats()
+DumpPoolRefs()
 DumpPoolAllocations()
 DumpPools()
