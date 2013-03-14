@@ -134,6 +134,8 @@ struct pool_notify {
 
     struct pool *pool;
 
+    const char *name;
+
     bool destroyed, registered;
 
 #ifdef TRACE

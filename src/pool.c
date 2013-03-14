@@ -820,6 +820,7 @@ pool_notify(struct pool *pool, struct pool_notify *notify)
 {
     list_add(&notify->siblings, &pool->notify);
     notify->pool = pool;
+    notify->name = pool->name;
     notify->registered = true;
     notify->destroyed = 0;
 }
