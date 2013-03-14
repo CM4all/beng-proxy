@@ -141,6 +141,9 @@ struct pool_notify {
 #ifdef TRACE
     const char *file;
     int line;
+
+    const char *destroyed_file;
+    int destroyed_line;
 #endif
 };
 

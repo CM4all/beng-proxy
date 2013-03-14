@@ -499,7 +499,7 @@ pool_check_attachments(struct pool *pool)
 }
 
 static void
-pool_destroy(struct pool *pool, struct pool *reparent_to)
+pool_destroy(struct pool *pool, struct pool *reparent_to TRACE_ARGS_DECL)
 {
     assert(pool->ref == 0);
     assert(pool->parent == NULL);
@@ -519,6 +519,11 @@ pool_destroy(struct pool *pool, struct pool *reparent_to)
         struct pool_notify *notify = (struct pool_notify *)pool->notify.next;
         list_remove(&notify->siblings);
         notify->destroyed = 1;
+
+#ifdef TRACE
+        notify->destroyed_file = file;
+        notify->destroyed_line = line;
+#endif
     }
 
     if (pool->trashed)
@@ -698,7 +703,7 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
 #ifdef DUMP_POOL_UNREF
         pool_dump_refs(pool);
 #endif
-        pool_destroy(pool, reparent_to);
+        pool_destroy(pool, reparent_to TRACE_ARGS_FWD);
         return 0;
     }
 
