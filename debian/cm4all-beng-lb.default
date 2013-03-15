@@ -10,6 +10,9 @@
 # Which user should workshop run as?
 #LOGGER_USER=cm4all-logger
 
+# Process which receives the access log
+#ACCESS_LOGGER="exec /usr/bin/cm4all-beng-proxy-log-split /var/log/cm4all/access-log/access_log-%{year}%{month}%{day}"
+
 # Use a different configuration file?
 #CONFIG_FILE="/etc/cm4all/beng/lb.conf"
 
