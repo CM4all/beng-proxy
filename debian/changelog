@@ -3,7 +3,7 @@ cm4all-beng-proxy (3.0.18) unstable; urgency=low
   * bot: detect more crawler/bot user-agents
   * lb.init: add ACCESS_LOGGER variable
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 15 Mar 2013 14:47:08 -0000
 
 cm4all-beng-proxy (3.0.17) unstable; urgency=low
 
