@@ -146,14 +146,16 @@ tee_input_eof(void *ctx)
 
     tee->input = NULL;
 
-    if (tee->outputs[0].enabled) {
-        tee->outputs[0].enabled = false;
-        istream_deinit_eof(&tee->outputs[0].istream);
-    }
+    /* clean up in reverse order */
 
     if (tee->outputs[1].enabled) {
         tee->outputs[1].enabled = false;
         istream_deinit_eof(&tee->outputs[1].istream);
+    }
+
+    if (tee->outputs[0].enabled) {
+        tee->outputs[0].enabled = false;
+        istream_deinit_eof(&tee->outputs[0].istream);
     }
 
     pool_unref(tee->outputs[0].istream.pool);
@@ -170,14 +172,16 @@ tee_input_abort(GError *error, void *ctx)
 
     tee->input = NULL;
 
-    if (tee->outputs[0].enabled) {
-        tee->outputs[0].enabled = false;
-        istream_deinit_abort(&tee->outputs[0].istream, g_error_copy(error));
-    }
+    /* clean up in reverse order */
 
     if (tee->outputs[1].enabled) {
         tee->outputs[1].enabled = false;
         istream_deinit_abort(&tee->outputs[1].istream, g_error_copy(error));
+    }
+
+    if (tee->outputs[0].enabled) {
+        tee->outputs[0].enabled = false;
+        istream_deinit_abort(&tee->outputs[0].istream, g_error_copy(error));
     }
 
     g_error_free(error);
