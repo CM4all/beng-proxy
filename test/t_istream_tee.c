@@ -139,6 +139,37 @@ test_close_data(struct pool *pool)
     g_string_free(ctx.value, true);
 }
 
+/**
+ * Close the second output after data has been consumed only by the
+ * first output.  This verifies that istream_tee's "skip" attribute is
+ * obeyed properly.
+ */
+static void
+test_close_skipped(struct pool *pool)
+{
+    struct ctx ctx = {
+        .value = NULL,
+        .eof = false,
+        .aborted = false,
+    };
+    struct async_operation_ref async_ref;
+
+    struct istream *input = istream_string_new(pool, "foo");
+    struct istream *tee = istream_tee_new(pool, input, false, false);
+    sink_gstring_new(pool, tee, buffer_callback, &ctx, &async_ref);
+
+    struct istream *second = istream_tee_second(tee);
+    sink_close_new(second);
+
+    assert(ctx.value == NULL);
+
+    istream_read(input);
+
+    assert(ctx.value != NULL);
+    assert(strcmp(ctx.value->str, "foo") == 0);
+    g_string_free(ctx.value, true);
+}
+
 
 /*
  * main
@@ -161,6 +192,7 @@ int main(int argc, char **argv) {
 
     test_block1(root_pool);
     test_close_data(root_pool);
+    test_close_skipped(root_pool);
 
     /* cleanup */
 
