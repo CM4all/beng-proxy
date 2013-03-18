@@ -24,6 +24,7 @@
 #include "escape_css.h"
 #include "istream.h"
 #include "istream-replace.h"
+#include "istream_tee.h"
 
 #include <daemon/log.h>
 

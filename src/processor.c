@@ -36,6 +36,7 @@
 #include "istream-internal.h"
 #include "istream-replace.h"
 #include "istream-catch.h"
+#include "istream_tee.h"
 
 #include <daemon/log.h>
 

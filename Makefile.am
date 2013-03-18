@@ -619,7 +619,7 @@ libistream_a_SOURCES = \
 	src/istream-catch.c istream-catch.h \
 	src/istream-later.c \
 	src/istream-head.c \
-	src/istream-tee.c \
+	src/istream_tee.c src/istream_tee.h \
 	src/istream-replace.c \
 	src/istream-socket.c src/istream-socket.h \
 	src/istream-socketpair.c \
@@ -981,7 +981,7 @@ test_t_sink_header_empty_SOURCES = test/t-sink-header-empty.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_sink_header_empty_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_tee_SOURCES = test/t-istream-tee.c \
+test_t_istream_tee_SOURCES = test/t_istream_tee.c \
 	src/sink-gstring.c \
 	src/sink-close.c \
 	$(T_ISTREAM_FILTER_SRC)

@@ -22,6 +22,7 @@
 #include "rubber.h"
 #include "sink_rubber.h"
 #include "istream_rubber.h"
+#include "istream_tee.h"
 
 #include <glib.h>
 

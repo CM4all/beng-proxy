@@ -23,6 +23,7 @@
 #include "slice.h"
 #include "istream_rubber.h"
 #include "sink_rubber.h"
+#include "istream_tee.h"
 #include "async.h"
 
 #include <event.h>

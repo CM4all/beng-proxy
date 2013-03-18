@@ -4,6 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_tee.h"
 #include "istream-internal.h"
 
 #include <assert.h>

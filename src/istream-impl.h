@@ -140,22 +140,6 @@ struct istream *
 istream_head_new(struct pool *pool, struct istream *input, size_t size,
                  bool authoritative);
 
-/**
- * Create two new streams fed from one input.
- *
- * @param input the istream which is duplicated
- * @param first_weak if true, closes the whole object if only the
- * first output remains
- * @param second_weak if true, closes the whole object if only the
- * second output remains
- */
-struct istream *
-istream_tee_new(struct pool *pool, struct istream *input,
-                bool first_weak, bool second_weak);
-
-struct istream *
-istream_tee_second(struct istream *istream);
-
 struct istream *
 istream_iconv_new(struct pool *pool, struct istream *input,
                   const char *tocode, const char *fromcode);

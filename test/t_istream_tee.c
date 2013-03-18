@@ -1,3 +1,4 @@
+#include "istream_tee.h"
 #include "istream.h"
 #include "async.h"
 #include "sink-gstring.h"
