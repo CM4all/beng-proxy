@@ -123,6 +123,7 @@ http_cache_key(struct pool *pool, const struct resource_address *address)
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
     case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_NFS:
         /* not cacheable */
         return NULL;
 

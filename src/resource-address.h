@@ -12,6 +12,7 @@
 #include "file-address.h"
 #include "uri-address.h"
 #include "cgi-address.h"
+#include "nfs_address.h"
 #include "jail.h"
 
 #include <glib.h>
@@ -27,7 +28,8 @@ enum resource_address_type {
     RESOURCE_ADDRESS_CGI,
     RESOURCE_ADDRESS_FASTCGI,
     RESOURCE_ADDRESS_WAS,
-    RESOURCE_ADDRESS_AJP
+    RESOURCE_ADDRESS_AJP,
+    RESOURCE_ADDRESS_NFS,
 };
 
 struct resource_address {
@@ -39,6 +41,8 @@ struct resource_address {
         const struct uri_with_address *http;
 
         const struct cgi_address *cgi;
+
+        const struct nfs_address *nfs;
     } u;
 };
 

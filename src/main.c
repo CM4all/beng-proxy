@@ -48,6 +48,10 @@
 
 #include <event.h>
 
+#ifdef HAVE_LIBNFS
+#include "nfs_stock.h"
+#endif
+
 #ifndef NDEBUG
 bool debug_mode = false;
 #endif
@@ -138,6 +142,11 @@ shutdown_callback(void *ctx)
 
     if (instance->delegate_stock != NULL)
         hstock_free(instance->delegate_stock);
+
+#ifdef HAVE_LIBNFS
+    if (instance->nfs_stock != NULL)
+        nfs_stock_free(instance->nfs_stock);
+#endif
 
     if (instance->pipe_stock != NULL)
         stock_free(instance->pipe_stock);
@@ -339,11 +348,17 @@ int main(int argc, char **argv)
                                        instance.config.was_stock_max_idle);
 
     instance.delegate_stock = delegate_stock_new(instance.pool);
+
+#ifdef HAVE_LIBNFS
+    instance.nfs_stock = nfs_stock_new(instance.pool);
+#endif
+
     instance.resource_loader = resource_loader_new(instance.pool,
                                                    instance.tcp_balancer,
                                                    instance.fcgi_stock,
                                                    instance.was_stock,
-                                                   instance.delegate_stock);
+                                                   instance.delegate_stock,
+                                                   instance.nfs_stock);
 
     instance.http_cache = http_cache_new(instance.pool,
                                          instance.config.http_cache_size,
@@ -366,6 +381,7 @@ int main(int argc, char **argv)
     global_fcgi_stock = instance.fcgi_stock;
     global_was_stock = instance.was_stock;
     global_delegate_stock = instance.delegate_stock;
+    global_nfs_stock = instance.nfs_stock;
     global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;
 

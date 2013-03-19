@@ -72,6 +72,17 @@ PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],,
 PKG_CHECK_MODULES([LIBSSL], [openssl],,
 	[AC_MSG_ERROR([OpenSSL not found])])
 
+AC_ARG_ENABLE(nfs,
+	AS_HELP_STRING([--enable-nfs],
+		[Enable the NFS client (default: disabled)]),,
+	enable_nfs=no)
+AM_CONDITIONAL(HAVE_LIBNFS, test x$enable_nfs = xyes)
+if test x$enable_nfs = xyes; then
+	AC_DEFINE_UNQUOTED([HAVE_LIBNFS], 1)
+	PKG_CHECK_MODULES([LIBNFS], [libnfs],,
+		[AC_MSG_ERROR([libnfs not found])])
+fi
+
 PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.3],,
 	[AC_MSG_ERROR([libcm4all-daemon not found])])
 

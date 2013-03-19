@@ -23,6 +23,10 @@
 #include "strmap.h"
 #include "istream.h"
 
+#ifdef HAVE_LIBNFS
+#include "nfs_request.h"
+#endif
+
 #include <socket/parser.h>
 
 #include <string.h>
@@ -33,6 +37,10 @@ struct resource_loader {
     struct hstock *fcgi_stock;
     struct hstock *was_stock;
     struct hstock *delegate_stock;
+
+#ifdef HAVE_LIBNFS
+    struct nfs_stock *nfs_stock;
+#endif
 };
 
 static inline GQuark
@@ -44,7 +52,8 @@ resource_loader_quark(void)
 struct resource_loader *
 resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
-                    struct hstock *delegate_stock)
+                    struct hstock *delegate_stock,
+                    struct nfs_stock *nfs_stock)
 {
     assert(fcgi_stock != NULL);
 
@@ -54,6 +63,12 @@ resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
     rl->fcgi_stock = fcgi_stock;
     rl->was_stock = was_stock;
     rl->delegate_stock = delegate_stock;
+
+#ifdef HAVE_LIBNFS
+    rl->nfs_stock = nfs_stock;
+#else
+    (void)nfs_stock;
+#endif
 
     return rl;
 }
@@ -167,6 +182,23 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         static_file_get(pool, address->u.local.path,
                         address->u.local.content_type,
                         handler, handler_ctx);
+        return;
+
+    case RESOURCE_ADDRESS_NFS:
+#ifdef HAVE_LIBNFS
+        if (body != NULL)
+            /* NFS files cannot receive a request body, close it */
+            istream_close_unused(body);
+
+        nfs_request(pool, rl->nfs_stock,
+                    address->u.nfs->server, address->u.nfs->export,
+                    address->u.nfs->path,
+                    handler, handler_ctx, async_ref);
+#else
+        http_response_handler_direct_abort(handler, handler_ctx,
+                                           g_error_new_literal(resource_loader_quark(), 0,
+                                                               "libnfs disabled"));
+#endif
         return;
 
     case RESOURCE_ADDRESS_PIPE:

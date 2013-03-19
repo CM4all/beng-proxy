@@ -222,6 +222,7 @@ handle_translated_request(struct request *request,
             file_callback(request);
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP ||
                resource_address_is_cgi_alike(&response->address) ||
+               response->address.type == RESOURCE_ADDRESS_NFS ||
                response->address.type == RESOURCE_ADDRESS_AJP) {
         proxy_handler(request);
     } else if (response->redirect != NULL) {

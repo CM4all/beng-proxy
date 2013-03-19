@@ -79,6 +79,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
     case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_NFS:
         break;
 
     case RESOURCE_ADDRESS_HTTP:

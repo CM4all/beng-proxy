@@ -89,6 +89,18 @@ class Response:
             self.packet(TRANSLATE_ADDRESS_STRING, address)
         return self
 
+    def nfs(self, server, export, path):
+        """Generate an NFS address."""
+
+        assert isinstance(server, str)
+        assert isinstance(export, str)
+        assert isinstance(path, str)
+
+        self.packet(TRANSLATE_NFS_SERVER, server)
+        self.packet(TRANSLATE_NFS_EXPORT, export)
+        self.packet(TRANSLATE_PATH, path)
+        return self
+
     def max_age(self, seconds):
         assert isinstance(seconds, int)
         return self.packet(TRANSLATE_MAX_AGE, struct.pack('I', seconds))

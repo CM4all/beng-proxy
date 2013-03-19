@@ -50,6 +50,10 @@ print_resource_address(const struct resource_address *address)
     case RESOURCE_ADDRESS_AJP:
         printf("ajp=%s\n", address->u.http->path);
         break;
+
+    case RESOURCE_ADDRESS_NFS:
+        printf("nfs=%s:%s\n", address->u.nfs->server, address->u.nfs->path);
+        break;
     }
 }
 

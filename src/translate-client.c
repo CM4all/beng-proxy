@@ -88,6 +88,9 @@ struct translate_client {
     /** the current CGI/FastCGI/WAS address being edited */
     struct cgi_address *cgi_address;
 
+    /** the current NFS address being edited */
+    struct nfs_address *nfs_address;
+
     /** the current address list being edited */
     struct address_list *address_list;
 
@@ -528,6 +531,7 @@ add_view(struct translate_client *client, const char *name)
     client->jail = NULL;
     client->file_address = NULL;
     client->cgi_address = NULL;
+    client->nfs_address = NULL;
     client->address_list = NULL;
     client->transformation_tail = &view->transformation;
     client->transformation = NULL;
@@ -714,6 +718,7 @@ translate_handle_packet(struct translate_client *client,
         client->jail = NULL;
         client->file_address = NULL;
         client->cgi_address = NULL;
+        client->nfs_address = NULL;
         client->address_list = NULL;
 
         client->response.request_header_forward =
@@ -781,6 +786,17 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_PATH:
+        if (client->nfs_address != NULL && *client->nfs_address->path == 0) {
+            if (payload == NULL || *payload != '/') {
+                translate_client_error(client,
+                                       "malformed TRANSLATE_PATH packet");
+                return false;
+            }
+
+            client->nfs_address->path = payload;
+            return true;
+        }
+
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             translate_client_error(client, "misplaced TRANSLATE_PATH packet");
@@ -820,9 +836,17 @@ translate_handle_packet(struct translate_client *client,
             translate_client_error(client,
                                    "misplaced TRANSLATE_EXPAND_PATH packet");
             return false;
+        } else if (client->nfs_address != NULL &&
+                   client->nfs_address->expand_path == NULL) {
+            client->nfs_address->expand_path = payload;
+            return true;
         } else if (client->cgi_address != NULL &&
                    client->cgi_address->expand_path == NULL) {
             client->cgi_address->expand_path = payload;
+            return true;
+        } else if (client->nfs_address != NULL &&
+                   client->nfs_address->expand_path == NULL) {
+            client->nfs_address->expand_path = payload;
             return true;
         } else if (client->file_address != NULL &&
                    client->file_address->expand_path == NULL) {
@@ -932,6 +956,7 @@ translate_handle_packet(struct translate_client *client,
         client->jail = NULL;
         client->file_address = NULL;
         client->cgi_address = NULL;
+        client->nfs_address = NULL;
         client->address_list = NULL;
         return true;
 
@@ -1194,6 +1219,38 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->address_list = &uwa->addresses;
+        return true;
+
+    case TRANSLATE_NFS_SERVER:
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_NONE) {
+            translate_client_error(client, "misplaced TRANSLATE_NFS_SERVER packet");
+            return false;
+        }
+
+        if (payload == NULL) {
+            translate_client_error(client, "malformed TRANSLATE_NFS_SERVER packet");
+            return false;
+        }
+
+        client->resource_address->type = RESOURCE_ADDRESS_NFS;
+        client->resource_address->u.nfs = client->nfs_address =
+            nfs_address_new(client->pool, payload, "", "");
+        return true;
+
+    case TRANSLATE_NFS_EXPORT:
+        if (client->nfs_address == NULL ||
+            *client->nfs_address->export != 0) {
+            translate_client_error(client, "misplaced TRANSLATE_NFS_EXPORT packet");
+            return false;
+        }
+
+        if (payload == NULL || *payload != '/') {
+            translate_client_error(client, "malformed TRANSLATE_NFS_EXPORT packet");
+            return false;
+        }
+
+        client->nfs_address->export = payload;
         return true;
 
     case TRANSLATE_JAILCGI:

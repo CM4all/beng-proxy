@@ -53,6 +53,7 @@ resource_address_has_query_string(const struct resource_address *address)
     switch (address->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_NFS:
         return false;
 
     case RESOURCE_ADDRESS_HTTP:

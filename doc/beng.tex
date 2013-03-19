@@ -547,6 +547,33 @@ filters.  The same can be achieved with CGI, but pipes are simpler to
 implement, because they do not need to bother with HTTP status code
 and headers.
 
+\subsection{NFS}
+\label{nfs}
+
+When compiled with \texttt{libnfs} support (\texttt{--enable-nfs}),
+\emph{beng-proxy} can serve files right from a NFSv3 server without
+having to mount it locally.  The NFS server must accept ``insecure''
+connections, that is connections from non-privileged source ports.
+Don't fear, calling it ``insecure'' is an exaggeration; that option's
+name was chosen long ago, when people thought the concept of
+``privileged ports'' would benefit security.
+
+Three translation response packets are necessary to construct an NFS
+resource address; example:
+
+\begin{verbatim}
+NFS_SERVER "1.2.3.4"
+NFS_EXPORT "/srv/nfs/foo"
+PATH "/index.html"
+\end{verbatim}
+
+This mounts the path \texttt{/srv/nfs/foo} from server
+\texttt{1.2.3.4} and serves the file \texttt{index.html}.  The
+trailing slashes are necessary.
+
+The options above are compatible with \verb|BASE| and
+\verb|EXPAND_PATH|.
+
 
 \section{Translation}
 
@@ -757,6 +784,16 @@ prints the modified resource on stdout (see \ref{pipe}). \\
 
 \verb|APPEND| & appends an argument to the command line of the
 preceding \verb|PIPE| \\
+
+\hline
+
+\verb|NFS_SERVER| & Mount the specified NFS server (see \ref{nfs}).
+The payload is a string specifying the server's IP address. \\
+
+\hline
+
+\verb|NFS_EXPORT| & Mount the specified path from the NFS server
+specified right before this packet (see \ref{nfs}) \\
 
 \hline
 

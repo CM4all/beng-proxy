@@ -31,6 +31,7 @@ AM_CPPFLAGS += \
 	$(LIBEVENT_CFLAGS) \
 	$(LIBATTR_CFLAGS) \
 	$(LIBZ_CFLAGS) \
+	$(LIBNFS_CFLAGS) \
 	-DSPLICE \
 	-D_GNU_SOURCE
 INCLUDES = -I$(srcdir)/src -I$(srcdir)/include
@@ -279,6 +280,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/translate-response.c rc/translate-response.h \
 	src/tvary.c src/tvary.h \
 	src/file-address.c src/file-address.h \
+	src/nfs_address.c src/nfs_address.h \
 	src/proxy-handler.c \
 	src/errdoc.c \
 	src/widget.c \
@@ -352,8 +354,16 @@ src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBEVENT_LIBS) \
 	$(LIBATTR_LIBS) \
+	$(LIBNFS_LIBS) \
 	$(LIBZ_LIBS)
 src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
+
+if HAVE_LIBNFS
+src_cm4all_beng_proxy_SOURCES += \
+	src/nfs_stock.c src/nfs_stock.h \
+	src/nfs_client.c src/nfs_client.h \
+	src/nfs_request.c src/nfs_request.h
+endif
 
 src_cm4all_beng_lb_SOURCES = \
 	src/abort-close.c src/abort-close.h \
@@ -672,6 +682,10 @@ noinst_PROGRAMS = \
 	test/run_ua_parser \
 	test/run-parser-cdata
 
+if HAVE_LIBNFS
+noinst_PROGRAMS += test/run_nfs_client
+endif
+
 FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk \
 	test/t-istream-pipe test/t-istream-hold test/t-istream-delayed \
 	test/t-istream-subst test/t-istream-deflate test/t-istream-byte \
@@ -801,6 +815,7 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/resource-address.c src/uri-address.c \
 	src/file-address.c \
 	src/cgi-address.c \
+	src/nfs_address.c \
 	src/widget-view.c \
 	src/jail.c \
 	src/regex.c \
@@ -843,6 +858,7 @@ test_t_stock_LDADD = $(AM_LDADD) \
 
 test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/resource-address.c src/file-address.c src/cgi-address.c \
+	src/nfs_address.c \
 	src/jail.c \
 	src/regex.c \
 	src/uri-address.c src/uri-relative.c \
@@ -964,6 +980,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/resource-address.c src/global.c src/transformation.c \
 	src/file-address.c \
 	src/cgi-address.c \
+	src/nfs_address.c \
 	src/jail.c \
 	src/regex.c \
 	src/expansible-buffer.c \
@@ -1133,6 +1150,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/resource-address.c src/uri-address.c \
 	src/file-address.c \
 	src/cgi-address.c \
+	src/nfs_address.c \
 	src/jail.c \
 	src/regex.c \
 	src/uri-edit.c src/uri-relative.c src/uri-escape.c src/uri-verify.c \
@@ -1229,6 +1247,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/resource-address.c src/uri-address.c \
 	src/file-address.c \
 	src/cgi-address.c \
+	src/nfs_address.c \
 	src/address_list.c \
 	src/jail.c \
 	src/regex.c \
@@ -1251,6 +1270,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/strset.c \
 	src/resource-address.c src/file-address.c src/cgi-address.c \
+	src/nfs_address.c \
 	src/jail.c \
 	src/regex.c \
 	src/uri-relative.c src/uri-verify.c src/uri-escape.c src/uri-edit.c \
@@ -1300,6 +1320,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/resource-address.c src/uri-address.c \
 	src/file-address.c \
 	src/cgi-address.c \
+	src/nfs_address.c \
 	src/address_list.c \
 	src/jail.c \
 	src/regex.c \
@@ -1345,6 +1366,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/uri-address.c src/uri-edit.c src/uri-base.c \
 	src/uri-escape.c src/uri-relative.c src/uri-verify.c \
 	src/uri-extract.c \
+	src/nfs_address.c \
 	src/address_list.c \
 	src/format.c \
 	src/widget-view.c \
@@ -1435,6 +1457,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/resource-address.c src/jail.c src/transformation.c \
 	src/file-address.c \
 	src/cgi-address.c \
+	src/nfs_address.c \
 	src/regex.c \
 	src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \
@@ -1472,6 +1495,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/resource-address.c src/jail.c src/transformation.c \
 	src/file-address.c \
 	src/cgi-address.c \
+	src/nfs_address.c \
 	src/regex.c \
 	src/failure.c src/bulldog.c \
 	src/balancer.c src/uri-address.c src/cache.c \
@@ -1508,6 +1532,25 @@ test_run_client_balancer_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
+
+if HAVE_LIBNFS
+
+test_run_nfs_client_SOURCES = test/run_nfs_client.c \
+	src/nfs_client.c \
+	src/hashmap.c \
+	src/sink_fd.c \
+	src/direct.c \
+	src/fd_util.c src/fd-util.c \
+	src/stock.c src/pipe-stock.c \
+	src/shutdown_listener.c
+test_run_nfs_client_LDADD = $(AM_LDADD) \
+	libistream.a libpool.a libmemory.a \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBEVENT_LIBS) \
+	$(LIBNFS_LIBS) \
+	$(GLIB_LIBS)
+endif
 
 test_t_fcgi_client_SOURCES = test/t_fcgi_client.c \
 	src/fcgi-client.c src/fcgi-serialize.c \

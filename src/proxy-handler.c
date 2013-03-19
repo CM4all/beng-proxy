@@ -70,6 +70,7 @@ proxy_response(http_status_t status, struct strmap *headers,
     const struct translate_response *tr = request2->translate.response;
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
+           tr->address.type == RESOURCE_ADDRESS_NFS ||
            resource_address_is_cgi_alike(&tr->address));
 #endif
 
@@ -101,6 +102,7 @@ proxy_handler(struct request *request2)
 
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
+           tr->address.type == RESOURCE_ADDRESS_NFS ||
            resource_address_is_cgi_alike(&tr->address));
 
     const char *host_and_port = NULL, *uri_p = NULL;

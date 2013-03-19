@@ -299,6 +299,18 @@ enum beng_translation_command {
      * or is inaccessible.
      */
     TRANSLATE_VALIDATE_MTIME = 94,
+
+    /**
+     * Mount a NFS share.  This packet specifies the server (IP
+     * address).
+     */
+    TRANSLATE_NFS_SERVER = 95,
+
+    /**
+     * Mount a NFS share.  This packet specifies the export path to be
+     * mounted from the server.
+     */
+    TRANSLATE_NFS_EXPORT = 96,
 };
 
 struct beng_translation_header {

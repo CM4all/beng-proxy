@@ -32,6 +32,7 @@ debian/stamp-configure-debug: debian/stamp-autogen
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		--includedir=/usr/include/cm4all/libbeng-proxy-0 \
+		--enable-nfs \
 		--enable-documentation \
 		--enable-debug
 	touch $@
@@ -43,6 +44,7 @@ debian/stamp-configure-optimized: debian/stamp-autogen
 		--disable-dependency-tracking \
 		--prefix=/usr \
 		--sysconfdir=/etc \
+		--enable-nfs \
 		--disable-documentation \
 		--disable-debug
 	touch $@
@@ -54,6 +56,7 @@ debian/stamp-configure-toi: debian/stamp-autogen
 		--disable-dependency-tracking \
 		--prefix=/usr \
 		--sysconfdir=/etc \
+		--enable-nfs \
 		--disable-documentation \
 		--disable-debug \
 		--with-session-id=20
