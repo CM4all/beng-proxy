@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.20) unstable; urgency=low
 
-  * 
+  * http-client: fix assertion failure with certain chunked responses
 
  --   
 

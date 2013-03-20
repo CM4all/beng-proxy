@@ -517,6 +517,11 @@ http_client_headers_finished(struct http_client *client)
                 return false;
             }
             content_length = (off_t)-1;
+
+            /* we must reset this flag because the response body ends
+               when the socket gets closed, and we don't know how much
+               will come */
+            client->socket.expect_more = false;
         } else {
             char *endptr;
             content_length = (off_t)strtoull(content_length_string,
@@ -692,7 +697,10 @@ http_client_feed_body(struct http_client *client,
     if (nbytes < length)
         return BUFFERED_PARTIAL;
 
-    if (client->response.body_reader.rest > 0)
+    if (client->response.body_reader.rest > 0 ||
+        /* the expect_more flag is true when the response body is
+           chunked */
+        client->socket.expect_more)
         return BUFFERED_MORE;
 
     return BUFFERED_OK;
