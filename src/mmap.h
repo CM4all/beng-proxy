@@ -86,7 +86,7 @@ mmap_enable_huge_pages(void *p, size_t size)
         return;
 #endif
 
-#ifdef __linux
+#if defined(__linux) && defined(MADV_HUGEPAGE)
     madvise(p, size, MADV_HUGEPAGE);
 #else
     (void)p;
