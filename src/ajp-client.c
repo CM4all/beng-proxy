@@ -961,6 +961,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     }
 
     /* Content-Length */
+
     if (body != NULL)
         ++num_headers;
 
@@ -968,7 +969,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     if (headers != NULL)
         growing_buffer_cat(gb, headers_buffer);
 
-    off_t available = 0;
+    off_t available = -1;
 
     size_t requested;
     if (body != NULL) {
@@ -991,7 +992,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
             requested = 1024;
     }
 
-    if (body != NULL) {
+    if (available >= 0) {
         char buffer[32];
         format_uint64(buffer, (uint64_t)available);
         serialize_ajp_integer(gb, AJP_HEADER_CONTENT_LENGTH);
