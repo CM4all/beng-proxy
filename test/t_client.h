@@ -1142,6 +1142,43 @@ test_premature_close_body(struct pool *pool, struct context *c)
 
 #endif
 
+/**
+ * POST with empty request body.
+ */
+static void
+test_post_empty(struct pool *pool, struct context *c)
+{
+    c->connection = connect_mirror();
+    client_request(pool, c->connection, &my_lease, c,
+                   HTTP_METHOD_POST, "/foo", NULL,
+                   istream_null_new(pool),
+#ifdef HAVE_EXPECT_100
+                   false,
+#endif
+                   &my_response_handler, c, &c->async_ref);
+    pool_unref(pool);
+    pool_commit();
+
+    event_dispatch();
+
+    if (c->body != NULL)
+        istream_read(c->body);
+
+    event_dispatch();
+
+    assert(c->released);
+    assert(c->status == HTTP_STATUS_OK ||
+           c->status == HTTP_STATUS_NO_CONTENT);
+    assert(c->content_length == NULL ||
+           strcmp(c->content_length, "0") == 0);
+    assert(c->available == -2);
+    assert(!c->body_eof);
+    assert(!c->body_abort);
+    assert(c->body_data == 0);
+    assert(c->request_error == NULL);
+    assert(c->body_error == NULL);
+}
+
 
 /*
  * main
@@ -1200,4 +1237,5 @@ run_all_tests(struct pool *pool)
 #ifdef ENABLE_PREMATURE_CLOSE_BODY
     run_test(pool, test_premature_close_body);
 #endif
+    run_test(pool, test_post_empty);
 }
