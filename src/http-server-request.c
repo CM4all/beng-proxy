@@ -24,12 +24,20 @@ http_server_feed_body(struct http_server_connection *connection,
         /* the handler is not yet connected */
         return BUFFERED_BLOCKING;
 
+    struct pool *pool = connection->pool;
+    pool_ref(pool);
+
     size_t nbytes = http_body_feed_body(&connection->request.body_reader,
                                         data, length);
-    if (nbytes == 0)
-        return buffered_socket_valid(&connection->socket)
+    if (nbytes == 0) {
+        const bool valid = buffered_socket_valid(&connection->socket);
+        pool_unref(pool);
+        return valid
             ? BUFFERED_BLOCKING
             : BUFFERED_CLOSED;
+    }
+
+    pool_unref(pool);
 
     connection->request.bytes_received += nbytes;
     buffered_socket_consumed(&connection->socket, nbytes);
