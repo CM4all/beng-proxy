@@ -1,6 +1,7 @@
 cm4all-beng-proxy (3.0.22) unstable; urgency=low
 
   * http-server: fix rare crash in request body handler
+  * http-client: fix memory leak
 
  --   
 

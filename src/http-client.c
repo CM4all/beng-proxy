@@ -817,6 +817,9 @@ http_client_try_response_direct(struct http_client *client,
     }
 
     if (nbytes == ISTREAM_RESULT_EOF) {
+        if (client->request.istream != NULL)
+            istream_close_handler(client->request.istream);
+
         http_body_socket_eof(&client->response.body_reader, 0);
         http_client_release(client, false);
         return DIRECT_CLOSED;
