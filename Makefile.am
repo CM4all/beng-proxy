@@ -356,6 +356,7 @@ src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 
 src_cm4all_beng_lb_SOURCES = \
+	src/abort-close.c src/abort-close.h \
 	src/clock.c src/clock.h \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/format.c \

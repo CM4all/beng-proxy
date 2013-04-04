@@ -28,6 +28,7 @@
 #include "strmap.h"
 #include "failure.h"
 #include "bulldog.h"
+#include "abort-close.h"
 
 #include <http/status.h>
 #include <daemon/log.h>
@@ -38,6 +39,11 @@ struct lb_request {
     struct tcp_balancer *balancer;
 
     struct http_server_request *request;
+
+    /**
+     * The request body (wrapperd with istream_hold).
+     */
+    struct istream *body;
 
     struct async_operation_ref *async_ref;
 
@@ -226,7 +232,7 @@ my_stock_ready(struct stock_item *item, void *ctx)
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         &my_socket_lease, request2,
                         request->method, request->uri,
-                        headers2, request->body, true,
+                        headers2, request2->body, true,
                         &my_response_handler, request2,
                         request2->async_ref);
 }
@@ -240,8 +246,8 @@ my_stock_error(GError *error, void *ctx)
     log_error(2, connection, "Connect error", error);
     g_error_free(error);
 
-    if (request2->request->body != NULL)
-        istream_close_unused(request2->request->body);
+    if (request2->body != NULL)
+        istream_close_unused(request2->body);
 
     if (!send_fallback(request2->request,
                        &connection->listener->cluster->fallback))
@@ -278,6 +284,9 @@ lb_http_connection_request(struct http_server_request *request,
     request2->connection = connection;
     request2->balancer = connection->instance->tcp_balancer;
     request2->request = request;
+    request2->body = request->body != NULL
+        ? istream_hold_new(request->pool, request->body)
+        : NULL;
     request2->async_ref = async_ref;
     request2->new_cookie = 0;
 
@@ -314,7 +323,9 @@ lb_http_connection_request(struct http_server_request *request,
                      &cluster->address_list,
                      20,
                      &my_stock_handler, request2,
-                     async_ref);
+                     async_optional_close_on_abort(request->pool,
+                                                   request2->body,
+                                                   async_ref));
 }
 
 static void
