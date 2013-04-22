@@ -486,7 +486,9 @@ memcached_feed_value(struct memcached_client *client,
 
     client->response.remaining -= nbytes;
     if (client->response.remaining > 0)
-        return BUFFERED_MORE;
+        return nbytes < length
+            ? BUFFERED_PARTIAL
+            : BUFFERED_MORE;
 
     assert(!buffered_socket_connected(&client->socket));
     assert(client->request.istream == NULL);
