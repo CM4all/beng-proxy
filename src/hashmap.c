@@ -47,6 +47,16 @@ hashmap_new(struct pool *pool, unsigned capacity)
     return map;
 }
 
+bool
+hashmap_is_empty(const struct hashmap *map)
+{
+    for (unsigned i = 0; i < map->capacity; ++i)
+        if (map->slots[i].pair.key != NULL)
+            return false;
+
+    return true;
+}
+
 gcc_pure
 static struct slot *
 hashmap_get_slot(struct hashmap *map, const char *key)

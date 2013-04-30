@@ -21,6 +21,10 @@ struct hashmap_pair {
 struct hashmap *gcc_malloc
 hashmap_new(struct pool *pool, unsigned capacity);
 
+gcc_pure
+bool
+hashmap_is_empty(const struct hashmap *map);
+
 void
 hashmap_add(struct hashmap *map, const char *key, void *value);
 
