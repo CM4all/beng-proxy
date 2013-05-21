@@ -266,7 +266,7 @@ stock_schedule_retry_waiting(struct stock *stock)
 {
     static const struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
 
-    if (!list_empty(&stock->waiting) &&
+    if (stock->limit > 0 && !list_empty(&stock->waiting) &&
         stock->num_busy - stock->num_create < stock->limit)
         evtimer_add(&stock->retry_event, &tv);
 }
