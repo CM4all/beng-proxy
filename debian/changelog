@@ -2,7 +2,7 @@ cm4all-beng-proxy (3.1) unstable; urgency=low
 
   * nfs_client: new resource loader backend
 
- --
+ -- Max Kellermann <mk@cm4all.com>  Tue, 21 May 2013 21:14:06 -0000
 
 cm4all-beng-proxy (3.0.24) unstable; urgency=low
 
