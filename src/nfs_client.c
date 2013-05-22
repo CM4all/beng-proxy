@@ -672,13 +672,9 @@ nfs_file_request_operation_abort(struct async_operation *ao)
 {
     struct nfs_file_request *const request = operation_to_nfs_file_request(ao);
 
-    assert(!request->aborted);
-    request->aborted = true;
-
-    nfs_file_request_deactivate(request);
-
     pool_unref(request->caller_pool);
 
+    nfs_file_request_deactivate(request);
     nfs_file_request_release(request);
 }
 
