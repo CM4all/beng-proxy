@@ -50,6 +50,9 @@ load_xattr_content_type(char *buffer, size_t size, int fd)
 
     return false;
 #else
+    if (fd < 0)
+        return false;
+
     ssize_t nbytes = fgetxattr(fd, "user.Content-Type",
                                buffer, size - 1);
     if (nbytes <= 0)

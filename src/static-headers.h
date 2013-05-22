@@ -26,6 +26,10 @@ struct file_request {
     off_t size;
 };
 
+/**
+ * @param fd a file descriptor for loading xattr, or -1 to disable
+ * xattr
+ */
 void
 static_response_headers(struct pool *pool, struct strmap *headers,
                         int fd, const struct stat *st,
