@@ -222,6 +222,10 @@ nfs_file_request_deactivate(struct nfs_file_request *request)
 static bool
 nfs_file_request_can_release(const struct nfs_file_request *request)
 {
+    assert(request != NULL);
+    assert(request->file != NULL);
+    assert(nfs_file_is_ready(request->file));
+
     return request->pending_read == 0;
 }
 
@@ -232,7 +236,8 @@ nfs_file_request_can_release(const struct nfs_file_request *request)
 static void
 nfs_file_request_release(struct nfs_file_request *request)
 {
-    assert(nfs_file_request_can_release(request));
+    assert(!nfs_file_is_ready(request->file) ||
+           nfs_file_request_can_release(request));
 
     list_remove(&request->siblings);
     pool_unref(request->pool);
@@ -674,8 +679,7 @@ nfs_file_request_operation_abort(struct async_operation *ao)
 
     pool_unref(request->caller_pool);
 
-    if (nfs_file_request_can_release(request))
-        nfs_file_request_release(request);
+    nfs_file_request_release(request);
 }
 
 static const struct async_operation_class nfs_file_request_operation = {
