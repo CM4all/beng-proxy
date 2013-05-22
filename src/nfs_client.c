@@ -73,7 +73,14 @@ struct nfs_file_request {
 
     struct fifo_buffer *buffer;
 
-    bool aborted;
+    /**
+     * This is true if istream_close() has been called by the istream
+     * handler.  This object cannot be destroyed until libnfs has
+     * released the reference to this object (queued async call with
+     * private_data pointing to this object).  As soon as libnfs calls
+     * back, the object will finally be destroyed.
+     */
+    bool closed;
 };
 
 struct nfs_file {
@@ -443,7 +450,7 @@ nfs_read_cb(int status, gcc_unused struct nfs_context *nfs,
     request->pending_read = 0;
     request->discard_read = 0;
 
-    if (request->aborted) {
+    if (request->closed) {
         nfs_file_request_release(request);
         return;
     }
@@ -451,7 +458,6 @@ nfs_read_cb(int status, gcc_unused struct nfs_context *nfs,
     if (status < 0) {
         GError *error = nfs_client_new_error("nfs_pread_async() failed",
                                              status, data);
-        request->aborted = true;
         nfs_file_request_deactivate(request);
         istream_deinit_abort(&request->istream, error);
         nfs_file_request_release(request);
@@ -468,7 +474,7 @@ nfs_schedule_read(struct nfs_file_request *request)
     struct nfs_file *const file = request->file;
     struct nfs_client *const client = file->client;
 
-    assert(!request->aborted);
+    assert(!request->closed);
 
     if (request->pending_read > 0)
         return true;
@@ -486,7 +492,6 @@ nfs_schedule_read(struct nfs_file_request *request)
                                     "nfs_fstat_async() failed: %s",
                                     nfs_get_error(client->context));
 
-        request->aborted = true;
         nfs_file_request_deactivate(request);
         istream_deinit_abort(&request->istream, error);
         nfs_file_request_release(request);
@@ -568,7 +573,7 @@ istream_nfs_read(struct istream *istream)
 {
     struct nfs_file_request *request = istream_to_nfs_file_request(istream);
 
-    assert(!request->aborted);
+    assert(!request->closed);
 
     nfs_schedule_read(request);
 }
@@ -579,13 +584,12 @@ istream_nfs_close(struct istream *istream)
     struct nfs_file_request *const request =
         istream_to_nfs_file_request(istream);
 
-    if (!request->aborted) {
-        request->aborted = true;
+    assert(!request->closed);
+    request->closed = true;
 
-        nfs_file_request_deactivate(request);
-        if (nfs_file_request_can_release(request))
-            nfs_file_request_release(request);
-    }
+    nfs_file_request_deactivate(request);
+    if (nfs_file_request_can_release(request))
+        nfs_file_request_release(request);
 
     istream_deinit(&request->istream);
 }
@@ -615,6 +619,7 @@ nfs_file_request_submit(struct nfs_file_request *request)
         request->pending_read = 0;
         request->discard_read = 0;
         request->buffer = NULL;
+        request->closed = false;
         body = &request->istream;
     } else {
         body = istream_null_new(file->pool);
@@ -969,7 +974,6 @@ nfs_client_get_file(struct nfs_client *client, struct pool *caller_pool,
     request->file = file;
     request->pool = r_pool;
     request->caller_pool = caller_pool;
-    request->aborted = false;
     http_response_handler_set(&request->handler, handler, ctx);
 
     async_init(&request->operation, &nfs_file_request_operation);
