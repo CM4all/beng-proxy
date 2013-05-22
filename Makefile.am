@@ -1537,11 +1537,12 @@ if HAVE_LIBNFS
 
 test_run_nfs_client_SOURCES = test/run_nfs_client.c \
 	src/nfs_client.c \
-	src/hashmap.c \
+	src/hashmap.c src/strmap.c \
 	src/sink_fd.c \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c \
 	src/stock.c src/pipe-stock.c \
+	src/static-headers.c src/date.c src/gmtime.c \
 	src/shutdown_listener.c
 test_run_nfs_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \

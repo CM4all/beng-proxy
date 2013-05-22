@@ -12,6 +12,8 @@
 #include "istream-buffer.h"
 #include "fifo-buffer.h"
 #include "gerrno.h"
+#include "strmap.h"
+#include "static-headers.h"
 
 #include <inline/list.h>
 
@@ -618,6 +620,11 @@ nfs_file_request_submit(struct nfs_file_request *request)
     struct nfs_file *const file = request->file;
     assert(nfs_file_is_ready(file));
 
+    struct strmap *headers = strmap_new(request->caller_pool, 16);
+    static_response_headers(request->caller_pool, headers, -1, &file->stat,
+                            // TODO: content type from translation server
+                            NULL);
+
     struct istream *body;
     struct pool *caller_pool;
 
@@ -639,8 +646,7 @@ nfs_file_request_submit(struct nfs_file_request *request)
     http_response_handler_invoke_response(&request->handler,
                                           // TODO: handle revalidation etc.
                                           HTTP_STATUS_OK,
-                                          // TODO: headers
-                                          NULL,
+                                          headers,
                                           body);
 
     if (caller_pool != NULL)
