@@ -616,6 +616,7 @@ static void
 nfs_file_request_submit(struct nfs_file_request *request)
 {
     struct nfs_file *const file = request->file;
+    assert(nfs_file_is_ready(file));
 
     struct istream *body;
     struct pool *caller_pool;
@@ -649,6 +650,8 @@ nfs_file_request_submit(struct nfs_file_request *request)
 static void
 nfs_file_continue(struct nfs_file *file)
 {
+    assert(nfs_file_is_ready(file));
+
     struct list_head tmp_head;
     list_replace(&file->requests, &tmp_head);
     list_init(&file->requests);
