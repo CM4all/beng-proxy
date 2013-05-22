@@ -40,6 +40,27 @@ make_etag(char *p, const struct stat *st)
     *p = 0;
 }
 
+static bool
+load_xattr_content_type(char *buffer, size_t size, int fd)
+{
+#ifdef NO_XATTR
+    (void)buffer;
+    (void)size;
+    (void)fd;
+
+    return false;
+#else
+    ssize_t nbytes = fgetxattr(fd, "user.Content-Type",
+                               buffer, size - 1);
+    if (nbytes <= 0)
+        return false;
+
+    assert((size_t)nbytes < size);
+    buffer[nbytes] = 0;
+    return true;
+#endif
+}
+
 void
 static_response_headers(struct pool *pool, struct strmap *headers,
                         int fd, const struct stat *st,
@@ -47,27 +68,10 @@ static_response_headers(struct pool *pool, struct strmap *headers,
 {
     char buffer[256];
 
-#ifdef NO_XATTR
-    (void)fd;
-#endif
-
-    if (content_type == NULL) {
-#ifndef NO_XATTR
-        ssize_t nbytes;
-
-        nbytes = fgetxattr(fd, "user.Content-Type",
-                           buffer, sizeof(buffer) - 1);
-        if (nbytes > 0) {
-            assert((size_t)nbytes < sizeof(buffer));
-            buffer[nbytes] = 0;
-            content_type = p_strdup(pool, buffer);
-        } else {
-#endif /* #ifndef NO_XATTR */
-            content_type = "application/octet-stream";
-#ifndef NO_XATTR
-        }
-#endif /* #ifndef NO_XATTR */
-    }
+    if (content_type == NULL)
+        content_type = load_xattr_content_type(buffer, sizeof(buffer), fd)
+            ? p_strdup(pool, buffer)
+            : "application/octet-stream";
 
     strmap_add(headers, "content-type", content_type);
 
