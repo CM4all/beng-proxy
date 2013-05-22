@@ -251,6 +251,17 @@ nfs_file_request_release(struct nfs_file_request *request)
 }
 
 static void
+nfs_file_request_body_error(struct nfs_file_request *request, GError *error)
+{
+    nfs_file_request_deactivate(request);
+
+    istream_deinit_abort(&request->istream, error);
+
+    pool_unref(request->caller_pool);
+    nfs_file_request_release(request);
+}
+
+static void
 nfs_file_request_abort(struct nfs_file_request *request, GError *error)
 {
     nfs_file_request_deactivate(request);
@@ -459,10 +470,7 @@ nfs_read_cb(int status, gcc_unused struct nfs_context *nfs,
     if (status < 0) {
         GError *error = nfs_client_new_error("nfs_pread_async() failed",
                                              status, data);
-        nfs_file_request_deactivate(request);
-        istream_deinit_abort(&request->istream, error);
-        pool_unref(request->caller_pool);
-        nfs_file_request_release(request);
+        nfs_file_request_body_error(request, error);
         return;
     }
 
@@ -493,11 +501,7 @@ nfs_schedule_read(struct nfs_file_request *request)
         GError *error = g_error_new(nfs_client_quark(), 0,
                                     "nfs_fstat_async() failed: %s",
                                     nfs_get_error(client->context));
-
-        nfs_file_request_deactivate(request);
-        istream_deinit_abort(&request->istream, error);
-        pool_unref(request->caller_pool);
-        nfs_file_request_release(request);
+        nfs_file_request_body_error(request, error);
         return false;
     }
 
