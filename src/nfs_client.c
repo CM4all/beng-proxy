@@ -266,10 +266,7 @@ nfs_file_request_abort(struct nfs_file_request *request, GError *error)
 {
     nfs_file_request_deactivate(request);
 
-    if (http_response_handler_defined(&request->handler))
-        http_response_handler_invoke_abort(&request->handler, error);
-    else
-        istream_deinit_abort(&request->istream, error);
+    http_response_handler_invoke_abort(&request->handler, error);
 
     pool_unref(request->caller_pool);
     pool_unref(request->pool);
