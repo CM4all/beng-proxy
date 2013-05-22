@@ -255,12 +255,12 @@ nfs_file_request_abort(struct nfs_file_request *request, GError *error)
 {
     nfs_file_request_deactivate(request);
 
-    if (http_response_handler_defined(&request->handler)) {
+    if (http_response_handler_defined(&request->handler))
         http_response_handler_invoke_abort(&request->handler, error);
-        pool_unref(request->caller_pool);
-    } else
+    else
         istream_deinit_abort(&request->istream, error);
 
+    pool_unref(request->caller_pool);
     pool_unref(request->pool);
 }
 
@@ -431,6 +431,7 @@ nfs_read_from_buffer(struct nfs_file_request *request)
 
             nfs_file_request_deactivate(request);
             istream_deinit_eof(&request->istream);
+            pool_unref(request->caller_pool);
             nfs_file_request_release(request);
         }
     }
@@ -460,6 +461,7 @@ nfs_read_cb(int status, gcc_unused struct nfs_context *nfs,
                                              status, data);
         nfs_file_request_deactivate(request);
         istream_deinit_abort(&request->istream, error);
+        pool_unref(request->caller_pool);
         nfs_file_request_release(request);
         return;
     }
@@ -494,6 +496,7 @@ nfs_schedule_read(struct nfs_file_request *request)
 
         nfs_file_request_deactivate(request);
         istream_deinit_abort(&request->istream, error);
+        pool_unref(request->caller_pool);
         nfs_file_request_release(request);
         return false;
     }
@@ -584,6 +587,8 @@ istream_nfs_close(struct istream *istream)
     struct nfs_file_request *const request =
         istream_to_nfs_file_request(istream);
 
+    pool_unref(request->caller_pool);
+
     assert(!request->closed);
     request->closed = true;
 
@@ -612,6 +617,7 @@ nfs_file_request_submit(struct nfs_file_request *request)
     struct nfs_file *const file = request->file;
 
     struct istream *body;
+    struct pool *caller_pool;
 
     if (file->stat.st_size > 0) {
         request->offset = 0;
@@ -621,8 +627,10 @@ nfs_file_request_submit(struct nfs_file_request *request)
         request->buffer = NULL;
         request->closed = false;
         body = &request->istream;
+        caller_pool = NULL;
     } else {
         body = istream_null_new(file->pool);
+        caller_pool = request->caller_pool;
     }
 
     istream_init(&request->istream, &istream_nfs, request->pool);
@@ -632,7 +640,9 @@ nfs_file_request_submit(struct nfs_file_request *request)
                                           // TODO: headers
                                           NULL,
                                           body);
-    pool_unref(request->caller_pool);
+
+    if (caller_pool != NULL)
+        pool_unref(caller_pool);
 }
 
 static void
