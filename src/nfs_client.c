@@ -624,6 +624,7 @@ nfs_file_request_submit(struct nfs_file_request *request)
     static_response_headers(request->caller_pool, headers, -1, &file->stat,
                             // TODO: content type from translation server
                             NULL);
+    strmap_add(headers, "cache-control", "max-age=60");
 
     struct istream *body;
     struct pool *caller_pool;
