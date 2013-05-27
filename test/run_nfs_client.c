@@ -1,4 +1,5 @@
 #include "nfs_client.h"
+#include "istream_nfs.h"
 #include "shutdown_listener.h"
 #include "async.h"
 #include "pool.h"
@@ -95,14 +96,12 @@ static const struct sink_fd_handler my_sink_fd_handler = {
 };
 
 /*
- * http_response_handler
+ * nfs_client_open_file_handler
  *
  */
 
 static void
-my_http_response(gcc_unused http_status_t status,
-                 gcc_unused struct strmap *headers,
-                 struct istream *body, void *ctx)
+my_open_ready(struct nfs_file_handle *handle, const struct stat *st, void *ctx)
 {
     struct context *c = ctx;
 
@@ -110,16 +109,15 @@ my_http_response(gcc_unused http_status_t status,
     assert(!c->failed);
     assert(c->connected);
 
-    if (body != NULL) {
-        body = istream_pipe_new(c->pool, body, NULL);
-        c->body = sink_fd_new(c->pool, body, 1, guess_fd_type(1),
-                                &my_sink_fd_handler, ctx);
-        istream_read(body);
-    }
+    struct istream *body = istream_nfs_new(c->pool, handle, 0, st->st_size);
+    body = istream_pipe_new(c->pool, body, NULL);
+    c->body = sink_fd_new(c->pool, body, 1, guess_fd_type(1),
+                          &my_sink_fd_handler, ctx);
+    istream_read(body);
 }
 
 static void
-my_http_abort(GError *error, void *ctx)
+my_open_error(GError *error, void *ctx)
 {
     struct context *c = ctx;
 
@@ -136,9 +134,9 @@ my_http_abort(GError *error, void *ctx)
     nfs_client_free(c->client);
 }
 
-static const struct http_response_handler my_http_response_handler = {
-    .response = my_http_response,
-    .abort = my_http_abort,
+static const struct nfs_client_open_file_handler my_open_handler = {
+    .ready = my_open_ready,
+    .error = my_open_error,
 };
 
 /*
@@ -159,9 +157,9 @@ my_nfs_client_ready(struct nfs_client *client, void *ctx)
     c->connected = true;
     c->client = client;
 
-    nfs_client_get_file(client, c->pool, c->path,
-                        &my_http_response_handler, ctx,
-                        &c->async_ref);
+    nfs_client_open_file(client, c->pool, c->path,
+                         &my_open_handler, ctx,
+                         &c->async_ref);
 }
 
 static void

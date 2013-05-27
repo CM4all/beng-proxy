@@ -360,6 +360,7 @@ src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 
 if HAVE_LIBNFS
 src_cm4all_beng_proxy_SOURCES += \
+	src/istream_nfs.c src/istream_nfs.h \
 	src/nfs_stock.c src/nfs_stock.h \
 	src/nfs_client.c src/nfs_client.h \
 	src/nfs_request.c src/nfs_request.h
@@ -1536,7 +1537,7 @@ test_run_client_balancer_LDADD = $(AM_LDADD) \
 if HAVE_LIBNFS
 
 test_run_nfs_client_SOURCES = test/run_nfs_client.c \
-	src/nfs_client.c \
+	src/nfs_client.c src/istream_nfs.c \
 	src/hashmap.c src/strmap.c \
 	src/sink_fd.c \
 	src/direct.c \
