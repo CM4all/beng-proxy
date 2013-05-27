@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.1.2) unstable; urgency=low
 
-  * 
+  * nfs_client: read larger chunks
 
  --   
 

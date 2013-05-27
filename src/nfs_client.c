@@ -488,10 +488,11 @@ nfs_schedule_read(struct nfs_file_request *request)
     if (request->pending_read > 0)
         return true;
 
-    //static const size_t MAX_BUFFER = 8192;
-    static const size_t MAX_BUFFER = 3;
-    size_t nbytes = request->remaining > (off_t)MAX_BUFFER
-        ? MAX_BUFFER
+    const size_t max = request->buffer != NULL
+        ? fifo_buffer_space(request->buffer)
+        : NFS_BUFFER_SIZE;
+    size_t nbytes = request->remaining > (off_t)max
+        ? max
         : (size_t)request->remaining;
 
     if (nfs_pread_async(client->context, file->nfsfh,
