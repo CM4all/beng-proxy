@@ -45,6 +45,12 @@ fifo_buffer_new(struct pool *pool, size_t size);
 void
 fifo_buffer_clear(struct fifo_buffer *buffer);
 
+/**
+ * How much space is available for writing?
+ */
+size_t
+fifo_buffer_space(const struct fifo_buffer *buffer);
+
 size_t
 fifo_buffer_available(const struct fifo_buffer *buffer);
 

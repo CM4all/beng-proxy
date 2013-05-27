@@ -63,6 +63,17 @@ fifo_buffer_clear(struct fifo_buffer *buffer)
 }
 
 size_t
+fifo_buffer_space(const struct fifo_buffer *buffer)
+{
+    assert(buffer != NULL);
+    assert(buffer->end >= buffer->start);
+
+    return buffer->start == buffer->end
+        ? buffer->size
+        : buffer->size - buffer->end;
+}
+
+size_t
 fifo_buffer_available(const struct fifo_buffer *buffer)
 {
     assert(buffer != NULL);
