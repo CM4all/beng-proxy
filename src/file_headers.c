@@ -120,7 +120,10 @@ file_evaluate_request(struct request *request2,
             if (t != (time_t)-1 && st->st_mtime <= t) {
                 struct growing_buffer *headers = NULL;
                 headers = growing_buffer_new(request->pool, 512);
-                file_cache_headers(headers, fd, st);
+
+                if (fd >= 0)
+                    file_cache_headers(headers, fd, st);
+
                 write_translation_vary_header(headers,
                                               request2->translate.response);
 
@@ -178,6 +181,8 @@ void
 file_cache_headers(struct growing_buffer *headers,
                    int fd, const struct stat *st)
 {
+    assert(fd >= 0);
+
     char buffer[64];
 
 #ifdef NO_XATTR
@@ -233,7 +238,7 @@ file_response_headers(struct growing_buffer *headers,
                       int fd, const struct stat *st,
                       bool processor_enabled, bool processor_first)
 {
-    if (!processor_first)
+    if (!processor_first && fd >= 0)
         file_cache_headers(headers, fd, st);
 
     if (tr->address.u.local.content_type != NULL) {
