@@ -144,7 +144,7 @@ file_evaluate_request(struct request *request2,
         }
     }
 
-    if (request_transformation_enabled(request2)) {
+    if (!request_transformation_enabled(request2)) {
         p = strmap_get(request->headers, "if-match");
         if (p != NULL && strcmp(p, "*") != 0) {
             static_etag(buffer, st);
