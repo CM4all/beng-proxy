@@ -10,7 +10,6 @@
 #include <stdbool.h>
 
 struct growing_buffer;
-struct translate_response;
 struct request;
 struct stat;
 struct file_request;
@@ -26,7 +25,7 @@ file_cache_headers(struct growing_buffer *headers,
 
 void
 file_response_headers(struct growing_buffer *headers,
-                      const struct translate_response *tr,
+                      const char *override_content_type,
                       int fd, const struct stat *st,
                       bool processor_enabled, bool processor_first);
 

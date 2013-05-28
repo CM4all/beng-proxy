@@ -234,16 +234,16 @@ file_cache_headers(struct growing_buffer *headers,
 
 void
 file_response_headers(struct growing_buffer *headers,
-                      const struct translate_response *tr,
+                      const char *override_content_type,
                       int fd, const struct stat *st,
                       bool processor_enabled, bool processor_first)
 {
     if (!processor_first && fd >= 0)
         file_cache_headers(headers, fd, st);
 
-    if (tr->address.u.local.content_type != NULL) {
+    if (override_content_type != NULL) {
         /* content type override from the translation server */
-        header_write(headers, "content-type", tr->address.u.local.content_type);
+        header_write(headers, "content-type", override_content_type);
     } else {
 #ifndef NO_XATTR
         char content_type[256];
