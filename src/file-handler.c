@@ -7,6 +7,7 @@
 #include "file-handler.h"
 #include "request.h"
 #include "generate_response.h"
+#include "static-headers.h"
 #include "header-writer.h"
 #include "date.h"
 #include "format.h"
