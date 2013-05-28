@@ -26,6 +26,14 @@ struct nfs_request {
     struct async_operation_ref *async_ref;
 };
 
+static void
+nfs_request_error(GError *error, void *ctx)
+{
+    struct nfs_request *r = ctx;
+
+    http_response_handler_invoke_abort(&r->handler, error);
+}
+
 /*
  * nfs_client_open_file_handler
  *
@@ -58,17 +66,9 @@ nfs_open_ready(struct nfs_file_handle *handle, const struct stat *st,
                                           body);
 }
 
-static void
-nfs_open_error(GError *error, void *ctx)
-{
-    struct nfs_request *r = ctx;
-
-    http_response_handler_invoke_abort(&r->handler, error);
-}
-
 static const struct nfs_client_open_file_handler nfs_open_handler = {
     .ready = nfs_open_ready,
-    .error = nfs_open_error,
+    .error = nfs_request_error,
 };
 
 /*
@@ -85,17 +85,9 @@ nfs_request_stock_ready(struct nfs_client *client, void *ctx)
                          &nfs_open_handler, r, r->async_ref);
 }
 
-static void
-nfs_request_stock_error(GError *error, void *ctx)
-{
-    struct nfs_request *r = ctx;
-
-    http_response_handler_invoke_abort(&r->handler, error);
-}
-
 static const struct nfs_stock_get_handler nfs_request_stock_handler = {
     .ready = nfs_request_stock_ready,
-    .error = nfs_request_stock_error,
+    .error = nfs_request_error,
 };
 
 /*
