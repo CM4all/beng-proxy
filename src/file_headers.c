@@ -241,14 +241,8 @@ file_response_headers(struct growing_buffer *headers,
         header_write(headers, "content-type", tr->address.u.local.content_type);
     } else {
 #ifndef NO_XATTR
-        ssize_t nbytes;
         char content_type[256];
-
-        nbytes = fgetxattr(fd, "user.Content-Type",
-                           content_type, sizeof(content_type) - 1);
-        if (nbytes > 0) {
-            assert((size_t)nbytes < sizeof(content_type));
-            content_type[nbytes] = 0;
+        if (load_xattr_content_type(content_type, sizeof(content_type), fd)) {
             header_write(headers, "content-type", content_type);
         } else {
 #endif /* #ifndef NO_XATTR */

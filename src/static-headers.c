@@ -40,7 +40,7 @@ static_etag(char *p, const struct stat *st)
     *p = 0;
 }
 
-static bool
+bool
 load_xattr_content_type(char *buffer, size_t size, int fd)
 {
 #ifdef NO_XATTR

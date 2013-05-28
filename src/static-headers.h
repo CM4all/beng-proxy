@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_STATIC_HEADERS_H
 #define BENG_PROXY_STATIC_HEADERS_H
 
+#include <stdbool.h>
 #include <sys/types.h>
 
 struct pool;
@@ -28,6 +29,9 @@ struct file_request {
 
 void
 static_etag(char *p, const struct stat *st);
+
+bool
+load_xattr_content_type(char *buffer, size_t size, int fd);
 
 /**
  * @param fd a file descriptor for loading xattr, or -1 to disable
