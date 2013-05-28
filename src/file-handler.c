@@ -6,6 +6,7 @@
 
 #include "file-handler.h"
 #include "request.h"
+#include "generate_response.h"
 #include "header-writer.h"
 #include "date.h"
 #include "format.h"
@@ -98,22 +99,6 @@ make_etag(char *p, const struct stat *st)
 
     *p++ = '"';
     *p = 0;
-}
-
-static void
-method_not_allowed(struct request *request2, const char *allow)
-{
-    struct http_server_request *request = request2->request;
-    struct growing_buffer *headers = growing_buffer_new(request->pool, 128);
-
-    assert(allow != NULL);
-
-    header_write(headers, "content-type", "text/plain");
-    header_write(headers, "allow", allow);
-
-    response_dispatch(request2, HTTP_STATUS_METHOD_NOT_ALLOWED, headers,
-                      istream_string_new(request->pool,
-                                         "This method is not allowed."));
 }
 
 /**
