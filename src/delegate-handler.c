@@ -6,6 +6,7 @@
 
 #include "handler.h"
 #include "file-handler.h"
+#include "file_headers.h"
 #include "static-headers.h"
 #include "delegate-glue.h"
 #include "http-error.h"

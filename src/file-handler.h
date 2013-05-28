@@ -15,10 +15,6 @@ struct request;
 struct file_request;
 struct stat;
 
-bool
-file_evaluate_request(struct request *request2, int fd, const struct stat *st,
-                      struct file_request *file_request);
-
 void
 file_dispatch(struct request *request2, const struct stat *st,
               const struct file_request *file_request,
