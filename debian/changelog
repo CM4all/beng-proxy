@@ -1,7 +1,7 @@
 cm4all-beng-proxy (3.0.25) unstable; urgency=low
 
   * stock: fix access to undefind memory
-  * file-handler: fix If-Match / If-None-Match check
+  * file-handler, http-util: fix If-Match / If-None-Match check
 
  --   
 

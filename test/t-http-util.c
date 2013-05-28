@@ -12,4 +12,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     assert(http_list_contains("bar,foo", "bar"));
     assert(!http_list_contains("bar,foo", "bart"));
     assert(!http_list_contains("foo,bar", "bart"));
+    assert(http_list_contains("bar,foo", "\"bar\""));
+    assert(http_list_contains("\"bar\",\"foo\"", "\"bar\""));
+    assert(http_list_contains("\"bar\",\"foo\"", "bar"));
 }
