@@ -240,6 +240,11 @@ file_response_headers(struct growing_buffer *headers,
 {
     if (!processor_first && fd >= 0)
         file_cache_headers(headers, fd, st);
+    else {
+        char etag[64];
+        static_etag(etag, st);
+        header_write(headers, "etag", etag);
+    }
 
     if (override_content_type != NULL) {
         /* content type override from the translation server */
