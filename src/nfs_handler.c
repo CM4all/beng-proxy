@@ -7,15 +7,17 @@
 #include "nfs_handler.h"
 #include "nfs_stock.h"
 #include "nfs_client.h"
+#include "file_headers.h"
 #include "istream_nfs.h"
 #include "istream.h"
+#include "tvary.h"
 #include "static-headers.h"
+#include "header-writer.h"
 #include "generate_response.h"
+#include "growing-buffer.h"
 #include "request.h"
 #include "http-server.h"
-#include "http-response.h"
 #include "global.h"
-#include "strmap.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -42,26 +44,76 @@ nfs_handler_open_ready(struct nfs_file_handle *handle, const struct stat *st,
     struct request *const request2 = ctx;
     struct http_server_request *const request = request2->request;
     struct pool *const pool = request->pool;
+    const struct translate_response *const tr = request2->translate.response;
 
-    struct strmap *headers = strmap_new(pool, 16);
-    static_response_headers(pool, headers, -1, st,
-                            // TODO: content type from translation server
-                            NULL);
-    strmap_add(headers, "cache-control", "max-age=60");
+    struct file_request file_request = {
+        .range = RANGE_NONE,
+        .skip = 0,
+        .size = st->st_size,
+    };
+
+    if (!file_evaluate_request(request2, -1, st, &file_request)) {
+        nfs_client_close_file(handle);
+        return;
+    }
+
+    struct growing_buffer *headers = growing_buffer_new(pool, 2048);
+    header_write(headers, "cache-control", "max-age=60");
+
+    file_response_headers(headers,
+                          /* TODO: Content-Type from translation server */
+                          NULL,
+                          -1, st,
+                          request_processor_enabled(request2),
+                          request_processor_first(request2));
+    write_translation_vary_header(headers, request2->translate.response);
+
+    http_status_t status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
+
+    /* generate the Content-Range header */
+
+    header_write(headers, "accept-ranges", "bytes");
+
+    bool no_body = false;
+
+    switch (file_request.range) {
+    case RANGE_NONE:
+        break;
+
+    case RANGE_VALID:
+        status = HTTP_STATUS_PARTIAL_CONTENT;
+
+        header_write(headers, "content-range",
+                     p_sprintf(request->pool, "bytes %lu-%lu/%lu",
+                               (unsigned long)file_request.skip,
+                               (unsigned long)(file_request.size - 1),
+                               (unsigned long)st->st_size));
+        break;
+
+    case RANGE_INVALID:
+        status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
+
+        header_write(headers, "content-range",
+                     p_sprintf(request->pool, "bytes */%lu",
+                               (unsigned long)st->st_size));
+
+        no_body = true;
+        break;
+    }
 
     struct istream *body;
-    if (st->st_size > 0) {
-        body = istream_nfs_new(pool, handle, 0, st->st_size);
+    if (no_body) {
+        nfs_client_close_file(handle);
+        body = NULL;
+    } else if (file_request.skip < file_request.size) {
+        body = istream_nfs_new(pool, handle, file_request.skip,
+                               file_request.size);
     } else {
         nfs_client_close_file(handle);
         body = istream_null_new(pool);
     }
 
-    http_response_handler_direct_response(&response_handler, request2,
-                                          // TODO: handle revalidation etc.
-                                          HTTP_STATUS_OK,
-                                          headers,
-                                          body);
+    response_dispatch(request2, status, headers, body);
 }
 
 static const struct nfs_client_open_file_handler nfs_handler_open_handler = {
