@@ -221,8 +221,10 @@ handle_translated_request(struct request *request,
             delegate_handler(request);
         else
             file_callback(request);
+#ifdef HAVE_LIBNFS
     } else if (response->address.type == RESOURCE_ADDRESS_NFS) {
         nfs_handler(request);
+#endif
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP ||
                resource_address_is_cgi_alike(&response->address) ||
                response->address.type == RESOURCE_ADDRESS_NFS ||
