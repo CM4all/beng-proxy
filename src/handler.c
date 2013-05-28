@@ -6,6 +6,7 @@
 
 #include "handler.h"
 #include "file-handler.h"
+#include "nfs_handler.h"
 #include "request.h"
 #include "connection.h"
 #include "config.h"
@@ -220,6 +221,8 @@ handle_translated_request(struct request *request,
             delegate_handler(request);
         else
             file_callback(request);
+    } else if (response->address.type == RESOURCE_ADDRESS_NFS) {
+        nfs_handler(request);
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP ||
                resource_address_is_cgi_alike(&response->address) ||
                response->address.type == RESOURCE_ADDRESS_NFS ||
