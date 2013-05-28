@@ -25,8 +25,6 @@ struct file_request {
 
     off_t skip;
     off_t size;
-
-    const char *if_range;
 };
 
 bool
