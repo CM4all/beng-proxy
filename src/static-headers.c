@@ -21,8 +21,8 @@
 #include <attr/xattr.h>
 #endif
 
-static void
-make_etag(char *p, const struct stat *st)
+void
+static_etag(char *p, const struct stat *st)
 {
     *p++ = '"';
 
@@ -81,6 +81,6 @@ static_response_headers(struct pool *pool, struct strmap *headers,
     strmap_add(headers, "last-modified",
                p_strdup(pool, http_date_format(st->st_mtime)));
 
-    make_etag(buffer, st);
+    static_etag(buffer, st);
     strmap_add(headers, "etag", p_strdup(pool, buffer));
 }

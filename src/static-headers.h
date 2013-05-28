@@ -26,6 +26,9 @@ struct file_request {
     off_t size;
 };
 
+void
+static_etag(char *p, const struct stat *st);
+
 /**
  * @param fd a file descriptor for loading xattr, or -1 to disable
  * xattr

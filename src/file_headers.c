@@ -27,25 +27,6 @@
 #include <attr/xattr.h>
 #endif
 
-static void
-make_etag(char *p, const struct stat *st)
-{
-    *p++ = '"';
-
-    p += format_uint32_hex(p, (uint32_t)st->st_dev);
-
-    *p++ = '-';
-
-    p += format_uint32_hex(p, (uint32_t)st->st_ino);
-
-    *p++ = '-';
-
-    p += format_uint32_hex(p, (uint32_t)st->st_mtime);
-
-    *p++ = '"';
-    *p = 0;
-}
-
 static enum range_type
 parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
 {
@@ -107,7 +88,7 @@ check_if_range(const char *if_range, const struct stat *st)
         return st->st_mtime == t;
 
     char etag[64];
-    make_etag(etag, st);
+    static_etag(etag, st);
     return strcmp(if_range, etag) == 0;
 }
 
@@ -163,7 +144,7 @@ file_evaluate_request(struct request *request2,
     if (request_transformation_enabled(request2)) {
         p = strmap_get(request->headers, "if-match");
         if (p != NULL && strcmp(p, "*") != 0) {
-            make_etag(buffer, st);
+            static_etag(buffer, st);
 
             if (!http_list_contains(p, buffer)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
@@ -180,7 +161,7 @@ file_evaluate_request(struct request *request2,
         }
 
         if (p != NULL) {
-            make_etag(buffer, st);
+            static_etag(buffer, st);
 
             if (http_list_contains(p, buffer)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
@@ -217,7 +198,7 @@ file_cache_headers(struct growing_buffer *headers,
         header_write(headers, "etag", etag);
     } else {
 #endif
-        make_etag(buffer, st);
+        static_etag(buffer, st);
         header_write(headers, "etag", buffer);
 #ifndef NO_XATTR
     }
