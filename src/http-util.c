@@ -55,27 +55,40 @@ http_list_split(struct pool *pool, const char *p)
     return (char**)p_memdup(pool, tmp, num * sizeof(tmp[0]));
 }
 
-static bool
-http_equals(const char *a, size_t a_length, const char *b, size_t b_length)
+static void
+http_trim(const char **pp, size_t *length_p)
 {
-    /* trim */
+    const char *p = *pp;
+    size_t length = *length_p;
 
-    while (a_length > 0 && char_is_whitespace(a[a_length - 1]))
-        --a_length;
+    /* trim whitespace */
 
-    while (a_length > 0 && char_is_whitespace(a[0])) {
-        ++a;
-        --a_length;
+    while (length > 0 && char_is_whitespace(p[length - 1]))
+        --length;
+
+    while (length > 0 && char_is_whitespace(p[0])) {
+        ++p;
+        --length;
     }
 
     /* remove quotes from quoted-string */
 
-    if (a_length >= 2 && a[0] == '"' && a[a_length - 1] == '"') {
-        ++a;
-        a_length -= 2;
+    if (length >= 2 && p[0] == '"' && p[length - 1] == '"') {
+        ++p;
+        length -= 2;
     }
 
-    /* finally compare */
+    /* return */
+
+    *pp = p;
+    *length_p = length;
+}
+
+static bool
+http_equals(const char *a, size_t a_length, const char *b, size_t b_length)
+{
+    http_trim(&a, &a_length);
+    http_trim(&b, &b_length);
 
     return a_length == b_length && memcmp(a, b, a_length) == 0;
 }
