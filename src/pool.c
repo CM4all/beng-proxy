@@ -435,7 +435,7 @@ pool_new_slice(struct pool *parent, const char *name,
     assert(slice_pool_get_slice_size(slice_pool) > LINEAR_POOL_AREA_HEADER);
 
 #ifdef POOL_LIBC_ONLY
-    (void)initial_size;
+    (void)slice_pool;
 
     return pool_new_libc(parent, name);
 #else
@@ -451,6 +451,8 @@ pool_new_slice(struct pool *parent, const char *name,
 
 #ifndef NDEBUG
 
+#ifndef POOL_LIBC_ONLY
+
 static bool
 pool_linear_is_empty(const struct pool *pool)
 {
@@ -459,6 +461,8 @@ pool_linear_is_empty(const struct pool *pool)
     const struct linear_pool_area *area = pool->current_area.linear;
     return area == NULL || (area->prev == NULL && area->used == 0);
 }
+
+#endif
 
 void
 pool_set_major(struct pool *pool)
