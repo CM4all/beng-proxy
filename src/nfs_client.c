@@ -96,6 +96,8 @@ struct nfs_client {
 
     struct event event;
 
+    struct event timeout_event;
+
     struct list_head file_list;
 
     struct hashmap *file_map;
@@ -126,6 +128,14 @@ struct nfs_client {
     bool postponed_destroy;
 
     bool mount_finished;
+};
+
+static const struct timeval nfs_client_mount_timeout = {
+    .tv_sec = 10,
+};
+
+static const struct timeval nfs_client_idle_timeout = {
+    .tv_sec = 300,
 };
 
 static GError *
@@ -183,7 +193,8 @@ nfs_file_deactivate(struct nfs_file *file)
     assert(client->n_active_files > 0);
     --client->n_active_files;
 
-    // TODO: abort connection after the last file was aborted?
+    if (client->n_active_files == 0)
+        evtimer_add(&client->timeout_event, &nfs_client_idle_timeout);
 }
 
 /**
@@ -291,6 +302,8 @@ nfs_client_mount_error(struct nfs_client *client, GError *error)
     assert(client->context != NULL);
     assert(!client->in_service);
 
+    evtimer_del(&client->timeout_event);
+
     nfs_client_destroy_context(client);
 
     client->handler->mount_error(error, client->handler_ctx);
@@ -331,6 +344,8 @@ static void
 nfs_client_error(struct nfs_client *client, GError *error)
 {
     if (client->mount_finished) {
+        evtimer_del(&client->timeout_event);
+
         nfs_client_abort_all_files(client, error);
 
         nfs_client_destroy_context(client);
@@ -473,6 +488,8 @@ nfs_client_mount_abort(struct async_operation *ao)
     assert(!client->mount_finished);
     assert(!client->in_service);
 
+    evtimer_del(&client->timeout_event);
+
     nfs_client_destroy_context(client);
 
     pool_unref(client->pool);
@@ -536,6 +553,32 @@ nfs_client_event_callback(gcc_unused int fd, short event, void *ctx)
         nfs_client_add_event(client);
 
     pool_unref(pool);
+    pool_commit();
+}
+
+static void
+nfs_client_timeout_callback(gcc_unused int fd, gcc_unused short event,
+                            void *ctx)
+{
+    struct nfs_client *client = ctx;
+    assert(client->context != NULL);
+
+    if (client->mount_finished) {
+        assert(client->n_active_files == 0);
+
+        nfs_client_destroy_context(client);
+        GError *error = g_error_new_literal(nfs_client_quark(), 0,
+                                            "Idle timeout");
+        client->handler->closed(error, client->handler_ctx);
+        pool_unref(client->pool);
+    } else {
+        client->mount_finished = true;
+
+        GError *error = g_error_new_literal(nfs_client_quark(), 0,
+                                            "Mount timeout");
+        nfs_client_mount_error(client, error);
+    }
+
     pool_commit();
 }
 
@@ -680,6 +723,9 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
 
     async_init(&client->mount_operation, &nfs_client_mount_operation);
     async_ref_set(async_ref, &client->mount_operation);
+
+    evtimer_set(&client->timeout_event, nfs_client_timeout_callback, client);
+    evtimer_add(&client->timeout_event, &nfs_client_mount_timeout);
 }
 
 void
@@ -687,6 +733,8 @@ nfs_client_free(struct nfs_client *client)
 {
     assert(client != NULL);
     assert(client->n_active_files == 0);
+
+    evtimer_del(&client->timeout_event);
 
     if (client->in_service) {
         client->postponed_destroy = true;
@@ -743,8 +791,12 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
 
     list_add(&handle->siblings, &file->handles);
     ++file->n_active_handles;
-    if (file->n_active_handles == 1)
+    if (file->n_active_handles == 1) {
+        if (client->n_active_files == 0)
+            evtimer_del(&client->timeout_event);
+
         ++client->n_active_files;
+    }
 
     nfs_client_update_event(client);
 
