@@ -748,9 +748,12 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
 
     nfs_client_update_event(client);
 
-    if (nfs_file_is_ready(file))
+    if (nfs_file_is_ready(file)) {
+        handle->pending = false;
+        handle->closed = false;
+
         handler->ready(handle, &file->stat, ctx);
-    else {
+    } else {
         handle->open_handler = handler;
         handle->handler_ctx = ctx;
 
