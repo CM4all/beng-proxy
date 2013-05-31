@@ -104,6 +104,13 @@ struct nfs_file {
          */
         F_IDLE,
 
+        /**
+         * This object has expired.  It is no longer in
+         * #nfs_client::file_map.  It will be destroyed as soon as the
+         * last handle has been closed.
+         */
+        F_EXPIRED,
+
         F_RELEASED,
     } state;
 
@@ -113,6 +120,12 @@ struct nfs_file {
     struct nfsfh *nfsfh;
 
     struct stat stat;
+
+    /**
+     * Expire this object after #nfs_file_expiry.  This is only used
+     * in state #F_IDLE.
+     */
+    struct event expire_event;
 
     bool locked;
 };
@@ -169,6 +182,10 @@ static const struct timeval nfs_client_idle_timeout = {
     .tv_sec = 300,
 };
 
+static const struct timeval nfs_file_expiry = {
+    .tv_sec = 60,
+};
+
 static GError *
 nfs_client_new_error(const char *msg, int status, void *data)
 {
@@ -219,6 +236,7 @@ nfs_file_is_ready(const struct nfs_file *file)
         return false;
 
     case F_IDLE:
+    case F_EXPIRED:
         return true;
 
     case F_RELEASED:
@@ -248,10 +266,15 @@ nfs_file_deactivate(struct nfs_file *file)
 static void
 nfs_file_release(struct nfs_client *client, struct nfs_file *file)
 {
+    if (file->state == F_IDLE)
+        evtimer_del(&file->expire_event);
+
+    if (file->state != F_EXPIRED)
+        hashmap_remove(client->file_map, file->path);
+
     file->state = F_RELEASED;
 
     list_remove(&file->siblings);
-    hashmap_remove(client->file_map, file->path);
     pool_unref(file->pool);
 }
 
@@ -280,10 +303,16 @@ nfs_file_handle_release(struct nfs_file_handle *handle)
 {
     assert(handle->state == H_WAITING || handle->state == H_IDLE);
 
+    struct nfs_file *const file = handle->file;
+    assert(!list_empty(&file->handles));
+
     handle->state = H_RELEASED;
 
     list_remove(&handle->siblings);
     pool_unref(handle->pool);
+
+    if (list_empty(&file->handles) && file->state == F_EXPIRED)
+        nfs_file_release(file->client, file);
 }
 
 static void
@@ -550,6 +579,27 @@ static const struct async_operation_class nfs_client_mount_operation = {
  */
 
 static void
+nfs_file_expire_callback(gcc_unused int fd, gcc_unused short event,
+                         void *ctx)
+{
+    struct nfs_file *file = ctx;
+    struct nfs_client *const client = file->client;
+
+    assert(file->state == F_IDLE);
+
+    if (list_empty(&file->handles)) {
+        assert(file->n_active_handles == 0);
+
+        nfs_file_release(client, file);
+    } else {
+        file->state = F_EXPIRED;
+        hashmap_remove(client->file_map, file->path);
+    }
+
+    pool_commit();
+}
+
+static void
 nfs_client_event_callback(gcc_unused int fd, short event, void *ctx)
 {
     struct nfs_client *client = ctx;
@@ -682,6 +732,8 @@ nfs_fstat_cb(int status, gcc_unused struct nfs_context *nfs,
 
     file->stat = *st;
     file->state = F_IDLE;
+    evtimer_set(&file->expire_event, nfs_file_expire_callback, file);
+    evtimer_add(&file->expire_event, &nfs_file_expiry);
 
     nfs_file_continue(file);
 }
