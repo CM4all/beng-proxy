@@ -222,7 +222,10 @@ istream_nfs_read(struct istream *istream)
 {
     struct istream_nfs *n = istream_to_nfs(istream);
 
-    istream_nfs_schedule_read(n);
+    if (n->buffer != NULL && !fifo_buffer_empty(n->buffer))
+        istream_nfs_read_from_buffer(n);
+    else
+        istream_nfs_schedule_read(n);
 }
 
 static void
