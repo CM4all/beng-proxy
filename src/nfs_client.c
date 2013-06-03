@@ -87,17 +87,29 @@ struct nfs_file {
     struct nfs_client *client;
     const char *path;
 
+    enum {
+        /**
+         * Waiting for nfs_open_async().
+         */
+        F_PENDING_OPEN,
+
+        /**
+         * The file has been opened, and now we're waiting for
+         * nfs_fstat_async().
+         */
+        F_PENDING_FSTAT,
+
+        /**
+         * The file is ready.
+         */
+        F_IDLE,
+    } state;
+
     struct list_head handles;
     unsigned n_active_handles;
 
-    /**
-     * If this is NULL, then nfs_open_async() has not finished yet.
-     */
     struct nfsfh *nfsfh;
 
-    /**
-     * If st_mode is 0, then nfs_fstat_async() has not finished yet.
-     */
     struct stat stat;
 
     bool locked;
@@ -199,7 +211,16 @@ libevent_to_libnfs(int i)
 static bool
 nfs_file_is_ready(const struct nfs_file *file)
 {
-    return file->nfsfh != NULL && file->stat.st_mode != 0;
+    switch (file->state) {
+    case F_PENDING_OPEN:
+    case F_PENDING_FSTAT:
+        return false;
+
+    case F_IDLE:
+        return true;
+    }
+
+    gcc_unreachable();
 }
 
 static void
@@ -622,7 +643,7 @@ nfs_fstat_cb(int status, gcc_unused struct nfs_context *nfs,
              void *data, void *private_data)
 {
     struct nfs_file *const file = private_data;
-    assert(file->nfsfh != NULL);
+    assert(file->state == F_PENDING_FSTAT);
 
     struct nfs_client *const client = file->client;
 
@@ -645,6 +666,7 @@ nfs_fstat_cb(int status, gcc_unused struct nfs_context *nfs,
     }
 
     file->stat = *st;
+    file->state = F_IDLE;
 
     nfs_file_continue(file);
 }
@@ -654,7 +676,7 @@ nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
             void *data, void *private_data)
 {
     struct nfs_file *const file = private_data;
-    assert(file->nfsfh == NULL);
+    assert(file->state == F_PENDING_OPEN);
 
     struct nfs_client *const client = file->client;
 
@@ -667,7 +689,7 @@ nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
     }
 
     file->nfsfh = data;
-    file->stat.st_mode = 0;
+    file->state = F_PENDING_FSTAT;
 
     int result = nfs_fstat_async(file->client->context, file->nfsfh,
                                  nfs_fstat_cb, file);
@@ -771,9 +793,9 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
         file->pool = f_pool;
         file->client = client;
         file->path = p_strdup(f_pool, path);
+        file->state = F_PENDING_OPEN;
         list_init(&file->handles);
         file->n_active_handles = 0;
-        file->nfsfh = NULL;
         file->locked = false;
 
         hashmap_add(client->file_map, file->path, file);
