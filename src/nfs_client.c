@@ -103,6 +103,8 @@ struct nfs_file {
          * The file is ready.
          */
         F_IDLE,
+
+        F_RELEASED,
     } state;
 
     struct list_head handles;
@@ -218,6 +220,10 @@ nfs_file_is_ready(const struct nfs_file *file)
 
     case F_IDLE:
         return true;
+
+    case F_RELEASED:
+        assert(false);
+        gcc_unreachable();
     }
 
     gcc_unreachable();
@@ -233,6 +239,20 @@ nfs_file_deactivate(struct nfs_file *file)
 
     if (client->n_active_files == 0)
         evtimer_add(&client->timeout_event, &nfs_client_idle_timeout);
+}
+
+/**
+ * Release an "inactive" file.  Must have called nfs_file_deactivate()
+ * prior to this.
+ */
+static void
+nfs_file_release(struct nfs_client *client, struct nfs_file *file)
+{
+    file->state = F_RELEASED;
+
+    list_remove(&file->siblings);
+    hashmap_remove(client->file_map, file->path);
+    pool_unref(file->pool);
 }
 
 /**
@@ -302,10 +322,7 @@ nfs_client_abort_file(struct nfs_client *client, struct nfs_file *file,
                       GError *error)
 {
     nfs_file_abort_handles(file, error);
-
-    list_remove(&file->siblings);
-    hashmap_remove(client->file_map, file->path);
-    pool_unref(file->pool);
+    nfs_file_release(client, file);
 }
 
 static void
@@ -349,9 +366,7 @@ nfs_client_cleanup_files(struct nfs_client *client)
         if (list_empty(&file->handles)) {
             assert(file->n_active_handles == 0);
 
-            list_remove(&file->siblings);
-            hashmap_remove(client->file_map, file->path);
-            pool_unref(file->pool);
+            nfs_file_release(client, file);
         }
 
         file = next;
