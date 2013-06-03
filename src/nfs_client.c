@@ -37,27 +37,44 @@ struct nfs_file_handle {
      */
     struct pool *caller_pool;
 
+    enum {
+        /**
+         * Waiting for the file to be opened.  The
+         * nfs_client_open_file_handler will be invoked next.
+         */
+        H_WAITING,
+
+        /**
+         * The file is ready, the nfs_client_open_file_handler has
+         * been invoked already.
+         */
+        H_IDLE,
+
+        /**
+         * A request by this handle is pending inside libnfs.  This
+         * object can only be freed when all libnfs operations
+         * referencing this object are finished.
+         */
+        H_PENDING,
+
+        /**
+         * istream_close() has been called by the istream handler
+         * while the state was #H_PENDING.  This object cannot be
+         * destroyed until libnfs has released the reference to this
+         * object (queued async call with private_data pointing to
+         * this object).  As soon as libnfs calls back, the object
+         * will finally be destroyed.
+         */
+        H_PENDING_CLOSED,
+
+        H_RELEASED,
+    } state;
+
     const struct nfs_client_open_file_handler *open_handler;
     const struct nfs_client_read_file_handler *read_handler;
     void *handler_ctx;
 
     struct async_operation operation;
-
-    /**
-     * Is a request pending inside libnfs?  This object can only be
-     * freed when all libnfs operations referencing this object are
-     * finished.
-     */
-    bool pending;
-
-    /**
-     * This is true if istream_close() has been called by the istream
-     * handler.  This object cannot be destroyed until libnfs has
-     * released the reference to this object (queued async call with
-     * private_data pointing to this object).  As soon as libnfs calls
-     * back, the object will finally be destroyed.
-     */
-    bool closed;
 };
 
 struct nfs_file {
@@ -213,16 +230,6 @@ nfs_file_handle_deactivate(struct nfs_file_handle *handle)
         nfs_file_deactivate(file);
 }
 
-static bool
-nfs_file_handle_can_release(const struct nfs_file_handle *handle)
-{
-    assert(handle != NULL);
-    assert(handle->file != NULL);
-    assert(nfs_file_is_ready(handle->file));
-
-    return !handle->pending;
-}
-
 /**
  * Release an "inactive" handle.  Must have called
  * nfs_file_handle_deactivate() prior to this.
@@ -230,8 +237,9 @@ nfs_file_handle_can_release(const struct nfs_file_handle *handle)
 static void
 nfs_file_handle_release(struct nfs_file_handle *handle)
 {
-    assert(!nfs_file_is_ready(handle->file) ||
-           nfs_file_handle_can_release(handle));
+    assert(handle->state == H_WAITING || handle->state == H_IDLE);
+
+    handle->state = H_RELEASED;
 
     list_remove(&handle->siblings);
     pool_unref(handle->pool);
@@ -383,11 +391,12 @@ nfs_read_cb(int status, gcc_unused struct nfs_context *nfs,
             void *data, void *private_data)
 {
     struct nfs_file_handle *const handle = private_data;
+    assert(handle->state == H_PENDING || handle->state == H_PENDING_CLOSED);
 
-    assert(handle->pending);
-    handle->pending = false;
+    const bool closed = handle->state == H_PENDING_CLOSED;
+    handle->state = H_IDLE;
 
-    if (handle->closed) {
+    if (closed) {
         nfs_file_handle_release(handle);
         return;
     }
@@ -423,12 +432,12 @@ nfs_file_continue(struct nfs_file *file)
         struct nfs_file_handle *handle =
             (struct nfs_file_handle *)tmp_head.next;
         assert(handle->file == file);
+        assert(handle->state == H_WAITING);
 
         list_remove(&handle->siblings);
         list_add(&handle->siblings, &file->handles);
 
-        handle->pending = false;
-        handle->closed = false;
+        handle->state = H_IDLE;
 
         struct pool *const caller_pool = handle->caller_pool;
 
@@ -801,11 +810,11 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
     nfs_client_update_event(client);
 
     if (nfs_file_is_ready(file)) {
-        handle->pending = false;
-        handle->closed = false;
+        handle->state = H_IDLE;
 
         handler->ready(handle, &file->stat, ctx);
     } else {
+        handle->state = H_WAITING;
         handle->open_handler = handler;
         handle->handler_ctx = ctx;
 
@@ -819,14 +828,25 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
 void
 nfs_client_close_file(struct nfs_file_handle *handle)
 {
-    assert(!handle->closed);
     assert(nfs_file_is_ready(handle->file));
 
-    handle->closed = true;
-
     nfs_file_handle_deactivate(handle);
-    if (nfs_file_handle_can_release(handle))
+
+    switch (handle->state) {
+    case H_WAITING:
+    case H_PENDING_CLOSED:
+    case H_RELEASED:
+        assert(false);
+        gcc_unreachable();
+
+    case H_IDLE:
         nfs_file_handle_release(handle);
+        break;
+
+    case H_PENDING:
+        handle->state = H_PENDING_CLOSED;
+        break;
+    }
 }
 
 void
@@ -838,8 +858,7 @@ nfs_client_read_file(struct nfs_file_handle *handle,
     struct nfs_file *const file = handle->file;
     struct nfs_client *const client = file->client;
 
-    assert(!handle->pending);
-    assert(!handle->closed);
+    assert(handle->state == H_IDLE);
 
     if (nfs_pread_async(client->context, file->nfsfh,
                         offset, length,
@@ -853,7 +872,7 @@ nfs_client_read_file(struct nfs_file_handle *handle,
 
     handle->read_handler = handler;
     handle->handler_ctx = ctx;
-    handle->pending = true;
+    handle->state = H_PENDING;
 
     nfs_client_update_event(client);
 }
