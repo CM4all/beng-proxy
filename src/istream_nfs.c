@@ -124,11 +124,20 @@ istream_nfs_read_from_buffer(struct istream_nfs *n)
  */
 
 static void
-istream_nfs_read_data(const void *data, void *ctx)
+istream_nfs_read_data(const void *data, size_t _length, void *ctx)
 {
     struct istream_nfs *n = ctx;
     assert(n->pending_read > 0);
     assert(n->discard_read <= n->pending_read);
+    assert(_length <= n->pending_read);
+
+    if (_length < n->pending_read) {
+        nfs_client_close_file(n->handle);
+        GError *error = g_error_new_literal(g_file_error_quark(), 0,
+                                            "premature end of file");
+        istream_deinit_abort(&n->base, error);
+        return;
+    }
 
     const size_t discard = n->discard_read;
     const size_t length = n->pending_read - discard;

@@ -399,7 +399,7 @@ nfs_read_cb(int status, gcc_unused struct nfs_context *nfs,
         return;
     }
 
-    handle->read_handler->data(data, handle->handler_ctx);
+    handle->read_handler->data(data, status, handle->handler_ctx);
 }
 
 /*

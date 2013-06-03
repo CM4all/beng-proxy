@@ -74,7 +74,7 @@ struct nfs_client_read_file_handler {
     /**
      * Data has been read from the file.
      */
-    void (*data)(const void *data, void *ctx);
+    void (*data)(const void *data, size_t length, void *ctx);
 
     /**
      * An I/O error has occurred while reading.
