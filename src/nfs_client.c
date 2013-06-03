@@ -392,7 +392,7 @@ nfs_read_cb(int status, gcc_unused struct nfs_context *nfs,
         return;
     }
 
-    if (status == 0) {
+    if (status < 0) {
         GError *error = nfs_client_new_error("nfs_pread_async() failed",
                                              status, data);
         handle->read_handler->error(error, handle->handler_ctx);
