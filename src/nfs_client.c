@@ -198,7 +198,7 @@ nfs_file_deactivate(struct nfs_file *file)
 }
 
 /**
- * Mark this object "inactive".  Call nfs_file_request_release() after
+ * Mark this object "inactive".  Call nfs_file_handle_release() after
  * all references by libnfs have been cleared.
  */
 static void
@@ -228,13 +228,13 @@ nfs_file_handle_can_release(const struct nfs_file_handle *handle)
  * nfs_file_handle_deactivate() prior to this.
  */
 static void
-nfs_file_handle_release(struct nfs_file_handle *request)
+nfs_file_handle_release(struct nfs_file_handle *handle)
 {
-    assert(!nfs_file_is_ready(request->file) ||
-           nfs_file_handle_can_release(request));
+    assert(!nfs_file_is_ready(handle->file) ||
+           nfs_file_handle_can_release(handle));
 
-    list_remove(&request->siblings);
-    pool_unref(request->pool);
+    list_remove(&handle->siblings);
+    pool_unref(handle->pool);
 }
 
 static void
@@ -249,7 +249,7 @@ nfs_file_handle_abort(struct nfs_file_handle *handle, GError *error)
 }
 
 static void
-nfs_file_abort_requests(struct nfs_file *file, GError *error)
+nfs_file_abort_handles(struct nfs_file *file, GError *error)
 {
     struct list_head *const head = &file->handles;
     while (!list_empty(head)) {
@@ -272,7 +272,7 @@ static void
 nfs_client_abort_file(struct nfs_client *client, struct nfs_file *file,
                       GError *error)
 {
-    nfs_file_abort_requests(file, error);
+    nfs_file_abort_handles(file, error);
 
     list_remove(&file->siblings);
     hashmap_remove(client->file_map, file->path);
@@ -782,7 +782,7 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
         }
     }
 
-    struct pool *r_pool = pool_new_libc(file->pool, "nfs_file_request");
+    struct pool *r_pool = pool_new_libc(file->pool, "nfs_file_handle");
 
     struct nfs_file_handle *handle = p_malloc(r_pool, sizeof(*handle));
     handle->file = file;
