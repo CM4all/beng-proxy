@@ -14,7 +14,7 @@
 struct pool;
 struct istream;
 struct hstock;
-struct nfs_stock;
+struct nfs_cache;
 struct tcp_balancer;
 struct resource_address;
 struct strmap;
@@ -25,7 +25,7 @@ struct resource_loader *
 resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
                     struct hstock *delegate_stock,
-                    struct nfs_stock *nfs_stock);
+                    struct nfs_cache *nfs_cache);
 
 /**
  * Requests a resource.  This is a glue function which integrates all

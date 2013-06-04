@@ -5,10 +5,7 @@
  */
 
 #include "nfs_request.h"
-#include "nfs_stock.h"
-#include "nfs_client.h"
-#include "istream_nfs.h"
-#include "istream.h"
+#include "nfs_cache.h"
 #include "http-response.h"
 #include "static-headers.h"
 #include "strmap.h"
@@ -35,13 +32,13 @@ nfs_request_error(GError *error, void *ctx)
 }
 
 /*
- * nfs_client_open_file_handler
+ * nfs_stock_get_handler
  *
  */
 
 static void
-nfs_open_ready(struct nfs_file_handle *handle, const struct stat *st,
-               void *ctx)
+nfs_request_response(struct nfs_cache_handle *handle,
+                     const struct stat *st, void *ctx)
 {
     struct nfs_request *r = ctx;
 
@@ -51,13 +48,8 @@ nfs_open_ready(struct nfs_file_handle *handle, const struct stat *st,
                             NULL);
     strmap_add(headers, "cache-control", "max-age=60");
 
-    struct istream *body;
-    if (st->st_size > 0) {
-        body = istream_nfs_new(r->pool, handle, 0, st->st_size);
-    } else {
-        nfs_client_close_file(handle);
-        body = istream_null_new(r->pool);
-    }
+    struct istream *body = nfs_cache_handle_open(r->pool, handle,
+                                                 0, st->st_size);
 
     http_response_handler_invoke_response(&r->handler,
                                           // TODO: handle revalidation etc.
@@ -66,27 +58,8 @@ nfs_open_ready(struct nfs_file_handle *handle, const struct stat *st,
                                           body);
 }
 
-static const struct nfs_client_open_file_handler nfs_open_handler = {
-    .ready = nfs_open_ready,
-    .error = nfs_request_error,
-};
-
-/*
- * nfs_stock_get_handler
- *
- */
-
-static void
-nfs_request_stock_ready(struct nfs_client *client, void *ctx)
-{
-    struct nfs_request *r = ctx;
-
-    nfs_client_open_file(client, r->pool, r->path,
-                         &nfs_open_handler, r, r->async_ref);
-}
-
-static const struct nfs_stock_get_handler nfs_request_stock_handler = {
-    .ready = nfs_request_stock_ready,
+static const struct nfs_cache_handler nfs_request_cache_handler = {
+    .response = nfs_request_response,
     .error = nfs_request_error,
 };
 
@@ -96,7 +69,7 @@ static const struct nfs_stock_get_handler nfs_request_stock_handler = {
  */
 
 void
-nfs_request(struct pool *pool, struct nfs_stock *nfs_stock,
+nfs_request(struct pool *pool, struct nfs_cache *nfs_cache,
             const char *server, const char *export, const char *path,
             const struct http_response_handler *handler, void *handler_ctx,
             struct async_operation_ref *async_ref)
@@ -108,7 +81,7 @@ nfs_request(struct pool *pool, struct nfs_stock *nfs_stock,
     http_response_handler_set(&r->handler, handler, handler_ctx);
     r->async_ref = async_ref;
 
-    nfs_stock_get(nfs_stock, pool, server, export,
-                  &nfs_request_stock_handler, r,
-                  async_ref);
+    nfs_cache_request(pool, nfs_cache, server, export, path,
+                      &nfs_request_cache_handler, r,
+                      async_ref);
 }

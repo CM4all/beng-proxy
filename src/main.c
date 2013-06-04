@@ -50,6 +50,7 @@
 
 #ifdef HAVE_LIBNFS
 #include "nfs_stock.h"
+#include "nfs_cache.h"
 #endif
 
 #ifndef NDEBUG
@@ -144,6 +145,9 @@ shutdown_callback(void *ctx)
         hstock_free(instance->delegate_stock);
 
 #ifdef HAVE_LIBNFS
+    if (instance->nfs_cache != NULL)
+        nfs_cache_free(instance->nfs_cache);
+
     if (instance->nfs_stock != NULL)
         nfs_stock_free(instance->nfs_stock);
 #endif
@@ -253,6 +257,9 @@ int main(int argc, char **argv)
             .max_connections = 8192,
             .http_cache_size = 512 * 1024 * 1024,
             .filter_cache_size = 128 * 1024 * 1024,
+#ifdef HAVE_LIBNFS
+            .nfs_cache_size = 256 * 1024 * 1024,
+#endif
             .translate_cache_size = 131072,
             .fcgi_stock_max_idle = 16,
             .was_stock_max_idle = 16,
@@ -351,6 +358,9 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_LIBNFS
     instance.nfs_stock = nfs_stock_new(instance.pool);
+    instance.nfs_cache = nfs_cache_new(instance.pool,
+                                       instance.config.nfs_cache_size,
+                                       instance.nfs_stock);
 #endif
 
     instance.resource_loader = resource_loader_new(instance.pool,
@@ -358,7 +368,7 @@ int main(int argc, char **argv)
                                                    instance.fcgi_stock,
                                                    instance.was_stock,
                                                    instance.delegate_stock,
-                                                   instance.nfs_stock);
+                                                   instance.nfs_cache);
 
     instance.http_cache = http_cache_new(instance.pool,
                                          instance.config.http_cache_size,
@@ -382,6 +392,7 @@ int main(int argc, char **argv)
     global_was_stock = instance.was_stock;
     global_delegate_stock = instance.delegate_stock;
     global_nfs_stock = instance.nfs_stock;
+    global_nfs_cache = instance.nfs_cache;
     global_filter_cache = instance.filter_cache;
     global_pipe_stock = instance.pipe_stock;
 

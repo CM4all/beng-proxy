@@ -5,19 +5,17 @@
  */
 
 #include "nfs_handler.h"
-#include "nfs_stock.h"
-#include "nfs_client.h"
+#include "nfs_cache.h"
 #include "file_headers.h"
-#include "istream_nfs.h"
-#include "istream.h"
 #include "tvary.h"
 #include "static-headers.h"
 #include "header-writer.h"
 #include "generate_response.h"
 #include "growing-buffer.h"
 #include "request.h"
+#include "connection.h"
+#include "instance.h"
 #include "http-server.h"
-#include "global.h"
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -33,15 +31,15 @@ nfs_handler_error(GError *error, void *ctx)
 }
 
 /*
- * nfs_client_open_file_handler
+ * nfs_cache_handler
  *
  */
 
 static void
-nfs_handler_open_ready(struct nfs_file_handle *handle, const struct stat *st,
-                       void *ctx)
+nfs_handler_cache_response(struct nfs_cache_handle *handle,
+                           const struct stat *st, void *ctx)
 {
-    struct request *const request2 = ctx;
+    struct request *request2 = ctx;
     struct http_server_request *const request = request2->request;
     struct pool *const pool = request->pool;
     const struct translate_response *const tr = request2->translate.response;
@@ -52,10 +50,8 @@ nfs_handler_open_ready(struct nfs_file_handle *handle, const struct stat *st,
         .size = st->st_size,
     };
 
-    if (!file_evaluate_request(request2, -1, st, &file_request)) {
-        nfs_client_close_file(handle);
+    if (!file_evaluate_request(request2, -1, st, &file_request))
         return;
-    }
 
     struct growing_buffer *headers = growing_buffer_new(pool, 2048);
     header_write(headers, "cache-control", "max-age=60");
@@ -84,7 +80,7 @@ nfs_handler_open_ready(struct nfs_file_handle *handle, const struct stat *st,
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
         header_write(headers, "content-range",
-                     p_sprintf(request->pool, "bytes %lu-%lu/%lu",
+                     p_sprintf(pool, "bytes %lu-%lu/%lu",
                                (unsigned long)file_request.skip,
                                (unsigned long)(file_request.size - 1),
                                (unsigned long)st->st_size));
@@ -94,7 +90,7 @@ nfs_handler_open_ready(struct nfs_file_handle *handle, const struct stat *st,
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
         header_write(headers, "content-range",
-                     p_sprintf(request->pool, "bytes */%lu",
+                     p_sprintf(pool, "bytes */%lu",
                                (unsigned long)st->st_size));
 
         no_body = true;
@@ -102,46 +98,17 @@ nfs_handler_open_ready(struct nfs_file_handle *handle, const struct stat *st,
     }
 
     struct istream *body;
-    if (no_body) {
-        nfs_client_close_file(handle);
+    if (no_body)
         body = NULL;
-    } else if (file_request.skip < file_request.size) {
-        body = istream_nfs_new(pool, handle, file_request.skip,
-                               file_request.size);
-    } else {
-        nfs_client_close_file(handle);
-        body = istream_null_new(pool);
-    }
+    else
+        body = nfs_cache_handle_open(pool, handle,
+                                     file_request.skip, file_request.size);
 
     response_dispatch(request2, status, headers, body);
 }
 
-static const struct nfs_client_open_file_handler nfs_handler_open_handler = {
-    .ready = nfs_handler_open_ready,
-    .error = nfs_handler_error,
-};
-
-/*
- * nfs_stock_get_handler
- *
- */
-
-static void
-nfs_handler_stock_ready(struct nfs_client *client, void *ctx)
-{
-    struct request *request2 = ctx;
-    struct http_server_request *const request = request2->request;
-    struct pool *const pool = request->pool;
-    const struct translate_response *const tr = request2->translate.response;
-    const struct nfs_address *const address = tr->address.u.nfs;
-
-    nfs_client_open_file(client, pool, address->path,
-                         &nfs_handler_open_handler, request2,
-                         &request2->async_ref);
-}
-
-static const struct nfs_stock_get_handler nfs_handler_stock_handler = {
-    .ready = nfs_handler_stock_ready,
+static const struct nfs_cache_handler nfs_handler_cache_handler = {
+    .response = nfs_handler_cache_response,
     .error = nfs_handler_error,
 };
 
@@ -176,7 +143,8 @@ nfs_handler(struct request *request2)
 
     /* run the delegate helper */
 
-    nfs_stock_get(global_nfs_stock, pool, address->server, address->export,
-                  &nfs_handler_stock_handler, request2,
-                  &request2->async_ref);
+    nfs_cache_request(pool, request2->connection->instance->nfs_cache,
+                      address->server, address->export, address->path,
+                      &nfs_handler_cache_handler, request2,
+                      &request2->async_ref);
 }

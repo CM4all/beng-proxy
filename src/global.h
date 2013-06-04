@@ -25,6 +25,7 @@ extern struct filter_cache *global_filter_cache;
 extern struct hstock *global_delegate_stock;
 
 extern struct nfs_stock *global_nfs_stock;
+extern struct nfs_cache *global_nfs_cache;
 
 extern struct stock *global_pipe_stock;
 

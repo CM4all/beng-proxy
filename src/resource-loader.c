@@ -39,7 +39,7 @@ struct resource_loader {
     struct hstock *delegate_stock;
 
 #ifdef HAVE_LIBNFS
-    struct nfs_stock *nfs_stock;
+    struct nfs_cache *nfs_cache;
 #endif
 };
 
@@ -53,7 +53,7 @@ struct resource_loader *
 resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
                     struct hstock *delegate_stock,
-                    struct nfs_stock *nfs_stock)
+                    struct nfs_cache *nfs_cache)
 {
     assert(fcgi_stock != NULL);
 
@@ -65,9 +65,9 @@ resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
     rl->delegate_stock = delegate_stock;
 
 #ifdef HAVE_LIBNFS
-    rl->nfs_stock = nfs_stock;
+    rl->nfs_cache = nfs_cache;
 #else
-    (void)nfs_stock;
+    (void)nfs_cache;
 #endif
 
     return rl;
@@ -190,7 +190,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             /* NFS files cannot receive a request body, close it */
             istream_close_unused(body);
 
-        nfs_request(pool, rl->nfs_stock,
+        nfs_request(pool, rl->nfs_cache,
                     address->u.nfs->server, address->u.nfs->export,
                     address->u.nfs->path,
                     handler, handler_ctx, async_ref);

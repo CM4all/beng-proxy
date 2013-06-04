@@ -366,6 +366,7 @@ src_cm4all_beng_proxy_SOURCES += \
 	src/istream_nfs.c src/istream_nfs.h \
 	src/nfs_stock.c src/nfs_stock.h \
 	src/nfs_client.c src/nfs_client.h \
+	src/nfs_cache.c src/nfs_cache.h \
 	src/nfs_request.c src/nfs_request.h
 endif
 

@@ -102,7 +102,7 @@ errdoc_translate_response(const struct translate_response *response, void *ctx)
                      instance->tcp_balancer,
                      instance->fcgi_stock, instance->was_stock,
                      instance->delegate_stock,
-                     instance->nfs_stock,
+                     instance->nfs_cache,
                      pool, 0, HTTP_METHOD_GET,
                      &response->address, HTTP_STATUS_OK, NULL, NULL,
                      &errdoc_response_handler, er,

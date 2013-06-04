@@ -46,7 +46,7 @@ int global_delegate_stock;
 int global_fcgi_stock;
 int global_was_stock;
 int global_http_cache;
-int global_nfs_stock;
+int global_nfs_cache;
 int global_tcp_balancer;
 const struct widget_class root_widget_class;
 
@@ -144,7 +144,7 @@ resource_get(gcc_unused struct http_cache *cache,
              gcc_unused struct hstock *fcgi_stock,
              gcc_unused struct hstock *was_stock,
              gcc_unused struct hstock *delegate_stock,
-             gcc_unused struct nfs_stock *nfs_stock,
+             gcc_unused struct nfs_cache *nfs_cache,
              struct pool *pool,
              gcc_unused unsigned session_sticky,
              http_method_t method,

@@ -27,7 +27,7 @@ resource_get(struct http_cache *cache,
              struct hstock *fcgi_stock,
              struct hstock *was_stock,
              struct hstock *delegate_stock,
-             struct nfs_stock *nfs_stock,
+             struct nfs_cache *nfs_cache,
              struct pool *pool,
              unsigned session_sticky,
              http_method_t method,
@@ -51,7 +51,7 @@ resource_get(struct http_cache *cache,
         struct resource_loader *rl =
             resource_loader_new(pool, tcp_balancer,
                                 fcgi_stock, was_stock,
-                                delegate_stock, nfs_stock);
+                                delegate_stock, nfs_cache);
         resource_loader_request(rl, pool, session_sticky,
                                 method, address, status, headers, body,
                                 handler, handler_ctx, async_ref);

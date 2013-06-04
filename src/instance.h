@@ -74,6 +74,7 @@ struct instance {
     struct hstock *delegate_stock;
 
     struct nfs_stock *nfs_stock;
+    struct nfs_cache *nfs_cache;
 
     struct stock *pipe_stock;
 
