@@ -12,6 +12,7 @@
 
 #include <assert.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #ifndef HAVE_ATTR_XATTR_H
 #define NO_XATTR 1

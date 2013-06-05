@@ -8,11 +8,24 @@
 #define BENG_PROXY_FILE_HEADERS_H
 
 #include <stdbool.h>
+#include <sys/types.h>
 
 struct growing_buffer;
 struct request;
 struct stat;
-struct file_request;
+
+enum range_type {
+    RANGE_NONE,
+    RANGE_VALID,
+    RANGE_INVALID
+};
+
+struct file_request {
+    enum range_type range;
+
+    off_t skip;
+    off_t size;
+};
 
 bool
 file_evaluate_request(struct request *request2,

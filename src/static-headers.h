@@ -8,24 +8,12 @@
 #define BENG_PROXY_STATIC_HEADERS_H
 
 #include <stdbool.h>
-#include <sys/types.h>
+#include <stddef.h>
 
 struct pool;
 struct strmap;
 struct stat;
-
-enum range_type {
-    RANGE_NONE,
-    RANGE_VALID,
-    RANGE_INVALID
-};
-
-struct file_request {
-    enum range_type range;
-
-    off_t skip;
-    off_t size;
-};
+struct file_request;
 
 void
 static_etag(char *p, const struct stat *st);
