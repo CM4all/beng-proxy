@@ -193,6 +193,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         nfs_request(pool, rl->nfs_cache,
                     address->u.nfs->server, address->u.nfs->export,
                     address->u.nfs->path,
+                    address->u.nfs->content_type,
                     handler, handler_ctx, async_ref);
 #else
         http_response_handler_direct_abort(handler, handler_ctx,

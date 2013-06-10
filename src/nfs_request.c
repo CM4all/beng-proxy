@@ -17,6 +17,7 @@ struct nfs_request {
     struct pool *pool;
 
     const char *path;
+    const char *content_type;
 
     struct http_response_handler_ref handler;
 
@@ -44,8 +45,7 @@ nfs_request_response(struct nfs_cache_handle *handle,
 
     struct strmap *headers = strmap_new(r->pool, 16);
     static_response_headers(r->pool, headers, -1, st,
-                            // TODO: content type from translation server
-                            NULL);
+                            r->content_type);
     strmap_add(headers, "cache-control", "max-age=60");
 
     struct istream *body = nfs_cache_handle_open(r->pool, handle,
@@ -71,6 +71,7 @@ static const struct nfs_cache_handler nfs_request_cache_handler = {
 void
 nfs_request(struct pool *pool, struct nfs_cache *nfs_cache,
             const char *server, const char *export, const char *path,
+            const char *content_type,
             const struct http_response_handler *handler, void *handler_ctx,
             struct async_operation_ref *async_ref)
 {
@@ -78,6 +79,7 @@ nfs_request(struct pool *pool, struct nfs_cache *nfs_cache,
 
     r->pool = pool;
     r->path = path;
+    r->content_type = content_type;
     http_response_handler_set(&r->handler, handler, handler_ctx);
     r->async_ref = async_ref;
 

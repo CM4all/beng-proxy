@@ -28,6 +28,8 @@ struct nfs_address {
      * translation cache.
      */
     const char *expand_path;
+
+    const char *content_type;
 };
 
 static inline void
@@ -38,6 +40,7 @@ nfs_address_init(struct nfs_address *nfs, const char *server,
     nfs->export = export;
     nfs->path = path;
     nfs->expand_path = NULL;
+    nfs->content_type = NULL;
 }
 
 struct nfs_address *

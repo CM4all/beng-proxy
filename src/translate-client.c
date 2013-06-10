@@ -904,13 +904,16 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_CONTENT_TYPE:
-        if (client->file_address == NULL) {
+        if (client->file_address != NULL) {
+            client->file_address->content_type = payload;
+            return true;
+        } else if (client->nfs_address != NULL) {
+            client->nfs_address->content_type = payload;
+            return true;
+        } else {
             translate_client_error(client, "misplaced TRANSLATE_CONTENT_TYPE packet");
             return false;
         }
-
-        client->file_address->content_type = payload;
-        return true;
 
     case TRANSLATE_PROXY:
         if (client->resource_address == NULL ||

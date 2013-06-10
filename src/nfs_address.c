@@ -20,6 +20,7 @@ nfs_address_new(struct pool *pool, const char *server,
     nfs->export = p_strdup(pool, export);
     nfs->path = p_strdup(pool, path);
     nfs->expand_path = NULL;
+    nfs->content_type = NULL;
     return nfs;
 }
 
@@ -49,6 +50,7 @@ nfs_address_copy(struct pool *pool, struct nfs_address *dest,
     dest->export = p_strdup(pool, src->export);
     dest->path = p_strdup(pool, src->path);
     dest->expand_path = p_strdup_checked(pool, src->expand_path);
+    dest->content_type = p_strdup_checked(pool, src->content_type);
 }
 
 struct nfs_address *
@@ -76,6 +78,7 @@ nfs_address_save_base(struct pool *pool, const struct nfs_address *src,
     dest->export = p_strdup(pool, src->export);
     dest->path = p_strndup(pool, dest->path, length);
     dest->expand_path = NULL;
+    dest->content_type = p_strdup_checked(pool, src->content_type);
     return dest;
 }
 
@@ -98,6 +101,7 @@ nfs_address_load_base(struct pool *pool, const struct nfs_address *src,
     dest->export = p_strdup(pool, src->export);
     dest->path = p_strcat(pool, dest->path, unescaped, NULL);
     dest->expand_path = NULL;
+    dest->content_type = p_strdup_checked(pool, src->content_type);
     return dest;
 }
 
@@ -122,5 +126,6 @@ nfs_address_expand(struct pool *pool, const struct nfs_address *src,
     dest->export = src->export;
     dest->path = path;
     dest->expand_path = NULL;
+    dest->content_type = p_strdup_checked(pool, src->content_type);
     return dest;
 }

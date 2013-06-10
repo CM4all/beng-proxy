@@ -57,8 +57,7 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
     header_write(headers, "cache-control", "max-age=60");
 
     file_response_headers(headers,
-                          /* TODO: Content-Type from translation server */
-                          NULL,
+                          tr->address.u.nfs->content_type,
                           -1, st,
                           request_processor_enabled(request2),
                           request_processor_first(request2));
