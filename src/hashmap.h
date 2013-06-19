@@ -42,6 +42,14 @@ bool
 hashmap_remove_value(struct hashmap *map, const char *key, const void *value);
 
 /**
+ * Removes the item with the specified value.  The value must exist;
+ * if not, the debug build may abort the process.
+ */
+void
+hashmap_remove_existing(struct hashmap *map, const char *key,
+                        const void *value);
+
+/**
  * Removes all matching pair.s
  */
 void

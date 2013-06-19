@@ -95,7 +95,8 @@ nfs_stock_client_mount_error(GError *error, void *ctx)
     g_error_free(error);
 
     list_remove(&connection->siblings);
-    hashmap_remove(stock->connection_map, connection->key);
+    hashmap_remove_existing(stock->connection_map, connection->key,
+                            connection);
     pool_unref(connection->pool);
 }
 
@@ -113,7 +114,8 @@ nfs_stock_client_closed(GError *error, void *ctx)
     g_error_free(error);
 
     list_remove(&connection->siblings);
-    hashmap_remove(stock->connection_map, connection->key);
+    hashmap_remove_existing(stock->connection_map, connection->key,
+                            connection);
     pool_unref(connection->pool);
 }
 
@@ -172,7 +174,8 @@ nfs_stock_free(struct nfs_stock *stock)
         struct nfs_stock_connection *connection =
             (struct nfs_stock_connection *)stock->connection_list.next;
         list_remove(&connection->siblings);
-        hashmap_remove(stock->connection_map, connection->key);
+        hashmap_remove_existing(stock->connection_map, connection->key,
+                                connection);
 
         if (connection->client != NULL)
             nfs_client_free(connection->client);

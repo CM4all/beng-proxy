@@ -173,9 +173,7 @@ cache_flush(struct cache *cache)
          item = (struct cache_item *)item->sorted_siblings.next) {
         struct cache_item *item2;
 
-        gcc_unused bool found =
-            hashmap_remove_value(cache->items, item->key, item);
-        assert(found);
+        hashmap_remove_existing(cache->items, item->key, item);
 
         item2 = item;
         item = (struct cache_item *)item->sorted_siblings.prev;
@@ -215,9 +213,7 @@ cache_get(struct cache *cache, const char *key)
     if (!cache_item_validate(cache, item, now)) {
         cache_check(cache);
 
-        gcc_unused bool found =
-            hashmap_remove_value(cache->items, key, item);
-        assert(found);
+        hashmap_remove_existing(cache->items, key, item);
 
         cache_item_removed(cache, item);
 
@@ -247,9 +243,7 @@ cache_get_match(struct cache *cache, const char *key,
 
                 cache_check(cache);
 
-                gcc_unused bool found =
-                    hashmap_remove_value(cache->items, key, item);
-                assert(found);
+                hashmap_remove_existing(cache->items, key, item);
 
                 cache_item_removed(cache, item);
                 cache_check(cache);
@@ -289,9 +283,7 @@ cache_destroy_oldest_item(struct cache *cache)
 
     cache_check(cache);
 
-    gcc_unused bool found =
-        hashmap_remove_value(cache->items, item->key, item);
-    assert(found);
+    hashmap_remove_existing(cache->items, item->key, item);
 
     cache_item_removed(cache, item);
     cache_check(cache);
@@ -539,9 +531,7 @@ cache_expire_callback(void *ctx)
             /* not yet expired */
             continue;
 
-        gcc_unused bool found =
-            hashmap_remove_value(cache->items, item->key, item);
-        assert(found);
+        hashmap_remove_existing(cache->items, item->key, item);
 
         item2 = item;
         item = (struct cache_item *)item->sorted_siblings.prev;

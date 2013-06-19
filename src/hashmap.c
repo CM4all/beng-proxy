@@ -208,6 +208,17 @@ hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
 }
 
 void
+hashmap_remove_existing(struct hashmap *map, const char *key,
+                        const void *value)
+{
+#ifndef NDEBUG
+    bool found =
+#endif
+        hashmap_remove_value(map, key, value);
+    assert(found);
+}
+
+void
 hashmap_remove_match(struct hashmap *map, const char *key,
                      bool (*match)(void *value, void *ctx), void *ctx)
 {

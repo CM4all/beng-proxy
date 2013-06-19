@@ -172,9 +172,7 @@ tcache_remove_per_host(struct tcache_item *item)
 
         struct tcache *tcache = per_host->tcache;
 
-        gcc_unused
-        const void *old = hashmap_remove(tcache->per_host, host);
-        assert(old == per_host);
+        hashmap_remove_existing(tcache->per_host, host, per_host);
 
         p_free(tcache->pool, per_host->host);
         p_free(tcache->pool, per_host);

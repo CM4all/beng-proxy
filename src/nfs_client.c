@@ -319,7 +319,7 @@ nfs_file_release(struct nfs_client *client, struct nfs_file *file)
         evtimer_del(&file->expire_event);
 
     if (file->state != F_EXPIRED)
-        hashmap_remove(client->file_map, file->path);
+        hashmap_remove_existing(client->file_map, file->path, file);
 
     file->state = F_RELEASED;
 
@@ -636,7 +636,7 @@ nfs_file_expire_callback(gcc_unused int fd, gcc_unused short event,
         nfs_file_release(client, file);
     } else {
         file->state = F_EXPIRED;
-        hashmap_remove(client->file_map, file->path);
+        hashmap_remove_existing(client->file_map, file->path, file);
     }
 
     pool_commit();

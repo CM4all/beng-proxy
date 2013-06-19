@@ -42,8 +42,7 @@ hstock_stock_empty(struct stock *stock, const char *uri, void *ctx)
 
     daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
                (const void *)hstock, (const void *)stock, uri);
-    gcc_unused void *value = hashmap_remove(hstock->stocks, uri);
-    assert(value == stock);
+    hashmap_remove_existing(hstock->stocks, uri, stock);
 
     stock_free(stock);
 }
