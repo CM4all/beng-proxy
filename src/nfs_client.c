@@ -126,8 +126,6 @@ struct nfs_file {
      * in state #F_IDLE.
      */
     struct event expire_event;
-
-    bool locked;
 };
 
 struct nfs_client {
@@ -490,9 +488,6 @@ nfs_file_continue(struct nfs_file *file)
     list_replace(&file->handles, &tmp_head);
     list_init(&file->handles);
 
-    assert(!file->locked);
-    file->locked = true;
-
     while (!list_empty(&tmp_head)) {
         struct nfs_file_handle *handle =
             (struct nfs_file_handle *)tmp_head.next;
@@ -510,9 +505,6 @@ nfs_file_continue(struct nfs_file *file)
                                     handle->handler_ctx);
         pool_unref(caller_pool);
     }
-
-    assert(file->locked);
-    file->locked = false;
 }
 
 /*
@@ -863,7 +855,6 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
         file->state = F_PENDING_OPEN;
         list_init(&file->handles);
         file->n_active_handles = 0;
-        file->locked = false;
 
         hashmap_add(client->file_map, file->path, file);
         list_add(&file->siblings, &client->file_list);
