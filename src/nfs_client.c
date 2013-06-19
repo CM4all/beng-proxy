@@ -18,6 +18,11 @@
 #include <sys/poll.h>
 #include <sys/stat.h>
 
+/**
+ * A handle that is passed to the caller.  Each file can have multiple
+ * public "handles", one for each caller.  That way, only one #nfsfh
+ * (inside #nfs_file) is needed.
+ */
 struct nfs_file_handle {
     /**
      * @see nfs_file::handles
@@ -77,6 +82,14 @@ struct nfs_file_handle {
     struct async_operation operation;
 };
 
+/**
+ * Wrapper for a libnfs file handle (#nfsfh).  Can feed multiple
+ * #nfs_file_handle objects that are accessing the file at the same
+ * time.
+ *
+ * After a while (#nfs_file_expiry), this object expires, and will not
+ * accept any more callers; a new one will be created on demand.
+ */
 struct nfs_file {
     /**
      * @see nfs_client::file_list
@@ -114,7 +127,16 @@ struct nfs_file {
         F_RELEASED,
     } state;
 
+    /**
+     * An unordered list of #nfs_file_handle objects.
+     */
     struct list_head handles;
+
+    /**
+     * Keep track of active handles.  A #nfs_file_handle is "inactive"
+     * when the caller has lost interest in the object (aborted or
+     * closed).
+     */
     unsigned n_active_handles;
 
     struct nfsfh *nfsfh;
@@ -136,16 +158,37 @@ struct nfs_client {
 
     struct nfs_context *context;
 
+    /**
+     * libnfs I/O events.
+     */
     struct event event;
 
+    /**
+     * Track mount timeout (#nfs_client_mount_timeout) and idle
+     * timeout (#nfs_client_idle_timeout).
+     */
     struct event timeout_event;
 
+    /**
+     * An unordered list of all #nfs_file objects.  This includes all
+     * file handles that may have expired already.
+     */
     struct list_head file_list;
 
+    /**
+     * Map path names to #nfs_file.  This excludes expired files.
+     */
     struct hashmap *file_map;
 
+    /**
+     * Keep track of active files.  If this drops to zero, the idle
+     * timer starts, and the connection is about to be closed.
+     */
     unsigned n_active_files;
 
+    /**
+     * Hook that allows the caller to abort the mount operation.
+     */
     struct async_operation mount_operation;
 
     GError *postponed_mount_error;
@@ -225,6 +268,9 @@ libevent_to_libnfs(int i)
     return o;
 }
 
+/**
+ * Is the object ready for reading?
+ */
 static bool
 nfs_file_is_ready(const struct nfs_file *file)
 {
@@ -245,6 +291,10 @@ nfs_file_is_ready(const struct nfs_file *file)
     gcc_unreachable();
 }
 
+/**
+ * Make the #nfs_file "inactive".  It must be active prior to calling
+ * this function.
+ */
 static void
 nfs_file_deactivate(struct nfs_file *file)
 {
@@ -254,6 +304,7 @@ nfs_file_deactivate(struct nfs_file *file)
     --client->n_active_files;
 
     if (client->n_active_files == 0)
+        /* the last file was deactivated: watch for idle timeout */
         evtimer_add(&client->timeout_event, &nfs_client_idle_timeout);
 }
 
@@ -882,6 +933,7 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
     ++file->n_active_handles;
     if (file->n_active_handles == 1) {
         if (client->n_active_files == 0)
+            /* cancel the idle timeout */
             evtimer_del(&client->timeout_event);
 
         ++client->n_active_files;
@@ -924,6 +976,8 @@ nfs_client_close_file(struct nfs_file_handle *handle)
         break;
 
     case H_PENDING:
+        /* a request is still pending; postpone the close until libnfs
+           has called back */
         handle->state = H_PENDING_CLOSED;
         break;
     }
