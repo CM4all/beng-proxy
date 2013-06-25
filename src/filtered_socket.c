@@ -73,6 +73,14 @@ filtered_socket_bs_timeout(void *ctx)
     }
 }
 
+static bool
+filtered_socket_bs_broken(void *ctx)
+{
+    struct filtered_socket *s = ctx;
+
+    return s->handler->broken != NULL && s->handler->broken(s->handler_ctx);
+}
+
 static void
 filtered_socket_bs_error(GError *error, void *ctx)
 {
@@ -88,6 +96,7 @@ static const struct buffered_socket_handler filtered_socket_bs_handler = {
     .end = filtered_socket_bs_end,
     .write = filtered_socket_bs_write,
     .timeout = filtered_socket_bs_timeout,
+    .broken = filtered_socket_bs_broken,
     .error = filtered_socket_bs_error,
 };
 

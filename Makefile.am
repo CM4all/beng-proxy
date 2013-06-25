@@ -456,6 +456,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/ssl_filter.hxx \
 	src/ssl_filter.cxx \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
+	src/thread_socket_filter.c src/thread_socket_filter.h \
 	src/ping.c src/ping.h \
 	src/shutdown_listener.c src/shutdown_listener.h \
 	src/lb_global.cxx \
