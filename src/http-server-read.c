@@ -146,7 +146,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
         static const char msg[] =
             "This server requires HTTP 1.1.";
 
-        buffered_socket_write(&connection->socket, msg, sizeof(msg) - 1);
+        filtered_socket_write(&connection->socket, msg, sizeof(msg) - 1);
         http_server_done(connection);
         return false;
     }
@@ -173,7 +173,7 @@ http_server_headers_finished(struct http_server_connection *connection)
     bool chunked;
 
     /* disable the idle+headers timeout; the request body timeout will
-       be tracked by buffered_socket (auto-refreshing) */
+       be tracked by filtered_socket (auto-refreshing) */
     evtimer_del(&connection->idle_timeout);
 
     value = strmap_get(request->headers, "expect");
@@ -242,9 +242,9 @@ http_server_headers_finished(struct http_server_connection *connection)
 
     connection->request.read_state = READ_BODY;
 
-    /* for the response body, the buffered_socket class tracks
+    /* for the response body, the filtered_socket class tracks
        inactivity timeout */
-    buffered_socket_schedule_read_timeout(&connection->socket,
+    filtered_socket_schedule_read_timeout(&connection->socket,
                                           &http_server_read_timeout);
 
     return true;
@@ -317,7 +317,7 @@ http_server_feed_headers(struct http_server_connection *connection,
     if (next != NULL) {
         consumed = next - buffer;
         connection->request.bytes_received += consumed;
-        buffered_socket_consumed(&connection->socket, consumed);
+        filtered_socket_consumed(&connection->socket, consumed);
     }
 
     return connection->request.read_state == READ_HEADERS
@@ -334,7 +334,7 @@ http_server_submit_request(struct http_server_connection *connection)
     if (connection->request.read_state == READ_END)
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        buffered_socket_schedule_read_no_timeout(&connection->socket);
+        filtered_socket_schedule_read_no_timeout(&connection->socket);
 
     pool_ref(connection->pool);
 
@@ -387,7 +387,7 @@ http_server_feed(struct http_server_connection *connection,
         /* check if the connection was closed by the client while we
            were processing the request */
 
-        if (buffered_socket_full(&connection->socket))
+        if (filtered_socket_full(&connection->socket))
             /* the buffer is full, the peer has been pipelining too
                much - that would disallow us to detect a disconnect;
                let's disable keep-alive now and discard all data */
@@ -396,7 +396,7 @@ http_server_feed(struct http_server_connection *connection,
         if (!connection->keep_alive) {
             /* discard all pipelined input when keep-alive has been
                disabled */
-            buffered_socket_consumed(&connection->socket, length);
+            filtered_socket_consumed(&connection->socket, length);
             return BUFFERED_OK;
         }
 

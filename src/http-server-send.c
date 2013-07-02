@@ -32,7 +32,7 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
        of response to the peer */
     static const char *const response = "HTTP/1.1 100 Continue\r\n\r\n";
     const size_t length = strlen(response);
-    ssize_t nbytes = buffered_socket_write(&connection->socket,
+    ssize_t nbytes = filtered_socket_write(&connection->socket,
                                            response, length);
     if (gcc_likely(nbytes == (ssize_t)length))
         return true;
@@ -77,7 +77,7 @@ http_server_response(const struct http_server_request *request,
 
     assert(connection->score != HTTP_SERVER_NEW);
     assert(connection->request.request == request);
-    assert(buffered_socket_connected(&connection->socket));
+    assert(filtered_socket_connected(&connection->socket));
 
     async_ref_poison(&connection->request.async_ref);
 
@@ -148,11 +148,11 @@ http_server_response(const struct http_server_request *request,
     connection->response.istream = body;
     istream_handler_set(connection->response.istream,
                         &http_server_response_stream_handler, connection,
-                        buffered_socket_direct_mask(&connection->socket));
+                        filtered_socket_direct_mask(&connection->socket));
 
-    buffered_socket_set_cork(&connection->socket, true);
+    filtered_socket_set_cork(&connection->socket, true);
     if (http_server_try_write(connection))
-        buffered_socket_set_cork(&connection->socket, false);
+        filtered_socket_set_cork(&connection->socket, false);
 }
 
 void

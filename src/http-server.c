@@ -113,7 +113,7 @@ http_server_socket_write(void *ctx)
         return false;
 
     if (!connection->response.want_write)
-        buffered_socket_unschedule_write(&connection->socket);
+        filtered_socket_unschedule_write(&connection->socket);
 
     return true;
 }
@@ -194,13 +194,13 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
 
-    buffered_socket_init(&connection->socket, pool, fd, fd_type,
-                         NULL, &http_server_write_timeout,
-                         &http_server_socket_handler, connection);
+    filtered_socket_init_null(&connection->socket, pool, fd, fd_type,
+                              NULL, &http_server_write_timeout,
+                              &http_server_socket_handler, connection);
 
     /* hack: clear the "expect_more" flag because the connection is
        idle; it is perfectly ok to be closed by the peer */
-    connection->socket.expect_more = false;
+    connection->socket.base.expect_more = false;
 
     connection->handler = handler;
     connection->handler_ctx = ctx;
@@ -241,15 +241,15 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     *connection_r = connection;
 
-    buffered_socket_read(&connection->socket);
+    filtered_socket_read(&connection->socket);
 }
 
 static void
 http_server_socket_close(struct http_server_connection *connection)
 {
-    assert(buffered_socket_connected(&connection->socket));
+    assert(filtered_socket_connected(&connection->socket));
 
-    buffered_socket_close(&connection->socket);
+    filtered_socket_close(&connection->socket);
 
     evtimer_del(&connection->idle_timeout);
 }
@@ -257,12 +257,12 @@ http_server_socket_close(struct http_server_connection *connection)
 static void
 http_server_socket_destroy(struct http_server_connection *connection)
 {
-    assert(buffered_socket_valid(&connection->socket));
+    assert(filtered_socket_valid(&connection->socket));
 
-    if (buffered_socket_connected(&connection->socket))
+    if (filtered_socket_connected(&connection->socket))
         http_server_socket_close(connection);
 
-    buffered_socket_destroy(&connection->socket);
+    filtered_socket_destroy(&connection->socket);
 }
 
 static void

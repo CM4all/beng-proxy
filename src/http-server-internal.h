@@ -11,17 +11,17 @@
 #include "fifo-buffer.h"
 #include "http-body.h"
 #include "async.h"
-#include "buffered_socket.h"
+#include "filtered_socket.h"
 
 struct http_server_connection {
     struct pool *pool;
 
     /* I/O */
-    struct buffered_socket socket;
+    struct filtered_socket socket;
 
     /**
      * Track the total time for idle periods plus receiving all
-     * headers from the client.  Unlike the #buffered_socket read
+     * headers from the client.  Unlike the #filtered_socket read
      * timeout, it is not refreshed after receiving some header data.
      */
     struct event idle_timeout;
@@ -133,15 +133,15 @@ http_server_connection_valid(const struct http_server_connection *connection)
 {
     assert(connection != NULL);
 
-    return buffered_socket_valid(&connection->socket) &&
-        buffered_socket_connected(&connection->socket);
+    return filtered_socket_valid(&connection->socket) &&
+        filtered_socket_connected(&connection->socket);
 }
 
 static inline void
 http_server_schedule_write(struct http_server_connection *connection)
 {
     connection->response.want_write = true;
-    buffered_socket_schedule_write(&connection->socket);
+    filtered_socket_schedule_write(&connection->socket);
 }
 
 /**

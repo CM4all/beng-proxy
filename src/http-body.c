@@ -7,15 +7,15 @@
 #include "http-body.h"
 #include "http-error.h"
 #include "istream-internal.h"
-#include "buffered_socket.h"
+#include "filtered_socket.h"
 
 #include <assert.h>
 #include <limits.h>
 
 gcc_pure
 off_t
-http_body_available2(const struct http_body_reader *body,
-                     const struct buffered_socket *s, bool partial)
+http_body_available(const struct http_body_reader *body,
+                    const struct filtered_socket *s, bool partial)
 {
     assert(body->rest != -2);
 
@@ -23,7 +23,7 @@ http_body_available2(const struct http_body_reader *body,
         return body->rest;
 
     return partial
-        ? (off_t)buffered_socket_available(s)
+        ? (off_t)filtered_socket_available(s)
         : -1;
 }
 
@@ -85,11 +85,11 @@ http_body_try_direct(struct http_body_reader *body, int fd,
 
 bool
 http_body_socket_is_done(struct http_body_reader *body,
-                         const struct buffered_socket *s)
+                         const struct filtered_socket *s)
 {
     return body->rest != -1 &&
         (http_body_eof(body) ||
-         (off_t)buffered_socket_available(s) >= body->rest);
+         (off_t)filtered_socket_available(s) >= body->rest);
 }
 
 bool
