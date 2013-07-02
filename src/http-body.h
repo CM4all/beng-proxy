@@ -14,7 +14,6 @@
 #include <stddef.h>
 
 struct pool;
-struct fifo_buffer;
 struct buffered_socket;
 
 struct http_body_reader {
@@ -54,13 +53,6 @@ http_body_available2(const struct http_body_reader *body,
 size_t
 http_body_feed_body(struct http_body_reader *body,
                     const void *data, size_t length);
-
-/**
- * Returne (size_t)-1 if the buffer is empty.
- */
-size_t
-http_body_consume_body(struct http_body_reader *body,
-                       struct fifo_buffer *buffer);
 
 ssize_t
 http_body_try_direct(struct http_body_reader *body, int fd,

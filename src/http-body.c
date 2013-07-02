@@ -7,7 +7,6 @@
 #include "http-body.h"
 #include "http-error.h"
 #include "istream-internal.h"
-#include "fifo-buffer.h"
 #include "buffered_socket.h"
 
 #include <assert.h>
@@ -63,22 +62,6 @@ http_body_feed_body(struct http_body_reader *body,
     size_t consumed = istream_invoke_data(&body->output, data, length);
     if (consumed > 0)
         http_body_consumed(body, consumed);
-
-    return consumed;
-}
-
-size_t
-http_body_consume_body(struct http_body_reader *body,
-                       struct fifo_buffer *buffer)
-{
-    size_t length;
-    const void *data = fifo_buffer_read(buffer, &length);
-    if (data == NULL)
-        return (size_t)-1;
-
-    size_t consumed = http_body_feed_body(body, data, length);
-    if (consumed > 0)
-        fifo_buffer_consume(buffer, consumed);
 
     return consumed;
 }
