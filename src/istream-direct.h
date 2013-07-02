@@ -6,6 +6,12 @@
 #define BENG_PROXY_ISTREAM_DIRECT_H
 
 enum istream_direct {
+    /**
+     * No file descriptor available.  Special value that is only
+     * supported by few libraries.
+     */
+    ISTREAM_NONE = 00,
+
     ISTREAM_FILE = 01,
     ISTREAM_PIPE = 02,
     ISTREAM_SOCKET = 04,

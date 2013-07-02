@@ -95,6 +95,9 @@ static inline enum istream_direct
 istream_direct_mask_to(enum istream_direct type)
 {
     switch (type) {
+    case ISTREAM_NONE:
+        return ISTREAM_NONE;
+
     case ISTREAM_FILE:
         return ISTREAM_TO_FILE;
 
