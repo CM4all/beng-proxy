@@ -165,6 +165,10 @@ connect_close_100(void)
         static const char response[] = "HTTP/1.1 100 Continue\n\n";
         write(sv[1], response, sizeof(response) - 1);
         shutdown(sv[1], SHUT_WR);
+
+        char buffer[64];
+        while (read(sv[1], buffer, sizeof(buffer)) > 0) {}
+
         exit(EXIT_SUCCESS);
     }
 
