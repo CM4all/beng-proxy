@@ -48,11 +48,6 @@ http_body_eof(struct http_body_reader *body)
 
 gcc_pure
 off_t
-http_body_available(const struct http_body_reader *body,
-                    const struct fifo_buffer *buffer, bool partial);
-
-gcc_pure
-off_t
 http_body_available2(const struct http_body_reader *body,
                      const struct buffered_socket *s, bool partial);
 

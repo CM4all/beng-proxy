@@ -13,20 +13,6 @@
 #include <assert.h>
 #include <limits.h>
 
-off_t
-http_body_available(const struct http_body_reader *body,
-                    const struct fifo_buffer *buffer, bool partial)
-{
-    assert(body->rest != -2);
-
-    if (body->rest >= 0)
-        return body->rest;
-
-    return partial
-        ? (off_t)fifo_buffer_available(buffer)
-        : -1;
-}
-
 gcc_pure
 off_t
 http_body_available2(const struct http_body_reader *body,
