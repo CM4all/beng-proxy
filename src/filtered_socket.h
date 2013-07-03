@@ -13,8 +13,11 @@
 #include <pthread.h>
 
 struct fifo_buffer;
+struct filtered_socket;
 
 struct socket_filter {
+    void (*init)(struct filtered_socket *s, void *ctx);
+
     /**
      * Data has been read from the socket into the input buffer.  Call
      * filtered_socket_internal_consumed() each time you consume data

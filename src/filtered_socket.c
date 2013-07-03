@@ -87,6 +87,8 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
     s->filter_ctx = filter_ctx;
     s->handler = handler;
     s->handler_ctx = handler_ctx;
+
+    filter->init(s, filter_ctx);
 }
 
 void
