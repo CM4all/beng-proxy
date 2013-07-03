@@ -51,9 +51,9 @@ struct socket_filter {
      * calling filtered_socket_internal_write() again.
      *
      * This method must not destroy the socket.  If an error occurs,
-     * it shall return false with a GError.
+     * it shall return false.
      */
-    bool (*internal_write)(void *ctx, GError **error_r);
+    bool (*internal_write)(void *ctx);
 
     bool (*closed)(size_t remaining, void *ctx);
 

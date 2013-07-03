@@ -38,13 +38,7 @@ filtered_socket_bs_write(void *ctx)
 {
     struct filtered_socket *s = ctx;
 
-    GError *error = NULL;
-    if (!s->filter->internal_write(s->filter_ctx, &error)) {
-        s->handler->error(error, s->handler_ctx);
-        return false;
-    }
-
-    return true;
+    return s->filter->internal_write(s->filter_ctx);
 }
 
 static void
