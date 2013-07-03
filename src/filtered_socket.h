@@ -302,15 +302,6 @@ filtered_socket_unschedule_write(struct filtered_socket *s)
     buffered_socket_unschedule_write(&s->base);
 }
 
-static inline enum buffered_result
-filtered_socket_internal_data(struct filtered_socket *s,
-                              const void *data, size_t size)
-{
-    assert(s->filter != NULL);
-
-    return s->handler->data(data, size, s->handler_ctx);
-}
-
 static inline void
 filtered_socket_internal_consumed(struct filtered_socket *s, size_t nbytes)
 {
@@ -334,6 +325,15 @@ filtered_socket_internal_write(struct filtered_socket *s,
     assert(s->filter != NULL);
 
     return buffered_socket_write(&s->base, data, length);
+}
+
+static inline enum buffered_result
+filtered_socket_invoke_data(struct filtered_socket *s,
+                            const void *data, size_t size)
+{
+    assert(s->filter != NULL);
+
+    return s->handler->data(data, size, s->handler_ctx);
 }
 
 #endif
