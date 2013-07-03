@@ -363,4 +363,44 @@ filtered_socket_invoke_data(struct filtered_socket *s,
     return s->handler->data(data, size, s->handler_ctx);
 }
 
+static inline bool
+filtered_socket_invoke_closed(size_t remaining, struct filtered_socket *s)
+{
+    assert(s->filter != NULL);
+
+    return s->handler->closed(remaining, s->handler_ctx);
+}
+
+static inline void
+filtered_socket_invoke_end(struct filtered_socket *s)
+{
+    assert(s->filter != NULL);
+
+    s->handler->end(s->handler_ctx);
+}
+
+static inline bool
+filtered_socket_invoke_write(struct filtered_socket *s)
+{
+    assert(s->filter != NULL);
+
+    return s->handler->write(s->handler_ctx);
+}
+
+static inline bool
+filtered_socket_invoke_timeout(struct filtered_socket *s)
+{
+    assert(s->filter != NULL);
+
+    return s->handler->timeout(s->handler_ctx);
+}
+
+static inline void
+filtered_socket_invoke_error(struct filtered_socket *s, GError *error)
+{
+    assert(s->filter != NULL);
+
+    s->handler->error(error, s->handler_ctx);
+}
+
 #endif
