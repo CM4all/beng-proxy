@@ -364,7 +364,7 @@ filtered_socket_invoke_data(struct filtered_socket *s,
 }
 
 static inline bool
-filtered_socket_invoke_closed(size_t remaining, struct filtered_socket *s)
+filtered_socket_invoke_closed(struct filtered_socket *s, size_t remaining)
 {
     assert(s->filter != NULL);
 
