@@ -88,8 +88,6 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
 void
 filtered_socket_destroy(struct filtered_socket *s)
 {
-    assert(s->filter == NULL);
-
     if (s->filter != NULL) {
         s->filter->close(s->filter_ctx);
         s->filter = NULL;
