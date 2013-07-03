@@ -302,6 +302,33 @@ filtered_socket_unschedule_write(struct filtered_socket *s)
     buffered_socket_unschedule_write(&s->base);
 }
 
+gcc_pure
+static inline bool
+filtered_socket_internal_is_empty(const struct filtered_socket *s)
+{
+    assert(s->filter != NULL);
+
+    return buffered_socket_empty(&s->base);
+}
+
+gcc_pure
+static inline bool
+filtered_socket_internal_is_full(const struct filtered_socket *s)
+{
+    assert(s->filter != NULL);
+
+    return buffered_socket_full(&s->base);
+}
+
+gcc_pure
+static inline size_t
+filtered_socket_internal_available(const struct filtered_socket *s)
+{
+    assert(s->filter != NULL);
+
+    return buffered_socket_available(&s->base);
+}
+
 static inline void
 filtered_socket_internal_consumed(struct filtered_socket *s, size_t nbytes)
 {
