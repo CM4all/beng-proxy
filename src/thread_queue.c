@@ -46,6 +46,7 @@ thread_queue_wakeup_callback(gcc_unused int fd, gcc_unused short event,
             pthread_mutex_unlock(&q->mutex);
             job->done(job);
             pthread_mutex_lock(&q->mutex);
+            job->state = THREAD_JOB_NULL;
         }
     }
 
