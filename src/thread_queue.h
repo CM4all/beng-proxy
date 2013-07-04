@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_THREAD_QUEUE_H
 #define BENG_PROXY_THREAD_QUEUE_H
 
+#include <stdbool.h>
+
 struct thread_job;
 struct pool;
 
@@ -43,5 +45,14 @@ thread_queue_wait(struct thread_queue *q);
  */
 void
 thread_queue_done(struct thread_queue *q, struct thread_job *job);
+
+/**
+ * Cancel a job that has been queued.
+ *
+ * @return true if the job is now canceled, false if the job is
+ * currently being processed
+ */
+bool
+thread_queue_cancel(struct thread_queue *q, struct thread_job *job);
 
 #endif

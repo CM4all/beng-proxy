@@ -147,3 +147,36 @@ thread_queue_done(struct thread_queue *q, struct thread_job *job)
     static const struct timeval now = { 0, 0 };
     evtimer_add(&q->wakeup_event, &now);
 }
+
+bool
+thread_queue_cancel(struct thread_queue *q, struct thread_job *job)
+{
+    pthread_mutex_lock(&q->mutex);
+
+    bool result = false;
+    switch (job->state) {
+    case THREAD_JOB_NULL:
+        /* already idle */
+        result = true;
+        break;
+
+    case THREAD_JOB_WAITING:
+        /* cancel it */
+        list_remove(&job->siblings);
+        job->state = THREAD_JOB_NULL;
+        result = true;
+        break;
+
+    case THREAD_JOB_BUSY:
+        /* no chance */
+        break;
+
+    case THREAD_JOB_DONE:
+        /* TODO: the callback hasn't been invoked yet - do that now?
+           anyway, with this pending state, we can't return success */
+        break;
+    }
+
+    pthread_mutex_unlock(&q->mutex);
+    return result;
+}
