@@ -19,6 +19,11 @@ struct thread_queue {
 
     bool alive;
 
+    /**
+     * Was the #wakeup_event triggered?  This avoids duplicate events.
+     */
+    bool pending;
+
     struct list_head waiting, busy, done;
 
     struct event wakeup_event;
@@ -30,6 +35,8 @@ thread_queue_wakeup_callback(gcc_unused int fd, gcc_unused short event,
 {
     struct thread_queue *q = ctx;
     pthread_mutex_lock(&q->mutex);
+
+    q->pending = false;
 
     while (!list_empty(&q->done)) {
         struct thread_job *job = (struct thread_job *)q->done.next;
@@ -62,6 +69,7 @@ thread_queue_new(struct pool *pool)
     pthread_cond_init(&q->cond, NULL);
 
     q->alive = true;
+    q->pending = false;
 
     list_init(&q->waiting);
     list_init(&q->busy);
@@ -141,6 +149,8 @@ thread_queue_done(struct thread_queue *q, struct thread_job *job)
     job->state = THREAD_JOB_DONE;
     list_remove(&job->siblings);
     list_add(&job->siblings, &q->done);
+
+    q->pending = true;
 
     pthread_mutex_unlock(&q->mutex);
 
