@@ -47,6 +47,20 @@ struct socket_filter {
     ssize_t (*write)(const void *data, size_t length, void *ctx);
 
     /**
+     * The client wants to be called back as soon as writing becomes
+     * possible.  The filter processes the call, and may then call
+     * filtered_socket_internal_schedule_write().
+     */
+    void (*schedule_write)(void *ctx);
+
+    /**
+     * The client is not anymore interested in writing.  The filter
+     * processes the call, and may then call
+     * filtered_socket_internal_unschedule_write().
+     */
+    void (*unschedule_write)(void *ctx);
+
+    /**
      * The underlying socket is ready for writing.  The filter may try
      * calling filtered_socket_internal_write() again.
      *
@@ -293,13 +307,19 @@ filtered_socket_schedule_read_no_timeout(struct filtered_socket *s)
 static inline void
 filtered_socket_schedule_write(struct filtered_socket *s)
 {
-    buffered_socket_schedule_write(&s->base);
+    if (s->filter != NULL && s->filter->schedule_write != NULL)
+        s->filter->schedule_write(s->filter_ctx);
+    else
+        buffered_socket_schedule_write(&s->base);
 }
 
 static inline void
 filtered_socket_unschedule_write(struct filtered_socket *s)
 {
-    buffered_socket_unschedule_write(&s->base);
+    if (s->filter != NULL && s->filter->unschedule_write != NULL)
+        s->filter->unschedule_write(s->filter_ctx);
+    else
+        buffered_socket_unschedule_write(&s->base);
 }
 
 gcc_pure
@@ -352,6 +372,22 @@ filtered_socket_internal_write(struct filtered_socket *s,
     assert(s->filter != NULL);
 
     return buffered_socket_write(&s->base, data, length);
+}
+
+static inline void
+filtered_socket_internal_schedule_write(struct filtered_socket *s)
+{
+    assert(s->filter != NULL);
+
+    buffered_socket_schedule_write(&s->base);
+}
+
+static inline void
+filtered_socket_internal_unschedule_write(struct filtered_socket *s)
+{
+    assert(s->filter != NULL);
+
+    buffered_socket_unschedule_write(&s->base);
 }
 
 static inline enum buffered_result
