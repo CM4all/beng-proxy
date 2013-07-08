@@ -90,3 +90,15 @@ notify_signal(struct notify *notify)
 #endif
         (void)write(notify->fds[1], notify, 1);
 }
+
+void
+notify_enable(struct notify *notify)
+{
+    event_add(&notify->event, NULL);
+}
+
+void
+notify_disable(struct notify *notify)
+{
+    event_del(&notify->event);
+}

@@ -24,4 +24,10 @@ notify_free(struct notify *notify);
 void
 notify_signal(struct notify *notify);
 
+void
+notify_enable(struct notify *notify);
+
+void
+notify_disable(struct notify *notify);
+
 #endif
