@@ -7,8 +7,7 @@
 #include "thread_queue.h"
 #include "thread_job.h"
 #include "pool.h"
-
-#include <event.h>
+#include "notify.h"
 
 #include <pthread.h>
 #include <assert.h>
@@ -26,12 +25,11 @@ struct thread_queue {
 
     struct list_head waiting, busy, done;
 
-    struct event wakeup_event;
+    struct notify *notify;
 };
 
 static void
-thread_queue_wakeup_callback(gcc_unused int fd, gcc_unused short event,
-                             void *ctx)
+thread_queue_wakeup_callback(void *ctx)
 {
     struct thread_queue *q = ctx;
     pthread_mutex_lock(&q->mutex);
@@ -59,6 +57,10 @@ thread_queue_wakeup_callback(gcc_unused int fd, gcc_unused short event,
     }
 
     pthread_mutex_unlock(&q->mutex);
+
+    if (list_empty(&q->waiting) && list_empty(&q->busy) &&
+        list_empty(&q->done))
+        notify_disable(q->notify);
 }
 
 struct thread_queue *
@@ -76,7 +78,10 @@ thread_queue_new(struct pool *pool)
     list_init(&q->busy);
     list_init(&q->done);
 
-    evtimer_set(&q->wakeup_event, thread_queue_wakeup_callback, q);
+    GError *error = NULL;
+    q->notify = notify_new(pool, thread_queue_wakeup_callback, q, &error);
+    if (q->notify == NULL)
+        g_printerr("%s\n", error->message);
 
     return q;
 }
@@ -115,6 +120,8 @@ thread_queue_add(struct thread_queue *q, struct thread_job *job)
     }
 
     pthread_mutex_unlock(&q->mutex);
+
+    notify_enable(q->notify);
 }
 
 struct thread_job *
@@ -156,8 +163,7 @@ thread_queue_done(struct thread_queue *q, struct thread_job *job)
 
     pthread_mutex_unlock(&q->mutex);
 
-    static const struct timeval now = { 0, 0 };
-    evtimer_add(&q->wakeup_event, &now);
+    notify_signal(q->notify);
 }
 
 bool
