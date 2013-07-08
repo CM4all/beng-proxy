@@ -7,10 +7,9 @@
 #include "stock.h"
 #include "async.h"
 #include "pool.h"
+#include "defer_event.h"
 
 #include <daemon/log.h>
-
-#include <event.h>
 
 #include <assert.h>
 
@@ -41,13 +40,13 @@ struct stock {
      * current stack, to invoke the handler method in a safe
      * environment.
      */
-    struct event retry_event;
+    struct defer_event retry_event;
 
     /**
      * This event is used to move the "empty" check out of the current
      * stack, to invoke the handler method in a safe environment.
      */
-    struct event empty_event;
+    struct defer_event empty_event;
 
     struct event cleanup_event;
     struct event clear_event;
@@ -112,11 +111,9 @@ stock_empty_event_callback(gcc_unused int fd, short event gcc_unused,
 static void
 stock_schedule_check_empty(struct stock *stock)
 {
-    static const struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
-
     if (stock_is_empty(stock) && stock->handler != NULL &&
         stock->handler->empty != NULL)
-        evtimer_add(&stock->empty_event, &tv);
+        defer_event_add(&stock->empty_event);
 }
 
 
@@ -264,11 +261,9 @@ stock_retry_event_callback(gcc_unused int fd, gcc_unused short event,
 static void
 stock_schedule_retry_waiting(struct stock *stock)
 {
-    static const struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
-
     if (stock->limit > 0 && !list_empty(&stock->waiting) &&
         stock->num_busy - stock->num_create < stock->limit)
-        evtimer_add(&stock->retry_event, &tv);
+        defer_event_add(&stock->retry_event);
 }
 
 
@@ -360,8 +355,8 @@ stock_new(struct pool *pool, const struct stock_class *class,
     stock->handler = handler;
     stock->handler_ctx = handler_ctx;
 
-    evtimer_set(&stock->retry_event, stock_retry_event_callback, stock);
-    evtimer_set(&stock->empty_event, stock_empty_event_callback, stock);
+    defer_event_init(&stock->retry_event, stock_retry_event_callback, stock);
+    defer_event_init(&stock->empty_event, stock_empty_event_callback, stock);
     evtimer_set(&stock->cleanup_event, stock_cleanup_event_callback, stock);
     evtimer_set(&stock->clear_event, stock_clear_event_callback, stock);
 
@@ -417,8 +412,8 @@ stock_free(struct stock *stock)
     /* must not call stock_free() when there are busy items left */
     assert(list_empty(&stock->busy));
 
-    evtimer_del(&stock->retry_event);
-    evtimer_del(&stock->empty_event);
+    defer_event_deinit(&stock->retry_event);
+    defer_event_deinit(&stock->empty_event);
     evtimer_del(&stock->cleanup_event);
     evtimer_del(&stock->clear_event);
 

@@ -115,6 +115,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/date.c src/date.h \
 	src/dchunk.h \
 	src/defer.c src/defer.h \
+	src/defer_event.h \
 	src/delegate-client.c \
 	src/delegate-client.h \
 	src/delegate-glue.c src/delegate-glue.h \

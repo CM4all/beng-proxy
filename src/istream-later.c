@@ -7,13 +7,14 @@
 
 #include "istream-internal.h"
 #include "istream-forward.h"
+#include "defer_event.h"
 
 #include <event.h>
 
 struct istream_later {
     struct istream output;
     struct istream *input;
-    struct event event;
+    struct defer_event defer_event;
 };
 
 
@@ -31,10 +32,7 @@ later_event_callback(int fd gcc_unused, short event gcc_unused,
 
 static void later_schedule(struct istream_later *later)
 {
-    static const struct timeval tv = { .tv_sec = 0, .tv_usec = 0 };
-
-    if (evtimer_pending(&later->event, NULL) == 0)
-        evtimer_add(&later->event, &tv);
+    defer_event_add(&later->defer_event);
 }
 
 
@@ -58,7 +56,7 @@ later_input_abort(GError *error, void *ctx)
 {
     struct istream_later *later = ctx;
 
-    evtimer_del(&later->event);
+    defer_event_deinit(&later->defer_event);
 
     later->input = NULL;
     istream_deinit_abort(&later->output, error);
@@ -96,7 +94,7 @@ istream_later_close(struct istream *istream)
 {
     struct istream_later *later = istream_to_later(istream);
 
-    evtimer_del(&later->event);
+    defer_event_deinit(&later->defer_event);
 
     /* input can only be NULL during the eof callback delay */
     if (later->input != NULL)
@@ -128,7 +126,7 @@ istream_later_new(struct pool *pool, struct istream *input)
                            &later_input_handler, later,
                            0);
 
-    evtimer_set(&later->event, later_event_callback, later);
+    defer_event_init(&later->defer_event, later_event_callback, later);
 
     return istream_struct_cast(&later->output);
 }

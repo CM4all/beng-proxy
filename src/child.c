@@ -7,6 +7,7 @@
 #include "child.h"
 #include "crash.h"
 #include "pool.h"
+#include "defer_event.h"
 
 #include <daemon/log.h>
 #include <inline/list.h>
@@ -28,10 +29,6 @@ struct child {
     void *callback_ctx;
 };
 
-static const struct timeval immediately = {
-    .tv_sec = 0,
-};
-
 static bool shutdown_flag = false;
 static struct pool *pool;
 static struct list_head children;
@@ -44,7 +41,7 @@ static struct event sigchld_event;
  * catch up with SIGCHLDs that may have been lost while the SIGCHLD
  * handler was disabled.
  */
-static struct event defer_event;
+static struct defer_event defer_event;
 
 static struct child *
 find_child_by_pid(pid_t pid)
@@ -145,6 +142,7 @@ children_init(struct pool *_pool)
     list_init(&children);
     num_children = 0;
 
+    defer_event_init(&defer_event, child_event_callback, NULL);
     children_event_add();
 }
 
@@ -152,6 +150,8 @@ void
 children_shutdown(void)
 {
     assert(list_empty(&children) == (num_children == 0));
+
+    defer_event_deinit(&defer_event);
 
     shutdown_flag = true;
 
@@ -170,15 +170,14 @@ children_event_add(void)
 
     /* schedule an immediate waitpid() run, just in case we lost a
        SIGCHLD */
-    evtimer_set(&defer_event, child_event_callback, NULL);
-    evtimer_add(&defer_event, &immediately);
+    defer_event_add(&defer_event);
 }
 
 void
 children_event_del(void)
 {
     event_del(&sigchld_event);
-    evtimer_del(&defer_event);
+    defer_event_cancel(&defer_event);
 
     /* reset the "shutdown" flag, so the test suite may initialize
        this library more than once */
