@@ -42,6 +42,32 @@ filtered_socket_bs_write(void *ctx)
 }
 
 static void
+filtered_socket_bs_end(void *ctx)
+{
+    struct filtered_socket *s = ctx;
+
+    // TODO: let handler intercept this call
+    if (s->handler->end != NULL)
+        s->handler->end(s->handler_ctx);
+}
+
+static bool
+filtered_socket_bs_timeout(void *ctx)
+{
+    struct filtered_socket *s = ctx;
+
+    // TODO: let handler intercept this call
+    if (s->handler->timeout != NULL)
+        return s->handler->timeout(s->handler_ctx);
+    else {
+        s->handler->error(g_error_new_literal(buffered_socket_quark(), 0,
+                                              "Timeout"),
+                          s->handler_ctx);
+        return false;
+    }
+}
+
+static void
 filtered_socket_bs_error(GError *error, void *ctx)
 {
     struct filtered_socket *s = ctx;
@@ -52,7 +78,9 @@ filtered_socket_bs_error(GError *error, void *ctx)
 static const struct buffered_socket_handler filtered_socket_bs_handler = {
     .data = filtered_socket_bs_data,
     .closed = filtered_socket_bs_closed,
+    .end = filtered_socket_bs_end,
     .write = filtered_socket_bs_write,
+    .timeout = filtered_socket_bs_timeout,
     .error = filtered_socket_bs_error,
 };
 
