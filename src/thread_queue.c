@@ -47,6 +47,7 @@ thread_queue_wakeup_callback(gcc_unused int fd, gcc_unused short event,
         if (job->again) {
             /* schedule this job again */
             job->state = THREAD_JOB_WAITING;
+            job->again = false;
             list_add(&job->siblings, &q->waiting);
             pthread_cond_signal(&q->cond);
         } else {
@@ -106,6 +107,7 @@ thread_queue_add(struct thread_queue *q, struct thread_job *job)
 
     if (job->state == THREAD_JOB_NULL) {
         job->state = THREAD_JOB_WAITING;
+        job->again = false;
         list_add(&job->siblings, &q->waiting);
         pthread_cond_signal(&q->cond);
     } else if (job->state != THREAD_JOB_WAITING) {
