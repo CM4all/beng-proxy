@@ -588,6 +588,9 @@ test_data_blocking(struct pool *pool, struct context *c)
     assert(!c->body_abort);
     assert(c->request_error == NULL);
     assert(c->body_error == NULL);
+
+    /* flush all remaining events */
+    event_dispatch();
 }
 
 /**
