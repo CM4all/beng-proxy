@@ -412,7 +412,8 @@ filtered_socket_invoke_end(struct filtered_socket *s)
 {
     assert(s->filter != NULL);
 
-    s->handler->end(s->handler_ctx);
+    if (s->handler->end != NULL)
+        s->handler->end(s->handler_ctx);
 }
 
 static inline bool
