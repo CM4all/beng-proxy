@@ -46,9 +46,7 @@ filtered_socket_bs_end(void *ctx)
 {
     struct filtered_socket *s = ctx;
 
-    // TODO: let handler intercept this call
-    if (s->handler->end != NULL)
-        s->handler->end(s->handler_ctx);
+    s->filter->end(s->filter_ctx);
 }
 
 static bool

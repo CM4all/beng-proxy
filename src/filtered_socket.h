@@ -71,6 +71,13 @@ struct socket_filter {
 
     bool (*closed)(size_t remaining, void *ctx);
 
+    /**
+     * The buffered_socket has run empty after the socket has been
+     * closed.  The filter may call filtered_socket_invoke_end() as
+     * soon as all its buffers have been consumed.
+     */
+    void (*end)(void *ctx);
+
     void (*close)(void *ctx);
 };
 
