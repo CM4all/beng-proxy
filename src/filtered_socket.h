@@ -194,6 +194,12 @@ filtered_socket_as_fd(struct filtered_socket *s)
 static inline bool
 filtered_socket_connected(const struct filtered_socket *s)
 {
+#ifndef NDEBUG
+    /* work around bogus assertion failure */
+    if (s->filter != NULL && s->base.ended)
+        return false;
+#endif
+
     return buffered_socket_connected(&s->base);
 }
 
