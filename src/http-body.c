@@ -17,7 +17,7 @@ off_t
 http_body_available(const struct http_body_reader *body,
                     const struct filtered_socket *s, bool partial)
 {
-    assert(body->rest != -2);
+    assert(body->rest != HTTP_BODY_REST_EOF_CHUNK);
 
     if (body->rest >= 0)
         return body->rest;
@@ -31,9 +31,9 @@ http_body_available(const struct http_body_reader *body,
 static inline size_t
 http_body_max_read(struct http_body_reader *body, size_t length)
 {
-    assert(body->rest != -2);
+    assert(body->rest != HTTP_BODY_REST_EOF_CHUNK);
 
-    if (body->rest != (off_t)-1 && body->rest < (off_t)length)
+    if (body->rest != HTTP_BODY_REST_UNKNOWN && body->rest < (off_t)length)
         /* content-length header was provided, return this value */
         return (size_t)body->rest;
     else
@@ -87,7 +87,7 @@ bool
 http_body_socket_is_done(struct http_body_reader *body,
                          const struct filtered_socket *s)
 {
-    return body->rest != -1 &&
+    return body->rest != HTTP_BODY_REST_UNKNOWN &&
         (http_body_eof(body) ||
          (off_t)filtered_socket_available(s) >= body->rest);
 }
@@ -99,7 +99,7 @@ http_body_socket_eof(struct http_body_reader *body, size_t remaining)
     body->socket_eof = true;
 #endif
 
-    if (body->rest == -1) {
+    if (body->rest == HTTP_BODY_REST_UNKNOWN) {
         if (remaining > 0) {
             /* serve the rest of the buffer, then end the body
                stream */
@@ -110,7 +110,8 @@ http_body_socket_eof(struct http_body_reader *body, size_t remaining)
         /* the socket is closed, which ends the body */
         istream_deinit_eof(&body->output);
         return false;
-    } else if (body->rest == (off_t)remaining || body->rest == -2) {
+    } else if (body->rest == (off_t)remaining ||
+               body->rest == HTTP_BODY_REST_EOF_CHUNK) {
         if (remaining > 0)
             /* serve the rest of the buffer, then end the body
                stream */
@@ -134,9 +135,10 @@ http_body_dechunker_eof(void *ctx)
     struct http_body_reader *body = ctx;
 
     assert(body->chunked);
-    assert(body->rest == -1 || (body->socket_eof && body->rest >= 0));
+    assert(body->rest == HTTP_BODY_REST_UNKNOWN ||
+           (body->socket_eof && body->rest >= 0));
 
-    body->rest = -2;
+    body->rest = HTTP_BODY_REST_EOF_CHUNK;
 }
 
 struct istream *
@@ -145,6 +147,7 @@ http_body_init(struct http_body_reader *body,
                struct pool *pool, off_t content_length, bool chunked)
 {
     assert(pool_contains(stream_pool, body, sizeof(*body)));
+    assert(content_length >= -1);
 
     istream_init(&body->output, stream, stream_pool);
     body->rest = content_length;
@@ -156,7 +159,7 @@ http_body_init(struct http_body_reader *body,
 
     struct istream *istream = http_body_istream(body);
     if (chunked) {
-        assert(content_length == (off_t)-1);
+        assert(body->rest == (off_t)HTTP_BODY_REST_UNKNOWN);
 
         istream = istream_dechunk_new(pool, istream,
                                       http_body_dechunker_eof, body);

@@ -20,11 +20,9 @@ struct http_body_reader {
     struct istream output;
 
     /**
-     * The remaining number of bytes.  If that is unknown
-     * (i.e. chunked or ended by closing the socket), the value is -1.
+     * The remaining number of bytes.
      *
-     * When the body is chunked, and the EOF chunk has been seen, the
-     * value is -2.
+     * @see #HTTP_BODY_REST_UNKNOWN, #HTTP_BODY_REST_EOF_CHUNK
      */
     off_t rest;
 
@@ -32,6 +30,16 @@ struct http_body_reader {
     bool chunked, socket_eof;
 #endif
 };
+
+/**
+ * The remaining size is unknown.
+ */
+static const off_t HTTP_BODY_REST_UNKNOWN = -1;
+
+/**
+ * EOF chunk has been seen.
+ */
+static const off_t HTTP_BODY_REST_EOF_CHUNK = -2;
 
 static inline struct istream *
 http_body_istream(struct http_body_reader *body)
@@ -42,7 +50,7 @@ http_body_istream(struct http_body_reader *body)
 static inline bool
 http_body_eof(struct http_body_reader *body)
 {
-    return body->rest == 0 || body->rest == -2;
+    return body->rest == 0 || body->rest == HTTP_BODY_REST_EOF_CHUNK;
 }
 
 gcc_pure
