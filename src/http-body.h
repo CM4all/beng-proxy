@@ -22,7 +22,8 @@ struct http_body_reader {
     /**
      * The remaining number of bytes.
      *
-     * @see #HTTP_BODY_REST_UNKNOWN, #HTTP_BODY_REST_EOF_CHUNK
+     * @see #HTTP_BODY_REST_UNKNOWN, #HTTP_BODY_REST_EOF_CHUNK,
+     * #HTTP_BODY_REST_CHUNKED
      */
     off_t rest;
 
@@ -41,10 +42,22 @@ static const off_t HTTP_BODY_REST_UNKNOWN = -1;
  */
 static const off_t HTTP_BODY_REST_EOF_CHUNK = -2;
 
+/**
+ * Chunked response.  Will flip to #HTTP_BODY_REST_EOF_CHUNK as soon
+ * as the EOF chunk is seen.
+ */
+static const off_t HTTP_BODY_REST_CHUNKED = -3;
+
 static inline struct istream *
 http_body_istream(struct http_body_reader *body)
 {
     return istream_struct_cast(&body->output);
+}
+
+static inline bool
+http_body_chunked(const struct http_body_reader *body)
+{
+    return body->rest == HTTP_BODY_REST_CHUNKED;
 }
 
 static inline bool

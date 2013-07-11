@@ -120,6 +120,7 @@ http_body_socket_eof(struct http_body_reader *body, size_t remaining)
         istream_deinit_eof(&body->output);
         return false;
     } else if (body->rest == (off_t)remaining ||
+               body->rest == HTTP_BODY_REST_CHUNKED ||
                body->rest == HTTP_BODY_REST_EOF_CHUNK) {
         if (remaining > 0)
             /* serve the rest of the buffer, then end the body
@@ -144,8 +145,7 @@ http_body_dechunker_eof(void *ctx)
     struct http_body_reader *body = ctx;
 
     assert(body->chunked);
-    assert(body->rest == HTTP_BODY_REST_UNKNOWN ||
-           (body->socket_eof && http_body_known_length(body)));
+    assert(body->rest == HTTP_BODY_REST_CHUNKED);
 
     body->rest = HTTP_BODY_REST_EOF_CHUNK;
 }
@@ -169,6 +169,8 @@ http_body_init(struct http_body_reader *body,
     struct istream *istream = http_body_istream(body);
     if (chunked) {
         assert(body->rest == (off_t)HTTP_BODY_REST_UNKNOWN);
+
+        body->rest = HTTP_BODY_REST_CHUNKED;
 
         istream = istream_dechunk_new(pool, istream,
                                       http_body_dechunker_eof, body);
