@@ -12,6 +12,15 @@
 #include <assert.h>
 #include <limits.h>
 
+/**
+ * Do we know the remaining length of the body?
+ */
+static inline bool
+http_body_known_length(const struct http_body_reader *body)
+{
+    return body->rest >= 0;
+}
+
 gcc_pure
 off_t
 http_body_available(const struct http_body_reader *body,
@@ -19,7 +28,7 @@ http_body_available(const struct http_body_reader *body,
 {
     assert(body->rest != HTTP_BODY_REST_EOF_CHUNK);
 
-    if (body->rest >= 0)
+    if (http_body_known_length(body))
         return body->rest;
 
     return partial
@@ -33,7 +42,7 @@ http_body_max_read(struct http_body_reader *body, size_t length)
 {
     assert(body->rest != HTTP_BODY_REST_EOF_CHUNK);
 
-    if (body->rest != HTTP_BODY_REST_UNKNOWN && body->rest < (off_t)length)
+    if (http_body_known_length(body) && body->rest < (off_t)length)
         /* content-length header was provided, return this value */
         return (size_t)body->rest;
     else
@@ -44,7 +53,7 @@ http_body_max_read(struct http_body_reader *body, size_t length)
 static void
 http_body_consumed(struct http_body_reader *body, size_t nbytes)
 {
-    if (body->rest < 0)
+    if (!http_body_known_length(body))
         return;
 
     assert((off_t)nbytes <= body->rest);
@@ -87,7 +96,7 @@ bool
 http_body_socket_is_done(struct http_body_reader *body,
                          const struct filtered_socket *s)
 {
-    return body->rest != HTTP_BODY_REST_UNKNOWN &&
+    return http_body_known_length(body) &&
         (http_body_eof(body) ||
          (off_t)filtered_socket_available(s) >= body->rest);
 }
@@ -136,7 +145,7 @@ http_body_dechunker_eof(void *ctx)
 
     assert(body->chunked);
     assert(body->rest == HTTP_BODY_REST_UNKNOWN ||
-           (body->socket_eof && body->rest >= 0));
+           (body->socket_eof && http_body_known_length(body)));
 
     body->rest = HTTP_BODY_REST_EOF_CHUNK;
 }
