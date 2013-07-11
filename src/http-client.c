@@ -149,7 +149,8 @@ http_client_valid(const struct http_client *client)
 static inline bool
 http_client_check_direct(const struct http_client *client)
 {
-    assert(filtered_socket_connected(&client->socket));
+    assert(filtered_socket_fd_type(&client->socket) == ISTREAM_NONE ||
+           filtered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_BODY);
 
     return istream_check_direct(&client->response.body_reader.output,
