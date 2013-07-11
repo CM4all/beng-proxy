@@ -48,7 +48,7 @@ http_body_istream(struct http_body_reader *body)
 }
 
 static inline bool
-http_body_eof(struct http_body_reader *body)
+http_body_eof(const struct http_body_reader *body)
 {
     return body->rest == 0 || body->rest == HTTP_BODY_REST_EOF_CHUNK;
 }
