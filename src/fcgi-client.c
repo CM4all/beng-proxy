@@ -123,26 +123,6 @@ static const struct timeval fcgi_client_timeout = {
 static void
 fcgi_client_response_body_init(struct fcgi_client *client);
 
-/*
-static void
-fcgi_client_schedule_read(struct fcgi_client *client)
-{
-    assert(!fifo_buffer_full(client->input));
-
-    socket_wrapper_schedule_read_timeout(&client->socket,
-                                         client->request.istream != NULL
-                                         ? NULL : &fcgi_client_timeout);
-}
-
-static void
-fcgi_client_schedule_write(struct fcgi_client *client)
-{
-    assert(socket_wrapper_valid(&client->socket));
-
-    socket_wrapper_schedule_write(&client->socket);
-}
-*/
-
 /**
  * Release the socket held by this object.
  */
