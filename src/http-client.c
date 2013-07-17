@@ -887,22 +887,32 @@ http_client_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
 }
 
 static bool
-http_client_socket_closed(size_t remaining, void *ctx)
+http_client_socket_closed(void *ctx)
 {
     struct http_client *client = ctx;
-
-    /* only READ_BODY could have blocked */
-    assert(client->response.read_state == READ_BODY);
 
     stopwatch_event(client->stopwatch, "end");
 
     if (client->request.istream != NULL)
         istream_close_handler(client->request.istream);
 
+    /* can't reuse the socket, it was closed by the peer */
+    http_client_release_socket(client, false);
+
+    return true;
+}
+
+static bool
+http_client_socket_remaining(size_t remaining, void *ctx)
+{
+    struct http_client *client = ctx;
+
+    /* only READ_BODY could have blocked */
+    assert(client->response.read_state == READ_BODY);
+
     if (http_body_socket_eof(&client->response.body_reader, remaining)) {
-        /* there's data left in the buffer: only release the
-           socket, continue serving the buffer */
-        http_client_release_socket(client, false);
+        /* there's data left in the buffer: continue serving the
+           buffer */
         return true;
     } else {
         /* finished: close the HTTP client */
@@ -947,6 +957,7 @@ static const struct buffered_socket_handler http_client_socket_handler = {
     .data = http_client_socket_data,
     .direct = http_client_socket_direct,
     .closed = http_client_socket_closed,
+    .remaining = http_client_socket_remaining,
     .write = http_client_socket_write,
     .error = http_client_socket_error,
 };

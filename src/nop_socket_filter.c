@@ -95,11 +95,19 @@ nop_socket_filter_internal_write(void *ctx)
 }
 
 static bool
-nop_socket_filter_closed(size_t remaining, void *ctx)
+nop_socket_filter_closed(void *ctx)
 {
     struct nop_socket_filter *f = ctx;
 
-    return filtered_socket_invoke_closed(f->socket, remaining);
+    return filtered_socket_invoke_closed(f->socket);
+}
+
+static bool
+nop_socket_filter_remaining(size_t remaining, void *ctx)
+{
+    struct nop_socket_filter *f = ctx;
+
+    return filtered_socket_invoke_remaining(f->socket, remaining);
 }
 
 static void
@@ -129,6 +137,7 @@ const struct socket_filter nop_socket_filter = {
     .write = nop_socket_filter_write,
     .internal_write = nop_socket_filter_internal_write,
     .closed = nop_socket_filter_closed,
+    .remaining = nop_socket_filter_remaining,
     .end = nop_socket_filter_end,
     .close = nop_socket_filter_close,
 };

@@ -1880,6 +1880,15 @@ translate_client_socket_data(const void *buffer, size_t size, void *ctx)
 }
 
 static bool
+translate_client_socket_closed(void *ctx)
+{
+    struct translate_client *client = ctx;
+
+    translate_client_release_socket(client, false);
+    return true;
+}
+
+static bool
 translate_client_socket_write(void *ctx)
 {
     struct translate_client *client = ctx;
@@ -1898,6 +1907,7 @@ translate_client_socket_error(GError *error, void *ctx)
 
 static const struct buffered_socket_handler translate_client_socket_handler = {
     .data = translate_client_socket_data,
+    .closed = translate_client_socket_closed,
     .write = translate_client_socket_write,
     .error = translate_client_socket_error,
 };

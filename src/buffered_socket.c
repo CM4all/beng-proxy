@@ -268,7 +268,9 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
 
         const size_t remaining = fifo_buffer_available(buffer);
 
-        if (!s->handler->closed(remaining, s->handler_ctx))
+        if (!s->handler->closed(s->handler_ctx) ||
+            (s->handler->remaining != NULL &&
+             !s->handler->remaining(remaining, s->handler_ctx)))
             return false;
 
         assert(!buffered_socket_connected(s));

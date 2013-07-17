@@ -26,11 +26,19 @@ filtered_socket_bs_data(const void *buffer, size_t size, void *ctx)
 }
 
 static bool
-filtered_socket_bs_closed(size_t remaining, void *ctx)
+filtered_socket_bs_closed(void *ctx)
 {
     struct filtered_socket *s = ctx;
 
-    return s->filter->closed(remaining, s->filter_ctx);
+    return s->filter->closed(s->filter_ctx);
+}
+
+static bool
+filtered_socket_bs_remaining(size_t remaining, void *ctx)
+{
+    struct filtered_socket *s = ctx;
+
+    return s->filter->remaining(remaining, s->filter_ctx);
 }
 
 static bool
@@ -76,6 +84,7 @@ filtered_socket_bs_error(GError *error, void *ctx)
 static const struct buffered_socket_handler filtered_socket_bs_handler = {
     .data = filtered_socket_bs_data,
     .closed = filtered_socket_bs_closed,
+    .remaining = filtered_socket_bs_remaining,
     .end = filtered_socket_bs_end,
     .write = filtered_socket_bs_write,
     .timeout = filtered_socket_bs_timeout,

@@ -783,7 +783,17 @@ ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
 }
 
 static bool
-ajp_client_socket_closed(gcc_unused size_t remaining, void *ctx)
+ajp_client_socket_closed(void *ctx)
+{
+    struct ajp_client *client = ctx;
+
+    /* the rest of the response may already be in the input buffer */
+    ajp_client_release_socket(client, false);
+    return true;
+}
+
+static bool
+ajp_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 {
     struct ajp_client *client = ctx;
 
@@ -791,7 +801,6 @@ ajp_client_socket_closed(gcc_unused size_t remaining, void *ctx)
     assert(client->response.read_state == READ_BODY);
 
     /* the rest of the response may already be in the input buffer */
-    ajp_client_release_socket(client, false);
     return true;
 }
 
@@ -830,6 +839,7 @@ ajp_client_socket_error(GError *error, void *ctx)
 static const struct buffered_socket_handler ajp_client_socket_handler = {
     .data = ajp_client_socket_data,
     .closed = ajp_client_socket_closed,
+    .remaining = ajp_client_socket_remaining,
     .write = ajp_client_socket_write,
     .error = ajp_client_socket_error,
 };

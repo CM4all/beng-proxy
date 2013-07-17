@@ -610,7 +610,17 @@ memcached_client_socket_direct(int fd, istream_direct_t type, void *ctx)
 }
 
 static bool
-memcached_client_socket_closed(gcc_unused size_t remaining, void *ctx)
+memcached_client_socket_closed(void *ctx)
+{
+    struct memcached_client *client = ctx;
+
+    /* the rest of the response may already be in the input buffer */
+    memcached_client_release_socket(client, false);
+    return true;
+}
+
+static bool
+memcached_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 {
     struct memcached_client *client = ctx;
 
@@ -618,7 +628,6 @@ memcached_client_socket_closed(gcc_unused size_t remaining, void *ctx)
     assert(client->response.read_state == READ_VALUE);
 
     /* the rest of the response may already be in the input buffer */
-    memcached_client_release_socket(client, false);
     return true;
 }
 
@@ -635,6 +644,7 @@ static const struct buffered_socket_handler memcached_client_socket_handler = {
     .data = memcached_client_socket_data,
     .direct = memcached_client_socket_direct,
     .closed = memcached_client_socket_closed,
+    .remaining = memcached_client_socket_remaining,
     .write = memcached_client_socket_write,
     .error = memcached_client_socket_error,
 };

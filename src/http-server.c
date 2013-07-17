@@ -130,7 +130,7 @@ http_server_socket_timeout(void *ctx)
 }
 
 static bool
-http_server_socket_closed(gcc_unused size_t remaining, void *ctx)
+http_server_socket_closed(void *ctx)
 {
     struct http_server_connection *connection = ctx;
 

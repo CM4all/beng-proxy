@@ -69,7 +69,9 @@ struct socket_filter {
      */
     bool (*internal_write)(void *ctx);
 
-    bool (*closed)(size_t remaining, void *ctx);
+    bool (*closed)(void *ctx);
+
+    bool (*remaining)(size_t remaining, void *ctx);
 
     /**
      * The buffered_socket has run empty after the socket has been
@@ -413,11 +415,20 @@ filtered_socket_invoke_data(struct filtered_socket *s,
 }
 
 static inline bool
-filtered_socket_invoke_closed(struct filtered_socket *s, size_t remaining)
+filtered_socket_invoke_closed(struct filtered_socket *s)
 {
     assert(s->filter != NULL);
 
-    return s->handler->closed(remaining, s->handler_ctx);
+    return s->handler->closed(s->handler_ctx);
+}
+
+static inline bool
+filtered_socket_invoke_remaining(struct filtered_socket *s, size_t remaining)
+{
+    assert(s->filter != NULL);
+
+    return s->handler->remaining == NULL ||
+        s->handler->remaining(remaining, s->handler_ctx);
 }
 
 static inline void
