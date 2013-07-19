@@ -757,9 +757,10 @@ http_client_feed_headers(struct http_client *client,
         client->request.body = NULL;
     }
 
-    if (client->response.body == NULL ||
-        http_body_socket_is_done(&client->response.body_reader,
-                                 &client->socket))
+    if ((client->response.body == NULL ||
+         http_body_socket_is_done(&client->response.body_reader,
+                                 &client->socket)) &&
+        filtered_socket_connected(&client->socket))
         /* we don't need the socket anymore, we've got everything we
            need in the input buffer */
         http_client_release_socket(client, client->keep_alive);
