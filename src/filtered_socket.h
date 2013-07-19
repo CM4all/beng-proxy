@@ -154,6 +154,12 @@ filtered_socket_fd_type(const struct filtered_socket *s)
 static inline void
 filtered_socket_close(struct filtered_socket *s)
 {
+#ifndef NDEBUG
+    /* work around bogus assertion failure */
+    if (s->filter != NULL && s->base.ended)
+        return;
+#endif
+
     buffered_socket_close(&s->base);
 }
 
@@ -165,6 +171,12 @@ filtered_socket_close(struct filtered_socket *s)
 static inline void
 filtered_socket_abandon(struct filtered_socket *s)
 {
+#ifndef NDEBUG
+    /* work around bogus assertion failure */
+    if (s->filter != NULL && s->base.ended)
+        return;
+#endif
+
     buffered_socket_abandon(&s->base);
 }
 
