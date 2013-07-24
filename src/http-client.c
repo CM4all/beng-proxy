@@ -989,23 +989,18 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     if (errno == EPIPE || errno == ECONNRESET) {
         /* the server has closed the connection, probably because he's
-           not interested in our request body - if he has already sent
-           the response, everything's fine */
-        bool valid;
+           not interested in our request body - that's ok; now we wait
+           for his response */
 
-        pool_ref(client->pool);
-        /* see if we can receive the full response now */
-        filtered_socket_read(&client->socket, false);
-        valid = http_client_valid(client);
-        pool_unref(client->pool);
+        client->keep_alive = false;
 
-        if (!valid)
-            /* this client is done (either response finished or an
-               error occured) - return */
-            return 0;
+        istream_free(&client->request.istream);
 
-        /* at this point, the response is not finished, and we bail
-           out by aborting the HTTP client */
+        filtered_socket_unschedule_write(&client->socket);
+        filtered_socket_schedule_read_timeout(&client->socket, true,
+                                              &http_client_timeout);
+
+        return 0;
     }
 
     stopwatch_event(client->stopwatch, "error");
