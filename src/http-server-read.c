@@ -244,7 +244,7 @@ http_server_headers_finished(struct http_server_connection *connection)
 
     /* for the response body, the filtered_socket class tracks
        inactivity timeout */
-    filtered_socket_schedule_read_timeout(&connection->socket,
+    filtered_socket_schedule_read_timeout(&connection->socket, false,
                                           &http_server_read_timeout);
 
     return true;
@@ -334,7 +334,7 @@ http_server_submit_request(struct http_server_connection *connection)
     if (connection->request.read_state == READ_END)
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        filtered_socket_schedule_read_no_timeout(&connection->socket);
+        filtered_socket_schedule_read_no_timeout(&connection->socket, false);
 
     pool_ref(connection->pool);
 

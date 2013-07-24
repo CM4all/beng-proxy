@@ -363,9 +363,13 @@ buffered_socket_direct_mask(const struct buffered_socket *s)
  * to buffered_socket_handler.direct, a call to
  * buffered_socket_handler.error or (if there is no data available
  * yet) an event gets scheduled and the function returns immediately.
+ *
+ * @param expect_more if true, generates an error if no more data can
+ * be read (socket already shut down, buffer empty); if false, the
+ * existing expect_more state is unmodified
  */
 bool
-buffered_socket_read(struct buffered_socket *s);
+buffered_socket_read(struct buffered_socket *s, bool expect_more);
 
 static inline void
 buffered_socket_set_cork(struct buffered_socket *s, bool cork)
@@ -399,10 +403,14 @@ buffered_socket_ready_for_writing(const struct buffered_socket *s)
 
 static inline void
 buffered_socket_schedule_read_timeout(struct buffered_socket *s,
+                                      bool expect_more,
                                       const struct timeval *timeout)
 {
     assert(!s->ended);
     assert(!s->destroyed);
+
+    if (expect_more)
+        s->expect_more = true;
 
     s->read_timeout = timeout;
     socket_wrapper_schedule_read(&s->base, timeout);
@@ -416,9 +424,10 @@ buffered_socket_schedule_read_timeout(struct buffered_socket *s,
  * you should call buffered_socket_read() to enable the read timeout.
  */
 static inline void
-buffered_socket_schedule_read_no_timeout(struct buffered_socket *s)
+buffered_socket_schedule_read_no_timeout(struct buffered_socket *s,
+                                         bool expect_more)
 {
-    buffered_socket_schedule_read_timeout(s, NULL);
+    buffered_socket_schedule_read_timeout(s, expect_more, NULL);
 }
 
 static inline void

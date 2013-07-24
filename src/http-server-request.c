@@ -48,7 +48,7 @@ http_server_feed_body(struct http_server_connection *connection,
 
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        filtered_socket_schedule_read_no_timeout(&connection->socket);
+        filtered_socket_schedule_read_no_timeout(&connection->socket, false);
 
         pool_ref(connection->pool);
         istream_deinit_eof(&connection->request.body_reader.output);
@@ -104,7 +104,8 @@ http_server_request_stream_read(struct istream *istream)
     if (!http_server_maybe_send_100_continue(connection))
         return;
 
-    filtered_socket_read(&connection->socket);
+    filtered_socket_read(&connection->socket,
+                         http_body_require_more(&connection->request.body_reader));
 }
 
 static void

@@ -176,12 +176,12 @@ filtered_socket_consumed(struct filtered_socket *s, size_t nbytes)
 }
 
 bool
-filtered_socket_read(struct filtered_socket *s)
+filtered_socket_read(struct filtered_socket *s, bool expect_more)
 {
     if (s->filter != NULL)
-        return s->filter->read(s->filter_ctx);
+        return s->filter->read(expect_more, s->filter_ctx);
     else
-        return buffered_socket_read(&s->base);
+        return buffered_socket_read(&s->base, expect_more);
 }
 
 ssize_t

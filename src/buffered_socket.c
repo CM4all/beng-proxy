@@ -465,7 +465,7 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
     s->handler_ctx = ctx;
     s->input = NULL;
     s->direct = false;
-    s->expect_more = true;
+    s->expect_more = false;
 
 #ifndef NDEBUG
     s->reading = false;
@@ -506,11 +506,21 @@ buffered_socket_full(const struct buffered_socket *s)
 }
 
 bool
-buffered_socket_read(struct buffered_socket *s)
+buffered_socket_read(struct buffered_socket *s, bool expect_more)
 {
     assert(!s->reading);
     assert(!s->destroyed);
     assert(!s->ended);
+
+    if (expect_more) {
+        if (!buffered_socket_connected(s) &&
+            buffered_socket_input_empty(s)) {
+            buffered_socket_closed_prematurely(s);
+            return false;
+        }
+
+        s->expect_more = true;
+    }
 
     return buffered_socket_try_read(s);
 }

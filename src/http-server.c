@@ -198,10 +198,6 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
                               NULL, &http_server_write_timeout,
                               &http_server_socket_handler, connection);
 
-    /* hack: clear the "expect_more" flag because the connection is
-       idle; it is perfectly ok to be closed by the peer */
-    connection->socket.base.expect_more = false;
-
     connection->handler = handler;
     connection->handler_ctx = ctx;
 
@@ -241,7 +237,7 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     *connection_r = connection;
 
-    filtered_socket_read(&connection->socket);
+    filtered_socket_read(&connection->socket, false);
 }
 
 static void

@@ -252,7 +252,7 @@ istream_memcached_read(struct istream *istream)
     if (buffered_socket_connected(&client->socket))
         client->socket.direct = memcached_client_check_direct(client);
 
-    buffered_socket_read(&client->socket);
+    buffered_socket_read(&client->socket, true);
 }
 
 static void
@@ -698,7 +698,7 @@ memcached_request_stream_eof(void *ctx)
     client->request.istream = NULL;
 
     buffered_socket_unschedule_write(&client->socket);
-    buffered_socket_read(&client->socket);
+    buffered_socket_read(&client->socket, true);
 }
 
 static void

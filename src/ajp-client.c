@@ -268,7 +268,7 @@ istream_ajp_read(struct istream *istream)
     if (client->response.in_handler)
         return;
 
-    buffered_socket_read(&client->socket);
+    buffered_socket_read(&client->socket, true);
 }
 
 static void
@@ -737,7 +737,7 @@ ajp_request_stream_eof(void *ctx)
     client->request.istream = NULL;
 
     buffered_socket_unschedule_write(&client->socket);
-    buffered_socket_read(&client->socket);
+    buffered_socket_read(&client->socket, true);
 }
 
 static void
@@ -1051,6 +1051,6 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     client->response.no_body = http_method_is_empty(method);
     client->response.in_handler = false;
 
-    buffered_socket_schedule_read_no_timeout(&client->socket);
+    buffered_socket_schedule_read_no_timeout(&client->socket, true);
     istream_read(client->request.istream);
 }

@@ -731,7 +731,7 @@ fcgi_client_response_body_read(struct istream *istream)
            continue parsing the response if possible */
         return;
 
-    buffered_socket_read(&client->socket);
+    buffered_socket_read(&client->socket, true);
 }
 
 static void
@@ -1025,6 +1025,6 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
                            &fcgi_request_stream_handler, client,
                            buffered_socket_direct_mask(&client->socket));
 
-    buffered_socket_schedule_read_no_timeout(&client->socket);
+    buffered_socket_schedule_read_no_timeout(&client->socket, true);
     istream_read(client->request.istream);
 }

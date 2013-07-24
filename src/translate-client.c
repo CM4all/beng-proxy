@@ -1858,7 +1858,7 @@ translate_try_write(struct translate_client *client)
         buffered_socket_unschedule_write(&client->socket);
 
         packet_reader_init(&client->reader);
-        return buffered_socket_read(&client->socket);
+        return buffered_socket_read(&client->socket, true);
     }
 
     buffered_socket_schedule_write(&client->socket);

@@ -37,7 +37,7 @@ struct socket_filter {
      * The client asks to read more data.  The filter shall call
      * filtered_socket_internal_data() again.
      */
-    bool (*read)(void *ctx);
+    bool (*read)(bool expect_more, void *ctx);
 
     /**
      * The client asks to write data to the socket.  The filter
@@ -280,7 +280,7 @@ filtered_socket_direct_mask(const struct filtered_socket *s)
  * yet) an event gets scheduled and the function returns immediately.
  */
 bool
-filtered_socket_read(struct filtered_socket *s);
+filtered_socket_read(struct filtered_socket *s, bool expect_more);
 
 static inline void
 filtered_socket_set_cork(struct filtered_socket *s, bool cork)
@@ -313,9 +313,10 @@ filtered_socket_ready_for_writing(const struct filtered_socket *s)
 
 static inline void
 filtered_socket_schedule_read_timeout(struct filtered_socket *s,
+                                      bool expect_more,
                                       const struct timeval *timeout)
 {
-    buffered_socket_schedule_read_timeout(&s->base, timeout);
+    buffered_socket_schedule_read_timeout(&s->base, expect_more, timeout);
 }
 
 /**
@@ -326,9 +327,10 @@ filtered_socket_schedule_read_timeout(struct filtered_socket *s,
  * you should call filtered_socket_read() to enable the read timeout.
  */
 static inline void
-filtered_socket_schedule_read_no_timeout(struct filtered_socket *s)
+filtered_socket_schedule_read_no_timeout(struct filtered_socket *s,
+                                         bool expect_more)
 {
-    filtered_socket_schedule_read_timeout(s, NULL);
+    filtered_socket_schedule_read_timeout(s, expect_more, NULL);
 }
 
 static inline void
@@ -385,11 +387,11 @@ filtered_socket_internal_consumed(struct filtered_socket *s, size_t nbytes)
 }
 
 static inline bool
-filtered_socket_internal_read(struct filtered_socket *s)
+filtered_socket_internal_read(struct filtered_socket *s, bool expect_more)
 {
     assert(s->filter != NULL);
 
-    return buffered_socket_read(&s->base);
+    return buffered_socket_read(&s->base, expect_more);
 }
 
 static inline ssize_t

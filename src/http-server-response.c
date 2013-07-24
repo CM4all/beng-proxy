@@ -136,7 +136,7 @@ http_server_response_stream_eof(void *ctx)
         /* handle pipelined request (if any), or set up events for
            next request */
 
-        filtered_socket_schedule_read_no_timeout(&connection->socket);
+        filtered_socket_schedule_read_no_timeout(&connection->socket, false);
         evtimer_add(&connection->idle_timeout, &http_server_idle_timeout);
     } else {
         /* keepalive disabled and response is finished: we must close

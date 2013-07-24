@@ -323,7 +323,8 @@ http_client_response_stream_read(struct istream *istream)
     if (filtered_socket_connected(&client->socket))
         client->socket.base.direct = http_client_check_direct(client);
 
-    filtered_socket_read(&client->socket);
+    filtered_socket_read(&client->socket,
+                         http_body_require_more(&client->response.body_reader));
 }
 
 static int
@@ -994,7 +995,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
         pool_ref(client->pool);
         /* see if we can receive the full response now */
-        filtered_socket_read(&client->socket);
+        filtered_socket_read(&client->socket, false);
         valid = http_client_valid(client);
         pool_unref(client->pool);
 
@@ -1061,7 +1062,7 @@ http_client_request_stream_eof(void *ctx)
     client->request.istream = NULL;
 
     filtered_socket_unschedule_write(&client->socket);
-    filtered_socket_read(&client->socket);
+    filtered_socket_read(&client->socket, false);
 }
 
 static void
@@ -1242,6 +1243,6 @@ http_client_request(struct pool *caller_pool,
                         &http_client_request_stream_handler, client,
                         filtered_socket_direct_mask(&client->socket));
 
-    filtered_socket_schedule_read_no_timeout(&client->socket);
+    filtered_socket_schedule_read_no_timeout(&client->socket, true);
     istream_read(client->request.istream);
 }

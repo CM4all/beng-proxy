@@ -71,11 +71,11 @@ nop_socket_filter_consumed(size_t nbytes, void *ctx)
 }
 
 static bool
-nop_socket_filter_read(void *ctx)
+nop_socket_filter_read(bool expect_more, void *ctx)
 {
     struct nop_socket_filter *f = ctx;
 
-    return filtered_socket_internal_read(f->socket);
+    return filtered_socket_internal_read(f->socket, expect_more);
 }
 
 static ssize_t
