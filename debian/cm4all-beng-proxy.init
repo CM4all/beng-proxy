@@ -61,6 +61,7 @@ fi
 case "$1" in
     start)
 	log_begin_msg "Starting CM4all BENG proxy daemon"
+        install -d -m 0711 $RUNDIR
         start-stop-daemon --start --quiet \
             --exec /usr/sbin/cm4all-beng-proxy \
             --pidfile "$PIDFILE" \

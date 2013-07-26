@@ -39,6 +39,7 @@ fi
 case "$1" in
     start)
 	log_begin_msg "Starting CM4all BENG load balancer daemon"
+        install -d -m 0711 $RUNDIR
         start-stop-daemon --start --quiet \
             --exec /usr/sbin/cm4all-beng-lb \
             --pidfile "$PIDFILE" \
