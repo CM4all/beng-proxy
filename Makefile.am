@@ -483,7 +483,8 @@ src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBEVENT_LIBS)
-src_cm4all_beng_lb_LDFLAGS = $(AM_LDFLAGS)
+src_cm4all_beng_lb_LDFLAGS = $(AM_LDFLAGS) \
+	$(GTHREAD_LIBS)
 
 src_cm4all_beng_proxy_log_cat_SOURCES = \
 	src/log-server.c \
