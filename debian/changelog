@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.26) unstable; urgency=low
 
-  * 
+  * respones: generate header P3P:CP="CAO PSA OUR" to work around IE10 bug
 
  --   
 
