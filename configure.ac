@@ -66,8 +66,7 @@ dnl Checks for libraries.
 PKG_CHECK_MODULES([CPPUNIT], [cppunit],,
 	[AC_MSG_ERROR([cppunit not found])])
 
-PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],,
-	[AC_MSG_ERROR([glib 2.16 is required])])
+PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.24])
 
 PKG_CHECK_MODULES([GTHREAD], [gthread-2.0 < 2.32],
 	[AC_DEFINE(HAVE_OLD_GTHREAD, 1)], [:])

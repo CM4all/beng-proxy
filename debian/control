@@ -5,7 +5,7 @@ Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 7), autoconf (>= 2.60), automake (>= 1.11),
  gcc (>= 4.3), g++ (>= 4.3), libc6-dev (>= 2.7),
  libcppunit-dev,
- libglib2.0-dev (>= 2.16),
+ libglib2.0-dev (>= 2.24),
  libevent-dev (>= 2.0), libattr1-dev,
  libssl-dev,
  libnfs-dev (>= 1.2),
