@@ -490,6 +490,11 @@ response_generate_set_cookie(struct request *request2,
 
         header_write_finish(headers);
 
+        /* workaround for IE10 bug; see
+           http://projects.intern.cm-ag/view.php?id=3789 for
+           details */
+        header_write(headers, "p3p", "CP=\"CAO PSA OUR\"");
+
         struct session *session = request_make_session(request2);
         if (session != NULL) {
             session->cookie_sent = true;

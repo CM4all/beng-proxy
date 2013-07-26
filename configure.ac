@@ -69,6 +69,9 @@ PKG_CHECK_MODULES([CPPUNIT], [cppunit],,
 PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16],,
 	[AC_MSG_ERROR([glib 2.16 is required])])
 
+PKG_CHECK_MODULES([GTHREAD], [gthread-2.0 < 2.32],
+	[AC_DEFINE(HAVE_OLD_GTHREAD, 1)], [:])
+
 PKG_CHECK_MODULES([LIBSSL], [openssl],,
 	[AC_MSG_ERROR([OpenSSL not found])])
 

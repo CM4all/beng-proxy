@@ -20,7 +20,8 @@ test -f /usr/sbin/cm4all-beng-proxy || exit 0
 
 source /lib/lsb/init-functions
 
-PIDFILE=/var/run/cm4all/beng-proxy.pid
+RUNDIR=/var/run/cm4all
+PIDFILE=$RUNDIR/beng-proxy.pid
 DAEMON_USER=cm4all-beng-proxy
 DAEMON_GROUP=
 LOGGER="exec /usr/bin/multilog t s4194304 n16 /var/log/cm4all/beng-proxy"
@@ -29,7 +30,7 @@ ACCESS_LOGGER=""
 PORT=80
 WORKERS=1
 DOCUMENT_ROOT=/var/www
-TRANSLATION_SOCKET=/var/run/cm4all/beng-proxy-translation.sock
+TRANSLATION_SOCKET=$RUNDIR/beng-proxy-translation.sock
 UA_CLASSES=
 SESSION_SAVE_PATH=
 OPTIONS="-vv"
@@ -60,6 +61,7 @@ fi
 case "$1" in
     start)
 	log_begin_msg "Starting CM4all BENG proxy daemon"
+        install -d -m 0711 $RUNDIR
         start-stop-daemon --start --quiet \
             --exec /usr/sbin/cm4all-beng-proxy \
             --pidfile "$PIDFILE" \

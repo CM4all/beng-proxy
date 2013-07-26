@@ -20,7 +20,8 @@ test -f /usr/sbin/cm4all-beng-lb || exit 0
 
 source /lib/lsb/init-functions
 
-PIDFILE=/var/run/cm4all/beng-lb.pid
+RUNDIR=/var/run/cm4all
+PIDFILE=$RUNDIR/beng-lb.pid
 DAEMON_USER=cm4all-beng-lb
 LOGGER="exec /usr/bin/multilog t s4194304 n16 /var/log/cm4all/beng-lb"
 LOGGER_USER=cm4all-logger
@@ -38,6 +39,7 @@ fi
 case "$1" in
     start)
 	log_begin_msg "Starting CM4all BENG load balancer daemon"
+        install -d -m 0711 $RUNDIR
         start-stop-daemon --start --quiet \
             --exec /usr/sbin/cm4all-beng-lb \
             --pidfile "$PIDFILE" \

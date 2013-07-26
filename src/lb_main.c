@@ -217,6 +217,11 @@ int main(int argc, char **argv)
         },
     };
 
+#ifdef HAVE_OLD_GTHREAD
+    /* deprecated in GLib 2.32 */
+    g_thread_init(NULL);
+#endif
+
     instance.pool = pool_new_libc(NULL, "global");
     tpool_init(instance.pool);
 
