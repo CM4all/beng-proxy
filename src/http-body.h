@@ -66,6 +66,15 @@ http_body_eof(const struct http_body_reader *body)
     return body->rest == 0 || body->rest == HTTP_BODY_REST_EOF_CHUNK;
 }
 
+/**
+ * Do we require more data to finish the body?
+ */
+static inline bool
+http_body_require_more(const struct http_body_reader *body)
+{
+    return body->rest > 0 || body->rest == HTTP_BODY_REST_CHUNKED;
+}
+
 gcc_pure
 off_t
 http_body_available(const struct http_body_reader *body,
