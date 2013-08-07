@@ -41,9 +41,19 @@ enum buffered_result {
      * can be used to simplify the handler code.
      *
      * If the input buffer is empty, this return value behaves like
+     * #BUFFERED_OK or #BUFFERED_PARTIAL.
+     */
+    BUFFERED_AGAIN_OPTIONAL,
+
+    /**
+     * The handler wants to be called again immediately, without
+     * attempting to read more data from the socket.  This result code
+     * can be used to simplify the handler code.
+     *
+     * If the input buffer is empty, this return value behaves like
      * #BUFFERED_MORE.
      */
-    BUFFERED_AGAIN,
+    BUFFERED_AGAIN_EXPECT,
 
     /**
      * The handler blocks.  The handler is responsible for calling

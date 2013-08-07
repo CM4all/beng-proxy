@@ -86,19 +86,22 @@ buffered_socket_consumed(struct buffered_socket *s, size_t nbytes)
 }
 
 /**
- * Invokes the data handler, and takes care for #BUFFERED_AGAIN.
+ * Invokes the data handler, and takes care for
+ * #BUFFERED_AGAIN_OPTIONAL and #BUFFERED_AGAIN_EXPECT.
  */
 static enum buffered_result
 buffered_socket_invoke_data(struct buffered_socket *s)
 {
     assert(!buffered_socket_input_empty(s));
 
+    bool local_expect_more = false;
+
     while (true) {
         size_t length;
         const void *data = fifo_buffer_read(s->input, &length);
         data = fifo_buffer_read(s->input, &length);
         if (data == NULL)
-            return s->expect_more
+            return s->expect_more || local_expect_more
                 ? BUFFERED_MORE
                 : BUFFERED_OK;
 
@@ -118,7 +121,11 @@ buffered_socket_invoke_data(struct buffered_socket *s)
         }
 #endif
 
-        if (result != BUFFERED_AGAIN)
+        if (result == BUFFERED_AGAIN_EXPECT)
+            local_expect_more = true;
+        else if (result == BUFFERED_AGAIN_OPTIONAL)
+            local_expect_more = false;
+        else
             return result;
     }
 }
@@ -170,7 +177,8 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
 
         return true;
 
-    case BUFFERED_AGAIN:
+    case BUFFERED_AGAIN_OPTIONAL:
+    case BUFFERED_AGAIN_EXPECT:
         /* unreachable, has been handled by
            buffered_socket_invoke_data() */
         assert(false);

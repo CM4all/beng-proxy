@@ -372,7 +372,11 @@ http_server_feed(struct http_server_connection *connection,
         if ((result == BUFFERED_OK || result == BUFFERED_PARTIAL) &&
             (connection->request.read_state == READ_BODY ||
              connection->request.read_state == READ_END)) {
-            result = BUFFERED_AGAIN;
+            if (connection->request.read_state == READ_BODY)
+                result =
+                    http_body_require_more(&connection->request.body_reader)
+                    ? BUFFERED_AGAIN_EXPECT
+                    : BUFFERED_AGAIN_OPTIONAL;
 
             if (!http_server_submit_request(connection))
                 result = BUFFERED_CLOSED;

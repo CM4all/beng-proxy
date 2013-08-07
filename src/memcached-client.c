@@ -335,7 +335,7 @@ memcached_submit_response(struct memcached_client *client)
         pool_unref(client->pool);
 
         return valid
-            ? BUFFERED_AGAIN
+            ? BUFFERED_AGAIN_EXPECT
             : BUFFERED_CLOSED;
     } else {
         /* no value: invoke the callback, quit */
@@ -376,7 +376,7 @@ memcached_begin_key(struct memcached_client *client)
         = client->response.key.tail
         = p_malloc(client->pool, client->response.key.remaining);
 
-    return BUFFERED_AGAIN;
+    return BUFFERED_AGAIN_EXPECT;
 }
 
 static enum buffered_result
@@ -411,7 +411,7 @@ memcached_feed_header(struct memcached_client *client,
         return memcached_begin_key(client);
     }
 
-    return BUFFERED_AGAIN;
+    return BUFFERED_AGAIN_EXPECT;
 }
 
 static enum buffered_result

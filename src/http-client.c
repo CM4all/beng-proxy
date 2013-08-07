@@ -518,11 +518,6 @@ http_client_headers_finished(struct http_client *client)
                 return false;
             }
             content_length = (off_t)-1;
-
-            /* we must reset this flag because the response body ends
-               when the socket gets closed, and we don't know how much
-               will come */
-            client->socket.base.expect_more = false;
         } else {
             char *endptr;
             content_length = (off_t)strtoull(content_length_string,
@@ -635,11 +630,10 @@ http_client_parse_headers(struct http_client *client,
         /* handle this line */
         if (!http_client_handle_line(client, start, end - start + 1))
             return BUFFERED_CLOSED;
-
         if (client->response.read_state != READ_HEADERS) {
             /* header parsing is finished */
             filtered_socket_consumed(&client->socket, next - buffer);
-            return BUFFERED_AGAIN;
+            return BUFFERED_AGAIN_EXPECT;
         }
 
         start = next;
@@ -717,7 +711,7 @@ http_client_feed_headers(struct http_client *client,
 
     const enum buffered_result result =
         http_client_parse_headers(client, data, length);
-    if (result != BUFFERED_AGAIN)
+    if (result != BUFFERED_AGAIN_EXPECT)
         return result;
 
     /* the headers are finished, we can now report the response to
@@ -748,8 +742,7 @@ http_client_feed_headers(struct http_client *client,
         http_client_schedule_write(client);
 
         /* try again */
-        client->socket.base.expect_more = true;
-        return BUFFERED_AGAIN;
+        return BUFFERED_AGAIN_EXPECT;
     } else if (client->request.body != NULL) {
         /* the server begins sending a response - he's not interested
            in the request body, discard it now */
@@ -788,7 +781,9 @@ http_client_feed_headers(struct http_client *client,
     }
 
     /* now do the response body */
-    return BUFFERED_AGAIN;
+    return http_body_require_more(&client->response.body_reader)
+        ? BUFFERED_AGAIN_EXPECT
+        : BUFFERED_AGAIN_OPTIONAL;
 }
 
 static enum direct_result
