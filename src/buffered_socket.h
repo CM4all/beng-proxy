@@ -377,10 +377,21 @@ buffered_socket_set_cork(struct buffered_socket *s, bool cork)
     socket_wrapper_set_cork(&s->base, cork);
 }
 
+/**
+ * Write data to the socket.
+ *
+ * @return the number of bytes written or -1 on error (with errno set)
+ */
 ssize_t
 buffered_socket_write(struct buffered_socket *s,
                       const void *data, size_t length);
 
+/**
+ * Transfer data from the given file descriptor to the socket.
+ *
+ * @return the number of bytes transferred or 0 on end-of-file on the
+ * given file descriptor or -1 on error (with errno set)
+ */
 static inline ssize_t
 buffered_socket_write_from(struct buffered_socket *s,
                            int fd, enum istream_direct fd_type,
