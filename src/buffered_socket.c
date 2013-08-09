@@ -535,6 +535,11 @@ buffered_socket_write(struct buffered_socket *s,
         if (gcc_likely(errno == EAGAIN)) {
             buffered_socket_schedule_write(s);
             return WRITE_BLOCKING;
+        } else if ((errno == EPIPE || errno == ECONNRESET) &&
+                   s->handler->broken != NULL &&
+                   s->handler->broken(s->handler_ctx)) {
+            buffered_socket_unschedule_write(s);
+            return WRITE_BROKEN;
         }
     }
 

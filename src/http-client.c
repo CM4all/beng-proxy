@@ -941,6 +941,26 @@ http_client_socket_write(void *ctx)
     return result;
 }
 
+static bool
+http_client_socket_broken(void *ctx)
+{
+    struct http_client *client = ctx;
+    assert(client->request.istream != NULL);
+
+    /* the server has closed the connection, probably because he's not
+       interested in our request body - that's ok; now we wait for his
+       response */
+
+    client->keep_alive = false;
+
+    istream_free(&client->request.istream);
+
+    filtered_socket_schedule_read_timeout(&client->socket, true,
+                                          &http_client_timeout);
+
+    return true;
+}
+
 static void
 http_client_socket_error(GError *error, void *ctx)
 {
@@ -956,6 +976,7 @@ static const struct buffered_socket_handler http_client_socket_handler = {
     .closed = http_client_socket_closed,
     .remaining = http_client_socket_remaining,
     .write = http_client_socket_write,
+    .broken = http_client_socket_broken,
     .error = http_client_socket_error,
 };
 
@@ -980,26 +1001,11 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
         return (size_t)nbytes;
     }
 
-    if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
+    if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED ||
+                   nbytes == WRITE_BROKEN))
         return 0;
 
     int _errno = errno;
-
-    if (errno == EPIPE || errno == ECONNRESET) {
-        /* the server has closed the connection, probably because he's
-           not interested in our request body - that's ok; now we wait
-           for his response */
-
-        client->keep_alive = false;
-
-        istream_free(&client->request.istream);
-
-        filtered_socket_unschedule_write(&client->socket);
-        filtered_socket_schedule_read_timeout(&client->socket, true,
-                                              &http_client_timeout);
-
-        return 0;
-    }
 
     stopwatch_event(client->stopwatch, "error");
 
@@ -1025,26 +1031,12 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
         http_client_schedule_write(client);
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
-    else if (nbytes == WRITE_DESTROYED)
+    else if (nbytes == WRITE_DESTROYED || nbytes == WRITE_BROKEN)
         return ISTREAM_RESULT_CLOSED;
     else if (likely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
             client->request.got_data = false;
             filtered_socket_unschedule_write(&client->socket);
-        } else if (errno == EPIPE || errno == ECONNRESET) {
-            /* the server has closed the connection, probably because
-               he's not interested in our request body - that's ok;
-               now we wait for his response */
-
-            client->keep_alive = false;
-
-            istream_free(&client->request.istream);
-
-            filtered_socket_unschedule_write(&client->socket);
-            filtered_socket_schedule_read_timeout(&client->socket, true,
-                                                  &http_client_timeout);
-
-            return ISTREAM_RESULT_CLOSED;
         }
     }
 

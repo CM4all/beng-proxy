@@ -132,6 +132,11 @@ enum write_result {
      * The #buffered_socket was destroyed inside the function call.
      */
     WRITE_DESTROYED = -3,
+
+    /**
+     * See buffered_socket_handler::broken
+     */
+    WRITE_BROKEN = -4,
 };
 
 struct buffered_socket_handler {
@@ -197,6 +202,17 @@ struct buffered_socket_handler {
      * @return false when the socket has been closed
      */
     bool (*timeout)(void *ctx);
+
+    /**
+     * A write failed because the peer has closed (at least one side
+     * of) the socket.  It may be possible for us to continue reading
+     * from the socket.
+     *
+     * @return true to continue reading from the socket (by returning
+     * #WRITE_BROKEN), false if the caller shall close the socket with
+     * the error
+     */
+    bool (*broken)(void *ctx);
 
     /**
      * An I/O error on the socket has occurred.  After returning, it
