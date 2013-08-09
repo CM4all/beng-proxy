@@ -980,7 +980,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
         return (size_t)nbytes;
     }
 
-    if (gcc_likely(nbytes == WRITE_BLOCKING))
+    if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
 
     int _errno = errno;
@@ -1025,6 +1025,8 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
         http_client_schedule_write(client);
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
+    else if (nbytes == WRITE_DESTROYED)
+        return ISTREAM_RESULT_CLOSED;
     else if (likely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
             client->request.got_data = false;

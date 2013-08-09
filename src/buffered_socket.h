@@ -127,6 +127,11 @@ enum write_result {
      * later.
      */
     WRITE_BLOCKING = -2,
+
+    /**
+     * The #buffered_socket was destroyed inside the function call.
+     */
+    WRITE_DESTROYED = -3,
 };
 
 struct buffered_socket_handler {

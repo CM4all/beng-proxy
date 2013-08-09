@@ -677,7 +677,7 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
         return (size_t)nbytes;
     }
 
-    if (likely(nbytes == WRITE_BLOCKING))
+    if (likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
 
     GError *error =
@@ -706,6 +706,8 @@ ajp_request_stream_direct(istream_direct_t type, int fd, size_t max_length,
         ajp_client_schedule_write(client);
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
+    else if (nbytes == WRITE_DESTROYED)
+        return ISTREAM_RESULT_CLOSED;
     else if (nbytes < 0 && errno == EAGAIN) {
         client->request.got_data = false;
         buffered_socket_unschedule_write(&client->socket);

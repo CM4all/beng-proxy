@@ -39,7 +39,7 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
 
     if (nbytes == WRITE_ERRNO)
         http_server_errno(connection, "write error");
-    else
+    else if (nbytes != WRITE_DESTROYED)
         http_server_error_message(connection, "write error");
     return false;
 }

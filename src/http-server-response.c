@@ -37,7 +37,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
         return (size_t)nbytes;
     }
 
-    if (gcc_likely(nbytes == WRITE_BLOCKING))
+    if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
 
     http_server_errno(connection, "write error on HTTP connection");
@@ -66,6 +66,8 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
         http_server_schedule_write(connection);
     } else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
+    else if (nbytes == WRITE_DESTROYED)
+        return ISTREAM_RESULT_CLOSED;
 
     return nbytes;
 }

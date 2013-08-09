@@ -146,8 +146,10 @@ http_server_parse_request_line(struct http_server_connection *connection,
         static const char msg[] =
             "This server requires HTTP 1.1.";
 
-        filtered_socket_write(&connection->socket, msg, sizeof(msg) - 1);
-        http_server_done(connection);
+        ssize_t nbytes = filtered_socket_write(&connection->socket,
+                                               msg, sizeof(msg) - 1);
+        if (nbytes != WRITE_DESTROYED)
+            http_server_done(connection);
         return false;
     }
 
