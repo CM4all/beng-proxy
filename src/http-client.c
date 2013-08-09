@@ -980,10 +980,8 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
         return (size_t)nbytes;
     }
 
-    if (likely(errno == EAGAIN)) {
-        http_client_schedule_write(client);
+    if (gcc_likely(errno == EAGAIN))
         return 0;
-    }
 
     int _errno = errno;
 

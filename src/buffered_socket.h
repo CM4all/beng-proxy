@@ -377,12 +377,9 @@ buffered_socket_set_cork(struct buffered_socket *s, bool cork)
     socket_wrapper_set_cork(&s->base, cork);
 }
 
-static inline ssize_t
+ssize_t
 buffered_socket_write(struct buffered_socket *s,
-                      const void *data, size_t length)
-{
-    return socket_wrapper_write(&s->base, data, length);
-}
+                      const void *data, size_t length);
 
 static inline ssize_t
 buffered_socket_write_from(struct buffered_socket *s,

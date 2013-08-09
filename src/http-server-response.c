@@ -37,10 +37,8 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
         return (size_t)nbytes;
     }
 
-    if (likely(errno == EAGAIN)) {
-        http_server_schedule_write(connection);
+    if (gcc_likely(errno == EAGAIN))
         return 0;
-    }
 
     http_server_errno(connection, "write error on HTTP connection");
     return 0;

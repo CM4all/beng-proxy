@@ -1837,16 +1837,14 @@ translate_try_write(struct translate_client *client)
     assert(data != NULL);
 
     ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
-    if (nbytes < 0 && errno != EAGAIN) {
+    if (gcc_unlikely(nbytes < 0)) {
+        if (gcc_likely(errno == EAGAIN))
+            return true;
+
         GError *error =
             new_error_errno_msg("write error to translation server");
         translate_client_abort(client, error);
         return false;
-    }
-
-    if (nbytes <= 0) {
-        buffered_socket_schedule_write(&client->socket);
-        return true;
     }
 
     growing_buffer_reader_consume(&client->request, nbytes);

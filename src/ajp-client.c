@@ -677,10 +677,8 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
         return (size_t)nbytes;
     }
 
-    if (likely(errno == EAGAIN)) {
-        ajp_client_schedule_write(client);
+    if (likely(errno == EAGAIN))
         return 0;
-    }
 
     GError *error =
         g_error_new(ajp_client_quark(), 0,

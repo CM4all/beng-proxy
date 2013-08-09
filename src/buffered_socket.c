@@ -524,3 +524,18 @@ buffered_socket_read(struct buffered_socket *s, bool expect_more)
 
     return buffered_socket_try_read(s);
 }
+
+ssize_t
+buffered_socket_write(struct buffered_socket *s,
+                      const void *data, size_t length)
+{
+    ssize_t nbytes = socket_wrapper_write(&s->base, data, length);
+
+    if (gcc_unlikely(nbytes < 0)) {
+        if (gcc_likely(errno == EAGAIN)) {
+            buffered_socket_schedule_write(s);
+        }
+    }
+
+    return nbytes;
+}

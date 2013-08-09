@@ -668,10 +668,8 @@ memcached_request_stream_data(const void *data, size_t length, void *ctx)
 
     ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
     if (nbytes < 0) {
-        if (errno == EAGAIN) {
-            memcached_client_schedule_write(client);
+        if (errno == EAGAIN)
             return 0;
-        }
 
         GError *error =
             g_error_new(memcached_client_quark(), 0,
