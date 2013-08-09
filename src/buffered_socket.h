@@ -418,13 +418,10 @@ buffered_socket_write(struct buffered_socket *s,
  * @return the positive number of bytes transferred or a #write_result
  * code
  */
-static inline ssize_t
+ssize_t
 buffered_socket_write_from(struct buffered_socket *s,
                            int fd, enum istream_direct fd_type,
-                           size_t length)
-{
-    return socket_wrapper_write_from(&s->base, fd, fd_type, length);
-}
+                           size_t length);
 
 gcc_pure
 static inline bool

@@ -60,24 +60,12 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
 
     nbytes = filtered_socket_write_from(&connection->socket, fd, type,
                                         max_length);
-    if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!filtered_socket_ready_for_writing(&connection->socket)) {
-            http_server_schedule_write(connection);
-            return ISTREAM_RESULT_BLOCKING;
-        }
-
-        /* try again, just in case connection->fd has become ready
-           between the first istream_direct_to_socket() call and
-           fd_ready_for_writing() */
-        nbytes = filtered_socket_write_from(&connection->socket, fd, type,
-                                            max_length);
-    }
-
     if (likely(nbytes > 0)) {
         connection->response.bytes_sent += nbytes;
         connection->response.length += (off_t)nbytes;
         http_server_schedule_write(connection);
-    }
+    } else if (nbytes == WRITE_BLOCKING)
+        return ISTREAM_RESULT_BLOCKING;
 
     return nbytes;
 }

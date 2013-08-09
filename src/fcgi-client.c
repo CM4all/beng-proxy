@@ -633,21 +633,10 @@ fcgi_request_stream_direct(istream_direct_t type, int fd,
 
     ssize_t nbytes = buffered_socket_write_from(&client->socket, fd, type,
                                                 max_length);
-    if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!buffered_socket_ready_for_writing(&client->socket)) {
-            buffered_socket_schedule_write(&client->socket);
-            return ISTREAM_RESULT_BLOCKING;
-        }
-
-        /* try again, just in case client->fd has become ready between
-           the first istream_direct_to_socket() call and
-           fd_ready_for_writing() */
-        nbytes = buffered_socket_write_from(&client->socket, type, fd,
-                                            max_length);
-    }
-
     if (likely(nbytes > 0))
         buffered_socket_schedule_write(&client->socket);
+    else if (nbytes == WRITE_BLOCKING)
+        return ISTREAM_RESULT_BLOCKING;
     else if (nbytes < 0 && errno == EAGAIN) {
         client->request.got_data = false;
         buffered_socket_unschedule_write(&client->socket);

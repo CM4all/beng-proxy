@@ -1021,21 +1021,10 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
 
     ssize_t nbytes = filtered_socket_write_from(&client->socket, fd, type,
                                                 max_length);
-    if (unlikely(nbytes < 0 && errno == EAGAIN)) {
-        if (!filtered_socket_ready_for_writing(&client->socket)) {
-            http_client_schedule_write(client);
-            return ISTREAM_RESULT_BLOCKING;
-        }
-
-        /* try again, just in case connection->fd has become ready
-           between the first istream_direct_to_socket() call and
-           fd_ready_for_writing() */
-        nbytes = filtered_socket_write_from(&client->socket, fd, type,
-                                            max_length);
-    }
-
     if (likely(nbytes > 0))
         http_client_schedule_write(client);
+    else if (nbytes == WRITE_BLOCKING)
+        return ISTREAM_RESULT_BLOCKING;
     else if (likely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
             client->request.got_data = false;

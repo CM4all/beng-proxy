@@ -540,3 +540,26 @@ buffered_socket_write(struct buffered_socket *s,
 
     return nbytes;
 }
+
+ssize_t
+buffered_socket_write_from(struct buffered_socket *s,
+                           int fd, enum istream_direct fd_type,
+                           size_t length)
+{
+    ssize_t nbytes = socket_wrapper_write_from(&s->base, fd, fd_type, length);
+    if (gcc_unlikely(nbytes < 0)) {
+        if (gcc_likely(errno == EAGAIN)) {
+            if (!buffered_socket_ready_for_writing(s)) {
+                buffered_socket_schedule_write(s);
+                return WRITE_BLOCKING;
+            }
+
+            /* try again, just in case our fd has become ready between
+               the first socket_wrapper_write_from() call and
+               fd_ready_for_writing() */
+            nbytes = socket_wrapper_write_from(&s->base, fd, fd_type, length);
+        }
+    }
+
+    return nbytes;
+}
