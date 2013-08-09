@@ -104,6 +104,24 @@ enum direct_result {
     DIRECT_ERRNO,
 };
 
+/**
+ * Special return values for buffered_socket_write() and
+ * buffered_socket_write_from().
+ */
+enum write_result {
+    /**
+     * The source has reached end-of-file.  Only valid for
+     * buffered_socket_write_from(), i.e. when there is a source file
+     * descriptor.
+     */
+    WRITE_SOURCE_EOF = 0,
+
+    /**
+     * An I/O error has occurred, and errno is set.
+     */
+    WRITE_ERRNO = -1,
+};
+
 struct buffered_socket_handler {
     /**
      * Data has been read from the socket into the input buffer.  Call
@@ -380,7 +398,8 @@ buffered_socket_set_cork(struct buffered_socket *s, bool cork)
 /**
  * Write data to the socket.
  *
- * @return the number of bytes written or -1 on error (with errno set)
+ * @return the positive number of bytes written or a #write_result
+ * code
  */
 ssize_t
 buffered_socket_write(struct buffered_socket *s,
@@ -389,8 +408,8 @@ buffered_socket_write(struct buffered_socket *s,
 /**
  * Transfer data from the given file descriptor to the socket.
  *
- * @return the number of bytes transferred or 0 on end-of-file on the
- * given file descriptor or -1 on error (with errno set)
+ * @return the positive number of bytes transferred or a #write_result
+ * code
  */
 static inline ssize_t
 buffered_socket_write_from(struct buffered_socket *s,
