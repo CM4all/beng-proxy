@@ -1838,7 +1838,7 @@ translate_try_write(struct translate_client *client)
 
     ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
     if (gcc_unlikely(nbytes < 0)) {
-        if (gcc_likely(errno == EAGAIN))
+        if (gcc_likely(nbytes == WRITE_BLOCKING))
             return true;
 
         GError *error =

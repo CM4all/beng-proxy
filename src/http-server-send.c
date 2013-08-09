@@ -37,7 +37,7 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
     if (gcc_likely(nbytes == (ssize_t)length))
         return true;
 
-    if (nbytes < 0)
+    if (nbytes == WRITE_ERRNO)
         http_server_errno(connection, "write error");
     else
         http_server_error_message(connection, "write error");

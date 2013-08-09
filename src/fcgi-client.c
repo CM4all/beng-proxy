@@ -608,10 +608,9 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
     ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
     if (nbytes > 0)
         buffered_socket_schedule_write(&client->socket);
+    else if (gcc_likely(nbytes == WRITE_BLOCKING))
+        return 0;
     else if (nbytes < 0) {
-        if (errno == EAGAIN)
-            return 0;
-
         GError *error = g_error_new(fcgi_quark(), errno,
                                     "write to FastCGI application failed: %s",
                                     strerror(errno));

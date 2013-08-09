@@ -677,7 +677,7 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
         return (size_t)nbytes;
     }
 
-    if (likely(errno == EAGAIN))
+    if (likely(nbytes == WRITE_BLOCKING))
         return 0;
 
     GError *error =

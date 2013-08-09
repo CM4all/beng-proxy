@@ -120,6 +120,13 @@ enum write_result {
      * An I/O error has occurred, and errno is set.
      */
     WRITE_ERRNO = -1,
+
+    /**
+     * The destination socket blocks.  The #buffered_socket library
+     * has already scheduled the "write" event to resume writing
+     * later.
+     */
+    WRITE_BLOCKING = -2,
 };
 
 struct buffered_socket_handler {

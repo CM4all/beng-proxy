@@ -980,7 +980,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
         return (size_t)nbytes;
     }
 
-    if (gcc_likely(errno == EAGAIN))
+    if (gcc_likely(nbytes == WRITE_BLOCKING))
         return 0;
 
     int _errno = errno;

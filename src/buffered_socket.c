@@ -534,6 +534,7 @@ buffered_socket_write(struct buffered_socket *s,
     if (gcc_unlikely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
             buffered_socket_schedule_write(s);
+            return WRITE_BLOCKING;
         }
     }
 
