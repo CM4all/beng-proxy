@@ -1038,9 +1038,25 @@ http_client_request_stream_direct(istream_direct_t type, int fd,
 
     if (likely(nbytes > 0))
         http_client_schedule_write(client);
-    else if (nbytes < 0 && errno == EAGAIN) {
-        client->request.got_data = false;
-        filtered_socket_unschedule_write(&client->socket);
+    else if (likely(nbytes < 0)) {
+        if (gcc_likely(errno == EAGAIN)) {
+            client->request.got_data = false;
+            filtered_socket_unschedule_write(&client->socket);
+        } else if (errno == EPIPE || errno == ECONNRESET) {
+            /* the server has closed the connection, probably because
+               he's not interested in our request body - that's ok;
+               now we wait for his response */
+
+            client->keep_alive = false;
+
+            istream_free(&client->request.istream);
+
+            filtered_socket_unschedule_write(&client->socket);
+            filtered_socket_schedule_read_timeout(&client->socket, true,
+                                                  &http_client_timeout);
+
+            return ISTREAM_RESULT_CLOSED;
+        }
     }
 
     return nbytes;
