@@ -9,7 +9,7 @@
 #include "lb_connection.h"
 #include "lb_config.h"
 #include "notify.h"
-#include "ssl_create.h"
+#include "ssl_factory.h"
 #include "listener.h"
 #include "address_envelope.h"
 #include "pool.h"
@@ -37,7 +37,7 @@ lb_listener_connected(int fd,
     struct lb_listener *listener = ctx;
 
     lb_connection_new(listener->instance, listener->config,
-                      listener->ssl_ctx, listener->notify,
+                      listener->ssl_factory, listener->notify,
                       fd, address, address_length);
 }
 
@@ -80,15 +80,16 @@ lb_listener_new(struct lb_instance *instance,
             return NULL;
         }
 
-        listener->ssl_ctx = ssl_create(&config->ssl_config, error_r);
-        if (listener->ssl_ctx == NULL) {
+        listener->ssl_factory = ssl_factory_new(pool, &config->ssl_config,
+                                                error_r);
+        if (listener->ssl_factory == NULL) {
             notify_free(listener->notify);
             pool_unref(pool);
             return NULL;
         }
     } else {
         listener->notify = NULL;
-        listener->ssl_ctx = NULL;
+        listener->ssl_factory = NULL;
     }
 
     const struct address_envelope *envelope = config->envelope;
@@ -98,8 +99,8 @@ lb_listener_new(struct lb_instance *instance,
                                       &lb_listener_handler, listener,
                                       error_r);
     if (listener->listener == NULL) {
-        if (listener->ssl_ctx != NULL)
-            SSL_CTX_free(listener->ssl_ctx);
+        if (listener->ssl_factory != NULL)
+            ssl_factory_free(listener->ssl_factory);
         pool_unref(pool);
         return NULL;
     }
@@ -112,8 +113,8 @@ lb_listener_free(struct lb_listener *listener)
 {
     listener_free(&listener->listener);
 
-    if (listener->ssl_ctx != NULL)
-        SSL_CTX_free(listener->ssl_ctx);
+    if (listener->ssl_factory != NULL)
+        ssl_factory_free(listener->ssl_factory);
 
     if (listener->notify != NULL)
         notify_free(listener->notify);

@@ -4,14 +4,20 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ssl_create.h"
+#include "ssl_factory.h"
 #include "ssl_config.h"
+#include "pool.h"
 
 #include <inline/compiler.h>
 
+#include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <assert.h>
 #include <stdbool.h>
+
+struct ssl_factory {
+    SSL_CTX *ssl_ctx;
+};
 
 static int
 verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
@@ -77,23 +83,38 @@ apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
     return true;
 }
 
-SSL_CTX *
-ssl_create(const struct ssl_config *config, GError **error_r)
+struct ssl_factory *
+ssl_factory_new(struct pool *pool, const struct ssl_config *config,
+                GError **error_r)
 {
+    assert(pool != NULL);
     assert(config != NULL);
     assert(config->cert_file != NULL);
     assert(config->key_file != NULL);
 
-    SSL_CTX *ssl_ctx = SSL_CTX_new(SSLv23_server_method());
-    if (ssl_ctx == NULL) {
+    struct ssl_factory *factory = p_malloc(pool, sizeof(*factory));
+    factory->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+    if (factory->ssl_ctx == NULL) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_CTX_new() failed");
         return NULL;
     }
 
-    if (!apply_config(ssl_ctx, config, error_r)) {
-        SSL_CTX_free(ssl_ctx);
+    if (!apply_config(factory->ssl_ctx, config, error_r)) {
+        SSL_CTX_free(factory->ssl_ctx);
         return NULL;
     }
 
-    return ssl_ctx;
+    return factory;
+}
+
+void
+ssl_factory_free(struct ssl_factory *factory)
+{
+    SSL_CTX_free(factory->ssl_ctx);
+}
+
+SSL *
+ssl_factory_make(struct ssl_factory *factory)
+{
+    return SSL_new(factory->ssl_ctx);
 }

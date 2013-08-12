@@ -29,7 +29,7 @@
 struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
-                  SSL_CTX *ssl_ctx, struct notify *notify,
+                  struct ssl_factory *ssl_factory, struct notify *notify,
                   int fd, const struct sockaddr *addr, size_t addrlen)
 {
     struct lb_connection *connection;
@@ -52,7 +52,7 @@ lb_connection_new(struct lb_instance *instance,
 
     enum istream_direct fd_type = ISTREAM_TCP;
 
-    if (ssl_ctx != NULL) {
+    if (ssl_factory != NULL) {
         int fds[2];
         if (socketpair_cloexec_nonblock(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
             close(fd);
@@ -61,7 +61,7 @@ lb_connection_new(struct lb_instance *instance,
         }
 
         GError *error = NULL;
-        connection->ssl_filter = ssl_filter_new(pool, ssl_ctx,
+        connection->ssl_filter = ssl_filter_new(pool, ssl_factory,
                                                 fd, fds[0], notify,
                                                 &error);
         if (connection->ssl_filter == NULL) {

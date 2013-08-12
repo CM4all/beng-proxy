@@ -11,9 +11,8 @@
 
 #include <inline/compiler.h>
 
-#include <openssl/ssl.h>
-
 struct pool;
+struct ssl_factory;
 struct notify;
 struct ssl_config;
 struct ssl_filter;
@@ -26,7 +25,7 @@ struct ssl_filter;
  * to local service)
  */
 struct ssl_filter *
-ssl_filter_new(struct pool *pool, SSL_CTX *ssl_ctx,
+ssl_filter_new(struct pool *pool, struct ssl_factory *factory,
                int encrypted_fd, int plain_fd,
                struct notify *notify,
                GError **error_r);

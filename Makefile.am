@@ -450,8 +450,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/ssl_init.h \
 	src/ssl_init.c \
 	src/ssl_config.h \
-	src/ssl_create.h \
-	src/ssl_create.c \
+	src/ssl_factory.h \
+	src/ssl_factory.c \
 	src/ssl_filter.h \
 	src/ssl_filter.c \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \

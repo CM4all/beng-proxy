@@ -5,6 +5,7 @@
  */
 
 #include "ssl_filter.h"
+#include "ssl_factory.h"
 #include "ssl_config.h"
 #include "notify.h"
 #include "pool.h"
@@ -394,13 +395,13 @@ ssl_filter_thread(void *ctx)
 }
 
 struct ssl_filter *
-ssl_filter_new(struct pool *pool, SSL_CTX *ssl_ctx,
+ssl_filter_new(struct pool *pool, struct ssl_factory *factory,
                int encrypted_fd, int plain_fd,
                struct notify *notify,
                GError **error_r)
 {
     assert(pool != NULL);
-    assert(ssl_ctx != NULL);
+    assert(factory != NULL);
 
     struct ssl_filter *ssl = p_malloc(pool, sizeof(*ssl));
     ssl->pool = pool;
@@ -411,7 +412,7 @@ ssl_filter_new(struct pool *pool, SSL_CTX *ssl_ctx,
     ssl->from_encrypted = fb_pool_alloc();
     ssl->from_plain = fb_pool_alloc();
 
-    ssl->ssl = SSL_new(ssl_ctx);
+    ssl->ssl = ssl_factory_make(factory);
     if (ssl->ssl == NULL) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed");
         fb_pool_free(ssl->from_encrypted);
