@@ -15,10 +15,16 @@ enum ssl_verify {
     SSL_VERIFY_OPTIONAL,
 };
 
-struct ssl_config {
+struct ssl_cert_key_config {
+    struct ssl_cert_key_config *next;
+
     const char *cert_file;
 
     const char *key_file;
+};
+
+struct ssl_config {
+    struct ssl_cert_key_config cert_key;
 
     const char *ca_cert_file;
 
@@ -28,7 +34,8 @@ struct ssl_config {
 static inline void
 ssl_config_clear(struct ssl_config *config)
 {
-    config->cert_file = config->key_file = NULL;
+    config->cert_key.next = NULL;
+    config->cert_key.cert_file = config->cert_key.key_file = NULL;
     config->ca_cert_file = NULL;
     config->verify = SSL_VERIFY_NO;
 }
@@ -36,7 +43,8 @@ ssl_config_clear(struct ssl_config *config)
 static inline bool
 ssl_config_valid(const struct ssl_config *config)
 {
-    return config->cert_file != NULL && config->key_file != NULL;
+    return config->cert_key.cert_file != NULL &&
+        config->cert_key.key_file != NULL;
 }
 
 #endif

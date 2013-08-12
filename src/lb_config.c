@@ -972,9 +972,6 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (!listener->ssl)
                 return throw(error_r, "SSL is not enabled");
 
-            if (listener->ssl_config.cert_file != NULL)
-                return throw(error_r, "Certificate already configured");
-
             const char *path = next_value(&p);
             if (path == NULL)
                 return throw(error_r, "Path expected");
@@ -984,27 +981,36 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
                 key_path = next_value(&p);
                 if (key_path == NULL)
                     return throw(error_r, "Path expected");
-
-                if (listener->ssl_config.key_file != NULL)
-                    return throw(error_r, "Key already configured");
             }
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            listener->ssl_config.cert_file =
-                p_strdup(parser->config->pool, path);
+            struct ssl_cert_key_config *c = &listener->ssl_config.cert_key;
+            if (c->cert_file != NULL) {
+                if (c->key_file == NULL || key_path == NULL)
+                    return throw(error_r, "Certificate already configured");
+
+                while (c->next != NULL)
+                    c = c->next;
+
+                c = c->next = p_malloc(parser->config->pool, sizeof(*c));
+                c->next = NULL;
+            }
+
+            c->cert_file = p_strdup(parser->config->pool, path);
 
             if (key_path != NULL)
-                listener->ssl_config.key_file =
-                    p_strdup(parser->config->pool, key_path);
+                c->key_file = p_strdup(parser->config->pool, key_path);
             return true;
         } else if (strcmp(word, "ssl_key") == 0) {
             if (!listener->ssl)
                 return throw(error_r, "SSL is not enabled");
 
-            if (listener->ssl_config.key_file != NULL)
+            if (listener->ssl_config.cert_key.key_file != NULL)
                 return throw(error_r, "Key already configured");
+
+            assert(listener->ssl_config.cert_key.next == NULL);
 
             const char *path = next_value(&p);
             if (path == NULL)
@@ -1013,7 +1019,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            listener->ssl_config.key_file =
+            listener->ssl_config.cert_key.key_file =
                 p_strdup(parser->config->pool, path);
             return true;
         } else if (strcmp(word, "ssl_ca_cert") == 0) {

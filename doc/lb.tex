@@ -224,6 +224,17 @@ listener ssl {
 
 One pool can be shared by listeners with and without SSL.
 
+\subsubsection{Server Name Indication}
+
+You can specify multiple \verb|ssl_cert| lines.  All certificate/key
+pairs are loaded.  During the TLS handshake, the client may announce
+the desired server name with the TLS extension ``SNI'' (Server Name
+Indication).  \emph{beng-lb} uses this name to choose a certificate.
+Currently, it uses the first matching certificate, but that algorithm
+may be changed in the future to ``most specific certificate''.
+
+\subsubsection{Client Certificates}
+
 The option \verb|ssl_verify| enables client certificates.  A
 connection without a client certificate will be rejected.  The client
 certificate will only be accepted if its issuer can be validated by
