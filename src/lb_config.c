@@ -979,11 +979,25 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (path == NULL)
                 return throw(error_r, "Path expected");
 
+            const char *key_path = NULL;
+            if (*p != 0) {
+                key_path = next_value(&p);
+                if (key_path == NULL)
+                    return throw(error_r, "Path expected");
+
+                if (listener->ssl_config.key_file != NULL)
+                    return throw(error_r, "Key already configured");
+            }
+
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
             listener->ssl_config.cert_file =
                 p_strdup(parser->config->pool, path);
+
+            if (key_path != NULL)
+                listener->ssl_config.key_file =
+                    p_strdup(parser->config->pool, key_path);
             return true;
         } else if (strcmp(word, "ssl_key") == 0) {
             if (!listener->ssl)

@@ -218,8 +218,7 @@ listener ssl {
   bind "*:443"
   pool "demo"
   ssl "yes"
-  ssl_cert "/etc/cm4all/beng/lb/cert.pem"
-  ssl_key "/etc/cm4all/beng/lb/key.pem"
+  ssl_cert "/etc/cm4all/beng/lb/cert.pem" "/etc/cm4all/beng/lb/key.pem"
 }
 \end{verbatim*}
 
@@ -238,8 +237,7 @@ listener ssl {
   bind "*:443"
   pool "demo"
   ssl "yes"
-  ssl_cert "/etc/cm4all/beng/lb/cert.pem"
-  ssl_key "/etc/cm4all/beng/lb/key.pem"
+  ssl_cert "/etc/cm4all/beng/lb/cert.pem" "/etc/cm4all/beng/lb/key.pem"
   ssl_verify "yes"
   ssl_ca_cert "/etc/cm4all/beng/lb/ca.pem"
 }
