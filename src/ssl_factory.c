@@ -93,14 +93,14 @@ ssl_factory_new(struct pool *pool, const struct ssl_config *config,
     assert(config->key_file != NULL);
 
     struct ssl_factory *factory = p_malloc(pool, sizeof(*factory));
-    factory->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
-    if (factory->ssl_ctx == NULL) {
+    SSL_CTX *ssl_ctx = factory->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+    if (ssl_ctx == NULL) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_CTX_new() failed");
         return NULL;
     }
 
-    if (!apply_config(factory->ssl_ctx, config, error_r)) {
-        SSL_CTX_free(factory->ssl_ctx);
+    if (!apply_config(ssl_ctx, config, error_r)) {
+        SSL_CTX_free(ssl_ctx);
         return NULL;
     }
 
