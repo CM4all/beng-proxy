@@ -100,6 +100,8 @@ thread_queue_free(struct thread_queue *q)
 {
     assert(!q->alive);
 
+    notify_free(q->notify);
+
     pthread_mutex_destroy(&q->mutex);
     pthread_cond_destroy(&q->cond);
 }
