@@ -60,6 +60,10 @@ http_client_quark(void)
     return g_quark_from_static_string("http_client");
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Sends a HTTP request on a socket, and passes the response to the
  * handler.
@@ -89,5 +93,9 @@ http_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                     const struct http_response_handler *handler,
                     void *ctx,
                     struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -67,6 +67,9 @@ struct stock_stats {
     unsigned busy, idle;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* stock.c */
 
@@ -76,7 +79,7 @@ struct stock;
  * @param handler optional handler class
  */
 struct stock *
-stock_new(struct pool *pool, const struct stock_class *class,
+stock_new(struct pool *pool, const struct stock_class *_class,
           void *class_ctx, const char *uri, unsigned limit, unsigned max_idle,
           const struct stock_handler *handler, void *handler_ctx);
 
@@ -138,7 +141,8 @@ struct hstock;
 
 gcc_malloc
 struct hstock *
-hstock_new(struct pool *pool, const struct stock_class *class, void *class_ctx,
+hstock_new(struct pool *pool,
+           const struct stock_class *_class, void *class_ctx,
            unsigned limit, unsigned max_idle);
 
 void
@@ -161,5 +165,9 @@ void
 hstock_put(struct hstock *hstock, const char *uri, struct stock_item *item,
            bool destroy);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

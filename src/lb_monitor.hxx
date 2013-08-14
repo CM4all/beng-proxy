@@ -33,7 +33,7 @@ struct lb_monitor *
 lb_monitor_new(struct pool *pool, const char *name,
                const struct lb_monitor_config *config,
                const struct sockaddr *address, size_t address_length,
-               const struct lb_monitor_class *class);
+               const struct lb_monitor_class *class_);
 
 void
 lb_monitor_free(struct lb_monitor *monitor);

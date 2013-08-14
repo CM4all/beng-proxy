@@ -20,6 +20,10 @@ struct listener_handler {
     void (*error)(GError *error, void *ctx);
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct listener *
 listener_new(struct pool *pool, int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
@@ -39,5 +43,9 @@ listener_event_add(struct listener *listener);
 
 void
 listener_event_del(struct listener *listener);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

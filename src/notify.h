@@ -14,6 +14,10 @@ struct notify;
 
 typedef void (*notify_callback_t)(void *ctx);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct notify *
 notify_new(struct pool *pool, notify_callback_t callback, void *ctx,
            GError **error_r);
@@ -29,5 +33,9 @@ notify_enable(struct notify *notify);
 
 void
 notify_disable(struct notify *notify);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

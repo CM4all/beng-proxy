@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SSL_FACTORY_H
 #define BENG_PROXY_SSL_FACTORY_H
 
-#include "ssl_quark.h"
+#include "ssl_quark.hxx"
 
 struct pool;
 struct ssl_config;

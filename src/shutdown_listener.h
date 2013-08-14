@@ -16,11 +16,19 @@ struct shutdown_listener {
     void *callback_ctx;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 shutdown_listener_init(struct shutdown_listener *l,
                        void (*callback)(void *ctx), void *ctx);
 
 void
 shutdown_listener_deinit(struct shutdown_listener *l);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

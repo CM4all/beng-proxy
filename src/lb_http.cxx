@@ -4,15 +4,15 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_http.h"
-#include "lb_instance.h"
-#include "lb_connection.h"
-#include "lb_config.h"
-#include "lb_session.h"
-#include "lb_cookie.h"
-#include "lb_jvm_route.h"
-#include "lb_headers.h"
-#include "ssl_filter.h"
+#include "lb_http.hxx"
+#include "lb_instance.hxx"
+#include "lb_connection.hxx"
+#include "lb_config.hxx"
+#include "lb_session.hxx"
+#include "lb_cookie.hxx"
+#include "lb_jvm_route.hxx"
+#include "lb_headers.hxx"
+#include "ssl_filter.hxx"
 #include "address_envelope.h"
 #include "address_sticky.h"
 #include "http-server.h"
@@ -130,7 +130,7 @@ is_server_failure(GError *error)
 static void
 my_socket_release(bool reuse, void *ctx)
 {
-    struct lb_request *request2 = ctx;
+    struct lb_request *request2 = (struct lb_request *)ctx;
 
     tcp_balancer_put(request2->balancer,
                      request2->stock_item, !reuse);
@@ -149,7 +149,7 @@ static void
 my_response_response(http_status_t status, struct strmap *headers,
                      struct istream *body, void *ctx)
 {
-    struct lb_request *request2 = ctx;
+    struct lb_request *request2 = (struct lb_request *)ctx;
     struct http_server_request *request = request2->request;
 
     struct growing_buffer *headers2 = headers_dup(request->pool, headers);
@@ -175,7 +175,7 @@ my_response_response(http_status_t status, struct strmap *headers,
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    struct lb_request *request2 = ctx;
+    struct lb_request *request2 = (struct lb_request *)ctx;
     const struct lb_connection *connection = request2->connection;
 
     if (is_server_failure(error))
@@ -204,7 +204,7 @@ static const struct http_response_handler my_response_handler = {
 static void
 my_stock_ready(struct stock_item *item, void *ctx)
 {
-    struct lb_request *request2 = ctx;
+    struct lb_request *request2 = (struct lb_request *)ctx;
     struct http_server_request *request = request2->request;
 
     request2->stock_item = item;
@@ -240,7 +240,7 @@ my_stock_ready(struct stock_item *item, void *ctx)
 static void
 my_stock_error(GError *error, void *ctx)
 {
-    struct lb_request *request2 = ctx;
+    struct lb_request *request2 = (struct lb_request *)ctx;
     const struct lb_connection *connection = request2->connection;
 
     log_error(2, connection, "Connect error", error);
@@ -270,7 +270,7 @@ lb_http_connection_request(struct http_server_request *request,
                            void *ctx,
                            struct async_operation_ref *async_ref)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     ++connection->instance->http_request_counter;
 
@@ -280,7 +280,8 @@ lb_http_connection_request(struct http_server_request *request,
     assert(cluster != NULL);
     assert(cluster->num_members > 0);
 
-    struct lb_request *request2 = p_malloc(request->pool, sizeof(*request2));
+    struct lb_request *request2 =
+        (struct lb_request *)p_malloc(request->pool, sizeof(*request2));
     request2->connection = connection;
     request2->balancer = connection->instance->tcp_balancer;
     request2->request = request;
@@ -334,7 +335,7 @@ lb_http_connection_log(struct http_server_request *request,
                        uint64_t bytes_received, uint64_t bytes_sent,
                        void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     access_log(request, NULL,
                strmap_get_checked(request->headers, "referer"),
@@ -347,7 +348,7 @@ lb_http_connection_log(struct http_server_request *request,
 static void
 lb_http_connection_error(GError *error, void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     log_error(2, connection, "Error", error);
     g_error_free(error);
@@ -361,7 +362,7 @@ lb_http_connection_error(GError *error, void *ctx)
 static void
 lb_http_connection_free(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     assert(connection->http != NULL);
 
@@ -371,8 +372,8 @@ lb_http_connection_free(void *ctx)
 }
 
 const struct http_server_connection_handler lb_http_connection_handler = {
-    .request = lb_http_connection_request,
-    .log = lb_http_connection_log,
-    .error = lb_http_connection_error,
-    .free = lb_http_connection_free,
+    lb_http_connection_request,
+    lb_http_connection_log,
+    lb_http_connection_error,
+    lb_http_connection_free,
 };

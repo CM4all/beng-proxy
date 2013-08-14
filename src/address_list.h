@@ -43,6 +43,10 @@ address_list_set_sticky_mode(struct address_list *list,
     list->sticky_mode = sticky_mode;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 address_list_copy(struct pool *pool, struct address_list *dest,
                   const struct address_list *src);
@@ -91,5 +95,9 @@ address_list_is_single(const struct address_list *list)
 gcc_pure
 const char *
 address_list_key(const struct address_list *list);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

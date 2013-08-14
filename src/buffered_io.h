@@ -11,6 +11,10 @@
 
 struct fifo_buffer;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Appends data from a file to the buffer.
  *
@@ -50,5 +54,9 @@ recv_to_buffer(int fd, struct fifo_buffer *buffer, size_t length);
  */
 ssize_t
 send_from_buffer(int fd, struct fifo_buffer *buffer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

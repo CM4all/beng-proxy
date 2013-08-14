@@ -15,6 +15,10 @@ struct sockaddr;
 
 #ifdef ENABLE_STOPWATCH
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 stopwatch_enable(void);
 
@@ -33,6 +37,10 @@ stopwatch_event(struct stopwatch *stopwatch, const char *name);
 
 void
 stopwatch_dump(const struct stopwatch *stopwatch);
+
+#ifdef __cplusplus
+}
+#endif
 
 #else
 

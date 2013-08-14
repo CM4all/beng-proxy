@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_jvm_route.h"
-#include "lb_config.h"
+#include "lb_jvm_route.hxx"
+#include "lb_config.hxx"
 #include "strmap.h"
 #include "tpool.h"
 #include "cookie_server.h"

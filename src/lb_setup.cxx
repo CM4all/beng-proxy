@@ -4,12 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_setup.h"
-#include "lb_config.h"
-#include "lb_instance.h"
-#include "lb_listener.h"
-#include "lb_hmonitor.h"
-#include "lb_control.h"
+#include "lb_setup.hxx"
+#include "lb_config.hxx"
+#include "lb_instance.hxx"
+#include "lb_listener.hxx"
+#include "lb_hmonitor.hxx"
+#include "lb_control.hxx"
 
 static void
 init_cluster_monitors(const struct lb_cluster_config *cluster)

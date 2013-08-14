@@ -17,6 +17,10 @@ struct stock_get_handler;
 struct async_operation_ref;
 struct sockaddr;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Creates a new TCP connection stock.
  *
@@ -47,5 +51,9 @@ tcp_stock_item_get(const struct stock_item *item);
 
 int
 tcp_stock_item_get_domain(const struct stock_item *item);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

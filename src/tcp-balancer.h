@@ -19,6 +19,10 @@ struct async_operation_ref;
 
 struct tcp_balancer;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Creates a new TCP connection stock.
  *
@@ -56,5 +60,9 @@ tcp_balancer_put(struct tcp_balancer *tcp_balancer, struct stock_item *item,
  */
 const struct address_envelope *
 tcp_balancer_get_last(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

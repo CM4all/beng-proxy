@@ -9,7 +9,7 @@
 
 #include "address_list.h"
 #include "sticky.h"
-#include "ssl_config.h"
+#include "ssl_config.hxx"
 
 #include <inline/list.h>
 #include <http/status.h>
@@ -51,34 +51,34 @@ struct lb_monitor_config {
      */
     unsigned timeout;
 
-    enum {
-        MONITOR_NONE,
-        MONITOR_PING,
-        MONITOR_CONNECT,
-        MONITOR_TCP_EXPECT,
+    enum class Type {
+        NONE,
+        PING,
+        CONNECT,
+        TCP_EXPECT,
     } type;
 
     /**
      * The timeout for establishing a connection.  Only applicable for
-     * #MONITOR_TCP_EXPECT.  0 means no special setting present.
+     * #Type::TCP_EXPECT.  0 means no special setting present.
      */
     unsigned connect_timeout;
 
     /**
-     * For #MONITOR_TCP_EXPECT: a string that is sent to the peer
+     * For #Type::TCP_EXPECT: a string that is sent to the peer
      * after the connection has been established.  May be NULL or
      * empty.
      */
     const char *send;
 
     /**
-     * For #MONITOR_TCP_EXPECT: a string that is expected to be
+     * For #Type::TCP_EXPECT: a string that is expected to be
      * received from the peer after the #send string has been sent.
      */
     const char *expect;
 
     /**
-     * For #MONITOR_TCP_EXPECT: if that string is received from the
+     * For #Type::TCP_EXPECT: if that string is received from the
      * peer (instead of #expect), then the node is assumed to be
      * shutting down gracefully, and will only get sticky requests.
      */

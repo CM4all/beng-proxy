@@ -15,6 +15,10 @@ struct pool;
 
 typedef void (*child_callback_t)(int status, void *ctx);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 children_init(struct pool *pool);
 
@@ -51,5 +55,9 @@ child_kill(pid_t pid);
 gcc_pure
 unsigned
 child_get_count(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

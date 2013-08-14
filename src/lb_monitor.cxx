@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_monitor.h"
-#include "lb_config.h"
+#include "lb_monitor.hxx"
+#include "lb_config.hxx"
 #include "async.h"
 #include "pool.h"
 #include "failure.h"
@@ -21,7 +21,7 @@ struct lb_monitor {
     const struct lb_monitor_config *config;
     const struct sockaddr *address;
     size_t address_length;
-    const struct lb_monitor_class *class;
+    const struct lb_monitor_class *class_;
 
     struct timeval interval;
     struct event interval_event;
@@ -39,7 +39,7 @@ struct lb_monitor {
 static void
 monitor_handler_success(void *ctx)
 {
-    struct lb_monitor *monitor = ctx;
+    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
     async_ref_clear(&monitor->async_ref);
     evtimer_del(&monitor->timeout_event);
 
@@ -67,7 +67,7 @@ monitor_handler_success(void *ctx)
 static void
 monitor_handler_fade(void *ctx)
 {
-    struct lb_monitor *monitor = ctx;
+    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
     async_ref_clear(&monitor->async_ref);
     evtimer_del(&monitor->timeout_event);
 
@@ -86,7 +86,7 @@ monitor_handler_fade(void *ctx)
 static void
 monitor_handler_timeout(void *ctx)
 {
-    struct lb_monitor *monitor = ctx;
+    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
     async_ref_clear(&monitor->async_ref);
     evtimer_del(&monitor->timeout_event);
 
@@ -103,7 +103,7 @@ monitor_handler_timeout(void *ctx)
 static void
 monitor_handler_error(GError *error, void *ctx)
 {
-    struct lb_monitor *monitor = ctx;
+    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
     async_ref_clear(&monitor->async_ref);
     evtimer_del(&monitor->timeout_event);
 
@@ -133,7 +133,7 @@ static void
 lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
                           void *ctx)
 {
-    struct lb_monitor *monitor = ctx;
+    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
     assert(!async_ref_defined(&monitor->async_ref));
 
     daemon_log(6, "running monitor %s\n", monitor->name);
@@ -142,10 +142,10 @@ lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
         evtimer_add(&monitor->timeout_event, &monitor->timeout);
 
     struct pool *pool = pool_new_linear(monitor->pool, "monitor_run", 8192);
-    monitor->class->run(pool, monitor->config,
-                        monitor->address, monitor->address_length,
-                        &monitor_handler, monitor,
-                        &monitor->async_ref);
+    monitor->class_->run(pool, monitor->config,
+                         monitor->address, monitor->address_length,
+                         &monitor_handler, monitor,
+                         &monitor->async_ref);
     pool_unref(pool);
 }
 
@@ -153,7 +153,7 @@ static void
 lb_monitor_timeout_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
                           void *ctx)
 {
-    struct lb_monitor *monitor = ctx;
+    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
     assert(async_ref_defined(&monitor->async_ref));
 
     daemon_log(6, "monitor timeout: %s\n", monitor->name);
@@ -172,16 +172,17 @@ struct lb_monitor *
 lb_monitor_new(struct pool *pool, const char *name,
                const struct lb_monitor_config *config,
                const struct sockaddr *address, size_t address_length,
-               const struct lb_monitor_class *class)
+               const struct lb_monitor_class *class_)
 {
     pool_ref(pool);
-    struct lb_monitor *monitor = p_malloc(pool, sizeof(*monitor));
+    struct lb_monitor *monitor = (struct lb_monitor *)
+        p_malloc(pool, sizeof(*monitor));
     monitor->pool = pool;
     monitor->name = name;
     monitor->config = config;
     monitor->address = address;
     monitor->address_length = address_length;
-    monitor->class = class;
+    monitor->class_ = class_;
 
     monitor->interval.tv_sec = config->interval;
     monitor->interval.tv_usec = 0;
@@ -214,7 +215,7 @@ lb_monitor_free(struct lb_monitor *monitor)
 void
 lb_monitor_enable(struct lb_monitor *monitor)
 {
-    static const struct timeval immediately = { .tv_sec = 0 };
+    static constexpr struct timeval immediately = { 0, 0 };
     evtimer_add(&monitor->interval_event, &immediately);
 }
 

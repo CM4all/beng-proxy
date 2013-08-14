@@ -14,6 +14,10 @@ struct balancer;
 struct address_list;
 struct sockaddr;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct balancer *
 balancer_new(struct pool *pool);
 
@@ -37,5 +41,9 @@ balancer_event_add(struct balancer *balancer);
 
 void
 balancer_event_del(struct balancer *balancer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

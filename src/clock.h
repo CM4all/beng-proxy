@@ -9,6 +9,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Returns the current monotonic time stamp in seconds.
  */
@@ -22,5 +26,9 @@ now_s(void);
 gcc_pure
 uint64_t
 now_us(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

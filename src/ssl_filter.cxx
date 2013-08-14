@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ssl_filter.h"
-#include "ssl_factory.h"
-#include "ssl_config.h"
+#include "ssl_filter.hxx"
+#include "ssl_factory.hxx"
+#include "ssl_config.hxx"
 #include "notify.h"
 #include "pool.h"
 #include "fifo-buffer.h"
@@ -116,8 +116,9 @@ ssl_poll(struct ssl_filter *ssl, short events, int timeout_ms,
          GError **error_r)
 {
     struct pollfd pfd = {
-        .fd = ssl->encrypted_fd,
-        .events = events,
+        ssl->encrypted_fd,
+        events,
+        0,
     };
 
     ssl_filter_unlock(ssl);
@@ -260,7 +261,7 @@ ssl_encrypt(SSL *ssl, struct fifo_buffer *buffer)
 static void *
 ssl_filter_thread(void *ctx)
 {
-    struct ssl_filter *ssl = ctx;
+    struct ssl_filter *ssl = (struct ssl_filter *)ctx;
 
     ssl_filter_lock(ssl);
 
@@ -286,12 +287,8 @@ ssl_filter_thread(void *ctx)
     }
 
     struct pollfd pfds[2] = {
-        [0] = {
-            .fd = ssl->encrypted_fd,
-        },
-        [1] = {
-            .fd = ssl->plain_fd,
-        },
+        { ssl->encrypted_fd, 0, 0 },
+        { ssl->plain_fd, 0, 0 },
     };
 
     while (!ssl->closing) {
@@ -403,7 +400,7 @@ ssl_filter_new(struct pool *pool, struct ssl_factory *factory,
     assert(pool != NULL);
     assert(factory != NULL);
 
-    struct ssl_filter *ssl = p_malloc(pool, sizeof(*ssl));
+    struct ssl_filter *ssl = (struct ssl_filter *)p_malloc(pool, sizeof(*ssl));
     ssl->pool = pool;
     ssl->notify = notify;
     ssl->encrypted_fd = encrypted_fd;

@@ -12,6 +12,10 @@
 struct pool;
 struct addrinfo;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Parse a numeric socket address for use with stream sockets
  * (e.g. TCP).
@@ -22,5 +26,9 @@ struct addrinfo;
 struct address_envelope *
 address_envelope_parse(struct pool *pool, const char *p, int default_port,
                        bool passive, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

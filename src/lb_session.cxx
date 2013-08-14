@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_session.h"
+#include "lb_session.hxx"
 #include "strmap.h"
 #include "tpool.h"
 #include "cookie_server.h"

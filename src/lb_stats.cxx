@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_stats.h"
-#include "lb_instance.h"
+#include "lb_stats.hxx"
+#include "lb_instance.hxx"
 #include "stock.h"
 #include "beng-proxy/control.h"
 

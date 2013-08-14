@@ -12,6 +12,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Global initialization.
  */
@@ -46,5 +50,9 @@ fb_pool_alloc(void);
 gcc_nonnull_all
 void
 fb_pool_free(struct fifo_buffer *buffer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

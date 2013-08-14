@@ -11,8 +11,16 @@
 
 struct sockaddr;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_pure
 unsigned
 socket_address_sticky(const struct sockaddr *address);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

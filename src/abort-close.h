@@ -11,6 +11,10 @@ struct pool;
 struct istream;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param istream the istream to be closed on abort; it should be
  * allocated from the specified pool, and must not have a handler
@@ -25,5 +29,9 @@ async_close_on_abort(struct pool *pool, struct istream *istream,
 struct async_operation_ref *
 async_optional_close_on_abort(struct pool *pool, struct istream *istream,
                               struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

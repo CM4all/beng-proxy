@@ -11,6 +11,10 @@ struct pool;
 struct strmap;
 struct growing_buffer;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Begin writing a header line.  After this, you may write the value.
  * Call header_write_finish() when you're done.
@@ -42,5 +46,9 @@ headers_copy_all(struct strmap *in, struct growing_buffer *out);
 
 struct growing_buffer *
 headers_dup(struct pool *pool, struct strmap *in);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

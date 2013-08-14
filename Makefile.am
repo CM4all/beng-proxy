@@ -446,53 +446,53 @@ src_cm4all_beng_lb_SOURCES = \
 	src/thread_queue.c src/thread_queue.h \
 	src/thread_worker.c src/thread_worker.h \
 	src/thread_pool.c src/thread_pool.h \
-	src/ssl_quark.h \
-	src/ssl_init.h \
-	src/ssl_init.c \
-	src/ssl_config.h \
-	src/ssl_factory.h \
-	src/ssl_factory.c \
-	src/ssl_filter.h \
-	src/ssl_filter.c \
+	src/ssl_quark.hxx \
+	src/ssl_init.hxx \
+	src/ssl_init.cxx \
+	src/ssl_config.hxx \
+	src/ssl_factory.hxx \
+	src/ssl_factory.cxx \
+	src/ssl_filter.hxx \
+	src/ssl_filter.cxx \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
 	src/ping.c src/ping.h \
 	src/shutdown_listener.c src/shutdown_listener.h \
-	src/lb_global.c \
-	src/lb_cmdline.h \
-	src/lb_cmdline.c \
-	src/lb_stats.c src/lb_stats.h \
-	src/lb_control.h \
-	src/lb_control.c \
-	src/lb_listener.h \
-	src/lb_listener.c \
-	src/lb_connection.h \
-	src/lb_connection.c \
-	src/lb_log.h src/lb_log.c \
-	src/lb_http.h \
-	src/lb_http.c \
-	src/lb_jvm_route.c src/lb_jvm_route.h \
-	src/lb_headers.c src/lb_headers.h \
-	src/lb_tcp.h \
-	src/lb_tcp.c \
-	src/lb_session.h \
-	src/lb_session.c \
-	src/lb_cookie.h \
-	src/lb_cookie.c \
-	src/lb_config.h \
-	src/lb_config.c \
-	src/lb_setup.h \
-	src/lb_setup.c \
-	src/lb_monitor.h \
-	src/lb_monitor.c \
-	src/lb_ping_monitor.h \
-	src/lb_ping_monitor.c \
-	src/lb_syn_monitor.h \
-	src/lb_syn_monitor.c \
-	src/lb_expect_monitor.h \
-	src/lb_expect_monitor.c \
-	src/lb_hmonitor.h \
-	src/lb_hmonitor.c \
-	src/lb_main.c
+	src/lb_global.cxx \
+	src/lb_cmdline.hxx \
+	src/lb_cmdline.cxx \
+	src/lb_stats.c src/lb_stats.hxx \
+	src/lb_control.hxx \
+	src/lb_control.cxx \
+	src/lb_listener.hxx \
+	src/lb_listener.cxx \
+	src/lb_connection.hxx \
+	src/lb_connection.cxx \
+	src/lb_log.h src/lb_log.cxx \
+	src/lb_http.hxx \
+	src/lb_http.cxx \
+	src/lb_jvm_route.c src/lb_jvm_route.hxx \
+	src/lb_headers.c src/lb_headers.hxx \
+	src/lb_tcp.hxx \
+	src/lb_tcp.cxx \
+	src/lb_session.hxx \
+	src/lb_session.cxx \
+	src/lb_cookie.hxx \
+	src/lb_cookie.cxx \
+	src/lb_config.hxx \
+	src/lb_config.cxx \
+	src/lb_setup.hxx \
+	src/lb_setup.cxx \
+	src/lb_monitor.hxx \
+	src/lb_monitor.cxx \
+	src/lb_ping_monitor.hxx \
+	src/lb_ping_monitor.cxx \
+	src/lb_syn_monitor.hxx \
+	src/lb_syn_monitor.cxx \
+	src/lb_expect_monitor.hxx \
+	src/lb_expect_monitor.cxx \
+	src/lb_hmonitor.hxx \
+	src/lb_hmonitor.cxx \
+	src/lb_main.cxx
 src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \

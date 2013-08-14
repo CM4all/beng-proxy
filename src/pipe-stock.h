@@ -11,10 +11,18 @@ struct pool;
 struct stock;
 struct stock_item;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct stock *
 pipe_stock_new(struct pool *pool);
 
 void
 pipe_stock_item_get(struct stock_item *item, int fds[2]);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

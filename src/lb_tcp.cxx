@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_tcp.h"
-#include "lb_connection.h"
-#include "lb_instance.h"
-#include "lb_config.h"
-#include "lb_log.h"
+#include "lb_tcp.hxx"
+#include "lb_connection.hxx"
+#include "lb_instance.hxx"
+#include "lb_config.hxx"
+#include "lb_log.hxx"
 #include "tcp-balancer.h"
 #include "istream-socket.h"
 #include "sink_fd.h"
@@ -28,7 +28,7 @@
 static void
 first_istream_socket_read(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     sink_fd_read(connection->tcp.peers[0].sink);
 }
@@ -36,7 +36,7 @@ first_istream_socket_read(void *ctx)
 static void
 first_istream_socket_close(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     (void)connection;
 }
@@ -44,7 +44,7 @@ first_istream_socket_close(void *ctx)
 static bool
 first_istream_socket_error(int error, void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     lb_connection_log_errno(3, connection, "Receive failed", error);
     lb_connection_close(connection);
@@ -54,7 +54,7 @@ first_istream_socket_error(int error, void *ctx)
 static bool
 first_istream_socket_depleted(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     (void)connection;
     return true;
@@ -63,18 +63,19 @@ first_istream_socket_depleted(void *ctx)
 static bool
 first_istream_socket_finished(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     lb_connection_close(connection);
     return false;
 }
 
-static const struct istream_socket_handler first_istream_socket_handler = {
-    .read = first_istream_socket_read,
-    .close = first_istream_socket_close,
-    .error = first_istream_socket_error,
-    .depleted = first_istream_socket_depleted,
-    .finished = first_istream_socket_finished,
+static constexpr struct istream_socket_handler first_istream_socket_handler = {
+    nullptr,
+    first_istream_socket_read,
+    first_istream_socket_close,
+    first_istream_socket_error,
+    first_istream_socket_depleted,
+    first_istream_socket_finished,
 };
 
 /*
@@ -85,7 +86,7 @@ static const struct istream_socket_handler first_istream_socket_handler = {
 static void
 second_istream_socket_read(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     sink_fd_read(connection->tcp.peers[1].sink);
 }
@@ -93,7 +94,7 @@ second_istream_socket_read(void *ctx)
 static void
 second_istream_socket_close(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     (void)connection;
 }
@@ -101,7 +102,7 @@ second_istream_socket_close(void *ctx)
 static bool
 second_istream_socket_error(int error, void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     lb_connection_log_errno(3, connection, "Receive failed", error);
     lb_connection_close(connection);
@@ -111,7 +112,7 @@ second_istream_socket_error(int error, void *ctx)
 static bool
 second_istream_socket_depleted(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     (void)connection;
     return true;
@@ -120,18 +121,19 @@ second_istream_socket_depleted(void *ctx)
 static bool
 second_istream_socket_finished(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     lb_connection_close(connection);
     return false;
 }
 
 static const struct istream_socket_handler second_istream_socket_handler = {
-    .read = second_istream_socket_read,
-    .close = second_istream_socket_close,
-    .error = second_istream_socket_error,
-    .depleted = second_istream_socket_depleted,
-    .finished = second_istream_socket_finished,
+    nullptr,
+    second_istream_socket_read,
+    second_istream_socket_close,
+    second_istream_socket_error,
+    second_istream_socket_depleted,
+    second_istream_socket_finished,
 };
 
 /*
@@ -142,7 +144,7 @@ static const struct istream_socket_handler second_istream_socket_handler = {
 static void
 first_sink_input_eof(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     lb_connection_close(connection);
 }
@@ -150,7 +152,7 @@ first_sink_input_eof(void *ctx)
 static void
 first_sink_input_error(GError *error, void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     connection->tcp.peers[0].sink = NULL;
 
@@ -163,7 +165,7 @@ first_sink_input_error(GError *error, void *ctx)
 static bool
 first_sink_send_error(int error, void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     connection->tcp.peers[0].sink = NULL;
 
@@ -186,7 +188,7 @@ static const struct sink_fd_handler first_sink_fd_handler = {
 static void
 second_sink_input_eof(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     lb_connection_close(connection);
 }
@@ -194,7 +196,7 @@ second_sink_input_eof(void *ctx)
 static void
 second_sink_input_error(GError *error, void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     connection->tcp.peers[1].sink = NULL;
 
@@ -207,7 +209,7 @@ second_sink_input_error(GError *error, void *ctx)
 static bool
 second_sink_send_error(int error, void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     connection->tcp.peers[1].sink = NULL;
 
@@ -230,7 +232,7 @@ static const struct sink_fd_handler second_sink_fd_handler = {
 static void
 lb_tcp_client_socket_success(int fd, void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     async_ref_clear(&connection->tcp.connect);
 
@@ -263,7 +265,7 @@ lb_tcp_client_socket_success(int fd, void *ctx)
 static void
 lb_tcp_client_socket_timeout(void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     close(connection->tcp.peers[0].fd);
 
@@ -274,7 +276,7 @@ lb_tcp_client_socket_timeout(void *ctx)
 static void
 lb_tcp_client_socket_error(GError *error, void *ctx)
 {
-    struct lb_connection *connection = ctx;
+    struct lb_connection *connection = (struct lb_connection *)ctx;
 
     close(connection->tcp.peers[0].fd);
 

@@ -64,8 +64,16 @@ struct istream_socket_handler {
     bool (*finished)(void *ctx);
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct istream *
 istream_socket_new(struct pool *pool, int fd, istream_direct_t fd_type,
                    const struct istream_socket_handler *handler, void *ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

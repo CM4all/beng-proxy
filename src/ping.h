@@ -28,6 +28,10 @@ ping_quark(void)
     return g_quark_from_static_string("ping");
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Is the "ping" client available?
  */
@@ -42,5 +46,9 @@ void
 ping(struct pool *pool, const struct sockaddr *address, size_t address_length,
      const struct ping_handler *handler, void *ctx,
      struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

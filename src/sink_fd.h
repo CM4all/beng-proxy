@@ -37,6 +37,10 @@ struct sink_fd_handler {
     bool (*send_error)(int error, void *ctx);
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct sink_fd *
 sink_fd_new(struct pool *pool, struct istream *istream,
             int fd, enum istream_direct fd_type,
@@ -47,5 +51,9 @@ sink_fd_read(struct sink_fd *ss);
 
 void
 sink_fd_close(struct sink_fd *ss);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

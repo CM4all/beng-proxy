@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_log.h"
-#include "lb_connection.h"
-#include "lb_config.h"
+#include "lb_log.hxx"
+#include "lb_connection.hxx"
+#include "lb_config.hxx"
 
 #include <daemon/log.h>
 

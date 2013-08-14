@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_ping_monitor.h"
-#include "lb_monitor.h"
+#include "lb_ping_monitor.hxx"
+#include "lb_monitor.hxx"
 #include "ping.h"
 #include "pool.h"
 
@@ -17,21 +17,21 @@ struct ping_monitor_context {
 static void
 ping_monitor_response(void *ctx)
 {
-    struct ping_monitor_context *p = ctx;
+    struct ping_monitor_context *p = (struct ping_monitor_context *)ctx;
     p->handler->success(p->handler_ctx);
 }
 
 static void
 ping_monitor_timeout(void *ctx)
 {
-    struct ping_monitor_context *p = ctx;
+    struct ping_monitor_context *p = (struct ping_monitor_context *)ctx;
     p->handler->timeout(p->handler_ctx);
 }
 
 static void
 ping_monitor_error(GError *error, void *ctx)
 {
-    struct ping_monitor_context *p = ctx;
+    struct ping_monitor_context *p = (struct ping_monitor_context *)ctx;
     p->handler->error(error, p->handler_ctx);
 }
 
@@ -48,7 +48,8 @@ ping_monitor_run(struct pool *pool,
                  const struct lb_monitor_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    struct ping_monitor_context *p = p_malloc(pool, sizeof(*p));
+    struct ping_monitor_context *p =
+        (struct ping_monitor_context *)p_malloc(pool, sizeof(*p));
     p->handler = handler;
     p->handler_ctx = handler_ctx;
 

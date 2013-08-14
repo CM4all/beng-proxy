@@ -14,6 +14,10 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialized the bulldog-tyke library.
  *
@@ -40,5 +44,9 @@ bulldog_check(const struct sockaddr *addr, socklen_t addrlen);
 gcc_pure
 bool
 bulldog_is_fading(const struct sockaddr *address, socklen_t address_size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

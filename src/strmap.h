@@ -17,6 +17,10 @@ struct strmap_pair {
     const char *key, *value;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct strmap *gcc_malloc
 strmap_new(struct pool *pool, unsigned capacity);
 
@@ -78,5 +82,9 @@ strmap_get_checked(const struct strmap *map, const char *key)
         ? strmap_get(map, key)
         : NULL;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

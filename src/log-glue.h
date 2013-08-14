@@ -13,6 +13,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool
 log_global_init(const char *program);
 
@@ -29,5 +33,9 @@ log_http_request(uint64_t timestamp, http_method_t method, const char *uri,
                  http_status_t status, uint64_t length,
                  uint64_t traffic_received, uint64_t traffic_sent,
                  uint64_t duration);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

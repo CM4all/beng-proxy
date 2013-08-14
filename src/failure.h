@@ -43,6 +43,10 @@ enum failure_status {
     FAILURE_MONITOR,
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 failure_init(struct pool *pool);
 
@@ -82,5 +86,9 @@ failure_check(const struct sockaddr *address, size_t length)
 {
     return failure_get_status(address, length) != FAILURE_OK;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

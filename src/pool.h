@@ -43,6 +43,10 @@ struct pool_mark_state {
 #endif
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 pool_recycler_clear(void);
 
@@ -323,5 +327,9 @@ p_strcat(struct pool *pool, const char *s, ...);
 gcc_malloc
 char *
 p_strncat(struct pool *pool, const char *s, size_t length, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

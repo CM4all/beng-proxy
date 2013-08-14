@@ -49,6 +49,10 @@
 
 struct sockaddr;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Wrapper for dup(), which sets the CLOEXEC flag on the new
  * descriptor.
@@ -133,5 +137,9 @@ recvmsg_cloexec(int sockfd, struct msghdr *msg, int flags);
  */
 int
 inotify_init_cloexec(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

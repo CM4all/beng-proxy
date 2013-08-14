@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ssl_factory.h"
-#include "ssl_config.h"
+#include "ssl_factory.hxx"
+#include "ssl_config.hxx"
 #include "pool.h"
 
 #include <inline/compiler.h>
@@ -138,7 +138,8 @@ load_certs_keys(struct pool *pool, struct ssl_factory *factory,
     *ck_tail = NULL;
 
     for (c = c->next; c != NULL; c = c->next) {
-        struct ssl_cert_key *ck = p_malloc(pool, sizeof(*ck));
+        struct ssl_cert_key *ck =
+            (struct ssl_cert_key *)p_malloc(pool, sizeof(*ck));
 
         if (!load_cert_key(ck, c, error_r)) {
             free_cert_key_list(&factory->cert_key);
@@ -291,7 +292,8 @@ ssl_factory_new(struct pool *pool, const struct ssl_config *config,
     assert(config->cert_key.cert_file != NULL);
     assert(config->cert_key.key_file != NULL);
 
-    struct ssl_factory *factory = p_malloc(pool, sizeof(*factory));
+    struct ssl_factory *factory =
+        (struct ssl_factory *)p_malloc(pool, sizeof(*factory));
     SSL_CTX *ssl_ctx = factory->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
     if (ssl_ctx == NULL) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_CTX_new() failed");

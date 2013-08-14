@@ -42,6 +42,10 @@ control_server_quark(void)
     return g_quark_from_static_string("control_server");
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct control_server *
 control_server_new(struct pool *pool,
                    const struct sockaddr *address, size_t address_length,
@@ -82,5 +86,9 @@ void
 control_server_decode(const void *data, size_t length,
                       const struct sockaddr *address, size_t address_length,
                       const struct control_handler *handler, void *handler_ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

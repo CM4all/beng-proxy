@@ -18,6 +18,10 @@ struct cache;
 struct cache_item;
 struct stopwatch;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct istream *
 istream_null_new(struct pool *pool);
 
@@ -176,5 +180,9 @@ istream_stopwatch_new(struct pool *pool, struct istream *input,
 }
 
 #endif /* !ENABLE_STOPWATCH */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

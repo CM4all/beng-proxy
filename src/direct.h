@@ -29,11 +29,19 @@ enum {
 extern unsigned ISTREAM_TO_PIPE;
 extern unsigned ISTREAM_TO_CHARDEV;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 direct_global_init(void);
 
 void
 direct_global_deinit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #else /* !SPLICE */
 
@@ -99,22 +107,22 @@ istream_direct_mask_to(enum istream_direct type)
         return ISTREAM_NONE;
 
     case ISTREAM_FILE:
-        return ISTREAM_TO_FILE;
+        return (enum istream_direct)ISTREAM_TO_FILE;
 
     case ISTREAM_PIPE:
-        return ISTREAM_TO_PIPE;
+        return (enum istream_direct)ISTREAM_TO_PIPE;
 
     case ISTREAM_SOCKET:
-        return ISTREAM_TO_SOCKET;
+        return (enum istream_direct)ISTREAM_TO_SOCKET;
 
     case ISTREAM_TCP:
-        return ISTREAM_TO_TCP;
+        return (enum istream_direct)ISTREAM_TO_TCP;
 
     case ISTREAM_CHARDEV:
-        return ISTREAM_TO_CHARDEV;
+        return (enum istream_direct)ISTREAM_TO_CHARDEV;
     }
 
-    return 0;
+    return (enum istream_direct)0;
 }
 
 #else /* !__linux */

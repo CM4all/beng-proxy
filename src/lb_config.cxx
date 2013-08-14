@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_config.h"
+#include "lb_config.hxx"
 #include "pool.h"
 #include "address_string.h"
 #include "address_envelope.h"
@@ -22,13 +22,13 @@
 struct config_parser {
     struct lb_config *config;
 
-    enum {
-        STATE_ROOT,
-        STATE_CONTROL,
-        STATE_MONITOR,
-        STATE_NODE,
-        STATE_CLUSTER,
-        STATE_LISTENER,
+    enum class State {
+        ROOT,
+        CONTROL,
+        MONITOR,
+        NODE,
+        CLUSTER,
+        LISTENER,
     } state;
 
     struct lb_control_config *control;
@@ -42,11 +42,11 @@ static void
 config_parser_init(struct config_parser *parser, struct lb_config *config)
 {
     parser->config = config;
-    parser->state = STATE_ROOT;
+    parser->state = config_parser::State::ROOT;
 }
 
 static bool
-throw(GError **error_r, const char *msg)
+_throw(GError **error_r, const char *msg)
 {
     g_set_error(error_r, lb_config_quark(), 0, "%s", msg);
     return false;
@@ -55,7 +55,7 @@ throw(GError **error_r, const char *msg)
 static bool
 syntax_error(GError **error_r)
 {
-    return throw(error_r, "Syntax error");
+    return _throw(error_r, "Syntax error");
 }
 
 static bool
@@ -114,14 +114,14 @@ next_word(char **pp)
     return result;
 }
 
-static const char *
+static char *
 next_unquoted_value(char **pp)
 {
     char *p = *pp;
     if (!is_unquoted_char(*p))
         return NULL;
 
-    const char *result = p;
+    char *result = p;
     do {
         ++p;
     } while (is_unquoted_char(*p));
@@ -136,10 +136,10 @@ next_unquoted_value(char **pp)
     return result;
 }
 
-static const char *
+static char *
 next_value(char **pp)
 {
-    const char *result = next_unquoted_value(pp);
+    char *result = next_unquoted_value(pp);
     if (result != NULL)
         return result;
 
@@ -212,14 +212,14 @@ next_bool(char **pp, bool *value_r, GError **error_r)
 {
     const char *value = next_value(pp);
     if (value == NULL)
-        return throw(error_r, "yes/no expected");
+        return _throw(error_r, "yes/no expected");
 
     if (strcmp(value, "yes") == 0)
         *value_r = true;
     else if (strcmp(value, "no") == 0)
         *value_r = false;
     else
-        return throw(error_r, "yes/no expected");
+        return _throw(error_r, "yes/no expected");
 
     return true;
 }
@@ -260,13 +260,13 @@ config_parser_create_control(struct config_parser *parser, char *p,
                              GError **error_r)
 {
     if (!expect_symbol_and_eol(p, '{'))
-        return throw(error_r, "'{' expected");
+        return _throw(error_r, "'{' expected");
 
-    struct lb_control_config *control =
+    struct lb_control_config *control = (struct lb_control_config *)
         p_malloc(parser->config->pool, sizeof(*control));
     control->envelope = NULL;
 
-    parser->state = STATE_CONTROL;
+    parser->state = config_parser::State::CONTROL;
     parser->control = control;
     return true;
 }
@@ -282,10 +282,10 @@ config_parser_feed_control(struct config_parser *parser, char *p,
             return syntax_error(error_r);
 
         if (control->envelope == NULL)
-            return throw(error_r, "Bind address is missing");
+            return _throw(error_r, "Bind address is missing");
 
         list_add(&control->siblings, &parser->config->controls);
-        parser->state = STATE_ROOT;
+        parser->state = config_parser::State::ROOT;
         return true;
     }
 
@@ -294,7 +294,7 @@ config_parser_feed_control(struct config_parser *parser, char *p,
         if (strcmp(word, "bind") == 0) {
             const char *address = next_value(&p);
             if (address == NULL)
-                return throw(error_r, "Control address expected");
+                return _throw(error_r, "Control address expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -307,7 +307,7 @@ config_parser_feed_control(struct config_parser *parser, char *p,
 
             return true;
         } else
-            return throw(error_r, "Unknown option");
+            return _throw(error_r, "Unknown option");
     } else
         return syntax_error(error_r);
 }
@@ -318,22 +318,22 @@ config_parser_create_monitor(struct config_parser *parser, char *p,
 {
     const char *name = next_value(&p);
     if (name == NULL)
-        return throw(error_r, "Monitor name expected");
+        return _throw(error_r, "Monitor name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
-        return throw(error_r, "'{' expected");
+        return _throw(error_r, "'{' expected");
 
     if (lb_config_find_monitor(parser->config, name) != NULL)
-        return throw(error_r, "Duplicate monitor name");
+        return _throw(error_r, "Duplicate monitor name");
 
-    struct lb_monitor_config *monitor =
+    struct lb_monitor_config *monitor = (struct lb_monitor_config *)
         p_malloc(parser->config->pool, sizeof(*monitor));
     monitor->name = p_strdup(parser->config->pool, name);
     monitor->interval = 10;
     monitor->timeout = 0;
-    monitor->type = MONITOR_NONE;
+    monitor->type = lb_monitor_config::Type::NONE;
 
-    parser->state = STATE_MONITOR;
+    parser->state = config_parser::State::MONITOR;
     parser->monitor = monitor;
     return true;
 }
@@ -348,12 +348,12 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
-        if (monitor->type == MONITOR_TCP_EXPECT &&
+        if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
             (monitor->expect == NULL && monitor->fade_expect == NULL))
-            return throw(error_r, "No 'expect' string configured");
+            return _throw(error_r, "No 'expect' string configured");
 
         list_add(&monitor->siblings, &parser->config->monitors);
-        parser->state = STATE_ROOT;
+        parser->state = config_parser::State::ROOT;
         return true;
     }
 
@@ -362,57 +362,57 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
         if (strcmp(word, "type") == 0) {
             const char *value = next_value(&p);
             if (value == NULL)
-                return throw(error_r, "Monitor address expected");
+                return _throw(error_r, "Monitor address expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            if (monitor->type != MONITOR_NONE)
-                return throw(error_r, "Monitor type already specified");
+            if (monitor->type != lb_monitor_config::Type::NONE)
+                return _throw(error_r, "Monitor type already specified");
 
             if (strcmp(value, "none") == 0)
-                monitor->type = MONITOR_NONE;
+                monitor->type = lb_monitor_config::Type::NONE;
             else if (strcmp(value, "ping") == 0)
-                monitor->type = MONITOR_PING;
+                monitor->type = lb_monitor_config::Type::PING;
             else if (strcmp(value, "connect") == 0)
-                monitor->type = MONITOR_CONNECT;
+                monitor->type = lb_monitor_config::Type::CONNECT;
             else if (strcmp(value, "tcp_expect") == 0) {
-                monitor->type = MONITOR_TCP_EXPECT;
+                monitor->type = lb_monitor_config::Type::TCP_EXPECT;
                 monitor->connect_timeout = 0;
                 monitor->send = NULL;
                 monitor->expect = NULL;
                 monitor->fade_expect = NULL;
             } else
-                return throw(error_r, "Unknown monitor type");
+                return _throw(error_r, "Unknown monitor type");
 
             return true;
         } else if (strcmp(word, "interval") == 0) {
             unsigned value = next_positive_integer(&p);
             if (value == 0)
-                return throw(error_r, "Positive integer expected");
+                return _throw(error_r, "Positive integer expected");
 
             monitor->interval = value;
             return true;
         } else if (strcmp(word, "timeout") == 0) {
             unsigned value = next_positive_integer(&p);
             if (value == 0)
-                return throw(error_r, "Positive integer expected");
+                return _throw(error_r, "Positive integer expected");
 
             monitor->timeout = value;
             return true;
-        } else if (monitor->type == MONITOR_TCP_EXPECT &&
+        } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
                    strcmp(word, "connect_timeout") == 0) {
             unsigned value = next_positive_integer(&p);
             if (value == 0)
-                return throw(error_r, "Positive integer expected");
+                return _throw(error_r, "Positive integer expected");
 
             monitor->connect_timeout = value;
             return true;
-        } else if (monitor->type == MONITOR_TCP_EXPECT &&
+        } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
                    strcmp(word, "send") == 0) {
             const char *value = next_unescape(&p);
             if (value == NULL)
-                return throw(error_r, "String value expected");
+                return _throw(error_r, "String value expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -421,11 +421,11 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                 ? p_strdup(parser->config->pool, value)
                 : NULL;
             return true;
-        } else if (monitor->type == MONITOR_TCP_EXPECT &&
+        } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
                    strcmp(word, "expect") == 0) {
             const char *value = next_unescape(&p);
             if (value == NULL)
-                return throw(error_r, "String value expected");
+                return _throw(error_r, "String value expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -434,11 +434,11 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                 ? p_strdup(parser->config->pool, value)
                 : NULL;
             return true;
-        } else if (monitor->type == MONITOR_TCP_EXPECT &&
+        } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
                    strcmp(word, "expect_graceful") == 0) {
             const char *value = next_unescape(&p);
             if (value == NULL)
-                return throw(error_r, "String value expected");
+                return _throw(error_r, "String value expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -448,7 +448,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                 : NULL;
             return true;
         } else
-            return throw(error_r, "Unknown option");
+            return _throw(error_r, "Unknown option");
     } else
         return syntax_error(error_r);
 }
@@ -459,21 +459,21 @@ config_parser_create_node(struct config_parser *parser, char *p,
 {
     const char *name = next_value(&p);
     if (name == NULL)
-        return throw(error_r, "Node name expected");
+        return _throw(error_r, "Node name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
-        return throw(error_r, "'{' expected");
+        return _throw(error_r, "'{' expected");
 
     if (lb_config_find_node(parser->config, name) != NULL)
-        return throw(error_r, "Duplicate node name");
+        return _throw(error_r, "Duplicate node name");
 
-    struct lb_node_config *node =
+    struct lb_node_config *node = (struct lb_node_config *)
         p_malloc(parser->config->pool, sizeof(*node));
     node->name = p_strdup(parser->config->pool, name);
     node->envelope = NULL;
     node->jvm_route = NULL;
 
-    parser->state = STATE_NODE;
+    parser->state = config_parser::State::NODE;
     parser->node = node;
     return true;
 }
@@ -497,7 +497,7 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         }
 
         list_add(&node->siblings, &parser->config->nodes);
-        parser->state = STATE_ROOT;
+        parser->state = config_parser::State::ROOT;
         return true;
     }
 
@@ -506,13 +506,13 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         if (strcmp(word, "address") == 0) {
             const char *value = next_value(&p);
             if (value == NULL)
-                return throw(error_r, "Node address expected");
+                return _throw(error_r, "Node address expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
             if (node->envelope != NULL)
-                return throw(error_r, "Duplicate node address");
+                return _throw(error_r, "Duplicate node address");
 
             node->envelope = address_envelope_parse(parser->config->pool,
                                                     value, 80, false, error_r);
@@ -523,18 +523,18 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         } else if (strcmp(word, "jvm_route") == 0) {
             const char *value = next_value(&p);
             if (value == NULL)
-                return throw(error_r, "Value expected");
+                return _throw(error_r, "Value expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
             if (node->jvm_route != NULL)
-                return throw(error_r, "Duplicate jvm_route");
+                return _throw(error_r, "Duplicate jvm_route");
 
             node->jvm_route = p_strdup(parser->config->pool, value);
             return true;
         } else
-            return throw(error_r, "Unknown option");
+            return _throw(error_r, "Unknown option");
     } else
         return syntax_error(error_r);
 }
@@ -548,7 +548,7 @@ auto_create_node(struct config_parser *parser, const char *name,
     if (envelope == NULL)
         return NULL;
 
-    struct lb_node_config *node =
+    struct lb_node_config *node = (struct lb_node_config *)
         p_malloc(parser->config->pool, sizeof(*node));
     node->name = p_strdup(parser->config->pool, name);
     node->envelope = envelope;
@@ -591,12 +591,12 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
 {
     const char *name = next_value(&p);
     if (name == NULL)
-        return throw(error_r, "Pool name expected");
+        return _throw(error_r, "Pool name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
-        return throw(error_r, "'{' expected");
+        return _throw(error_r, "'{' expected");
 
-    struct lb_cluster_config *cluster =
+    struct lb_cluster_config *cluster = (struct lb_cluster_config *)
         p_malloc(parser->config->pool, sizeof(*cluster));
     cluster->name = p_strdup(parser->config->pool, name);
     cluster->protocol = LB_PROTOCOL_HTTP;
@@ -607,7 +607,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
     cluster->monitor = NULL;
     cluster->num_members = 0;
 
-    parser->state = STATE_CLUSTER;
+    parser->state = config_parser::State::CLUSTER;
     parser->cluster = cluster;
     return true;
 }
@@ -684,13 +684,13 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             return syntax_error(error_r);
 
         if (lb_config_find_cluster(parser->config, cluster->name) != NULL)
-            return throw(error_r, "Duplicate pool name");
+            return _throw(error_r, "Duplicate pool name");
 
         if (cluster->num_members == 0)
-            return throw(error_r, "Pool has no members");
+            return _throw(error_r, "Pool has no members");
 
         if (!validate_protocol_sticky(cluster->protocol, cluster->sticky_mode))
-            return throw(error_r, "Sticky mode not available for this protocol");
+            return _throw(error_r, "Sticky mode not available for this protocol");
 
         if (cluster->num_members == 1)
             /* with only one member, a sticky setting doesn't make
@@ -698,7 +698,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             cluster->sticky_mode = STICKY_NONE;
 
         list_add(&cluster->siblings, &parser->config->clusters);
-        parser->state = STATE_ROOT;
+        parser->state = config_parser::State::ROOT;
         return true;
     }
 
@@ -707,7 +707,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
         if (strcmp(word, "name") == 0) {
             const char *name = next_value(&p);
             if (name == NULL)
-                return throw(error_r, "Pool name expected");
+                return _throw(error_r, "Pool name expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -717,7 +717,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
         } else if (strcmp(word, "sticky") == 0) {
             const char *sticky_mode = next_value(&p);
             if (sticky_mode == NULL)
-                return throw(error_r, "Sticky mode expected");
+                return _throw(error_r, "Sticky mode expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -735,13 +735,13 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             else if (strcmp(sticky_mode, "jvm_route") == 0)
                 cluster->sticky_mode = STICKY_JVM_ROUTE;
             else
-                return throw(error_r, "Unknown sticky mode");
+                return _throw(error_r, "Unknown sticky mode");
 
             return true;
         } else if (strcmp(word, "session_cookie") == 0) {
             const char *session_cookie = next_value(&p);
             if (session_cookie == NULL)
-                return throw(error_r, "Cookie name expected");
+                return _throw(error_r, "Cookie name expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -752,23 +752,23 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
         } else if (strcmp(word, "monitor") == 0) {
             const char *name = next_value(&p);
             if (name == NULL)
-                return throw(error_r, "Monitor name expected");
+                return _throw(error_r, "Monitor name expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
             if (cluster->monitor != NULL)
-                return throw(error_r, "Monitor already specified");
+                return _throw(error_r, "Monitor already specified");
 
             cluster->monitor = lb_config_find_monitor(parser->config, name);
             if (cluster->monitor == NULL)
-                return throw(error_r, "No such monitor");
+                return _throw(error_r, "No such monitor");
 
             return true;
         } else if (strcmp(word, "member") == 0) {
-            const char *name = next_value(&p);
+            char *name = next_value(&p);
             if (name == NULL)
-                return throw(error_r, "Member name expected");
+                return _throw(error_r, "Member name expected");
 
             /*
             if (!expect_eol(p))
@@ -776,7 +776,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             */
 
             if (cluster->num_members >= MAX_CLUSTER_MEMBERS)
-                return throw(error_r, "Pool is full");
+                return _throw(error_r, "Pool is full");
 
             struct lb_member_config *member =
                 &cluster->members[cluster->num_members++];
@@ -801,7 +801,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
                     member->port = parse_port(q, member->node->envelope);
                     if (member->port == 0)
-                        return throw(error_r, "Malformed port");
+                        return _throw(error_r, "Malformed port");
                 } else
                     /* node doesn't exist: parse the given member
                        name, auto-create a new node */
@@ -812,7 +812,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
         } else if (strcmp(word, "protocol") == 0) {
             const char *protocol = next_value(&p);
             if (protocol == NULL)
-                return throw(error_r, "Protocol name expected");
+                return _throw(error_r, "Protocol name expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -822,7 +822,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             else if (strcmp(protocol, "tcp") == 0)
                 cluster->protocol = LB_PROTOCOL_TCP;
             else
-                return throw(error_r, "Unknown protocol");
+                return _throw(error_r, "Unknown protocol");
 
             return true;
         } else if (strcmp(word, "mangle_via") == 0) {
@@ -835,7 +835,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             return true;
         } else if (strcmp(word, "fallback") == 0) {
             if (lb_fallback_config_defined(&cluster->fallback))
-                return throw(error_r, "Duplicate fallback");
+                return _throw(error_r, "Duplicate fallback");
 
             const char *location = next_value(&p);
             if (strstr(location, "://") != NULL) {
@@ -850,15 +850,15 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 http_status_t status =
                     (http_status_t)(unsigned)strtoul(location, &endptr, 10);
                 if (*endptr != 0 || !http_status_is_valid(status))
-                    return throw(error_r, "Invalid HTTP status code");
+                    return _throw(error_r, "Invalid HTTP status code");
 
                 if (http_status_is_empty(status))
-                    return throw(error_r,
+                    return _throw(error_r,
                                  "This HTTP status does not allow a response body");
 
                 const char *message = next_value(&p);
                 if (message == NULL)
-                    return throw(error_r, "Message expected");
+                    return _throw(error_r, "Message expected");
 
                 if (!expect_eol(p))
                     return syntax_error(error_r);
@@ -869,7 +869,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 return true;
             }
         } else
-            return throw(error_r, "Unknown option");
+            return _throw(error_r, "Unknown option");
     } else
         return syntax_error(error_r);
 }
@@ -880,12 +880,12 @@ config_parser_create_listener(struct config_parser *parser, char *p,
 {
     const char *name = next_value(&p);
     if (name == NULL)
-        return throw(error_r, "Listener name expected");
+        return _throw(error_r, "Listener name expected");
 
     if (!expect_symbol_and_eol(p, '{'))
-        return throw(error_r, "'{' expected");
+        return _throw(error_r, "'{' expected");
 
-    struct lb_listener_config *listener =
+    struct lb_listener_config *listener = (struct lb_listener_config *)
         p_malloc(parser->config->pool, sizeof(*listener));
     listener->name = p_strdup(parser->config->pool, name);
     listener->envelope = NULL;
@@ -893,7 +893,7 @@ config_parser_create_listener(struct config_parser *parser, char *p,
     listener->ssl = false;
     ssl_config_clear(&listener->ssl_config);
 
-    parser->state = STATE_LISTENER;
+    parser->state = config_parser::State::LISTENER;
     parser->listener = listener;
     return true;
 }
@@ -909,16 +909,16 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             return syntax_error(error_r);
 
         if (lb_config_find_listener(parser->config, listener->name) != NULL)
-            return throw(error_r, "Duplicate listener name");
+            return _throw(error_r, "Duplicate listener name");
 
         if (listener->envelope == NULL)
-            return throw(error_r, "Listener has no destination");
+            return _throw(error_r, "Listener has no destination");
 
         if (listener->ssl && !ssl_config_valid(&listener->ssl_config))
-            return throw(error_r, "Incomplete SSL configuration");
+            return _throw(error_r, "Incomplete SSL configuration");
 
         list_add(&listener->siblings, &parser->config->listeners);
-        parser->state = STATE_ROOT;
+        parser->state = config_parser::State::ROOT;
         return true;
     }
 
@@ -927,7 +927,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
         if (strcmp(word, "bind") == 0) {
             const char *address = next_value(&p);
             if (address == NULL)
-                return throw(error_r, "Listener address expected");
+                return _throw(error_r, "Listener address expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -942,17 +942,17 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
         } else if (strcmp(word, "pool") == 0) {
             const char *name = next_value(&p);
             if (name == NULL)
-                return throw(error_r, "Pool name expected");
+                return _throw(error_r, "Pool name expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
             if (listener->cluster != NULL)
-                return throw(error_r, "Pool already configured");
+                return _throw(error_r, "Pool already configured");
 
             listener->cluster = lb_config_find_cluster(parser->config, name);
             if (listener->cluster == NULL)
-                return throw(error_r, "No such pool");
+                return _throw(error_r, "No such pool");
 
             return true;
         } else if (strcmp(word, "ssl") == 0) {
@@ -961,7 +961,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
                 return false;
 
             if (listener->ssl && !value)
-                return throw(error_r, "SSL cannot be disabled at this point");
+                return _throw(error_r, "SSL cannot be disabled at this point");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -970,17 +970,17 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             return true;
         } else if (strcmp(word, "ssl_cert") == 0) {
             if (!listener->ssl)
-                return throw(error_r, "SSL is not enabled");
+                return _throw(error_r, "SSL is not enabled");
 
             const char *path = next_value(&p);
             if (path == NULL)
-                return throw(error_r, "Path expected");
+                return _throw(error_r, "Path expected");
 
             const char *key_path = NULL;
             if (*p != 0) {
                 key_path = next_value(&p);
                 if (key_path == NULL)
-                    return throw(error_r, "Path expected");
+                    return _throw(error_r, "Path expected");
             }
 
             if (!expect_eol(p))
@@ -989,12 +989,13 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             struct ssl_cert_key_config *c = &listener->ssl_config.cert_key;
             if (c->cert_file != NULL) {
                 if (c->key_file == NULL || key_path == NULL)
-                    return throw(error_r, "Certificate already configured");
+                    return _throw(error_r, "Certificate already configured");
 
                 while (c->next != NULL)
                     c = c->next;
 
-                c = c->next = p_malloc(parser->config->pool, sizeof(*c));
+                c = c->next = (struct ssl_cert_key_config *)
+                    p_malloc(parser->config->pool, sizeof(*c));
                 c->next = NULL;
             }
 
@@ -1005,16 +1006,16 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             return true;
         } else if (strcmp(word, "ssl_key") == 0) {
             if (!listener->ssl)
-                return throw(error_r, "SSL is not enabled");
+                return _throw(error_r, "SSL is not enabled");
 
             if (listener->ssl_config.cert_key.key_file != NULL)
-                return throw(error_r, "Key already configured");
+                return _throw(error_r, "Key already configured");
 
             assert(listener->ssl_config.cert_key.next == NULL);
 
             const char *path = next_value(&p);
             if (path == NULL)
-                return throw(error_r, "Path expected");
+                return _throw(error_r, "Path expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -1024,14 +1025,14 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             return true;
         } else if (strcmp(word, "ssl_ca_cert") == 0) {
             if (!listener->ssl)
-                return throw(error_r, "SSL is not enabled");
+                return _throw(error_r, "SSL is not enabled");
 
             if (listener->ssl_config.ca_cert_file != NULL)
-                return throw(error_r, "Certificate already configured");
+                return _throw(error_r, "Certificate already configured");
 
             const char *path = next_value(&p);
             if (path == NULL)
-                return throw(error_r, "Path expected");
+                return _throw(error_r, "Path expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
@@ -1041,11 +1042,11 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             return true;
         } else if (strcmp(word, "ssl_verify") == 0) {
             if (!listener->ssl)
-                return throw(error_r, "SSL is not enabled");
+                return _throw(error_r, "SSL is not enabled");
 
             const char *value = next_value(&p);
             if (value == NULL)
-                return throw(error_r, "yes/no expected");
+                return _throw(error_r, "yes/no expected");
 
             if (strcmp(value, "yes") == 0)
                 listener->ssl_config.verify = SSL_VERIFY_YES;
@@ -1054,14 +1055,14 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             else if (strcmp(value, "optional") == 0)
                 listener->ssl_config.verify = SSL_VERIFY_OPTIONAL;
             else
-                return throw(error_r, "yes/no expected");
+                return _throw(error_r, "yes/no expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
             return true;
         } else
-            return throw(error_r, "Unknown option");
+            return _throw(error_r, "Unknown option");
     } else
         return syntax_error(error_r);
 }
@@ -1086,7 +1087,7 @@ config_parser_feed_root(struct config_parser *parser, char *p,
         else if (strcmp(word, "control") == 0)
             return config_parser_create_control(parser, p, error_r);
         else
-            return throw(error_r, "Unknown option");
+            return _throw(error_r, "Unknown option");
     } else
         return syntax_error(error_r);
 }
@@ -1099,22 +1100,22 @@ config_parser_feed(struct config_parser *parser, char *line,
         return true;
 
     switch (parser->state) {
-    case STATE_ROOT:
+    case config_parser::State::ROOT:
         return config_parser_feed_root(parser, line, error_r);
 
-    case STATE_CONTROL:
+    case config_parser::State::CONTROL:
         return config_parser_feed_control(parser, line, error_r);
 
-    case STATE_MONITOR:
+    case config_parser::State::MONITOR:
         return config_parser_feed_monitor(parser, line, error_r);
 
-    case STATE_NODE:
+    case config_parser::State::NODE:
         return config_parser_feed_node(parser, line, error_r);
 
-    case STATE_CLUSTER:
+    case config_parser::State::CLUSTER:
         return config_parser_feed_cluster(parser, line, error_r);
 
-    case STATE_LISTENER:
+    case config_parser::State::LISTENER:
         return config_parser_feed_listener(parser, line, error_r);
     }
 
@@ -1162,7 +1163,7 @@ lb_cluster_config_finish(struct pool *pool, struct lb_cluster_config *config,
 
         if (!address_list_add(pool, &config->address_list,
                               address, envelope->length))
-            return throw(error_r, "Too many members");
+            return _throw(error_r, "Too many members");
     }
 
     return true;
@@ -1193,7 +1194,8 @@ lb_config_load(struct pool *pool, const char *path,
     }
 
     pool = pool_new_linear(pool, "lb_config", 32768);
-    struct lb_config *config = p_malloc(pool, sizeof(*config));
+    struct lb_config *config = (struct lb_config *)
+        p_malloc(pool, sizeof(*config));
     config->pool = pool;
     list_init(&config->controls);
     list_init(&config->monitors);

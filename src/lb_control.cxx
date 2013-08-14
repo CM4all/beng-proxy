@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_control.h"
-#include "lb_instance.h"
-#include "lb_config.h"
-#include "lb_stats.h"
+#include "lb_control.hxx"
+#include "lb_instance.hxx"
+#include "lb_config.hxx"
+#include "lb_stats.hxx"
 #include "control_server.h"
 #include "address_envelope.h"
 #include "address_edit.h"
@@ -24,7 +24,7 @@ static void
 enable_node(const struct lb_instance *instance,
           const char *payload, size_t length)
 {
-    const char *colon = memchr(payload, ':', length);
+    const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == NULL || colon == payload || colon == payload + length - 1) {
         daemon_log(3, "malformed FADE_NODE control packet: no port\n");
         return;
@@ -72,7 +72,7 @@ static void
 fade_node(const struct lb_instance *instance,
           const char *payload, size_t length)
 {
-    const char *colon = memchr(payload, ':', length);
+    const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == NULL || colon == payload || colon == payload + length - 1) {
         daemon_log(3, "malformed FADE_NODE control packet: no port\n");
         return;
@@ -146,7 +146,7 @@ node_status_response(struct control_server *server, struct pool *pool,
     size_t status_length = strlen(status);
 
     size_t response_length = length + 1 + status_length;
-    char *response = p_malloc(tpool, response_length);
+    char *response = (char *)p_malloc(tpool, response_length);
     memcpy(response, payload, length);
     response[length] = 0;
     memcpy(response + length + 1, status, status_length);
@@ -166,7 +166,7 @@ query_node_status(struct lb_control *control,
         return;
     }
 
-    const char *colon = memchr(payload, ':', length);
+    const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == NULL || colon == payload || colon == payload + length - 1) {
         node_status_response(control->server, tpool, address, address_length,
                              payload, length, "malformed", NULL);
@@ -252,7 +252,7 @@ lb_control_packet(enum beng_control_command command,
                   const struct sockaddr *address, size_t address_length,
                   void *ctx)
 {
-    struct lb_control *control = ctx;
+    struct lb_control *control = (struct lb_control *)ctx;
 
     switch (command) {
     case CONTROL_NOP:
@@ -260,15 +260,15 @@ lb_control_packet(enum beng_control_command command,
         break;
 
     case CONTROL_ENABLE_NODE:
-        enable_node(control->instance, payload, payload_length);
+        enable_node(control->instance, (const char *)payload, payload_length);
         break;
 
     case CONTROL_FADE_NODE:
-        fade_node(control->instance, payload, payload_length);
+        fade_node(control->instance, (const char *)payload, payload_length);
         break;
 
     case CONTROL_NODE_STATUS:
-        query_node_status(control, payload, payload_length,
+        query_node_status(control, (const char *)payload, payload_length,
                           address, address_length);
         break;
 
@@ -294,9 +294,10 @@ lb_control_error(GError *error, G_GNUC_UNUSED void *ctx)
     g_error_free(error);
 }
 
-static const struct control_handler lb_control_handler = {
-    .packet = lb_control_packet,
-    .error = lb_control_error,
+static constexpr struct control_handler lb_control_handler = {
+    nullptr,
+    lb_control_packet,
+    lb_control_error,
 };
 
 struct lb_control *
@@ -306,7 +307,8 @@ lb_control_new(struct lb_instance *instance,
 {
     struct pool *pool = pool_new_linear(instance->pool, "lb_control", 1024);
 
-    struct lb_control *control = p_malloc(pool, sizeof(*control));
+    struct lb_control *control =
+        (struct lb_control *)p_malloc(pool, sizeof(*control));
     control->pool = pool;
     control->instance = instance;
 

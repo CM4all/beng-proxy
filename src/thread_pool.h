@@ -11,6 +11,10 @@ struct pool;
 
 extern struct thread_queue *global_thread_queue;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 thread_pool_init(struct pool *pool);
 
@@ -25,5 +29,9 @@ thread_pool_join(void);
 
 void
 thread_pool_deinit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

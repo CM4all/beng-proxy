@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_syn_monitor.h"
-#include "lb_monitor.h"
-#include "lb_config.h"
+#include "lb_syn_monitor.hxx"
+#include "lb_monitor.hxx"
+#include "lb_config.hxx"
 #include "client-socket.h"
 #include "pool.h"
 
@@ -29,21 +29,21 @@ syn_monitor_success(int fd, void *ctx)
     /* dispose the socket, we don't need it */
     close(fd);
 
-    struct syn_monitor_context *syn = ctx;
+    struct syn_monitor_context *syn = (struct syn_monitor_context *)ctx;
     syn->handler->success(syn->handler_ctx);
 }
 
 static void
 syn_monitor_timeout(void *ctx)
 {
-    struct syn_monitor_context *syn = ctx;
+    struct syn_monitor_context *syn = (struct syn_monitor_context *)ctx;
     syn->handler->timeout(syn->handler_ctx);
 }
 
 static void
 syn_monitor_error(GError *error, void *ctx)
 {
-    struct syn_monitor_context *syn = ctx;
+    struct syn_monitor_context *syn = (struct syn_monitor_context *)ctx;
     syn->handler->error(error, syn->handler_ctx);
 }
 
@@ -65,7 +65,8 @@ syn_monitor_run(struct pool *pool,
                 const struct lb_monitor_handler *handler, void *handler_ctx,
                 struct async_operation_ref *async_ref)
 {
-    struct syn_monitor_context *syn = p_malloc(pool, sizeof(*syn));
+    struct syn_monitor_context *syn =
+        (struct syn_monitor_context *)p_malloc(pool, sizeof(*syn));
     syn->handler = handler;
     syn->handler_ctx = handler_ctx;
 

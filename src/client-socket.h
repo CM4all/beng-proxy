@@ -20,6 +20,10 @@ struct client_socket_handler {
     void (*error)(GError *error, void *ctx);
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param timeout the connect timeout in seconds
  */
@@ -30,5 +34,9 @@ client_socket_new(struct pool *pool,
                   unsigned timeout,
                   const struct client_socket_handler *handler, void *ctx,
                   struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

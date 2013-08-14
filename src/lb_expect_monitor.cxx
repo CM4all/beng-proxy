@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_expect_monitor.h"
-#include "lb_monitor.h"
-#include "lb_config.h"
+#include "lb_expect_monitor.hxx"
+#include "lb_monitor.hxx"
+#include "lb_config.hxx"
 #include "client-socket.h"
 #include "pool.h"
 #include "async.h"
@@ -73,7 +73,8 @@ static const struct async_operation_class expect_monitor_async_operation = {
 static void
 expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
 {
-    struct expect_monitor_context *expect = ctx;
+    struct expect_monitor_context *expect =
+        (struct expect_monitor_context *)ctx;
 
     async_operation_finished(&expect->async_operation);
 
@@ -118,7 +119,8 @@ expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
 static void
 expect_monitor_success(int fd, void *ctx)
 {
-    struct expect_monitor_context *expect = ctx;
+    struct expect_monitor_context *expect =
+        (struct expect_monitor_context *)ctx;
 
     if (expect->config->send != NULL) {
         ssize_t nbytes = send(fd, expect->config->send,
@@ -151,14 +153,16 @@ expect_monitor_success(int fd, void *ctx)
 static void
 expect_monitor_timeout(void *ctx)
 {
-    struct expect_monitor_context *expect = ctx;
+    struct expect_monitor_context *expect =
+        (struct expect_monitor_context *)ctx;
     expect->handler->timeout(expect->handler_ctx);
 }
 
 static void
 expect_monitor_error(GError *error, void *ctx)
 {
-    struct expect_monitor_context *expect = ctx;
+    struct expect_monitor_context *expect =
+        (struct expect_monitor_context *)ctx;
     expect->handler->error(error, expect->handler_ctx);
 }
 
@@ -179,7 +183,8 @@ expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
                    const struct lb_monitor_handler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    struct expect_monitor_context *expect = p_malloc(pool, sizeof(*expect));
+    struct expect_monitor_context *expect =
+        (struct expect_monitor_context *)p_malloc(pool, sizeof(*expect));
     expect->pool = pool;
     expect->config = config;
     expect->handler = handler;

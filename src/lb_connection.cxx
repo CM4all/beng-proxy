@@ -4,17 +4,17 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_connection.h"
-#include "lb_log.h"
-#include "lb_config.h"
-#include "lb_instance.h"
-#include "lb_http.h"
-#include "lb_tcp.h"
+#include "lb_connection.hxx"
+#include "lb_log.hxx"
+#include "lb_config.hxx"
+#include "lb_instance.hxx"
+#include "lb_http.hxx"
+#include "lb_tcp.hxx"
 #include "strmap.h"
 #include "http-server.h"
 #include "drop.h"
 #include "fd_util.h"
-#include "ssl_filter.h"
+#include "ssl_filter.hxx"
 #include "pool.h"
 
 #include <assert.h>
@@ -32,8 +32,6 @@ lb_connection_new(struct lb_instance *instance,
                   struct ssl_factory *ssl_factory, struct notify *notify,
                   int fd, const struct sockaddr *addr, size_t addrlen)
 {
-    struct lb_connection *connection;
-
     /* determine the local socket address */
     struct sockaddr_storage local_address;
     socklen_t local_address_length = sizeof(local_address);
@@ -45,7 +43,8 @@ lb_connection_new(struct lb_instance *instance,
                                         2048);
     pool_set_major(pool);
 
-    connection = p_malloc(pool, sizeof(*connection));
+    struct lb_connection *connection =
+        (struct lb_connection *)p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
     connection->instance = instance;
     connection->listener = listener;

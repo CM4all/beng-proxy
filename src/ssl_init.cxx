@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ssl_init.h"
+#include "ssl_init.hxx"
 
 #include <inline/compiler.h>
 
@@ -49,7 +49,7 @@ ssl_global_init(void)
     unsigned num_locks;
 #endif
     num_locks = CRYPTO_num_locks();
-    ssl_mutexes = malloc(num_locks * sizeof(*ssl_mutexes));
+    ssl_mutexes = new pthread_mutex_t[num_locks];
     for (unsigned i = 0; i < num_locks; ++i)
         pthread_mutex_init(&ssl_mutexes[i], NULL);
 
@@ -69,5 +69,5 @@ ssl_global_deinit(void)
 
     for (unsigned i = 0; i < num_locks; ++i)
         pthread_mutex_destroy(&ssl_mutexes[i]);
-    free(ssl_mutexes);
+    delete[] ssl_mutexes;
 }

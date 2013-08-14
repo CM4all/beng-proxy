@@ -4,12 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lb_listener.h"
-#include "lb_instance.h"
-#include "lb_connection.h"
-#include "lb_config.h"
+#include "lb_listener.hxx"
+#include "lb_instance.hxx"
+#include "lb_connection.hxx"
+#include "lb_config.hxx"
 #include "notify.h"
-#include "ssl_factory.h"
+#include "ssl_factory.hxx"
 #include "listener.h"
 #include "address_envelope.h"
 #include "pool.h"
@@ -19,7 +19,7 @@
 static void
 lb_listener_notify_callback(void *ctx)
 {
-    struct lb_listener *listener = ctx;
+    struct lb_listener *listener = (struct lb_listener *)ctx;
     (void)listener;
     /* XXX check SSL events */
 }
@@ -34,7 +34,7 @@ lb_listener_connected(int fd,
                       const struct sockaddr *address, size_t address_length,
                       void *ctx)
 {
-    struct lb_listener *listener = ctx;
+    struct lb_listener *listener = (struct lb_listener *)ctx;
 
     lb_connection_new(listener->instance, listener->config,
                       listener->ssl_factory, listener->notify,
@@ -65,7 +65,8 @@ lb_listener_new(struct lb_instance *instance,
 {
     struct pool *pool = pool_new_linear(instance->pool, "lb_listener", 8192);
 
-    struct lb_listener *listener = p_malloc(pool, sizeof(*listener));
+    struct lb_listener *listener =
+        (struct lb_listener *)p_malloc(pool, sizeof(*listener));
     listener->pool = pool;
     listener->instance = instance;
     listener->config = config;

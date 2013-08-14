@@ -6,9 +6,9 @@
 
 #include "tpool.h"
 #include "direct.h"
-#include "lb_instance.h"
-#include "lb_setup.h"
-#include "lb_connection.h"
+#include "lb_instance.hxx"
+#include "lb_setup.hxx"
+#include "lb_connection.hxx"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"
 #include "stock.h"
@@ -19,9 +19,9 @@
 #include "listener.h"
 #include "pipe-stock.h"
 #include "log-glue.h"
-#include "lb_config.h"
-#include "lb_hmonitor.h"
-#include "ssl_init.h"
+#include "lb_config.hxx"
+#include "lb_hmonitor.hxx"
+#include "ssl_init.hxx"
 #include "child.h"
 #include "thread_pool.h"
 #include "fb_pool.h"
@@ -58,7 +58,7 @@ static struct event launch_worker_event;
 static void
 worker_callback(int status, void *ctx)
 {
-    struct lb_instance *instance = ctx;
+    struct lb_instance *instance = (struct lb_instance *)ctx;
 
     int exit_status = WEXITSTATUS(status);
     if (WIFSIGNALED(status))
@@ -85,7 +85,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
     assert(is_watchdog);
     assert(worker_pid <= 0);
 
-    struct lb_instance *instance = ctx;
+    struct lb_instance *instance = (struct lb_instance *)ctx;
 
     /* in libevent 2.0.16, it is necessary to re-add all EV_SIGNAL
        events after forking; this bug is not present in 1.4.13 and
@@ -128,7 +128,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
 static void
 shutdown_callback(void *ctx)
 {
-    struct lb_instance *instance = ctx;
+    struct lb_instance *instance = (struct lb_instance *)ctx;
 
     if (instance->should_exit)
         return;
@@ -209,13 +209,10 @@ int main(int argc, char **argv)
 {
     int ret;
     int gcc_unused ref;
-    static struct lb_instance instance = {
-        .cmdline = {
-            .config_path = "/etc/cm4all/beng/lb.conf",
-            .max_connections = 8192,
-            .tcp_stock_limit = 256,
-        },
-    };
+    static struct lb_instance instance;
+    instance.cmdline.config_path = "/etc/cm4all/beng/lb.conf";
+    instance.cmdline.max_connections = 8192;
+    instance.cmdline.tcp_stock_limit = 256;
 
 #ifdef HAVE_OLD_GTHREAD
     /* deprecated in GLib 2.32 */

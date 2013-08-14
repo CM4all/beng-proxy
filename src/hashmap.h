@@ -18,6 +18,10 @@ struct hashmap_pair {
     void *value;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct hashmap *gcc_malloc
 hashmap_new(struct pool *pool, unsigned capacity);
 
@@ -97,5 +101,9 @@ hashmap_rewind(struct hashmap *map);
 
 const struct hashmap_pair *
 hashmap_next(struct hashmap *map);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
