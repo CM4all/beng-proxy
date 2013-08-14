@@ -90,13 +90,14 @@ expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
             GError *error = new_error_errno();
             close(fd);
             expect->handler->error(error, expect->handler_ctx);
-        } else if (expect->config->fade_expect != NULL &&
+        } else if (!expect->config->fade_expect.empty() &&
                    check_expectation(buffer, nbytes,
-                                     expect->config->fade_expect)) {
+                                     expect->config->fade_expect.c_str())) {
             close(fd);
             expect->handler->fade(expect->handler_ctx);
-        } else if (expect->config->expect == NULL ||
-                   check_expectation(buffer, nbytes, expect->config->expect)) {
+        } else if (expect->config->expect.empty() ||
+                   check_expectation(buffer, nbytes,
+                                     expect->config->expect.c_str())) {
             close(fd);
             expect->handler->success(expect->handler_ctx);
         } else {
@@ -122,9 +123,9 @@ expect_monitor_success(int fd, void *ctx)
     struct expect_monitor_context *expect =
         (struct expect_monitor_context *)ctx;
 
-    if (expect->config->send != NULL) {
-        ssize_t nbytes = send(fd, expect->config->send,
-                              strlen(expect->config->send),
+    if (!expect->config->send.empty()) {
+        ssize_t nbytes = send(fd, expect->config->send.data(),
+                              expect->config->send.length(),
                               MSG_DONTWAIT);
         if (nbytes < 0) {
             GError *error = new_error_errno();

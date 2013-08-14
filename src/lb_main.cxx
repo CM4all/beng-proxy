@@ -338,8 +338,7 @@ int main(int argc, char **argv)
     event_base_free(instance.event_base);
 
     tpool_deinit();
-    ref = pool_unref(instance.config->pool);
-    assert(ref == 0);
+    delete instance.config;
 
     ref = pool_unref(instance.pool);
     assert(ref == 0);

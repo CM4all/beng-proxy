@@ -35,14 +35,14 @@ lb_jvm_route_get_internal(const struct strmap *request_headers,
         return 0;
 
     const char *jvm_route = p + 1;
-    int i = lb_config_find_jvm_route(cluster, jvm_route);
+    int i = cluster->FindJVMRoute(jvm_route);
     if (i < 0)
         return 0;
 
     /* add num_members to make sure that the modulo still maps to the
        node index, but the first node is not referred to as zero
        (special value for "no session") */
-    return i + cluster->num_members;
+    return i + cluster->members.size();
 }
 
 unsigned

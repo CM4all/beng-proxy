@@ -5,7 +5,6 @@
  */
 
 #include "lb_config.hxx"
-#include "pool.h"
 #include "address_string.h"
 #include "address_envelope.h"
 #include "address_edit.h"
@@ -20,7 +19,9 @@
 #include <netinet/in.h>
 
 struct config_parser {
-    struct lb_config *config;
+    struct pool *pool;
+
+    lb_config &config;
 
     enum class State {
         ROOT,
@@ -36,14 +37,11 @@ struct config_parser {
     struct lb_node_config *node;
     struct lb_cluster_config *cluster;
     struct lb_listener_config *listener;
-};
 
-static void
-config_parser_init(struct config_parser *parser, struct lb_config *config)
-{
-    parser->config = config;
-    parser->state = config_parser::State::ROOT;
-}
+    config_parser(struct pool *_pool, lb_config &_config)
+        :pool(_pool), config(_config),
+         state(State::ROOT) {}
+};
 
 static bool
 _throw(GError **error_r, const char *msg)
@@ -262,9 +260,7 @@ config_parser_create_control(struct config_parser *parser, char *p,
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
 
-    struct lb_control_config *control = (struct lb_control_config *)
-        p_malloc(parser->config->pool, sizeof(*control));
-    control->envelope = NULL;
+    lb_control_config *control = new lb_control_config();
 
     parser->state = config_parser::State::CONTROL;
     parser->control = control;
@@ -284,7 +280,9 @@ config_parser_feed_control(struct config_parser *parser, char *p,
         if (control->envelope == NULL)
             return _throw(error_r, "Bind address is missing");
 
-        list_add(&control->siblings, &parser->config->controls);
+        parser->config.controls.emplace_back(std::move(*control));
+        delete control;
+
         parser->state = config_parser::State::ROOT;
         return true;
     }
@@ -299,7 +297,7 @@ config_parser_feed_control(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            control->envelope = address_envelope_parse(parser->config->pool,
+            control->envelope = address_envelope_parse(parser->pool,
                                                        address, 80, true,
                                                        error_r);
             if (control->envelope == NULL)
@@ -323,15 +321,10 @@ config_parser_create_monitor(struct config_parser *parser, char *p,
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
 
-    if (lb_config_find_monitor(parser->config, name) != NULL)
+    if (parser->config.FindMonitor(name) != nullptr)
         return _throw(error_r, "Duplicate monitor name");
 
-    struct lb_monitor_config *monitor = (struct lb_monitor_config *)
-        p_malloc(parser->config->pool, sizeof(*monitor));
-    monitor->name = p_strdup(parser->config->pool, name);
-    monitor->interval = 10;
-    monitor->timeout = 0;
-    monitor->type = lb_monitor_config::Type::NONE;
+    lb_monitor_config *monitor = new lb_monitor_config(name);
 
     parser->state = config_parser::State::MONITOR;
     parser->monitor = monitor;
@@ -349,10 +342,13 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
             return syntax_error(error_r);
 
         if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
-            (monitor->expect == NULL && monitor->fade_expect == NULL))
+            (monitor->expect.empty() && monitor->fade_expect.empty()))
             return _throw(error_r, "No 'expect' string configured");
 
-        list_add(&monitor->siblings, &parser->config->monitors);
+        parser->config.monitors.insert(std::make_pair(monitor->name,
+                                                      *monitor));
+        delete monitor;
+
         parser->state = config_parser::State::ROOT;
         return true;
     }
@@ -376,13 +372,9 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
                 monitor->type = lb_monitor_config::Type::PING;
             else if (strcmp(value, "connect") == 0)
                 monitor->type = lb_monitor_config::Type::CONNECT;
-            else if (strcmp(value, "tcp_expect") == 0) {
+            else if (strcmp(value, "tcp_expect") == 0)
                 monitor->type = lb_monitor_config::Type::TCP_EXPECT;
-                monitor->connect_timeout = 0;
-                monitor->send = NULL;
-                monitor->expect = NULL;
-                monitor->fade_expect = NULL;
-            } else
+            else
                 return _throw(error_r, "Unknown monitor type");
 
             return true;
@@ -417,9 +409,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            monitor->send = *value != 0
-                ? p_strdup(parser->config->pool, value)
-                : NULL;
+            monitor->send = value;
             return true;
         } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
                    strcmp(word, "expect") == 0) {
@@ -430,9 +420,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            monitor->expect = *value != 0
-                ? p_strdup(parser->config->pool, value)
-                : NULL;
+            monitor->expect = value;
             return true;
         } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
                    strcmp(word, "expect_graceful") == 0) {
@@ -443,9 +431,7 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            monitor->fade_expect = *value != 0
-                ? p_strdup(parser->config->pool, value)
-                : NULL;
+            monitor->fade_expect = value;
             return true;
         } else
             return _throw(error_r, "Unknown option");
@@ -464,14 +450,10 @@ config_parser_create_node(struct config_parser *parser, char *p,
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
 
-    if (lb_config_find_node(parser->config, name) != NULL)
+    if (parser->config.FindNode(name) != nullptr)
         return _throw(error_r, "Duplicate node name");
 
-    struct lb_node_config *node = (struct lb_node_config *)
-        p_malloc(parser->config->pool, sizeof(*node));
-    node->name = p_strdup(parser->config->pool, name);
-    node->envelope = NULL;
-    node->jvm_route = NULL;
+    lb_node_config *node = new lb_node_config(name);
 
     parser->state = config_parser::State::NODE;
     parser->node = node;
@@ -489,14 +471,17 @@ config_parser_feed_node(struct config_parser *parser, char *p,
             return syntax_error(error_r);
 
         if (node->envelope == NULL) {
-            node->envelope = address_envelope_parse(parser->config->pool,
-                                                    node->name, 80, false,
+            node->envelope = address_envelope_parse(parser->pool,
+                                                    node->name.c_str(),
+                                                    80, false,
                                                     error_r);
             if (node->envelope == NULL)
                 return false;
         }
 
-        list_add(&node->siblings, &parser->config->nodes);
+        parser->config.nodes.insert(std::make_pair(node->name, *node));
+        delete node;
+
         parser->state = config_parser::State::ROOT;
         return true;
     }
@@ -514,7 +499,7 @@ config_parser_feed_node(struct config_parser *parser, char *p,
             if (node->envelope != NULL)
                 return _throw(error_r, "Duplicate node address");
 
-            node->envelope = address_envelope_parse(parser->config->pool,
+            node->envelope = address_envelope_parse(parser->pool,
                                                     value, 80, false, error_r);
             if (node->envelope == NULL)
                 return false;
@@ -528,10 +513,10 @@ config_parser_feed_node(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            if (node->jvm_route != NULL)
+            if (!node->jvm_route.empty())
                 return _throw(error_r, "Duplicate jvm_route");
 
-            node->jvm_route = p_strdup(parser->config->pool, value);
+            node->jvm_route = value;
             return true;
         } else
             return _throw(error_r, "Unknown option");
@@ -544,17 +529,14 @@ auto_create_node(struct config_parser *parser, const char *name,
                  GError **error_r)
 {
     const struct address_envelope *envelope =
-        address_envelope_parse(parser->config->pool, name, 80, false, error_r);
+        address_envelope_parse(parser->pool, name, 80, false, error_r);
     if (envelope == NULL)
         return NULL;
 
-    struct lb_node_config *node = (struct lb_node_config *)
-        p_malloc(parser->config->pool, sizeof(*node));
-    node->name = p_strdup(parser->config->pool, name);
-    node->envelope = envelope;
-    list_add(&node->siblings, &parser->config->nodes);
+    lb_node_config node(name, envelope);
+    auto i = parser->config.nodes.insert(std::make_pair(name, node));
 
-    return node;
+    return &i.first->second;
 }
 
 static bool
@@ -572,19 +554,6 @@ auto_create_member(struct config_parser *parser,
     return true;
 }
 
-static void
-lb_fallback_config_init(struct lb_fallback_config *fallback)
-{
-    fallback->location = NULL;
-    fallback->message = NULL;
-}
-
-static bool
-lb_fallback_config_defined(const struct lb_fallback_config *fallback)
-{
-    return fallback->location != NULL || fallback->message != NULL;
-}
-
 static bool
 config_parser_create_cluster(struct config_parser *parser, char *p,
                              GError **error_r)
@@ -596,16 +565,7 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
 
-    struct lb_cluster_config *cluster = (struct lb_cluster_config *)
-        p_malloc(parser->config->pool, sizeof(*cluster));
-    cluster->name = p_strdup(parser->config->pool, name);
-    cluster->protocol = LB_PROTOCOL_HTTP;
-    cluster->mangle_via = false;
-    lb_fallback_config_init(&cluster->fallback);
-    cluster->sticky_mode = STICKY_NONE;
-    cluster->session_cookie = "beng_proxy_session";
-    cluster->monitor = NULL;
-    cluster->num_members = 0;
+    lb_cluster_config *cluster = new lb_cluster_config(name);
 
     parser->state = config_parser::State::CLUSTER;
     parser->cluster = cluster;
@@ -683,21 +643,23 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
-        if (lb_config_find_cluster(parser->config, cluster->name) != NULL)
+        if (parser->config.FindCluster(cluster->name) != NULL)
             return _throw(error_r, "Duplicate pool name");
 
-        if (cluster->num_members == 0)
+        if (cluster->members.empty())
             return _throw(error_r, "Pool has no members");
 
         if (!validate_protocol_sticky(cluster->protocol, cluster->sticky_mode))
             return _throw(error_r, "Sticky mode not available for this protocol");
 
-        if (cluster->num_members == 1)
+        if (cluster->members.size() == 1)
             /* with only one member, a sticky setting doesn't make
                sense */
             cluster->sticky_mode = STICKY_NONE;
 
-        list_add(&cluster->siblings, &parser->config->clusters);
+        parser->config.clusters.insert(std::make_pair(cluster->name, *cluster));
+        delete cluster;
+
         parser->state = config_parser::State::ROOT;
         return true;
     }
@@ -712,7 +674,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            cluster->name = p_strdup(parser->config->pool, name);
+            cluster->name = name;
             return true;
         } else if (strcmp(word, "sticky") == 0) {
             const char *sticky_mode = next_value(&p);
@@ -746,8 +708,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            cluster->session_cookie = p_strdup(parser->config->pool,
-                                               session_cookie);
+            cluster->session_cookie = session_cookie;
             return true;
         } else if (strcmp(word, "monitor") == 0) {
             const char *name = next_value(&p);
@@ -760,7 +721,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             if (cluster->monitor != NULL)
                 return _throw(error_r, "Monitor already specified");
 
-            cluster->monitor = lb_config_find_monitor(parser->config, name);
+            cluster->monitor = parser->config.FindMonitor(name);
             if (cluster->monitor == NULL)
                 return _throw(error_r, "No such monitor");
 
@@ -775,19 +736,16 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 return syntax_error(error_r);
             */
 
-            if (cluster->num_members >= MAX_CLUSTER_MEMBERS)
-                return _throw(error_r, "Pool is full");
+            cluster->members.emplace_back();
 
-            struct lb_member_config *member =
-                &cluster->members[cluster->num_members++];
+            struct lb_member_config *member = &cluster->members.back();
 
-            member->port = 0;
-            member->node = lb_config_find_node(parser->config, name);
+            member->node = parser->config.FindNode(name);
             if (member->node == NULL) {
                 char *q = strchr(name, ':');
                 if (q != NULL) {
                     *q++ = 0;
-                    member->node = lb_config_find_node(parser->config, name);
+                    member->node = parser->config.FindNode(name);
                     if (member->node == NULL) {
                         /* node doesn't exist: parse the given member
                            name, auto-create a new node */
@@ -834,7 +792,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 
             return true;
         } else if (strcmp(word, "fallback") == 0) {
-            if (lb_fallback_config_defined(&cluster->fallback))
+            if (cluster->fallback.IsDefined())
                 return _throw(error_r, "Duplicate fallback");
 
             const char *location = next_value(&p);
@@ -842,8 +800,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                 if (!expect_eol(p))
                     return syntax_error(error_r);
 
-                cluster->fallback.location =
-                    p_strdup(parser->config->pool, location);
+                cluster->fallback.location = location;
                 return true;
             } else {
                 char *endptr;
@@ -864,8 +821,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                     return syntax_error(error_r);
 
                 cluster->fallback.status = status;
-                cluster->fallback.message =
-                    p_strdup(parser->config->pool, message);
+                cluster->fallback.message = message;
                 return true;
             }
         } else
@@ -885,13 +841,7 @@ config_parser_create_listener(struct config_parser *parser, char *p,
     if (!expect_symbol_and_eol(p, '{'))
         return _throw(error_r, "'{' expected");
 
-    struct lb_listener_config *listener = (struct lb_listener_config *)
-        p_malloc(parser->config->pool, sizeof(*listener));
-    listener->name = p_strdup(parser->config->pool, name);
-    listener->envelope = NULL;
-    listener->cluster = NULL;
-    listener->ssl = false;
-    ssl_config_clear(&listener->ssl_config);
+    lb_listener_config *listener = new lb_listener_config(name);
 
     parser->state = config_parser::State::LISTENER;
     parser->listener = listener;
@@ -908,16 +858,18 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
-        if (lb_config_find_listener(parser->config, listener->name) != NULL)
+        if (parser->config.FindListener(listener->name) != nullptr)
             return _throw(error_r, "Duplicate listener name");
 
         if (listener->envelope == NULL)
             return _throw(error_r, "Listener has no destination");
 
-        if (listener->ssl && !ssl_config_valid(&listener->ssl_config))
+        if (listener->ssl && !listener->ssl_config.IsValid())
             return _throw(error_r, "Incomplete SSL configuration");
 
-        list_add(&listener->siblings, &parser->config->listeners);
+        parser->config.listeners.emplace_back(std::move(*listener));
+        delete listener;
+
         parser->state = config_parser::State::ROOT;
         return true;
     }
@@ -932,7 +884,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            listener->envelope = address_envelope_parse(parser->config->pool,
+            listener->envelope = address_envelope_parse(parser->pool,
                                                         address, 80, true,
                                                         error_r);
             if (listener->envelope == NULL)
@@ -950,7 +902,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (listener->cluster != NULL)
                 return _throw(error_r, "Pool already configured");
 
-            listener->cluster = lb_config_find_cluster(parser->config, name);
+            listener->cluster = parser->config.FindCluster(name);
             if (listener->cluster == NULL)
                 return _throw(error_r, "No such pool");
 
@@ -986,32 +938,32 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            struct ssl_cert_key_config *c = &listener->ssl_config.cert_key;
-            if (c->cert_file != NULL) {
-                if (c->key_file == NULL || key_path == NULL)
-                    return _throw(error_r, "Certificate already configured");
+            auto &cks = listener->ssl_config.cert_key;
+            if (!cks.empty()) {
+                auto &front = cks.front();
 
-                while (c->next != NULL)
-                    c = c->next;
-
-                c = c->next = (struct ssl_cert_key_config *)
-                    p_malloc(parser->config->pool, sizeof(*c));
-                c->next = NULL;
+                if (key_path == nullptr) {
+                    if (front.cert_file.empty()) {
+                        front.cert_file = path;
+                        return true;
+                    } else
+                        return _throw(error_r, "Certificate already configured");
+                } else {
+                    if (front.cert_file.empty())
+                        return _throw(error_r, "Previous certificate missing");
+                    if (front.key_file.empty())
+                        return _throw(error_r, "Previous key missing");
+                }
             }
 
-            c->cert_file = p_strdup(parser->config->pool, path);
+            if (key_path == nullptr)
+                key_path = "";
 
-            if (key_path != NULL)
-                c->key_file = p_strdup(parser->config->pool, key_path);
+            cks.emplace_back(path, key_path);
             return true;
         } else if (strcmp(word, "ssl_key") == 0) {
             if (!listener->ssl)
                 return _throw(error_r, "SSL is not enabled");
-
-            if (listener->ssl_config.cert_key.key_file != NULL)
-                return _throw(error_r, "Key already configured");
-
-            assert(listener->ssl_config.cert_key.next == NULL);
 
             const char *path = next_value(&p);
             if (path == NULL)
@@ -1020,14 +972,22 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            listener->ssl_config.cert_key.key_file =
-                p_strdup(parser->config->pool, path);
+            auto &cks = listener->ssl_config.cert_key;
+            if (!cks.empty()) {
+                if (!cks.front().key_file.empty())
+                    return _throw(error_r, "Key already configured");
+
+                cks.front().key_file = path;
+            } else {
+                cks.emplace_back(std::string(), path);
+            }
+
             return true;
         } else if (strcmp(word, "ssl_ca_cert") == 0) {
             if (!listener->ssl)
                 return _throw(error_r, "SSL is not enabled");
 
-            if (listener->ssl_config.ca_cert_file != NULL)
+            if (!listener->ssl_config.ca_cert_file.empty())
                 return _throw(error_r, "Certificate already configured");
 
             const char *path = next_value(&p);
@@ -1037,8 +997,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            listener->ssl_config.ca_cert_file =
-                p_strdup(parser->config->pool, path);
+            listener->ssl_config.ca_cert_file = path;
             return true;
         } else if (strcmp(word, "ssl_verify") == 0) {
             if (!listener->ssl)
@@ -1049,11 +1008,11 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
                 return _throw(error_r, "yes/no expected");
 
             if (strcmp(value, "yes") == 0)
-                listener->ssl_config.verify = SSL_VERIFY_YES;
+                listener->ssl_config.verify = ssl_verify::YES;
             else if (strcmp(value, "no") == 0)
-                listener->ssl_config.verify = SSL_VERIFY_NO;
+                listener->ssl_config.verify = ssl_verify::NO;
             else if (strcmp(value, "optional") == 0)
-                listener->ssl_config.verify = SSL_VERIFY_OPTIONAL;
+                listener->ssl_config.verify = ssl_verify::OPTIONAL;
             else
                 return _throw(error_r, "yes/no expected");
 
@@ -1124,10 +1083,9 @@ config_parser_feed(struct config_parser *parser, char *line,
 }
 
 static bool
-config_parser_run(struct lb_config *config, FILE *file, GError **error_r)
+config_parser_run(struct pool *pool, lb_config &config, FILE *file, GError **error_r)
 {
-    struct config_parser parser;
-    config_parser_init(&parser, config);
+    config_parser parser(pool, config);
 
     char buffer[4096], *line;
     unsigned i = 1;
@@ -1145,23 +1103,21 @@ config_parser_run(struct lb_config *config, FILE *file, GError **error_r)
 }
 
 static bool
-lb_cluster_config_finish(struct pool *pool, struct lb_cluster_config *config,
+lb_cluster_config_finish(struct pool *pool, lb_cluster_config &config,
                          GError **error_r)
 {
-    address_list_init(&config->address_list);
+    address_list_init(&config.address_list);
 
-    address_list_set_sticky_mode(&config->address_list, config->sticky_mode);
+    address_list_set_sticky_mode(&config.address_list, config.sticky_mode);
 
-    for (unsigned i = 0; i < config->num_members; ++i) {
-        struct lb_member_config *member = &config->members[i];
-        const struct address_envelope *envelope =
-            member->node->envelope;
-        const struct sockaddr *address = member->port != 0
+    for (auto &member : config.members) {
+        const struct address_envelope *envelope = member.node->envelope;
+        const struct sockaddr *address = member.port != 0
             ? sockaddr_set_port(pool, &envelope->address, envelope->length,
-                                member->port)
+                                member.port)
             : &envelope->address;
 
-        if (!address_list_add(pool, &config->address_list,
+        if (!address_list_add(pool, &config.address_list,
                               address, envelope->length))
             return _throw(error_r, "Too many members");
     }
@@ -1170,20 +1126,17 @@ lb_cluster_config_finish(struct pool *pool, struct lb_cluster_config *config,
 }
 
 static bool
-lb_config_finish(struct lb_config *config, GError **error_r)
+lb_config_finish(struct pool *pool, lb_config &config, GError **error_r)
 {
-    for (struct lb_cluster_config *cluster = (struct lb_cluster_config *)config->clusters.next;
-         &cluster->siblings != &config->clusters;
-         cluster = (struct lb_cluster_config *)cluster->siblings.next)
-        if (!lb_cluster_config_finish(config->pool, cluster, error_r))
+    for (auto &i : config.clusters)
+        if (!lb_cluster_config_finish(pool, i.second, error_r))
             return false;
 
     return true;
 }
 
 struct lb_config *
-lb_config_load(struct pool *pool, const char *path,
-               GError **error_r)
+lb_config_load(struct pool *pool, const char *path, GError **error_r)
 {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
@@ -1193,86 +1146,27 @@ lb_config_load(struct pool *pool, const char *path,
         return NULL;
     }
 
-    pool = pool_new_linear(pool, "lb_config", 32768);
-    struct lb_config *config = (struct lb_config *)
-        p_malloc(pool, sizeof(*config));
-    config->pool = pool;
-    list_init(&config->controls);
-    list_init(&config->monitors);
-    list_init(&config->nodes);
-    list_init(&config->clusters);
-    list_init(&config->listeners);
+    lb_config *config = new lb_config();
 
-    bool success = config_parser_run(config, file, error_r);
+    bool success = config_parser_run(pool, *config, file, error_r);
     fclose(file);
-    if (!success || !lb_config_finish(config, error_r)) {
-        pool_unref(config->pool);
-        config = NULL;
+    if (!success || !lb_config_finish(pool, *config, error_r)) {
+        delete config;
+        config = nullptr;
     }
 
     return config;
 }
 
-const struct lb_monitor_config *
-lb_config_find_monitor(const struct lb_config *config, const char *name)
-{
-    for (const struct lb_monitor_config *monitor = (const struct lb_monitor_config *)config->monitors.next;
-         &monitor->siblings != &config->monitors;
-         monitor = (const struct lb_monitor_config *)monitor->siblings.next)
-        if (strcmp(monitor->name, name) == 0)
-            return monitor;
-
-    return NULL;
-}
-
-const struct lb_node_config *
-lb_config_find_node(const struct lb_config *config, const char *name)
-{
-    for (const struct lb_node_config *node = (const struct lb_node_config *)config->nodes.next;
-         &node->siblings != &config->nodes;
-         node = (const struct lb_node_config *)node->siblings.next)
-        if (strcmp(node->name, name) == 0)
-            return node;
-
-    return NULL;
-}
-
-const struct lb_cluster_config *
-lb_config_find_cluster(const struct lb_config *config, const char *name)
-{
-    for (const struct lb_cluster_config *cluster = (const struct lb_cluster_config *)config->clusters.next;
-         &cluster->siblings != &config->clusters;
-         cluster = (const struct lb_cluster_config *)cluster->siblings.next)
-        if (strcmp(cluster->name, name) == 0)
-            return cluster;
-
-    return NULL;
-}
-
-const struct lb_listener_config *
-lb_config_find_listener(const struct lb_config *config, const char *name)
-{
-    for (const struct lb_listener_config *listener = (const struct lb_listener_config *)config->listeners.next;
-         &listener->siblings != &config->listeners;
-         listener = (const struct lb_listener_config *)listener->siblings.next)
-        if (strcmp(listener->name, name) == 0)
-            return listener;
-
-    return NULL;
-}
-
 int
-lb_config_find_jvm_route(const struct lb_cluster_config *config,
-                         const char *jvm_route)
+lb_cluster_config::FindJVMRoute(const char *jvm_route) const
 {
-    assert(config != NULL);
     assert(jvm_route != NULL);
 
-    for (unsigned i = 0; i < config->num_members; ++i) {
-        const struct lb_node_config *node = config->members[i].node;
-        assert(node != NULL);
+    for (unsigned i = 0, n = members.size(); i < n; ++i) {
+        const lb_node_config &node = *members[i].node;
 
-        if (node->jvm_route != NULL && strcmp(node->jvm_route, jvm_route) == 0)
+        if (!node.jvm_route.empty() && node.jvm_route == jvm_route)
             return i;
     }
 

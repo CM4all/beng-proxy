@@ -78,7 +78,8 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
     struct pool_mark_state mark;
     pool_mark(tpool, &mark);
     const char *key = p_sprintf(tpool, "%s:[%s]:%u",
-                                config->name, node->name, port);
+                                config->name.c_str(), node->name.c_str(),
+                                port);
     struct lb_monitor *monitor =
         (struct lb_monitor *)hashmap_get(hmonitor_map, key);
     if (monitor == NULL) {

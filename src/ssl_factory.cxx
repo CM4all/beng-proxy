@@ -16,40 +16,48 @@
 #include <stdbool.h>
 
 struct ssl_cert_key {
-    struct ssl_cert_key *next;
-
     X509 *cert;
     EVP_PKEY *key;
+
+    ssl_cert_key():cert(nullptr), key(nullptr) {}
+
+    ssl_cert_key(X509 *_cert, EVP_PKEY *_key)
+        :cert(_cert), key(_key) {}
+
+    ssl_cert_key(ssl_cert_key &&other)
+        :cert(other.cert), key(other.key) {
+        other.cert = nullptr;
+        other.key = nullptr;
+    }
+
+    ~ssl_cert_key() {
+        if (cert != nullptr)
+            X509_free(cert);
+        if (key != nullptr)
+            EVP_PKEY_free(key);
+    }
+
+    bool Load(const ssl_cert_key_config &config, GError **error_r);
 };
 
 struct ssl_factory {
-    SSL_CTX *ssl_ctx;
+    SSL_CTX *const ssl_ctx;
 
-    struct ssl_cert_key cert_key;
+    std::vector<ssl_cert_key> cert_key;
+
+    ssl_factory(SSL_CTX *_ssl_ctx):ssl_ctx(_ssl_ctx) {}
+
+    ~ssl_factory() {
+        SSL_CTX_free(ssl_ctx);
+    }
+
+    bool EnableSNI(GError **error_r);
 };
 
 static int
 verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
 {
     return ok;
-}
-
-static void
-free_cert_key(struct ssl_cert_key *ck)
-{
-    X509_free(ck->cert);
-    EVP_PKEY_free(ck->key);
-}
-
-static void
-free_cert_key_list(struct ssl_cert_key *ck)
-{
-    assert(ck != NULL);
-
-    do {
-        free_cert_key(ck);
-        ck = ck->next;
-    } while (ck != NULL);
 }
 
 static BIO *
@@ -95,26 +103,24 @@ read_cert_file(const char *path, GError **error_r)
     return cert;
 }
 
-static bool
-load_cert_key(struct ssl_cert_key *ck,
-              const struct ssl_cert_key_config *config,
-              GError **error_r)
+bool
+ssl_cert_key::Load(const ssl_cert_key_config &config, GError **error_r)
 {
-    ck->key = read_key_file(config->key_file, error_r);
-    if (ck->key == NULL)
+    assert(key == nullptr);
+    assert(cert == nullptr);
+
+    key = read_key_file(config.key_file.c_str(), error_r);
+    if (key == nullptr)
         return false;
 
-    ck->cert = read_cert_file(config->cert_file, error_r);
-    if (ck->cert == NULL) {
-        EVP_PKEY_free(ck->key);
+    cert = read_cert_file(config.cert_file.c_str(), error_r);
+    if (cert == nullptr)
         return false;
-    }
 
-    if (X509_verify(ck->cert, ck->key) != 0) {
-        free_cert_key(ck);
+    if (X509_verify(cert, key) != 0) {
         g_set_error(error_r, ssl_quark(), 0,
                     "Key '%s' does not match certificate '%s'",
-                    config->key_file, config->cert_file);
+                    config.key_file.c_str(), config.cert_file.c_str());
         return false;
     }
 
@@ -122,33 +128,17 @@ load_cert_key(struct ssl_cert_key *ck,
 }
 
 static bool
-load_certs_keys(struct pool *pool, struct ssl_factory *factory,
-                const struct ssl_config *config,
+load_certs_keys(ssl_factory &factory, const ssl_config &config,
                 GError **error_r)
 {
-    assert(factory != NULL);
-    assert(config != NULL);
+    factory.cert_key.reserve(config.cert_key.size());
 
-    const struct ssl_cert_key_config *c = &config->cert_key;
-
-    if (!load_cert_key(&factory->cert_key, c, error_r))
-        return false;
-
-    struct ssl_cert_key **ck_tail = &factory->cert_key.next;
-    *ck_tail = NULL;
-
-    for (c = c->next; c != NULL; c = c->next) {
-        struct ssl_cert_key *ck =
-            (struct ssl_cert_key *)p_malloc(pool, sizeof(*ck));
-
-        if (!load_cert_key(ck, c, error_r)) {
-            free_cert_key_list(&factory->cert_key);
+    for (const auto &c : config.cert_key) {
+        ssl_cert_key ck;
+        if (!ck.Load(c, error_r))
             return false;
-        }
 
-        *ck_tail = ck;
-        ck_tail = &ck->next;
-        ck->next = NULL;
+        factory.cert_key.emplace_back(std::move(ck));
     }
 
     return true;
@@ -158,29 +148,36 @@ static bool
 apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
              GError **error_r)
 {
+    assert(!config->cert_key.empty());
+
     ERR_clear_error();
 
-    if (SSL_CTX_use_RSAPrivateKey_file(ssl_ctx, config->cert_key.key_file,
+    if (SSL_CTX_use_RSAPrivateKey_file(ssl_ctx,
+                                       config->cert_key[0].key_file.c_str(),
                                        SSL_FILETYPE_PEM) != 1) {
         ERR_print_errors_fp(stderr);
         g_set_error(error_r, ssl_quark(), 0,
-                    "Failed to load key file %s", config->cert_key.key_file);
+                    "Failed to load key file %s",
+                    config->cert_key[0].key_file.c_str());
         return false;
     }
 
-    if (SSL_CTX_use_certificate_chain_file(ssl_ctx, config->cert_key.cert_file) != 1) {
+    if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
+                                           config->cert_key[0].cert_file.c_str()) != 1) {
         ERR_print_errors_fp(stderr);
         g_set_error(error_r, ssl_quark(), 0,
-                    "Failed to load certificate file %s", config->cert_key.cert_file);
+                    "Failed to load certificate file %s",
+                    config->cert_key[0].cert_file.c_str());
         return false;
     }
 
-    if (config->ca_cert_file != NULL) {
-        if (SSL_CTX_load_verify_locations(ssl_ctx, config->ca_cert_file,
+    if (!config->ca_cert_file.empty()) {
+        if (SSL_CTX_load_verify_locations(ssl_ctx,
+                                          config->ca_cert_file.c_str(),
                                           NULL) != 1) {
             g_set_error(error_r, ssl_quark(), 0,
                         "Failed to load CA certificate file %s",
-                        config->ca_cert_file);
+                        config->ca_cert_file.c_str());
             return false;
         }
 
@@ -188,22 +185,22 @@ apply_config(SSL_CTX *ssl_ctx, const struct ssl_config *config,
            acceptable CA certificates) */
 
         STACK_OF(X509_NAME) *list =
-            SSL_load_client_CA_file(config->ca_cert_file);
+            SSL_load_client_CA_file(config->ca_cert_file.c_str());
         if (list == NULL) {
             g_set_error(error_r, ssl_quark(), 0,
                         "Failed to load CA certificate list from file %s",
-                        config->ca_cert_file);
+                        config->ca_cert_file.c_str());
             return false;
         }
 
         SSL_CTX_set_client_CA_list(ssl_ctx, list);
     }
 
-    if (config->verify != SSL_VERIFY_NO) {
+    if (config->verify != ssl_verify::NO) {
         /* enable client certificates */
         int mode = SSL_VERIFY_PEER;
 
-        if (config->verify == SSL_VERIFY_YES)
+        if (config->verify == ssl_verify::YES)
             mode |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
 
         SSL_CTX_set_verify(ssl_ctx, mode, verify_callback);
@@ -236,15 +233,15 @@ match_cn(X509_NAME *subject, const char *host_name, size_t hn_length)
 }
 
 static bool
-use_cert_key(SSL *ssl, const struct ssl_cert_key *ck)
+use_cert_key(SSL *ssl, const ssl_cert_key &ck)
 {
-    return SSL_use_certificate(ssl, ck->cert) == 1 &&
-        SSL_use_PrivateKey(ssl, ck->key) == 1;
+    return SSL_use_certificate(ssl, ck.cert) == 1 &&
+        SSL_use_PrivateKey(ssl, ck.key) == 1;
 }
 
 static int
 ssl_servername_callback(SSL *ssl, gcc_unused int *al,
-                        struct ssl_factory *factory)
+                        const ssl_factory &factory)
 {
     const char *host_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
     if (host_name == NULL)
@@ -254,27 +251,24 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
 
     /* find the first certificate that matches */
 
-    const struct ssl_cert_key *ck = &factory->cert_key;
-    do {
-        X509_NAME *subject = X509_get_subject_name(ck->cert);
+    for (const auto &ck : factory.cert_key) {
+        X509_NAME *subject = X509_get_subject_name(ck.cert);
         if (subject != NULL && match_cn(subject, host_name, length)) {
             /* found it - now use it */
             use_cert_key(ssl, ck);
             break;
         }
+    }
 
-        ck = ck->next;
-    } while (ck != NULL);
-
-    return SSL_TLSEXT_ERR_NOACK;
+    return SSL_TLSEXT_ERR_OK;
 }
 
-static bool
-ssl_factory_enable_sni(struct ssl_factory *factory, GError **error_r)
+inline bool
+ssl_factory::EnableSNI(GError **error_r)
 {
-    if (!SSL_CTX_set_tlsext_servername_callback(factory->ssl_ctx,
+    if (!SSL_CTX_set_tlsext_servername_callback(ssl_ctx,
                                                 ssl_servername_callback) ||
-        !SSL_CTX_set_tlsext_servername_arg(factory->ssl_ctx, factory)) {
+        !SSL_CTX_set_tlsext_servername_arg(ssl_ctx, this)) {
         g_set_error(error_r, ssl_quark(), 0,
                     "SSL_CTX_set_tlsext_servername_callback() failed");
         return false;
@@ -289,27 +283,24 @@ ssl_factory_new(struct pool *pool, const struct ssl_config *config,
 {
     assert(pool != NULL);
     assert(config != NULL);
-    assert(config->cert_key.cert_file != NULL);
-    assert(config->cert_key.key_file != NULL);
+    assert(!config->cert_key.empty());
 
-    struct ssl_factory *factory =
-        (struct ssl_factory *)p_malloc(pool, sizeof(*factory));
-    SSL_CTX *ssl_ctx = factory->ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+    SSL_CTX *ssl_ctx = SSL_CTX_new(SSLv23_server_method());
     if (ssl_ctx == NULL) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_CTX_new() failed");
         return NULL;
     }
 
+    ssl_factory *factory = new ssl_factory(ssl_ctx);
+
     if (!apply_config(ssl_ctx, config, error_r) ||
-        !load_certs_keys(pool, factory, config, error_r)) {
-        SSL_CTX_free(ssl_ctx);
+        !load_certs_keys(*factory, *config, error_r)) {
+        delete factory;
         return NULL;
     }
 
-    if (factory->cert_key.next != NULL &&
-        !ssl_factory_enable_sni(factory, error_r)) {
-        free_cert_key_list(&factory->cert_key);
-        SSL_CTX_free(factory->ssl_ctx);
+    if (factory->cert_key.size() > 1 && !factory->EnableSNI(error_r)) {
+        delete factory;
         return NULL;
     }
 
@@ -319,8 +310,7 @@ ssl_factory_new(struct pool *pool, const struct ssl_config *config,
 void
 ssl_factory_free(struct ssl_factory *factory)
 {
-    free_cert_key_list(&factory->cert_key);
-    SSL_CTX_free(factory->ssl_ctx);
+    delete factory;
 }
 
 SSL *

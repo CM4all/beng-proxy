@@ -11,18 +11,16 @@
 #include "sticky.h"
 #include "ssl_config.hxx"
 
-#include <inline/list.h>
 #include <http/status.h>
 
 #include <glib.h>
 
-#include <stdbool.h>
+#include <map>
+#include <list>
+#include <vector>
+#include <string>
 
 struct pool;
-
-enum {
-    MAX_CLUSTER_MEMBERS = 64,
-};
 
 enum lb_protocol {
     LB_PROTOCOL_HTTP,
@@ -30,15 +28,13 @@ enum lb_protocol {
 };
 
 struct lb_control_config {
-    struct list_head siblings;
-
     const struct address_envelope *envelope;
+
+    lb_control_config():envelope(nullptr) {}
 };
 
 struct lb_monitor_config {
-    struct list_head siblings;
-
-    const char *name;
+    std::string name;
 
     /**
      * Time in seconds between two monitor checks.
@@ -66,29 +62,32 @@ struct lb_monitor_config {
 
     /**
      * For #Type::TCP_EXPECT: a string that is sent to the peer
-     * after the connection has been established.  May be NULL or
-     * empty.
+     * after the connection has been established.  May be empty.
      */
-    const char *send;
+    std::string send;
 
     /**
      * For #Type::TCP_EXPECT: a string that is expected to be
      * received from the peer after the #send string has been sent.
      */
-    const char *expect;
+    std::string expect;
 
     /**
      * For #Type::TCP_EXPECT: if that string is received from the
      * peer (instead of #expect), then the node is assumed to be
      * shutting down gracefully, and will only get sticky requests.
      */
-    const char *fade_expect;
+    std::string fade_expect;
+
+    lb_monitor_config(const char *_name)
+        :name(_name),
+         interval(10), timeout(0),
+         type(Type::NONE),
+         connect_timeout(0) {}
 };
 
 struct lb_node_config {
-    struct list_head siblings;
-
-    const char *name;
+    std::string name;
 
     const struct address_envelope *envelope;
 
@@ -96,13 +95,20 @@ struct lb_node_config {
      * The Tomcat "jvmRoute" setting of this node.  It is used for
      * #STICKY_JVM_ROUTE.
      */
-    const char *jvm_route;
+    std::string jvm_route;
+
+    lb_node_config(const char *_name,
+                   const struct address_envelope *_envelope=nullptr)
+        :name(_name),
+         envelope(_envelope) {}
 };
 
 struct lb_member_config {
     const struct lb_node_config *node;
 
     unsigned port;
+
+    lb_member_config():node(nullptr), port(0) {}
 };
 
 struct lb_fallback_config {
@@ -111,15 +117,17 @@ struct lb_fallback_config {
     /**
      * The "Location" response header.
      */
-    const char *location;
+    std::string location;
 
-    const char *message;
+    std::string message;
+
+    bool IsDefined() const {
+        return !location.empty() || !message.empty();
+    }
 };
 
 struct lb_cluster_config {
-    struct list_head siblings;
-
-    const char *name;
+    std::string name;
 
     /**
      * The protocol that is spoken on this cluster.
@@ -132,24 +140,36 @@ struct lb_cluster_config {
 
     enum sticky_mode sticky_mode;
 
-    const char *session_cookie;
+    std::string session_cookie;
 
     const struct lb_monitor_config *monitor;
 
-    unsigned num_members;
-
-    struct lb_member_config members[MAX_CLUSTER_MEMBERS];
+    std::vector<lb_member_config> members;
 
     /**
      * A list of node addresses.
      */
     struct address_list address_list;
+
+    lb_cluster_config(const char *_name)
+        :name(_name),
+         protocol(LB_PROTOCOL_HTTP),
+         mangle_via(false),
+         sticky_mode(STICKY_NONE),
+         session_cookie("beng_proxy_session"),
+         monitor(nullptr) {}
+
+
+    /**
+     * Returns the member index of the node with the specified
+     * jvm_route value, or -1 if not found.
+     */
+    gcc_pure
+    int FindJVMRoute(const char *jvm_route) const;
 };
 
 struct lb_listener_config {
-    struct list_head siblings;
-
-    const char *name;
+    std::string name;
 
     const struct address_envelope *envelope;
 
@@ -158,20 +178,61 @@ struct lb_listener_config {
     bool ssl;
 
     struct ssl_config ssl_config;
+
+    lb_listener_config(const char *_name)
+        :name(_name),
+         envelope(nullptr), cluster(nullptr),
+         ssl(false) {
+    }
 };
 
 struct lb_config {
-    struct pool *pool;
+    std::list<lb_control_config> controls;
 
-    struct list_head controls;
+    std::map<std::string, lb_monitor_config> monitors;
 
-    struct list_head monitors;
+    std::map<std::string, lb_node_config> nodes;
 
-    struct list_head nodes;
+    std::map<std::string, lb_cluster_config> clusters;
 
-    struct list_head clusters;
+    std::list<lb_listener_config> listeners;
 
-    struct list_head listeners;
+    template<typename T>
+    gcc_pure
+    const lb_monitor_config *FindMonitor(T &&t) const {
+        const auto i = monitors.find(std::forward<T>(t));
+        return i != monitors.end()
+            ? &i->second
+            : nullptr;
+    }
+
+    template<typename T>
+    gcc_pure
+    const lb_node_config *FindNode(T &&t) const {
+        const auto i = nodes.find(std::forward<T>(t));
+        return i != nodes.end()
+            ? &i->second
+            : nullptr;
+    }
+
+    template<typename T>
+    gcc_pure
+    const lb_cluster_config *FindCluster(T &&t) const {
+        const auto i = clusters.find(std::forward<T>(t));
+        return i != clusters.end()
+            ? &i->second
+            : nullptr;
+    }
+
+    template<typename T>
+    gcc_pure
+    const lb_listener_config *FindListener(T &&t) const {
+        for (const auto &i : listeners)
+            if (i.name == t)
+                return &i;
+
+        return nullptr;
+    }
 };
 
 G_GNUC_CONST
@@ -183,37 +244,8 @@ lb_config_quark(void)
 
 /**
  * Load and parse the specified configuration file.
- *
- * The function creates a new memory pool below the given one.
- * The structure is freed by calling pool_unref() on that pool.
  */
 struct lb_config *
-lb_config_load(struct pool *pool, const char *path,
-               GError **error_r);
-
-G_GNUC_PURE
-const struct lb_monitor_config *
-lb_config_find_monitor(const struct lb_config *config, const char *name);
-
-G_GNUC_PURE
-const struct lb_node_config *
-lb_config_find_node(const struct lb_config *config, const char *name);
-
-G_GNUC_PURE
-const struct lb_cluster_config *
-lb_config_find_cluster(const struct lb_config *config, const char *name);
-
-G_GNUC_PURE
-const struct lb_listener_config *
-lb_config_find_listener(const struct lb_config *config, const char *name);
-
-/**
- * Returns the member index of the node with the specified jvm_route
- * value, or -1 if not found.
- */
-G_GNUC_PURE
-int
-lb_config_find_jvm_route(const struct lb_cluster_config *config,
-                         const char *jvm_route);
+lb_config_load(struct pool *pool, const char *path, GError **error_r);
 
 #endif

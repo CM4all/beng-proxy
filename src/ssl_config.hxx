@@ -7,44 +7,38 @@
 #ifndef BENG_PROXY_SSL_CONFIG_H
 #define BENG_PROXY_SSL_CONFIG_H
 
-#include <stdbool.h>
+#include <string>
+#include <vector>
 
-enum ssl_verify {
-    SSL_VERIFY_NO,
-    SSL_VERIFY_YES,
-    SSL_VERIFY_OPTIONAL,
+enum class ssl_verify {
+    NO,
+    YES,
+    OPTIONAL,
 };
 
 struct ssl_cert_key_config {
-    struct ssl_cert_key_config *next;
+    std::string cert_file;
 
-    const char *cert_file;
+    std::string key_file;
 
-    const char *key_file;
+    template<typename C, typename K>
+    ssl_cert_key_config(C &&_cert_file, K &&_key_file)
+        :cert_file(std::forward<C>(_cert_file)),
+         key_file(std::forward<K>(_key_file)) {}
 };
 
 struct ssl_config {
-    struct ssl_cert_key_config cert_key;
+    std::vector<ssl_cert_key_config> cert_key;
 
-    const char *ca_cert_file;
+    std::string ca_cert_file;
 
-    enum ssl_verify verify;
+    ssl_verify verify;
+
+    ssl_config():verify(ssl_verify::NO) {}
+
+    bool IsValid() const {
+        return !cert_key.empty();
+    }
 };
-
-static inline void
-ssl_config_clear(struct ssl_config *config)
-{
-    config->cert_key.next = NULL;
-    config->cert_key.cert_file = config->cert_key.key_file = NULL;
-    config->ca_cert_file = NULL;
-    config->verify = SSL_VERIFY_NO;
-}
-
-static inline bool
-ssl_config_valid(const struct ssl_config *config)
-{
-    return config->cert_key.cert_file != NULL &&
-        config->cert_key.key_file != NULL;
-}
 
 #endif

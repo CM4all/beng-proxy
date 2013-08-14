@@ -18,8 +18,8 @@ lb_connection_log_error(int level, const struct lb_connection *connection,
 {
     daemon_log(level, "%s (listener='%s' cluster='%s'): %s\n",
                prefix,
-               connection->listener->name,
-               connection->listener->cluster->name,
+               connection->listener->name.c_str(),
+               connection->listener->cluster->name.c_str(),
                error);
 }
 

@@ -59,8 +59,8 @@ log_error(int level, const struct lb_connection *connection,
 {
     daemon_log(level, "%s (listener='%s' cluster='%s'): %s\n",
                prefix,
-               connection->listener->name,
-               connection->listener->cluster->name,
+               connection->listener->name.c_str(),
+               connection->listener->cluster->name.c_str(),
                error->message);
 }
 
@@ -68,15 +68,16 @@ static bool
 send_fallback(struct http_server_request *request,
               const struct lb_fallback_config *fallback)
 {
-    if (fallback->location != NULL) {
+    if (!fallback->location.empty()) {
         http_server_send_redirect(request, HTTP_STATUS_FOUND,
-                                  fallback->location, "Found");
+                                  fallback->location.c_str(), "Found");
         return true;
-    } else if (fallback->message != NULL) {
+    } else if (!fallback->message.empty()) {
         /* custom status + error message */
         assert(http_status_is_valid(fallback->status));
 
-        http_server_send_message(request, fallback->status, fallback->message);
+        http_server_send_message(request, fallback->status,
+                                 fallback->message.c_str());
         return true;
     } else
         return false;
@@ -278,7 +279,7 @@ lb_http_connection_request(struct http_server_request *request,
 
     const struct lb_cluster_config *cluster = connection->listener->cluster;
     assert(cluster != NULL);
-    assert(cluster->num_members > 0);
+    assert(!cluster->members.empty());
 
     struct lb_request *request2 =
         (struct lb_request *)p_malloc(request->pool, sizeof(*request2));
@@ -303,7 +304,7 @@ lb_http_connection_request(struct http_server_request *request,
 
     case STICKY_SESSION_MODULO:
         session_sticky = lb_session_get(request->headers,
-                                        connection->listener->cluster->session_cookie);
+                                        connection->listener->cluster->session_cookie.c_str());
         break;
 
     case STICKY_COOKIE:

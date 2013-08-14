@@ -37,8 +37,7 @@ enable_node(const struct lb_instance *instance,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const struct lb_node_config *node =
-        lb_config_find_node(instance->config, node_name);
+    const lb_node_config *node = instance->config->FindNode(node_name);
     if (node == NULL) {
         pool_rewind(tpool, &mark);
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
@@ -85,8 +84,7 @@ fade_node(const struct lb_instance *instance,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const struct lb_node_config *node =
-        lb_config_find_node(instance->config, node_name);
+    const lb_node_config *node = instance->config->FindNode(node_name);
     if (node == NULL) {
         pool_rewind(tpool, &mark);
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
@@ -181,8 +179,8 @@ query_node_status(struct lb_control *control,
     char *port_string = node_name + (colon - payload);
     *port_string++ = 0;
 
-    const struct lb_node_config *node =
-        lb_config_find_node(control->instance->config, node_name);
+    const lb_node_config *node =
+        control->instance->config->FindNode(node_name);
     if (node == NULL) {
         node_status_response(control->server, tpool, address, address_length,
                              payload, length, "unknown", NULL);
