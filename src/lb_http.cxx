@@ -36,6 +36,7 @@
 
 struct lb_request {
     struct lb_connection *connection;
+    const lb_cluster_config *cluster;
 
     struct tcp_balancer *balancer;
 
@@ -53,6 +54,68 @@ struct lb_request {
 
     unsigned new_cookie;
 };
+
+gcc_pure
+static const char *
+lb_http_get_attribute(const http_server_request &request,
+                      const lb_attribute_reference &reference)
+{
+    switch (reference.type) {
+    case lb_attribute_reference::Type::METHOD:
+        return http_method_to_string(request.method);
+
+    case lb_attribute_reference::Type::URI:
+        return request.uri;
+
+    case lb_attribute_reference::Type::HEADER:
+        return strmap_get(request.headers, reference.name.c_str());
+    }
+
+    assert(false);
+    gcc_unreachable();
+}
+
+gcc_pure
+static bool
+lb_http_check_condition(const lb_condition_config &condition,
+                        const http_server_request &request)
+{
+    const char *value = lb_http_get_attribute(request,
+                                              condition.attribute_reference);
+    if (value == nullptr)
+        value = "";
+
+    return condition.Match(value);
+}
+
+gcc_pure
+static const lb_cluster_config *
+lb_http_select_cluster(const lb_goto &destination,
+                       const http_server_request &request);
+
+gcc_pure
+static const lb_cluster_config *
+lb_http_select_cluster(const lb_branch_config &branch,
+                       const http_server_request &request)
+{
+    for (const auto &i : branch.conditions)
+        if (lb_http_check_condition(i.condition, request))
+            return lb_http_select_cluster(i.destination, request);
+
+    return lb_http_select_cluster(branch.fallback, request);
+}
+
+gcc_pure
+static const lb_cluster_config *
+lb_http_select_cluster(const lb_goto &destination,
+                       const http_server_request &request)
+{
+    if (gcc_likely(destination.cluster != nullptr))
+        return destination.cluster;
+
+    assert(destination.branch != nullptr);
+    return lb_http_select_cluster(*destination.branch, request);
+}
 
 static bool
 send_fallback(struct http_server_request *request,
@@ -178,7 +241,7 @@ my_response_abort(GError *error, void *ctx)
     g_error_free(error);
 
     if (!send_fallback(request2->request,
-                       &connection->listener->cluster->fallback))
+                       &request2->cluster->fallback))
         http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
                                  "Server failure");
 }
@@ -214,7 +277,7 @@ my_stock_ready(struct stock_item *item, void *ctx)
                                    request->local_host_and_port,
                                    request->remote_host,
                                    peer_subject, peer_issuer_subject,
-                                   request2->connection->listener->cluster->mangle_via);
+                                   request2->cluster->mangle_via);
 
     struct growing_buffer *headers2 = headers_dup(request->pool, headers);
 
@@ -241,8 +304,7 @@ my_stock_error(GError *error, void *ctx)
     if (request2->body != NULL)
         istream_close_unused(request2->body);
 
-    if (!send_fallback(request2->request,
-                       &connection->listener->cluster->fallback))
+    if (!send_fallback(request2->request, &request2->cluster->fallback))
         http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
                                  "Connection failure");
 }
@@ -268,13 +330,11 @@ lb_http_connection_request(struct http_server_request *request,
 
     connection->request_start_time = now_us();
 
-    const struct lb_cluster_config *cluster = connection->listener->cluster;
-    assert(cluster != NULL);
-    assert(!cluster->members.empty());
-
     struct lb_request *request2 =
         (struct lb_request *)p_malloc(request->pool, sizeof(*request2));
     request2->connection = connection;
+    const lb_cluster_config *cluster = request2->cluster =
+        lb_http_select_cluster(connection->listener->destination, *request);
     request2->balancer = connection->instance->tcp_balancer;
     request2->request = request;
     request2->body = request->body != NULL
@@ -295,7 +355,7 @@ lb_http_connection_request(struct http_server_request *request,
 
     case STICKY_SESSION_MODULO:
         session_sticky = lb_session_get(request->headers,
-                                        connection->listener->cluster->session_cookie.c_str());
+                                        cluster->session_cookie.c_str());
         break;
 
     case STICKY_COOKIE:

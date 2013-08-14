@@ -328,12 +328,15 @@ lb_tcp_new(struct lb_connection *connection, int fd,
     connection->tcp.peers[0].fd = fd;
     connection->tcp.peers[0].type = fd_type;
 
-    unsigned session_sticky = lb_tcp_sticky(connection->listener->cluster,
-                                            remote_address);
+    const lb_cluster_config *cluster =
+        connection->listener->destination.cluster;
+    assert(cluster != nullptr);
+
+    unsigned session_sticky = lb_tcp_sticky(cluster, remote_address);
 
     client_balancer_connect(connection->pool, connection->instance->balancer,
                             session_sticky,
-                            &connection->listener->cluster->address_list,
+                            &cluster->address_list,
                             20,
                             &lb_tcp_client_socket_handler, connection,
                             &connection->tcp.connect);

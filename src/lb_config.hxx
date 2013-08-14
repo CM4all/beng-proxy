@@ -168,12 +168,167 @@ struct lb_cluster_config {
     int FindJVMRoute(const char *jvm_route) const;
 };
 
+struct lb_attribute_reference {
+    enum class Type {
+        METHOD,
+        URI,
+        HEADER,
+    } type;
+
+    std::string name;
+
+    template<typename N>
+    lb_attribute_reference(Type _type, N &&_name)
+        :type(_type), name(std::forward<N>(_name)) {}
+};
+
+struct lb_branch_config;
+
+struct lb_goto {
+    const lb_cluster_config *cluster;
+    const lb_branch_config *branch;
+
+    lb_goto()
+        :cluster(nullptr), branch(nullptr) {}
+
+    lb_goto(lb_cluster_config *_cluster)
+        :cluster(_cluster), branch(nullptr) {}
+
+    lb_goto(lb_branch_config *_branch)
+        :cluster(nullptr), branch(_branch) {}
+
+    bool IsDefined() const {
+        return cluster != nullptr || branch != nullptr;
+    }
+
+    gcc_pure
+    lb_protocol GetProtocol() const;
+
+    gcc_pure
+    const char *GetName() const;
+};
+
+struct lb_condition_config {
+    lb_attribute_reference attribute_reference;
+
+    enum class Operator {
+        EQUALS,
+        REGEX,
+    };
+
+    Operator op;
+
+    bool negate;
+
+    std::string string;
+    GRegex *regex;
+
+    lb_condition_config(lb_attribute_reference &&a, bool _negate,
+                        const char *_string)
+        :attribute_reference(std::move(a)), op(Operator::EQUALS),
+         negate(_negate), string(_string) {}
+
+    lb_condition_config(lb_attribute_reference &&a, bool _negate,
+                        GRegex *_regex)
+        :attribute_reference(std::move(a)), op(Operator::REGEX),
+         negate(_negate), regex(_regex) {}
+
+    lb_condition_config(const lb_condition_config &other)
+        :attribute_reference(other.attribute_reference),
+         op(other.op), negate(other.negate),
+         string(other.string),
+         regex(other.op == Operator::REGEX
+               ? g_regex_ref(other.regex)
+               : nullptr) {}
+
+    lb_condition_config(lb_condition_config &&other)
+        :attribute_reference(std::move(other.attribute_reference)),
+         op(other.op), negate(other.negate),
+         string(std::move(other.string)),
+         regex(other.regex) {
+        other.regex = nullptr;
+    }
+
+    ~lb_condition_config() {
+        if (regex != nullptr)
+            g_regex_unref(regex);
+    }
+
+    gcc_pure
+    bool Match(const char *value) const {
+        switch (op) {
+        case Operator::EQUALS:
+            return (string == value) ^ negate;
+            break;
+
+        case Operator::REGEX:
+            return g_regex_match(regex, value, GRegexMatchFlags(0),
+                                 nullptr) ^ negate;
+            break;
+        }
+
+        gcc_unreachable();
+    }
+};
+
+struct lb_goto_if_config {
+    lb_condition_config condition;
+
+    lb_goto destination;
+
+    lb_goto_if_config(lb_condition_config &&c, lb_goto d)
+        :condition(std::move(c)), destination(d) {}
+};
+
+/**
+ * An object that distributes connections or requests to the "real"
+ * cluster.
+ */
+struct lb_branch_config {
+    std::string name;
+
+    lb_goto fallback;
+
+    std::list<lb_goto_if_config> conditions;
+
+    lb_branch_config(const char *_name)
+        :name(_name) {}
+
+    bool HasFallback() const {
+        return fallback.IsDefined();
+    }
+
+    lb_protocol GetProtocol() const {
+        return fallback.GetProtocol();
+    }
+};
+
+inline lb_protocol
+lb_goto::GetProtocol() const
+{
+    assert(IsDefined());
+
+    return cluster != nullptr
+        ? cluster->protocol
+        : branch->GetProtocol();
+}
+
+inline const char *
+lb_goto::GetName() const
+{
+    assert(IsDefined());
+
+    return cluster != nullptr
+        ? cluster->name.c_str()
+        : branch->name.c_str();
+}
+
 struct lb_listener_config {
     std::string name;
 
     const struct address_envelope *envelope;
 
-    const struct lb_cluster_config *cluster;
+    lb_goto destination;
 
     bool ssl;
 
@@ -181,7 +336,7 @@ struct lb_listener_config {
 
     lb_listener_config(const char *_name)
         :name(_name),
-         envelope(nullptr), cluster(nullptr),
+         envelope(nullptr),
          ssl(false) {
     }
 };
@@ -194,6 +349,7 @@ struct lb_config {
     std::map<std::string, lb_node_config> nodes;
 
     std::map<std::string, lb_cluster_config> clusters;
+    std::map<std::string, lb_branch_config> branches;
 
     std::list<lb_listener_config> listeners;
 
@@ -220,6 +376,27 @@ struct lb_config {
     const lb_cluster_config *FindCluster(T &&t) const {
         const auto i = clusters.find(std::forward<T>(t));
         return i != clusters.end()
+            ? &i->second
+            : nullptr;
+    }
+
+    template<typename T>
+    gcc_pure
+    const lb_goto FindGoto(T &&t) const {
+        lb_goto g;
+
+        g.cluster = FindCluster(t);
+        if (g.cluster == nullptr)
+            g.branch = FindBranch(std::forward<T>(t));
+
+        return g;
+    }
+
+    template<typename T>
+    gcc_pure
+    const lb_branch_config *FindBranch(T &&t) const {
+        const auto i = branches.find(std::forward<T>(t));
+        return i != branches.end()
             ? &i->second
             : nullptr;
     }

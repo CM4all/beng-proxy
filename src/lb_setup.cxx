@@ -12,13 +12,40 @@
 #include "lb_control.hxx"
 
 static void
-init_cluster_monitors(const struct lb_cluster_config *cluster)
+init_monitors(const lb_cluster_config &cluster)
 {
-    if (cluster->monitor == NULL)
+    if (cluster.monitor == NULL)
         return;
 
-    for (const auto &member : cluster->members)
-        lb_hmonitor_add(member.node, member.port, cluster->monitor);
+    for (const auto &member : cluster.members)
+        lb_hmonitor_add(member.node, member.port, cluster.monitor);
+}
+
+static void
+init_monitors(const lb_branch_config &cluster);
+
+static void
+init_monitors(const lb_goto &g)
+{
+    if (g.cluster != nullptr)
+        init_monitors(*g.cluster);
+    else
+        init_monitors(*g.branch);
+}
+
+static void
+init_monitors(const lb_goto_if_config &gif)
+{
+    init_monitors(gif.destination);
+}
+
+static void
+init_monitors(const lb_branch_config &cluster)
+{
+    init_monitors(cluster.fallback);
+
+    for (const auto &i : cluster.conditions)
+        init_monitors(i);
 }
 
 bool
@@ -34,7 +61,7 @@ init_all_listeners(struct lb_instance *instance, GError **error_r)
 
         list_add(&listener->siblings, &instance->listeners);
 
-        init_cluster_monitors(config.cluster);
+        init_monitors(config.destination);
     }
 
     return success;

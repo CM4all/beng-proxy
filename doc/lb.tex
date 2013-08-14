@@ -129,6 +129,61 @@ The protocol \texttt{http} means that \texttt{beng-lb} parses the
 HTTP/1.1 request/response, and forwards them to the peer.  This HTTP
 parser is needed for some of the advanced features, such as cookies.
 
+\subsection{Conditional Pools}
+
+Incoming requests can be delivered to pools based on
+administrator-specified conditions.  This virtual pool is called
+``branch'', and can be referenced by its name just like regular pools.
+That implies that pools and branches share a namespace, their names
+must be uniquie.  Example:
+
+\begin{verbatim*}
+branch foo {
+  goto pool1 if $request_method == "POST"
+  goto pool2 if $request_uri =~ "^/for/pool2/"
+  goto pool3 if $http_user_agent =~ "Opera"
+  goto pool4
+}
+\end{verbatim*}
+
+The object contains any number of ``goto'' statements, all but the
+last one with conditions.  These ``goto'' statements can refer to a
+pool or another branch.
+
+The following ``variables'' are available:
+
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\verb|$request_method| & the HTTP request method (``\texttt{GET}'',
+``\texttt{POST}'', ...) \\
+\hline
+\verb|$request_uri| & the HTTP request URI \\
+\hline
+\verb|$http_header_name| & a HTTP request header with the
+specified name, lower case, dashes converted to underscore \\
+\hline
+\end{tabular}
+
+The following operators are available:
+
+\begin{tabular}{|l|p{8cm}|}
+\hline
+\verb|==| & check the value for equality \\
+\hline
+\verb|!=| & check the value for non-equality \\
+\hline
+\verb|=~| & Perl-compatible regular expression match \\
+\hline
+\verb|!~| & Perl-compatible regular expression mismatch \\
+\hline
+\end{tabular}
+
+The last token is a quoted string decpiting the value to compare with,
+or the regular expression.
+
+At the time of this writing, conditional pools work only for HTTP, not
+for TCP.
+
 \subsection{Listener}
 
 A listener is a socket address (IP and port) which accepts incoming

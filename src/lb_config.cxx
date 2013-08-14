@@ -29,6 +29,7 @@ struct config_parser {
         MONITOR,
         NODE,
         CLUSTER,
+        BRANCH,
         LISTENER,
     } state;
 
@@ -36,12 +37,18 @@ struct config_parser {
     struct lb_monitor_config *monitor;
     struct lb_node_config *node;
     struct lb_cluster_config *cluster;
+    struct lb_branch_config *branch;
     struct lb_listener_config *listener;
 
     config_parser(struct pool *_pool, lb_config &_config)
         :pool(_pool), config(_config),
          state(State::ROOT) {}
 };
+
+static constexpr GRegexCompileFlags regex_compile_flags =
+    GRegexCompileFlags(G_REGEX_MULTILINE|G_REGEX_DOTALL|
+                       G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
+                       G_REGEX_OPTIMIZE);
 
 static bool
 _throw(GError **error_r, const char *msg)
@@ -831,6 +838,175 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
 }
 
 static bool
+config_parser_create_branch(struct config_parser *parser, char *p,
+                            GError **error_r)
+{
+    const char *name = next_value(&p);
+    if (name == NULL)
+        return _throw(error_r, "Pool name expected");
+
+    if (!expect_symbol_and_eol(p, '{'))
+        return _throw(error_r, "'{' expected");
+
+    parser->state = config_parser::State::BRANCH;
+    parser->branch = new lb_branch_config(name);
+    return true;
+}
+
+static bool
+parse_attribute_reference(lb_attribute_reference &a, const char *p)
+{
+    if (strcmp(p, "request_method") == 0) {
+        a.type = lb_attribute_reference::Type::METHOD;
+        return true;
+    } else if (strcmp(p, "request_uri") == 0) {
+        a.type = lb_attribute_reference::Type::URI;
+        return true;
+    } else if (memcmp(p, "http_", 5) == 0) {
+        a.type = lb_attribute_reference::Type::HEADER;
+        a.name = p + 5;
+        if (a.name.empty())
+            return false;
+
+        for (auto &ch : a.name) {
+            if (ch == '_')
+                ch = '-';
+            else if (!g_ascii_islower(ch) && !g_ascii_isdigit(ch))
+                return false;
+        }
+
+        return true;
+    } else
+        return false;
+}
+
+static bool
+config_parser_feed_branch(struct config_parser *parser, char *p,
+                          GError **error_r)
+{
+    lb_branch_config &branch = *parser->branch;
+
+    if (*p == '}') {
+        if (!expect_eol(p + 1))
+            return syntax_error(error_r);
+
+        if (parser->config.FindBranch(branch.name) != nullptr)
+            return _throw(error_r, "Duplicate pool/branch name");
+
+        if (!branch.HasFallback())
+            return _throw(error_r, "Branch has no fallback");
+
+        if (branch.GetProtocol() != LB_PROTOCOL_HTTP)
+            return _throw(error_r, "Only HTTP pools allowed in branch");
+
+        parser->config.branches.insert(std::make_pair(branch.name, branch));
+        delete &branch;
+
+        parser->state = config_parser::State::ROOT;
+        return true;
+    }
+
+    const char *word = next_word(&p);
+    if (word == nullptr)
+        return syntax_error(error_r);
+
+    if (strcmp(word, "goto") == 0) {
+        const char *name = next_value(&p);
+        if (name == NULL)
+            return _throw(error_r, "Pool name expected");
+
+        lb_goto destination = parser->config.FindGoto(name);
+        if (!destination.IsDefined())
+            return _throw(error_r, "No such pool");
+
+        if (*p == 0) {
+            if (branch.HasFallback())
+                return _throw(error_r, "Fallback already specified");
+
+            if (!branch.conditions.empty() &&
+                branch.conditions.front().destination.GetProtocol() != destination.GetProtocol())
+                return _throw(error_r, "Protocol mismatch");
+
+            branch.fallback = destination;
+
+            return true;
+        }
+
+        if (branch.fallback.IsDefined() &&
+            branch.fallback.GetProtocol() != destination.GetProtocol())
+                return _throw(error_r, "Protocol mismatch");
+
+        const char *if_ = next_word(&p);
+        if (if_ == nullptr || strcmp(if_, "if") != 0)
+            return _throw(error_r, "'if' or end of line expected");
+
+        if (*p++ != '$')
+            return _throw(error_r, "Attribute name starting with '$' expected");
+
+        const char *attribute = next_word(&p);
+        if (attribute == nullptr)
+            return _throw(error_r, "Attribute name starting with '$' expected");
+
+        lb_condition_config::Operator op;
+        bool negate;
+
+        if (p[0] == '=' && p[1] == '=') {
+            op = lb_condition_config::Operator::EQUALS;
+            negate = false;
+            p += 2;
+        } else if (p[0] == '!' && p[1] == '=') {
+            op = lb_condition_config::Operator::EQUALS;
+            negate = true;
+            p += 2;
+        } else if (p[0] == '=' && p[1] == '~') {
+            op = lb_condition_config::Operator::REGEX;
+            negate = false;
+            p += 2;
+        } else if (p[0] == '!' && p[1] == '~') {
+            op = lb_condition_config::Operator::REGEX;
+            negate = true;
+            p += 2;
+        } else
+            return _throw(error_r, "Comparison operator expected");
+
+        if (!is_whitespace(*p++))
+            return syntax_error(error_r);
+
+        p = fast_chug(p);
+
+        const char *string = next_unescape(&p);
+        if (string == nullptr)
+            return _throw(error_r, "Regular expression expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        lb_attribute_reference a(lb_attribute_reference::Type::HEADER, "");
+        if (!parse_attribute_reference(a, attribute))
+            return _throw(error_r, "Unknown attribute reference");
+
+        GRegex *regex = nullptr;
+        if (op == lb_condition_config::Operator::REGEX) {
+            regex = g_regex_new(string, regex_compile_flags,
+                                GRegexMatchFlags(0), error_r);
+            if (regex == nullptr)
+                return false;
+        }
+
+        lb_goto_if_config gif(regex != nullptr
+                              ? lb_condition_config(std::move(a), negate,
+                                                    regex)
+                              : lb_condition_config(std::move(a), negate,
+                                                    string),
+                              destination);
+        branch.conditions.emplace_back(std::move(gif));
+
+        return true;
+    } else
+        return _throw(error_r, "Unknown option");
+}
+
+static bool
 config_parser_create_listener(struct config_parser *parser, char *p,
                               GError **error_r)
 {
@@ -898,14 +1074,11 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
         if (name == NULL)
             return _throw(error_r, "Pool name expected");
 
-        if (!expect_eol(p))
-            return syntax_error(error_r);
-
-        if (listener->cluster != NULL)
+        if (listener->destination.IsDefined())
             return _throw(error_r, "Pool already configured");
 
-        listener->cluster = parser->config.FindCluster(name);
-        if (listener->cluster == NULL)
+        listener->destination = parser->config.FindGoto(name);
+        if (!listener->destination.IsDefined())
             return _throw(error_r, "No such pool");
 
         return true;
@@ -1041,6 +1214,8 @@ config_parser_feed_root(struct config_parser *parser, char *p,
         return config_parser_create_node(parser, p, error_r);
     else if (strcmp(word, "pool") == 0)
         return config_parser_create_cluster(parser, p, error_r);
+    else if (strcmp(word, "branch") == 0)
+        return config_parser_create_branch(parser, p, error_r);
     else if (strcmp(word, "listener") == 0)
         return config_parser_create_listener(parser, p, error_r);
     else if (strcmp(word, "monitor") == 0)
@@ -1073,6 +1248,9 @@ config_parser_feed(struct config_parser *parser, char *line,
 
     case config_parser::State::CLUSTER:
         return config_parser_feed_cluster(parser, line, error_r);
+
+    case config_parser::State::BRANCH:
+        return config_parser_feed_branch(parser, line, error_r);
 
     case config_parser::State::LISTENER:
         return config_parser_feed_listener(parser, line, error_r);

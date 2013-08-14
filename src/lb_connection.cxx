@@ -81,7 +81,7 @@ lb_connection_new(struct lb_instance *instance,
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;
 
-    switch (listener->cluster->protocol) {
+    switch (listener->destination.GetProtocol()) {
     case LB_PROTOCOL_HTTP:
         http_server_connection_new(pool, fd, fd_type,
                                    local_address_length > 0
@@ -124,7 +124,7 @@ lb_connection_remove(struct lb_connection *connection)
 void
 lb_connection_close(struct lb_connection *connection)
 {
-    switch (connection->listener->cluster->protocol) {
+    switch (connection->listener->destination.GetProtocol()) {
     case LB_PROTOCOL_HTTP:
         assert(connection->http != NULL);
         http_server_connection_close(connection->http);
