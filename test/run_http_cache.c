@@ -15,7 +15,7 @@
 static void
 put_random(struct http_cache_heap *cache, struct rubber *rubber)
 {
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     char uri[8];

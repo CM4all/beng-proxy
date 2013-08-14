@@ -385,7 +385,7 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
                          struct async_operation_ref *async_ref)
 {
     struct http_cache_memcached_request *request = p_malloc(pool, sizeof(*request));
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     struct strmap *vary;
     struct growing_buffer *gb;
     const char *key;

@@ -43,7 +43,7 @@ lb_session_get_internal(const struct strmap *request_headers,
 unsigned
 lb_session_get(const struct strmap *request_headers, const char *cookie_name)
 {
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     unsigned id = lb_session_get_internal(request_headers, cookie_name);

@@ -16,7 +16,7 @@ widget_get_session(struct widget *widget, struct session *session,
                    bool create)
 {
     struct widget_session *parent, *ws;
-    struct pool_mark mark;
+    struct pool_mark_state mark;
 
     assert(widget != NULL);
     assert(session != NULL);

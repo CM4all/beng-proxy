@@ -187,7 +187,7 @@ istream_available(struct istream *istream, bool partial)
 {
     off_t available;
 #ifndef NDEBUG
-    struct pool_notify notify;
+    struct pool_notify_state notify;
 
     assert(istream != NULL);
     assert(!istream->destroyed);
@@ -235,7 +235,7 @@ istream_skip(struct istream *istream, off_t length)
 {
     off_t nbytes;
 #ifndef NDEBUG
-    struct pool_notify notify;
+    struct pool_notify_state notify;
 
     assert(istream != NULL);
     assert(!istream->destroyed);
@@ -280,7 +280,7 @@ static inline void
 istream_read(struct istream *istream)
 {
 #ifndef NDEBUG
-    struct pool_notify notify;
+    struct pool_notify_state notify;
 
     assert(istream != NULL);
     assert(!istream->destroyed);
@@ -308,7 +308,7 @@ static inline int
 istream_as_fd(struct istream *istream)
 {
 #ifndef NDEBUG
-    struct pool_notify notify;
+    struct pool_notify_state notify;
 
     assert(istream != NULL);
     assert(!istream->destroyed);

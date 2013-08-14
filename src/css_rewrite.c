@@ -83,7 +83,7 @@ css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
                        const struct strref block,
                        const struct escape_class *escape)
 {
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     struct css_rewrite rewrite = {

@@ -17,9 +17,7 @@
 struct pool;
 struct slice_pool;
 
-#ifndef __cplusplus
-
-struct pool_mark {
+struct pool_mark_state {
     /**
      * The area that was current when the mark was set.
      */
@@ -44,8 +42,6 @@ struct pool_mark {
     bool was_empty;
 #endif
 };
-
-#endif
 
 void
 pool_recycler_clear(void);
@@ -129,7 +125,7 @@ pool_dump_tree(const struct pool *pool);
 #ifndef NDEBUG
 #include <inline/list.h>
 
-struct pool_notify {
+struct pool_notify_state {
     struct list_head siblings;
 
     struct pool *pool;
@@ -148,28 +144,28 @@ struct pool_notify {
 };
 
 void
-pool_notify(struct pool *pool, struct pool_notify *notify);
+pool_notify(struct pool *pool, struct pool_notify_state *notify);
 
 bool
-pool_denotify(struct pool_notify *notify);
+pool_denotify(struct pool_notify_state *notify);
 
 /**
  * Hands over control from an existing #pool_notify to a new one.  The
  * old one is unregistered.
  */
 void
-pool_notify_move(struct pool *pool, struct pool_notify *src,
-                 struct pool_notify *dest);
+pool_notify_move(struct pool *pool, struct pool_notify_state *src,
+                 struct pool_notify_state *dest);
 
 #endif
 
 #ifndef NDEBUG
 
 void
-pool_ref_notify_impl(struct pool *pool, struct pool_notify *notify TRACE_ARGS_DECL);
+pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify TRACE_ARGS_DECL);
 
 void
-pool_unref_denotify_impl(struct pool *pool, struct pool_notify *notify
+pool_unref_denotify_impl(struct pool *pool, struct pool_notify_state *notify
                          TRACE_ARGS_DECL);
 
 /**
@@ -267,15 +263,11 @@ pool_attachment_name(struct pool *pool, const void *p);
 
 #endif
 
-#ifndef __cplusplus
+void
+pool_mark(struct pool *pool, struct pool_mark_state *mark);
 
 void
-pool_mark(struct pool *pool, struct pool_mark *mark);
-
-void
-pool_rewind(struct pool *pool, const struct pool_mark *mark);
-
-#endif
+pool_rewind(struct pool *pool, const struct pool_mark_state *mark);
 
 gcc_malloc
 void *

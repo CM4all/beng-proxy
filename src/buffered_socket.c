@@ -106,7 +106,7 @@ buffered_socket_invoke_data(struct buffered_socket *s)
                 : BUFFERED_OK;
 
 #ifndef NDEBUG
-        struct pool_notify notify;
+        struct pool_notify_state notify;
         pool_notify(s->base.pool, &notify);
 #endif
 
@@ -373,7 +373,7 @@ buffered_socket_try_read(struct buffered_socket *s)
     assert(!s->reading);
 
 #ifndef NDEBUG
-    struct pool_notify notify;
+    struct pool_notify_state notify;
     pool_notify(s->base.pool, &notify);
     s->reading = true;
 #endif

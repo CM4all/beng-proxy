@@ -75,7 +75,7 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
 
     assert(class != NULL);
 
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
     const char *key = p_sprintf(tpool, "%s:[%s]:%u",
                                 config->name, node->name, port);

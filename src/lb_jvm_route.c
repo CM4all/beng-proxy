@@ -49,7 +49,7 @@ unsigned
 lb_jvm_route_get(const struct strmap *request_headers,
                  const struct lb_cluster_config *cluster)
 {
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     unsigned id = lb_jvm_route_get_internal(request_headers, cluster);

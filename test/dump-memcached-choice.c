@@ -84,7 +84,7 @@ static void
 my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
 {
     struct strref data;
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     struct http_cache_document document;
     /*uint32_t magic;*/
 

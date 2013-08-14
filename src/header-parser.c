@@ -49,7 +49,7 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
     assert(headers != NULL);
     assert(gb != NULL);
 
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     struct growing_buffer_reader reader;

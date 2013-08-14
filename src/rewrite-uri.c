@@ -264,7 +264,7 @@ class_lookup_callback(void *ctx)
                 rwu->widget->session_sync_pending = false;
         }
 
-        struct pool_mark mark;
+        struct pool_mark_state mark;
         struct strref unescaped;
         if (rwu->value != NULL && strref_chr(rwu->value, '&') != NULL) {
             pool_mark(tpool, &mark);
@@ -339,7 +339,7 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
                specified */
             return NULL;
 
-        struct pool_mark mark;
+        struct pool_mark_state mark;
         struct strref unescaped;
         if (escape != NULL && value != NULL &&
             unescape_find(escape, value->data, value->length) != NULL) {

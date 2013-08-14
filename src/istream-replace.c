@@ -293,7 +293,7 @@ replace_read_from_buffer_loop(struct istream_replace *replace, off_t end)
 {
     size_t max_length, rest;
 #ifndef NDEBUG
-    struct pool_notify notify;
+    struct pool_notify_state notify;
 #endif
 
     assert(replace != NULL);

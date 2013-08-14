@@ -256,7 +256,7 @@ widget_external_uri(struct pool *pool,
     const char *qmark, *args2, *new_uri;
     struct strref buffer, query_string;
     const struct strref *p;
-    struct pool_mark mark;
+    struct pool_mark_state mark;
 
     path = widget_path(widget);
     if (path == NULL ||

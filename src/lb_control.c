@@ -30,7 +30,7 @@ enable_node(const struct lb_instance *instance,
         return;
     }
 
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     char *node_name = p_strndup(tpool, payload, length);
@@ -78,7 +78,7 @@ fade_node(const struct lb_instance *instance,
         return;
     }
 
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     char *node_name = p_strndup(tpool, payload, length);
@@ -174,7 +174,7 @@ query_node_status(struct lb_control *control,
         return;
     }
 
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     char *node_name = p_strndup(tpool, payload, length);
@@ -232,7 +232,7 @@ query_stats(struct lb_control *control,
     struct beng_control_stats stats;
     lb_get_stats(control->instance, &stats);
 
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     GError *error = NULL;

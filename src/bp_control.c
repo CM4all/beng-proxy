@@ -130,7 +130,7 @@ control_tcache_invalidate(struct instance *instance,
 {
     (void)instance;
 
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     struct translate_request request;
@@ -168,7 +168,7 @@ query_stats(struct instance *instance, struct control_server *server,
     struct beng_control_stats stats;
     bp_get_stats(instance, &stats);
 
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
     GError *error = NULL;

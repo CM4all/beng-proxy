@@ -417,7 +417,7 @@ was_client_control_drained(void *ctx)
     async_operation_finished(&client->async);
 
 #ifndef NDEBUG
-    struct pool_notify notify;
+    struct pool_notify_state notify;
 #endif
     pool_ref_notify(client->pool, &notify);
     http_response_handler_invoke_response(&client->handler,

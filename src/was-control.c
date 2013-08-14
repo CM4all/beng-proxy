@@ -144,7 +144,7 @@ was_control_consume_input(struct was_control *control)
         const void *payload = header + 1;
 
 #ifndef NDEBUG
-        struct pool_notify notify;
+        struct pool_notify_state notify;
         pool_notify(control->pool, &notify);
 #endif
 

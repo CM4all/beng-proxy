@@ -179,7 +179,7 @@ cookie_jar_set_cookie2(struct cookie_jar *jar, const char *value,
                        const char *domain, const char *path)
 {
     struct strref input;
-    struct pool_mark mark;
+    struct pool_mark_state mark;
 
     strref_set_c(&input, value);
 
@@ -215,7 +215,7 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
     char *buffer;
     struct cookie *cookie, *next;
     size_t length;
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     char *value;
 
     assert(domain != NULL);

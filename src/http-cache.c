@@ -62,7 +62,7 @@ struct http_cache_request {
     struct pool *pool, *caller_pool;
 
 #ifndef NDEBUG
-    struct pool_notify caller_pool_notify;
+    struct pool_notify_state caller_pool_notify;
 #endif
 
     unsigned session_sticky;
@@ -306,7 +306,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
-        struct pool_notify notify;
+        struct pool_notify_state notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
 #endif
 
@@ -331,7 +331,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
-        struct pool_notify notify;
+        struct pool_notify_state notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
 #endif
 
@@ -365,7 +365,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
-        struct pool_notify notify;
+        struct pool_notify_state notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
 #endif
 
@@ -410,7 +410,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
     struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
-    struct pool_notify notify;
+    struct pool_notify_state notify;
     pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
 #endif
 
@@ -448,7 +448,7 @@ http_cache_response_abort(GError *error, void *ctx)
 
     struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
-    struct pool_notify notify;
+    struct pool_notify_state notify;
     pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
 #endif
 
@@ -928,7 +928,7 @@ http_cache_memcached_miss(struct http_cache_request *request)
     if (info->only_if_cached) {
         struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
-        struct pool_notify notify;
+        struct pool_notify_state notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
 #endif
 
@@ -975,7 +975,7 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
 
         struct pool *caller_pool = request->caller_pool;
 #ifndef NDEBUG
-        struct pool_notify notify;
+        struct pool_notify_state notify;
         pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
 #endif
 

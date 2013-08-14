@@ -1415,7 +1415,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         widget_element_finished(processor, tag, widget);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
-        struct pool_mark mark;
+        struct pool_mark_state mark;
         const char *p;
         size_t length;
 

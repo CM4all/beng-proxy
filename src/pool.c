@@ -520,7 +520,8 @@ pool_destroy(struct pool *pool, struct pool *reparent_to TRACE_ARGS_DECL)
 
 #ifndef NDEBUG
     while (!list_empty(&pool->notify)) {
-        struct pool_notify *notify = (struct pool_notify *)pool->notify.next;
+        struct pool_notify_state *notify =
+            (struct pool_notify_state *)pool->notify.next;
         list_remove(&notify->siblings);
         notify->destroyed = 1;
 
@@ -825,7 +826,7 @@ pool_dump_tree(const struct pool *pool)
 #ifndef NDEBUG
 
 void
-pool_notify(struct pool *pool, struct pool_notify *notify)
+pool_notify(struct pool *pool, struct pool_notify_state *notify)
 {
     list_add(&notify->siblings, &pool->notify);
     notify->pool = pool;
@@ -835,7 +836,7 @@ pool_notify(struct pool *pool, struct pool_notify *notify)
 }
 
 bool
-pool_denotify(struct pool_notify *notify)
+pool_denotify(struct pool_notify_state *notify)
 {
     assert(notify->registered);
     notify->registered = false;
@@ -847,8 +848,8 @@ pool_denotify(struct pool_notify *notify)
 }
 
 void
-pool_notify_move(struct pool *pool, struct pool_notify *src,
-                 struct pool_notify *dest)
+pool_notify_move(struct pool *pool, struct pool_notify_state *src,
+                 struct pool_notify_state *dest)
 {
     assert(src->pool == pool);
 
@@ -862,7 +863,7 @@ pool_notify_move(struct pool *pool, struct pool_notify *src,
 }
 
 void
-pool_ref_notify_impl(struct pool *pool, struct pool_notify *notify TRACE_ARGS_DECL)
+pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify TRACE_ARGS_DECL)
 {
     pool_notify(pool, notify);
     pool_ref_impl(pool TRACE_ARGS_FWD);
@@ -874,7 +875,7 @@ pool_ref_notify_impl(struct pool *pool, struct pool_notify *notify TRACE_ARGS_DE
 }
 
 void
-pool_unref_denotify_impl(struct pool *pool, struct pool_notify *notify
+pool_unref_denotify_impl(struct pool *pool, struct pool_notify_state *notify
                          TRACE_ARGS_DECL)
 {
     assert(notify->pool == pool);
@@ -958,7 +959,7 @@ pool_contains(struct pool *pool, const void *ptr, size_t size)
 #endif
 
 void
-pool_mark(struct pool *pool, struct pool_mark *mark)
+pool_mark(struct pool *pool, struct pool_mark_state *mark)
 {
 #ifndef POOL_LIBC_ONLY
     assert(pool->type == POOL_LINEAR);
@@ -1001,7 +1002,7 @@ pool_remove_allocations(struct pool *pool, const unsigned char *p, size_t length
 #endif
 
 void
-pool_rewind(struct pool *pool, const struct pool_mark *mark)
+pool_rewind(struct pool *pool, const struct pool_mark_state *mark)
 {
 #ifndef POOL_LIBC_ONLY
     assert(pool->type == POOL_LINEAR);

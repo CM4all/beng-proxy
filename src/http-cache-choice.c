@@ -128,7 +128,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
     struct http_cache_choice *choice = ctx;
     struct strref data;
     time_t now = time(NULL);
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     uint32_t magic;
     struct http_cache_document document;
     const char *uri = NULL;
@@ -426,7 +426,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
     struct strref data;
     const char *current;
     char *dest;
-    struct pool_mark mark;
+    struct pool_mark_state mark;
     uint32_t magic;
     struct http_cache_document document;
 
