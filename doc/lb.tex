@@ -231,7 +231,8 @@ pairs are loaded.  During the TLS handshake, the client may announce
 the desired server name with the TLS extension ``SNI'' (Server Name
 Indication).  \emph{beng-lb} uses this name to choose a certificate.
 Currently, it uses the first matching certificate, but that algorithm
-may be changed in the future to ``most specific certificate''.
+may be changed in the future to ``most specific certificate''.  If no
+certificate matches, the first certificate is used.
 
 \subsubsection{Client Certificates}
 
