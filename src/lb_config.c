@@ -1060,11 +1060,6 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
                 return syntax_error(error_r);
 
             return true;
-        } else if (strcmp(word, "protocol") == 0 ||
-                   strcmp(word, "profile") == 0 ||
-                   strcmp(word, "persist") == 0 ||
-                   strcmp(word, "vlans") == 0) {
-            return true;
         } else
             return throw(error_r, "Unknown option");
     } else
