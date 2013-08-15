@@ -125,10 +125,9 @@ lb_connection_remove(struct lb_connection *connection)
 void
 lb_connection_close(struct lb_connection *connection)
 {
-    assert(connection->http != NULL);
-
     switch (connection->listener->cluster->protocol) {
     case LB_PROTOCOL_HTTP:
+        assert(connection->http != NULL);
         http_server_connection_close(connection->http);
         break;
 
