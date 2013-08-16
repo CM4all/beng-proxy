@@ -194,7 +194,7 @@ node second {
 pool demo {
   protocol "http"
   member "second:http"
-  member "secondd:http"
+  member "second:http"
   sticky "jvm_route"
 }
 \end{verbatim*}
