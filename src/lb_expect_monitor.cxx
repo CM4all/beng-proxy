@@ -146,9 +146,8 @@ expect_monitor_success(int fd, void *ctx)
     }
 
     struct timeval expect_timeout = {
-        .tv_sec = time_t(expect->config->timeout > 0
-                         ? expect->config->timeout : 10),
-        .tv_usec = 0,
+        time_t(expect->config->timeout > 0 ? expect->config->timeout : 10),
+        0,
     };
 
     expect->fd = fd;

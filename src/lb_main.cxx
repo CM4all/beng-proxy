@@ -41,14 +41,14 @@
 
 #include <event.h>
 
-static const struct timeval launch_worker_now = {
-    .tv_sec = 0,
-    .tv_usec = 10000,
+static constexpr struct timeval launch_worker_now = {
+    0,
+    10000,
 };
 
-static const struct timeval launch_worker_delayed = {
-    .tv_sec = 10,
-    .tv_usec = 0,
+static constexpr struct timeval launch_worker_delayed = {
+    10,
+    0,
 };
 
 static bool is_watchdog;
