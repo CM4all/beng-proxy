@@ -12,6 +12,7 @@
 #include "lb_cookie.hxx"
 #include "lb_jvm_route.hxx"
 #include "lb_headers.hxx"
+#include "lb_log.hxx"
 #include "ssl_filter.hxx"
 #include "address_envelope.h"
 #include "address_sticky.h"
@@ -52,17 +53,6 @@ struct lb_request {
 
     unsigned new_cookie;
 };
-
-static void
-log_error(int level, const struct lb_connection *connection,
-          const char *prefix, GError *error)
-{
-    daemon_log(level, "%s (listener='%s' cluster='%s'): %s\n",
-               prefix,
-               connection->listener->name.c_str(),
-               connection->listener->cluster->name.c_str(),
-               error->message);
-}
 
 static bool
 send_fallback(struct http_server_request *request,
@@ -183,7 +173,8 @@ my_response_abort(GError *error, void *ctx)
         failure_add(&request2->current_address->address,
                     request2->current_address->length);
 
-    log_error(2, connection, "Error", error);
+
+    lb_connection_log_gerror(2, connection, "Error", error);
     g_error_free(error);
 
     if (!send_fallback(request2->request,
@@ -244,7 +235,7 @@ my_stock_error(GError *error, void *ctx)
     struct lb_request *request2 = (struct lb_request *)ctx;
     const struct lb_connection *connection = request2->connection;
 
-    log_error(2, connection, "Connect error", error);
+    lb_connection_log_gerror(2, connection, "Connect error", error);
     g_error_free(error);
 
     if (request2->body != NULL)
@@ -351,7 +342,7 @@ lb_http_connection_error(GError *error, void *ctx)
 {
     struct lb_connection *connection = (struct lb_connection *)ctx;
 
-    log_error(2, connection, "Error", error);
+    lb_connection_log_gerror(2, connection, "Error", error);
     g_error_free(error);
 
     assert(connection->http != NULL);
