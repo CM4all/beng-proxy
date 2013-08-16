@@ -37,6 +37,12 @@ struct ssl_cert_key {
             EVP_PKEY_free(key);
     }
 
+    ssl_cert_key &operator=(ssl_cert_key &&other) {
+        std::swap(cert, other.cert);
+        std::swap(key, other.key);
+        return *this;
+    }
+
     bool Load(const ssl_cert_key_config &config, GError **error_r);
 };
 
