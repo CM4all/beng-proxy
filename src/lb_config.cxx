@@ -288,26 +288,26 @@ config_parser_feed_control(struct config_parser *parser, char *p,
     }
 
     const char *word = next_word(&p);
-    if (word != NULL) {
-        if (strcmp(word, "bind") == 0) {
-            const char *address = next_value(&p);
-            if (address == NULL)
-                return _throw(error_r, "Control address expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            control->envelope = address_envelope_parse(parser->pool,
-                                                       address, 80, true,
-                                                       error_r);
-            if (control->envelope == NULL)
-                return false;
-
-            return true;
-        } else
-            return _throw(error_r, "Unknown option");
-    } else
+    if (word == nullptr)
         return syntax_error(error_r);
+
+    if (strcmp(word, "bind") == 0) {
+        const char *address = next_value(&p);
+        if (address == NULL)
+            return _throw(error_r, "Control address expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        control->envelope = address_envelope_parse(parser->pool,
+                                                   address, 80, true,
+                                                   error_r);
+        if (control->envelope == NULL)
+            return false;
+
+        return true;
+    } else
+        return _throw(error_r, "Unknown option");
 }
 
 static bool
@@ -354,89 +354,89 @@ config_parser_feed_monitor(struct config_parser *parser, char *p,
     }
 
     const char *word = next_word(&p);
-    if (word != NULL) {
-        if (strcmp(word, "type") == 0) {
-            const char *value = next_value(&p);
-            if (value == NULL)
-                return _throw(error_r, "Monitor address expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            if (monitor->type != lb_monitor_config::Type::NONE)
-                return _throw(error_r, "Monitor type already specified");
-
-            if (strcmp(value, "none") == 0)
-                monitor->type = lb_monitor_config::Type::NONE;
-            else if (strcmp(value, "ping") == 0)
-                monitor->type = lb_monitor_config::Type::PING;
-            else if (strcmp(value, "connect") == 0)
-                monitor->type = lb_monitor_config::Type::CONNECT;
-            else if (strcmp(value, "tcp_expect") == 0)
-                monitor->type = lb_monitor_config::Type::TCP_EXPECT;
-            else
-                return _throw(error_r, "Unknown monitor type");
-
-            return true;
-        } else if (strcmp(word, "interval") == 0) {
-            unsigned value = next_positive_integer(&p);
-            if (value == 0)
-                return _throw(error_r, "Positive integer expected");
-
-            monitor->interval = value;
-            return true;
-        } else if (strcmp(word, "timeout") == 0) {
-            unsigned value = next_positive_integer(&p);
-            if (value == 0)
-                return _throw(error_r, "Positive integer expected");
-
-            monitor->timeout = value;
-            return true;
-        } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
-                   strcmp(word, "connect_timeout") == 0) {
-            unsigned value = next_positive_integer(&p);
-            if (value == 0)
-                return _throw(error_r, "Positive integer expected");
-
-            monitor->connect_timeout = value;
-            return true;
-        } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
-                   strcmp(word, "send") == 0) {
-            const char *value = next_unescape(&p);
-            if (value == NULL)
-                return _throw(error_r, "String value expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            monitor->send = value;
-            return true;
-        } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
-                   strcmp(word, "expect") == 0) {
-            const char *value = next_unescape(&p);
-            if (value == NULL)
-                return _throw(error_r, "String value expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            monitor->expect = value;
-            return true;
-        } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
-                   strcmp(word, "expect_graceful") == 0) {
-            const char *value = next_unescape(&p);
-            if (value == NULL)
-                return _throw(error_r, "String value expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            monitor->fade_expect = value;
-            return true;
-        } else
-            return _throw(error_r, "Unknown option");
-    } else
+    if (word == nullptr)
         return syntax_error(error_r);
+
+    if (strcmp(word, "type") == 0) {
+        const char *value = next_value(&p);
+        if (value == NULL)
+            return _throw(error_r, "Monitor address expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        if (monitor->type != lb_monitor_config::Type::NONE)
+            return _throw(error_r, "Monitor type already specified");
+
+        if (strcmp(value, "none") == 0)
+            monitor->type = lb_monitor_config::Type::NONE;
+        else if (strcmp(value, "ping") == 0)
+            monitor->type = lb_monitor_config::Type::PING;
+        else if (strcmp(value, "connect") == 0)
+            monitor->type = lb_monitor_config::Type::CONNECT;
+        else if (strcmp(value, "tcp_expect") == 0)
+            monitor->type = lb_monitor_config::Type::TCP_EXPECT;
+        else
+            return _throw(error_r, "Unknown monitor type");
+
+        return true;
+    } else if (strcmp(word, "interval") == 0) {
+        unsigned value = next_positive_integer(&p);
+        if (value == 0)
+            return _throw(error_r, "Positive integer expected");
+
+        monitor->interval = value;
+        return true;
+    } else if (strcmp(word, "timeout") == 0) {
+        unsigned value = next_positive_integer(&p);
+        if (value == 0)
+            return _throw(error_r, "Positive integer expected");
+
+        monitor->timeout = value;
+        return true;
+    } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
+               strcmp(word, "connect_timeout") == 0) {
+        unsigned value = next_positive_integer(&p);
+        if (value == 0)
+            return _throw(error_r, "Positive integer expected");
+
+        monitor->connect_timeout = value;
+        return true;
+    } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
+               strcmp(word, "send") == 0) {
+        const char *value = next_unescape(&p);
+        if (value == NULL)
+            return _throw(error_r, "String value expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        monitor->send = value;
+        return true;
+    } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
+               strcmp(word, "expect") == 0) {
+        const char *value = next_unescape(&p);
+        if (value == NULL)
+            return _throw(error_r, "String value expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        monitor->expect = value;
+        return true;
+    } else if (monitor->type == lb_monitor_config::Type::TCP_EXPECT &&
+               strcmp(word, "expect_graceful") == 0) {
+        const char *value = next_unescape(&p);
+        if (value == NULL)
+            return _throw(error_r, "String value expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        monitor->fade_expect = value;
+        return true;
+    } else
+        return _throw(error_r, "Unknown option");
 }
 
 static bool
@@ -487,41 +487,41 @@ config_parser_feed_node(struct config_parser *parser, char *p,
     }
 
     const char *word = next_word(&p);
-    if (word != NULL) {
-        if (strcmp(word, "address") == 0) {
-            const char *value = next_value(&p);
-            if (value == NULL)
-                return _throw(error_r, "Node address expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            if (node->envelope != NULL)
-                return _throw(error_r, "Duplicate node address");
-
-            node->envelope = address_envelope_parse(parser->pool,
-                                                    value, 80, false, error_r);
-            if (node->envelope == NULL)
-                return false;
-
-            return true;
-        } else if (strcmp(word, "jvm_route") == 0) {
-            const char *value = next_value(&p);
-            if (value == NULL)
-                return _throw(error_r, "Value expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            if (!node->jvm_route.empty())
-                return _throw(error_r, "Duplicate jvm_route");
-
-            node->jvm_route = value;
-            return true;
-        } else
-            return _throw(error_r, "Unknown option");
-    } else
+    if (word == nullptr)
         return syntax_error(error_r);
+
+    if (strcmp(word, "address") == 0) {
+        const char *value = next_value(&p);
+        if (value == NULL)
+            return _throw(error_r, "Node address expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        if (node->envelope != NULL)
+            return _throw(error_r, "Duplicate node address");
+
+        node->envelope = address_envelope_parse(parser->pool,
+                                                value, 80, false, error_r);
+        if (node->envelope == NULL)
+            return false;
+
+        return true;
+    } else if (strcmp(word, "jvm_route") == 0) {
+        const char *value = next_value(&p);
+        if (value == NULL)
+            return _throw(error_r, "Value expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        if (!node->jvm_route.empty())
+            return _throw(error_r, "Duplicate jvm_route");
+
+        node->jvm_route = value;
+        return true;
+    } else
+        return _throw(error_r, "Unknown option");
 }
 
 static struct lb_node_config *
@@ -665,169 +665,169 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
     }
 
     const char *word = next_word(&p);
-    if (word != NULL) {
-        if (strcmp(word, "name") == 0) {
-            const char *name = next_value(&p);
-            if (name == NULL)
-                return _throw(error_r, "Pool name expected");
+    if (word == nullptr)
+        return syntax_error(error_r);
 
-            if (!expect_eol(p))
-                return syntax_error(error_r);
+    if (strcmp(word, "name") == 0) {
+        const char *name = next_value(&p);
+        if (name == NULL)
+            return _throw(error_r, "Pool name expected");
 
-            cluster->name = name;
-            return true;
-        } else if (strcmp(word, "sticky") == 0) {
-            const char *sticky_mode = next_value(&p);
-            if (sticky_mode == NULL)
-                return _throw(error_r, "Sticky mode expected");
+        if (!expect_eol(p))
+            return syntax_error(error_r);
 
-            if (!expect_eol(p))
-                return syntax_error(error_r);
+        cluster->name = name;
+        return true;
+    } else if (strcmp(word, "sticky") == 0) {
+        const char *sticky_mode = next_value(&p);
+        if (sticky_mode == NULL)
+            return _throw(error_r, "Sticky mode expected");
 
-            if (strcmp(sticky_mode, "none") == 0)
-                cluster->sticky_mode = STICKY_NONE;
-            else if (strcmp(sticky_mode, "failover") == 0)
-                cluster->sticky_mode = STICKY_FAILOVER;
-            else if (strcmp(sticky_mode, "source_ip") == 0)
-                cluster->sticky_mode = STICKY_SOURCE_IP;
-            else if (strcmp(sticky_mode, "session_modulo") == 0)
-                cluster->sticky_mode = STICKY_SESSION_MODULO;
-            else if (strcmp(sticky_mode, "cookie") == 0)
-                cluster->sticky_mode = STICKY_COOKIE;
-            else if (strcmp(sticky_mode, "jvm_route") == 0)
-                cluster->sticky_mode = STICKY_JVM_ROUTE;
-            else
-                return _throw(error_r, "Unknown sticky mode");
+        if (!expect_eol(p))
+            return syntax_error(error_r);
 
-            return true;
-        } else if (strcmp(word, "session_cookie") == 0) {
-            const char *session_cookie = next_value(&p);
-            if (session_cookie == NULL)
-                return _throw(error_r, "Cookie name expected");
+        if (strcmp(sticky_mode, "none") == 0)
+            cluster->sticky_mode = STICKY_NONE;
+        else if (strcmp(sticky_mode, "failover") == 0)
+            cluster->sticky_mode = STICKY_FAILOVER;
+        else if (strcmp(sticky_mode, "source_ip") == 0)
+            cluster->sticky_mode = STICKY_SOURCE_IP;
+        else if (strcmp(sticky_mode, "session_modulo") == 0)
+            cluster->sticky_mode = STICKY_SESSION_MODULO;
+        else if (strcmp(sticky_mode, "cookie") == 0)
+            cluster->sticky_mode = STICKY_COOKIE;
+        else if (strcmp(sticky_mode, "jvm_route") == 0)
+            cluster->sticky_mode = STICKY_JVM_ROUTE;
+        else
+            return _throw(error_r, "Unknown sticky mode");
 
-            if (!expect_eol(p))
-                return syntax_error(error_r);
+        return true;
+    } else if (strcmp(word, "session_cookie") == 0) {
+        const char *session_cookie = next_value(&p);
+        if (session_cookie == NULL)
+            return _throw(error_r, "Cookie name expected");
 
-            cluster->session_cookie = session_cookie;
-            return true;
-        } else if (strcmp(word, "monitor") == 0) {
-            const char *name = next_value(&p);
-            if (name == NULL)
-                return _throw(error_r, "Monitor name expected");
+        if (!expect_eol(p))
+            return syntax_error(error_r);
 
-            if (!expect_eol(p))
-                return syntax_error(error_r);
+        cluster->session_cookie = session_cookie;
+        return true;
+    } else if (strcmp(word, "monitor") == 0) {
+        const char *name = next_value(&p);
+        if (name == NULL)
+            return _throw(error_r, "Monitor name expected");
 
-            if (cluster->monitor != NULL)
-                return _throw(error_r, "Monitor already specified");
+        if (!expect_eol(p))
+            return syntax_error(error_r);
 
-            cluster->monitor = parser->config.FindMonitor(name);
-            if (cluster->monitor == NULL)
-                return _throw(error_r, "No such monitor");
+        if (cluster->monitor != NULL)
+            return _throw(error_r, "Monitor already specified");
 
-            return true;
-        } else if (strcmp(word, "member") == 0) {
-            char *name = next_value(&p);
-            if (name == NULL)
-                return _throw(error_r, "Member name expected");
+        cluster->monitor = parser->config.FindMonitor(name);
+        if (cluster->monitor == NULL)
+            return _throw(error_r, "No such monitor");
 
-            /*
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-            */
+        return true;
+    } else if (strcmp(word, "member") == 0) {
+        char *name = next_value(&p);
+        if (name == NULL)
+            return _throw(error_r, "Member name expected");
 
-            cluster->members.emplace_back();
+        /*
+          if (!expect_eol(p))
+          return syntax_error(error_r);
+        */
 
-            struct lb_member_config *member = &cluster->members.back();
+        cluster->members.emplace_back();
 
-            member->node = parser->config.FindNode(name);
-            if (member->node == NULL) {
-                char *q = strchr(name, ':');
-                if (q != NULL) {
-                    *q++ = 0;
-                    member->node = parser->config.FindNode(name);
-                    if (member->node == NULL) {
-                        /* node doesn't exist: parse the given member
-                           name, auto-create a new node */
+        struct lb_member_config *member = &cluster->members.back();
 
-                        /* restore the colon */
-                        *--q = ':';
-
-                        return auto_create_member(parser, member, name,
-                                                  error_r);
-                    }
-
-                    member->port = parse_port(q, member->node->envelope);
-                    if (member->port == 0)
-                        return _throw(error_r, "Malformed port");
-                } else
+        member->node = parser->config.FindNode(name);
+        if (member->node == NULL) {
+            char *q = strchr(name, ':');
+            if (q != NULL) {
+                *q++ = 0;
+                member->node = parser->config.FindNode(name);
+                if (member->node == NULL) {
                     /* node doesn't exist: parse the given member
                        name, auto-create a new node */
-                    return auto_create_member(parser, member, name, error_r);
-            }
 
+                    /* restore the colon */
+                    *--q = ':';
+
+                    return auto_create_member(parser, member, name,
+                                              error_r);
+                }
+
+                member->port = parse_port(q, member->node->envelope);
+                if (member->port == 0)
+                    return _throw(error_r, "Malformed port");
+            } else
+                /* node doesn't exist: parse the given member
+                   name, auto-create a new node */
+                return auto_create_member(parser, member, name, error_r);
+        }
+
+        return true;
+    } else if (strcmp(word, "protocol") == 0) {
+        const char *protocol = next_value(&p);
+        if (protocol == NULL)
+            return _throw(error_r, "Protocol name expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        if (strcmp(protocol, "http") == 0)
+            cluster->protocol = LB_PROTOCOL_HTTP;
+        else if (strcmp(protocol, "tcp") == 0)
+            cluster->protocol = LB_PROTOCOL_TCP;
+        else
+            return _throw(error_r, "Unknown protocol");
+
+        return true;
+    } else if (strcmp(word, "mangle_via") == 0) {
+        if (!next_bool(&p, &cluster->mangle_via, error_r))
+            return false;
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        return true;
+    } else if (strcmp(word, "fallback") == 0) {
+        if (cluster->fallback.IsDefined())
+            return _throw(error_r, "Duplicate fallback");
+
+        const char *location = next_value(&p);
+        if (strstr(location, "://") != NULL) {
+            if (!expect_eol(p))
+                return syntax_error(error_r);
+
+            cluster->fallback.location = location;
             return true;
-        } else if (strcmp(word, "protocol") == 0) {
-            const char *protocol = next_value(&p);
-            if (protocol == NULL)
-                return _throw(error_r, "Protocol name expected");
+        } else {
+            char *endptr;
+            http_status_t status =
+                (http_status_t)(unsigned)strtoul(location, &endptr, 10);
+            if (*endptr != 0 || !http_status_is_valid(status))
+                return _throw(error_r, "Invalid HTTP status code");
+
+            if (http_status_is_empty(status))
+                return _throw(error_r,
+                              "This HTTP status does not allow a response body");
+
+            const char *message = next_value(&p);
+            if (message == NULL)
+                return _throw(error_r, "Message expected");
 
             if (!expect_eol(p))
                 return syntax_error(error_r);
 
-            if (strcmp(protocol, "http") == 0)
-                cluster->protocol = LB_PROTOCOL_HTTP;
-            else if (strcmp(protocol, "tcp") == 0)
-                cluster->protocol = LB_PROTOCOL_TCP;
-            else
-                return _throw(error_r, "Unknown protocol");
-
+            cluster->fallback.status = status;
+            cluster->fallback.message = message;
             return true;
-        } else if (strcmp(word, "mangle_via") == 0) {
-            if (!next_bool(&p, &cluster->mangle_via, error_r))
-                return false;
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            return true;
-        } else if (strcmp(word, "fallback") == 0) {
-            if (cluster->fallback.IsDefined())
-                return _throw(error_r, "Duplicate fallback");
-
-            const char *location = next_value(&p);
-            if (strstr(location, "://") != NULL) {
-                if (!expect_eol(p))
-                    return syntax_error(error_r);
-
-                cluster->fallback.location = location;
-                return true;
-            } else {
-                char *endptr;
-                http_status_t status =
-                    (http_status_t)(unsigned)strtoul(location, &endptr, 10);
-                if (*endptr != 0 || !http_status_is_valid(status))
-                    return _throw(error_r, "Invalid HTTP status code");
-
-                if (http_status_is_empty(status))
-                    return _throw(error_r,
-                                 "This HTTP status does not allow a response body");
-
-                const char *message = next_value(&p);
-                if (message == NULL)
-                    return _throw(error_r, "Message expected");
-
-                if (!expect_eol(p))
-                    return syntax_error(error_r);
-
-                cluster->fallback.status = status;
-                cluster->fallback.message = message;
-                return true;
-            }
-        } else
-            return _throw(error_r, "Unknown option");
+        }
     } else
-        return syntax_error(error_r);
+        return _throw(error_r, "Unknown option");
 }
 
 static bool
@@ -875,155 +875,155 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
     }
 
     const char *word = next_word(&p);
-    if (word != NULL) {
-        if (strcmp(word, "bind") == 0) {
-            const char *address = next_value(&p);
-            if (address == NULL)
-                return _throw(error_r, "Listener address expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            listener->envelope = address_envelope_parse(parser->pool,
-                                                        address, 80, true,
-                                                        error_r);
-            if (listener->envelope == NULL)
-                return false;
-
-            return true;
-        } else if (strcmp(word, "pool") == 0) {
-            const char *name = next_value(&p);
-            if (name == NULL)
-                return _throw(error_r, "Pool name expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            if (listener->cluster != NULL)
-                return _throw(error_r, "Pool already configured");
-
-            listener->cluster = parser->config.FindCluster(name);
-            if (listener->cluster == NULL)
-                return _throw(error_r, "No such pool");
-
-            return true;
-        } else if (strcmp(word, "ssl") == 0) {
-            bool value = false;
-            if (!next_bool(&p, &value, error_r))
-                return false;
-
-            if (listener->ssl && !value)
-                return _throw(error_r, "SSL cannot be disabled at this point");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            listener->ssl = value;
-            return true;
-        } else if (strcmp(word, "ssl_cert") == 0) {
-            if (!listener->ssl)
-                return _throw(error_r, "SSL is not enabled");
-
-            const char *path = next_value(&p);
-            if (path == NULL)
-                return _throw(error_r, "Path expected");
-
-            const char *key_path = NULL;
-            if (*p != 0) {
-                key_path = next_value(&p);
-                if (key_path == NULL)
-                    return _throw(error_r, "Path expected");
-            }
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            auto &cks = listener->ssl_config.cert_key;
-            if (!cks.empty()) {
-                auto &front = cks.front();
-
-                if (key_path == nullptr) {
-                    if (front.cert_file.empty()) {
-                        front.cert_file = path;
-                        return true;
-                    } else
-                        return _throw(error_r, "Certificate already configured");
-                } else {
-                    if (front.cert_file.empty())
-                        return _throw(error_r, "Previous certificate missing");
-                    if (front.key_file.empty())
-                        return _throw(error_r, "Previous key missing");
-                }
-            }
-
-            if (key_path == nullptr)
-                key_path = "";
-
-            cks.emplace_back(path, key_path);
-            return true;
-        } else if (strcmp(word, "ssl_key") == 0) {
-            if (!listener->ssl)
-                return _throw(error_r, "SSL is not enabled");
-
-            const char *path = next_value(&p);
-            if (path == NULL)
-                return _throw(error_r, "Path expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            auto &cks = listener->ssl_config.cert_key;
-            if (!cks.empty()) {
-                if (!cks.front().key_file.empty())
-                    return _throw(error_r, "Key already configured");
-
-                cks.front().key_file = path;
-            } else {
-                cks.emplace_back(std::string(), path);
-            }
-
-            return true;
-        } else if (strcmp(word, "ssl_ca_cert") == 0) {
-            if (!listener->ssl)
-                return _throw(error_r, "SSL is not enabled");
-
-            if (!listener->ssl_config.ca_cert_file.empty())
-                return _throw(error_r, "Certificate already configured");
-
-            const char *path = next_value(&p);
-            if (path == NULL)
-                return _throw(error_r, "Path expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            listener->ssl_config.ca_cert_file = path;
-            return true;
-        } else if (strcmp(word, "ssl_verify") == 0) {
-            if (!listener->ssl)
-                return _throw(error_r, "SSL is not enabled");
-
-            const char *value = next_value(&p);
-            if (value == NULL)
-                return _throw(error_r, "yes/no expected");
-
-            if (strcmp(value, "yes") == 0)
-                listener->ssl_config.verify = ssl_verify::YES;
-            else if (strcmp(value, "no") == 0)
-                listener->ssl_config.verify = ssl_verify::NO;
-            else if (strcmp(value, "optional") == 0)
-                listener->ssl_config.verify = ssl_verify::OPTIONAL;
-            else
-                return _throw(error_r, "yes/no expected");
-
-            if (!expect_eol(p))
-                return syntax_error(error_r);
-
-            return true;
-        } else
-            return _throw(error_r, "Unknown option");
-    } else
+    if (word == nullptr)
         return syntax_error(error_r);
+
+    if (strcmp(word, "bind") == 0) {
+        const char *address = next_value(&p);
+        if (address == NULL)
+            return _throw(error_r, "Listener address expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        listener->envelope = address_envelope_parse(parser->pool,
+                                                    address, 80, true,
+                                                    error_r);
+        if (listener->envelope == NULL)
+            return false;
+
+        return true;
+    } else if (strcmp(word, "pool") == 0) {
+        const char *name = next_value(&p);
+        if (name == NULL)
+            return _throw(error_r, "Pool name expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        if (listener->cluster != NULL)
+            return _throw(error_r, "Pool already configured");
+
+        listener->cluster = parser->config.FindCluster(name);
+        if (listener->cluster == NULL)
+            return _throw(error_r, "No such pool");
+
+        return true;
+    } else if (strcmp(word, "ssl") == 0) {
+        bool value = false;
+        if (!next_bool(&p, &value, error_r))
+            return false;
+
+        if (listener->ssl && !value)
+            return _throw(error_r, "SSL cannot be disabled at this point");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        listener->ssl = value;
+        return true;
+    } else if (strcmp(word, "ssl_cert") == 0) {
+        if (!listener->ssl)
+            return _throw(error_r, "SSL is not enabled");
+
+        const char *path = next_value(&p);
+        if (path == NULL)
+            return _throw(error_r, "Path expected");
+
+        const char *key_path = NULL;
+        if (*p != 0) {
+            key_path = next_value(&p);
+            if (key_path == NULL)
+                return _throw(error_r, "Path expected");
+        }
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        auto &cks = listener->ssl_config.cert_key;
+        if (!cks.empty()) {
+            auto &front = cks.front();
+
+            if (key_path == nullptr) {
+                if (front.cert_file.empty()) {
+                    front.cert_file = path;
+                    return true;
+                } else
+                    return _throw(error_r, "Certificate already configured");
+            } else {
+                if (front.cert_file.empty())
+                    return _throw(error_r, "Previous certificate missing");
+                if (front.key_file.empty())
+                    return _throw(error_r, "Previous key missing");
+            }
+        }
+
+        if (key_path == nullptr)
+            key_path = "";
+
+        cks.emplace_back(path, key_path);
+        return true;
+    } else if (strcmp(word, "ssl_key") == 0) {
+        if (!listener->ssl)
+            return _throw(error_r, "SSL is not enabled");
+
+        const char *path = next_value(&p);
+        if (path == NULL)
+            return _throw(error_r, "Path expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        auto &cks = listener->ssl_config.cert_key;
+        if (!cks.empty()) {
+            if (!cks.front().key_file.empty())
+                return _throw(error_r, "Key already configured");
+
+            cks.front().key_file = path;
+        } else {
+            cks.emplace_back(std::string(), path);
+        }
+
+        return true;
+    } else if (strcmp(word, "ssl_ca_cert") == 0) {
+        if (!listener->ssl)
+            return _throw(error_r, "SSL is not enabled");
+
+        if (!listener->ssl_config.ca_cert_file.empty())
+            return _throw(error_r, "Certificate already configured");
+
+        const char *path = next_value(&p);
+        if (path == NULL)
+            return _throw(error_r, "Path expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        listener->ssl_config.ca_cert_file = path;
+        return true;
+    } else if (strcmp(word, "ssl_verify") == 0) {
+        if (!listener->ssl)
+            return _throw(error_r, "SSL is not enabled");
+
+        const char *value = next_value(&p);
+        if (value == NULL)
+            return _throw(error_r, "yes/no expected");
+
+        if (strcmp(value, "yes") == 0)
+            listener->ssl_config.verify = ssl_verify::YES;
+        else if (strcmp(value, "no") == 0)
+            listener->ssl_config.verify = ssl_verify::NO;
+        else if (strcmp(value, "optional") == 0)
+            listener->ssl_config.verify = ssl_verify::OPTIONAL;
+        else
+            return _throw(error_r, "yes/no expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        return true;
+    } else
+        return _throw(error_r, "Unknown option");
 }
 
 static bool
@@ -1034,21 +1034,21 @@ config_parser_feed_root(struct config_parser *parser, char *p,
         return syntax_error(error_r);
 
     const char *word = next_word(&p);
-    if (word != NULL) {
-        if (strcmp(word, "node") == 0)
-            return config_parser_create_node(parser, p, error_r);
-        else if (strcmp(word, "pool") == 0)
-            return config_parser_create_cluster(parser, p, error_r);
-        else if (strcmp(word, "listener") == 0)
-            return config_parser_create_listener(parser, p, error_r);
-        else if (strcmp(word, "monitor") == 0)
-            return config_parser_create_monitor(parser, p, error_r);
-        else if (strcmp(word, "control") == 0)
-            return config_parser_create_control(parser, p, error_r);
-        else
-            return _throw(error_r, "Unknown option");
-    } else
+    if (word == nullptr)
         return syntax_error(error_r);
+
+    if (strcmp(word, "node") == 0)
+        return config_parser_create_node(parser, p, error_r);
+    else if (strcmp(word, "pool") == 0)
+        return config_parser_create_cluster(parser, p, error_r);
+    else if (strcmp(word, "listener") == 0)
+        return config_parser_create_listener(parser, p, error_r);
+    else if (strcmp(word, "monitor") == 0)
+        return config_parser_create_monitor(parser, p, error_r);
+    else if (strcmp(word, "control") == 0)
+        return config_parser_create_control(parser, p, error_r);
+    else
+        return _throw(error_r, "Unknown option");
 }
 
 static bool
