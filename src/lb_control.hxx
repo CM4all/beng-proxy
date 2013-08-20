@@ -7,9 +7,9 @@
 #ifndef BENG_PROXY_LB_CONTROL_H
 #define BENG_PROXY_LB_CONTROL_H
 
-#include <inline/list.h>
+#include "gerror.h"
 
-#include <glib.h>
+#include <inline/list.h>
 
 struct lb_control_config;
 

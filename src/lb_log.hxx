@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_LOG_H
 #define BENG_PROXY_LB_LOG_H
 
-#include <glib.h>
+#include "gerror.h"
 
 struct lb_connection;
 

@@ -7,8 +7,11 @@
 #ifndef BENG_PROXY_LB_MONITOR_H
 #define BENG_PROXY_LB_MONITOR_H
 
-#include <glib.h>
-#include <stdbool.h>
+#include "gerror.h"
+
+#include <inline/compiler.h>
+
+#include <stddef.h>
 
 struct pool;
 struct sockaddr;
@@ -41,7 +44,7 @@ lb_monitor_free(struct lb_monitor *monitor);
 void
 lb_monitor_enable(struct lb_monitor *monitor);
 
-G_GNUC_PURE
+gcc_pure
 bool
 lb_monitor_get_state(const struct lb_monitor *monitor);
 

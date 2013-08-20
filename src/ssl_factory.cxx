@@ -6,6 +6,7 @@
 
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
+#include "ssl_quark.hxx"
 #include "pool.h"
 
 #include <inline/compiler.h>
@@ -13,7 +14,6 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <assert.h>
-#include <stdbool.h>
 
 struct ssl_cert_key {
     X509 *cert;

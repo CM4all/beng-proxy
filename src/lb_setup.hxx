@@ -7,8 +7,7 @@
 #ifndef BENG_PROXY_LB_SETUP_H
 #define BENG_PROXY_LB_SETUP_H
 
-#include <glib.h>
-#include <stdbool.h>
+#include "gerror.h"
 
 struct lb_instance;
 

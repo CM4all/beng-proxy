@@ -7,8 +7,6 @@
 #ifndef BENG_LB_HEADERS_H
 #define BENG_LB_HEADERS_H
 
-#include <stdbool.h>
-
 struct pool;
 struct session;
 

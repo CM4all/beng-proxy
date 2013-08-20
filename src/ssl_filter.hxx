@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SSL_FILTER_H
 #define BENG_PROXY_SSL_FILTER_H
 
-#include "ssl_quark.hxx"
+#include "gerror.h"
 
 #include <inline/compiler.h>
 

@@ -82,6 +82,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/translation.h \
 	src/product.h \
 	src/gerrno.h \
+	src/gerror.h \
 	src/abort-close.c src/abort-close.h \
 	src/abort-flag.c src/abort-flag.h \
 	src/abort-unref.c src/abort-unref.h \

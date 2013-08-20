@@ -7,9 +7,9 @@
 #ifndef BENG_PROXY_LB_LISTENER_H
 #define BENG_PROXY_LB_LISTENER_H
 
-#include <inline/list.h>
+#include "gerror.h"
 
-#include <glib.h>
+#include <inline/list.h>
 
 struct pool;
 

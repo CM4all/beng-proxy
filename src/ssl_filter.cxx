@@ -7,6 +7,7 @@
 #include "ssl_filter.hxx"
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
+#include "ssl_quark.hxx"
 #include "notify.h"
 #include "pool.h"
 #include "fifo-buffer.h"
