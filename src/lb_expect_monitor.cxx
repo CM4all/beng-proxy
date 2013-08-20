@@ -26,17 +26,16 @@ struct ExpectMonitor {
 
     struct event event;
 
-    const struct lb_monitor_handler *handler;
-    void *handler_ctx;
+    LBMonitorHandler *handler;
 
     struct async_operation_ref *async_ref;
     struct async_operation async_operation;
 
     ExpectMonitor(struct pool *_pool, const lb_monitor_config *_config,
-                  const lb_monitor_handler *_handler, void *_handler_ctx,
+                  LBMonitorHandler &_handler,
                   async_operation_ref *_async_ref)
         :pool(_pool), config(_config),
-         handler(_handler), handler_ctx(_handler_ctx),
+         handler(&_handler),
          async_ref(_async_ref) {}
 
     ExpectMonitor(const ExpectMonitor &other) = delete;
@@ -90,7 +89,7 @@ expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
 
     if (event & EV_TIMEOUT) {
         close(expect->fd);
-        expect->handler->timeout(expect->handler_ctx);
+        expect->handler->Timeout();
     } else {
         char buffer[1024];
 
@@ -99,22 +98,22 @@ expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
         if (nbytes < 0) {
             GError *error = new_error_errno();
             close(fd);
-            expect->handler->error(error, expect->handler_ctx);
+            expect->handler->Error(error);
         } else if (!expect->config->fade_expect.empty() &&
                    check_expectation(buffer, nbytes,
                                      expect->config->fade_expect.c_str())) {
             close(fd);
-            expect->handler->fade(expect->handler_ctx);
+            expect->handler->Fade();
         } else if (expect->config->expect.empty() ||
                    check_expectation(buffer, nbytes,
                                      expect->config->expect.c_str())) {
             close(fd);
-            expect->handler->success(expect->handler_ctx);
+            expect->handler->Success();
         } else {
             close(fd);
             GError *error = g_error_new_literal(g_file_error_quark(), 0,
                                                 "Expectation failed");
-            expect->handler->error(error, expect->handler_ctx);
+            expect->handler->Error(error);
         }
     }
 
@@ -141,7 +140,7 @@ expect_monitor_success(int fd, void *ctx)
         if (nbytes < 0) {
             GError *error = new_error_errno();
             close(fd);
-            expect->handler->error(error, expect->handler_ctx);
+            expect->handler->Error(error);
             return;
         }
     }
@@ -168,7 +167,7 @@ expect_monitor_timeout(void *ctx)
 {
     ExpectMonitor *expect =
         (ExpectMonitor *)ctx;
-    expect->handler->timeout(expect->handler_ctx);
+    expect->handler->Timeout();
     delete expect;
 }
 
@@ -177,7 +176,7 @@ expect_monitor_error(GError *error, void *ctx)
 {
     ExpectMonitor *expect =
         (ExpectMonitor *)ctx;
-    expect->handler->error(error, expect->handler_ctx);
+    expect->handler->Error(error);
     delete expect;
 }
 
@@ -195,11 +194,11 @@ static const struct client_socket_handler expect_monitor_handler = {
 static void
 expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
                    const struct sockaddr *address, size_t address_length,
-                   const struct lb_monitor_handler *handler, void *handler_ctx,
+                   LBMonitorHandler &handler,
                    struct async_operation_ref *async_ref)
 {
     ExpectMonitor *expect = new ExpectMonitor(pool, config,
-                                              handler, handler_ctx,
+                                              handler,
                                               async_ref);
 
     const unsigned connect_timeout = config->connect_timeout > 0

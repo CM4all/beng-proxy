@@ -13,11 +13,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-struct syn_monitor_context {
-    const struct lb_monitor_handler *handler;
-    void *handler_ctx;
-};
-
 /*
  * client_socket handler
  *
@@ -29,22 +24,22 @@ syn_monitor_success(int fd, void *ctx)
     /* dispose the socket, we don't need it */
     close(fd);
 
-    struct syn_monitor_context *syn = (struct syn_monitor_context *)ctx;
-    syn->handler->success(syn->handler_ctx);
+    LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
+    handler.Success();
 }
 
 static void
 syn_monitor_timeout(void *ctx)
 {
-    struct syn_monitor_context *syn = (struct syn_monitor_context *)ctx;
-    syn->handler->timeout(syn->handler_ctx);
+    LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
+    handler.Timeout();
 }
 
 static void
 syn_monitor_error(GError *error, void *ctx)
 {
-    struct syn_monitor_context *syn = (struct syn_monitor_context *)ctx;
-    syn->handler->error(error, syn->handler_ctx);
+    LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
+    handler.Error(error);
 }
 
 static const struct client_socket_handler syn_monitor_handler = {
@@ -62,14 +57,9 @@ static void
 syn_monitor_run(struct pool *pool,
                 const struct lb_monitor_config *config,
                 const struct sockaddr *address, size_t address_length,
-                const struct lb_monitor_handler *handler, void *handler_ctx,
+                LBMonitorHandler &handler,
                 struct async_operation_ref *async_ref)
 {
-    struct syn_monitor_context *syn =
-        (struct syn_monitor_context *)p_malloc(pool, sizeof(*syn));
-    syn->handler = handler;
-    syn->handler_ctx = handler_ctx;
-
     const unsigned timeout = config->timeout > 0
         ? config->timeout
         : 30;
@@ -77,7 +67,7 @@ syn_monitor_run(struct pool *pool,
     client_socket_new(pool, address->sa_family, SOCK_STREAM, 0,
                       address, address_length,
                       timeout,
-                      &syn_monitor_handler, syn,
+                      &syn_monitor_handler, &handler,
                       async_ref);
 }
 

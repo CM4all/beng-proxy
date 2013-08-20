@@ -14,7 +14,7 @@
 
 #include <event.h>
 
-struct lb_monitor {
+struct lb_monitor final : public LBMonitorHandler {
     struct pool *pool;
 
     const char *name;
@@ -48,100 +48,89 @@ struct lb_monitor {
 
         pool_unref(pool);
     }
+
+    /* virtual methods from class LBMonitorHandler */
+    virtual void Success() override;
+    virtual void Fade() override;
+    virtual void Timeout() override;
+    virtual void Error(GError *error) override;
 };
 
-static void
-monitor_handler_success(void *ctx)
+void
+lb_monitor::Success()
 {
-    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
-    async_ref_clear(&monitor->async_ref);
-    evtimer_del(&monitor->timeout_event);
+    async_ref_clear(&async_ref);
+    evtimer_del(&timeout_event);
 
-    if (!monitor->state)
-        daemon_log(5, "monitor recovered: %s\n", monitor->name);
-    else if (monitor->fade)
-        daemon_log(5, "monitor finished fade: %s\n", monitor->name);
+    if (!state)
+        daemon_log(5, "monitor recovered: %s\n", name);
+    else if (fade)
+        daemon_log(5, "monitor finished fade: %s\n", name);
     else
-        daemon_log(6, "monitor ok: %s\n", monitor->name);
+        daemon_log(6, "monitor ok: %s\n", name);
 
-    monitor->state = true;
+    state = true;
 
-    failure_unset(monitor->address, monitor->address_length,
-                  FAILURE_MONITOR);
+    failure_unset(address, address_length, FAILURE_MONITOR);
 
-    if (monitor->fade) {
-        monitor->fade = false;
-        failure_unset(monitor->address, monitor->address_length,
-                      FAILURE_FADE);
+    if (fade) {
+        fade = false;
+        failure_unset(address, address_length, FAILURE_FADE);
     }
 
-    evtimer_add(&monitor->interval_event, &monitor->interval);
+    evtimer_add(&interval_event, &interval);
 }
 
-static void
-monitor_handler_fade(void *ctx)
+void
+lb_monitor::Fade()
 {
-    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
-    async_ref_clear(&monitor->async_ref);
-    evtimer_del(&monitor->timeout_event);
+    async_ref_clear(&async_ref);
+    evtimer_del(&timeout_event);
 
-    if (!monitor->fade)
-        daemon_log(5, "monitor fade: %s\n", monitor->name);
+    if (!fade)
+        daemon_log(5, "monitor fade: %s\n", name);
     else
-        daemon_log(6, "monitor still fade: %s\n", monitor->name);
+        daemon_log(6, "monitor still fade: %s\n", name);
 
-    monitor->fade = true;
-    failure_set(monitor->address, monitor->address_length,
-                FAILURE_FADE, 300);
+    fade = true;
+    failure_set(address, address_length, FAILURE_FADE, 300);
 
-    evtimer_add(&monitor->interval_event, &monitor->interval);
+    evtimer_add(&interval_event, &interval);
 }
 
-static void
-monitor_handler_timeout(void *ctx)
+void
+lb_monitor::Timeout()
 {
-    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
-    async_ref_clear(&monitor->async_ref);
-    evtimer_del(&monitor->timeout_event);
+    async_ref_clear(&async_ref);
+    evtimer_del(&timeout_event);
 
-    daemon_log(monitor->state ? 3 : 6,
-               "monitor timeout: %s\n", monitor->name);
+    daemon_log(state ? 3 : 6, "monitor timeout: %s\n", name);
 
-    monitor->state = false;
-    failure_set(monitor->address, monitor->address_length,
-                FAILURE_MONITOR, 0);
+    state = false;
+    failure_set(address, address_length, FAILURE_MONITOR, 0);
 
-    evtimer_add(&monitor->interval_event, &monitor->interval);
+    evtimer_add(&interval_event, &interval);
 }
 
-static void
-monitor_handler_error(GError *error, void *ctx)
+void
+lb_monitor::Error(GError *error)
 {
-    struct lb_monitor *monitor = (struct lb_monitor *)ctx;
-    async_ref_clear(&monitor->async_ref);
-    evtimer_del(&monitor->timeout_event);
+    async_ref_clear(&async_ref);
+    evtimer_del(&timeout_event);
 
-    if (monitor->state)
+    if (state)
         daemon_log(2, "monitor error: %s: %s\n",
-                   monitor->name, error->message);
+                   name, error->message);
     else
         daemon_log(4, "monitor error: %s: %s\n",
-                   monitor->name, error->message);
+                   name, error->message);
     g_error_free(error);
 
-    monitor->state = false;
-    failure_set(monitor->address, monitor->address_length,
-                FAILURE_MONITOR, 0);
+    state = false;
+    failure_set(address, address_length, FAILURE_MONITOR, 0);
 
-    evtimer_add(&monitor->interval_event, &monitor->interval);
+    evtimer_add(&interval_event, &interval);
 }
-
-static const struct lb_monitor_handler monitor_handler = {
-    .success = monitor_handler_success,
-    .fade = monitor_handler_fade,
-    .timeout = monitor_handler_timeout,
-    .error = monitor_handler_error,
-};
 
 static void
 lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
@@ -158,7 +147,7 @@ lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
     struct pool *pool = pool_new_linear(monitor->pool, "monitor_run", 8192);
     monitor->class_->run(pool, monitor->config,
                          monitor->address, monitor->address_length,
-                         &monitor_handler, monitor,
+                         *monitor,
                          &monitor->async_ref);
     pool_unref(pool);
 }

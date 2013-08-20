@@ -18,17 +18,18 @@ struct sockaddr;
 struct async_operation_ref;
 struct lb_monitor_config;
 
-struct lb_monitor_handler {
-    void (*success)(void *ctx);
-    void (*fade)(void *ctx);
-    void (*timeout)(void *ctx);
-    void (*error)(GError *error, void *ctx);
+class LBMonitorHandler {
+public:
+    virtual void Success() = 0;
+    virtual void Fade() = 0;
+    virtual void Timeout() = 0;
+    virtual void Error(GError *error) = 0;
 };
 
 struct lb_monitor_class {
     void (*run)(struct pool *pool, const struct lb_monitor_config *config,
                 const struct sockaddr *address, size_t address_length,
-                const struct lb_monitor_handler *handler, void *handler_ctx,
+                LBMonitorHandler &handler,
                 struct async_operation_ref *async_ref);
 };
 
