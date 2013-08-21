@@ -47,6 +47,14 @@ struct socket_filter {
     ssize_t (*write)(const void *data, size_t length, void *ctx);
 
     /**
+     * The client is willing to read, but does not expect it yet.  The
+     * filter processes the call, and may then call
+     * filtered_socket_internal_schedule_read().
+     */
+    void (*schedule_read)(bool expect_more, const struct timeval *timeout,
+                          void *ctx);
+
+    /**
      * The client wants to be called back as soon as writing becomes
      * possible.  The filter processes the call, and may then call
      * filtered_socket_internal_schedule_write().
@@ -316,7 +324,10 @@ filtered_socket_schedule_read_timeout(struct filtered_socket *s,
                                       bool expect_more,
                                       const struct timeval *timeout)
 {
-    buffered_socket_schedule_read_timeout(&s->base, expect_more, timeout);
+    if (s->filter != NULL && s->filter->schedule_read != NULL)
+        s->filter->schedule_read(expect_more, timeout, s->filter_ctx);
+    else
+        buffered_socket_schedule_read_timeout(&s->base, expect_more, timeout);
 }
 
 /**
@@ -401,6 +412,16 @@ filtered_socket_internal_write(struct filtered_socket *s,
     assert(s->filter != NULL);
 
     return buffered_socket_write(&s->base, data, length);
+}
+
+static inline void
+filtered_socket_internal_schedule_read(struct filtered_socket *s,
+                                       bool expect_more,
+                                       const struct timeval *timeout)
+{
+    assert(s->filter != NULL);
+
+    buffered_socket_schedule_read_timeout(&s->base, expect_more, timeout);
 }
 
 static inline void
