@@ -34,6 +34,20 @@ struct lb_monitor {
 
     bool state;
     bool fade;
+
+    lb_monitor(struct pool *_pool, const char *_name,
+               const struct lb_monitor_config *_config,
+               const struct sockaddr *_address, size_t _address_length,
+               const struct lb_monitor_class *_class);
+
+    ~lb_monitor() {
+        event_del(&interval_event);
+
+        if (async_ref_defined(&async_ref))
+            async_abort(&async_ref);
+
+        pool_unref(pool);
+    }
 };
 
 static void
@@ -168,48 +182,38 @@ lb_monitor_timeout_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
     evtimer_add(&monitor->interval_event, &monitor->interval);
 }
 
+inline
+lb_monitor::lb_monitor(struct pool *_pool, const char *_name,
+                       const struct lb_monitor_config *_config,
+                       const struct sockaddr *_address, size_t _address_length,
+                       const struct lb_monitor_class *_class)
+    :pool(_pool), name(_name), config(_config),
+     address(_address), address_length(_address_length),
+     class_(_class),
+     interval{config->interval, 0},
+     timeout{config->timeout, 0},
+     state(true), fade(false) {
+    evtimer_set(&interval_event, lb_monitor_interval_callback, this);
+    evtimer_set(&timeout_event, lb_monitor_timeout_callback, this);
+    async_ref_clear(&async_ref);
+    pool_ref(pool);
+}
+
 struct lb_monitor *
 lb_monitor_new(struct pool *pool, const char *name,
                const struct lb_monitor_config *config,
                const struct sockaddr *address, size_t address_length,
                const struct lb_monitor_class *class_)
 {
-    pool_ref(pool);
-    struct lb_monitor *monitor = (struct lb_monitor *)
-        p_malloc(pool, sizeof(*monitor));
-    monitor->pool = pool;
-    monitor->name = name;
-    monitor->config = config;
-    monitor->address = address;
-    monitor->address_length = address_length;
-    monitor->class_ = class_;
-
-    monitor->interval.tv_sec = config->interval;
-    monitor->interval.tv_usec = 0;
-
-    evtimer_set(&monitor->interval_event,
-                lb_monitor_interval_callback, monitor);
-
-    monitor->timeout.tv_sec = config->timeout;
-    monitor->timeout.tv_usec = 0;
-    evtimer_set(&monitor->timeout_event, lb_monitor_timeout_callback, monitor);
-
-    async_ref_clear(&monitor->async_ref);
-    monitor->state = true;
-    monitor->fade = false;
-
-    return monitor;
+    return new lb_monitor(pool, name, config,
+                          address, address_length,
+                          class_);
 }
 
 void
 lb_monitor_free(struct lb_monitor *monitor)
 {
-    event_del(&monitor->interval_event);
-
-    if (async_ref_defined(&monitor->async_ref))
-        async_abort(&monitor->async_ref);
-
-    pool_unref(monitor->pool);
+    delete monitor;
 }
 
 void
