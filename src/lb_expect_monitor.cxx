@@ -18,9 +18,9 @@
 #include <string.h>
 #include <errno.h>
 
-struct expect_monitor_context {
+struct ExpectMonitor {
     struct pool *pool;
-    const struct lb_monitor_config *config;
+    const lb_monitor_config *config;
 
     int fd;
 
@@ -31,6 +31,15 @@ struct expect_monitor_context {
 
     struct async_operation_ref *async_ref;
     struct async_operation async_operation;
+
+    ExpectMonitor(struct pool *_pool, const lb_monitor_config *_config,
+                  const lb_monitor_handler *_handler, void *_handler_ctx,
+                  async_operation_ref *_async_ref)
+        :pool(_pool), config(_config),
+         handler(_handler), handler_ctx(_handler_ctx),
+         async_ref(_async_ref) {}
+
+    ExpectMonitor(const ExpectMonitor &other) = delete;
 };
 
 static bool
@@ -45,20 +54,21 @@ check_expectation(char *received, size_t received_length,
  *
  */
 
-static struct expect_monitor_context *
+static ExpectMonitor *
 async_to_expect_monitor(struct async_operation *ao)
 {
-    return (struct expect_monitor_context *)(((char*)ao) - offsetof(struct expect_monitor_context, async_operation));
+    return (ExpectMonitor *)(((char *)ao) - offsetof(struct ExpectMonitor, async_operation));
 }
 
 static void
 expect_monitor_request_abort(struct async_operation *ao)
 {
-    struct expect_monitor_context *expect = async_to_expect_monitor(ao);
+    ExpectMonitor *expect = async_to_expect_monitor(ao);
 
     event_del(&expect->event);
     close(expect->fd);
     pool_unref(expect->pool);
+    delete expect;
 }
 
 static const struct async_operation_class expect_monitor_async_operation = {
@@ -73,8 +83,8 @@ static const struct async_operation_class expect_monitor_async_operation = {
 static void
 expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
 {
-    struct expect_monitor_context *expect =
-        (struct expect_monitor_context *)ctx;
+    ExpectMonitor *expect =
+        (ExpectMonitor *)ctx;
 
     async_operation_finished(&expect->async_operation);
 
@@ -109,6 +119,7 @@ expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
     }
 
     pool_unref(expect->pool);
+    delete expect;
     pool_commit();
 }
 
@@ -120,8 +131,8 @@ expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
 static void
 expect_monitor_success(int fd, void *ctx)
 {
-    struct expect_monitor_context *expect =
-        (struct expect_monitor_context *)ctx;
+    ExpectMonitor *expect =
+        (ExpectMonitor *)ctx;
 
     if (!expect->config->send.empty()) {
         ssize_t nbytes = send(fd, expect->config->send.data(),
@@ -155,17 +166,19 @@ expect_monitor_success(int fd, void *ctx)
 static void
 expect_monitor_timeout(void *ctx)
 {
-    struct expect_monitor_context *expect =
-        (struct expect_monitor_context *)ctx;
+    ExpectMonitor *expect =
+        (ExpectMonitor *)ctx;
     expect->handler->timeout(expect->handler_ctx);
+    delete expect;
 }
 
 static void
 expect_monitor_error(GError *error, void *ctx)
 {
-    struct expect_monitor_context *expect =
-        (struct expect_monitor_context *)ctx;
+    ExpectMonitor *expect =
+        (ExpectMonitor *)ctx;
     expect->handler->error(error, expect->handler_ctx);
+    delete expect;
 }
 
 static const struct client_socket_handler expect_monitor_handler = {
@@ -185,13 +198,9 @@ expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
                    const struct lb_monitor_handler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    struct expect_monitor_context *expect =
-        (struct expect_monitor_context *)p_malloc(pool, sizeof(*expect));
-    expect->pool = pool;
-    expect->config = config;
-    expect->handler = handler;
-    expect->handler_ctx = handler_ctx;
-    expect->async_ref = async_ref;
+    ExpectMonitor *expect = new ExpectMonitor(pool, config,
+                                              handler, handler_ctx,
+                                              async_ref);
 
     const unsigned connect_timeout = config->connect_timeout > 0
         ? config->connect_timeout
