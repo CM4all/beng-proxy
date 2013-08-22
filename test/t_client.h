@@ -465,6 +465,7 @@ static void
 test_close_request_body_early(struct pool *pool, struct context *c)
 {
     struct istream *request_body = istream_delayed_new(pool);
+    async_ref_clear(istream_delayed_async_ref(request_body));
 
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
@@ -805,6 +806,7 @@ test_close_ignored_request_body(struct pool *pool, struct context *c)
 {
     c->connection = connect_null();
     c->request_body = istream_delayed_new(pool);
+    async_ref_clear(istream_delayed_async_ref(c->request_body));
     c->close_request_body_early = true;
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_GET, "/foo", NULL,
@@ -838,6 +840,7 @@ test_head_close_ignored_request_body(struct pool *pool, struct context *c)
 {
     c->connection = connect_null();
     c->request_body = istream_delayed_new(pool);
+    async_ref_clear(istream_delayed_async_ref(c->request_body));
     c->close_request_body_early = true;
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_HEAD, "/foo", NULL,
@@ -871,6 +874,7 @@ test_close_request_body_eor(struct pool *pool, struct context *c)
     c->connection = connect_dummy();
     c->close_request_body_eof = true;
     c->request_body = istream_delayed_new(pool);
+    async_ref_clear(istream_delayed_async_ref(c->request_body));
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_GET, "/foo", NULL,
                    wrap_fake_request_body(pool, c->request_body),
@@ -901,10 +905,12 @@ static void
 test_close_request_body_eor2(struct pool *pool, struct context *c)
 {
     c->connection = connect_fixed();
+    c->request_body = istream_delayed_new(pool);
+    async_ref_clear(istream_delayed_async_ref(c->request_body));
     c->close_request_body_eof = true;
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_GET, "/foo", NULL,
-                   c->request_body = istream_delayed_new(pool),
+                   c->request_body,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -964,9 +970,11 @@ static void
 test_twice_100(struct pool *pool, struct context *c)
 {
     c->connection = connect_twice_100();
+    c->request_body = istream_delayed_new(pool);
+    async_ref_clear(istream_delayed_async_ref(c->request_body));
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_GET, "/foo", NULL,
-                   c->request_body = istream_delayed_new(pool),
+                   c->request_body,
                    false,
                    &my_response_handler, c, &c->async_ref);
     async_ref_clear(istream_delayed_async_ref(c->request_body));
