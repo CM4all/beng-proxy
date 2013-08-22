@@ -891,7 +891,7 @@ http_client_socket_closed(void *ctx)
     stopwatch_event(client->stopwatch, "end");
 
     if (client->request.istream != NULL)
-        istream_close_handler(client->request.istream);
+        istream_free(&client->request.istream);
 
     /* can't reuse the socket, it was closed by the peer */
     http_client_release_socket(client, false);
