@@ -221,7 +221,6 @@ http_client_prefix_error(struct http_client *client, GError **error_r)
 static void
 http_client_abort_response_headers(struct http_client *client, GError *error)
 {
-    assert(filtered_socket_connected(&client->socket));
     assert(client->response.read_state == READ_STATUS ||
            client->response.read_state == READ_HEADERS);
 
