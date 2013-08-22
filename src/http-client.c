@@ -896,7 +896,7 @@ http_client_socket_closed(size_t remaining, void *ctx)
     stopwatch_event(client->stopwatch, "end");
 
     if (client->request.istream != NULL)
-        istream_close_handler(client->request.istream);
+        istream_free(&client->request.istream);
 
     if (http_body_socket_eof(&client->response.body_reader, remaining)) {
         /* there's data left in the buffer: only release the
