@@ -179,8 +179,8 @@ lb_monitor::lb_monitor(struct pool *_pool, const char *_name,
     :pool(_pool), name(_name), config(_config),
      address(_address), address_length(_address_length),
      class_(_class),
-     interval{config->interval, 0},
-     timeout{config->timeout, 0},
+     interval{time_t(config->interval), 0},
+     timeout{time_t(config->timeout), 0},
      state(true), fade(false) {
     evtimer_set(&interval_event, lb_monitor_interval_callback, this);
     evtimer_set(&timeout_event, lb_monitor_timeout_callback, this);
