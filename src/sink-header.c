@@ -234,7 +234,7 @@ sink_header_input_eof(void *ctx)
 
     case CALLBACK:
         assert(false);
-        break;
+        gcc_unreachable();
 
     case DATA:
         istream_deinit_eof(&header->output);
@@ -257,7 +257,7 @@ sink_header_input_abort(GError *error, void *ctx)
 
     case CALLBACK:
         assert(false);
-        break;
+        gcc_unreachable();
 
     case DATA:
         istream_deinit_abort(&header->output, error);

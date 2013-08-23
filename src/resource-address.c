@@ -109,9 +109,8 @@ resource_address_insert_query_string_from(struct pool *pool,
         return dest;
     }
 
-    /* unreachable */
     assert(false);
-    return src;
+    gcc_unreachable();
 }
 
 const struct resource_address *
@@ -169,9 +168,8 @@ resource_address_insert_args(struct pool *pool,
         return dest;
     }
 
-    /* unreachable */
     assert(false);
-    return src;
+    gcc_unreachable();
 }
 
 char *
@@ -199,7 +197,7 @@ resource_address_auto_base(struct pool *pool,
     }
 
     assert(false);
-    return NULL;
+    gcc_unreachable();
 }
 
 struct resource_address *
@@ -253,7 +251,7 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
     }
 
     assert(false);
-    return NULL;
+    gcc_unreachable();
 }
 
 struct resource_address *
@@ -267,7 +265,7 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_PIPE:
         assert(false);
-        return NULL;
+        gcc_unreachable();
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
@@ -300,7 +298,7 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
     }
 
     assert(false);
-    return NULL;
+    gcc_unreachable();
 }
 
 const struct resource_address *
@@ -355,7 +353,7 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
     }
 
     assert(false);
-    return NULL;
+    gcc_unreachable();
 }
 
 const struct strref *
@@ -392,7 +390,7 @@ resource_address_relative(const struct resource_address *base,
     }
 
     assert(false);
-    return NULL;
+    gcc_unreachable();
 }
 
 const char *
@@ -420,7 +418,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
     }
 
     assert(false);
-    return "";
+    gcc_unreachable();
 }
 
 const char *
@@ -443,9 +441,8 @@ resource_address_host_and_port(const struct resource_address *address)
         return address->u.http->host_and_port;
     }
 
-    /* unreachable */
     assert(false);
-    return NULL;
+    gcc_unreachable();
 }
 
 const char *
@@ -473,9 +470,8 @@ resource_address_uri_path(const struct resource_address *address)
         return address->u.cgi->script_name;
     }
 
-    /* unreachable */
     assert(false);
-    return NULL;
+    gcc_unreachable();
 }
 
 bool
@@ -504,9 +500,8 @@ resource_address_is_expandable(const struct resource_address *address)
         return nfs_address_is_expandable(address->u.nfs);
     }
 
-    /* unreachable */
     assert(false);
-    return false;
+    gcc_unreachable();
 }
 
 bool
@@ -557,7 +552,6 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
         return true;
     }
 
-    /* unreachable */
     assert(false);
-    return true;
+    gcc_unreachable();
 }

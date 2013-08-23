@@ -194,9 +194,8 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
         return false;
     }
 
-    /* unreachable */
     assert(false);
-    return false;
+    gcc_unreachable();
 }
 
 /**
@@ -241,9 +240,8 @@ buffered_socket_submit_direct(struct buffered_socket *s)
         return false;
     }
 
-    /* unreachable */
     assert(false);
-    return false;
+    gcc_unreachable();
 }
 
 static bool

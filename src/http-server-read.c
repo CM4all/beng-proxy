@@ -409,9 +409,8 @@ http_server_feed(struct http_server_connection *connection,
         return BUFFERED_MORE;
     }
 
-    /* unreachable */
     assert(false);
-    return BUFFERED_BLOCKING;
+    gcc_unreachable();
 }
 
 enum direct_result

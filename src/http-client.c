@@ -851,9 +851,8 @@ http_client_feed(struct http_client *client, const void *data, size_t length)
         return http_client_feed_body(client, data, length);
     }
 
-    /* unreachable */
     assert(false);
-    return BUFFERED_CLOSED;
+    gcc_unreachable();
 }
 
 /*
