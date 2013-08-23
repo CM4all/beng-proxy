@@ -107,8 +107,11 @@ struct context {
     bool body_eof, body_abort, body_closed;
 
     struct istream *request_body;
+    bool aborted_request_body;
     bool close_request_body_early, close_request_body_eof;
     GError *body_error;
+
+    struct async_operation operation;
 };
 
 
@@ -132,6 +135,32 @@ static const struct lease my_lease = {
     .release = my_release,
 };
 
+/*
+ * async_operation
+ *
+ */
+
+static struct context *
+async_to_context(struct async_operation *ao)
+{
+    return (struct context *)(((char *)ao) - offsetof(struct context, operation));
+}
+
+static void
+my_async_abort(struct async_operation *ao)
+{
+    g_printerr("MY_ASYNC_ABORT\n");
+    struct context *c = async_to_context(ao);
+    assert(c->request_body != NULL);
+    assert(!c->aborted_request_body);
+
+    c->request_body = NULL;
+    c->aborted_request_body = true;
+}
+
+static const struct async_operation_class my_async_class = {
+    .abort = my_async_abort,
+};
 
 /*
  * istream handler
@@ -168,7 +197,7 @@ my_istream_eof(void *ctx)
     c->body = NULL;
     c->body_eof = true;
 
-    if (c->close_request_body_eof) {
+    if (c->close_request_body_eof && !c->aborted_request_body) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "close_request_body_eof");
         istream_delayed_set_abort(c->request_body, error);
@@ -214,7 +243,7 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
         ? istream_available(body, false)
         : -2;
 
-    if (c->close_request_body_early) {
+    if (c->close_request_body_early && !c->aborted_request_body) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "close_request_body_early");
         istream_delayed_set_abort(c->request_body, error);
@@ -461,11 +490,21 @@ wrap_fake_request_body(gcc_unused struct pool *pool, struct istream *i)
     return i;
 }
 
+static struct istream *
+make_delayed_request_body(struct pool *pool, struct context *c)
+{
+    async_init(&c->operation, &my_async_class);
+
+    struct istream *i = c->request_body = istream_delayed_new(pool);
+    async_ref_set(istream_delayed_async_ref(i), &c->operation);
+
+    return i;
+}
+
 static void
 test_close_request_body_early(struct pool *pool, struct context *c)
 {
-    struct istream *request_body = istream_delayed_new(pool);
-    async_ref_clear(istream_delayed_async_ref(request_body));
+    struct istream *request_body = make_delayed_request_body(pool, c);
 
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
@@ -807,13 +846,13 @@ test_ignored_body(struct pool *pool, struct context *c)
 static void
 test_close_ignored_request_body(struct pool *pool, struct context *c)
 {
+    struct istream *request_body = make_delayed_request_body(pool, c);
+
     c->connection = connect_null();
-    c->request_body = istream_delayed_new(pool);
-    async_ref_clear(istream_delayed_async_ref(c->request_body));
     c->close_request_body_early = true;
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_GET, "/foo", NULL,
-                   wrap_fake_request_body(pool, c->request_body),
+                   wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -841,13 +880,13 @@ test_close_ignored_request_body(struct pool *pool, struct context *c)
 static void
 test_head_close_ignored_request_body(struct pool *pool, struct context *c)
 {
+    struct istream *request_body = make_delayed_request_body(pool, c);
+
     c->connection = connect_null();
-    c->request_body = istream_delayed_new(pool);
-    async_ref_clear(istream_delayed_async_ref(c->request_body));
     c->close_request_body_early = true;
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_HEAD, "/foo", NULL,
-                   wrap_fake_request_body(pool, c->request_body),
+                   wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -874,13 +913,13 @@ test_head_close_ignored_request_body(struct pool *pool, struct context *c)
 static void
 test_close_request_body_eor(struct pool *pool, struct context *c)
 {
+    struct istream *request_body = make_delayed_request_body(pool, c);
+
     c->connection = connect_dummy();
     c->close_request_body_eof = true;
-    c->request_body = istream_delayed_new(pool);
-    async_ref_clear(istream_delayed_async_ref(c->request_body));
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_GET, "/foo", NULL,
-                   wrap_fake_request_body(pool, c->request_body),
+                   wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -907,13 +946,13 @@ test_close_request_body_eor(struct pool *pool, struct context *c)
 static void
 test_close_request_body_eor2(struct pool *pool, struct context *c)
 {
+    struct istream *request_body = make_delayed_request_body(pool, c);
+
     c->connection = connect_fixed();
-    c->request_body = istream_delayed_new(pool);
-    async_ref_clear(istream_delayed_async_ref(c->request_body));
     c->close_request_body_eof = true;
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_GET, "/foo", NULL,
-                   c->request_body,
+                   request_body,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
