@@ -207,6 +207,7 @@ buffered_socket_submit_direct(struct buffered_socket *s)
     assert(buffered_socket_connected(s));
     assert(buffered_socket_input_empty(s));
 
+    const bool old_expect_more = s->expect_more;
     s->expect_more = false;
 
     const enum direct_result result =
@@ -218,6 +219,7 @@ buffered_socket_submit_direct(struct buffered_socket *s)
         return true;
 
     case DIRECT_BLOCKING:
+        s->expect_more = old_expect_more;
         socket_wrapper_unschedule_read(&s->base);
         return false;
 
