@@ -136,6 +136,9 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
     if (buffered_socket_input_empty(s))
         return true;
 
+    const bool old_expect_more = s->expect_more;
+    s->expect_more = false;
+
     enum buffered_result result = buffered_socket_invoke_data(s);
     assert((result == BUFFERED_CLOSED) || buffered_socket_valid(s));
 
@@ -185,6 +188,7 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
         return false;
 
     case BUFFERED_BLOCKING:
+        s->expect_more = old_expect_more;
         socket_wrapper_unschedule_read(&s->base);
         return false;
 
