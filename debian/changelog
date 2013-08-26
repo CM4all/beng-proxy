@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.27) unstable; urgency=low
 
-  * 
+  * processor: fix stalled transfer with two nested processors
 
  --   
 
