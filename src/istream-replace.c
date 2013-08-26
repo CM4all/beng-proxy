@@ -30,6 +30,12 @@ struct istream_replace {
     struct growing_buffer *buffer;
     off_t source_length, position;
 
+    /**
+     * The offset given by istream_replace_settle() or the end offset
+     * of the last substitution (whichever is bigger).
+     */
+    off_t settled_position;
+
     struct growing_buffer_reader reader;
 
     struct substitution *first_substitution, **append_substitution_p;
@@ -337,14 +343,16 @@ replace_try_read_from_buffer(struct istream_replace *replace)
     assert(replace != NULL);
 
     if (replace->first_substitution == NULL) {
-        if (!replace->finished)
+        if (replace->finished)
+            end = replace->source_length;
+        else if (replace->position < replace->settled_position)
+            end = replace->settled_position;
+        else
             /* block after the last substitution, unless the caller
                has already set the "finished" flag */
             return 1;
 
         assert(replace->position < replace->source_length);
-
-        end = replace->source_length;
     } else {
         end = replace->first_substitution->start;
         assert(end >= replace->position);
@@ -600,6 +608,7 @@ istream_replace_new(struct pool *pool, struct istream *input)
     replace->buffer = growing_buffer_new(replace->output.pool, 4096);
     replace->source_length = 0;
     replace->position = 0;
+    replace->settled_position = 0;
 
     growing_buffer_reader_init(&replace->reader, replace->buffer);
 
@@ -623,6 +632,7 @@ istream_replace_add(struct istream *istream, off_t start, off_t end,
     assert(!replace->finished);
     assert(start >= 0);
     assert(start <= end);
+    assert(start >= replace->settled_position);
     assert(start >= replace->last_substitution_end);
 
     if (contents == NULL && start == end)
@@ -634,6 +644,8 @@ istream_replace_add(struct istream *istream, off_t start, off_t end,
 
     s->start = start;
     s->end = end;
+
+    replace->settled_position = end;
 
 #ifndef NDEBUG
     replace->last_substitution_end = end;
@@ -660,6 +672,7 @@ replace_get_last_substitution(struct istream_replace *replace)
     while (substitution->next != NULL)
         substitution = substitution->next;
 
+    assert(substitution->end <= replace->settled_position);
     assert(substitution->end == replace->last_substitution_end);
     return substitution;
 }
@@ -674,13 +687,26 @@ istream_replace_extend(struct istream *istream, G_GNUC_UNUSED off_t start, off_t
 
     struct substitution *substitution = replace_get_last_substitution(replace);
     assert(substitution->start == start);
+    assert(substitution->end == replace->settled_position);
     assert(substitution->end == replace->last_substitution_end);
     assert(end >= substitution->end);
 
     substitution->end = end;
+    replace->settled_position = end;
 #ifndef NDEBUG
     replace->last_substitution_end = end;
 #endif
+}
+
+void
+istream_replace_settle(struct istream *istream, off_t offset)
+{
+    struct istream_replace *replace = istream_to_replace(istream);
+
+    assert(!replace->finished);
+    assert(offset >= replace->settled_position);
+
+    replace->settled_position = offset;
 }
 
 void

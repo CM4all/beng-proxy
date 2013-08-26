@@ -30,6 +30,15 @@ istream_replace_add(struct istream *istream, off_t start, off_t end,
 void
 istream_replace_extend(struct istream *istream, off_t start, off_t end);
 
+/**
+ * Mark all source data until the given offset as "settled",
+ * i.e. there will be no more substitutions before this offset.  It
+ * allows this object to deliver data until this offset to its
+ * handler.
+ */
+void
+istream_replace_settle(struct istream *istream, off_t offset);
+
 void
 istream_replace_finish(struct istream *istream);
 

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.1.7) unstable; urgency=low
 
-  * 
+  * merge release 3.0.28
 
  --   
 
@@ -57,6 +57,18 @@ cm4all-beng-proxy (3.1) unstable; urgency=low
   * nfs_client: new resource loader backend
 
  -- Max Kellermann <mk@cm4all.com>  Tue, 21 May 2013 21:14:06 -0000
+
+cm4all-beng-proxy (3.0.28) unstable; urgency=low
+
+  * processor: fix widget lookup regression
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Aug 2013 18:21:03 -0000
+
+cm4all-beng-proxy (3.0.27) unstable; urgency=low
+
+  * processor: fix stalled transfer with two nested processors
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 Aug 2013 17:09:47 -0000
 
 cm4all-beng-proxy (3.0.26) unstable; urgency=low
 
