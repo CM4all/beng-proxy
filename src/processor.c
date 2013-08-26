@@ -1537,7 +1537,7 @@ processor_parser_cdata(const char *p gcc_unused, size_t length,
         if (length > 0)
             istream_replace_extend(processor->replace, processor->cdata_start,
                                    start + length);
-    } else if (processor->widget.widget == NULL)
+    } else if (processor->replace != NULL && processor->widget.widget == NULL)
         istream_replace_settle(processor->replace, start + length);
 
     return length;
