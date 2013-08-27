@@ -739,6 +739,18 @@ http_client_feed_headers(struct http_client *client,
         istream_optional_resume(client->request.body);
         client->request.body = NULL;
 
+        if (!filtered_socket_connected(&client->socket)) {
+            GError *error = g_error_new_literal(http_client_quark(),
+                                                HTTP_CLIENT_UNSPECIFIED,
+                                                "Peer closed the socket prematurely after status 100");
+#ifndef NDEBUG
+            /* assertion workaround */
+            client->response.read_state = READ_STATUS;
+#endif
+            http_client_abort_response_headers(client, error);
+            return BUFFERED_CLOSED;
+        }
+
         http_client_schedule_write(client);
 
         /* try again */
