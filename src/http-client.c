@@ -943,7 +943,6 @@ static bool
 http_client_socket_broken(void *ctx)
 {
     struct http_client *client = ctx;
-    assert(client->request.istream != NULL);
 
     /* the server has closed the connection, probably because he's not
        interested in our request body - that's ok; now we wait for his
@@ -951,7 +950,8 @@ http_client_socket_broken(void *ctx)
 
     client->keep_alive = false;
 
-    istream_free(&client->request.istream);
+    if (client->request.istream != NULL)
+        istream_free(&client->request.istream);
 
     filtered_socket_schedule_read_timeout(&client->socket, true,
                                           &http_client_timeout);
