@@ -8,3 +8,5 @@
     echo "HTTP/1.1 200 OK"
     echo
 } >&0
+
+while read; do :; done
