@@ -185,7 +185,8 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 
     async_operation_finished(&client->async);
 
-    fcgi_client_release_socket(client, false);
+    if (buffered_socket_connected(&client->socket))
+        fcgi_client_release_socket(client, false);
 
     if (client->request.istream != NULL)
         istream_free_handler(&client->request.istream);
