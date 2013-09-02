@@ -485,8 +485,13 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                 if (*buffer == ']' && parser->cdend_match < 2) {
                     if (buffer > p) {
                         /* flush buffer */
-                        nbytes = parser->handler->cdata(p, buffer - p, 0,
-                                                        parser->position + buffer - start,
+
+                        size_t cdata_length = buffer - p;
+                        off_t cdata_end = parser->position + buffer - start;
+                        off_t cdata_start = cdata_end - cdata_length;
+
+                        nbytes = parser->handler->cdata(p, cdata_length, false,
+                                                        cdata_start,
                                                         parser->handler_ctx);
                         assert(nbytes <= (size_t)(buffer - p));
 
@@ -536,8 +541,12 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             }
 
             if (buffer > p) {
-                nbytes = parser->handler->cdata(p, buffer - p, 0,
-                                                parser->position + buffer - start,
+                size_t cdata_length = buffer - p;
+                off_t cdata_end = parser->position + buffer - start;
+                off_t cdata_start = cdata_end - cdata_length;
+
+                nbytes = parser->handler->cdata(p, cdata_length, false,
+                                                cdata_start,
                                                 parser->handler_ctx);
                 assert(nbytes <= (size_t)(buffer - p));
 
