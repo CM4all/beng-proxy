@@ -3,7 +3,7 @@ cm4all-beng-proxy (3.0.29) unstable; urgency=low
   * fcgi-client: fix crash on certain malformed responses
   * parser: fix crash on certain CDATA sections
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 02 Sep 2013 10:51:58 -0000
 
 cm4all-beng-proxy (3.0.28) unstable; urgency=low
 
