@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_LB_CONNECTION_H
 #define BENG_PROXY_LB_CONNECTION_H
 
-#include "istream-direct.h"
-
 #include <inline/list.h>
 
 #include <stdint.h>
