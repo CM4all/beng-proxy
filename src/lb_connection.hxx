@@ -7,7 +7,6 @@
 #ifndef BENG_PROXY_LB_CONNECTION_H
 #define BENG_PROXY_LB_CONNECTION_H
 
-#include "async.h"
 #include "istream-direct.h"
 
 #include <inline/list.h>
@@ -39,17 +38,7 @@ struct lb_connection {
      */
     uint64_t request_start_time;
 
-    struct {
-        struct {
-            int fd;
-
-            enum istream_direct type;
-
-            struct sink_fd *sink;
-        } peers[2];
-
-        struct async_operation_ref connect;
-    } tcp;
+    struct lb_tcp *tcp;
 };
 
 struct lb_connection *

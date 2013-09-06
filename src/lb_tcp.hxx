@@ -11,6 +11,7 @@
 
 struct sockaddr;
 struct lb_connection;
+struct lb_tcp;
 
 void
 lb_tcp_new(struct lb_connection *connection, int fd,
@@ -18,6 +19,6 @@ lb_tcp_new(struct lb_connection *connection, int fd,
            const struct sockaddr *remote_address);
 
 void
-lb_tcp_close(struct lb_connection *connection);
+lb_tcp_close(struct lb_tcp *tcp);
 
 #endif

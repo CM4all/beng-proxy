@@ -131,7 +131,7 @@ lb_connection_close(struct lb_connection *connection)
         break;
 
     case LB_PROTOCOL_TCP:
-        lb_tcp_close(connection);
+        lb_tcp_close(connection->tcp);
         break;
     }
 
