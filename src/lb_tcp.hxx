@@ -9,14 +9,29 @@
 
 #include "istream-direct.h"
 
+typedef struct _GError GError;
+struct pool;
+struct stock;
 struct sockaddr;
-struct lb_connection;
+struct address_list;
+struct balancer;
 struct lb_tcp;
 
+struct lb_tcp_handler {
+    void (*eof)(void *ctx);
+    void (*error)(const char *prefix, const char *error, void *ctx);
+    void (*_errno)(const char *prefix, int error, void *ctx);
+    void (*gerror)(const char *prefix, GError *error, void *ctx);
+};
+
 void
-lb_tcp_new(struct lb_connection *connection, int fd,
-           enum istream_direct fd_type,
-           const struct sockaddr *remote_address);
+lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
+           int fd, enum istream_direct fd_type,
+           const struct sockaddr *remote_address,
+           const struct address_list &address_list,
+           struct balancer &balancer,
+           const struct lb_tcp_handler *handler, void *ctx,
+           lb_tcp **tcp_r);
 
 void
 lb_tcp_close(struct lb_tcp *tcp);

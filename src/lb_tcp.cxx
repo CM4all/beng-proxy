@@ -5,12 +5,7 @@
  */
 
 #include "lb_tcp.hxx"
-#include "lb_connection.hxx"
-#include "lb_instance.hxx"
-#include "lb_config.hxx"
-#include "lb_log.hxx"
-#include "tcp-balancer.h"
-#include "istream-socket.h"
+#include "address_list.h"
 #include "sink_fd.h"
 #include "client-balancer.h"
 #include "client-socket.h"
@@ -19,10 +14,13 @@
 #include "async.h"
 
 #include <unistd.h>
-#include <string.h>
 
 struct lb_tcp {
-    struct lb_connection *connection;
+    struct pool *pool;
+    struct stock *pipe_stock;
+
+    const struct lb_tcp_handler *handler;
+    void *handler_ctx;
 
     struct {
         int fd;
@@ -60,10 +58,8 @@ static bool
 first_istream_socket_error(int error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
-    lb_connection_log_errno(3, connection, "Receive failed", error);
-    lb_connection_close(connection);
+    tcp->handler->_errno("Receive failed", error, tcp->handler_ctx);
     return false;
 }
 
@@ -80,9 +76,8 @@ static bool
 first_istream_socket_finished(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
-    lb_connection_close(connection);
+    tcp->handler->eof(tcp->handler_ctx);
     return false;
 }
 
@@ -120,10 +115,8 @@ static bool
 second_istream_socket_error(int error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
-    lb_connection_log_errno(3, connection, "Receive failed", error);
-    lb_connection_close(connection);
+    tcp->handler->_errno("Receive failed", error, tcp->handler_ctx);
     return false;
 }
 
@@ -140,9 +133,8 @@ static bool
 second_istream_socket_finished(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
-    lb_connection_close(connection);
+    tcp->handler->eof(tcp->handler_ctx);
     return false;
 }
 
@@ -164,35 +156,28 @@ static void
 first_sink_input_eof(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
-    lb_connection_close(connection);
+    tcp->handler->eof(tcp->handler_ctx);
 }
 
 static void
 first_sink_input_error(GError *error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
     tcp->peers[0].sink = NULL;
 
-    lb_connection_log_gerror(3, connection, "Error", error);
-    g_error_free(error);
-
-    lb_connection_close(connection);
+    tcp->handler->gerror("Error", error, tcp->handler_ctx);
 }
 
 static bool
 first_sink_send_error(int error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
     tcp->peers[0].sink = NULL;
 
-    lb_connection_log_errno(3, connection, "Send failed", error);
-    lb_connection_close(connection);
+    tcp->handler->_errno("Send failed", error, tcp->handler_ctx);
     return false;
 }
 
@@ -211,35 +196,28 @@ static void
 second_sink_input_eof(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
-    lb_connection_close(connection);
+    tcp->handler->eof(tcp->handler_ctx);
 }
 
 static void
 second_sink_input_error(GError *error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
     tcp->peers[1].sink = NULL;
 
-    lb_connection_log_gerror(3, connection, "Error", error);
-    g_error_free(error);
-
-    lb_connection_close(connection);
+    tcp->handler->gerror("Error", error, tcp->handler_ctx);
 }
 
 static bool
 second_sink_send_error(int error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
     tcp->peers[1].sink = NULL;
 
-    lb_connection_log_errno(3, connection, "Send failed", error);
-    lb_connection_close(connection);
+    tcp->handler->_errno("Send failed", error, tcp->handler_ctx);
     return false;
 }
 
@@ -258,31 +236,28 @@ static void
 lb_tcp_client_socket_success(int fd, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
     async_ref_clear(&tcp->connect);
 
     tcp->peers[1].fd = fd;
 
     struct istream *istream =
-        istream_socket_new(connection->pool,
+        istream_socket_new(tcp->pool,
                            tcp->peers[0].fd,
                            tcp->peers[0].type,
                            &first_istream_socket_handler, tcp);
-    istream = istream_pipe_new(connection->pool, istream,
-                               connection->instance->pipe_stock);
+    istream = istream_pipe_new(tcp->pool, istream, tcp->pipe_stock);
 
     tcp->peers[1].sink =
-        sink_fd_new(connection->pool, istream, fd, ISTREAM_TCP,
+        sink_fd_new(tcp->pool, istream, fd, ISTREAM_TCP,
                     &second_sink_fd_handler, tcp);
 
-    istream = istream_socket_new(connection->pool, fd, ISTREAM_TCP,
+    istream = istream_socket_new(tcp->pool, fd, ISTREAM_TCP,
                                  &second_istream_socket_handler, tcp);
-    istream = istream_pipe_new(connection->pool, istream,
-                               connection->instance->pipe_stock);
+    istream = istream_pipe_new(tcp->pool, istream, tcp->pipe_stock);
 
     tcp->peers[0].sink =
-        sink_fd_new(connection->pool, istream,
+        sink_fd_new(tcp->pool, istream,
                     tcp->peers[0].fd,
                     tcp->peers[0].type,
                     &first_sink_fd_handler, tcp);
@@ -292,26 +267,20 @@ static void
 lb_tcp_client_socket_timeout(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
     close(tcp->peers[0].fd);
 
-    lb_connection_log_error(4, connection, "Connect error", "Timeout");
-    lb_connection_remove(connection);
+    tcp->handler->error("Connect error", "Timeout", tcp->handler_ctx);
 }
 
 static void
 lb_tcp_client_socket_error(GError *error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-    struct lb_connection *connection = tcp->connection;
 
     close(tcp->peers[0].fd);
 
-    lb_connection_log_gerror(4, connection, "Connect error", error);
-    g_error_free(error);
-
-    lb_connection_remove(connection);
+    tcp->handler->gerror("Connect error", error, tcp->handler_ctx);
 }
 
 static const struct client_socket_handler lb_tcp_client_socket_handler = {
@@ -327,10 +296,10 @@ static const struct client_socket_handler lb_tcp_client_socket_handler = {
 
 gcc_pure
 static unsigned
-lb_tcp_sticky(const struct lb_cluster_config *cluster,
+lb_tcp_sticky(const struct address_list &address_list,
               const struct sockaddr *remote_address)
 {
-    switch (cluster->address_list.sticky_mode) {
+    switch (address_list.sticky_mode) {
     case STICKY_NONE:
     case STICKY_FAILOVER:
         break;
@@ -349,27 +318,29 @@ lb_tcp_sticky(const struct lb_cluster_config *cluster,
 }
 
 void
-lb_tcp_new(struct lb_connection *connection, int fd,
-           enum istream_direct fd_type,
-           const struct sockaddr *remote_address)
+lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
+           int fd, enum istream_direct fd_type,
+           const struct sockaddr *remote_address,
+           const struct address_list &address_list,
+           struct balancer &balancer,
+           const struct lb_tcp_handler *handler, void *ctx,
+           lb_tcp **tcp_r)
 {
-    struct pool *pool = connection->pool;
     lb_tcp *tcp = (lb_tcp *)p_malloc(pool, sizeof(*tcp));
-    tcp->connection = connection;
+    tcp->pool = pool;
+    tcp->pipe_stock = pipe_stock;
+    tcp->handler = handler;
+    tcp->handler_ctx = ctx;
     tcp->peers[0].fd = fd;
     tcp->peers[0].type = fd_type;
 
-    const lb_cluster_config *cluster =
-        connection->listener->destination.cluster;
-    assert(cluster != nullptr);
+    unsigned session_sticky = lb_tcp_sticky(address_list, remote_address);
 
-    unsigned session_sticky = lb_tcp_sticky(cluster, remote_address);
+    *tcp_r = tcp;
 
-    connection->tcp = tcp;
-
-    client_balancer_connect(pool, connection->instance->balancer,
+    client_balancer_connect(pool, &balancer,
                             session_sticky,
-                            &cluster->address_list,
+                            &address_list,
                             20,
                             &lb_tcp_client_socket_handler, tcp,
                             &tcp->connect);

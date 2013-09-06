@@ -22,6 +22,54 @@
 #include <sys/socket.h>
 
 /*
+ * lb_tcp_handler
+ *
+ */
+
+static void
+tcp_eof(void *ctx)
+{
+    lb_connection *connection = (lb_connection *)ctx;
+
+    lb_connection_close(connection);
+}
+
+static void
+tcp_error(const char *prefix, const char *error, void *ctx)
+{
+    lb_connection *connection = (lb_connection *)ctx;
+
+    lb_connection_log_error(3, connection, prefix, error);
+    lb_connection_close(connection);
+}
+
+static void
+tcp_errno(const char *prefix, int error, void *ctx)
+{
+    lb_connection *connection = (lb_connection *)ctx;
+
+    lb_connection_log_errno(3, connection, prefix, error);
+    lb_connection_close(connection);
+}
+
+static void
+tcp_gerror(const char *prefix, GError *error, void *ctx)
+{
+    lb_connection *connection = (lb_connection *)ctx;
+
+    lb_connection_log_gerror(3, connection, prefix, error);
+    g_error_free(error);
+    lb_connection_close(connection);
+}
+
+static const struct lb_tcp_handler tcp_handler = {
+    .eof = tcp_eof,
+    .error = tcp_error,
+    ._errno = tcp_errno,
+    .gerror = tcp_gerror,
+};
+
+/*
  * public
  *
  */
@@ -96,7 +144,12 @@ lb_connection_new(struct lb_instance *instance,
         break;
 
     case LB_PROTOCOL_TCP:
-        lb_tcp_new(connection, fd, fd_type, addr);
+        lb_tcp_new(connection->pool, instance->pipe_stock,
+                   fd, fd_type, addr,
+                   connection->listener->destination.cluster->address_list,
+                   *connection->instance->balancer,
+                   &tcp_handler, connection,
+                   &connection->tcp);
         break;
     }
 
