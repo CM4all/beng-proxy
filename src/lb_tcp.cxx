@@ -5,15 +5,16 @@
  */
 
 #include "lb_tcp.hxx"
+#include "filtered_socket.h"
 #include "address_list.h"
-#include "sink_fd.h"
 #include "client-balancer.h"
 #include "client-socket.h"
-#include "istream-socket.h"
 #include "address_sticky.h"
 #include "async.h"
+#include "direct.h"
 
 #include <unistd.h>
+#include <errno.h>
 
 struct lb_tcp {
     struct pool *pool;
@@ -22,231 +23,224 @@ struct lb_tcp {
     const struct lb_tcp_handler *handler;
     void *handler_ctx;
 
-    struct {
-        int fd;
+    struct filtered_socket inbound;
 
-        enum istream_direct type;
-
-        struct sink_fd *sink;
-    } peers[2];
+    struct buffered_socket outbound;
 
     struct async_operation_ref connect;
 };
 
+static constexpr timeval write_timeout = { 30, 0 };
+
 static void
-lb_tcp_close_sockets(struct lb_tcp *tcp)
+lb_tcp_destroy_inbound(struct lb_tcp *tcp)
 {
-    if (tcp->peers[0].sink != NULL)
-        sink_fd_close(tcp->peers[0].sink);
+    if (filtered_socket_connected(&tcp->inbound))
+        filtered_socket_close(&tcp->inbound);
 
-    if (tcp->peers[1].sink != NULL)
-        sink_fd_close(tcp->peers[1].sink);
+    filtered_socket_destroy(&tcp->inbound);
+}
 
-    close(tcp->peers[0].fd);
-    close(tcp->peers[1].fd);
+static void
+lb_tcp_destroy_outbound(struct lb_tcp *tcp)
+{
+    if (buffered_socket_connected(&tcp->outbound))
+        buffered_socket_close(&tcp->outbound);
+
+    buffered_socket_destroy(&tcp->outbound);
 }
 
 /*
- * first istream_socket handler
+ * inbound buffered_socket_handler
  *
  */
 
-static void
-first_istream_socket_read(void *ctx)
+static enum buffered_result
+inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    sink_fd_read(tcp->peers[0].sink);
-}
+    if (async_ref_defined(&tcp->connect))
+        /* outbound is not yet connected */
+        return BUFFERED_BLOCKING;
 
-static void
-first_istream_socket_close(void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+    ssize_t nbytes = buffered_socket_write(&tcp->outbound, buffer, size);
+    if (nbytes > 0) {
+        filtered_socket_consumed(&tcp->inbound, nbytes);
+        return (size_t)nbytes == size
+            ? BUFFERED_OK
+            : BUFFERED_PARTIAL;
+    }
 
-    (void)tcp;
+    switch ((enum write_result)nbytes) {
+    case WRITE_SOURCE_EOF:
+        assert(false);
+        gcc_unreachable();
+
+    case WRITE_ERRNO:
+        tcp->handler->_errno("Send failed", errno, tcp->handler_ctx);
+        return BUFFERED_CLOSED;
+
+    case WRITE_BLOCKING:
+        return BUFFERED_BLOCKING;
+
+    case WRITE_DESTROYED:
+        return BUFFERED_CLOSED;
+
+    case WRITE_BROKEN:
+        tcp->handler->eof(tcp->handler_ctx);
+        return BUFFERED_CLOSED;
+    }
+
+    assert(false);
+    gcc_unreachable();
 }
 
 static bool
-first_istream_socket_error(int error, void *ctx)
+inbound_buffered_socket_closed(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    lb_tcp_close_sockets(tcp);
-    tcp->handler->_errno("Receive failed", error, tcp->handler_ctx);
-    return false;
-}
-
-static bool
-first_istream_socket_depleted(void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-
-    (void)tcp;
-    return true;
-}
-
-static bool
-first_istream_socket_finished(void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-
-    lb_tcp_close_sockets(tcp);
+    lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
     return false;
 }
 
-static constexpr struct istream_socket_handler first_istream_socket_handler = {
-    nullptr,
-    first_istream_socket_read,
-    first_istream_socket_close,
-    first_istream_socket_error,
-    first_istream_socket_depleted,
-    first_istream_socket_finished,
-};
-
-/*
- * second istream_socket handler
- *
- */
-
-static void
-second_istream_socket_read(void *ctx)
+static bool
+inbound_buffered_socket_write(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    sink_fd_read(tcp->peers[1].sink);
-}
-
-static void
-second_istream_socket_close(void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-
-    (void)tcp;
+    return filtered_socket_read(&tcp->inbound, false);
 }
 
 static bool
-second_istream_socket_error(int error, void *ctx)
+inbound_buffered_socket_broken(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    lb_tcp_close_sockets(tcp);
-    tcp->handler->_errno("Receive failed", error, tcp->handler_ctx);
-    return false;
-}
-
-static bool
-second_istream_socket_depleted(void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-
-    (void)tcp;
-    return true;
-}
-
-static bool
-second_istream_socket_finished(void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-
-    lb_tcp_close_sockets(tcp);
+    lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
     return false;
 }
 
-static const struct istream_socket_handler second_istream_socket_handler = {
-    nullptr,
-    second_istream_socket_read,
-    second_istream_socket_close,
-    second_istream_socket_error,
-    second_istream_socket_depleted,
-    second_istream_socket_finished,
-};
-
-/*
- * first sink_fd handler
- *
- */
-
 static void
-first_sink_input_eof(void *ctx)
+inbound_buffered_socket_error(GError *error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    lb_tcp_close_sockets(tcp);
-    tcp->handler->eof(tcp->handler_ctx);
-}
-
-static void
-first_sink_input_error(GError *error, void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-
-    tcp->peers[0].sink = NULL;
-
-    lb_tcp_close_sockets(tcp);
     tcp->handler->gerror("Error", error, tcp->handler_ctx);
 }
 
-static bool
-first_sink_send_error(int error, void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-
-    tcp->peers[0].sink = NULL;
-
-    lb_tcp_close_sockets(tcp);
-    tcp->handler->_errno("Send failed", error, tcp->handler_ctx);
-    return false;
-}
-
-static const struct sink_fd_handler first_sink_fd_handler = {
-    .input_eof = first_sink_input_eof,
-    .input_error = first_sink_input_error,
-    .send_error = first_sink_send_error,
+static constexpr struct buffered_socket_handler inbound_buffered_socket_handler = {
+    inbound_buffered_socket_data,
+    nullptr, // TODO: inbound_buffered_socket_direct,
+    inbound_buffered_socket_closed,
+    nullptr,
+    nullptr,
+    inbound_buffered_socket_write,
+    nullptr,
+    inbound_buffered_socket_broken,
+    inbound_buffered_socket_error,
 };
 
 /*
- * second sink_fd handler
+ * outbound buffered_socket_handler
  *
  */
 
+static enum buffered_result
+outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
+{
+    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+
+    ssize_t nbytes = filtered_socket_write(&tcp->inbound, buffer, size);
+    if (nbytes > 0) {
+        buffered_socket_consumed(&tcp->outbound, nbytes);
+        return (size_t)nbytes == size
+            ? BUFFERED_OK
+            : BUFFERED_PARTIAL;
+    }
+
+    switch ((enum write_result)nbytes) {
+    case WRITE_SOURCE_EOF:
+        assert(false);
+        gcc_unreachable();
+
+    case WRITE_ERRNO:
+        lb_tcp_close(tcp);
+        tcp->handler->_errno("Send failed", errno, tcp->handler_ctx);
+        return BUFFERED_CLOSED;
+
+    case WRITE_BLOCKING:
+        return BUFFERED_BLOCKING;
+
+    case WRITE_DESTROYED:
+        return BUFFERED_CLOSED;
+
+    case WRITE_BROKEN:
+        tcp->handler->eof(tcp->handler_ctx);
+        return BUFFERED_CLOSED;
+    }
+
+    assert(false);
+    gcc_unreachable();
+}
+
+static bool
+outbound_buffered_socket_closed(void *ctx)
+{
+    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+
+    buffered_socket_close(&tcp->outbound);
+    return true;
+}
+
 static void
-second_sink_input_eof(void *ctx)
+outbound_buffered_socket_end(void *ctx)
+{
+    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+
+    buffered_socket_destroy(&tcp->outbound);
+    lb_tcp_close(tcp);
+    tcp->handler->eof(tcp->handler_ctx);
+}
+
+static bool
+outbound_buffered_socket_write(void *ctx)
+{
+    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+
+    return buffered_socket_read(&tcp->outbound, false);
+}
+
+static bool
+outbound_buffered_socket_broken(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
     tcp->handler->eof(tcp->handler_ctx);
-}
-
-static void
-second_sink_input_error(GError *error, void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-
-    tcp->peers[1].sink = NULL;
-
-    lb_tcp_close_sockets(tcp);
-    tcp->handler->gerror("Error", error, tcp->handler_ctx);
-}
-
-static bool
-second_sink_send_error(int error, void *ctx)
-{
-    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
-
-    tcp->peers[1].sink = NULL;
-
-    lb_tcp_close_sockets(tcp);
-    tcp->handler->_errno("Send failed", error, tcp->handler_ctx);
     return false;
 }
 
-static const struct sink_fd_handler second_sink_fd_handler = {
-    .input_eof = second_sink_input_eof,
-    .input_error = second_sink_input_error,
-    .send_error = second_sink_send_error,
+static void
+outbound_buffered_socket_error(GError *error, void *ctx)
+{
+    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+
+    tcp->handler->gerror("Error", error, tcp->handler_ctx);
+}
+
+static constexpr struct buffered_socket_handler outbound_buffered_socket_handler = {
+    outbound_buffered_socket_data,
+    nullptr, // TODO: outbound_buffered_socket_direct,
+    outbound_buffered_socket_closed,
+    nullptr,
+    outbound_buffered_socket_end,
+    outbound_buffered_socket_write,
+    nullptr,
+    outbound_buffered_socket_broken,
+    outbound_buffered_socket_error,
 };
 
 /*
@@ -261,28 +255,19 @@ lb_tcp_client_socket_success(int fd, void *ctx)
 
     async_ref_clear(&tcp->connect);
 
-    tcp->peers[1].fd = fd;
+    buffered_socket_init(&tcp->outbound, tcp->pool,
+                         fd, ISTREAM_TCP,
+                         nullptr, &write_timeout,
+                         &outbound_buffered_socket_handler, tcp);
 
-    struct istream *istream =
-        istream_socket_new(tcp->pool,
-                           tcp->peers[0].fd,
-                           tcp->peers[0].type,
-                           &first_istream_socket_handler, tcp);
-    istream = istream_pipe_new(tcp->pool, istream, tcp->pipe_stock);
+    /* TODO
+    tcp->outbound.direct = tcp->pipe_stock != nullptr &&
+        (ISTREAM_TO_TCP & ISTREAM_PIPE) != 0 &&
+        (istream_direct_mask_to(tcp->inbound.base.base.fd_type) & ISTREAM_PIPE) != 0;
+    */
 
-    tcp->peers[1].sink =
-        sink_fd_new(tcp->pool, istream, fd, ISTREAM_TCP,
-                    &second_sink_fd_handler, tcp);
-
-    istream = istream_socket_new(tcp->pool, fd, ISTREAM_TCP,
-                                 &second_istream_socket_handler, tcp);
-    istream = istream_pipe_new(tcp->pool, istream, tcp->pipe_stock);
-
-    tcp->peers[0].sink =
-        sink_fd_new(tcp->pool, istream,
-                    tcp->peers[0].fd,
-                    tcp->peers[0].type,
-                    &first_sink_fd_handler, tcp);
+    if (filtered_socket_read(&tcp->inbound, false))
+        buffered_socket_read(&tcp->outbound, false);
 }
 
 static void
@@ -290,8 +275,7 @@ lb_tcp_client_socket_timeout(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    close(tcp->peers[0].fd);
-
+    lb_tcp_destroy_inbound(tcp);
     tcp->handler->error("Connect error", "Timeout", tcp->handler_ctx);
 }
 
@@ -300,8 +284,7 @@ lb_tcp_client_socket_error(GError *error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    close(tcp->peers[0].fd);
-
+    lb_tcp_destroy_inbound(tcp);
     tcp->handler->gerror("Connect error", error, tcp->handler_ctx);
 }
 
@@ -353,8 +336,16 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
     tcp->pipe_stock = pipe_stock;
     tcp->handler = handler;
     tcp->handler_ctx = ctx;
-    tcp->peers[0].fd = fd;
-    tcp->peers[0].type = fd_type;
+
+    filtered_socket_init(&tcp->inbound, pool, fd, fd_type,
+                         nullptr, &write_timeout,
+                         nullptr, nullptr,
+                         &inbound_buffered_socket_handler, tcp);
+    /* TODO
+    tcp->inbound.base.direct = pipe_stock != nullptr &&
+        (ISTREAM_TO_PIPE & fd_type) != 0 &&
+        (ISTREAM_TO_TCP & ISTREAM_PIPE) != 0;
+    */
 
     unsigned session_sticky = lb_tcp_sticky(address_list, remote_address);
 
@@ -371,8 +362,11 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
 void
 lb_tcp_close(struct lb_tcp *tcp)
 {
+    if (filtered_socket_valid(&tcp->inbound))
+        lb_tcp_destroy_inbound(tcp);
+
     if (async_ref_defined(&tcp->connect))
         async_abort(&tcp->connect);
-    else
-        lb_tcp_close_sockets(tcp);
+    else if (buffered_socket_valid(&tcp->outbound))
+        lb_tcp_destroy_outbound(tcp);
 }
