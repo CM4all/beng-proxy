@@ -31,7 +31,7 @@ tcp_eof(void *ctx)
 {
     lb_connection *connection = (lb_connection *)ctx;
 
-    lb_connection_close(connection);
+    lb_connection_remove(connection);
 }
 
 static void
@@ -40,7 +40,7 @@ tcp_error(const char *prefix, const char *error, void *ctx)
     lb_connection *connection = (lb_connection *)ctx;
 
     lb_connection_log_error(3, connection, prefix, error);
-    lb_connection_close(connection);
+    lb_connection_remove(connection);
 }
 
 static void
@@ -49,7 +49,7 @@ tcp_errno(const char *prefix, int error, void *ctx)
     lb_connection *connection = (lb_connection *)ctx;
 
     lb_connection_log_errno(3, connection, prefix, error);
-    lb_connection_close(connection);
+    lb_connection_remove(connection);
 }
 
 static void
@@ -59,7 +59,7 @@ tcp_gerror(const char *prefix, GError *error, void *ctx)
 
     lb_connection_log_gerror(3, connection, prefix, error);
     g_error_free(error);
-    lb_connection_close(connection);
+    lb_connection_remove(connection);
 }
 
 static const struct lb_tcp_handler tcp_handler = {

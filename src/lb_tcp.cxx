@@ -33,6 +33,19 @@ struct lb_tcp {
     struct async_operation_ref connect;
 };
 
+static void
+lb_tcp_close_sockets(struct lb_tcp *tcp)
+{
+    if (tcp->peers[0].sink != NULL)
+        sink_fd_close(tcp->peers[0].sink);
+
+    if (tcp->peers[1].sink != NULL)
+        sink_fd_close(tcp->peers[1].sink);
+
+    close(tcp->peers[0].fd);
+    close(tcp->peers[1].fd);
+}
+
 /*
  * first istream_socket handler
  *
@@ -59,6 +72,7 @@ first_istream_socket_error(int error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
+    lb_tcp_close_sockets(tcp);
     tcp->handler->_errno("Receive failed", error, tcp->handler_ctx);
     return false;
 }
@@ -77,6 +91,7 @@ first_istream_socket_finished(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
+    lb_tcp_close_sockets(tcp);
     tcp->handler->eof(tcp->handler_ctx);
     return false;
 }
@@ -116,6 +131,7 @@ second_istream_socket_error(int error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
+    lb_tcp_close_sockets(tcp);
     tcp->handler->_errno("Receive failed", error, tcp->handler_ctx);
     return false;
 }
@@ -134,6 +150,7 @@ second_istream_socket_finished(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
+    lb_tcp_close_sockets(tcp);
     tcp->handler->eof(tcp->handler_ctx);
     return false;
 }
@@ -157,6 +174,7 @@ first_sink_input_eof(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
+    lb_tcp_close_sockets(tcp);
     tcp->handler->eof(tcp->handler_ctx);
 }
 
@@ -167,6 +185,7 @@ first_sink_input_error(GError *error, void *ctx)
 
     tcp->peers[0].sink = NULL;
 
+    lb_tcp_close_sockets(tcp);
     tcp->handler->gerror("Error", error, tcp->handler_ctx);
 }
 
@@ -177,6 +196,7 @@ first_sink_send_error(int error, void *ctx)
 
     tcp->peers[0].sink = NULL;
 
+    lb_tcp_close_sockets(tcp);
     tcp->handler->_errno("Send failed", error, tcp->handler_ctx);
     return false;
 }
@@ -207,6 +227,7 @@ second_sink_input_error(GError *error, void *ctx)
 
     tcp->peers[1].sink = NULL;
 
+    lb_tcp_close_sockets(tcp);
     tcp->handler->gerror("Error", error, tcp->handler_ctx);
 }
 
@@ -217,6 +238,7 @@ second_sink_send_error(int error, void *ctx)
 
     tcp->peers[1].sink = NULL;
 
+    lb_tcp_close_sockets(tcp);
     tcp->handler->_errno("Send failed", error, tcp->handler_ctx);
     return false;
 }
@@ -351,14 +373,6 @@ lb_tcp_close(struct lb_tcp *tcp)
 {
     if (async_ref_defined(&tcp->connect))
         async_abort(&tcp->connect);
-    else {
-        if (tcp->peers[0].sink != NULL)
-            sink_fd_close(tcp->peers[0].sink);
-
-        if (tcp->peers[1].sink != NULL)
-            sink_fd_close(tcp->peers[1].sink);
-
-        close(tcp->peers[0].fd);
-        close(tcp->peers[1].fd);
-    }
+    else
+        lb_tcp_close_sockets(tcp);
 }
