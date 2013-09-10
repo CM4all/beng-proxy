@@ -194,9 +194,10 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     connection = p_malloc(pool, sizeof(*connection));
     connection->pool = pool;
 
-    filtered_socket_init_null(&connection->socket, pool, fd, fd_type,
-                              NULL, &http_server_write_timeout,
-                              &http_server_socket_handler, connection);
+    filtered_socket_init(&connection->socket, pool, fd, fd_type,
+                         NULL, &http_server_write_timeout,
+                         NULL, NULL,
+                         &http_server_socket_handler, connection);
 
     connection->handler = handler;
     connection->handler_ctx = ctx;

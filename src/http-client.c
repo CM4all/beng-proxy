@@ -1172,9 +1172,10 @@ http_client_request(struct pool *caller_pool,
     client->pool = pool;
     client->peer_name = p_strdup(pool, get_peer_name(fd));
 
-    filtered_socket_init_null(&client->socket, pool, fd, fd_type,
-                              &http_client_timeout, &http_client_timeout,
-                              &http_client_socket_handler, client);
+    filtered_socket_init(&client->socket, pool, fd, fd_type,
+                         &http_client_timeout, &http_client_timeout,
+                         NULL, NULL,
+                         &http_client_socket_handler, client);
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "http_client_lease");
 

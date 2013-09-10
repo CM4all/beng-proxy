@@ -115,29 +115,35 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
                      const struct buffered_socket_handler *handler,
                      void *handler_ctx)
 {
-    assert(filter != NULL);
-    assert(filter->init != NULL);
-    assert(filter->data != NULL);
-    assert(filter->is_empty != NULL);
-    assert(filter->is_full != NULL);
-    assert(filter->available != NULL);
-    assert(filter->consumed != NULL);
-    assert(filter->read != NULL);
-    assert(filter->write != NULL);
-    assert(filter->internal_write != NULL);
-    assert(filter->closed != NULL);
-    assert(filter->close != NULL);
+    s->filter = filter;
+    s->filter_ctx = filter_ctx;
+
+    if (filter != NULL) {
+        assert(filter->init != NULL);
+        assert(filter->data != NULL);
+        assert(filter->is_empty != NULL);
+        assert(filter->is_full != NULL);
+        assert(filter->available != NULL);
+        assert(filter->consumed != NULL);
+        assert(filter->read != NULL);
+        assert(filter->write != NULL);
+        assert(filter->internal_write != NULL);
+        assert(filter->closed != NULL);
+        assert(filter->close != NULL);
+
+        s->handler = handler;
+        s->handler_ctx = handler_ctx;
+
+        handler = &filtered_socket_bs_handler;
+        handler_ctx = s;
+    }
 
     buffered_socket_init(&s->base, pool, fd, fd_type,
                          read_timeout, write_timeout,
-                         &filtered_socket_bs_handler, s);
+                         handler, handler_ctx);
 
-    s->filter = filter;
-    s->filter_ctx = filter_ctx;
-    s->handler = handler;
-    s->handler_ctx = handler_ctx;
-
-    filter->init(s, filter_ctx);
+    if (filter != NULL)
+        filter->init(s, filter_ctx);
 }
 
 void

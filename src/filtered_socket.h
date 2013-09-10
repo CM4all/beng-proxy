@@ -119,9 +119,6 @@ filtered_socket_quark(void)
 extern "C" {
 #endif
 
-/**
- * Initialise the object with a filter.
- */
 void
 filtered_socket_init(struct filtered_socket *s, struct pool *pool,
                      int fd, enum istream_direct fd_type,
@@ -131,24 +128,6 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
                      void *filter_ctx,
                      const struct buffered_socket_handler *handler,
                      void *handler_ctx);
-
-/**
- * Initialise the object without a filter.
- */
-static inline void
-filtered_socket_init_null(struct filtered_socket *s, struct pool *pool,
-                          int fd, enum istream_direct fd_type,
-                          const struct timeval *read_timeout,
-                          const struct timeval *write_timeout,
-                          const struct buffered_socket_handler *handler,
-                          void *handler_ctx)
-{
-    buffered_socket_init(&s->base, pool, fd, fd_type,
-                         read_timeout, write_timeout,
-                         handler, handler_ctx);
-
-    s->filter = NULL;
-}
 
 static inline enum istream_direct
 filtered_socket_fd_type(const struct filtered_socket *s)
