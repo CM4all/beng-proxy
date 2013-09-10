@@ -280,6 +280,10 @@ buffered_socket_quark(void)
     return g_quark_from_static_string("buffered_socket");
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 buffered_socket_init(struct buffered_socket *s, struct pool *pool,
                      int fd, enum istream_direct fd_type,
@@ -499,5 +503,9 @@ buffered_socket_unschedule_write(struct buffered_socket *s)
 
     socket_wrapper_unschedule_write(&s->base);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

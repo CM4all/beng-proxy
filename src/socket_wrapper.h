@@ -55,6 +55,10 @@ struct socket_wrapper {
     void *handler_ctx;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
                     int fd, enum istream_direct fd_type,
@@ -159,5 +163,9 @@ ssize_t
 socket_wrapper_write_from(struct socket_wrapper *s,
                           int fd, enum istream_direct fd_type,
                           size_t length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

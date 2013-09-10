@@ -115,6 +115,10 @@ filtered_socket_quark(void)
     return g_quark_from_static_string("filtered_socket");
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialise the object with a filter.
  */
@@ -498,5 +502,9 @@ filtered_socket_invoke_error(struct filtered_socket *s, GError *error)
 
     s->handler->error(error, s->handler_ctx);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
