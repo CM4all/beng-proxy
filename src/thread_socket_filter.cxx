@@ -48,6 +48,8 @@ thread_socket_filter_free_buffers(ThreadSocketFilter *f)
 static void
 thread_socket_filter_destroy(ThreadSocketFilter *f)
 {
+    f->handler->destroy(*f, f->handler_ctx);
+
     defer_event_deinit(&f->defer_event);
 
     thread_socket_filter_free_buffers(f);
