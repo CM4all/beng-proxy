@@ -68,7 +68,7 @@ test_catch(struct pool *pool)
     struct istream *sock = istream_socketpair_new(pool, request, &fd);
     sink_null_new(sock);
 
-    http_server_connection_new(pool, fd, ISTREAM_SOCKET,
+    http_server_connection_new(pool, fd, ISTREAM_SOCKET, NULL, NULL,
                                NULL, 0, NULL, 0,
                                true, &catch_close_handler, NULL,
                                &connection);

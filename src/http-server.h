@@ -21,6 +21,7 @@ struct istream;
 struct sockaddr;
 struct growing_buffer;
 struct async_operation_ref;
+struct socket_filter;
 
 struct http_server_connection;
 
@@ -126,6 +127,8 @@ extern "C" {
 void
 http_server_connection_new(struct pool *pool,
                            int fd, enum istream_direct fd_type,
+                           const struct socket_filter *filter,
+                           void *filter_ctx,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
                            const struct sockaddr *remote_address,

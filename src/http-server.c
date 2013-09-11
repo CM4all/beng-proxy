@@ -173,6 +173,8 @@ http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
 
 void
 http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_type,
+                           const struct socket_filter *filter,
+                           void *filter_ctx,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
                            const struct sockaddr *remote_address,
@@ -196,7 +198,7 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     filtered_socket_init(&connection->socket, pool, fd, fd_type,
                          NULL, &http_server_write_timeout,
-                         NULL, NULL,
+                         filter, filter_ctx,
                          &http_server_socket_handler, connection);
 
     connection->handler = handler;

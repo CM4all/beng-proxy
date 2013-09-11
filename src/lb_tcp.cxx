@@ -325,6 +325,7 @@ lb_tcp_sticky(const struct address_list &address_list,
 void
 lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
            int fd, enum istream_direct fd_type,
+           const struct socket_filter *filter, void *filter_ctx,
            const struct sockaddr *remote_address,
            const struct address_list &address_list,
            struct balancer &balancer,
@@ -339,7 +340,7 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
 
     filtered_socket_init(&tcp->inbound, pool, fd, fd_type,
                          nullptr, &write_timeout,
-                         nullptr, nullptr,
+                         filter, filter_ctx,
                          &inbound_buffered_socket_handler, tcp);
     /* TODO
     tcp->inbound.base.direct = pipe_stock != nullptr &&

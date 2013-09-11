@@ -99,6 +99,9 @@ lb_connection_new(struct lb_instance *instance,
 
     enum istream_direct fd_type = ISTREAM_TCP;
 
+    const socket_filter *filter = nullptr;
+    void *filter_ctx = nullptr;
+
     if (ssl_factory != NULL) {
         int fds[2];
         if (socketpair_cloexec_nonblock(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
@@ -131,7 +134,7 @@ lb_connection_new(struct lb_instance *instance,
 
     switch (listener->destination.GetProtocol()) {
     case LB_PROTOCOL_HTTP:
-        http_server_connection_new(pool, fd, fd_type,
+        http_server_connection_new(pool, fd, fd_type, filter, filter_ctx,
                                    local_address_length > 0
                                    ? (const struct sockaddr *)&local_address
                                    : NULL,
@@ -145,7 +148,7 @@ lb_connection_new(struct lb_instance *instance,
 
     case LB_PROTOCOL_TCP:
         lb_tcp_new(connection->pool, instance->pipe_stock,
-                   fd, fd_type, addr,
+                   fd, fd_type, filter, filter_ctx, addr,
                    connection->listener->destination.cluster->address_list,
                    *connection->instance->balancer,
                    &tcp_handler, connection,
