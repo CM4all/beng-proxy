@@ -265,12 +265,12 @@ my_stock_ready(struct stock_item *item, void *ctx)
     request2->stock_item = item;
     request2->current_address = tcp_balancer_get_last();
 
-    const char *peer_subject = request2->connection->ssl_filter != NULL
+    const char *peer_subject = request2->connection->ssl_filter != nullptr
         ? ssl_filter_get_peer_subject(request2->connection->ssl_filter)
-        : NULL;
-    const char *peer_issuer_subject = request2->connection->ssl_filter != NULL
+        : nullptr;
+    const char *peer_issuer_subject = request2->connection->ssl_filter != nullptr
         ? ssl_filter_get_peer_issuer_subject(request2->connection->ssl_filter)
-        : NULL;
+        : nullptr;
 
     struct strmap *headers =
         lb_forward_request_headers(request->pool, request->headers,
@@ -301,7 +301,7 @@ my_stock_error(GError *error, void *ctx)
     lb_connection_log_gerror(2, connection, "Connect error", error);
     g_error_free(error);
 
-    if (request2->body != NULL)
+    if (request2->body != nullptr)
         istream_close_unused(request2->body);
 
     if (!send_fallback(request2->request, &request2->cluster->fallback))
@@ -337,9 +337,9 @@ lb_http_connection_request(struct http_server_request *request,
         lb_http_select_cluster(connection->listener->destination, *request);
     request2->balancer = connection->instance->tcp_balancer;
     request2->request = request;
-    request2->body = request->body != NULL
+    request2->body = request->body != nullptr
         ? istream_hold_new(request->pool, request->body)
-        : NULL;
+        : nullptr;
     request2->async_ref = async_ref;
     request2->new_cookie = 0;
 
@@ -389,7 +389,7 @@ lb_http_connection_log(struct http_server_request *request,
 {
     struct lb_connection *connection = (struct lb_connection *)ctx;
 
-    access_log(request, NULL,
+    access_log(request, nullptr,
                strmap_get_checked(request->headers, "referer"),
                strmap_get_checked(request->headers, "user-agent"),
                status, length,
@@ -405,8 +405,8 @@ lb_http_connection_error(GError *error, void *ctx)
     lb_connection_log_gerror(2, connection, "Error", error);
     g_error_free(error);
 
-    assert(connection->http != NULL);
-    connection->http = NULL;
+    assert(connection->http != nullptr);
+    connection->http = nullptr;
 
     lb_connection_remove(connection);
 }
@@ -416,9 +416,9 @@ lb_http_connection_free(void *ctx)
 {
     struct lb_connection *connection = (struct lb_connection *)ctx;
 
-    assert(connection->http != NULL);
+    assert(connection->http != nullptr);
 
-    connection->http = NULL;
+    connection->http = nullptr;
 
     lb_connection_remove(connection);
 }

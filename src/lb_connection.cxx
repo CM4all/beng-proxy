@@ -102,32 +102,32 @@ lb_connection_new(struct lb_instance *instance,
     const socket_filter *filter = nullptr;
     void *filter_ctx = nullptr;
 
-    if (ssl_factory != NULL) {
+    if (ssl_factory != nullptr) {
         int fds[2];
         if (socketpair_cloexec_nonblock(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
             close(fd);
             pool_unref(pool);
-            return NULL;
+            return nullptr;
         }
 
-        GError *error = NULL;
+        GError *error = nullptr;
         connection->ssl_filter = ssl_filter_new(pool, ssl_factory,
                                                 fd, fds[0], notify,
                                                 &error);
-        if (connection->ssl_filter == NULL) {
+        if (connection->ssl_filter == nullptr) {
             close(fd);
             close(fds[0]);
             close(fds[1]);
             lb_connection_log_gerror(1, connection, "SSL", error);
             g_error_free(error);
             pool_unref(pool);
-            return NULL;
+            return nullptr;
         }
 
         fd = fds[1];
         fd_type = ISTREAM_SOCKET;
     } else
-        connection->ssl_filter = NULL;
+        connection->ssl_filter = nullptr;
 
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;
@@ -137,7 +137,7 @@ lb_connection_new(struct lb_instance *instance,
         http_server_connection_new(pool, fd, fd_type, filter, filter_ctx,
                                    local_address_length > 0
                                    ? (const struct sockaddr *)&local_address
-                                   : NULL,
+                                   : nullptr,
                                    local_address_length,
                                    addr, addrlen,
                                    false,
@@ -162,14 +162,14 @@ lb_connection_new(struct lb_instance *instance,
 void
 lb_connection_remove(struct lb_connection *connection)
 {
-    assert(connection != NULL);
-    assert(connection->instance != NULL);
+    assert(connection != nullptr);
+    assert(connection->instance != nullptr);
     assert(connection->instance->num_connections > 0);
 
     list_remove(&connection->siblings);
     --connection->instance->num_connections;
 
-    if (connection->ssl_filter != NULL)
+    if (connection->ssl_filter != nullptr)
         ssl_filter_free(connection->ssl_filter);
 
     struct pool *pool = connection->pool;
@@ -182,7 +182,7 @@ lb_connection_close(struct lb_connection *connection)
 {
     switch (connection->listener->destination.GetProtocol()) {
     case LB_PROTOCOL_HTTP:
-        assert(connection->http != NULL);
+        assert(connection->http != nullptr);
         http_server_connection_close(connection->http);
         break;
 
