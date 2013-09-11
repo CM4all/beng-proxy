@@ -129,6 +129,7 @@ inbound_buffered_socket_error(GError *error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
+    lb_tcp_close(tcp);
     tcp->handler->gerror("Error", error, tcp->handler_ctx);
 }
 
@@ -228,6 +229,7 @@ outbound_buffered_socket_error(GError *error, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
+    lb_tcp_close(tcp);
     tcp->handler->gerror("Error", error, tcp->handler_ctx);
 }
 
