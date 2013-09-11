@@ -40,14 +40,16 @@ copy(struct fifo_buffer *dest, struct fifo_buffer *src)
  *
  */
 
-static void
+static bool
 nop_thread_socket_filter_run(ThreadSocketFilter &f,
+                             gcc_unused GError **error_r,
                              gcc_unused void *ctx)
 {
     pthread_mutex_lock(&f.mutex);
     copy(f.decrypted_input, f.encrypted_input);
     copy(f.encrypted_output, f.plain_output);
     pthread_mutex_unlock(&f.mutex);
+    return true;
 }
 
 static void

@@ -54,6 +54,9 @@ thread_socket_filter_destroy(ThreadSocketFilter *f)
 
     thread_socket_filter_free_buffers(f);
 
+    if (f->error != nullptr)
+        g_error_free(f->error);
+
     pool_unref(f->pool);
 }
 
@@ -175,14 +178,24 @@ thread_socket_filter_run(struct thread_job *job)
     ThreadSocketFilter *f = (ThreadSocketFilter *)job;
 
     pthread_mutex_lock(&f->mutex);
+    if (f->error != nullptr) {
+        pthread_mutex_unlock(&f->mutex);
+        return;
+    }
+
     f->busy = true;
     pthread_mutex_unlock(&f->mutex);
 
-    f->handler->run(*f, f->handler_ctx);
+    GError *error = nullptr;
+    bool success = f->handler->run(*f, &error, f->handler_ctx);
 
     pthread_mutex_lock(&f->mutex);
     f->busy = false;
     f->done_pending = true;
+
+    assert(f->error == nullptr);
+    if (!success)
+        f->error = error;
     pthread_mutex_unlock(&f->mutex);
 }
 
@@ -201,6 +214,16 @@ thread_socket_filter_done(struct thread_job *job)
     pthread_mutex_lock(&f->mutex);
 
     f->done_pending = false;
+
+    if (f->error != nullptr) {
+        /* an error has occurred inside the worker thread: forward it
+           to the filtered_socket */
+        GError *error = f->error;
+        f->error = nullptr;
+        pthread_mutex_unlock(&f->mutex);
+        filtered_socket_invoke_error(f->socket, error);
+        return;
+    }
 
     if (f->postponed_end && fifo_buffer_empty(f->encrypted_input)) {
         if (f->postponed_remaining) {
@@ -656,6 +679,8 @@ thread_socket_filter_new(struct pool *pool,
     f->read_timeout = nullptr;
 
     pthread_mutex_init(&f->mutex, nullptr);
+
+    f->error = nullptr;
 
     f->encrypted_input = fb_pool_alloc();
     f->decrypted_input = fb_pool_alloc();

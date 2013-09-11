@@ -13,10 +13,11 @@
 
 #include <pthread.h>
 
+typedef struct _GError GError;
 struct ThreadSocketFilter;
 
 struct ThreadSocketFilterHandler {
-    void (*run)(ThreadSocketFilter &f, void *ctx);
+    bool (*run)(ThreadSocketFilter &f, GError **error_r, void *ctx);
     void (*destroy)(ThreadSocketFilter &f, void *ctx);
 };
 
@@ -89,6 +90,12 @@ struct ThreadSocketFilter {
     const struct timeval *read_timeout;
 
     pthread_mutex_t mutex;
+
+    /**
+     * If this is set, an error was caught inside the thread, and
+     * shall be forwarded to the main thread.
+     */
+    GError *error;
 
     /**
      * A buffer of input data that was not yet handled by the filter.
