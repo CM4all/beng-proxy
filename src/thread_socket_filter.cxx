@@ -5,18 +5,22 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "thread_socket_filter.h"
+#include "thread_socket_filter.hxx"
 #include "filtered_socket.h"
 #include "fifo-buffer.h"
 #include "fb_pool.h"
+
+extern "C" {
 #include "thread_queue.h"
+}
+
 #include "gerrno.h"
 
 #include <string.h>
 #include <errno.h>
 
 static void
-thread_socket_filter_closed_prematurely(struct thread_socket_filter *f)
+thread_socket_filter_closed_prematurely(ThreadSocketFilter *f)
 {
     GError *error =
         g_error_new_literal(buffered_socket_quark(), 0,
@@ -25,24 +29,24 @@ thread_socket_filter_closed_prematurely(struct thread_socket_filter *f)
 }
 
 static void
-thread_socket_filter_free_buffers(struct thread_socket_filter *f)
+thread_socket_filter_free_buffers(ThreadSocketFilter *f)
 {
-    if (f->encrypted_input != NULL)
+    if (f->encrypted_input != nullptr)
         fb_pool_free(f->encrypted_input);
 
-    if (f->decrypted_input != NULL)
+    if (f->decrypted_input != nullptr)
         fb_pool_free(f->decrypted_input);
 
-    if (f->plain_output != NULL)
+    if (f->plain_output != nullptr)
         fb_pool_free(f->plain_output);
 
-    if (f->encrypted_output != NULL)
+    if (f->encrypted_output != nullptr)
         fb_pool_free(f->encrypted_output);
 
 }
 
 static void
-thread_socket_filter_destroy(struct thread_socket_filter *f)
+thread_socket_filter_destroy(ThreadSocketFilter *f)
 {
     defer_event_deinit(&f->defer_event);
 
@@ -52,7 +56,7 @@ thread_socket_filter_destroy(struct thread_socket_filter *f)
 }
 
 static void
-thread_socket_filter_schedule(struct thread_socket_filter *f)
+thread_socket_filter_schedule(ThreadSocketFilter *f)
 {
     assert(!f->postponed_destroy);
 
@@ -63,14 +67,14 @@ thread_socket_filter_schedule(struct thread_socket_filter *f)
  * @return false if the object has been destroyed
  */
 static bool
-thread_socket_filter_submit_decrypted_input(struct thread_socket_filter *f)
+thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
 {
     while (true) {
         pthread_mutex_lock(&f->mutex);
 
         size_t length;
         const void *data = fifo_buffer_read(f->decrypted_input, &length);
-        if (data == NULL) {
+        if (data == nullptr) {
             pthread_mutex_unlock(&f->mutex);
             return true;
         }
@@ -81,7 +85,7 @@ thread_socket_filter_submit_decrypted_input(struct thread_socket_filter *f)
         pthread_mutex_unlock(&f->mutex);
 
         f->want_read = false;
-        f->read_timeout = NULL;
+        f->read_timeout = nullptr;
 
         switch (filtered_socket_invoke_data(f->socket, copy, length)) {
         case BUFFERED_OK:
@@ -111,7 +115,7 @@ thread_socket_filter_submit_decrypted_input(struct thread_socket_filter *f)
 }
 
 static bool
-thread_socket_filter_check_read(struct thread_socket_filter *f)
+thread_socket_filter_check_read(ThreadSocketFilter *f)
 {
     if (!f->want_read || fifo_buffer_full(f->encrypted_input) ||
         !f->connected || f->read_scheduled)
@@ -127,7 +131,7 @@ thread_socket_filter_check_read(struct thread_socket_filter *f)
 }
 
 static bool
-thread_socket_filter_check_write(struct thread_socket_filter *f)
+thread_socket_filter_check_write(ThreadSocketFilter *f)
 {
     if (!f->want_write || fifo_buffer_full(f->plain_output))
         return true;
@@ -147,7 +151,7 @@ static void
 thread_socket_filter_defer_callback(gcc_unused int fd, gcc_unused short event,
                                     void *ctx)
 {
-    struct thread_socket_filter *f = (struct thread_socket_filter *)ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     pthread_mutex_lock(&f->mutex);
 
@@ -166,13 +170,13 @@ thread_socket_filter_defer_callback(gcc_unused int fd, gcc_unused short event,
 static void
 thread_socket_filter_run(struct thread_job *job)
 {
-    struct thread_socket_filter *f = (struct thread_socket_filter *)job;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)job;
 
     pthread_mutex_lock(&f->mutex);
     f->busy = true;
     pthread_mutex_unlock(&f->mutex);
 
-    f->handler->run(f, f->handler_ctx);
+    f->handler->run(*f, f->handler_ctx);
 
     pthread_mutex_lock(&f->mutex);
     f->busy = false;
@@ -183,7 +187,7 @@ thread_socket_filter_run(struct thread_job *job)
 static void
 thread_socket_filter_done(struct thread_job *job)
 {
-    struct thread_socket_filter *f = (struct thread_socket_filter *)job;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)job;
 
     if (f->postponed_destroy) {
         /* the object has been closed, and now that the thread has
@@ -270,7 +274,7 @@ thread_socket_filter_done(struct thread_job *job)
 static void
 thread_socket_filter_init_(struct filtered_socket *s, void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     f->socket = s;
 }
@@ -278,7 +282,7 @@ thread_socket_filter_init_(struct filtered_socket *s, void *ctx)
 static enum buffered_result
 thread_socket_filter_data(const void *data, size_t length, void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     f->read_scheduled = false;
 
@@ -286,7 +290,7 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
 
     size_t max_length;
     void *p = fifo_buffer_write(f->encrypted_input, &max_length);
-    if (p == NULL) {
+    if (p == nullptr) {
         pthread_mutex_unlock(&f->mutex);
         return BUFFERED_BLOCKING;
     }
@@ -311,23 +315,25 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
 static bool
 thread_socket_filter_is_empty(void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    return f->decrypted_input == NULL || fifo_buffer_empty(f->decrypted_input);
+    return f->decrypted_input == nullptr ||
+        fifo_buffer_empty(f->decrypted_input);
 }
 
 static bool
 thread_socket_filter_is_full(void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    return f->decrypted_input != NULL && fifo_buffer_full(f->decrypted_input);
+    return f->decrypted_input != nullptr &&
+        fifo_buffer_full(f->decrypted_input);
 }
 
 static size_t
 thread_socket_filter_available(void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     pthread_mutex_lock(&f->mutex);
     size_t result = fifo_buffer_available(f->decrypted_input);
@@ -338,8 +344,8 @@ thread_socket_filter_available(void *ctx)
 static void
 thread_socket_filter_consumed(size_t nbytes, void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
-    assert(f->decrypted_input != NULL);
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
+    assert(f->decrypted_input != nullptr);
 
     bool schedule;
 
@@ -361,7 +367,7 @@ thread_socket_filter_consumed(size_t nbytes, void *ctx)
 static bool
 thread_socket_filter_read(bool expect_more, void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     if (expect_more)
         f->expect_more = true;
@@ -374,14 +380,14 @@ thread_socket_filter_read(bool expect_more, void *ctx)
 static ssize_t
 thread_socket_filter_write(const void *data, size_t length, void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     pthread_mutex_lock(&f->mutex);
 
     ssize_t nbytes = 0;
     size_t max_length;
     void *p = fifo_buffer_write(f->plain_output, &max_length);
-    if (p != NULL) {
+    if (p != nullptr) {
         nbytes = length <= max_length ? length : max_length;
         memcpy(p, data, nbytes);
         fifo_buffer_append(f->plain_output, nbytes);
@@ -399,7 +405,7 @@ thread_socket_filter_schedule_read(bool expect_more,
                                    const struct timeval *timeout,
                                    void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     if (expect_more)
         f->expect_more = true;
@@ -407,7 +413,7 @@ thread_socket_filter_schedule_read(bool expect_more,
     f->want_read = true;
     f->read_scheduled = false;
 
-    if (timeout != NULL) {
+    if (timeout != nullptr) {
         f->read_timeout_buffer = *timeout;
         timeout = &f->read_timeout_buffer;
     }
@@ -420,7 +426,7 @@ thread_socket_filter_schedule_read(bool expect_more,
 static void
 thread_socket_filter_schedule_write(void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     if (f->want_write)
         return;
@@ -432,7 +438,7 @@ thread_socket_filter_schedule_write(void *ctx)
 static void
 thread_socket_filter_unschedule_write(void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     if (!f->want_write)
         return;
@@ -444,13 +450,13 @@ thread_socket_filter_unschedule_write(void *ctx)
 static bool
 thread_socket_filter_internal_write(void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     pthread_mutex_lock(&f->mutex);
 
     size_t length;
     const void *p = fifo_buffer_read(f->encrypted_output, &length);
-    if (p == NULL) {
+    if (p == nullptr) {
         pthread_mutex_unlock(&f->mutex);
         filtered_socket_internal_unschedule_write(f->socket);
         return true;
@@ -491,7 +497,7 @@ thread_socket_filter_internal_write(void *ctx)
 static bool
 thread_socket_filter_closed(void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     assert(f->connected);
     assert(!f->postponed_remaining);
@@ -505,7 +511,7 @@ thread_socket_filter_closed(void *ctx)
 static bool
 thread_socket_filter_remaining(size_t remaining, void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
     assert(!f->connected);
     assert(!f->want_write);
     assert(!f->postponed_remaining);
@@ -535,7 +541,7 @@ thread_socket_filter_remaining(size_t remaining, void *ctx)
 static void
 thread_socket_filter_end(void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     assert(!f->postponed_end);
 
@@ -578,7 +584,7 @@ thread_socket_filter_end(void *ctx)
 static void
 thread_socket_filter_close(void *ctx)
 {
-    struct thread_socket_filter *f = ctx;
+    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     defer_event_cancel(&f->defer_event);
 
@@ -616,15 +622,15 @@ const struct socket_filter thread_socket_filter = {
  *
  */
 
-struct thread_socket_filter *
+ThreadSocketFilter *
 thread_socket_filter_new(struct pool *pool,
                          struct thread_queue *queue,
-                         const struct thread_socket_filter_handler *handler,
+                         const ThreadSocketFilterHandler *handler,
                          void *ctx)
 {
     pool = pool_new_libc(pool, "thread_socket_filter");
 
-    struct thread_socket_filter *f = p_malloc(pool, sizeof(*f));
+    ThreadSocketFilter *f = (ThreadSocketFilter *)p_malloc(pool, sizeof(*f));
     thread_job_init(&f->job,
                     thread_socket_filter_run,
                     thread_socket_filter_done);
@@ -645,9 +651,9 @@ thread_socket_filter_new(struct pool *pool,
     f->want_read = false;
     f->read_scheduled = false;
     f->want_write = false;
-    f->read_timeout = NULL;
+    f->read_timeout = nullptr;
 
-    pthread_mutex_init(&f->mutex, NULL);
+    pthread_mutex_init(&f->mutex, nullptr);
 
     f->encrypted_input = fb_pool_alloc();
     f->decrypted_input = fb_pool_alloc();

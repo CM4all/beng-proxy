@@ -5,26 +5,26 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_THREAD_SOCKET_FILTER_H
-#define BENG_PROXY_THREAD_SOCKET_FILTER_H
+#ifndef BENG_PROXY_THREAD_SOCKET_FILTER_HXX
+#define BENG_PROXY_THREAD_SOCKET_FILTER_HXX
 
 #include "thread_job.h"
 #include "defer_event.h"
 
 #include <pthread.h>
 
-struct thread_socket_filter;
+struct ThreadSocketFilter;
 
-struct thread_socket_filter_handler {
-    void (*run)(struct thread_socket_filter *f, void *ctx);
-    void (*destroy)(struct thread_socket_filter *f, void *ctx);
+struct ThreadSocketFilterHandler {
+    void (*run)(ThreadSocketFilter &f, void *ctx);
+    void (*destroy)(ThreadSocketFilter &f, void *ctx);
 };
 
 /**
  * A module for #filtered_socket that moves the filter to a thread
  * pool (see #thread_job).
  */
-struct thread_socket_filter {
+struct ThreadSocketFilter {
     struct thread_job job;
 
     struct pool *pool;
@@ -37,7 +37,7 @@ struct thread_socket_filter {
      * The actual filter.  If this is NULL, then this object behaves
      * just like #buffered_socket.
      */
-    const struct thread_socket_filter_handler *handler;
+    const ThreadSocketFilterHandler *handler;
     void *handler_ctx;
 
     /**
@@ -120,10 +120,10 @@ struct thread_socket_filter {
     struct fifo_buffer *encrypted_output;
 };
 
-struct thread_socket_filter *
+ThreadSocketFilter *
 thread_socket_filter_new(struct pool *pool,
                          struct thread_queue *queue,
-                         const struct thread_socket_filter_handler *handler,
+                         const ThreadSocketFilterHandler *handler,
                          void *ctx);
 
 extern const struct socket_filter thread_socket_filter;
