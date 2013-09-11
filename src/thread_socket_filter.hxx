@@ -17,7 +17,15 @@ typedef struct _GError GError;
 struct ThreadSocketFilter;
 
 struct ThreadSocketFilterHandler {
+    /**
+     * Do the work.  This is run in an unspecified worker thread.  The
+     * given #ThreadSocketFilter's mutex may be used for protection.
+     */
     bool (*run)(ThreadSocketFilter &f, GError **error_r, void *ctx);
+
+    /**
+     * The #ThreadSocketFilter is about to be destroyed.
+     */
     void (*destroy)(ThreadSocketFilter &f, void *ctx);
 };
 
