@@ -372,7 +372,7 @@ thread_socket_filter_consumed(size_t nbytes, void *ctx)
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
     assert(f->decrypted_input != nullptr);
 
-    bool schedule;
+    bool schedule = false;
 
     pthread_mutex_lock(&f->mutex);
 
