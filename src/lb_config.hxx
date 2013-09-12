@@ -226,7 +226,7 @@ struct lb_condition_config {
     lb_condition_config(lb_attribute_reference &&a, bool _negate,
                         const char *_string)
         :attribute_reference(std::move(a)), op(Operator::EQUALS),
-         negate(_negate), string(_string) {}
+         negate(_negate), string(_string), regex(nullptr) {}
 
     lb_condition_config(lb_attribute_reference &&a, bool _negate,
                         GRegex *_regex)
