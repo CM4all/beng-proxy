@@ -698,13 +698,14 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
 #endif
 
     if (unlikely(pool->ref == 0)) {
+        struct pool *parent = pool->parent;
 #ifdef NDEBUG
         struct pool *reparent_to = NULL;
 #else
-        struct pool *reparent_to = pool->major ? NULL : pool->parent;
+        struct pool *reparent_to = pool->major ? NULL : parent;
 #endif
-        if (pool->parent != NULL)
-            pool_remove_child(pool->parent, pool);
+        if (parent != NULL)
+            pool_remove_child(parent, pool);
 #ifdef DUMP_POOL_UNREF
         pool_dump_refs(pool);
 #endif
