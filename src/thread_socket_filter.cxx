@@ -653,7 +653,7 @@ thread_socket_filter_new(struct pool *pool,
                          const ThreadSocketFilterHandler *handler,
                          void *ctx)
 {
-    pool = pool_new_libc(pool, "thread_socket_filter");
+    pool_ref(pool);
 
     ThreadSocketFilter *f = (ThreadSocketFilter *)p_malloc(pool, sizeof(*f));
     thread_job_init(&f->job,
