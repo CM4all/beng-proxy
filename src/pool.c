@@ -114,6 +114,14 @@ struct pool {
     /** this is a major pool, i.e. pool commits are performed after
         the major pool is freed */
     bool major;
+
+    /**
+     * Does the pool survive the destruction of the parent pool?  It
+     * will be reparented across destroyed "major" pools.  This flag
+     * is only relevant in the debug build, because it disables the
+     * memory leak checks.
+     */
+    bool persistent;
 #endif
 
     enum pool_type type;
@@ -330,6 +338,7 @@ pool_new(struct pool *parent, const char *name)
     pool->name = name;
 #ifndef NDEBUG
     pool->major = parent == NULL;
+    pool->persistent = false;
 #endif
 
     pool->parent = NULL;
@@ -469,9 +478,22 @@ pool_set_major(struct pool *pool)
 {
     assert(!pool->trashed);
     assert(list_empty(&pool->children));
+    assert(!pool->persistent);
 
     pool->major = true;
 }
+
+void
+pool_set_persistent(struct pool *pool)
+{
+    assert(!pool->trashed);
+    assert(list_empty(&pool->children));
+    assert(!pool->persistent);
+
+    pool->major = true;
+    pool->persistent = true;
+}
+
 #endif
 
 #ifdef DUMP_POOL_ALLOC_ALL
@@ -503,7 +525,8 @@ pool_check_attachments(struct pool *pool)
 }
 
 static void
-pool_destroy(struct pool *pool, struct pool *reparent_to TRACE_ARGS_DECL)
+pool_destroy(struct pool *pool, struct pool *parent,
+             struct pool *reparent_to TRACE_ARGS_DECL)
 {
     assert(pool->ref == 0);
     assert(pool->parent == NULL);
@@ -546,8 +569,17 @@ pool_destroy(struct pool *pool, struct pool *reparent_to TRACE_ARGS_DECL)
             assert(pool->major || pool->trashed);
 
 #ifndef NDEBUG
-            list_add(&child->siblings, &trash);
-            child->trashed = true;
+            if (child->persistent) {
+                assert(child->major);
+
+                if (parent != NULL)
+                    pool_add_child(parent, child);
+                else
+                    child->parent = NULL;
+            } else {
+                list_add(&child->siblings, &trash);
+                child->trashed = true;
+            }
 #else
             child->parent = NULL;
 #endif
@@ -709,7 +741,7 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
 #ifdef DUMP_POOL_UNREF
         pool_dump_refs(pool);
 #endif
-        pool_destroy(pool, reparent_to TRACE_ARGS_FWD);
+        pool_destroy(pool, parent, reparent_to TRACE_ARGS_FWD);
         return 0;
     }
 
@@ -902,6 +934,11 @@ pool_trash(struct pool *pool)
         return;
 
     assert(pool->parent != NULL);
+
+#ifndef NDEBUG
+    if (pool->persistent)
+        return;
+#endif
 
     pool_remove_child(pool->parent, pool);
     list_add(&pool->siblings, &trash);

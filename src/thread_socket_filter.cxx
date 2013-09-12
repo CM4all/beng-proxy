@@ -615,7 +615,7 @@ thread_socket_filter_close(void *ctx)
 
     if (!thread_queue_cancel(f->queue, &f->job)) {
         /* detach the pool, postpone the destruction */
-        pool_set_major(f->pool);
+        pool_set_persistent(f->pool);
         f->postponed_destroy = true;
         return;
     }

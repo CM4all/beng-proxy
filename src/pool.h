@@ -66,11 +66,15 @@ pool_new_slice(struct pool *parent, const char *name,
 #ifdef NDEBUG
 
 #define pool_set_major(pool)
+#define pool_set_persistent(pool)
 
 #else
 
 void
 pool_set_major(struct pool *pool);
+
+void
+pool_set_persistent(struct pool *pool);
 
 #endif
 
