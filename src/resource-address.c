@@ -6,6 +6,7 @@
  */
 
 #include "resource-address.h"
+#include "lhttp_address.h"
 #include "uri-relative.h"
 #include "uri-edit.h"
 #include "uri-extract.h"
@@ -31,6 +32,11 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
         dest->u.http = uri_address_dup(pool, src->u.http);
         break;
 
+    case RESOURCE_ADDRESS_LHTTP:
+        assert(src->u.lhttp != NULL);
+        dest->u.lhttp = lhttp_address_dup(pool, src->u.lhttp);
+        break;
+
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
@@ -52,7 +58,28 @@ resource_address_dup_with_path(struct pool *pool,
 {
     struct resource_address *dest = p_malloc(pool, sizeof(*dest));
     dest->type = src->type;
-    dest->u.http = uri_address_dup_with_path(pool, src->u.http, path);
+
+    switch (src->type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_NFS:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        assert(false);
+        gcc_unreachable();
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        dest->u.http = uri_address_dup_with_path(pool, src->u.http, path);
+        break;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        dest->u.lhttp = lhttp_address_dup_with_uri(pool, src->u.lhttp, path);
+        break;
+    }
+
     return dest;
 }
 
@@ -88,6 +115,20 @@ resource_address_insert_query_string_from(struct pool *pool,
         dest->u.http = uri_address_insert_query_string(pool, src->u.http,
                                                        query_string);
         return dest;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        assert(src->u.lhttp != NULL);
+
+        query_string = uri_query_string(uri);
+        if (query_string == NULL)
+            /* no query string in URI */
+            return src;
+
+        dest = p_malloc(pool, sizeof(*dest));
+        dest->type = src->type;
+        dest->u.lhttp = lhttp_address_insert_query_string(pool, src->u.lhttp,
+                                                          query_string);
+        break;
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
@@ -143,6 +184,16 @@ resource_address_insert_args(struct pool *pool,
                                                path, path_length);
         return dest;
 
+    case RESOURCE_ADDRESS_LHTTP:
+        assert(src->u.lhttp != NULL);
+
+        dest = p_malloc(pool, sizeof(*dest));
+        dest->type = src->type;
+        dest->u.lhttp = lhttp_address_insert_args(pool, src->u.lhttp,
+                                                  args, args_length,
+                                                  path, path_length);
+        return dest;
+
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
@@ -187,6 +238,7 @@ resource_address_auto_base(struct pool *pool,
     case RESOURCE_ADDRESS_LOCAL:
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_LHTTP:
     case RESOURCE_ADDRESS_AJP:
     case RESOURCE_ADDRESS_NFS:
         return NULL;
@@ -242,6 +294,14 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
         dest->type = src->type;
         return dest;
 
+    case RESOURCE_ADDRESS_LHTTP:
+        dest->u.lhttp = lhttp_address_save_base(pool, src->u.lhttp, suffix);
+        if (dest->u.lhttp == NULL)
+            return NULL;
+
+        dest->type = src->type;
+        return dest;
+
     case RESOURCE_ADDRESS_NFS:
         dest->u.nfs = nfs_address_save_base(pool, src->u.nfs, suffix);
         if (dest->u.nfs == NULL)
@@ -291,6 +351,14 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
         dest->type = src->type;
         return dest;
 
+    case RESOURCE_ADDRESS_LHTTP:
+        dest->u.lhttp = lhttp_address_load_base(pool, src->u.lhttp, suffix);
+        if (dest->u.lhttp == NULL)
+            return NULL;
+
+        dest->type = src->type;
+        return dest;
+
     case RESOURCE_ADDRESS_NFS:
         dest->u.nfs = nfs_address_load_base(pool, src->u.nfs, suffix);
         assert(dest->u.nfs != NULL);
@@ -309,6 +377,7 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
 {
     const struct uri_with_address *uwa;
     const struct cgi_address *cgi;
+    const struct lhttp_address *lhttp;
 
     assert(pool != NULL);
     assert(src != NULL);
@@ -334,6 +403,19 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
 
         buffer->type = src->type;
         buffer->u.http = uwa;
+        return buffer;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        lhttp = lhttp_address_apply(pool, src->u.lhttp,
+                                    relative, relative_length);
+        if (lhttp == NULL)
+            return NULL;
+
+        if (lhttp == src->u.lhttp)
+            return src;
+
+        buffer->type = src->type;
+        buffer->u.lhttp = lhttp;
         return buffer;
 
     case RESOURCE_ADDRESS_CGI:
@@ -380,6 +462,9 @@ resource_address_relative(const struct resource_address *base,
     case RESOURCE_ADDRESS_AJP:
         return uri_address_relative(base->u.http, address->u.http, buffer);
 
+    case RESOURCE_ADDRESS_LHTTP:
+        return lhttp_address_relative(base->u.lhttp, address->u.lhttp, buffer);
+
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
@@ -407,6 +492,9 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
         return uri_address_absolute(pool, address->u.http);
+
+    case RESOURCE_ADDRESS_LHTTP:
+        return lhttp_address_id(pool, address->u.lhttp);
 
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
@@ -440,6 +528,9 @@ resource_address_host_and_port(const struct resource_address *address)
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
         return address->u.http->host_and_port;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        return address->u.lhttp->host_and_port;
     }
 
     assert(false);
@@ -461,6 +552,9 @@ resource_address_uri_path(const struct resource_address *address)
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
         return address->u.http->path;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        return address->u.lhttp->uri;
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
@@ -497,6 +591,9 @@ resource_address_is_expandable(const struct resource_address *address)
     case RESOURCE_ADDRESS_AJP:
         return uri_address_is_expandable(address->u.http);
 
+    case RESOURCE_ADDRESS_LHTTP:
+        return lhttp_address_is_expandable(address->u.lhttp);
+
     case RESOURCE_ADDRESS_NFS:
         return nfs_address_is_expandable(address->u.nfs);
     }
@@ -516,6 +613,7 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     switch (address->type) {
         struct cgi_address *cgi;
         struct uri_with_address *uwa;
+        struct lhttp_address *lhttp;
         const struct nfs_address *nfs;
 
     case RESOURCE_ADDRESS_NONE:
@@ -541,6 +639,12 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
         address->u.http = uwa = uri_address_dup(pool, address->u.http);
         return uri_address_expand(pool, uwa,
                                   match_info, error_r);
+
+    case RESOURCE_ADDRESS_LHTTP:
+        /* copy the uri_with_address object (it's a pointer, not
+           in-line) and expand it */
+        address->u.lhttp = lhttp = lhttp_address_dup(pool, address->u.lhttp);
+        return lhttp_address_expand(pool, lhttp, match_info, error_r);
 
     case RESOURCE_ADDRESS_NFS:
         /* copy the uri_with_address object (it's a pointer, not

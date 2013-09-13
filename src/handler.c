@@ -226,6 +226,7 @@ handle_translated_request(struct request *request,
         nfs_handler(request);
 #endif
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP ||
+               response->address.type == RESOURCE_ADDRESS_LHTTP ||
                resource_address_is_cgi_alike(&response->address) ||
                response->address.type == RESOURCE_ADDRESS_NFS ||
                response->address.type == RESOURCE_ADDRESS_AJP) {

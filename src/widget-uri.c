@@ -14,6 +14,7 @@
 #include "strref.h"
 #include "strref-pool.h"
 #include "uri-address.h"
+#include "lhttp_address.h"
 
 #include <assert.h>
 
@@ -93,6 +94,31 @@ widget_determine_address(const struct widget *widget, bool stateful)
             break;
 
         uri = original_address->u.http->path;
+
+        if (*path_info != 0)
+            uri = p_strcat(pool, uri, path_info, NULL);
+
+        if (widget->query_string != NULL)
+            uri = uri_insert_query_string(pool, uri,
+                                          widget->query_string);
+
+        if (stateful && !strref_is_empty(&widget->from_request.query_string))
+            uri = uri_append_query_string_n(pool, uri,
+                                            widget->from_request.query_string.data,
+                                            widget->from_request.query_string.length);
+
+        return resource_address_dup_with_path(pool, original_address, uri);
+
+    case RESOURCE_ADDRESS_LHTTP:
+        assert(original_address->u.lhttp->uri != NULL);
+
+        if ((!stateful ||
+             strref_is_empty(&widget->from_request.query_string)) &&
+            *path_info == 0 &&
+            widget->query_string == NULL)
+            break;
+
+        uri = original_address->u.lhttp->uri;
 
         if (*path_info != 0)
             uri = p_strcat(pool, uri, path_info, NULL);

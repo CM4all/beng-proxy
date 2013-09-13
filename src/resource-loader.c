@@ -281,6 +281,10 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                           headers, body,
                           handler, handler_ctx, async_ref);
         return;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        // TODO: implement
+        break;
     }
 
     /* the resource could not be located, abort the request */

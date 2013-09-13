@@ -826,6 +826,7 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/translate-response.c \
 	src/hashmap.c src/strmap.c \
 	src/resource-address.c src/uri-address.c \
+	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi-address.c \
 	src/nfs_address.c \
@@ -871,6 +872,7 @@ test_t_stock_LDADD = $(AM_LDADD) \
 
 test_t_resource_address_SOURCES = test/t-resource-address.c \
 	src/resource-address.c src/file-address.c src/cgi-address.c \
+	src/lhttp_address.c \
 	src/nfs_address.c \
 	src/jail.c \
 	src/regex.c \
@@ -991,6 +993,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/address_list.c \
 	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
 	src/resource-address.c src/global.c src/transformation.c \
+	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi-address.c \
 	src/nfs_address.c \
@@ -1161,6 +1164,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/http-cache-info.c src/http-cache-document.c \
 	src/http-cache-heap.c src/http-cache-age.c \
 	src/resource-address.c src/uri-address.c \
+	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi-address.c \
 	src/nfs_address.c \
@@ -1258,6 +1262,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/args.c \
 	src/strmap.c src/hashmap.c \
 	src/resource-address.c src/uri-address.c \
+	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi-address.c \
 	src/nfs_address.c \
@@ -1283,6 +1288,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/strset.c \
 	src/resource-address.c src/file-address.c src/cgi-address.c \
+	src/lhttp_address.c \
 	src/nfs_address.c \
 	src/jail.c \
 	src/regex.c \
@@ -1331,6 +1337,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/args.c src/uri-escape.c src/uri-verify.c \
 	src/format.c \
 	src/resource-address.c src/uri-address.c \
+	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi-address.c \
 	src/nfs_address.c \
@@ -1384,6 +1391,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/format.c \
 	src/widget-view.c \
 	src/resource-address.c src/transformation.c src/jail.c \
+	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi-address.c \
 	src/regex.c \
@@ -1468,6 +1476,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/widget-request.c \
 	src/widget-view.c \
 	src/resource-address.c src/jail.c src/transformation.c \
+	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi-address.c \
 	src/nfs_address.c \
@@ -1506,6 +1515,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/widget-request.c \
 	src/widget-view.c \
 	src/resource-address.c src/jail.c src/transformation.c \
+	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi-address.c \
 	src/nfs_address.c \
