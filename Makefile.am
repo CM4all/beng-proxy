@@ -287,6 +287,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/tvary.c src/tvary.h \
 	src/file-address.c src/file-address.h \
 	src/nfs_address.c src/nfs_address.h \
+	src/lhttp_address.c src/lhttp_address.h \
 	src/proxy-handler.c \
 	src/errdoc.c \
 	src/widget.c \
