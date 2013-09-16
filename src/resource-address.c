@@ -8,6 +8,7 @@
 #include "resource-address.h"
 #include "uri-relative.h"
 #include "uri-edit.h"
+#include "uri-extract.h"
 #include "strref.h"
 
 void
@@ -77,8 +78,8 @@ resource_address_insert_query_string_from(struct pool *pool,
     case RESOURCE_ADDRESS_AJP:
         assert(src->u.http != NULL);
 
-        query_string = strchr(uri, '?');
-        if (query_string == NULL || *++query_string == 0)
+        query_string = uri_query_string(uri);
+        if (query_string == NULL)
             /* no query string in URI */
             return src;
 
@@ -93,8 +94,8 @@ resource_address_insert_query_string_from(struct pool *pool,
     case RESOURCE_ADDRESS_WAS:
         assert(src->u.cgi->path != NULL);
 
-        query_string = strchr(uri, '?');
-        if (query_string == NULL || *++query_string == 0)
+        query_string = uri_query_string(uri);
+        if (query_string == NULL)
             /* no query string in URI */
             return src;
 

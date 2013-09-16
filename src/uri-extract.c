@@ -52,3 +52,15 @@ uri_path(const char *uri)
         return "";
     return p;
 }
+
+const char *
+uri_query_string(const char *uri)
+{
+    assert(uri != NULL);
+
+    const char *p = strchr(uri, '?');
+    if (p == NULL || *++p == 0)
+        return NULL;
+
+    return p;
+}
