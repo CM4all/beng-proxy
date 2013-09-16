@@ -188,6 +188,7 @@ widget_response_redirect(struct embed *embed, const char *location,
                                      false);
 
     resource_get(global_http_cache, global_tcp_balancer,
+                 global_lhttp_stock,
                  global_fcgi_stock, global_was_stock, global_delegate_stock,
                  global_nfs_cache,
                  embed->pool, session_id_low(embed->env->session_id),
@@ -709,6 +710,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
     widget->from_request.body = NULL;
 
     resource_get(global_http_cache, global_tcp_balancer,
+                 global_lhttp_stock,
                  global_fcgi_stock, global_was_stock, global_delegate_stock,
                  global_nfs_cache,
                  pool, session_id_low(embed->env->session_id),
@@ -774,6 +776,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     widget->from_request.body = NULL;
 
     resource_get(global_http_cache, global_tcp_balancer,
+                 global_lhttp_stock,
                  global_fcgi_stock, global_was_stock, global_delegate_stock,
                  global_nfs_cache,
                  pool, session_id_low(embed->env->session_id),

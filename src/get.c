@@ -12,6 +12,7 @@
 void
 resource_get(struct http_cache *cache,
              struct tcp_balancer *tcp_balancer,
+             struct hstock *lhttp_stock,
              struct hstock *fcgi_stock,
              struct hstock *was_stock,
              struct hstock *delegate_stock,
@@ -38,7 +39,7 @@ resource_get(struct http_cache *cache,
     } else {
         struct resource_loader *rl =
             resource_loader_new(pool, tcp_balancer,
-                                fcgi_stock, was_stock,
+                                lhttp_stock, fcgi_stock, was_stock,
                                 delegate_stock, nfs_cache);
         resource_loader_request(rl, pool, session_sticky,
                                 method, address, status, headers, body,

@@ -100,6 +100,7 @@ errdoc_translate_response(const struct translate_response *response, void *ctx)
 
         resource_get(instance->http_cache,
                      instance->tcp_balancer,
+                     instance->lhttp_stock,
                      instance->fcgi_stock, instance->was_stock,
                      instance->delegate_stock,
                      instance->nfs_cache,

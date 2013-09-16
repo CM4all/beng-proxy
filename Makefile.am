@@ -287,7 +287,11 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/tvary.c src/tvary.h \
 	src/file-address.c src/file-address.h \
 	src/nfs_address.c src/nfs_address.h \
+	src/lhttp_quark.h \
 	src/lhttp_address.c src/lhttp_address.h \
+	src/lhttp_launch.c src/lhttp_launch.h \
+	src/lhttp_stock.c src/lhttp_stock.h \
+	src/lhttp_request.c src/lhttp_request.h \
 	src/proxy-handler.c \
 	src/errdoc.c \
 	src/widget.c \

@@ -23,6 +23,7 @@ struct async_operation_ref;
 
 struct resource_loader *
 resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
+                    struct hstock *lhttp_stock,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
                     struct hstock *delegate_stock,
                     struct nfs_cache *nfs_cache);

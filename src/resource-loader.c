@@ -11,6 +11,7 @@
 #include "http-request.h"
 #include "http-response.h"
 #include "static-file.h"
+#include "lhttp_request.h"
 #include "cgi.h"
 #include "fcgi-request.h"
 #include "fcgi-remote.h"
@@ -34,6 +35,7 @@
 
 struct resource_loader {
     struct tcp_balancer *tcp_balancer;
+    struct hstock *lhttp_stock;
     struct hstock *fcgi_stock;
     struct hstock *was_stock;
     struct hstock *delegate_stock;
@@ -51,6 +53,7 @@ resource_loader_quark(void)
 
 struct resource_loader *
 resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
+                    struct hstock *lhttp_stock,
                     struct hstock *fcgi_stock, struct hstock *was_stock,
                     struct hstock *delegate_stock,
                     struct nfs_cache *nfs_cache)
@@ -60,6 +63,7 @@ resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
     struct resource_loader *rl = p_malloc(pool, sizeof(*rl));
 
     rl->tcp_balancer = tcp_balancer;
+    rl->lhttp_stock = lhttp_stock;
     rl->fcgi_stock = fcgi_stock;
     rl->was_stock = was_stock;
     rl->delegate_stock = delegate_stock;
@@ -283,8 +287,10 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         return;
 
     case RESOURCE_ADDRESS_LHTTP:
-        // TODO: implement
-        break;
+        lhttp_request(pool, rl->lhttp_stock, address->u.lhttp,
+                      method, headers_dup(pool, headers), body,
+                      handler, handler_ctx, async_ref);
+        return;
     }
 
     /* the resource could not be located, abort the request */

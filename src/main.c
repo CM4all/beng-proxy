@@ -20,6 +20,7 @@
 #include "stock.h"
 #include "tcache.h"
 #include "http-cache.h"
+#include "lhttp_stock.h"
 #include "fcgi-stock.h"
 #include "was-stock.h"
 #include "delegate-stock.h"
@@ -120,6 +121,11 @@ shutdown_callback(void *ctx)
     if (instance->filter_cache != NULL) {
         filter_cache_close(instance->filter_cache);
         instance->filter_cache = NULL;
+    }
+
+    if (instance->lhttp_stock != NULL) {
+        hstock_free(instance->lhttp_stock);
+        instance->lhttp_stock = NULL;
     }
 
     if (instance->fcgi_stock != NULL) {
@@ -346,6 +352,9 @@ int main(int argc, char **argv)
         instance.translate_cache = translate_cache_new(instance.pool, translate_stock,
                                                        instance.config.translate_cache_size);
     }
+
+    instance.lhttp_stock = lhttp_stock_new(instance.pool, 0, 16);
+
     instance.fcgi_stock = fcgi_stock_new(instance.pool,
                                          instance.config.fcgi_stock_limit,
                                          instance.config.fcgi_stock_max_idle);
@@ -365,6 +374,7 @@ int main(int argc, char **argv)
 
     instance.resource_loader = resource_loader_new(instance.pool,
                                                    instance.tcp_balancer,
+                                                   instance.lhttp_stock,
                                                    instance.fcgi_stock,
                                                    instance.was_stock,
                                                    instance.delegate_stock,
@@ -388,6 +398,7 @@ int main(int argc, char **argv)
     global_tcp_balancer = instance.tcp_balancer;
     global_memcached_stock = instance.memcached_stock;
     global_http_cache = instance.http_cache;
+    global_lhttp_stock = instance.lhttp_stock;
     global_fcgi_stock = instance.fcgi_stock;
     global_was_stock = instance.was_stock;
     global_delegate_stock = instance.delegate_stock;
