@@ -1469,28 +1469,33 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_APPEND:
-        if (client->resource_address == NULL ||
-            client->resource_address->type != RESOURCE_ADDRESS_PIPE) {
-            translate_client_error(client,
-                                   "misplaced TRANSLATE_APPEND packet");
-            return false;
-        }
-
-        if (client->cgi_address->num_args >=
-            G_N_ELEMENTS(client->cgi_address->args)) {
-            translate_client_error(client,
-                                   "too many TRANSLATE_APPEND packets");
-            return false;
-        }
-
         if (payload == NULL) {
             translate_client_error(client,
                                    "malformed TRANSLATE_APPEND packet");
             return false;
         }
 
-        client->cgi_address->args[client->cgi_address->num_args++] = payload;
-        return true;
+        if (client->resource_address == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_APPEND packet");
+            return false;
+        }
+
+        if (client->resource_address->type == RESOURCE_ADDRESS_PIPE) {
+            if (client->cgi_address->num_args >=
+                G_N_ELEMENTS(client->cgi_address->args)) {
+                translate_client_error(client,
+                                       "too many TRANSLATE_APPEND packets");
+                return false;
+            }
+
+            client->cgi_address->args[client->cgi_address->num_args++] = payload;
+            return true;
+        } else {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_APPEND packet");
+            return false;
+        }
 
     case TRANSLATE_PAIR:
         if (client->cgi_address != NULL) {
