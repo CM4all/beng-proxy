@@ -11,7 +11,6 @@
 
 struct pool;
 struct istream;
-struct fcgi_stock;
 struct hstock;
 struct strmap;
 struct http_response_handler;
