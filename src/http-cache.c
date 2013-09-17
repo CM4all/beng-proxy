@@ -127,6 +127,7 @@ http_cache_key(struct pool *pool, const struct resource_address *address)
         return NULL;
 
     case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_LHTTP:
     case RESOURCE_ADDRESS_AJP:
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:

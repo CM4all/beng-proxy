@@ -43,6 +43,7 @@ struct request {
 
 int global_filter_cache;
 int global_delegate_stock;
+int global_lhttp_stock;
 int global_fcgi_stock;
 int global_was_stock;
 int global_http_cache;
@@ -141,6 +142,7 @@ struct hstock;
 void
 resource_get(gcc_unused struct http_cache *cache,
              gcc_unused struct tcp_balancer *tcp_balancer,
+             gcc_unused struct hstock *lhttp_stock,
              gcc_unused struct hstock *fcgi_stock,
              gcc_unused struct hstock *was_stock,
              gcc_unused struct hstock *delegate_stock,

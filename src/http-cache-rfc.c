@@ -12,6 +12,7 @@
 #include "date.h"
 #include "tpool.h"
 #include "resource-address.h"
+#include "lhttp_address.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -58,6 +59,9 @@ resource_address_has_query_string(const struct resource_address *address)
 
     case RESOURCE_ADDRESS_HTTP:
         return strchr(address->u.http->path, '?') != NULL;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        return strchr(address->u.lhttp->uri, '?') != NULL;
 
     case RESOURCE_ADDRESS_PIPE:
         return false;

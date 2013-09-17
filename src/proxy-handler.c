@@ -18,6 +18,7 @@
 #include "strmap.h"
 #include "http-response.h"
 #include "istream-impl.h"
+#include "lhttp_address.h"
 
 static void
 proxy_collect_cookies(struct request *request2, const struct strmap *headers)
@@ -69,6 +70,7 @@ proxy_response(http_status_t status, struct strmap *headers,
 #ifndef NDEBUG
     const struct translate_response *tr = request2->translate.response;
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
+           tr->address.type == RESOURCE_ADDRESS_LHTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
            tr->address.type == RESOURCE_ADDRESS_NFS ||
            resource_address_is_cgi_alike(&tr->address));
@@ -101,6 +103,7 @@ proxy_handler(struct request *request2)
     struct forward_request forward;
 
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
+           tr->address.type == RESOURCE_ADDRESS_LHTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
            tr->address.type == RESOURCE_ADDRESS_NFS ||
            resource_address_is_cgi_alike(&tr->address));
@@ -110,12 +113,16 @@ proxy_handler(struct request *request2)
         tr->address.type == RESOURCE_ADDRESS_AJP) {
         host_and_port = tr->address.u.http->host_and_port;
         uri_p = tr->address.u.http->path;
+    } else if (tr->address.type == RESOURCE_ADDRESS_LHTTP) {
+        host_and_port = tr->address.u.lhttp->host_and_port;
+        uri_p = tr->address.u.lhttp->uri;
     }
 
     request_forward(&forward, request2,
                     &tr->request_header_forward,
                     host_and_port, uri_p,
-                    tr->address.type == RESOURCE_ADDRESS_HTTP);
+                    tr->address.type == RESOURCE_ADDRESS_HTTP ||
+                    tr->address.type == RESOURCE_ADDRESS_LHTTP);
 
     const struct resource_address *address = &tr->address;
     if (request2->translate.response->transparent &&

@@ -9,6 +9,7 @@
 #include "async.h"
 #include "config.h"
 #include "fb_pool.h"
+#include "lhttp_address.h"
 
 #include <stdio.h>
 #include <event.h>
@@ -29,6 +30,10 @@ print_resource_address(const struct resource_address *address)
 
     case RESOURCE_ADDRESS_HTTP:
         printf("proxy=%s\n", address->u.http->path);
+        break;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        printf("lhttp=%s|%s\n", address->u.lhttp->path, address->u.lhttp->uri);
         break;
 
     case RESOURCE_ADDRESS_PIPE:

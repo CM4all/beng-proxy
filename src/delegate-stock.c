@@ -39,12 +39,6 @@ struct delegate_process {
     struct event event;
 };
 
-static GQuark
-delegate_stock_quark(void)
-{
-    return g_quark_from_static_string("delegate");
-}
-
 /*
  * libevent callback
  *
@@ -222,10 +216,8 @@ delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
     struct delegate_info *info;
 
     if (jail != NULL && jail->enabled) {
-        if (jail->home_directory == NULL) {
-            GError *error =
-                g_error_new_literal(delegate_stock_quark(), 0,
-                                    "No home directory for jailed delegate");
+        GError *error = NULL;
+        if (!jail_params_check(jail, &error)) {
             handler->error(error, handler_ctx);
             return;
         }

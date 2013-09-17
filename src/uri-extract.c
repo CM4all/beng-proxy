@@ -7,11 +7,14 @@
 #include "uri-extract.h"
 #include "pool.h"
 
+#include <assert.h>
 #include <string.h>
 
 bool
 uri_has_protocol(const char *uri, size_t length)
 {
+    assert(uri != NULL);
+
     const char *colon = memchr(uri, ':', length);
     return colon != NULL && colon < uri + length - 2 &&
         colon[1] == '/' && colon[2] == '/';
@@ -20,13 +23,14 @@ uri_has_protocol(const char *uri, size_t length)
 const char *
 uri_host_and_port(struct pool *pool, const char *uri)
 {
-    const char *slash;
+    assert(pool != NULL);
+    assert(uri != NULL);
 
     if (memcmp(uri, "http://", 7) != 0 && memcmp(uri, "ajp://", 6) != 0)
         return NULL;
 
     uri += 6 + (uri[0] != 'a');
-    slash = strchr(uri, '/');
+    const char *slash = strchr(uri, '/');
     if (slash == NULL)
         return uri;
 
@@ -36,6 +40,8 @@ uri_host_and_port(struct pool *pool, const char *uri)
 const char *
 uri_path(const char *uri)
 {
+    assert(uri != NULL);
+
     const char *p = strchr(uri, ':');
     if (p == NULL || p[1] != '/')
         return uri;
@@ -44,5 +50,17 @@ uri_path(const char *uri)
     p = strchr(p + 3, '/');
     if (p == NULL)
         return "";
+    return p;
+}
+
+const char *
+uri_query_string(const char *uri)
+{
+    assert(uri != NULL);
+
+    const char *p = strchr(uri, '?');
+    if (p == NULL || *++p == 0)
+        return NULL;
+
     return p;
 }

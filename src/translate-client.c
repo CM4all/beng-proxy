@@ -16,6 +16,7 @@
 #include "css_processor.h"
 #include "async.h"
 #include "uri-address.h"
+#include "lhttp_address.h"
 #include "strutil.h"
 #include "strmap.h"
 #include "stopwatch.h"
@@ -90,6 +91,9 @@ struct translate_client {
 
     /** the current NFS address being edited */
     struct nfs_address *nfs_address;
+
+    /** the current "local HTTP" address being edited */
+    struct lhttp_address *lhttp_address;
 
     /** the current address list being edited */
     struct address_list *address_list;
@@ -532,6 +536,7 @@ add_view(struct translate_client *client, const char *name)
     client->file_address = NULL;
     client->cgi_address = NULL;
     client->nfs_address = NULL;
+    client->lhttp_address = NULL;
     client->address_list = NULL;
     client->transformation_tail = &view->transformation;
     client->transformation = NULL;
@@ -719,6 +724,7 @@ translate_handle_packet(struct translate_client *client,
         client->file_address = NULL;
         client->cgi_address = NULL;
         client->nfs_address = NULL;
+        client->lhttp_address = NULL;
         client->address_list = NULL;
 
         client->response.request_header_forward =
@@ -960,6 +966,7 @@ translate_handle_packet(struct translate_client *client,
         client->file_address = NULL;
         client->cgi_address = NULL;
         client->nfs_address = NULL;
+        client->lhttp_address = NULL;
         client->address_list = NULL;
         return true;
 
@@ -1469,28 +1476,43 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_APPEND:
-        if (client->resource_address == NULL ||
-            client->resource_address->type != RESOURCE_ADDRESS_PIPE) {
-            translate_client_error(client,
-                                   "misplaced TRANSLATE_APPEND packet");
-            return false;
-        }
-
-        if (client->cgi_address->num_args >=
-            G_N_ELEMENTS(client->cgi_address->args)) {
-            translate_client_error(client,
-                                   "too many TRANSLATE_APPEND packets");
-            return false;
-        }
-
         if (payload == NULL) {
             translate_client_error(client,
                                    "malformed TRANSLATE_APPEND packet");
             return false;
         }
 
-        client->cgi_address->args[client->cgi_address->num_args++] = payload;
-        return true;
+        if (client->resource_address == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_APPEND packet");
+            return false;
+        }
+
+        if (client->resource_address->type == RESOURCE_ADDRESS_PIPE) {
+            if (client->cgi_address->num_args >=
+                G_N_ELEMENTS(client->cgi_address->args)) {
+                translate_client_error(client,
+                                       "too many TRANSLATE_APPEND packets");
+                return false;
+            }
+
+            client->cgi_address->args[client->cgi_address->num_args++] = payload;
+            return true;
+        } else if (client->lhttp_address != NULL) {
+            if (client->lhttp_address->num_args >=
+                G_N_ELEMENTS(client->lhttp_address->args)) {
+                translate_client_error(client,
+                                       "too many TRANSLATE_APPEND packets");
+                return false;
+            }
+
+            client->lhttp_address->args[client->lhttp_address->num_args++] = payload;
+            return true;
+        } else {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_APPEND packet");
+            return false;
+        }
 
     case TRANSLATE_PAIR:
         if (client->cgi_address != NULL) {
@@ -1785,6 +1807,69 @@ translate_handle_packet(struct translate_client *client,
         client->response.validate_mtime.mtime = *(const uint64_t *)payload;
         client->response.validate_mtime.path =
             p_strndup(client->pool, payload + 8, payload_length - 8);
+        return true;
+
+    case TRANSLATE_LHTTP_PATH:
+        if (client->resource_address == NULL ||
+            client->resource_address->type != RESOURCE_ADDRESS_NONE) {
+            translate_client_error(client, "misplaced TRANSLATE_LHTTP_PATH packet");
+            return false;
+        }
+
+        if (payload == NULL || *payload != '/') {
+            translate_client_error(client, "malformed TRANSLATE_LHTTP_PATH packet");
+            return false;
+        }
+
+        client->resource_address->type = RESOURCE_ADDRESS_LHTTP;
+        client->resource_address->u.lhttp = client->lhttp_address =
+            lhttp_address_new(client->pool, payload);
+        client->jail = &client->lhttp_address->jail;
+        return true;
+
+    case TRANSLATE_LHTTP_URI:
+        if (client->lhttp_address == NULL ||
+            client->lhttp_address->uri != NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_LHTTP_HOST packet");
+            return false;
+        }
+
+        if (payload == NULL || *payload != '/') {
+            translate_client_error(client, "malformed TRANSLATE_LHTTP_URI packet");
+            return false;
+        }
+
+        client->lhttp_address->uri = payload;
+        return true;
+
+    case TRANSLATE_LHTTP_EXPAND_URI:
+        if (client->lhttp_address == NULL ||
+            client->lhttp_address->uri == NULL ||
+            client->lhttp_address->expand_uri != NULL ||
+            client->response.regex == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_LHTTP_EXPAND_URI packet");
+            return false;
+        }
+
+        client->lhttp_address->expand_uri = payload;
+        return true;
+
+    case TRANSLATE_LHTTP_HOST:
+        if (client->lhttp_address == NULL ||
+            client->lhttp_address->host_and_port != NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_LHTTP_HOST packet");
+            return false;
+        }
+
+        if (payload == NULL) {
+            translate_client_error(client, "malformed TRANSLATE_LHTTP_HOST packet");
+            return false;
+        }
+
+        client->lhttp_address->host_and_port = payload;
         return true;
     }
 

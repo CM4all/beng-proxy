@@ -270,6 +270,18 @@ class Translation(Protocol):
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
             response.packet(TRANSLATE_PATH_INFO, path_info)
             response.packet(TRANSLATE_EXPAND_PATH_INFO, r"/\2")
+        elif uri == '/lhttp/':
+            response.packet(TRANSLATE_LHTTP_PATH, os.path.join(test_path, 'run_http_server'))
+            response.packet(TRANSLATE_APPEND, 'accept')
+            response.packet(TRANSLATE_APPEND, '0')
+            response.packet(TRANSLATE_APPEND, 'fixed')
+            response.packet(TRANSLATE_LHTTP_URI, uri)
+        elif uri == '/lhttp/mirror':
+            response.packet(TRANSLATE_LHTTP_PATH, os.path.join(test_path, 'run_http_server'))
+            response.packet(TRANSLATE_APPEND, 'accept')
+            response.packet(TRANSLATE_APPEND, '0')
+            response.packet(TRANSLATE_APPEND, 'mirror')
+            response.packet(TRANSLATE_LHTTP_URI, uri)
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))

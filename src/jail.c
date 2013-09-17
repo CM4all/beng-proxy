@@ -13,6 +13,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+gcc_const
+static GQuark
+jail_quark(void)
+{
+    return g_quark_from_static_string("jail");
+}
+
 static char *
 next_word(char *p)
 {
@@ -87,6 +94,20 @@ jail_try_translate_path(const char *path,
         return jailed_prefix;
     else
         return NULL;
+}
+
+bool
+jail_params_check(const struct jail_params *jail, GError **error_r)
+{
+    if (!jail->enabled)
+        return true;
+
+    if (jail->home_directory == NULL) {
+        g_set_error(error_r, jail_quark(), 0, "No JailCGI home directory");
+        return false;
+    }
+
+    return true;
 }
 
 void

@@ -574,6 +574,28 @@ trailing slashes are necessary.
 The options above are compatible with \verb|BASE| and
 \verb|EXPAND_PATH|.
 
+\subsection{Local HTTP}
+\label{lhttp}
+
+``Local HTTP'' is a way for \emph{beng-proxy} to launch local HTTP
+servers.  An address for a ``local HTTP'' resource contains at least:
+
+\begin{itemize}
+\item a server program
+\item a request URI
+\end{itemize}
+
+Optional attributes:
+
+\begin{itemize}
+\item command-line arguments (one or more \verb|APPEND| packets)
+\item a ``Host'' request header (packet \verb|LHTTP_HOST|)
+\item JailCGI configuration (packet \verb|JAILCGI|)
+\end{itemize}
+
+How it works: \emph{beng-proxy} spawns the specified process with a
+bound listener socket on file descriptor 0.  The server program then
+accepts regular HTTP connections on this listener socket.
 
 \section{Translation}
 
@@ -783,7 +805,7 @@ prints the modified resource on stdout (see \ref{pipe}). \\
 \hline
 
 \verb|APPEND| & appends an argument to the command line of the
-preceding \verb|PIPE| \\
+preceding \verb|PIPE| or \verb|LHTTP_PATH|\\
 
 \hline
 
@@ -794,6 +816,23 @@ The payload is a string specifying the server's IP address. \\
 
 \verb|NFS_EXPORT| & Mount the specified path from the NFS server
 specified right before this packet (see \ref{nfs}) \\
+
+\hline
+
+\verb|LHTTP_PATH| & a local path which is executed as HTTP server \\
+
+\hline
+
+\verb|LHTTP_URI| & the request URI for \verb|LHTTP_PATH| \\
+
+\hline
+
+\verb|LHTTP_EXPAND_URI| & the regular expression rule for \verb|LHTTP_URI| \\
+
+\hline
+
+\verb|LHTTP_HOST| & the ``Host'' request header for \verb|LHTTP_PATH|
+\\
 
 \hline
 

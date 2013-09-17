@@ -6,24 +6,13 @@
  */
 
 #include "get.h"
-#include "resource-address.h"
 #include "resource-loader.h"
 #include "http-cache.h"
-#include "http-request.h"
-#include "http-response.h"
-#include "static-file.h"
-#include "cgi.h"
-#include "fcgi-request.h"
-#include "ajp-request.h"
-#include "header-writer.h"
-#include "pipe.h"
-#include "delegate-request.h"
-
-#include <string.h>
 
 void
 resource_get(struct http_cache *cache,
              struct tcp_balancer *tcp_balancer,
+             struct hstock *lhttp_stock,
              struct hstock *fcgi_stock,
              struct hstock *was_stock,
              struct hstock *delegate_stock,
@@ -50,7 +39,7 @@ resource_get(struct http_cache *cache,
     } else {
         struct resource_loader *rl =
             resource_loader_new(pool, tcp_balancer,
-                                fcgi_stock, was_stock,
+                                lhttp_stock, fcgi_stock, was_stock,
                                 delegate_stock, nfs_cache);
         resource_loader_request(rl, pool, session_sticky,
                                 method, address, status, headers, body,

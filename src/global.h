@@ -16,6 +16,7 @@ extern struct memcached_stock *global_memcached_stock;
 
 extern struct http_cache *global_http_cache;
 
+extern struct hstock *global_lhttp_stock;
 extern struct hstock *global_fcgi_stock;
 
 extern struct hstock *global_was_stock;

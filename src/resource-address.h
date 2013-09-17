@@ -24,6 +24,7 @@ enum resource_address_type {
     RESOURCE_ADDRESS_NONE = 0,
     RESOURCE_ADDRESS_LOCAL,
     RESOURCE_ADDRESS_HTTP,
+    RESOURCE_ADDRESS_LHTTP,
     RESOURCE_ADDRESS_PIPE,
     RESOURCE_ADDRESS_CGI,
     RESOURCE_ADDRESS_FASTCGI,
@@ -39,6 +40,8 @@ struct resource_address {
         struct file_address local;
 
         const struct uri_with_address *http;
+
+        const struct lhttp_address *lhttp;
 
         const struct cgi_address *cgi;
 

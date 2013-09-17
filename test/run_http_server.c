@@ -179,8 +179,19 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    const int in_fd = atoi(argv[1]);
-    const int out_fd = atoi(argv[2]);
+    int in_fd, out_fd;
+
+    if (strcmp(argv[1], "accept") == 0) {
+        const int listen_fd = atoi(argv[2]);
+        in_fd = out_fd = accept(listen_fd, NULL, 0);
+        if (in_fd < 0) {
+            perror("accept() failed");
+            return EXIT_FAILURE;
+        }
+    } else {
+        in_fd = atoi(argv[1]);
+        out_fd = atoi(argv[2]);
+    }
 
     direct_global_init();
     struct event_base *event_base = event_init();

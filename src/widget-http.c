@@ -183,10 +183,12 @@ widget_response_redirect(struct embed *embed, const char *location,
         istream_close_unused(body);
 
     headers = widget_request_headers(embed, view,
-                                     address->type == RESOURCE_ADDRESS_HTTP,
+                                     address->type == RESOURCE_ADDRESS_HTTP ||
+                                     address->type == RESOURCE_ADDRESS_LHTTP,
                                      false);
 
     resource_get(global_http_cache, global_tcp_balancer,
+                 global_lhttp_stock,
                  global_fcgi_stock, global_was_stock, global_delegate_stock,
                  global_nfs_cache,
                  embed->pool, session_id_low(embed->env->session_id),
@@ -684,7 +686,8 @@ widget_http_request(struct pool *pool, struct widget *widget,
     embed->transformation = t_view->transformation;
 
     headers = widget_request_headers(embed, a_view,
-                                     widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,
+                                     widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP ||
+                                     widget_address(embed->widget)->type == RESOURCE_ADDRESS_LHTTP,
                                      widget->from_request.body != NULL);
 
     if (widget->class->dump_headers) {
@@ -707,6 +710,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
     widget->from_request.body = NULL;
 
     resource_get(global_http_cache, global_tcp_balancer,
+                 global_lhttp_stock,
                  global_fcgi_stock, global_was_stock, global_delegate_stock,
                  global_nfs_cache,
                  pool, session_id_low(embed->env->session_id),
@@ -755,7 +759,8 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     embed->transformation = t_view->transformation;
 
     headers = widget_request_headers(embed, a_view,
-                                     widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP,
+                                     widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP ||
+                                     widget_address(embed->widget)->type == RESOURCE_ADDRESS_LHTTP,
                                      widget->from_request.body != NULL);
 
     embed->lookup_handler = handler;
@@ -771,6 +776,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     widget->from_request.body = NULL;
 
     resource_get(global_http_cache, global_tcp_balancer,
+                 global_lhttp_stock,
                  global_fcgi_stock, global_was_stock, global_delegate_stock,
                  global_nfs_cache,
                  pool, session_id_low(embed->env->session_id),

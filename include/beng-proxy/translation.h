@@ -311,6 +311,29 @@ enum beng_translation_command {
      * mounted from the server.
      */
     TRANSLATE_NFS_EXPORT = 96,
+
+    /**
+     * The path of a HTTP server program that will be launched.
+     */
+    TRANSLATE_LHTTP_PATH = 97,
+
+    /**
+     * The URI that will be requested on the given HTTP server
+     * program.
+     */
+    TRANSLATE_LHTTP_URI = 98,
+
+    /**
+     * Expand #TRANSLATE_REGEX match strings in this
+     * #TRANSLATE_LHTTP_URI value.  Sub-strings in the form "\1" will
+     * be replaced.
+     */
+    TRANSLATE_LHTTP_EXPAND_URI = 99,
+
+    /**
+     * The "Host" request header for the #TRANSLATE_LHTTP_PATH.
+     */
+    TRANSLATE_LHTTP_HOST = 100,
 };
 
 struct beng_translation_header {

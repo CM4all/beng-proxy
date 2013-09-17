@@ -26,4 +26,8 @@ gcc_pure
 const char *
 uri_path(const char *uri);
 
+gcc_pure
+const char *
+uri_query_string(const char *uri);
+
 #endif

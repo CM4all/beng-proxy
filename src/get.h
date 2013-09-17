@@ -39,6 +39,7 @@ struct async_operation_ref;
 void
 resource_get(struct http_cache *cache,
              struct tcp_balancer *tcp_balancer,
+             struct hstock *lhttp_stock,
              struct hstock *fcgi_stock,
              struct hstock *was_stock,
              struct hstock *delegate_stock,
