@@ -1,6 +1,7 @@
 cm4all-beng-proxy (3.0.30) unstable; urgency=low
 
   * istream-file: fix crash bug
+  * fcgi, was: fix memory leak on malformed translation response
 
  --   
 
