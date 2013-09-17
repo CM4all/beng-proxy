@@ -47,13 +47,6 @@ struct fcgi_request {
     struct async_operation_ref *async_ref;
 };
 
-static GQuark
-fcgi_request_quark(void)
-{
-    return g_quark_from_static_string("fcgi_request");
-}
-
-
 /*
  * socket lease
  *
@@ -146,10 +139,8 @@ fcgi_request(struct pool *pool, struct hstock *fcgi_stock,
 {
     struct fcgi_request *request;
 
-    if (jail != NULL && jail->enabled && jail->home_directory == NULL) {
-        GError *error =
-            g_error_new_literal(fcgi_request_quark(), 0,
-                                "No document root");
+    GError *error = NULL;
+    if (jail != NULL && !jail_params_check(jail, &error)) {
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }

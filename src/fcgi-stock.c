@@ -380,10 +380,8 @@ fcgi_stock_get(struct hstock *hstock, struct pool *pool,
                const struct stock_get_handler *handler, void *handler_ctx,
                struct async_operation_ref *async_ref)
 {
-    if (jail != NULL && jail->enabled && jail->home_directory == NULL) {
-        GError *error =
-            g_error_new_literal(fcgi_quark(), 0,
-                                "No home directory for jailed FastCGI");
+    GError *error = NULL;
+    if (jail != NULL && !jail_params_check(jail, &error)) {
         handler->error(error, handler_ctx);
         return;
     }

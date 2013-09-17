@@ -9,6 +9,8 @@
 
 #include <inline/compiler.h>
 
+#include <glib.h>
+
 #include <stdbool.h>
 
 struct pool;
@@ -37,6 +39,9 @@ struct jail_params {
 bool
 jail_config_load(struct jail_config *config, const char *path,
                  struct pool *pool);
+
+bool
+jail_params_check(const struct jail_params *jail, GError **error_r);
 
 void
 jail_params_copy(struct pool *pool, struct jail_params *dest,
