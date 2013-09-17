@@ -6,20 +6,8 @@
  */
 
 #include "get.h"
-#include "resource-address.h"
 #include "resource-loader.h"
 #include "http-cache.h"
-#include "http-request.h"
-#include "http-response.h"
-#include "static-file.h"
-#include "cgi.h"
-#include "fcgi-request.h"
-#include "ajp-request.h"
-#include "header-writer.h"
-#include "pipe.h"
-#include "delegate-request.h"
-
-#include <string.h>
 
 void
 resource_get(struct http_cache *cache,
