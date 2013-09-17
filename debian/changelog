@@ -3,7 +3,7 @@ cm4all-beng-proxy (3.1.7) unstable; urgency=low
   * merge release 3.0.30
   * resource-loader: new protocol "Local HTTP"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 17 Sep 2013 13:36:20 -0000
 
 cm4all-beng-proxy (3.1.6) unstable; urgency=low
 
