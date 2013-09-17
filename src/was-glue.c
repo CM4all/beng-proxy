@@ -96,6 +96,9 @@ was_stock_error(GError *error, void *ctx)
     struct was_request *request = ctx;
 
     http_response_handler_invoke_abort(&request->handler, error);
+
+    if (request->body != NULL)
+        istream_close_unused(request->body);
 }
 
 static const struct stock_get_handler was_stock_handler = {
@@ -127,6 +130,9 @@ was_request(struct pool *pool, struct hstock *was_stock,
 
     GError *error = NULL;
     if (jail != NULL && !jail_params_check(jail, &error)) {
+        if (body != NULL)
+            istream_close_unused(body);
+
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }

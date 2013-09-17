@@ -141,6 +141,9 @@ fcgi_request(struct pool *pool, struct hstock *fcgi_stock,
 
     GError *error = NULL;
     if (jail != NULL && !jail_params_check(jail, &error)) {
+        if (body != NULL)
+            istream_close_unused(body);
+
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }

@@ -125,8 +125,16 @@ istream_file_try_data(struct file *file)
             file->buffer = fb_pool_alloc();
 
         rest = 0;
-    } else
-        rest = istream_file_invoke_data(file);
+    } else {
+        const size_t available = fifo_buffer_available(file->buffer);
+        if (available > 0) {
+            rest = istream_file_invoke_data(file);
+            if (rest == available)
+                /* not a single byte was consumed: we may have been
+                   closed, and we must bail out now */
+                return;
+        }
+    }
 
     if (file->rest == 0) {
         if (rest == 0)
