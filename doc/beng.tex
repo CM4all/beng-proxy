@@ -1631,7 +1631,16 @@ storing the current state of a widget in its current URI (path info).
 \subsection{Authentication}
 \label{authentication}
 
-There is currently no support for HTTP based authentication.
+\subsubsection{HTTP-level Authentication}
+
+\emph{beng-proxy} supports HTTP-level authentication according to RFC
+2617.  It forwards the \texttt{Authorization} request header to the
+translation server wrapped in a \verb|AUTHORIZATION| packet, and
+allows the translation server to send \texttt{WWW-Authenticate} and
+\texttt{Authentication-Info} response headers back to the client,
+wrapperd in \verb|WWW_AUTHENTICATE| and \verb|AUTHENTICATION_INFO|.
+
+\subsubsection{Application level Authentication}
 
 Authentication is supported in the translation protocol.  After the
 translation server sets the \verb|USER| session variable to a
