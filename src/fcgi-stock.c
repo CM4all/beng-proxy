@@ -14,6 +14,7 @@
 #include "jail.h"
 #include "pevent.h"
 #include "gerrno.h"
+#include "child_socket.h"
 
 #include <daemon/log.h>
 
@@ -44,7 +45,7 @@ struct fcgi_child {
 
     struct jail_config jail_config;
 
-    struct sockaddr_un address;
+    struct child_socket socket;
 
     pid_t pid;
 
@@ -70,56 +71,6 @@ fcgi_child_callback(int status gcc_unused, void *ctx)
     struct fcgi_child *child = ctx;
 
     child->pid = -1;
-}
-
-static void
-fcgi_child_socket_path(struct sockaddr_un *address,
-                       const char *executable_path gcc_unused)
-{
-    address->sun_family = AF_UNIX;
-
-    snprintf(address->sun_path, sizeof(address->sun_path),
-             "/tmp/cm4all-beng-proxy-fcgi-%u.socket",
-             (unsigned)random());
-}
-
-static int
-fcgi_create_socket(const struct fcgi_child *child, GError **error_r)
-{
-    int ret = unlink(child->address.sun_path);
-    if (ret != 0 && errno != ENOENT) {
-        g_set_error(error_r, errno_quark(), errno,
-                    "failed to unlink %s: %s",
-                    child->address.sun_path, strerror(errno));
-        return -1;
-    }
-
-    int fd = socket(PF_UNIX, SOCK_STREAM, 0);
-    if (fd < 0) {
-        g_set_error(error_r, errno_quark(), errno,
-                    "failed to create unix socket %s: %s",
-                    child->address.sun_path, strerror(errno));
-        return -1;
-    }
-
-    ret = bind(fd, (const struct sockaddr*)&child->address,
-               SUN_LEN(&child->address));
-    if (ret < 0) {
-        g_set_error(error_r, errno_quark(), errno,
-                    "bind(%s) failed: %s",
-                    child->address.sun_path, strerror(errno));
-        close(fd);
-        return -1;
-    }
-
-    ret = listen(fd, 8);
-    if (ret < 0) {
-        set_error_errno_msg(error_r, "listen() failed");
-        close(fd);
-        return -1;
-    }
-
-    return fd;
 }
 
 /*
@@ -164,7 +115,7 @@ fcgi_stock_socket_success(int fd, void *ctx)
     async_ref_clear(&child->connect_operation);
     async_operation_finished(&child->create_operation);
 
-    unlink(child->address.sun_path);
+    child_socket_unlink(&child->socket);
 
     child->fd = fd;
 
@@ -181,7 +132,7 @@ fcgi_stock_socket_timeout(void *ctx)
     async_ref_clear(&child->connect_operation);
     async_operation_finished(&child->create_operation);
 
-    unlink(child->address.sun_path);
+    child_socket_unlink(&child->socket);
 
     GError *error = g_error_new(errno_quark(), ETIMEDOUT,
                                 "failed to connect to FastCGI server '%s': timeout",
@@ -196,7 +147,7 @@ fcgi_stock_socket_error(GError *error, void *ctx)
     async_ref_clear(&child->connect_operation);
     async_operation_finished(&child->create_operation);
 
-    unlink(child->address.sun_path);
+    child_socket_unlink(&child->socket);
 
     g_prefix_error(&error, "failed to connect to FastCGI server '%s': ",
                    child->key);
@@ -228,7 +179,7 @@ fcgi_create_abort(struct async_operation *ao)
     assert(child != NULL);
     assert(async_ref_defined(&child->connect_operation));
 
-    unlink(child->address.sun_path);
+    child_socket_unlink(&child->socket);
 
     if (child->pid >= 0)
         child_kill(child->pid);
@@ -268,7 +219,6 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     assert(params->executable_path != NULL);
 
     child->key = p_strdup(pool, key);
-    fcgi_child_socket_path(&child->address, key);
 
     if (params->jail != NULL && params->jail->enabled) {
         jail_params_copy(pool, &child->jail_params, params->jail);
@@ -284,7 +234,7 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
         child->jail_params.enabled = false;
 
     GError *error = NULL;
-    int fd = fcgi_create_socket(child, &error);
+    int fd = child_socket_create(&child->socket, &error);
     if (fd < 0) {
         stock_item_failed(item, error);
         return;
@@ -295,6 +245,7 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
                                   fd, &error);
     close(fd);
     if (child->pid < 0) {
+        child_socket_unlink(&child->socket);
         stock_item_failed(item, error);
         return;
     }
@@ -307,8 +258,8 @@ fcgi_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     async_ref_set(async_ref, &child->create_operation);
 
     client_socket_new(caller_pool, AF_UNIX, SOCK_STREAM, 0,
-                      (const struct sockaddr*)&child->address,
-                      SUN_LEN(&child->address),
+                      child_socket_address(&child->socket),
+                      child_socket_address_length(&child->socket),
                       10,
                       &fcgi_stock_socket_handler, child,
                       &child->connect_operation);

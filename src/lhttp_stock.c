@@ -59,17 +59,6 @@ lhttp_child_callback(int status gcc_unused, void *ctx)
     child->process.pid = -1;
 }
 
-static void
-lhttp_child_socket_path(struct sockaddr_un *address,
-                       const char *executable_path gcc_unused)
-{
-    address->sun_family = AF_UNIX;
-
-    snprintf(address->sun_path, sizeof(address->sun_path),
-             "/tmp/cm4all-beng-proxy-lhttp-%u.socket",
-             (unsigned)random());
-}
-
 /*
  * libevent callback
  *
@@ -112,7 +101,7 @@ lhttp_stock_socket_success(int fd, void *ctx)
     async_ref_clear(&child->connect_operation);
     async_operation_finished(&child->create_operation);
 
-    unlink(child->process.address.sun_path);
+    lhttp_process_unlink_socket(&child->process);
 
     child->fd = fd;
 
@@ -129,7 +118,7 @@ lhttp_stock_socket_timeout(void *ctx)
     async_ref_clear(&child->connect_operation);
     async_operation_finished(&child->create_operation);
 
-    unlink(child->process.address.sun_path);
+    lhttp_process_unlink_socket(&child->process);
 
     GError *error = g_error_new(errno_quark(), ETIMEDOUT,
                                 "failed to connect to FastCGI server '%s': timeout",
@@ -144,7 +133,7 @@ lhttp_stock_socket_error(GError *error, void *ctx)
     async_ref_clear(&child->connect_operation);
     async_operation_finished(&child->create_operation);
 
-    unlink(child->process.address.sun_path);
+    lhttp_process_unlink_socket(&child->process);
 
     g_prefix_error(&error, "failed to connect to FastCGI server '%s': ",
                    child->key);
@@ -176,7 +165,7 @@ lhttp_create_abort(struct async_operation *ao)
     assert(child != NULL);
     assert(async_ref_defined(&child->connect_operation));
 
-    unlink(child->process.address.sun_path);
+    lhttp_process_unlink_socket(&child->process);
 
     if (child->process.pid >= 0)
         child_kill(child->process.pid);
@@ -216,7 +205,6 @@ lhttp_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     assert(address->path != NULL);
 
     child->key = p_strdup(pool, key);
-    lhttp_child_socket_path(&child->process.address, key);
 
     if (address->jail.enabled) {
         if (!jail_config_load(&child->jail_config,
@@ -242,8 +230,8 @@ lhttp_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     async_ref_set(async_ref, &child->create_operation);
 
     client_socket_new(caller_pool, AF_UNIX, SOCK_STREAM, 0,
-                      (const struct sockaddr*)&child->process.address,
-                      SUN_LEN(&child->process.address),
+                      lhttp_process_address(&child->process),
+                      lhttp_process_address_length(&child->process),
                       10,
                       &lhttp_stock_socket_handler, child,
                       &child->connect_operation);
