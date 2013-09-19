@@ -65,10 +65,10 @@ lhttp_child_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
         char buffer;
         ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
-            daemon_log(2, "error on idle FastCGI connection: %s\n",
+            daemon_log(2, "error on idle LHTTP connection: %s\n",
                        strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data from idle FastCGI connection\n");
+            daemon_log(2, "unexpected data from idle LHTTP connection\n");
     }
 
     stock_del(&child->base);
