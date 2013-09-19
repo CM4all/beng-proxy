@@ -44,4 +44,10 @@ lhttp_process_address_length(const struct lhttp_process *process)
     return child_socket_address_length(&process->socket);
 }
 
+static inline int
+lhttp_process_connect(const struct lhttp_process *process, GError **error_r)
+{
+    return child_socket_connect(&process->socket, error_r);
+}
+
 #endif

@@ -10,24 +10,15 @@
 #include "lhttp_address.h"
 #include "stock.h"
 #include "child.h"
-#include "async.h"
-#include "client-socket.h"
 #include "pevent.h"
 #include "gerrno.h"
 
 #include <daemon/log.h>
 
 #include <glib.h>
+
 #include <assert.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <signal.h>
-#include <stdlib.h>
 
 struct lhttp_child {
     struct stock_item base;
@@ -40,9 +31,6 @@ struct lhttp_child {
 
     int fd;
     struct event event;
-
-    struct async_operation create_operation;
-    struct async_operation_ref connect_operation;
 };
 
 static const char *
@@ -88,97 +76,6 @@ lhttp_child_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 }
 
 /*
- * client_socket handler
- *
- */
-
-static void
-lhttp_stock_socket_success(int fd, void *ctx)
-{
-    assert(fd >= 0);
-
-    struct lhttp_child *child = ctx;
-    async_ref_clear(&child->connect_operation);
-    async_operation_finished(&child->create_operation);
-
-    lhttp_process_unlink_socket(&child->process);
-
-    child->fd = fd;
-
-    event_set(&child->event, child->fd, EV_READ|EV_TIMEOUT,
-              lhttp_child_event_callback, child);
-
-    stock_item_available(&child->base);
-}
-
-static void
-lhttp_stock_socket_timeout(void *ctx)
-{
-    struct lhttp_child *child = ctx;
-    async_ref_clear(&child->connect_operation);
-    async_operation_finished(&child->create_operation);
-
-    lhttp_process_unlink_socket(&child->process);
-
-    GError *error = g_error_new(errno_quark(), ETIMEDOUT,
-                                "failed to connect to FastCGI server '%s': timeout",
-                                child->key);
-    stock_item_failed(&child->base, error);
-}
-
-static void
-lhttp_stock_socket_error(GError *error, void *ctx)
-{
-    struct lhttp_child *child = ctx;
-    async_ref_clear(&child->connect_operation);
-    async_operation_finished(&child->create_operation);
-
-    lhttp_process_unlink_socket(&child->process);
-
-    g_prefix_error(&error, "failed to connect to FastCGI server '%s': ",
-                   child->key);
-    stock_item_failed(&child->base, error);
-}
-
-static const struct client_socket_handler lhttp_stock_socket_handler = {
-    .success = lhttp_stock_socket_success,
-    .timeout = lhttp_stock_socket_timeout,
-    .error = lhttp_stock_socket_error,
-};
-
-/*
- * async operation
- *
- */
-
-static struct lhttp_child *
-async_to_lhttp_child(struct async_operation *ao)
-{
-    return (struct lhttp_child*)(((char*)ao) - offsetof(struct lhttp_child, create_operation));
-}
-
-static void
-lhttp_create_abort(struct async_operation *ao)
-{
-    struct lhttp_child *child = async_to_lhttp_child(ao);
-
-    assert(child != NULL);
-    assert(async_ref_defined(&child->connect_operation));
-
-    lhttp_process_unlink_socket(&child->process);
-
-    if (child->process.pid >= 0)
-        child_kill(child->process.pid);
-
-    async_abort(&child->connect_operation);
-    stock_item_aborted(&child->base);
-}
-
-static const struct async_operation_class lhttp_create_operation = {
-    .abort = lhttp_create_abort,
-};
-
-/*
  * stock class
  *
  */
@@ -193,8 +90,8 @@ lhttp_stock_pool(void *ctx gcc_unused, struct pool *parent,
 static void
 lhttp_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
                   const char *key, void *info,
-                  struct pool *caller_pool,
-                  struct async_operation_ref *async_ref)
+                   gcc_unused struct pool *caller_pool,
+                   gcc_unused struct async_operation_ref *async_ref)
 {
     struct pool *pool = item->pool;
     const struct lhttp_address *address = info;
@@ -224,17 +121,19 @@ lhttp_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
 
     child_register(child->process.pid, key, lhttp_child_callback, child);
 
-    child->fd = -1;
+    child->fd = lhttp_process_connect(&child->process, &error);
+    lhttp_process_unlink_socket(&child->process);
 
-    async_init(&child->create_operation, &lhttp_create_operation);
-    async_ref_set(async_ref, &child->create_operation);
+    if (child->fd < 0) {
+        child_kill(child->process.pid);
+        stock_item_failed(item, error);
+        return;
+    }
 
-    client_socket_new(caller_pool, AF_UNIX, SOCK_STREAM, 0,
-                      lhttp_process_address(&child->process),
-                      lhttp_process_address_length(&child->process),
-                      10,
-                      &lhttp_stock_socket_handler, child,
-                      &child->connect_operation);
+    event_set(&child->event, child->fd, EV_READ|EV_TIMEOUT,
+              lhttp_child_event_callback, child);
+
+    stock_item_available(&child->base);
 }
 
 static bool
@@ -267,9 +166,7 @@ lhttp_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
     if (child->process.pid >= 0)
         child_kill(child->process.pid);
 
-    if (async_ref_defined(&child->connect_operation))
-        async_abort(&child->connect_operation);
-    else if (child->fd >= 0) {
+    if (child->fd >= 0) {
         p_event_del(&child->event, child->base.pool);
         close(child->fd);
     }
