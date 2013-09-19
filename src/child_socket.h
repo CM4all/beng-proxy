@@ -37,4 +37,7 @@ child_socket_address_length(const struct child_socket *cs)
     return SUN_LEN(&cs->address);
 }
 
+int
+child_socket_connect(const struct child_socket *cs, GError **error_r);
+
 #endif

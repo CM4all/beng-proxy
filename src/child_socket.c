@@ -5,6 +5,7 @@
  */
 
 #include "child_socket.h"
+#include "fd_util.h"
 #include "gerrno.h"
 
 #include <stdlib.h>
@@ -57,4 +58,23 @@ void
 child_socket_unlink(struct child_socket *cs)
 {
     unlink(cs->address.sun_path);
+}
+
+int
+child_socket_connect(const struct child_socket *cs, GError **error_r)
+{
+    int fd = socket_cloexec_nonblock(PF_UNIX, SOCK_STREAM, 0);
+    if (fd < 0) {
+        set_error_errno(error_r);
+        return -1;
+    }
+
+    if (connect(fd, child_socket_address(cs),
+                child_socket_address_length(cs)) < 0) {
+        set_error_errno_msg(error_r, "connect failed");
+        close(fd);
+        return -1;
+    }
+
+    return fd;
 }
