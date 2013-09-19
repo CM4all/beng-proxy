@@ -38,7 +38,7 @@ struct stock_get_handler {
 };
 
 struct stock_item {
-    struct list_head list_head;
+    struct list_head siblings;
     struct stock *stock;
     struct pool *pool;
 
