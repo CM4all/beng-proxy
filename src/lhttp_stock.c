@@ -125,6 +125,9 @@ lhttp_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     lhttp_process_unlink_socket(&child->process);
 
     if (child->fd < 0) {
+        g_prefix_error(&error, "failed to connect to LHTTP server '%s': ",
+                       child->key);
+
         child_kill(child->process.pid);
         stock_item_failed(item, error);
         return;
