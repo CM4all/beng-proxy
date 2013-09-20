@@ -842,10 +842,6 @@ translate_handle_packet(struct translate_client *client,
             translate_client_error(client,
                                    "misplaced TRANSLATE_EXPAND_PATH packet");
             return false;
-        } else if (client->nfs_address != NULL &&
-                   client->nfs_address->expand_path == NULL) {
-            client->nfs_address->expand_path = payload;
-            return true;
         } else if (client->cgi_address != NULL &&
                    client->cgi_address->expand_path == NULL) {
             client->cgi_address->expand_path = payload;
