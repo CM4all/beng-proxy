@@ -16,10 +16,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
 
 gcc_noreturn
 static void
@@ -74,63 +71,21 @@ lhttp_start(const struct lhttp_address *address, int fd, GError **error_r)
     return pid;
 }
 
-static void
-lhttp_socket_path(struct sockaddr_un *address)
-{
-    address->sun_family = AF_UNIX;
-
-    strcpy(address->sun_path, "/tmp/cm4all-beng-proxy-lhttp-XXXXXX");
-    mktemp(address->sun_path);
-}
-
-static int
-lhttp_create_socket(struct lhttp_process *process, GError **error_r)
-{
-    lhttp_socket_path(&process->address);
-
-    int ret = unlink(process->address.sun_path);
-    if (ret != 0 && errno != ENOENT) {
-        set_error_errno_msg(error_r, "Failed to unlink socket");
-        return -1;
-    }
-
-    int fd = socket(PF_UNIX, SOCK_STREAM, 0);
-    if (fd < 0) {
-        set_error_errno_msg(error_r, "Failed to create socket");
-        return -1;
-    }
-
-    ret = bind(fd, (const struct sockaddr*)&process->address,
-               SUN_LEN(&process->address));
-    if (ret < 0) {
-        set_error_errno_msg(error_r, "Bind failed");
-        close(fd);
-        return -1;
-    }
-
-    // TODO: fix race condition
-    chmod(process->address.sun_path, 0700);
-
-    ret = listen(fd, 8);
-    if (ret < 0) {
-        set_error_errno_msg(error_r, "listen() failed");
-        close(fd);
-        return -1;
-    }
-
-    return fd;
-}
-
 bool
 lhttp_launch(struct lhttp_process *process,
              const struct lhttp_address *address,
              GError **error_r)
 {
-    int fd = lhttp_create_socket(process, error_r);
+    int fd = child_socket_create(&process->socket, error_r);
     if (fd < 0)
         return false;
 
     process->pid = lhttp_start(address, fd, error_r);
     close(fd);
-    return process->pid > 0;
+    if (process->pid <= 0) {
+        child_socket_unlink(&process->socket);
+        return false;
+    }
+
+    return true;
 }

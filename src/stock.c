@@ -151,7 +151,7 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 
         assert(!list_empty(&stock->idle));
 
-        list_remove(&item->list_head);
+        list_remove(&item->siblings);
         --stock->num_idle;
 
         destroy_item(stock, item);
@@ -292,7 +292,7 @@ stock_clear_idle(struct stock *stock)
 
         assert(!list_empty(&stock->idle));
 
-        list_remove(&item->list_head);
+        list_remove(&item->siblings);
         --stock->num_idle;
 
         if (stock->num_idle == stock->max_idle)
@@ -454,7 +454,7 @@ stock_get_idle(struct stock *stock,
         struct stock_item *item = (struct stock_item *)stock->idle.next;
         assert(item->is_idle);
 
-        list_remove(&item->list_head);
+        list_remove(&item->siblings);
         --stock->num_idle;
 
         if (stock->num_idle == stock->max_idle)
@@ -463,7 +463,7 @@ stock_get_idle(struct stock *stock,
         if (stock->class->borrow(stock->class_ctx, item)) {
 #ifndef NDEBUG
             item->is_idle = false;
-            list_add(&item->list_head, &stock->busy);
+            list_add(&item->siblings, &stock->busy);
 #endif
             ++stock->num_busy;
 
@@ -609,7 +609,7 @@ stock_item_available(struct stock_item *item)
     --stock->num_create;
 
 #ifndef NDEBUG
-    list_add(&item->list_head, &stock->busy);
+    list_add(&item->siblings, &stock->busy);
 #endif
     ++stock->num_busy;
 
@@ -663,7 +663,7 @@ stock_put(struct stock_item *item, bool destroy)
     assert(pool_contains(item->pool, item, stock->class->item_size));
 
 #ifndef NDEBUG
-    list_remove(&item->list_head);
+    list_remove(&item->siblings);
 #endif
     --stock->num_busy;
 
@@ -678,7 +678,7 @@ stock_put(struct stock_item *item, bool destroy)
         if (stock->num_idle == stock->max_idle)
             stock_schedule_cleanup(stock);
 
-        list_add(&item->list_head, &stock->idle);
+        list_add(&item->siblings, &stock->idle);
         ++stock->num_idle;
 
         stock->class->release(stock->class_ctx, item);
@@ -701,10 +701,10 @@ stock_del(struct stock_item *item)
     assert(stock->num_idle > 0);
     assert(!list_empty(&stock->idle));
     assert(pool_contains(item->pool, item, stock->class->item_size));
-    assert(item->list_head.next->prev == &item->list_head);
-    assert(item->list_head.prev->next == &item->list_head);
+    assert(item->siblings.next->prev == &item->siblings);
+    assert(item->siblings.prev->next == &item->siblings);
 
-    list_remove(&item->list_head);
+    list_remove(&item->siblings);
     --stock->num_idle;
 
     if (stock->num_idle == stock->max_idle)

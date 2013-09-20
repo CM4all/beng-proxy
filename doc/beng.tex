@@ -878,8 +878,11 @@ finding the file \\
 \verb|AJP|).
 Backslash references are expanded to the value of the match group of
 \verb|REGEX|. In the presence of this packet, the URI suffix after the
-base will not be appended to other paths.  \scriptsize{(Since version
-  2.0.5)} \\
+base will not be appended to other paths.
+The translation server is responsible for ensuring that the resulting
+path cannot point to files that are not supposed to be published; for
+example, \emph{beng-proxy} does not check for \texttt{/../} sequences.
+\scriptsize{(Since version 2.0.5)} \\
 
 \hline
 
@@ -1220,7 +1223,7 @@ the absolute path to a Unix socket.
 The translation server can tell \emph{beng-proxy} to apply a filter to
 the resource by sending the \verb|FILTER| command.  It is followed
 by a packet specifying the filter server (\verb|PROXY|,
-\verb|CGI|, \verb|FASTCGI|, \verb|AJP|).
+\verb|CGI|, \verb|FASTCGI|, \verb|AJP|, \verb|PIPE|).
 
 A filter server is a HTTP server.  \emph{beng-proxy} sends the
 original resource with a POST request and expects the filtered
@@ -1628,12 +1631,21 @@ It is recommended to use (cookie based) sessions only if really
 required.  In many situations, there are more elegant solutions, like
 storing the current state of a widget in its current URI (path info).
 
-\subsection{Authentification}
-\label{authentification}
+\subsection{Authentication}
+\label{authentication}
 
-There is currently no support for HTTP based authentification.
+\subsubsection{HTTP-level Authentication}
 
-Authentification is supported in the translation protocol.  After the
+\emph{beng-proxy} supports HTTP-level authentication according to RFC
+2617.  It forwards the \texttt{Authorization} request header to the
+translation server wrapped in a \verb|AUTHORIZATION| packet, and
+allows the translation server to send \texttt{WWW-Authenticate} and
+\texttt{Authentication-Info} response headers back to the client,
+wrapperd in \verb|WWW_AUTHENTICATE| and \verb|AUTHENTICATION_INFO|.
+
+\subsubsection{Application level Authentication}
+
+Authentication is supported in the translation protocol.  After the
 translation server sets the \verb|USER| session variable to a
 non-empty string, the session is presumed to be authenticated.  This
 user variable is passed to widget servers in the proprietary
