@@ -111,6 +111,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cgi-launch.c src/cgi-launch.h \
 	src/child.c src/child.h \
 	src/child_socket.c src/child_socket.h \
+	src/child_stock.c src/child_stock.h \
 	src/client-socket.c src/client-socket.h \
 	src/config.h \
 	src/connection.c src/connection.h \

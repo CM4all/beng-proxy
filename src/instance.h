@@ -67,8 +67,8 @@ struct instance {
 
     struct filter_cache *filter_cache;
 
-    struct hstock *lhttp_stock;
-    struct hstock *fcgi_stock;
+    struct lhttp_stock *lhttp_stock;
+    struct fcgi_stock *fcgi_stock;
 
     struct hstock *was_stock;
 

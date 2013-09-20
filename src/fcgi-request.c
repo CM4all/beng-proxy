@@ -24,7 +24,7 @@
 struct fcgi_request {
     struct pool *pool;
 
-    struct hstock *fcgi_stock;
+    struct fcgi_stock *fcgi_stock;
     struct stock_item *stock_item;
 };
 
@@ -52,7 +52,7 @@ static const struct lease fcgi_socket_lease = {
  */
 
 void
-fcgi_request(struct pool *pool, struct hstock *fcgi_stock,
+fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              const struct jail_params *jail,
              const char *action,
              const char *path,

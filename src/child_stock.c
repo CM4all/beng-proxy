@@ -1,0 +1,229 @@
+/*
+ * Launch and manage "Local HTTP" child processes.
+ *
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#include "child_stock.h"
+#include "child_socket.h"
+#include "hstock.h"
+#include "stock.h"
+#include "child.h"
+#include "gerrno.h"
+#include "sigutil.h"
+#include "pool.h"
+
+#include <glib.h>
+
+#include <assert.h>
+#include <unistd.h>
+
+struct child_stock_item {
+    struct stock_item base;
+
+    const char *key;
+
+    const struct child_stock_class *cls;
+    void *cls_ctx;
+
+    struct child_socket socket;
+    pid_t pid;
+
+    bool busy;
+};
+
+static void
+child_stock_child_callback(int status gcc_unused, void *ctx)
+{
+    struct child_stock_item *item = ctx;
+
+    item->pid = -1;
+
+    if (!item->busy)
+        stock_del(&item->base);
+}
+
+static pid_t
+child_stock_start(struct pool *pool, const char *key, void *info,
+                  const struct child_stock_class *cls, void *ctx,
+                  int fd, GError **error_r)
+{
+    /* avoid race condition due to libevent signal handler in child
+       process */
+    sigset_t signals;
+    enter_signal_section(&signals);
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        set_error_errno_msg(error_r, "fork() failed");
+        leave_signal_section(&signals);
+        return -1;
+    }
+
+    if (pid == 0) {
+        install_default_signal_handlers();
+        leave_signal_section(&signals);
+
+        dup2(fd, 0);
+        close(fd);
+
+        int result = cls->run(pool, key, info, ctx);
+        _exit(result);
+    }
+
+    leave_signal_section(&signals);
+
+    close(fd);
+
+    return pid;
+}
+
+/*
+ * stock class
+ *
+ */
+
+static struct pool *
+child_stock_pool(void *ctx gcc_unused, struct pool *parent,
+                 const char *uri gcc_unused)
+{
+    return pool_new_linear(parent, "child_stock_child", 2048);
+}
+
+static void
+child_stock_create(void *stock_ctx, struct stock_item *_item,
+                   const char *key, void *info,
+                   gcc_unused struct pool *caller_pool,
+                   gcc_unused struct async_operation_ref *async_ref)
+{
+    const struct child_stock_class *cls = stock_ctx;
+    struct pool *pool = _item->pool;
+    struct child_stock_item *item = (struct child_stock_item *)_item;
+
+    item->key = key = p_strdup(pool, key);
+    item->cls = cls;
+
+    GError *error = NULL;
+    void *cls_ctx = NULL;
+    if (cls->prepare != NULL) {
+        cls_ctx = cls->prepare(pool, key, info, &error);
+        if (cls_ctx == NULL) {
+            stock_item_failed(_item, error);
+            return;
+        }
+    }
+
+    item->cls_ctx = cls_ctx;
+
+    int fd = child_socket_create(&item->socket, &error);
+    if (fd < 0) {
+        if (cls_ctx != NULL)
+            cls->free(cls_ctx);
+        stock_item_failed(_item, error);
+        return;
+    }
+
+    pid_t pid = item->pid = child_stock_start(pool, key, info,
+                                              cls, cls_ctx, fd, &error);
+    if (pid < 0) {
+        if (cls_ctx != NULL)
+            cls->free(cls_ctx);
+        stock_item_failed(_item, error);
+        return;
+    }
+
+    child_register(pid, key, child_stock_child_callback, item);
+
+    item->busy = false;
+    stock_item_available(&item->base);
+}
+
+static bool
+child_stock_borrow(gcc_unused void *ctx, gcc_unused struct stock_item *item)
+{
+    return true;
+}
+
+static void
+child_stock_release(gcc_unused void *ctx, struct stock_item *_item)
+{
+    struct child_stock_item *item = (struct child_stock_item *)_item;
+
+    if (item->pid < 0)
+        /* the child process has exited; now that the item has been
+           released, we can remove it entirely */
+        stock_del(_item);
+}
+
+static void
+child_stock_destroy(void *ctx gcc_unused, struct stock_item *_item)
+{
+    struct child_stock_item *item = (struct child_stock_item *)_item;
+
+    if (item->pid >= 0)
+        child_kill(item->pid);
+
+    child_socket_unlink(&item->socket);
+
+    if (item->cls_ctx != NULL)
+        item->cls->free(item->cls_ctx);
+}
+
+static const struct stock_class child_stock_class = {
+    .item_size = sizeof(struct child_stock_item),
+    .pool = child_stock_pool,
+    .create = child_stock_create,
+    .borrow = child_stock_borrow,
+    .release = child_stock_release,
+    .destroy = child_stock_destroy,
+};
+
+
+/*
+ * interface
+ *
+ */
+
+struct hstock *
+child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
+                const struct child_stock_class *cls)
+{
+    assert(cls != NULL);
+    assert((cls->prepare == NULL) == (cls->free == NULL));
+    assert(cls->run != NULL);
+
+    union {
+        const struct child_stock_class *in;
+        void *out;
+    } u = { .in = cls };
+
+    return hstock_new(pool, &child_stock_class, u.out, limit, max_idle);
+}
+
+struct child_stock_item *
+child_stock_get(struct hstock *hstock, struct pool *pool,
+                const char *key, void *info,
+                GError **error_r)
+{
+    return (struct child_stock_item *)
+        hstock_get_now(hstock, pool, key, info, error_r);
+}
+
+const char *
+child_stock_item_key(const struct child_stock_item *item)
+{
+    return item->key;
+}
+
+int
+child_stock_item_connect(const struct child_stock_item *item, GError **error_r)
+{
+    return child_socket_connect(&item->socket, error_r);
+}
+
+void
+child_stock_put(struct hstock *hstock, struct child_stock_item *item,
+                bool destroy)
+{
+    hstock_put(hstock, item->key, &item->base, destroy);
+}

@@ -142,8 +142,8 @@ struct hstock;
 void
 resource_get(gcc_unused struct http_cache *cache,
              gcc_unused struct tcp_balancer *tcp_balancer,
-             gcc_unused struct hstock *lhttp_stock,
-             gcc_unused struct hstock *fcgi_stock,
+             gcc_unused struct lhttp_stock *lhttp_stock,
+             gcc_unused struct fcgi_stock *fcgi_stock,
              gcc_unused struct hstock *was_stock,
              gcc_unused struct hstock *delegate_stock,
              gcc_unused struct nfs_cache *nfs_cache,

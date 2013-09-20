@@ -16,17 +16,20 @@
 #include <stdbool.h>
 
 struct pool;
-struct hstock;
+struct lhttp_stock;
 struct stock_item;
 struct stock_get_handler;
 struct lhttp_address;
 struct async_operation_ref;
 
-struct hstock *
+struct lhttp_stock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
+void
+lhttp_stock_free(struct lhttp_stock *lhttp_stock);
+
 struct stock_item *
-lhttp_stock_get(struct hstock *hstock, struct pool *pool,
+lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
                 const struct lhttp_address *address,
                 GError **error_r);
 
@@ -45,6 +48,6 @@ lhttp_stock_item_get_type(const struct stock_item *item);
  * Wrapper for hstock_put().
  */
 void
-lhttp_stock_put(struct hstock *hstock, struct stock_item *item, bool destroy);
+lhttp_stock_put(struct lhttp_stock *stock, struct stock_item *item, bool destroy);
 
 #endif
