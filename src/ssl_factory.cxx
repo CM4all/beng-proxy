@@ -109,6 +109,50 @@ read_cert_file(const char *path, GError **error_r)
     return cert;
 }
 
+/**
+ * Are both public keys equal?
+ */
+gcc_pure
+static bool
+MatchModulus(EVP_PKEY *key1, EVP_PKEY *key2)
+{
+    assert(key1 != nullptr);
+    assert(key2 != nullptr);
+
+    if (key1->type != key2->type)
+        return false;
+
+    switch (key1->type) {
+    case EVP_PKEY_RSA:
+        return BN_cmp(key1->pkey.rsa->n, key2->pkey.rsa->n) == 0;
+
+    case EVP_PKEY_DSA:
+        return BN_cmp(key1->pkey.dsa->pub_key, key2->pkey.dsa->pub_key) == 0;
+
+    default:
+        return false;
+    }
+}
+
+/**
+ * Does the certificate belong to the given key?
+ */
+gcc_pure
+static bool
+MatchModulus(X509 *cert, EVP_PKEY *key)
+{
+    assert(cert != nullptr);
+    assert(key != nullptr);
+
+    EVP_PKEY *public_key = X509_get_pubkey(cert);
+    if (public_key == nullptr)
+        return false;
+
+    const bool result = MatchModulus(public_key, key);
+    EVP_PKEY_free(public_key);
+    return result;
+}
+
 bool
 ssl_cert_key::Load(const ssl_cert_key_config &config, GError **error_r)
 {
@@ -123,7 +167,7 @@ ssl_cert_key::Load(const ssl_cert_key_config &config, GError **error_r)
     if (cert == nullptr)
         return false;
 
-    if (X509_verify(cert, key) != 0) {
+    if (!MatchModulus(cert, key)) {
         g_set_error(error_r, ssl_quark(), 0,
                     "Key '%s' does not match certificate '%s'",
                     config.key_file.c_str(), config.cert_file.c_str());
