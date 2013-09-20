@@ -878,8 +878,11 @@ finding the file \\
 \verb|AJP|).
 Backslash references are expanded to the value of the match group of
 \verb|REGEX|. In the presence of this packet, the URI suffix after the
-base will not be appended to other paths.  \scriptsize{(Since version
-  2.0.5)} \\
+base will not be appended to other paths.
+The translation server is responsible for ensuring that the resulting
+path cannot point to files that are not supposed to be published; for
+example, \emph{beng-proxy} does not check for \texttt{/../} sequences.
+\scriptsize{(Since version 2.0.5)} \\
 
 \hline
 
