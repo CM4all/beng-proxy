@@ -11,6 +11,8 @@
 #include <inline/compiler.h>
 #include <inline/list.h>
 
+#include <glib.h>
+
 #include <stdbool.h>
 
 struct pool;
@@ -45,6 +47,17 @@ hstock_get(struct hstock *hstock, struct pool *pool,
            const char *uri, void *info,
            const struct stock_get_handler *handler, void *handler_ctx,
            struct async_operation_ref *async_ref);
+
+/**
+ * Obtains an item from the hstock without going through the callback.
+ * This requires a stock class which finishes the create() method
+ * immediately.
+ */
+gcc_pure
+struct stock_item *
+hstock_get_now(struct hstock *hstock, struct pool *pool,
+               const char *uri, void *info,
+               GError **error_r);
 
 void
 hstock_put(struct hstock *hstock, const char *uri, struct stock_item *item,

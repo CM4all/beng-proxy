@@ -139,6 +139,17 @@ hstock_get(struct hstock *hstock, struct pool *pool,
     stock_get(stock, pool, info, handler, handler_ctx, async_ref);
 }
 
+struct stock_item *
+hstock_get_now(struct hstock *hstock, struct pool *pool,
+               const char *uri, void *info,
+               GError **error_r)
+{
+    assert(hstock != NULL);
+
+    struct stock *stock = hstock_get_stock(hstock, uri);
+    return stock_get_now(stock, pool, info, error_r);
+}
+
 void
 hstock_put(struct hstock *hstock gcc_unused, const char *uri gcc_unused,
            struct stock_item *object, bool destroy)
