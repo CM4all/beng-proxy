@@ -8,6 +8,7 @@
 #include "lhttp_quark.h"
 #include "lhttp_launch.h"
 #include "lhttp_address.h"
+#include "hstock.h"
 #include "stock.h"
 #include "child.h"
 #include "pevent.h"

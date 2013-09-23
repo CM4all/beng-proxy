@@ -5,7 +5,7 @@
  */
 
 #include "delegate-stock.h"
-#include "stock.h"
+#include "hstock.h"
 #include "async.h"
 #include "failure.h"
 #include "fd_util.h"

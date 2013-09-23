@@ -1,9 +1,11 @@
 /*
- * Objects in stock.  May be used for connection pooling.
+ * The 'hstock' class is a hash table of any number of 'stock'
+ * objects, each with a different URI.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "hstock.h"
 #include "stock.h"
 #include "hashmap.h"
 #include "pool.h"

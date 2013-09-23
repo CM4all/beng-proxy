@@ -11,6 +11,7 @@
 #include "lb_connection.hxx"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"
+#include "hstock.h"
 #include "stock.h"
 #include "global.h"
 #include "failure.h"

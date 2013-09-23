@@ -7,6 +7,7 @@
 #include "fcgi-stock.h"
 #include "fcgi-quark.h"
 #include "fcgi-launch.h"
+#include "hstock.h"
 #include "stock.h"
 #include "child.h"
 #include "jail.h"
