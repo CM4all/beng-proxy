@@ -111,18 +111,12 @@ hstock_add_stats(const struct hstock *stock, struct stock_stats *data)
     }
 }
 
-void
-hstock_get(struct hstock *hstock, struct pool *pool,
-           const char *uri, void *info,
-           const struct stock_get_handler *handler, void *handler_ctx,
-           struct async_operation_ref *async_ref)
+static struct stock *
+hstock_get_stock(struct hstock *hstock, const char *uri)
 {
-    struct stock *stock;
-
     assert(hstock != NULL);
 
-    stock = (struct stock *)hashmap_get(hstock->stocks, uri);
-
+    struct stock *stock = (struct stock *)hashmap_get(hstock->stocks, uri);
     if (stock == NULL) {
         stock = stock_new(hstock->pool, hstock->class, hstock->class_ctx, uri,
                           hstock->limit, hstock->max_idle,
@@ -130,6 +124,18 @@ hstock_get(struct hstock *hstock, struct pool *pool,
         hashmap_set(hstock->stocks, stock_get_uri(stock), stock);
     }
 
+    return stock;
+}
+
+void
+hstock_get(struct hstock *hstock, struct pool *pool,
+           const char *uri, void *info,
+           const struct stock_get_handler *handler, void *handler_ctx,
+           struct async_operation_ref *async_ref)
+{
+    assert(hstock != NULL);
+
+    struct stock *stock = hstock_get_stock(hstock, uri);
     stock_get(stock, pool, info, handler, handler_ctx, async_ref);
 }
 
