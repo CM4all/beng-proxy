@@ -185,18 +185,15 @@ lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
     return hstock_new(pool, &lhttp_stock_class, NULL, limit, max_idle);
 }
 
-void
+struct stock_item *
 lhttp_stock_get(struct hstock *hstock, struct pool *pool,
                 const struct lhttp_address *address,
-                const struct stock_get_handler *handler, void *handler_ctx,
-                struct async_operation_ref *async_ref)
+                GError **error_r)
 {
     if (address->jail.enabled && address->jail.home_directory == NULL) {
-        GError *error =
-            g_error_new_literal(lhttp_quark(), 0,
-                                "No home directory for jailed LHTTP");
-        handler->error(error, handler_ctx);
-        return;
+        g_set_error(error_r, lhttp_quark(), 0,
+                    "No home directory for jailed LHTTP");
+        return NULL;
     }
 
     union {
@@ -204,8 +201,8 @@ lhttp_stock_get(struct hstock *hstock, struct pool *pool,
         void *out;
     } deconst = { .in = address };
 
-    hstock_get(hstock, pool, lhttp_stock_key(pool, address), deconst.out,
-               handler, handler_ctx, async_ref);
+    return hstock_get_now(hstock, pool, lhttp_stock_key(pool, address),
+                          deconst.out, error_r);
 }
 
 int

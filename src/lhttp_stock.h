@@ -11,6 +11,8 @@
 
 #include <inline/compiler.h>
 
+#include <glib.h>
+
 #include <stdbool.h>
 
 struct pool;
@@ -23,11 +25,10 @@ struct async_operation_ref;
 struct hstock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
-void
+struct stock_item *
 lhttp_stock_get(struct hstock *hstock, struct pool *pool,
                 const struct lhttp_address *address,
-                const struct stock_get_handler *handler, void *handler_ctx,
-                struct async_operation_ref *async_ref);
+                GError **error_r);
 
 /**
  * Returns the socket descriptor of the specified stock item.
