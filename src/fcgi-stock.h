@@ -7,6 +7,8 @@
 #ifndef __BENG_FCGI_STOCK_H
 #define __BENG_FCGI_STOCK_H
 
+#include <glib.h>
+
 #include <stdbool.h>
 
 struct pool;
@@ -24,12 +26,11 @@ fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
  * @param site_id the customer site id (JailCGI)
  * @param host_name the UTS host name (JailCGI)
  */
-void
+struct stock_item *
 fcgi_stock_get(struct hstock *hstock, struct pool *pool,
                const struct jail_params *jail,
                const char *executable_path,
-               const struct stock_get_handler *handler, void *handler_ctx,
-               struct async_operation_ref *async_ref);
+               GError **error_r);
 
 /**
  * Returns the socket descriptor of the specified stock item.

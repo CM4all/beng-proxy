@@ -226,25 +226,21 @@ fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
     return hstock_new(pool, &fcgi_stock_class, NULL, limit, max_idle);
 }
 
-void
+struct stock_item *
 fcgi_stock_get(struct hstock *hstock, struct pool *pool,
                const struct jail_params *jail,
                const char *executable_path,
-               const struct stock_get_handler *handler, void *handler_ctx,
-               struct async_operation_ref *async_ref)
+               GError **error_r)
 {
-    GError *error = NULL;
-    if (jail != NULL && !jail_params_check(jail, &error)) {
-        handler->error(error, handler_ctx);
-        return;
-    }
+    if (jail != NULL && !jail_params_check(jail, error_r))
+        return NULL;
 
     struct fcgi_child_params *params = p_malloc(pool, sizeof(*params));
     params->executable_path = executable_path;
     params->jail = jail;
 
-    hstock_get(hstock, pool, fcgi_stock_key(pool, params), params,
-               handler, handler_ctx, async_ref);
+    return hstock_get_now(hstock, pool, fcgi_stock_key(pool, params), params,
+                          error_r);
 }
 
 int
