@@ -25,8 +25,6 @@ struct lhttp_child {
 
     const char *key;
 
-    struct jail_config jail_config;
-
     struct lhttp_process process;
 
     int fd;
@@ -102,16 +100,6 @@ lhttp_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     assert(address->path != NULL);
 
     child->key = p_strdup(pool, key);
-
-    if (address->jail.enabled) {
-        if (!jail_config_load(&child->jail_config,
-                              "/etc/cm4all/jailcgi/jail.conf", pool)) {
-            GError *error = g_error_new(lhttp_quark(), 0,
-                                        "Failed to load /etc/cm4all/jailcgi/jail.conf");
-            stock_item_failed(item, error);
-            return;
-        }
-    }
 
     GError *error = NULL;
     if (!lhttp_launch(&child->process, address, &error)) {
