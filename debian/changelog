@@ -6,7 +6,7 @@ cm4all-beng-proxy (3.1.9) unstable; urgency=low
   * ssl_factory: wildcard matches single letter
   * ssl_factory: wildcard matches only one segment
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 24 Sep 2013 10:31:30 -0000
 
 cm4all-beng-proxy (3.1.8) unstable; urgency=low
 
