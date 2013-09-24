@@ -876,6 +876,8 @@ translate_handle_packet(struct translate_client *client,
         if (client->file_address != NULL) {
             client->file_address->deflated = payload;
             return true;
+        } else if (client->nfs_address != NULL) {
+            /* ignore for now */
         } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_DEFLATED packet");
@@ -886,6 +888,8 @@ translate_handle_packet(struct translate_client *client,
         if (client->file_address != NULL) {
             client->file_address->gzipped = payload;
             return true;
+        } else if (client->nfs_address != NULL) {
+            /* ignore for now */
         } else {
             translate_client_error(client, "misplaced TRANSLATE_GZIPPED packet");
             return false;
