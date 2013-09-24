@@ -83,7 +83,7 @@ struct translate_client {
     /** the current JailCGI parameters being edited */
     struct jail_params *jail;
 
-    /** the current CGI/FastCGI/WAS address being edited */
+    /** the current local file address being edited */
     struct file_address *file_address;
 
     /** the current CGI/FastCGI/WAS address being edited */
