@@ -273,7 +273,7 @@ match_cn(X509_NAME *subject, const char *host_name, size_t hn_length)
     if (common_name[0] == '*' && common_name[1] == '.' &&
         common_name[2] != 0) {
         const size_t cn_length = strlen(common_name);
-        if (hn_length > cn_length &&
+        if (hn_length >= cn_length &&
             memcmp(host_name + hn_length - cn_length + 1,
                    common_name + 1, cn_length - 1) == 0)
             return true;
