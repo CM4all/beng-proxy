@@ -873,23 +873,23 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_DEFLATED:
-        if (client->file_address == NULL) {
+        if (client->file_address != NULL) {
+            client->file_address->deflated = payload;
+            return true;
+        } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_DEFLATED packet");
             return false;
         }
 
-        client->file_address->deflated = payload;
-        return true;
-
     case TRANSLATE_GZIPPED:
-        if (client->file_address == NULL) {
+        if (client->file_address != NULL) {
+            client->file_address->gzipped = payload;
+            return true;
+        } else {
             translate_client_error(client, "misplaced TRANSLATE_GZIPPED packet");
             return false;
         }
-
-        client->file_address->gzipped = payload;
-        return true;
 
     case TRANSLATE_SITE:
         assert(client->resource_address != NULL);
