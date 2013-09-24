@@ -820,22 +820,20 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_PATH_INFO:
-        if (client->cgi_address == NULL) {
-            /* don't emit this error when the resource is a local
-               path.  This combination might be useful one day, but isn't
-               currently used. */
-            if (client->resource_address == NULL ||
-                client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
-                translate_client_error(client,
-                                       "misplaced TRANSLATE_PATH_INFO packet");
-                return false;
-            }
-
+        if (client->cgi_address != NULL &&
+            client->cgi_address->path_info == NULL) {
+            client->cgi_address->path_info = payload;
             return true;
+        } else if (client->file_address != NULL) {
+            /* don't emit an error when the resource is a local path.
+               This combination might be useful one day, but isn't
+               currently used. */
+            return true;
+        } else {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_PATH_INFO packet");
+            return false;
         }
-
-        client->cgi_address->path_info = payload;
-        return true;
 
     case TRANSLATE_EXPAND_PATH:
         if (client->response.regex == NULL) {
@@ -861,16 +859,19 @@ translate_handle_packet(struct translate_client *client,
         }
 
     case TRANSLATE_EXPAND_PATH_INFO:
-        if (client->response.regex == NULL ||
-            client->cgi_address == NULL ||
-            client->cgi_address->expand_path_info != NULL) {
+        if (client->response.regex == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_EXPAND_PATH_INFO packet");
+            return false;
+        } else if (client->cgi_address != NULL &&
+                   client->cgi_address->expand_path_info == NULL) {
+            client->cgi_address->expand_path_info = payload;
+            return true;
+        } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_EXPAND_PATH_INFO packet");
             return false;
         }
-
-        client->cgi_address->expand_path_info = payload;
-        return true;
 
     case TRANSLATE_DEFLATED:
         if (client->file_address != NULL) {
