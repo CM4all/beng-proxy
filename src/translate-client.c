@@ -867,6 +867,11 @@ translate_handle_packet(struct translate_client *client,
                    client->cgi_address->expand_path_info == NULL) {
             client->cgi_address->expand_path_info = payload;
             return true;
+        } else if (client->file_address != NULL) {
+            /* don't emit an error when the resource is a local path.
+               This combination might be useful one day, but isn't
+               currently used. */
+            return true;
         } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_EXPAND_PATH_INFO packet");

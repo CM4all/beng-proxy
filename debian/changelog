@@ -2,6 +2,7 @@ cm4all-beng-proxy (3.1.9) unstable; urgency=low
 
   * {fcgi,lhttp}_stock: reuse child processes after connection closed
   * translate-client: ignore DEFLATED,GZIPPED on NFS address
+  * translate-client: ignore EXPAND_PATH_INFO on local file
 
  --   
 
