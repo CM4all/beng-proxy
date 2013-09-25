@@ -85,7 +85,7 @@ if test x$enable_nfs = xyes; then
 		[AC_MSG_ERROR([libnfs not found])])
 fi
 
-PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.3],,
+PKG_CHECK_MODULES([LIBCM4ALL_DAEMON], [libcm4all-daemon >= 0.4],,
 	[AC_MSG_ERROR([libcm4all-daemon not found])])
 
 PKG_CHECK_MODULES([LIBCM4ALL_INLINE], [libcm4all-inline >= 0.3.3],,
