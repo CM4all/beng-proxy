@@ -11,6 +11,7 @@
 #include "http-client.h"
 #include "lease.h"
 #include "istream.h"
+#include "header-writer.h"
 
 struct lhttp_request {
     struct pool *pool;
@@ -76,6 +77,9 @@ lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
     }
 
     request->stock_item = stock_item;
+
+    if (address->host_and_port != NULL)
+        header_write(headers, "host", address->host_and_port);
 
     http_client_request(request->pool,
                         lhttp_stock_item_get_socket(stock_item),
