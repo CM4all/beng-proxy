@@ -233,6 +233,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/static-headers.c src/static-headers.h \
 	src/stock.c src/stock.h \
 	src/hstock.c src/hstock.h \
+	src/mstock.cxx src/hstock.h \
 	src/strmap.c src/strmap.h \
 	src/strref-dpool.h \
 	src/strref-pool.h \
