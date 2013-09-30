@@ -9,8 +9,10 @@
 #include "lhttp_launch.h"
 #include "lhttp_address.h"
 #include "hstock.h"
+#include "mstock.h"
 #include "child_stock.h"
 #include "stock.h"
+#include "lease.h"
 #include "child.h"
 #include "pevent.h"
 #include "gerrno.h"
@@ -25,13 +27,15 @@
 
 struct lhttp_stock {
     struct hstock *hstock;
-    struct hstock *child_stock;
+    struct mstock *child_stock;
 };
 
 struct lhttp_connection {
     struct stock_item base;
 
     struct stock_item *child;
+
+    struct lease_ref lease_ref;
 
     int fd;
     struct event event;
@@ -117,15 +121,16 @@ lhttp_stock_create(void *ctx, struct stock_item *item,
     assert(address->path != NULL);
 
     GError *error = NULL;
-    connection->child = hstock_get_now(lhttp_stock->child_stock, pool,
-                                       key, info, &error);
+    connection->child = mstock_get_now(lhttp_stock->child_stock, pool,
+                                       key, info, &connection->lease_ref,
+                                       &error);
 
     connection->fd = child_stock_item_connect(connection->child, &error);
 
     if (connection->fd < 0) {
         g_prefix_error(&error, "failed to connect to LHTTP server '%s': ",
                        key);
-        child_stock_put(lhttp_stock->child_stock, connection->child, false);
+        lease_release(&connection->lease_ref, false);
         stock_item_failed(item, error);
         return;
     }
@@ -159,15 +164,14 @@ lhttp_stock_release(void *ctx gcc_unused, struct stock_item *item)
 }
 
 static void
-lhttp_stock_destroy(void *ctx, struct stock_item *item)
+lhttp_stock_destroy(gcc_unused void *ctx, struct stock_item *item)
 {
-    struct lhttp_stock *lhttp_stock = ctx;
     struct lhttp_connection *connection = (struct lhttp_connection *)item;
 
     p_event_del(&connection->event, connection->base.pool);
     close(connection->fd);
 
-    child_stock_put(lhttp_stock->child_stock, connection->child, false);
+    lease_release(&connection->lease_ref, true);
 }
 
 static const struct stock_class lhttp_stock_class = {
@@ -189,8 +193,10 @@ struct lhttp_stock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
     struct lhttp_stock *lhttp_stock = p_malloc(pool, sizeof(*lhttp_stock));
-    lhttp_stock->child_stock = child_stock_new(pool, limit, max_idle,
-                                               &lhttp_child_stock_class);
+
+    struct hstock *child_stock = child_stock_new(pool, limit, max_idle,
+                                                 &lhttp_child_stock_class);
+    lhttp_stock->child_stock = mstock_new(pool, child_stock);
     lhttp_stock->hstock = hstock_new(pool, &lhttp_stock_class, lhttp_stock,
                                      limit, max_idle);
 
@@ -201,7 +207,7 @@ void
 lhttp_stock_free(struct lhttp_stock *lhttp_stock)
 {
     hstock_free(lhttp_stock->hstock);
-    hstock_free(lhttp_stock->child_stock);
+    mstock_free(lhttp_stock->child_stock);
 }
 
 struct stock_item *
