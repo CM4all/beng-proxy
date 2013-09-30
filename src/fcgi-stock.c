@@ -42,7 +42,7 @@ struct fcgi_connection {
 
     struct jail_config jail_config;
 
-    struct child_stock_item *child;
+    struct stock_item *child;
 
     int fd;
     struct event event;
@@ -144,8 +144,8 @@ fcgi_stock_create(void *ctx, struct stock_item *item,
         connection->jail_params.enabled = false;
 
     GError *error = NULL;
-    connection->child = child_stock_get(fcgi_stock->child_stock, pool,
-                                        key, params, &error);
+    connection->child = hstock_get_now(fcgi_stock->child_stock, pool,
+                                       key, params, &error);
 
     connection->fd = child_stock_item_connect(connection->child, &error);
     if (connection->fd < 0) {

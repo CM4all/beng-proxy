@@ -200,30 +200,26 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
     return hstock_new(pool, &child_stock_class, u.out, limit, max_idle);
 }
 
-struct child_stock_item *
-child_stock_get(struct hstock *hstock, struct pool *pool,
-                const char *key, void *info,
-                GError **error_r)
-{
-    return (struct child_stock_item *)
-        hstock_get_now(hstock, pool, key, info, error_r);
-}
-
 const char *
-child_stock_item_key(const struct child_stock_item *item)
+child_stock_item_key(const struct stock_item *_item)
 {
+    const struct child_stock_item *item =
+        (const struct child_stock_item *)_item;
     return item->key;
 }
 
 int
-child_stock_item_connect(const struct child_stock_item *item, GError **error_r)
+child_stock_item_connect(const struct stock_item *_item, GError **error_r)
 {
+    const struct child_stock_item *item =
+        (const struct child_stock_item *)_item;
     return child_socket_connect(&item->socket, error_r);
 }
 
 void
-child_stock_put(struct hstock *hstock, struct child_stock_item *item,
+child_stock_put(struct hstock *hstock, struct stock_item *_item,
                 bool destroy)
 {
+    struct child_stock_item *item = (struct child_stock_item *)_item;
     hstock_put(hstock, item->key, &item->base, destroy);
 }

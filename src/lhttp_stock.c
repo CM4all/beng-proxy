@@ -31,7 +31,7 @@ struct lhttp_stock {
 struct lhttp_connection {
     struct stock_item base;
 
-    struct child_stock_item *child;
+    struct stock_item *child;
 
     int fd;
     struct event event;
@@ -117,8 +117,8 @@ lhttp_stock_create(void *ctx, struct stock_item *item,
     assert(address->path != NULL);
 
     GError *error = NULL;
-    connection->child = child_stock_get(lhttp_stock->child_stock, pool,
-                                        key, info, &error);
+    connection->child = hstock_get_now(lhttp_stock->child_stock, pool,
+                                       key, info, &error);
 
     connection->fd = child_stock_item_connect(connection->child, &error);
 
