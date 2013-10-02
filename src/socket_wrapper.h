@@ -102,6 +102,12 @@ socket_wrapper_schedule_read(struct socket_wrapper *s,
 {
     assert(socket_wrapper_valid(s));
 
+    if (timeout == NULL && event_pending(&s->read_event, EV_TIMEOUT, NULL))
+        /* work around libevent bug: event_add() should disable the
+           timeout if tv==NULL, but in fact it does not; workaround:
+           delete the whole event first, then re-add it */
+        p_event_del(&s->read_event, s->pool);
+
     p_event_add(&s->read_event, timeout, s->pool, "socket_read");
 }
 
@@ -116,6 +122,12 @@ socket_wrapper_schedule_write(struct socket_wrapper *s,
                               const struct timeval *timeout)
 {
     assert(socket_wrapper_valid(s));
+
+    if (timeout == NULL && event_pending(&s->write_event, EV_TIMEOUT, NULL))
+        /* work around libevent bug: event_add() should disable the
+           timeout if tv==NULL, but in fact it does not; workaround:
+           delete the whole event first, then re-add it */
+        p_event_del(&s->write_event, s->pool);
 
     p_event_add(&s->write_event, timeout, s->pool, "socket_write");
 }
