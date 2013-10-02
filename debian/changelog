@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.31) unstable; urgency=low
 
-  * 
+  * socket_wrapper: work around libevent timeout reset bug
 
  --   
 
