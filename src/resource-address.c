@@ -128,7 +128,7 @@ resource_address_insert_query_string_from(struct pool *pool,
         dest->type = src->type;
         dest->u.lhttp = lhttp_address_insert_query_string(pool, src->u.lhttp,
                                                           query_string);
-        break;
+        return dest;
 
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:

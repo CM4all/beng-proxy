@@ -1,6 +1,6 @@
 #include "delegate-glue.h"
 #include "delegate-stock.h"
-#include "stock.h"
+#include "hstock.h"
 #include "async.h"
 #include "defer.h"
 #include "pool.h"

@@ -6,6 +6,7 @@
 
 #include "bp_stats.h"
 #include "instance.h"
+#include "hstock.h"
 #include "stock.h"
 #include "cache.h"
 #include "tcache.h"
@@ -14,6 +15,8 @@
 #include "child.h"
 #include "session_manager.h"
 #include "beng-proxy/control.h"
+
+#include <glib.h>
 
 void
 bp_get_stats(const struct instance *instance,

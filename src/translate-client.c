@@ -83,7 +83,7 @@ struct translate_client {
     /** the current JailCGI parameters being edited */
     struct jail_params *jail;
 
-    /** the current CGI/FastCGI/WAS address being edited */
+    /** the current local file address being edited */
     struct file_address *file_address;
 
     /** the current CGI/FastCGI/WAS address being edited */
@@ -820,22 +820,20 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_PATH_INFO:
-        if (client->cgi_address == NULL) {
-            /* don't emit this error when the resource is a local
-               path.  This combination might be useful one day, but isn't
-               currently used. */
-            if (client->resource_address == NULL ||
-                client->resource_address->type != RESOURCE_ADDRESS_LOCAL) {
-                translate_client_error(client,
-                                       "misplaced TRANSLATE_PATH_INFO packet");
-                return false;
-            }
-
+        if (client->cgi_address != NULL &&
+            client->cgi_address->path_info == NULL) {
+            client->cgi_address->path_info = payload;
             return true;
+        } else if (client->file_address != NULL) {
+            /* don't emit an error when the resource is a local path.
+               This combination might be useful one day, but isn't
+               currently used. */
+            return true;
+        } else {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_PATH_INFO packet");
+            return false;
         }
-
-        client->cgi_address->path_info = payload;
-        return true;
 
     case TRANSLATE_EXPAND_PATH:
         if (client->response.regex == NULL) {
@@ -861,35 +859,47 @@ translate_handle_packet(struct translate_client *client,
         }
 
     case TRANSLATE_EXPAND_PATH_INFO:
-        if (client->response.regex == NULL ||
-            client->cgi_address == NULL ||
-            client->cgi_address->expand_path_info != NULL) {
+        if (client->response.regex == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_EXPAND_PATH_INFO packet");
+            return false;
+        } else if (client->cgi_address != NULL &&
+                   client->cgi_address->expand_path_info == NULL) {
+            client->cgi_address->expand_path_info = payload;
+            return true;
+        } else if (client->file_address != NULL) {
+            /* don't emit an error when the resource is a local path.
+               This combination might be useful one day, but isn't
+               currently used. */
+            return true;
+        } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_EXPAND_PATH_INFO packet");
             return false;
         }
 
-        client->cgi_address->expand_path_info = payload;
-        return true;
-
     case TRANSLATE_DEFLATED:
-        if (client->file_address == NULL) {
+        if (client->file_address != NULL) {
+            client->file_address->deflated = payload;
+            return true;
+        } else if (client->nfs_address != NULL) {
+            /* ignore for now */
+        } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_DEFLATED packet");
             return false;
         }
 
-        client->file_address->deflated = payload;
-        return true;
-
     case TRANSLATE_GZIPPED:
-        if (client->file_address == NULL) {
+        if (client->file_address != NULL) {
+            client->file_address->gzipped = payload;
+            return true;
+        } else if (client->nfs_address != NULL) {
+            /* ignore for now */
+        } else {
             translate_client_error(client, "misplaced TRANSLATE_GZIPPED packet");
             return false;
         }
-
-        client->file_address->gzipped = payload;
-        return true;
 
     case TRANSLATE_SITE:
         assert(client->resource_address != NULL);

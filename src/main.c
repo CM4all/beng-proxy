@@ -17,7 +17,7 @@
 #include "tcp-stock.h"
 #include "tcp-balancer.h"
 #include "memcached-stock.h"
-#include "stock.h"
+#include "hstock.h"
 #include "tcache.h"
 #include "http-cache.h"
 #include "lhttp_stock.h"
@@ -124,12 +124,12 @@ shutdown_callback(void *ctx)
     }
 
     if (instance->lhttp_stock != NULL) {
-        hstock_free(instance->lhttp_stock);
+        lhttp_stock_free(instance->lhttp_stock);
         instance->lhttp_stock = NULL;
     }
 
     if (instance->fcgi_stock != NULL) {
-        hstock_free(instance->fcgi_stock);
+        fcgi_stock_free(instance->fcgi_stock);
         instance->fcgi_stock = NULL;
     }
 

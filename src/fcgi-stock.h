@@ -7,29 +7,32 @@
 #ifndef __BENG_FCGI_STOCK_H
 #define __BENG_FCGI_STOCK_H
 
+#include <glib.h>
+
 #include <stdbool.h>
 
 struct pool;
-struct hstock;
 struct stock_item;
 struct stock_get_handler;
 struct jail_params;
 struct async_operation_ref;
 
-struct hstock *
+struct fcgi_stock *
 fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
+
+void
+fcgi_stock_free(struct fcgi_stock *fcgi_stock);
 
 /**
  * @param account_id the customer account id (JailCGI)
  * @param site_id the customer site id (JailCGI)
  * @param host_name the UTS host name (JailCGI)
  */
-void
-fcgi_stock_get(struct hstock *hstock, struct pool *pool,
+struct stock_item *
+fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct jail_params *jail,
                const char *executable_path,
-               const struct stock_get_handler *handler, void *handler_ctx,
-               struct async_operation_ref *async_ref);
+               GError **error_r);
 
 /**
  * Returns the socket descriptor of the specified stock item.
@@ -48,9 +51,10 @@ fcgi_stock_translate_path(const struct stock_item *item,
                           const char *path, struct pool *pool);
 
 /**
- * Wrapper for hstock_put().
+ * Wrapper for fcgi_stock_put().
  */
 void
-fcgi_stock_put(struct hstock *hstock, struct stock_item *item, bool destroy);
+fcgi_stock_put(struct fcgi_stock *fcgi_stock, struct stock_item *item,
+               bool destroy);
 
 #endif

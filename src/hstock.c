@@ -1,9 +1,11 @@
 /*
- * Objects in stock.  May be used for connection pooling.
+ * The 'hstock' class is a hash table of any number of 'stock'
+ * objects, each with a different URI.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "hstock.h"
 #include "stock.h"
 #include "hashmap.h"
 #include "pool.h"
@@ -109,18 +111,12 @@ hstock_add_stats(const struct hstock *stock, struct stock_stats *data)
     }
 }
 
-void
-hstock_get(struct hstock *hstock, struct pool *pool,
-           const char *uri, void *info,
-           const struct stock_get_handler *handler, void *handler_ctx,
-           struct async_operation_ref *async_ref)
+static struct stock *
+hstock_get_stock(struct hstock *hstock, const char *uri)
 {
-    struct stock *stock;
-
     assert(hstock != NULL);
 
-    stock = (struct stock *)hashmap_get(hstock->stocks, uri);
-
+    struct stock *stock = (struct stock *)hashmap_get(hstock->stocks, uri);
     if (stock == NULL) {
         stock = stock_new(hstock->pool, hstock->class, hstock->class_ctx, uri,
                           hstock->limit, hstock->max_idle,
@@ -128,7 +124,30 @@ hstock_get(struct hstock *hstock, struct pool *pool,
         hashmap_set(hstock->stocks, stock_get_uri(stock), stock);
     }
 
+    return stock;
+}
+
+void
+hstock_get(struct hstock *hstock, struct pool *pool,
+           const char *uri, void *info,
+           const struct stock_get_handler *handler, void *handler_ctx,
+           struct async_operation_ref *async_ref)
+{
+    assert(hstock != NULL);
+
+    struct stock *stock = hstock_get_stock(hstock, uri);
     stock_get(stock, pool, info, handler, handler_ctx, async_ref);
+}
+
+struct stock_item *
+hstock_get_now(struct hstock *hstock, struct pool *pool,
+               const char *uri, void *info,
+               GError **error_r)
+{
+    assert(hstock != NULL);
+
+    struct stock *stock = hstock_get_stock(hstock, uri);
+    return stock_get_now(stock, pool, info, error_r);
 }
 
 void

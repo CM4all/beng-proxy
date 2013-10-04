@@ -10,6 +10,7 @@
 #include "defer_event.h"
 
 #include <daemon/log.h>
+#include <daemon/daemonize.h>
 #include <inline/list.h>
 
 #include <assert.h>
@@ -124,6 +125,9 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
     int status;
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+        if (daemonize_child_exited(pid, status))
+            continue;
+
         struct child *child = find_child_by_pid(pid);
         if (child != NULL)
             child_done(child, status);
