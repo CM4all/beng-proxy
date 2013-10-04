@@ -40,6 +40,11 @@ struct lhttp_address {
      * translation cache.
      */
     const char *expand_uri;
+
+    /**
+     * The maximum number of concurrent connections to one instance.
+     */
+    unsigned concurrency;
 };
 
 void

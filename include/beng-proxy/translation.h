@@ -334,6 +334,12 @@ enum beng_translation_command {
      * The "Host" request header for the #TRANSLATE_LHTTP_PATH.
      */
     TRANSLATE_LHTTP_HOST = 100,
+
+    /**
+     * How many concurrent requests will be handled by the
+     * aforementioned process?
+     */
+    TRANSLATE_CONCURRENCY = 101,
 };
 
 struct beng_translation_header {

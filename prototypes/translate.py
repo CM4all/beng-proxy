@@ -276,12 +276,14 @@ class Translation(Protocol):
             response.packet(TRANSLATE_APPEND, '0')
             response.packet(TRANSLATE_APPEND, 'fixed')
             response.packet(TRANSLATE_LHTTP_URI, uri)
+            response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
         elif uri == '/lhttp/mirror':
             response.packet(TRANSLATE_LHTTP_PATH, os.path.join(test_path, 'run_http_server'))
             response.packet(TRANSLATE_APPEND, 'accept')
             response.packet(TRANSLATE_APPEND, '0')
             response.packet(TRANSLATE_APPEND, 'mirror')
             response.packet(TRANSLATE_LHTTP_URI, uri)
+            response.packet(TRANSLATE_CONCURRENCY, '\x04\x00')
         elif uri[:15] == '/ticket/create/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))

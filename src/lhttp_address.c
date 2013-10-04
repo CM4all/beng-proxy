@@ -21,6 +21,7 @@ lhttp_address_init(struct lhttp_address *address, const char *path)
 
     memset(address, 0, sizeof(*address));
     address->path = path;
+    address->concurrency = 1;
 }
 
 struct lhttp_address *
@@ -73,6 +74,8 @@ lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
     dest->host_and_port = p_strdup_checked(pool, src->host_and_port);
     dest->uri = p_strdup(pool, src->uri);
     dest->expand_uri = p_strdup_checked(pool, src->expand_uri);
+
+    dest->concurrency = src->concurrency;
 }
 
 struct lhttp_address *

@@ -122,7 +122,8 @@ lhttp_stock_create(void *ctx, struct stock_item *item,
 
     GError *error = NULL;
     connection->child = mstock_get_now(lhttp_stock->child_stock, pool,
-                                       key, info, &connection->lease_ref,
+                                       key, info, address->concurrency,
+                                       &connection->lease_ref,
                                        &error);
 
     connection->fd = child_stock_item_connect(connection->child, &error);

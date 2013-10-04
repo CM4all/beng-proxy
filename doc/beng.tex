@@ -591,6 +591,7 @@ Optional attributes:
 \item command-line arguments (one or more \verb|APPEND| packets)
 \item a ``Host'' request header (packet \verb|LHTTP_HOST|)
 \item JailCGI configuration (packet \verb|JAILCGI|)
+\item concurrency (packet \verb|CONCURRENCY|)
 \end{itemize}
 
 How it works: \emph{beng-proxy} spawns the specified process with a
@@ -833,6 +834,11 @@ specified right before this packet (see \ref{nfs}) \\
 
 \verb|LHTTP_HOST| & the ``Host'' request header for \verb|LHTTP_PATH|
 \\
+
+\hline
+
+\verb|CONCURRENCY| & the maximum number of concurrent requests to this
+server (LHTTP only currently) \\
 
 \hline
 

@@ -1877,6 +1877,21 @@ translate_handle_packet(struct translate_client *client,
 
         client->lhttp_address->host_and_port = payload;
         return true;
+
+    case TRANSLATE_CONCURRENCY:
+        if (client->lhttp_address == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_CONCURRENCY packet");
+            return false;
+        }
+
+        if (payload_length != 2) {
+            translate_client_error(client, "malformed TRANSLATE_CONCURRENCY packet");
+            return false;
+        }
+
+        client->lhttp_address->concurrency = *(const uint16_t*)payload;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,
