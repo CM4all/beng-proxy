@@ -47,7 +47,7 @@ class MultiStock : public mstock {
                 }
             };
 
-            DomainMap::iterator domain;
+            const DomainMap::iterator domain;
 
             stock_item &item;
 
