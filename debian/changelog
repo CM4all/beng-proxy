@@ -4,7 +4,7 @@ cm4all-beng-proxy (3.1.12) unstable; urgency=low
   * translation: new packet CONCURRENCY controls number of LHTTP
     connections per process
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Sat, 05 Oct 2013 11:34:04 -0000
 
 cm4all-beng-proxy (3.1.11) unstable; urgency=low
 
