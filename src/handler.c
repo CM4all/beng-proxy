@@ -271,6 +271,19 @@ install_error_response(struct request *request)
     request->translate.transformation = NULL;
 }
 
+static const char *
+uri_without_query_string(struct pool *pool, const char *uri)
+{
+    assert(pool != NULL);
+    assert(uri != NULL);
+
+    const char *qmark = strchr(uri, '?');
+    if (qmark != NULL)
+        return p_strndup(pool, uri, qmark - uri);
+
+    return uri;
+}
+
 static void
 handler_translate_response(const struct translate_response *response,
                            void *ctx)
@@ -294,6 +307,43 @@ handler_translate_response(const struct translate_response *response,
 
         request->translate.previous = response;
         request->translate.request.check = response->check;
+
+        translate_cache(request->request->pool,
+                        request->connection->instance->translate_cache,
+                        &request->translate.request,
+                        &handler_translate_handler, request,
+                        &request->async_ref);
+        return;
+    }
+
+    if (!strref_is_null(&response->want_full_uri)) {
+        /* repeat request with full URI */
+
+        if (request->translate.want_full_uri) {
+            daemon_log(2, "duplicate TRANSLATE_WANT_FULL_URI packet\n");
+            response_dispatch_message(request,
+                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                      "Internal server error");
+            return;
+        }
+
+        request->translate.want_full_uri = true;
+
+        /* echo the server's WANT_FULL_URI packet */
+        request->translate.request.want_full_uri = response->want_full_uri;
+
+        /* send the full URI this time */
+        request->translate.request.uri =
+            uri_without_query_string(request->request->pool,
+                                     request->request->uri);
+
+        /* undo the uri_parse() call (but leave the query_string) */
+
+        strref_set_c(&request->uri.base, request->translate.request.uri);
+        strref_clear(&request->uri.args);
+        strref_clear(&request->uri.path_info);
+
+        /* resend the modified request */
 
         translate_cache(request->request->pool,
                         request->connection->instance->translate_cache,
@@ -401,6 +451,7 @@ fill_translate_request(struct translate_request *t,
         : strref_dup(request->pool, &uri->query);
     t->widget_type = NULL;
     strref_null(&t->check);
+    strref_null(&t->want_full_uri);
     t->error_document_status = 0;
 }
 
@@ -409,6 +460,7 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
 {
     request2->translate.previous = NULL;
     request2->translate.checks = 0;
+    request2->translate.want_full_uri = false;
 
     struct http_server_request *request = request2->request;
     fill_translate_request(&request2->translate.request, request2->request,

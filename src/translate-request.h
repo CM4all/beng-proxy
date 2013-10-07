@@ -37,10 +37,17 @@ struct translate_request {
 
     /**
      * The payload of the CHECK packet.  If
-     * strref_is_null(&esponse.check), then no CHECK packet will be
+     * strref_is_null(&response.check), then no CHECK packet will be
      * sent.
      */
     struct strref check;
+
+    /**
+     * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
+     * strref_is_null(&response.want_full_uri), then no
+     * #TRANSLATE_WANT_FULL_URI packet was received.
+     */
+    struct strref want_full_uri;
 
     http_status_t error_document_status;
 };

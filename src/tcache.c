@@ -30,6 +30,7 @@
 #include <errno.h>
 
 #define MAX_CACHE_CHECK 256
+#define MAX_CACHE_WFU 256
 
 struct tcache_item {
     struct cache_item item;
@@ -185,7 +186,8 @@ tcache_remove_per_host(struct tcache_item *item)
 static const char *
 tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                http_status_t status,
-               const struct strref *check)
+               const struct strref *check,
+               const struct strref *want_full_uri)
 {
     const char *key = status != 0
         ? p_sprintf(pool, "ERR%u_%s", status, uri)
@@ -208,6 +210,18 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                         NULL);
     }
 
+    if (want_full_uri != NULL && !strref_is_null(want_full_uri)) {
+        char buffer[MAX_CACHE_WFU * 3];
+        size_t length = uri_escape(buffer, want_full_uri->data,
+                                   want_full_uri->length, '%');
+
+        key = p_strncat(pool,
+                        "|WFU=", (size_t)5,
+                        buffer, length,
+                        key, strlen(key),
+                        NULL);
+    }
+
     return key;
 }
 
@@ -217,7 +231,7 @@ tcache_request_key(struct pool *pool, const struct translate_request *request)
     return request->uri != NULL
         ? tcache_uri_key(pool, request->uri, request->host,
                          request->error_document_status,
-                         &request->check)
+                         &request->check, &request->want_full_uri)
         : request->widget_type;
 }
 
@@ -227,6 +241,7 @@ tcache_request_evaluate(const struct translate_request *request)
 {
     return (request->uri != NULL || request->widget_type != NULL) &&
         request->check.length < MAX_CACHE_CHECK &&
+        request->want_full_uri.length <= MAX_CACHE_WFU &&
         request->authorization == NULL &&
         request->param == NULL;
 }
@@ -390,7 +405,7 @@ tcache_store_response(struct pool *pool, struct translate_response *dest,
     if (key != NULL)
         key = tcache_uri_key(pool, key, request->host,
                              request->error_document_status,
-                             &request->check);
+                             &request->check, &request->want_full_uri);
 
     return key;
 }

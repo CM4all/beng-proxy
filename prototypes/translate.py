@@ -121,7 +121,9 @@ class Translation(Protocol):
         username, password = x
         return username == 'hansi' and password == 'hansilein'
 
-    def _handle_http(self, raw_uri, uri, authorization, check, ua_class, response):
+    def _handle_http(self, raw_uri, uri, authorization,
+                     check, want_full_uri,
+                     ua_class, response):
         if uri[:6] == '/site/':
             x = uri[6:]
             i = x.find('/')
@@ -406,6 +408,16 @@ class Translation(Protocol):
             else:
                 # invalid request
                 response.status(400)
+        elif uri[:14] == '/want_full_uri':
+            if want_full_uri is None:
+                response.packet(TRANSLATE_WANT_FULL_URI, 'foo')
+            elif want_full_uri == 'foo':
+                response.max_age(20)
+                response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'env.py'))
+                response.packet(TRANSLATE_SCRIPT_NAME, uri)
+            else:
+                # invalid request
+                response.status(400)
         elif uri[:10] == '/balancer/':
             response.proxy('http://balancer/' + raw_uri[10:],
                            ('172.30.0.23:80', '172.30.0.23:8080'))
@@ -466,7 +478,8 @@ class Translation(Protocol):
 
         if request.uri is not None:
             self._handle_http(request.raw_uri, request.uri, request.authorization,
-                              request.check, request.ua_class, response)
+                              request.check, request.want_full_uri,
+                              request.ua_class, response)
 
         return response
 

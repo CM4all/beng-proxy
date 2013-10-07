@@ -340,6 +340,15 @@ enum beng_translation_command {
      * aforementioned process?
      */
     TRANSLATE_CONCURRENCY = 101,
+
+    /**
+     * The translation server sends this packet when it wants to have
+     * the full request URI.  beng-proxy then sends another
+     * translation request, echoing this packet (including its
+     * payload), and #TRANSLATE_URI containing the full request URI
+     * (not including the query string)
+     */
+    TRANSLATE_WANT_FULL_URI = 102,
 };
 
 struct beng_translation_header {

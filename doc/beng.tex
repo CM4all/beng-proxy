@@ -723,6 +723,14 @@ is followed by the packets \verb|URI| and \verb|STATUS|.  See
 
 \hline
 
+\verb|WANT_FULL_URI| & causes beng-proxy to submit the same
+translation request again, with this packet appended (its payload is
+opaque to \emph{beng-proxy}), and with the full request URI (including
+semicolon-arguments and the follow-up suffix, but excluding the query
+string). \\
+
+\hline
+
 \verb|CHECK| & causes beng-proxy to submit the same translation
 request again, with this packet appended (its payload is opaque to
 \emph{beng-proxy}).  The current response is remembered, to be used

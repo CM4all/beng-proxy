@@ -74,6 +74,12 @@ struct request {
          * used for loop detection.
          */
         unsigned checks;
+
+        /**
+         * True when the translation server has sent
+         * #TRANSLATE_WANT_FULL_URI.
+         */
+        bool want_full_uri;
     } translate;
 
     /**

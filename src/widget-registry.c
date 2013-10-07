@@ -45,6 +45,7 @@ widget_registry_lookup(struct pool *pool,
     request->session = NULL;
     request->param = NULL;
     strref_null(&request->check);
+    strref_null(&request->want_full_uri);
     request->error_document_status = 0;
 
     translate_cache(pool, tcache, request,
