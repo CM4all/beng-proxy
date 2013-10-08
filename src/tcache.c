@@ -197,9 +197,10 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
         key = p_strcat(pool, host, ":", key, NULL);
 
     if (check != NULL && !strref_is_null(check))
-        key = p_strncat(pool, key, strlen(key),
+        key = p_strncat(pool,
                         "|CHECK=", (size_t)7,
                         check->data, (size_t)check->length,
+                        key, strlen(key),
                         NULL);
 
     return key;
