@@ -2,6 +2,7 @@ cm4all-beng-proxy (3.0.32) unstable; urgency=low
 
   * tcache: apply BASE to responses without an address
   * tcache: fix BASE on responses with CHECK
+  * handler: fix crash after malformed CHECK/PREVIOUS translation
 
  --   
 

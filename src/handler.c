@@ -270,6 +270,10 @@ handler_translate_response(const struct translate_response *response,
 {
     struct request *request = ctx;
 
+    /* just in case we error out before handle_translated_request()
+       assigns the real response */
+    install_error_response(request);
+
     if (!strref_is_null(&response->check)) {
         /* repeat request with CHECK set */
 
