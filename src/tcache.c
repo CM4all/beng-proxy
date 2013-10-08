@@ -195,9 +195,10 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
         key = p_strcat(pool, host, ":", key, NULL);
 
     if (check != NULL && !strref_is_null(check))
-        key = p_strncat(pool, key, strlen(key),
+        key = p_strncat(pool,
                         "|CHECK=", (size_t)7,
                         check->data, (size_t)check->length,
+                        key, strlen(key),
                         NULL);
 
     return key;
@@ -327,6 +328,14 @@ tcache_store_address(struct pool *pool, struct resource_address *dest,
             return p_strndup(pool, uri, suffix - uri);
         }
 
+        if (src->type == RESOURCE_ADDRESS_NONE) {
+            /* _save_base() will fail on a "NONE" address, but in this
+               case, the operation is useful and is allowed as a
+               special case */
+            dest->type = RESOURCE_ADDRESS_NONE;
+            return p_strndup(pool, uri, suffix - uri);
+        }
+
         if (resource_address_save_base(pool, dest, src, suffix) != NULL)
             return p_strndup(pool, uri, suffix - uri);
     }
@@ -398,6 +407,12 @@ tcache_load_address(struct pool *pool, const char *uri,
             g_set_error(error_r, http_response_quark(),
                         HTTP_STATUS_BAD_REQUEST, "Malformed URI");
             return false;
+        }
+
+        if (src->address.type == RESOURCE_ADDRESS_NONE) {
+            /* see code comment in tcache_store_address() */
+            dest->type = RESOURCE_ADDRESS_NONE;
+            return true;
         }
 
         if (resource_address_load_base(pool, dest, &src->address,

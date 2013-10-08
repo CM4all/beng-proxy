@@ -175,6 +175,7 @@ translate_response_equals(const struct translate_response *a,
         return a == NULL && b == NULL;
 
     return string_equals(a->base, b->base) &&
+        strref_is_null(&a->check) == strref_is_null(&b->check) &&
         resource_address_equals(&a->address, &b->address) &&
         view_chain_equals(a->views, b->views);
 }
@@ -1101,6 +1102,184 @@ test_auto_base(struct pool *pool, struct tcache *cache)
                     &my_translate_handler, NULL, &async_ref);
 }
 
+/**
+ * Test CHECK + BASE.
+ */
+static void
+test_base_check(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    /* feed the cache */
+
+    static const struct translate_request request1 = {
+        .uri = "/a/b/c.html",
+    };
+    static const struct translate_response response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_NONE,
+        },
+        .base = "/a/",
+        .check = {
+            .length = 1,
+            .data = "x",
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request2 = {
+        .uri = "/a/b/c.html",
+        .check = {
+            .length = 1,
+            .data = "x",
+        },
+    };
+    static const struct translate_response response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/vol0/a/b/c.html",
+                },
+            },
+        },
+        .base = "/a/b/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request3 = {
+        .uri = "/a/d/e.html",
+        .check = {
+            .length = 1,
+            .data = "x",
+        },
+    };
+    static const struct translate_response response3 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/vol1/a/d/e.html",
+                },
+            },
+        },
+        .base = "/a/d/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response3;
+    translate_cache(pool, cache, &request3,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* now check whether the translate cache matches the BASE
+       correctly */
+
+    next_response = NULL;
+
+    static const struct translate_request request4 = {
+        .uri = "/a/f/g.html",
+    };
+    static const struct translate_response response4 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_NONE,
+        },
+        .base = "/a/",
+        .check = {
+            .length = 1,
+            .data = "x",
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    expected_response = &response4;
+    translate_cache(pool, cache, &request4,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request5 = {
+        .uri = "/a/b/0/1.html",
+    };
+
+    translate_cache(pool, cache, &request5,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request6 = {
+        .uri = "/a/b/0/1.html",
+        .check = {
+            .length = 1,
+            .data = "x",
+        },
+    };
+    static const struct translate_response response6 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/vol0/a/b/0/1.html",
+                },
+            },
+        },
+        .base = "/a/b/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    expected_response = &response6;
+    translate_cache(pool, cache, &request6,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request7 = {
+        .uri = "/a/d/2/3.html",
+        .check = {
+            .length = 1,
+            .data = "x",
+        },
+    };
+    static const struct translate_response response7 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/vol1/a/d/2/3.html",
+                },
+            },
+        },
+        .base = "/a/d/",
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    expected_response = &response7;
+    translate_cache(pool, cache, &request7,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* expect cache misses */
+
+    expected_response = NULL;
+
+    static const struct translate_request miss1 = {
+        .uri = "/a/f/g.html",
+        .check = {
+            .length = 1,
+            .data = "y",
+        },
+    };
+
+    translate_cache(pool, cache, &miss1,
+                    &my_translate_handler, NULL, &async_ref);
+}
+
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
@@ -1125,6 +1304,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_expand_local_filter(pool, cache);
     test_expand_uri(pool, cache);
     test_auto_base(pool, cache);
+    test_base_check(pool, cache);
 
     /* cleanup */
 
