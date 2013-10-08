@@ -4,7 +4,7 @@ cm4all-beng-proxy (3.0.32) unstable; urgency=low
   * tcache: fix BASE on responses with CHECK
   * handler: fix crash after malformed CHECK/PREVIOUS translation
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 08 Oct 2013 15:48:07 -0000
 
 cm4all-beng-proxy (3.0.31) unstable; urgency=low
 
