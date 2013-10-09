@@ -507,18 +507,10 @@ tcache_uri_match(const char *a, const char *b, bool strict)
     if (a == NULL || b == NULL)
         return !strict && a == b;
 
-    if (memcmp(a, "ERR", 3) == 0) {
-        char *endptr;
-        strtol(a + 3, &endptr, 10);
-        if (*endptr == '_')
-            a = endptr + 1;
-    }
-
-    const char *check = strstr(a, "|CHECK=");
-    if (check != NULL)
-        return memcmp(a, b, check - a) == 0 && b[check - a] == 0;
-    else
-        return strcmp(a, b) == 0;
+    /* skip everything until the first slash; these may be prefixes
+       added by tcache_uri_key() */
+    a = strchr(a, '/');
+    return a != NULL && strcmp(a, b) == 0;
 }
 
 /**

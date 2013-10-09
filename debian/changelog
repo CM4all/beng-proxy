@@ -2,6 +2,7 @@ cm4all-beng-proxy (3.0.33) unstable; urgency=low
 
   * tcache: limit the cacheable CHECK length
   * tcache: allow binary data in the CHECK payload
+  * tcache: fix matching the URI on INVALIDATE with CHECK
 
  --   
 
