@@ -16,6 +16,7 @@
 #include "hashmap.h"
 #include "uri-address.h"
 #include "uri-verify.h"
+#include "uri-escape.h"
 #include "strref-pool.h"
 #include "slice.h"
 #include "beng-proxy/translation.h"
@@ -27,6 +28,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <errno.h>
+
+#define MAX_CACHE_CHECK 256
 
 struct tcache_item {
     struct cache_item item;
@@ -194,15 +197,18 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
            key */
         key = p_strcat(pool, host, ":", key, NULL);
 
-    if (check != NULL && !strref_is_null(check))
+    if (check != NULL && !strref_is_null(check)) {
+        char buffer[MAX_CACHE_CHECK * 3];
+        size_t length = uri_escape(buffer, check->data, check->length, '%');
+
         key = p_strncat(pool,
                         "|CHECK=", (size_t)7,
-                        check->data, (size_t)check->length,
+                        buffer, length,
                         key, strlen(key),
                         NULL);
+    }
 
     return key;
-
 }
 
 static const char *
@@ -220,6 +226,7 @@ static bool
 tcache_request_evaluate(const struct translate_request *request)
 {
     return (request->uri != NULL || request->widget_type != NULL) &&
+        request->check.length < MAX_CACHE_CHECK &&
         request->authorization == NULL &&
         request->param == NULL;
 }
@@ -498,18 +505,10 @@ tcache_uri_match(const char *a, const char *b, bool strict)
     if (a == NULL || b == NULL)
         return !strict && a == b;
 
-    if (memcmp(a, "ERR", 3) == 0) {
-        char *endptr;
-        strtol(a + 3, &endptr, 10);
-        if (*endptr == '_')
-            a = endptr + 1;
-    }
-
-    const char *check = strstr(a, "|CHECK=");
-    if (check != NULL)
-        return memcmp(a, b, check - a) == 0 && b[check - a] == 0;
-    else
-        return strcmp(a, b) == 0;
+    /* skip everything until the first slash; these may be prefixes
+       added by tcache_uri_key() */
+    a = strchr(a, '/');
+    return a != NULL && strcmp(a, b) == 0;
 }
 
 /**

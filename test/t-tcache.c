@@ -533,6 +533,165 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
 }
 
 static void
+test_invalidate_uri(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    /* feed the cache */
+
+    static const struct translate_request request1 = {
+        .uri = "/invalidate/uri",
+    };
+    static const struct translate_response response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/invalidate/uri",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request2 = {
+        .uri = "/invalidate/uri",
+        .check = {
+            .length = 1,
+            .data = "x",
+        },
+    };
+    static const struct translate_response response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/check/invalidate/uri",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request3 = {
+        .uri = "/invalidate/uri",
+        .error_document_status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
+    };
+    static const struct translate_response response3 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/500/invalidate/uri",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response3;
+    translate_cache(pool, cache, &request3,
+                    &my_translate_handler, NULL, &async_ref);
+
+    static const struct translate_request request4 = {
+        .uri = "/invalidate/uri",
+        .error_document_status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        .check = {
+            .length = 1,
+            .data = "x",
+        },
+    };
+    static const struct translate_response response4 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/500/check/invalidate/uri",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+    };
+
+    next_response = expected_response = &response4;
+    translate_cache(pool, cache, &request4,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* verify the cache items */
+
+    next_response = NULL;
+
+    expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
+
+    expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, NULL, &async_ref);
+
+    expected_response = &response3;
+    translate_cache(pool, cache, &request3,
+                    &my_translate_handler, NULL, &async_ref);
+
+    expected_response = &response4;
+    translate_cache(pool, cache, &request4,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* invalidate all cache items */
+
+    static const struct translate_request request5 = {
+        .uri = "/invalidate/uri",
+        .error_document_status = HTTP_STATUS_NOT_FOUND,
+    };
+    static const uint16_t response5_invalidate[] = {
+        TRANSLATE_URI,
+    };
+    static const struct translate_response response5 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .local = {
+                    .path = "/var/www/404/invalidate/uri",
+                },
+            },
+        },
+        .max_age = -1,
+        .user_max_age = -1,
+        .invalidate = response5_invalidate,
+        .num_invalidate = sizeof(response5_invalidate) / sizeof(response5_invalidate[0]),
+    };
+
+    next_response = expected_response = &response5;
+    translate_cache(pool, cache, &request5,
+                    &my_translate_handler, NULL, &async_ref);
+
+    /* check if all cache items have really been deleted */
+
+    next_response = expected_response = NULL;
+
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, NULL, &async_ref);
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, NULL, &async_ref);
+    translate_cache(pool, cache, &request3,
+                    &my_translate_handler, NULL, &async_ref);
+    translate_cache(pool, cache, &request4,
+                    &my_translate_handler, NULL, &async_ref);
+}
+
+static void
 test_regex(struct pool *pool, struct tcache *cache)
 {
     static const struct translate_request request_i1 = {
@@ -1298,6 +1457,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     test_basic(pool, cache);
     test_vary_invalidate(pool, cache);
+    test_invalidate_uri(pool, cache);
     test_regex(pool, cache);
     test_expand(pool, cache);
     test_expand_local(pool, cache);
