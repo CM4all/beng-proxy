@@ -28,6 +28,8 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#define MAX_CACHE_CHECK 256
+
 struct tcache_item {
     struct cache_item item;
 
@@ -204,7 +206,6 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                         NULL);
 
     return key;
-
 }
 
 static const char *
@@ -222,6 +223,7 @@ static bool
 tcache_request_evaluate(const struct translate_request *request)
 {
     return (request->uri != NULL || request->widget_type != NULL) &&
+        request->check.length < MAX_CACHE_CHECK &&
         request->authorization == NULL &&
         request->param == NULL;
 }

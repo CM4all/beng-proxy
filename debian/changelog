@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.33) unstable; urgency=low
 
-  * 
+  * tcache: limit the cacheable CHECK length
 
  --   
 
