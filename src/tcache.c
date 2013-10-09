@@ -16,6 +16,7 @@
 #include "hashmap.h"
 #include "uri-address.h"
 #include "uri-verify.h"
+#include "uri-escape.h"
 #include "strref-pool.h"
 #include "slice.h"
 #include "beng-proxy/translation.h"
@@ -198,12 +199,16 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
            key */
         key = p_strcat(pool, host, ":", key, NULL);
 
-    if (check != NULL && !strref_is_null(check))
+    if (check != NULL && !strref_is_null(check)) {
+        char buffer[MAX_CACHE_CHECK * 3];
+        size_t length = uri_escape(buffer, check->data, check->length, '%');
+
         key = p_strncat(pool,
                         "|CHECK=", (size_t)7,
-                        check->data, (size_t)check->length,
+                        buffer, length,
                         key, strlen(key),
                         NULL);
+    }
 
     return key;
 }
