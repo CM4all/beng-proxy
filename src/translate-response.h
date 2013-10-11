@@ -85,10 +85,17 @@ struct translate_response {
 
     /**
      * The payload of the CHECK packet.  If
-     * strref_is_null(&esponse.check), then no CHECK packet was
+     * strref_is_null(&response.check), then no CHECK packet was
      * received.
      */
     struct strref check;
+
+    /**
+     * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
+     * strref_is_null(&response.want_full_uri), then no
+     * #TRANSLATE_WANT_FULL_URI packet was received.
+     */
+    struct strref want_full_uri;
 
     const char *user;
     unsigned user_max_age;

@@ -591,6 +591,7 @@ Optional attributes:
 \item command-line arguments (one or more \verb|APPEND| packets)
 \item a ``Host'' request header (packet \verb|LHTTP_HOST|)
 \item JailCGI configuration (packet \verb|JAILCGI|)
+\item concurrency (packet \verb|CONCURRENCY|)
 \end{itemize}
 
 How it works: \emph{beng-proxy} spawns the specified process with a
@@ -722,6 +723,14 @@ is followed by the packets \verb|URI| and \verb|STATUS|.  See
 
 \hline
 
+\verb|WANT_FULL_URI| & causes beng-proxy to submit the same
+translation request again, with this packet appended (its payload is
+opaque to \emph{beng-proxy}), and with the full request URI (including
+semicolon-arguments and the follow-up suffix, but excluding the query
+string). \\
+
+\hline
+
 \verb|CHECK| & causes beng-proxy to submit the same translation
 request again, with this packet appended (its payload is opaque to
 \emph{beng-proxy}).  The current response is remembered, to be used
@@ -833,6 +842,11 @@ specified right before this packet (see \ref{nfs}) \\
 
 \verb|LHTTP_HOST| & the ``Host'' request header for \verb|LHTTP_PATH|
 \\
+
+\hline
+
+\verb|CONCURRENCY| & the maximum number of concurrent requests to this
+server (LHTTP only currently) \\
 
 \hline
 
@@ -1028,11 +1042,17 @@ will be mounted in the jail; defaults to \verb|DOCUMENT_ROOT| \\
 \hline
 
 \verb|INTERPRETER| & run a CGI script with the specified
-interpreter; does not require the ``execute'' bit on the CGI script \\
+interpreter: invokes the specified interpreter with the mapped file
+path added as a command-line argument.  This can be used to run Perl
+scripts without setting the  ``execute'' bit. \\
 
 \hline
 
-\verb|ACTION| & run the specified CGI program \\
+\verb|ACTION| & run the specified CGI program instead of the mapped
+file.  This program reads the mapped file path from
+\verb|SCRIPT_FILENAME| and loads this script.  This is modeled after
+the Apache directive \verb|Action|, and implements a protocol
+understood by PHP and COMA. \\
 
 \hline
 

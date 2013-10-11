@@ -45,11 +45,13 @@ mstock_add_stats(const struct mstock *stock, struct stock_stats *data);
  * Obtains an item from the mstock without going through the callback.
  * This requires a stock class which finishes the create() method
  * immediately.
+ *
+ * @param max_leases the maximum number of leases per stock_item
  */
 gcc_pure
 struct stock_item *
 mstock_get_now(struct mstock *mstock, struct pool *caller_pool,
-               const char *uri, void *info,
+               const char *uri, void *info, unsigned max_leases,
                struct lease_ref *lease_ref,
                GError **error_r);
 

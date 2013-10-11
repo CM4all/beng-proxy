@@ -47,7 +47,9 @@ class MultiStock : public mstock {
                 }
             };
 
-            DomainMap::iterator domain;
+            const DomainMap::iterator domain;
+
+            const unsigned max_leases;
 
             stock_item &item;
 
@@ -57,8 +59,10 @@ class MultiStock : public mstock {
             bool reuse;
 
         public:
-            Item(DomainMap::iterator _domain, stock_item &_item)
-                :domain(_domain), item(_item), n_leases(0), reuse(true) {
+            Item(DomainMap::iterator _domain, unsigned _max_leases,
+                 stock_item &_item)
+                :domain(_domain), max_leases(_max_leases), item(_item),
+                 n_leases(0), reuse(true) {
                 list_init(&leases);
             }
 
@@ -72,8 +76,7 @@ class MultiStock : public mstock {
             }
 
             bool IsFull() const {
-                // TODO: dynamic limit
-                return n_leases >= 4;
+                return n_leases >= max_leases;
             }
 
             bool CanUse() const {
@@ -85,6 +88,7 @@ class MultiStock : public mstock {
                 assert(&*i == this);
 
                 ++n_leases;
+                printf("AddLease n=%u max=%u\n", n_leases, max_leases);
 
                 Lease *lease = new Lease(i);
                 list_add(lease, &leases);
@@ -163,16 +167,19 @@ class MultiStock : public mstock {
             return items.end();
         }
 
-        ItemList::iterator AddItem(DomainMap::iterator di, stock_item &si) {
+        ItemList::iterator AddItem(DomainMap::iterator di,
+                                   unsigned max_leases,
+                                   stock_item &si) {
             assert(&di->second == this);
 
-            items.emplace_front(di, si);
+            items.emplace_front(di, max_leases, si);
             return items.begin();
         }
 
         stock_item *GetNow(DomainMap::iterator di,
                            struct pool *caller_pool,
                            const char *uri, void *info,
+                           unsigned max_leases,
                            struct lease_ref &lease_ref,
                            GError **error_r);
 
@@ -208,6 +215,7 @@ public:
     }
 
     stock_item *GetNow(struct pool *caller_pool, const char *uri, void *info,
+                       unsigned max_leases,
                        struct lease_ref &lease_ref,
                        GError **error_r);
 
@@ -224,6 +232,7 @@ stock_item *
 MultiStock::Domain::GetNow(DomainMap::iterator di,
                            struct pool *caller_pool,
                            const char *uri, void *info,
+                           unsigned max_leases,
                            struct lease_ref &lease_ref,
                            GError **error_r)
 {
@@ -232,7 +241,7 @@ MultiStock::Domain::GetNow(DomainMap::iterator di,
         stock_item *item =
             hstock_get_now(stock.hstock, caller_pool, uri, info,
                            error_r);
-        items.emplace_front(di, *item);
+        items.emplace_front(di, max_leases, *item);
         i = items.begin();
     }
 
@@ -241,13 +250,15 @@ MultiStock::Domain::GetNow(DomainMap::iterator di,
 
 inline stock_item *
 MultiStock::GetNow(struct pool *caller_pool, const char *uri, void *info,
+                   unsigned max_leases,
                    struct lease_ref &lease_ref,
                    GError **error_r)
 {
     struct pool *domain_pool = pool_new_libc(pool, "mstock_domain");
     auto di = domains.insert(std::make_pair(uri, Domain(*this, domain_pool)))
         .first;
-    return di->second.GetNow(di, caller_pool, uri, info, lease_ref, error_r);
+    return di->second.GetNow(di, caller_pool, uri, info, max_leases,
+                             lease_ref, error_r);
 }
 
 /*
@@ -277,10 +288,11 @@ mstock_add_stats(const struct mstock *_m, stock_stats *data)
 
 struct stock_item *
 mstock_get_now(struct mstock *_m, struct pool *caller_pool,
-               const char *uri, void *info,
+               const char *uri, void *info, unsigned max_leases,
                struct lease_ref *lease_ref,
                GError **error_r)
 {
     MultiStock &m = *(MultiStock *)_m;
-    return m.GetNow(caller_pool, uri, info, *lease_ref, error_r);
+    return m.GetNow(caller_pool, uri, info, max_leases,
+                    *lease_ref, error_r);
 }

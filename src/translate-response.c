@@ -61,6 +61,11 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
     else
         strref_set_dup(pool, &dest->check, &src->check);
 
+    if (strref_is_null(&src->want_full_uri))
+        strref_null(&dest->want_full_uri);
+    else
+        strref_set_dup(pool, &dest->want_full_uri, &src->want_full_uri);
+
     /* The "user" attribute must not be present in cached responses,
        because they belong to only that one session.  For the same
        reason, we won't copy the user_max_age attribute. */

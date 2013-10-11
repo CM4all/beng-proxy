@@ -16,6 +16,7 @@
 #include "hashmap.h"
 #include "uri-address.h"
 #include "uri-verify.h"
+#include "uri-escape.h"
 #include "strref-pool.h"
 #include "slice.h"
 #include "beng-proxy/translation.h"
@@ -27,6 +28,9 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <errno.h>
+
+#define MAX_CACHE_CHECK 256
+#define MAX_CACHE_WFU 256
 
 struct tcache_item {
     struct cache_item item;
@@ -182,7 +186,8 @@ tcache_remove_per_host(struct tcache_item *item)
 static const char *
 tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                http_status_t status,
-               const struct strref *check)
+               const struct strref *check,
+               const struct strref *want_full_uri)
 {
     const char *key = status != 0
         ? p_sprintf(pool, "ERR%u_%s", status, uri)
@@ -194,14 +199,30 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
            key */
         key = p_strcat(pool, host, ":", key, NULL);
 
-    if (check != NULL && !strref_is_null(check))
-        key = p_strncat(pool, key, strlen(key),
+    if (check != NULL && !strref_is_null(check)) {
+        char buffer[MAX_CACHE_CHECK * 3];
+        size_t length = uri_escape(buffer, check->data, check->length, '%');
+
+        key = p_strncat(pool,
                         "|CHECK=", (size_t)7,
-                        check->data, (size_t)check->length,
+                        buffer, length,
+                        key, strlen(key),
                         NULL);
+    }
+
+    if (want_full_uri != NULL && !strref_is_null(want_full_uri)) {
+        char buffer[MAX_CACHE_WFU * 3];
+        size_t length = uri_escape(buffer, want_full_uri->data,
+                                   want_full_uri->length, '%');
+
+        key = p_strncat(pool,
+                        "|WFU=", (size_t)5,
+                        buffer, length,
+                        key, strlen(key),
+                        NULL);
+    }
 
     return key;
-
 }
 
 static const char *
@@ -210,7 +231,7 @@ tcache_request_key(struct pool *pool, const struct translate_request *request)
     return request->uri != NULL
         ? tcache_uri_key(pool, request->uri, request->host,
                          request->error_document_status,
-                         &request->check)
+                         &request->check, &request->want_full_uri)
         : request->widget_type;
 }
 
@@ -219,6 +240,8 @@ static bool
 tcache_request_evaluate(const struct translate_request *request)
 {
     return (request->uri != NULL || request->widget_type != NULL) &&
+        request->check.length < MAX_CACHE_CHECK &&
+        request->want_full_uri.length <= MAX_CACHE_WFU &&
         request->authorization == NULL &&
         request->param == NULL;
 }
@@ -327,6 +350,14 @@ tcache_store_address(struct pool *pool, struct resource_address *dest,
             return p_strndup(pool, uri, suffix - uri);
         }
 
+        if (src->type == RESOURCE_ADDRESS_NONE) {
+            /* _save_base() will fail on a "NONE" address, but in this
+               case, the operation is useful and is allowed as a
+               special case */
+            dest->type = RESOURCE_ADDRESS_NONE;
+            return p_strndup(pool, uri, suffix - uri);
+        }
+
         if (resource_address_save_base(pool, dest, src, suffix) != NULL)
             return p_strndup(pool, uri, suffix - uri);
     }
@@ -374,7 +405,7 @@ tcache_store_response(struct pool *pool, struct translate_response *dest,
     if (key != NULL)
         key = tcache_uri_key(pool, key, request->host,
                              request->error_document_status,
-                             &request->check);
+                             &request->check, &request->want_full_uri);
 
     return key;
 }
@@ -398,6 +429,12 @@ tcache_load_address(struct pool *pool, const char *uri,
             g_set_error(error_r, http_response_quark(),
                         HTTP_STATUS_BAD_REQUEST, "Malformed URI");
             return false;
+        }
+
+        if (src->address.type == RESOURCE_ADDRESS_NONE) {
+            /* see code comment in tcache_store_address() */
+            dest->type = RESOURCE_ADDRESS_NONE;
+            return true;
         }
 
         if (resource_address_load_base(pool, dest, &src->address,
@@ -483,18 +520,10 @@ tcache_uri_match(const char *a, const char *b, bool strict)
     if (a == NULL || b == NULL)
         return !strict && a == b;
 
-    if (memcmp(a, "ERR", 3) == 0) {
-        char *endptr;
-        strtol(a + 3, &endptr, 10);
-        if (*endptr == '_')
-            a = endptr + 1;
-    }
-
-    const char *check = strstr(a, "|CHECK=");
-    if (check != NULL)
-        return memcmp(a, b, check - a) == 0 && b[check - a] == 0;
-    else
-        return strcmp(a, b) == 0;
+    /* skip everything until the first slash; these may be prefixes
+       added by tcache_uri_key() */
+    a = strchr(a, '/');
+    return a != NULL && strcmp(a, b) == 0;
 }
 
 /**

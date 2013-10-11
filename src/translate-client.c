@@ -319,6 +319,8 @@ marshal_request(struct pool *pool, const struct translate_request *request,
                               error_r) &&
         write_optional_strref(gb, TRANSLATE_CHECK, &request->check,
                               error_r) &&
+        write_optional_strref(gb, TRANSLATE_WANT_FULL_URI,
+                              &request->want_full_uri, error_r) &&
         write_optional_packet(gb, TRANSLATE_PARAM, request->param,
                               error_r) &&
         write_packet(gb, TRANSLATE_END, NULL, error_r);
@@ -1602,6 +1604,18 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_CHECK:
+        if (!strref_is_null(&client->response.check)) {
+            translate_client_error(client,
+                                   "duplicate TRANSLATE_CHECK packet");
+            return false;
+        }
+
+        if (!strref_is_null(&client->response.want_full_uri)) {
+            translate_client_error(client,
+                                   "TRANSLATE_CHECK and TRANSLATE_WANT_FULL_URI can't be combined");
+            return false;
+        }
+
         if (payload != NULL)
             strref_set(&client->response.check, payload, payload_length);
         else
@@ -1869,6 +1883,41 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->lhttp_address->host_and_port = payload;
+        return true;
+
+    case TRANSLATE_CONCURRENCY:
+        if (client->lhttp_address == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_CONCURRENCY packet");
+            return false;
+        }
+
+        if (payload_length != 2) {
+            translate_client_error(client, "malformed TRANSLATE_CONCURRENCY packet");
+            return false;
+        }
+
+        client->lhttp_address->concurrency = *(const uint16_t*)payload;
+        return true;
+
+    case TRANSLATE_WANT_FULL_URI:
+        if (!strref_is_null(&client->response.want_full_uri)) {
+            translate_client_error(client,
+                                   "duplicate TRANSLATE_WANT_FULL_URI packet");
+            return false;
+        }
+
+        if (!strref_is_null(&client->response.check)) {
+            translate_client_error(client,
+                                   "TRANSLATE_CHECK and TRANSLATE_WANT_FULL_URI can't be combined");
+            return false;
+        }
+
+        if (payload != NULL)
+            strref_set(&client->response.want_full_uri,
+                       payload, payload_length);
+        else
+            strref_set(&client->response.want_full_uri, "", 0);
         return true;
     }
 
