@@ -13,13 +13,13 @@ struct pool;
 struct ssl_config;
 
 struct ssl_factory *
-ssl_factory_new(struct pool *pool, const struct ssl_config *config,
+ssl_factory_new(struct pool *pool, const ssl_config &config,
                 GError **error_r);
 
 void
 ssl_factory_free(struct ssl_factory *factory);
 
 struct ssl_st *
-ssl_factory_make(struct ssl_factory *factory);
+ssl_factory_make(struct ssl_factory &factory);
 
 #endif

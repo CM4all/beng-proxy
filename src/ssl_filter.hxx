@@ -31,7 +31,7 @@ extern const struct ThreadSocketFilterHandler ssl_thread_socket_filter;
  * to local service)
  */
 struct ssl_filter *
-ssl_filter_new(struct pool *pool, struct ssl_factory *factory,
+ssl_filter_new(struct pool *pool, ssl_factory &factory,
                GError **error_r);
 
 gcc_pure

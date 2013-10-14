@@ -105,7 +105,7 @@ lb_connection_new(struct lb_instance *instance,
 
     if (ssl_factory != nullptr) {
         GError *error = nullptr;
-        connection->ssl_filter = ssl_filter_new(pool, ssl_factory,
+        connection->ssl_filter = ssl_filter_new(pool, *ssl_factory,
                                                 &error);
         if (connection->ssl_filter == nullptr) {
             close(fd);

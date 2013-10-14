@@ -81,7 +81,7 @@ lb_listener_new(struct lb_instance *instance,
             return NULL;
         }
 
-        listener->ssl_factory = ssl_factory_new(pool, &config->ssl_config,
+        listener->ssl_factory = ssl_factory_new(pool, config->ssl_config,
                                                 error_r);
         if (listener->ssl_factory == NULL) {
             notify_free(listener->notify);

@@ -292,11 +292,10 @@ const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
  */
 
 struct ssl_filter *
-ssl_filter_new(struct pool *pool, struct ssl_factory *factory,
+ssl_filter_new(struct pool *pool, ssl_factory &factory,
                GError **error_r)
 {
     assert(pool != NULL);
-    assert(factory != NULL);
 
     struct ssl_filter *ssl = (struct ssl_filter *)p_malloc(pool, sizeof(*ssl));
     ssl->pool = pool;
