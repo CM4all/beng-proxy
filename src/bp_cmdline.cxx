@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "config.h"
+#include "config.hxx"
 #include "address_resolver.h"
 #include "stopwatch.h"
 #include "pool.h"
@@ -440,7 +440,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'p':
-            if (config->num_ports >= MAX_PORTS)
+            if (config->num_ports >= config::MAX_PORTS)
                 arg_error(argv[0], "too many listener ports");
             ret = (unsigned)strtoul(optarg, &endptr, 10);
             if (*endptr != 0)
@@ -451,7 +451,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'L':
-            if (config->num_listen >= MAX_LISTEN)
+            if (config->num_listen >= config::MAX_LISTEN)
                 arg_error(argv[0], "too many listeners");
 
             memset(&hints, 0, sizeof(hints));

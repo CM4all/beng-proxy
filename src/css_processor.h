@@ -23,6 +23,10 @@ struct pool;
 struct widget;
 struct processor_env;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Process the specified istream, and return the processed stream.
  *
@@ -33,5 +37,9 @@ css_processor(struct pool *pool, struct istream *stream,
               struct widget *widget,
               struct processor_env *env,
               unsigned options);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

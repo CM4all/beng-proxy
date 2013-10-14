@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "config.h"
+#include "config.hxx"
 #include "stopwatch.h"
 
 #include <daemon/daemonize.h>

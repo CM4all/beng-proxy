@@ -17,6 +17,10 @@ struct translate_request;
 struct async_operation_ref;
 struct cache_stats;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct tcache *
 translate_cache_new(struct pool *pool, struct tstock *stock,
                     unsigned max_size);
@@ -57,5 +61,9 @@ translate_cache_invalidate(struct tcache *tcache,
                            const struct translate_request *request,
                            const uint16_t *vary, unsigned num_vary,
                            const char *site);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

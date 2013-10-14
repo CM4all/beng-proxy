@@ -5,10 +5,10 @@
  */
 
 #include "connection.h"
-#include "instance.h"
+#include "bp_instance.hxx"
 #include "strmap.h"
 #include "http_server.h"
-#include "handler.h"
+#include "handler.hxx"
 #include "access-log.h"
 #include "drop.h"
 #include "clock.h"
@@ -22,20 +22,18 @@
 #include <sys/socket.h>
 
 static void
-remove_connection(struct client_connection *connection)
+remove_connection(client_connection &connection)
 {
-    struct pool *pool;
+    assert(connection.http != NULL);
+    assert(connection.instance != NULL);
+    assert(connection.instance->num_connections > 0);
 
-    assert(connection->http != NULL);
-    assert(connection->instance != NULL);
-    assert(connection->instance->num_connections > 0);
+    connection.http = NULL;
 
-    connection->http = NULL;
+    list_remove(&connection.siblings);
+    --connection.instance->num_connections;
 
-    list_remove(&connection->siblings);
-    --connection->instance->num_connections;
-
-    pool = connection->pool;
+    struct pool *pool = connection.pool;
     pool_trash(pool);
     pool_unref(pool);
 }
@@ -43,10 +41,10 @@ remove_connection(struct client_connection *connection)
 void
 close_connection(struct client_connection *connection)
 {
-    assert(connection->http != NULL);
+    assert(connection->http != nullptr);
 
     http_server_connection_close(connection->http);
-    remove_connection(connection);
+    remove_connection(*connection);
 }
 
 
@@ -60,14 +58,14 @@ my_http_server_connection_request(struct http_server_request *request,
                                   void *ctx,
                                   struct async_operation_ref *async_ref)
 {
-    struct client_connection *connection = ctx;
+    client_connection &connection = *(client_connection *)ctx;
 
-    ++connection->instance->http_request_counter;
+    ++connection.instance->http_request_counter;
 
-    connection->site_name = NULL;
-    connection->request_start_time = now_us();
+    connection.site_name = nullptr;
+    connection.request_start_time = now_us();
 
-    handle_http_request(connection, request, async_ref);
+    handle_http_request(connection, *request, async_ref);
 }
 
 static void
@@ -76,21 +74,21 @@ my_http_server_connection_log(struct http_server_request *request,
                               uint64_t bytes_received, uint64_t bytes_sent,
                               void *ctx)
 {
-    struct client_connection *connection = ctx;
+    client_connection &connection = *(client_connection *)ctx;
 
-    access_log(request, connection->site_name,
+    access_log(request, connection.site_name,
                strmap_get_checked(request->headers, "referer"),
                strmap_get_checked(request->headers, "user-agent"),
                status, length,
                bytes_received, bytes_sent,
-               now_us() - connection->request_start_time);
-    connection->site_name = NULL;
+               now_us() - connection.request_start_time);
+    connection.site_name = NULL;
 }
 
 static void
 my_http_server_connection_error(GError *error, void *ctx)
 {
-    struct client_connection *connection = ctx;
+    client_connection &connection = *(client_connection *)ctx;
 
     int level = 2;
 
@@ -106,7 +104,7 @@ my_http_server_connection_error(GError *error, void *ctx)
 static void
 my_http_server_connection_free(void *ctx)
 {
-    struct client_connection *connection = ctx;
+    client_connection &connection = *(client_connection *)ctx;
 
     remove_connection(connection);
 }
@@ -131,7 +129,6 @@ http_listener_connected(int fd,
 {
     struct instance *instance = (struct instance*)ctx;
     struct pool *pool;
-    struct client_connection *connection;
     struct sockaddr_storage local_address;
     socklen_t local_address_length;
     int ret;
@@ -157,7 +154,8 @@ http_listener_connected(int fd,
     pool = pool_new_linear(instance->pool, "client_connection", 2048);
     pool_set_major(pool);
 
-    connection = p_malloc(pool, sizeof(*connection));
+    client_connection *connection = (client_connection *)
+        p_malloc(pool, sizeof(*connection));
     connection->instance = instance;
     connection->pool = pool;
     connection->config = &instance->config;

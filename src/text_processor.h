@@ -16,6 +16,10 @@ struct strmap;
 struct widget;
 struct processor_env;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Check if the resource described by the specified headers can be
  * processed by the text processor.
@@ -32,5 +36,9 @@ text_processor_allowed(const struct strmap *headers);
 struct istream *
 text_processor(struct pool *pool, struct istream *istream,
                const struct widget *widget, const struct processor_env *env);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

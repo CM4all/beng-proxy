@@ -11,6 +11,10 @@
 
 #include <time.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 http_date_format_r(char *buffer, time_t t);
 
@@ -21,5 +25,9 @@ http_date_format(time_t t);
 gcc_pure
 time_t
 http_date_parse(const char *p);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

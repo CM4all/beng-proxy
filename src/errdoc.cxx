@@ -7,7 +7,7 @@
 #include "errdoc.h"
 #include "request.h"
 #include "connection.h"
-#include "instance.h"
+#include "bp_instance.hxx"
 #include "http_server.h"
 #include "http_response.h"
 #include "tcache.h"
@@ -32,9 +32,9 @@ struct error_response {
 };
 
 static void
-errdoc_resubmit(const struct error_response *er)
+errdoc_resubmit(const error_response &er)
 {
-    response_dispatch(er->request2, er->status, er->headers, er->body);
+    response_dispatch(er.request2, er.status, er.headers, er.body);
 }
 
 /*
@@ -46,15 +46,15 @@ static void
 errdoc_response_response(http_status_t status, struct strmap *headers,
                          struct istream *body, void *ctx)
 {
-    struct error_response *er = ctx;
+    error_response &er = *(error_response *)ctx;
 
     if (http_status_is_success(status)) {
-        if (er->body != NULL)
+        if (er.body != NULL)
             /* close the original (error) response body */
-            istream_close_unused(er->body);
+            istream_close_unused(er.body);
 
-        http_response_handler_direct_response(&response_handler, er->request2,
-                                              er->status, headers, body);
+        http_response_handler_direct_response(&response_handler, er.request2,
+                                              er.status, headers, body);
     } else {
         if (body != NULL)
             /* discard the error document response */
@@ -67,10 +67,10 @@ errdoc_response_response(http_status_t status, struct strmap *headers,
 static void
 errdoc_response_abort(GError *error, void *ctx)
 {
-    struct error_response *er = ctx;
+    error_response &er = *(error_response *)ctx;
 
     daemon_log(2, "error on error document of %s: %s\n",
-               er->request2->request->uri, error->message);
+               er.request2->request->uri, error->message);
     g_error_free(error);
 
     errdoc_resubmit(er);
@@ -89,12 +89,12 @@ const struct http_response_handler errdoc_response_handler = {
 static void
 errdoc_translate_response(const struct translate_response *response, void *ctx)
 {
-    struct error_response *er = ctx;
+    error_response &er = *(error_response *)ctx;
 
     if ((response->status == (http_status_t)0 ||
          http_status_is_success(response->status)) &&
         response->address.type != RESOURCE_ADDRESS_NONE) {
-        struct request *request2 = er->request2;
+        struct request *request2 = er.request2;
         struct pool *pool = request2->request->pool;
         struct instance *instance = request2->connection->instance;
 
@@ -106,7 +106,7 @@ errdoc_translate_response(const struct translate_response *response, void *ctx)
                      instance->nfs_cache,
                      pool, 0, HTTP_METHOD_GET,
                      &response->address, HTTP_STATUS_OK, NULL, NULL,
-                     &errdoc_response_handler, er,
+                     &errdoc_response_handler, &er,
                      &request2->async_ref);
     } else
         errdoc_resubmit(er);
@@ -115,7 +115,7 @@ errdoc_translate_response(const struct translate_response *response, void *ctx)
 static void
 errdoc_translate_error(GError *error, void *ctx)
 {
-    struct error_response *er = ctx;
+    error_response &er = *(error_response *)ctx;
 
     daemon_log(2, "error document translation error: %s\n", error->message);
     g_error_free(error);
@@ -145,12 +145,12 @@ fill_translate_request(struct translate_request *t,
 static void
 errdoc_abort(struct async_operation *ao)
 {
-    struct error_response *er = (struct error_response *)ao;
+    error_response &er = (error_response &)ao;
 
-    if (er->body != NULL)
-        istream_close_unused(er->body);
+    if (er.body != NULL)
+        istream_close_unused(er.body);
 
-    async_abort(&er->async_ref);
+    async_abort(&er.async_ref);
 }
 
 static const struct async_operation_class errdoc_operation = {
@@ -171,7 +171,7 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
     assert(instance->translate_cache != NULL);
 
     struct pool *pool = request2->request->pool;
-    struct error_response *er = p_malloc(pool, sizeof(*er));
+    error_response *er = (error_response *)p_malloc(pool, sizeof(*er));
     er->request2 = request2;
     er->status = status;
     er->headers = headers;

@@ -9,6 +9,10 @@ struct pool;
 struct translate_response;
 struct growing_buffer;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct strmap *
 add_translation_vary_header(struct pool *pool, struct strmap *headers,
                             const struct translate_response *response);
@@ -16,5 +20,9 @@ add_translation_vary_header(struct pool *pool, struct strmap *headers,
 void
 write_translation_vary_header(struct growing_buffer *headers,
                               const struct translate_response *response);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

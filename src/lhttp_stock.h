@@ -22,6 +22,10 @@ struct stock_get_handler;
 struct lhttp_address;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct lhttp_stock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
@@ -49,5 +53,9 @@ lhttp_stock_item_get_type(const struct stock_item *item);
  */
 void
 lhttp_stock_put(struct lhttp_stock *stock, struct stock_item *item, bool destroy);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

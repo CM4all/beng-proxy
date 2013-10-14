@@ -211,6 +211,10 @@ struct widget_ref {
 #define WIDGET_REF_SEPARATOR ':'
 #define WIDGET_REF_SEPARATOR_S ":"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 widget_init(struct widget *widget, struct pool *pool,
             const struct widget_class *cls);
@@ -420,5 +424,9 @@ widget_check_recursion(const struct widget *widget);
  */
 void
 widget_cancel(struct widget *widget);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

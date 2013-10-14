@@ -15,6 +15,10 @@ struct pool;
 struct control_local;
 struct control_handler;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct control_local *
 control_local_new(struct pool *pool, const char *prefix,
                   const struct control_handler *handler, void *ctx);
@@ -27,5 +31,9 @@ control_local_open(struct control_local *cl, GError **error_r);
 
 struct control_server *
 control_local_get(struct control_local *cl);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

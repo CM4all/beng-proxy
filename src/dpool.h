@@ -13,6 +13,10 @@
 struct dpool;
 struct shm;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Create a new memory pool.
  *
@@ -63,5 +67,9 @@ d_strdup(struct dpool *pool, const char *src);
  */
 char *
 d_strndup(struct dpool *pool, const char *src, size_t length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

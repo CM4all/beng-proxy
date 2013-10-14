@@ -14,6 +14,10 @@
 struct pool;
 struct strmap;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_pure
 struct strmap *
 args_parse(struct pool *pool, const char *p, size_t length);
@@ -42,5 +46,9 @@ args_format(struct pool *pool, struct strmap *args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2,
             const char *remove_key);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

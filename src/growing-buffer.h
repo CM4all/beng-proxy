@@ -23,6 +23,10 @@ struct growing_buffer_reader {
     size_t position;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct growing_buffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size);
 
@@ -96,5 +100,9 @@ void *
 growing_buffer_dup2(const struct growing_buffer *a,
                     const struct growing_buffer *b,
                     struct pool *pool, size_t *length_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

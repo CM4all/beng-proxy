@@ -12,6 +12,10 @@
 struct pool;
 struct jail_params;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct hstock *
 delegate_stock_new(struct pool *pool);
 
@@ -28,5 +32,9 @@ delegate_stock_put(struct hstock *delegate_stock,
 
 int
 delegate_stock_item_get(struct stock_item *item);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

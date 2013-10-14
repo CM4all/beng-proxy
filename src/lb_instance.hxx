@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_INSTANCE_H
 #define BENG_PROXY_LB_INSTANCE_H
 
-#include "config.h"
+#include "config.hxx"
 #include "shutdown_listener.h"
 
 #include <inline/list.h>

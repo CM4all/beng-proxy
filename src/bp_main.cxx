@@ -6,7 +6,7 @@
 
 #include "tpool.h"
 #include "direct.h"
-#include "instance.h"
+#include "bp_instance.hxx"
 #include "worker.h"
 #include "connection.h"
 #include "crash.h"
@@ -33,7 +33,7 @@
 #include "listener.h"
 #include "pipe-stock.h"
 #include "resource-loader.h"
-#include "bp_control.h"
+#include "bp_control.hxx"
 #include "log-glue.h"
 #include "ua_classification.h"
 
@@ -214,7 +214,8 @@ add_listener(struct instance *instance, struct addrinfo *ai)
     assert(ai != NULL);
 
     do {
-        struct listener_node *node = p_malloc(instance->pool, sizeof(*node));
+        listener_node *node = (listener_node *)
+            p_malloc(instance->pool, sizeof(*node));
 
         node->listener = listener_new(instance->pool, ai->ai_family, ai->ai_socktype,
                                       ai->ai_protocol, ai->ai_addr,
@@ -236,7 +237,8 @@ add_listener(struct instance *instance, struct addrinfo *ai)
 static void
 add_tcp_listener(struct instance *instance, int port)
 {
-    struct listener_node *node = p_malloc(instance->pool, sizeof(*node));
+    listener_node *node = (listener_node *)
+        p_malloc(instance->pool, sizeof(*node));
     GError *error = NULL;
 
     node->listener = listener_tcp_port_new(instance->pool, port,
@@ -256,21 +258,20 @@ int main(int argc, char **argv)
     int ret;
     bool bret;
     int gcc_unused ref;
-    static struct instance instance = {
-        .config = {
-            .session_cookie = "beng_proxy_session",
-            .session_idle_timeout = 1200,
-            .max_connections = 8192,
-            .http_cache_size = 512 * 1024 * 1024,
-            .filter_cache_size = 128 * 1024 * 1024,
+
+    static struct instance instance;
+    instance.config.session_cookie = "beng_proxy_session";
+    instance.config.session_cookie = "beng_proxy_session";
+    instance.config.session_idle_timeout = 1200;
+    instance.config.max_connections = 8192;
+    instance.config.http_cache_size = 512 * 1024 * 1024;
+    instance.config.filter_cache_size = 128 * 1024 * 1024;
 #ifdef HAVE_LIBNFS
-            .nfs_cache_size = 256 * 1024 * 1024,
+    instance.config.nfs_cache_size = 256 * 1024 * 1024;
 #endif
-            .translate_cache_size = 131072,
-            .fcgi_stock_max_idle = 16,
-            .was_stock_max_idle = 16,
-        },
-    };
+    instance.config.translate_cache_size = 131072;
+    instance.config.fcgi_stock_max_idle = 16;
+    instance.config.was_stock_max_idle = 16;
 
 #ifndef NDEBUG
     if (geteuid() != 0)

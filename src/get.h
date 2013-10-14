@@ -24,6 +24,10 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Requests a resource.  This is a glue function which integrates all
  * client-side protocols implemented by beng-proxy.
@@ -55,5 +59,9 @@ resource_get(struct http_cache *cache,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

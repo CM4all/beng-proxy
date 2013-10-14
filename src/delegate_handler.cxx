@@ -4,7 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "handler.h"
+#include "handler.hxx"
+
+extern "C" {
 #include "file-handler.h"
 #include "file_headers.h"
 #include "static-headers.h"
@@ -16,6 +18,7 @@
 #include "http_response.h"
 #include "global.h"
 #include "istream-file.h"
+}
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -29,14 +32,15 @@
 static void
 delegate_handler_callback(int fd, void *ctx)
 {
-    struct request *request2 = ctx;
-    struct http_server_request *request = request2->request;
-    const struct translate_response *tr = request2->translate.response;
+    request &request2 = *(request *)ctx;
+    struct http_server_request *request = request2.request;
+    const struct translate_response *tr = request2.translate.response;
     int ret;
     struct stat st;
     struct file_request file_request = {
         .range = RANGE_NONE,
         .skip = 0,
+        .size = 0,
     };
 
     /* get file information */
@@ -45,7 +49,7 @@ delegate_handler_callback(int fd, void *ctx)
     if (ret < 0) {
         close(fd);
 
-        response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_message(&request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
     }
@@ -53,7 +57,7 @@ delegate_handler_callback(int fd, void *ctx)
     if (!S_ISREG(st.st_mode)) {
         close(fd);
 
-        response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+        response_dispatch_message(&request2, HTTP_STATUS_NOT_FOUND,
                                   "Not a regular file");
         return;
     }
@@ -62,14 +66,14 @@ delegate_handler_callback(int fd, void *ctx)
 
     /* request options */
 
-    if (!file_evaluate_request(request2, fd, &st, &file_request)) {
+    if (!file_evaluate_request(&request2, fd, &st, &file_request)) {
         close(fd);
         return;
     }
 
     /* build the response */
 
-    file_dispatch(request2, &st, &file_request,
+    file_dispatch(&request2, &st, &file_request,
                   istream_file_fd_new(request->pool,
                                       tr->address.u.local.path,
                                       fd, ISTREAM_FILE, file_request.size));
@@ -78,9 +82,9 @@ delegate_handler_callback(int fd, void *ctx)
 static void
 delegate_handler_error(GError *error, void *ctx)
 {
-    struct request *request2 = ctx;
+    request &request2 = *(request *)ctx;
 
-    response_dispatch_error(request2, error);
+    response_dispatch_error(&request2, error);
     g_error_free(error);
 }
 
@@ -95,10 +99,10 @@ static const struct delegate_handler delegate_handler_handler = {
  */
 
 void
-delegate_handler(struct request *request2)
+delegate_handler(request &request2)
 {
-    struct http_server_request *request = request2->request;
-    const struct translate_response *tr = request2->translate.response;
+    struct http_server_request *request = request2.request;
+    const struct translate_response *tr = request2.translate.response;
 
     assert(tr != NULL);
     assert(tr->address.u.local.path != NULL);
@@ -108,8 +112,8 @@ delegate_handler(struct request *request2)
 
     if (request->method != HTTP_METHOD_HEAD &&
         request->method != HTTP_METHOD_GET &&
-        !request2->processor_focus) {
-        method_not_allowed(request2, "GET, HEAD");
+        !request2.processor_focus) {
+        method_not_allowed(&request2, "GET, HEAD");
         return;
     }
 
@@ -119,6 +123,6 @@ delegate_handler(struct request *request2)
                         tr->address.u.local.delegate,
                         &tr->address.u.local.jail,
                         tr->address.u.local.path,
-                        &delegate_handler_handler, request2,
-                        &request2->async_ref);
+                        &delegate_handler_handler, &request2,
+                        &request2.async_ref);
 }

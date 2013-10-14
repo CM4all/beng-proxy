@@ -49,6 +49,10 @@ struct resource_address {
     } u;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Is this a CGI address, or a similar protocol?
  */
@@ -81,7 +85,8 @@ gcc_malloc
 static inline struct resource_address *
 resource_address_dup(struct pool *pool, const struct resource_address *src)
 {
-    struct resource_address *dest = p_malloc(pool, sizeof(*dest));
+    struct resource_address *dest = (struct resource_address *)
+        p_malloc(pool, sizeof(*dest));
 
     resource_address_copy(pool, dest, src);
     return dest;
@@ -216,5 +221,9 @@ resource_address_is_expandable(const struct resource_address *address);
 bool
 resource_address_expand(struct pool *pool, struct resource_address *address,
                         const GMatchInfo *match_info, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

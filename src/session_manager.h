@@ -13,6 +13,10 @@
 
 struct session;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize the global session manager or increase the reference
  * counter.
@@ -94,5 +98,9 @@ session_new(void);
 bool
 session_manager_visit(bool (*callback)(const struct session *session,
                                        void *ctx), void *ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

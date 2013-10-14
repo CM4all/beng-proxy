@@ -9,6 +9,10 @@
 
 #include "pool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param escape_char the character that is used to escape; use '%'
  * for normal URIs
@@ -34,5 +38,9 @@ uri_escape_dup(struct pool *pool, const char *src, size_t src_length,
  */
 size_t
 uri_unescape_inplace(char *src, size_t length, char escape_char);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

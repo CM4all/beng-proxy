@@ -23,6 +23,10 @@ struct http_response_handler;
 struct async_operation_ref;
 struct cache_stats;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct http_cache *
 http_cache_new(struct pool *pool, size_t max_size,
                struct memcached_stock *memcached_stock,
@@ -53,5 +57,9 @@ http_cache_request(struct http_cache *cache,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

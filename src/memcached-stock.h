@@ -19,6 +19,10 @@ struct tcp_balancer;
 struct address_list;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct memcached_stock *
 memcached_stock_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     const struct address_list *address);
@@ -40,5 +44,9 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                        const struct memcached_client_handler *handler,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

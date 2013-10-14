@@ -55,6 +55,10 @@ struct processor_env {
     session_id_t session_id;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 processor_env_init(struct pool *pool,
                    struct processor_env *env,
@@ -69,5 +73,9 @@ processor_env_init(struct pool *pool,
                    session_id_t session_id,
                    http_method_t method,
                    struct strmap *request_headers);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

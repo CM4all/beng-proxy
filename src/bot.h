@@ -11,6 +11,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Checks if the specified User-Agent request header is a well-known
  * bot.  This is notoriously unreliable, because we cannot know all
@@ -20,5 +24,9 @@
 gcc_pure
 bool
 user_agent_is_bot(const char *user_agent);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

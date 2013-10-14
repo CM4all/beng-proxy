@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_CONFIG_H
-#define __BENG_CONFIG_H
+#ifndef BENG_PROXY_CONFIG_HXX
+#define BENG_PROXY_CONFIG_HXX
 
 #include <daemon/user.h>
 
@@ -14,11 +14,6 @@
 
 struct pool;
 
-enum {
-    MAX_PORTS = 32,
-    MAX_LISTEN = 32,
-};
-
 #ifdef NDEBUG
 static const bool debug_mode = false;
 #else
@@ -26,6 +21,9 @@ extern bool debug_mode;
 #endif
 
 struct config {
+    static constexpr unsigned MAX_PORTS = 32;
+    static constexpr unsigned MAX_LISTEN = 32;
+
     struct daemon_user user;
 
     /**

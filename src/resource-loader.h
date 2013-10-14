@@ -23,6 +23,10 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct resource_loader *
 resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct lhttp_stock *lhttp_stock,
@@ -50,5 +54,9 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         const struct http_response_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

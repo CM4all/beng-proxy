@@ -18,6 +18,10 @@ struct header_forward_settings {
 struct pool;
 struct session;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param exclude_host suppress the "Host" header?  The "Host" request
  * header must not be forwarded to another HTTP server, because we
@@ -37,5 +41,9 @@ struct strmap *
 forward_response_headers(struct pool *pool, struct strmap *src,
                          const char *local_host,
                          const struct header_forward_settings *settings);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

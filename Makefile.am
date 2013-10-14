@@ -113,8 +113,8 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/child_socket.c src/child_socket.h \
 	src/child_stock.c src/child_stock.h \
 	src/client-socket.c src/client-socket.h \
-	src/config.h \
-	src/connection.c src/connection.h \
+	src/config.hxx \
+	src/bp_connection.cxx src/connection.h \
 	src/date.c src/date.h \
 	src/dchunk.h \
 	src/defer.c src/defer.h \
@@ -125,7 +125,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/delegate-protocol.h \
 	src/delegate-request.c src/delegate-request.h \
 	src/delegate-stock.c src/delegate-stock.h \
-	src/delegate-handler.c \
+	src/delegate_handler.cxx \
 	src/dhashmap.h \
 	src/direct.c src/direct.h \
 	src/dpool.c src/dpool.h \
@@ -158,7 +158,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/global.c src/global.h \
 	src/gmtime.c src/gmtime.h \
 	src/growing-buffer.c src/growing-buffer.h \
-	src/handler.c src/handler.h \
+	src/handler.cxx src/handler.hxx \
 	src/hashmap.c src/hashmap.h \
 	src/header-forward.c src/header-forward.h \
 	src/header-parser.c src/header-parser.h \
@@ -191,8 +191,8 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/http_response.c src/http_response.h \
 	src/control_server.c src/control_server.h \
 	src/control_local.c src/control_local.h \
-	src/bp_stats.c src/bp_stats.h \
-	src/bp_control.c src/bp_control.h \
+	src/bp_stats.cxx src/bp_stats.hxx \
+	src/bp_control.cxx src/bp_control.hxx \
 	src/jail.c src/jail.h \
 	src/lease.h \
 	src/listener.c src/listener.h \
@@ -213,9 +213,9 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/random.c src/random.h \
 	src/refcount.h \
 	src/request-forward.c src/request-forward.h \
-	src/request.c src/request.h \
+	src/request.cxx src/request.h \
 	src/rerror.c \
-	src/response.c \
+	src/response.cxx \
 	src/generate_response.c src/generate_response.h \
 	src/resource-address.c src/resource-address.h \
 	src/resource-tag.c src/resource-tag.h \
@@ -261,16 +261,15 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget-registry.h \
 	src/widget-resolver.h \
 	src/widget.h \
-	src/worker.h \
 	$(STOPWATCH_SRC) \
 	src/clock.c src/clock.h \
 	src/cleanup_timer.c src/cleanup_timer.h \
-	src/cmdline.c \
+	src/bp_cmdline.cxx \
 	src/completion.h \
 	src/crc.h \
 	src/crash.h \
 	src/crash.c \
-	src/worker.c \
+	src/bp_worker.cxx src/worker.h \
 	src/dstring.c \
 	src/istream_rubber.c src/istream_rubber.h \
 	src/sink_rubber.c src/sink_rubber.h \
@@ -294,7 +293,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/lhttp_launch.c src/lhttp_launch.h \
 	src/lhttp_stock.c src/lhttp_stock.h \
 	src/lhttp_request.c src/lhttp_request.h \
-	src/proxy-handler.c \
+	src/proxy_handler.cxx \
 	src/errdoc.c \
 	src/widget.c \
 	src/widget-init.c \
@@ -356,9 +355,9 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/log-client.c src/log-client.h \
 	src/log-launch.c src/log-launch.h \
 	src/log-glue.c src/log-glue.h \
-	src/instance.c src/instance.h \
+	src/bp_instance.cxx src/bp_instance.hxx \
 	src/shutdown_listener.c src/shutdown_listener.h \
-	src/main.c
+	src/bp_main.cxx
 src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -373,7 +372,7 @@ src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 
 if HAVE_LIBNFS
 src_cm4all_beng_proxy_SOURCES += \
-	src/nfs_handler.c src/nfs_handler.h \
+	src/bp_nfs_handler.c src/nfs_handler.h \
 	src/istream_nfs.c src/istream_nfs.h \
 	src/nfs_stock.c src/nfs_stock.h \
 	src/nfs_client.c src/nfs_client.h \

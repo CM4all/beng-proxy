@@ -7,10 +7,18 @@
 
 struct pool;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Returns the processed response headers.
  */
 struct strmap *
 processor_header_forward(struct pool *pool, struct strmap *headers);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

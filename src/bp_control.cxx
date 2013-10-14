@@ -4,12 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "bp_control.h"
-#include "bp_stats.h"
+#include "bp_control.hxx"
+#include "bp_stats.hxx"
 #include "control_server.h"
 #include "control_local.h"
 #include "udp-distribute.h"
-#include "instance.h"
+#include "bp_instance.hxx"
 #include "tcache.h"
 #include "translate-request.h"
 #include "tpool.h"
@@ -88,13 +88,14 @@ decode_translation_packets(struct pool *pool, struct translate_request *request,
         return 0;
 
     while (length > 0) {
-        const struct beng_translation_header *header = data;
+        const beng_translation_header *header =
+            (const beng_translation_header *)data;
         if (length < sizeof(*header))
             return 0;
 
         size_t payload_length = GUINT16_FROM_BE(header->length);
-        enum beng_translation_command command =
-            GUINT16_FROM_BE(header->command);
+        beng_translation_command command =
+            beng_translation_command(GUINT16_FROM_BE(header->command));
 
         data = header + 1;
         length -= sizeof(*header);
@@ -103,7 +104,7 @@ decode_translation_packets(struct pool *pool, struct translate_request *request,
             return 0;
 
         char *payload = payload_length > 0
-            ? p_strndup(pool, data, payload_length)
+            ? p_strndup(pool, (const char *)data, payload_length)
             : NULL;
         if (command == TRANSLATE_SITE)
             *site_r = payload;
@@ -228,7 +229,7 @@ global_control_packet(enum beng_control_command command,
                       const struct sockaddr *address, size_t address_length,
                       void *ctx)
 {
-    struct instance *instance = ctx;
+    struct instance *instance = (struct instance *)ctx;
 
     handle_control_packet(instance, instance->control_server,
                           command, payload, payload_length,
@@ -332,7 +333,7 @@ local_control_packet(enum beng_control_command command,
                      const struct sockaddr *address, size_t address_length,
                      void *ctx)
 {
-    struct instance *instance = ctx;
+    struct instance *instance = (struct instance *)ctx;
 
     handle_control_packet(instance,
                           control_local_get(instance->local_control_server),
@@ -341,6 +342,7 @@ local_control_packet(enum beng_control_command command,
 }
 
 static const struct control_handler local_control_handler = {
+    nullptr,
     .packet = local_control_packet,
     .error = global_control_error,
 };

@@ -6,7 +6,7 @@
 
 #include "drop.h"
 #include "connection.h"
-#include "instance.h"
+#include "bp_instance.hxx"
 #include "http_server.h"
 
 #include <glib.h>
@@ -20,7 +20,7 @@ drop_some_connections(struct instance *instance)
 {
     struct client_connection *connections[32];
     unsigned num_connections = 0;
-    enum http_server_score min_score = G_MAXSHORT;
+    http_server_score min_score = (http_server_score)G_MAXSHORT;
 
     assert(instance != NULL);
 

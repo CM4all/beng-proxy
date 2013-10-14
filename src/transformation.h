@@ -63,6 +63,8 @@ gcc_malloc
 struct transformation *
 transformation_dup_chain(struct pool *pool, const struct transformation *src);
 
+#ifndef __cplusplus
+
 /**
  * Does this transformation need to be expanded with
  * transformation_expand()?
@@ -76,6 +78,8 @@ transformation_is_expandable(const struct transformation *transformation)
     return transformation->type == TRANSFORMATION_FILTER &&
         resource_address_is_expandable(&transformation->u.filter);
 }
+
+#endif
 
 /**
  * Does any transformation in the linked list need to be expanded with

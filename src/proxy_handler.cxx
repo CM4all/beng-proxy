@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "handler.h"
+#include "handler.hxx"
 #include "request.h"
 #include "request-forward.h"
 #include "http_server.h"
@@ -21,9 +21,9 @@
 #include "lhttp_address.h"
 
 static void
-proxy_collect_cookies(struct request *request2, const struct strmap *headers)
+proxy_collect_cookies(request &request2, const struct strmap *headers)
 {
-    const struct translate_response *tr = request2->translate.response;
+    const struct translate_response *tr = request2.translate.response;
     struct session *session;
 
     if (headers == NULL)
@@ -37,7 +37,7 @@ proxy_collect_cookies(struct request *request2, const struct strmap *headers)
             return;
     }
 
-    const char *host_and_port = request2->translate.response->cookie_host;
+    const char *host_and_port = request2.translate.response->cookie_host;
     if (host_and_port == NULL)
         host_and_port = resource_address_host_and_port(&tr->address);
     if (host_and_port == NULL)
@@ -47,7 +47,7 @@ proxy_collect_cookies(struct request *request2, const struct strmap *headers)
     if (path == NULL)
         return;
 
-    session = request_make_session(request2);
+    session = request_make_session(&request2);
     if (session == NULL)
         return;
 
@@ -65,10 +65,10 @@ static void
 proxy_response(http_status_t status, struct strmap *headers,
                struct istream *body, void *ctx)
 {
-    struct request *request2 = ctx;
+    request &request2 = *(request *)ctx;
 
 #ifndef NDEBUG
-    const struct translate_response *tr = request2->translate.response;
+    const struct translate_response *tr = request2.translate.response;
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
            tr->address.type == RESOURCE_ADDRESS_LHTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
@@ -78,16 +78,16 @@ proxy_response(http_status_t status, struct strmap *headers,
 
     proxy_collect_cookies(request2, headers);
 
-    http_response_handler_direct_response(&response_handler, request2,
+    http_response_handler_direct_response(&response_handler, &request2,
                                           status, headers, body);
 }
 
 static void
 proxy_abort(GError *error, void *ctx)
 {
-    struct request *request2 = ctx;
+    request &request2 = *(request *)ctx;
 
-    http_response_handler_direct_abort(&response_handler, request2, error);
+    http_response_handler_direct_abort(&response_handler, &request2, error);
 }
 
 static const struct http_response_handler proxy_response_handler = {
@@ -96,10 +96,10 @@ static const struct http_response_handler proxy_response_handler = {
 };
 
 void
-proxy_handler(struct request *request2)
+proxy_handler(request &request2)
 {
-    struct http_server_request *request = request2->request;
-    const struct translate_response *tr = request2->translate.response;
+    struct http_server_request *request = request2.request;
+    const struct translate_response *tr = request2.translate.response;
     struct forward_request forward;
 
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
@@ -118,23 +118,23 @@ proxy_handler(struct request *request2)
         uri_p = tr->address.u.lhttp->uri;
     }
 
-    request_forward(&forward, request2,
+    request_forward(&forward, &request2,
                     &tr->request_header_forward,
                     host_and_port, uri_p,
                     tr->address.type == RESOURCE_ADDRESS_HTTP ||
                     tr->address.type == RESOURCE_ADDRESS_LHTTP);
 
     const struct resource_address *address = &tr->address;
-    if (request2->translate.response->transparent &&
-        (!strref_is_empty(&request2->uri.args) ||
-         !strref_is_empty(&request2->uri.path_info)))
+    if (request2.translate.response->transparent &&
+        (!strref_is_empty(&request2.uri.args) ||
+         !strref_is_empty(&request2.uri.path_info)))
         address = resource_address_insert_args(request->pool, address,
-                                               request2->uri.args.data,
-                                               request2->uri.args.length,
-                                               request2->uri.path_info.data,
-                                               request2->uri.path_info.length);
+                                               request2.uri.args.data,
+                                               request2.uri.args.length,
+                                               request2.uri.path_info.data,
+                                               request2.uri.path_info.length);
 
-    if (!request2->processor_focus)
+    if (!request2.processor_focus)
         /* forward query string */
         address = resource_address_insert_query_string_from(request->pool,
                                                             address,
@@ -148,18 +148,18 @@ proxy_handler(struct request *request2)
 
         /* pass the "real" request URI to the CGI (but without the
            "args", unless the request is "transparent") */
-        if (request2->translate.response->transparent ||
-            strref_is_empty(&request2->uri.args))
+        if (request2.translate.response->transparent ||
+            strref_is_empty(&request2.uri.args))
             cgi->uri = request->uri;
-        else if (strref_is_empty(&request2->uri.query))
-            cgi->uri = strref_dup(request->pool, &request2->uri.base);
+        else if (strref_is_empty(&request2.uri.query))
+            cgi->uri = strref_dup(request->pool, &request2.uri.base);
         else
             cgi->uri = p_strncat(request->pool,
-                                 request2->uri.base.data,
-                                 request2->uri.base.length,
+                                 request2.uri.base.data,
+                                 request2.uri.base.length,
                                  "?", (size_t)1,
-                                 request2->uri.query.data,
-                                 request2->uri.query.length,
+                                 request2.uri.query.data,
+                                 request2.uri.query.length,
                                  NULL);
 
         address = copy;
@@ -172,9 +172,9 @@ proxy_handler(struct request *request2)
 #endif
 
     http_cache_request(global_http_cache, request->pool,
-                       session_id_low(request2->session_id),
+                       session_id_low(request2.session_id),
                        forward.method, address,
                        forward.headers, forward.body,
-                       &proxy_response_handler, request2,
-                       &request2->async_ref);
+                       &proxy_response_handler, &request2,
+                       &request2.async_ref);
 }

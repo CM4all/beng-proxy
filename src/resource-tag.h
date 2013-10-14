@@ -10,8 +10,16 @@
 struct pool;
 struct strmap;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 const char *
 resource_tag_append_etag(struct pool *pool, const char *tag,
                          const struct strmap *headers);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

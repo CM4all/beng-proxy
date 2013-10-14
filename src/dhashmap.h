@@ -17,6 +17,10 @@ struct dhashmap_pair {
     void *value;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct dhashmap *gcc_malloc
 dhashmap_new(struct dpool *pool, unsigned capacity);
 
@@ -37,5 +41,9 @@ dhashmap_rewind(struct dhashmap *map);
 
 const struct dhashmap_pair *
 dhashmap_next(struct dhashmap *map);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

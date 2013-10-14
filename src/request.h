@@ -141,6 +141,8 @@ request_transformation_enabled(const struct request *request)
     return request->translate.response->views->transformation != NULL;
 }
 
+#ifndef __cplusplus
+
 /**
  * Returns true if the first transformation (if any) is the processor.
  */
@@ -151,6 +153,12 @@ request_processor_first(const struct request *request)
         request->translate.response->views->transformation->type
         == TRANSFORMATION_PROCESS;
 }
+
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 bool
 request_processor_enabled(const struct request *request);
@@ -209,5 +217,9 @@ response_dispatch_redirect(struct request *request2, http_status_t status,
                            const char *location, const char *msg);
 
 extern const struct http_response_handler response_handler;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

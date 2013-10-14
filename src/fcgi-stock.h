@@ -17,6 +17,10 @@ struct stock_get_handler;
 struct jail_params;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct fcgi_stock *
 fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
@@ -56,5 +60,9 @@ fcgi_stock_translate_path(const struct stock_item *item,
 void
 fcgi_stock_put(struct fcgi_stock *fcgi_stock, struct stock_item *item,
                bool destroy);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CONTROL_HANDLER_H
-#define BENG_PROXY_CONTROL_HANDLER_H
+#ifndef BENG_PROXY_CONTROL_HANDLER_HXX
+#define BENG_PROXY_CONTROL_HANDLER_HXX
 
 #include <stdbool.h>
 

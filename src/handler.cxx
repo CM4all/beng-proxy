@@ -4,15 +4,17 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "handler.h"
+#include "handler.hxx"
+#include "config.hxx"
+#include "bp_instance.hxx"
+
+extern "C" {
 #include "file-handler.h"
 #include "nfs_handler.h"
 #include "request.h"
 #include "connection.h"
-#include "config.h"
 #include "args.h"
 #include "session.h"
-#include "instance.h"
 #include "tcache.h"
 #include "growing-buffer.h"
 #include "header-writer.h"
@@ -28,6 +30,7 @@
 #include "istream.h"
 #include "translate-client.h"
 #include "ua_classification.h"
+}
 
 #include <daemon/log.h>
 
@@ -88,34 +91,34 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
 }
 
 static void
-handle_translated_request(struct request *request,
+handle_translated_request(request &request,
                           const struct translate_response *response)
 {
-    request->realm = get_request_realm(request->request->pool,
-                                       request->request->headers, response);
+    request.realm = get_request_realm(request.request->pool,
+                                      request.request->headers, response);
 
-    if (request->session_realm != NULL &&
-        strcmp(request->realm, request->session_realm) != 0) {
+    if (request.session_realm != NULL &&
+        strcmp(request.realm, request.session_realm) != 0) {
         daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",
-                   request->realm, request->session_realm);
-        request_ignore_session(request);
+                   request.realm, request.session_realm);
+        request_ignore_session(&request);
     }
 
-    request->connection->site_name = response->site;
+    request.connection->site_name = response->site;
 
     if (response->transparent) {
-        session_id_clear(&request->session_id);
-        request->stateless = true;
-        request->args = NULL;
+        session_id_clear(&request.session_id);
+        request.stateless = true;
+        request.args = NULL;
     }
 
     if (response->discard_session)
-        request_discard_session(request);
+        request_discard_session(&request);
     else if (response->transparent)
-        request_ignore_session(request);
+        request_ignore_session(&request);
 
-    request->translate.response = response;
-    request->translate.transformation = response->views != NULL
+    request.translate.response = response;
+    request.translate.transformation = response->views != NULL
         ? response->views->transformation
         : NULL;
 
@@ -123,8 +126,8 @@ handle_translated_request(struct request *request,
         response->response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE) {
         /* disable session management if cookies are not mangled by
            beng-proxy */
-        session_id_clear(&request->session_id);
-        request->stateless = true;
+        session_id_clear(&request.session_id);
+        request.stateless = true;
     }
 
     if (response->status == (http_status_t)-1 ||
@@ -133,7 +136,7 @@ handle_translated_request(struct request *request,
          response->www_authenticate == NULL &&
          response->bounce == NULL &&
          response->redirect == NULL)) {
-        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
     }
@@ -141,7 +144,7 @@ handle_translated_request(struct request *request,
     struct session *session;
     if (response->session != NULL || response->user != NULL ||
         response->language != NULL || response->views->transformation != NULL)
-        session = request_get_session(request);
+        session = request_get_session(&request);
     else
         session = NULL;
 
@@ -155,7 +158,7 @@ handle_translated_request(struct request *request,
             /* set new translate session */
 
             if (session == NULL)
-                session = request_make_session(request);
+                session = request_make_session(&request);
 
             if (session != NULL)
                 session_set_translate(session, response->session);
@@ -172,7 +175,7 @@ handle_translated_request(struct request *request,
             /* log in */
 
             if (session == NULL)
-                session = request_make_session(request);
+                session = request_make_session(&request);
 
             if (session != NULL)
                 session_set_user(session, response->user,
@@ -195,7 +198,7 @@ handle_translated_request(struct request *request,
             /* override language */
 
             if (session == NULL)
-                session = request_make_session(request);
+                session = request_make_session(&request);
 
             if (session != NULL)
                 session_set_language(session, response->language);
@@ -203,24 +206,24 @@ handle_translated_request(struct request *request,
     }
 
     /* always enforce sessions when the processor is enabled */
-    if (request_processor_enabled(request) && session == NULL)
-        session = request_make_session(request);
+    if (request_processor_enabled(&request) && session == NULL)
+        session = request_make_session(&request);
 
     if (session != NULL)
         session_put(session);
 
-    request->resource_tag = resource_address_id(&response->address,
-                                                request->request->pool);
+    request.resource_tag = resource_address_id(&response->address,
+                                               request.request->pool);
 
-    request->processor_focus = request->args != NULL &&
-        request_processor_enabled(request) &&
-        strmap_get(request->args, "focus") != NULL;
+    request.processor_focus = request.args != NULL &&
+        request_processor_enabled(&request) &&
+        strmap_get(request.args, "focus") != NULL;
 
     if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
         if (response->address.u.local.delegate != NULL)
             delegate_handler(request);
         else
-            file_callback(request);
+            file_callback(&request);
 #ifdef HAVE_LIBNFS
     } else if (response->address.type == RESOURCE_ADDRESS_NFS) {
         nfs_handler(request);
@@ -232,28 +235,28 @@ handle_translated_request(struct request *request,
                response->address.type == RESOURCE_ADDRESS_AJP) {
         proxy_handler(request);
     } else if (response->redirect != NULL) {
-        int status = response->status != 0
+        http_status_t status = response->status != (http_status_t)0
             ? response->status : HTTP_STATUS_SEE_OTHER;
-        response_dispatch_redirect(request, status, response->redirect, NULL);
+        response_dispatch_redirect(&request, status, response->redirect, NULL);
     } else if (response->bounce != NULL) {
-        response_dispatch_redirect(request, HTTP_STATUS_SEE_OTHER,
-                                   bounce_uri(request->request->pool, request,
+        response_dispatch_redirect(&request, HTTP_STATUS_SEE_OTHER,
+                                   bounce_uri(request.request->pool, &request,
                                               response),
                                    NULL);
     } else if (response->status != (http_status_t)0) {
-        response_dispatch(request, response->status, NULL, NULL);
+        response_dispatch(&request, response->status, NULL, NULL);
     } else if (response->www_authenticate != NULL) {
-        response_dispatch_message(request, HTTP_STATUS_UNAUTHORIZED,
+        response_dispatch_message(&request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
     } else {
         daemon_log(2, "empty response from translation server\n");
 
-        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
     }
 }
 
-static const struct translate_handler handler_translate_handler;
+extern const struct translate_handler handler_translate_handler;
 
 /**
  * Install a fake #translate_response.  This is sometimes necessary
@@ -261,14 +264,13 @@ static const struct translate_handler handler_translate_handler;
  * code in response.c dereferences the #translate_response pointer.
  */
 static void
-install_error_response(struct request *request)
+install_error_response(request &request)
 {
-    static const struct translate_response error_response = {
-        .status = -1,
-    };
+    static struct translate_response error_response;
+    error_response.status = (http_status_t)-1;
 
-    request->translate.response = &error_response;
-    request->translate.transformation = NULL;
+    request.translate.response = &error_response;
+    request.translate.transformation = NULL;
 }
 
 static const char *
@@ -288,7 +290,7 @@ static void
 handler_translate_response(const struct translate_response *response,
                            void *ctx)
 {
-    struct request *request = ctx;
+    struct request &request = *(struct request *)ctx;
 
     /* just in case we error out before handle_translated_request()
        assigns the real response */
@@ -297,72 +299,72 @@ handler_translate_response(const struct translate_response *response,
     if (!strref_is_null(&response->check)) {
         /* repeat request with CHECK set */
 
-        if (++request->translate.checks > 4) {
+        if (++request.translate.checks > 4) {
             daemon_log(2, "got too many consecutive CHECK packets\n");
-            response_dispatch_message(request,
+            response_dispatch_message(&request,
                                       HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                       "Internal server error");
             return;
         }
 
-        request->translate.previous = response;
-        request->translate.request.check = response->check;
+        request.translate.previous = response;
+        request.translate.request.check = response->check;
 
-        translate_cache(request->request->pool,
-                        request->connection->instance->translate_cache,
-                        &request->translate.request,
-                        &handler_translate_handler, request,
-                        &request->async_ref);
+        translate_cache(request.request->pool,
+                        request.connection->instance->translate_cache,
+                        &request.translate.request,
+                        &handler_translate_handler, &request,
+                        &request.async_ref);
         return;
     }
 
     if (!strref_is_null(&response->want_full_uri)) {
         /* repeat request with full URI */
 
-        if (request->translate.want_full_uri) {
+        if (request.translate.want_full_uri) {
             daemon_log(2, "duplicate TRANSLATE_WANT_FULL_URI packet\n");
-            response_dispatch_message(request,
+            response_dispatch_message(&request,
                                       HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                       "Internal server error");
             return;
         }
 
-        request->translate.want_full_uri = true;
+        request.translate.want_full_uri = true;
 
         /* echo the server's WANT_FULL_URI packet */
-        request->translate.request.want_full_uri = response->want_full_uri;
+        request.translate.request.want_full_uri = response->want_full_uri;
 
         /* send the full URI this time */
-        request->translate.request.uri =
-            uri_without_query_string(request->request->pool,
-                                     request->request->uri);
+        request.translate.request.uri =
+            uri_without_query_string(request.request->pool,
+                                     request.request->uri);
 
         /* undo the uri_parse() call (but leave the query_string) */
 
-        strref_set_c(&request->uri.base, request->translate.request.uri);
-        strref_clear(&request->uri.args);
-        strref_clear(&request->uri.path_info);
+        strref_set_c(&request.uri.base, request.translate.request.uri);
+        strref_clear(&request.uri.args);
+        strref_clear(&request.uri.path_info);
 
         /* resend the modified request */
 
-        translate_cache(request->request->pool,
-                        request->connection->instance->translate_cache,
-                        &request->translate.request,
-                        &handler_translate_handler, request,
-                        &request->async_ref);
+        translate_cache(request.request->pool,
+                        request.connection->instance->translate_cache,
+                        &request.translate.request,
+                        &handler_translate_handler, &request,
+                        &request.async_ref);
         return;
     }
 
     if (response->previous) {
-        if (request->translate.previous == NULL) {
+        if (request.translate.previous == NULL) {
             daemon_log(2, "no previous translation response\n");
-            response_dispatch_message(request,
+            response_dispatch_message(&request,
                                       HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                       "Internal server error");
             return;
         }
 
-        response = request->translate.previous;
+        response = request.translate.previous;
     }
 
     handle_translated_request(request, response);
@@ -371,10 +373,10 @@ handler_translate_response(const struct translate_response *response,
 static void
 handler_translate_error(GError *error, void *ctx)
 {
-    struct request *request = ctx;
+    struct request &request = *(struct request *)ctx;
 
     daemon_log(1, "translation error on '%s': %s\n",
-               request->request->uri, error->message);
+               request.request->uri, error->message);
 
     install_error_response(request);
 
@@ -386,19 +388,19 @@ handler_translate_error(GError *error, void *ctx)
         error->code = 0;
     }
 
-    response_dispatch_error(request, error);
+    response_dispatch_error(&request, error);
     g_error_free(error);
 }
 
-static const struct translate_handler handler_translate_handler = {
+const struct translate_handler handler_translate_handler = {
     .response = handler_translate_response,
     .error = handler_translate_error,
 };
 
 static bool
-request_uri_parse(struct request *request2, struct parsed_uri *dest)
+request_uri_parse(request &request2, struct parsed_uri *dest)
 {
-    const struct http_server_request *request = request2->request;
+    const struct http_server_request *request = request2.request;
 
     if (!uri_path_verify_quick(request->uri) ||
         !uri_parse(dest, request->uri)) {
@@ -406,14 +408,9 @@ request_uri_parse(struct request *request2, struct parsed_uri *dest)
            response, and will dereference it - at this point, the
            translation server hasn't been queried yet, so we just
            insert an empty response here */
-        static const struct translate_response tr_error = {
-            .status = -1,
-        };
+        install_error_response(request2);
 
-        request2->translate.response = &tr_error;
-        request2->translate.transformation = NULL;
-
-        response_dispatch_message(request2, HTTP_STATUS_BAD_REQUEST,
+        response_dispatch_message(&request2, HTTP_STATUS_BAD_REQUEST,
                                   "Malformed URI");
         return false;
     }
@@ -452,7 +449,7 @@ fill_translate_request(struct translate_request *t,
     t->widget_type = NULL;
     strref_null(&t->check);
     strref_null(&t->want_full_uri);
-    t->error_document_status = 0;
+    t->error_document_status = (http_status_t)0;
 }
 
 static void
@@ -471,16 +468,16 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
 }
 
 static void
-serve_document_root_file(struct request *request2,
+serve_document_root_file(request &request2,
                          const struct config *config)
 {
-    struct http_server_request *request = request2->request;
+    struct http_server_request *request = request2.request;
 
-    struct parsed_uri *uri = &request2->uri;
+    struct parsed_uri *uri = &request2.uri;
 
-    struct translate_response *tr = p_calloc(request->pool,
-                                             sizeof(*request2->translate.response));
-    request2->translate.response = tr;
+    translate_response *tr = (translate_response *)
+        p_calloc(request->pool, sizeof(*tr));
+    request2.translate.response = tr;
 
     const char *index_file = NULL;
     bool process;
@@ -492,25 +489,28 @@ serve_document_root_file(struct request *request2,
     }
 
     if (process) {
-        struct transformation *transformation = p_malloc(request->pool, sizeof(*transformation));
-        struct widget_view *view = p_malloc(request->pool, sizeof(*view));
+        struct transformation *transformation = (struct transformation *)
+            p_malloc(request->pool, sizeof(*transformation));
+        widget_view *view = (widget_view *)
+            p_malloc(request->pool, sizeof(*view));
         widget_view_init(view);
 
         transformation->next = NULL;
-        transformation->type = TRANSFORMATION_PROCESS;
+        transformation->type = transformation::TRANSFORMATION_PROCESS;
 
         view->transformation = transformation;
 
         tr->views = view;
     } else {
-        struct widget_view *view = p_malloc(request->pool, sizeof(*view));
+        widget_view *view = (widget_view *)
+            p_malloc(request->pool, sizeof(*view));
         widget_view_init(view);
 
         tr->views = view;
         tr->transparent = true;
     }
 
-    request2->translate.transformation = tr->views->transformation;
+    request2.translate.transformation = tr->views->transformation;
 
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
     tr->address.u.local.path = p_strncat(request->pool,
@@ -541,11 +541,11 @@ serve_document_root_file(struct request *request2,
         },
     };
 
-    request2->resource_tag = tr->address.u.local.path;
-    request2->processor_focus = process &&
-        strmap_get_checked(request2->args, "focus") != NULL;
+    request2.resource_tag = tr->address.u.local.path;
+    request2.processor_focus = process &&
+        strmap_get_checked(request2.args, "focus") != NULL;
 
-    file_callback(request2);
+    file_callback(&request2);
 }
 
 /*
@@ -553,21 +553,21 @@ serve_document_root_file(struct request *request2,
  *
  */
 
-static struct request *
+static request &
 async_to_request(struct async_operation *ao)
 {
-    return (struct request *)(((char *)ao) - offsetof(struct request, operation));
+    return *(request *)(((char *)ao) - offsetof(struct request, operation));
 }
 
 static void
 handler_abort(struct async_operation *ao)
 {
-    struct request *request2 = async_to_request(ao);
+    request &request2 = async_to_request(ao);
 
-    request_discard_body(request2);
+    request_discard_body(&request2);
 
     /* forward the abort to the http_server library */
-    async_abort(&request2->async_ref);
+    async_abort(&request2.async_ref);
 }
 
 static const struct async_operation_class handler_operation = {
@@ -580,15 +580,14 @@ static const struct async_operation_class handler_operation = {
  */
 
 void
-handle_http_request(struct client_connection *connection,
-                    struct http_server_request *request,
+handle_http_request(client_connection &connection,
+                    http_server_request &request,
                     struct async_operation_ref *async_ref)
 {
-    assert(request != NULL);
-
-    struct request *request2 = p_malloc(request->pool, sizeof(*request2));
-    request2->connection = connection;
-    request2->request = request;
+    struct request *request2 = (struct request *)
+        p_malloc(request.pool, sizeof(*request2));
+    request2->connection = &connection;
+    request2->request = &request;
     request2->product_token = NULL;
 #ifndef NO_DATE_HEADER
     request2->date = NULL;
@@ -601,8 +600,8 @@ handle_http_request(struct client_connection *connection,
 #ifdef DUMP_WIDGET_TREE
     request2->dump_widget_tree = NULL;
 #endif
-    request2->body = http_server_request_has_body(request)
-        ? istream_hold_new(request->pool, request->body)
+    request2->body = http_server_request_has_body(&request)
+        ? istream_hold_new(request.pool, request.body)
         : NULL;
     request2->transformed = false;
 
@@ -613,7 +612,7 @@ handle_http_request(struct client_connection *connection,
     request2->response_sent = false;
 #endif
 
-    if (!request_uri_parse(request2, &request2->uri))
+    if (!request_uri_parse(*request2, &request2->uri))
         return;
 
     assert(!strref_is_empty(&request2->uri.base));
@@ -622,8 +621,8 @@ handle_http_request(struct client_connection *connection,
     request_args_parse(request2);
     request_determine_session(request2);
 
-    if (connection->instance->translate_cache == NULL)
-        serve_document_root_file(request2, connection->config);
+    if (connection.instance->translate_cache == NULL)
+        serve_document_root_file(*request2, connection.config);
     else
-        ask_translation_server(request2, connection->instance->translate_cache);
+        ask_translation_server(request2, connection.instance->translate_cache);
 }

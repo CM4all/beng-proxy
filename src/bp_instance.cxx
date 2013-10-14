@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "instance.h"
+#include "bp_instance.hxx"
 #include "http_cache.h"
 #include "fcache.h"
 

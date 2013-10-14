@@ -103,6 +103,10 @@ struct session {
     struct cookie_jar *cookies;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_malloc
 struct session *
 session_allocate(struct dpool *pool);
@@ -174,5 +178,9 @@ widget_session_delete(struct dpool *pool, struct widget_session *ws);
 
 void
 session_delete_widgets(struct session *session);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -18,6 +18,10 @@ struct http_response_handler;
 struct async_operation_ref;
 struct cache_stats;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct filter_cache *
 filter_cache_new(struct pool *pool, size_t max_size,
                  struct resource_loader *resource_loader);
@@ -51,5 +55,9 @@ filter_cache_request(struct filter_cache *cache,
                      const struct http_response_handler *handler,
                      void *handler_ctx,
                      struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

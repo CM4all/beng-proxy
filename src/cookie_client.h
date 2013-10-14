@@ -13,6 +13,10 @@ struct pool;
 struct strmap;
 struct cookie_jar;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Parse a Set-Cookie2 response header and insert new cookies into the
  * linked list.
@@ -40,5 +44,9 @@ void
 cookie_jar_http_header(struct cookie_jar *jar,
                        const char *domain, const char *path,
                        struct strmap *headers, struct pool *pool);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

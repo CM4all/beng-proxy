@@ -17,6 +17,10 @@ struct stock_item;
 struct stock_get_handler;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct hstock *
 was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
@@ -47,5 +51,9 @@ was_stock_translate_path(const struct stock_item *item,
  */
 void
 was_stock_put(struct hstock *hstock, struct stock_item *item, bool destroy);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

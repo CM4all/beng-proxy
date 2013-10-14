@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "bp_stats.h"
-#include "instance.h"
+#include "bp_stats.hxx"
+#include "bp_instance.hxx"
 #include "hstock.h"
 #include "stock.h"
 #include "cache.h"

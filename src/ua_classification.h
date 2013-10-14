@@ -8,6 +8,10 @@
 #include <glib.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 G_GNUC_CONST
 static inline GQuark
 ua_classification_quark(void)
@@ -24,5 +28,9 @@ ua_classification_deinit(void);
 G_GNUC_PURE
 const char *
 ua_classification_lookup(const char *user_agent);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

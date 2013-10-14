@@ -7,7 +7,7 @@
 
 #include "request.h"
 #include "connection.h"
-#include "instance.h"
+#include "bp_instance.hxx"
 #include "session.h"
 #include "session_manager.h"
 #include "http_server.h"
@@ -31,7 +31,7 @@ request_processor_enabled(const struct request *request)
     for (transformation = request->translate.response->views->transformation;
          transformation != NULL;
          transformation = transformation->next)
-        if (transformation->type == TRANSFORMATION_PROCESS)
+        if (transformation->type == transformation::TRANSFORMATION_PROCESS)
             return true;
 
     return false;
@@ -125,7 +125,7 @@ build_session_cookie_name(struct pool *pool, const struct config *config,
         return config->session_cookie;
 
     size_t length = strlen(config->session_cookie);
-    char *name = p_malloc(pool, length + 5);
+    char *name = (char *)p_malloc(pool, length + 5);
     memcpy(name, config->session_cookie, length);
     format_uint16_hex_fixed(name + length, crc16_string(0, host));
     name[length + 4] = 0;

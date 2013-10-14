@@ -24,6 +24,10 @@ struct crash {
 
 extern struct crash global_crash;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool
 crash_init(struct crash *crash);
 
@@ -89,5 +93,9 @@ crash_in_unsafe(void)
 {
     return !crash_is_safe(&global_crash);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

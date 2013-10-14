@@ -11,6 +11,10 @@
 
 struct pool;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct udp_distribute *
 udp_distribute_new(struct pool *pool);
 
@@ -26,5 +30,9 @@ udp_distribute_add(struct udp_distribute *ud);
 void
 udp_distribute_packet(struct udp_distribute *ud,
                       const void *payload, size_t payload_length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

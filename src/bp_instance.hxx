@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_INSTANCE_H
-#define __BENG_INSTANCE_H
+#ifndef BENG_PROXY_INSTANCE_HXX
+#define BENG_PROXY_INSTANCE_HXX
 
-#include "config.h"
+#include "config.hxx"
 #include "shutdown_listener.h"
 
 #include <inline/list.h>

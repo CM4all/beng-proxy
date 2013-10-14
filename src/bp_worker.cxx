@@ -7,12 +7,12 @@
 #include "worker.h"
 #include "http_server.h"
 #include "pool.h"
-#include "instance.h"
+#include "bp_instance.hxx"
 #include "connection.h"
 #include "session_manager.h"
 #include "child.h"
 #include "listener.h"
-#include "bp_control.h"
+#include "bp_control.hxx"
 
 #include <daemon/log.h>
 
@@ -46,7 +46,7 @@ schedule_respawn(struct instance *instance)
 {
     if (!instance->should_exit &&
         instance->num_workers < instance->config.num_workers &&
-        evtimer_pending(&instance->respawn_event, NULL) == 0) {
+        evtimer_pending(&instance->respawn_event, nullptr) == 0) {
         static const struct timeval tv = {
             .tv_sec = 1,
             .tv_usec = 0,
@@ -86,8 +86,8 @@ worker_dispose(struct instance *instance, struct worker *worker)
 static void
 worker_child_callback(int status, void *ctx)
 {
-    struct worker *worker = ctx;
-    struct instance *instance = worker->instance;
+    worker &worker = *(struct worker *)ctx;
+    struct instance *instance = worker.instance;
     int exit_status = WEXITSTATUS(status);
 
     if (WIFSIGNALED(status)) {
@@ -96,17 +96,17 @@ worker_child_callback(int status, void *ctx)
             level = 3;
 
         daemon_log(level, "worker %d died from signal %d%s\n",
-                   worker->pid, WTERMSIG(status),
+                   worker.pid, WTERMSIG(status),
                    WCOREDUMP(status) ? " (core dumped)" : "");
     } else if (exit_status == 0)
         daemon_log(1, "worker %d exited with success\n",
-                   worker->pid);
+                   worker.pid);
     else
         daemon_log(1, "worker %d exited with status %d\n",
-                   worker->pid, exit_status);
+                   worker.pid, exit_status);
 
-    const bool safe = crash_is_safe(&worker->crash);
-    worker_dispose(instance, worker);
+    const bool safe = crash_is_safe(&worker.crash);
+    worker_dispose(instance, &worker);
 
     if (WIFSIGNALED(status) && !instance->should_exit && !safe) {
         /* a worker has died due to a signal - this is dangerous for
@@ -142,7 +142,7 @@ worker_new(struct instance *instance)
     children_event_del();
 
     int distribute_socket = -1;
-    if (instance->config.control_listen != NULL) {
+    if (instance->config.control_listen != nullptr) {
         distribute_socket = global_control_handler_add_fd(instance);
         if (distribute_socket < 0) {
             daemon_log(1, "udp_distribute_add() failed: %s\n",
@@ -209,7 +209,8 @@ worker_new(struct instance *instance)
 
         event_reinit(instance->event_base);
 
-        struct worker *worker = p_malloc(instance->pool, sizeof(*worker));
+        struct worker *worker = (struct worker *)
+            p_malloc(instance->pool, sizeof(*worker));
         worker->instance = instance;
         worker->pid = pid;
         worker->crash = crash;
