@@ -26,7 +26,7 @@ strref_set_dup_impl(struct pool *pool, struct strref *dest,
         return NULL;
     } else {
         dest->length = src->length;
-        char *p = p_memdup_fwd(pool, src->data, src->length);
+        char *p = (char *)p_memdup_fwd(pool, src->data, src->length);
         dest->data = p;
         return p;
     }
@@ -49,7 +49,7 @@ strref_append_impl(struct pool *pool, struct strref *dest,
     if (src->length == 0)
         return;
 
-    p = p_malloc_fwd(pool, dest->length + src->length);
+    p = (char *)p_malloc_fwd(pool, dest->length + src->length);
     memcpy(p, dest->data, dest->length);
     memcpy(p + dest->length, src->data, src->length);
 
