@@ -92,15 +92,15 @@ struct widget_class {
 extern const struct widget_class root_widget_class;
 
 static inline const struct widget_view *
-widget_class_view_lookup(const struct widget_class *class, const char *name)
+widget_class_view_lookup(const struct widget_class *cls, const char *name)
 {
-    return widget_view_lookup(&class->views, name);
+    return widget_view_lookup(&cls->views, name);
 }
 
 static inline bool
-widget_class_has_groups(const struct widget_class *class)
+widget_class_has_groups(const struct widget_class *cls)
 {
-    return !strset_is_empty(&class->container_groups);
+    return !strset_is_empty(&cls->container_groups);
 }
 
 static inline bool
