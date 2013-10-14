@@ -86,6 +86,9 @@ struct translate_client {
     /** the current local file address being edited */
     struct file_address *file_address;
 
+    /** the current HTTP/AJP address being edited */
+    struct http_address *http_address;
+
     /** the current CGI/FastCGI/WAS address being edited */
     struct cgi_address *cgi_address;
 
@@ -536,6 +539,7 @@ add_view(struct translate_client *client, const char *name)
     client->resource_address = &view->address;
     client->jail = NULL;
     client->file_address = NULL;
+    client->http_address = NULL;
     client->cgi_address = NULL;
     client->nfs_address = NULL;
     client->lhttp_address = NULL;
@@ -699,8 +703,6 @@ translate_handle_packet(struct translate_client *client,
     GError *error = NULL;
 
     switch ((enum beng_translation_command)command) {
-        struct http_address *uwa;
-
     case TRANSLATE_END:
         stopwatch_event(client->stopwatch, "end");
 
@@ -724,6 +726,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address = &client->response.address;
         client->jail = NULL;
         client->file_address = NULL;
+        client->http_address = NULL;
         client->cgi_address = NULL;
         client->nfs_address = NULL;
         client->lhttp_address = NULL;
@@ -942,19 +945,20 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_HTTP;
-        client->resource_address->u.http = uwa =
+        client->resource_address->u.http = client->http_address =
             http_address_parse(client->pool, payload, &error);
-        if (uwa == NULL) {
+        if (client->http_address == NULL) {
             translate_client_abort(client, error);
             return false;
         }
 
-        if (uwa->scheme != URI_SCHEME_UNIX && uwa->scheme != URI_SCHEME_HTTP) {
+        if (client->http_address->scheme != URI_SCHEME_UNIX &&
+            client->http_address->scheme != URI_SCHEME_HTTP) {
             translate_client_error(client, "malformed TRANSLATE_HTTP packet");
             return false;
         }
 
-        client->address_list = &uwa->addresses;
+        client->address_list = &client->http_address->addresses;
         return true;
 
     case TRANSLATE_REDIRECT:
@@ -1217,19 +1221,19 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_AJP;
-        client->resource_address->u.http = uwa =
+        client->resource_address->u.http = client->http_address =
             http_address_parse(client->pool, payload, &error);
-        if (uwa == NULL) {
+        if (client->http_address == NULL) {
             translate_client_abort(client, error);
             return false;
         }
 
-        if (uwa->scheme != URI_SCHEME_AJP) {
+        if (client->http_address->scheme != URI_SCHEME_AJP) {
             translate_client_error(client, "malformed TRANSLATE_AJP packet");
             return false;
         }
 
-        client->address_list = &uwa->addresses;
+        client->address_list = &client->http_address->addresses;
         return true;
 
     case TRANSLATE_NFS_SERVER:
