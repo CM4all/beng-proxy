@@ -23,6 +23,7 @@
 #include "strutil.h"
 #include "strmap.h"
 #include "istream.h"
+#include "ssl_client.h"
 
 #ifdef HAVE_LIBNFS
 #include "nfs_request.h"
@@ -34,6 +35,8 @@
 #include <stdlib.h>
 
 struct resource_loader {
+    struct pool *pool;
+
     struct tcp_balancer *tcp_balancer;
     struct lhttp_stock *lhttp_stock;
     struct fcgi_stock *fcgi_stock;
@@ -62,6 +65,7 @@ resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
 
     struct resource_loader *rl = p_malloc(pool, sizeof(*rl));
 
+    rl->pool = pool;
     rl->tcp_balancer = tcp_balancer;
     rl->lhttp_stock = lhttp_stock;
     rl->fcgi_stock = fcgi_stock;
@@ -156,6 +160,8 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         const struct cgi_address *cgi;
         const char *server_name;
         unsigned server_port;
+        const struct socket_filter *filter;
+        void *filter_ctx;
 
     case RESOURCE_ADDRESS_NONE:
         break;
@@ -267,8 +273,26 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         return;
 
     case RESOURCE_ADDRESS_HTTP:
+        if (address->u.http->ssl) {
+            GError *error = NULL;
+            filter_ctx = ssl_client_create(rl->pool, pool,
+                                           /* TODO: only host */
+                                           address->u.http->host_and_port,
+                                           &error);
+            if (filter_ctx == NULL) {
+                http_response_handler_direct_abort(handler, handler_ctx,
+                                                   error);
+                return;
+            }
+
+            filter = ssl_client_get_filter();
+        } else {
+            filter = NULL;
+            filter_ctx = NULL;
+        }
+
         http_request(pool, rl->tcp_balancer, session_sticky,
-                     NULL, NULL,
+                     filter, filter_ctx,
                      method, address->u.http,
                      headers_dup(pool, headers), body,
                      handler, handler_ctx, async_ref);

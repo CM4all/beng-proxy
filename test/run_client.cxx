@@ -15,6 +15,8 @@
 #include "client-socket.h"
 #include "tpool.h"
 #include "fb_pool.h"
+#include "ssl_init.hxx"
+#include "ssl_client.h"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -34,7 +36,7 @@
 
 struct parsed_url {
     enum {
-        HTTP, AJP,
+        HTTP, HTTPS, AJP,
     } protocol;
 
     char *host;
@@ -58,6 +60,10 @@ parse_url(struct parsed_url *dest, const char *url)
         url += 7;
         dest->protocol = parsed_url::HTTP;
         dest->default_port = 80;
+    } else if (memcmp(url, "https://", 8) == 0) {
+        url += 8;
+        dest->protocol = parsed_url::HTTPS;
+        dest->default_port = 443;
     } else
         return false;
 
@@ -259,6 +265,35 @@ my_client_socket_success(int fd, void *ctx)
                             &my_response_handler, c,
                             &c->async_ref);
         break;
+
+    case parsed_url::HTTPS: {
+        GError *error = nullptr;
+        void *filter_ctx = ssl_client_create(c->pool, c->pool,
+                                             c->url.host,
+                                             &error);
+        if (filter_ctx == nullptr) {
+            g_printerr("%s\n", error->message);
+            g_error_free(error);
+
+            c->aborted = true;
+
+            if (c->request_body != nullptr)
+                istream_close_unused(c->request_body);
+
+            shutdown_listener_deinit(&c->shutdown_listener);
+            return;
+        }
+
+        const socket_filter *filter = ssl_client_get_filter();
+        http_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
+                            filter, filter_ctx,
+                            c->method, c->url.uri,
+                            headers_dup(c->pool, headers),
+                            c->request_body, false,
+                            &my_response_handler, c,
+                            &c->async_ref);
+        break;
+    }
     }
 }
 
@@ -318,6 +353,9 @@ main(int argc, char **argv)
         fprintf(stderr, "Invalid or unsupported URL.\n");
         return EXIT_FAILURE;
     }
+
+    ssl_global_init();
+    ssl_client_init();
 
     direct_global_init();
 
@@ -398,6 +436,10 @@ main(int argc, char **argv)
 
     fb_pool_deinit();
     event_base_free(event_base);
+
+    ssl_client_deinit();
+    ssl_global_deinit();
+
     direct_global_deinit();
 
     g_free(ctx.url.host);

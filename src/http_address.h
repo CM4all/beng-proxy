@@ -36,6 +36,8 @@ enum uri_scheme {
 struct http_address {
     enum uri_scheme scheme;
 
+    bool ssl;
+
     /**
      * The host part of the URI (including the port, if any).  NULL if
      * scheme is URI_SCHEME_UNIX.
@@ -186,7 +188,7 @@ http_address_default_port(const struct http_address *address)
         return 0;
 
     case URI_SCHEME_HTTP:
-        return 80;
+        return address->ssl ? 443 : 80;
 
     case URI_SCHEME_AJP:
         return 8009;

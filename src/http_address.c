@@ -25,7 +25,7 @@ uri_scheme_has_host(enum uri_scheme scheme)
 }
 
 static struct http_address *
-http_address_new(struct pool *pool, enum uri_scheme scheme,
+http_address_new(struct pool *pool, enum uri_scheme scheme, bool ssl,
                  const char *host_and_port, const char *path)
 {
     assert(pool != NULL);
@@ -34,6 +34,7 @@ http_address_new(struct pool *pool, enum uri_scheme scheme,
 
     struct http_address *uwa = p_malloc(pool, sizeof(*uwa));
     uwa->scheme = scheme;
+    uwa->ssl = ssl;
     uwa->host_and_port = host_and_port;
     uwa->path = path;
     uwa->expand_path = NULL;
@@ -45,7 +46,7 @@ http_address_new(struct pool *pool, enum uri_scheme scheme,
  * Utility function used by http_address_parse().
  */
 static struct http_address *
-http_address_parse2(struct pool *pool, enum uri_scheme scheme,
+http_address_parse2(struct pool *pool, enum uri_scheme scheme, bool ssl,
                     const char *uri, GError **error_r)
 {
     assert(pool != NULL);
@@ -67,18 +68,23 @@ http_address_parse2(struct pool *pool, enum uri_scheme scheme,
         path = "/";
     }
 
-    return http_address_new(pool, scheme, host_and_port, path);
+    return http_address_new(pool, scheme, ssl, host_and_port, path);
 }
 
 struct http_address *
 http_address_parse(struct pool *pool, const char *uri, GError **error_r)
 {
     if (memcmp(uri, "http://", 7) == 0)
-        return http_address_parse2(pool, URI_SCHEME_HTTP, uri + 7, error_r);
+        return http_address_parse2(pool, URI_SCHEME_HTTP, false, uri + 7,
+                                   error_r);
+    else if (memcmp(uri, "https://", 8) == 0)
+        return http_address_parse2(pool, URI_SCHEME_HTTP, true, uri + 8,
+                                   error_r);
     else if (memcmp(uri, "ajp://", 6) == 0)
-        return http_address_parse2(pool, URI_SCHEME_AJP, uri + 6, error_r);
+        return http_address_parse2(pool, URI_SCHEME_AJP, false, uri + 6,
+                                   error_r);
     else if (memcmp(uri, "unix:/", 6) == 0)
-        return http_address_new(pool, URI_SCHEME_UNIX, NULL, uri + 5);
+        return http_address_new(pool, URI_SCHEME_UNIX, false, NULL, uri + 5);
 
     g_set_error(error_r, http_address_quark(), 0,
                 "unrecognized URI");
@@ -90,7 +96,8 @@ http_address_with_path(struct pool *pool, const struct http_address *uwa,
                        const char *path)
 {
     struct http_address *p =
-        http_address_new(pool, uwa->scheme, uwa->host_and_port, path);
+        http_address_new(pool, uwa->scheme, uwa->ssl,
+                         uwa->host_and_port, path);
     p->expand_path = p_strdup_checked(pool, uwa->expand_path);
     address_list_copy(pool, &p->addresses, &uwa->addresses);
     return p;
@@ -103,7 +110,7 @@ http_address_dup(struct pool *pool, const struct http_address *uwa)
     assert(uwa != NULL);
 
     struct http_address *p =
-        http_address_new(pool, uwa->scheme,
+        http_address_new(pool, uwa->scheme, uwa->ssl,
                          p_strdup(pool, uwa->host_and_port),
                          p_strdup(pool, uwa->path));
 
@@ -119,7 +126,7 @@ http_address_dup_with_path(struct pool *pool,
                            const char *path)
 {
     struct http_address *p =
-        http_address_new(pool, uwa->scheme,
+        http_address_new(pool, uwa->scheme, uwa->ssl,
                          p_strdup(pool, uwa->host_and_port),
                          path);
     p->expand_path = p_strdup_checked(pool, uwa->expand_path);

@@ -1634,6 +1634,13 @@ test_t_ajp_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_client_SOURCES = test/run_client.cxx \
+	src/ssl_init.cxx \
+	src/ssl_client.cxx \
+	src/ssl_factory.cxx \
+	src/ssl_filter.cxx \
+	src/thread_socket_filter.cxx \
+	src/thread_pool.c src/thread_queue.c src/thread_worker.c \
+	src/notify.c \
 	src/client-socket.c \
 	src/http_client.c src/http_body.c \
 	src/header-writer.c src/header-parser.c \
@@ -1657,6 +1664,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 test_run_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
+	$(LIBSSL_LIBS) \
 	$(GLIB_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
