@@ -330,11 +330,10 @@ ssl_factory::EnableSNI(GError **error_r)
 }
 
 struct ssl_factory *
-ssl_factory_new(struct pool *pool, const ssl_config &config,
+ssl_factory_new(const ssl_config &config,
                 bool server,
                 GError **error_r)
 {
-    assert(pool != NULL);
     assert(!config.cert_key.empty());
 
     auto method = server
