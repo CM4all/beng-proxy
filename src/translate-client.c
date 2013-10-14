@@ -929,15 +929,15 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-    case TRANSLATE_PROXY:
+    case TRANSLATE_HTTP:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
-            translate_client_error(client, "misplaced TRANSLATE_PROXY packet");
+            translate_client_error(client, "misplaced TRANSLATE_HTTP packet");
             return false;
         }
 
         if (payload == NULL) {
-            translate_client_error(client, "malformed TRANSLATE_PROXY packet");
+            translate_client_error(client, "malformed TRANSLATE_HTTP packet");
             return false;
         }
 
@@ -950,7 +950,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         if (uwa->scheme != URI_SCHEME_UNIX && uwa->scheme != URI_SCHEME_HTTP) {
-            translate_client_error(client, "malformed TRANSLATE_PROXY packet");
+            translate_client_error(client, "malformed TRANSLATE_HTTP packet");
             return false;
         }
 

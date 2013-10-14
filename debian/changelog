@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0) unstable; urgency=low
 
-  * 
+  * translation: rename TRANSLATE_PROXY to TRANSLATE_HTTP
 
  --
 

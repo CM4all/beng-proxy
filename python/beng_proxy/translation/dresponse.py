@@ -21,13 +21,13 @@ class DeferredResponse(Response):
         self.packet(TRANSLATE_ADDRESS_STRING, result)
         d.callback(self)
 
-    def proxy(self, uri, addresses=None):
-        """Non-blocking version of Response.proxy() - returns a
+    def http(self, uri, addresses=None):
+        """Non-blocking version of Response.http() - returns a
         Deferred if the resolver is used."""
         assert uri[0] != '/' or addresses is None or len(addresses) == 0
         assert addresses is None or hasattr(addresses, '__iter__')
 
-        self.packet(TRANSLATE_PROXY, uri)
+        self.packet(TRANSLATE_HTTP, uri)
 
         if uri[0] != '/' and addresses is None:
             # parse host:port from URL
@@ -42,8 +42,10 @@ class DeferredResponse(Response):
 
             return d
 
+    proxy = http # deprecated
+
     def ajp(self, uri, addresses=None):
-        """Non-blocking version of Response.proxy() - returns a
+        """Non-blocking version of Response.http() - returns a
         Deferred if the resolver is used."""
         assert uri[0] != '/' or addresses is None or len(addresses) == 0
         assert addresses is None or hasattr(addresses, '__iter__')

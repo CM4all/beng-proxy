@@ -40,7 +40,7 @@ class _Lookup:
         m = re.match(r'^server\s+"(\S+)"$', line)
         if m:
             uri = m.group(1)
-            return response.proxy(uri)
+            return response.http(uri)
         m = re.match(r'^pipe\s+"(\S+)"', line)
         if m:
             line = line[4:]

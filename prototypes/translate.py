@@ -180,21 +180,21 @@ class Translation(Protocol):
 
             response.packet(TRANSLATE_TRANSPARENT)
         elif raw_uri[:11] == '/cfatest01/':
-            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
+            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
         elif raw_uri[:13] == '/transparent/':
-            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
+            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[11:])
             response.packet(TRANSLATE_TRANSPARENT)
         elif raw_uri[:7] == '/proxy/':
-            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[7:])
+            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[7:])
             response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_YES))
             response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_YES))
         elif raw_uri[:8] == '/mangle/':
-            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[8:])
+            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[8:])
             response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
             response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
         elif raw_uri[:24] == '/vary-user-agent/remote/':
             response.vary(TRANSLATE_USER_AGENT)
-            response.proxy('http://cfatest01.intern.cm-ag/' + raw_uri[24:])
+            response.http('http://cfatest01.intern.cm-ag/' + raw_uri[24:])
         elif raw_uri[:5] == '/ajp/':
             response.ajp('ajp://cfatest01.intern.cm-ag:8009' + raw_uri[4:], 'cfatest01.intern.cm-ag:8009')
         elif raw_uri[:5] == '/nfs/':
@@ -419,11 +419,11 @@ class Translation(Protocol):
                 # invalid request
                 response.status(400)
         elif uri[:10] == '/balancer/':
-            response.proxy('http://balancer/' + raw_uri[10:],
-                           ('172.30.0.23:80', '172.30.0.23:8080'))
+            response.http('http://balancer/' + raw_uri[10:],
+                          ('172.30.0.23:80', '172.30.0.23:8080'))
         elif uri[:8] == '/sticky/':
-            response.proxy('http://sticky/' + raw_uri[8:],
-                           ('172.30.0.23:80', '172.30.0.23:8080'))
+            response.http('http://sticky/' + raw_uri[8:],
+                          ('172.30.0.23:80', '172.30.0.23:8080'))
             response.packet(TRANSLATE_STICKY)
         elif raw_uri[:23] == '/vary-user-agent/local/':
             response.vary(TRANSLATE_USER_AGENT)

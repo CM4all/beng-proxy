@@ -796,7 +796,7 @@ file.  The file is compressed with \texttt{gzip}.  May follow the
 
 \hline
 
-\verb|PROXY| & this URL parameter may be specified instead of
+\verb|HTTP| & this URL parameter may be specified instead of
 \verb|PATH| to tell \emph{beng-proxy} to obtain the resource from a
 remote HTTP server (see \ref{http}) \\
 
@@ -888,7 +888,7 @@ finding the file \\
 \hline
 
 \verb|EXPAND_PATH| & Override the \verb|PATH| with the given value
-(applicable to static files, CGI, FastCGI, WAS, \verb|PROXY|,
+(applicable to static files, CGI, FastCGI, WAS, \verb|HTTP|,
 \verb|AJP|).
 Backslash references are expanded to the value of the match group of
 \verb|REGEX|. In the presence of this packet, the URI suffix after the
@@ -935,7 +935,7 @@ slash) which contains this
 realm.  All resources in this realm can be addressed by
 \emph{beng-proxy} with a trivial pattern: append the relative URI
 (within the realm) to the resource address (e.g. the \verb|PATH|,
-\verb|PROXY| or \verb|PATH_INFO| value).
+\verb|HTTP| or \verb|PATH_INFO| value).
 
 The address in this response applies to request URI, not the
 base URI (to allow backwards compatibility with translation clients
@@ -968,7 +968,7 @@ compatible). \scriptsize{(Since version 1.3.2)} \\
 
 \hline
 
-\verb|FILTER| & the next resource address (\verb|PROXY|,
+\verb|FILTER| & the next resource address (\verb|HTTP|,
 \verb|CGI|) will denote an output filter, see section \ref{filter}
 \\
 
@@ -1061,7 +1061,7 @@ for a CGI \\
 
 \hline
 
-\verb|ADDRESS| & after each \verb|PROXY| packet, there must be one
+\verb|ADDRESS| & after each \verb|HTTP| packet, there must be one
 or more \verb|ADDRESS| packets which specify the resolved addresses.
 The payload of each is a \texttt{struct sockaddr}.
 The same applies to \verb|AJP| packets. \\
@@ -1226,7 +1226,7 @@ status.
 
 \subsection{Proxying requests}
 
-When proxying HTTP requests with the a \verb|PROXY| packet,
+When proxying HTTP requests with the a \verb|HTTP| packet,
 \emph{beng-proxy} forwards the request to the specified location,
 including the HTTP method and the request body.  There is one
 exception: if \verb|PROCESS| is enabled and a widget is focused (see
@@ -1242,7 +1242,7 @@ the absolute path to a Unix socket.
 
 The translation server can tell \emph{beng-proxy} to apply a filter to
 the resource by sending the \verb|FILTER| command.  It is followed
-by a packet specifying the filter server (\verb|PROXY|,
+by a packet specifying the filter server (\verb|HTTP|,
 \verb|CGI|, \verb|FASTCGI|, \verb|AJP|, \verb|PIPE|).
 
 A filter server is a HTTP server.  \emph{beng-proxy} sends the
@@ -1313,7 +1313,7 @@ The translation server's response consists of these packets:
 HTTP status code \\
 \hline
 
-\verb|PATH|, \verb|CGI|, \verb|PROXY| & choose one of these
+\verb|PATH|, \verb|CGI|, \verb|HTTP| & choose one of these
 packets: a static widget (local file path), a local CGI script, or a
 HTTP server \\
 

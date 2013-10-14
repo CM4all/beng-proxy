@@ -48,8 +48,8 @@ class Response:
             self.packet(TRANSLATE_CONTAINER)
         return self
 
-    def proxy(self, uri, addresses=None):
-        """Generate a PROXY packet.  If you do not specify an address
+    def http(self, uri, addresses=None):
+        """Generate a HTTP packet.  If you do not specify an address
         list, this function looks up the URI's host name with the
         local resolver (which may throw socket.gaierror)."""
         assert uri[0] != '/' or len(addresses) == 0
@@ -65,10 +65,12 @@ class Response:
             if port: address += ':' + port
             addresses = (address,)
 
-        self.packet(TRANSLATE_PROXY, uri)
+        self.packet(TRANSLATE_HTTP, uri)
         for address in addresses:
             self.packet(TRANSLATE_ADDRESS_STRING, address)
         return self
+
+    proxy = http # deprecated
 
     def ajp(self, uri, addresses):
         """Generate an AJP packet.  If you do not specify an address
