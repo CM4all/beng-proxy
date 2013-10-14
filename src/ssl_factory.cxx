@@ -195,8 +195,8 @@ load_certs_keys(ssl_factory &factory, const ssl_config &config,
 }
 
 static bool
-apply_config(SSL_CTX *ssl_ctx, const ssl_config &config,
-             GError **error_r)
+apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
+                    GError **error_r)
 {
     assert(!config.cert_key.empty());
 
@@ -331,12 +331,17 @@ ssl_factory::EnableSNI(GError **error_r)
 
 struct ssl_factory *
 ssl_factory_new(struct pool *pool, const ssl_config &config,
+                bool server,
                 GError **error_r)
 {
     assert(pool != NULL);
     assert(!config.cert_key.empty());
 
-    SSL_CTX *ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+    auto method = server
+        ? SSLv23_server_method()
+        : TLSv1_client_method();
+
+    SSL_CTX *ssl_ctx = SSL_CTX_new(method);
     if (ssl_ctx == NULL) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_CTX_new() failed");
         return NULL;
@@ -344,10 +349,16 @@ ssl_factory_new(struct pool *pool, const ssl_config &config,
 
     ssl_factory *factory = new ssl_factory(ssl_ctx);
 
-    if (!apply_config(ssl_ctx, config, error_r) ||
-        !load_certs_keys(*factory, config, error_r)) {
-        delete factory;
-        return NULL;
+    if (server) {
+        if (!apply_server_config(ssl_ctx, config, error_r) ||
+            !load_certs_keys(*factory, config, error_r)) {
+            delete factory;
+            return NULL;
+        }
+    } else {
+        assert(config.cert_key.empty());
+        assert(config.ca_cert_file.empty());
+        assert(config.verify == ssl_verify::NO);
     }
 
     if (factory->cert_key.size() > 1 && !factory->EnableSNI(error_r)) {

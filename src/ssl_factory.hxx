@@ -14,6 +14,7 @@ struct ssl_config;
 
 struct ssl_factory *
 ssl_factory_new(struct pool *pool, const ssl_config &config,
+                bool server,
                 GError **error_r);
 
 void
