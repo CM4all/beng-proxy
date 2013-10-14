@@ -120,7 +120,7 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
     struct widget *widget = ctx;
     struct widget_resolver *resolver = widget->resolver;
 
-    assert(widget->class == NULL);
+    assert(widget->cls == NULL);
     assert(resolver != NULL);
     assert(resolver->widget == widget);
     assert(!list_empty(&resolver->listeners));
@@ -134,7 +134,7 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
     resolver->running = true;
 #endif
 
-    widget->class = class;
+    widget->cls = class;
 
     widget->view = widget->from_request.view = class != NULL
         ? widget_view_lookup(&class->views, widget->view_name)
@@ -218,7 +218,7 @@ widget_resolver_new(struct pool *pool, struct pool *widget_pool,
 
     assert(widget != NULL);
     assert(widget->class_name != NULL);
-    assert(widget->class == NULL);
+    assert(widget->cls == NULL);
     assert(pool_contains(widget_pool, widget, sizeof(*widget)));
 
     /* create new resolver object if it does not already exist */

@@ -28,7 +28,7 @@ frame_top_widget(struct pool *pool, struct widget *widget,
                  struct async_operation_ref *async_ref)
 {
     assert(widget != NULL);
-    assert(widget->class != NULL);
+    assert(widget->cls != NULL);
     assert(widget_has_default_view(widget));
     assert(env != NULL);
 
@@ -75,7 +75,7 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
                     struct async_operation_ref *async_ref)
 {
     assert(widget != NULL);
-    assert(widget->class != NULL);
+    assert(widget->cls != NULL);
     assert(widget_has_default_view(widget));
     assert(id != NULL);
     assert(env != NULL);

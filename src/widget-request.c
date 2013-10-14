@@ -22,8 +22,8 @@ static void
 widget_to_session(struct widget_session *ws, const struct widget *widget)
 {
     assert(widget != NULL);
-    assert(widget->class != NULL);
-    assert(widget->class->stateful); /* cannot save state for stateless widgets */
+    assert(widget->cls != NULL);
+    assert(widget->cls->stateful); /* cannot save state for stateless widgets */
 
     if (ws->path_info != NULL)
         d_free(ws->session->pool, ws->path_info);
@@ -44,8 +44,8 @@ widget_to_session(struct widget_session *ws, const struct widget *widget)
 static void
 session_to_widget(struct widget *widget, const struct widget_session *ws)
 {
-    assert(widget->class != NULL);
-    assert(widget->class->stateful); /* cannot load state from stateless widgets */
+    assert(widget->cls != NULL);
+    assert(widget->cls->stateful); /* cannot load state from stateless widgets */
     assert(widget->lazy.address == NULL);
 
     widget->from_request.path_info = ws->path_info;
@@ -150,8 +150,8 @@ widget_sync_session(struct widget *widget, struct session *session)
     assert(widget != NULL);
     assert(widget->parent != NULL);
     assert(widget->lazy.address == NULL);
-    assert(widget->class != NULL);
-    assert(widget->class->stateful);
+    assert(widget->cls != NULL);
+    assert(widget->cls->stateful);
     assert(widget->session_sync_pending);
     assert(!widget->session_save_pending);
 
@@ -183,8 +183,8 @@ widget_save_session(struct widget *widget, struct session *session)
 {
     assert(widget != NULL);
     assert(widget->parent != NULL);
-    assert(widget->class != NULL);
-    assert(widget->class->stateful);
+    assert(widget->cls != NULL);
+    assert(widget->cls->stateful);
     assert(!widget->session_sync_pending);
     assert(widget->session_save_pending);
 
@@ -207,7 +207,7 @@ widget_copy_from_location(struct widget *widget, struct session *session,
     const char *qmark;
 
     assert(widget != NULL);
-    assert(widget->class != NULL);
+    assert(widget->cls != NULL);
 
     widget->from_request.method = HTTP_METHOD_GET;
     widget->from_request.body = NULL;
@@ -229,7 +229,7 @@ widget_copy_from_location(struct widget *widget, struct session *session,
     if (session != NULL) {
         struct widget_session *ws;
 
-        assert(widget->class->stateful);
+        assert(widget->cls->stateful);
 
         ws = widget_get_session(widget, session, true);
         if (ws != NULL)

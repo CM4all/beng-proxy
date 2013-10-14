@@ -822,7 +822,7 @@ transform_uri_attribute(struct processor *processor,
 
     assert(widget != NULL);
 
-    if (widget->class == NULL && widget->class_name == NULL)
+    if (widget->cls == NULL && widget->class_name == NULL)
         return;
 
     const char *hash = value != NULL ? strref_chr(value, '#') : NULL;

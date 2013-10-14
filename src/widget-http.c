@@ -70,7 +70,7 @@ struct embed {
 static struct session *
 session_get_if_stateful(const struct embed *embed)
 {
-    return embed->widget->class->stateful
+    return embed->widget->cls->stateful
         ? session_get(embed->env->session_id)
         : NULL;
 }
@@ -108,7 +108,7 @@ widget_request_headers(struct embed *embed, const struct widget_view *view,
     if (session != NULL)
         session_put(session);
 
-    if (widget->class->info_headers) {
+    if (widget->cls->info_headers) {
         if (widget->id != NULL)
             strmap_add(headers, "x-cm4all-widget-id", widget->id);
 
@@ -499,7 +499,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
         /* yes, look it up in the class */
 
         const struct widget_view *view =
-            widget_class_view_lookup(widget->class, view_name);
+            widget_class_view_lookup(widget->cls, view_name);
         if (view == NULL) {
             /* the view specified in the response header does not
                exist, bail out */
@@ -538,7 +538,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
     /*const char *translate;*/
 
     if (headers != NULL) {
-        if (widget->class->dump_headers) {
+        if (widget->cls->dump_headers) {
             daemon_log(4, "response headers from widget '%s'\n",
                        widget_path(widget));
             strmap_rewind(headers);
@@ -665,7 +665,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
     const struct resource_address *address;
 
     assert(widget != NULL);
-    assert(widget->class != NULL);
+    assert(widget->cls != NULL);
 
     const struct widget_view *a_view = widget_get_address_view(widget);
     assert(a_view != NULL);
@@ -680,8 +680,8 @@ widget_http_request(struct pool *pool, struct widget *widget,
     embed->widget = widget;
     embed->lookup_id = NULL;
     embed->env = env;
-    embed->host_and_port = widget->class->cookie_host != NULL
-        ? widget->class->cookie_host
+    embed->host_and_port = widget->cls->cookie_host != NULL
+        ? widget->cls->cookie_host
         : resource_address_host_and_port(&a_view->address);
     embed->transformation = t_view->transformation;
 
@@ -690,7 +690,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_LHTTP,
                                      widget->from_request.body != NULL);
 
-    if (widget->class->dump_headers) {
+    if (widget->cls->dump_headers) {
         daemon_log(4, "request headers for widget '%s'\n", widget_path(widget));
         strmap_rewind(headers);
         const struct strmap_pair *pair;
@@ -733,7 +733,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     const struct resource_address *address;
 
     assert(widget != NULL);
-    assert(widget->class != NULL);
+    assert(widget->cls != NULL);
     assert(id != NULL);
     assert(handler != NULL);
     assert(handler->found != NULL);
@@ -753,8 +753,8 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     embed->widget = widget;
     embed->lookup_id = id;
     embed->env = env;
-    embed->host_and_port = widget->class->cookie_host != NULL
-        ? widget->class->cookie_host
+    embed->host_and_port = widget->cls->cookie_host != NULL
+        ? widget->cls->cookie_host
         : resource_address_host_and_port(&a_view->address);
     embed->transformation = t_view->transformation;
 

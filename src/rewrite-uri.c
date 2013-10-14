@@ -148,12 +148,12 @@ do_rewrite_widget_uri(struct pool *pool,
                       enum uri_mode mode, bool stateful,
                       const char *view)
 {
-    if (widget->class->local_uri != NULL && value != NULL &&
+    if (widget->cls->local_uri != NULL && value != NULL &&
         (value->length >= 2 && value->data[0] == '@' &&
          value->data[1] == '/'))
         /* relative to widget's "local URI" */
-        return p_strncat(pool, widget->class->local_uri,
-                         strlen(widget->class->local_uri),
+        return p_strncat(pool, widget->cls->local_uri,
+                         strlen(widget->cls->local_uri),
                          value->data + 2, value->length - 2,
                          NULL);
 
@@ -199,16 +199,16 @@ do_rewrite_widget_uri(struct pool *pool,
         return NULL;
     }
 
-    if (widget->class->untrusted_host != NULL &&
+    if (widget->cls->untrusted_host != NULL &&
         (untrusted_host == NULL ||
-         strcmp(widget->class->untrusted_host, untrusted_host) != 0))
-        uri = uri_replace_hostname(pool, uri, widget->class->untrusted_host);
-    else if (widget->class->untrusted_prefix != NULL)
+         strcmp(widget->cls->untrusted_host, untrusted_host) != 0))
+        uri = uri_replace_hostname(pool, uri, widget->cls->untrusted_host);
+    else if (widget->cls->untrusted_prefix != NULL)
         uri = uri_add_prefix(pool, uri, absolute_uri, untrusted_host,
-                             widget->class->untrusted_prefix);
-    else if (widget->class->untrusted_site_suffix != NULL)
+                             widget->cls->untrusted_prefix);
+    else if (widget->cls->untrusted_site_suffix != NULL)
         uri = uri_add_site_suffix(pool, uri, site_name, untrusted_host,
-                                  widget->class->untrusted_site_suffix);
+                                  widget->cls->untrusted_site_suffix);
 
     return uri;
 }
@@ -251,7 +251,7 @@ class_lookup_callback(void *ctx)
     struct istream *istream;
 
     bool escape = false;
-    if (rwu->widget->class != NULL &&
+    if (rwu->widget->cls != NULL &&
         widget_has_default_view(rwu->widget)) {
         const char *uri;
 
@@ -333,7 +333,7 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
 
     const char *uri;
 
-    if (widget->class != NULL) {
+    if (widget->cls != NULL) {
         if (!widget_has_default_view(widget))
             /* refuse to rewrite URIs when an invalid view name was
                specified */

@@ -59,7 +59,7 @@ processor_subst_beng_widget(struct istream *istream,
     istream_subst_add(istream, "&c:type;", widget->class_name);
     istream_subst_add(istream, "&c:class;",
                       widget_get_quoted_class_name(widget));
-    istream_subst_add(istream, "&c:local;", widget->class->local_uri);
+    istream_subst_add(istream, "&c:local;", widget->cls->local_uri);
     istream_subst_add(istream, "&c:id;", widget->id);
     istream_subst_add(istream, "&c:path;", widget_path(widget));
     istream_subst_add(istream, "&c:prefix;", widget_prefix(widget));

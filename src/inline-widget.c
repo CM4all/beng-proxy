@@ -250,7 +250,7 @@ class_lookup_callback(void *_ctx)
 {
     struct inline_widget *iw = _ctx;
 
-    if (iw->widget->class != NULL) {
+    if (iw->widget->cls != NULL) {
         inline_widget_set(iw);
     } else {
         GError *error =
@@ -305,7 +305,7 @@ embed_inline_widget(struct pool *pool, struct processor_env *env,
     iw->delayed = istream_delayed_new(pool);
     hold = istream_hold_new(pool, iw->delayed);
 
-    if (widget->class == NULL)
+    if (widget->cls == NULL)
         widget_resolver_new(pool, env->pool,
                             widget,
                             global_translate_cache,

@@ -109,17 +109,17 @@ widget_resolver_new(G_GNUC_UNUSED struct pool *pool, G_GNUC_UNUSED struct pool *
 
     if (strcmp(widget->class_name, "1") == 0) {
         address_list_init(&address1.addresses);
-        widget->class = &class1;
+        widget->cls = &class1;
     } else if (strcmp(widget->class_name, "2") == 0) {
         address_list_init(&address2.addresses);
-        widget->class = &class2;
+        widget->cls = &class2;
     } else if (strcmp(widget->class_name, "3") == 0) {
         address_list_init(&address3.addresses);
-        widget->class = &class3;
+        widget->cls = &class3;
     }
 
-    if (widget->class != NULL)
-        widget->view = widget->from_request.view = &widget->class->views;
+    if (widget->cls != NULL)
+        widget->view = widget->from_request.view = &widget->cls->views;
 
     callback(ctx);
 }

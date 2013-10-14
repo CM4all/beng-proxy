@@ -51,7 +51,7 @@ static const struct resource_address *
 widget_get_original_address(const struct widget *widget)
 {
     assert(widget != NULL);
-    assert(widget->class != NULL);
+    assert(widget->cls != NULL);
 
     const struct widget_view *view = widget_get_address_view(widget);
     assert(view != NULL);
@@ -67,7 +67,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
     struct resource_address *address;
 
     assert(widget != NULL);
-    assert(widget->class != NULL);
+    assert(widget->cls != NULL);
 
     path_info = stateful ? widget_get_path_info(widget) : widget->path_info;
     assert(path_info != NULL);
@@ -188,7 +188,7 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
         stateful = false;
     } else if (relative_uri != NULL &&
                strref_starts_with_n(relative_uri, "/", 1) &&
-               widget->class != NULL && widget->class->anchor_absolute) {
+               widget->cls != NULL && widget->cls->anchor_absolute) {
         buffer = *relative_uri;
         strref_skip(&buffer, 1);
         relative_uri = &buffer;
@@ -227,7 +227,7 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
         relative_uri_length -= 2;
         base = widget_get_original_address(widget);
     } else if (relative_uri_length >= 1 && relative_uri[0] == '/' &&
-               widget->class != NULL && widget->class->anchor_absolute) {
+               widget->cls != NULL && widget->cls->anchor_absolute) {
         relative_uri += 1;
         relative_uri_length -= 1;
         base = widget_get_original_address(widget);
@@ -287,7 +287,7 @@ widget_external_uri(struct pool *pool,
     path = widget_path(widget);
     if (path == NULL ||
         external_uri == NULL ||
-        widget->class == &root_widget_class)
+        widget->cls == &root_widget_class)
         return NULL;
 
     pool_mark(tpool, &mark);
@@ -325,7 +325,7 @@ widget_external_uri(struct pool *pool,
     }
 
     struct strref suffix;
-    if (p != NULL && widget->class->direct_addressing &&
+    if (p != NULL && widget->cls->direct_addressing &&
         compare_widget_path(widget, frame)) {
         /* new-style direct URI addressing: append */
         suffix = *p;

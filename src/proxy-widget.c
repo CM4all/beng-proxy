@@ -57,7 +57,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     struct growing_buffer *headers2;
 
     assert(widget != NULL);
-    assert(widget->class != NULL);
+    assert(widget->cls != NULL);
 
     /* XXX shall the address view or the transformation view be used
        to control response header forwarding? */
@@ -197,7 +197,7 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
             /* the client can select the view; he can never explicitly
                select the default view */
             const struct widget_view *view =
-                widget_class_view_lookup(widget->class, env->view_name);
+                widget_class_view_lookup(widget->cls, env->view_name);
             if (view == NULL || view->name == NULL) {
                 widget_cancel(widget);
                 response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
@@ -215,7 +215,7 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
             widget->from_request.view = view;
         }
 
-        if (widget->class->direct_addressing &&
+        if (widget->cls->direct_addressing &&
             !strref_is_empty(&request2->uri.path_info))
             /* apply new-style path_info to frame top widget (direct
                addressing) */
@@ -237,7 +237,7 @@ proxy_widget_resolver_callback(void *ctx)
     struct request *request2 = proxy->request;
     struct widget *widget = proxy->widget;
 
-    if (widget->class == NULL) {
+    if (widget->cls == NULL) {
         daemon_log(2, "lookup of widget class '%s' for '%s' failed\n",
                    widget->class_name, widget_path(widget));
 
@@ -260,7 +260,7 @@ widget_proxy_found(struct widget *widget, void *ctx)
     proxy->widget = widget;
     proxy->ref = proxy->ref->next;
 
-    if (widget->class == NULL) {
+    if (widget->cls == NULL) {
         widget_resolver_new(request->pool, request2->env.pool, widget,
                             global_translate_cache,
                             &proxy_widget_resolver_callback, proxy,

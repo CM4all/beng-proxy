@@ -36,7 +36,7 @@ struct widget {
      * The widget class.  May be NULL if the #class_name hasn't been
      * looked up yet.
      */
-    const struct widget_class *class;
+    const struct widget_class *cls;
 
     /**
      * The object that is currently requesting the widget class from
@@ -213,7 +213,7 @@ struct widget_ref {
 
 void
 widget_init(struct widget *widget, struct pool *pool,
-            const struct widget_class *class);
+            const struct widget_class *cls);
 
 void
 widget_init_root(struct widget *widget, struct pool *pool, const char *id);

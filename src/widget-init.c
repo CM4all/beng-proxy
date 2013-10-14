@@ -16,7 +16,7 @@ widget_init(struct widget *widget, struct pool *pool,
     widget->pool = pool;
 
     widget->class_name = NULL;
-    widget->class = class;
+    widget->cls = class;
     widget->resolver = NULL;
     widget->id = NULL;
     widget->display = WIDGET_DISPLAY_INLINE;
