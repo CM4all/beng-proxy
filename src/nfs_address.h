@@ -19,7 +19,7 @@ struct pool;
 struct nfs_address {
     const char *server;
 
-    const char *export;
+    const char *export_name;
 
     const char *path;
 
@@ -34,10 +34,10 @@ struct nfs_address {
 
 static inline void
 nfs_address_init(struct nfs_address *nfs, const char *server,
-                 const char *export, const char *path)
+                 const char *export_name, const char *path)
 {
     nfs->server = server;
-    nfs->export = export;
+    nfs->export_name = export_name;
     nfs->path = path;
     nfs->expand_path = NULL;
     nfs->content_type = NULL;
@@ -45,7 +45,7 @@ nfs_address_init(struct nfs_address *nfs, const char *server,
 
 struct nfs_address *
 nfs_address_new(struct pool *pool, const char *server,
-                const char *export, const char *path);
+                const char *export_name, const char *path);
 
 const char *
 nfs_address_id(struct pool *pool, const struct nfs_address *address);

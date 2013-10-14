@@ -13,11 +13,11 @@
 
 struct nfs_address *
 nfs_address_new(struct pool *pool, const char *server,
-                const char *export, const char *path)
+                const char *export_name, const char *path)
 {
     struct nfs_address *nfs = p_malloc(pool, sizeof(*nfs));
     nfs->server = p_strdup(pool, server);
-    nfs->export = p_strdup(pool, export);
+    nfs->export_name = p_strdup(pool, export_name);
     nfs->path = p_strdup(pool, path);
     nfs->expand_path = NULL;
     nfs->content_type = NULL;
@@ -29,10 +29,10 @@ nfs_address_id(struct pool *pool, const struct nfs_address *address)
 {
     assert(address != NULL);
     assert(address->server != NULL);
-    assert(address->export != NULL);
+    assert(address->export_name != NULL);
     assert(address->path != NULL);
 
-    return p_strcat(pool, address->server, ":", address->export, ":",
+    return p_strcat(pool, address->server, ":", address->export_name, ":",
                     address->path, NULL);
 }
 
@@ -43,11 +43,11 @@ nfs_address_copy(struct pool *pool, struct nfs_address *dest,
     assert(dest != NULL);
     assert(src != NULL);
     assert(src->server != NULL);
-    assert(src->export != NULL);
+    assert(src->export_name != NULL);
     assert(src->path != NULL);
 
     dest->server = p_strdup(pool, src->server);
-    dest->export = p_strdup(pool, src->export);
+    dest->export_name = p_strdup(pool, src->export_name);
     dest->path = p_strdup(pool, src->path);
     dest->expand_path = p_strdup_checked(pool, src->expand_path);
     dest->content_type = p_strdup_checked(pool, src->content_type);
@@ -75,7 +75,7 @@ nfs_address_save_base(struct pool *pool, const struct nfs_address *src,
 
     struct nfs_address *dest = p_malloc(pool, sizeof(*dest));
     dest->server = p_strdup(pool, src->server);
-    dest->export = p_strdup(pool, src->export);
+    dest->export_name = p_strdup(pool, src->export_name);
     dest->path = p_strndup(pool, dest->path, length);
     dest->expand_path = NULL;
     dest->content_type = p_strdup_checked(pool, src->content_type);
@@ -98,7 +98,7 @@ nfs_address_load_base(struct pool *pool, const struct nfs_address *src,
 
     struct nfs_address *dest = p_malloc(pool, sizeof(*dest));
     dest->server = p_strdup(pool, src->server);
-    dest->export = p_strdup(pool, src->export);
+    dest->export_name = p_strdup(pool, src->export_name);
     dest->path = p_strcat(pool, dest->path, unescaped, NULL);
     dest->expand_path = NULL;
     dest->content_type = p_strdup_checked(pool, src->content_type);
@@ -123,7 +123,7 @@ nfs_address_expand(struct pool *pool, const struct nfs_address *src,
 
     struct nfs_address *dest = p_malloc(pool, sizeof(*dest));
     dest->server = src->server;
-    dest->export = src->export;
+    dest->export_name = src->export_name;
     dest->path = path;
     dest->expand_path = NULL;
     dest->content_type = p_strdup_checked(pool, src->content_type);

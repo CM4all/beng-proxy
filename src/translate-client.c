@@ -1255,7 +1255,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_NFS_EXPORT:
         if (client->nfs_address == NULL ||
-            *client->nfs_address->export != 0) {
+            *client->nfs_address->export_name != 0) {
             translate_client_error(client, "misplaced TRANSLATE_NFS_EXPORT packet");
             return false;
         }
@@ -1265,7 +1265,7 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        client->nfs_address->export = payload;
+        client->nfs_address->export_name = payload;
         return true;
 
     case TRANSLATE_JAILCGI:
