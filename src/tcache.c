@@ -14,7 +14,7 @@
 #include "cache.h"
 #include "stock.h"
 #include "hashmap.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "uri-verify.h"
 #include "uri-escape.h"
 #include "strref-pool.h"

@@ -93,7 +93,7 @@ lhttp_address_insert_query_string(struct pool *pool,
                                   const char *query_string);
 
 /**
- * Duplicates this #uri_with_address object and inserts the specified
+ * Duplicates this #lhttp_address object and inserts the specified
  * arguments into the URI.
  */
 gcc_malloc

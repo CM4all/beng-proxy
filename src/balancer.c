@@ -1,5 +1,5 @@
 /*
- * Load balancer for struct uri_with_address.
+ * Load balancer for struct address_list.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */

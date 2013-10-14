@@ -318,7 +318,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
 {
     const struct request *request = &requests[num];
     struct pool *pool = pool_new_linear(root_pool, "t_http_cache", 8192);
-    struct uri_with_address uwa = {
+    struct http_address uwa = {
         .scheme = URI_SCHEME_HTTP,
         .host_and_port = "foo",
         .path = request->uri,

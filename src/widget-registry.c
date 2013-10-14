@@ -13,7 +13,7 @@
 #include "translate-client.h"
 #include "translate-request.h"
 #include "translate-response.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "transformation.h"
 #include "pool.h"
 

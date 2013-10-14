@@ -10,7 +10,7 @@
 #include "http_server.h"
 #include "http_cache.h"
 #include "http_response.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "global.h"
 #include "cookie_client.h"
 #include "uri-extract.h"

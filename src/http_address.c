@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri-address.h"
+#include "http_address.h"
 #include "uri-edit.h"
 #include "uri-base.h"
 #include "uri-relative.h"
@@ -24,15 +24,15 @@ uri_scheme_has_host(enum uri_scheme scheme)
     return scheme != URI_SCHEME_UNIX;
 }
 
-static struct uri_with_address *
-uri_address_new(struct pool *pool, enum uri_scheme scheme,
-                const char *host_and_port, const char *path)
+static struct http_address *
+http_address_new(struct pool *pool, enum uri_scheme scheme,
+                 const char *host_and_port, const char *path)
 {
     assert(pool != NULL);
     assert(uri_scheme_has_host(scheme) == (host_and_port != NULL));
     assert(path != NULL);
 
-    struct uri_with_address *uwa = p_malloc(pool, sizeof(*uwa));
+    struct http_address *uwa = p_malloc(pool, sizeof(*uwa));
     uwa->scheme = scheme;
     uwa->host_and_port = host_and_port;
     uwa->path = path;
@@ -42,11 +42,11 @@ uri_address_new(struct pool *pool, enum uri_scheme scheme,
 }
 
 /**
- * Utility function used by uri_address_parse().
+ * Utility function used by http_address_parse().
  */
-static struct uri_with_address *
-uri_address_parse2(struct pool *pool, enum uri_scheme scheme,
-                   const char *uri, GError **error_r)
+static struct http_address *
+http_address_parse2(struct pool *pool, enum uri_scheme scheme,
+                    const char *uri, GError **error_r)
 {
     assert(pool != NULL);
     assert(uri != NULL);
@@ -55,7 +55,7 @@ uri_address_parse2(struct pool *pool, enum uri_scheme scheme,
     const char *host_and_port;
     if (path != NULL) {
         if (path == uri || !uri_path_verify_quick(path)) {
-            g_set_error(error_r, uri_address_quark(), 0,
+            g_set_error(error_r, http_address_quark(), 0,
                         "malformed HTTP URI");
             return NULL;
         }
@@ -67,45 +67,45 @@ uri_address_parse2(struct pool *pool, enum uri_scheme scheme,
         path = "/";
     }
 
-    return uri_address_new(pool, scheme, host_and_port, path);
+    return http_address_new(pool, scheme, host_and_port, path);
 }
 
-struct uri_with_address *
-uri_address_parse(struct pool *pool, const char *uri, GError **error_r)
+struct http_address *
+http_address_parse(struct pool *pool, const char *uri, GError **error_r)
 {
     if (memcmp(uri, "http://", 7) == 0)
-        return uri_address_parse2(pool, URI_SCHEME_HTTP, uri + 7, error_r);
+        return http_address_parse2(pool, URI_SCHEME_HTTP, uri + 7, error_r);
     else if (memcmp(uri, "ajp://", 6) == 0)
-        return uri_address_parse2(pool, URI_SCHEME_AJP, uri + 6, error_r);
+        return http_address_parse2(pool, URI_SCHEME_AJP, uri + 6, error_r);
     else if (memcmp(uri, "unix:/", 6) == 0)
-        return uri_address_new(pool, URI_SCHEME_UNIX, NULL, uri + 5);
+        return http_address_new(pool, URI_SCHEME_UNIX, NULL, uri + 5);
 
-    g_set_error(error_r, uri_address_quark(), 0,
+    g_set_error(error_r, http_address_quark(), 0,
                 "unrecognized URI");
     return NULL;
 }
 
-struct uri_with_address *
-uri_address_with_path(struct pool *pool, const struct uri_with_address *uwa,
-                      const char *path)
+struct http_address *
+http_address_with_path(struct pool *pool, const struct http_address *uwa,
+                       const char *path)
 {
-    struct uri_with_address *p =
-        uri_address_new(pool, uwa->scheme, uwa->host_and_port, path);
+    struct http_address *p =
+        http_address_new(pool, uwa->scheme, uwa->host_and_port, path);
     p->expand_path = p_strdup_checked(pool, uwa->expand_path);
     address_list_copy(pool, &p->addresses, &uwa->addresses);
     return p;
 }
 
-struct uri_with_address *
-uri_address_dup(struct pool *pool, const struct uri_with_address *uwa)
+struct http_address *
+http_address_dup(struct pool *pool, const struct http_address *uwa)
 {
     assert(pool != NULL);
     assert(uwa != NULL);
 
-    struct uri_with_address *p =
-        uri_address_new(pool, uwa->scheme,
-                        p_strdup(pool, uwa->host_and_port),
-                        p_strdup(pool, uwa->path));
+    struct http_address *p =
+        http_address_new(pool, uwa->scheme,
+                         p_strdup(pool, uwa->host_and_port),
+                         p_strdup(pool, uwa->path));
 
     p->expand_path = p_strdup_checked(pool, uwa->expand_path);
     address_list_copy(pool, &p->addresses, &uwa->addresses);
@@ -113,15 +113,15 @@ uri_address_dup(struct pool *pool, const struct uri_with_address *uwa)
     return p;
 }
 
-struct uri_with_address *
-uri_address_dup_with_path(struct pool *pool,
-                          const struct uri_with_address *uwa,
-                          const char *path)
+struct http_address *
+http_address_dup_with_path(struct pool *pool,
+                           const struct http_address *uwa,
+                           const char *path)
 {
-    struct uri_with_address *p =
-        uri_address_new(pool, uwa->scheme,
-                        p_strdup(pool, uwa->host_and_port),
-                        path);
+    struct http_address *p =
+        http_address_new(pool, uwa->scheme,
+                         p_strdup(pool, uwa->host_and_port),
+                         path);
     p->expand_path = p_strdup_checked(pool, uwa->expand_path);
     address_list_copy(pool, &p->addresses, &uwa->addresses);
     return p;
@@ -147,9 +147,9 @@ uri_scheme_prefix(enum uri_scheme p)
 }
 
 char *
-uri_address_absolute_with_path(struct pool *pool,
-                               const struct uri_with_address *uwa,
-                               const char *path)
+http_address_absolute_with_path(struct pool *pool,
+                                const struct http_address *uwa,
+                                const char *path)
 {
     assert(pool != NULL);
     assert(uwa != NULL);
@@ -163,39 +163,39 @@ uri_address_absolute_with_path(struct pool *pool,
 }
 
 char *
-uri_address_absolute(struct pool *pool, const struct uri_with_address *uwa)
+http_address_absolute(struct pool *pool, const struct http_address *uwa)
 {
     assert(pool != NULL);
     assert(uwa != NULL);
 
-    return uri_address_absolute_with_path(pool, uwa, uwa->path);
+    return http_address_absolute_with_path(pool, uwa, uwa->path);
 }
 
-struct uri_with_address *
-uri_address_insert_query_string(struct pool *pool,
-                                const struct uri_with_address *uwa,
-                                const char *query_string)
+struct http_address *
+http_address_insert_query_string(struct pool *pool,
+                                 const struct http_address *uwa,
+                                 const char *query_string)
 {
-    return uri_address_with_path(pool, uwa,
-                                 uri_insert_query_string(pool, uwa->path,
-                                                         query_string));
+    return http_address_with_path(pool, uwa,
+                                  uri_insert_query_string(pool, uwa->path,
+                                                          query_string));
 }
 
-struct uri_with_address *
-uri_address_insert_args(struct pool *pool,
-                        const struct uri_with_address *uwa,
-                        const char *args, size_t args_length,
-                        const char *path, size_t path_length)
+struct http_address *
+http_address_insert_args(struct pool *pool,
+                         const struct http_address *uwa,
+                         const char *args, size_t args_length,
+                         const char *path, size_t path_length)
 {
-    return uri_address_with_path(pool, uwa,
-                                 uri_insert_args(pool, uwa->path,
-                                                 args, args_length,
-                                                 path, path_length));
+    return http_address_with_path(pool, uwa,
+                                  uri_insert_args(pool, uwa->path,
+                                                  args, args_length,
+                                                  path, path_length));
 }
 
-struct uri_with_address *
-uri_address_save_base(struct pool *pool, const struct uri_with_address *src,
-                      const char *suffix)
+struct http_address *
+http_address_save_base(struct pool *pool, const struct http_address *src,
+                       const char *suffix)
 {
     assert(pool != NULL);
     assert(src != NULL);
@@ -205,13 +205,13 @@ uri_address_save_base(struct pool *pool, const struct uri_with_address *src,
     if (length == (size_t)-1)
         return NULL;
 
-    return uri_address_dup_with_path(pool, src,
-                                     p_strndup(pool, src->path, length));
+    return http_address_dup_with_path(pool, src,
+                                      p_strndup(pool, src->path, length));
 }
 
-struct uri_with_address *
-uri_address_load_base(struct pool *pool, const struct uri_with_address *src,
-                      const char *suffix)
+struct http_address *
+http_address_load_base(struct pool *pool, const struct http_address *src,
+                       const char *suffix)
 {
     assert(pool != NULL);
     assert(src != NULL);
@@ -221,21 +221,21 @@ uri_address_load_base(struct pool *pool, const struct uri_with_address *src,
     assert(src->expand_path != NULL ||
            src->path[strlen(src->path) - 1] == '/');
 
-    return uri_address_dup_with_path(pool, src,
-                                     p_strcat(pool, src->path, suffix, NULL));
+    return http_address_dup_with_path(pool, src,
+                                      p_strcat(pool, src->path, suffix, NULL));
 }
 
-const struct uri_with_address *
-uri_address_apply(struct pool *pool, const struct uri_with_address *src,
-                  const char *relative, size_t relative_length)
+const struct http_address *
+http_address_apply(struct pool *pool, const struct http_address *src,
+                   const char *relative, size_t relative_length)
 {
     if (relative_length == 0)
         return src;
 
     if (uri_has_protocol(relative, relative_length)) {
-        struct uri_with_address *other =
-            uri_address_parse(pool, p_strndup(pool, relative, relative_length),
-                              NULL);
+        struct http_address *other =
+            http_address_parse(pool, p_strndup(pool, relative, relative_length),
+                               NULL);
         if (other == NULL || other->scheme != src->scheme)
             return NULL;
 
@@ -253,13 +253,13 @@ uri_address_apply(struct pool *pool, const struct uri_with_address *src,
                                  relative, relative_length);
     assert(p != NULL);
 
-    return uri_address_with_path(pool, src, p);
+    return http_address_with_path(pool, src, p);
 }
 
 const struct strref *
-uri_address_relative(const struct uri_with_address *base,
-                     const struct uri_with_address *uwa,
-                     struct strref *buffer)
+http_address_relative(const struct http_address *base,
+                      const struct http_address *uwa,
+                      struct strref *buffer)
 {
     if (base->scheme != uwa->scheme)
         return NULL;
@@ -275,8 +275,8 @@ uri_address_relative(const struct uri_with_address *base,
 }
 
 bool
-uri_address_expand(struct pool *pool, struct uri_with_address *uwa,
-                   const GMatchInfo *match_info, GError **error_r)
+http_address_expand(struct pool *pool, struct http_address *uwa,
+                    const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != NULL);
     assert(uwa != NULL);

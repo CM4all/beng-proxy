@@ -1,4 +1,4 @@
-#include "uri-address.h"
+#include "http_address.h"
 #include "pool.h"
 
 #include <assert.h>
@@ -7,8 +7,8 @@
 static void
 test_unix(struct pool *pool)
 {
-    struct uri_with_address *a =
-        uri_address_parse(pool, "unix:/var/run/foo", NULL);
+    struct http_address *a =
+        http_address_parse(pool, "unix:/var/run/foo", NULL);
     assert(a != NULL);
     assert(a->scheme == URI_SCHEME_UNIX);
     assert(a->host_and_port == NULL);
@@ -18,42 +18,42 @@ test_unix(struct pool *pool)
 static void
 test_apply(struct pool *pool)
 {
-    struct uri_with_address *a =
-        uri_address_parse(pool, "http://localhost/foo", NULL);
+    struct http_address *a =
+        http_address_parse(pool, "http://localhost/foo", NULL);
     assert(a != NULL);
     assert(a->scheme == URI_SCHEME_HTTP);
     assert(a->host_and_port != NULL);
     assert(strcmp(a->host_and_port, "localhost") == 0);
     assert(strcmp(a->path, "/foo") == 0);
 
-    const struct uri_with_address *b = uri_address_apply(pool, a, "", 0);
+    const struct http_address *b = http_address_apply(pool, a, "", 0);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/foo") == 0);
 
-    b = uri_address_apply(pool, a, "bar", 3);
+    b = http_address_apply(pool, a, "bar", 3);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/bar") == 0);
 
-    b = uri_address_apply(pool, a, "/", 1);
+    b = http_address_apply(pool, a, "/", 1);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/") == 0);
 
-    b = uri_address_apply(pool, a, "http://example.com/", 29);
+    b = http_address_apply(pool, a, "http://example.com/", 29);
     assert(b == NULL);
 
-    b = uri_address_apply(pool, a, "http://localhost/bar", 30);
+    b = http_address_apply(pool, a, "http://localhost/bar", 30);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/bar") == 0);
 
-    b = uri_address_apply(pool, a, "?query", 6);
+    b = http_address_apply(pool, a, "?query", 6);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);

@@ -10,7 +10,7 @@
 #include "stock.h"
 #include "async.h"
 #include "ajp-client.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "strmap.h"
 #include "lease.h"
 #include "tcp-stock.h"
@@ -118,7 +118,7 @@ ajp_stock_request(struct pool *pool,
                   const char *remote_host, const char *server_name,
                   unsigned server_port, bool is_ssl,
                   http_method_t method,
-                  const struct uri_with_address *uwa,
+                  const struct http_address *uwa,
                   struct strmap *headers,
                   struct istream *body,
                   const struct http_response_handler *handler,

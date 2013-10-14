@@ -1,7 +1,7 @@
 #include "widget-registry.h"
 #include "async.h"
 #include "stock.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "tcache.h"
 #include "tstock.h"
 #include "translate-client.h"
@@ -69,7 +69,7 @@ tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
         struct translate_response *response =
             p_calloc(pool, sizeof(*response));
         response->address.type = RESOURCE_ADDRESS_HTTP;
-        response->address.u.http = uri_address_parse(pool, "http://foo/", NULL);
+        response->address.u.http = http_address_parse(pool, "http://foo/", NULL);
         response->views = p_calloc(pool, sizeof(*response->views));
         response->views->address = response->address;
         handler->response(response, ctx);

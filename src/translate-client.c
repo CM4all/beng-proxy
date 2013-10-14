@@ -15,7 +15,7 @@
 #include "processor.h"
 #include "css_processor.h"
 #include "async.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "lhttp_address.h"
 #include "strutil.h"
 #include "strmap.h"
@@ -699,7 +699,7 @@ translate_handle_packet(struct translate_client *client,
     GError *error = NULL;
 
     switch ((enum beng_translation_command)command) {
-        struct uri_with_address *uwa;
+        struct http_address *uwa;
 
     case TRANSLATE_END:
         stopwatch_event(client->stopwatch, "end");
@@ -943,7 +943,7 @@ translate_handle_packet(struct translate_client *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_HTTP;
         client->resource_address->u.http = uwa =
-            uri_address_parse(client->pool, payload, &error);
+            http_address_parse(client->pool, payload, &error);
         if (uwa == NULL) {
             translate_client_abort(client, error);
             return false;
@@ -1218,7 +1218,7 @@ translate_handle_packet(struct translate_client *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_AJP;
         client->resource_address->u.http = uwa =
-            uri_address_parse(client->pool, payload, &error);
+            http_address_parse(client->pool, payload, &error);
         if (uwa == NULL) {
             translate_client_abort(client, error);
             return false;

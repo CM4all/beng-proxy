@@ -12,7 +12,7 @@
 #include "stock.h"
 #include "async.h"
 #include "http_client.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "growing-buffer.h"
 #include "lease.h"
 #include "abort-close.h"
@@ -35,7 +35,7 @@ struct http_request {
     const struct address_envelope *current_address;
 
     http_method_t method;
-    const struct uri_with_address *uwa;
+    const struct http_address *uwa;
     struct growing_buffer *headers;
     struct istream *body;
 
@@ -183,7 +183,7 @@ http_request(struct pool *pool,
              struct tcp_balancer *tcp_balancer,
              unsigned session_sticky,
              http_method_t method,
-             const struct uri_with_address *uwa,
+             const struct http_address *uwa,
              struct growing_buffer *headers,
              struct istream *body,
              const struct http_response_handler *handler,

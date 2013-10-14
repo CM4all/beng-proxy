@@ -12,7 +12,7 @@
 struct pool;
 struct istream;
 struct tcp_balancer;
-struct uri_with_address;
+struct http_address;
 struct growing_buffer;
 struct http_response_handler;
 struct async_operation_ref;
@@ -26,7 +26,7 @@ http_request(struct pool *pool,
              struct tcp_balancer *tcp_balancer,
              unsigned session_sticky,
              http_method_t method,
-             const struct uri_with_address *uwa,
+             const struct http_address *address,
              struct growing_buffer *headers, struct istream *body,
              const struct http_response_handler *handler,
              void *handler_ctx,

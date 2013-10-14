@@ -10,7 +10,7 @@
 
 #include "pool.h"
 #include "file-address.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "cgi-address.h"
 #include "nfs_address.h"
 #include "jail.h"
@@ -39,7 +39,7 @@ struct resource_address {
     union {
         struct file_address local;
 
-        const struct uri_with_address *http;
+        const struct http_address *http;
 
         const struct lhttp_address *lhttp;
 

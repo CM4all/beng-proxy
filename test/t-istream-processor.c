@@ -7,7 +7,7 @@
 #include "session_manager.h"
 #include "inline-widget.h"
 #include "widget-registry.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "global.h"
 #include "crash.h"
 

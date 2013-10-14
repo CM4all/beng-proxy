@@ -36,8 +36,8 @@ string_equals(const char *a, const char *b)
 }
 
 static bool
-uri_address_equals(const struct uri_with_address *a,
-                   const struct uri_with_address *b)
+http_address_equals(const struct http_address *a,
+                    const struct http_address *b)
 {
     return a->scheme == b->scheme &&
         string_equals(a->host_and_port, b->host_and_port) &&
@@ -87,7 +87,7 @@ resource_address_equals(const struct resource_address *a,
         assert(a->u.http != NULL);
         assert(b->u.http != NULL);
 
-        return uri_address_equals(a->u.http, b->u.http);
+        return http_address_equals(a->u.http, b->u.http);
 
     default:
         /* not implemented */
@@ -1158,7 +1158,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
     static const struct translate_request request1 = {
         .uri = "/regex-expand4/foo/bar.jpg/b=c",
     };
-    static const struct uri_with_address uwa1n = {
+    static const struct http_address uwa1n = {
         .scheme = URI_SCHEME_HTTP,
         .host_and_port = "localhost:8080",
         .path = "/foo/bar.jpg",
@@ -1176,7 +1176,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
         .max_age = -1,
         .user_max_age = -1,
     };
-    static const struct uri_with_address uwa1e = {
+    static const struct http_address uwa1e = {
         .scheme = URI_SCHEME_HTTP,
         .host_and_port = "localhost:8080",
         .path = "/foo/bar.jpg",
@@ -1204,7 +1204,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
     static const struct translate_request request2 = {
         .uri = "/regex-expand4/x/y/z.jpg/d=e",
     };
-    static const struct uri_with_address uwa2 = {
+    static const struct http_address uwa2 = {
         .scheme = URI_SCHEME_HTTP,
         .host_and_port = "localhost:8080",
         .path = "/x/y/z.jpg",

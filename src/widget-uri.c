@@ -13,7 +13,7 @@
 #include "tpool.h"
 #include "strref.h"
 #include "strref-pool.h"
-#include "uri-address.h"
+#include "http_address.h"
 #include "lhttp_address.h"
 
 #include <assert.h>
@@ -195,13 +195,13 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
         stateful = false;
     }
 
-    const struct uri_with_address *uwa =
+    const struct http_address *uwa =
         (stateful
          ? widget_address(widget)
          : widget_stateless_address(widget))->u.http;
     const char *base = uwa->path;
     if (relative_uri == NULL)
-        return uri_address_absolute(pool, uwa);
+        return http_address_absolute(pool, uwa);
 
     const char *uri = uri_absolute(pool, base, relative_uri->data,
                                    relative_uri->length);
@@ -212,7 +212,7 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
            string */
         uri = uri_insert_query_string(pool, uri, widget->query_string);
 
-    return uri_address_absolute_with_path(pool, uwa, uri);
+    return http_address_absolute_with_path(pool, uwa, uri);
 }
 
 const struct strref *

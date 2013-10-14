@@ -29,7 +29,7 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
         assert(src->u.http != NULL);
-        dest->u.http = uri_address_dup(pool, src->u.http);
+        dest->u.http = http_address_dup(pool, src->u.http);
         break;
 
     case RESOURCE_ADDRESS_LHTTP:
@@ -72,7 +72,7 @@ resource_address_dup_with_path(struct pool *pool,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        dest->u.http = uri_address_dup_with_path(pool, src->u.http, path);
+        dest->u.http = http_address_dup_with_path(pool, src->u.http, path);
         break;
 
     case RESOURCE_ADDRESS_LHTTP:
@@ -112,8 +112,8 @@ resource_address_insert_query_string_from(struct pool *pool,
 
         dest = p_malloc(pool, sizeof(*dest));
         dest->type = src->type;
-        dest->u.http = uri_address_insert_query_string(pool, src->u.http,
-                                                       query_string);
+        dest->u.http = http_address_insert_query_string(pool, src->u.http,
+                                                        query_string);
         return dest;
 
     case RESOURCE_ADDRESS_LHTTP:
@@ -179,9 +179,9 @@ resource_address_insert_args(struct pool *pool,
 
         dest = p_malloc(pool, sizeof(*dest));
         dest->type = src->type;
-        dest->u.http = uri_address_insert_args(pool, src->u.http,
-                                               args, args_length,
-                                               path, path_length);
+        dest->u.http = http_address_insert_args(pool, src->u.http,
+                                                args, args_length,
+                                                path, path_length);
         return dest;
 
     case RESOURCE_ADDRESS_LHTTP:
@@ -287,7 +287,7 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        dest->u.http = uri_address_save_base(pool, src->u.http, suffix);
+        dest->u.http = http_address_save_base(pool, src->u.http, suffix);
         if (dest->u.http == NULL)
             return NULL;
 
@@ -344,7 +344,7 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        dest->u.http = uri_address_load_base(pool, src->u.http, suffix);
+        dest->u.http = http_address_load_base(pool, src->u.http, suffix);
         if (dest->u.http == NULL)
             return NULL;
 
@@ -375,7 +375,7 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
                        const char *relative, size_t relative_length,
                        struct resource_address *buffer)
 {
-    const struct uri_with_address *uwa;
+    const struct http_address *uwa;
     const struct cgi_address *cgi;
     const struct lhttp_address *lhttp;
 
@@ -394,7 +394,7 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        uwa = uri_address_apply(pool, src->u.http, relative, relative_length);
+        uwa = http_address_apply(pool, src->u.http, relative, relative_length);
         if (uwa == NULL)
             return NULL;
 
@@ -460,7 +460,7 @@ resource_address_relative(const struct resource_address *base,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        return uri_address_relative(base->u.http, address->u.http, buffer);
+        return http_address_relative(base->u.http, address->u.http, buffer);
 
     case RESOURCE_ADDRESS_LHTTP:
         return lhttp_address_relative(base->u.lhttp, address->u.lhttp, buffer);
@@ -491,7 +491,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        return uri_address_absolute(pool, address->u.http);
+        return http_address_absolute(pool, address->u.http);
 
     case RESOURCE_ADDRESS_LHTTP:
         return lhttp_address_id(pool, address->u.lhttp);
@@ -589,7 +589,7 @@ resource_address_is_expandable(const struct resource_address *address)
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        return uri_address_is_expandable(address->u.http);
+        return http_address_is_expandable(address->u.http);
 
     case RESOURCE_ADDRESS_LHTTP:
         return lhttp_address_is_expandable(address->u.lhttp);
@@ -612,7 +612,7 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
 
     switch (address->type) {
         struct cgi_address *cgi;
-        struct uri_with_address *uwa;
+        struct http_address *uwa;
         struct lhttp_address *lhttp;
         const struct nfs_address *nfs;
 
@@ -634,20 +634,20 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        /* copy the uri_with_address object (it's a pointer, not
+        /* copy the http_address object (it's a pointer, not
            in-line) and expand it */
-        address->u.http = uwa = uri_address_dup(pool, address->u.http);
-        return uri_address_expand(pool, uwa,
-                                  match_info, error_r);
+        address->u.http = uwa = http_address_dup(pool, address->u.http);
+        return http_address_expand(pool, uwa,
+                                   match_info, error_r);
 
     case RESOURCE_ADDRESS_LHTTP:
-        /* copy the uri_with_address object (it's a pointer, not
+        /* copy the lhttp_address object (it's a pointer, not
            in-line) and expand it */
         address->u.lhttp = lhttp = lhttp_address_dup(pool, address->u.lhttp);
         return lhttp_address_expand(pool, lhttp, match_info, error_r);
 
     case RESOURCE_ADDRESS_NFS:
-        /* copy the uri_with_address object (it's a pointer, not
+        /* copy the nfs_address object (it's a pointer, not
            in-line) and expand it */
         nfs = nfs_address_expand(pool, address->u.nfs, match_info, error_r);
         if (nfs == NULL)
