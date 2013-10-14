@@ -69,7 +69,7 @@ struct session {
 
     /** is this a new session, i.e. there hasn't been a second request
         yet? */
-    bool new;
+    bool is_new;
 
     /** has a HTTP cookie with this session id already been sent? */
     bool cookie_sent;

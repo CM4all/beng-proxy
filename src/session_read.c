@@ -283,7 +283,7 @@ do_read_session(FILE *file, struct dpool *pool, struct session *session)
     return read_session_id(file, &session->id) &&
         read_time(file, &session->expires) &&
         read_32(file, &session->counter) &&
-        read_bool(file, &session->new) &&
+        read_bool(file, &session->is_new) &&
         read_bool(file, &session->cookie_sent) &&
         read_bool(file, &session->cookie_received) &&
         read_string_const(file, pool, &session->realm) &&

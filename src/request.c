@@ -108,7 +108,7 @@ request_load_session(struct request *request, const char *session_id)
     if (!session->cookie_sent)
         request->send_session_cookie = true;
 
-    session->new = false;
+    session->is_new = false;
 
     return session;
 }

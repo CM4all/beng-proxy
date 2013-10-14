@@ -168,7 +168,7 @@ session_write(FILE *file, const struct session *session)
     return write_session_id(file, &session->id) &&
         write_64(file, session->expires) &&
         write_32(file, session->counter) &&
-        write_bool(file, session->new) &&
+        write_bool(file, session->is_new) &&
         write_bool(file, session->cookie_sent) &&
         write_bool(file, session->cookie_received) &&
         write_string(file, session->realm) &&

@@ -61,7 +61,7 @@ session_destroy(struct session *session)
 unsigned
 session_purge_score(const struct session *session)
 {
-    if (session->new)
+    if (session->is_new)
         return 1000;
 
     if (!session->cookie_received)
