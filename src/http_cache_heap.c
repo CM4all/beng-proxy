@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-cache-heap.h"
-#include "http-cache-internal.h"
-#include "http-cache-age.h"
+#include "http_cache_heap.h"
+#include "http_cache_internal.h"
+#include "http_cache_age.h"
 #include "cache.h"
 #include "istream.h"
 #include "rubber.h"

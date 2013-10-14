@@ -11,8 +11,8 @@
 #include "format.h"
 #include "date.h"
 #include "request.h"
-#include "http-server.h"
-#include "http-util.h"
+#include "http_server.h"
+#include "http_util.h"
 #include "tvary.h"
 
 #include <assert.h>

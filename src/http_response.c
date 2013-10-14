@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-response.h"
+#include "http_response.h"
 #include "strmap.h"
 #include "istream.h"
 

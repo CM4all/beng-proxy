@@ -7,9 +7,9 @@
 
 #include "resource-loader.h"
 #include "resource-address.h"
-#include "http-cache.h"
-#include "http-request.h"
-#include "http-response.h"
+#include "http_cache.h"
+#include "http_request.h"
+#include "http_response.h"
 #include "static-file.h"
 #include "lhttp_request.h"
 #include "cgi.h"

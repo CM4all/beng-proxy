@@ -7,7 +7,7 @@
 #include "connection.h"
 #include "instance.h"
 #include "strmap.h"
-#include "http-server.h"
+#include "http_server.h"
 #include "handler.h"
 #include "access-log.h"
 #include "drop.h"

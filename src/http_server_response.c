@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-server-internal.h"
+#include "http_server_internal.h"
 #include "direct.h"
 #include "istream-internal.h"
 #include "fd-util.h"

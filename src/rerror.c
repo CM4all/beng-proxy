@@ -6,17 +6,17 @@
 
 #include "request.h"
 #include "translate-client.h"
-#include "http-client.h"
+#include "http_client.h"
 #include "ajp-client.h"
 #include "memcached-client.h"
 #include "cgi-quark.h"
 #include "fcgi-quark.h"
 #include "was-quark.h"
 #include "widget-quark.h"
-#include "http-error.h"
-#include "http-response.h"
-#include "http-server.h"
-#include "http-quark.h"
+#include "http_error.h"
+#include "http_response.h"
+#include "http_server.h"
+#include "http_quark.h"
 #include "gerrno.h"
 
 void

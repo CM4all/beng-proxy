@@ -5,7 +5,7 @@
  */
 
 #include "instance.h"
-#include "http-cache.h"
+#include "http_cache.h"
 #include "fcache.h"
 
 void

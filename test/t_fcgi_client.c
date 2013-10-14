@@ -5,7 +5,7 @@
 #include "tio.h"
 #include "fcgi-client.h"
 #include "fcgi-protocol.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "async.h"
 #include "fd-util.h"
 #include "header-writer.h"

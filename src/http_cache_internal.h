@@ -1,7 +1,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_INTERNAL_H
 #define BENG_PROXY_HTTP_CACHE_INTERNAL_H
 
-#include "http-cache.h"
+#include "http_cache.h"
 
 #include <http/status.h>
 

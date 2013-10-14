@@ -9,7 +9,7 @@
 #include "translate-request.h"
 #include "translate-response.h"
 #include "translate-client.h"
-#include "http-quark.h"
+#include "http_quark.h"
 #include "widget-class.h"
 #include "cache.h"
 #include "stock.h"

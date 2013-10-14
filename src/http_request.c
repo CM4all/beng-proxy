@@ -4,14 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-request.h"
-#include "http-response.h"
+#include "http_request.h"
+#include "http_response.h"
 #include "header-writer.h"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"
 #include "stock.h"
 #include "async.h"
-#include "http-client.h"
+#include "http_client.h"
 #include "uri-address.h"
 #include "growing-buffer.h"
 #include "lease.h"

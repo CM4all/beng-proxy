@@ -3,7 +3,7 @@
 #include "shutdown_listener.h"
 #include "async.h"
 #include "pool.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "istream.h"
 #include "sink_fd.h"
 #include "direct.h"

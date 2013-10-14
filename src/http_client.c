@@ -4,14 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-client.h"
-#include "http-response.h"
+#include "http_client.h"
+#include "http_response.h"
 #include "fifo-buffer.h"
 #include "strutil.h"
 #include "header-parser.h"
 #include "header-writer.h"
 #include "pevent.h"
-#include "http-body.h"
+#include "http_body.h"
 #include "istream-internal.h"
 #include "istream-gb.h"
 #include "async.h"

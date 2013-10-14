@@ -7,7 +7,7 @@
 #include "processor.h"
 #include "penv.h"
 #include "async.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "istream.h"
 
 #include <stdlib.h>

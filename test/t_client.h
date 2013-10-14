@@ -1,4 +1,4 @@
-#include "http-response.h"
+#include "http_response.h"
 #include "async.h"
 #include "lease.h"
 #include "istream.h"
@@ -6,7 +6,7 @@
 #include "fb_pool.h"
 
 #ifdef HAVE_EXPECT_100
-#include "http-client.h"
+#include "http_client.h"
 #endif
 
 #include <inline/compiler.h>

@@ -5,7 +5,7 @@
 #include "t_client.h"
 #include "ajp-client.h"
 #include "ajp-protocol.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "duplex.h"
 #include "async.h"
 #include "fd-util.h"

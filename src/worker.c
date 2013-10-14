@@ -5,7 +5,7 @@
  */
 
 #include "worker.h"
-#include "http-server.h"
+#include "http_server.h"
 #include "pool.h"
 #include "instance.h"
 #include "connection.h"

@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-cache-internal.h"
-#include "http-util.h"
+#include "http_cache_internal.h"
+#include "http_util.h"
 #include "strref2.h"
 #include "strmap.h"
 #include "date.h"

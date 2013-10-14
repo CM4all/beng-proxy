@@ -1,5 +1,5 @@
 #include "memcached-client.h"
-#include "http-cache-internal.h"
+#include "http_cache_internal.h"
 #include "lease.h"
 #include "async.h"
 #include "fd-util.h"

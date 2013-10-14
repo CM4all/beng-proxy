@@ -15,7 +15,7 @@
 #include "request.h"
 #include "connection.h"
 #include "instance.h"
-#include "http-server.h"
+#include "http_server.h"
 
 #include <assert.h>
 #include <sys/stat.h>

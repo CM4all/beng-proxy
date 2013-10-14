@@ -18,7 +18,7 @@
 #include "header-writer.h"
 #include "strref-pool.h"
 #include "dpool.h"
-#include "http-server.h"
+#include "http_server.h"
 #include "transformation.h"
 #include "expiry.h"
 #include "uri-escape.h"

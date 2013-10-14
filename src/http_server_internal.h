@@ -7,9 +7,9 @@
 #ifndef __BENG_HTTP_SERVER_INTERNAL_H
 #define __BENG_HTTP_SERVER_INTERNAL_H
 
-#include "http-server.h"
+#include "http_server.h"
 #include "fifo-buffer.h"
-#include "http-body.h"
+#include "http_body.h"
 #include "async.h"
 #include "filtered_socket.h"
 

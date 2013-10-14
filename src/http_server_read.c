@@ -6,8 +6,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-server-internal.h"
-#include "http-util.h"
+#include "http_server_internal.h"
+#include "http_util.h"
 #include "strutil.h"
 #include "strmap.h"
 #include "buffered_io.h"

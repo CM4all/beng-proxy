@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-body.h"
-#include "http-error.h"
+#include "http_body.h"
+#include "http_error.h"
 #include "istream-internal.h"
 #include "filtered_socket.h"
 

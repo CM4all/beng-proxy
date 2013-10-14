@@ -8,7 +8,7 @@
 #include "was-quark.h"
 #include "was-stock.h"
 #include "was-client.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "lease.h"
 #include "tcp-stock.h"
 #include "stock.h"

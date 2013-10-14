@@ -166,29 +166,29 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/header-copy.c src/header-copy.h \
 	src/hostname.c src/hostname.h \
 	src/html-chars.h \
-	src/http-body.c src/http-body.h \
-	src/http-cache.c src/http-cache.h \
-	src/http-cache-choice.c src/http-cache-choice.h \
-	src/http-cache-internal.h \
-	src/http-cache-document.c \
-	src/http-cache-age.c src/http-cache-age.h \
-	src/http-cache-heap.c src/http-cache-heap.h \
-	src/http-cache-info.c \
-	src/http-cache-memcached.c src/http-cache-memcached.h \
-	src/http-cache-rfc.c \
-	src/http-client.c src/http-client.h \
-	src/http-error.c src/http-error.h \
-	src/http-request.c src/http-request.h \
-	src/http-server-internal.h \
-	src/http-server.c src/http-server.h \
-	src/http-server-send.c \
-	src/http-server-request.c \
-	src/http-server-read.c \
-	src/http-server-response.c \
-	src/http-string.c src/http-string.h \
-	src/http-util.c src/http-util.h \
-	src/http-quark.h \
-	src/http-response.c src/http-response.h \
+	src/http_body.c src/http_body.h \
+	src/http_cache.c src/http_cache.h \
+	src/http_cache_choice.c src/http_cache_choice.h \
+	src/http_cache_internal.h \
+	src/http_cache_document.c \
+	src/http_cache_age.c src/http_cache_age.h \
+	src/http_cache_heap.c src/http_cache_heap.h \
+	src/http_cache_info.c \
+	src/http_cache_memcached.c src/http_cache_memcached.h \
+	src/http_cache_rfc.c \
+	src/http_client.c src/http_client.h \
+	src/http_error.c src/http_error.h \
+	src/http_request.c src/http_request.h \
+	src/http_server_internal.h \
+	src/http_server.c src/http_server.h \
+	src/http_server_send.c \
+	src/http_server_request.c \
+	src/http_server_read.c \
+	src/http_server_response.c \
+	src/http_string.c src/http_string.h \
+	src/http_util.c src/http_util.h \
+	src/http_quark.h \
+	src/http_response.c src/http_response.h \
 	src/control_server.c src/control_server.h \
 	src/control_local.c src/control_local.h \
 	src/bp_stats.c src/bp_stats.h \
@@ -414,15 +414,15 @@ src_cm4all_beng_lb_SOURCES = \
 	src/hashmap.c \
 	src/strmap.c \
 	src/cache.c \
-	src/http-body.c \
-	src/http-server.c \
-	src/http-server-send.c \
-	src/http-server-request.c \
-	src/http-server-read.c \
-	src/http-server-response.c \
-	src/http-client.c \
-	src/http-string.c \
-	src/http-util.c src/http-util.h \
+	src/http_body.c \
+	src/http_server.c \
+	src/http_server_send.c \
+	src/http_server_request.c \
+	src/http_server_read.c \
+	src/http_server_response.c \
+	src/http_client.c \
+	src/http_string.c \
+	src/http_util.c src/http_util.h \
 	src/header-writer.c \
 	src/header-parser.c \
 	src/uri-verify.c \
@@ -856,7 +856,7 @@ test_t_tcache_LDADD = $(AM_LDADD) \
 test_t_header_forward_SOURCES = test/t-header-forward.c \
 	src/header-forward.c src/header-writer.c \
 	src/header-copy.c \
-	src/http-string.c \
+	src/http_string.c \
 	src/hashmap.c src/strmap.c \
 	src/growing-buffer.c \
 	src/cookie_client.c src/cookie_jar.c \
@@ -985,7 +985,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/crash.c \
 	src/session.c src/session_manager.c \
 	src/cookie_client.c src/cookie_jar.c \
-	src/http-string.c \
+	src/http_string.c \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
 	src/penv.c src/processor.c \
@@ -1073,9 +1073,9 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_SOURCES = test/t-http-server.c \
-	src/http-util.c \
-	src/http-server.c src/http-server-send.c src/http-server-request.c \
-	src/http-server-read.c src/http-server-response.c \
+	src/http_util.c \
+	src/http_server.c src/http_server_send.c src/http_server_request.c \
+	src/http_server_read.c src/http_server_response.c \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
 	src/cleanup_timer.c \
 	src/address.c \
@@ -1086,7 +1086,7 @@ test_t_http_server_SOURCES = test/t-http-server.c \
 	src/istream-gb.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
-	src/http-body.c src/date.c \
+	src/http_body.c src/date.c \
 	src/fd_util.c src/fd-util.c \
 	src/growing-buffer.c \
 	src/header-parser.c src/format.c \
@@ -1101,9 +1101,9 @@ test_t_http_server_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_http_server_SOURCES = test/run_http_server.c \
-	src/http-util.c \
-	src/http-server.c src/http-server-send.c src/http-server-request.c \
-	src/http-server-read.c src/http-server-response.c \
+	src/http_util.c \
+	src/http_server.c src/http_server_send.c src/http_server_request.c \
+	src/http_server_read.c src/http_server_response.c \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
 	src/address.c \
 	src/fifo-buffer.c \
@@ -1114,7 +1114,7 @@ test_run_http_server_SOURCES = test/run_http_server.c \
 	src/istream-gb.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
-	src/http-body.c src/date.c \
+	src/http_body.c src/date.c \
 	src/fd_util.c src/fd-util.c \
 	src/cleanup_timer.c \
 	src/shutdown_listener.c \
@@ -1130,7 +1130,7 @@ test_run_http_server_LDADD = $(AM_LDADD) \
 
 test_t_http_client_SOURCES = test/t-http-client.c \
 	src/t_client.h \
-	src/http-client.c \
+	src/http_client.c \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
 	src/cleanup_timer.c \
 	$(STOPWATCH_SRC) \
@@ -1139,7 +1139,7 @@ test_t_http_client_SOURCES = test/t-http-client.c \
 	src/header-writer.c \
 	src/istream-gb.c \
 	src/direct.c \
-	src/http-body.c src/header-parser.c \
+	src/http_body.c src/header-parser.c \
 	src/format.c src/strutil.c \
 	src/buffered_io.c src/fd_util.c src/fd-util.c \
 	src/uri-verify.c \
@@ -1152,7 +1152,7 @@ test_t_http_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_util_SOURCES = test/t-http-util.c \
-	src/http-util.c src/strutil.c
+	src/http_util.c src/strutil.c
 test_t_http_util_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
@@ -1167,9 +1167,9 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/strutil.c \
 	src/istream_rubber.c \
 	src/istream-gb.c \
-	src/http-cache.c src/http-cache-rfc.c \
-	src/http-cache-info.c src/http-cache-document.c \
-	src/http-cache-heap.c src/http-cache-age.c \
+	src/http_cache.c src/http_cache_rfc.c \
+	src/http_cache_info.c src/http_cache_document.c \
+	src/http_cache_heap.c src/http_cache_age.c \
 	src/resource-address.c src/uri-address.c \
 	src/lhttp_address.c \
 	src/file-address.c \
@@ -1182,7 +1182,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/address_list.c \
 	src/format.c \
 	src/abort-unref.c src/cache.c \
-	src/header-writer.c src/http-util.c \
+	src/header-writer.c src/http_util.c \
 	src/date.c src/gmtime.c \
 	src/istream-unlock.c
 test_t_http_cache_LDADD = $(AM_LDADD) \
@@ -1196,7 +1196,7 @@ test_t_cookie_client_SOURCES = test/t-cookie-client.c \
 	src/tpool.c \
 	src/clock.c \
 	src/cookie_client.c src/cookie_jar.c \
-	src/http-string.c \
+	src/http_string.c \
 	src/header-writer.c src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c
@@ -1207,7 +1207,7 @@ test_t_cookie_client_LDADD = $(AM_LDADD) \
 
 test_t_cookie_server_SOURCES = test/t-cookie-server.c \
 	src/cookie_server.c \
-	src/http-string.c \
+	src/http_string.c \
 	src/strmap.c src/hashmap.c
 test_t_cookie_server_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1325,7 +1325,7 @@ test_t_wembed_SOURCES = test/t-wembed.c \
 	src/escape_html.c \
 	src/fifo-buffer.c \
 	src/hashmap.c src/strmap.c src/strset.c \
-	src/http-util.c src/strutil.c \
+	src/http_util.c src/strutil.c \
 	src/uri-parser.c src/uri-escape.c src/uri-verify.c \
 	src/format.c src/global.c
 test_t_wembed_LDADD = $(AM_LDADD) \
@@ -1359,7 +1359,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
 	src/growing-buffer.c src/fifo-buffer.c \
-	src/strutil.c src/http-string.c src/http-util.c \
+	src/strutil.c src/http_string.c src/http_util.c \
 	src/istream-escape.c \
 	src/escape_html.c \
 	src/transformation.c \
@@ -1419,7 +1419,7 @@ test_run_subst_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_cookie_client_SOURCES = test/run-cookie-client.c \
-	src/cookie_client.c src/cookie_jar.c src/http-string.c \
+	src/cookie_client.c src/cookie_jar.c src/http_string.c \
 	src/header-writer.c src/growing-buffer.c \
 	src/tpool.c src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c \
@@ -1430,7 +1430,7 @@ test_run_cookie_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_cookie_server_SOURCES = test/run-cookie-server.c \
-	src/cookie_server.c src/http-string.c \
+	src/cookie_server.c src/http_string.c \
 	src/strmap.c src/hashmap.c
 test_run_cookie_server_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1626,7 +1626,7 @@ test_t_ajp_client_LDADD = $(AM_LDADD) \
 
 test_run_client_SOURCES = test/run_client.c \
 	src/client-socket.c \
-	src/http-client.c src/http-body.c \
+	src/http_client.c src/http_body.c \
 	src/header-writer.c src/header-parser.c \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \
@@ -1653,12 +1653,12 @@ test_run_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_http_cache_SOURCES = test/run_http_cache.c \
-	src/http-cache-heap.c \
-	src/http-cache-info.c \
-	src/http-cache-rfc.c \
-	src/http-cache-document.c \
-	src/http-cache-age.c \
-	src/http-util.c \
+	src/http_cache_heap.c \
+	src/http_cache_info.c \
+	src/http_cache_rfc.c \
+	src/http_cache_document.c \
+	src/http_cache_age.c \
+	src/http_util.c \
 	src/uri-address.c src/uri-verify.c src/uri-edit.c \
 	src/uri-base.c src/uri-relative.c src/uri-extract.c \
 	src/uri-escape.c \
@@ -1721,8 +1721,8 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/stock.c src/hstock.c \
 	src/memcached-client.c src/memcached-packet.c \
 	src/memcached-stock.c \
-	src/http-cache-choice.c src/http-cache-rfc.c \
-	src/date.c src/http-util.c src/format.c src/gmtime.c src/strutil.c \
+	src/http_cache_choice.c src/http_cache_rfc.c \
+	src/date.c src/http_util.c src/format.c src/gmtime.c src/strutil.c \
 	src/serialize.c \
 	src/sink-buffer.c \
 	src/growing-buffer.c \

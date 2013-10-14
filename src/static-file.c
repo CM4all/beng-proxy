@@ -6,8 +6,8 @@
 
 #include "static-file.h"
 #include "static-headers.h"
-#include "http-response.h"
-#include "http-error.h"
+#include "http_response.h"
+#include "http_error.h"
 #include "strmap.h"
 #include "istream.h"
 #include "istream-file.h"

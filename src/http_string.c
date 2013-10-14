@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-string.h"
+#include "http_string.h"
 #include "strref2.h"
 #include "pool.h"
 

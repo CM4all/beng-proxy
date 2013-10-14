@@ -10,7 +10,7 @@
 #include "instance.h"
 #include "session.h"
 #include "session_manager.h"
-#include "http-server.h"
+#include "http_server.h"
 #include "cookie_server.h"
 #include "transformation.h"
 #include "args.h"

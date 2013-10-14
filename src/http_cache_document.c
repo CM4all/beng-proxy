@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-cache-internal.h"
+#include "http_cache_internal.h"
 #include "strmap.h"
 
 void

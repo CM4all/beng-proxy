@@ -19,7 +19,7 @@
 #include "memcached-stock.h"
 #include "hstock.h"
 #include "tcache.h"
-#include "http-cache.h"
+#include "http_cache.h"
 #include "lhttp_stock.h"
 #include "fcgi-stock.h"
 #include "was-stock.h"

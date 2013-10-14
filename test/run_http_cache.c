@@ -1,8 +1,8 @@
 #include "pool.h"
 #include "tpool.h"
 #include "cache.h"
-#include "http-cache-heap.h"
-#include "http-cache-internal.h"
+#include "http_cache_heap.h"
+#include "http_cache_internal.h"
 #include "strmap.h"
 #include "rubber.h"
 

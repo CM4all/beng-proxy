@@ -10,7 +10,7 @@
 #include "fcgi-serialize.h"
 #include "buffered_socket.h"
 #include "growing-buffer.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "async.h"
 #include "istream-internal.h"
 #include "istream-gb.h"

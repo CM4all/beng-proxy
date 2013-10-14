@@ -10,7 +10,7 @@
 #include "stock.h"
 #include "cache.h"
 #include "tcache.h"
-#include "http-cache.h"
+#include "http_cache.h"
 #include "fcache.h"
 #include "child.h"
 #include "session_manager.h"

@@ -13,7 +13,7 @@
 #include "strutil.h"
 #include "stopwatch.h"
 #include "strmap.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "fb_pool.h"
 
 #include <string.h>

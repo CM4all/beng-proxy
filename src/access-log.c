@@ -8,7 +8,7 @@
 
 #ifndef NO_ACCESS_LOG
 
-#include "http-server.h"
+#include "http_server.h"
 #include "log-glue.h"
 
 #include <time.h>

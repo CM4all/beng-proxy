@@ -6,7 +6,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-server-internal.h"
+#include "http_server_internal.h"
 #include "istream-internal.h"
 
 enum buffered_result

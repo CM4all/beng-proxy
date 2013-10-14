@@ -5,7 +5,7 @@
  */
 
 #include "ajp-request.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "header-writer.h"
 #include "stock.h"
 #include "async.h"

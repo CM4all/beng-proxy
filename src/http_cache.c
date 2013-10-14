@@ -4,16 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-cache-internal.h"
-#include "http-cache-heap.h"
-#include "http-cache-memcached.h"
+#include "http_cache_internal.h"
+#include "http_cache_heap.h"
+#include "http_cache_memcached.h"
 #include "resource-loader.h"
 #include "strmap.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "resource-address.h"
 #include "strref2.h"
 #include "tpool.h"
-#include "http-util.h"
+#include "http_util.h"
 #include "async.h"
 #include "background.h"
 #include "istream-gb.h"

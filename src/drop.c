@@ -7,7 +7,7 @@
 #include "drop.h"
 #include "connection.h"
 #include "instance.h"
-#include "http-server.h"
+#include "http_server.h"
 
 #include <glib.h>
 

@@ -10,7 +10,7 @@
 #include "cgi-launch.h"
 #include "abort-flag.h"
 #include "stopwatch.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "istream.h"
 
 void

@@ -1,7 +1,7 @@
 #include "cgi.h"
 #include "cgi-address.h"
 #include "async.h"
-#include "http-response.h"
+#include "http_response.h"
 #include "child.h"
 #include "direct.h"
 #include "crash.h"

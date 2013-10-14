@@ -5,7 +5,7 @@
 #include "address_list.h"
 #include "address_resolver.h"
 #include "memcached-stock.h"
-#include "http-cache-choice.h"
+#include "http_cache_choice.h"
 #include "lease.h"
 #include "async.h"
 #include "strref.h"

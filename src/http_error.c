@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http-error.h"
-#include "http-response.h"
+#include "http_error.h"
+#include "http_response.h"
 
 #include <errno.h>
 #include <string.h>
