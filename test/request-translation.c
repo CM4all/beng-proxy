@@ -7,7 +7,6 @@
 #include "balancer.h"
 #include "tcp-stock.h"
 #include "async.h"
-#include "config.h"
 #include "fb_pool.h"
 #include "lhttp_address.h"
 
