@@ -355,6 +355,11 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/log-client.c src/log-client.h \
 	src/log-launch.c src/log-launch.h \
 	src/log-glue.c src/log-glue.h \
+	src/notify.c src/notify.h \
+	src/thread_job.h \
+	src/thread_queue.c src/thread_queue.h \
+	src/thread_worker.c src/thread_worker.h \
+	src/thread_pool.c src/thread_pool.h \
 	src/bp_instance.cxx src/bp_instance.hxx \
 	src/shutdown_listener.c src/shutdown_listener.h \
 	src/bp_main.cxx

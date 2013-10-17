@@ -26,6 +26,7 @@
 #include "delegate-stock.h"
 #include "fcache.h"
 #include "child.h"
+#include "thread_pool.h"
 #include "global.h"
 #include "failure.h"
 #include "bulldog.h"
@@ -96,6 +97,7 @@ shutdown_callback(void *ctx)
 
     instance->should_exit = true;
     deinit_signals(instance);
+    thread_pool_stop();
 
     free_all_listeners(instance);
 
@@ -105,6 +107,10 @@ shutdown_callback(void *ctx)
     pool_commit();
 
     children_shutdown();
+
+    thread_pool_join();
+    thread_pool_deinit();
+
     worker_killall(instance);
 
     session_save_deinit();
