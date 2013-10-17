@@ -286,6 +286,7 @@ my_stock_ready(struct stock_item *item, void *ctx)
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         &my_socket_lease, request2,
+                        NULL, NULL,
                         request->method, request->uri,
                         headers2, request2->body, true,
                         &my_response_handler, request2,

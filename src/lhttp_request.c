@@ -85,6 +85,7 @@ lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
                         lhttp_stock_item_get_socket(stock_item),
                         lhttp_stock_item_get_type(stock_item),
                         &lhttp_socket_lease, request,
+                        NULL, NULL,
                         method, address->uri, headers, body, true,
                         handler, handler_ctx,
                         async_ref);

@@ -252,6 +252,7 @@ my_client_socket_success(int fd, void *ctx)
 
     case HTTP:
         http_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
+                            NULL, NULL,
                             c->method, c->url.uri,
                             headers_dup(c->pool, headers),
                             c->request_body, false,

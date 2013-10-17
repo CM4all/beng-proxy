@@ -1140,6 +1140,7 @@ void
 http_client_request(struct pool *caller_pool,
                     int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
+                    const struct socket_filter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
                     struct istream *body, bool expect_100,
@@ -1174,7 +1175,7 @@ http_client_request(struct pool *caller_pool,
 
     filtered_socket_init(&client->socket, pool, fd, fd_type,
                          &http_client_timeout, &http_client_timeout,
-                         NULL, NULL,
+                         filter, filter_ctx,
                          &http_client_socket_handler, client);
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "http_client_lease");
