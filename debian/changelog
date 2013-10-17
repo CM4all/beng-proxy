@@ -1,6 +1,7 @@
 cm4all-beng-proxy (4.0) unstable; urgency=low
 
   * translation: rename TRANSLATE_PROXY to TRANSLATE_HTTP
+  * thread_pool: start SSL worker threads on the first use
 
  --
 

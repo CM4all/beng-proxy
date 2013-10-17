@@ -15,16 +15,16 @@
 #include <assert.h>
 #include <stdlib.h>
 
-struct thread_queue *global_thread_queue;
+static struct thread_queue *global_thread_queue;
 static struct thread_worker worker_threads[8];
 
-void
+static void
 thread_pool_init(struct pool *pool)
 {
     global_thread_queue = thread_queue_new(pool);
 }
 
-void
+static void
 thread_pool_start(void)
 {
     assert(global_thread_queue != NULL);
@@ -37,10 +37,24 @@ thread_pool_start(void)
     }
 }
 
+struct thread_queue *
+thread_pool_get_queue(struct pool *pool)
+{
+    if (global_thread_queue == NULL) {
+        /* initial call - create the queue and launch worker
+           threads */
+        thread_pool_init(pool);
+        thread_pool_start();
+    }
+
+    return global_thread_queue;
+}
+
 void
 thread_pool_stop(void)
 {
-    assert(global_thread_queue != NULL);
+    if (global_thread_queue == NULL)
+        return;
 
     thread_queue_stop(global_thread_queue);
 }
@@ -48,7 +62,8 @@ thread_pool_stop(void)
 void
 thread_pool_join(void)
 {
-    assert(global_thread_queue != NULL);
+    if (global_thread_queue == NULL)
+        return;
 
     for (unsigned i = 0; i < G_N_ELEMENTS(worker_threads); ++i)
         thread_worker_join(&worker_threads[i]);
@@ -57,7 +72,8 @@ thread_pool_join(void)
 void
 thread_pool_deinit(void)
 {
-    assert(global_thread_queue != NULL);
+    if (global_thread_queue == NULL)
+        return;
 
     thread_queue_free(global_thread_queue);
     global_thread_queue = NULL;

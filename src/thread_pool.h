@@ -9,17 +9,21 @@
 
 struct pool;
 
-extern struct thread_queue *global_thread_queue;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void
-thread_pool_init(struct pool *pool);
-
-void
-thread_pool_start(void);
+/**
+ * Returns the global #thread_queue instance.  The first call to this
+ * function creates the queue and starts the worker threads.  To shut
+ * down, call thread_pool_stop(), thread_pool_join() and
+ * thread_pool_deinit().
+ *
+ * @param pool a global pool that will be destructed after the
+ * thread_pool_deinit() call
+ */
+struct thread_queue *
+thread_pool_get_queue(struct pool *pool);
 
 void
 thread_pool_stop(void);

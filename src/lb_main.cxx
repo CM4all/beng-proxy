@@ -109,7 +109,6 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         event_reinit(instance->event_base);
         init_signals(instance);
 
-        thread_pool_start();
         children_init(instance->pool);
         all_listeners_event_add(instance);
 
@@ -257,7 +256,6 @@ int main(int argc, char **argv)
 
     init_signals(&instance);
 
-    thread_pool_init(instance.pool);
     children_init(instance.pool);
 
     instance.balancer = balancer_new(instance.pool);
@@ -316,8 +314,6 @@ int main(int argc, char **argv)
     } else {
         /* this is already the worker process: enable monitors here */
         lb_hmonitor_enable();
-
-        thread_pool_start();
     }
 
     event_dispatch();
