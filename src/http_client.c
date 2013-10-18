@@ -184,6 +184,12 @@ http_client_schedule_write(struct http_client *client)
 static void
 http_client_release_socket(struct http_client *client, bool reuse)
 {
+    if (filtered_socket_has_filter(&client->socket))
+        /* never reuse the socket if it was filtered */
+        /* TODO: move the filtering layer to the tcp_stock to allow
+           reusing connections */
+        reuse = false;
+
     filtered_socket_abandon(&client->socket);
     p_lease_release(&client->lease_ref, reuse, client->pool);
 }
