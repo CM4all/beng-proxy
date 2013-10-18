@@ -51,7 +51,10 @@ struct ssl_factory {
 
     std::vector<ssl_cert_key> cert_key;
 
-    ssl_factory(SSL_CTX *_ssl_ctx):ssl_ctx(_ssl_ctx) {}
+    const bool server;
+
+    ssl_factory(SSL_CTX *_ssl_ctx, bool _server)
+        :ssl_ctx(_ssl_ctx), server(_server) {}
 
     ~ssl_factory() {
         SSL_CTX_free(ssl_ctx);
@@ -338,7 +341,10 @@ ssl_factory::Make()
     if (ssl == nullptr)
         return nullptr;
 
-    SSL_set_accept_state(ssl);
+    if (server)
+        SSL_set_accept_state(ssl);
+    else
+        SSL_set_connect_state(ssl);
 
     return ssl;
 }
@@ -348,7 +354,7 @@ ssl_factory_new(const ssl_config &config,
                 bool server,
                 GError **error_r)
 {
-    assert(!config.cert_key.empty());
+    assert(!config.cert_key.empty() || !server);
 
     auto method = server
         ? SSLv23_server_method()
@@ -360,7 +366,7 @@ ssl_factory_new(const ssl_config &config,
         return NULL;
     }
 
-    ssl_factory *factory = new ssl_factory(ssl_ctx);
+    ssl_factory *factory = new ssl_factory(ssl_ctx, server);
 
     if (server) {
         if (!apply_server_config(ssl_ctx, config, error_r) ||

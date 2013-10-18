@@ -360,6 +360,11 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/thread_queue.c src/thread_queue.h \
 	src/thread_worker.c src/thread_worker.h \
 	src/thread_pool.c src/thread_pool.h \
+	src/ssl_init.cxx src/ssl_init.hxx \
+	src/ssl_client.cxx src/ssl_client.h \
+	src/ssl_factory.cxx src/ssl_factory.hxx \
+	src/ssl_filter.cxx src/ssl_filter.hxx \
+	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/bp_instance.cxx src/bp_instance.hxx \
 	src/shutdown_listener.c src/shutdown_listener.h \
 	src/bp_main.cxx
@@ -372,6 +377,7 @@ src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS) \
 	$(LIBATTR_LIBS) \
 	$(LIBNFS_LIBS) \
+	$(LIBSSL_LIBS) \
 	$(LIBZ_LIBS)
 src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 

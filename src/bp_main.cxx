@@ -37,6 +37,8 @@
 #include "bp_control.hxx"
 #include "log-glue.h"
 #include "ua_classification.h"
+#include "ssl_init.hxx"
+#include "ssl_client.h"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -300,6 +302,9 @@ int main(int argc, char **argv)
 
     /* initialize */
 
+    ssl_global_init();
+    ssl_client_init();
+
     direct_global_init();
 
     instance.event_base = event_init();
@@ -473,6 +478,9 @@ int main(int argc, char **argv)
     pool_commit();
 
     pool_recycler_clear();
+
+    ssl_client_deinit();
+    ssl_global_deinit();
 
     crash_global_deinit();
 
