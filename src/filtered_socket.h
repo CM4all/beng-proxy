@@ -129,6 +129,12 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
                      const struct buffered_socket_handler *handler,
                      void *handler_ctx);
 
+static inline bool
+filtered_socket_has_filter(const struct filtered_socket *s)
+{
+    return s->filter != NULL;
+}
+
 static inline enum istream_direct
 filtered_socket_fd_type(const struct filtered_socket *s)
 {
