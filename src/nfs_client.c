@@ -228,14 +228,18 @@ static const struct timeval nfs_file_expiry = {
 };
 
 static GError *
-nfs_client_new_error(const char *msg, int status, void *data)
+nfs_client_new_error(int status, struct nfs_context *nfs, void *data,
+                     const char *msg)
 {
     assert(msg != NULL);
     assert(status < 0);
 
-    const char *msg2 = data != NULL && *(const char *)data != 0
-        ? (const char *)data
-        : g_strerror(-status);
+    const char *msg2 = (const char *)data;
+    if (data == NULL || *(const char *)data == 0) {
+        msg2 = nfs_get_error(nfs);
+        if (msg2 == NULL)
+            msg2 = g_strerror(-status);
+    }
 
     return g_error_new(errno_quark(), -status, "%s: %s", msg, msg2);
 }
@@ -501,7 +505,7 @@ nfs_client_update_event(struct nfs_client *client)
 }
 
 static void
-nfs_read_cb(int status, gcc_unused struct nfs_context *nfs,
+nfs_read_cb(int status, struct nfs_context *nfs,
             void *data, void *private_data)
 {
     struct nfs_file_handle *const handle = private_data;
@@ -516,8 +520,8 @@ nfs_read_cb(int status, gcc_unused struct nfs_context *nfs,
     }
 
     if (status < 0) {
-        GError *error = nfs_client_new_error("nfs_pread_async() failed",
-                                             status, data);
+        GError *error = nfs_client_new_error(status, nfs, data,
+                                             "nfs_pread_async() failed");
         handle->read_handler->error(error, handle->handler_ctx);
         return;
     }
@@ -726,7 +730,7 @@ nfs_client_timeout_callback(gcc_unused int fd, gcc_unused short event,
  */
 
 static void
-nfs_mount_cb(int status, gcc_unused struct nfs_context *nfs, void *data,
+nfs_mount_cb(int status, struct nfs_context *nfs, void *data,
              void *private_data)
 {
     struct nfs_client *client = private_data;
@@ -735,7 +739,8 @@ nfs_mount_cb(int status, gcc_unused struct nfs_context *nfs, void *data,
 
     if (status < 0) {
         client->postponed_mount_error =
-            nfs_client_new_error("nfs_mount_async() failed", status, data);
+            nfs_client_new_error(status, nfs, data,
+                                 "nfs_mount_async() failed");
         return;
     }
 
@@ -756,8 +761,8 @@ nfs_fstat_cb(int status, gcc_unused struct nfs_context *nfs,
     struct nfs_client *const client = file->client;
 
     if (status < 0) {
-        GError *error = nfs_client_new_error("nfs_fstat_async() failed",
-                                             status, data);
+        GError *error = nfs_client_new_error(status, nfs, data,
+                                             "nfs_fstat_async() failed");
         nfs_client_abort_file(client, file, error);
         g_error_free(error);
         return;
@@ -791,8 +796,8 @@ nfs_open_cb(int status, gcc_unused struct nfs_context *nfs,
     struct nfs_client *const client = file->client;
 
     if (status < 0) {
-        GError *error = nfs_client_new_error("nfs_open_async() failed",
-                                             status, data);
+        GError *error = nfs_client_new_error(status, nfs, data,
+                                             "nfs_open_async() failed");
         nfs_client_abort_file(client, file, error);
         g_error_free(error);
         return;
