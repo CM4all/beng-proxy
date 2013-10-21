@@ -14,7 +14,7 @@
 #include "growing-buffer.h"
 #include "request.h"
 #include "connection.h"
-#include "instance.h"
+#include "bp_instance.hxx"
 #include "http_server.h"
 
 #include <assert.h>
@@ -24,7 +24,7 @@
 static void
 nfs_handler_error(GError *error, void *ctx)
 {
-    struct request *request2 = ctx;
+    request *request2 = (request *)ctx;
 
     response_dispatch_error(request2, error);
     g_error_free(error);
@@ -39,7 +39,7 @@ static void
 nfs_handler_cache_response(struct nfs_cache_handle *handle,
                            const struct stat *st, void *ctx)
 {
-    struct request *request2 = ctx;
+    request *request2 = (request *)ctx;
     struct http_server_request *const request = request2->request;
     struct pool *const pool = request->pool;
     const struct translate_response *const tr = request2->translate.response;
@@ -128,7 +128,7 @@ nfs_handler(struct request *request2)
 
     const struct nfs_address *const address = tr->address.u.nfs;
     assert(address->server != NULL);
-    assert(address->export != NULL);
+    assert(address->export_name != NULL);
     assert(address->path != NULL);
 
     /* check request */
@@ -143,7 +143,7 @@ nfs_handler(struct request *request2)
     /* run the delegate helper */
 
     nfs_cache_request(pool, request2->connection->instance->nfs_cache,
-                      address->server, address->export, address->path,
+                      address->server, address->export_name, address->path,
                       &nfs_handler_cache_handler, request2,
                       &request2->async_ref);
 }

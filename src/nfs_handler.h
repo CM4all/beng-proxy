@@ -9,7 +9,15 @@
 
 struct request;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 nfs_handler(struct request *request);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

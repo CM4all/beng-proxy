@@ -377,7 +377,7 @@ src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
 
 if HAVE_LIBNFS
 src_cm4all_beng_proxy_SOURCES += \
-	src/bp_nfs_handler.c src/nfs_handler.h \
+	src/nfs_handler.c src/nfs_handler.h \
 	src/istream_nfs.c src/istream_nfs.h \
 	src/nfs_stock.c src/nfs_stock.h \
 	src/nfs_client.c src/nfs_client.h \

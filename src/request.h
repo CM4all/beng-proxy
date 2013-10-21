@@ -141,20 +141,21 @@ request_transformation_enabled(const struct request *request)
     return request->translate.response->views->transformation != NULL;
 }
 
-#ifndef __cplusplus
-
 /**
  * Returns true if the first transformation (if any) is the processor.
  */
 static inline bool
 request_processor_first(const struct request *request)
 {
+#ifdef __cplusplus
+    static constexpr auto TRANSFORMATION_PROCESS =
+        transformation::TRANSFORMATION_PROCESS;
+#endif
+
     return request_transformation_enabled(request) &&
         request->translate.response->views->transformation->type
         == TRANSFORMATION_PROCESS;
 }
-
-#endif
 
 #ifdef __cplusplus
 extern "C" {

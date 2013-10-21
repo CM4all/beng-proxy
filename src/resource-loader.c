@@ -195,7 +195,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             istream_close_unused(body);
 
         nfs_request(pool, rl->nfs_cache,
-                    address->u.nfs->server, address->u.nfs->export,
+                    address->u.nfs->server, address->u.nfs->export_name,
                     address->u.nfs->path,
                     address->u.nfs->content_type,
                     handler, handler_ctx, async_ref);

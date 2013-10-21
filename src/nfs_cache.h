@@ -27,6 +27,10 @@ struct nfs_cache_handler {
     void (*error)(GError *error, void *ctx);
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct nfs_cache *
 nfs_cache_new(struct pool *pool, size_t max_size, struct nfs_stock *stock);
 
@@ -35,12 +39,17 @@ nfs_cache_free(struct nfs_cache *cache);
 
 void
 nfs_cache_request(struct pool *pool, struct nfs_cache *cache,
-                  const char *server, const char *export, const char *path,
+                  const char *server, const char *export_name,
+                  const char *path,
                   const struct nfs_cache_handler *handler, void *ctx,
                   struct async_operation_ref *async_ref);
 
 struct istream *
 nfs_cache_handle_open(struct pool *pool, struct nfs_cache_handle *handle,
                       uint64_t start, uint64_t end);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

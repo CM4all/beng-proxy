@@ -9,7 +9,15 @@
 
 struct request;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 method_not_allowed(struct request *request2, const char *allow);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

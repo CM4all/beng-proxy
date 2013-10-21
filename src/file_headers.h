@@ -27,6 +27,10 @@ struct file_request {
     off_t size;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool
 file_evaluate_request(struct request *request2,
                       int fd, const struct stat *st,
@@ -41,5 +45,9 @@ file_response_headers(struct growing_buffer *headers,
                       const char *override_content_type,
                       int fd, const struct stat *st,
                       bool processor_enabled, bool processor_first);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -226,7 +226,7 @@ handle_translated_request(request &request,
             file_callback(&request);
 #ifdef HAVE_LIBNFS
     } else if (response->address.type == RESOURCE_ADDRESS_NFS) {
-        nfs_handler(request);
+        nfs_handler(&request);
 #endif
     } else if (response->address.type == RESOURCE_ADDRESS_HTTP ||
                response->address.type == RESOURCE_ADDRESS_LHTTP ||
