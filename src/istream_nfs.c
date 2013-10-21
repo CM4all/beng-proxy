@@ -247,7 +247,7 @@ istream_nfs_read(struct istream *istream)
     if (n->buffer != NULL && !fifo_buffer_empty(n->buffer))
         istream_nfs_read_from_buffer(n);
     else
-        istream_nfs_schedule_read(n);
+        istream_nfs_schedule_read_or_eof(n);
 }
 
 static void
