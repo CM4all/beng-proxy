@@ -139,8 +139,13 @@ child_stock_create(void *stock_ctx, struct stock_item *_item,
 }
 
 static bool
-child_stock_borrow(gcc_unused void *ctx, gcc_unused struct stock_item *item)
+child_stock_borrow(gcc_unused void *ctx, struct stock_item *_item)
 {
+    struct child_stock_item *item = (struct child_stock_item *)_item;
+
+    assert(!item->busy);
+    item->busy = true;
+
     return true;
 }
 
@@ -148,6 +153,9 @@ static void
 child_stock_release(gcc_unused void *ctx, struct stock_item *_item)
 {
     struct child_stock_item *item = (struct child_stock_item *)_item;
+
+    assert(item->busy);
+    item->busy = false;
 
     if (item->pid < 0)
         /* the child process has exited; now that the item has been

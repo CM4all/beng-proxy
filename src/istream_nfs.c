@@ -56,8 +56,7 @@ static const struct nfs_client_read_file_handler istream_nfs_read_handler;
 static void
 istream_nfs_schedule_read(struct istream_nfs *n)
 {
-    if (n->pending_read > 0)
-        return;
+    assert(n->pending_read == 0);
 
     const size_t max = n->buffer != NULL
         ? fifo_buffer_space(n->buffer)
@@ -74,6 +73,32 @@ istream_nfs_schedule_read(struct istream_nfs *n)
 
     nfs_client_read_file(n->handle, offset, nbytes,
                          &istream_nfs_read_handler, n);
+}
+
+/**
+ * Check for end-of-file, and if there's more data to read, schedule
+ * another read call.
+ *
+ * The input buffer must be empty.
+ */
+static void
+istream_nfs_schedule_read_or_eof(struct istream_nfs *n)
+{
+    assert(n->buffer == NULL || fifo_buffer_empty(n->buffer));
+
+    if (n->pending_read > 0)
+        return;
+
+    if (n->remaining > 0) {
+        /* read more */
+
+        istream_nfs_schedule_read(n);
+    } else {
+        /* end of file */
+
+        nfs_client_close_file(n->handle);
+        istream_deinit_eof(&n->base);
+    }
 }
 
 static void
@@ -104,18 +129,8 @@ istream_nfs_read_from_buffer(struct istream_nfs *n)
     assert(n->buffer != NULL);
 
     size_t remaining = istream_buffer_consume(&n->base, n->buffer);
-    if (remaining == 0 && n->pending_read == 0) {
-        if (n->remaining > 0) {
-            /* read more */
-
-            istream_nfs_schedule_read(n);
-        } else {
-            /* end of file */
-
-            nfs_client_close_file(n->handle);
-            istream_deinit_eof(&n->base);
-        }
-    }
+    if (remaining == 0 && n->pending_read == 0)
+        istream_nfs_schedule_read_or_eof(n);
 }
 
 /*
@@ -234,7 +249,7 @@ istream_nfs_read(struct istream *istream)
     if (n->buffer != NULL && !fifo_buffer_empty(n->buffer))
         istream_nfs_read_from_buffer(n);
     else
-        istream_nfs_schedule_read(n);
+        istream_nfs_schedule_read_or_eof(n);
 }
 
 static void
