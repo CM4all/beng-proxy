@@ -912,6 +912,7 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
 
         if (nfs_open_async(client->context, file->path, O_RDONLY,
                            nfs_open_cb, file) != 0) {
+            list_remove(&file->siblings);
             pool_unref(file->pool);
 
             GError *error = g_error_new(nfs_client_quark(), 0,
