@@ -2,6 +2,7 @@ cm4all-beng-proxy (3.1.14) unstable; urgency=low
 
   * istream_nfs: fix assertion failure on empty file
   * nfs_client: fix crash on malformed path
+  * child_stock: fix assertion failure when busy child process gets killed
 
  --   
 
