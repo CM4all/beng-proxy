@@ -5,7 +5,7 @@ cm4all-beng-proxy (3.1.14) unstable; urgency=low
   * nfs_client: improved error messages
   * child_stock: fix assertion failure when busy child process gets killed
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 21 Oct 2013 15:38:28 -0000
 
 cm4all-beng-proxy (3.1.13) unstable; urgency=low
 
