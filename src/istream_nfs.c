@@ -56,8 +56,7 @@ static const struct nfs_client_read_file_handler istream_nfs_read_handler;
 static void
 istream_nfs_schedule_read(struct istream_nfs *n)
 {
-    if (n->pending_read > 0)
-        return;
+    assert(n->pending_read == 0);
 
     const size_t max = n->buffer != NULL
         ? fifo_buffer_space(n->buffer)
@@ -86,6 +85,9 @@ static void
 istream_nfs_schedule_read_or_eof(struct istream_nfs *n)
 {
     assert(n->buffer == NULL || fifo_buffer_empty(n->buffer));
+
+    if (n->pending_read > 0)
+        return;
 
     if (n->remaining > 0) {
         /* read more */
