@@ -125,7 +125,7 @@ lhttp_address_save_base(struct pool *pool, const struct lhttp_address *src,
     assert(src != NULL);
     assert(suffix != NULL);
 
-    size_t length = base_string_unescape(pool, src->uri, suffix);
+    size_t length = base_string(src->uri, suffix);
     if (length == (size_t)-1)
         return NULL;
 
@@ -139,16 +139,14 @@ lhttp_address_load_base(struct pool *pool, const struct lhttp_address *src,
 {
     assert(pool != NULL);
     assert(src != NULL);
+    assert(suffix != NULL);
     assert(src->uri != NULL);
     assert(*src->uri != 0);
     assert(src->uri[strlen(src->uri) - 1] == '/');
     assert(suffix != NULL);
 
-    char *unescaped = p_strdup(pool, suffix);
-    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
-
     return lhttp_address_dup_with_uri(pool, src,
-                                  p_strcat(pool, src->uri, unescaped, NULL));
+                                      p_strcat(pool, src->uri, suffix, NULL));
 }
 
 const struct lhttp_address *
