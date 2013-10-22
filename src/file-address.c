@@ -99,8 +99,8 @@ file_address_expand(struct pool *pool, struct file_address *address,
     assert(match_info != NULL);
 
     if (address->expand_path != NULL) {
-        address->path = expand_string(pool, address->expand_path,
-                                      match_info, error_r);
+        address->path = expand_string_unescaped(pool, address->expand_path,
+                                                match_info, error_r);
         if (address->path == NULL)
             return false;
     }
