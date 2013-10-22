@@ -116,8 +116,8 @@ nfs_address_expand(struct pool *pool, const struct nfs_address *src,
     if (src->expand_path == NULL)
         return src;
 
-    const char *path = expand_string(pool, src->expand_path, match_info,
-                                     error_r);
+    const char *path = expand_string_unescaped(pool, src->expand_path,
+                                               match_info, error_r);
     if (path == NULL)
         return NULL;
 

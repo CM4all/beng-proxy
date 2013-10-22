@@ -134,7 +134,7 @@ child_stock_create(void *stock_ctx, struct stock_item *_item,
 
     child_register(pid, key, child_stock_child_callback, item);
 
-    item->busy = false;
+    item->busy = true;
     stock_item_available(&item->base);
 }
 

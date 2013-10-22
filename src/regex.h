@@ -18,4 +18,15 @@ const char *
 expand_string(struct pool *pool, const char *src,
               const GMatchInfo *match_info, GError **error_r);
 
+/**
+ * Like expand_string(), but unescape the substitutions with the '%'
+ * URI method.
+ *
+ * @return NULL on error
+ */
+const char *
+expand_string_unescaped(struct pool *pool, const char *src,
+                        const GMatchInfo *match_info,
+                        GError **error_r);
+
 #endif

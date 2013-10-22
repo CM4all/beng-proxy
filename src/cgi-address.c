@@ -226,15 +226,15 @@ cgi_address_expand(struct pool *pool, struct cgi_address *address,
     assert(match_info != NULL);
 
     if (address->expand_path != NULL) {
-        address->path = expand_string(pool, address->expand_path,
-                                      match_info, error_r);
+        address->path = expand_string_unescaped(pool, address->expand_path,
+                                                match_info, error_r);
         if (address->path == NULL)
             return false;
     }
 
     if (address->expand_path_info != NULL) {
-        address->path_info = expand_string(pool, address->expand_path_info,
-                                           match_info, error_r);
+        address->path_info = expand_string_unescaped(pool, address->expand_path_info,
+                                                     match_info, error_r);
         if (address->path_info == NULL)
             return false;
     }
