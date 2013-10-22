@@ -4,7 +4,7 @@ cm4all-beng-proxy (3.1.15) unstable; urgency=low
   * {file,nfs}_address: unescape EXPAND_PATH(_INFO) substitutions
   * child_stock: fix another assertion failure
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 22 Oct 2013 15:15:42 -0000
 
 cm4all-beng-proxy (3.1.14) unstable; urgency=low
 
