@@ -268,6 +268,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     case RESOURCE_ADDRESS_HTTP:
         http_request(pool, rl->tcp_balancer, session_sticky,
+                     NULL, NULL,
                      method, address->u.http,
                      headers_dup(pool, headers), body,
                      handler, handler_ctx, async_ref);

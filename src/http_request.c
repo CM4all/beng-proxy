@@ -19,6 +19,7 @@
 #include "failure.h"
 #include "address_envelope.h"
 #include "istream.h"
+#include "filtered_socket.h"
 
 #include <inline/compiler.h>
 
@@ -30,6 +31,9 @@ struct http_request {
     struct tcp_balancer *tcp_balancer;
 
     unsigned session_sticky;
+
+    const struct socket_filter *filter;
+    void *filter_ctx;
 
     struct stock_item *stock_item;
     const struct address_envelope *current_address;
@@ -150,7 +154,7 @@ http_request_stock_ready(struct stock_item *item, void *ctx)
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         &http_socket_lease, hr,
-                        NULL, NULL,
+                        hr->filter, hr->filter_ctx,
                         hr->method, hr->uwa->path, hr->headers,
                         hr->body, true,
                         &http_request_response_handler, hr,
@@ -164,6 +168,9 @@ http_request_stock_error(GError *error, void *ctx)
 
     if (hr->body != NULL)
         istream_close_unused(hr->body);
+
+    if (hr->filter != NULL)
+        hr->filter->close(hr->filter_ctx);
 
     http_response_handler_invoke_abort(&hr->handler, error);
 }
@@ -183,6 +190,7 @@ void
 http_request(struct pool *pool,
              struct tcp_balancer *tcp_balancer,
              unsigned session_sticky,
+             const struct socket_filter *filter, void *filter_ctx,
              http_method_t method,
              const struct http_address *uwa,
              struct growing_buffer *headers,
@@ -204,6 +212,8 @@ http_request(struct pool *pool,
     hr->pool = pool;
     hr->tcp_balancer = tcp_balancer;
     hr->session_sticky = session_sticky;
+    hr->filter = filter;
+    hr->filter_ctx = filter_ctx;
     hr->method = method;
     hr->uwa = uwa;
 
