@@ -90,6 +90,7 @@ lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
 }
 
 static const struct child_stock_class lhttp_child_stock_class = {
+    .shutdown_signal = SIGTERM,
     .run = lhttp_child_stock_run,
 };
 

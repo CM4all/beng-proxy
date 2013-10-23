@@ -23,6 +23,12 @@ struct stock_get_handler;
 struct async_operation_ref;
 
 struct child_stock_class {
+    /**
+     * The signal that shall be used for shutting down a child
+     * process.
+     */
+    int shutdown_signal;
+
     void *(*prepare)(struct pool *pool, const char *key, void *info,
                      GError **error_r);
     int (*run)(struct pool *pool, const char *key, void *info, void *ctx);
