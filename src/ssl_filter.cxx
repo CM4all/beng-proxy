@@ -311,7 +311,6 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
     ssl->encrypted_input = BIO_new(BIO_s_mem());
     ssl->encrypted_output = BIO_new(BIO_s_mem());
 
-    SSL_set_accept_state(ssl->ssl);
     SSL_set_bio(ssl->ssl, ssl->encrypted_input, ssl->encrypted_output);
 
     ssl->peer_subject = NULL;

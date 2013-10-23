@@ -335,6 +335,11 @@ SSL *
 ssl_factory::Make()
 {
     SSL *ssl = SSL_new(ssl_ctx);
+    if (ssl == nullptr)
+        return nullptr;
+
+    SSL_set_accept_state(ssl);
+
     return ssl;
 }
 
