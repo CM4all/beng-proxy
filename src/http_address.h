@@ -177,4 +177,22 @@ bool
 http_address_expand(struct pool *pool, struct http_address *uwa,
                    const GMatchInfo *match_info, GError **error_r);
 
+gcc_pure
+static inline int
+http_address_default_port(const struct http_address *address)
+{
+    switch (address->scheme) {
+    case URI_SCHEME_UNIX:
+        return 0;
+
+    case URI_SCHEME_HTTP:
+        return 80;
+
+    case URI_SCHEME_AJP:
+        return 8009;
+    }
+
+    gcc_unreachable();
+}
+
 #endif

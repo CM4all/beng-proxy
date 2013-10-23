@@ -101,6 +101,11 @@ struct translate_client {
     /** the current address list being edited */
     struct address_list *address_list;
 
+    /**
+     * Default port for #TRANSLATE_ADDRESS_STRING.
+     */
+    int default_port;
+
     /** the current widget view */
     struct widget_view *view;
 
@@ -430,7 +435,8 @@ translate_add_transformation(struct translate_client *client)
 }
 
 static bool
-parse_address_string(struct pool *pool, struct address_list *list, const char *p)
+parse_address_string(struct pool *pool, struct address_list *list,
+                     const char *p, int default_port)
 {
     if (*p == '/') {
         /* unix domain socket */
@@ -456,7 +462,7 @@ parse_address_string(struct pool *pool, struct address_list *list, const char *p
     hints.ai_flags = AI_NUMERICHOST;
     hints.ai_socktype = SOCK_STREAM;
 
-    ret = socket_resolve_host_port(p, 80, &hints, &ai);
+    ret = socket_resolve_host_port(p, default_port, &hints, &ai);
     if (ret != 0)
         return false;
 
@@ -959,6 +965,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->address_list = &client->http_address->addresses;
+        client->default_port = http_address_default_port(client->http_address);
         return true;
 
     case TRANSLATE_REDIRECT:
@@ -1206,6 +1213,7 @@ translate_handle_packet(struct translate_client *client,
 
         client->jail = &client->cgi_address->jail;
         client->address_list = &client->cgi_address->address_list;
+        client->default_port = 9000;
         return true;
 
     case TRANSLATE_AJP:
@@ -1234,6 +1242,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->address_list = &client->http_address->addresses;
+        client->default_port = 8009;
         return true;
 
     case TRANSLATE_NFS_SERVER:
@@ -1374,7 +1383,7 @@ translate_handle_packet(struct translate_client *client,
             bool ret;
 
             ret = parse_address_string(client->pool, client->address_list,
-                                       payload);
+                                       payload, client->default_port);
             if (!ret) {
                 translate_client_error(client,
                                        "malformed TRANSLATE_ADDRESS_STRING packet");
