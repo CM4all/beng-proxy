@@ -18,6 +18,10 @@
 struct pool;
 struct stat;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct istream *
 istream_file_fd_new(struct pool *pool, const char *path,
                     int fd, enum istream_direct fd_type, off_t length);
@@ -40,5 +44,9 @@ istream_file_fd(struct istream * istream);
  */
 bool
 istream_file_set_range(struct istream *istream, off_t start, off_t end);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

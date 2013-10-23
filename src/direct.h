@@ -39,10 +39,6 @@ direct_global_init(void);
 void
 direct_global_deinit(void);
 
-#ifdef __cplusplus
-}
-#endif
-
 #else /* !SPLICE */
 
 enum {
@@ -171,5 +167,9 @@ direct_available(int fd, istream_direct_t fd_type, size_t max_length);
 gcc_pure
 enum istream_direct
 guess_fd_type(int fd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

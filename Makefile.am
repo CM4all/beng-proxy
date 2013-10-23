@@ -1627,7 +1627,7 @@ test_t_ajp_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_run_client_SOURCES = test/run_client.c \
+test_run_client_SOURCES = test/run_client.cxx \
 	src/client-socket.c \
 	src/http_client.c src/http_body.c \
 	src/header-writer.c src/header-parser.c \

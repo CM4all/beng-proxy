@@ -47,22 +47,22 @@ struct parsed_url {
 static bool
 parse_url(struct parsed_url *dest, const char *url)
 {
-    assert(dest != NULL);
-    assert(url != NULL);
+    assert(dest != nullptr);
+    assert(url != nullptr);
 
     if (memcmp(url, "ajp://", 6) == 0) {
         url += 6;
-        dest->protocol = AJP;
+        dest->protocol = parsed_url::AJP;
         dest->default_port = 8009;
     } else if (memcmp(url, "http://", 7) == 0) {
         url += 7;
-        dest->protocol = HTTP;
+        dest->protocol = parsed_url::HTTP;
         dest->default_port = 80;
     } else
         return false;
 
     dest->uri = strchr(url, '/');
-    if (dest->uri == NULL || dest->uri == url)
+    if (dest->uri == nullptr || dest->uri == url)
         return false;
 
     dest->host = g_strndup(url, dest->uri - url);
@@ -93,11 +93,11 @@ struct context {
 static void
 shutdown_callback(void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
-    if (c->body != NULL) {
+    if (c->body != nullptr) {
         sink_fd_close(c->body);
-        c->body = NULL;
+        c->body = nullptr;
         c->body_abort = true;
     } else {
         c->aborted = true;
@@ -113,7 +113,7 @@ shutdown_callback(void *ctx)
 static void
 ajp_socket_release(bool reuse, void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
     assert(!c->idle);
     assert(c->fd >= 0);
@@ -138,9 +138,9 @@ static const struct lease ajp_socket_lease = {
 static void
 my_sink_fd_input_eof(void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
-    c->body = NULL;
+    c->body = nullptr;
     c->body_eof = true;
 
     shutdown_listener_deinit(&c->shutdown_listener);
@@ -149,12 +149,12 @@ my_sink_fd_input_eof(void *ctx)
 static void
 my_sink_fd_input_error(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
 
-    c->body = NULL;
+    c->body = nullptr;
     c->body_abort = true;
 
     shutdown_listener_deinit(&c->shutdown_listener);
@@ -163,11 +163,11 @@ my_sink_fd_input_error(GError *error, void *ctx)
 static bool
 my_sink_fd_send_error(int error, void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
     g_printerr("%s\n", g_strerror(error));
 
-    c->body = NULL;
+    c->body = nullptr;
     c->body_abort = true;
 
     shutdown_listener_deinit(&c->shutdown_listener);
@@ -191,12 +191,12 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
             struct istream *body,
             void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
     c->status = status;
 
-    if (body != NULL) {
-        body = istream_pipe_new(c->pool, body, NULL);
+    if (body != nullptr) {
+        body = istream_pipe_new(c->pool, body, nullptr);
         c->body = sink_fd_new(c->pool, body, 1, guess_fd_type(1),
                               &my_sink_fd_handler, c);
         istream_read(body);
@@ -209,7 +209,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -233,7 +233,7 @@ static const struct http_response_handler my_response_handler = {
 static void
 my_client_socket_success(int fd, void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
     c->fd = fd;
 
@@ -241,7 +241,7 @@ my_client_socket_success(int fd, void *ctx)
     strmap_add(headers, "host", c->url.host);
 
     switch (c->url.protocol) {
-    case AJP:
+    case parsed_url::AJP:
         ajp_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
@@ -250,9 +250,9 @@ my_client_socket_success(int fd, void *ctx)
                            &c->async_ref);
         break;
 
-    case HTTP:
+    case parsed_url::HTTP:
         http_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
-                            NULL, NULL,
+                            nullptr, nullptr,
                             c->method, c->url.uri,
                             headers_dup(c->pool, headers),
                             c->request_body, false,
@@ -265,13 +265,13 @@ my_client_socket_success(int fd, void *ctx)
 static void
 my_client_socket_timeout(void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
     g_printerr("Connect timeout\n");
 
     c->aborted = true;
 
-    if (c->request_body != NULL)
+    if (c->request_body != nullptr)
         istream_close_unused(c->request_body);
 
     shutdown_listener_deinit(&c->shutdown_listener);
@@ -280,14 +280,14 @@ my_client_socket_timeout(void *ctx)
 static void
 my_client_socket_error(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    context *c = (context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
 
     c->aborted = true;
 
-    if (c->request_body != NULL)
+    if (c->request_body != nullptr)
         istream_close_unused(c->request_body);
 
     shutdown_listener_deinit(&c->shutdown_listener);
@@ -307,7 +307,7 @@ static const struct client_socket_handler my_client_socket_handler = {
 int
 main(int argc, char **argv)
 {
-    static struct context ctx;
+    static context ctx;
 
     if (argc < 2 || argc > 3) {
         fprintf(stderr, "usage: run-ajp-client URL [BODY]\n");
@@ -343,7 +343,7 @@ main(int argc, char **argv)
 
     shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
 
-    struct pool *root_pool = pool_new_libc(NULL, "root");
+    struct pool *root_pool = pool_new_libc(nullptr, "root");
     tpool_init(root_pool);
 
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
@@ -365,7 +365,7 @@ main(int argc, char **argv)
         ctx.request_body = istream_file_new(pool, argv[2], st.st_size);
     } else {
         ctx.method = HTTP_METHOD_GET;
-        ctx.request_body = NULL;
+        ctx.request_body = nullptr;
     }
 
     /* connect */
