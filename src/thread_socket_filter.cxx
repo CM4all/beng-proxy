@@ -374,7 +374,8 @@ thread_socket_filter_consumed(size_t nbytes, void *ctx)
 
     pthread_mutex_lock(&f->mutex);
 
-    if (!fifo_buffer_empty(f->encrypted_input))
+    if (!fifo_buffer_empty(f->encrypted_input) ||
+        fifo_buffer_full(f->decrypted_input))
         /* just in case the filter has stalled because the
            decrypted_input buffer was full: try again */
         schedule = true;
