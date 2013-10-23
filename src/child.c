@@ -208,19 +208,19 @@ child_register(pid_t pid, const char *name,
 }
 
 void
-child_kill(pid_t pid)
+child_kill_signal(pid_t pid, int signo)
 {
     struct child *child = find_child_by_pid(pid);
 
     assert(child != NULL);
     assert(child->callback != NULL);
 
-    daemon_log(5, "sending SIGTERM to child process '%s' (pid %d)\n",
-               child->name, (int)pid);
+    daemon_log(5, "sending %s to child process '%s' (pid %d)\n",
+               strsignal(signo), child->name, (int)pid);
 
     child->callback = NULL;
 
-    if (kill(pid, SIGTERM) < 0) {
+    if (kill(pid, signo) < 0) {
         daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",
                    child->name, (int)pid, strerror(errno));
 
@@ -229,6 +229,12 @@ child_kill(pid_t pid)
            the shutdown */
         child_abandon(child);
     }
+}
+
+void
+child_kill(pid_t pid)
+{
+    child_kill_signal(pid, SIGTERM);
 }
 
 unsigned

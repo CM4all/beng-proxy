@@ -169,7 +169,7 @@ child_stock_destroy(void *ctx gcc_unused, struct stock_item *_item)
     struct child_stock_item *item = (struct child_stock_item *)_item;
 
     if (item->pid >= 0)
-        child_kill(item->pid);
+        child_kill_signal(item->pid, item->cls->shutdown_signal);
 
     child_socket_unlink(&item->socket);
 
@@ -198,6 +198,7 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
 {
     assert(cls != NULL);
     assert((cls->prepare == NULL) == (cls->free == NULL));
+    assert(cls->shutdown_signal != 0);
     assert(cls->run != NULL);
 
     union {

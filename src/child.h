@@ -44,6 +44,12 @@ child_register(pid_t pid, const char *name,
                child_callback_t callback, void *ctx);
 
 /**
+ * Send a signal to a child process and unregister it.
+ */
+void
+child_kill_signal(pid_t pid, int signo);
+
+/**
  * Send a SIGTERM to a child process and unregister it.
  */
 void
