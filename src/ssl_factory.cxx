@@ -58,6 +58,8 @@ struct ssl_factory {
     }
 
     bool EnableSNI(GError **error_r);
+
+    SSL *Make();
 };
 
 static int
@@ -329,6 +331,13 @@ ssl_factory::EnableSNI(GError **error_r)
     return true;
 }
 
+SSL *
+ssl_factory::Make()
+{
+    SSL *ssl = SSL_new(ssl_ctx);
+    return ssl;
+}
+
 struct ssl_factory *
 ssl_factory_new(const ssl_config &config,
                 bool server,
@@ -377,5 +386,5 @@ ssl_factory_free(struct ssl_factory *factory)
 SSL *
 ssl_factory_make(ssl_factory &factory)
 {
-    return SSL_new(factory.ssl_ctx);
+    return factory.Make();
 }
