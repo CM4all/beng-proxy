@@ -920,8 +920,9 @@ http_client_socket_remaining(size_t remaining, void *ctx)
 {
     struct http_client *client = ctx;
 
-    /* only READ_BODY could have blocked */
-    assert(client->response.read_state == READ_BODY);
+    if (client->response.read_state < READ_BODY)
+        /* this information comes too early, we can't use it */
+        return true;
 
     if (http_body_socket_eof(&client->response.body_reader, remaining)) {
         /* there's data left in the buffer: continue serving the
