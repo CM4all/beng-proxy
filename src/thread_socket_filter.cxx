@@ -94,12 +94,10 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
 
         switch (filtered_socket_invoke_data(f->socket, copy, length)) {
         case BUFFERED_OK:
-            assert(fifo_buffer_empty(f->decrypted_input));
             return true;
 
         case BUFFERED_PARTIAL:
         case BUFFERED_BLOCKING:
-            assert(!fifo_buffer_empty(f->decrypted_input));
             return true;
 
         case BUFFERED_MORE:
