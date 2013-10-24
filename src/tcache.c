@@ -254,8 +254,7 @@ tcache_response_evaluate(const struct translate_response *response)
 
     return response->max_age != 0 &&
         response->www_authenticate == NULL &&
-        response->authentication_info == NULL &&
-        response->status == 0;
+        response->authentication_info == NULL;
 }
 
 /**
