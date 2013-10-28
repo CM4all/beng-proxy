@@ -241,7 +241,7 @@ nfs_client_new_error(int status, struct nfs_context *nfs, void *data,
             msg2 = g_strerror(-status);
     }
 
-    return g_error_new(errno_quark(), -status, "%s: %s", msg, msg2);
+    return g_error_new(nfs_client_quark(), -status, "%s: %s", msg, msg2);
 }
 
 static int
