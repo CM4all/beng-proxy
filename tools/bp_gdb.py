@@ -237,6 +237,32 @@ class DumpPools(gdb.Command):
                 print pair['key'].string(), '=', pair['value'].cast(string_type).string()
                 slot = slot['next']
 
+class FindChild(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_find_child", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
+
+    def _find_child_by_pid(self, pid):
+        lh = gdb.parse_and_eval('children')
+        if lh.type.code != gdb.lookup_type('struct list_head').code:
+            print "not a list_head"
+            return None
+
+        child_pointer = gdb.lookup_type('struct child').pointer()
+        for li in for_each_list_head(lh):
+            child = li.cast(child_pointer)
+            if child['pid'] == pid:
+                return child
+
+        return None
+
+    def invoke(self, arg, from_tty):
+        pid = gdb.parse_and_eval(arg)
+        child = self._find_child_by_pid(pid)
+        if child is None:
+            print "Not found"
+        else:
+            print child, child.dereference()
+
 DumpHashmapSlot()
 DumpHashmap()
 DumpHashmap2()
@@ -245,3 +271,4 @@ DumpPoolStats()
 DumpPoolRefs()
 DumpPoolAllocations()
 DumpPools()
+FindChild()
