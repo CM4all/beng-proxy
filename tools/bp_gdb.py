@@ -230,6 +230,51 @@ class FindChild(gdb.Command):
         else:
             print child, child.dereference()
 
+class FindChildStockClient(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_find_child_stock_client", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
+
+    def _find_child_by_pid(self, pid):
+        lh = gdb.parse_and_eval('children')
+        if lh.type.code != gdb.lookup_type('struct list_head').code:
+            print "not a list_head"
+            return None
+
+        child_pointer = gdb.lookup_type('struct child').pointer()
+        for li in for_each_list_head(lh):
+            child = li.cast(child_pointer)
+            if child['pid'] == pid:
+                return child
+
+        return None
+
+    def invoke(self, arg, from_tty):
+        pid = gdb.parse_and_eval(arg)
+        child = self._find_child_by_pid(pid)
+        if child is None:
+            print "Not found"
+            return
+
+        stock_type = gdb.lookup_type('struct stock').pointer()
+        child_stock_item_type = gdb.lookup_type('struct child_stock_item').pointer()
+        child_stock_item = child['callback_ctx'].cast(child_stock_item_type)
+
+        string_type = gdb.lookup_type('char').pointer()
+        fcgi_connection_type = gdb.lookup_type('struct fcgi_connection').pointer()
+
+        fcgi_stock = gdb.parse_and_eval('global_fcgi_stock')
+        h = fcgi_stock['hstock']['stocks']
+
+        for i, key, value in for_each_hashmap(h.dereference()):
+            stock = value.cast(stock_type)
+
+            for x in ('idle', 'busy'):
+                for lh in for_each_list_head(stock[x]):
+                    c = lh.cast(fcgi_connection_type)
+
+                    if c['child'] == child_stock_item:
+                        print key, c, c.dereference()
+
 DumpHashmapSlot()
 DumpHashmap()
 DumpHashmap2()
@@ -238,3 +283,4 @@ DumpPoolStats()
 DumpPoolRefs()
 DumpPoolAllocations()
 FindChild()
+FindChildStockClient()
