@@ -212,31 +212,6 @@ class DumpPoolAllocations(gdb.Command):
         for a in for_each_list_item_reverse(pool['allocations'], allocation_pointer):
             print '%8u %s:%u' % (a['size'], a['file'].string().replace('../', ''), a['line'])
 
-class DumpPools(gdb.Command):
-    def __init__(self):
-        gdb.Command.__init__(self, "bp_dump_pools", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
-
-    def invoke(self, arg, from_tty):
-        h = gdb.parse_and_eval(arg)
-        if h.type.code != gdb.lookup_type('struct pool').pointer().code:
-            print "%s is not a strmap*" % arg_list[0]
-            return
-
-        h = h['hashmap']
-
-        string_type = gdb.lookup_type('char').pointer()
-
-        capacity = h['capacity']
-        for i in range(capacity):
-            slot = h['slots'][i]
-            if not slot['pair']['key']:
-                continue
-
-            while slot:
-                pair = slot['pair']
-                print pair['key'].string(), '=', pair['value'].cast(string_type).string()
-                slot = slot['next']
-
 class FindChild(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "bp_find_child", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
@@ -270,5 +245,4 @@ DumpStrmap()
 DumpPoolStats()
 DumpPoolRefs()
 DumpPoolAllocations()
-DumpPools()
 FindChild()
