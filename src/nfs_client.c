@@ -9,6 +9,7 @@
 #include "async.h"
 #include "hashmap.h"
 #include "gerrno.h"
+#include "fd_util.h"
 
 #include <inline/list.h>
 
@@ -691,8 +692,15 @@ nfs_client_event_callback(gcc_unused int fd, short event, void *ctx)
     assert(client->in_event);
     client->in_event = false;
 
-    if (client->context != NULL)
+    if (client->context != NULL) {
+        if (!was_mounted)
+            /* until the mount is finished, the NFS client may use
+               various sockets, therefore make sure the close-on-exec
+               flag is set on all of them */
+            fd_set_cloexec(nfs_get_fd(client->context), true);
+
         nfs_client_add_event(client);
+    }
 
     pool_unref(pool);
     pool_commit();
@@ -864,6 +872,8 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
         nfs_client_mount_error(client, error);
         return;
     }
+
+    fd_set_cloexec(nfs_get_fd(client->context), true);
 
     nfs_client_add_event(client);
 
