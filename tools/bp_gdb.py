@@ -6,6 +6,23 @@
 
 import gdb
 
+def for_each_hashmap(h):
+    if h.type.code != gdb.lookup_type('struct hashmap').code:
+        print "not a hashmap"
+        return
+
+    capacity = h['capacity']
+    slots = h['slots']
+    for i in range(capacity):
+        slot = slots[i]
+        if not slot['pair']['key']:
+            continue
+
+        while slot:
+            pair = slot['pair']
+            yield i, pair['key'].string(), pair['value']
+            slot = slot['next']
+
 class DumpHashmapSlot(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "bp_dump_hashmap_slot", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
@@ -74,22 +91,8 @@ class DumpHashmap2(gdb.Command):
 
     def invoke(self, arg, from_tty):
         h = gdb.parse_and_eval(arg)
-        if h.type.code != gdb.lookup_type('struct hashmap').pointer().code:
-            print "%s is not a hashmap*" % arg_list[0]
-            return
-
-        string_type = gdb.lookup_type('char').pointer()
-
-        capacity = h['capacity']
-        for i in range(capacity):
-            slot = h['slots'][i]
-            if not slot['pair']['key']:
-                continue
-
-            while slot:
-                pair = slot['pair']
-                print i, pair['key'].string()
-                slot = slot['next']
+        for i, key, value in for_each_hashmap(h.dereference()):
+            print i, key, value
 
 class DumpStrmap(gdb.Command):
     def __init__(self):
@@ -101,20 +104,9 @@ class DumpStrmap(gdb.Command):
             print "%s is not a strmap*" % arg_list[0]
             return
 
-        h = h['hashmap']
-
         string_type = gdb.lookup_type('char').pointer()
-
-        capacity = h['capacity']
-        for i in range(capacity):
-            slot = h['slots'][i]
-            if not slot['pair']['key']:
-                continue
-
-            while slot:
-                pair = slot['pair']
-                print pair['key'].string(), '=', pair['value'].cast(string_type).string()
-                slot = slot['next']
+        for i, key, value in for_each_hashmap(h['hashmap'].dereference()):
+            print key, '=', value.cast(string_type).string()
 
 def pool_size(pool):
     return int(pool['size'])
