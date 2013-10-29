@@ -145,6 +145,16 @@ def for_each_list_item_reverse(head, cast):
         yield item.cast(cast)
         item = item['prev']
 
+def for_each_recursive_pool(pool):
+    yield pool
+
+    pool_pointer = gdb.lookup_type('struct pool').pointer()
+
+    for child in for_each_list_head(pool['children']):
+        child = child.cast(pool_pointer)
+        for x in for_each_recursive_pool(child):
+            yield x
+
 def pool_recursive_sizes(pool):
     pool_pointer = gdb.lookup_type('struct pool').pointer()
 
@@ -203,6 +213,23 @@ class DumpPoolAllocations(gdb.Command):
         allocation_pointer = gdb.lookup_type('struct allocation_info').pointer()
         for a in for_each_list_item_reverse(pool['allocations'], allocation_pointer):
             print '%8u %s:%u' % (a['size'], a['file'].string().replace('../', ''), a['line'])
+
+class FindPool(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_find_pool", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
+
+    def invoke(self, arg, from_tty):
+        arg_list = gdb.string_to_argv(arg)
+        if len(arg_list) != 2:
+            print "usage: bp_find_pool pool name"
+            return
+
+        pool = gdb.parse_and_eval(arg_list[0])
+        name = arg_list[1]
+
+        for x in for_each_recursive_pool(pool):
+            if x['name'].string() == name:
+                print x, x.dereference()
 
 class FindChild(gdb.Command):
     def __init__(self):
@@ -282,5 +309,6 @@ DumpStrmap()
 DumpPoolStats()
 DumpPoolRefs()
 DumpPoolAllocations()
+FindPool()
 FindChild()
 FindChildStockClient()
