@@ -117,7 +117,14 @@ handle_translated_request(request &request,
     else if (response->transparent)
         request_ignore_session(&request);
 
-    request.translate.response = response;
+    /* copy the translate_response just in case the cache item is
+       freed before we send the final response */
+    /* TODO: use cache_item_lock() instead */
+    translate_response *response2 = (translate_response *)
+        p_malloc(request.request->pool, sizeof(*response2));
+    *response2 = *response;
+    translate_response_copy(request.request->pool, response2, response);
+    request.translate.response = response2;
     request.translate.transformation = response->views != NULL
         ? response->views->transformation
         : NULL;

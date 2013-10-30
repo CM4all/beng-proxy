@@ -19,6 +19,11 @@
 #include "http_quark.h"
 #include "gerrno.h"
 
+#ifdef HAVE_LIBNFS
+#include "nfs_client.h"
+#include <nfsc/libnfs-raw-nfs.h>
+#endif
+
 void
 response_dispatch_error(struct request *request, GError *error)
 {
@@ -57,6 +62,18 @@ response_dispatch_error(struct request *request, GError *error)
             return;
         }
     }
+
+#ifdef HAVE_LIBNFS
+    if (error->domain == nfs_client_quark()) {
+        switch (error->code) {
+        case NFS3ERR_NOENT:
+        case NFS3ERR_NOTDIR:
+            response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
+                                      "The requested file does not exist.");
+            return;
+        }
+    }
+#endif
 
     if (error->domain == translate_quark())
         response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,

@@ -42,7 +42,15 @@
 #endif
 #endif
 
+#ifndef NDEBUG
+static LIST_HEAD(fcgi_clients);
+#endif
+
 struct fcgi_client {
+#ifndef NDEBUG
+    struct list_head siblings;
+#endif
+
     struct pool *pool, *caller_pool;
 
     struct buffered_socket socket;
@@ -148,6 +156,10 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
         fcgi_client_release_socket(client, reuse);
 
     buffered_socket_destroy(&client->socket);
+
+#ifndef NDEBUG
+    list_remove(&client->siblings);
+#endif
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -914,6 +926,9 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     struct pool *pool = pool_new_linear(caller_pool, "fcgi_client_request",
                                         1024);
     struct fcgi_client *client = p_malloc(pool, sizeof(*client));
+#ifndef NDEBUG
+    list_add(&client->siblings, &fcgi_clients);
+#endif
     client->pool = pool;
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;

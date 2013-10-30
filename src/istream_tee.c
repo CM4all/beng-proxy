@@ -31,6 +31,10 @@ struct istream_tee {
      */
     bool reading, in_data;
 
+#ifndef NDEBUG
+    bool closed_while_reading, closed_while_data;
+#endif
+
     /**
      * The number of bytes to skip for output 0.  The first output has
      * already consumed this many bytes, but the second output
@@ -248,6 +252,13 @@ istream_tee_close0(struct istream *istream)
 
     tee->outputs[0].enabled = false;
 
+#ifndef NDEBUG
+    if (tee->reading)
+        tee->closed_while_reading = true;
+    if (tee->in_data)
+        tee->closed_while_data = true;
+#endif
+
     if (tee->input != NULL) {
         if (!tee->outputs[1].enabled)
             istream_free_handler(&tee->input);
@@ -330,6 +341,13 @@ istream_tee_close1(struct istream *istream)
 
     tee->outputs[1].enabled = false;
 
+#ifndef NDEBUG
+    if (tee->reading)
+        tee->closed_while_reading = true;
+    if (tee->in_data)
+        tee->closed_while_data = true;
+#endif
+
     if (tee->input != NULL) {
         if (!tee->outputs[0].enabled)
             istream_free_handler(&tee->input);
@@ -395,6 +413,10 @@ istream_tee_new(struct pool *pool, struct istream *input,
     tee->reading = false;
     tee->in_data = false;
     tee->skip = 0;
+
+#ifndef NDEBUG
+    tee->closed_while_reading = tee->closed_while_data = false;
+#endif
 
     return istream_struct_cast(&tee->outputs[0].istream);
 }

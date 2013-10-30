@@ -270,6 +270,8 @@ struct buffered_socket {
 
 #ifndef NDEBUG
     bool reading, ended, destroyed;
+
+    enum buffered_result last_buffered_result;
 #endif
 };
 
