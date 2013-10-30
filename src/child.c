@@ -28,6 +28,18 @@ struct child {
 
     child_callback_t callback;
     void *callback_ctx;
+
+    /**
+     * This timer is set up by child_kill_signal().  If the child
+     * process hasn't exited after a certain amount of time, we send
+     * SIGKILL.
+     */
+    struct event kill_timeout_event;
+};
+
+static const struct timeval child_kill_timeout = {
+    .tv_sec = 60,
+    .tv_usec = 0,
 };
 
 static bool shutdown_flag = false;
@@ -73,6 +85,8 @@ child_remove(struct child *child)
     assert(num_children > 0);
     --num_children;
 
+    evtimer_del(&child->kill_timeout_event);
+
     list_remove(&child->siblings);
     if (shutdown_flag && list_empty(&children)) {
         assert(num_children == 0);
@@ -113,6 +127,20 @@ child_done(struct child *child, int status)
     if (child->callback != NULL)
         child->callback(status, child->callback_ctx);
     child_free(child);
+}
+
+static void
+child_kill_timeout_callback(gcc_unused int fd, gcc_unused short event,
+                            void *ctx)
+{
+    struct child *child = ctx;
+
+    daemon_log(3, "sending SIGKILL to child process '%s' (pid %d) due to timeout\n",
+               child->name, (int)child->pid);
+
+    if (kill(child->pid, SIGKILL) < 0)
+        daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",
+                   child->name, (int)child->pid, strerror(errno));
 }
 
 static void
@@ -205,6 +233,9 @@ child_register(pid_t pid, const char *name,
     child->callback_ctx = ctx;
     list_add(&child->siblings, &children);
     ++num_children;
+
+    evtimer_set(&child->kill_timeout_event,
+                child_kill_timeout_callback, child);
 }
 
 void
@@ -228,7 +259,10 @@ child_kill_signal(pid_t pid, int signo)
            just ignore the process from now on and don't let it delay
            the shutdown */
         child_abandon(child);
+        return;
     }
+
+    evtimer_add(&child->kill_timeout_event, &child_kill_timeout);
 }
 
 void
