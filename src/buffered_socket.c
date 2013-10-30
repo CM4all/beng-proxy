@@ -117,6 +117,7 @@ buffered_socket_invoke_data(struct buffered_socket *s)
         if (pool_denotify(&notify)) {
             assert(result == BUFFERED_CLOSED);
         } else {
+            s->last_buffered_result = result;
             assert((result == BUFFERED_CLOSED) == !buffered_socket_valid(s));
         }
 #endif
@@ -475,6 +476,7 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
     s->reading = false;
     s->ended = false;
     s->destroyed = false;
+    s->last_buffered_result = -1;
 #endif
 }
 
