@@ -114,7 +114,14 @@ handle_translated_request(struct request *request,
     else if (response->transparent)
         request_ignore_session(request);
 
-    request->translate.response = response;
+    /* copy the translate_response just in case the cache item is
+       freed before we send the final response */
+    /* TODO: use cache_item_lock() instead */
+    struct translate_response *response2 =
+        p_malloc(request->request->pool, sizeof(*response2));
+    *response2 = *response;
+    translate_response_copy(request->request->pool, response2, response);
+    request->translate.response = response2;
     request->translate.transformation = response->views != NULL
         ? response->views->transformation
         : NULL;
