@@ -3,7 +3,7 @@ cm4all-beng-proxy (3.1.19) unstable; urgency=low
   * handler: work around crash due to translation cache invalidation
   * child: send SIGKILL after 60 seconds
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 30 Oct 2013 12:12:31 -0000
 
 cm4all-beng-proxy (3.1.18) unstable; urgency=low
 
