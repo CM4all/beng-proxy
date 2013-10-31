@@ -65,6 +65,7 @@ syn_monitor_run(struct pool *pool,
         : 30;
 
     client_socket_new(pool, address->sa_family, SOCK_STREAM, 0,
+                      nullptr, 0,
                       address, address_length,
                       timeout,
                       &syn_monitor_handler, &handler,

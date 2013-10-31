@@ -129,6 +129,7 @@ client_socket_event_callback(int fd, short event gcc_unused, void *ctx)
 void
 client_socket_new(struct pool *pool,
                   int domain, int type, int protocol,
+                  const struct sockaddr *bind_addr, size_t bind_addrlen,
                   const struct sockaddr *addr, size_t addrlen,
                   unsigned timeout,
                   const struct client_socket_handler *handler, void *ctx,
@@ -152,6 +153,13 @@ client_socket_new(struct pool *pool,
 
     if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
         !socket_set_nodelay(fd, true)) {
+        GError *error = new_error_errno();
+        close(fd);
+        handler->error(error, ctx);
+        return;
+    }
+
+    if (bind_addr != NULL && bind(fd, bind_addr, bind_addrlen) < 0) {
         GError *error = new_error_errno();
         close(fd);
         handler->error(error, ctx);
