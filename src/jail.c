@@ -171,4 +171,6 @@ jail_wrapper_insert(struct exec *e, const struct jail_params *params,
         exec_append(e, "--home");
         exec_append(e, params->home_directory);
     }
+
+    exec_append(e, "--");
 }
