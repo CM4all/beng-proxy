@@ -150,13 +150,12 @@ client_socket_new(struct pool *pool,
         return;
     }
 
-    if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM) {
-        if (!socket_set_nodelay(fd, true)) {
-            GError *error = new_error_errno();
-            close(fd);
-            handler->error(error, ctx);
-            return;
-        }
+    if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
+        !socket_set_nodelay(fd, true)) {
+        GError *error = new_error_errno();
+        close(fd);
+        handler->error(error, ctx);
+        return;
     }
 
 #ifdef ENABLE_STOPWATCH
