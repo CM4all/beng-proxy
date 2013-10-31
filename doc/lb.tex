@@ -129,6 +129,27 @@ The protocol \texttt{http} means that \texttt{beng-lb} parses the
 HTTP/1.1 request/response, and forwards them to the peer.  This HTTP
 parser is needed for some of the advanced features, such as cookies.
 
+\subsection{Transparent Source IP}
+
+The \verb|source_address| setting can be used on TCP pools to forward
+the connection transparently with its original source IP.  Example
+configuration:
+
+\begin{verbatim*}
+pool demo {
+  protocol "tcp"
+  source_address "transparent"
+  member "foo:1234"
+  member "bar:1234"
+}
+\end{verbatim*}
+
+Note that this requires a routing table on the pool members that
+routes reply packets back to \emph{beng-lb} instead of replying to the
+client directly.  The easiest way to do it is make the \emph{beng-lb}
+server the default gateway.  If that is not desirable, advanced
+routing with Netfilter marks are a powerful alternative.
+
 \subsection{Conditional Pools}
 
 Incoming requests can be delivered to pools based on

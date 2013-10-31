@@ -134,6 +134,13 @@ struct lb_cluster_config {
      */
     enum lb_protocol protocol;
 
+    /**
+     * Use the client's source IP for the connection to the backend?
+     * This is implemented using IP_TRANSPARENT and requires the
+     * "tproxy" Linux kernel module.
+     */
+    bool transparent_source;
+
     bool mangle_via;
 
     struct lb_fallback_config fallback;
@@ -154,6 +161,7 @@ struct lb_cluster_config {
     lb_cluster_config(const char *_name)
         :name(_name),
          protocol(LB_PROTOCOL_HTTP),
+         transparent_source(false),
          mangle_via(false),
          sticky_mode(STICKY_NONE),
          session_cookie("beng_proxy_session"),

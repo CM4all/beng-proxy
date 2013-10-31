@@ -792,6 +792,16 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
             return _throw(error_r, "Unknown protocol");
 
         return true;
+    } else if (strcmp(word, "source_address") == 0) {
+        const char *address = next_value(&p);
+        if (address == NULL || strcmp(address, "transparent") != 0)
+            return _throw(error_r, "\"transparent\" expected");
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        cluster->transparent_source = true;
+        return true;
     } else if (strcmp(word, "mangle_via") == 0) {
         if (!next_bool(&p, &cluster->mangle_via, error_r))
             return false;
