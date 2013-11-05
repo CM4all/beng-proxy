@@ -81,6 +81,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
 	src/product.h \
+	src/capabilities.c src/capabilities.h \
 	src/gerrno.h \
 	src/gerror.h \
 	src/abort-close.c src/abort-close.h \
@@ -379,7 +380,7 @@ src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBNFS_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBZ_LIBS)
-src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS)
+src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS) -lcap
 
 if HAVE_LIBNFS
 src_cm4all_beng_proxy_SOURCES += \

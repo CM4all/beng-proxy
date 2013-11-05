@@ -39,6 +39,7 @@
 #include "ua_classification.h"
 #include "ssl_init.hxx"
 #include "ssl_client.h"
+#include "capabilities.h"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -432,8 +433,14 @@ int main(int argc, char **argv)
 
     /* daemonize II */
 
+    if (daemon_user_defined(&instance.config.user))
+        capabilities_pre_setuid();
+
     if (daemon_user_set(&instance.config.user) < 0)
         return EXIT_FAILURE;
+
+    if (daemon_user_defined(&instance.config.user))
+        capabilities_post_setuid();
 
     /* create worker processes */
 
