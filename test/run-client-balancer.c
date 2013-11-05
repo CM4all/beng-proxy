@@ -129,7 +129,9 @@ main(int argc, char **argv)
     /* connect */
 
     struct async_operation_ref async_ref;
-    client_balancer_connect(pool, ctx.balancer, 0, &address_list, 30,
+    client_balancer_connect(pool, ctx.balancer,
+                            false, NULL, 0,
+                            0, &address_list, 30,
                             &my_socket_handler, &ctx,
                             &async_ref);
 

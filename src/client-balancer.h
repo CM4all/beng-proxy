@@ -7,11 +7,15 @@
 #ifndef BENG_PROXY_CLIENT_BALANCER_H
 #define BENG_PROXY_CLIENT_BALANCER_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 struct pool;
 struct balancer;
 struct address_list;
 struct client_socket_handler;
 struct async_operation_ref;
+struct sockaddr;
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,6 +30,9 @@ extern "C" {
  */
 void
 client_balancer_connect(struct pool *pool, struct balancer *balancer,
+                        bool ip_transparent,
+                        const struct sockaddr *bind_address,
+                        size_t bind_address_size,
                         unsigned session_sticky,
                         const struct address_list *address_list,
                         unsigned timeout,

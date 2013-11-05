@@ -355,6 +355,7 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
     *tcp_r = tcp;
 
     client_balancer_connect(pool, &balancer,
+                            false, nullptr, 0,
                             session_sticky,
                             &address_list,
                             20,
