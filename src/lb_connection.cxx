@@ -143,7 +143,7 @@ lb_connection_new(struct lb_instance *instance,
     case LB_PROTOCOL_TCP:
         lb_tcp_new(connection->pool, instance->pipe_stock,
                    fd, fd_type, filter, filter_ctx, addr,
-                   connection->listener->destination.cluster->address_list,
+                   listener->destination.cluster->address_list,
                    *connection->instance->balancer,
                    &tcp_handler, connection,
                    &connection->tcp);
