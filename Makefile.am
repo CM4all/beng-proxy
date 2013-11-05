@@ -394,6 +394,7 @@ endif
 
 src_cm4all_beng_lb_SOURCES = \
 	src/abort-close.c src/abort-close.h \
+	src/capabilities.cxx src/capabilities.hxx \
 	src/clock.c src/clock.h \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/format.c \
@@ -523,6 +524,7 @@ src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBSSL_LIBS) \
 	$(LIBEVENT_LIBS)
 src_cm4all_beng_lb_LDFLAGS = $(AM_LDFLAGS) \
+	-lcap \
 	$(GTHREAD_LIBS)
 
 src_cm4all_beng_proxy_log_cat_SOURCES = \

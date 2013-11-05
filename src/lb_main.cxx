@@ -26,6 +26,7 @@
 #include "child.h"
 #include "thread_pool.h"
 #include "fb_pool.h"
+#include "capabilities.hxx"
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
@@ -41,6 +42,12 @@
 #include <netdb.h>
 
 #include <event.h>
+
+static constexpr cap_value_t cap_keep_list[1] = {
+    /* keep the NET_RAW capability to be able to to use the socket
+       option IP_TRANSPARENT */
+    CAP_NET_RAW,
+};
 
 static constexpr struct timeval launch_worker_now = {
     0,
@@ -298,8 +305,14 @@ int main(int argc, char **argv)
 
     /* daemonize II */
 
+    if (daemon_user_defined(&instance.cmdline.user))
+        capabilities_pre_setuid();
+
     if (daemon_user_set(&instance.cmdline.user) < 0)
         return EXIT_FAILURE;
+
+    if (daemon_user_defined(&instance.cmdline.user))
+        capabilities_post_setuid(cap_keep_list, G_N_ELEMENTS(cap_keep_list));
 
     /* main loop */
 
