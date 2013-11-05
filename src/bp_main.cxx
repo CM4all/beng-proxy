@@ -62,6 +62,12 @@
 bool debug_mode = false;
 #endif
 
+static constexpr cap_value_t cap_keep_list[1] = {
+    /* keep the KILL capability to be able to kill child processes
+       that have switched to another uid (e.g. via JailCGI) */
+    CAP_KILL,
+};
+
 static void
 free_all_listeners(struct instance *instance)
 {
@@ -440,7 +446,8 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
 
     if (daemon_user_defined(&instance.config.user))
-        capabilities_post_setuid();
+        capabilities_post_setuid(cap_keep_list, G_N_ELEMENTS(cap_keep_list));
+
 
     /* create worker processes */
 

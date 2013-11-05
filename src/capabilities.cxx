@@ -8,18 +8,11 @@
 
 #include <glib.h>
 
-#include <sys/capability.h>
 #include <sys/prctl.h>
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-static const cap_value_t keep_list[1] = {
-    /* keep the KILL capability to be able to kill child processes
-       that have switched to another uid (e.g. via JailCGI) */
-    CAP_KILL,
-};
 
 void
 capabilities_pre_setuid(void)
@@ -35,7 +28,7 @@ capabilities_pre_setuid(void)
 }
 
 void
-capabilities_post_setuid(void)
+capabilities_post_setuid(const cap_value_t *keep_list, unsigned n)
 {
     /* restore the KEEPCAPS flag */
 
@@ -55,14 +48,12 @@ capabilities_post_setuid(void)
 
     cap_clear(caps);
 
-    if (cap_set_flag(caps, CAP_EFFECTIVE,
-                     G_N_ELEMENTS(keep_list), keep_list, CAP_SET) < 0) {
+    if (cap_set_flag(caps, CAP_EFFECTIVE, n, keep_list, CAP_SET) < 0) {
         fprintf(stderr, "cap_set_flag() failed: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
-    if (cap_set_flag(caps, CAP_PERMITTED,
-                     G_N_ELEMENTS(keep_list), keep_list, CAP_SET) < 0) {
+    if (cap_set_flag(caps, CAP_PERMITTED, n, keep_list, CAP_SET) < 0) {
         fprintf(stderr, "cap_set_flag() failed: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
