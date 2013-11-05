@@ -54,6 +54,7 @@ client_balancer_next(struct client_balancer_request *request)
 
     client_socket_new(request->pool,
                       envelope->address.sa_family, SOCK_STREAM, 0,
+                      false,
                       NULL, 0,
                       &envelope->address, envelope->length,
                       request->timeout,

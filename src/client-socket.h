@@ -8,6 +8,8 @@
 #define __BENG_CLIENT_SOCKET_H
 
 #include <glib.h>
+
+#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -25,11 +27,13 @@ extern "C" {
 #endif
 
 /**
+ * @param ip_transparent enable the IP_TRANSPARENT option?
  * @param timeout the connect timeout in seconds
  */
 void
 client_socket_new(struct pool *pool,
                   int domain, int type, int protocol,
+                  bool ip_transparent,
                   const struct sockaddr *bind_addr, size_t bind_addrlen,
                   const struct sockaddr *addr, size_t addrlen,
                   unsigned timeout,

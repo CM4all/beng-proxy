@@ -207,6 +207,7 @@ expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
            : 30);
 
     client_socket_new(pool, address->sa_family, SOCK_STREAM, 0,
+                      false,
                       NULL, 0,
                       address, address_length,
                       connect_timeout,

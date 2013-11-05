@@ -410,6 +410,7 @@ main(int argc, char **argv)
 
     client_socket_new(pool,
                       ai->ai_family, ai->ai_socktype, ai->ai_protocol,
+                      false,
                       nullptr, 0,
                       ai->ai_addr, ai->ai_addrlen,
                       30,

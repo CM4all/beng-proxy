@@ -129,6 +129,7 @@ client_socket_event_callback(int fd, short event gcc_unused, void *ctx)
 void
 client_socket_new(struct pool *pool,
                   int domain, int type, int protocol,
+                  bool ip_transparent,
                   const struct sockaddr *bind_addr, size_t bind_addrlen,
                   const struct sockaddr *addr, size_t addrlen,
                   unsigned timeout,
@@ -157,6 +158,16 @@ client_socket_new(struct pool *pool,
         close(fd);
         handler->error(error, ctx);
         return;
+    }
+
+    if (ip_transparent) {
+        int on = 1;
+        if (setsockopt(fd, SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
+            GError *error = new_error_errno_msg("Failed to set IP_TRANSPARENT");
+            close(fd);
+            handler->error(error, ctx);
+            return;
+        }
     }
 
     if (bind_addr != NULL && bind(fd, bind_addr, bind_addrlen) < 0) {
