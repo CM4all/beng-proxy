@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "capabilities.h"
+#include "capabilities.hxx"
 
 #include <glib.h>
 

@@ -4,28 +4,20 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CAPABILITIES_H
-#define BENG_PROXY_CAPABILITIES_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef BENG_PROXY_CAPABILITIES_HXX
+#define BENG_PROXY_CAPABILITIES_HXX
 
 /**
  * Prepare the setuid() call.  Configures beng-proxy to keep certain
  * capabilities after switching to an unprivileged uid.
  */
 void
-capabilities_pre_setuid(void);
+capabilities_pre_setuid();
 
 /**
  * Call after setuid().
  */
 void
-capabilities_post_setuid(void);
-
-#ifdef __cplusplus
-}
-#endif
+capabilities_post_setuid();
 
 #endif
