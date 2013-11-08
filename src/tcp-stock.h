@@ -38,6 +38,8 @@ tcp_stock_new(struct pool *pool, unsigned limit);
  */
 void
 tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
+              bool ip_transparent,
+              const struct sockaddr *bind_address, size_t bind_address_size,
               const struct sockaddr *address, size_t address_length,
               unsigned timeout,
               const struct stock_get_handler *handler, void *handler_ctx,

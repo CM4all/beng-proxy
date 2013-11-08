@@ -68,6 +68,7 @@ tcp_balancer_next(struct tcp_balancer_request *request)
 
     tcp_stock_get(request->tcp_balancer->tcp_stock, request->pool,
                   NULL,
+                  false, NULL, 0,
                   &request->current_address->address,
                   request->current_address->length,
                   request->timeout,

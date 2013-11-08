@@ -25,6 +25,10 @@
 #include <sys/socket.h>
 
 struct tcp_stock_request {
+    bool ip_transparent;
+    const struct sockaddr *bind_address;
+    size_t bind_address_size;
+
     const struct sockaddr *address;
     size_t address_length;
 
@@ -260,6 +264,8 @@ tcp_stock_new(struct pool *pool, unsigned limit)
 
 void
 tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
+              bool ip_transparent,
+              const struct sockaddr *bind_address, size_t bind_address_size,
               const struct sockaddr *address, size_t address_length,
               unsigned timeout,
               const struct stock_get_handler *handler, void *handler_ctx,
@@ -269,6 +275,9 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
     assert(address_length > 0);
 
     struct tcp_stock_request *request = p_malloc(pool, sizeof(*request));
+    request->ip_transparent = ip_transparent;
+    request->bind_address = bind_address;
+    request->bind_address_size = bind_address_size;
     request->address = address;
     request->address_length = address_length;
     request->timeout = timeout;
@@ -279,7 +288,14 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
                                       address, address_length))
             buffer[0] = 0;
 
-        name = p_strdup(pool, buffer);
+        if (bind_address != NULL) {
+            char bind_buffer[1024];
+            if (!socket_address_to_string(bind_buffer, sizeof(bind_buffer),
+                                          bind_address, bind_address_size))
+                bind_buffer[0] = 0;
+            name = p_strcat(pool, bind_buffer, ">", buffer, NULL);
+        } else
+            name = p_strdup(pool, buffer);
     }
 
     hstock_get(tcp_stock, pool, name, request,
