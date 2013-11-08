@@ -23,6 +23,10 @@ struct tcp_balancer_request {
     struct pool *pool;
     struct tcp_balancer *tcp_balancer;
 
+    bool ip_transparent;
+    const struct sockaddr *bind_address;
+    size_t bind_address_size;
+
     /**
      * The "sticky id" of the incoming HTTP request.
      */
@@ -68,7 +72,8 @@ tcp_balancer_next(struct tcp_balancer_request *request)
 
     tcp_stock_get(request->tcp_balancer->tcp_stock, request->pool,
                   NULL,
-                  false, NULL, 0,
+                  request->ip_transparent,
+                  request->bind_address, request->bind_address_size,
                   &request->current_address->address,
                   request->current_address->length,
                   request->timeout,
@@ -135,6 +140,8 @@ tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
 
 void
 tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
+                 bool ip_transparent,
+                 const struct sockaddr *bind_address, size_t bind_address_size,
                  unsigned session_sticky,
                  const struct address_list *address_list,
                  unsigned timeout,
@@ -144,6 +151,9 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
     struct tcp_balancer_request *request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->tcp_balancer = tcp_balancer;
+    request->ip_transparent = ip_transparent;
+    request->bind_address = bind_address;
+    request->bind_address_size = bind_address_size;
     request->session_sticky = session_sticky;
     request->timeout = timeout;
 

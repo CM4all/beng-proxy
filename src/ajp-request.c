@@ -159,7 +159,9 @@ ajp_stock_request(struct pool *pool,
 
     hr->uri = uwa->path;
 
-    tcp_balancer_get(tcp_balancer, pool, session_sticky,
+    tcp_balancer_get(tcp_balancer, pool,
+                     false, NULL, 0,
+                     session_sticky,
                      &uwa->addresses,
                      20,
                      &ajp_request_stock_handler, hr,

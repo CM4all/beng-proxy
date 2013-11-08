@@ -373,6 +373,7 @@ lb_http_connection_request(struct http_server_request *request,
     }
 
     tcp_balancer_get(request2->balancer, request->pool,
+                     false, nullptr, 0,
                      session_sticky,
                      &cluster->address_list,
                      20,

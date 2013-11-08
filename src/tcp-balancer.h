@@ -8,6 +8,7 @@
 #define BENG_PROXY_TCP_STOCK_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 struct hstock;
 struct pool;
@@ -16,6 +17,7 @@ struct address_list;
 struct stock_get_handler;
 struct stock_item;
 struct async_operation_ref;
+struct sockaddr;
 
 struct tcp_balancer;
 
@@ -43,6 +45,8 @@ tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
  */
 void
 tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
+                 bool ip_transparent,
+                 const struct sockaddr *bind_address, size_t bind_address_size,
                  unsigned session_sticky,
                  const struct address_list *address_list,
                  unsigned timeout,
