@@ -360,6 +360,19 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
     if (transparent_source) {
         bind_address = remote_address;
         bind_address_size = remote_address_size;
+
+        /* reset the port to 0 to allow the kernel to choose one */
+        if (bind_address->sa_family == AF_INET) {
+            struct sockaddr_in *s_in = (struct sockaddr_in *)
+                p_memdup(pool, bind_address, bind_address_size);
+            s_in->sin_port = 0;
+            bind_address = (const struct sockaddr *)s_in;
+        } else if (bind_address->sa_family == AF_INET6) {
+            struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
+                p_memdup(pool, bind_address, bind_address_size);
+            s_in->sin6_port = 0;
+            bind_address = (const struct sockaddr *)s_in;
+        }
     }
 
     *tcp_r = tcp;
