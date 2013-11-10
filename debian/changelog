@@ -1,6 +1,7 @@
 cm4all-beng-proxy (4.0.3) unstable; urgency=low
 
   * lb: allow the kernel to chooes a TCP bind port
+  * lb: support forwarding HTTP requests with the original source IP
 
  --   
 

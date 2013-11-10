@@ -344,6 +344,27 @@ lb_http_connection_request(struct http_server_request *request,
     request2->async_ref = async_ref;
     request2->new_cookie = 0;
 
+    const struct sockaddr *bind_address = nullptr;
+    size_t bind_address_size = 0;
+    const bool transparent_source = cluster->transparent_source;
+    if (transparent_source) {
+        bind_address = request->remote_address;
+        bind_address_size = request->remote_address_length;
+
+        /* reset the port to 0 to allow the kernel to choose one */
+        if (bind_address->sa_family == AF_INET) {
+            struct sockaddr_in *s_in = (struct sockaddr_in *)
+                p_memdup(request->pool, bind_address, bind_address_size);
+            s_in->sin_port = 0;
+            bind_address = (const struct sockaddr *)s_in;
+        } else if (bind_address->sa_family == AF_INET6) {
+            struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
+                p_memdup(request->pool, bind_address, bind_address_size);
+            s_in->sin6_port = 0;
+            bind_address = (const struct sockaddr *)s_in;
+        }
+    }
+
     unsigned session_sticky = 0;
     switch (cluster->address_list.sticky_mode) {
     case STICKY_NONE:
@@ -373,7 +394,8 @@ lb_http_connection_request(struct http_server_request *request,
     }
 
     tcp_balancer_get(request2->balancer, request->pool,
-                     false, nullptr, 0,
+                     transparent_source,
+                     bind_address, bind_address_size,
                      session_sticky,
                      &cluster->address_list,
                      20,
