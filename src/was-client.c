@@ -592,10 +592,9 @@ was_client_request_abort(struct async_operation *ao)
        delivered to our callback */
     assert(!was_client_response_submitted(client));
 
-    pool_unref(client->caller_pool);
-
     was_client_clear_unused(client);
 
+    pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
 
