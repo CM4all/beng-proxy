@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.0.34) unstable; urgency=low
 
-  * 
+  * processor: fix use-after-free crash bug
 
  --   
 
