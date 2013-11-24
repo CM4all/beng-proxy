@@ -249,12 +249,14 @@ static void
 processor_async_abort(struct async_operation *ao)
 {
     struct processor *processor = async_to_processor(ao);
+    struct pool *const widget_pool = processor->container->pool;
 
     if (processor->container->for_focused.body != NULL)
         /* the request body was not yet submitted to the focused
            widget; dispose it now */
         istream_free_unused(&processor->container->for_focused.body);
 
+    pool_unref(widget_pool);
     pool_unref(processor->caller_pool);
 
     if (processor->parser != NULL)
@@ -292,6 +294,8 @@ processor_new(struct pool *caller_pool,
     processor->widget.pool = env->pool;
 
     processor->container = widget;
+    pool_ref(processor->container->pool);
+
     processor->env = env;
     processor->options = options;
     processor->tag = TAG_NONE;
@@ -1291,6 +1295,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
     } else if (widget->id != NULL &&
                strcmp(processor->lookup_id, widget->id) == 0) {
         struct pool *caller_pool = processor->caller_pool;
+        struct pool *const widget_pool = processor->container->pool;
         const struct widget_lookup_handler *handler = processor->handler;
         void *handler_ctx = processor->handler_ctx;
 
@@ -1301,6 +1306,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
         if (!widget_copy_from_request(widget, env, &error)) {
             widget_cancel(widget);
             processor->handler->error(error, processor->handler_ctx);
+            pool_unref(widget_pool);
             pool_unref(caller_pool);
             return NULL;
         }
@@ -1308,6 +1314,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
         handler->found(widget, handler_ctx);
 
         pool_unref(caller_pool);
+        pool_unref(widget_pool);
 
         return NULL;
     } else {
@@ -1547,6 +1554,7 @@ static void
 processor_parser_eof(void *ctx, off_t length gcc_unused)
 {
     struct processor *processor = ctx;
+    struct pool *const widget_pool = processor->container->pool;
 
     assert(processor->parser != NULL);
 
@@ -1569,12 +1577,15 @@ processor_parser_eof(void *ctx, off_t length gcc_unused)
         processor->handler->not_found(processor->handler_ctx);
         pool_unref(processor->caller_pool);
     }
+
+    pool_unref(widget_pool);
 }
 
 static void
 processor_parser_abort(GError *error, void *ctx)
 {
     struct processor *processor = ctx;
+    struct pool *const widget_pool = processor->container->pool;
 
     assert(processor->parser != NULL);
 
@@ -1593,6 +1604,8 @@ processor_parser_abort(GError *error, void *ctx)
         pool_unref(processor->caller_pool);
     } else
         g_error_free(error);
+
+    pool_unref(widget_pool);
 }
 
 static const struct parser_handler processor_parser_handler = {
