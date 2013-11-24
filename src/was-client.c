@@ -252,7 +252,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         strmap_add(client->response.headers,
                    p_strndup(client->pool, payload, p - (const char*)payload),
                    p_strndup(client->pool, p + 1,
-                             (const char*)payload + payload_length - p));
+                             (const char*)payload + payload_length - p - 1));
         break;
 
     case WAS_COMMAND_STATUS:
@@ -592,10 +592,9 @@ was_client_request_abort(struct async_operation *ao)
        delivered to our callback */
     assert(!was_client_response_submitted(client));
 
-    pool_unref(client->caller_pool);
-
     was_client_clear_unused(client);
 
+    pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
 
