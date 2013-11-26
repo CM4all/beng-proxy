@@ -131,7 +131,7 @@ thread_queue_wait(struct thread_queue *q)
 {
     pthread_mutex_lock(&q->mutex);
 
-    if (q->alive && list_empty(&q->waiting))
+    while (q->alive && list_empty(&q->waiting))
         /* queue is empty, wait for a new job to be added */
         pthread_cond_wait(&q->cond, &q->mutex);
 
