@@ -28,6 +28,11 @@ xmlstrip = '/usr/lib/cm4all/was/bin/xmlstrip'
 sed_fastcgi = '/usr/lib/cm4all/fcgi-bin/fsed'
 apache_lhttpd = '/usr/lib/cm4all/lhttp/bin/apache-lhttpd'
 
+davos_plain = '/usr/lib/cm4all/was/bin/davos-plain'
+davos_od = '/usr/lib/cm4all/was/bin/davos-od'
+od_conf = '/etc/cm4all/davos/od.conf'
+od_section = 'test'
+
 cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
 coma_apps_re = re.compile(r'^/coma-apps/([-\w]+)/(\w+\.cls(?:/.*)?)$')
@@ -581,6 +586,46 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILTER)
             response.packet(TRANSLATE_FASTCGI, os.path.join(cgi_path, 'pipe2.sed'))
             response.packet(TRANSLATE_ACTION, sed_fastcgi)
+        elif uri == '/dav':
+            response.packet(TRANSLATE_WAS, davos_plain)
+            response.pair('DAVOS_DOCUMENT_ROOT', '/var/www')
+            response.pair('DAVOS_MOUNT', '/dav/')
+            response.pair('DAVOS_DAV_HEADER', '3')
+            response.request_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
+            response.response_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
+        elif uri[:5] == '/dav/':
+            response.packet(TRANSLATE_BASE, "/dav/")
+            response.packet(TRANSLATE_WAS, davos_plain)
+            response.pair('DAVOS_DOCUMENT_ROOT', '/var/www')
+            response.pair('DAVOS_MOUNT', '/dav/')
+            response.request_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
+            response.response_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
+        elif uri[:8] == '/dav-od/':
+            uri = uri[8:]
+            i = uri.find('/')
+            if i > 0:
+                site = uri[:i]
+                response.packet(TRANSLATE_BASE, '/dav-od/' + site + '/')
+            elif i < 0:
+                response.packet(TRANSLATE_BASE, "/dav-od/")
+                if len(uri) == 0:
+                    response.status(404)
+                    return
+                site = uri
+            else:
+                response.status(404)
+                return
+
+            response.packet(TRANSLATE_REGEX, "^/dav-od/([^/]+)")
+            response.packet(TRANSLATE_WAS, davos_od)
+            response.packet(TRANSLATE_APPEND, od_conf)
+            response.packet(TRANSLATE_APPEND, od_section)
+            response.pair('DAVOS_MOUNT', '/dav-od/' + site + '/')
+            response.packet(TRANSLATE_EXPAND_PAIR, r'DAVOS_MOUNT=/dav-od/\1/')
+            response.pair('DAVOS_SITE', site)
+            response.packet(TRANSLATE_EXPAND_PAIR, r'DAVOS_SITE=\1')
+            response.request_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
+            response.response_header_forward((HEADER_GROUP_OTHER, HEADER_FORWARD_YES))
         elif uri == '/validate_mtime':
             response.path(os.path.join(demo_path, 'hello.txt'))
             stamp_path = '/tmp/stamp'
@@ -866,6 +911,10 @@ if __name__ == '__main__':
         xslt_fastcgi = os.path.join(src_dir, 'filters/src/xslt')
         xmlstrip = os.path.join(src_dir, 'filters/src/xmlstrip')
         sed_fastcgi = os.path.join(src_dir, 'sed/sed/fsed')
+        davos_plain = os.path.join(src_dir, 'davos/src/davos-plain')
+        davos_od = os.path.join(src_dir, 'davos/src/davos-od')
+        od_conf = '/home/max/people/cmag/od/od.conf'
+        od_section = 'test'
 
     if len(argv) >= 2:
         path = argv[1]
