@@ -42,6 +42,9 @@ struct was_output *
 was_output_new(struct pool *pool, int fd, struct istream *input,
                const struct was_output_handler *handler, void *handler_ctx);
 
+/**
+ * @return the total number of bytes written to the pipe
+ */
 uint64_t
 was_output_free(struct was_output *data);
 
