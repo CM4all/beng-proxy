@@ -176,19 +176,22 @@ check_ssl_error(SSL *ssl, int result, GError **error_r)
 static bool
 ssl_decrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
 {
-    size_t length;
-    void *data = fifo_buffer_write(buffer, &length);
-    if (data == NULL)
-        return true;
+    /* SSL_read() must be called repeatedly until there is no more
+       data (or until the buffer is full) */
 
-    int result = SSL_read(ssl, data, length);
-    if (result < 0 && !check_ssl_error(ssl, result, error_r))
-        return false;
+    while (true) {
+        size_t length;
+        void *data = fifo_buffer_write(buffer, &length);
+        if (data == NULL)
+            return true;
 
-    if (result > 0)
-        fifo_buffer_append(buffer, result);
+        int result = SSL_read(ssl, data, length);
+        if (result <= 0)
+            return result == 0 || check_ssl_error(ssl, result, error_r);
 
-    return true;
+        if (result > 0)
+            fifo_buffer_append(buffer, result);
+    }
 }
 
 /**
