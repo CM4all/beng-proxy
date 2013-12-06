@@ -80,6 +80,13 @@ was_client_response_submitted(const struct was_client *client)
     return client->response.headers == NULL;
 }
 
+static void
+was_client_clear_request_body(struct was_client *client)
+{
+    if (client->request.body != NULL)
+        was_output_free_p(&client->request.body);
+}
+
 /**
  * Destroys the objects was_control, was_input, was_output and
  * releases the socket lease.
@@ -87,8 +94,7 @@ was_client_response_submitted(const struct was_client *client)
 static void
 was_client_clear(struct was_client *client, GError *error)
 {
-    if (client->request.body != NULL)
-        was_output_free_p(&client->request.body);
+    was_client_clear_request_body(client);
 
     if (client->response.body != NULL)
         was_input_free_p(&client->response.body, error);
@@ -110,8 +116,7 @@ was_client_clear(struct was_client *client, GError *error)
 static void
 was_client_clear_unused(struct was_client *client)
 {
-    if (client->request.body != NULL)
-        was_output_free_p(&client->request.body);
+    was_client_clear_request_body(client);
 
     if (client->response.body != NULL)
         was_input_free_unused_p(&client->response.body);
@@ -165,6 +170,30 @@ was_client_abort_response_empty(struct was_client *client)
 
     was_client_clear_unused(client);
 
+    pool_unref(client->caller_pool);
+    pool_unref(client->pool);
+}
+
+/**
+ * Call this when end of the response body has been seen.  It will
+ * take care for releasing the #was_client.
+ */
+static void
+was_client_response_eof(struct was_client *client)
+{
+    assert(was_client_response_submitted(client));
+    assert(client->response.body == NULL);
+
+    if (client->request.body != NULL ||
+        !was_control_is_empty(client->control)) {
+        was_client_abort_response_empty(client);
+        return;
+    }
+
+    was_control_free(client->control);
+    client->control = NULL;
+
+    p_lease_release(&client->lease_ref, true, client->pool);
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
@@ -308,10 +337,12 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
         async_operation_finished(&client->async);
 
+        was_client_clear_request_body(client);
+
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               headers, NULL);
-        was_client_abort_response_empty(client);
+        was_client_response_eof(client);
         return false;
 
     case WAS_COMMAND_DATA:
@@ -533,23 +564,36 @@ was_client_input_eof(void *ctx)
 {
     struct was_client *client = ctx;
 
-    assert(was_client_response_submitted(client));
+    assert(was_client_response_submitted(client) || client->response.pending);
     assert(client->response.body != NULL);
 
     client->response.body = NULL;
 
-    if (client->request.body != NULL ||
-        !was_control_is_empty(client->control)) {
-        was_client_abort_response_empty(client);
+    if (client->response.pending) {
+        struct strmap *headers = client->response.headers;
+
+        /* LENGTH=0 received, therefore was_input has been closed, and
+           we use an istream_null instead */
+        struct istream *body = istream_null_new(client->caller_pool);
+
+        async_operation_finished(&client->async);
+
+        http_response_handler_invoke_response(&client->handler,
+                                              client->response.status,
+                                              headers, body);
+
+        if (client->request.body == NULL) {
+            /* reuse the connection */
+            was_control_free(client->control);
+            p_lease_release(&client->lease_ref, true, client->pool);
+            pool_unref(client->caller_pool);
+            pool_unref(client->pool);
+        } else
+            was_client_abort_response_empty(client);
         return;
     }
 
-    was_control_free(client->control);
-    client->control = NULL;
-
-    p_lease_release(&client->lease_ref, true, client->pool);
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
+    was_client_response_eof(client);
 }
 
 static void

@@ -54,7 +54,7 @@ was_output_abort(struct was_output *output, GError *error)
     if (output->input != NULL)
         istream_free_handler(&output->input);
 
-    output->handler->abort(output->handler_ctx, error);
+    output->handler->abort(error, output->handler_ctx);
 }
 
 
@@ -180,6 +180,7 @@ was_output_stream_abort(GError *error, void *ctx)
     assert(output->input != NULL);
 
     output->input = NULL;
+    p_event_del(&output->event, output->pool);
 
     output->handler->premature(output->sent, error, output->handler_ctx);
 }
