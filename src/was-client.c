@@ -313,6 +313,8 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
         async_operation_finished(&client->async);
 
+        was_client_clear_request_body(client);
+
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               headers, NULL);
