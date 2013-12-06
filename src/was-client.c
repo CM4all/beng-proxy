@@ -80,6 +80,13 @@ was_client_response_submitted(const struct was_client *client)
     return client->response.headers == NULL;
 }
 
+static void
+was_client_clear_request_body(struct was_client *client)
+{
+    if (client->request.body != NULL)
+        was_output_free_p(&client->request.body);
+}
+
 /**
  * Destroys the objects was_control, was_input, was_output and
  * releases the socket lease.
@@ -87,8 +94,7 @@ was_client_response_submitted(const struct was_client *client)
 static void
 was_client_clear(struct was_client *client, GError *error)
 {
-    if (client->request.body != NULL)
-        was_output_free_p(&client->request.body);
+    was_client_clear_request_body(client);
 
     if (client->response.body != NULL)
         was_input_free_p(&client->response.body, error);
@@ -110,8 +116,7 @@ was_client_clear(struct was_client *client, GError *error)
 static void
 was_client_clear_unused(struct was_client *client)
 {
-    if (client->request.body != NULL)
-        was_output_free_p(&client->request.body);
+    was_client_clear_request_body(client);
 
     if (client->response.body != NULL)
         was_input_free_unused_p(&client->response.body);
