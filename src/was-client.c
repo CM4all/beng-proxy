@@ -564,10 +564,34 @@ was_client_input_eof(void *ctx)
 {
     struct was_client *client = ctx;
 
-    assert(was_client_response_submitted(client));
+    assert(was_client_response_submitted(client) || client->response.pending);
     assert(client->response.body != NULL);
 
     client->response.body = NULL;
+
+    if (client->response.pending) {
+        struct strmap *headers = client->response.headers;
+
+        /* LENGTH=0 received, therefore was_input has been closed, and
+           we use an istream_null instead */
+        struct istream *body = istream_null_new(client->caller_pool);
+
+        async_operation_finished(&client->async);
+
+        http_response_handler_invoke_response(&client->handler,
+                                              client->response.status,
+                                              headers, body);
+
+        if (client->request.body == NULL) {
+            /* reuse the connection */
+            was_control_free(client->control);
+            p_lease_release(&client->lease_ref, true, client->pool);
+            pool_unref(client->caller_pool);
+            pool_unref(client->pool);
+        } else
+            was_client_abort_response_empty(client);
+        return;
+    }
 
     was_client_response_eof(client);
 }
