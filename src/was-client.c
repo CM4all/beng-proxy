@@ -342,7 +342,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               headers, NULL);
-        was_client_abort_response_empty(client);
+        was_client_response_eof(client);
         return false;
 
     case WAS_COMMAND_DATA:
