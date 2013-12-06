@@ -180,6 +180,7 @@ was_output_stream_abort(GError *error, void *ctx)
     assert(output->input != NULL);
 
     output->input = NULL;
+    p_event_del(&output->event, output->pool);
 
     output->handler->premature(output->sent, error, output->handler_ctx);
 }
