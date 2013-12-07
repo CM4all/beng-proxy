@@ -500,8 +500,7 @@ thread_socket_filter_internal_write(void *ctx)
 
     if (nbytes > 0) {
         pthread_mutex_lock(&f->mutex);
-        const bool add = fifo_buffer_full(f->encrypted_output) &&
-            !fifo_buffer_empty(f->plain_output);
+        const bool add = fifo_buffer_full(f->encrypted_output);
         fifo_buffer_consume(f->encrypted_output, nbytes);
         const bool empty = fifo_buffer_empty(f->encrypted_output);
         pthread_mutex_unlock(&f->mutex);

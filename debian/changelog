@@ -2,6 +2,7 @@ cm4all-beng-proxy (4.0.7) unstable; urgency=low
 
   * merge release 3.1.23
   * ssl_filter: fix stalled SSL read
+  * thread_socket_filter: fix stalled SSL write
 
  --   
 
