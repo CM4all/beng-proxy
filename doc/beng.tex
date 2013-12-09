@@ -542,6 +542,14 @@ Local CGI programs may be used to generate dynamic resources.
 CGI/FastCGI resources are cached in the same manner as remote HTTP
 resources.
 
+\subsection{WAS}
+\label{was}
+
+Web Application Socket (WAS) is a protocol that can let a child process
+render a resource, similar to FastCGI.  Unlike FastCGI, it copies raw
+data through separate pipes, which allows using the \texttt{splice()}
+system call for efficient zero-copy transfer.
+
 \subsection{Pipe filters}
 \label{pipe}
 
@@ -865,7 +873,8 @@ To connect to an existing FastCGI server, specify one or more
 
 \hline
 
-\verb|WAS| & a local path which is executed as WAS application \\
+\verb|WAS| & a local path which is executed as WAS application (see
+\ref{was}) \\
 
 \hline
 
