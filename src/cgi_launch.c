@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cgi-launch.h"
-#include "cgi-address.h"
+#include "cgi_launch.h"
+#include "cgi_address.h"
 #include "istream.h"
 #include "fork.h"
 #include "strutil.h"

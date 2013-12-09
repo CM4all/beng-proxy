@@ -104,12 +104,12 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/buffered_io.c src/buffered_io.h \
 	src/bulldog.c src/bulldog.h \
 	src/cache.c src/cache.h \
-	src/cgi.c src/cgi.h \
-	src/cgi-address.c src/cgi-address.h \
-	src/cgi-quark.h \
-	src/cgi-parser.c src/cgi-parser.h \
-	src/cgi-client.c src/cgi-client.h \
-	src/cgi-launch.c src/cgi-launch.h \
+	src/cgi_glue.c src/cgi_glue.h \
+	src/cgi_address.c src/cgi_address.h \
+	src/cgi_quark.h \
+	src/cgi_parser.c src/cgi_parser.h \
+	src/cgi_client.c src/cgi_client.h \
+	src/cgi_launch.c src/cgi_launch.h \
 	src/child.c src/child.h \
 	src/child_socket.c src/child_socket.h \
 	src/child_stock.c src/child_stock.h \
@@ -847,7 +847,7 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/resource-address.c src/http_address.c \
 	src/lhttp_address.c \
 	src/file-address.c \
-	src/cgi-address.c \
+	src/cgi_address.c \
 	src/nfs_address.c \
 	src/widget-view.c \
 	src/jail.c \
@@ -890,7 +890,7 @@ test_t_stock_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_resource_address_SOURCES = test/t-resource-address.c \
-	src/resource-address.c src/file-address.c src/cgi-address.c \
+	src/resource-address.c src/file-address.c src/cgi_address.c \
 	src/lhttp_address.c \
 	src/nfs_address.c \
 	src/jail.c \
@@ -1014,7 +1014,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/resource-address.c src/global.c src/transformation.c \
 	src/lhttp_address.c \
 	src/file-address.c \
-	src/cgi-address.c \
+	src/cgi_address.c \
 	src/nfs_address.c \
 	src/jail.c \
 	src/regex.c \
@@ -1062,9 +1062,9 @@ test_t_balancer_LDADD = $(AM_LDADD) \
 
 test_t_cgi_SOURCES = test/t-cgi.c \
 	$(STOPWATCH_SRC) \
-	src/cgi.c src/fork.c \
-	src/cgi-client.c src/cgi-address.c src/cgi-launch.c \
-	src/cgi-parser.c \
+	src/cgi_glue.c src/fork.c \
+	src/cgi_client.c src/cgi_address.c src/cgi_launch.c \
+	src/cgi_parser.c \
 	src/jail.c src/uri-base.c src/uri-escape.c src/uri-relative.c \
 	src/uri-extract.c \
 	src/cleanup_timer.c \
@@ -1185,7 +1185,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/resource-address.c src/http_address.c \
 	src/lhttp_address.c \
 	src/file-address.c \
-	src/cgi-address.c \
+	src/cgi_address.c \
 	src/nfs_address.c \
 	src/jail.c \
 	src/regex.c \
@@ -1283,7 +1283,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/resource-address.c src/http_address.c \
 	src/lhttp_address.c \
 	src/file-address.c \
-	src/cgi-address.c \
+	src/cgi_address.c \
 	src/nfs_address.c \
 	src/address_list.c \
 	src/jail.c \
@@ -1306,7 +1306,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/widget-view.c \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/strset.c \
-	src/resource-address.c src/file-address.c src/cgi-address.c \
+	src/resource-address.c src/file-address.c src/cgi_address.c \
 	src/lhttp_address.c \
 	src/nfs_address.c \
 	src/jail.c \
@@ -1358,7 +1358,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/resource-address.c src/http_address.c \
 	src/lhttp_address.c \
 	src/file-address.c \
-	src/cgi-address.c \
+	src/cgi_address.c \
 	src/nfs_address.c \
 	src/address_list.c \
 	src/jail.c \
@@ -1412,7 +1412,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/resource-address.c src/transformation.c src/jail.c \
 	src/lhttp_address.c \
 	src/file-address.c \
-	src/cgi-address.c \
+	src/cgi_address.c \
 	src/regex.c \
 	src/clock.c \
 	$(STOPWATCH_SRC)
@@ -1497,7 +1497,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/resource-address.c src/jail.c src/transformation.c \
 	src/lhttp_address.c \
 	src/file-address.c \
-	src/cgi-address.c \
+	src/cgi_address.c \
 	src/nfs_address.c \
 	src/regex.c \
 	src/failure.c src/bulldog.c \
@@ -1536,7 +1536,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/resource-address.c src/jail.c src/transformation.c \
 	src/lhttp_address.c \
 	src/file-address.c \
-	src/cgi-address.c \
+	src/cgi_address.c \
 	src/nfs_address.c \
 	src/regex.c \
 	src/failure.c src/bulldog.c \

@@ -12,7 +12,7 @@
 #include "http_response.h"
 #include "static-file.h"
 #include "lhttp_request.h"
-#include "cgi.h"
+#include "cgi_glue.h"
 #include "fcgi-request.h"
 #include "fcgi-remote.h"
 #include "was-glue.h"

@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cgi-address.h"
+#include "cgi_address.h"
 #include "pool.h"
 #include "uri-base.h"
 #include "uri-relative.h"

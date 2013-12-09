@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cgi-client.h"
-#include "cgi-quark.h"
-#include "cgi-parser.h"
+#include "cgi_client.h"
+#include "cgi_quark.h"
+#include "cgi_parser.h"
 #include "istream-buffer.h"
 #include "async.h"
 #include "header-parser.h"

@@ -11,7 +11,7 @@
 #include "pool.h"
 #include "file-address.h"
 #include "http_address.h"
-#include "cgi-address.h"
+#include "cgi_address.h"
 #include "nfs_address.h"
 #include "jail.h"
 

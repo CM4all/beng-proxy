@@ -1,5 +1,5 @@
-#include "cgi.h"
-#include "cgi-address.h"
+#include "cgi_glue.h"
+#include "cgi_address.h"
 #include "async.h"
 #include "http_response.h"
 #include "child.h"

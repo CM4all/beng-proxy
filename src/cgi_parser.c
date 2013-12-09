@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cgi-parser.h"
-#include "cgi-quark.h"
+#include "cgi_parser.h"
+#include "cgi_quark.h"
 #include "fifo-buffer.h"
 #include "strmap.h"
 #include "header-parser.h"

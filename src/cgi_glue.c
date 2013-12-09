@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cgi.h"
-#include "cgi-address.h"
-#include "cgi-client.h"
-#include "cgi-launch.h"
+#include "cgi_glue.h"
+#include "cgi_address.h"
+#include "cgi_client.h"
+#include "cgi_launch.h"
 #include "abort-flag.h"
 #include "stopwatch.h"
 #include "http_response.h"
