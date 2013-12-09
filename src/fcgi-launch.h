@@ -14,6 +14,7 @@ struct jail_params;
 gcc_noreturn
 void
 fcgi_run(const struct jail_params *jail,
-         const char *executable_path);
+         const char *executable_path,
+         const char *const*args, unsigned n_args);
 
 #endif

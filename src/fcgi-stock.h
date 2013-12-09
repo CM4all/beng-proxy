@@ -28,14 +28,13 @@ void
 fcgi_stock_free(struct fcgi_stock *fcgi_stock);
 
 /**
- * @param account_id the customer account id (JailCGI)
- * @param site_id the customer site id (JailCGI)
- * @param host_name the UTS host name (JailCGI)
+ * @param args command-line arguments
  */
 struct stock_item *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct jail_params *jail,
                const char *executable_path,
+               const char *const*args, unsigned n_args,
                GError **error_r);
 
 /**

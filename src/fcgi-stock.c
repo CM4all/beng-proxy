@@ -32,6 +32,9 @@ struct fcgi_stock {
 struct fcgi_child_params {
     const char *executable_path;
 
+    const char *const*args;
+    unsigned n_args;
+
     const struct jail_params *jail;
 };
 
@@ -51,10 +54,15 @@ struct fcgi_connection {
 static const char *
 fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
 {
-    return params->jail == NULL || !params->jail->enabled
-        ? params->executable_path
-        : p_strcat(pool, params->executable_path, "|",
-                   params->jail->home_directory, NULL);
+    const char *key = params->executable_path;
+    for (unsigned i = 0, n = params->n_args; i < n; ++i)
+        key = p_strcat(pool, key, " ", params->args[i], NULL);
+
+    if (params->jail != NULL && params->jail->enabled)
+        key = p_strcat(pool, key, "|j=",
+                       params->jail->home_directory, NULL);
+
+    return key;
 }
 
 /*
@@ -96,7 +104,8 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
 {
     const struct fcgi_child_params *params = info;
 
-    fcgi_run(params->jail, params->executable_path);
+    fcgi_run(params->jail, params->executable_path,
+             params->args, params->n_args);
 }
 
 static const struct child_stock_class fcgi_child_stock_class = {
@@ -237,6 +246,7 @@ struct stock_item *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct jail_params *jail,
                const char *executable_path,
+               const char *const*args, unsigned n_args,
                GError **error_r)
 {
     if (jail != NULL && !jail_params_check(jail, error_r))
@@ -244,6 +254,8 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
 
     struct fcgi_child_params *params = p_malloc(pool, sizeof(*params));
     params->executable_path = executable_path;
+    params->args = args;
+    params->n_args = n_args;
     params->jail = jail;
 
     return hstock_get_now(fcgi_stock->hstock, pool,

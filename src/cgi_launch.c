@@ -12,6 +12,7 @@
 #include "strmap.h"
 #include "sigutil.h"
 #include "product.h"
+#include "exec.h"
 
 #include <daemon/log.h>
 
@@ -26,6 +27,7 @@ static void gcc_noreturn
 cgi_run(const struct jail_params *jail,
         const char *interpreter, const char *action,
         const char *path,
+        const char *const*args, unsigned n_args,
         http_method_t method, const char *uri,
         const char *script_name, const char *path_info,
         const char *query_string,
@@ -140,7 +142,15 @@ cgi_run(const struct jail_params *jail,
         setenv("CONTENT_LENGTH", value, 1);
     }
 
-    execl(path, path, arg, NULL);
+    struct exec e;
+    exec_init(&e);
+    exec_append(&e, path);
+    for (unsigned i = 0; i < n_args; ++i)
+        exec_append(&e, args[i]);
+    if (arg != NULL)
+        exec_append(&e, arg);
+    exec_do(&e);
+
     fprintf(stderr, "exec('%s') failed: %s\n",
             path, strerror(errno));
     _exit(2);
@@ -217,7 +227,9 @@ cgi_launch(struct pool *pool, http_method_t method,
         leave_signal_section(&signals);
 
         cgi_run(&address->jail, address->interpreter, address->action,
-                address->path, method, uri,
+                address->path,
+                address->args, address->num_args,
+                method, uri,
                 address->script_name, address->path_info,
                 address->query_string, address->document_root,
                 remote_addr,

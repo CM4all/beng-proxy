@@ -1502,7 +1502,7 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        if (client->resource_address->type == RESOURCE_ADDRESS_PIPE) {
+        if (client->cgi_address != NULL) {
             if (client->cgi_address->num_args >=
                 G_N_ELEMENTS(client->cgi_address->args)) {
                 translate_client_error(client,

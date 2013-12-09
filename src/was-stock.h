@@ -24,10 +24,14 @@ extern "C" {
 struct hstock *
 was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
+/**
+ * @param args command-line arguments
+ */
 void
 was_stock_get(struct hstock *hstock, struct pool *pool,
               const struct jail_params *jail,
               const char *executable_path,
+              const char *const*args, unsigned n_args,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 

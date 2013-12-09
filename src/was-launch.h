@@ -21,6 +21,7 @@ struct was_process {
 bool
 was_launch(struct was_process *process,
            const char *executable_path,
+           const char *const*args, unsigned n_args,
            const struct jail_params *jail,
            GError **error_r);
 

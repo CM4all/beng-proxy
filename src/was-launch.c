@@ -25,6 +25,7 @@
 gcc_noreturn
 static void
 was_run(const char *executable_path,
+        const char *const*args, unsigned n_args,
         const struct jail_params *jail,
         int control_fd, int input_fd, int output_fd)
 {
@@ -37,6 +38,8 @@ was_run(const char *executable_path,
     exec_init(&e);
     jail_wrapper_insert(&e, jail, NULL);
     exec_append(&e, executable_path);
+    for (unsigned i = 0; i < n_args; ++i)
+        exec_append(&e, args[i]);
     exec_do(&e);
 
     fprintf(stderr, "failed to execute %s: %s\n",
@@ -47,6 +50,7 @@ was_run(const char *executable_path,
 bool
 was_launch(struct was_process *process,
            const char *executable_path,
+           const char *const*args, unsigned n_args,
            const struct jail_params *jail,
            GError **error_r)
 {
@@ -96,7 +100,7 @@ was_launch(struct was_process *process,
         install_default_signal_handlers();
         leave_signal_section(&signals);
 
-        was_run(executable_path, jail,
+        was_run(executable_path, args, n_args, jail,
                 control_fds[1], output_fds[0], input_fds[1]);
     }
 

@@ -117,6 +117,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
             const struct jail_params *jail,
             const char *action,
             const char *path,
+            const char *const*args, unsigned n_args,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
@@ -164,7 +165,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
 
     was_stock_get(was_stock, pool,
                   jail,
-                  action,
+                  action, args, n_args,
                   &was_stock_handler, request,
                   async_ref);
 }

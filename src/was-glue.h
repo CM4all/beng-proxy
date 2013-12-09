@@ -20,12 +20,14 @@ struct jail_params;
 
 /**
  * @param jail run the WAS application with JailCGI?
+ * @param args command-line arguments
  */
 void
 was_request(struct pool *pool, struct hstock *was_stock,
             const struct jail_params *jail,
             const char *action,
             const char *path,
+            const char *const*args, unsigned n_args,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,

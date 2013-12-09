@@ -22,7 +22,9 @@
 gcc_noreturn
 void
 fcgi_run(const struct jail_params *jail,
-         const char *executable_path)
+         const char *executable_path,
+         const char *const*args, unsigned n_args)
+
 {
     int fd = open("/dev/null", O_WRONLY);
     if (fd >= 0) {
@@ -39,6 +41,8 @@ fcgi_run(const struct jail_params *jail,
     exec_init(&e);
     jail_wrapper_insert(&e, jail, NULL);
     exec_append(&e, executable_path);
+    for (unsigned i = 0; i < n_args; ++i)
+        exec_append(&e, args[i]);
     exec_do(&e);
 
     daemon_log(1, "failed to execute %s: %s\n",
