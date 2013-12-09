@@ -1530,8 +1530,8 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_PAIR:
         if (client->cgi_address != NULL) {
-            if (client->cgi_address->num_args >=
-                G_N_ELEMENTS(client->cgi_address->args)) {
+            if (client->cgi_address->num_env >=
+                G_N_ELEMENTS(client->cgi_address->env)) {
                 translate_client_error(client,
                                        "too many TRANSLATE_PAIR packets");
                 return false;
@@ -1544,7 +1544,7 @@ translate_handle_packet(struct translate_client *client,
                 return false;
             }
 
-            client->cgi_address->args[client->cgi_address->num_args++] = payload;
+            client->cgi_address->env[client->cgi_address->num_env++] = payload;
         } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_PAIR packet");

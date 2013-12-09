@@ -241,7 +241,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                          cgi->document_root,
                          extract_remote_ip(pool, headers),
                          headers, body,
-                         cgi->args, cgi->num_args,
+                         cgi->env, cgi->num_env,
                          handler, handler_ctx, async_ref);
         else
             fcgi_remote_request(pool, rl->tcp_balancer,
@@ -254,7 +254,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                                 cgi->document_root,
                                 extract_remote_ip(pool, headers),
                                 headers, body,
-                                cgi->args, cgi->num_args,
+                                cgi->env, cgi->num_env,
                                 handler, handler_ctx, async_ref);
         return;
 
@@ -268,7 +268,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                     cgi->path_info,
                     cgi->query_string,
                     headers, body,
-                    cgi->args, cgi->num_args,
+                    cgi->env, cgi->num_env,
                     handler, handler_ctx, async_ref);
         return;
 

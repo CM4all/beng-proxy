@@ -21,8 +21,18 @@ struct pool;
 struct cgi_address {
     const char *path;
 
+    /**
+     * Command-line arguments.
+     */
     const char *args[32];
     unsigned num_args;
+
+    /**
+     * Environment variables or other protocol-specific name/value
+     * pairs.
+     */
+    const char *env[32];
+    unsigned num_env;
 
     struct jail_params jail;
 

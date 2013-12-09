@@ -72,6 +72,9 @@ cgi_address_id(struct pool *pool, const struct cgi_address *address)
     for (unsigned i = 0; i < address->num_args; ++i)
         p = p_strcat(pool, p, "!", address->args[i], NULL);
 
+    for (unsigned i = 0; i < address->num_env; ++i)
+        p = p_strcat(pool, p, "$", address->env[i], NULL);
+
     if (address->uri != NULL)
         p = p_strcat(pool, p, ";u=", address->uri, NULL);
     else if (address->script_name != NULL)
@@ -97,6 +100,10 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
     for (unsigned i = 0; i < src->num_args; ++i)
         dest->args[i] = p_strdup(pool, src->args[i]);
     dest->num_args = src->num_args;
+
+    for (unsigned i = 0; i < src->num_env; ++i)
+        dest->env[i] = p_strdup(pool, src->env[i]);
+    dest->num_env = src->num_env;
 
     jail_params_copy(pool, &dest->jail, &src->jail);
 

@@ -33,7 +33,7 @@ cgi_run(const struct jail_params *jail,
         const char *remote_addr,
         struct strmap *headers,
         off_t content_length,
-        const char *const params[], unsigned num_params)
+        const char *const env[], unsigned num_env)
 {
     const struct strmap_pair *pair;
     const char *arg = NULL;
@@ -56,12 +56,12 @@ cgi_run(const struct jail_params *jail,
 
     clearenv();
 
-    for (unsigned j = 0; j < num_params; ++j) {
+    for (unsigned j = 0; j < num_env; ++j) {
         union {
             const char *in;
             char *out;
         } u = {
-            .in = params[j],
+            .in = env[j],
         };
 
         putenv(u.out);
@@ -222,7 +222,7 @@ cgi_launch(struct pool *pool, http_method_t method,
                 address->query_string, address->document_root,
                 remote_addr,
                 headers, available,
-                address->args, address->num_args);
+                address->env, address->num_env);
     }
 
     leave_signal_section(&signals);
