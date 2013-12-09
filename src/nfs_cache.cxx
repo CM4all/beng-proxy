@@ -7,7 +7,7 @@
 #include "nfs_cache.h"
 #include "nfs_stock.h"
 #include "nfs_client.h"
-#include "istream_nfs.h"
+#include "istream_nfs.hxx"
 #include "istream.h"
 #include "static-headers.h"
 #include "strmap.h"
@@ -50,7 +50,7 @@ struct nfs_cache {
     struct list_head requests;
 };
 
-struct nfs_cache_request {
+struct NFSCacheRequest {
     struct pool *pool;
 
     struct nfs_cache *cache;
@@ -68,11 +68,11 @@ struct nfs_cache_handle {
     const char *key;
 
     struct nfs_file_handle *file;
-    struct nfs_cache_item *item;
+    nfs_cache_item *item;
     const struct stat *stat;
 };
 
-struct nfs_cache_store {
+struct NFSCacheStore {
     struct list_head siblings;
 
     struct pool *pool;
@@ -98,21 +98,21 @@ struct nfs_cache_item {
     unsigned rubber_id;
 };
 
-static const off_t cacheable_size_limit = 256 * 1024;
+static constexpr off_t cacheable_size_limit = 256 * 1024;
 
-static const struct timeval nfs_cache_timeout = { .tv_sec = 60 };
+static constexpr struct timeval nfs_cache_timeout = { 60, 0 };
 
 static const char *
 nfs_cache_key(struct pool *pool, const char *server,
-              const char *export, const char *path)
+              const char *_export, const char *path)
 {
-    return p_strcat(pool, server, ":", export, path, NULL);
+    return p_strcat(pool, server, ":", _export, path, nullptr);
 }
 
 static void
 nfs_cache_request_error(GError *error, void *ctx)
 {
-    struct nfs_cache_request *r = ctx;
+    NFSCacheRequest *r = (NFSCacheRequest *)ctx;
 
     r->handler->error(error, r->handler_ctx);
 }
@@ -121,9 +121,9 @@ nfs_cache_request_error(GError *error, void *ctx)
  * Release resources held by this request.
  */
 static void
-nfs_cache_store_release(struct nfs_cache_store *store)
+nfs_cache_store_release(NFSCacheStore *store)
 {
-    assert(store != NULL);
+    assert(store != nullptr);
     assert(!async_ref_defined(&store->async_ref));
 
     evtimer_del(&store->timeout_event);
@@ -136,9 +136,9 @@ nfs_cache_store_release(struct nfs_cache_store *store)
  * Abort the request.
  */
 static void
-nfs_cache_store_abort(struct nfs_cache_store *store)
+nfs_cache_store_abort(NFSCacheStore *store)
 {
-    assert(store != NULL);
+    assert(store != nullptr);
     assert(async_ref_defined(&store->async_ref));
 
     async_abort(&store->async_ref);
@@ -147,16 +147,16 @@ nfs_cache_store_abort(struct nfs_cache_store *store)
 }
 
 static void
-nfs_cache_put(struct nfs_cache_store *store, unsigned rubber_id)
+nfs_cache_put(NFSCacheStore *store, unsigned rubber_id)
 {
     struct nfs_cache *const cache = store->cache;
 
     cache_log(4, "nfs_cache: put %s\n", store->key);
 
-    const time_t expires = time(NULL) + 60;
+    const time_t expires = time(nullptr) + 60;
 
     struct pool *pool = pool_new_libc(cache->pool, "nfs_cache_item");
-    struct nfs_cache_item *item = p_malloc(pool, sizeof(*item));
+    nfs_cache_item *item = (nfs_cache_item *)p_malloc(pool, sizeof(*item));
     item->pool = pool;
     item->stat = store->stat;
     item->rubber = cache->rubber;
@@ -175,7 +175,7 @@ nfs_cache_put(struct nfs_cache_store *store, unsigned rubber_id)
 static void
 nfs_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
 {
-    struct nfs_cache_store *store = ctx;
+    NFSCacheStore *store = (NFSCacheStore *)ctx;
     assert((off_t)size == store->stat.st_size);
 
     async_ref_clear(&store->async_ref);
@@ -190,7 +190,7 @@ nfs_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
 static void
 nfs_cache_rubber_no_store(void *ctx)
 {
-    struct nfs_cache_store *store = ctx;
+    NFSCacheStore *store = (NFSCacheStore *)ctx;
     async_ref_clear(&store->async_ref);
 
     cache_log(4, "nfs_cache: nocache %s\n", store->key);
@@ -200,7 +200,7 @@ nfs_cache_rubber_no_store(void *ctx)
 static void
 nfs_cache_rubber_error(GError *error, void *ctx)
 {
-    struct nfs_cache_store *store = ctx;
+    NFSCacheStore *store = (NFSCacheStore *)ctx;
     async_ref_clear(&store->async_ref);
 
     cache_log(4, "nfs_cache: body_abort %s: %s\n", store->key, error->message);
@@ -225,19 +225,19 @@ static void
 nfs_open_ready(struct nfs_file_handle *handle, const struct stat *st,
                void *ctx)
 {
-    struct nfs_cache_request *r = ctx;
+    NFSCacheRequest *r = (NFSCacheRequest *)ctx;
 
     struct nfs_cache_handle handle2 = {
         .cache = r->cache,
         .key = r->key,
         .file = handle,
-        .item = NULL,
+        .item = nullptr,
         .stat = st,
     };
 
     r->handler->response(&handle2, st, r->handler_ctx);
 
-    if (handle2.file != NULL)
+    if (handle2.file != nullptr)
         nfs_client_close_file(handle2.file);
 }
 
@@ -254,7 +254,7 @@ static const struct nfs_client_open_file_handler nfs_open_handler = {
 static void
 nfs_cache_request_stock_ready(struct nfs_client *client, void *ctx)
 {
-    struct nfs_cache_request *r = ctx;
+    NFSCacheRequest *r = (NFSCacheRequest *)ctx;
 
     nfs_client_open_file(client, r->pool, r->path,
                          &nfs_open_handler, r, r->async_ref);
@@ -273,7 +273,7 @@ static const struct nfs_stock_get_handler nfs_cache_request_stock_handler = {
 static bool
 nfs_cache_item_validate(struct cache_item *_item)
 {
-    struct nfs_cache_item *item = (struct nfs_cache_item *)_item;
+    nfs_cache_item *item = (nfs_cache_item *)_item;
 
     (void)item;
     return true;
@@ -282,7 +282,7 @@ nfs_cache_item_validate(struct cache_item *_item)
 static void
 nfs_cache_item_destroy(struct cache_item *_item)
 {
-    struct nfs_cache_item *item = (struct nfs_cache_item *)_item;
+    nfs_cache_item *item = (nfs_cache_item *)_item;
 
     if (item->rubber_id != 0)
         rubber_remove(item->rubber, item->rubber_id);
@@ -304,7 +304,7 @@ static void
 nfs_cache_timeout_callback(gcc_unused int fd, gcc_unused short event,
                            void *ctx)
 {
-    struct nfs_cache_store *store = ctx;
+    NFSCacheStore *store = (NFSCacheStore *)ctx;
 
     /* reading the response has taken too long already; don't store
        this resource */
@@ -322,13 +322,13 @@ nfs_cache_new(struct pool *pool, size_t max_size,
               struct nfs_stock *stock)
 {
     pool = pool_new_libc(pool, "nfs_cache");
-    struct nfs_cache *cache = p_malloc(pool, sizeof(*cache));
+    nfs_cache *cache = (nfs_cache *)p_malloc(pool, sizeof(*cache));
     cache->pool = pool;
     cache->stock = stock;
     cache->cache = cache_new(pool, &nfs_cache_class, 65521, max_size * 7 / 8);
 
     cache->rubber = rubber_new(max_size);
-    if (cache->rubber == NULL) {
+    if (cache->rubber == nullptr) {
         fprintf(stderr, "Failed to allocate HTTP cache: %s\n",
                 strerror(errno));
         exit(2);
@@ -342,9 +342,9 @@ nfs_cache_new(struct pool *pool, size_t max_size,
 void
 nfs_cache_free(struct nfs_cache *cache)
 {
-    assert(cache != NULL);
-    assert(cache->cache != NULL);
-    assert(cache->stock != NULL);
+    assert(cache != nullptr);
+    assert(cache->cache != nullptr);
+    assert(cache->stock != nullptr);
 
     cache_close(cache->cache);
     rubber_free(cache->rubber);
@@ -353,20 +353,20 @@ nfs_cache_free(struct nfs_cache *cache)
 
 void
 nfs_cache_request(struct pool *pool, struct nfs_cache *cache,
-                  const char *server, const char *export, const char *path,
+                  const char *server, const char *_export, const char *path,
                   const struct nfs_cache_handler *handler, void *ctx,
                   struct async_operation_ref *async_ref)
 {
-    const char *key = nfs_cache_key(pool, server, export, path);
-    struct nfs_cache_item *item = (struct nfs_cache_item *)
+    const char *key = nfs_cache_key(pool, server, _export, path);
+    nfs_cache_item *item = (nfs_cache_item *)
         cache_get(cache->cache, key);
-    if (item != NULL) {
+    if (item != nullptr) {
         cache_log(4, "nfs_cache: hit %s\n", key);
 
         struct nfs_cache_handle handle2 = {
             .cache = cache,
             .key = key,
-            .file = NULL,
+            .file = nullptr,
             .item = item,
             .stat = &item->stat,
         };
@@ -377,7 +377,7 @@ nfs_cache_request(struct pool *pool, struct nfs_cache *cache,
 
     cache_log(4, "nfs_cache: miss %s\n", key);
 
-    struct nfs_cache_request *r = p_malloc(pool, sizeof(*r));
+    NFSCacheRequest *r = (NFSCacheRequest *)p_malloc(pool, sizeof(*r));
 
     r->pool = pool;
     r->cache = cache;
@@ -387,18 +387,18 @@ nfs_cache_request(struct pool *pool, struct nfs_cache *cache,
     r->handler_ctx = ctx;
     r->async_ref = async_ref;
 
-    nfs_stock_get(cache->stock, pool, server, export,
+    nfs_stock_get(cache->stock, pool, server, _export,
                   &nfs_cache_request_stock_handler, r,
                   async_ref);
 }
 
 static struct istream *
 nfs_cache_item_open(struct pool *pool, struct nfs_cache *cache,
-                    struct nfs_cache_item *item,
+                    nfs_cache_item *item,
                     uint64_t start, uint64_t end)
 {
-    assert(cache != NULL);
-    assert(item != NULL);
+    assert(cache != nullptr);
+    assert(item != nullptr);
     assert(start <= end);
     assert(end <= (uint64_t)item->stat.st_size);
 
@@ -416,8 +416,8 @@ nfs_cache_file_open(struct pool *pool, struct nfs_cache *cache,
                     struct nfs_file_handle *file, const struct stat *st,
                     uint64_t start, uint64_t end)
 {
-    assert(cache != NULL);
-    assert(file != NULL);
+    assert(cache != nullptr);
+    assert(file != nullptr);
     assert(start <= end);
     assert(end <= (uint64_t)st->st_size);
 
@@ -434,7 +434,7 @@ nfs_cache_file_open(struct pool *pool, struct nfs_cache *cache,
        it */
     struct pool *pool2 = pool_new_linear(cache->pool,
                                          "nfs_cache_tee", 1024);
-    struct nfs_cache_store *store = p_malloc(pool2, sizeof(*store));
+    NFSCacheStore *store = (NFSCacheStore *)p_malloc(pool2, sizeof(*store));
     store->pool = pool2;
     store->cache = cache;
     store->key = p_strdup(pool2, key);
@@ -461,14 +461,14 @@ struct istream *
 nfs_cache_handle_open(struct pool *pool, struct nfs_cache_handle *handle,
                       uint64_t start, uint64_t end)
 {
-    assert((handle->file == NULL) != (handle->item == NULL));
+    assert((handle->file == nullptr) != (handle->item == nullptr));
     assert(start <= end);
     assert(end <= (uint64_t)handle->stat->st_size);
 
     if (start == end)
         return istream_null_new(pool);
 
-    if (handle->item != NULL) {
+    if (handle->item != nullptr) {
         /* cache hit: serve cached file */
         cache_log(5, "nfs_cache: serve %s\n", handle->key);
         return nfs_cache_item_open(pool, handle->cache, handle->item,
@@ -476,7 +476,7 @@ nfs_cache_handle_open(struct pool *pool, struct nfs_cache_handle *handle,
     } else {
         /* cache miss: load from NFS server */
         struct nfs_file_handle *const file = handle->file;
-        handle->file = NULL;
+        handle->file = nullptr;
 
         return nfs_cache_file_open(pool, handle->cache, handle->key,
                                    file, handle->stat, start, end);

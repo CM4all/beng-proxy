@@ -49,7 +49,7 @@ istream_new_impl(struct pool *pool,
     pool = pool_new_libc(pool, "istream");
 #endif
 
-    istream = p_malloc_fwd(pool, size);
+    istream = (struct istream *)p_malloc_fwd(pool, size);
     istream_init_impl(istream, cls, pool TRACE_ARGS_FWD);
 
 #ifdef ISTREAM_POOL

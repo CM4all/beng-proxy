@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream_nfs.h"
+#include "istream_nfs.hxx"
 #include "istream-internal.h"
 #include "istream-buffer.h"
 #include "nfs_client.h"
@@ -46,7 +46,7 @@ struct istream_nfs {
     struct fifo_buffer *buffer;
 };
 
-static const struct nfs_client_read_file_handler istream_nfs_read_handler;
+extern const struct nfs_client_read_file_handler istream_nfs_read_handler;
 
 /*
  * internal
@@ -58,7 +58,7 @@ istream_nfs_schedule_read(struct istream_nfs *n)
 {
     assert(n->pending_read == 0);
 
-    const size_t max = n->buffer != NULL
+    const size_t max = n->buffer != nullptr
         ? fifo_buffer_space(n->buffer)
         : NFS_BUFFER_SIZE;
     size_t nbytes = n->remaining > max
@@ -84,7 +84,7 @@ istream_nfs_schedule_read(struct istream_nfs *n)
 static void
 istream_nfs_schedule_read_or_eof(struct istream_nfs *n)
 {
-    assert(n->buffer == NULL || fifo_buffer_empty(n->buffer));
+    assert(n->buffer == nullptr || fifo_buffer_empty(n->buffer));
 
     if (n->pending_read > 0)
         return;
@@ -107,7 +107,7 @@ istream_nfs_feed(struct istream_nfs *n, const void *data, size_t length)
     assert(length > 0);
 
     struct fifo_buffer *buffer = n->buffer;
-    if (buffer == NULL) {
+    if (buffer == nullptr) {
         const uint64_t total_size = n->remaining + length;
         const size_t buffer_size = total_size > NFS_BUFFER_SIZE
             ? NFS_BUFFER_SIZE
@@ -126,7 +126,7 @@ istream_nfs_feed(struct istream_nfs *n, const void *data, size_t length)
 static void
 istream_nfs_read_from_buffer(struct istream_nfs *n)
 {
-    assert(n->buffer != NULL);
+    assert(n->buffer != nullptr);
 
     size_t remaining = istream_buffer_consume(&n->base, n->buffer);
     if (remaining == 0 && n->pending_read == 0)
@@ -141,7 +141,7 @@ istream_nfs_read_from_buffer(struct istream_nfs *n)
 static void
 istream_nfs_read_data(const void *data, size_t _length, void *ctx)
 {
-    struct istream_nfs *n = ctx;
+    struct istream_nfs *n = (istream_nfs *)ctx;
     assert(n->pending_read > 0);
     assert(n->discard_read <= n->pending_read);
     assert(_length <= n->pending_read);
@@ -167,16 +167,16 @@ istream_nfs_read_data(const void *data, size_t _length, void *ctx)
 static void
 istream_nfs_read_error(GError *error, void *ctx)
 {
-    struct istream_nfs *n = ctx;
+    struct istream_nfs *n = (istream_nfs *)ctx;
     assert(n->pending_read > 0);
 
     nfs_client_close_file(n->handle);
     istream_deinit_abort(&n->base, error);
 }
 
-static const struct nfs_client_read_file_handler istream_nfs_read_handler = {
-    .data = istream_nfs_read_data,
-    .error = istream_nfs_read_error,
+const struct nfs_client_read_file_handler istream_nfs_read_handler = {
+    istream_nfs_read_data,
+    istream_nfs_read_error,
 };
 
 /*
@@ -196,7 +196,7 @@ istream_nfs_available(struct istream *istream, bool partial gcc_unused)
     struct istream_nfs *n = istream_to_nfs(istream);
 
     uint64_t available = n->remaining + n->pending_read - n->discard_read;
-    if (n->buffer != NULL)
+    if (n->buffer != nullptr)
         available += fifo_buffer_available(n->buffer);
 
     return available;
@@ -212,7 +212,7 @@ istream_nfs_skip(struct istream *istream, off_t _length)
 
     uint64_t result = 0;
 
-    if (n->buffer != NULL) {
+    if (n->buffer != nullptr) {
         const uint64_t buffer_available = fifo_buffer_available(n->buffer);
         const uint64_t consume = length < buffer_available
             ? length
@@ -246,7 +246,7 @@ istream_nfs_read(struct istream *istream)
 {
     struct istream_nfs *n = istream_to_nfs(istream);
 
-    if (n->buffer != NULL && !fifo_buffer_empty(n->buffer))
+    if (n->buffer != nullptr && !fifo_buffer_empty(n->buffer))
         istream_nfs_read_from_buffer(n);
     else
         istream_nfs_schedule_read_or_eof(n);
@@ -262,10 +262,11 @@ istream_nfs_close(struct istream *istream)
 }
 
 static const struct istream_class istream_nfs = {
-    .available = istream_nfs_available,
-    .skip = istream_nfs_skip,
-    .read = istream_nfs_read,
-    .close = istream_nfs_close,
+    istream_nfs_available,
+    istream_nfs_skip,
+    istream_nfs_read,
+    nullptr,
+    istream_nfs_close,
 };
 
 /*
@@ -277,8 +278,8 @@ struct istream *
 istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
                 uint64_t start, uint64_t end)
 {
-    assert(pool != NULL);
-    assert(handle != NULL);
+    assert(pool != nullptr);
+    assert(handle != nullptr);
     assert(start <= end);
 
     struct istream_nfs *n = istream_new_macro(pool, nfs);
@@ -287,7 +288,7 @@ istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
     n->remaining = end - start;
     n->pending_read = 0;
     n->discard_read = 0;
-    n->buffer = NULL;
+    n->buffer = nullptr;
 
     return istream_struct_cast(&n->base);
 }

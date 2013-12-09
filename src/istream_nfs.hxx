@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ISTREAM_NFS_H
-#define BENG_PROXY_ISTREAM_NFS_H
+#ifndef BENG_PROXY_ISTREAM_NFS_HXX
+#define BENG_PROXY_ISTREAM_NFS_HXX
 
 #include <stdint.h>
 

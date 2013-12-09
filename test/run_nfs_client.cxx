@@ -1,5 +1,5 @@
 #include "nfs_client.h"
-#include "istream_nfs.h"
+#include "istream_nfs.hxx"
 #include "shutdown_listener.h"
 #include "async.h"
 #include "pool.h"
@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct context {
+struct Context {
     struct pool *pool;
 
     const char *path;
@@ -30,11 +30,11 @@ struct context {
 static void
 shutdown_callback(void *ctx)
 {
-    struct context *c = ctx;
+    Context *c = (Context *)ctx;
 
     c->aborted = true;
 
-    if (c->body != NULL)
+    if (c->body != nullptr)
         sink_fd_close(c->body);
     else
         async_abort(&c->async_ref);
@@ -48,9 +48,9 @@ shutdown_callback(void *ctx)
 static void
 my_sink_fd_input_eof(void *ctx)
 {
-    struct context *c = ctx;
+    Context *c = (Context *)ctx;
 
-    c->body = NULL;
+    c->body = nullptr;
     c->body_eof = true;
 
     shutdown_listener_deinit(&c->shutdown_listener);
@@ -60,12 +60,12 @@ my_sink_fd_input_eof(void *ctx)
 static void
 my_sink_fd_input_error(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    Context *c = (Context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
 
-    c->body = NULL;
+    c->body = nullptr;
     c->body_abort = true;
 
     shutdown_listener_deinit(&c->shutdown_listener);
@@ -75,13 +75,13 @@ my_sink_fd_input_error(GError *error, void *ctx)
 static bool
 my_sink_fd_send_error(int error, void *ctx)
 {
-    struct context *c = ctx;
+    Context *c = (Context *)ctx;
 
     g_printerr("%s\n", g_strerror(error));
 
     sink_fd_close(c->body);
 
-    c->body = NULL;
+    c->body = nullptr;
     c->body_abort = true;
 
     shutdown_listener_deinit(&c->shutdown_listener);
@@ -103,14 +103,14 @@ static const struct sink_fd_handler my_sink_fd_handler = {
 static void
 my_open_ready(struct nfs_file_handle *handle, const struct stat *st, void *ctx)
 {
-    struct context *c = ctx;
+    Context *c = (Context *)ctx;
 
     assert(!c->aborted);
     assert(!c->failed);
     assert(c->connected);
 
     struct istream *body = istream_nfs_new(c->pool, handle, 0, st->st_size);
-    body = istream_pipe_new(c->pool, body, NULL);
+    body = istream_pipe_new(c->pool, body, nullptr);
     c->body = sink_fd_new(c->pool, body, 1, guess_fd_type(1),
                           &my_sink_fd_handler, ctx);
     istream_read(body);
@@ -119,7 +119,7 @@ my_open_ready(struct nfs_file_handle *handle, const struct stat *st, void *ctx)
 static void
 my_open_error(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    Context *c = (Context *)ctx;
 
     assert(!c->aborted);
     assert(!c->failed);
@@ -147,7 +147,7 @@ static const struct nfs_client_open_file_handler my_open_handler = {
 static void
 my_nfs_client_ready(struct nfs_client *client, void *ctx)
 {
-    struct context *c = ctx;
+    Context *c = (Context *)ctx;
 
     assert(!c->aborted);
     assert(!c->failed);
@@ -165,7 +165,7 @@ my_nfs_client_ready(struct nfs_client *client, void *ctx)
 static void
 my_nfs_client_mount_error(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    Context *c = (Context *)ctx;
 
     assert(!c->aborted);
     assert(!c->failed);
@@ -183,7 +183,7 @@ my_nfs_client_mount_error(GError *error, void *ctx)
 static void
 my_nfs_client_closed(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    Context *c = (Context *)ctx;
 
     assert(!c->aborted);
     assert(!c->failed);
@@ -209,7 +209,7 @@ static const struct nfs_client_handler my_nfs_client_handler = {
 
 int main(int argc, char **argv) {
     struct event_base *event_base;
-    static struct context ctx;
+    static Context ctx;
 
     if (argc != 4) {
         g_printerr("usage: run_nfs_client SERVER ROOT PATH\n");
@@ -217,7 +217,7 @@ int main(int argc, char **argv) {
     }
 
     const char *const server = argv[1];
-    const char *const export = argv[2];
+    const char *const _export = argv[2];
     ctx.path = argv[3];
 
     /* initialize */
@@ -229,12 +229,12 @@ int main(int argc, char **argv) {
     event_base = event_init();
     shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
 
-    struct pool *const root_pool = pool_new_libc(NULL, "root");
+    struct pool *const root_pool = pool_new_libc(nullptr, "root");
     ctx.pool = pool_new_libc(root_pool, "pool");
 
     /* open NFS connection */
 
-    nfs_client_new(ctx.pool, server, export,
+    nfs_client_new(ctx.pool, server, _export,
                    &my_nfs_client_handler, &ctx,
                    &ctx.async_ref);
     pool_unref(ctx.pool);
