@@ -62,7 +62,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              const char *document_root,
              const char *remote_addr,
              struct strmap *headers, struct istream *body,
-             const char *const params[], unsigned num_params,
+             const char *const env[], unsigned n_env,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
@@ -113,7 +113,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
                         document_root,
                         remote_addr,
                         headers, body,
-                        params, num_params,
+                        env, n_env,
                         handler, handler_ctx,
                         async_ref);
 }
