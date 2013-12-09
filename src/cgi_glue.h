@@ -16,9 +16,6 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
-/**
- * @param params environment variables for the child process
- */
 void
 cgi_new(struct pool *pool, http_method_t method,
         const struct cgi_address *address,
