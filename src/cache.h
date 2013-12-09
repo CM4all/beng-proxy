@@ -62,6 +62,10 @@ struct cache_stats {
     size_t brutto_size;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_malloc
 struct cache *
 cache_new(struct pool *pool, const struct cache_class *cls,
@@ -181,5 +185,9 @@ cache_event_add(struct cache *cache);
 
 void
 cache_event_del(struct cache *cache);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

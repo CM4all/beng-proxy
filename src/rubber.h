@@ -16,6 +16,10 @@
 
 struct rubber;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct rubber *
 rubber_new(size_t size);
 
@@ -99,5 +103,9 @@ rubber_get_brutto_size(const struct rubber *r);
 
 void
 rubber_compress(struct rubber *rr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

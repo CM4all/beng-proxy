@@ -22,10 +22,18 @@ struct sink_rubber_handler {
     void (*error)(GError *error, void *ctx);
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 sink_rubber_new(struct pool *pool, struct istream *input,
                 struct rubber *rubber, size_t max_size,
                 const struct sink_rubber_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

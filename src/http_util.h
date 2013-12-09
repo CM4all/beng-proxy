@@ -14,6 +14,10 @@
 struct pool;
 struct strref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Splits a comma separated list into a string array.  The return
  * value is NULL terminated.
@@ -44,5 +48,9 @@ http_client_accepts_encoding(struct strmap *request_headers,
 
 struct strref *
 http_header_param(struct strref *dest, const char *value, const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

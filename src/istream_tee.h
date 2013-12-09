@@ -11,6 +11,10 @@
 
 struct pool;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Create two new streams fed from one input.
  *
@@ -30,5 +34,9 @@ istream_tee_new(struct pool *pool, struct istream *input,
 
 struct istream *
 istream_tee_second(struct istream *istream);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

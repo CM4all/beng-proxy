@@ -14,6 +14,10 @@ struct pool;
 struct istream;
 struct rubber;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param auto_remove shall the allocation be removed when this
  * istream is closed?
@@ -22,5 +26,9 @@ struct istream *
 istream_rubber_new(struct pool *pool, struct rubber *rubber,
                    unsigned id, size_t start, size_t end,
                    bool auto_remove);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
