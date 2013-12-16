@@ -121,6 +121,13 @@ static const char *const exclude_response_headers[] = {
     NULL,
 };
 
+gcc_pure
+static bool
+is_secure_header(const char *name)
+{
+    return memcmp(name, "x-cm4all-beng-", 14) == 0;
+}
+
 static void
 forward_basic_headers(struct strmap *dest, const struct strmap *src,
                       bool with_body)
@@ -216,7 +223,7 @@ forward_other_headers(struct strmap *dest, struct strmap *src)
             !string_in_array(cookie_request_headers, pair->key) &&
             !string_in_array(cors_request_headers, pair->key) &&
             !string_in_array(exclude_request_headers, pair->key) &&
-            memcmp(pair->key, "x-cm4all-beng-", 14) != 0 &&
+            !is_secure_header(pair->key) &&
             !http_header_is_hop_by_hop(pair->key))
             strmap_add(dest, pair->key, pair->value);
 }
@@ -321,7 +328,7 @@ forward_other_response_headers(struct strmap *dest, struct strmap *src)
             !string_in_array(cookie_response_headers, pair->key) &&
             !string_in_array(cors_response_headers, pair->key) &&
             !string_in_array(exclude_response_headers, pair->key) &&
-            memcmp(pair->key, "x-cm4all-beng-", 14) != 0 &&
+            !is_secure_header(pair->key) &&
             !http_header_is_hop_by_hop(pair->key))
             strmap_add(dest, pair->key, pair->value);
 }
