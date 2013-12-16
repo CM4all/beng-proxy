@@ -51,6 +51,16 @@ static const char *const cookie_request_headers[] = {
 };
 
 /**
+ * @see http://www.w3.org/TR/cors/#syntax
+ */
+static const char *const cors_request_headers[] = {
+    "origin",
+    "access-control-request-method",
+    "access-control-request-headers",
+    NULL,
+};
+
+/**
  * A list of request headers to be excluded from the "other" setting.
  */
 static const char *const exclude_request_headers[] = {
@@ -85,6 +95,19 @@ static const char *const basic_response_headers[] = {
 static const char *const cookie_response_headers[] = {
     "set-cookie",
     "set-cookie2",
+    NULL,
+};
+
+/**
+ * @see http://www.w3.org/TR/cors/#syntax
+ */
+static const char *const cors_response_headers[] = {
+    "access-control-allow-origin",
+    "access-control-allow-credentials",
+    "access-control-expose-headers",
+    "access-control-max-age",
+    "access-control-allow-methods",
+    "access-control-allow-headers",
     NULL,
 };
 
@@ -191,6 +214,7 @@ forward_other_headers(struct strmap *dest, struct strmap *src)
             !string_in_array(body_request_headers, pair->key) &&
             !string_in_array(language_request_headers, pair->key) &&
             !string_in_array(cookie_request_headers, pair->key) &&
+            !string_in_array(cors_request_headers, pair->key) &&
             !string_in_array(exclude_request_headers, pair->key) &&
             memcmp(pair->key, "x-cm4all-beng-", 14) != 0 &&
             !http_header_is_hop_by_hop(pair->key))
@@ -234,6 +258,9 @@ forward_request_headers(struct pool *pool, struct strmap *src,
 
         if (!exclude_host)
             header_copy_one(src, dest, "host");
+
+        if (settings->modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
+            header_copy_list(src, dest, cors_request_headers);
 
         if (settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
             forward_other_headers(dest, src);
@@ -292,6 +319,7 @@ forward_other_response_headers(struct strmap *dest, struct strmap *src)
     while ((pair = strmap_next(src)) != NULL)
         if (!string_in_array(basic_response_headers, pair->key) &&
             !string_in_array(cookie_response_headers, pair->key) &&
+            !string_in_array(cors_response_headers, pair->key) &&
             !string_in_array(exclude_response_headers, pair->key) &&
             memcmp(pair->key, "x-cm4all-beng-", 14) != 0 &&
             !http_header_is_hop_by_hop(pair->key))
@@ -332,6 +360,9 @@ forward_response_headers(struct pool *pool, struct strmap *src,
 
         if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES)
             header_copy_list(src, dest, cookie_response_headers);
+
+        if (settings->modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
+            header_copy_list(src, dest, cors_response_headers);
     }
 
     /* RFC 2616 3.8: Product Tokens */

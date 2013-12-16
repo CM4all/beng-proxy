@@ -75,6 +75,13 @@ enum beng_header_group {
     HEADER_GROUP_FORWARD,
 
     /**
+     * Forward CORS headers.
+     *
+     * @see http://www.w3.org/TR/cors/#syntax
+     */
+    HEADER_GROUP_CORS,
+
+    /**
      * Internal definition for estimating the size of an array.
      */
     HEADER_GROUP_MAX,

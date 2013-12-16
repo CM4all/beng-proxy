@@ -68,6 +68,8 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
             [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
             [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
             [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_CORS] = HEADER_FORWARD_NO,
             [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
         },
     };
@@ -240,12 +242,39 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
+    /* forward CORS headers */
+
+    strmap_add(headers, "access-control-request-method", "POST");
+    strmap_add(headers, "origin", "example.com");
+
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false, false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
+                 "from=foo;");
+
+    settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_YES;
+
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false, false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
+                 "access-control-request-method=POST;"
+                 "from=foo;"
+                 "origin=example.com;");
+
     /* response headers: NULL */
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
 
     out = forward_response_headers(pool, NULL,
                                    "192.168.0.2",
@@ -307,6 +336,25 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                    "192.168.0.2",
                                    &settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;"
+                 "set-cookie=a=b;");
+
+    /* forward CORS headers */
+
+    strmap_add(headers, "access-control-allow-methods", "POST");
+
+    out = forward_response_headers(pool, headers,
+                                   "192.168.0.2",
+                                   &settings);
+    check_strmap(out, "content-type=image/jpeg;server=apache;"
+                 "set-cookie=a=b;");
+
+    settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_YES;
+
+    out = forward_response_headers(pool, headers,
+                                   "192.168.0.2",
+                                   &settings);
+    check_strmap(out, "access-control-allow-methods=POST;"
+                 "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;");
 
     /* cleanup */
