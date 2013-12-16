@@ -234,11 +234,9 @@ forward_request_headers(struct pool *pool, struct strmap *src,
 
         if (!exclude_host)
             header_copy_one(src, dest, "host");
-    }
 
-    if (src != NULL &&
-        settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES) {
-        forward_other_headers(dest, src);
+        if (settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
+            forward_other_headers(dest, src);
     }
 
     p = forward_charset
