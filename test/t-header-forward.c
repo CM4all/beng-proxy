@@ -70,6 +70,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
             [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
             [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
             [HEADER_GROUP_CORS] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_SECURE] = HEADER_FORWARD_NO,
             [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
         },
     };
@@ -85,11 +86,14 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     strmap_add(headers, "accept", "text/*");
     strmap_add(headers, "via", "1.1 192.168.0.1");
     strmap_add(headers, "x-forwarded-for", "10.0.0.2");
+    strmap_add(headers, "x-cm4all-beng-user", "hans");
 
     /* verify strmap_to_string() */
     check_strmap(headers, "abc=def;accept=text/*;"
                  "content-type=image/jpeg;cookie=a=b;from=foo;"
-                 "via=1.1 192.168.0.1;x-forwarded-for=10.0.0.2;");
+                 "via=1.1 192.168.0.1;"
+                 "x-cm4all-beng-user=hans;"
+                 "x-forwarded-for=10.0.0.2;");
 
     /* NULL test */
     out = forward_request_headers(pool, NULL,
@@ -267,6 +271,21 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                  "from=foo;"
                  "origin=example.com;");
 
+    /* forward secure headers */
+
+    settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_YES;
+
+    out = forward_request_headers(pool, headers,
+                                  "192.168.0.2", "192.168.0.3",
+                                  false, false, false, false,
+                                  &settings,
+                                  NULL, NULL, NULL);
+    check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
+                 "access-control-request-method=POST;"
+                 "from=foo;"
+                 "origin=example.com;"
+                 "x-cm4all-beng-user=hans;");
+
     /* response headers: NULL */
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
@@ -275,6 +294,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     settings.modes[HEADER_GROUP_OTHER] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
+    settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
 
     out = forward_response_headers(pool, NULL,
                                    "192.168.0.2",
@@ -290,6 +310,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     strmap_add(headers, "set-cookie", "a=b");
     strmap_add(headers, "content-type", "image/jpeg");
     strmap_add(headers, "via", "1.1 192.168.0.1");
+    strmap_add(headers, "x-cm4all-beng-user", "hans");
 
     out = forward_response_headers(pool, headers,
                                    "192.168.0.2",
@@ -356,6 +377,18 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     check_strmap(out, "access-control-allow-methods=POST;"
                  "content-type=image/jpeg;server=apache;"
                  "set-cookie=a=b;");
+
+    /* forward secure headers */
+
+    settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_YES;
+
+    out = forward_response_headers(pool, headers,
+                                   "192.168.0.2",
+                                   &settings);
+    check_strmap(out, "access-control-allow-methods=POST;"
+                 "content-type=image/jpeg;server=apache;"
+                 "set-cookie=a=b;"
+                 "x-cm4all-beng-user=hans;");
 
     /* cleanup */
 

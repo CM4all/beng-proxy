@@ -35,7 +35,8 @@ enum beng_header_forward_mode {
  */
 enum beng_header_group {
     /**
-     * Special value for "override all settings".
+     * Special value for "override all settings" (except for
+     * #HEADER_GROUP_SECURE).
      */
     HEADER_GROUP_ALL = -1,
 
@@ -80,6 +81,13 @@ enum beng_header_group {
      * @see http://www.w3.org/TR/cors/#syntax
      */
     HEADER_GROUP_CORS,
+
+    /**
+     * Forward "secure" headers such as "x-cm4all-beng-user".
+     *
+     * @see http://www.w3.org/TR/cors/#syntax
+     */
+    HEADER_GROUP_SECURE,
 
     /**
      * Internal definition for estimating the size of an array.

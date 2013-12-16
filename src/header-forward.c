@@ -121,6 +121,9 @@ static const char *const exclude_response_headers[] = {
     NULL,
 };
 
+/**
+ * @see #HEADER_GROUP_SECURE
+ */
 gcc_pure
 static bool
 is_secure_header(const char *name)
@@ -135,6 +138,17 @@ forward_basic_headers(struct strmap *dest, const struct strmap *src,
     header_copy_list(src, dest, basic_request_headers);
     if (with_body)
         header_copy_list(src, dest, body_request_headers);
+}
+
+static void
+forward_secure_headers(struct strmap *dest, struct strmap *src)
+{
+    strmap_rewind(src);
+
+    const struct strmap_pair *pair;
+    while ((pair = strmap_next(src)) != NULL)
+        if (is_secure_header(pair->key))
+            strmap_add(dest, pair->key, pair->value);
 }
 
 static void
@@ -269,6 +283,9 @@ forward_request_headers(struct pool *pool, struct strmap *src,
         if (settings->modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
             header_copy_list(src, dest, cors_request_headers);
 
+        if (settings->modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
+            forward_secure_headers(dest, src);
+
         if (settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
             forward_other_headers(dest, src);
     }
@@ -370,6 +387,9 @@ forward_response_headers(struct pool *pool, struct strmap *src,
 
         if (settings->modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
             header_copy_list(src, dest, cors_response_headers);
+
+        if (settings->modes[HEADER_GROUP_SECURE] == HEADER_FORWARD_YES)
+            forward_secure_headers(dest, src);
     }
 
     /* RFC 2616 3.8: Product Tokens */

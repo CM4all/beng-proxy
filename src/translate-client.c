@@ -578,7 +578,8 @@ parse_header_forward(struct header_forward_settings *settings,
 
         if (packet->group == HEADER_GROUP_ALL)
             for (unsigned i = 0; i < HEADER_GROUP_MAX; ++i)
-                settings->modes[i] = packet->mode;
+                if (i != HEADER_GROUP_SECURE)
+                    settings->modes[i] = packet->mode;
         else
             settings->modes[packet->group] = packet->mode;
 
