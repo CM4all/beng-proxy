@@ -83,6 +83,12 @@ cgi_address_id(struct pool *pool, const struct cgi_address *address)
     if (address->path_info != NULL)
         p = p_strcat(pool, p, ";p=", address->path_info, NULL);
 
+    if (address->user_namespace)
+        p = p_strcat(pool, p, ";uns", NULL);
+
+    if (address->network_namespace)
+        p = p_strcat(pool, p, ";netns", NULL);
+
     if (address->query_string != NULL)
         p = p_strcat(pool, p, "?", address->query_string, NULL);
 
@@ -125,6 +131,9 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
 
     if (have_address_list)
         address_list_copy(pool, &dest->address_list, &src->address_list);
+
+    dest->user_namespace = src->user_namespace;
+    dest->network_namespace = src->network_namespace;
 }
 
 struct cgi_address *

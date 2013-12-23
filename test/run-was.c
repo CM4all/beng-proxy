@@ -177,7 +177,9 @@ int main(int argc, char **argv) {
     fb_pool_init(false);
 
     static struct context context;
-    if (!was_launch(&context.process, argv[1], NULL, 0, NULL, &error)) {
+    if (!was_launch(&context.process, argv[1], NULL, 0,
+                    NULL, false, false,
+                    &error)) {
         g_printerr("%s\n", error->message);
         g_error_free(error);
         return 2;

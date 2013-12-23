@@ -33,6 +33,7 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock);
 struct stock_item *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct jail_params *jail,
+               bool user_namespace, bool network_namespace,
                const char *executable_path,
                const char *const*args, unsigned n_args,
                GError **error_r);

@@ -1305,6 +1305,17 @@ for a CGI \\
 \verb|PATH_INFO| (only CGI, FastCGI and WAS) \\
 
 \hline
+
+\verb|USER_NAMESPACE| & Create the child process in a new user
+namespace. \\
+
+\hline
+
+\verb|NETWORK_NAMESPACE| & Create the child process in a new network
+namespace.  This prevents the process from doing network I/O, because
+the new namespace has no network devices. \\
+
+\hline
 \end{longtable}
 
 \subsection{Local HTTP}

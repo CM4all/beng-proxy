@@ -25,6 +25,7 @@ struct jail_params;
 void
 was_request(struct pool *pool, struct hstock *was_stock,
             const struct jail_params *jail,
+            bool user_namespace, bool network_namespace,
             const char *action,
             const char *path,
             const char *const*args, unsigned n_args,

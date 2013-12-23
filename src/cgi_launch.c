@@ -23,6 +23,10 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+#ifdef __linux
+#include <sched.h>
+#endif
+
 static void gcc_noreturn
 cgi_run(const struct jail_params *jail,
         const char *interpreter, const char *action,
@@ -225,6 +229,20 @@ cgi_launch(struct pool *pool, http_method_t method,
     if (pid == 0) {
         install_default_signal_handlers();
         leave_signal_section(&signals);
+
+#ifdef __linux
+        int unshare_flags = 0;
+        if (address->user_namespace)
+            unshare_flags |= CLONE_NEWUSER;
+        if (address->network_namespace)
+            unshare_flags |= CLONE_NEWNET;
+
+        if (unshare_flags != 0 && unshare(unshare_flags) < 0) {
+            fprintf(stderr, "unshare(0x%x) failed: %s\n",
+                    unshare_flags, strerror(errno));
+            _exit(2);
+        }
+#endif
 
         cgi_run(&address->jail, address->interpreter, address->action,
                 address->path,

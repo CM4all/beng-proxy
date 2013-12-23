@@ -54,6 +54,7 @@ static const struct lease fcgi_socket_lease = {
 void
 fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              const struct jail_params *jail,
+             bool user_namespace, bool network_namespace,
              const char *action,
              const char *path,
              const char *const*args, unsigned n_args,
@@ -87,7 +88,9 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     request->fcgi_stock = fcgi_stock;
 
     struct stock_item *stock_item =
-        fcgi_stock_get(fcgi_stock, pool, jail, action,
+        fcgi_stock_get(fcgi_stock, pool, jail,
+                       user_namespace, network_namespace,
+                       action,
                        args, n_args,
                        &error);
     if (stock_item == NULL) {

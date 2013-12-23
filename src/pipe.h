@@ -21,6 +21,7 @@ struct http_response_handler;
 void
 pipe_filter(struct pool *pool, const char *path,
             const char *const* args, unsigned num_args,
+            bool user_namespace, bool network_namespace,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx);

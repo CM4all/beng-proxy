@@ -349,6 +349,16 @@ enum beng_translation_command {
      * (not including the query string)
      */
     TRANSLATE_WANT_FULL_URI = 102,
+
+    /**
+     * Start the child process in a new user namespace?
+     */
+    TRANSLATE_USER_NAMESPACE = 103,
+
+    /**
+     * Start the child process in a new network namespace?
+     */
+    TRANSLATE_NETWORK_NAMESPACE = 104,
 };
 
 struct beng_translation_header {

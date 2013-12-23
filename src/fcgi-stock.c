@@ -24,6 +24,10 @@
 #include <errno.h>
 #include <string.h>
 
+#ifdef __linux
+#include <sched.h>
+#endif
+
 struct fcgi_stock {
     struct hstock *hstock;
     struct hstock *child_stock;
@@ -36,6 +40,8 @@ struct fcgi_child_params {
     unsigned n_args;
 
     const struct jail_params *jail;
+
+    bool user_namespace, network_namespace;
 };
 
 struct fcgi_connection {
@@ -103,6 +109,20 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
                      void *info, gcc_unused void *ctx)
 {
     const struct fcgi_child_params *params = info;
+
+#ifdef __linux
+    int unshare_flags = 0;
+    if (params->user_namespace)
+        unshare_flags |= CLONE_NEWUSER;
+    if (params->network_namespace)
+        unshare_flags |= CLONE_NEWNET;
+
+    if (unshare_flags != 0 && unshare(unshare_flags) < 0) {
+        fprintf(stderr, "unshare(0x%x) failed: %s\n",
+                unshare_flags, strerror(errno));
+        _exit(2);
+    }
+#endif
 
     fcgi_run(params->jail, params->executable_path,
              params->args, params->n_args);
@@ -245,6 +265,7 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock)
 struct stock_item *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct jail_params *jail,
+               bool user_namespace, bool network_namespace,
                const char *executable_path,
                const char *const*args, unsigned n_args,
                GError **error_r)
@@ -257,6 +278,8 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
     params->args = args;
     params->n_args = n_args;
     params->jail = jail;
+    params->user_namespace = user_namespace;
+    params->network_namespace = network_namespace;
 
     return hstock_get_now(fcgi_stock->hstock, pool,
                           fcgi_stock_key(pool, params), params,

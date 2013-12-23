@@ -1933,6 +1933,38 @@ translate_handle_packet(struct translate_client *client,
         else
             strref_set(&client->response.want_full_uri, "", 0);
         return true;
+
+    case TRANSLATE_USER_NAMESPACE:
+        if (payload_length != 0) {
+            translate_client_error(client, "malformed TRANSLATE_USER_NAMESPACE packet");
+            return false;
+        }
+
+        if (client->cgi_address != NULL) {
+            client->cgi_address->user_namespace = true;
+        } else {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_USER_NAMESPACE packet");
+            return false;
+        }
+
+        return true;
+
+    case TRANSLATE_NETWORK_NAMESPACE:
+        if (payload_length != 0) {
+            translate_client_error(client, "malformed TRANSLATE_NETWORK_NAMESPACE packet");
+            return false;
+        }
+
+        if (client->cgi_address != NULL) {
+            client->cgi_address->network_namespace = true;
+        } else {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_NETWORK_NAMESPACE packet");
+            return false;
+        }
+
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

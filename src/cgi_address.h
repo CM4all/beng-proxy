@@ -62,6 +62,16 @@ struct cgi_address {
      * process.
      */
     struct address_list address_list;
+
+    /**
+     * Start the child process in a new user namespace?
+     */
+    bool user_namespace;
+
+    /**
+     * Start the child process in a new network namespace?
+     */
+    bool network_namespace;
 };
 
 void

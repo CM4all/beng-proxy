@@ -23,6 +23,7 @@ was_launch(struct was_process *process,
            const char *executable_path,
            const char *const*args, unsigned n_args,
            const struct jail_params *jail,
+           bool user_namespace, bool network_namespace,
            GError **error_r);
 
 #endif

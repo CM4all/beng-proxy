@@ -36,6 +36,7 @@ struct was_child_params {
     unsigned n_args;
 
     const struct jail_params *jail;
+    bool user_namespace, network_namespace;
 };
 
 struct was_child {
@@ -149,6 +150,7 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     if (!was_launch(&child->process, params->executable_path,
                     params->args, params->n_args,
                     params->jail,
+                    params->user_namespace, params->network_namespace,
                     &error)) {
         stock_item_failed(item, error);
         return;
@@ -225,6 +227,7 @@ was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 void
 was_stock_get(struct hstock *hstock, struct pool *pool,
               const struct jail_params *jail,
+              bool user_namespace, bool network_namespace,
               const char *executable_path,
               const char *const*args, unsigned n_args,
               const struct stock_get_handler *handler, void *handler_ctx,
@@ -241,6 +244,8 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
     params->args = args;
     params->n_args = n_args;
     params->jail = jail;
+    params->user_namespace = user_namespace;
+    params->network_namespace = network_namespace;
 
     hstock_get(hstock, pool, was_stock_key(pool, params), params,
                handler, handler_ctx, async_ref);

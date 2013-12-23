@@ -1,6 +1,7 @@
 cm4all-beng-proxy (4.0.9) unstable; urgency=low
 
   * pipe: fix signal handler race condition
+  * pipe, CGI, FastCGI, WAS: support user/network namespaces
 
  --   
 

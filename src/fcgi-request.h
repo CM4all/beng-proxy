@@ -24,6 +24,7 @@ struct jail_params;
 void
 fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              const struct jail_params *jail,
+             bool user_namespace, bool network_namespace,
              const char *action,
              const char *path,
              const char *const*args, unsigned n_args,

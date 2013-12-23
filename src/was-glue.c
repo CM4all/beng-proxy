@@ -115,6 +115,7 @@ static const struct stock_get_handler was_stock_handler = {
 void
 was_request(struct pool *pool, struct hstock *was_stock,
             const struct jail_params *jail,
+            bool user_namespace, bool network_namespace,
             const char *action,
             const char *path,
             const char *const*args, unsigned n_args,
@@ -165,6 +166,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
 
     was_stock_get(was_stock, pool,
                   jail,
+                  user_namespace, network_namespace,
                   action, args, n_args,
                   &was_stock_handler, request,
                   async_ref);
