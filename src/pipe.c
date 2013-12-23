@@ -12,6 +12,7 @@
 #include "strmap.h"
 #include "pool.h"
 #include "istream.h"
+#include "sigutil.h"
 
 #include <daemon/log.h>
 
@@ -113,10 +114,17 @@ pipe_filter(struct pool *pool, const char *path,
 
     stopwatch = stopwatch_new(pool, path);
 
+    /* avoid race condition due to libevent signal handler in child
+       process */
+    sigset_t signals;
+    enter_signal_section(&signals);
+
     GError *error = NULL;
     pid = beng_fork(pool, path, body, &response,
                     pipe_child_callback, NULL, &error);
     if (pid < 0) {
+        leave_signal_section(&signals);
+
         istream_close_unused(body);
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
@@ -127,11 +135,16 @@ pipe_filter(struct pool *pool, const char *path,
     argv[1 + num_args] = NULL;
 
     if (pid == 0) {
+        install_default_signal_handlers();
+        leave_signal_section(&signals);
+
         execv(path, argv);
         fprintf(stderr, "exec('%s') failed: %s\n",
                 path, strerror(errno));
         _exit(2);
     }
+
+    leave_signal_section(&signals);
 
     stopwatch_event(stopwatch, "fork");
 
