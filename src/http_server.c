@@ -39,14 +39,13 @@ const struct timeval http_server_write_timeout = {
 struct http_server_request *
 http_server_request_new(struct http_server_connection *connection)
 {
-    struct pool *pool;
-    struct http_server_request *request;
-
     assert(connection != NULL);
 
-    pool = pool_new_linear(connection->pool, "http_server_request", 32768);
+    struct pool *pool = pool_new_linear(connection->pool,
+                                        "http_server_request", 32768);
     pool_set_major(pool);
-    request = p_malloc(pool, sizeof(*request));
+
+    struct http_server_request *request = p_malloc(pool, sizeof(*request));
     request->pool = pool;
     request->connection = connection;
     request->local_address = connection->local_address;
@@ -267,12 +266,10 @@ http_server_socket_destroy(struct http_server_connection *connection)
 static void
 http_server_request_close(struct http_server_connection *connection)
 {
-    struct pool *pool;
-
     assert(connection->request.read_state != READ_START);
     assert(connection->request.request != NULL);
 
-    pool = connection->request.request->pool;
+    struct pool *pool = connection->request.request->pool;
     pool_trash(pool);
     pool_unref(pool);
     connection->request.request = NULL;

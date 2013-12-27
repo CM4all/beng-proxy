@@ -30,9 +30,6 @@ static bool
 http_server_parse_request_line(struct http_server_connection *connection,
                                const char *line, size_t length)
 {
-    const char *eol, *space;
-    http_method_t method = HTTP_METHOD_NULL;
-
     assert(connection != NULL);
     assert(connection->request.read_state == READ_START);
     assert(connection->request.request == NULL);
@@ -42,8 +39,9 @@ http_server_parse_request_line(struct http_server_connection *connection,
         return false;
     }
 
-    eol = line + length;
+    const char *eol = line + length;
 
+    http_method_t method = HTTP_METHOD_NULL;
     switch (line[0]) {
     case 'D':
         if (likely(line[1] == 'E' && line[2] == 'L' && line[3] == 'E' &&
@@ -139,7 +137,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
         return false;
     }
 
-    space = memchr(line, ' ', eol - line);
+    const char *space = memchr(line, ' ', eol - line);
     if (unlikely(space == NULL || space + 6 > line + length ||
                  memcmp(space + 1, "HTTP/", 5) != 0)) {
         /* refuse HTTP 0.9 requests */
@@ -170,15 +168,12 @@ static bool
 http_server_headers_finished(struct http_server_connection *connection)
 {
     struct http_server_request *request = connection->request.request;
-    const char *value;
-    off_t content_length;
-    bool chunked;
 
     /* disable the idle+headers timeout; the request body timeout will
        be tracked by filtered_socket (auto-refreshing) */
     evtimer_del(&connection->idle_timeout);
 
-    value = strmap_get(request->headers, "expect");
+    const char *value = strmap_get(request->headers, "expect");
     connection->request.expect_100_continue = value != NULL &&
         strcmp(value, "100-continue") == 0;
     connection->request.expect_failed = value != NULL &&
@@ -193,9 +188,10 @@ http_server_headers_finished(struct http_server_connection *connection)
         (value == NULL || !http_list_contains_i(value, "close"));
 
     value = strmap_get(request->headers, "transfer-encoding");
-    if (value == NULL || strcasecmp(value, "chunked") != 0) {
-        /* not chunked */
 
+    off_t content_length = -1;
+    const bool chunked = value != NULL && strcasecmp(value, "chunked") == 0;
+    if (!chunked) {
         value = strmap_get(request->headers, "content-length");
         if (value == NULL) {
             /* no body at all */
@@ -223,13 +219,6 @@ http_server_headers_finished(struct http_server_connection *connection)
                 return true;
             }
         }
-
-        chunked = false;
-    } else {
-        /* chunked */
-
-        content_length = (off_t)-1;
-        chunked = true;
     }
 
     /* istream_deinit() used poison_noaccess() - make it writable now
@@ -417,16 +406,14 @@ enum direct_result
 http_server_try_request_direct(struct http_server_connection *connection,
                                int fd, enum istream_direct fd_type)
 {
-    ssize_t nbytes;
-
     assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == READ_BODY);
 
     if (!http_server_maybe_send_100_continue(connection))
         return DIRECT_CLOSED;
 
-    nbytes = http_body_try_direct(&connection->request.body_reader,
-                                  fd, fd_type);
+    ssize_t nbytes = http_body_try_direct(&connection->request.body_reader,
+                                          fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
         return DIRECT_BLOCKING;

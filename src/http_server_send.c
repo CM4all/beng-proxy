@@ -47,14 +47,11 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
 static size_t
 format_status_line(char *p, http_status_t status)
 {
-    const char *status_string;
-    size_t length;
-
     assert(status >= 100 && status < 600);
 
-    status_string = http_status_to_string(status);
+    const char *status_string = http_status_to_string(status);
     assert(status_string != NULL);
-    length = strlen(status_string);
+    size_t length = strlen(status_string);
 
     memcpy(p, "HTTP/1.1 ", 9);
     memcpy(p + 9, status_string, length);
@@ -72,8 +69,6 @@ http_server_response(const struct http_server_request *request,
                      struct istream *body)
 {
     struct http_server_connection *connection = request->connection;
-    off_t content_length;
-    struct istream *status_stream, *header_stream;
 
     assert(connection->score != HTTP_SERVER_NEW);
     assert(connection->request.request == request);
@@ -96,7 +91,7 @@ http_server_response(const struct http_server_request *request,
         return;
 
     connection->response.status = status;
-    status_stream
+    struct istream *status_stream
         = istream_memory_new(request->pool,
                              connection->response.status_buffer,
                              format_status_line(connection->response.status_buffer,
@@ -108,7 +103,7 @@ http_server_response(const struct http_server_request *request,
     /* how will we transfer the body?  determine length and
        transfer-encoding */
 
-    content_length = body == NULL
+    const off_t content_length = body == NULL
         ? 0 : istream_available(body, false);
     if (content_length == (off_t)-1) {
         /* the response length is unknown yet */
@@ -137,7 +132,7 @@ http_server_response(const struct http_server_request *request,
 
     growing_buffer_write_buffer(headers, "\r\n", 2);
 
-    header_stream = istream_gb_new(request->pool, headers);
+    struct istream *header_stream = istream_gb_new(request->pool, headers);
 
     connection->response.length = - istream_available(status_stream, false)
         - istream_available(header_stream, false);
@@ -175,8 +170,6 @@ http_server_send_redirect(const struct http_server_request *request,
                           http_status_t status, const char *location,
                           const char *msg)
 {
-    struct growing_buffer *headers;
-
     assert(request != NULL);
     assert(status >= 300 && status < 400);
     assert(location != NULL);
@@ -184,7 +177,7 @@ http_server_send_redirect(const struct http_server_request *request,
     if (msg == NULL)
         msg = "redirection";
 
-    headers = growing_buffer_new(request->pool, 1024);
+    struct growing_buffer *headers = growing_buffer_new(request->pool, 1024);
     header_write(headers, "content-type", "text/plain");
     header_write(headers, "location", location);
 

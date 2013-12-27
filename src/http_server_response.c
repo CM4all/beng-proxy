@@ -19,7 +19,6 @@ static size_t
 http_server_response_stream_data(const void *data, size_t length, void *ctx)
 {
     struct http_server_connection *connection = ctx;
-    ssize_t nbytes;
 
     assert(filtered_socket_connected(&connection->socket) ||
            connection->request.request == NULL);
@@ -28,7 +27,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     if (!filtered_socket_connected(&connection->socket))
         return 0;
 
-    nbytes = filtered_socket_write(&connection->socket, data, length);
+    ssize_t nbytes = filtered_socket_write(&connection->socket, data, length);
 
     if (likely(nbytes >= 0)) {
         connection->response.bytes_sent += nbytes;
@@ -54,7 +53,6 @@ static ssize_t
 http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 {
     struct http_server_connection *connection = ctx;
-    ssize_t nbytes;
 
     assert(filtered_socket_connected(&connection->socket) ||
            connection->request.request == NULL);
@@ -63,8 +61,8 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
     if (!filtered_socket_connected(&connection->socket))
         return 0;
 
-    nbytes = filtered_socket_write_from(&connection->socket, fd, type,
-                                        max_length);
+    ssize_t nbytes = filtered_socket_write_from(&connection->socket, fd, type,
+                                                max_length);
     if (likely(nbytes > 0)) {
         connection->response.bytes_sent += nbytes;
         connection->response.length += (off_t)nbytes;
