@@ -18,8 +18,8 @@
 #include <unistd.h>
 #endif
 
-#define LOCK_MAGIC1 (*(const unsigned*)"lck1")
-#define LOCK_MAGIC2 (*(const unsigned*)"lck2")
+#define LOCK_MAGIC1 0x6c636b31
+#define LOCK_MAGIC2 0x6c636b32
 
 struct lock {
 #ifndef NDEBUG
