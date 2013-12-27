@@ -586,6 +586,11 @@ config_parser_create_cluster(struct config_parser *parser, char *p,
 static unsigned
 sockaddr_port(const struct sockaddr *address)
 {
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-align"
+#endif
+
     switch (address->sa_family) {
     case AF_INET:
         return ntohs(((const struct sockaddr_in *)address)->sin_port);
@@ -596,6 +601,10 @@ sockaddr_port(const struct sockaddr *address)
     default:
         return 0;
     }
+
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 }
 
 static unsigned
