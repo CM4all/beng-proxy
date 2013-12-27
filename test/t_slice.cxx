@@ -110,7 +110,8 @@ public:
             CPPUNIT_ASSERT(allocations[i] != NULL);
             CPPUNIT_ASSERT(i <= 0 || allocations[i] != allocations[0]);
             CPPUNIT_ASSERT(i <= 1 || allocations[i] != allocations[1]);
-            CPPUNIT_ASSERT(i <= 128 || allocations[i] != allocations[128]);
+            CPPUNIT_ASSERT(i <= per_area - 1 ||
+                           allocations[i] != allocations[per_area - 1]);
 
             Fill(allocations[i], slice_size, i);
         }
@@ -159,7 +160,8 @@ public:
             CPPUNIT_ASSERT(allocations[i] != NULL);
             CPPUNIT_ASSERT(i <= 0 || allocations[i] != allocations[0]);
             CPPUNIT_ASSERT(i <= 1 || allocations[i] != allocations[1]);
-            CPPUNIT_ASSERT(i <= 128 || allocations[i] != allocations[128]);
+            CPPUNIT_ASSERT(i <= per_area - 1 ||
+                           allocations[i] != allocations[per_area - 1]);
 
             Fill(allocations[i], slice_size, i);
         }
