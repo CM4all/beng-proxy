@@ -777,14 +777,14 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t-growing-buffer \
 	test/t_balancer \
 	test/t-cgi \
-	$(srcdir)/test/t-http-server.py test/t-http-server \
+	test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t-http-cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
 	test/t-processor \
 	test/t-memcached-client \
-	$(srcdir)/test/t-cookie-client.py test/t-cookie-client \
+	test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
 	test/t_pool \
