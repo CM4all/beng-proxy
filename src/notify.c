@@ -36,12 +36,12 @@ notify_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
     char buffer[32];
     (void)read(fd, buffer, sizeof(buffer));
 
-#if GCC_CHECK_VERSION(4,6)
+#if GCC_CHECK_VERSION(4,6) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wbad-function-cast"
 #endif
     if (g_atomic_int_compare_and_exchange(&notify->value, 1, 0))
-#if GCC_CHECK_VERSION(4,6)
+#if GCC_CHECK_VERSION(4,6) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
         notify->callback(notify->callback_ctx);
@@ -80,12 +80,12 @@ notify_free(struct notify *notify)
 void
 notify_signal(struct notify *notify)
 {
-#if GCC_CHECK_VERSION(4,6)
+#if GCC_CHECK_VERSION(4,6) || defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wbad-function-cast"
 #endif
     if (g_atomic_int_compare_and_exchange(&notify->value, 0, 1))
-#if GCC_CHECK_VERSION(4,6)
+#if GCC_CHECK_VERSION(4,6) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
         (void)write(notify->fds[1], notify, 1);
