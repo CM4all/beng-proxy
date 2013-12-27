@@ -22,6 +22,7 @@ LIBZ_CFLAGS =
 LIBZ_LIBS = -lz
 
 AM_CPPFLAGS += \
+	-I$(srcdir)/src -I$(srcdir)/include \
 	$(LIBCM4ALL_DAEMON_CFLAGS) \
 	$(LIBCM4ALL_INLINE_CFLAGS) \
 	$(LIBCM4ALL_HTTP_CFLAGS) \
@@ -34,7 +35,6 @@ AM_CPPFLAGS += \
 	$(LIBNFS_CFLAGS) \
 	-DSPLICE \
 	-D_GNU_SOURCE
-INCLUDES = -I$(srcdir)/src -I$(srcdir)/include
 AM_LDADD = \
 	-lrt \
 	$(GLIB_LIBS) \
