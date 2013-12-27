@@ -16,7 +16,7 @@
 #include "growing-buffer.h"
 #include "http_server.h"
 #include "global.h"
-#include "istream-file.h"
+#include "istream_file.h"
 #include "istream.h"
 #include "tvary.h"
 

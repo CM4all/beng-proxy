@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream-file.h"
+#include "istream_file.h"
 #include "istream-buffer.h"
 #include "buffered_io.h"
 #include "fd_util.h"

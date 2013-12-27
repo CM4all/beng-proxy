@@ -10,7 +10,7 @@
 #include "http_error.h"
 #include "strmap.h"
 #include "istream.h"
-#include "istream-file.h"
+#include "istream_file.h"
 #include "pool.h"
 
 #include <http/status.h>

@@ -17,7 +17,7 @@ extern "C" {
 #include "http_server.h"
 #include "http_response.h"
 #include "global.h"
-#include "istream-file.h"
+#include "istream_file.h"
 }
 
 #include <assert.h>

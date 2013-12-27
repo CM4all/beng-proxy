@@ -1,6 +1,6 @@
 #include "parser.h"
 #include "istream.h"
-#include "istream-file.h"
+#include "istream_file.h"
 #include "fb_pool.h"
 
 #include <unistd.h>

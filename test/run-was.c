@@ -5,7 +5,7 @@
 #include "direct.h"
 #include "async.h"
 #include "istream.h"
-#include "istream-file.h"
+#include "istream_file.h"
 #include "fb_pool.h"
 
 #include <daemon/log.h>
