@@ -103,6 +103,11 @@ parse_4digit(const char *p)
         + (p[2] - '0') * 10 + (p[3] - '0');
 }
 
+#if GCC_CHECK_VERSION(4,6)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#endif
+
 static int
 parse_month_name(const char *p)
 {
@@ -114,6 +119,10 @@ parse_month_name(const char *p)
 
     return -1;
 }
+
+#if GCC_CHECK_VERSION(4,6)
+#pragma GCC diagnostic pop
+#endif
 
 time_t
 http_date_parse(const char *p)

@@ -87,7 +87,16 @@ delegate_send_fd(enum delegate_response_command command, int fd)
     cmsg->cmsg_type = SCM_RIGHTS;
     cmsg->cmsg_len = msg.msg_controllen;
 
+#if GCC_CHECK_VERSION(4,6)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#endif
+
     *(int *)CMSG_DATA(cmsg) = fd;
+
+#if GCC_CHECK_VERSION(4,6)
+#pragma GCC diagnostic pop
+#endif
 
     if (sendmsg(0, &msg, 0) < 0) {
         fprintf(stderr, "failed to send fd: %s\n", strerror(errno));
