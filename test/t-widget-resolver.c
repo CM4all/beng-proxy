@@ -81,6 +81,10 @@ widget_resolver_callback2(void *ctx)
  *
  */
 
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wextended-offsetof"
+#endif
+
 static struct data *
 async_to_data(struct async_operation *ao)
 {
