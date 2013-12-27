@@ -47,7 +47,7 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection)
 static size_t
 format_status_line(char *p, http_status_t status)
 {
-    assert(status >= 100 && status < 600);
+    assert(http_status_is_valid(status));
 
     const char *status_string = http_status_to_string(status);
     assert(status_string != NULL);
