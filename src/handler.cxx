@@ -603,7 +603,7 @@ handle_http_request(client_connection &connection,
     request2->args = NULL;
     request2->cookies = NULL;
     session_id_clear(&request2->session_id);
-    request2->send_session_cookie = NULL;
+    request2->send_session_cookie = false;
 #ifdef DUMP_WIDGET_TREE
     request2->dump_widget_tree = NULL;
 #endif
