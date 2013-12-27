@@ -81,6 +81,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
 	src/product.h \
+	src/cast.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/gerrno.h \
 	src/gerror.h \

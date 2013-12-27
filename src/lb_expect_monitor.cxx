@@ -10,6 +10,7 @@
 #include "client-socket.h"
 #include "pool.h"
 #include "async.h"
+#include "cast.hxx"
 #include "gerrno.h"
 
 #include <event.h>
@@ -53,16 +54,10 @@ check_expectation(char *received, size_t received_length,
  *
  */
 
-static ExpectMonitor *
-async_to_expect_monitor(struct async_operation *ao)
-{
-    return (ExpectMonitor *)(((char *)ao) - offsetof(struct ExpectMonitor, async_operation));
-}
-
 static void
 expect_monitor_request_abort(struct async_operation *ao)
 {
-    ExpectMonitor *expect = async_to_expect_monitor(ao);
+    ExpectMonitor *expect = ContainerCast(ao, ExpectMonitor, async_operation);
 
     event_del(&expect->event);
     close(expect->fd);

@@ -7,6 +7,7 @@
 #include "handler.hxx"
 #include "config.hxx"
 #include "bp_instance.hxx"
+#include "cast.hxx"
 
 extern "C" {
 #include "file-handler.h"
@@ -560,16 +561,10 @@ serve_document_root_file(request &request2,
  *
  */
 
-static request &
-async_to_request(struct async_operation *ao)
-{
-    return *(request *)(((char *)ao) - offsetof(struct request, operation));
-}
-
 static void
 handler_abort(struct async_operation *ao)
 {
-    request &request2 = async_to_request(ao);
+    request &request2 = *ContainerCast(ao, request, operation);
 
     request_discard_body(&request2);
 

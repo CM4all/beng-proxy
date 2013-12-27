@@ -25,6 +25,7 @@
 #include "sink_rubber.h"
 #include "istream_tee.h"
 #include "async.h"
+#include "cast.hxx"
 
 #include <event.h>
 
@@ -519,7 +520,7 @@ filter_cache_new(struct pool *pool, size_t max_size,
 static inline FilterCacheRequest *
 list_head_to_request(struct list_head *head)
 {
-    return (FilterCacheRequest *)(((char*)head) - offsetof(FilterCacheRequest, siblings));
+    return ContainerCast(head, FilterCacheRequest, siblings);
 }
 
 void
