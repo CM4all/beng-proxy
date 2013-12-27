@@ -117,13 +117,11 @@ istream_file_max_read(const struct file *file)
 static void
 istream_file_try_data(struct file *file)
 {
-    size_t rest;
+    size_t rest = 0;
 
     if (file->buffer == NULL) {
         if (file->rest != 0)
             file->buffer = fb_pool_alloc();
-
-        rest = 0;
     } else {
         const size_t available = fifo_buffer_available(file->buffer);
         if (available > 0) {
