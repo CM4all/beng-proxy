@@ -51,12 +51,15 @@ css_rewrite_parser_eof(void *ctx, off_t length gcc_unused)
     rewrite->parser = NULL;
 }
 
+gcc_noreturn
 static void
 css_rewrite_parser_error(GError *error, void *ctx)
 {
     struct css_rewrite *rewrite = ctx;
     (void)rewrite;
 
+    /* shouldn't happen - input is an istream_memory which never
+       fails */
     g_error_free(error);
     assert(false);
 }
