@@ -118,7 +118,6 @@ static void
 istream_file_try_data(struct file *file)
 {
     size_t rest;
-    ssize_t nbytes;
 
     if (file->buffer == NULL) {
         if (file->rest != 0)
@@ -142,8 +141,8 @@ istream_file_try_data(struct file *file)
         return;
     }
 
-    nbytes = read_to_buffer(file->fd, file->buffer,
-                            istream_file_max_read(file));
+    ssize_t nbytes = read_to_buffer(file->fd, file->buffer,
+                                    istream_file_max_read(file));
     if (nbytes == 0) {
         if (file->rest == (off_t)-1) {
             file->rest = 0;
@@ -178,8 +177,6 @@ istream_file_try_data(struct file *file)
 static void
 istream_file_try_direct(struct file *file)
 {
-    ssize_t nbytes;
-
     assert(file->stream.handler->direct != NULL);
 
     /* first consume the rest of the buffer */
@@ -191,8 +188,9 @@ istream_file_try_direct(struct file *file)
         return;
     }
 
-    nbytes = istream_invoke_direct(&file->stream, file->fd_type, file->fd,
-                                   istream_file_max_read(file));
+    ssize_t nbytes = istream_invoke_direct(&file->stream,
+                                           file->fd_type, file->fd,
+                                           istream_file_max_read(file));
     if (nbytes == ISTREAM_RESULT_CLOSED)
         /* this stream was closed during the direct() callback */
         return;
@@ -275,10 +273,8 @@ istream_file_available(struct istream *istream, bool partial)
         available = 0;
 
     if (file->buffer != NULL) {
-        const void *data;
         size_t length;
-
-        data = fifo_buffer_read(file->buffer, &length);
+        const void *data = fifo_buffer_read(file->buffer, &length);
         if (data != NULL)
             available += length;
     }
@@ -393,20 +389,17 @@ istream_file_fd_new(struct pool *pool, const char *path,
 struct istream *
 istream_file_stat_new(struct pool *pool, const char *path, struct stat *st)
 {
-    int fd, ret;
-
     assert(path != NULL);
     assert(st != NULL);
 
-    fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
+    int fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
     if (fd < 0) {
         daemon_log(1, "failed to open '%s': %s\n",
                    path, strerror(errno));
         return NULL;
     }
 
-    ret = fstat(fd, st);
-    if (ret < 0) {
+    if (fstat(fd, st) < 0) {
         int save_errno = errno;
         daemon_log(1, "failed to stat '%s': %s\n",
                    path, strerror(errno));
@@ -421,11 +414,9 @@ istream_file_stat_new(struct pool *pool, const char *path, struct stat *st)
 struct istream *
 istream_file_new(struct pool *pool, const char *path, off_t length)
 {
-    int fd;
-
     assert(length >= -1);
 
-    fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
+    int fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
     if (fd < 0) {
         daemon_log(1, "failed to open '%s': %s\n",
                    path, strerror(errno));
