@@ -216,7 +216,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         cgi = address->u.cgi;
         pipe_filter(pool, cgi->path,
                     cgi->args, cgi->num_args,
-                    cgi->user_namespace, cgi->network_namespace,
+                    &cgi->options.ns,
                     status, headers, body,
                     handler, handler_ctx);
         return;
@@ -232,8 +232,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         cgi = address->u.cgi;
         if (address_list_is_empty(&cgi->address_list))
             fcgi_request(pool, rl->fcgi_stock,
-                         &cgi->jail,
-                         cgi->user_namespace, cgi->network_namespace,
+                         &cgi->options,
                          cgi->action,
                          cgi->path,
                          cgi->args, cgi->num_args,
@@ -263,8 +262,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     case RESOURCE_ADDRESS_WAS:
         cgi = address->u.cgi;
-        was_request(pool, rl->was_stock, &cgi->jail,
-                    cgi->user_namespace, cgi->network_namespace,
+        was_request(pool, rl->was_stock, &cgi->options,
                     cgi->action,
                     cgi->path,
                     cgi->args, cgi->num_args,

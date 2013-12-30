@@ -8,7 +8,7 @@
 #include "fd_util.h"
 #include "fd-util.h"
 #include "exec.h"
-#include "jail.h"
+#include "child_options.h"
 #include "sigutil.h"
 #include "gerrno.h"
 
@@ -55,8 +55,7 @@ bool
 was_launch(struct was_process *process,
            const char *executable_path,
            const char *const*args, unsigned n_args,
-           const struct jail_params *jail,
-           bool user_namespace, bool network_namespace,
+           const struct child_options *options,
            GError **error_r)
 {
     int control_fds[2], input_fds[2], output_fds[2];
@@ -105,21 +104,9 @@ was_launch(struct was_process *process,
         install_default_signal_handlers();
         leave_signal_section(&signals);
 
-#ifdef __linux
-        int unshare_flags = 0;
-        if (user_namespace)
-            unshare_flags |= CLONE_NEWUSER;
-        if (network_namespace)
-            unshare_flags |= CLONE_NEWNET;
+        namespace_options_unshare(&options->ns);
 
-        if (unshare_flags != 0 && unshare(unshare_flags) < 0) {
-            fprintf(stderr, "unshare(0x%x) failed: %s\n",
-                    unshare_flags, strerror(errno));
-            _exit(2);
-        }
-#endif
-
-        was_run(executable_path, args, n_args, jail,
+        was_run(executable_path, args, n_args, &options->jail,
                 control_fds[1], output_fds[0], input_fds[1]);
     }
 

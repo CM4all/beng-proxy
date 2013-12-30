@@ -12,7 +12,7 @@
 #include "child_manager.h"
 #include "async.h"
 #include "client-socket.h"
-#include "jail.h"
+#include "child_options.h"
 #include "pevent.h"
 
 #include <daemon/log.h>
@@ -35,8 +35,7 @@ struct was_child_params {
     const char *const*args;
     unsigned n_args;
 
-    const struct jail_params *jail;
-    bool user_namespace, network_namespace;
+    const struct child_options *options;
 };
 
 struct was_child {
@@ -59,9 +58,12 @@ was_stock_key(struct pool *pool, const struct was_child_params *params)
     for (unsigned i = 0, n = params->n_args; i < n; ++i)
         key = p_strcat(pool, key, " ", params->args[i], NULL);
 
-    if (params->jail != NULL && params->jail->enabled)
+    const struct child_options *const options = params->options;
+
+    const struct jail_params *const jail = &options->jail;
+    if (jail->enabled)
         key = p_strcat(pool, key, "|j=",
-                       params->jail->home_directory, NULL);
+                       jail->home_directory, NULL);
 
     return key;
 }
@@ -133,8 +135,9 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
 
     child->key = p_strdup(pool, key);
 
-    if (params->jail != NULL && params->jail->enabled) {
-        jail_params_copy(pool, &child->jail_params, params->jail);
+    const struct child_options *const options = params->options;
+    if (options->jail.enabled) {
+        jail_params_copy(pool, &child->jail_params, &options->jail);
 
         if (!jail_config_load(&child->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {
@@ -149,8 +152,7 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     GError *error = NULL;
     if (!was_launch(&child->process, params->executable_path,
                     params->args, params->n_args,
-                    params->jail,
-                    params->user_namespace, params->network_namespace,
+                    options,
                     &error)) {
         stock_item_failed(item, error);
         return;
@@ -226,15 +228,14 @@ was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 
 void
 was_stock_get(struct hstock *hstock, struct pool *pool,
-              const struct jail_params *jail,
-              bool user_namespace, bool network_namespace,
+              const struct child_options *options,
               const char *executable_path,
               const char *const*args, unsigned n_args,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
     GError *error = NULL;
-    if (jail != NULL && !jail_params_check(jail, &error)) {
+    if (!jail_params_check(&options->jail, &error)) {
         handler->error(error, handler_ctx);
         return;
     }
@@ -243,9 +244,7 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
     params->executable_path = executable_path;
     params->args = args;
     params->n_args = n_args;
-    params->jail = jail;
-    params->user_namespace = user_namespace;
-    params->network_namespace = network_namespace;
+    params->options = options;
 
     hstock_get(hstock, pool, was_stock_key(pool, params), params,
                handler, handler_ctx, async_ref);

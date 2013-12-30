@@ -15,7 +15,7 @@ struct fcgi_stock;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
-struct jail_params;
+struct child_options;
 
 /**
  * @param jail run the FastCGI application with JailCGI?
@@ -23,8 +23,7 @@ struct jail_params;
  */
 void
 fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
-             const struct jail_params *jail,
-             bool user_namespace, bool network_namespace,
+             const struct child_options *options,
              const char *action,
              const char *path,
              const char *const*args, unsigned n_args,

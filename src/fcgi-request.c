@@ -11,7 +11,7 @@
 #include "lease.h"
 #include "tcp-stock.h"
 #include "stock.h"
-#include "jail.h"
+#include "child_options.h"
 #include "istream.h"
 
 #include <daemon/log.h>
@@ -53,8 +53,7 @@ static const struct lease fcgi_socket_lease = {
 
 void
 fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
-             const struct jail_params *jail,
-             bool user_namespace, bool network_namespace,
+             const struct child_options *options,
              const char *action,
              const char *path,
              const char *const*args, unsigned n_args,
@@ -72,7 +71,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     struct fcgi_request *request;
 
     GError *error = NULL;
-    if (jail != NULL && !jail_params_check(jail, &error)) {
+    if (!jail_params_check(&options->jail, &error)) {
         if (body != NULL)
             istream_close_unused(body);
 
@@ -88,8 +87,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     request->fcgi_stock = fcgi_stock;
 
     struct stock_item *stock_item =
-        fcgi_stock_get(fcgi_stock, pool, jail,
-                       user_namespace, network_namespace,
+        fcgi_stock_get(fcgi_stock, pool, options,
                        action,
                        args, n_args,
                        &error);

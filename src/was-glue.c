@@ -13,7 +13,7 @@
 #include "tcp-stock.h"
 #include "stock.h"
 #include "abort-close.h"
-#include "jail.h"
+#include "child_options.h"
 #include "istream.h"
 
 #include <daemon/log.h>
@@ -114,8 +114,7 @@ static const struct stock_get_handler was_stock_handler = {
 
 void
 was_request(struct pool *pool, struct hstock *was_stock,
-            const struct jail_params *jail,
-            bool user_namespace, bool network_namespace,
+            const struct child_options *options,
             const char *action,
             const char *path,
             const char *const*args, unsigned n_args,
@@ -131,7 +130,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
     struct was_request *request;
 
     GError *error = NULL;
-    if (jail != NULL && !jail_params_check(jail, &error)) {
+    if (!jail_params_check(&options->jail, &error)) {
         if (body != NULL)
             istream_close_unused(body);
 
@@ -165,8 +164,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
         request->body = NULL;
 
     was_stock_get(was_stock, pool,
-                  jail,
-                  user_namespace, network_namespace,
+                  options,
                   action, args, n_args,
                   &was_stock_handler, request,
                   async_ref);

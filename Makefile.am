@@ -111,6 +111,8 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cgi_parser.c src/cgi_parser.h \
 	src/cgi_client.c src/cgi_client.h \
 	src/cgi_launch.c src/cgi_launch.h \
+	src/namespace_options.c src/namespace_options.h \
+	src/child_options.h \
 	src/child_manager.c src/child_manager.h \
 	src/child_socket.c src/child_socket.h \
 	src/child_stock.c src/child_stock.h \
@@ -807,7 +809,7 @@ test_run_ping_LDADD = $(AM_LDADD) \
 
 test_run_was_SOURCES = test/run-was.c \
 	src/was-launch.c src/was-client.c src/was-control.c src/was-input.c src/was-output.c \
-	src/jail.c \
+	src/jail.c src/namespace_options.c \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/cleanup_timer.c \
@@ -1066,7 +1068,8 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/cgi_glue.c src/fork.c \
 	src/cgi_client.c src/cgi_address.c src/cgi_launch.c \
 	src/cgi_parser.c \
-	src/jail.c src/uri-base.c src/uri-escape.c src/uri-relative.c \
+	src/jail.c src/namespace_options.c \
+	src/uri-base.c src/uri-escape.c src/uri-relative.c \
 	src/uri-extract.c \
 	src/cleanup_timer.c \
 	src/regex.c \

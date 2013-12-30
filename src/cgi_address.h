@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_CGI_ADDRESS_H
 #define BENG_PROXY_CGI_ADDRESS_H
 
-#include "jail.h"
+#include "child_options.h"
 #include "address_list.h"
 
 #include <inline/compiler.h>
@@ -34,7 +34,7 @@ struct cgi_address {
     const char *env[32];
     unsigned num_env;
 
-    struct jail_params jail;
+    struct child_options options;
 
     const char *interpreter;
     const char *action;
@@ -62,16 +62,6 @@ struct cgi_address {
      * process.
      */
     struct address_list address_list;
-
-    /**
-     * Start the child process in a new user namespace?
-     */
-    bool user_namespace;
-
-    /**
-     * Start the child process in a new network namespace?
-     */
-    bool network_namespace;
 };
 
 void

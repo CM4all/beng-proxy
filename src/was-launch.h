@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
-struct jail_params;
+struct child_options;
 
 struct was_process {
     pid_t pid;
@@ -22,8 +22,7 @@ bool
 was_launch(struct was_process *process,
            const char *executable_path,
            const char *const*args, unsigned n_args,
-           const struct jail_params *jail,
-           bool user_namespace, bool network_namespace,
+           const struct child_options *options,
            GError **error_r);
 
 #endif

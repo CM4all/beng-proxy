@@ -7,6 +7,7 @@
 #include "istream.h"
 #include "istream_file.h"
 #include "fb_pool.h"
+#include "child_options.h"
 
 #include <daemon/log.h>
 
@@ -176,9 +177,11 @@ int main(int argc, char **argv) {
     struct event_base *event_base = event_init();
     fb_pool_init(false);
 
+    static struct child_options child_options;
+
     static struct context context;
     if (!was_launch(&context.process, argv[1], NULL, 0,
-                    NULL, false, false,
+                    &child_options,
                     &error)) {
         g_printerr("%s\n", error->message);
         g_error_free(error);

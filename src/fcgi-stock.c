@@ -11,7 +11,7 @@
 #include "hstock.h"
 #include "stock.h"
 #include "child_manager.h"
-#include "jail.h"
+#include "child_options.h"
 #include "pevent.h"
 #include "gerrno.h"
 
@@ -39,9 +39,7 @@ struct fcgi_child_params {
     const char *const*args;
     unsigned n_args;
 
-    const struct jail_params *jail;
-
-    bool user_namespace, network_namespace;
+    const struct child_options *options;
 };
 
 struct fcgi_connection {
@@ -64,9 +62,12 @@ fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
     for (unsigned i = 0, n = params->n_args; i < n; ++i)
         key = p_strcat(pool, key, " ", params->args[i], NULL);
 
-    if (params->jail != NULL && params->jail->enabled)
+    const struct child_options *const options = params->options;
+
+    const struct jail_params *const jail = &options->jail;
+    if (jail->enabled)
         key = p_strcat(pool, key, "|j=",
-                       params->jail->home_directory, NULL);
+                       jail->home_directory, NULL);
 
     return key;
 }
@@ -109,22 +110,11 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
                      void *info, gcc_unused void *ctx)
 {
     const struct fcgi_child_params *params = info;
+    const struct child_options *const options = params->options;
 
-#ifdef __linux
-    int unshare_flags = 0;
-    if (params->user_namespace)
-        unshare_flags |= CLONE_NEWUSER;
-    if (params->network_namespace)
-        unshare_flags |= CLONE_NEWNET;
+    namespace_options_unshare(&options->ns);
 
-    if (unshare_flags != 0 && unshare(unshare_flags) < 0) {
-        fprintf(stderr, "unshare(0x%x) failed: %s\n",
-                unshare_flags, strerror(errno));
-        _exit(2);
-    }
-#endif
-
-    fcgi_run(params->jail, params->executable_path,
+    fcgi_run(&options->jail, params->executable_path,
              params->args, params->n_args);
 }
 
@@ -160,8 +150,9 @@ fcgi_stock_create(void *ctx, struct stock_item *item,
     assert(params != NULL);
     assert(params->executable_path != NULL);
 
-    if (params->jail != NULL && params->jail->enabled) {
-        jail_params_copy(pool, &connection->jail_params, params->jail);
+    const struct child_options *const options = params->options;
+    if (options->jail.enabled) {
+        jail_params_copy(pool, &connection->jail_params, &options->jail);
 
         if (!jail_config_load(&connection->jail_config,
                               "/etc/cm4all/jailcgi/jail.conf", pool)) {
@@ -264,22 +255,19 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock)
 
 struct stock_item *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
-               const struct jail_params *jail,
-               bool user_namespace, bool network_namespace,
+               const struct child_options *options,
                const char *executable_path,
                const char *const*args, unsigned n_args,
                GError **error_r)
 {
-    if (jail != NULL && !jail_params_check(jail, error_r))
+    if (!jail_params_check(&options->jail, error_r))
         return NULL;
 
     struct fcgi_child_params *params = p_malloc(pool, sizeof(*params));
     params->executable_path = executable_path;
     params->args = args;
     params->n_args = n_args;
-    params->jail = jail;
-    params->user_namespace = user_namespace;
-    params->network_namespace = network_namespace;
+    params->options = options;
 
     return hstock_get_now(fcgi_stock->hstock, pool,
                           fcgi_stock_key(pool, params), params,

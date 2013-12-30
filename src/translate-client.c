@@ -83,6 +83,9 @@ struct translate_client {
     /** the current JailCGI parameters being edited */
     struct jail_params *jail;
 
+    /** the current child process options being edited */
+    struct child_options *child_options;
+
     /** the current local file address being edited */
     struct file_address *file_address;
 
@@ -544,6 +547,7 @@ add_view(struct translate_client *client, const char *name)
     client->widget_view_tail = &view->next;
     client->resource_address = &view->address;
     client->jail = NULL;
+    client->child_options = NULL;
     client->file_address = NULL;
     client->http_address = NULL;
     client->cgi_address = NULL;
@@ -662,7 +666,8 @@ translate_response_finish(struct translate_response *response,
         if (cgi->document_root == NULL)
             cgi->document_root = response->document_root;
 
-        if (!translate_jail_finish(&cgi->jail, response, cgi->document_root,
+        if (!translate_jail_finish(&cgi->options.jail,
+                                   response, cgi->document_root,
                                    error_r))
             return false;
     } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
@@ -732,6 +737,7 @@ translate_handle_packet(struct translate_client *client,
         client->previous_command = command;
         client->resource_address = &client->response.address;
         client->jail = NULL;
+        client->child_options = NULL;
         client->file_address = NULL;
         client->http_address = NULL;
         client->cgi_address = NULL;
@@ -983,6 +989,7 @@ translate_handle_packet(struct translate_client *client,
         transformation->u.filter.type = RESOURCE_ADDRESS_NONE;
         client->resource_address = &transformation->u.filter;
         client->jail = NULL;
+        client->child_options = NULL;
         client->file_address = NULL;
         client->cgi_address = NULL;
         client->nfs_address = NULL;
@@ -1171,7 +1178,8 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->u.cgi = client->cgi_address =
             cgi_address_new(client->pool, payload, false);
 
-        client->jail = &client->cgi_address->jail;
+        client->child_options = &client->cgi_address->options;
+        client->jail = &client->child_options->jail;
         return true;
 
     case TRANSLATE_CGI:
@@ -1191,7 +1199,8 @@ translate_handle_packet(struct translate_client *client,
             cgi_address_new(client->pool, payload, false);
 
         client->cgi_address->document_root = client->response.document_root;
-        client->jail = &client->cgi_address->jail;
+        client->child_options = &client->cgi_address->options;
+        client->jail = &client->child_options->jail;
         return true;
 
     case TRANSLATE_FASTCGI:
@@ -1212,7 +1221,8 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->u.cgi = client->cgi_address =
             cgi_address_new(client->pool, payload, true);
 
-        client->jail = &client->cgi_address->jail;
+        client->child_options = &client->cgi_address->options;
+        client->jail = &client->child_options->jail;
         client->address_list = &client->cgi_address->address_list;
         client->default_port = 9000;
         return true;
@@ -1658,7 +1668,8 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->u.cgi = client->cgi_address =
             cgi_address_new(client->pool, payload, false);
 
-        client->jail = &client->cgi_address->jail;
+        client->child_options = &client->cgi_address->options;
+        client->jail = &client->child_options->jail;
         return true;
 
     case TRANSLATE_TRANSPARENT:
@@ -1940,8 +1951,8 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        if (client->cgi_address != NULL) {
-            client->cgi_address->user_namespace = true;
+        if (client->child_options != NULL) {
+            client->child_options->ns.enable_user = true;
         } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_USER_NAMESPACE packet");
@@ -1956,8 +1967,8 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        if (client->cgi_address != NULL) {
-            client->cgi_address->network_namespace = true;
+        if (client->child_options != NULL) {
+            client->child_options->ns.enable_network = true;
         } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_NETWORK_NAMESPACE packet");

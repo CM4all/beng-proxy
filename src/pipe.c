@@ -13,6 +13,7 @@
 #include "pool.h"
 #include "istream.h"
 #include "sigutil.h"
+#include "namespace_options.h"
 
 #include <daemon/log.h>
 
@@ -21,10 +22,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-
-#ifdef __linux
-#include <sched.h>
-#endif
 
 static void
 pipe_child_callback(int status, void *ctx gcc_unused)
@@ -96,7 +93,7 @@ make_pipe_etag(struct pool *pool, const char *in,
 void
 pipe_filter(struct pool *pool, const char *path,
             const char *const* args, unsigned num_args,
-            bool user_namespace, bool network_namespace,
+            const struct namespace_options *ns,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx)
@@ -143,19 +140,7 @@ pipe_filter(struct pool *pool, const char *path,
         install_default_signal_handlers();
         leave_signal_section(&signals);
 
-#ifdef __linux
-        int unshare_flags = 0;
-        if (user_namespace)
-            unshare_flags |= CLONE_NEWUSER;
-        if (network_namespace)
-            unshare_flags |= CLONE_NEWNET;
-
-        if (unshare_flags != 0 && unshare(unshare_flags) < 0) {
-            fprintf(stderr, "unshare(0x%x) failed: %s\n",
-                    unshare_flags, strerror(errno));
-            _exit(2);
-        }
-#endif
+        namespace_options_unshare(ns);
 
         execv(path, argv);
         fprintf(stderr, "exec('%s') failed: %s\n",

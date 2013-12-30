@@ -14,7 +14,7 @@
 struct pool;
 struct stock_item;
 struct stock_get_handler;
-struct jail_params;
+struct child_options;
 struct async_operation_ref;
 
 #ifdef __cplusplus
@@ -32,8 +32,7 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock);
  */
 struct stock_item *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
-               const struct jail_params *jail,
-               bool user_namespace, bool network_namespace,
+               const struct child_options *options,
                const char *executable_path,
                const char *const*args, unsigned n_args,
                GError **error_r);

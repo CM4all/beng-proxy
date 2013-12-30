@@ -13,6 +13,7 @@ struct pool;
 struct istream;
 struct strmap;
 struct http_response_handler;
+struct namespace_options;
 
 /**
  * @param status the HTTP status code to be sent to the response
@@ -21,7 +22,7 @@ struct http_response_handler;
 void
 pipe_filter(struct pool *pool, const char *path,
             const char *const* args, unsigned num_args,
-            bool user_namespace, bool network_namespace,
+            const struct namespace_options *ns,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx);
