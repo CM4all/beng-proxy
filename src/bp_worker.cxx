@@ -10,7 +10,7 @@
 #include "bp_instance.hxx"
 #include "connection.h"
 #include "session_manager.h"
-#include "child.h"
+#include "child_manager.h"
 #include "listener.h"
 #include "bp_control.hxx"
 

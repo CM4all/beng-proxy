@@ -7,7 +7,7 @@
 #ifndef __BENG_FORK_H
 #define __BENG_FORK_H
 
-#include "child.h"
+#include "child_manager.h"
 
 #include <glib.h>
 

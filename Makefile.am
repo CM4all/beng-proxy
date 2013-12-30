@@ -111,7 +111,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cgi_parser.c src/cgi_parser.h \
 	src/cgi_client.c src/cgi_client.h \
 	src/cgi_launch.c src/cgi_launch.h \
-	src/child.c src/child.h \
+	src/child_manager.c src/child_manager.h \
 	src/child_socket.c src/child_socket.h \
 	src/child_stock.c src/child_stock.h \
 	src/client-socket.c src/client-socket.h \
@@ -422,7 +422,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/client-socket.c \
 	src/client-balancer.c src/client-balancer.h \
 	src/bulldog.c \
-	src/child.c \
+	src/child_manager.c src/child_manager.h \
 	src/hashmap.c \
 	src/strmap.c \
 	src/cache.c \
@@ -1076,7 +1076,7 @@ test_t_cgi_SOURCES = test/t-cgi.c \
 	src/header-parser.c \
 	src/strmap.c src/hashmap.c \
 	src/fd_util.c src/fd-util.c \
-	src/child.c \
+	src/child_manager.c src/child_manager.h \
 	src/strutil.c \
 	src/crash.c \
 	src/abort-flag.c src/direct.c

@@ -9,7 +9,7 @@
 #include "was-launch.h"
 #include "hstock.h"
 #include "stock.h"
-#include "child.h"
+#include "child_manager.h"
 #include "async.h"
 #include "client-socket.h"
 #include "jail.h"

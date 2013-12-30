@@ -23,7 +23,7 @@
 #include "lb_config.hxx"
 #include "lb_hmonitor.hxx"
 #include "ssl_init.hxx"
-#include "child.h"
+#include "child_manager.h"
 #include "thread_pool.h"
 #include "fb_pool.h"
 #include "capabilities.hxx"

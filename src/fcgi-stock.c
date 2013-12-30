@@ -10,7 +10,7 @@
 #include "child_stock.h"
 #include "hstock.h"
 #include "stock.h"
-#include "child.h"
+#include "child_manager.h"
 #include "jail.h"
 #include "pevent.h"
 #include "gerrno.h"

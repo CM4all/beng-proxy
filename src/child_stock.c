@@ -8,7 +8,7 @@
 #include "child_socket.h"
 #include "hstock.h"
 #include "stock.h"
-#include "child.h"
+#include "child_manager.h"
 #include "gerrno.h"
 #include "sigutil.h"
 #include "pool.h"

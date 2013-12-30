@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_CHILD_H
-#define __BENG_CHILD_H
+#ifndef BENG_PROXY_CHILD_MANAGER_H
+#define BENG_PROXY_CHILD_MANAGER_H
 
 #include <inline/compiler.h>
 

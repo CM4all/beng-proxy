@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "child.h"
+#include "child_manager.h"
 #include "crash.h"
 #include "pool.h"
 #include "defer_event.h"
