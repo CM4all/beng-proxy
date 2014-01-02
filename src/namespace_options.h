@@ -5,6 +5,8 @@
 #ifndef BENG_PROXY_NAMESPACE_OPTIONS_H
 #define BENG_PROXY_NAMESPACE_OPTIONS_H
 
+#include <inline/compiler.h>
+
 #include <stdbool.h>
 
 struct namespace_options {
@@ -25,6 +27,11 @@ namespace_options_copy(struct namespace_options *dest,
 {
     *dest = *src;
 }
+
+gcc_pure
+int
+namespace_options_clone_flags(const struct namespace_options *options,
+                              int flags);
 
 void
 namespace_options_unshare(const struct namespace_options *options);

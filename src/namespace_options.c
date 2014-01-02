@@ -14,14 +14,23 @@
 #error This library requires Linux
 #endif
 
+gcc_pure
+int
+namespace_options_clone_flags(const struct namespace_options *options,
+                              int flags)
+{
+    if (options->enable_user)
+        flags |= CLONE_NEWUSER;
+    if (options->enable_network)
+        flags |= CLONE_NEWNET;
+
+    return flags;
+}
+
 void
 namespace_options_unshare(const struct namespace_options *options)
 {
-    int unshare_flags = 0;
-    if (options->enable_user)
-        unshare_flags |= CLONE_NEWUSER;
-    if (options->enable_network)
-        unshare_flags |= CLONE_NEWNET;
+    int unshare_flags = namespace_options_clone_flags(options, 0);
 
     if (unshare_flags != 0 && unshare(unshare_flags) < 0) {
         fprintf(stderr, "unshare(0x%x) failed: %s\n",
