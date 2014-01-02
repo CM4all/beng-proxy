@@ -10,7 +10,7 @@
 #include "ajp-client.h"
 #include "memcached-client.h"
 #include "cgi_quark.h"
-#include "fcgi-quark.h"
+#include "fcgi_quark.h"
 #include "was-quark.h"
 #include "widget-quark.h"
 #include "http_error.h"

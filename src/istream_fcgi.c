@@ -5,7 +5,7 @@
  */
 
 #include "istream-internal.h"
-#include "fcgi-protocol.h"
+#include "fcgi_protocol.h"
 
 #include <assert.h>
 #include <string.h>

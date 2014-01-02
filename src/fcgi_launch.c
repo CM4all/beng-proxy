@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi-launch.h"
+#include "fcgi_launch.h"
 #include "exec.h"
 #include "jail.h"
 #include "sigutil.h"

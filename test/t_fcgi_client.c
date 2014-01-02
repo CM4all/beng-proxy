@@ -3,8 +3,8 @@
 
 #include "t_client.h"
 #include "tio.h"
-#include "fcgi-client.h"
-#include "fcgi-protocol.h"
+#include "fcgi_client.h"
+#include "fcgi_protocol.h"
 #include "http_response.h"
 #include "async.h"
 #include "fd-util.h"

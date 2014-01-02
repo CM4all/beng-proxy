@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi-client.h"
-#include "fcgi-quark.h"
-#include "fcgi-protocol.h"
-#include "fcgi-serialize.h"
+#include "fcgi_client.h"
+#include "fcgi_quark.h"
+#include "fcgi_protocol.h"
+#include "fcgi_serialize.h"
 #include "buffered_socket.h"
 #include "growing-buffer.h"
 #include "http_response.h"

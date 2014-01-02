@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi-serialize.h"
-#include "fcgi-protocol.h"
+#include "fcgi_serialize.h"
+#include "fcgi_protocol.h"
 #include "growing-buffer.h"
 #include "strmap.h"
 #include "strutil.h"

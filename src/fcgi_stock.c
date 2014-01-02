@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi-stock.h"
-#include "fcgi-quark.h"
-#include "fcgi-launch.h"
+#include "fcgi_stock.h"
+#include "fcgi_quark.h"
+#include "fcgi_launch.h"
 #include "child_stock.h"
 #include "hstock.h"
 #include "stock.h"

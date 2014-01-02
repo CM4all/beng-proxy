@@ -138,13 +138,13 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/expiry.h \
 	src/failure.c src/failure.h \
 	src/fcache.cxx src/fcache.h \
-	src/fcgi-client.c src/fcgi-client.h \
-	src/fcgi-launch.c src/fcgi-launch.h \
-	src/fcgi-remote.c src/fcgi-remote.h \
-	src/fcgi-protocol.h \
-	src/fcgi-request.c src/fcgi-request.h \
-	src/fcgi-serialize.c src/fcgi-serialize.h \
-	src/fcgi-stock.c src/fcgi-stock.h \
+	src/fcgi_client.c src/fcgi_client.h \
+	src/fcgi_launch.c src/fcgi_launch.h \
+	src/fcgi_remote.c src/fcgi_remote.h \
+	src/fcgi_protocol.h \
+	src/fcgi_request.c src/fcgi_request.h \
+	src/fcgi_serialize.c src/fcgi_serialize.h \
+	src/fcgi_stock.c src/fcgi_stock.h \
 	src/was-control.c src/was-control.h \
 	src/was-output.c src/was-output.h \
 	src/was-input.c src/was-input.h \
@@ -648,7 +648,7 @@ libistream_a_SOURCES = \
 	src/istream_file.c src/istream_file.h \
 	src/istream-chunked.c \
 	src/istream-dechunk.c \
-	src/istream-fcgi.c \
+	src/istream_fcgi.c \
 	src/istream-cat.c \
 	src/istream-pipe.c \
 	src/istream-delayed.c \
@@ -1600,7 +1600,7 @@ test_run_nfs_client_LDADD = $(AM_LDADD) \
 endif
 
 test_t_fcgi_client_SOURCES = test/t_fcgi_client.c \
-	src/fcgi-client.c src/fcgi-serialize.c \
+	src/fcgi_client.c src/fcgi_serialize.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/cleanup_timer.c \
