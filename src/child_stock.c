@@ -43,8 +43,37 @@ child_stock_child_callback(int status gcc_unused, void *ctx)
         stock_del(&item->base);
 }
 
+struct child_stock_args {
+    struct pool *pool;
+    const char *key;
+    void *info;
+    const struct child_stock_class *cls;
+    void *cls_ctx;
+    int fd;
+    sigset_t *signals;
+};
+
+gcc_noreturn
+static int
+child_stock_fn(void *ctx)
+{
+    const struct child_stock_args *args = ctx;
+    const int fd = args->fd;
+
+    install_default_signal_handlers();
+    leave_signal_section(args->signals);
+
+    dup2(fd, 0);
+    close(fd);
+
+    int result = args->cls->run(args->pool, args->key, args->info,
+                                args->cls_ctx);
+    _exit(result);
+}
+
 static pid_t
 child_stock_start(struct pool *pool, const char *key, void *info,
+                  int clone_flags,
                   const struct child_stock_class *cls, void *ctx,
                   int fd, GError **error_r)
 {
@@ -53,22 +82,21 @@ child_stock_start(struct pool *pool, const char *key, void *info,
     sigset_t signals;
     enter_signal_section(&signals);
 
-    pid_t pid = fork();
+    struct child_stock_args args = {
+        pool, key, info,
+        cls, ctx,
+        fd,
+        &signals,
+    };
+
+    char stack[8192];
+
+    long pid = clone(child_stock_fn, stack + sizeof(stack),
+                     clone_flags, &args);
     if (pid < 0) {
-        set_error_errno_msg(error_r, "fork() failed");
+        set_error_errno_msg(error_r, "clone() failed");
         leave_signal_section(&signals);
         return -1;
-    }
-
-    if (pid == 0) {
-        install_default_signal_handlers();
-        leave_signal_section(&signals);
-
-        dup2(fd, 0);
-        close(fd);
-
-        int result = cls->run(pool, key, info, ctx);
-        _exit(result);
     }
 
     leave_signal_section(&signals);
@@ -123,7 +151,11 @@ child_stock_create(void *stock_ctx, struct stock_item *_item,
         return;
     }
 
-    pid_t pid = item->pid = child_stock_start(pool, key, info,
+    int clone_flags = SIGCHLD;
+    if (cls->clone_flags != NULL)
+        clone_flags = cls->clone_flags(key, info, clone_flags, cls_ctx);
+
+    pid_t pid = item->pid = child_stock_start(pool, key, info, clone_flags,
                                               cls, cls_ctx, fd, &error);
     if (pid < 0) {
         if (cls_ctx != NULL)
