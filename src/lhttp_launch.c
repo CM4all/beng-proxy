@@ -20,8 +20,6 @@ gcc_noreturn
 void
 lhttp_run(const struct lhttp_address *address, int fd)
 {
-    namespace_options_unshare(&address->options.ns);
-
     if (fd != 0) {
         dup2(fd, 0);
         close(fd);

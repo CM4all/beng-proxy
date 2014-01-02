@@ -81,8 +81,17 @@ lhttp_connection_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
  */
 
 static int
+lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
+                              gcc_unused void *ctx)
+{
+    const struct lhttp_address *address = info;
+
+    return namespace_options_clone_flags(&address->options.ns, flags);
+}
+
+static int
 lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
-                          void *info, gcc_unused void *ctx)
+                      void *info, gcc_unused void *ctx)
 {
     const struct lhttp_address *address = info;
 
@@ -91,6 +100,7 @@ lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
 
 static const struct child_stock_class lhttp_child_stock_class = {
     .shutdown_signal = SIGTERM,
+    .clone_flags = lhttp_child_stock_clone_flags,
     .run = lhttp_child_stock_run,
 };
 

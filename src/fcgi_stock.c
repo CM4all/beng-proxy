@@ -104,13 +104,21 @@ fcgi_connection_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
  */
 
 static int
+fcgi_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
+                             gcc_unused void *ctx)
+{
+    const struct fcgi_child_params *params = info;
+    const struct child_options *const options = params->options;
+
+    return namespace_options_clone_flags(&options->ns, flags);
+}
+
+static int
 fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
                      void *info, gcc_unused void *ctx)
 {
     const struct fcgi_child_params *params = info;
     const struct child_options *const options = params->options;
-
-    namespace_options_unshare(&options->ns);
 
     fcgi_run(&options->jail, params->executable_path,
              params->args, params->n_args);
@@ -118,6 +126,7 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
 
 static const struct child_stock_class fcgi_child_stock_class = {
     .shutdown_signal = SIGUSR1,
+    .clone_flags = fcgi_child_stock_clone_flags,
     .run = fcgi_child_stock_run,
 };
 
