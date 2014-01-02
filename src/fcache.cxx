@@ -376,6 +376,10 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
 
     if (body == nullptr) {
         async_ref_clear(&request->response.async_ref);
+
+        request->response.status = status;
+        request->response.headers = headers;
+
         filter_cache_put(request, 0, 0);
     } else {
         struct pool *pool;
