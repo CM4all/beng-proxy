@@ -62,12 +62,10 @@ fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
     for (unsigned i = 0, n = params->n_args; i < n; ++i)
         key = p_strcat(pool, key, " ", params->args[i], NULL);
 
-    const struct child_options *const options = params->options;
-
-    const struct jail_params *const jail = &options->jail;
-    if (jail->enabled)
-        key = p_strcat(pool, key, "|j=",
-                       jail->home_directory, NULL);
+    char options_buffer[4096];
+    *child_options_id(params->options, options_buffer) = 0;
+    if (*options_buffer != 0)
+        key = p_strcat(pool, key, options_buffer, NULL);
 
     return key;
 }
