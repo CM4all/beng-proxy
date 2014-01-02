@@ -1,6 +1,6 @@
 cm4all-beng-proxy (3.1.24) unstable; urgency=low
 
-  * 
+  * fcgi-stock: fix crash on fork() failure
 
  --   
 

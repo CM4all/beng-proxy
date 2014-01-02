@@ -147,6 +147,13 @@ fcgi_stock_create(void *ctx, struct stock_item *item,
     GError *error = NULL;
     connection->child = hstock_get_now(fcgi_stock->child_stock, pool,
                                        key, params, &error);
+    if (connection->child == NULL) {
+        g_prefix_error(&error, "failed to start to FastCGI server '%s': ",
+                       key);
+
+        stock_item_failed(item, error);
+        return;
+    }
 
     connection->fd = child_stock_item_connect(connection->child, &error);
     if (connection->fd < 0) {
