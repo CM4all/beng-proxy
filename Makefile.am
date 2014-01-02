@@ -853,6 +853,7 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/cgi_address.c \
 	src/nfs_address.c \
 	src/widget-view.c \
+	src/namespace_options.c \
 	src/jail.c \
 	src/regex.c \
 	src/strset.c \
@@ -893,6 +894,7 @@ test_t_stock_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_resource_address_SOURCES = test/t-resource-address.c \
+	src/namespace_options.c \
 	src/resource-address.c src/file-address.c src/cgi_address.c \
 	src/lhttp_address.c \
 	src/nfs_address.c \
@@ -1020,6 +1022,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/cgi_address.c \
 	src/nfs_address.c \
 	src/jail.c \
+	src/namespace_options.c \
 	src/regex.c \
 	src/expansible-buffer.c \
 	src/clock.c \
@@ -1192,6 +1195,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/cgi_address.c \
 	src/nfs_address.c \
 	src/jail.c \
+	src/namespace_options.c \
 	src/regex.c \
 	src/uri-edit.c src/uri-relative.c src/uri-escape.c src/uri-verify.c \
 	src/uri-extract.c src/uri-base.c \
@@ -1291,6 +1295,7 @@ test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
 	src/nfs_address.c \
 	src/address_list.c \
 	src/jail.c \
+	src/namespace_options.c \
 	src/regex.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c src/uri-parser.c \
 	src/uri-verify.c src/uri-extract.c src/uri-base.c \
@@ -1314,6 +1319,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/lhttp_address.c \
 	src/nfs_address.c \
 	src/jail.c \
+	src/namespace_options.c \
 	src/regex.c \
 	src/uri-relative.c src/uri-verify.c src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri-base.c \
@@ -1365,6 +1371,7 @@ test_t_widget_http_SOURCES = test/t-widget-http.c \
 	src/cgi_address.c \
 	src/nfs_address.c \
 	src/address_list.c \
+	src/namespace_options.c \
 	src/jail.c \
 	src/regex.c \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c src/uri-base.c \
@@ -1417,6 +1424,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi_address.c \
+	src/namespace_options.c \
 	src/regex.c \
 	src/clock.c \
 	$(STOPWATCH_SRC)
@@ -1503,6 +1511,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/file-address.c \
 	src/cgi_address.c \
 	src/nfs_address.c \
+	src/namespace_options.c \
 	src/regex.c \
 	src/failure.c src/bulldog.c \
 	src/balancer.c src/http_address.c src/cache.c \
@@ -1538,6 +1547,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/widget-request.c \
 	src/widget-view.c \
 	src/resource-address.c src/jail.c src/transformation.c \
+	src/namespace_options.c \
 	src/lhttp_address.c \
 	src/file-address.c \
 	src/cgi_address.c \

@@ -29,3 +29,15 @@ namespace_options_unshare(const struct namespace_options *options)
         _exit(2);
     }
 }
+
+char *
+namespace_options_id(const struct namespace_options *options, char *p)
+{
+    if (options->enable_user)
+        p = mempcpy(p, ";uns", 4);
+
+    if (options->enable_network)
+        p = mempcpy(p, ";nns", 4);
+
+    return p;
+}

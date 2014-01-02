@@ -55,16 +55,12 @@ cgi_address_uri(struct pool *pool, const struct cgi_address *cgi)
 const char *
 cgi_address_id(struct pool *pool, const struct cgi_address *address)
 {
-    const char *p = p_strdup(pool, address->path);
+    char child_options_buffer[4096];
+    *child_options_id(&address->options, child_options_buffer) = 0;
 
-    if (address->options.jail.enabled)
-        p = p_strcat(pool, p, ";j", NULL);
-
-    if (address->options.ns.enable_user)
-        p = p_strcat(pool, p, ";uns", NULL);
-
-    if (address->options.ns.enable_network)
-        p = p_strcat(pool, p, ";netns", NULL);
+    const char *p = p_strcat(pool, address->path,
+                             child_options_buffer,
+                             NULL);
 
     if (address->document_root != NULL)
         p = p_strcat(pool, p, ";d=", address->document_root, NULL);

@@ -123,6 +123,15 @@ jail_params_copy(struct pool *pool, struct jail_params *dest,
     dest->home_directory = p_strdup_checked(pool, src->home_directory);
 }
 
+char *
+jail_params_id(const struct jail_params *params, char *p)
+{
+    if (params->enabled)
+        p = mempcpy(p, ";j", 2);
+
+    return p;
+}
+
 const char *
 jail_translate_path(const struct jail_config *config, const char *path,
                     const char *document_root, struct pool *pool)

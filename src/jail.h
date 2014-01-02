@@ -47,6 +47,9 @@ void
 jail_params_copy(struct pool *pool, struct jail_params *dest,
                  const struct jail_params *src);
 
+char *
+jail_params_id(const struct jail_params *params, char *p);
+
 /**
  * Translates a path to a path inside the jail.
  *

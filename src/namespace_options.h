@@ -29,4 +29,7 @@ namespace_options_copy(struct namespace_options *dest,
 void
 namespace_options_unshare(const struct namespace_options *options);
 
+char *
+namespace_options_id(const struct namespace_options *options, char *p);
+
 #endif

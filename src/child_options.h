@@ -25,4 +25,12 @@ child_options_copy(struct pool *pool, struct child_options *dest,
     jail_params_copy(pool, &dest->jail, &src->jail);
 }
 
+static inline char *
+child_options_id(const struct child_options *options, char *p)
+{
+    p = namespace_options_id(&options->ns, p);
+    p = jail_params_id(&options->jail, p);
+    return p;
+}
+
 #endif
