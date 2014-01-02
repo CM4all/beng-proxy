@@ -35,10 +35,12 @@ lhttp_address_new(struct pool *pool, const char *path)
 const char *
 lhttp_address_server_id(struct pool *pool, const struct lhttp_address *address)
 {
-    const char *p = p_strdup(pool, address->path);
+    char child_options_buffer[4096];
+    *child_options_id(&address->options, child_options_buffer) = 0;
 
-    if (address->jail.enabled)
-        p = p_strcat(pool, p, ";j=", address->jail.home_directory, NULL);
+    const char *p = p_strcat(pool, address->path,
+                             child_options_buffer,
+                             NULL);
 
     for (unsigned i = 0; i < address->num_args; ++i)
         p = p_strcat(pool, p, "!", address->args[i], NULL);
@@ -69,7 +71,7 @@ lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
         dest->args[i] = p_strdup(pool, src->args[i]);
     dest->num_args = src->num_args;
 
-    jail_params_copy(pool, &dest->jail, &src->jail);
+    child_options_copy(pool, &dest->options, &src->options);
 
     dest->host_and_port = p_strdup_checked(pool, src->host_and_port);
     dest->uri = p_strdup(pool, src->uri);

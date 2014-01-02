@@ -20,6 +20,8 @@ gcc_noreturn
 void
 lhttp_run(const struct lhttp_address *address, int fd)
 {
+    namespace_options_unshare(&address->options.ns);
+
     if (fd != 0) {
         dup2(fd, 0);
         close(fd);
@@ -29,7 +31,7 @@ lhttp_run(const struct lhttp_address *address, int fd)
 
     struct exec e;
     exec_init(&e);
-    jail_wrapper_insert(&e, &address->jail, NULL);
+    jail_wrapper_insert(&e, &address->options.jail, NULL);
     exec_append(&e, address->path);
 
     for (unsigned i = 0; i < address->num_args; ++i)

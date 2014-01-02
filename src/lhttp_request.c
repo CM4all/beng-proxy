@@ -53,7 +53,7 @@ lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
     struct lhttp_request *request;
 
     GError *error = NULL;
-    if (!jail_params_check(&address->jail, &error)) {
+    if (!jail_params_check(&address->options.jail, &error)) {
         if (body != NULL)
             istream_close(body);
 

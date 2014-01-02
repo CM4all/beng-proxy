@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_LHTTP_ADDRESS_H
 #define BENG_PROXY_LHTTP_ADDRESS_H
 
-#include "jail.h"
+#include "child_options.h"
 
 #include <inline/compiler.h>
 
@@ -26,7 +26,7 @@ struct lhttp_address {
     const char *args[32];
     unsigned num_args;
 
-    struct jail_params jail;
+    struct child_options options;
 
     /**
      * The host part of the URI (including the port, if any).

@@ -1862,7 +1862,8 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->type = RESOURCE_ADDRESS_LHTTP;
         client->resource_address->u.lhttp = client->lhttp_address =
             lhttp_address_new(client->pool, payload);
-        client->jail = &client->lhttp_address->jail;
+        client->child_options = &client->lhttp_address->options;
+        client->jail = &client->child_options->jail;
         return true;
 
     case TRANSLATE_LHTTP_URI:
