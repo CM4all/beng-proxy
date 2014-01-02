@@ -38,8 +38,8 @@ class MultiStock : public mstock {
 
                 Lease(ItemList::iterator _item):item(_item) {}
 
-                void Release(bool reuse) {
-                    item->DeleteLease(this, reuse);
+                void Release(bool _reuse) {
+                    item->DeleteLease(this, _reuse);
                 }
 
                 static void Release(bool reuse, void *ctx) {
