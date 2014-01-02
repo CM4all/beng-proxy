@@ -26,28 +26,30 @@
 #include <sched.h>
 #endif
 
-gcc_noreturn
-static void
-was_run(const char *executable_path,
-        const char *const*args, unsigned n_args,
-        const struct jail_params *jail,
-        int control_fd, int input_fd, int output_fd)
-{
-    dup2(input_fd, 0);
-    dup2(output_fd, 1);
-    /* fd2 is retained */
-    dup2(control_fd, 3);
+struct was_run_args {
+    sigset_t signals;
+    int control_fd, input_fd, output_fd;
+    struct exec exec;
+};
 
-    struct exec e;
-    exec_init(&e);
-    jail_wrapper_insert(&e, jail, NULL);
-    exec_append(&e, executable_path);
-    for (unsigned i = 0; i < n_args; ++i)
-        exec_append(&e, args[i]);
-    exec_do(&e);
+gcc_noreturn
+static int
+was_run(void *ctx)
+{
+    struct was_run_args *args = ctx;
+
+    install_default_signal_handlers();
+    leave_signal_section(&args->signals);
+
+    dup2(args->input_fd, 0);
+    dup2(args->output_fd, 1);
+    /* fd2 is retained */
+    dup2(args->control_fd, 3);
+
+    exec_do(&args->exec);
 
     fprintf(stderr, "failed to execute %s: %s\n",
-            executable_path, strerror(errno));
+            args->exec.args[0], strerror(errno));
     _exit(1);
 }
 
@@ -81,14 +83,31 @@ was_launch(struct was_process *process,
         return false;
     }
 
+    struct was_run_args run_args = {
+        .control_fd = control_fds[1],
+        .output_fd = output_fds[0],
+        .input_fd = input_fds[1],
+    };
+
+    exec_init(&run_args.exec);
+    jail_wrapper_insert(&run_args.exec, &options->jail, NULL);
+    exec_append(&run_args.exec, executable_path);
+    for (unsigned i = 0; i < n_args; ++i)
+        exec_append(&run_args.exec, args[i]);
+
+    int clone_flags = SIGCHLD;
+    clone_flags = namespace_options_clone_flags(&options->ns, clone_flags);
+
     /* avoid race condition due to libevent signal handler in child
        process */
-    sigset_t signals;
-    enter_signal_section(&signals);
+    enter_signal_section(&run_args.signals);
 
-    pid_t pid = fork();
+    char stack[8192];
+
+    long pid = clone(was_run, stack + sizeof(stack),
+                     clone_flags, &run_args);
     if (pid < 0) {
-        leave_signal_section(&signals);
+        leave_signal_section(&run_args.signals);
 
         set_error_errno_msg(error_r, "fork() failed");
         close(control_fds[0]);
@@ -100,17 +119,7 @@ was_launch(struct was_process *process,
         return false;
     }
 
-    if (pid == 0) {
-        install_default_signal_handlers();
-        leave_signal_section(&signals);
-
-        namespace_options_unshare(&options->ns);
-
-        was_run(executable_path, args, n_args, &options->jail,
-                control_fds[1], output_fds[0], input_fds[1]);
-    }
-
-    leave_signal_section(&signals);
+    leave_signal_section(&run_args.signals);
 
     close(control_fds[1]);
     close(input_fds[1]);
