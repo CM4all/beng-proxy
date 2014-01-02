@@ -145,13 +145,13 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/fcgi_request.c src/fcgi_request.h \
 	src/fcgi_serialize.c src/fcgi_serialize.h \
 	src/fcgi_stock.c src/fcgi_stock.h \
-	src/was-control.c src/was-control.h \
-	src/was-output.c src/was-output.h \
-	src/was-input.c src/was-input.h \
-	src/was-client.c src/was-client.h \
-	src/was-stock.c src/was-stock.h \
-	src/was-launch.c \
-	src/was-glue.c \
+	src/was_control.c src/was_control.h \
+	src/was_output.c src/was_output.h \
+	src/was_input.c src/was_input.h \
+	src/was_client.c src/was_client.h \
+	src/was_stock.c src/was_stock.h \
+	src/was_launch.c \
+	src/was_glue.c \
 	src/fd-util.c src/fd-util.h \
 	src/fd_util.c src/fd_util.h \
 	src/file_headers.c src/file_headers.h \
@@ -695,8 +695,8 @@ if TEST
 noinst_PROGRAMS = \
 	test/run_css_parser \
 	test/run-ping \
-	test/run-was \
-	test/was-mirror \
+	test/run_was \
+	test/was_mirror \
 	test/benchmark-gmtime test/format-http-date \
 	test/request-translation \
 	test/run-subst \
@@ -807,8 +807,8 @@ test_run_ping_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
 
-test_run_was_SOURCES = test/run-was.c \
-	src/was-launch.c src/was-client.c src/was-control.c src/was-input.c src/was-output.c \
+test_run_was_SOURCES = test/run_was.c \
+	src/was_launch.c src/was_client.c src/was_control.c src/was_input.c src/was_output.c \
 	src/jail.c src/namespace_options.c \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/buffered_io.c \
@@ -822,8 +822,8 @@ test_run_was_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(GLIB_LIBS)
 
-test_was_mirror_SOURCES = test/was-mirror.c \
-	src/was-server.c src/was-control.c src/was-input.c src/was-output.c \
+test_was_mirror_SOURCES = test/was_mirror.c \
+	src/was_server.c src/was_control.c src/was_input.c src/was_output.c \
 	src/fifo-buffer.c \
 	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \

@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was-glue.h"
-#include "was-quark.h"
-#include "was-stock.h"
-#include "was-client.h"
+#include "was_glue.h"
+#include "was_quark.h"
+#include "was_stock.h"
+#include "was_client.h"
 #include "http_response.h"
 #include "lease.h"
 #include "tcp-stock.h"

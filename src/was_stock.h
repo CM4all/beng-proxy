@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WAS_STOCK_H
 #define BENG_PROXY_WAS_STOCK_H
 
-#include "was-launch.h"
+#include "was_launch.h"
 
 #include <inline/compiler.h>
 

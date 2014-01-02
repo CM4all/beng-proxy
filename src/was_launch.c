@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was-launch.h"
+#include "was_launch.h"
 #include "fd_util.h"
 #include "fd-util.h"
 #include "exec.h"

@@ -22,7 +22,7 @@
 #include "http_cache.h"
 #include "lhttp_stock.h"
 #include "fcgi_stock.h"
-#include "was-stock.h"
+#include "was_stock.h"
 #include "delegate-stock.h"
 #include "fcache.h"
 #include "child_manager.h"

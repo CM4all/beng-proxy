@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was-stock.h"
-#include "was-quark.h"
-#include "was-launch.h"
+#include "was_stock.h"
+#include "was_quark.h"
+#include "was_launch.h"
 #include "hstock.h"
 #include "stock.h"
 #include "child_manager.h"

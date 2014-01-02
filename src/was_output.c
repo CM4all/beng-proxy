@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was-output.h"
-#include "was-quark.h"
+#include "was_output.h"
+#include "was_quark.h"
 #include "pevent.h"
 #include "direct.h"
 #include "fd-util.h"

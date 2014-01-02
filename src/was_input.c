@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was-input.h"
-#include "was-quark.h"
+#include "was_input.h"
+#include "was_quark.h"
 #include "pevent.h"
 #include "direct.h"
 #include "istream-internal.h"

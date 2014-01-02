@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was-control.h"
-#include "was-quark.h"
+#include "was_control.h"
+#include "was_quark.h"
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "pevent.h"

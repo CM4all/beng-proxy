@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was-server.h"
-#include "was-quark.h"
-#include "was-control.h"
-#include "was-output.h"
-#include "was-input.h"
+#include "was_server.h"
+#include "was_quark.h"
+#include "was_control.h"
+#include "was_output.h"
+#include "was_input.h"
 #include "http_response.h"
 #include "async.h"
 #include "pevent.h"

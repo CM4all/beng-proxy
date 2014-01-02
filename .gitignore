@@ -92,8 +92,8 @@ test/t-processor
 test/dump-udp
 test/dump-control
 test/send-control
-test/was-mirror
-test/run-was
+test/was_mirror
+test/run_was
 test/run-ping
 test/t_balancer
 test/t_rubber

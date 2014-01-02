@@ -1,4 +1,4 @@
-#include "was-server.h"
+#include "was_server.h"
 #include "duplex.h"
 #include "direct.h"
 #include "pool.h"

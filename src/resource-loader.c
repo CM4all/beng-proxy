@@ -15,7 +15,7 @@
 #include "cgi_glue.h"
 #include "fcgi_request.h"
 #include "fcgi_remote.h"
-#include "was-glue.h"
+#include "was_glue.h"
 #include "ajp-request.h"
 #include "header-writer.h"
 #include "pipe.h"

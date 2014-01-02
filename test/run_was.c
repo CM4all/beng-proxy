@@ -1,5 +1,5 @@
-#include "was-client.h"
-#include "was-launch.h"
+#include "was_client.h"
+#include "was_launch.h"
 #include "lease.h"
 #include "http_response.h"
 #include "direct.h"

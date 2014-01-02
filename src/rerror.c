@@ -11,7 +11,7 @@
 #include "memcached-client.h"
 #include "cgi_quark.h"
 #include "fcgi_quark.h"
-#include "was-quark.h"
+#include "was_quark.h"
 #include "widget-quark.h"
 #include "http_error.h"
 #include "http_response.h"
