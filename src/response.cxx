@@ -440,7 +440,7 @@ more_response_headers(const request &request2,
     /* RFC 2616 3.8: Product Tokens */
     header_write(headers, "server", request2.product_token != nullptr
                  ? request2.product_token
-                 : PRODUCT_TOKEN);
+                 : BRIEF_PRODUCT_TOKEN);
 
 #ifndef NO_DATE_HEADER
     /* RFC 2616 14.18: Date */

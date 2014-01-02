@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0.10) unstable; urgency=low
 
-  * 
+  * response: don't report version in "Server" response header
 
  --   
 
