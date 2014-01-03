@@ -112,6 +112,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cgi_parser.c src/cgi_parser.h \
 	src/cgi_client.c src/cgi_client.h \
 	src/cgi_launch.c src/cgi_launch.h \
+	src/pivot_root.h \
 	src/namespace_options.c src/namespace_options.h \
 	src/child_options.h \
 	src/child_manager.c src/child_manager.h \

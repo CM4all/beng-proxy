@@ -685,6 +685,26 @@ translate_response_finish(struct translate_response *response,
     return true;
 }
 
+static bool
+translate_client_pivot_root(struct translate_client *client,
+                            const char *payload)
+{
+    if (*payload != '/') {
+        translate_client_error(client, "malformed TRANSLATE_PIVOT_ROOT packet");
+        return false;
+    }
+
+    if (client->child_options == NULL) {
+        translate_client_error(client,
+                               "misplaced TRANSLATE_PIVOT_ROOT packet");
+        return false;
+    }
+
+    client->child_options->ns.enable_mount = true;
+    client->child_options->ns.pivot_root = payload;
+    return true;
+}
+
 /**
  * Returns false if the client has been closed.
  */
@@ -2053,6 +2073,9 @@ translate_handle_packet(struct translate_client *client,
         }
 
         return true;
+
+    case TRANSLATE_PIVOT_ROOT:
+        return translate_client_pivot_root(client, payload);
     }
 
     error = g_error_new(translate_quark(), 0,

@@ -120,6 +120,8 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
     const struct fcgi_child_params *params = info;
     const struct child_options *const options = params->options;
 
+    namespace_options_setup(&options->ns);
+
     fcgi_run(&options->jail, params->executable_path,
              params->args, params->n_args);
 }

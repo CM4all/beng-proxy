@@ -28,7 +28,7 @@ static inline void
 child_options_copy(struct pool *pool, struct child_options *dest,
                    const struct child_options *src)
 {
-    namespace_options_copy(&dest->ns, &src->ns);
+    namespace_options_copy(pool, &dest->ns, &src->ns);
     jail_params_copy(pool, &dest->jail, &src->jail);
 }
 

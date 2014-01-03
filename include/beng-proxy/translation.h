@@ -374,6 +374,13 @@ enum beng_translation_command {
      * Start the child process in a new PID namespace?
      */
     TRANSLATE_PID_NAMESPACE = 107,
+
+    /**
+     * Starts the child process in a new mount namespace and invokes
+     * pivot_root().  Payload is the new root directory, which must
+     * contain a directory called "mnt".
+     */
+    TRANSLATE_PIVOT_ROOT = 108,
 };
 
 struct beng_translation_header {

@@ -28,6 +28,9 @@
 
 struct was_run_args {
     sigset_t signals;
+
+    const struct namespace_options *ns;
+
     int control_fd, input_fd, output_fd;
     struct exec exec;
 };
@@ -40,6 +43,8 @@ was_run(void *ctx)
 
     install_default_signal_handlers();
     leave_signal_section(&args->signals);
+
+    namespace_options_setup(args->ns);
 
     dup2(args->input_fd, 0);
     dup2(args->output_fd, 1);
@@ -84,6 +89,7 @@ was_launch(struct was_process *process,
     }
 
     struct was_run_args run_args = {
+        .ns = &options->ns,
         .control_fd = control_fds[1],
         .output_fd = input_fds[1],
         .input_fd = output_fds[0],
