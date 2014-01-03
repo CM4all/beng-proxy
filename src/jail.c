@@ -96,6 +96,12 @@ jail_try_translate_path(const char *path,
         return NULL;
 }
 
+void
+jail_params_init(struct jail_params *jail)
+{
+    memset(jail, 0, sizeof(*jail));
+}
+
 bool
 jail_params_check(const struct jail_params *jail, GError **error_r)
 {

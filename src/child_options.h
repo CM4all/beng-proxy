@@ -18,6 +18,13 @@ struct child_options {
 };
 
 static inline void
+child_options_init(struct child_options *options)
+{
+    namespace_options_init(&options->ns);
+    jail_params_init(&options->jail);
+}
+
+static inline void
 child_options_copy(struct pool *pool, struct child_options *dest,
                    const struct child_options *src)
 {

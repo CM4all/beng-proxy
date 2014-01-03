@@ -40,6 +40,9 @@ bool
 jail_config_load(struct jail_config *config, const char *path,
                  struct pool *pool);
 
+void
+jail_params_init(struct jail_params *jail);
+
 bool
 jail_params_check(const struct jail_params *jail, GError **error_r);
 

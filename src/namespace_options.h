@@ -22,6 +22,13 @@ struct namespace_options {
 };
 
 static inline void
+namespace_options_init(struct namespace_options *options)
+{
+    options->enable_user = false;
+    options->enable_network = false;
+}
+
+static inline void
 namespace_options_copy(struct namespace_options *dest,
                        const struct namespace_options *src)
 {
