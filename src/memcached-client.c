@@ -622,6 +622,7 @@ memcached_client_socket_closed(void *ctx)
 static bool
 memcached_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 {
+    gcc_unused
     struct memcached_client *client = ctx;
 
     /* only READ_VALUE could have blocked */

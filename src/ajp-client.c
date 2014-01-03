@@ -784,6 +784,7 @@ ajp_client_socket_closed(void *ctx)
 static bool
 ajp_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 {
+    gcc_unused
     struct ajp_client *client = ctx;
 
     /* only READ_BODY could have blocked */
