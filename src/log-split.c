@@ -255,7 +255,8 @@ dump_http(int fd, const struct log_datagram *d)
                            escaped_referer, sizeof(escaped_referer)),
              escape_string(optional_string(d->user_agent),
                            escaped_ua, sizeof(escaped_ua)));
-    write(fd, buffer, strlen(buffer));
+
+    (void)write(fd, buffer, strlen(buffer));
 }
 
 static void

@@ -44,7 +44,7 @@ parser_cdata(const char *p, size_t length, bool escaped,
     (void)escaped;
     (void)ctx;
 
-    write(1, p, length);
+    (void)write(1, p, length);
     return length;
 }
 
