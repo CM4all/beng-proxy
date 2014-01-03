@@ -36,7 +36,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     session_manager_init(1200, 0, 0);
     session_manager_event_del();
 
-    pipe(fds);
+    (void)pipe(fds);
 
     pid = fork();
     assert(pid >= 0);
@@ -49,7 +49,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
         session_manager_init(1200, 0, 0);
 
         session = session_new();
-        write(fds[1], &session->id, sizeof(session->id));
+        (void)write(fds[1], &session->id, sizeof(session->id));
         session_put(session);
     } else {
         pid_t pid2;
@@ -66,7 +66,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
         assert(WIFEXITED(status));
         assert(WEXITSTATUS(status) == 0);
 
-        read(fds[0], &session_id, sizeof(session_id));
+        (void)read(fds[0], &session_id, sizeof(session_id));
 
         session = session_get(session_id);
         assert(session != NULL);

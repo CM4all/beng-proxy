@@ -89,9 +89,9 @@ connect_server(const char *path, const char *mode)
         const char *srcdir = getenv("srcdir");
         if (srcdir != NULL) {
             /* support automake out-of-tree build */
-            chdir(srcdir);
-            execl(path, path,
-                  "0", "0", mode, NULL);
+            if (chdir(srcdir) == 0)
+                execl(path, path,
+                      "0", "0", mode, NULL);
         }
 
         perror("exec() failed");
@@ -164,7 +164,7 @@ connect_close_100(void)
         close(sv[0]);
 
         static const char response[] = "HTTP/1.1 100 Continue\n\n";
-        write(sv[1], response, sizeof(response) - 1);
+        (void)write(sv[1], response, sizeof(response) - 1);
         shutdown(sv[1], SHUT_WR);
 
         char buffer[64];
