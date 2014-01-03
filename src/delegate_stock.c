@@ -55,12 +55,10 @@ delegate_stock_event(int fd, short event, void *ctx)
     p_event_consumed(&process->event, process->stock_item.pool);
 
     if ((event & EV_TIMEOUT) == 0) {
-        char buffer;
-        ssize_t nbytes;
-
         assert((event & EV_READ) != 0);
 
-        nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
+        char buffer;
+        ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
             daemon_log(2, "error on idle delegate process: %s\n",
                        strerror(errno));
@@ -92,8 +90,6 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
                       struct async_operation_ref *async_ref gcc_unused)
 {
     struct delegate_process *process = (struct delegate_process *)item;
-    int ret, fds[2];
-    pid_t pid;
     const char *helper;
     const struct jail_params *jail;
 
@@ -106,8 +102,8 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
         jail = NULL;
     }
 
-    ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds);
-    if (ret < 0) {
+    int fds[2];
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
         GError *error = new_error_errno_msg("socketpair() failed: %s");
         stock_item_failed(item, error);
         return;
@@ -118,7 +114,7 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
     sigset_t signals;
     enter_signal_section(&signals);
 
-    pid = fork();
+    pid_t pid = fork();
     if (pid < 0) {
         GError *error = new_error_errno_msg("fork() failed");
         leave_signal_section(&signals);
