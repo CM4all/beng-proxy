@@ -13,6 +13,7 @@
 #include "exec.h"
 #include "jail.h"
 #include "gerrno.h"
+#include "sigutil.h"
 
 #include <daemon/log.h>
 
@@ -112,15 +113,24 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
         return;
     }
 
+    /* avoid race condition due to libevent signal handler in child
+       process */
+    sigset_t signals;
+    enter_signal_section(&signals);
+
     pid = fork();
     if (pid < 0) {
         GError *error = new_error_errno_msg("fork() failed");
+        leave_signal_section(&signals);
         close(fds[0]);
         close(fds[1]);
         stock_item_failed(item, error);
         return;
     } else if (pid == 0) {
         /* in the child */
+
+        install_default_signal_handlers();
+        leave_signal_section(&signals);
 
         dup2(fds[1], STDIN_FILENO);
         close(fds[0]);
@@ -138,6 +148,8 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
     }
 
     /* in the parent */
+
+    leave_signal_section(&signals);
 
     close(fds[1]);
 
