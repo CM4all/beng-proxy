@@ -44,7 +44,7 @@ file_dispatch(struct request *request2, const struct stat *st,
     http_status_t status;
 
     headers = growing_buffer_new(request->pool, 2048);
-    file_response_headers(headers, tr->address.u.local.content_type,
+    file_response_headers(headers, tr->address.u.file->content_type,
                           istream_file_fd(body), st,
                           request_processor_enabled(request2),
                           request_processor_first(request2));
@@ -125,7 +125,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
     /* response headers with information from uncompressed file */
 
     headers = growing_buffer_new(request->pool, 2048);
-    file_response_headers(headers, tr->address.u.local.content_type,
+    file_response_headers(headers, tr->address.u.file->content_type,
                           istream_file_fd(body), st,
                           request_processor_enabled(request2),
                           request_processor_first(request2));
@@ -159,10 +159,10 @@ file_callback(struct request *request2)
     };
 
     assert(tr != NULL);
-    assert(tr->address.u.local.path != NULL);
-    assert(tr->address.u.local.delegate == NULL);
+    assert(tr->address.u.file->path != NULL);
+    assert(tr->address.u.file->delegate == NULL);
 
-    path = tr->address.u.local.path;
+    path = tr->address.u.file->path;
 
     /* check request */
 
@@ -211,12 +211,12 @@ file_callback(struct request *request2)
 
     if (file_request.range == RANGE_NONE &&
         !request_transformation_enabled(request2) &&
-        ((tr->address.u.local.deflated != NULL &&
+        ((tr->address.u.file->deflated != NULL &&
           file_dispatch_compressed(request2, &st, body, "deflate",
-                                   tr->address.u.local.deflated)) ||
-         (tr->address.u.local.gzipped != NULL &&
+                                   tr->address.u.file->deflated)) ||
+         (tr->address.u.file->gzipped != NULL &&
           file_dispatch_compressed(request2, &st, body, "gzip",
-                                   tr->address.u.local.gzipped))))
+                                   tr->address.u.file->gzipped))))
         return;
 
     /* build the response */

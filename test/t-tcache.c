@@ -59,15 +59,15 @@ resource_address_equals(const struct resource_address *a,
         return true;
 
     case RESOURCE_ADDRESS_LOCAL:
-        assert(a->u.local.path != NULL);
-        assert(b->u.local.path != NULL);
+        assert(a->u.file->path != NULL);
+        assert(b->u.file->path != NULL);
 
-        return string_equals(a->u.local.path, b->u.local.path) &&
-            string_equals(a->u.local.deflated, b->u.local.deflated) &&
-            string_equals(a->u.local.gzipped, b->u.local.gzipped) &&
-            string_equals(a->u.local.content_type, b->u.local.content_type) &&
-            string_equals(a->u.local.delegate, b->u.local.delegate) &&
-            string_equals(a->u.local.document_root, b->u.local.document_root);
+        return string_equals(a->u.file->path, b->u.file->path) &&
+            string_equals(a->u.file->deflated, b->u.file->deflated) &&
+            string_equals(a->u.file->gzipped, b->u.file->gzipped) &&
+            string_equals(a->u.file->content_type, b->u.file->content_type) &&
+            string_equals(a->u.file->delegate, b->u.file->delegate) &&
+            string_equals(a->u.file->document_root, b->u.file->document_root);
 
     case RESOURCE_ADDRESS_CGI:
         assert(a->u.cgi->path != NULL);
@@ -222,26 +222,28 @@ test_basic(struct pool *pool, struct tcache *cache)
         .uri = "/foo",
     };
 
+    static const struct file_address file1 = {
+        .path = "/var/www/index.html",
+    };
     static const struct translate_response response1 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/index.html",
-                },
+                .file = &file1,
             },
         },
         .max_age = -1,
         .user_max_age = -1,
     };
 
+    static const struct file_address file2 = {
+        .path = "/srv/foo/bar.html",
+    };
     static const struct translate_response response2 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/srv/foo/bar.html",
-                },
+                .file = &file2,
             },
         },
         .base = "/foo/",
@@ -249,13 +251,14 @@ test_basic(struct pool *pool, struct tcache *cache)
         .user_max_age = -1,
     };
 
+    static const struct file_address file3 = {
+        .path = "/srv/foo/index.html",
+    };
     static const struct translate_response response3 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/srv/foo/index.html",
-                },
+                .file = &file3,
             },
         },
         .base = "/foo/",
@@ -263,13 +266,14 @@ test_basic(struct pool *pool, struct tcache *cache)
         .user_max_age = -1,
     };
 
+    static const struct file_address file4 = {
+        .path = "/srv/foo/",
+    };
     static const struct translate_response response4 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/srv/foo/",
-                },
+                .file = &file4,
             },
         },
         .base = "/foo/",
@@ -307,13 +311,14 @@ test_basic(struct pool *pool, struct tcache *cache)
     static const struct translate_request request10 = {
         .uri = "/foo//bar",
     };
+    static const struct file_address file10 = {
+        .path = "/srv/foo//bar",
+    };
     static const struct translate_response response10 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/srv/foo//bar",
-                },
+                .file = &file10,
             },
         },
         .base = "/foo/",
@@ -442,13 +447,14 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
         TRANSLATE_QUERY_STRING,
     };
 
+    static const struct file_address file5a = {
+        .path = "/srv/qs1",
+    };
     static const struct translate_response response5a = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/src/qs1",
-                },
+                .file = &file5a,
             },
         },
         .max_age = -1,
@@ -457,13 +463,14 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
         .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
     };
 
+    static const struct file_address file5b = {
+        .path = "/srv/qs2",
+    };
     static const struct translate_response response5b = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/src/qs2",
-                },
+                .file = &file5b,
             },
         },
         .max_age = -1,
@@ -476,13 +483,14 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
         TRANSLATE_QUERY_STRING,
     };
 
+    static const struct file_address file5c = {
+        .path = "/srv/qs3",
+    };
     static const struct translate_response response5c = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/src/qs3",
-                },
+                .file = &file5c,
             },
         },
         .max_age = -1,
@@ -545,13 +553,14 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     static const struct translate_request request1 = {
         .uri = "/invalidate/uri",
     };
+    static const struct file_address file1 = {
+        .path = "/var/www/invalidate/uri",
+    };
     static const struct translate_response response1 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/invalidate/uri",
-                },
+                .file = &file1,
             },
         },
         .max_age = -1,
@@ -573,9 +582,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/check/invalidate/uri",
-                },
+                .file = &file1,
             },
         },
         .max_age = -1,
@@ -590,13 +597,14 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
         .uri = "/invalidate/uri",
         .error_document_status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
     };
+    static const struct file_address file3 = {
+        .path = "/var/www/500/invalidate/uri",
+    };
     static const struct translate_response response3 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/500/invalidate/uri",
-                },
+                .file = &file3,
             },
         },
         .max_age = -1,
@@ -615,13 +623,14 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
             .data = "x",
         },
     };
+    static const struct file_address file4 = {
+        .path = "/var/www/500/check/invalidate/uri",
+    };
     static const struct translate_response response4 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/500/check/invalidate/uri",
-                },
+                .file = &file4,
             },
         },
         .max_age = -1,
@@ -644,13 +653,14 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
             .data = "a\0/b",
         },
     };
+    static const struct file_address file4b = {
+        .path = "/var/www/500/check/wfu/invalidate/uri",
+    };
     static const struct translate_response response4b = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/500/check/wfu/invalidate/uri",
-                },
+                .file = &file4b,
             },
         },
         .max_age = -1,
@@ -694,13 +704,14 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     static const uint16_t response5_invalidate[] = {
         TRANSLATE_URI,
     };
+    static const struct file_address file5 = {
+        .path = "/var/www/404/invalidate/uri",
+    };
     static const struct translate_response response5 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/404/invalidate/uri",
-                },
+                .file = &file5,
             },
         },
         .max_age = -1,
@@ -735,13 +746,14 @@ test_regex(struct pool *pool, struct tcache *cache)
     static const struct translate_request request_i1 = {
         .uri = "/regex/foo",
     };
+    static const struct file_address file_i1 = {
+        .path = "/var/www/regex/other/foo",
+    };
     static const struct translate_response response_i1 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/regex/other/foo",
-                },
+                .file = &file_i1,
             },
         },
         .base = "/regex/",
@@ -753,13 +765,14 @@ test_regex(struct pool *pool, struct tcache *cache)
     static const struct translate_request request_i2 = {
         .uri = "/regex/bar",
     };
+    static const struct file_address file_i2 = {
+        .path = "/var/www/regex/other/bar",
+    };
     static const struct translate_response response_i2 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/regex/other/bar",
-                },
+                .file = &file_i2,
             },
         },
         .base = "/regex/",
@@ -771,13 +784,14 @@ test_regex(struct pool *pool, struct tcache *cache)
     static const struct translate_request request1 = {
         .uri = "/regex/a/foo.jpg",
     };
+    static const struct file_address file1 = {
+        .path = "/var/www/regex/images/a/foo.jpg",
+    };
     static const struct translate_response response1 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/regex/images/a/foo.jpg",
-                },
+                .file = &file1,
             },
         },
         .base = "/regex/",
@@ -789,13 +803,14 @@ test_regex(struct pool *pool, struct tcache *cache)
     static const struct translate_request request2 = {
         .uri = "/regex/b/foo.html",
     };
+    static const struct file_address file2 = {
+        .path = "/var/www/regex/html/b/foo.html",
+    };
     static const struct translate_response response2 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/regex/html/b/foo.html",
-                },
+                .file = &file2,
             },
         },
         .base = "/regex/",
@@ -807,13 +822,14 @@ test_regex(struct pool *pool, struct tcache *cache)
     static const struct translate_request request3 = {
         .uri = "/regex/c/bar.jpg",
     };
+    static const struct file_address file3 = {
+        .path = "/var/www/regex/images/c/bar.jpg",
+    };
     static const struct translate_response response3 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/regex/images/c/bar.jpg",
-                },
+                .file = &file3,
             },
         },
         .base = "/regex/",
@@ -825,13 +841,14 @@ test_regex(struct pool *pool, struct tcache *cache)
     static const struct translate_request request4 = {
         .uri = "/regex/d/bar.html",
     };
+    static const struct file_address file4 = {
+        .path = "/var/www/regex/html/d/bar.html",
+    };
     static const struct translate_response response4 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/regex/html/d/bar.html",
-                },
+                .file = &file4,
             },
         },
         .base = "/regex/",
@@ -962,14 +979,15 @@ test_expand_local(struct pool *pool, struct tcache *cache)
     static const struct translate_request request1 = {
         .uri = "/regex-expand2/foo/bar.jpg/b=c",
     };
+    static const struct file_address file1n = {
+        .path = "/dummy",
+        .expand_path = "/var/www/\\1",
+    };
     static const struct translate_response response1n = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/dummy",
-                    .expand_path = "/var/www/\\1",
-                },
+                .file = &file1n,
             },
         },
         .base = "/regex-expand2/",
@@ -977,14 +995,16 @@ test_expand_local(struct pool *pool, struct tcache *cache)
         .max_age = -1,
         .user_max_age = -1,
     };
+
+    static const struct file_address file1e = {
+        .path = "/var/www/foo/bar.jpg",
+        .expand_path = "/var/www/\\1",
+    };
     static const struct translate_response response1e = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/foo/bar.jpg",
-                    .expand_path = "/var/www/\\1",
-                },
+                .file = &file1e,
             },
         },
         .base = "/regex-expand2/",
@@ -1003,13 +1023,14 @@ test_expand_local(struct pool *pool, struct tcache *cache)
     static const struct translate_request request2 = {
         .uri = "/regex-expand2/x/y/z.jpg/d=e",
     };
+    static const struct file_address file2 = {
+        .path = "/var/www/x/y/z.jpg",
+    };
     static const struct translate_response response2 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/x/y/z.jpg",
-                },
+                .file = &file2,
             },
         },
         .base = "/regex-expand2/",
@@ -1049,14 +1070,15 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     static struct widget_view view1n = {
         .transformation = &transformation1n,
     };
+    static const struct file_address file1n = {
+        .path = "/dummy",
+        .expand_path = "/var/www/\\1",
+    };
     static const struct translate_response response1n = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/dummy",
-                    .expand_path = "/var/www/\\1",
-                },
+                .file = &file1n,
             },
         },
         .base = "/regex-expand3/",
@@ -1083,14 +1105,15 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     static struct widget_view view1e = {
         .transformation = &transformation1e,
     };
+    static const struct file_address file1e = {
+        .path = "/var/www/foo/bar.jpg",
+        .expand_path = "/var/www/\\1",
+    };
     static const struct translate_response response1e = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/foo/bar.jpg",
-                    .expand_path = "/var/www/\\1",
-                },
+                .file = &file1e,
             },
         },
         .base = "/regex-expand3/",
@@ -1127,13 +1150,14 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
     static struct widget_view view2 = {
         .transformation = &transformation2,
     };
+    static const struct file_address file2 = {
+        .path = "/var/www/x/y/z.jpg",
+    };
     static const struct translate_response response2 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/x/y/z.jpg",
-                },
+                .file = &file2,
             },
         },
         .base = "/regex-expand3/",
@@ -1336,13 +1360,14 @@ test_base_check(struct pool *pool, struct tcache *cache)
             .data = "x",
         },
     };
+    static const struct file_address file2 = {
+        .path = "/var/www/vol0/a/b/c.html",
+    };
     static const struct translate_response response2 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/vol0/a/b/c.html",
-                },
+                .file = &file2,
             },
         },
         .base = "/a/b/",
@@ -1361,13 +1386,14 @@ test_base_check(struct pool *pool, struct tcache *cache)
             .data = "x",
         },
     };
+    static const struct file_address file3 = {
+        .path = "/var/www/vol1/a/d/e.html",
+    };
     static const struct translate_response response3 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/vol1/a/d/e.html",
-                },
+                .file = &file3,
             },
         },
         .base = "/a/d/",
@@ -1418,13 +1444,14 @@ test_base_check(struct pool *pool, struct tcache *cache)
             .data = "x",
         },
     };
+    static const struct file_address file6 = {
+        .path = "/var/www/vol0/a/b/0/1.html",
+    };
     static const struct translate_response response6 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/vol0/a/b/0/1.html",
-                },
+                .file = &file6,
             },
         },
         .base = "/a/b/",
@@ -1443,13 +1470,14 @@ test_base_check(struct pool *pool, struct tcache *cache)
             .data = "x",
         },
     };
+    static const struct file_address file7 = {
+        .path = "/var/www/vol1/a/d/2/3.html",
+    };
     static const struct translate_response response7 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/vol1/a/d/2/3.html",
-                },
+                .file = &file7,
             },
         },
         .base = "/a/d/",
@@ -1514,13 +1542,15 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             .data = "x",
         },
     };
+    static const struct file_address file2 = {
+        .path = "/var/www/vol0/a/b/c.html",
+    };
     static const struct translate_response response2 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
+
             .u = {
-                .local = {
-                    .path = "/var/www/vol0/a/b/c.html",
-                },
+                .file = &file2,
             },
         },
         .base = "/wfu/a/b/",
@@ -1539,13 +1569,14 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             .data = "x",
         },
     };
+    static const struct file_address file3 = {
+        .path = "/var/www/vol1/a/d/e.html",
+    };
     static const struct translate_response response3 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/vol1/a/d/e.html",
-                },
+                .file = &file3,
             },
         },
         .base = "/wfu/a/d/",
@@ -1596,13 +1627,14 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             .data = "x",
         },
     };
+    static const struct file_address file6 = {
+        .path = "/var/www/vol0/a/b/0/1.html",
+    };
     static const struct translate_response response6 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/vol0/a/b/0/1.html",
-                },
+                .file = &file6,
             },
         },
         .base = "/wfu/a/b/",
@@ -1621,13 +1653,14 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             .data = "x",
         },
     };
+    static const struct file_address file7 = {
+        .path = "/var/www/vol1/a/d/2/3.html",
+    };
     static const struct translate_response response7 = {
         .address = {
             .type = RESOURCE_ADDRESS_LOCAL,
             .u = {
-                .local = {
-                    .path = "/var/www/vol1/a/d/2/3.html",
-                },
+                .file = &file7,
             },
         },
         .base = "/wfu/a/d/",

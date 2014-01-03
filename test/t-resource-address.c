@@ -60,20 +60,23 @@ test_auto_base(struct pool *pool)
 
 int main(int argc, char **argv) {
     struct pool *pool;
+    static const struct file_address file1 = {
+        .path = "/var/www/foo/bar.html",
+    };
     static const struct resource_address ra1 = {
         .type = RESOURCE_ADDRESS_LOCAL,
         .u = {
-            .local = {
-                .path = "/var/www/foo/bar.html",
-            },
+            .file = &file1,
         },
+    };
+
+    static const struct file_address file2 = {
+        .path = "/var/www/foo/space .txt",
     };
     static const struct resource_address ra2 = {
         .type = RESOURCE_ADDRESS_LOCAL,
         .u = {
-            .local = {
-                .path = "/var/www/foo/space .txt",
-            },
+            .file = &file2,
         },
     };
 
@@ -98,22 +101,22 @@ int main(int argc, char **argv) {
     a = resource_address_save_base(pool, &dest2, &ra1, "bar.html");
     assert(a != NULL);
     assert(a->type == RESOURCE_ADDRESS_LOCAL);
-    assert(strcmp(a->u.local.path, "/var/www/foo/") == 0);
+    assert(strcmp(a->u.file->path, "/var/www/foo/") == 0);
 
     b = resource_address_load_base(pool, &dest, a, "index.html");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_LOCAL);
-    assert(strcmp(b->u.local.path, "/var/www/foo/index.html") == 0);
+    assert(strcmp(b->u.file->path, "/var/www/foo/index.html") == 0);
 
     a = resource_address_save_base(pool, &dest2, &ra2, "space%20.txt");
     assert(a != NULL);
     assert(a->type == RESOURCE_ADDRESS_LOCAL);
-    assert(strcmp(a->u.local.path, "/var/www/foo/") == 0);
+    assert(strcmp(a->u.file->path, "/var/www/foo/") == 0);
 
     b = resource_address_load_base(pool, &dest, a, "index%2ehtml");
     assert(b != NULL);
     assert(b->type == RESOURCE_ADDRESS_LOCAL);
-    assert(strcmp(b->u.local.path, "/var/www/foo/index.html") == 0);
+    assert(strcmp(b->u.file->path, "/var/www/foo/index.html") == 0);
 
     a = resource_address_save_base(pool, &dest2, &ra3, "bar/baz");
     assert(a != NULL);

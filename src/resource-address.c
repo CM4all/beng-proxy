@@ -23,7 +23,8 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
         break;
 
     case RESOURCE_ADDRESS_LOCAL:
-        file_address_copy(pool, &dest->u.local, &src->u.local);
+        assert(src->u.file != NULL);
+        dest->u.file = file_address_dup(pool, src->u.file);
         break;
 
     case RESOURCE_ADDRESS_HTTP:
@@ -278,8 +279,8 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
         return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
-        if (!file_address_save_base(pool, &dest->u.local, &src->u.local,
-                                    suffix))
+        dest->u.file = file_address_save_base(pool, src->u.file, suffix);
+        if (dest->u.file == NULL)
             return NULL;
 
         dest->type = src->type;
@@ -338,8 +339,8 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
         return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
-        file_address_load_base(pool, &dest->u.local, &src->u.local, suffix);
         dest->type = src->type;
+        dest->u.file = file_address_load_base(pool, src->u.file, suffix);
         return dest;
 
     case RESOURCE_ADDRESS_HTTP:
@@ -487,7 +488,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
         return "";
 
     case RESOURCE_ADDRESS_LOCAL:
-        return p_strdup(pool, address->u.local.path);
+        return p_strdup(pool, address->u.file->path);
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
@@ -579,7 +580,7 @@ resource_address_is_expandable(const struct resource_address *address)
         return false;
 
     case RESOURCE_ADDRESS_LOCAL:
-        return file_address_is_expandable(&address->u.local);
+        return file_address_is_expandable(address->u.file);
 
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
@@ -611,6 +612,7 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     assert(match_info != NULL);
 
     switch (address->type) {
+        struct file_address *file;
         struct cgi_address *cgi;
         struct http_address *uwa;
         struct lhttp_address *lhttp;
@@ -620,8 +622,8 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
         return true;
 
     case RESOURCE_ADDRESS_LOCAL:
-        return file_address_expand(pool, &address->u.local,
-                                   match_info, error_r);
+        address->u.file = file = file_address_dup(pool, address->u.file);
+        return file_address_expand(pool, file, match_info, error_r);
 
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:

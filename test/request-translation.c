@@ -21,10 +21,10 @@ print_resource_address(const struct resource_address *address)
         break;
 
     case RESOURCE_ADDRESS_LOCAL:
-        printf("path=%s\n", address->u.local.path);
-        if (address->u.local.content_type != NULL)
+        printf("path=%s\n", address->u.file->path);
+        if (address->u.file->content_type != NULL)
             printf("content_type=%s\n",
-                   address->u.local.content_type);
+                   address->u.file->content_type);
         break;
 
     case RESOURCE_ADDRESS_HTTP:

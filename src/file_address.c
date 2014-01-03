@@ -21,6 +21,14 @@ file_address_init(struct file_address *address, const char *path)
     address->path = path;
 }
 
+struct file_address *
+file_address_new(struct pool *pool, const char *path)
+{
+    struct file_address *file = p_malloc(pool, sizeof(*file));
+    file_address_init(file, path);
+    return file;
+}
+
 void
 file_address_copy(struct pool *pool, struct file_address *dest,
                   const struct file_address *src)
@@ -40,12 +48,19 @@ file_address_copy(struct pool *pool, struct file_address *dest,
     jail_params_copy(pool, &dest->jail, &src->jail);
 }
 
-bool
-file_address_save_base(struct pool *pool, struct file_address *dest,
-                      const struct file_address *src, const char *suffix)
+struct file_address *
+file_address_dup(struct pool *pool, const struct file_address *src)
+{
+    struct file_address *dest = p_malloc(pool, sizeof(*dest));
+    file_address_copy(pool, dest, src);
+    return dest;
+}
+
+struct file_address *
+file_address_save_base(struct pool *pool, const struct file_address *src,
+                       const char *suffix)
 {
     assert(pool != NULL);
-    assert(dest != NULL);
     assert(src != NULL);
     assert(suffix != NULL);
 
@@ -53,22 +68,21 @@ file_address_save_base(struct pool *pool, struct file_address *dest,
     if (length == (size_t)-1)
         return NULL;
 
-    file_address_copy(pool, dest, src);
+    struct file_address *dest = file_address_dup(pool, src);
     dest->path = p_strndup(pool, dest->path, length);
 
     /* BASE+DEFLATED is not supported */
     dest->deflated = NULL;
     dest->gzipped = NULL;
 
-    return true;
+    return dest;
 }
 
-void
-file_address_load_base(struct pool *pool, struct file_address *dest,
-                       const struct file_address *src, const char *suffix)
+struct file_address *
+file_address_load_base(struct pool *pool, const struct file_address *src,
+                       const char *suffix)
 {
     assert(pool != NULL);
-    assert(dest != NULL);
     assert(src != NULL);
     assert(src->path != NULL);
     assert(*src->path != 0);
@@ -78,8 +92,9 @@ file_address_load_base(struct pool *pool, struct file_address *dest,
     char *unescaped = p_strdup(pool, suffix);
     unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
-    file_address_copy(pool, dest, src);
+    struct file_address *dest = file_address_dup(pool, src);
     dest->path = p_strcat(pool, dest->path, unescaped, NULL);
+    return dest;
 }
 
 bool

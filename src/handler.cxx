@@ -228,7 +228,7 @@ handle_translated_request(request &request,
         strmap_get(request.args, "focus") != NULL;
 
     if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
-        if (response->address.u.local.delegate != NULL)
+        if (response->address.u.file->delegate != NULL)
             delegate_handler(request);
         else
             file_callback(&request);
@@ -520,14 +520,17 @@ serve_document_root_file(request &request2,
 
     request2.translate.transformation = tr->views->transformation;
 
+    file_address *fa = (file_address *)p_malloc(request->pool, sizeof(*fa));
+    file_address_init(fa, p_strncat(request->pool,
+                                    config->document_root,
+                                    strlen(config->document_root),
+                                    uri->base.data,
+                                    uri->base.length,
+                                    index_file, (size_t)10,
+                                    NULL));
+
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
-    tr->address.u.local.path = p_strncat(request->pool,
-                                         config->document_root,
-                                         strlen(config->document_root),
-                                         uri->base.data,
-                                         uri->base.length,
-                                         index_file, (size_t)10,
-                                         NULL);
+    tr->address.u.file = fa;
 
     tr->request_header_forward = (struct header_forward_settings){
         .modes = {
@@ -549,7 +552,7 @@ serve_document_root_file(request &request2,
         },
     };
 
-    request2.resource_tag = tr->address.u.local.path;
+    request2.resource_tag = tr->address.u.file->path;
     request2.processor_focus = process &&
         strmap_get_checked(request2.args, "focus") != NULL;
 

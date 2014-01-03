@@ -671,12 +671,12 @@ translate_response_finish(struct translate_response *response,
                                    error_r))
             return false;
     } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
-        if (response->address.u.local.jail.enabled &&
-            response->address.u.local.document_root == NULL)
-            response->address.u.local.document_root = response->document_root;
+        struct file_address *file = resource_address_get_file(&response->address);
 
-        if (!translate_jail_finish(&response->address.u.local.jail, response,
-                                   response->address.u.local.document_root,
+        if (file->jail.enabled && file->document_root == NULL)
+            file->document_root = response->document_root;
+
+        if (!translate_jail_finish(&file->jail, response, file->document_root,
                                    error_r))
             return false;
     }
@@ -833,8 +833,8 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_LOCAL;
-        client->file_address = &client->resource_address->u.local;
-        file_address_init(client->file_address, payload);
+        client->resource_address->u.file = client->file_address =
+            file_address_new(client->pool, payload);
         return true;
 
     case TRANSLATE_PATH_INFO:

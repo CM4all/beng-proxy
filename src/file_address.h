@@ -40,6 +40,9 @@ struct file_address {
 void
 file_address_init(struct file_address *cgi, const char *path);
 
+struct file_address *
+file_address_new(struct pool *pool, const char *path);
+
 gcc_pure
 const char *
 file_address_uri(struct pool *pool, const struct file_address *cgi);
@@ -48,13 +51,16 @@ void
 file_address_copy(struct pool *pool, struct file_address *dest,
                  const struct file_address *src);
 
-bool
-file_address_save_base(struct pool *pool, struct file_address *dest,
-                      const struct file_address *src, const char *suffix);
+struct file_address *
+file_address_dup(struct pool *pool, const struct file_address *src);
 
-void
-file_address_load_base(struct pool *pool, struct file_address *dest,
-                      const struct file_address *src, const char *suffix);
+struct file_address *
+file_address_save_base(struct pool *pool, const struct file_address *src,
+                       const char *suffix);
+
+struct file_address *
+file_address_load_base(struct pool *pool, const struct file_address *src,
+                       const char *suffix);
 
 /**
  * Does this address need to be expanded with file_address_expand()?

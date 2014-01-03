@@ -37,7 +37,7 @@ struct resource_address {
     enum resource_address_type type;
 
     union {
-        struct file_address local;
+        const struct file_address *file;
 
         const struct http_address *http;
 
@@ -62,6 +62,19 @@ resource_address_is_cgi_alike(const struct resource_address *address)
     return address->type == RESOURCE_ADDRESS_CGI ||
         address->type == RESOURCE_ADDRESS_FASTCGI ||
         address->type == RESOURCE_ADDRESS_WAS;
+}
+
+gcc_const
+static inline struct file_address *
+resource_address_get_file(struct resource_address *address)
+{
+    assert(address->type == RESOURCE_ADDRESS_LOCAL);
+
+    union {
+        const struct file_address *in;
+        struct file_address *out;
+    } u = { .in = address->u.file };
+    return u.out;
 }
 
 gcc_const

@@ -157,6 +157,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
     assert(address != NULL);
 
     switch (address->type) {
+        const struct file_address *file;
         const struct cgi_address *cgi;
         const char *server_name;
         unsigned server_port;
@@ -171,7 +172,8 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             /* static files cannot receive a request body, close it */
             istream_close_unused(body);
 
-        if (address->u.local.delegate != NULL) {
+        file = address->u.file;
+        if (file->delegate != NULL) {
             if (rl->delegate_stock == NULL) {
                 GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                                     "No delegate stock");
@@ -180,17 +182,17 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             }
 
             delegate_stock_request(rl->delegate_stock, pool,
-                                   address->u.local.delegate,
-                                   &address->u.local.jail,
-                                   address->u.local.path,
-                                   address->u.local.content_type,
+                                   file->delegate,
+                                   &file->jail,
+                                   file->path,
+                                   file->content_type,
                                    handler, handler_ctx,
                                    async_ref);
             return;
         }
 
-        static_file_get(pool, address->u.local.path,
-                        address->u.local.content_type,
+        static_file_get(pool, file->path,
+                        file->content_type,
                         handler, handler_ctx);
         return;
 
