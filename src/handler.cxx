@@ -10,7 +10,7 @@
 #include "cast.hxx"
 
 extern "C" {
-#include "file-handler.h"
+#include "file_handler.h"
 #include "nfs_handler.h"
 #include "request.h"
 #include "connection.h"

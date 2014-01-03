@@ -9,7 +9,7 @@
 #define __BENG_RESOURCE_ADDRESS_H
 
 #include "pool.h"
-#include "file-address.h"
+#include "file_address.h"
 #include "http_address.h"
 #include "cgi_address.h"
 #include "nfs_address.h"

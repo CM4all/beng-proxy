@@ -7,7 +7,7 @@
 #include "handler.hxx"
 
 extern "C" {
-#include "file-handler.h"
+#include "file_handler.h"
 #include "file_headers.h"
 #include "static-headers.h"
 #include "delegate_glue.h"

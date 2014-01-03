@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "file-handler.h"
+#include "file_handler.h"
 #include "file_headers.h"
 #include "request.h"
 #include "generate_response.h"

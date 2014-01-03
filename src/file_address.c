@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "file-address.h"
+#include "file_address.h"
 #include "uri-base.h"
 #include "uri-escape.h"
 #include "regex.h"
