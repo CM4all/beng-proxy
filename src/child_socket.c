@@ -13,19 +13,22 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-static void
+static bool
 make_child_socket_path(struct sockaddr_un *address)
 {
     address->sun_family = AF_UNIX;
 
     strcpy(address->sun_path, "/tmp/cm4all-beng-proxy-socket-XXXXXX");
-    mktemp(address->sun_path);
+    return *mktemp(address->sun_path) != 0;
 }
 
 int
 child_socket_create(struct child_socket *cs, GError **error_r)
 {
-    make_child_socket_path(&cs->address);
+    if (!make_child_socket_path(&cs->address)) {
+        set_error_errno_msg(error_r, "mktemp() failed");
+        return -1;
+    }
 
     unlink(cs->address.sun_path);
 
