@@ -88,7 +88,7 @@ static const struct delegate_handler delegate_get_handler = {
 void
 delegate_stock_request(struct hstock *stock, struct pool *pool,
                        const char *helper,
-                       const struct jail_params *jail,
+                       const struct child_options *options,
                        const char *path, const char *content_type,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref *async_ref)
@@ -101,7 +101,7 @@ delegate_stock_request(struct hstock *stock, struct pool *pool,
     http_response_handler_set(&get->handler, handler, ctx);
 
     delegate_stock_open(stock, pool,
-                        helper, jail, path,
+                        helper, options, path,
                         &delegate_get_handler, get,
                         async_ref);
 }

@@ -45,7 +45,7 @@ file_address_copy(struct pool *pool, struct file_address *dest,
 
     dest->expand_path = p_strdup_checked(pool, src->expand_path);
 
-    jail_params_copy(pool, &dest->jail, &src->jail);
+    child_options_copy(pool, &dest->child_options, &src->child_options);
 }
 
 struct file_address *

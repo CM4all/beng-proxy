@@ -1788,7 +1788,7 @@ test_run_delegate_SOURCES = test/run_delegate.c \
 	src/delegate_stock.c src/delegate_client.c src/delegate_glue.c \
 	src/hashmap.c src/hstock.c src/stock.c \
 	src/defer.c \
-	src/jail.c \
+	src/jail.c src/namespace_options.c \
 	src/fd_util.c
 test_run_delegate_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \

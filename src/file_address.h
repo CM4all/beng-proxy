@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_FILE_ADDRESS_H
 #define BENG_PROXY_FILE_ADDRESS_H
 
-#include "jail.h"
+#include "child_options.h"
 
 #include <inline/compiler.h>
 
@@ -32,9 +32,9 @@ struct file_address {
     const char *expand_path;
 
     /**
-     * Should the delegate be jailed?
+     * Options for the delegate process.
      */
-    struct jail_params jail;
+    struct child_options child_options;
 };
 
 void

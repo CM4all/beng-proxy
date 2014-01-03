@@ -10,7 +10,7 @@
 #include "stock.h"
 
 struct pool;
-struct jail_params;
+struct child_options;
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,7 +22,7 @@ delegate_stock_new(struct pool *pool);
 void
 delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
                    const char *path,
-                   const struct jail_params *jail,
+                   const struct child_options *options,
                    const struct stock_get_handler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref);
 

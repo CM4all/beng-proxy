@@ -673,10 +673,11 @@ translate_response_finish(struct translate_response *response,
     } else if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
         struct file_address *file = resource_address_get_file(&response->address);
 
-        if (file->jail.enabled && file->document_root == NULL)
+        if (file->child_options.jail.enabled && file->document_root == NULL)
             file->document_root = response->document_root;
 
-        if (!translate_jail_finish(&file->jail, response, file->document_root,
+        if (!translate_jail_finish(&file->child_options.jail, response,
+                                   file->document_root,
                                    error_r))
             return false;
     }
@@ -1497,7 +1498,8 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->file_address->delegate = payload;
-        client->jail = &client->file_address->jail;
+        client->child_options = &client->file_address->child_options;
+        client->jail = &client->child_options->jail;
         return true;
 
     case TRANSLATE_APPEND:

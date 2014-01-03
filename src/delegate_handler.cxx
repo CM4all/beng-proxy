@@ -121,7 +121,7 @@ delegate_handler(request &request2)
 
     delegate_stock_open(global_delegate_stock, request->pool,
                         tr->address.u.file->delegate,
-                        &tr->address.u.file->jail,
+                        &tr->address.u.file->child_options,
                         tr->address.u.file->path,
                         &delegate_handler_handler, &request2,
                         &request2.async_ref);

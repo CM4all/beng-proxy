@@ -183,7 +183,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
             delegate_stock_request(rl->delegate_stock, pool,
                                    file->delegate,
-                                   &file->jail,
+                                   &file->child_options,
                                    file->path,
                                    file->content_type,
                                    handler, handler_ctx,

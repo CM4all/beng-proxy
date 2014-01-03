@@ -12,12 +12,12 @@
 
 struct async_operation_ref;
 struct hstock;
-struct jail_params;
+struct child_options;
 
 void
 delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const char *helper,
-                    const struct jail_params *jail,
+                    const struct child_options *options,
                     const char *path,
                     const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref *async_ref);

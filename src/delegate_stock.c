@@ -11,7 +11,7 @@
 #include "fd_util.h"
 #include "pevent.h"
 #include "exec.h"
-#include "jail.h"
+#include "child_options.h"
 #include "gerrno.h"
 #include "sigutil.h"
 
@@ -26,7 +26,10 @@
 struct delegate_info {
     const char *helper;
 
-    const struct jail_params *jail;
+    const struct child_options *options;
+
+    int fds[2];
+    sigset_t signals;
 };
 
 struct delegate_process {
@@ -70,6 +73,33 @@ delegate_stock_event(int fd, short event, void *ctx)
     pool_commit();
 }
 
+/*
+ * clone() function
+ *
+ */
+
+static int
+delegate_stock_fn(void *ctx)
+{
+    struct delegate_info *info = ctx;
+
+    install_default_signal_handlers();
+    leave_signal_section(&info->signals);
+
+    dup2(info->fds[1], STDIN_FILENO);
+    close(info->fds[0]);
+    close(info->fds[1]);
+
+    clearenv();
+
+    struct exec e;
+    exec_init(&e);
+    jail_wrapper_insert(&e, &info->options->jail, NULL);
+    exec_append(&e, info->helper);
+    exec_do(&e);
+
+    _exit(1);
+}
 
 /*
  * stock class
@@ -90,68 +120,41 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
                       struct async_operation_ref *async_ref gcc_unused)
 {
     struct delegate_process *process = (struct delegate_process *)item;
-    const char *helper;
-    const struct jail_params *jail;
+    struct delegate_info *const info = _info;
+    const struct child_options *const options = info->options;
 
-    if (_info != NULL) {
-        struct delegate_info *info = _info;
-        helper = info->helper;
-        jail = info->jail;
-    } else {
-        helper = uri;
-        jail = NULL;
-    }
-
-    int fds[2];
-    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
         GError *error = new_error_errno_msg("socketpair() failed: %s");
         stock_item_failed(item, error);
         return;
     }
 
+    int clone_flags = SIGCHLD;
+    clone_flags = namespace_options_clone_flags(&options->ns, clone_flags);
+
     /* avoid race condition due to libevent signal handler in child
        process */
-    sigset_t signals;
-    enter_signal_section(&signals);
+    enter_signal_section(&info->signals);
 
-    pid_t pid = fork();
+    char stack[8192];
+    long pid = clone(delegate_stock_fn, stack + sizeof(stack),
+                     clone_flags, info);
     if (pid < 0) {
         GError *error = new_error_errno_msg("fork() failed");
-        leave_signal_section(&signals);
-        close(fds[0]);
-        close(fds[1]);
+        leave_signal_section(&info->signals);
+        close(info->fds[0]);
+        close(info->fds[1]);
         stock_item_failed(item, error);
         return;
-    } else if (pid == 0) {
-        /* in the child */
-
-        install_default_signal_handlers();
-        leave_signal_section(&signals);
-
-        dup2(fds[1], STDIN_FILENO);
-        close(fds[0]);
-        close(fds[1]);
-
-        clearenv();
-
-        struct exec e;
-        exec_init(&e);
-        jail_wrapper_insert(&e, jail, NULL);
-        exec_append(&e, helper);
-        exec_do(&e);
-
-        _exit(1);
     }
 
-    /* in the parent */
+    leave_signal_section(&info->signals);
 
-    leave_signal_section(&signals);
-
-    close(fds[1]);
+    close(info->fds[1]);
 
     process->uri = uri;
     process->pid = pid;
-    process->fd = fds[0];
+    process->fd = info->fds[0];
 
     event_set(&process->event, process->fd, EV_READ|EV_TIMEOUT,
               delegate_stock_event, process);
@@ -216,28 +219,22 @@ delegate_stock_new(struct pool *pool)
 void
 delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
                    const char *helper,
-                   const struct jail_params *jail,
+                   const struct child_options *options,
                    const struct stock_get_handler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    const char *uri;
-    struct delegate_info *info;
+    assert(options != NULL);
 
-    if (jail != NULL && jail->enabled) {
-        GError *error = NULL;
-        if (!jail_params_check(jail, &error)) {
-            handler->error(error, handler_ctx);
-            return;
-        }
+    const char *uri = helper;
 
-        uri = p_strcat(pool, helper, "|", jail->home_directory, "|jail", NULL);
-        info = p_malloc(pool, sizeof(*info));
-        info->helper = helper;
-        info->jail = jail;
-    } else {
-        uri = helper;
-        info = NULL;
-    }
+    char options_buffer[4096];
+    *child_options_id(options, options_buffer) = 0;
+    if (*options_buffer != 0)
+        uri = p_strcat(pool, helper, "|", options_buffer, NULL);
+
+    struct delegate_info *info = p_malloc(pool, sizeof(*info));
+    info->helper = helper;
+    info->options = options;
 
     hstock_get(delegate_stock, pool, uri, info,
                handler, handler_ctx, async_ref);

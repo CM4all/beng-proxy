@@ -12,12 +12,12 @@ struct pool;
 struct hstock;
 struct http_response_handler;
 struct async_operation_ref;
-struct jail_params;
+struct child_options;
 
 void
 delegate_stock_request(struct hstock *stock, struct pool *pool,
                        const char *helper,
-                       const struct jail_params *jail,
+                       const struct child_options *options,
                        const char *path, const char *content_type,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref *async_ref);

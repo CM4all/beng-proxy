@@ -73,7 +73,7 @@ static const struct stock_get_handler delegate_stock_handler = {
 void
 delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const char *helper,
-                    const struct jail_params *jail,
+                    const struct child_options *options,
                     const char *path,
                     const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref *async_ref)
@@ -87,6 +87,6 @@ delegate_stock_open(struct hstock *stock, struct pool *pool,
     glue->handler_ctx = ctx;
     glue->async_ref = async_ref;
 
-    delegate_stock_get(stock, pool, helper, jail,
+    delegate_stock_get(stock, pool, helper, options,
                        &delegate_stock_handler, glue, async_ref);
 }
