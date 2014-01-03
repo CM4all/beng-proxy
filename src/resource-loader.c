@@ -19,7 +19,7 @@
 #include "ajp-request.h"
 #include "header-writer.h"
 #include "pipe.h"
-#include "delegate-request.h"
+#include "delegate_request.h"
 #include "strutil.h"
 #include "strmap.h"
 #include "istream.h"

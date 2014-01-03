@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate-client.h"
-#include "delegate-protocol.h"
+#include "delegate_client.h"
+#include "delegate_protocol.h"
 #include "async.h"
 #include "please.h"
 #include "fd_util.h"

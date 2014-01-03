@@ -10,7 +10,7 @@ extern "C" {
 #include "file-handler.h"
 #include "file_headers.h"
 #include "static-headers.h"
-#include "delegate-glue.h"
+#include "delegate_glue.h"
 #include "http_error.h"
 #include "generate_response.h"
 #include "request.h"

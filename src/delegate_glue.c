@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate-glue.h"
-#include "delegate-stock.h"
+#include "delegate_glue.h"
+#include "delegate_stock.h"
 #include "stock.h"
 #include "lease.h"
 #include "pool.h"

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate-stock.h"
+#include "delegate_stock.h"
 #include "hstock.h"
 #include "async.h"
 #include "failure.h"

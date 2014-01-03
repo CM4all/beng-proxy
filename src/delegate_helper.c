@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate-protocol.h"
+#include "delegate_protocol.h"
 
 #include <inline/compiler.h>
 

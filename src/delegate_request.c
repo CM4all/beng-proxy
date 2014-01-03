@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate-request.h"
-#include "delegate-glue.h"
+#include "delegate_request.h"
+#include "delegate_glue.h"
 #include "static-headers.h"
 #include "http_response.h"
 #include "http_error.h"

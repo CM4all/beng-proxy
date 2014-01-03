@@ -8,7 +8,7 @@
 #ifndef BENG_DELEGATE_GLUE_H
 #define BENG_DELEGATE_GLUE_H
 
-#include "delegate-client.h"
+#include "delegate_client.h"
 
 struct async_operation_ref;
 struct hstock;

@@ -1,2 +1,3 @@
 run_nfs_client
+/run_delegate
 *.trs
