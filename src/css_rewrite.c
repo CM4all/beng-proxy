@@ -51,7 +51,9 @@ css_rewrite_parser_eof(void *ctx, off_t length gcc_unused)
     rewrite->parser = NULL;
 }
 
+#ifndef NDEBUG
 gcc_noreturn
+#endif
 static void
 css_rewrite_parser_error(GError *error, void *ctx)
 {
