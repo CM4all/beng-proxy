@@ -793,21 +793,6 @@ Trusted widgets are rejected. \\
 this parameter is usually not used \\
 \hline
 
-\verb|PATH| & Absolute path of the local file to be served (see
-\ref{static}). \\
-
-\hline
-
-\verb|DEFLATED| & Absolute path of a precompressed version of the
-file.  The file is compressed with the ``deflate'' algorithm, without
-\texttt{gzip} headers.  May follow the \verb|PATH| packet. \\
-
-\hline
-
-\verb|GZIPPED| & Absolute path of a precompressed version of the
-file.  The file is compressed with \texttt{gzip}.  May follow the
-\verb|PATH| packet. \\
-
 \hline
 
 \verb|HTTP| & this URL parameter may be specified instead of
@@ -908,16 +893,6 @@ resource belongs to \\
 \verb|DOCUMENT_ROOT| & base directory of the site; may also be
 passed after a \verb|CGI|/\verb|DELEGATE| command, to set the
 document root only for this CGI/delegate \\
-
-\hline
-
-\verb|CONTENT_TYPE| & MIME type of the file (optional) \\
-
-\hline
-
-\verb|DELEGATE| & After \verb|PATH|: delegates opening the file to
-a program.  The payload is the path of the delegate program.  See
-section \ref{delegate} for details. \\
 
 \hline
 
@@ -1199,6 +1174,70 @@ its extended attributes (see \ref{xattr}).
 To send a standard error page, the translation server sends a response
 containing only the \verb|STATUS| parameter with the desired HTTP
 status.
+
+\subsection{Static files}
+\label{tstatic}
+
+See \ref{static} for an explanation of static file resources.
+
+The response packet \verb|PATH| declares a static file that will be
+served.  The following packets are available:
+
+\begin{longtable}{|l|p{8cm}|}
+\hline
+
+\verb|PATH| & Absolute path of the local file to be served. \\
+
+\hline
+
+\verb|EXPAND_PATH| & Override the path with the given value (after
+expanding); see \ref{tresponse}. \\
+
+\hline
+
+\verb|DEFLATED| & Absolute path of a precompressed version of the
+file.  The file is compressed with the ``deflate'' algorithm, without
+\texttt{gzip} headers.  May follow the \verb|PATH| packet. \\
+
+\hline
+
+\verb|GZIPPED| & Absolute path of a precompressed version of the
+file.  The file is compressed with \texttt{gzip}.  May follow the
+\verb|PATH| packet. \\
+
+\hline
+
+\verb|CONTENT_TYPE| & MIME type of the file (optional) \\
+
+\hline
+\end{longtable}
+
+\subsection{Delegates}
+\label{tdelegate}
+
+If \verb|DELEGATE| follows after \verb|PATH|, then this file will be
+opened through the ``delegate'' process.  See \ref{delegate} for an
+explanation.
+
+\begin{longtable}{|l|p{8cm}|}
+\hline
+
+\verb|DELEGATE| & The payload is the path of the delegate program. \\
+
+\hline
+
+\verb|DOCUMENT_ROOT| & See \ref{tresponse}. \\
+
+\hline
+
+\verb|HOME| & See \ref{tresponse}. \\
+
+\hline
+
+\verb|JAILCGI| & enable JailCGI \\
+
+\hline
+\end{longtable}
 
 \subsection{Proxying requests}
 
