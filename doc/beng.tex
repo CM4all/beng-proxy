@@ -1344,18 +1344,9 @@ for a CGI \\
 \verb|PATH_INFO| (only CGI, FastCGI and WAS) \\
 
 \hline
-
-\verb|USER_NAMESPACE| & Create the child process in a new user
-namespace. \\
-
-\hline
-
-\verb|NETWORK_NAMESPACE| & Create the child process in a new network
-namespace.  This prevents the process from doing network I/O, because
-the new namespace has no network devices. \\
-
-\hline
 \end{longtable}
+
+See \ref{ns} for how to configure namespaces.
 
 \subsection{Local HTTP}
 
@@ -1366,6 +1357,46 @@ the new namespace has no network devices. \\
 
 \hline
 \end{longtable}
+
+See \ref{ns} for how to configure namespaces.
+
+\subsection{Namespaces}
+\label{ns}
+
+Child processes such as FastCGI programs can run in separate Linux
+namespaces to improve separation from the rest of the server.  That
+requires a fairly new Linux kernel.
+
+Articles on \url{http://lwn.net/} on Linux namespaces:
+
+\begin{itemize}
+\item \href{https://lwn.net/Articles/531114/}{Namespaces in operation,
+  part 1: namespaces overview}
+\item \href{http://lwn.net/Articles/532593/}{Namespaces in operation,
+  part 5: User namespaces}
+\item \href{https://lwn.net/Articles/540087/}{Namespaces in operation,
+  part 6: more on user namespaces}
+\item \href{http://lwn.net/Articles/219794/}{Network namespaces}
+\end{itemize}
+
+\subsubsection{User Namespaces}
+
+The translation packet \verb|USER_NAMESPACE| launches the process in a
+new user namespace.  This creates a new mapping for user ids inside
+this namespace.  More importantly, this gives the process a full set
+of capabilities.  This is a precondition for some of the other
+namespaces.
+
+Requires Linux 3.8 or newer.
+
+\subsubsection{Network Namespaces}
+
+The translation packet \verb|NETWORK_NAMESPACE| launches the process
+in a new network namespace.  Without further configuration (not
+implemented yet), this leaves the process without access to the
+network, because there is no network device in the new namespace.
+
+Depends on user namespaces.
 
 \subsection{Filters}
 \label{filter}
