@@ -9,6 +9,8 @@
 
 #include <glib.h>
 
+#include <stdlib.h>
+
 bool
 session_id_parse(const char *p, session_id_t *id_r)
 {
