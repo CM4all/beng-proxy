@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0.11) unstable; urgency=low
 
-  * 
+  * was: fix misdirected pipes (4.0.10 regression)
 
  --   
 

@@ -85,8 +85,8 @@ was_launch(struct was_process *process,
 
     struct was_run_args run_args = {
         .control_fd = control_fds[1],
-        .output_fd = output_fds[0],
-        .input_fd = input_fds[1],
+        .output_fd = input_fds[1],
+        .input_fd = output_fds[0],
     };
 
     exec_init(&run_args.exec);
