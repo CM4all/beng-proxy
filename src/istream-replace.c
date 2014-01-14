@@ -52,17 +52,6 @@ replace_quark(void)
 }
 
 /**
- * Return true if the replace object is at the specified position.
- * This is ignored (returns true) if this replace object is in "quiet"
- * mode (buffer==NULL).
- */
-static inline bool
-replace_is_at_position(const struct istream_replace *replace, off_t at)
-{
-    return replace->position == at;
-}
-
-/**
  * Is the buffer at the end-of-file position?
  */
 static inline bool
