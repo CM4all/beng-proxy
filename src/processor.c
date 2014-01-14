@@ -172,12 +172,6 @@ struct processor {
     struct async_operation_ref *async_ref;
 };
 
-static inline GQuark
-processor_quark(void)
-{
-    return g_quark_from_static_string("processor");
-}
-
 bool
 processable(const struct strmap *headers)
 {
