@@ -31,12 +31,6 @@ struct cache {
     struct cleanup_timer cleanup_timer;
 };
 
-/** clean up expired cache items every 60 seconds */
-static const struct timeval cache_expire_interval = {
-    .tv_sec = 60,
-    .tv_usec = 0,
-};
-
 static bool
 cache_expire_callback(void *ctx);
 
