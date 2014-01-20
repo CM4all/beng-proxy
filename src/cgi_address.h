@@ -123,7 +123,9 @@ cgi_address_is_expandable(const struct cgi_address *address)
     assert(address != NULL);
 
     return address->expand_path != NULL ||
-        address->expand_path_info != NULL;
+        address->expand_path_info != NULL ||
+        param_array_is_expandable(&address->args) ||
+        param_array_is_expandable(&address->env);
 }
 
 bool

@@ -295,11 +295,13 @@ class Translation(Protocol):
             response.pair('TICKET_VAR', ticket_database_uri)
             response.pair('TICKET_MAX_SIZE', str(4*1024*1024))
         elif uri[:16] == '/ticket/create2/':
+            response.packet(TRANSLATE_BASE, '/ticket/create2/')
+            response.packet(TRANSLATE_REGEX, "^/ticket/create2/(.*)$")
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))
-            response.packet(TRANSLATE_BASE, '/ticket/create2/')
             response.pair('TICKET_VAR', ticket_database_uri)
             response.pair('TICKET_URI', 'ftp://' + uri[16:])
+            response.packet(TRANSLATE_EXPAND_PAIR, r'TICKET_URI=ftp://\1')
         elif uri[:15] == '/ticket/upload/':
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'upload'))

@@ -134,7 +134,8 @@ lhttp_address_is_expandable(const struct lhttp_address *address)
 {
     assert(address != NULL);
 
-    return address->expand_uri != NULL;
+    return address->expand_uri != NULL ||
+        param_array_is_expandable(&address->args);
 }
 
 bool

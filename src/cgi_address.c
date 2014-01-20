@@ -246,5 +246,6 @@ cgi_address_expand(struct pool *pool, struct cgi_address *address,
             return false;
     }
 
-    return true;
+    return param_array_expand(pool, &address->args, match_info, error_r) &&
+        param_array_expand(pool, &address->env, match_info, error_r);
 }

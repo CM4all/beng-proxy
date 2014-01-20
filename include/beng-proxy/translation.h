@@ -359,6 +359,16 @@ enum beng_translation_command {
      * Start the child process in a new network namespace?
      */
     TRANSLATE_NETWORK_NAMESPACE = 104,
+
+    /**
+     * Add expansion for the preceding #TRANSLATE_APPEND.
+     */
+    TRANSLATE_EXPAND_APPEND = 105,
+
+    /**
+     * Add expansion for the preceding #TRANSLATE_PAIR.
+     */
+    TRANSLATE_EXPAND_PAIR = 106,
 };
 
 struct beng_translation_header {

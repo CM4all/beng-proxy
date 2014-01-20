@@ -196,5 +196,5 @@ lhttp_address_expand(struct pool *pool, struct lhttp_address *address,
             return false;
     }
 
-    return true;
+    return param_array_expand(pool, &address->args, match_info, error_r);
 }

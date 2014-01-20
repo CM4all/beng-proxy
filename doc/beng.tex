@@ -1299,8 +1299,18 @@ The following packets can be used to specify more details:
 
 \hline
 
+\verb|EXPAND_APPEND| & provide a cache expansion for the preceding
+\verb|APPEND| \\
+
+\hline
+
 \verb|PAIR| & adds a FastCGI/WAS parameter or CGI environment
 variable in the form \texttt{KEY=VALUE}. \\
+
+\hline
+
+\verb|EXPAND_PAIR| & provide a cache expansion for the preceding
+\verb|PAIR| \\
 
 \hline
 
@@ -1356,6 +1366,11 @@ See \ref{ns} for how to configure namespaces.
 \hline
 
 \verb|APPEND| & appends an argument to the command line \\
+
+\hline
+
+\verb|EXPAND_APPEND| & provide a cache expansion for the preceding
+\verb|APPEND| \\
 
 \hline
 \end{longtable}

@@ -1539,6 +1539,43 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
+    case TRANSLATE_EXPAND_APPEND:
+        if (payload == NULL) {
+            translate_client_error(client,
+                                   "malformed TRANSLATE_EXPAND_APPEND packet");
+            return false;
+        }
+
+        if (client->resource_address == NULL) {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_EXPAND_APPEND packet");
+            return false;
+        }
+
+        if (client->cgi_address != NULL) {
+            if (param_array_full(&client->cgi_address->args)) {
+                translate_client_error(client,
+                                       "misplaced TRANSLATE_EXPAND_APPEND packet");
+                return false;
+            }
+
+            param_array_set_expand(&client->cgi_address->args, payload);
+            return true;
+        } else if (client->lhttp_address != NULL) {
+            if (param_array_full(&client->lhttp_address->args)) {
+                translate_client_error(client,
+                                       "misplaced TRANSLATE_EXPAND_APPEND packet");
+                return false;
+            }
+
+            param_array_set_expand(&client->lhttp_address->args, payload);
+            return true;
+        } else {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_APPEND packet");
+            return false;
+        }
+
     case TRANSLATE_PAIR:
         if (client->cgi_address != NULL) {
             if (param_array_full(&client->cgi_address->env)) {
@@ -1558,6 +1595,30 @@ translate_handle_packet(struct translate_client *client,
         } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_PAIR packet");
+            return false;
+        }
+
+        return true;
+
+    case TRANSLATE_EXPAND_PAIR:
+        if (client->cgi_address != NULL) {
+            if (!param_array_can_set_expand(&client->cgi_address->env)) {
+                translate_client_error(client,
+                                       "misplaced TRANSLATE_EXPAND_PAIR packet");
+                return false;
+            }
+
+            if (payload == NULL || *payload == '=' ||
+                strchr(payload + 1, '=') == NULL) {
+                translate_client_error(client,
+                                       "malformed TRANSLATE_EXPAND_PAIR packet");
+                return false;
+            }
+
+            param_array_set_expand(&client->cgi_address->env, payload);
+        } else {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_EXPAND_PAIR packet");
             return false;
         }
 
