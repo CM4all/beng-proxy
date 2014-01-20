@@ -231,13 +231,13 @@ cgi_launch(struct pool *pool, http_method_t method,
         cgi_run(&address->options.jail,
                 address->interpreter, address->action,
                 address->path,
-                address->args, address->num_args,
+                address->args.values, address->args.n,
                 method, uri,
                 address->script_name, address->path_info,
                 address->query_string, address->document_root,
                 remote_addr,
                 headers, available,
-                address->env, address->num_env);
+                address->env.values, address->env.n);
     }
 
     leave_signal_section(&signals);

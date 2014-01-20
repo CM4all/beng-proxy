@@ -32,8 +32,8 @@ lhttp_run(const struct lhttp_address *address, int fd)
     jail_wrapper_insert(&e, &address->options.jail, NULL);
     exec_append(&e, address->path);
 
-    for (unsigned i = 0; i < address->num_args; ++i)
-        exec_append(&e, address->args[i]);
+    for (unsigned i = 0; i < address->args.n; ++i)
+        exec_append(&e, address->args.values[i]);
 
     exec_do(&e);
 

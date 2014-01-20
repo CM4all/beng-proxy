@@ -1516,24 +1516,22 @@ translate_handle_packet(struct translate_client *client,
         }
 
         if (client->cgi_address != NULL) {
-            if (client->cgi_address->num_args >=
-                G_N_ELEMENTS(client->cgi_address->args)) {
+            if (param_array_full(&client->cgi_address->args)) {
                 translate_client_error(client,
                                        "too many TRANSLATE_APPEND packets");
                 return false;
             }
 
-            client->cgi_address->args[client->cgi_address->num_args++] = payload;
+            param_array_append(&client->cgi_address->args, payload);
             return true;
         } else if (client->lhttp_address != NULL) {
-            if (client->lhttp_address->num_args >=
-                G_N_ELEMENTS(client->lhttp_address->args)) {
+            if (param_array_full(&client->lhttp_address->args)) {
                 translate_client_error(client,
                                        "too many TRANSLATE_APPEND packets");
                 return false;
             }
 
-            client->lhttp_address->args[client->lhttp_address->num_args++] = payload;
+            param_array_append(&client->lhttp_address->args, payload);
             return true;
         } else {
             translate_client_error(client,
@@ -1543,8 +1541,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_PAIR:
         if (client->cgi_address != NULL) {
-            if (client->cgi_address->num_env >=
-                G_N_ELEMENTS(client->cgi_address->env)) {
+            if (param_array_full(&client->cgi_address->env)) {
                 translate_client_error(client,
                                        "too many TRANSLATE_PAIR packets");
                 return false;
@@ -1557,7 +1554,7 @@ translate_handle_packet(struct translate_client *client,
                 return false;
             }
 
-            client->cgi_address->env[client->cgi_address->num_env++] = payload;
+            param_array_append(&client->cgi_address->env, payload);
         } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_PAIR packet");

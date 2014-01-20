@@ -21,6 +21,9 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
     memset(cgi, 0, sizeof(*cgi));
     cgi->path = path;
 
+    param_array_init(&cgi->args);
+    param_array_init(&cgi->env);
+
     if (have_address_list)
         address_list_init(&cgi->address_list);
 }
@@ -71,11 +74,11 @@ cgi_address_id(struct pool *pool, const struct cgi_address *address)
     if (address->action != NULL)
         p = p_strcat(pool, p, ";a=", address->action, NULL);
 
-    for (unsigned i = 0; i < address->num_args; ++i)
-        p = p_strcat(pool, p, "!", address->args[i], NULL);
+    for (unsigned i = 0; i < address->args.n; ++i)
+        p = p_strcat(pool, p, "!", address->args.values[i], NULL);
 
-    for (unsigned i = 0; i < address->num_env; ++i)
-        p = p_strcat(pool, p, "$", address->env[i], NULL);
+    for (unsigned i = 0; i < address->env.n; ++i)
+        p = p_strcat(pool, p, "$", address->env.values[i], NULL);
 
     if (address->uri != NULL)
         p = p_strcat(pool, p, ";u=", address->uri, NULL);
@@ -99,13 +102,8 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
 
     dest->path = p_strdup(pool, src->path);
 
-    for (unsigned i = 0; i < src->num_args; ++i)
-        dest->args[i] = p_strdup(pool, src->args[i]);
-    dest->num_args = src->num_args;
-
-    for (unsigned i = 0; i < src->num_env; ++i)
-        dest->env[i] = p_strdup(pool, src->env[i]);
-    dest->num_env = src->num_env;
+    param_array_copy(pool, &dest->args, &src->args);
+    param_array_copy(pool, &dest->env, &src->env);
 
     child_options_copy(pool, &dest->options, &src->options);
 

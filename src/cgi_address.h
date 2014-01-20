@@ -7,6 +7,7 @@
 
 #include "child_options.h"
 #include "address_list.h"
+#include "param_array.h"
 
 #include <inline/compiler.h>
 
@@ -24,15 +25,13 @@ struct cgi_address {
     /**
      * Command-line arguments.
      */
-    const char *args[32];
-    unsigned num_args;
+    struct param_array args;
 
     /**
      * Environment variables or other protocol-specific name/value
      * pairs.
      */
-    const char *env[32];
-    unsigned num_env;
+    struct param_array env;
 
     struct child_options options;
 

@@ -217,7 +217,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
     case RESOURCE_ADDRESS_PIPE:
         cgi = address->u.cgi;
         pipe_filter(pool, cgi->path,
-                    cgi->args, cgi->num_args,
+                    cgi->args.values, cgi->args.n,
                     &cgi->options.ns,
                     status, headers, body,
                     handler, handler_ctx);
@@ -237,7 +237,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                          &cgi->options,
                          cgi->action,
                          cgi->path,
-                         cgi->args, cgi->num_args,
+                         cgi->args.values, cgi->args.n,
                          method, cgi_address_uri(pool, cgi),
                          cgi->script_name,
                          cgi->path_info,
@@ -245,7 +245,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                          cgi->document_root,
                          extract_remote_ip(pool, headers),
                          headers, body,
-                         cgi->env, cgi->num_env,
+                         cgi->env.values, cgi->env.n,
                          handler, handler_ctx, async_ref);
         else
             fcgi_remote_request(pool, rl->tcp_balancer,
@@ -258,7 +258,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                                 cgi->document_root,
                                 extract_remote_ip(pool, headers),
                                 headers, body,
-                                cgi->env, cgi->num_env,
+                                cgi->env.values, cgi->env.n,
                                 handler, handler_ctx, async_ref);
         return;
 
@@ -267,13 +267,13 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         was_request(pool, rl->was_stock, &cgi->options,
                     cgi->action,
                     cgi->path,
-                    cgi->args, cgi->num_args,
+                    cgi->args.values, cgi->args.n,
                     method, cgi_address_uri(pool, cgi),
                     cgi->script_name,
                     cgi->path_info,
                     cgi->query_string,
                     headers, body,
-                    cgi->env, cgi->num_env,
+                    cgi->env.values, cgi->env.n,
                     handler, handler_ctx, async_ref);
         return;
 

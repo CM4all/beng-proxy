@@ -6,6 +6,7 @@
 #define BENG_PROXY_LHTTP_ADDRESS_H
 
 #include "child_options.h"
+#include "param_array.h"
 
 #include <inline/compiler.h>
 
@@ -23,8 +24,7 @@ struct pool;
 struct lhttp_address {
     const char *path;
 
-    const char *args[32];
-    unsigned num_args;
+    struct param_array args;
 
     struct child_options options;
 
