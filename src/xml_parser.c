@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "parser.h"
+#include "xml_parser.h"
 #include "pool.h"
 #include "html-chars.h"
 #include "expansible-buffer.h"

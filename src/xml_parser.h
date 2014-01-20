@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_PARSER_H
-#define __BENG_PARSER_H
+#ifndef BENG_PROXY_XML_PARSER_H
+#define BENG_PROXY_XML_PARSER_H
 
 #include "strref.h"
 

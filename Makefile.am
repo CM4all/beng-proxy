@@ -206,7 +206,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/memcached-protocol.h \
 	src/memcached-stock.c src/memcached-stock.h \
 	src/memcached-packet.c \
-	src/parser.c src/parser.h \
+	src/xml_parser.c src/xml_parser.h \
 	src/pevent.h \
 	src/pipe-stock.c src/pipe-stock.h \
 	src/pipe.c src/pipe.h \
@@ -1010,7 +1010,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/css_processor.c src/css_parser.c src/css_rewrite.c src/escape_css.c \
 	src/widget-request.c src/widget-approval.c \
 	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
-	src/widget-session.c src/parser.c src/widget-class.c \
+	src/widget-session.c src/xml_parser.c src/widget-class.c \
 	src/widget-view.c \
 	src/tpool.c src/rewrite-uri.c src/widget-resolver.c \
 	src/http_address.c src/uri-extract.c \
@@ -1488,7 +1488,7 @@ test_t_escape_css_SOURCES = \
 	test/t-escape-css.c
 
 test_run_processor_SOURCES = test/run-processor.c \
-	src/processor.c src/penv.c src/parser.c \
+	src/processor.c src/penv.c src/xml_parser.c \
 	src/text_processor.c \
 	src/css_processor.c src/css_parser.c src/css_rewrite.c src/escape_css.c \
 	src/escape_html.c \
@@ -1528,7 +1528,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_processor_SOURCES = test/t-processor.c \
-	src/processor.c src/penv.c src/parser.c \
+	src/processor.c src/penv.c src/xml_parser.c \
 	src/text_processor.c \
 	src/css_processor.c src/css_parser.c src/css_rewrite.c src/escape_css.c \
 	src/escape_html.c \
@@ -1821,7 +1821,7 @@ test_run_ua_parser_SOURCES = test/run_ua_parser.c \
 test_run_ua_parser_LDADD = $(AM_LDADD) $(GLIB_LIBS)
 
 test_run_parser_cdata_SOURCES = test/t-parser-cdata.c \
-	src/parser.c \
+	src/xml_parser.c \
 	src/fifo-buffer.c src/buffered_io.c src/expansible-buffer.c \
 	src/cleanup_timer.c \
 	src/fd_util.c
