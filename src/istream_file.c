@@ -406,7 +406,15 @@ istream_file_stat_new(struct pool *pool, const char *path, struct stat *st)
         return NULL;
     }
 
-    return istream_file_fd_new(pool, path, fd, ISTREAM_FILE, st->st_size);
+    enum istream_direct fd_type = ISTREAM_FILE;
+    off_t size = st->st_size;
+
+    if (S_ISCHR(st->st_mode)) {
+        fd_type = ISTREAM_CHARDEV;
+        size = -1;
+    }
+
+    return istream_file_fd_new(pool, path, fd, fd_type, size);
 }
 
 struct istream *

@@ -70,6 +70,9 @@ static_response_headers(struct pool *pool, struct strmap *headers,
                         int fd, const struct stat *st,
                         const char *content_type)
 {
+    if (S_ISCHR(st->st_mode))
+        return;
+
     char buffer[256];
 
     if (content_type == NULL)

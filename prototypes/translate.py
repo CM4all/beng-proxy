@@ -204,6 +204,8 @@ class Translation(Protocol):
         elif uri == '/discard':
             response.packet(TRANSLATE_DISCARD_SESSION)
             response.status(204)
+        elif uri in ['/null', '/zero', '/urandom']:
+            response.path('/dev' + uri)
         elif uri[:10] == '/delegate/':
             self._handle_local_file('/var/www' + uri[9:], response, True)
         elif uri[:15] == '/jail-delegate/':

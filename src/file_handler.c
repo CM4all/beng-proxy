@@ -190,6 +190,12 @@ file_callback(struct request *request2)
 
     /* check file type */
 
+    if (S_ISCHR(st.st_mode)) {
+        /* allow character devices, but skip range etc. */
+        response_dispatch(request2, HTTP_STATUS_OK, NULL, body);
+        return;
+    }
+
     if (!S_ISREG(st.st_mode)) {
         istream_close_unused(body);
         response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,

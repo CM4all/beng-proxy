@@ -40,7 +40,7 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
         return;
     }
 
-    if (!S_ISREG(st.st_mode)) {
+    if (!S_ISREG(st.st_mode) && !S_ISCHR(st.st_mode)) {
         struct http_response_handler_ref handler_ref;
         http_response_handler_set(&handler_ref, handler, handler_ctx);
         http_response_handler_invoke_message(&handler_ref, pool,
@@ -50,6 +50,9 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
     }
 
     size = st.st_size;
+
+    if (S_ISCHR(st.st_mode))
+        size = -1;
 
     body = istream_file_new(pool, path, size);
     if (body == NULL) {
