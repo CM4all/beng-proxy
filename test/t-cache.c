@@ -56,7 +56,7 @@ my_cache_item_new(struct pool *pool, int match, int value)
 
     pool = pool_new_linear(pool, "my_cache_item", 1024);
     i = p_malloc(pool, sizeof(*i));
-    cache_item_init(&i->item, time(NULL) + 3600, 1);
+    cache_item_init_relative(&i->item, 3600, 1);
     i->pool = pool;
     i->match = match;
     i->value = value;

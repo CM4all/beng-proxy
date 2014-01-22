@@ -170,6 +170,10 @@ cache_item_init(struct cache_item *item, time_t expires, size_t size)
     item->removed = false;
 }
 
+void
+cache_item_init_relative(struct cache_item *item, unsigned max_age,
+                         size_t size);
+
 /**
  * Locks the specified item in memory, i.e. prevents that it is freed
  * by cache_remove().

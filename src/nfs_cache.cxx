@@ -153,8 +153,6 @@ nfs_cache_put(NFSCacheStore *store, unsigned rubber_id)
 
     cache_log(4, "nfs_cache: put %s\n", store->key);
 
-    const time_t expires = time(nullptr) + 60;
-
     struct pool *pool = pool_new_libc(cache->pool, "nfs_cache_item");
     nfs_cache_item *item = (nfs_cache_item *)p_malloc(pool, sizeof(*item));
     item->pool = pool;
@@ -162,7 +160,7 @@ nfs_cache_put(NFSCacheStore *store, unsigned rubber_id)
     item->rubber = cache->rubber;
     item->rubber_id = rubber_id;
 
-    cache_item_init(&item->item, expires, item->stat.st_size);
+    cache_item_init_relative(&item->item, 60, item->stat.st_size);
 
     cache_put(cache->cache, p_strdup(pool, store->key), &item->item);
 }

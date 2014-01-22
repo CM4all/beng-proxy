@@ -781,7 +781,7 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
         if (max_age > 300)
             max_age = 300;
 
-        cache_item_init(&item->item, time(NULL) + max_age, 1);
+        cache_item_init_relative(&item->item, max_age, 1);
         item->pool = pool;
 
         item->request.session =

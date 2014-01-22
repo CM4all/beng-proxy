@@ -488,6 +488,13 @@ cache_remove_all_match(struct cache *cache,
 }
 
 void
+cache_item_init_relative(struct cache_item *item, unsigned max_age,
+                         size_t size)
+{
+    cache_item_init(item, time(NULL) + max_age, size);
+}
+
+void
 cache_item_lock(struct cache_item *item)
 {
     assert(item != NULL);

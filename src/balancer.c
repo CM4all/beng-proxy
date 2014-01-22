@@ -219,7 +219,7 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
 
         pool = pool_new_linear(balancer->pool, "balancer_item", 1024);
         item = p_malloc(pool, sizeof(*item));
-        cache_item_init(&item->item, time(NULL) + 1800, 1);
+        cache_item_init_relative(&item->item, 1800, 1);
         item->pool = pool;
         item->next = 0;
         address_list_copy(pool, &item->addresses, list);
