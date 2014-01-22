@@ -84,9 +84,9 @@ http_cache_heap_put(struct http_cache_heap *cache,
     item->rubber = rubber;
     item->rubber_id = rubber_id;
 
-    cache_item_init(&item->item,
-                    http_cache_calc_expires(info, request_headers),
-                    pool_netto_size(pool) + item->size);
+    cache_item_init_absolute(&item->item,
+                             http_cache_calc_expires(info, request_headers),
+                             pool_netto_size(pool) + item->size);
 
     cache_put_match(cache->cache, p_strdup(pool, url),
                     &item->item,

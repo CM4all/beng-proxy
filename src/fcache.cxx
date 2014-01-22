@@ -224,7 +224,8 @@ filter_cache_put(FilterCacheRequest *request,
     item->rubber = request->cache->rubber;
     item->rubber_id = rubber_id;
 
-    cache_item_init(&item->item, expires, pool_netto_size(pool) + item->size);
+    cache_item_init_absolute(&item->item, expires,
+                             pool_netto_size(pool) + item->size);
 
     cache_put(request->cache->cache,
               item->info.key, &item->item);

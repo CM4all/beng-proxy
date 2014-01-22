@@ -161,7 +161,7 @@ cache_remove_all_match(struct cache *cache,
  * initialize an item, because you won't notice API changes then.
  */
 static inline void
-cache_item_init(struct cache_item *item, time_t expires, size_t size)
+cache_item_init_absolute(struct cache_item *item, time_t expires, size_t size)
 {
     item->expires = expires;
     item->size = size;

@@ -491,7 +491,7 @@ void
 cache_item_init_relative(struct cache_item *item, unsigned max_age,
                          size_t size)
 {
-    cache_item_init(item, time(NULL) + max_age, size);
+    cache_item_init_absolute(item, time(NULL) + max_age, size);
 }
 
 void
