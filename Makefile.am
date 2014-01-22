@@ -842,6 +842,7 @@ test_t_hashmap_LDADD = $(AM_LDADD) libpool.a libmemory.a $(LIBCM4ALL_DAEMON_LIBS
 
 test_t_cache_SOURCES = test/t-cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
+	src/clock.c \
 	src/cache.c src/hashmap.c
 test_t_cache_LDADD = $(AM_LDADD) libpool.a libmemory.a $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
@@ -864,6 +865,7 @@ test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/address_list.c \
 	src/format.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
+	src/clock.c \
 	src/transformation.c
 test_t_tcache_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1210,6 +1212,7 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/abort-unref.c src/cache.c \
 	src/header-writer.c src/http_util.c \
 	src/date.c src/gmtime.c \
+	src/clock.c \
 	src/istream-unlock.c
 test_t_http_cache_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1331,6 +1334,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/regex.c \
 	src/uri-relative.c src/uri-verify.c src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri-base.c \
+	src/clock.c \
 	src/format.c
 test_t_widget_registry_LDADD = \
 	libpool.a libmemory.a \
@@ -1717,6 +1721,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/date.c src/format.c src/gmtime.c src/strutil.c \
 	src/tpool.c \
+	src/clock.c \
 	src/istream_rubber.c
 test_run_http_cache_LDADD = $(LIBEVENT_LIBS) \
 	libistream.a libpool.a libmemory.a \

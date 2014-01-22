@@ -28,9 +28,9 @@ struct cache_item {
      */
     const char *key;
 
-    time_t expires;
+    unsigned expires;
     size_t size;
-    time_t last_accessed;
+    unsigned last_accessed;
 
     /**
      * If non-zero, then this item has been locked by somebody, and
@@ -161,7 +161,7 @@ cache_remove_all_match(struct cache *cache,
  * initialize an item, because you won't notice API changes then.
  */
 static inline void
-cache_item_init_absolute(struct cache_item *item, time_t expires, size_t size)
+cache_item_init(struct cache_item *item, unsigned expires, size_t size)
 {
     item->expires = expires;
     item->size = size;
@@ -169,6 +169,9 @@ cache_item_init_absolute(struct cache_item *item, time_t expires, size_t size)
     item->lock = 0;
     item->removed = false;
 }
+
+void
+cache_item_init_absolute(struct cache_item *item, time_t expires, size_t size);
 
 void
 cache_item_init_relative(struct cache_item *item, unsigned max_age,

@@ -8,6 +8,7 @@
 #include "hashmap.h"
 #include "pool.h"
 #include "cleanup_timer.h"
+#include "clock.h"
 
 #include <assert.h>
 #include <time.h>
@@ -179,14 +180,14 @@ cache_flush(struct cache *cache)
 
 static bool
 cache_item_validate(const struct cache *cache, struct cache_item *item,
-                    time_t now)
+                    unsigned now)
 {
     return now < item->expires &&
         (cache->class->validate == NULL || cache->class->validate(item));
 }
 
 static void
-cache_refresh_item(struct cache *cache, struct cache_item *item, time_t now)
+cache_refresh_item(struct cache *cache, struct cache_item *item, unsigned now)
 {
     item->last_accessed = now;
 
@@ -202,7 +203,7 @@ cache_get(struct cache *cache, const char *key)
     if (item == NULL)
         return NULL;
 
-    const time_t now = time(NULL);
+    const unsigned now = now_s();
 
     if (!cache_item_validate(cache, item, now)) {
         cache_check(cache);
@@ -224,7 +225,7 @@ cache_get_match(struct cache *cache, const char *key,
                 bool (*match)(const struct cache_item *, void *),
                 void *ctx)
 {
-    const time_t now = time(NULL);
+    const unsigned now = now_s();
     const struct hashmap_pair *pair = NULL;
 
     while (true) {
@@ -315,7 +316,7 @@ cache_add(struct cache *cache, const char *key,
     list_add(&item->sorted_siblings, &cache->sorted_items);
 
     cache->size += item->size;
-    item->last_accessed = time(NULL);
+    item->last_accessed = now_s();
 
     cache_check(cache);
 
@@ -349,7 +350,7 @@ cache_put(struct cache *cache, const char *key,
         cache_item_removed(cache, old);
 
     cache->size += item->size;
-    item->last_accessed = time(NULL);
+    item->last_accessed = now_s();
 
     list_add(&item->sorted_siblings, &cache->sorted_items);
 
@@ -488,10 +489,21 @@ cache_remove_all_match(struct cache *cache,
 }
 
 void
+cache_item_init_absolute(struct cache_item *item, time_t expires, size_t size)
+{
+    time_t now = time(NULL);
+    unsigned monotonic_expires = expires > now
+        ? now_s() + (expires - now)
+        : 1;
+
+    cache_item_init(item, monotonic_expires, size);
+}
+
+void
 cache_item_init_relative(struct cache_item *item, unsigned max_age,
                          size_t size)
 {
-    cache_item_init_absolute(item, time(NULL) + max_age, size);
+    cache_item_init(item, now_s() + max_age, size);
 }
 
 void
@@ -519,7 +531,7 @@ cache_expire_callback(void *ctx)
 {
     struct cache *cache = ctx;
     struct cache_item *item;
-    const time_t now = time(NULL);
+    const unsigned now = now_s();
 
     cache_check(cache);
 
