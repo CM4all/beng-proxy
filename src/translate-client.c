@@ -705,6 +705,25 @@ translate_client_pivot_root(struct translate_client *client,
     return true;
 }
 
+static bool
+translate_client_mount_proc(struct translate_client *client,
+                            size_t payload_length)
+{
+    if (payload_length > 0) {
+        translate_client_error(client, "malformed TRANSLATE_MOUNT_PROC packet");
+        return false;
+    }
+
+    if (client->child_options == NULL) {
+        translate_client_error(client,
+                               "misplaced TRANSLATE_MOUNT_PROC packet");
+        return false;
+    }
+
+    client->child_options->ns.mount_proc = true;
+    return true;
+}
+
 /**
  * Returns false if the client has been closed.
  */
@@ -2076,6 +2095,9 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_PIVOT_ROOT:
         return translate_client_pivot_root(client, payload);
+
+    case TRANSLATE_MOUNT_PROC:
+        return translate_client_mount_proc(client, payload_length);
     }
 
     error = g_error_new(translate_quark(), 0,

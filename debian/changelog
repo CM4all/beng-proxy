@@ -3,6 +3,7 @@ cm4all-beng-proxy (4.0.12) unstable; urgency=low
   * cache: use monotonic clock
   * namespace: support PID namespaces
   * namespace: support mount namespace and pivot_root()
+  * namespace: can mount new /proc
 
  --   
 

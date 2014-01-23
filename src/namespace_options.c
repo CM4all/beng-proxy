@@ -24,6 +24,7 @@ namespace_options_init(struct namespace_options *options)
     options->enable_user = false;
     options->enable_network = false;
     options->enable_mount = false;
+    options->mount_proc = false;
     options->pivot_root = NULL;
 }
 
@@ -99,7 +100,19 @@ namespace_options_setup(const struct namespace_options *options)
                     new_root, strerror(errno));
             _exit(2);
         }
+    }
 
+    /* we must mount proc now before we umount the old filesystem,
+       because the kernel allows mounting proc only if proc was
+       previously visible in this namespace */
+    if (options->mount_proc &&
+        mount("none", "/proc", "proc", MS_RDONLY, NULL) < 0) {
+        fprintf(stderr, "mount('/proc') failed: %s\n",
+                strerror(errno));
+        _exit(2);
+    }
+
+    if (new_root != NULL) {
         /* get rid of the old root */
         if (umount2(put_old, MNT_DETACH) < 0) {
             fprintf(stderr, "umount('%s') failed: %s",

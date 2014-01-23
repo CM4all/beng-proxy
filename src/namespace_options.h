@@ -29,6 +29,11 @@ struct namespace_options {
 
     bool enable_mount;
 
+    /**
+     * Mount a new /proc?
+     */
+    bool mount_proc;
+
     const char *pivot_root;
 };
 

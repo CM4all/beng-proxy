@@ -381,6 +381,11 @@ enum beng_translation_command {
      * contain a directory called "mnt".
      */
     TRANSLATE_PIVOT_ROOT = 108,
+
+    /**
+     * Mount the proc filesystem on /proc?
+     */
+    TRANSLATE_MOUNT_PROC = 109,
 };
 
 struct beng_translation_header {
