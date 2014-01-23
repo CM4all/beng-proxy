@@ -14,6 +14,20 @@
 #error This library requires Linux
 #endif
 
+void
+namespace_options_init(struct namespace_options *options)
+{
+    options->enable_user = false;
+    options->enable_network = false;
+}
+
+void
+namespace_options_copy(struct namespace_options *dest,
+                       const struct namespace_options *src)
+{
+    *dest = *src;
+}
+
 gcc_pure
 int
 namespace_options_clone_flags(const struct namespace_options *options,

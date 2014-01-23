@@ -21,19 +21,12 @@ struct namespace_options {
     bool enable_network;
 };
 
-static inline void
-namespace_options_init(struct namespace_options *options)
-{
-    options->enable_user = false;
-    options->enable_network = false;
-}
+void
+namespace_options_init(struct namespace_options *options);
 
-static inline void
+void
 namespace_options_copy(struct namespace_options *dest,
-                       const struct namespace_options *src)
-{
-    *dest = *src;
-}
+                       const struct namespace_options *src);
 
 gcc_pure
 int
