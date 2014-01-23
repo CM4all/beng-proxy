@@ -2022,6 +2022,22 @@ translate_handle_packet(struct translate_client *client,
 
         return true;
 
+    case TRANSLATE_PID_NAMESPACE:
+        if (payload_length != 0) {
+            translate_client_error(client, "malformed TRANSLATE_PID_NAMESPACE packet");
+            return false;
+        }
+
+        if (client->child_options != NULL) {
+            client->child_options->ns.enable_pid = true;
+        } else {
+            translate_client_error(client,
+                                   "misplaced TRANSLATE_PID_NAMESPACE packet");
+            return false;
+        }
+
+        return true;
+
     case TRANSLATE_NETWORK_NAMESPACE:
         if (payload_length != 0) {
             translate_client_error(client, "malformed TRANSLATE_NETWORK_NAMESPACE packet");

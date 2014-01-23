@@ -16,6 +16,11 @@ struct namespace_options {
     bool enable_user;
 
     /**
+     * Start the child process in a new PID namespace?
+     */
+    bool enable_pid;
+
+    /**
      * Start the child process in a new network namespace?
      */
     bool enable_network;

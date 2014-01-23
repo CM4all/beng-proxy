@@ -35,6 +35,8 @@ namespace_options_clone_flags(const struct namespace_options *options,
 {
     if (options->enable_user)
         flags |= CLONE_NEWUSER;
+    if (options->enable_pid)
+        flags |= CLONE_NEWPID;
     if (options->enable_network)
         flags |= CLONE_NEWNET;
 

@@ -369,6 +369,11 @@ enum beng_translation_command {
      * Add expansion for the preceding #TRANSLATE_PAIR.
      */
     TRANSLATE_EXPAND_PAIR = 106,
+
+    /**
+     * Start the child process in a new PID namespace?
+     */
+    TRANSLATE_PID_NAMESPACE = 107,
 };
 
 struct beng_translation_header {
