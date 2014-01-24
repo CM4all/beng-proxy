@@ -1441,6 +1441,8 @@ payload specifies the directory which will be the new root.  All other
 mounts will be removed from the namespace.  The new root must contain
 a top-level directory called \texttt{mnt}.
 
+\verb|MOUNT_PROC| mounts a new instance of the \verb|proc| filesystem.
+
 \verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|
 depends on \verb|PIVOT_ROOT|, user namespaces and PID namespaces.
 
