@@ -1439,12 +1439,15 @@ process.  This namespace is created implicitly by the packet
 \verb|PIVOT_ROOT|.  Its works like the \texttt{chroot} command; its
 payload specifies the directory which will be the new root.  All other
 mounts will be removed from the namespace.  The new root must contain
-a top-level directory called \texttt{mnt}.
+a top-level directory called \texttt{mnt}.  It will be mounted
+read-only and with option \texttt{nosuid}.
 
-\verb|MOUNT_PROC| mounts a new instance of the \texttt{proc} filesystem.
+\verb|MOUNT_PROC| mounts a new read-only instance of the \texttt{proc}
+filesystem.
 
 \verb|MOUNT_HOME| bind-mounts the home directory (specified by
-\verb|HOME|) to the given directory within the \verb|PIVOT_ROOT|.
+\verb|HOME|) to the given directory within the \verb|PIVOT_ROOT|.  It
+will be mounted with option \texttt{nosuid}.
 
 \verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|
 depends on \verb|PIVOT_ROOT|, user namespaces and PID namespaces.

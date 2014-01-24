@@ -86,7 +86,7 @@ namespace_options_setup(const struct namespace_options *options)
            kernel's mount object (flag MNT_LOCKED) in our namespace;
            without this, the kernel would not allow an unprivileged
            process to pivot_root to it */
-        if (mount(new_root, new_root, "none", MS_BIND, NULL) < 0) {
+        if (mount(new_root, new_root, "none", MS_BIND|MS_NOSUID|MS_RDONLY, NULL) < 0) {
             fprintf(stderr, "mount('%s') failed: %s\n",
                     new_root, strerror(errno));
             _exit(2);
@@ -129,7 +129,7 @@ namespace_options_setup(const struct namespace_options *options)
         }
 
         if (mount(options->home + 1, options->mount_home,
-                  "none", MS_BIND, NULL) < 0) {
+                  "none", MS_BIND|MS_NOSUID|MS_NODEV, NULL) < 0) {
             fprintf(stderr, "mount('/mnt%s', '%s') failed: %s\n",
                     options->home, options->mount_home, strerror(errno));
             _exit(2);
