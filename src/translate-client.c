@@ -720,16 +720,26 @@ translate_client_home(struct translate_client *client,
         return false;
     }
 
+    struct namespace_options *ns = client->ns_options;
     struct jail_params *jail = client->jail;
+
+    bool ok = false;
+
+    if (ns != NULL && ns->home == NULL) {
+        ns->home = payload;
+        ok = true;
+    }
 
     if (jail != NULL && jail->enabled && jail->home_directory == NULL) {
         jail->home_directory = payload;
-        return true;
-    } else {
+        ok = true;
+    }
+
+    if (!ok)
         translate_client_error(client,
                                "misplaced HOME packet");
-        return false;
-    }
+
+    return ok;
 }
 
 static bool
@@ -750,6 +760,28 @@ translate_client_mount_proc(struct translate_client *client,
     }
 
     ns->mount_proc = true;
+    return true;
+}
+
+static bool
+translate_client_mount_home(struct translate_client *client,
+                            const char *payload)
+{
+    if (*payload != '/') {
+        translate_client_error(client, "malformed MOUNT_HOME packet");
+        return false;
+    }
+
+    struct namespace_options *ns = client->ns_options;
+
+    if (ns == NULL || !ns->enable_mount || ns->home == NULL ||
+        ns->mount_home != NULL) {
+        translate_client_error(client,
+                               "misplaced MOUNT_HOME packet");
+        return false;
+    }
+
+    ns->mount_home = payload;
     return true;
 }
 
@@ -2132,6 +2164,9 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_MOUNT_PROC:
         return translate_client_mount_proc(client, payload_length);
+
+    case TRANSLATE_MOUNT_HOME:
+        return translate_client_mount_home(client, payload);
     }
 
     error = g_error_new(translate_quark(), 0,

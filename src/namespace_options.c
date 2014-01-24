@@ -27,6 +27,8 @@ namespace_options_init(struct namespace_options *options)
     options->enable_mount = false;
     options->mount_proc = false;
     options->pivot_root = NULL;
+    options->home = NULL;
+    options->mount_home = NULL;
 }
 
 void
@@ -36,6 +38,8 @@ namespace_options_copy(struct pool *pool, struct namespace_options *dest,
     *dest = *src;
 
     dest->pivot_root = p_strdup_checked(pool, src->pivot_root);
+    dest->home = p_strdup_checked(pool, src->home);
+    dest->mount_home = p_strdup_checked(pool, src->mount_home);
 }
 
 gcc_pure
@@ -111,6 +115,31 @@ namespace_options_setup(const struct namespace_options *options)
         fprintf(stderr, "mount('/proc') failed: %s\n",
                 strerror(errno));
         _exit(2);
+    }
+
+    if (options->mount_home != NULL) {
+        assert(options->home != NULL);
+        assert(*options->home == '/');
+
+        /* go to /mnt so we can refer to the home directory with a
+           relative path */
+        if (chdir("/mnt") < 0) {
+            fprintf(stderr, "chdir('/mnt') failed: %s\n", strerror(errno));
+            _exit(2);
+        }
+
+        if (mount(options->home + 1, options->mount_home,
+                  "none", MS_BIND, NULL) < 0) {
+            fprintf(stderr, "mount('/mnt%s', '%s') failed: %s\n",
+                    options->home, options->mount_home, strerror(errno));
+            _exit(2);
+        }
+
+        /* back to the new root */
+        if (chdir("/") < 0) {
+            fprintf(stderr, "chdir('/') failed: %s\n", strerror(errno));
+            _exit(2);
+        }
     }
 
     if (new_root != NULL) {

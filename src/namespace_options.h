@@ -35,6 +35,13 @@ struct namespace_options {
     bool mount_proc;
 
     const char *pivot_root;
+
+    const char *home;
+
+    /**
+     * Mount the given home directory?  Value is the mount point.
+     */
+    const char *mount_home;
 };
 
 void

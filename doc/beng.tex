@@ -1443,6 +1443,9 @@ a top-level directory called \texttt{mnt}.
 
 \verb|MOUNT_PROC| mounts a new instance of the \verb|proc| filesystem.
 
+\verb|MOUNT_HOME| bind-mounts the home directory (specified by
+\verb|HOME|) to the given directory within the \verb|PIVOT_ROOT|.
+
 \verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|
 depends on \verb|PIVOT_ROOT|, user namespaces and PID namespaces.
 

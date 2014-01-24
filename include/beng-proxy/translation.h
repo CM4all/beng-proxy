@@ -386,6 +386,12 @@ enum beng_translation_command {
      * Mount the proc filesystem on /proc?
      */
     TRANSLATE_MOUNT_PROC = 109,
+
+    /**
+     * Mount the specified home directory?  Payload is the mount
+     * point.
+     */
+    TRANSLATE_MOUNT_HOME = 110,
 };
 
 struct beng_translation_header {
