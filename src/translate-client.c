@@ -715,6 +715,11 @@ static bool
 translate_client_home(struct translate_client *client,
                       const char *payload)
 {
+    if (*payload != '/') {
+        translate_client_error(client, "malformed HOME packet");
+        return false;
+    }
+
     struct jail_params *jail = client->jail;
 
     if (jail != NULL && jail->enabled && jail->home_directory == NULL) {
@@ -1411,6 +1416,11 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_DOCUMENT_ROOT:
+        if (*payload != '/') {
+            translate_client_error(client, "malformed DOCUMENT_ROOT packet");
+            return false;
+        }
+
         if (client->cgi_address != NULL)
             client->cgi_address->document_root = payload;
         else if (client->file_address != NULL &&
