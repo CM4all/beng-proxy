@@ -707,6 +707,22 @@ translate_client_pivot_root(struct translate_client *client,
 }
 
 static bool
+translate_client_home(struct translate_client *client,
+                      const char *payload)
+{
+    struct jail_params *jail = client->jail;
+
+    if (jail != NULL && jail->enabled && jail->home_directory == NULL) {
+        jail->home_directory = payload;
+        return true;
+    } else {
+        translate_client_error(client,
+                               "misplaced HOME packet");
+        return false;
+    }
+}
+
+static bool
 translate_client_mount_proc(struct translate_client *client,
                             size_t payload_length)
 {
@@ -1342,15 +1358,7 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_HOME:
-        if (client->jail == NULL || !client->jail->enabled ||
-            client->jail->home_directory != NULL) {
-            translate_client_error(client,
-                                   "misplaced HOME packet");
-            return false;
-        }
-
-        client->jail->home_directory = payload;
-        return true;
+        return translate_client_home(client, payload);
 
     case TRANSLATE_INTERPRETER:
         if (client->resource_address == NULL ||
