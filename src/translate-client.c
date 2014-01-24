@@ -86,6 +86,9 @@ struct translate_client {
     /** the current child process options being edited */
     struct child_options *child_options;
 
+    /** the current namespace options being edited */
+    struct namespace_options *ns_options;
+
     /** the current local file address being edited */
     struct file_address *file_address;
 
@@ -548,6 +551,7 @@ add_view(struct translate_client *client, const char *name)
     client->resource_address = &view->address;
     client->jail = NULL;
     client->child_options = NULL;
+    client->ns_options = NULL;
     client->file_address = NULL;
     client->http_address = NULL;
     client->cgi_address = NULL;
@@ -694,15 +698,16 @@ translate_client_pivot_root(struct translate_client *client,
         return false;
     }
 
-    if (client->child_options == NULL ||
-        client->child_options->ns.pivot_root != NULL) {
+    struct namespace_options *ns = client->ns_options;
+
+    if (ns == NULL || ns->pivot_root != NULL) {
         translate_client_error(client,
                                "misplaced PIVOT_ROOT packet");
         return false;
     }
 
-    client->child_options->ns.enable_mount = true;
-    client->child_options->ns.pivot_root = payload;
+    ns->enable_mount = true;
+    ns->pivot_root = payload;
     return true;
 }
 
@@ -731,15 +736,15 @@ translate_client_mount_proc(struct translate_client *client,
         return false;
     }
 
-    if (client->child_options == NULL ||
-        !client->child_options->ns.enable_mount ||
-        client->child_options->ns.mount_proc) {
+    struct namespace_options *ns = client->ns_options;
+
+    if (ns == NULL || !ns->enable_mount || ns->mount_proc) {
         translate_client_error(client,
                                "misplaced MOUNT_PROC packet");
         return false;
     }
 
-    client->child_options->ns.mount_proc = true;
+    ns->mount_proc = true;
     return true;
 }
 
@@ -797,6 +802,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address = &client->response.address;
         client->jail = NULL;
         client->child_options = NULL;
+        client->ns_options = NULL;
         client->file_address = NULL;
         client->http_address = NULL;
         client->cgi_address = NULL;
@@ -1049,6 +1055,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address = &transformation->u.filter;
         client->jail = NULL;
         client->child_options = NULL;
+        client->ns_options = NULL;
         client->file_address = NULL;
         client->cgi_address = NULL;
         client->nfs_address = NULL;
@@ -1238,6 +1245,7 @@ translate_handle_packet(struct translate_client *client,
             cgi_address_new(client->pool, payload, false);
 
         client->child_options = &client->cgi_address->options;
+        client->ns_options = &client->child_options->ns;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -1259,6 +1267,7 @@ translate_handle_packet(struct translate_client *client,
 
         client->cgi_address->document_root = client->response.document_root;
         client->child_options = &client->cgi_address->options;
+        client->ns_options = &client->child_options->ns;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -1281,6 +1290,7 @@ translate_handle_packet(struct translate_client *client,
             cgi_address_new(client->pool, payload, true);
 
         client->child_options = &client->cgi_address->options;
+        client->ns_options = &client->child_options->ns;
         client->jail = &client->child_options->jail;
         client->address_list = &client->cgi_address->address_list;
         client->default_port = 9000;
@@ -1549,6 +1559,7 @@ translate_handle_packet(struct translate_client *client,
 
         client->file_address->delegate = payload;
         client->child_options = &client->file_address->child_options;
+        client->ns_options = &client->child_options->ns;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -1779,6 +1790,7 @@ translate_handle_packet(struct translate_client *client,
             cgi_address_new(client->pool, payload, false);
 
         client->child_options = &client->cgi_address->options;
+        client->ns_options = &client->child_options->ns;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -1973,6 +1985,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address->u.lhttp = client->lhttp_address =
             lhttp_address_new(client->pool, payload);
         client->child_options = &client->lhttp_address->options;
+        client->ns_options = &client->child_options->ns;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -2062,8 +2075,8 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        if (client->child_options != NULL) {
-            client->child_options->ns.enable_user = true;
+        if (client->ns_options != NULL) {
+            client->ns_options->enable_user = true;
         } else {
             translate_client_error(client,
                                    "misplaced USER_NAMESPACE packet");
@@ -2078,8 +2091,8 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        if (client->child_options != NULL) {
-            client->child_options->ns.enable_pid = true;
+        if (client->ns_options != NULL) {
+            client->ns_options->enable_pid = true;
         } else {
             translate_client_error(client,
                                    "misplaced PID_NAMESPACE packet");
@@ -2094,8 +2107,8 @@ translate_handle_packet(struct translate_client *client,
             return false;
         }
 
-        if (client->child_options != NULL) {
-            client->child_options->ns.enable_network = true;
+        if (client->ns_options != NULL) {
+            client->ns_options->enable_network = true;
         } else {
             translate_client_error(client,
                                    "misplaced NETWORK_NAMESPACE packet");
