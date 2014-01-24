@@ -1441,13 +1441,34 @@ payload specifies the directory which will be the new root.  All other
 mounts will be removed from the namespace.  The new root must contain
 a top-level directory called \texttt{mnt}.
 
-\verb|MOUNT_PROC| mounts a new instance of the \verb|proc| filesystem.
+\verb|MOUNT_PROC| mounts a new instance of the \texttt{proc} filesystem.
 
 \verb|MOUNT_HOME| bind-mounts the home directory (specified by
 \verb|HOME|) to the given directory within the \verb|PIVOT_ROOT|.
 
 \verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|
 depends on \verb|PIVOT_ROOT|, user namespaces and PID namespaces.
+
+\subsubsection{Namespaces Summary}
+
+The following example describes part of a translation packets that
+attempts to execute a child process as securely as possible (without
+using JailCGI and Refence):
+
+\begin{verbatim}
+USER_NAMESPACE
+PID_NAMESPACE
+NETWORK_NAMESPACE
+PIVOT_ROOT "/var/lib/lxc/wheezy/rootfs"
+HOME "/var/www/foo"
+MOUNT_HOME "/home/www"
+\end{verbatim}
+
+The child process cannot see or kill processes processes other than
+the ones that were started by itself.  It cannot access the network.
+It lives in another filesystem namespace.  It can access the directory
+\texttt{/var/www/foo} at \texttt{/home/www}.  The \texttt{proc}
+filesystem is not mounted.
 
 \subsection{Filters}
 \label{filter}
