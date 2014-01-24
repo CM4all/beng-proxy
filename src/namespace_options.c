@@ -22,6 +22,7 @@ void
 namespace_options_init(struct namespace_options *options)
 {
     options->enable_user = false;
+    options->enable_pid = false;
     options->enable_network = false;
     options->enable_mount = false;
     options->mount_proc = false;
