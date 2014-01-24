@@ -694,7 +694,8 @@ translate_client_pivot_root(struct translate_client *client,
         return false;
     }
 
-    if (client->child_options == NULL) {
+    if (client->child_options == NULL ||
+        client->child_options->ns.pivot_root != NULL) {
         translate_client_error(client,
                                "misplaced PIVOT_ROOT packet");
         return false;
@@ -714,7 +715,9 @@ translate_client_mount_proc(struct translate_client *client,
         return false;
     }
 
-    if (client->child_options == NULL) {
+    if (client->child_options == NULL ||
+        !client->child_options->ns.enable_mount ||
+        client->child_options->ns.mount_proc) {
         translate_client_error(client,
                                "misplaced MOUNT_PROC packet");
         return false;
