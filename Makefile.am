@@ -1337,11 +1337,10 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/uri-extract.c src/uri-base.c \
 	src/clock.c \
 	src/format.c
-test_t_widget_registry_LDADD = \
+test_t_widget_registry_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
-	$(LIBCM4ALL_SOCKET_LIBS) \
-	$(LIBEVENT_LIBS) $(GLIB_LIBS)
+	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_widget_resolver_SOURCES = test/t-widget-resolver.c \
 	src/widget-resolver.c \
@@ -1724,12 +1723,11 @@ test_run_http_cache_SOURCES = test/run_http_cache.c \
 	src/tpool.c \
 	src/clock.c \
 	src/istream_rubber.c
-test_run_http_cache_LDADD = $(LIBEVENT_LIBS) \
+test_run_http_cache_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
-	$(LIBCM4ALL_DAEMON_LIBS) \
-	$(GLIB_LIBS)
+	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_memcached_client_SOURCES = test/run-memcached-client.c \
 	src/memcached-client.c src/memcached-packet.c \
