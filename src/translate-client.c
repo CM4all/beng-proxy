@@ -690,13 +690,13 @@ translate_client_pivot_root(struct translate_client *client,
                             const char *payload)
 {
     if (*payload != '/') {
-        translate_client_error(client, "malformed TRANSLATE_PIVOT_ROOT packet");
+        translate_client_error(client, "malformed PIVOT_ROOT packet");
         return false;
     }
 
     if (client->child_options == NULL) {
         translate_client_error(client,
-                               "misplaced TRANSLATE_PIVOT_ROOT packet");
+                               "misplaced PIVOT_ROOT packet");
         return false;
     }
 
@@ -710,13 +710,13 @@ translate_client_mount_proc(struct translate_client *client,
                             size_t payload_length)
 {
     if (payload_length > 0) {
-        translate_client_error(client, "malformed TRANSLATE_MOUNT_PROC packet");
+        translate_client_error(client, "malformed MOUNT_PROC packet");
         return false;
     }
 
     if (client->child_options == NULL) {
         translate_client_error(client,
-                               "misplaced TRANSLATE_MOUNT_PROC packet");
+                               "misplaced MOUNT_PROC packet");
         return false;
     }
 
@@ -853,7 +853,7 @@ translate_handle_packet(struct translate_client *client,
         if (client->nfs_address != NULL && *client->nfs_address->path == 0) {
             if (payload == NULL || *payload != '/') {
                 translate_client_error(client,
-                                       "malformed TRANSLATE_PATH packet");
+                                       "malformed PATH packet");
                 return false;
             }
 
@@ -863,12 +863,12 @@ translate_handle_packet(struct translate_client *client,
 
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
-            translate_client_error(client, "misplaced TRANSLATE_PATH packet");
+            translate_client_error(client, "misplaced PATH packet");
             return false;
         }
 
         if (payload == NULL) {
-            translate_client_error(client, "malformed TRANSLATE_PATH packet");
+            translate_client_error(client, "malformed PATH packet");
             return false;
         }
 
@@ -889,14 +889,14 @@ translate_handle_packet(struct translate_client *client,
             return true;
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_PATH_INFO packet");
+                                   "misplaced PATH_INFO packet");
             return false;
         }
 
     case TRANSLATE_EXPAND_PATH:
         if (client->response.regex == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_EXPAND_PATH packet");
+                                   "misplaced EXPAND_PATH packet");
             return false;
         } else if (client->cgi_address != NULL &&
                    client->cgi_address->expand_path == NULL) {
@@ -912,14 +912,14 @@ translate_handle_packet(struct translate_client *client,
             return true;
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_EXPAND_PATH packet");
+                                   "misplaced EXPAND_PATH packet");
             return false;
         }
 
     case TRANSLATE_EXPAND_PATH_INFO:
         if (client->response.regex == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_EXPAND_PATH_INFO packet");
+                                   "misplaced EXPAND_PATH_INFO packet");
             return false;
         } else if (client->cgi_address != NULL &&
                    client->cgi_address->expand_path_info == NULL) {
@@ -932,7 +932,7 @@ translate_handle_packet(struct translate_client *client,
             return true;
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_EXPAND_PATH_INFO packet");
+                                   "misplaced EXPAND_PATH_INFO packet");
             return false;
         }
 
@@ -944,7 +944,7 @@ translate_handle_packet(struct translate_client *client,
             /* ignore for now */
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_DEFLATED packet");
+                                   "misplaced DEFLATED packet");
             return false;
         }
 
@@ -955,7 +955,7 @@ translate_handle_packet(struct translate_client *client,
         } else if (client->nfs_address != NULL) {
             /* ignore for now */
         } else {
-            translate_client_error(client, "misplaced TRANSLATE_GZIPPED packet");
+            translate_client_error(client, "misplaced GZIPPED packet");
             return false;
         }
 
@@ -967,7 +967,7 @@ translate_handle_packet(struct translate_client *client,
         else if (client->jail != NULL && client->jail->enabled)
             client->jail->site_id = payload;
         else {
-            translate_client_error(client, "misplaced TRANSLATE_SITE packet");
+            translate_client_error(client, "misplaced SITE packet");
             return false;
         }
 
@@ -981,19 +981,19 @@ translate_handle_packet(struct translate_client *client,
             client->nfs_address->content_type = payload;
             return true;
         } else {
-            translate_client_error(client, "misplaced TRANSLATE_CONTENT_TYPE packet");
+            translate_client_error(client, "misplaced CONTENT_TYPE packet");
             return false;
         }
 
     case TRANSLATE_HTTP:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
-            translate_client_error(client, "misplaced TRANSLATE_HTTP packet");
+            translate_client_error(client, "misplaced HTTP packet");
             return false;
         }
 
         if (payload == NULL) {
-            translate_client_error(client, "malformed TRANSLATE_HTTP packet");
+            translate_client_error(client, "malformed HTTP packet");
             return false;
         }
 
@@ -1007,7 +1007,7 @@ translate_handle_packet(struct translate_client *client,
 
         if (client->http_address->scheme != URI_SCHEME_UNIX &&
             client->http_address->scheme != URI_SCHEME_HTTP) {
-            translate_client_error(client, "malformed TRANSLATE_HTTP packet");
+            translate_client_error(client, "malformed HTTP packet");
             return false;
         }
 
@@ -1051,14 +1051,14 @@ translate_handle_packet(struct translate_client *client,
         return true;
 
     case TRANSLATE_DOMAIN:
-        daemon_log(2, "deprecated TRANSLATE_DOMAIN packet\n");
+        daemon_log(2, "deprecated DOMAIN packet\n");
         return true;
 
     case TRANSLATE_CONTAINER:
         if (client->transformation == NULL ||
             client->transformation->type != TRANSFORMATION_PROCESS) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_CONTAINER packet");
+                                   "misplaced CONTAINER packet");
             return false;
         }
 
@@ -1069,7 +1069,7 @@ translate_handle_packet(struct translate_client *client,
         if (client->transformation == NULL ||
             client->transformation->type != TRANSFORMATION_PROCESS) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_SELF_CONTAINER packet");
+                                   "misplaced SELF_CONTAINER packet");
             return false;
         }
 
@@ -1080,14 +1080,14 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_GROUP_CONTAINER:
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_GROUP_CONTAINER packet");
+                                   "malformed GROUP_CONTAINER packet");
             return false;
         }
 
         if (client->transformation == NULL ||
             client->transformation->type != TRANSFORMATION_PROCESS) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_GROUP_CONTAINER packet");
+                                   "misplaced GROUP_CONTAINER packet");
             return false;
         }
 
@@ -1098,7 +1098,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_WIDGET_GROUP:
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_WIDGET_GROUP packet");
+                                   "malformed WIDGET_GROUP packet");
             return false;
         }
 
@@ -1108,14 +1108,14 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_UNTRUSTED:
         if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
             translate_client_error(client,
-                                   "malformed TRANSLATE_UNTRUSTED packet");
+                                   "malformed UNTRUSTED packet");
             return false;
         }
 
         if (client->response.untrusted_prefix != NULL ||
             client->response.untrusted_site_suffix != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_UNTRUSTED packet");
+                                   "misplaced UNTRUSTED packet");
             return false;
         }
 
@@ -1125,14 +1125,14 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_UNTRUSTED_PREFIX:
         if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
             translate_client_error(client,
-                                   "malformed TRANSLATE_UNTRUSTED_PREFIX packet");
+                                   "malformed UNTRUSTED_PREFIX packet");
             return false;
         }
 
         if (client->response.untrusted != NULL ||
             client->response.untrusted_site_suffix != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_UNTRUSTED_PREFIX packet");
+                                   "misplaced UNTRUSTED_PREFIX packet");
             return false;
         }
 
@@ -1141,13 +1141,13 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_UNTRUSTED_SITE_SUFFIX:
         if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
-            daemon_log(2, "malformed TRANSLATE_UNTRUSTED_SITE_SUFFIX packet\n");
+            daemon_log(2, "malformed UNTRUSTED_SITE_SUFFIX packet\n");
             return false;
         }
 
         if (client->response.untrusted != NULL ||
             client->response.untrusted_prefix != NULL) {
-            daemon_log(2, "misplaced TRANSLATE_UNTRUSTED_SITE_SUFFIX packet\n");
+            daemon_log(2, "misplaced UNTRUSTED_SITE_SUFFIX packet\n");
             return false;
         }
 
@@ -1157,7 +1157,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_SCHEME:
         if (strncmp(payload, "http", 4) != 0) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_SCHEME packet");
+                                   "misplaced SCHEME packet");
             return false;
         }
 
@@ -1170,7 +1170,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_URI:
         if (payload == NULL || *payload != '/') {
-            translate_client_error(client, "malformed TRANSLATE_URI packet");
+            translate_client_error(client, "malformed URI packet");
             return false;
         }
 
@@ -1205,12 +1205,12 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_PIPE:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
-            translate_client_error(client, "misplaced TRANSLATE_PIPE packet");
+            translate_client_error(client, "misplaced PIPE packet");
             return false;
         }
 
         if (payload == NULL) {
-            translate_client_error(client, "malformed TRANSLATE_PIPE packet");
+            translate_client_error(client, "malformed PIPE packet");
             return false;
         }
 
@@ -1225,12 +1225,12 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_CGI:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
-            translate_client_error(client, "misplaced TRANSLATE_CGI packet");
+            translate_client_error(client, "misplaced CGI packet");
             return false;
         }
 
         if (payload == NULL) {
-            translate_client_error(client, "malformed TRANSLATE_CGI packet");
+            translate_client_error(client, "malformed CGI packet");
             return false;
         }
 
@@ -1247,13 +1247,13 @@ translate_handle_packet(struct translate_client *client,
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_FASTCGI packet");
+                                   "misplaced FASTCGI packet");
             return false;
         }
 
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_FASTCGI packet");
+                                   "malformed FASTCGI packet");
             return false;
         }
 
@@ -1270,12 +1270,12 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_AJP:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
-            translate_client_error(client, "misplaced TRANSLATE_AJP packet");
+            translate_client_error(client, "misplaced AJP packet");
             return false;
         }
 
         if (payload == NULL) {
-            translate_client_error(client, "malformed TRANSLATE_AJP packet");
+            translate_client_error(client, "malformed AJP packet");
             return false;
         }
 
@@ -1288,7 +1288,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         if (client->http_address->scheme != URI_SCHEME_AJP) {
-            translate_client_error(client, "malformed TRANSLATE_AJP packet");
+            translate_client_error(client, "malformed AJP packet");
             return false;
         }
 
@@ -1299,12 +1299,12 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_NFS_SERVER:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
-            translate_client_error(client, "misplaced TRANSLATE_NFS_SERVER packet");
+            translate_client_error(client, "misplaced NFS_SERVER packet");
             return false;
         }
 
         if (payload == NULL) {
-            translate_client_error(client, "malformed TRANSLATE_NFS_SERVER packet");
+            translate_client_error(client, "malformed NFS_SERVER packet");
             return false;
         }
 
@@ -1316,12 +1316,12 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_NFS_EXPORT:
         if (client->nfs_address == NULL ||
             *client->nfs_address->export_name != 0) {
-            translate_client_error(client, "misplaced TRANSLATE_NFS_EXPORT packet");
+            translate_client_error(client, "misplaced NFS_EXPORT packet");
             return false;
         }
 
         if (payload == NULL || *payload != '/') {
-            translate_client_error(client, "malformed TRANSLATE_NFS_EXPORT packet");
+            translate_client_error(client, "malformed NFS_EXPORT packet");
             return false;
         }
 
@@ -1331,7 +1331,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_JAILCGI:
         if (client->jail == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_JAILCGI packet");
+                                   "misplaced JAILCGI packet");
             return false;
         }
 
@@ -1342,7 +1342,7 @@ translate_handle_packet(struct translate_client *client,
         if (client->jail == NULL || !client->jail->enabled ||
             client->jail->home_directory != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_HOME packet");
+                                   "misplaced HOME packet");
             return false;
         }
 
@@ -1355,7 +1355,7 @@ translate_handle_packet(struct translate_client *client,
              client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
             client->cgi_address->interpreter != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_INTERPRETER packet");
+                                   "misplaced INTERPRETER packet");
             return false;
         }
 
@@ -1368,7 +1368,7 @@ translate_handle_packet(struct translate_client *client,
              client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
             client->cgi_address->action != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_ACTION packet");
+                                   "misplaced ACTION packet");
             return false;
         }
 
@@ -1382,7 +1382,7 @@ translate_handle_packet(struct translate_client *client,
              client->resource_address->type != RESOURCE_ADDRESS_FASTCGI) ||
             client->cgi_address->script_name != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_SCRIPT_NAME packet");
+                                   "misplaced SCRIPT_NAME packet");
             return false;
         }
 
@@ -1402,13 +1402,13 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_ADDRESS:
         if (client->address_list == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_ADDRESS packet");
+                                   "misplaced ADDRESS packet");
             return false;
         }
 
         if (payload_length < 2) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_INTERPRETER packet");
+                                   "malformed INTERPRETER packet");
             return false;
         }
 
@@ -1420,13 +1420,13 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_ADDRESS_STRING:
         if (client->address_list == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_ADDRESS_STRING packet");
+                                   "misplaced ADDRESS_STRING packet");
             return false;
         }
 
         if (payload_length < 7) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_ADDRESS_STRING packet");
+                                   "malformed ADDRESS_STRING packet");
             return false;
         }
 
@@ -1437,7 +1437,7 @@ translate_handle_packet(struct translate_client *client,
                                        payload, client->default_port);
             if (!ret) {
                 translate_client_error(client,
-                                       "malformed TRANSLATE_ADDRESS_STRING packet");
+                                       "malformed ADDRESS_STRING packet");
                 return false;
             }
         }
@@ -1456,7 +1456,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_MAX_AGE:
         if (payload_length != 4) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_MAX_AGE packet");
+                                   "malformed MAX_AGE packet");
             return false;
         }
 
@@ -1471,7 +1471,7 @@ translate_handle_packet(struct translate_client *client,
 
         default:
             translate_client_error(client,
-                                   "misplaced TRANSLATE_MAX_AGE packet");
+                                   "misplaced MAX_AGE packet");
             return false;
         }
 
@@ -1480,7 +1480,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_VARY:
         if (payload_length == 0 ||
             payload_length % sizeof(client->response.vary[0]) != 0) {
-            translate_client_error(client, "malformed TRANSLATE_VARY packet");
+            translate_client_error(client, "malformed VARY packet");
             return false;
         }
 
@@ -1492,7 +1492,7 @@ translate_handle_packet(struct translate_client *client,
         if (payload_length == 0 ||
             payload_length % sizeof(client->response.invalidate[0]) != 0) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_INVALIDATE packet");
+                                   "malformed INVALIDATE packet");
             return false;
         }
 
@@ -1526,13 +1526,13 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_DELEGATE:
         if (client->file_address == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_DELEGATE packet");
+                                   "misplaced DELEGATE packet");
             return false;
         }
 
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_DELEGATE packet");
+                                   "malformed DELEGATE packet");
             return false;
         }
 
@@ -1544,20 +1544,20 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_APPEND:
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_APPEND packet");
+                                   "malformed APPEND packet");
             return false;
         }
 
         if (client->resource_address == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_APPEND packet");
+                                   "misplaced APPEND packet");
             return false;
         }
 
         if (client->cgi_address != NULL) {
             if (param_array_full(&client->cgi_address->args)) {
                 translate_client_error(client,
-                                       "too many TRANSLATE_APPEND packets");
+                                       "too many APPEND packets");
                 return false;
             }
 
@@ -1566,7 +1566,7 @@ translate_handle_packet(struct translate_client *client,
         } else if (client->lhttp_address != NULL) {
             if (param_array_full(&client->lhttp_address->args)) {
                 translate_client_error(client,
-                                       "too many TRANSLATE_APPEND packets");
+                                       "too many APPEND packets");
                 return false;
             }
 
@@ -1574,27 +1574,27 @@ translate_handle_packet(struct translate_client *client,
             return true;
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_APPEND packet");
+                                   "misplaced APPEND packet");
             return false;
         }
 
     case TRANSLATE_EXPAND_APPEND:
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_EXPAND_APPEND packet");
+                                   "malformed EXPAND_APPEND packet");
             return false;
         }
 
         if (client->resource_address == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_EXPAND_APPEND packet");
+                                   "misplaced EXPAND_APPEND packet");
             return false;
         }
 
         if (client->cgi_address != NULL) {
             if (param_array_full(&client->cgi_address->args)) {
                 translate_client_error(client,
-                                       "misplaced TRANSLATE_EXPAND_APPEND packet");
+                                       "misplaced EXPAND_APPEND packet");
                 return false;
             }
 
@@ -1603,7 +1603,7 @@ translate_handle_packet(struct translate_client *client,
         } else if (client->lhttp_address != NULL) {
             if (param_array_full(&client->lhttp_address->args)) {
                 translate_client_error(client,
-                                       "misplaced TRANSLATE_EXPAND_APPEND packet");
+                                       "misplaced EXPAND_APPEND packet");
                 return false;
             }
 
@@ -1611,7 +1611,7 @@ translate_handle_packet(struct translate_client *client,
             return true;
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_APPEND packet");
+                                   "misplaced APPEND packet");
             return false;
         }
 
@@ -1619,21 +1619,21 @@ translate_handle_packet(struct translate_client *client,
         if (client->cgi_address != NULL) {
             if (param_array_full(&client->cgi_address->env)) {
                 translate_client_error(client,
-                                       "too many TRANSLATE_PAIR packets");
+                                       "too many PAIR packets");
                 return false;
             }
 
             if (payload == NULL || *payload == '=' ||
                 strchr(payload + 1, '=') == NULL) {
                 translate_client_error(client,
-                                       "malformed TRANSLATE_PAIR packet");
+                                       "malformed PAIR packet");
                 return false;
             }
 
             param_array_append(&client->cgi_address->env, payload);
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_PAIR packet");
+                                   "misplaced PAIR packet");
             return false;
         }
 
@@ -1643,21 +1643,21 @@ translate_handle_packet(struct translate_client *client,
         if (client->cgi_address != NULL) {
             if (!param_array_can_set_expand(&client->cgi_address->env)) {
                 translate_client_error(client,
-                                       "misplaced TRANSLATE_EXPAND_PAIR packet");
+                                       "misplaced EXPAND_PAIR packet");
                 return false;
             }
 
             if (payload == NULL || *payload == '=' ||
                 strchr(payload + 1, '=') == NULL) {
                 translate_client_error(client,
-                                       "malformed TRANSLATE_EXPAND_PAIR packet");
+                                       "malformed EXPAND_PAIR packet");
                 return false;
             }
 
             param_array_set_expand(&client->cgi_address->env, payload);
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_EXPAND_PAIR packet");
+                                   "misplaced EXPAND_PAIR packet");
             return false;
         }
 
@@ -1709,13 +1709,13 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_COOKIE_DOMAIN:
         if (client->response.cookie_domain != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_COOKIE_DOMAIN packet");
+                                   "misplaced COOKIE_DOMAIN packet");
             return false;
         }
 
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_COOKIE_DOMAIN packet");
+                                   "malformed COOKIE_DOMAIN packet");
             return false;
         }
 
@@ -1729,13 +1729,13 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_CHECK:
         if (!strref_is_null(&client->response.check)) {
             translate_client_error(client,
-                                   "duplicate TRANSLATE_CHECK packet");
+                                   "duplicate CHECK packet");
             return false;
         }
 
         if (!strref_is_null(&client->response.want_full_uri)) {
             translate_client_error(client,
-                                   "TRANSLATE_CHECK and TRANSLATE_WANT_FULL_URI can't be combined");
+                                   "TRANSLATE_CHECK and WANT_FULL_URI can't be combined");
             return false;
         }
 
@@ -1753,13 +1753,13 @@ translate_handle_packet(struct translate_client *client,
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_WAS packet");
+                                   "misplaced WAS packet");
             return false;
         }
 
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_WAS packet");
+                                   "malformed WAS packet");
             return false;
         }
 
@@ -1782,7 +1782,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_STICKY:
         if (client->address_list == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_STICKY packet");
+                                   "misplaced STICKY packet");
             return false;
         }
 
@@ -1798,13 +1798,13 @@ translate_handle_packet(struct translate_client *client,
         if (client->resource_address == NULL ||
             client->resource_address->type == RESOURCE_ADDRESS_NONE) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_COOKIE_HOST packet");
+                                   "misplaced COOKIE_HOST packet");
             return false;
         }
 
         if (payload == NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_COOKIE_HOST packet");
+                                   "malformed COOKIE_HOST packet");
             return false;
         }
 
@@ -1820,7 +1820,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_PREFIX_CSS_CLASS:
         if (client->transformation == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_PREFIX_CSS_CLASS packet");
+                                   "misplaced PREFIX_CSS_CLASS packet");
             return false;
         }
 
@@ -1835,7 +1835,7 @@ translate_handle_packet(struct translate_client *client,
 
         default:
             translate_client_error(client,
-                                   "misplaced TRANSLATE_PREFIX_CSS_CLASS packet");
+                                   "misplaced PREFIX_CSS_CLASS packet");
             return false;
         }
 
@@ -1844,7 +1844,7 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_PREFIX_XML_ID:
         if (client->transformation == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_PREFIX_XML_ID packet");
+                                   "misplaced PREFIX_XML_ID packet");
             return false;
         }
 
@@ -1859,7 +1859,7 @@ translate_handle_packet(struct translate_client *client,
 
         default:
             translate_client_error(client,
-                                   "misplaced TRANSLATE_PREFIX_XML_ID packet");
+                                   "misplaced PREFIX_XML_ID packet");
             return false;
         }
 
@@ -1869,7 +1869,7 @@ translate_handle_packet(struct translate_client *client,
         if (client->transformation == NULL ||
             client->transformation->type != TRANSFORMATION_PROCESS) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_PROCESS_STYLE packet");
+                                   "misplaced PROCESS_STYLE packet");
             return false;
         }
 
@@ -1880,7 +1880,7 @@ translate_handle_packet(struct translate_client *client,
         if (client->transformation == NULL ||
             client->transformation->type != TRANSFORMATION_PROCESS) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_FOCUS_WIDGET packet");
+                                   "misplaced FOCUS_WIDGET packet");
             return false;
         }
 
@@ -1891,7 +1891,7 @@ translate_handle_packet(struct translate_client *client,
         if (client->transformation == NULL ||
             client->transformation->type != TRANSFORMATION_PROCESS) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_ANCHOR_ABSOLUTE packet");
+                                   "misplaced ANCHOR_ABSOLUTE packet");
             return false;
         }
 
@@ -1906,14 +1906,14 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_LOCAL_URI:
         if (client->response.local_uri != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_LOCAL_URI packet");
+                                   "misplaced LOCAL_URI packet");
             return false;
         }
 
         if (payload == NULL || *payload == 0 ||
             payload[strlen(payload) - 1] != '/') {
             translate_client_error(client,
-                                   "malformed TRANSLATE_LOCAL_URI packet");
+                                   "malformed LOCAL_URI packet");
             return false;
         }
 
@@ -1926,7 +1926,7 @@ translate_handle_packet(struct translate_client *client,
             client->cgi_address->path_info == NULL ||
             client->response.auto_base) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_AUTO_BASE packet");
+                                   "misplaced AUTO_BASE packet");
             return false;
         }
 
@@ -1937,7 +1937,7 @@ translate_handle_packet(struct translate_client *client,
         if (payload_length < 10 || payload[8] != '/' ||
             memchr(payload + 9, 0, payload_length - 9) != NULL) {
             translate_client_error(client,
-                                   "malformed TRANSLATE_VALIDATE_MTIME packet");
+                                   "malformed VALIDATE_MTIME packet");
             return false;
         }
 
@@ -1949,12 +1949,12 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_LHTTP_PATH:
         if (client->resource_address == NULL ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
-            translate_client_error(client, "misplaced TRANSLATE_LHTTP_PATH packet");
+            translate_client_error(client, "misplaced LHTTP_PATH packet");
             return false;
         }
 
         if (payload == NULL || *payload != '/') {
-            translate_client_error(client, "malformed TRANSLATE_LHTTP_PATH packet");
+            translate_client_error(client, "malformed LHTTP_PATH packet");
             return false;
         }
 
@@ -1969,12 +1969,12 @@ translate_handle_packet(struct translate_client *client,
         if (client->lhttp_address == NULL ||
             client->lhttp_address->uri != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_LHTTP_HOST packet");
+                                   "misplaced LHTTP_HOST packet");
             return false;
         }
 
         if (payload == NULL || *payload != '/') {
-            translate_client_error(client, "malformed TRANSLATE_LHTTP_URI packet");
+            translate_client_error(client, "malformed LHTTP_URI packet");
             return false;
         }
 
@@ -1987,7 +1987,7 @@ translate_handle_packet(struct translate_client *client,
             client->lhttp_address->expand_uri != NULL ||
             client->response.regex == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_LHTTP_EXPAND_URI packet");
+                                   "misplaced LHTTP_EXPAND_URI packet");
             return false;
         }
 
@@ -1998,12 +1998,12 @@ translate_handle_packet(struct translate_client *client,
         if (client->lhttp_address == NULL ||
             client->lhttp_address->host_and_port != NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_LHTTP_HOST packet");
+                                   "misplaced LHTTP_HOST packet");
             return false;
         }
 
         if (payload == NULL) {
-            translate_client_error(client, "malformed TRANSLATE_LHTTP_HOST packet");
+            translate_client_error(client, "malformed LHTTP_HOST packet");
             return false;
         }
 
@@ -2013,12 +2013,12 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_CONCURRENCY:
         if (client->lhttp_address == NULL) {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_CONCURRENCY packet");
+                                   "misplaced CONCURRENCY packet");
             return false;
         }
 
         if (payload_length != 2) {
-            translate_client_error(client, "malformed TRANSLATE_CONCURRENCY packet");
+            translate_client_error(client, "malformed CONCURRENCY packet");
             return false;
         }
 
@@ -2028,13 +2028,13 @@ translate_handle_packet(struct translate_client *client,
     case TRANSLATE_WANT_FULL_URI:
         if (!strref_is_null(&client->response.want_full_uri)) {
             translate_client_error(client,
-                                   "duplicate TRANSLATE_WANT_FULL_URI packet");
+                                   "duplicate WANT_FULL_URI packet");
             return false;
         }
 
         if (!strref_is_null(&client->response.check)) {
             translate_client_error(client,
-                                   "TRANSLATE_CHECK and TRANSLATE_WANT_FULL_URI can't be combined");
+                                   "TRANSLATE_CHECK and WANT_FULL_URI can't be combined");
             return false;
         }
 
@@ -2047,7 +2047,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_USER_NAMESPACE:
         if (payload_length != 0) {
-            translate_client_error(client, "malformed TRANSLATE_USER_NAMESPACE packet");
+            translate_client_error(client, "malformed USER_NAMESPACE packet");
             return false;
         }
 
@@ -2055,7 +2055,7 @@ translate_handle_packet(struct translate_client *client,
             client->child_options->ns.enable_user = true;
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_USER_NAMESPACE packet");
+                                   "misplaced USER_NAMESPACE packet");
             return false;
         }
 
@@ -2063,7 +2063,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_PID_NAMESPACE:
         if (payload_length != 0) {
-            translate_client_error(client, "malformed TRANSLATE_PID_NAMESPACE packet");
+            translate_client_error(client, "malformed PID_NAMESPACE packet");
             return false;
         }
 
@@ -2071,7 +2071,7 @@ translate_handle_packet(struct translate_client *client,
             client->child_options->ns.enable_pid = true;
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_PID_NAMESPACE packet");
+                                   "misplaced PID_NAMESPACE packet");
             return false;
         }
 
@@ -2079,7 +2079,7 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_NETWORK_NAMESPACE:
         if (payload_length != 0) {
-            translate_client_error(client, "malformed TRANSLATE_NETWORK_NAMESPACE packet");
+            translate_client_error(client, "malformed NETWORK_NAMESPACE packet");
             return false;
         }
 
@@ -2087,7 +2087,7 @@ translate_handle_packet(struct translate_client *client,
             client->child_options->ns.enable_network = true;
         } else {
             translate_client_error(client,
-                                   "misplaced TRANSLATE_NETWORK_NAMESPACE packet");
+                                   "misplaced NETWORK_NAMESPACE packet");
             return false;
         }
 
