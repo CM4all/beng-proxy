@@ -1456,6 +1456,12 @@ exits.
 \verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|
 depends on \verb|PIVOT_ROOT|, user namespaces and PID namespaces.
 
+\subsubsection{UTS Namespaces}
+
+A UTS namespace allows manipulating the host name reported by the
+kernel.  \verb|UTS_NAMESPACE| creates the namespace; its payload is
+the new host name.
+
 \subsubsection{Namespaces Summary}
 
 The following example describes part of a translation packets that

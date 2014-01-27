@@ -806,6 +806,27 @@ translate_client_mount_home(struct translate_client *client,
     return true;
 }
 
+static bool
+translate_client_uts_namespace(struct translate_client *client,
+                               const char *payload)
+{
+    if (*payload == 0) {
+        translate_client_error(client, "malformed MOUNT_UTS_NAMESPACE packet");
+        return false;
+    }
+
+    struct namespace_options *ns = client->ns_options;
+
+    if (ns == NULL || ns->hostname != NULL) {
+        translate_client_error(client,
+                               "misplaced MOUNT_UTS_NAMESPACE packet");
+        return false;
+    }
+
+    ns->hostname = payload;
+    return true;
+}
+
 /**
  * Returns false if the client has been closed.
  */
@@ -2191,6 +2212,9 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_MOUNT_TMP_TMPFS:
         return translate_client_mount_tmp_tmpfs(client, payload_length);
+
+    case TRANSLATE_UTS_NAMESPACE:
+        return translate_client_uts_namespace(client, payload);
     }
 
     error = g_error_new(translate_quark(), 0,

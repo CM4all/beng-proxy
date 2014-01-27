@@ -30,6 +30,7 @@ namespace_options_init(struct namespace_options *options)
     options->pivot_root = NULL;
     options->home = NULL;
     options->mount_home = NULL;
+    options->hostname = NULL;
 }
 
 void
@@ -41,6 +42,7 @@ namespace_options_copy(struct pool *pool, struct namespace_options *dest,
     dest->pivot_root = p_strdup_checked(pool, src->pivot_root);
     dest->home = p_strdup_checked(pool, src->home);
     dest->mount_home = p_strdup_checked(pool, src->mount_home);
+    dest->hostname = p_strdup_checked(pool, src->hostname);
 }
 
 gcc_pure
@@ -56,6 +58,8 @@ namespace_options_clone_flags(const struct namespace_options *options,
         flags |= CLONE_NEWNET;
     if (options->enable_mount)
         flags |= CLONE_NEWNS;
+    if (options->hostname != NULL)
+        flags |= CLONE_NEWUTS;
 
     return flags;
 }
@@ -159,6 +163,12 @@ namespace_options_setup(const struct namespace_options *options)
                 strerror(errno));
         _exit(2);
     }
+
+    if (options->hostname != NULL &&
+        sethostname(options->hostname, strlen(options->hostname)) < 0) {
+        fprintf(stderr, "sethostname() failed: %s", strerror(errno));
+        _exit(2);
+    }
 }
 
 char *
@@ -193,6 +203,11 @@ namespace_options_id(const struct namespace_options *options, char *p)
             *p++ = '=';
             p = stpcpy(p, options->mount_home);
         }
+    }
+
+    if (options->hostname != NULL) {
+        p = mempcpy(p, ";uts=", 5);
+        p = stpcpy(p, options->hostname);
     }
 
     return p;

@@ -47,6 +47,11 @@ struct namespace_options {
      * Mount the given home directory?  Value is the mount point.
      */
     const char *mount_home;
+
+    /**
+     * The hostname of the new UTS namespace.
+     */
+    const char *hostname;
 };
 
 void

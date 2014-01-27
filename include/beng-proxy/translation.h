@@ -397,6 +397,12 @@ enum beng_translation_command {
      * Mount a new tmpfs on /tmp?
      */
     TRANSLATE_MOUNT_TMP_TMPFS = 111,
+
+    /**
+     * Create a new UTS namespace?  Payload is the host name inside
+     * the namespace.
+     */
+    TRANSLATE_UTS_NAMESPACE = 112,
 };
 
 struct beng_translation_header {
