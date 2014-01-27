@@ -1453,8 +1453,9 @@ will be mounted with option \texttt{nosuid}.
 This is private to the namespace and is deleted when the process
 exits.
 
-\verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|
-depends on \verb|PIVOT_ROOT|, user namespaces and PID namespaces.
+\verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|,
+\verb|MOUNT_HOME| and \verb|MOUNT_TMP_TMPFS| depend on
+\verb|PIVOT_ROOT|, user namespaces and PID namespaces.
 
 \subsubsection{UTS Namespaces}
 
