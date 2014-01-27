@@ -392,6 +392,11 @@ enum beng_translation_command {
      * point.
      */
     TRANSLATE_MOUNT_HOME = 110,
+
+    /**
+     * Mount a new tmpfs on /tmp?
+     */
+    TRANSLATE_MOUNT_TMP_TMPFS = 111,
 };
 
 struct beng_translation_header {

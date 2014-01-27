@@ -34,6 +34,11 @@ struct namespace_options {
      */
     bool mount_proc;
 
+    /**
+     * Mount a new tmpfs on /tmp?
+     */
+    bool mount_tmp_tmpfs;
+
     const char *pivot_root;
 
     const char *home;

@@ -26,6 +26,7 @@ namespace_options_init(struct namespace_options *options)
     options->enable_network = false;
     options->enable_mount = false;
     options->mount_proc = false;
+    options->mount_tmp_tmpfs = false;
     options->pivot_root = NULL;
     options->home = NULL;
     options->mount_home = NULL;
@@ -150,6 +151,14 @@ namespace_options_setup(const struct namespace_options *options)
             _exit(2);
         }
     }
+
+    if (options->mount_tmp_tmpfs &&
+        mount("none", "/tmp", "tmpfs", MS_NODEV|MS_NOSUID,
+              "size=16M,nr_inodes=256,mode=1777") < 0) {
+        fprintf(stderr, "mount('/tmp') failed: %s\n",
+                strerror(errno));
+        _exit(2);
+    }
 }
 
 char *
@@ -174,6 +183,9 @@ namespace_options_id(const struct namespace_options *options, char *p)
 
         if (options->mount_proc)
             p = mempcpy(p, ";proc", 5);
+
+        if (options->mount_proc)
+            p = mempcpy(p, ";tmpfs", 6);
 
         if (options->mount_home != NULL) {
             p = mempcpy(p, ";h:", 3);

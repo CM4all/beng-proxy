@@ -764,6 +764,27 @@ translate_client_mount_proc(struct translate_client *client,
 }
 
 static bool
+translate_client_mount_tmp_tmpfs(struct translate_client *client,
+                                 size_t payload_length)
+{
+    if (payload_length > 0) {
+        translate_client_error(client, "malformed MOUNT_TMP_TMPFS packet");
+        return false;
+    }
+
+    struct namespace_options *ns = client->ns_options;
+
+    if (ns == NULL || !ns->enable_mount || ns->mount_tmp_tmpfs) {
+        translate_client_error(client,
+                               "misplaced MOUNT_TMP_TMPFS packet");
+        return false;
+    }
+
+    ns->mount_tmp_tmpfs = true;
+    return true;
+}
+
+static bool
 translate_client_mount_home(struct translate_client *client,
                             const char *payload)
 {
@@ -2167,6 +2188,9 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_MOUNT_HOME:
         return translate_client_mount_home(client, payload);
+
+    case TRANSLATE_MOUNT_TMP_TMPFS:
+        return translate_client_mount_tmp_tmpfs(client, payload_length);
     }
 
     error = g_error_new(translate_quark(), 0,

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0.13) unstable; urgency=low
 
-  * 
+  * namespace: add option to mount tmpfs on /tmp
 
  --   
 
