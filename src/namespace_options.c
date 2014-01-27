@@ -158,6 +158,9 @@ namespace_options_id(const struct namespace_options *options, char *p)
     if (options->enable_user)
         p = mempcpy(p, ";uns", 4);
 
+    if (options->enable_pid)
+        p = mempcpy(p, ";pns", 4);
+
     if (options->enable_network)
         p = mempcpy(p, ";nns", 4);
 
@@ -167,6 +170,16 @@ namespace_options_id(const struct namespace_options *options, char *p)
         if (options->pivot_root != NULL) {
             p = mempcpy(p, ";pvr=", 5);
             p = stpcpy(p, options->pivot_root);
+        }
+
+        if (options->mount_proc)
+            p = mempcpy(p, ";proc", 5);
+
+        if (options->mount_home != NULL) {
+            p = mempcpy(p, ";h:", 3);
+            p = stpcpy(p, options->home);
+            *p++ = '=';
+            p = stpcpy(p, options->mount_home);
         }
     }
 
