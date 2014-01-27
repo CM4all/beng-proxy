@@ -54,6 +54,16 @@ struct namespace_options {
     const char *hostname;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * Global library initialization.  Call after daemonization.
+ */
+void
+namespace_options_global_init(void);
+
 void
 namespace_options_init(struct namespace_options *options);
 
@@ -74,5 +84,9 @@ namespace_options_setup(const struct namespace_options *options);
 
 char *
 namespace_options_id(const struct namespace_options *options, char *p);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

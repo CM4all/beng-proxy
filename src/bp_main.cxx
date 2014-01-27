@@ -40,6 +40,7 @@
 #include "ssl_init.hxx"
 #include "ssl_client.h"
 #include "capabilities.hxx"
+#include "namespace_options.h"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -454,6 +455,7 @@ int main(int argc, char **argv)
     if (daemon_user_defined(&instance.config.user))
         capabilities_post_setuid(cap_keep_list, G_N_ELEMENTS(cap_keep_list));
 
+    namespace_options_global_init();
 
     /* create worker processes */
 

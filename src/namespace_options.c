@@ -12,11 +12,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/mount.h>
 
 #ifndef __linux
 #error This library requires Linux
 #endif
+
+static int namespace_uid, namespace_gid;
+
+void
+namespace_options_global_init(void)
+{
+    /* at this point, we have to remember the original uid/gid to be
+       able to set up the uid/gid mapping for user namespaces; after
+       the clone(), it's too late, we'd only see 65534 */
+    namespace_uid = geteuid();
+    namespace_gid = getegid();
+}
 
 void
 namespace_options_init(struct namespace_options *options)
@@ -76,6 +89,41 @@ namespace_options_unshare(const struct namespace_options *options)
     }
 }
 
+static void
+write_file(const char *path, const char *data)
+{
+    int fd = open(path, O_WRONLY|O_CLOEXEC);
+    if (fd < 0) {
+        fprintf(stderr, "open('%s') failed: %s\n",
+                path, strerror(errno));
+        _exit(2);
+    }
+
+    if (write(fd, data, strlen(data)) < 0) {
+        fprintf(stderr, "write('%s') failed: %s\n",
+                path, strerror(errno));
+        _exit(2);
+    }
+
+    close(fd);
+}
+
+static void
+setup_uid_map()
+{
+    char buffer[64];
+    sprintf(buffer, "%d %d 1", namespace_uid, namespace_uid);
+    write_file("/proc/self/uid_map", buffer);
+}
+
+static void
+setup_gid_map()
+{
+    char buffer[64];
+    sprintf(buffer, "%d %d 1", namespace_gid, namespace_gid);
+    write_file("/proc/self/gid_map", buffer);
+}
+
 void
 namespace_options_setup(const struct namespace_options *options)
 {
@@ -115,6 +163,26 @@ namespace_options_setup(const struct namespace_options *options)
     /* we must mount proc now before we umount the old filesystem,
        because the kernel allows mounting proc only if proc was
        previously visible in this namespace */
+    if (options->enable_user && options->mount_proc) {
+        /* mount writable proc */
+        if (mount("none", "/proc", "proc", 0, NULL) < 0) {
+            fprintf(stderr, "mount('/proc') failed: %s\n",
+                    strerror(errno));
+            _exit(2);
+        }
+
+        setup_gid_map();
+        setup_uid_map();
+
+        /* umount it; it will be mounted read-only after that
+           (MS_REMOUNT appears to be forbidden by Linux 3.13) */
+        if (umount2("/proc", MNT_DETACH) < 0) {
+            fprintf(stderr, "umount('/proc') failed: %s\n",
+                    strerror(errno));
+            _exit(2);
+        }
+    }
+
     if (options->mount_proc &&
         mount("none", "/proc", "proc", MS_RDONLY, NULL) < 0) {
         fprintf(stderr, "mount('/proc') failed: %s\n",
