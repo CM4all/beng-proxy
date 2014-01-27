@@ -115,7 +115,7 @@ was_launch(struct was_process *process,
     if (pid < 0) {
         leave_signal_section(&run_args.signals);
 
-        set_error_errno_msg(error_r, "fork() failed");
+        set_error_errno_msg(error_r, "clone() failed");
         close(control_fds[0]);
         close(control_fds[1]);
         close(input_fds[0]);

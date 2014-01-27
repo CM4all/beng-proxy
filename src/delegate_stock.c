@@ -140,7 +140,7 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
     long pid = clone(delegate_stock_fn, stack + sizeof(stack),
                      clone_flags, info);
     if (pid < 0) {
-        GError *error = new_error_errno_msg("fork() failed");
+        GError *error = new_error_errno_msg("clone() failed");
         leave_signal_section(&info->signals);
         close(info->fds[0]);
         close(info->fds[1]);
