@@ -2,6 +2,7 @@ cm4all-beng-proxy (4.0.13) unstable; urgency=low
 
   * namespace: make new root directory read-only
   * namespace: add option to mount tmpfs on /tmp
+  * namespace: arbitrary bind-mounts
   * namespace: support UTS namespaces
   * namespace: set up uid/gid mapping in user namespace
 

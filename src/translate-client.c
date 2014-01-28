@@ -17,6 +17,7 @@
 #include "async.h"
 #include "http_address.h"
 #include "lhttp_address.h"
+#include "mount_list.h"
 #include "strutil.h"
 #include "strmap.h"
 #include "stopwatch.h"
@@ -88,6 +89,9 @@ struct translate_client {
 
     /** the current namespace options being edited */
     struct namespace_options *ns_options;
+
+    /** the tail of the current mount_list */
+    struct mount_list **mount_list;
 
     /** the current local file address being edited */
     struct file_address *file_address;
@@ -552,6 +556,7 @@ add_view(struct translate_client *client, const char *name)
     client->jail = NULL;
     client->child_options = NULL;
     client->ns_options = NULL;
+    client->mount_list = NULL;
     client->file_address = NULL;
     client->http_address = NULL;
     client->cgi_address = NULL;
@@ -807,6 +812,36 @@ translate_client_mount_home(struct translate_client *client,
 }
 
 static bool
+translate_client_bind_mount(struct translate_client *client,
+                            const char *payload, size_t payload_length)
+{
+    if (*payload != '/') {
+        translate_client_error(client, "malformed BIND_MOUNT packet");
+        return false;
+    }
+
+    const char *separator = memchr(payload, 0, payload_length);
+    if (separator == NULL || separator[1] != '/') {
+        translate_client_error(client, "malformed BIND_MOUNT packet");
+        return false;
+    }
+
+    if (client->mount_list == NULL) {
+        translate_client_error(client,
+                               "misplaced BIND_MOUNT packet");
+        return false;
+    }
+
+    struct mount_list *m = p_malloc(client->pool, sizeof(*m));
+    m->next = NULL;
+    m->source = payload + 1; /* skip the slash to make it relative */
+    m->target = separator + 1;
+    *client->mount_list = m;
+    client->mount_list = &m->next;
+    return true;
+}
+
+static bool
 translate_client_uts_namespace(struct translate_client *client,
                                const char *payload)
 {
@@ -882,6 +917,7 @@ translate_handle_packet(struct translate_client *client,
         client->jail = NULL;
         client->child_options = NULL;
         client->ns_options = NULL;
+        client->mount_list = NULL;
         client->file_address = NULL;
         client->http_address = NULL;
         client->cgi_address = NULL;
@@ -1135,6 +1171,7 @@ translate_handle_packet(struct translate_client *client,
         client->jail = NULL;
         client->child_options = NULL;
         client->ns_options = NULL;
+        client->mount_list = NULL;
         client->file_address = NULL;
         client->cgi_address = NULL;
         client->nfs_address = NULL;
@@ -1325,6 +1362,7 @@ translate_handle_packet(struct translate_client *client,
 
         client->child_options = &client->cgi_address->options;
         client->ns_options = &client->child_options->ns;
+        client->mount_list = &client->ns_options->mounts;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -1347,6 +1385,7 @@ translate_handle_packet(struct translate_client *client,
         client->cgi_address->document_root = client->response.document_root;
         client->child_options = &client->cgi_address->options;
         client->ns_options = &client->child_options->ns;
+        client->mount_list = &client->ns_options->mounts;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -1370,6 +1409,7 @@ translate_handle_packet(struct translate_client *client,
 
         client->child_options = &client->cgi_address->options;
         client->ns_options = &client->child_options->ns;
+        client->mount_list = &client->ns_options->mounts;
         client->jail = &client->child_options->jail;
         client->address_list = &client->cgi_address->address_list;
         client->default_port = 9000;
@@ -1644,6 +1684,7 @@ translate_handle_packet(struct translate_client *client,
         client->file_address->delegate = payload;
         client->child_options = &client->file_address->child_options;
         client->ns_options = &client->child_options->ns;
+        client->mount_list = &client->ns_options->mounts;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -1875,6 +1916,7 @@ translate_handle_packet(struct translate_client *client,
 
         client->child_options = &client->cgi_address->options;
         client->ns_options = &client->child_options->ns;
+        client->mount_list = &client->ns_options->mounts;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -2070,6 +2112,7 @@ translate_handle_packet(struct translate_client *client,
             lhttp_address_new(client->pool, payload);
         client->child_options = &client->lhttp_address->options;
         client->ns_options = &client->child_options->ns;
+        client->mount_list = &client->ns_options->mounts;
         client->jail = &client->child_options->jail;
         return true;
 
@@ -2209,6 +2252,9 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_MOUNT_HOME:
         return translate_client_mount_home(client, payload);
+
+    case TRANSLATE_BIND_MOUNT:
+        return translate_client_bind_mount(client, payload, payload_length);
 
     case TRANSLATE_MOUNT_TMP_TMPFS:
         return translate_client_mount_tmp_tmpfs(client, payload_length);

@@ -48,6 +48,8 @@ struct namespace_options {
      */
     const char *mount_home;
 
+    struct mount_list *mounts;
+
     /**
      * The hostname of the new UTS namespace.
      */

@@ -1453,6 +1453,12 @@ will be mounted with option \texttt{nosuid}.
 This is private to the namespace and is deleted when the process
 exits.
 
+\verb|BIND_MOUNT| mounts arbitrary directories from the old root into
+the new root.  The payload is the source directory (absolute path
+within the old root) and the target directory (absolute path within
+the new root), separated by a null byte.  The new mount will have the
+options \texttt{ro,noexec,nosuid,nodev}.
+
 \verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|,
 \verb|MOUNT_HOME| and \verb|MOUNT_TMP_TMPFS| depend on
 \verb|PIVOT_ROOT|, user namespaces and PID namespaces.

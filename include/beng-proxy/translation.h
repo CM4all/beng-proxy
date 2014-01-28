@@ -403,6 +403,12 @@ enum beng_translation_command {
      * the namespace.
      */
     TRANSLATE_UTS_NAMESPACE = 112,
+
+    /**
+     * Bind-mount a directory.  Payload is source and target separated
+     * by a null byte.
+     */
+    TRANSLATE_BIND_MOUNT = 113,
 };
 
 struct beng_translation_header {

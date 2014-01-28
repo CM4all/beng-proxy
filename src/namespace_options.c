@@ -3,6 +3,7 @@
  */
 
 #include "namespace_options.h"
+#include "mount_list.h"
 #include "pool.h"
 #include "pivot_root.h"
 #include "bind_mount.h"
@@ -44,6 +45,7 @@ namespace_options_init(struct namespace_options *options)
     options->pivot_root = NULL;
     options->home = NULL;
     options->mount_home = NULL;
+    options->mounts = NULL;
     options->hostname = NULL;
 }
 
@@ -56,6 +58,7 @@ namespace_options_copy(struct pool *pool, struct namespace_options *dest,
     dest->pivot_root = p_strdup_checked(pool, src->pivot_root);
     dest->home = p_strdup_checked(pool, src->home);
     dest->mount_home = p_strdup_checked(pool, src->mount_home);
+    dest->mounts = mount_list_dup(pool, src->mounts);
     dest->hostname = p_strdup_checked(pool, src->hostname);
 }
 
@@ -187,19 +190,27 @@ namespace_options_setup(const struct namespace_options *options)
         _exit(2);
     }
 
-    if (options->mount_home != NULL) {
-        assert(options->home != NULL);
-        assert(*options->home == '/');
-
-        /* go to /mnt so we can refer to the home directory with a
+    if (new_root != NULL && (options->mount_home != NULL ||
+                             options->mounts != NULL)) {
+        /* go to /mnt so we can refer to the old directories with a
            relative path */
         if (chdir("/mnt") < 0) {
             fprintf(stderr, "chdir('/mnt') failed: %s\n", strerror(errno));
             _exit(2);
         }
+    }
+
+    if (options->mount_home != NULL) {
+        assert(options->home != NULL);
+        assert(*options->home == '/');
 
         bind_mount(options->home + 1, options->mount_home, MS_NOSUID|MS_NODEV);
+    }
 
+    mount_list_apply(options->mounts);
+
+    if (new_root != NULL && (options->mount_home != NULL ||
+                             options->mounts != NULL)) {
         /* back to the new root */
         if (chdir("/") < 0) {
             fprintf(stderr, "chdir('/') failed: %s\n", strerror(errno));
