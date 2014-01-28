@@ -13,9 +13,19 @@
 void
 bind_mount(const char *source, const char *target, int flags)
 {
-    if (mount(source, target, NULL, MS_BIND|flags, NULL) < 0) {
+    if (mount(source, target, NULL, MS_BIND, NULL) < 0) {
         fprintf(stderr, "bind_mount('%s', '%s') failed: %s\n",
                 source, target, strerror(errno));
+        _exit(2);
+    }
+
+    /* wish we could just pass additional flags to the first mount
+       call, but unfortunately that doesn't work, the kernel ignores
+       these flags */
+    if (flags != 0 &&
+        mount(NULL, target, NULL, MS_REMOUNT|MS_BIND|flags, NULL) < 0) {
+        fprintf(stderr, "remount('%s') failed: %s\n",
+                target, strerror(errno));
         _exit(2);
     }
 }
