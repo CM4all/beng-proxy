@@ -626,6 +626,7 @@ libraddress_a_SOURCES = \
 	src/regex.c src/regex.h \
 	src/param_array.h src/param_array.c \
 	src/namespace_options.c src/namespace_options.h \
+	src/bind_mount.c src/bind_mount.h \
 	src/jail.c src/jail.h \
 	src/child_options.h \
 	src/cgi_address.c src/cgi_address.h \
