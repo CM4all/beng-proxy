@@ -228,7 +228,7 @@ namespace_options_setup(const struct namespace_options *options)
     }
 
     if (options->mount_tmp_tmpfs &&
-        mount("none", "/tmp", "tmpfs", MS_NODEV|MS_NOSUID,
+        mount("none", "/tmp", "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID,
               "size=16M,nr_inodes=256,mode=1777") < 0) {
         fprintf(stderr, "mount('/tmp') failed: %s\n",
                 strerror(errno));
