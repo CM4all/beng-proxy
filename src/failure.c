@@ -7,6 +7,7 @@
 #include "failure.h"
 #include "expiry.h"
 #include "address_envelope.h"
+#include "djbhash.h"
 #include "pool.h"
 
 #include <daemon/log.h>
@@ -37,20 +38,6 @@ struct failure_list {
 };
 
 static struct failure_list fl;
-
-static inline unsigned
-calc_hash(const struct sockaddr *addr, size_t addrlen)
-{
-    const char *p = (const char*)addr;
-    unsigned hash = 5381;
-
-    assert(p != NULL);
-
-    while (addrlen-- > 0)
-        hash = (hash << 5) + hash + *p++;
-
-    return hash;
-}
 
 void
 failure_init(struct pool *pool)
@@ -121,7 +108,7 @@ void
 failure_set(const struct sockaddr *addr, size_t addrlen,
             enum failure_status status, unsigned duration)
 {
-    unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
+    unsigned slot = djb_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure *failure;
 
     assert(addr != NULL);
@@ -186,7 +173,7 @@ void
 failure_unset(const struct sockaddr *addr, size_t addrlen,
               enum failure_status status)
 {
-    unsigned slot = calc_hash(addr, addrlen) % FAILURE_SLOTS;
+    unsigned slot = djb_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure **failure_r, *failure;
 
     assert(addr != NULL);
@@ -219,7 +206,7 @@ failure_get_status2(const struct failure *failure)
 enum failure_status
 failure_get_status(const struct sockaddr *address, size_t length)
 {
-    unsigned slot = calc_hash(address, length) % FAILURE_SLOTS;
+    unsigned slot = djb_hash(address, length) % FAILURE_SLOTS;
     struct failure *failure;
 
     assert(address != NULL);

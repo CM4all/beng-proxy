@@ -5,6 +5,7 @@
  */
 
 #include "hashmap.h"
+#include "djbhash.h"
 #include "pool.h"
 
 #include <inline/compiler.h>
@@ -24,18 +25,6 @@ struct hashmap {
     unsigned next_slot;
     struct slot slots[1];
 };
-
-static inline unsigned
-calc_hash(const char *p) {
-    unsigned hash = 5381;
-
-    assert(p != NULL);
-
-    while (*p != 0)
-        hash = (hash << 5) + hash + *p++;
-
-    return hash;
-}
 
 struct hashmap *
 hashmap_new(struct pool *pool, unsigned capacity)
@@ -64,7 +53,7 @@ hashmap_get_slot(struct hashmap *map, const char *key)
     assert(map != NULL);
     assert(key != NULL);
 
-    return &map->slots[calc_hash(key) % map->capacity];
+    return &map->slots[djb_hash_string(key) % map->capacity];
 }
 
 gcc_pure
@@ -74,7 +63,7 @@ hashmap_get_slot_c(const struct hashmap *map, const char *key)
     assert(map != NULL);
     assert(key != NULL);
 
-    return &map->slots[calc_hash(key) % map->capacity];
+    return &map->slots[djb_hash_string(key) % map->capacity];
 }
 
 void

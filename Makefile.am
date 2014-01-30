@@ -591,6 +591,7 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 
 libutil_a_SOURCES = \
 	src/cast.hxx \
+	src/djbhash.c src/djbhash.h \
 	src/format.c format.h \
 	src/date.c src/date.h \
 	src/gmtime.c src/gmtime.h \
@@ -823,6 +824,7 @@ test_run_was_SOURCES = test/run_was.c \
 test_run_was_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libraddress.a \
+	libutil.a \
 	$(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -837,19 +839,26 @@ test_was_mirror_SOURCES = test/was_mirror.c \
 	src/fd_util.c src/fd-util.c
 test_was_mirror_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libutil.a \
 	$(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
 
 test_t_hashmap_SOURCES = test/t-hashmap.c src/hashmap.c
-test_t_hashmap_LDADD = $(AM_LDADD) libpool.a libmemory.a $(LIBCM4ALL_DAEMON_LIBS)
+test_t_hashmap_LDADD = $(AM_LDADD) \
+	libpool.a libmemory.a \
+	libutil.a \
+	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_cache_SOURCES = test/t-cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/clock.c \
 	src/cache.c src/hashmap.c
-test_t_cache_LDADD = $(AM_LDADD) libpool.a libmemory.a $(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
+test_t_cache_LDADD = $(AM_LDADD) \
+	libpool.a libmemory.a \
+	libutil.a \
+	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
 	src/translate-response.c \
@@ -1050,6 +1059,7 @@ test_t_balancer_SOURCES = test/t_balancer.cxx \
 test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS)$ $(CPPUNIT_CFLAGS)
 test_t_balancer_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(CPPUNIT_LIBS)
@@ -1200,6 +1210,7 @@ test_t_cookie_client_SOURCES = test/t-cookie-client.c \
 	src/shm.c src/dpool.c src/dstring.c
 test_t_cookie_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
+	libutil.a \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
@@ -1209,6 +1220,7 @@ test_t_cookie_server_SOURCES = test/t-cookie-server.c \
 	src/strmap.c src/hashmap.c
 test_t_cookie_server_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_shm_SOURCES = test/t-shm.c src/shm.c
@@ -1399,6 +1411,7 @@ test_run_cookie_client_SOURCES = test/run-cookie-client.c \
 	src/clock.c
 test_run_cookie_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
+	libutil.a \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
@@ -1407,6 +1420,7 @@ test_run_cookie_server_SOURCES = test/run-cookie-server.c \
 	src/strmap.c src/hashmap.c
 test_run_cookie_server_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_run_header_parser_SOURCES = test/run-header-parser.c \
@@ -1522,6 +1536,7 @@ test_run_client_balancer_SOURCES = test/run-client-balancer.c \
 	$(STOPWATCH_SRC)
 test_run_client_balancer_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libutil.a \
 	$(LIBEVENT_LIBS) \
 	-lrt \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1678,6 +1693,7 @@ test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
 	src/tpool.c
 test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
@@ -1731,6 +1747,7 @@ test_run_delegate_SOURCES = test/run_delegate.c \
 test_run_delegate_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libraddress.a \
+	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_dump_udp_SOURCES = test/dump-udp.c \

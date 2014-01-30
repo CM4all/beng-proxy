@@ -7,6 +7,7 @@
 
 #include "dhashmap.h"
 #include "dpool.h"
+#include "djbhash.h"
 
 #include <assert.h>
 #include <string.h>
@@ -23,18 +24,6 @@ struct dhashmap {
     unsigned next_slot;
     struct slot slots[1];
 };
-
-static inline unsigned
-calc_hash(const char *p) {
-    unsigned hash = 5381;
-
-    assert(p != NULL);
-
-    while (*p != 0)
-        hash = (hash << 5) + hash + *p++;
-
-    return hash;
-}
 
 struct dhashmap *
 dhashmap_new(struct dpool *pool, unsigned capacity)
@@ -89,7 +78,7 @@ dhashmap_overwrite(struct slot *slot, const char *key, void *value)
 void *
 dhashmap_put(struct dhashmap *map, const char *key, void *value)
 {
-    unsigned hash = calc_hash(key);
+    unsigned hash = djb_hash_string(key);
     struct slot *slot, *prev;
 
     assert(key != NULL);
@@ -125,7 +114,7 @@ dhashmap_put(struct dhashmap *map, const char *key, void *value)
 void *
 dhashmap_remove(struct dhashmap *map, const char *key)
 {
-    unsigned hash = calc_hash(key);
+    unsigned hash = djb_hash_string(key);
     struct slot *slot, *prev;
 
     assert(key != NULL);
@@ -165,7 +154,7 @@ dhashmap_remove(struct dhashmap *map, const char *key)
 void *
 dhashmap_get(struct dhashmap *map, const char *key)
 {
-    unsigned hash = calc_hash(key);
+    unsigned hash = djb_hash_string(key);
     struct slot *slot;
 
     slot = &map->slots[hash % map->capacity];

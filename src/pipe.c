@@ -14,6 +14,7 @@
 #include "istream.h"
 #include "sigutil.h"
 #include "namespace_options.h"
+#include "djbhash.h"
 
 #include <daemon/log.h>
 
@@ -58,18 +59,6 @@ append_etag(struct pool *pool, const char *in, const char *suffix)
                      "\"", (size_t)1, NULL);
 }
 
-static inline unsigned
-calc_hash(const char *p) {
-    unsigned hash = 5381;
-
-    assert(p != NULL);
-
-    while (*p != 0)
-        hash = (hash << 5) + hash + *p++;
-
-    return hash;
-}
-
 static const char *
 make_pipe_etag(struct pool *pool, const char *in,
                const char *path,
@@ -78,10 +67,10 @@ make_pipe_etag(struct pool *pool, const char *in,
     char suffix[10] = {'-'};
 
     /* build hash from path and arguments */
-    unsigned hash = calc_hash(path);
+    unsigned hash = djb_hash_string(path);
 
     for (unsigned i = 0; i < num_args; ++i)
-        hash ^= calc_hash(args[i]);
+        hash ^= djb_hash_string(args[i]);
 
     format_uint32_hex_fixed(suffix + 1, hash);
     suffix[9] = 0;

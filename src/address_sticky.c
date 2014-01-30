@@ -5,39 +5,23 @@
  */
 
 #include "address_sticky.h"
+#include "djbhash.h"
 
-#include <assert.h>
-#include <stddef.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
 gcc_pure
 static unsigned
-sticky_hash(const void *p0, size_t size)
-{
-    assert(p0 != NULL);
-
-    unsigned hash = 5381;
-
-    const char *p = p0, *const end = p + size;
-    for (; p != end; ++p)
-        hash = (hash << 5) + hash + *p;
-
-    return hash;
-}
-
-gcc_pure
-static unsigned
 ipv4_sticky(const struct sockaddr_in *address)
 {
-    return sticky_hash(&address->sin_addr, sizeof(address->sin_addr));
+    return djb_hash(&address->sin_addr, sizeof(address->sin_addr));
 }
 
 gcc_pure
 static unsigned
 ipv6_sticky(const struct sockaddr_in6 *address)
 {
-    return sticky_hash(&address->sin6_addr, sizeof(address->sin6_addr));
+    return djb_hash(&address->sin6_addr, sizeof(address->sin6_addr));
 }
 
 unsigned

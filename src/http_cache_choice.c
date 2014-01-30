@@ -17,6 +17,7 @@
 #include "sink-buffer.h"
 #include "uset.h"
 #include "istream.h"
+#include "djbhash.h"
 
 #include <glib.h>
 #include <stdio.h>
@@ -51,18 +52,6 @@ struct http_cache_choice {
     struct async_operation_ref *async_ref;
 };
 
-static inline unsigned
-calc_hash(const char *p) {
-    unsigned hash = 5381;
-
-    assert(p != NULL);
-
-    while (*p != 0)
-        hash = (hash << 5) + hash + *p++;
-
-    return hash;
-}
-
 /**
  * Calculate a aggregated hash value of the specified string map.
  * This is used as a suffix for the memcached
@@ -79,7 +68,7 @@ mcd_vary_hash(struct strmap *vary)
     strmap_rewind(vary);
 
     while ((pair = strmap_next(vary)) != NULL)
-        hash ^= calc_hash(pair->key) ^ calc_hash(pair->value);
+        hash ^= djb_hash_string(pair->key) ^ djb_hash_string(pair->value);
 
     return hash;
 }
