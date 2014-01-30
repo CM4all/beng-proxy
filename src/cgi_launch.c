@@ -227,6 +227,7 @@ cgi_launch(struct pool *pool, http_method_t method,
         leave_signal_section(&signals);
 
         namespace_options_unshare(&address->options.ns);
+        namespace_options_setup(&address->options.ns);
 
         cgi_run(&address->options.jail,
                 address->interpreter, address->action,

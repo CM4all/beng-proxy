@@ -86,6 +86,8 @@ delegate_stock_fn(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&info->signals);
 
+    namespace_options_setup(&info->options->ns);
+
     dup2(info->fds[1], STDIN_FILENO);
     close(info->fds[0]);
     close(info->fds[1]);

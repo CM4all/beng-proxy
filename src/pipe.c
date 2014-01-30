@@ -130,6 +130,7 @@ pipe_filter(struct pool *pool, const char *path,
         leave_signal_section(&signals);
 
         namespace_options_unshare(ns);
+        namespace_options_setup(ns);
 
         execv(path, argv);
         fprintf(stderr, "exec('%s') failed: %s\n",

@@ -95,6 +95,8 @@ lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
 {
     const struct lhttp_address *address = info;
 
+    namespace_options_setup(&address->options.ns);
+
     lhttp_run(address, 0);
 }
 
