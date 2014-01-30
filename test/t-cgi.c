@@ -201,12 +201,14 @@ test_normal(struct pool *pool, struct context *c)
     else
         path = "./demo/cgi-bin/env.py";
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "env.py",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -235,12 +237,14 @@ test_tiny(struct pool *pool, struct context *c)
     else
         path = "./demo/cgi-bin/tiny.sh";
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "tiny.py",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -271,12 +275,14 @@ test_close_early(struct pool *pool, struct context *c)
 
     c->close_response_body_early = true;
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "env.py",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -307,12 +313,14 @@ test_close_late(struct pool *pool, struct context *c)
 
     c->close_response_body_late = true;
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "env.py",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -342,12 +350,14 @@ test_close_data(struct pool *pool, struct context *c)
         path = "./demo/cgi-bin/env.py";
     c->close_response_body_data = true;
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "env.py",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -378,12 +388,14 @@ test_post(struct pool *pool, struct context *c)
 
     c->body_read = true;
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "cat.py",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_POST, &address,
             NULL, NULL, istream_file_new(pool, "Makefile", 8192),
@@ -414,12 +426,14 @@ test_status(struct pool *pool, struct context *c)
 
     c->body_read = true;
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "status.py",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -450,12 +464,14 @@ test_no_content(struct pool *pool, struct context *c)
 
     c->no_content = true;
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "no_content.sh",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -484,12 +500,14 @@ test_no_length(struct pool *pool, struct context *c)
     else
         path = "./demo/cgi-bin/length0.sh";
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "length0.sh",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -516,12 +534,14 @@ test_length_ok(struct pool *pool, struct context *c)
     else
         path = "./demo/cgi-bin/length1.sh";
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "length1.sh",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -550,12 +570,14 @@ test_length_ok_large(struct pool *pool, struct context *c)
     else
         path = "./demo/cgi-bin/length5.sh";
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "length5.sh",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -582,12 +604,14 @@ test_length_too_small(struct pool *pool, struct context *c)
     else
         path = "./demo/cgi-bin/length2.sh";
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "length2.sh",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -613,12 +637,14 @@ test_length_too_big(struct pool *pool, struct context *c)
     else
         path = "./demo/cgi-bin/length3.sh";
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "length3.sh",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -645,12 +671,14 @@ test_length_too_small_late(struct pool *pool, struct context *c)
     else
         path = "./demo/cgi-bin/length4.sh";
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "length4.sh",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -680,12 +708,14 @@ test_large_header(struct pool *pool, struct context *c)
     else
         path = "./demo/cgi-bin/large_header.sh";
 
-    const struct cgi_address address = {
+    struct cgi_address address = {
         .path = path,
         .uri = "/",
         .script_name = "large_header.py",
         .document_root = "/var/www",
     };
+
+    child_options_init(&address.options);
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
