@@ -1,0 +1,9 @@
+[Unit]
+Description=CM4all beng load balancer
+After=network.target
+
+[Service]
+ExecStart=/usr/lib/cm4all/beng-lb/systemd/run.sh
+
+[Install]
+WantedBy=multi-user.target
