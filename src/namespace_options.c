@@ -165,7 +165,7 @@ namespace_options_setup(const struct namespace_options *options)
        previously visible in this namespace */
     if (options->enable_user && options->mount_proc) {
         /* mount writable proc */
-        if (mount("none", "/proc", "proc", 0, NULL) < 0) {
+        if (mount("none", "/proc", "proc", MS_NOEXEC|MS_NOSUID|MS_NODEV, NULL) < 0) {
             fprintf(stderr, "mount('/proc') failed: %s\n",
                     strerror(errno));
             _exit(2);
@@ -184,7 +184,7 @@ namespace_options_setup(const struct namespace_options *options)
     }
 
     if (options->mount_proc &&
-        mount("none", "/proc", "proc", MS_RDONLY, NULL) < 0) {
+        mount("none", "/proc", "proc", MS_NOEXEC|MS_NOSUID|MS_NODEV|MS_RDONLY, NULL) < 0) {
         fprintf(stderr, "mount('/proc') failed: %s\n",
                 strerror(errno));
         _exit(2);
