@@ -1,2 +1,4 @@
 build/debug/src/cm4all-beng-proxy usr/sbin
 debian/ua_classes.conf etc/cm4all/beng/proxy
+systemd/cm4all-beng-proxy.service lib/systemd/system
+systemd/run.sh usr/lib/cm4all/beng-proxy/systemd
