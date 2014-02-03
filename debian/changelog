@@ -6,7 +6,7 @@ cm4all-beng-proxy (4.0.14) unstable; urgency=low
   * namespace: secure /proc flags
   * namespace: work around uid/gid mapper failure using PR_SET_DUMPABLE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 03 Feb 2014 20:40:49 -0000
 
 cm4all-beng-proxy (4.0.13) unstable; urgency=low
 
