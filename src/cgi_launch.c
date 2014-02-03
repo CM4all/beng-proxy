@@ -156,6 +156,40 @@ cgi_run(const struct jail_params *jail,
     _exit(2);
 }
 
+struct cgi_ctx {
+    http_method_t method;
+    const struct cgi_address *address;
+    const char *uri;
+    off_t available;
+    const char *remote_addr;
+    struct strmap *headers;
+
+    sigset_t signals;
+};
+
+static int
+cgi_fn(void *ctx)
+{
+    struct cgi_ctx *c = ctx;
+    const struct cgi_address *address = c->address;
+
+    install_default_signal_handlers();
+    leave_signal_section(&c->signals);
+
+    namespace_options_setup(&address->options.ns);
+
+    cgi_run(&address->options.jail,
+            address->interpreter, address->action,
+            address->path,
+            address->args.values, address->args.n,
+            c->method, c->uri,
+            address->script_name, address->path_info,
+            address->query_string, address->document_root,
+            c->remote_addr,
+            c->headers, c->available,
+            address->env.values, address->env.n);
+}
+
 static void
 cgi_child_callback(int status, void *ctx gcc_unused)
 {
@@ -196,22 +230,29 @@ cgi_launch(struct pool *pool, http_method_t method,
            struct strmap *headers, struct istream *body,
            GError **error_r)
 {
-    const char *uri = cgi_address_uri(pool, address);
+    struct cgi_ctx c = {
+        .method = method,
+        .address = address,
+        .uri = cgi_address_uri(pool, address),
+        .available = body != NULL ? istream_available(body, false) : -1,
+        .remote_addr = remote_addr,
+        .headers = headers,
+    };
 
-    off_t available = body != NULL
-        ? istream_available(body, false)
-        : -1;
+    const int clone_flags =
+        namespace_options_clone_flags(&address->options.ns, SIGCHLD);
 
     /* avoid race condition due to libevent signal handler in child
        process */
-    sigset_t signals;
-    enter_signal_section(&signals);
+    enter_signal_section(&c.signals);
 
     struct istream *input;
     pid_t pid = beng_fork(pool, cgi_address_name(address), body, &input,
+                          clone_flags,
+                          cgi_fn, &c,
                           cgi_child_callback, NULL, error_r);
     if (pid < 0) {
-        leave_signal_section(&signals);
+        leave_signal_section(&c.signals);
 
         if (body != NULL)
             /* beng_fork() left the request body open - free this
@@ -222,26 +263,7 @@ cgi_launch(struct pool *pool, http_method_t method,
         return NULL;
     }
 
-    if (pid == 0) {
-        install_default_signal_handlers();
-        leave_signal_section(&signals);
-
-        namespace_options_unshare(&address->options.ns);
-        namespace_options_setup(&address->options.ns);
-
-        cgi_run(&address->options.jail,
-                address->interpreter, address->action,
-                address->path,
-                address->args.values, address->args.n,
-                method, uri,
-                address->script_name, address->path_info,
-                address->query_string, address->document_root,
-                remote_addr,
-                headers, available,
-                address->env.values, address->env.n);
-    }
-
-    leave_signal_section(&signals);
+    leave_signal_section(&c.signals);
 
     return input;
 }

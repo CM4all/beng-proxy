@@ -371,6 +371,40 @@ static const struct istream_class istream_fork = {
 
 
 /*
+ * clone callback
+ *
+ */
+
+struct clone_ctx {
+    int stdin_pipe[2], stdin_fd, stdout_pipe[2];
+
+    int (*fn)(void *ctx);
+    void *ctx;
+};
+
+static int
+beng_fork_fn(void *ctx)
+{
+    struct clone_ctx *c = ctx;
+
+    if (c->stdin_pipe[0] >= 0) {
+        dup2(c->stdin_pipe[0], STDIN_FILENO);
+        close(c->stdin_pipe[0]);
+        close(c->stdin_pipe[1]);
+    } else if (c->stdin_fd >= 0) {
+        dup2(c->stdin_fd, STDIN_FILENO);
+        close(c->stdin_fd);
+    }
+
+    dup2(c->stdout_pipe[1], STDOUT_FILENO);
+    close(c->stdout_pipe[0]);
+    close(c->stdout_pipe[1]);
+
+    return c->fn(c->ctx);
+}
+
+
+/*
  * child callback
  *
  */
@@ -397,96 +431,93 @@ fork_child_callback(int status, void *ctx)
 pid_t
 beng_fork(struct pool *pool, const char *name,
           struct istream *input, struct istream **output_r,
+          int clone_flags,
+          int (*fn)(void *ctx), void *fn_ctx,
           child_callback_t callback, void *ctx,
           GError **error_r)
 {
-    int stdin_pipe[2], stdin_fd, stdout_pipe[2];
+    assert(clone_flags & SIGCHLD);
+
+    struct clone_ctx c = {
+        .stdin_pipe = { [0] = -1 },
+        .stdin_fd = -1,
+        .fn = fn,
+        .ctx = fn_ctx,
+    };
 
     if (input != NULL) {
-        stdin_fd = istream_as_fd(input);
-        if (stdin_fd >= 0)
+        c.stdin_fd = istream_as_fd(input);
+        if (c.stdin_fd >= 0)
             input = NULL;
-    } else
-        stdin_fd = -1;
+    }
 
     if (input != NULL) {
-        if (pipe_cloexec(stdin_pipe) < 0) {
+        if (pipe_cloexec(c.stdin_pipe) < 0) {
             g_set_error(error_r, fork_quark(), errno,
                         "pipe_cloexec() failed: %s", strerror(errno));
             return -1;
         }
 
-        if (fd_set_nonblock(stdin_pipe[1], 1) < 0) {
+        if (fd_set_nonblock(c.stdin_pipe[1], 1) < 0) {
             g_set_error(error_r, fork_quark(), errno,
                         "fcntl(O_NONBLOCK) failed: %s", strerror(errno));
-            close(stdin_pipe[0]);
-            close(stdin_pipe[1]);
+            close(c.stdin_pipe[0]);
+            close(c.stdin_pipe[1]);
             return -1;
         }
     }
 
-    if (pipe_cloexec(stdout_pipe) < 0) {
+    if (pipe_cloexec(c.stdout_pipe) < 0) {
         g_set_error(error_r, fork_quark(), errno,
                     "pipe() failed: %s", strerror(errno));
 
         if (input != NULL) {
-            close(stdin_pipe[0]);
-            close(stdin_pipe[1]);
-        } else if (stdin_fd >= 0)
-            close(stdin_fd);
+            close(c.stdin_pipe[0]);
+            close(c.stdin_pipe[1]);
+        } else if (c.stdin_fd >= 0)
+            close(c.stdin_fd);
 
         return -1;
     }
 
-    if (fd_set_nonblock(stdout_pipe[0], 1) < 0) {
+    if (fd_set_nonblock(c.stdout_pipe[0], 1) < 0) {
         g_set_error(error_r, fork_quark(), errno,
                     "fcntl(O_NONBLOCK) failed: %s", strerror(errno));
 
         if (input != NULL) {
-            close(stdin_pipe[0]);
-            close(stdin_pipe[1]);
-        } else if (stdin_fd >= 0)
-            close(stdin_fd);
+            close(c.stdin_pipe[0]);
+            close(c.stdin_pipe[1]);
+        } else if (c.stdin_fd >= 0)
+            close(c.stdin_fd);
 
-        close(stdout_pipe[0]);
-        close(stdout_pipe[1]);
+        close(c.stdout_pipe[0]);
+        close(c.stdout_pipe[1]);
         return -1;
     }
 
-    const pid_t pid = fork();
+    char stack[8192];
+    const pid_t pid = clone(beng_fork_fn, stack + sizeof(stack),
+                            clone_flags, &c);
     if (pid < 0) {
         g_set_error(error_r, fork_quark(), errno,
                     "fork() failed: %s", strerror(errno));
 
         if (input != NULL) {
-            close(stdin_pipe[0]);
-            close(stdin_pipe[1]);
-        } else if (stdin_fd >= 0)
-            close(stdin_fd);
+            close(c.stdin_pipe[0]);
+            close(c.stdin_pipe[1]);
+        } else if (c.stdin_fd >= 0)
+            close(c.stdin_fd);
 
-        close(stdout_pipe[0]);
-        close(stdout_pipe[1]);
-    } else if (pid == 0) {
-        if (input != NULL) {
-            dup2(stdin_pipe[0], STDIN_FILENO);
-            close(stdin_pipe[0]);
-            close(stdin_pipe[1]);
-        } else if (stdin_fd >= 0) {
-            dup2(stdin_fd, STDIN_FILENO);
-            close(stdin_fd);
-        }
-
-        dup2(stdout_pipe[1], STDOUT_FILENO);
-        close(stdout_pipe[0]);
-        close(stdout_pipe[1]);
+        close(c.stdout_pipe[0]);
+        close(c.stdout_pipe[1]);
     } else {
         struct fork *f = (struct fork *)
             istream_new(pool, &istream_fork, sizeof(*f));
 
         f->input = input;
         if (input != NULL) {
-            close(stdin_pipe[0]);
-            f->input_fd = stdin_pipe[1];
+            close(c.stdin_pipe[0]);
+            f->input_fd = c.stdin_pipe[1];
 
             event_set(&f->input_event, f->input_fd, EV_WRITE,
                       fork_input_event_callback, f);
@@ -496,11 +527,11 @@ beng_fork(struct pool *pool, const char *name,
             istream_assign_handler(&f->input, input,
                                    &fork_input_handler, f,
                                    ISTREAM_TO_PIPE);
-        } else if (stdin_fd >= 0)
-            close(stdin_fd);
+        } else if (c.stdin_fd >= 0)
+            close(c.stdin_fd);
 
-        close(stdout_pipe[1]);
-        f->output_fd = stdout_pipe[0];
+        close(c.stdout_pipe[1]);
+        f->output_fd = c.stdout_pipe[0];
         event_set(&f->output_event, f->output_fd, EV_READ,
                   fork_output_event_callback, f);
         f->buffer = NULL;

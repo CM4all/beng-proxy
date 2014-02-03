@@ -35,6 +35,8 @@ fork_quark(void)
 pid_t
 beng_fork(struct pool *pool, const char *name,
           struct istream *input, struct istream **output_r,
+          int clone_flags,
+          int (*fn)(void *ctx), void *fn_ctx,
           child_callback_t callback, void *ctx,
           GError **error_r);
 

@@ -24,6 +24,30 @@
 #include <string.h>
 #include <errno.h>
 
+struct pipe_ctx {
+    const struct namespace_options *ns;
+    const char *path;
+    char *const*argv;
+
+    sigset_t signals;
+};
+
+static int
+pipe_fn(void *ctx)
+{
+    struct pipe_ctx *c = ctx;
+
+    install_default_signal_handlers();
+    leave_signal_section(&c->signals);
+
+    namespace_options_setup(c->ns);
+
+    execv(c->path, c->argv);
+    fprintf(stderr, "exec('%s') failed: %s\n",
+            c->path, strerror(errno));
+    return 2;
+}
+
 static void
 pipe_child_callback(int status, void *ctx gcc_unused)
 {
@@ -88,7 +112,6 @@ pipe_filter(struct pool *pool, const char *path,
             void *handler_ctx)
 {
     struct stopwatch *stopwatch;
-    pid_t pid;
     struct istream *response;
     char *argv[1 + num_args + 1];
     const char *etag;
@@ -105,16 +128,26 @@ pipe_filter(struct pool *pool, const char *path,
 
     stopwatch = stopwatch_new(pool, path);
 
+    struct pipe_ctx c = {
+        .ns = ns,
+        .path = path,
+        .argv = argv,
+    };
+
+    const int clone_flags =
+        namespace_options_clone_flags(ns, SIGCHLD);
+
     /* avoid race condition due to libevent signal handler in child
        process */
-    sigset_t signals;
-    enter_signal_section(&signals);
+    enter_signal_section(&c.signals);
 
     GError *error = NULL;
-    pid = beng_fork(pool, path, body, &response,
-                    pipe_child_callback, NULL, &error);
+    pid_t pid = beng_fork(pool, path, body, &response,
+                          clone_flags,
+                          pipe_fn, &c,
+                          pipe_child_callback, NULL, &error);
     if (pid < 0) {
-        leave_signal_section(&signals);
+        leave_signal_section(&c.signals);
 
         istream_close_unused(body);
         http_response_handler_direct_abort(handler, handler_ctx, error);
@@ -125,20 +158,7 @@ pipe_filter(struct pool *pool, const char *path,
     memcpy(argv + 1, args, num_args * sizeof(argv[0]));
     argv[1 + num_args] = NULL;
 
-    if (pid == 0) {
-        install_default_signal_handlers();
-        leave_signal_section(&signals);
-
-        namespace_options_unshare(ns);
-        namespace_options_setup(ns);
-
-        execv(path, argv);
-        fprintf(stderr, "exec('%s') failed: %s\n",
-                path, strerror(errno));
-        _exit(2);
-    }
-
-    leave_signal_section(&signals);
+    leave_signal_section(&c.signals);
 
     stopwatch_event(stopwatch, "fork");
 
