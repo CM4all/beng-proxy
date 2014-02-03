@@ -111,11 +111,10 @@ static size_t
 fork_input_data(const void *data, size_t length, void *ctx)
 {
     struct fork *f = ctx;
-    ssize_t nbytes;
 
     assert(f->input_fd >= 0);
 
-    nbytes = write(f->input_fd, data, length);
+    ssize_t nbytes = write(f->input_fd, data, length);
     if (nbytes > 0)
         p_event_add(&f->input_event, NULL,
                     f->output.pool, "fork_input_event");
@@ -143,11 +142,10 @@ fork_input_direct(istream_direct_t type,
                   int fd, size_t max_length, void *ctx)
 {
     struct fork *f = ctx;
-    ssize_t nbytes;
 
     assert(f->input_fd >= 0);
 
-    nbytes = istream_direct_to_pipe(type, fd, f->input_fd, max_length);
+    ssize_t nbytes = istream_direct_to_pipe(type, fd, f->input_fd, max_length);
     if (nbytes > 0)
         p_event_add(&f->input_event, NULL,
                     f->output.pool, "fork_input_event");
@@ -402,8 +400,7 @@ beng_fork(struct pool *pool, const char *name,
           child_callback_t callback, void *ctx,
           GError **error_r)
 {
-    int ret, stdin_pipe[2], stdin_fd, stdout_pipe[2];
-    pid_t pid;
+    int stdin_pipe[2], stdin_fd, stdout_pipe[2];
 
     if (input != NULL) {
         stdin_fd = istream_as_fd(input);
@@ -413,15 +410,13 @@ beng_fork(struct pool *pool, const char *name,
         stdin_fd = -1;
 
     if (input != NULL) {
-        ret = pipe_cloexec(stdin_pipe);
-        if (ret < 0) {
+        if (pipe_cloexec(stdin_pipe) < 0) {
             g_set_error(error_r, fork_quark(), errno,
                         "pipe_cloexec() failed: %s", strerror(errno));
             return -1;
         }
 
-        ret = fd_set_nonblock(stdin_pipe[1], 1);
-        if (ret < 0) {
+        if (fd_set_nonblock(stdin_pipe[1], 1) < 0) {
             g_set_error(error_r, fork_quark(), errno,
                         "fcntl(O_NONBLOCK) failed: %s", strerror(errno));
             close(stdin_pipe[0]);
@@ -430,8 +425,7 @@ beng_fork(struct pool *pool, const char *name,
         }
     }
 
-    ret = pipe_cloexec(stdout_pipe);
-    if (ret < 0) {
+    if (pipe_cloexec(stdout_pipe) < 0) {
         g_set_error(error_r, fork_quark(), errno,
                     "pipe() failed: %s", strerror(errno));
 
@@ -444,8 +438,7 @@ beng_fork(struct pool *pool, const char *name,
         return -1;
     }
 
-    ret = fd_set_nonblock(stdout_pipe[0], 1);
-    if (ret < 0) {
+    if (fd_set_nonblock(stdout_pipe[0], 1) < 0) {
         g_set_error(error_r, fork_quark(), errno,
                     "fcntl(O_NONBLOCK) failed: %s", strerror(errno));
 
@@ -460,7 +453,7 @@ beng_fork(struct pool *pool, const char *name,
         return -1;
     }
 
-    pid = fork();
+    const pid_t pid = fork();
     if (pid < 0) {
         g_set_error(error_r, fork_quark(), errno,
                     "fork() failed: %s", strerror(errno));
