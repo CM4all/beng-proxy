@@ -13,6 +13,7 @@
 #include "stock.h"
 #include "child_options.h"
 #include "istream.h"
+#include "async.h"
 
 #include <daemon/log.h>
 
@@ -26,6 +27,9 @@ struct fcgi_request {
 
     struct fcgi_stock *fcgi_stock;
     struct stock_item *stock_item;
+
+    struct async_operation async;
+    struct async_operation_ref async_ref;
 };
 
 /*
@@ -39,10 +43,38 @@ fcgi_socket_release(bool reuse, void *ctx)
     struct fcgi_request *request = ctx;
 
     fcgi_stock_put(request->fcgi_stock, request->stock_item, !reuse);
+    request->stock_item = NULL;
 }
 
 static const struct lease fcgi_socket_lease = {
     .release = fcgi_socket_release,
+};
+
+
+/*
+ * async operation
+ *
+ */
+
+static struct fcgi_request *
+async_to_fcgi_request(struct async_operation *ao)
+{
+    return (struct fcgi_request *)(((char *)ao) - offsetof(struct fcgi_request, async));
+}
+
+static void
+fcgi_request_abort(struct async_operation *ao)
+{
+    struct fcgi_request *request = async_to_fcgi_request(ao);
+
+    if (request->stock_item != NULL)
+        fcgi_stock_aborted(request->stock_item);
+
+    async_abort(&request->async_ref);
+}
+
+static const struct async_operation_class fcgi_request_async_operation = {
+    .abort = fcgi_request_abort,
 };
 
 
@@ -100,6 +132,10 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     }
 
     request->stock_item = stock_item;
+
+    async_init(&request->async, &fcgi_request_async_operation);
+    async_ref_set(async_ref, &request->async);
+    async_ref = &request->async_ref;
 
     const char *script_filename = fcgi_stock_translate_path(stock_item, path,
                                                             request->pool);

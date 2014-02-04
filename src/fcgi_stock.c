@@ -53,6 +53,21 @@ struct fcgi_connection {
 
     int fd;
     struct event event;
+
+    /**
+     * Is this a fresh connection to the FastCGI child process?
+     */
+    bool fresh;
+
+    /**
+     * Shall the FastCGI child process be killed?
+     */
+    bool kill;
+
+    /**
+     * Was the current request aborted by the fcgi_client caller?
+     */
+    bool aborted;
 };
 
 static const char *
@@ -194,6 +209,9 @@ fcgi_stock_create(void *ctx, struct stock_item *item,
         return;
     }
 
+    connection->fresh = true;
+    connection->kill = false;
+
     event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
               fcgi_connection_event_callback, connection);
 
@@ -206,6 +224,7 @@ fcgi_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
     struct fcgi_connection *connection = (struct fcgi_connection *)item;
 
     p_event_del(&connection->event, connection->base.pool);
+    connection->aborted = false;
     return true;
 }
 
@@ -217,6 +236,8 @@ fcgi_stock_release(void *ctx gcc_unused, struct stock_item *item)
         .tv_sec = 300,
         .tv_usec = 0,
     };
+
+    connection->fresh = false;
 
     p_event_add(&connection->event, &tv, connection->base.pool,
                 "fcgi_connection_event");
@@ -232,7 +253,8 @@ fcgi_stock_destroy(void *ctx, struct stock_item *item)
     p_event_del(&connection->event, connection->base.pool);
     close(connection->fd);
 
-    child_stock_put(fcgi_stock->child_stock, connection->child, false);
+    child_stock_put(fcgi_stock->child_stock, connection->child,
+                    connection->kill);
 }
 
 static const struct stock_class fcgi_stock_class = {
@@ -333,6 +355,21 @@ fcgi_stock_put(struct fcgi_stock *fcgi_stock, struct stock_item *item,
 {
     struct fcgi_connection *connection = (struct fcgi_connection *)item;
 
+    if (connection->fresh && connection->aborted && destroy)
+        /* the fcgi_client caller has aborted the request before the
+           first response on a fresh connection was received: better
+           kill the child process, it may be failing on us
+           completely */
+        connection->kill = true;
+
     hstock_put(fcgi_stock->hstock, child_stock_item_key(connection->child),
                item, destroy);
+}
+
+void
+fcgi_stock_aborted(struct stock_item *item)
+{
+    struct fcgi_connection *connection = (struct fcgi_connection *)item;
+
+    connection->aborted = true;
 }

@@ -60,6 +60,16 @@ void
 fcgi_stock_put(struct fcgi_stock *fcgi_stock, struct stock_item *item,
                bool destroy);
 
+/**
+ * Let the fcgi_stock know that the client is being aborted.  The
+ * fcgi_stock may then figure out that the client process is faulty
+ * and kill it at the next chance.  Note that this function will not
+ * release the process - fcgi_stock_put() stil needs to be called
+ * after this function.
+ */
+void
+fcgi_stock_aborted(struct stock_item *item);
+
 #ifdef __cplusplus
 }
 #endif
