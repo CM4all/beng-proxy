@@ -8,6 +8,7 @@
 #include "crash.h"
 #include "pool.h"
 #include "defer_event.h"
+#include "clock.h"
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
@@ -17,6 +18,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 #include <event.h>
 
 struct child {
@@ -25,6 +27,12 @@ struct child {
     pid_t pid;
 
     const char *name;
+
+    /**
+     * The monotonic clock when this child process was started
+     * (registered in this library).
+     */
+    uint64_t start_us;
 
     child_callback_t callback;
     void *callback_ctx;
@@ -101,8 +109,15 @@ child_abandon(struct child *child)
     child_free(child);
 }
 
+gcc_pure
+static double
+timeval_to_double(const struct timeval *tv)
+{
+    return tv->tv_sec + tv->tv_usec / 1000000.;
+}
+
 static void
-child_done(struct child *child, int status)
+child_done(struct child *child, int status, const struct rusage *rusage)
 {
     const int exit_status = WEXITSTATUS(status);
     if (WIFSIGNALED(status)) {
@@ -121,6 +136,14 @@ child_done(struct child *child, int status)
     else
         daemon_log(2, "child process '%s' (pid %d) exited with status %d\n",
                    child->name, (int)child->pid, exit_status);
+
+    daemon_log(6, "stats on '%s' (pid %d): %1.3fs elapsed, %1.3fs user, %1.3fs sys, %ld/%ld faults, %ld/%ld switches\n",
+               child->name, (int)child->pid,
+               (now_us() - child->start_us) / 1000000.,
+               timeval_to_double(&rusage->ru_utime),
+               timeval_to_double(&rusage->ru_stime),
+               rusage->ru_minflt, rusage->ru_majflt,
+               rusage->ru_nvcsw, rusage->ru_nivcsw);
 
     child_remove(child);
 
@@ -152,13 +175,14 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
     pid_t pid;
     int status;
 
-    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+    struct rusage rusage;
+    while ((pid = wait4(-1, &status, WNOHANG, &rusage)) > 0) {
         if (daemonize_child_exited(pid, status))
             continue;
 
         struct child *child = find_child_by_pid(pid);
         if (child != NULL)
-            child_done(child, status);
+            child_done(child, status, &rusage);
     }
 
     pool_commit();
@@ -229,6 +253,7 @@ child_register(pid_t pid, const char *name,
 
     child->pid = pid;
     child->name = p_strdup(pool, name);
+    child->start_us = now_us();
     child->callback = callback;
     child->callback_ctx = ctx;
     list_add(&child->siblings, &children);

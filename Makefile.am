@@ -1066,6 +1066,7 @@ test_t_balancer_LDADD = $(AM_LDADD) \
 
 test_t_cgi_SOURCES = test/t-cgi.c \
 	$(STOPWATCH_SRC) \
+	src/clock.c \
 	src/cgi_glue.c src/fork.c \
 	src/cgi_client.c src/cgi_launch.c \
 	src/cgi_parser.c \
