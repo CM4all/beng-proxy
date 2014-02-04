@@ -1034,7 +1034,7 @@ translate_cache_new(struct pool *pool, struct tstock *stock,
     assert(stock != NULL);
 
     tcache->pool = pool;
-    tcache->slice_pool = slice_pool_new(1024, 65536);
+    tcache->slice_pool = slice_pool_new(2048, 65536);
     tcache->cache = cache_new(pool, &tcache_class, 65521, max_size);
     tcache->per_host = hashmap_new(pool, 3779);
     tcache->stock = stock;

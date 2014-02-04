@@ -925,7 +925,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     assert(http_method_is_valid(method));
 
     struct pool *pool = pool_new_linear(caller_pool, "fcgi_client_request",
-                                        1024);
+                                        2048);
     struct fcgi_client *client = p_malloc(pool, sizeof(*client));
 #ifndef NDEBUG
     list_add(&client->siblings, &fcgi_clients);
