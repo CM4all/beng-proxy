@@ -5,7 +5,7 @@ cm4all-beng-proxy (4.0.15) unstable; urgency=low
   * fcgi_stock: kill child process after connect failure
   * fcgi_stock: kill child process after repeated timeout
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 04 Feb 2014 15:17:36 -0000
 
 cm4all-beng-proxy (4.0.14) unstable; urgency=low
 
