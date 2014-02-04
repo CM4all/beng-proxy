@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0.15) unstable; urgency=low
 
-  * 
+  * daemon: set up supplementary groups
 
  --   
 
