@@ -120,7 +120,7 @@ write_file(const char *path, const char *data)
 }
 
 static void
-setup_uid_map()
+setup_uid_map(void)
 {
     char buffer[64];
     sprintf(buffer, "%d %d 1", namespace_uid, namespace_uid);
@@ -128,7 +128,7 @@ setup_uid_map()
 }
 
 static void
-setup_gid_map()
+setup_gid_map(void)
 {
     char buffer[64];
     sprintf(buffer, "%d %d 1", namespace_gid, namespace_gid);
