@@ -409,6 +409,11 @@ enum beng_translation_command {
      * by a null byte.
      */
     TRANSLATE_BIND_MOUNT = 113,
+
+    /**
+     * Set resource limits via setrlimit().
+     */
+    TRANSLATE_RLIMITS = 114,
 };
 
 struct beng_translation_header {

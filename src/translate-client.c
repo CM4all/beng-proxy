@@ -865,6 +865,23 @@ translate_client_uts_namespace(struct translate_client *client,
     return true;
 }
 
+static bool
+translate_client_rlimits(struct translate_client *client,
+                         const char *payload)
+{
+    if (client->child_options == NULL) {
+        translate_client_error(client, "misplaced RLIMITS packet");
+        return false;
+    }
+
+    if (!rlimit_options_parse(&client->child_options->rlimits, payload)) {
+        translate_client_error(client, "malformed RLIMITS packet");
+        return false;
+    }
+
+    return true;
+}
+
 /**
  * Returns false if the client has been closed.
  */
@@ -2264,6 +2281,9 @@ translate_handle_packet(struct translate_client *client,
 
     case TRANSLATE_UTS_NAMESPACE:
         return translate_client_uts_namespace(client, payload);
+
+    case TRANSLATE_RLIMITS:
+        return translate_client_rlimits(client, payload);
     }
 
     error = g_error_new(translate_quark(), 0,

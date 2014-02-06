@@ -219,6 +219,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         pipe_filter(pool, cgi->path,
                     cgi->args.values, cgi->args.n,
                     &cgi->options.ns,
+                    &cgi->options.rlimits,
                     status, headers, body,
                     handler, handler_ctx);
         return;

@@ -1239,7 +1239,8 @@ explanation.
 \hline
 \end{longtable}
 
-See \ref{ns} for how to configure namespaces.
+See \ref{rlimits} for how to configure resource limits and \ref{ns}
+for how to configure namespaces.
 
 \subsection{Proxying requests}
 
@@ -1358,7 +1359,8 @@ for a CGI \\
 \hline
 \end{longtable}
 
-See \ref{ns} for how to configure namespaces.
+See \ref{rlimits} for how to configure resource limits and \ref{ns}
+for how to configure namespaces.
 
 \subsection{Local HTTP}
 
@@ -1375,7 +1377,115 @@ See \ref{ns} for how to configure namespaces.
 \hline
 \end{longtable}
 
-See \ref{ns} for how to configure namespaces.
+See \ref{rlimits} for how to configure resource limits and \ref{ns}
+for how to configure namespaces.
+
+\subsection{Resource Limits}
+\label{rlimits}
+
+The packet \verb|RLIMITS| specifies Linux resource limits for child
+processes.  Its payload is a string, a sequence of resource limit
+codes and their respective limit values.  The following resource
+limits are supported:
+
+\begin{longtable}{|l|l|p{10cm}|}
+\hline
+
+\texttt{t} & \texttt{CPU} & CPU time limit in seconds. \\
+
+\hline
+
+\texttt{f} & \texttt{FSIZE} & The maximum size of files that the
+process may create. \\
+
+\hline
+
+\texttt{d} & \texttt{DATA} & The maximum size of the process's data
+segment. \\
+
+\hline
+
+\texttt{s} & \texttt{STACK} & The maximum size of the process stack,
+in bytes. \\
+
+\hline
+
+\texttt{c} & \texttt{CORE} & Maximum size of core file. \\
+
+\hline
+
+\texttt{m} & \texttt{RSS} & The limit of the process's resident set,
+in pages. \\
+
+\hline
+
+\texttt{u} & \texttt{NPROC} & The maximum number of processes that can
+be created for the real user ID. \\
+
+\hline
+
+\texttt{n} & \texttt{NOFILE} & The maximum file descriptor number that
+can be opened by this process. \\
+
+\hline
+
+\texttt{l} & \texttt{MEMLOCK} & The maximum number of bytes of memory
+that may be locked into RAM. \\
+
+\hline
+
+\texttt{v} & \texttt{AS} & The maximum size of the process's virtual
+memory (address space) in bytes. \\
+
+\hline
+
+\texttt{i} & \texttt{SIGPENDING} & The maximum number of signals that
+may be queued. \\
+
+\hline
+
+\texttt{q} & \texttt{MSGQUEUE} & The maximum number of bytes that can
+be allocated for POSIX message queues. \\
+
+\hline
+
+\texttt{e} & \texttt{NICE} & A ceiling to which the process's nice
+value can be raised. \\
+
+\hline
+
+\texttt{r} & \texttt{RTPRIO} & Ceiling on the real-time priority that
+may be set for this process. \\
+
+\hline
+\end{longtable}
+
+The letter in the first column is the code for the payload, to be
+followed by '!' (for ``unlimited'') or the numeric limit value (with
+optional prefix ``K'', ``M'' or ``G'' for ``kibi'', ``mebi'',
+``gibi'').
+
+The limits are applied to both ``soft'' and ``hard'' by default.  The
+code \texttt{S} changes all following specifications to ``soft'' only,
+and \texttt{H} does the same for ``hard''.
+
+Example:
+
+\begin{verbatim}
+c!Sv1Gn256Hn512
+\end{verbatim}
+
+Explanation:
+
+\begin{itemize}
+\item \verb|c!| unlimited core file size (both soft and hard)
+\item \verb|S|: the following will be soft limits
+\item \verb|v1G|: limit address space to $1 GiB$ (soft; the hard limit
+  is unchanged)
+\item \verb|n256|: maximum 256 file descriptors (soft)
+\item \verb|H|: the following will be hard limits
+\item \verb|n512|: maximum 256 file descriptors (hard)
+\end{itemize}
 
 \subsection{Namespaces}
 \label{ns}

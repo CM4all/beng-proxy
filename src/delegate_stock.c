@@ -87,6 +87,7 @@ delegate_stock_fn(void *ctx)
     leave_signal_section(&info->signals);
 
     namespace_options_setup(&info->options->ns);
+    rlimit_options_apply(&info->options->rlimits);
 
     dup2(info->fds[1], STDIN_FILENO);
     close(info->fds[0]);

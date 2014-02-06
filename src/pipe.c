@@ -14,6 +14,7 @@
 #include "istream.h"
 #include "sigutil.h"
 #include "namespace_options.h"
+#include "rlimit_options.h"
 #include "djbhash.h"
 
 #include <daemon/log.h>
@@ -26,6 +27,7 @@
 
 struct pipe_ctx {
     const struct namespace_options *ns;
+    const struct rlimit_options *rlimits;
     const char *path;
     char *const*argv;
 
@@ -41,6 +43,7 @@ pipe_fn(void *ctx)
     leave_signal_section(&c->signals);
 
     namespace_options_setup(c->ns);
+    rlimit_options_apply(c->rlimits);
 
     execv(c->path, c->argv);
     fprintf(stderr, "exec('%s') failed: %s\n",
@@ -107,6 +110,7 @@ void
 pipe_filter(struct pool *pool, const char *path,
             const char *const* args, unsigned num_args,
             const struct namespace_options *ns,
+            const struct rlimit_options *rlimits,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx)
@@ -130,6 +134,7 @@ pipe_filter(struct pool *pool, const char *path,
 
     struct pipe_ctx c = {
         .ns = ns,
+        .rlimits = rlimits,
         .path = path,
         .argv = argv,
     };

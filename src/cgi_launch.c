@@ -177,6 +177,7 @@ cgi_fn(void *ctx)
     leave_signal_section(&c->signals);
 
     namespace_options_setup(&address->options.ns);
+    rlimit_options_apply(&address->options.rlimits);
 
     cgi_run(&address->options.jail,
             address->interpreter, address->action,
