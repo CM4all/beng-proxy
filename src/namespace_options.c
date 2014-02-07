@@ -180,12 +180,14 @@ namespace_options_setup(const struct namespace_options *options)
         _exit(2);
     }
 
-    if (new_root != NULL && (options->mount_home != NULL ||
-                             options->mounts != NULL)) {
+    if (options->mount_home != NULL || options->mounts != NULL) {
         /* go to /mnt so we can refer to the old directories with a
            relative path */
-        if (chdir("/mnt") < 0) {
-            fprintf(stderr, "chdir('/mnt') failed: %s\n", strerror(errno));
+
+        const char *path = new_root != NULL ? "/mnt" : "/";
+
+        if (chdir(path) < 0) {
+            fprintf(stderr, "chdir('%s') failed: %s\n", path, strerror(errno));
             _exit(2);
         }
     }
