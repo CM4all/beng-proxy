@@ -206,7 +206,7 @@ rlimit_options_parse(struct rlimit_options *r, const char *s)
         unsigned long value;
 
         if (*s == '!') {
-            value = RLIM_INFINITY;
+            value = (unsigned long)RLIM_INFINITY;
             ++s;
         } else {
             char *endptr;
