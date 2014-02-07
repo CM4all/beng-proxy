@@ -758,12 +758,13 @@ translate_client_mount_proc(struct translate_client *client,
 
     struct namespace_options *ns = client->ns_options;
 
-    if (ns == NULL || !ns->enable_mount || ns->mount_proc) {
+    if (ns == NULL || ns->mount_proc) {
         translate_client_error(client,
                                "misplaced MOUNT_PROC packet");
         return false;
     }
 
+    ns->enable_mount = true;
     ns->mount_proc = true;
     return true;
 }
@@ -779,12 +780,13 @@ translate_client_mount_tmp_tmpfs(struct translate_client *client,
 
     struct namespace_options *ns = client->ns_options;
 
-    if (ns == NULL || !ns->enable_mount || ns->mount_tmp_tmpfs) {
+    if (ns == NULL || ns->mount_tmp_tmpfs) {
         translate_client_error(client,
                                "misplaced MOUNT_TMP_TMPFS packet");
         return false;
     }
 
+    ns->enable_mount = true;
     ns->mount_tmp_tmpfs = true;
     return true;
 }
@@ -800,13 +802,14 @@ translate_client_mount_home(struct translate_client *client,
 
     struct namespace_options *ns = client->ns_options;
 
-    if (ns == NULL || !ns->enable_mount || ns->home == NULL ||
+    if (ns == NULL || ns->home == NULL ||
         ns->mount_home != NULL) {
         translate_client_error(client,
                                "misplaced MOUNT_HOME packet");
         return false;
     }
 
+    ns->enable_mount = true;
     ns->mount_home = payload;
     return true;
 }
