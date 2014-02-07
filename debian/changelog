@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0.16) unstable; urgency=low
 
-  * 
+  * namespace: set up uid/gid mapping without MOUNT_PROC
 
  --   
 

@@ -138,6 +138,12 @@ setup_gid_map(void)
 void
 namespace_options_setup(const struct namespace_options *options)
 {
+    /* set up UID/GID mapping in the old /proc */
+    if (options->enable_user) {
+        setup_gid_map();
+        setup_uid_map();
+    }
+
     if (options->enable_mount)
         /* convert all "shared" mounts to "private" mounts */
         mount(NULL, "/", NULL, MS_PRIVATE|MS_REC, NULL);
@@ -163,29 +169,6 @@ namespace_options_setup(const struct namespace_options *options)
         if (my_pivot_root(new_root, put_old) < 0) {
             fprintf(stderr, "pivot_root('%s') failed: %s\n",
                     new_root, strerror(errno));
-            _exit(2);
-        }
-    }
-
-    /* we must mount proc now before we umount the old filesystem,
-       because the kernel allows mounting proc only if proc was
-       previously visible in this namespace */
-    if (options->enable_user && options->mount_proc) {
-        /* mount writable proc */
-        if (mount("none", "/proc", "proc", MS_NOEXEC|MS_NOSUID|MS_NODEV, NULL) < 0) {
-            fprintf(stderr, "mount('/proc') failed: %s\n",
-                    strerror(errno));
-            _exit(2);
-        }
-
-        setup_gid_map();
-        setup_uid_map();
-
-        /* umount it; it will be mounted read-only after that
-           (MS_REMOUNT appears to be forbidden by Linux 3.13) */
-        if (umount2("/proc", MNT_DETACH) < 0) {
-            fprintf(stderr, "umount('/proc') failed: %s\n",
-                    strerror(errno));
             _exit(2);
         }
     }
