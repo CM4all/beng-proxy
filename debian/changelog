@@ -5,7 +5,7 @@ cm4all-beng-proxy (4.0.16) unstable; urgency=low
     PIVOT_ROOT
   * configurable resource limits for child processes
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 07 Feb 2014 12:48:44 -0000
 
 cm4all-beng-proxy (4.0.15) unstable; urgency=low
 
