@@ -19,6 +19,7 @@ file_address_init(struct file_address *address, const char *path)
 
     memset(address, 0, sizeof(*address));
     address->path = path;
+    child_options_init(&address->child_options);
 }
 
 struct file_address *

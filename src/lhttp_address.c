@@ -22,6 +22,7 @@ lhttp_address_init(struct lhttp_address *address, const char *path)
     memset(address, 0, sizeof(*address));
     address->path = path;
     param_array_init(&address->args);
+    child_options_init(&address->options);
     address->concurrency = 1;
 }
 

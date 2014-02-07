@@ -177,7 +177,8 @@ int main(int argc, char **argv) {
     struct event_base *event_base = event_init();
     fb_pool_init(false);
 
-    static struct child_options child_options;
+    struct child_options child_options;
+    child_options_init(&child_options);
 
     static struct context context;
     if (!was_launch(&context.process, argv[1], NULL, 0,

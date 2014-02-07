@@ -23,6 +23,7 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
 
     param_array_init(&cgi->args);
     param_array_init(&cgi->env);
+    child_options_init(&cgi->options);
 
     if (have_address_list)
         address_list_init(&cgi->address_list);
