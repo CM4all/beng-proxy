@@ -752,12 +752,6 @@ can be used to implement authentication (see \ref{authentication}). \\
 
 \hline
 
-\verb|PREVIOUS| & Tells beng-proxy to use the resource address of
-the previous translation response.  Only allowed if the request
-contains a \verb|CHECK| packet. \\
-
-\hline
-
 \end{longtable}
 
 \subsection{Response}
@@ -1163,6 +1157,12 @@ specified in this packet is not modified.
 The first 8 bytes is the mtime (seconds since UNIX epoch), the rest is
 the absolute path to a regular file (symlinks not supported).  The
 translation fails when the file does not exist or is inaccessible.  \\
+
+\hline
+
+\verb|PREVIOUS| & Tells beng-proxy to use the resource address of
+the previous translation response.  Only allowed if the request
+contains a \verb|CHECK| packet. \\
 
 \hline
 \end{longtable}
