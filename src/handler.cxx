@@ -189,17 +189,14 @@ apply_translate_response_session(request &request,
     return session;
 }
 
+/**
+ * Called by handle_translated_request() with the #translate_response
+ * copy.
+ */
 static void
-handle_translated_request(request &request, const translate_response &response)
+handle_translated_request2(request &request,
+                           const translate_response &response)
 {
-    /* copy the translate_response just in case the cache item is
-       freed before we send the final response */
-    /* TODO: use cache_item_lock() instead */
-    translate_response *response2 = (translate_response *)
-        p_malloc(request.request->pool, sizeof(*response2));
-    *response2 = response;
-    translate_response_copy(request.request->pool, response2, &response);
-    request.translate.response = response2;
     request.translate.transformation = response.views != nullptr
         ? response.views->transformation
         : nullptr;
@@ -276,6 +273,21 @@ handle_translated_request(request &request, const translate_response &response)
         response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
     }
+}
+
+static void
+handle_translated_request(request &request, const translate_response &response)
+{
+    /* copy the translate_response just in case the cache item is
+       freed before we send the final response */
+    /* TODO: use cache_item_lock() instead */
+    translate_response *response2 = (translate_response *)
+        p_malloc(request.request->pool, sizeof(*response2));
+    *response2 = response;
+    translate_response_copy(request.request->pool, response2, &response);
+    request.translate.response = response2;
+
+    handle_translated_request2(request, *response2);
 }
 
 extern const struct translate_handler handler_translate_handler;
