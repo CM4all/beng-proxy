@@ -39,18 +39,18 @@ extern "C" {
 
 static const char *
 bounce_uri(struct pool *pool, const struct request *request,
-           const struct translate_response *response)
+           const translate_response &response)
 {
-    const char *scheme = response->scheme != NULL
-        ? response->scheme : "http";
-    const char *host = response->host != NULL
-        ? response->host
+    const char *scheme = response.scheme != NULL
+        ? response.scheme : "http";
+    const char *host = response.host != NULL
+        ? response.host
         : strmap_get(request->request->headers, "host");
     if (host == NULL)
         host = "localhost";
 
-    const char *uri_path = response->uri != NULL
-        ? p_strncat(pool, response->uri, strlen(response->uri),
+    const char *uri_path = response.uri != NULL
+        ? p_strncat(pool, response.uri, strlen(response.uri),
                     ";", strref_is_empty(&request->uri.args) ? (size_t)0 : 1,
                     request->uri.args.data, request->uri.args.length,
                     "?", strref_is_empty(&request->uri.query) ? (size_t)0 : 1,
@@ -63,7 +63,7 @@ bounce_uri(struct pool *pool, const struct request *request,
     const char *escaped_uri = uri_escape_dup(pool, current_uri,
                                              strlen(current_uri), '%');
 
-    return p_strcat(pool, response->bounce, escaped_uri, NULL);
+    return p_strcat(pool, response.bounce, escaped_uri, NULL);
 }
 
 /**
@@ -72,12 +72,10 @@ bounce_uri(struct pool *pool, const struct request *request,
  */
 static const char *
 get_request_realm(struct pool *pool, const struct strmap *request_headers,
-                  const struct translate_response *response)
+                  const translate_response &response)
 {
-    assert(response != NULL);
-
-    if (response->realm != NULL)
-        return response->realm;
+    if (response.realm != NULL)
+        return response.realm;
 
     const char *host = strmap_get_checked(request_headers, "host");
     if (host != NULL) {
@@ -92,8 +90,7 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
 }
 
 static void
-handle_translated_request(request &request,
-                          const struct translate_response *response)
+handle_translated_request(request &request, const translate_response &response)
 {
     request.realm = get_request_realm(request.request->pool,
                                       request.request->headers, response);
@@ -105,17 +102,17 @@ handle_translated_request(request &request,
         request_ignore_session(&request);
     }
 
-    request.connection->site_name = response->site;
+    request.connection->site_name = response.site;
 
-    if (response->transparent) {
+    if (response.transparent) {
         session_id_clear(&request.session_id);
         request.stateless = true;
         request.args = NULL;
     }
 
-    if (response->discard_session)
+    if (response.discard_session)
         request_discard_session(&request);
-    else if (response->transparent)
+    else if (response.transparent)
         request_ignore_session(&request);
 
     /* copy the translate_response just in case the cache item is
@@ -123,41 +120,41 @@ handle_translated_request(request &request,
     /* TODO: use cache_item_lock() instead */
     translate_response *response2 = (translate_response *)
         p_malloc(request.request->pool, sizeof(*response2));
-    *response2 = *response;
-    translate_response_copy(request.request->pool, response2, response);
+    *response2 = response;
+    translate_response_copy(request.request->pool, response2, &response);
     request.translate.response = response2;
-    request.translate.transformation = response->views != NULL
-        ? response->views->transformation
+    request.translate.transformation = response.views != NULL
+        ? response.views->transformation
         : NULL;
 
-    if (response->request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE ||
-        response->response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE) {
+    if (response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE ||
+        response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE) {
         /* disable session management if cookies are not mangled by
            beng-proxy */
         session_id_clear(&request.session_id);
         request.stateless = true;
     }
 
-    if (response->status == (http_status_t)-1 ||
-        (response->status == (http_status_t)0 &&
-         response->address.type == RESOURCE_ADDRESS_NONE &&
-         response->www_authenticate == NULL &&
-         response->bounce == NULL &&
-         response->redirect == NULL)) {
+    if (response.status == (http_status_t)-1 ||
+        (response.status == (http_status_t)0 &&
+         response.address.type == RESOURCE_ADDRESS_NONE &&
+         response.www_authenticate == NULL &&
+         response.bounce == NULL &&
+         response.redirect == NULL)) {
         response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
     }
 
     struct session *session;
-    if (response->session != NULL || response->user != NULL ||
-        response->language != NULL || response->views->transformation != NULL)
+    if (response.session != NULL || response.user != NULL ||
+        response.language != NULL || response.views->transformation != NULL)
         session = request_get_session(&request);
     else
         session = NULL;
 
-    if (response->session != NULL) {
-        if (*response->session == 0) {
+    if (response.session != NULL) {
+        if (*response.session == 0) {
             /* clear translate session */
 
             if (session != NULL)
@@ -169,12 +166,12 @@ handle_translated_request(request &request,
                 session = request_make_session(&request);
 
             if (session != NULL)
-                session_set_translate(session, response->session);
+                session_set_translate(session, response.session);
         }
     }
 
-    if (response->user != NULL) {
-        if (*response->user == 0) {
+    if (response.user != NULL) {
+        if (*response.user == 0) {
             /* log out */
 
             if (session != NULL)
@@ -186,8 +183,8 @@ handle_translated_request(request &request,
                 session = request_make_session(&request);
 
             if (session != NULL)
-                session_set_user(session, response->user,
-                                 response->user_max_age);
+                session_set_user(session, response.user,
+                                 response.user_max_age);
         }
     } else if (session != NULL && session->user != NULL && session->user_expires > 0 &&
                is_expired(session->user_expires)) {
@@ -196,8 +193,8 @@ handle_translated_request(request &request,
         session->user = NULL;
     }
 
-    if (response->language != NULL) {
-        if (*response->language == 0) {
+    if (response.language != NULL) {
+        if (*response.language == 0) {
             /* reset language setting */
 
             if (session != NULL)
@@ -209,7 +206,7 @@ handle_translated_request(request &request,
                 session = request_make_session(&request);
 
             if (session != NULL)
-                session_set_language(session, response->language);
+                session_set_language(session, response.language);
         }
     }
 
@@ -220,40 +217,40 @@ handle_translated_request(request &request,
     if (session != NULL)
         session_put(session);
 
-    request.resource_tag = resource_address_id(&response->address,
+    request.resource_tag = resource_address_id(&response.address,
                                                request.request->pool);
 
     request.processor_focus = request.args != NULL &&
         request_processor_enabled(&request) &&
         strmap_get(request.args, "focus") != NULL;
 
-    if (response->address.type == RESOURCE_ADDRESS_LOCAL) {
-        if (response->address.u.file->delegate != NULL)
+    if (response.address.type == RESOURCE_ADDRESS_LOCAL) {
+        if (response.address.u.file->delegate != NULL)
             delegate_handler(request);
         else
             file_callback(&request);
 #ifdef HAVE_LIBNFS
-    } else if (response->address.type == RESOURCE_ADDRESS_NFS) {
+    } else if (response.address.type == RESOURCE_ADDRESS_NFS) {
         nfs_handler(&request);
 #endif
-    } else if (response->address.type == RESOURCE_ADDRESS_HTTP ||
-               response->address.type == RESOURCE_ADDRESS_LHTTP ||
-               resource_address_is_cgi_alike(&response->address) ||
-               response->address.type == RESOURCE_ADDRESS_NFS ||
-               response->address.type == RESOURCE_ADDRESS_AJP) {
+    } else if (response.address.type == RESOURCE_ADDRESS_HTTP ||
+               response.address.type == RESOURCE_ADDRESS_LHTTP ||
+               resource_address_is_cgi_alike(&response.address) ||
+               response.address.type == RESOURCE_ADDRESS_NFS ||
+               response.address.type == RESOURCE_ADDRESS_AJP) {
         proxy_handler(request);
-    } else if (response->redirect != NULL) {
-        http_status_t status = response->status != (http_status_t)0
-            ? response->status : HTTP_STATUS_SEE_OTHER;
-        response_dispatch_redirect(&request, status, response->redirect, NULL);
-    } else if (response->bounce != NULL) {
+    } else if (response.redirect != NULL) {
+        http_status_t status = response.status != (http_status_t)0
+            ? response.status : HTTP_STATUS_SEE_OTHER;
+        response_dispatch_redirect(&request, status, response.redirect, NULL);
+    } else if (response.bounce != NULL) {
         response_dispatch_redirect(&request, HTTP_STATUS_SEE_OTHER,
                                    bounce_uri(request.request->pool, &request,
                                               response),
                                    NULL);
-    } else if (response->status != (http_status_t)0) {
-        response_dispatch(&request, response->status, NULL, NULL);
-    } else if (response->www_authenticate != NULL) {
+    } else if (response.status != (http_status_t)0) {
+        response_dispatch(&request, response.status, NULL, NULL);
+    } else if (response.www_authenticate != NULL) {
         response_dispatch_message(&request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
     } else {
@@ -375,7 +372,7 @@ handler_translate_response(const struct translate_response *response,
         response = request.translate.previous;
     }
 
-    handle_translated_request(request, response);
+    handle_translated_request(request, *response);
 }
 
 static void
@@ -406,12 +403,12 @@ const struct translate_handler handler_translate_handler = {
 };
 
 static bool
-request_uri_parse(request &request2, struct parsed_uri *dest)
+request_uri_parse(request &request2, parsed_uri &dest)
 {
-    const struct http_server_request *request = request2.request;
+    const http_server_request &request = *request2.request;
 
-    if (!uri_path_verify_quick(request->uri) ||
-        !uri_parse(dest, request->uri)) {
+    if (!uri_path_verify_quick(request.uri) ||
+        !uri_parse(&dest, request.uri)) {
         /* response_dispatch() assumes that we have a translation
            response, and will dereference it - at this point, the
            translation server hasn't been queried yet, so we just
@@ -467,10 +464,10 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
     request2->translate.checks = 0;
     request2->translate.want_full_uri = false;
 
-    struct http_server_request *request = request2->request;
+    http_server_request &request = *request2->request;
     fill_translate_request(&request2->translate.request, request2->request,
                            &request2->uri, request2->args);
-    translate_cache(request->pool, tcache, &request2->translate.request,
+    translate_cache(request.pool, tcache, &request2->translate.request,
                     &handler_translate_handler, request2,
                     &request2->async_ref);
 }
@@ -479,12 +476,12 @@ static void
 serve_document_root_file(request &request2,
                          const struct config *config)
 {
-    struct http_server_request *request = request2.request;
+    http_server_request &request = *request2.request;
 
     struct parsed_uri *uri = &request2.uri;
 
     translate_response *tr = (translate_response *)
-        p_calloc(request->pool, sizeof(*tr));
+        p_calloc(request.pool, sizeof(*tr));
     request2.translate.response = tr;
 
     const char *index_file = NULL;
@@ -498,9 +495,9 @@ serve_document_root_file(request &request2,
 
     if (process) {
         struct transformation *transformation = (struct transformation *)
-            p_malloc(request->pool, sizeof(*transformation));
+            p_malloc(request.pool, sizeof(*transformation));
         widget_view *view = (widget_view *)
-            p_malloc(request->pool, sizeof(*view));
+            p_malloc(request.pool, sizeof(*view));
         widget_view_init(view);
 
         transformation->next = NULL;
@@ -511,7 +508,7 @@ serve_document_root_file(request &request2,
         tr->views = view;
     } else {
         widget_view *view = (widget_view *)
-            p_malloc(request->pool, sizeof(*view));
+            p_malloc(request.pool, sizeof(*view));
         widget_view_init(view);
 
         tr->views = view;
@@ -520,8 +517,8 @@ serve_document_root_file(request &request2,
 
     request2.translate.transformation = tr->views->transformation;
 
-    file_address *fa = (file_address *)p_malloc(request->pool, sizeof(*fa));
-    file_address_init(fa, p_strncat(request->pool,
+    file_address *fa = (file_address *)p_malloc(request.pool, sizeof(*fa));
+    file_address_init(fa, p_strncat(request.pool,
                                     config->document_root,
                                     strlen(config->document_root),
                                     uri->base.data,
@@ -617,7 +614,7 @@ handle_http_request(client_connection &connection,
     request2->response_sent = false;
 #endif
 
-    if (!request_uri_parse(*request2, &request2->uri))
+    if (!request_uri_parse(*request2, request2->uri))
         return;
 
     assert(!strref_is_empty(&request2->uri.base));
