@@ -89,8 +89,14 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
     return "";
 }
 
-static void
-handle_translated_request(request &request, const translate_response &response)
+/**
+ * Apply session-specific data from the #translate_response.  Returns
+ * the session object or nullptr.  The session must be freed by the
+ * caller using session_put().
+ */
+static struct session *
+apply_translate_response_session(request &request,
+                                 const translate_response &response)
 {
     request.realm = get_request_realm(request.request->pool,
                                       request.request->headers, response);
@@ -114,37 +120,6 @@ handle_translated_request(request &request, const translate_response &response)
         request_discard_session(&request);
     else if (response.transparent)
         request_ignore_session(&request);
-
-    /* copy the translate_response just in case the cache item is
-       freed before we send the final response */
-    /* TODO: use cache_item_lock() instead */
-    translate_response *response2 = (translate_response *)
-        p_malloc(request.request->pool, sizeof(*response2));
-    *response2 = response;
-    translate_response_copy(request.request->pool, response2, &response);
-    request.translate.response = response2;
-    request.translate.transformation = response.views != nullptr
-        ? response.views->transformation
-        : nullptr;
-
-    if (response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE ||
-        response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE) {
-        /* disable session management if cookies are not mangled by
-           beng-proxy */
-        session_id_clear(&request.session_id);
-        request.stateless = true;
-    }
-
-    if (response.status == (http_status_t)-1 ||
-        (response.status == (http_status_t)0 &&
-         response.address.type == RESOURCE_ADDRESS_NONE &&
-         response.www_authenticate == nullptr &&
-         response.bounce == nullptr &&
-         response.redirect == nullptr)) {
-        response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "Internal server error");
-        return;
-    }
 
     struct session *session;
     if (response.session != nullptr || response.user != nullptr ||
@@ -210,6 +185,46 @@ handle_translated_request(request &request, const translate_response &response)
                 session_set_language(session, response.language);
         }
     }
+
+    return session;
+}
+
+static void
+handle_translated_request(request &request, const translate_response &response)
+{
+    /* copy the translate_response just in case the cache item is
+       freed before we send the final response */
+    /* TODO: use cache_item_lock() instead */
+    translate_response *response2 = (translate_response *)
+        p_malloc(request.request->pool, sizeof(*response2));
+    *response2 = response;
+    translate_response_copy(request.request->pool, response2, &response);
+    request.translate.response = response2;
+    request.translate.transformation = response.views != nullptr
+        ? response.views->transformation
+        : nullptr;
+
+    if (response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE ||
+        response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE) {
+        /* disable session management if cookies are not mangled by
+           beng-proxy */
+        session_id_clear(&request.session_id);
+        request.stateless = true;
+    }
+
+    if (response.status == (http_status_t)-1 ||
+        (response.status == (http_status_t)0 &&
+         response.address.type == RESOURCE_ADDRESS_NONE &&
+         response.www_authenticate == nullptr &&
+         response.bounce == nullptr &&
+         response.redirect == nullptr)) {
+        response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                  "Internal server error");
+        return;
+    }
+
+    struct session *session =
+        apply_translate_response_session(request, response);
 
     /* always enforce sessions when the processor is enabled */
     if (request_processor_enabled(&request) && session == nullptr)
