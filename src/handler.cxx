@@ -398,6 +398,13 @@ handler_translate_response(const struct translate_response *response,
             return;
         }
 
+        /* apply changes from this response, then resume the
+           "previous" response */
+        struct session *session =
+            apply_translate_response_session(request, *response);
+        if (session != nullptr)
+            session_put(session);
+
         response = request.translate.previous;
     }
 

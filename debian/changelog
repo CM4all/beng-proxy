@@ -1,6 +1,7 @@
 cm4all-beng-proxy (4.0.17) unstable; urgency=low
 
-  * 
+  * handler: apply session directives from current translation response
+    before resuming the "previous" response
 
  --   
 
