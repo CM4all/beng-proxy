@@ -41,44 +41,44 @@ static const char *
 bounce_uri(struct pool *pool, const struct request *request,
            const translate_response &response)
 {
-    const char *scheme = response.scheme != NULL
+    const char *scheme = response.scheme != nullptr
         ? response.scheme : "http";
-    const char *host = response.host != NULL
+    const char *host = response.host != nullptr
         ? response.host
         : strmap_get(request->request->headers, "host");
-    if (host == NULL)
+    if (host == nullptr)
         host = "localhost";
 
-    const char *uri_path = response.uri != NULL
+    const char *uri_path = response.uri != nullptr
         ? p_strncat(pool, response.uri, strlen(response.uri),
                     ";", strref_is_empty(&request->uri.args) ? (size_t)0 : 1,
                     request->uri.args.data, request->uri.args.length,
                     "?", strref_is_empty(&request->uri.query) ? (size_t)0 : 1,
                     request->uri.query.data, request->uri.query.length,
-                    NULL)
+                    nullptr)
         : request->request->uri;
 
     const char *current_uri = p_strcat(pool, scheme, "://", host, uri_path,
-                                       NULL);
+                                       nullptr);
     const char *escaped_uri = uri_escape_dup(pool, current_uri,
                                              strlen(current_uri), '%');
 
-    return p_strcat(pool, response.bounce, escaped_uri, NULL);
+    return p_strcat(pool, response.bounce, escaped_uri, nullptr);
 }
 
 /**
  * Determine the realm name, consider the override by the translation
- * server.  Guaranteed to return non-NULL.
+ * server.  Guaranteed to return non-nullptr.
  */
 static const char *
 get_request_realm(struct pool *pool, const struct strmap *request_headers,
                   const translate_response &response)
 {
-    if (response.realm != NULL)
+    if (response.realm != nullptr)
         return response.realm;
 
     const char *host = strmap_get_checked(request_headers, "host");
-    if (host != NULL) {
+    if (host != nullptr) {
         char *p = p_strdup(pool, host);
         str_to_lower(p);
         return p;
@@ -95,7 +95,7 @@ handle_translated_request(request &request, const translate_response &response)
     request.realm = get_request_realm(request.request->pool,
                                       request.request->headers, response);
 
-    if (request.session_realm != NULL &&
+    if (request.session_realm != nullptr &&
         strcmp(request.realm, request.session_realm) != 0) {
         daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",
                    request.realm, request.session_realm);
@@ -107,7 +107,7 @@ handle_translated_request(request &request, const translate_response &response)
     if (response.transparent) {
         session_id_clear(&request.session_id);
         request.stateless = true;
-        request.args = NULL;
+        request.args = nullptr;
     }
 
     if (response.discard_session)
@@ -123,9 +123,9 @@ handle_translated_request(request &request, const translate_response &response)
     *response2 = response;
     translate_response_copy(request.request->pool, response2, &response);
     request.translate.response = response2;
-    request.translate.transformation = response.views != NULL
+    request.translate.transformation = response.views != nullptr
         ? response.views->transformation
-        : NULL;
+        : nullptr;
 
     if (response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE ||
         response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE) {
@@ -138,94 +138,95 @@ handle_translated_request(request &request, const translate_response &response)
     if (response.status == (http_status_t)-1 ||
         (response.status == (http_status_t)0 &&
          response.address.type == RESOURCE_ADDRESS_NONE &&
-         response.www_authenticate == NULL &&
-         response.bounce == NULL &&
-         response.redirect == NULL)) {
+         response.www_authenticate == nullptr &&
+         response.bounce == nullptr &&
+         response.redirect == nullptr)) {
         response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
     }
 
     struct session *session;
-    if (response.session != NULL || response.user != NULL ||
-        response.language != NULL || response.views->transformation != NULL)
+    if (response.session != nullptr || response.user != nullptr ||
+        response.language != nullptr ||
+        response.views->transformation != nullptr)
         session = request_get_session(&request);
     else
-        session = NULL;
+        session = nullptr;
 
-    if (response.session != NULL) {
+    if (response.session != nullptr) {
         if (*response.session == 0) {
             /* clear translate session */
 
-            if (session != NULL)
+            if (session != nullptr)
                 session_clear_translate(session);
         } else {
             /* set new translate session */
 
-            if (session == NULL)
+            if (session == nullptr)
                 session = request_make_session(&request);
 
-            if (session != NULL)
+            if (session != nullptr)
                 session_set_translate(session, response.session);
         }
     }
 
-    if (response.user != NULL) {
+    if (response.user != nullptr) {
         if (*response.user == 0) {
             /* log out */
 
-            if (session != NULL)
+            if (session != nullptr)
                 session_clear_user(session);
         } else {
             /* log in */
 
-            if (session == NULL)
+            if (session == nullptr)
                 session = request_make_session(&request);
 
-            if (session != NULL)
+            if (session != nullptr)
                 session_set_user(session, response.user,
                                  response.user_max_age);
         }
-    } else if (session != NULL && session->user != NULL && session->user_expires > 0 &&
+    } else if (session != nullptr && session->user != nullptr && session->user_expires > 0 &&
                is_expired(session->user_expires)) {
         daemon_log(4, "user '%s' has expired\n", session->user);
         d_free(session->pool, session->user);
-        session->user = NULL;
+        session->user = nullptr;
     }
 
-    if (response.language != NULL) {
+    if (response.language != nullptr) {
         if (*response.language == 0) {
             /* reset language setting */
 
-            if (session != NULL)
+            if (session != nullptr)
                 session_clear_language(session);
         } else {
             /* override language */
 
-            if (session == NULL)
+            if (session == nullptr)
                 session = request_make_session(&request);
 
-            if (session != NULL)
+            if (session != nullptr)
                 session_set_language(session, response.language);
         }
     }
 
     /* always enforce sessions when the processor is enabled */
-    if (request_processor_enabled(&request) && session == NULL)
+    if (request_processor_enabled(&request) && session == nullptr)
         session = request_make_session(&request);
 
-    if (session != NULL)
+    if (session != nullptr)
         session_put(session);
 
     request.resource_tag = resource_address_id(&response.address,
                                                request.request->pool);
 
-    request.processor_focus = request.args != NULL &&
+    request.processor_focus = request.args != nullptr &&
         request_processor_enabled(&request) &&
-        strmap_get(request.args, "focus") != NULL;
+        strmap_get(request.args, "focus") != nullptr;
 
     if (response.address.type == RESOURCE_ADDRESS_LOCAL) {
-        if (response.address.u.file->delegate != NULL)
+        if (response.address.u.file->delegate != nullptr)
             delegate_handler(request);
         else
             file_callback(&request);
@@ -239,18 +240,19 @@ handle_translated_request(request &request, const translate_response &response)
                response.address.type == RESOURCE_ADDRESS_NFS ||
                response.address.type == RESOURCE_ADDRESS_AJP) {
         proxy_handler(request);
-    } else if (response.redirect != NULL) {
+    } else if (response.redirect != nullptr) {
         http_status_t status = response.status != (http_status_t)0
             ? response.status : HTTP_STATUS_SEE_OTHER;
-        response_dispatch_redirect(&request, status, response.redirect, NULL);
-    } else if (response.bounce != NULL) {
+        response_dispatch_redirect(&request, status, response.redirect,
+                                   nullptr);
+    } else if (response.bounce != nullptr) {
         response_dispatch_redirect(&request, HTTP_STATUS_SEE_OTHER,
                                    bounce_uri(request.request->pool, &request,
                                               response),
-                                   NULL);
+                                   nullptr);
     } else if (response.status != (http_status_t)0) {
-        response_dispatch(&request, response.status, NULL, NULL);
-    } else if (response.www_authenticate != NULL) {
+        response_dispatch(&request, response.status, nullptr, nullptr);
+    } else if (response.www_authenticate != nullptr) {
         response_dispatch_message(&request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
     } else {
@@ -275,17 +277,17 @@ install_error_response(request &request)
     error_response.status = (http_status_t)-1;
 
     request.translate.response = &error_response;
-    request.translate.transformation = NULL;
+    request.translate.transformation = nullptr;
 }
 
 static const char *
 uri_without_query_string(struct pool *pool, const char *uri)
 {
-    assert(pool != NULL);
-    assert(uri != NULL);
+    assert(pool != nullptr);
+    assert(uri != nullptr);
 
     const char *qmark = strchr(uri, '?');
-    if (qmark != NULL)
+    if (qmark != nullptr)
         return p_strndup(pool, uri, qmark - uri);
 
     return uri;
@@ -361,7 +363,7 @@ handler_translate_response(const struct translate_response *response,
     }
 
     if (response->previous) {
-        if (request.translate.previous == NULL) {
+        if (request.translate.previous == nullptr) {
             daemon_log(2, "no previous translation response\n");
             response_dispatch_message(&request,
                                       HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -434,24 +436,24 @@ fill_translate_request(struct translate_request *t,
     t->remote_host = request->remote_host_and_port;
     t->host = strmap_get(request->headers, "host");
     t->user_agent = strmap_get(request->headers, "user-agent");
-    t->ua_class = t->user_agent != NULL
+    t->ua_class = t->user_agent != nullptr
         ? ua_classification_lookup(t->user_agent)
-        : NULL;
+        : nullptr;
     t->accept_language = strmap_get(request->headers, "accept-language");
     t->authorization = strmap_get(request->headers, "authorization");
     t->uri = strref_dup(request->pool, &uri->base);
-    t->args = args != NULL
+    t->args = args != nullptr
         ? args_format(request->pool, args,
-                      NULL, NULL, NULL, NULL,
+                      nullptr, nullptr, nullptr, nullptr,
                       "translate")
-        : NULL;
-    if (t->args != NULL && *t->args == 0)
-        t->args = NULL;
+        : nullptr;
+    if (t->args != nullptr && *t->args == 0)
+        t->args = nullptr;
 
     t->query_string = strref_is_empty(&uri->query)
-        ? NULL
+        ? nullptr
         : strref_dup(request->pool, &uri->query);
-    t->widget_type = NULL;
+    t->widget_type = nullptr;
     strref_null(&t->check);
     strref_null(&t->want_full_uri);
     t->error_document_status = (http_status_t)0;
@@ -460,7 +462,7 @@ fill_translate_request(struct translate_request *t,
 static void
 ask_translation_server(struct request *request2, struct tcache *tcache)
 {
-    request2->translate.previous = NULL;
+    request2->translate.previous = nullptr;
     request2->translate.checks = 0;
     request2->translate.want_full_uri = false;
 
@@ -484,7 +486,7 @@ serve_document_root_file(request &request2,
         p_calloc(request.pool, sizeof(*tr));
     request2.translate.response = tr;
 
-    const char *index_file = NULL;
+    const char *index_file = nullptr;
     bool process;
     if (uri->base.data[uri->base.length - 1] == '/') {
         index_file = "index.html";
@@ -500,7 +502,7 @@ serve_document_root_file(request &request2,
             p_malloc(request.pool, sizeof(*view));
         widget_view_init(view);
 
-        transformation->next = NULL;
+        transformation->next = nullptr;
         transformation->type = transformation::TRANSFORMATION_PROCESS;
 
         view->transformation = transformation;
@@ -524,7 +526,7 @@ serve_document_root_file(request &request2,
                                     uri->base.data,
                                     uri->base.length,
                                     index_file, (size_t)10,
-                                    NULL));
+                                    nullptr));
 
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
     tr->address.u.file = fa;
@@ -551,7 +553,7 @@ serve_document_root_file(request &request2,
 
     request2.resource_tag = tr->address.u.file->path;
     request2.processor_focus = process &&
-        strmap_get_checked(request2.args, "focus") != NULL;
+        strmap_get_checked(request2.args, "focus") != nullptr;
 
     file_callback(&request2);
 }
@@ -590,21 +592,21 @@ handle_http_request(client_connection &connection,
         p_malloc(request.pool, sizeof(*request2));
     request2->connection = &connection;
     request2->request = &request;
-    request2->product_token = NULL;
+    request2->product_token = nullptr;
 #ifndef NO_DATE_HEADER
-    request2->date = NULL;
+    request2->date = nullptr;
 #endif
 
-    request2->args = NULL;
-    request2->cookies = NULL;
+    request2->args = nullptr;
+    request2->cookies = nullptr;
     session_id_clear(&request2->session_id);
     request2->send_session_cookie = false;
 #ifdef DUMP_WIDGET_TREE
-    request2->dump_widget_tree = NULL;
+    request2->dump_widget_tree = nullptr;
 #endif
     request2->body = http_server_request_has_body(&request)
         ? istream_hold_new(request.pool, request.body)
-        : NULL;
+        : nullptr;
     request2->transformed = false;
 
     async_init(&request2->operation, &handler_operation);
@@ -623,7 +625,7 @@ handle_http_request(client_connection &connection,
     request_args_parse(request2);
     request_determine_session(request2);
 
-    if (connection.instance->translate_cache == NULL)
+    if (connection.instance->translate_cache == nullptr)
         serve_document_root_file(*request2, connection.config);
     else
         ask_translation_server(request2, connection.instance->translate_cache);
