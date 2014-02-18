@@ -243,6 +243,8 @@ Other sticky modes:
 \begin{itemize}
 \item \texttt{none}: simple round-robin (the default mode)
 \item \texttt{failover}: the first non-failing node is used
+\item \verb|source_ip|: the modulo of the client's source IP is used
+  to calculate the node
 \item \texttt{session\_modulo}: the modulo of the \texttt{beng-proxy}
   session is used to calculate the node
 \item \texttt{cookie}: a random cookie is generated, and the node is
