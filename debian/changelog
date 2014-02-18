@@ -1,6 +1,7 @@
 cm4all-beng-proxy (4.0.18) unstable; urgency=low
 
   * doc/lb: document sticky mode "source_ip"
+  * lb/tcp: fix endless loop due to misrouted write event
 
  --   
 

@@ -111,7 +111,7 @@ inbound_buffered_socket_write(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    return filtered_socket_read(&tcp->inbound, false);
+    return buffered_socket_read(&tcp->outbound, false);
 }
 
 static bool
@@ -212,7 +212,7 @@ outbound_buffered_socket_write(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    return buffered_socket_read(&tcp->outbound, false);
+    return filtered_socket_read(&tcp->inbound, false);
 }
 
 static bool
