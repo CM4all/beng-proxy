@@ -10,7 +10,12 @@
 #include <stdint.h>
 
 enum beng_translation_command {
+    /**
+     * Beginning of a request/response.  The optional payload is a
+     * uint8_t specifying the protocol version.
+     */
     TRANSLATE_BEGIN = 1,
+
     TRANSLATE_END = 2,
     TRANSLATE_HOST = 3,
     TRANSLATE_URI = 4,

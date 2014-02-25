@@ -651,7 +651,7 @@ side closes the connection.
 \item client sends \verb|HOST| ``www.example.com''
 \item client sends \verb|URI| ``/foo/index.html''
 \item client sends \verb|END|
-\item server sends \verb|BEGIN|
+\item server sends \verb|BEGIN| ``\\x01''
 \item server sends \verb|PATH| ``/var/www/foo/index.html''
 \item server sends \verb|CONTENT_TYPE| ``text/html; charset=utf8''
 \item server sends \verb|PROCESS|
@@ -769,7 +769,9 @@ can be used to implement authentication (see \ref{authentication}). \\
 
 \hline
 
-\verb|BEGIN| & Begins the response. \\
+\verb|BEGIN| & Begins the response.  The payload is a 8-bit unsigned
+integer specifying the protocol version.  The initial protocol version
+is 0. \\
 
 \hline
 

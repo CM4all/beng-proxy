@@ -14,8 +14,17 @@ class Response:
     response, call finish().  This method returns the full response
     (all serialized packets) as a string."""
 
-    def __init__(self):
-        self._data = packet_header(TRANSLATE_BEGIN)
+    def __init__(self, protocol_version=0):
+        assert isinstance(protocol_version, int)
+        assert protocol_version >= 0
+        assert protocol_version <= 0xff
+
+        self._data = ''
+
+        payload = ''
+        if protocol_version > 0:
+            payload = struct.pack('B', protocol_version)
+        self.packet(TRANSLATE_BEGIN, payload)
 
     def finish(self):
         """Finish the response, and return it as a string."""

@@ -21,6 +21,11 @@
 struct pool;
 
 struct translate_response {
+    /**
+     * The protocol version from the BEGIN packet.
+     */
+    unsigned protocol_version;
+
     unsigned max_age;
 
     http_status_t status;
