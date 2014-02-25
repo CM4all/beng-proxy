@@ -459,23 +459,12 @@ tcache_load_response(struct pool *pool, struct translate_response *dest,
     return true;
 }
 
-static bool
-tcache_vary_contains(const struct translate_response *response,
-                     enum beng_translation_command command)
-{
-    for (unsigned i = 0; i < response->num_vary; ++i)
-        if (response->vary[i] == command)
-            return true;
-
-    return false;
-}
-
 static const char *
 tcache_vary_copy(struct pool *pool, const char *p,
                  const struct translate_response *response,
                  enum beng_translation_command command)
 {
-    return p != nullptr && tcache_vary_contains(response, command)
+    return p != nullptr && translate_response_vary_contains(response, command)
         ? p_strdup(pool, p)
         : nullptr;
 }
@@ -795,7 +784,7 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
 
         item->request.local_address =
             tcr->request->local_address != nullptr &&
-            tcache_vary_contains(response, TRANSLATE_LOCAL_ADDRESS)
+            translate_response_vary_contains(response, TRANSLATE_LOCAL_ADDRESS)
             ? (const struct sockaddr *)
             p_memdup(pool, tcr->request->local_address,
                      tcr->request->local_address_length)
