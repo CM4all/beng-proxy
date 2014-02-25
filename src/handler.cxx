@@ -37,6 +37,8 @@ extern "C" {
 
 #include <assert.h>
 
+static unsigned translation_protocol_version;
+
 static const char *
 bounce_uri(struct pool *pool, const struct request *request,
            const translate_response &response)
@@ -325,6 +327,8 @@ handler_translate_response(const struct translate_response *response,
                            void *ctx)
 {
     struct request &request = *(struct request *)ctx;
+
+    translation_protocol_version = response->protocol_version;
 
     /* just in case we error out before handle_translated_request()
        assigns the real response */
