@@ -46,6 +46,7 @@ struct tcache_item {
     struct pool *pool;
 
     struct {
+        const char *param;
         const char *session;
 
         const struct sockaddr *local_address;
@@ -244,8 +245,7 @@ tcache_request_evaluate(const struct translate_request *request)
     return (request->uri != nullptr || request->widget_type != nullptr) &&
         request->check.length < MAX_CACHE_CHECK &&
         request->want_full_uri.length <= MAX_CACHE_WFU &&
-        request->authorization == nullptr &&
-        request->param == nullptr;
+        request->authorization == nullptr;
 }
 
 /* check whether the response is cacheable */
@@ -531,6 +531,10 @@ tcache_vary_match(const struct tcache_item *item,
         return tcache_uri_match(item->item.key,
                                 request->uri, strict);
 
+    case TRANSLATE_PARAM:
+        return tcache_string_match(item->request.param,
+                                   request->param, strict);
+
     case TRANSLATE_SESSION:
         return tcache_string_match(item->request.session,
                                    request->session, strict);
@@ -777,6 +781,10 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
 
         cache_item_init_relative(&item->item, max_age, 1);
         item->pool = pool;
+
+        item->request.param =
+            tcache_vary_copy(pool, tcr->request->session,
+                             response, TRANSLATE_PARAM);
 
         item->request.session =
             tcache_vary_copy(pool, tcr->request->session,
