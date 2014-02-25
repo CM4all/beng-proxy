@@ -682,6 +682,14 @@ just the raw string, without terminating zero.
 \begin{longtable}{|l|p{10cm}|}
 \hline
 
+\verb|BEGIN| & Begins the request. \\
+
+\hline
+
+\verb|ENDS| & Finishes the request. \\
+
+\hline
+
 \verb|LOCAL_ADDRESS| & The local socket address the request was
 received on.  The payload is a \texttt{struct sockaddr}. \\
 
@@ -758,6 +766,14 @@ can be used to implement authentication (see \ref{authentication}). \\
 \label{tresponse}
 
 \begin{longtable}{|l|p{8cm}|}
+
+\hline
+
+\verb|BEGIN| & Begins the response. \\
+
+\hline
+
+\verb|ENDS| & Finishes the response. \\
 
 \hline
 
