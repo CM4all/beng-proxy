@@ -143,6 +143,10 @@ struct translate_response {
     } validate_mtime;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_pure
 static inline bool
 translate_response_vary_contains(const struct translate_response *response,
@@ -175,5 +179,9 @@ bool
 translate_response_expand(struct pool *pool,
                           struct translate_response *response,
                           const GMatchInfo *match_info, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

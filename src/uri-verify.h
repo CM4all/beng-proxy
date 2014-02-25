@@ -12,6 +12,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Verifies one path segment of an URI according to RFC 2396.
  */
@@ -50,5 +54,9 @@ uri_path_verify_paranoid(const char *uri);
 gcc_pure
 bool
 uri_path_verify_quick(const char *uri);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

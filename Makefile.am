@@ -231,7 +231,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/strmap.c src/strmap.h \
 	src/strref-dpool.h \
 	src/strref-pool.h \
-	src/tcache.c src/tcache.h \
+	src/tcache.cxx src/tcache.h \
 	src/tcp-stock.c src/tcp-stock.h \
 	src/tcp-balancer.c src/tcp-balancer.h \
 	src/tpool.h \
@@ -861,7 +861,7 @@ test_t_cache_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
-test_t_tcache_SOURCES = test/t-tcache.c src/tcache.c src/cache.c \
+test_t_tcache_SOURCES = test/t-tcache.c src/tcache.cxx src/cache.c \
 	src/translate-response.c \
 	src/hashmap.c src/strmap.c \
 	src/widget-view.c \
@@ -1293,7 +1293,7 @@ test_t_widget_registry_SOURCES = test/t-widget-registry.c \
 	src/widget-registry.c src/stock.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/transformation.c \
-	src/tcache.c src/cache.c \
+	src/tcache.cxx src/cache.c \
 	src/translate-response.c \
 	src/widget-view.c \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
