@@ -44,6 +44,8 @@
 #include <stdbool.h>
 #include <netdb.h>
 
+static const uint8_t PROTOCOL_VERSION = 1;
+
 enum packet_reader_state {
     PACKET_READER_HEADER,
     PACKET_READER_PAYLOAD,
@@ -307,7 +309,9 @@ marshal_request(struct pool *pool, const struct translate_request *request,
 
     gb = growing_buffer_new(pool, 512);
 
-    success = write_packet(gb, TRANSLATE_BEGIN, NULL, error_r) &&
+    success = write_packet_n(gb, TRANSLATE_BEGIN,
+                             &PROTOCOL_VERSION, sizeof(PROTOCOL_VERSION),
+                             error_r) &&
         (request->error_document_status == 0 ||
          (write_packet(gb, TRANSLATE_ERROR_DOCUMENT, "", error_r) &&
           write_short(gb, TRANSLATE_STATUS,

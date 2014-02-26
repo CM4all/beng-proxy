@@ -682,7 +682,9 @@ just the raw string, without terminating zero.
 \begin{longtable}{|l|p{10cm}|}
 \hline
 
-\verb|BEGIN| & Begins the request. \\
+\verb|BEGIN| & Begins the request.  The payload is a 8-bit unsigned
+integer specifying the protocol version.  The initial protocol version
+is 0. \\
 
 \hline
 
