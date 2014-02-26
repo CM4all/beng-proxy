@@ -244,7 +244,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/uri-extract.h \
 	src/uri-relative.h \
 	src/widget-http.h \
-	src/widget-registry.h \
 	src/widget-resolver.h \
 	src/widget.h \
 	$(STOPWATCH_SRC) \
@@ -287,7 +286,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget-uri.c \
 	src/widget-quark.h \
 	src/widget-request.c src/widget-request.h \
-	src/widget-registry.c \
+	src/widget_registry.cxx src/widget-registry.h \
 	src/widget-resolver.c \
 	src/widget-approval.c src/widget-approval.h \
 	src/widget-dump.h \
@@ -1290,7 +1289,7 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_widget_registry_SOURCES = test/t-widget-registry.c \
-	src/widget-registry.c src/stock.c \
+	src/widget_registry.cxx src/stock.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/transformation.c \
 	src/tcache.cxx src/cache.c \

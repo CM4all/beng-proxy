@@ -13,8 +13,12 @@ struct tcache;
 struct widget_class;
 struct async_operation_ref;
 
-typedef void (*widget_class_callback_t)(const struct widget_class *class,
+typedef void (*widget_class_callback_t)(const struct widget_class *cls,
                                         void *ctx);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void
 widget_class_lookup(struct pool *pool, struct pool *widget_pool,
@@ -23,5 +27,9 @@ widget_class_lookup(struct pool *pool, struct pool *widget_pool,
                     widget_class_callback_t callback,
                     void *ctx,
                     struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
