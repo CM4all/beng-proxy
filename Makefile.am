@@ -267,7 +267,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cookie_jar.c src/cookie_jar.h \
 	src/cookie_client.c src/cookie_client.h \
 	src/cookie_server.c src/cookie_server.h \
-	src/translate-client.c src/translate-client.h \
+	src/translate_client.cxx src/translate-client.h \
 	src/translate-request.h \
 	src/translate-response.c rc/translate-response.h \
 	src/tvary.c src/tvary.h \
@@ -1375,7 +1375,7 @@ test_request_translation_SOURCES = test/request-translation.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/fifo-buffer.c src/buffered_io.c src/direct.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
-	src/translate-client.c src/tstock.c src/growing-buffer.c src/gb-io.c \
+	src/translate_client.cxx src/tstock.c src/growing-buffer.c src/gb-io.c \
 	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
 	src/tcp-stock.c src/client-socket.c \
 	src/fd_util.c src/fd-util.c \
