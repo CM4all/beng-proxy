@@ -28,7 +28,7 @@ void
 response_dispatch_error(struct request *request, GError *error)
 {
     if (error->domain == http_response_quark()) {
-        response_dispatch_message(request, error->code,
+        response_dispatch_message(request, http_status_t(error->code),
                                   p_strdup(request->request->pool,
                                            error->message));
         return;
