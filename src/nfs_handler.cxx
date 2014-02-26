@@ -10,7 +10,7 @@
 #include "tvary.h"
 #include "static-headers.h"
 #include "header-writer.h"
-#include "generate_response.h"
+#include "generate_response.hxx"
 #include "growing-buffer.h"
 #include "request.h"
 #include "connection.h"

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "generate_response.h"
+#include "generate_response.hxx"
 #include "request.h"
 #include "http_server.h"
 #include "header-writer.h"
@@ -19,7 +19,7 @@ method_not_allowed(struct request *request2, const char *allow)
     struct http_server_request *request = request2->request;
     struct growing_buffer *headers = growing_buffer_new(request->pool, 128);
 
-    assert(allow != NULL);
+    assert(allow != nullptr);
 
     header_write(headers, "content-type", "text/plain");
     header_write(headers, "allow", allow);

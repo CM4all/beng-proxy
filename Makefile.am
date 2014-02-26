@@ -211,7 +211,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/request.cxx src/request.h \
 	src/rerror.c \
 	src/response.cxx \
-	src/generate_response.c src/generate_response.h \
+	src/generate_response.cxx src/generate_response.hxx \
 	src/resource-tag.c src/resource-tag.h \
 	src/rewrite-uri.c src/rewrite-uri.h \
 	src/rwlock.h \

@@ -10,7 +10,7 @@
 #include "static-headers.h"
 #include "delegate_glue.h"
 #include "http_error.h"
-#include "generate_response.h"
+#include "generate_response.hxx"
 #include "request.h"
 #include "http_server.h"
 #include "http_response.h"
