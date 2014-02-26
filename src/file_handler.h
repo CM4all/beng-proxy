@@ -15,6 +15,10 @@ struct request;
 struct file_request;
 struct stat;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 file_dispatch(struct request *request2, const struct stat *st,
               const struct file_request *file_request,
@@ -22,5 +26,9 @@ file_dispatch(struct request *request2, const struct stat *st,
 
 void
 file_callback(struct request *request);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

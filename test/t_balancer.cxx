@@ -1,12 +1,8 @@
 #include "PoolTest.hxx"
-
-extern "C" {
 #include "failure.h"
 #include "balancer.h"
 #include "pool.h"
 #include "address_list.h"
-}
-
 #include "address_envelope.h"
 
 #include <inline/compiler.h>

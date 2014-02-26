@@ -1,6 +1,4 @@
-extern "C" {
 #include "rubber.h"
-}
 
 #include <inline/compiler.h>
 

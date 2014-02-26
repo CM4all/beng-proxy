@@ -39,11 +39,19 @@ struct parsed_uri {
     struct strref query;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Split the URI into its parts.  The result contains pointers into
  * the original string.
  */
 bool
 uri_parse(struct parsed_uri *dest, const char *src);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

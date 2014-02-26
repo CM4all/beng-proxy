@@ -14,6 +14,10 @@ struct async_operation_ref;
 struct hstock;
 struct child_options;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const char *helper,
@@ -21,5 +25,9 @@ delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const char *path,
                     const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

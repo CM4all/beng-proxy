@@ -5,8 +5,6 @@
  */
 
 #include "handler.hxx"
-
-extern "C" {
 #include "file_handler.h"
 #include "file_headers.h"
 #include "static-headers.h"
@@ -18,7 +16,6 @@ extern "C" {
 #include "http_response.h"
 #include "global.h"
 #include "istream_file.h"
-}
 
 #include <assert.h>
 #include <sys/stat.h>

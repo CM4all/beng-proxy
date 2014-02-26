@@ -79,10 +79,18 @@ char_to_upper_inplace(char *ch_r)
         *ch_r -= 'a' - 'A';
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 str_to_lower(char *s);
 
 void
 str_to_upper(char *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

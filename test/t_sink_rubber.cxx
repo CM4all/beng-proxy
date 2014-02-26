@@ -1,13 +1,10 @@
 #include "PoolTest.hxx"
 #include "async.h"
-
-extern "C" {
 #include "rubber.h"
 #include "sink_rubber.h"
 #include "pool.h"
 #include "istream-impl.h"
 #include "istream.h"
-}
 
 #include <inline/compiler.h>
 

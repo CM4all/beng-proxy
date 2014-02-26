@@ -51,6 +51,10 @@ struct widget_view {
     struct header_forward_settings response_header_forward;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 widget_view_init(struct widget_view *view);
 
@@ -133,5 +137,9 @@ widget_view_expand(struct pool *pool, struct widget_view *view,
 bool
 widget_view_expand_all(struct pool *pool, struct widget_view *view,
                        const GMatchInfo *match_info, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

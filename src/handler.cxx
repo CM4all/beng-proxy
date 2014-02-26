@@ -8,8 +8,6 @@
 #include "config.hxx"
 #include "bp_instance.hxx"
 #include "cast.hxx"
-
-extern "C" {
 #include "file_handler.h"
 #include "nfs_handler.h"
 #include "request.h"
@@ -31,7 +29,6 @@ extern "C" {
 #include "istream.h"
 #include "translate-client.h"
 #include "ua_classification.h"
-}
 
 #include <daemon/log.h>
 

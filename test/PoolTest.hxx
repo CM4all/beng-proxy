@@ -1,6 +1,4 @@
-extern "C" {
 #include "pool.h"
-}
 
 #include <cppunit/TestFixture.h>
 

@@ -1,6 +1,4 @@
-extern "C" {
 #include "slice.h"
-}
 
 #include <inline/compiler.h>
 
