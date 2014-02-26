@@ -204,7 +204,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/tpool.c \
 	src/processor.c src/processor.h \
 	src/penv.c src/penv.h \
-	src/proxy-widget.c src/proxy-widget.h \
+	src/proxy_widget.cxx src/proxy_widget.hxx \
 	src/random.c src/random.h \
 	src/refcount.h \
 	src/request-forward.c src/request-forward.h \

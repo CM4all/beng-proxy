@@ -13,7 +13,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-dump.h"
-#include "proxy-widget.h"
+#include "proxy_widget.hxx"
 #include "session.h"
 #include "fcache.h"
 #include "http_address.h"
