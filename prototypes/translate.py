@@ -499,6 +499,7 @@ class Translation(Protocol):
     def _handle_packet(self, packet):
         if packet.command == TRANSLATE_BEGIN:
             self._request = Request()
+            self._request.packetReceived(packet)
         elif self._request is not None:
             if self._request.packetReceived(packet):
                 response = self._handle_request(self._request)
