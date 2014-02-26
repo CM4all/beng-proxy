@@ -705,7 +705,7 @@ noinst_PROGRAMS = \
 	test/run_was \
 	test/was_mirror \
 	test/benchmark-gmtime test/format-http-date \
-	test/request-translation \
+	test/request_translation \
 	test/run-subst \
 	test/run-cookie-client \
 	test/run-cookie-server \
@@ -738,7 +738,7 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 	test/t-istream-processor
 
 check_PROGRAMS = \
-	test/t-hashmap test/t-cache test/t-tcache \
+	test/t-hashmap test/t-cache test/t_tcache \
 	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
@@ -766,13 +766,13 @@ check_PROGRAMS = \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
 	test/t-rewrite-uri \
-	test/t-widget-registry \
+	test/t_widget_registry \
 	test/t-widget-resolver \
 	test/t-wembed test/t-widget-http \
 	test/t-processor \
 	test/t-memcached-client
 
-TESTS = test/t-hashmap test/t-cache test/t-tcache \
+TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t-header-forward \
 	test/t-stock \
 	test/t-resource-address \
@@ -801,7 +801,7 @@ TESTS = test/t-hashmap test/t-cache test/t-tcache \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
 	test/t-rewrite-uri \
-	test/t-widget-registry \
+	test/t_widget_registry \
 	test/t-widget-resolver \
 	test/t-wembed test/t-widget-http
 
@@ -860,7 +860,7 @@ test_t_cache_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
-test_t_tcache_SOURCES = test/t-tcache.c src/tcache.cxx src/cache.c \
+test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.c \
 	src/translate-response.c \
 	src/hashmap.c src/strmap.c \
 	src/widget-view.c \
@@ -1288,7 +1288,7 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_widget_registry_SOURCES = test/t-widget-registry.c \
+test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/widget_registry.cxx src/stock.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/transformation.c \
@@ -1370,7 +1370,7 @@ test_benchmark_gmtime_LDADD = $(AM_LDADD) libutil.a
 test_format_http_date_SOURCES = test/format-http-date.c
 test_format_http_date_LDADD = $(AM_LDADD) libutil.a
 
-test_request_translation_SOURCES = test/request-translation.c \
+test_request_translation_SOURCES = test/request_translation.cxx \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/fifo-buffer.c src/buffered_io.c src/direct.c \
 	src/cleanup_timer.c src/cleanup_timer.h \

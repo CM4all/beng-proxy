@@ -16,18 +16,18 @@
 
 struct data {
     bool got_class;
-    const struct widget_class *class;
+    const struct widget_class *cls;
 };
 
 static bool aborted;
 
 static void
-widget_class_callback(const struct widget_class *class, void *ctx)
+widget_class_callback(const struct widget_class *cls, void *ctx)
 {
-    struct data *data = ctx;
+    struct data *data = (struct data *)ctx;
 
     data->got_class = true;
-    data->class = class;
+    data->cls = cls;
 }
 
 
@@ -66,15 +66,14 @@ tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
     assert(request->param == NULL);
 
     if (strcmp(request->widget_type, "sync") == 0) {
-        struct translate_response *response =
-            p_calloc(pool, sizeof(*response));
+        translate_response *response = NewFromPool<translate_response>(pool);
         response->address.type = RESOURCE_ADDRESS_HTTP;
         response->address.u.http = http_address_parse(pool, "http://foo/", NULL);
-        response->views = p_calloc(pool, sizeof(*response->views));
+        response->views = (widget_view *)p_calloc(pool, sizeof(*response->views));
         response->views->address = response->address;
         handler->response(response, ctx);
     } else if (strcmp(request->widget_type, "block") == 0) {
-        struct async_operation *ao = p_malloc(pool, sizeof(*ao));
+        async_operation *ao = NewFromPool<async_operation>(pool);
 
         async_init(ao, &my_operation);
         async_ref_set(async_ref, ao);
@@ -95,7 +94,7 @@ test_normal(struct pool *pool)
     struct data data = {
         .got_class = false,
     };
-    struct tstock *const translate_stock = (void *)0x1;
+    tstock *const translate_stock = (tstock *)0x1;
     struct tcache *tcache;
     struct async_operation_ref async_ref;
 
@@ -108,13 +107,13 @@ test_normal(struct pool *pool)
                         widget_class_callback, &data, &async_ref);
     assert(!aborted);
     assert(data.got_class);
-    assert(data.class != NULL);
-    assert(data.class->views.address.type == RESOURCE_ADDRESS_HTTP);
-    assert(data.class->views.address.u.http->scheme == URI_SCHEME_HTTP);
-    assert(strcmp(data.class->views.address.u.http->host_and_port, "foo") == 0);
-    assert(strcmp(data.class->views.address.u.http->path, "/") == 0);
-    assert(data.class->views.next == NULL);
-    assert(data.class->views.transformation == NULL);
+    assert(data.cls != NULL);
+    assert(data.cls->views.address.type == RESOURCE_ADDRESS_HTTP);
+    assert(data.cls->views.address.u.http->scheme == URI_SCHEME_HTTP);
+    assert(strcmp(data.cls->views.address.u.http->host_and_port, "foo") == 0);
+    assert(strcmp(data.cls->views.address.u.http->path, "/") == 0);
+    assert(data.cls->views.next == NULL);
+    assert(data.cls->views.transformation == NULL);
 
     pool_unref(pool);
 
@@ -130,7 +129,7 @@ test_abort(struct pool *pool)
     struct data data = {
         .got_class = false,
     };
-    struct tstock *const translate_stock = (void *)0x1;
+    tstock *const translate_stock = (tstock *)0x1;
     struct tcache *tcache;
     struct async_operation_ref async_ref;
 

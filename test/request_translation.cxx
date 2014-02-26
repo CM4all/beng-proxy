@@ -22,7 +22,7 @@ print_resource_address(const struct resource_address *address)
 
     case RESOURCE_ADDRESS_LOCAL:
         printf("path=%s\n", address->u.file->path);
-        if (address->u.file->content_type != NULL)
+        if (address->u.file->content_type != nullptr)
             printf("content_type=%s\n",
                    address->u.file->content_type);
         break;
@@ -74,28 +74,28 @@ my_translate_response(const struct translate_response *response,
 
     print_resource_address(&response->address);
 
-    for (view = response->views; view != NULL; view = view->next) {
+    for (view = response->views; view != nullptr; view = view->next) {
         const struct transformation *transformation;
 
-        if (view->name != NULL)
+        if (view->name != nullptr)
             printf("view=%s\n", view->name);
 
-        for (transformation = view->transformation; transformation != NULL;
+        for (transformation = view->transformation; transformation != nullptr;
              transformation = transformation->next) {
             switch (transformation->type) {
-            case TRANSFORMATION_PROCESS:
+            case transformation::TRANSFORMATION_PROCESS:
                 printf("process\n");
                 break;
 
-            case TRANSFORMATION_PROCESS_CSS:
+            case transformation::TRANSFORMATION_PROCESS_CSS:
                 printf("process_css\n");
                 break;
 
-            case TRANSFORMATION_PROCESS_TEXT:
+            case transformation::TRANSFORMATION_PROCESS_TEXT:
                 printf("process_text\n");
                 break;
 
-            case TRANSFORMATION_FILTER:
+            case transformation::TRANSFORMATION_FILTER:
                 printf("filter\n");
                 print_resource_address(&transformation->u.filter);
                 break;
@@ -103,11 +103,11 @@ my_translate_response(const struct translate_response *response,
         }
     }
 
-    if (response->redirect != NULL)
+    if (response->redirect != nullptr)
         printf("redirect=%s\n", response->redirect);
-    if (response->session != NULL)
+    if (response->session != nullptr)
         printf("session=%s\n", response->session);
-    if (response->user != NULL)
+    if (response->user != nullptr)
         printf("user=%s\n", response->user);
 }
 
@@ -139,13 +139,13 @@ int main(int argc, char **argv) {
     event_init();
     fb_pool_init(false);
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     tcp_stock = tcp_stock_new(pool, 0);
     translate_stock = tstock_new(pool, tcp_stock, "/tmp/beng-proxy-translate");
 
     tstock_translate(translate_stock, pool,
-                     &request, &my_translate_handler, NULL, &async_ref);
+                     &request, &my_translate_handler, nullptr, &async_ref);
 
     event_dispatch();
     fb_pool_deinit();

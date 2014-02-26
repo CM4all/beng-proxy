@@ -1,3 +1,7 @@
 run_nfs_client
 /run_delegate
+/request_translation
+/t_tcache
+/t_widget_registry
+
 *.trs

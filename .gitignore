@@ -16,7 +16,6 @@ src/cm4all-beng-lb
 
 test/benchmark-gmtime
 test/format-http-date
-test/request-translation
 test/t-istream-dechunk
 test/t-istream-chunked
 test/t-istream-fcgi
@@ -52,7 +51,6 @@ test/t-shm
 test/t-dpool
 test/t-cookie-client
 test/t-cookie-server
-test/t-widget-registry
 test/t-widget-resolver
 test/t-session
 test/run-header-parser
@@ -73,7 +71,6 @@ test/t-hashmap
 test/t-widget-stream
 test/t-resource-address
 test/t_http_address
-test/t-tcache
 test/t-uri-relative
 test/t-uri-verify
 test/t-widget-http
