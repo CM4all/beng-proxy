@@ -976,7 +976,7 @@ translate_handle_packet(struct translate_client *client,
         client->transformation = NULL;
         client->transformation_tail = &client->response.views->transformation;
 
-        if (payload_length == sizeof(uint8_t))
+        if (payload_length >= sizeof(uint8_t))
             client->response.protocol_version = *(uint8_t *)payload;
 
         return true;
