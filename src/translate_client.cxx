@@ -5,8 +5,8 @@
  */
 
 #include "translate-client.h"
-#include "translate-request.h"
-#include "translate-response.h"
+#include "translate_request.hxx"
+#include "translate_response.hxx"
 #include "buffered_socket.h"
 #include "transformation.h"
 #include "widget-class.h"

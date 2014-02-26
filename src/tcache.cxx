@@ -6,8 +6,8 @@
 
 #include "tcache.h"
 #include "tstock.h"
-#include "translate-request.h"
-#include "translate-response.h"
+#include "translate_request.hxx"
+#include "translate_response.hxx"
 #include "translate-client.h"
 #include "http_quark.h"
 #include "widget-class.h"

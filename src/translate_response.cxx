@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "translate-response.h"
+#include "translate_response.hxx"
 #include "pool.h"
 #include "strref-pool.h"
 #include "strmap.h"
@@ -54,7 +54,7 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
 
     dest->anchor_absolute = src->anchor_absolute;
     dest->dump_headers = src->dump_headers;
-    dest->session = NULL;
+    dest->session = nullptr;
 
     if (strref_is_null(&src->check))
         strref_null(&dest->check);
@@ -69,9 +69,9 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
     /* The "user" attribute must not be present in cached responses,
        because they belong to only that one session.  For the same
        reason, we won't copy the user_max_age attribute. */
-    dest->user = NULL;
+    dest->user = nullptr;
 
-    dest->language = NULL;
+    dest->language = nullptr;
     dest->realm = p_strdup_checked(pool, src->realm);
     dest->www_authenticate = p_strdup_checked(pool, src->www_authenticate);
     dest->authentication_info = p_strdup_checked(pool,
@@ -79,13 +79,13 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
     dest->cookie_domain = p_strdup_checked(pool, src->cookie_domain);
     dest->cookie_host = p_strdup_checked(pool, src->cookie_host);
 
-    dest->headers = src->headers != NULL
+    dest->headers = src->headers != nullptr
         ? strmap_dup(pool, src->headers, 17)
-        : NULL;
+        : nullptr;
 
-    dest->views = src->views != NULL
+    dest->views = src->views != nullptr
         ? widget_view_dup_chain(pool, src->views)
-        : NULL;
+        : nullptr;
 
     dest->num_vary = src->num_vary;
     if (dest->num_vary > 0)
@@ -107,7 +107,7 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
 bool
 translate_response_is_expandable(const struct translate_response *response)
 {
-    return response->regex != NULL &&
+    return response->regex != nullptr &&
         (resource_address_is_expandable(&response->address) ||
          widget_view_any_is_expandable(response->views));
 }
@@ -117,10 +117,10 @@ translate_response_expand(struct pool *pool,
                           struct translate_response *response,
                           const GMatchInfo *match_info, GError **error_r)
 {
-    assert(pool != NULL);
-    assert(response != NULL);
-    assert(response->regex != NULL);
-    assert(match_info != NULL);
+    assert(pool != nullptr);
+    assert(response != nullptr);
+    assert(response->regex != nullptr);
+    assert(match_info != nullptr);
 
     return resource_address_expand(pool, &response->address,
                                    match_info, error_r) &&

@@ -11,7 +11,7 @@
 #include "udp-distribute.h"
 #include "bp_instance.hxx"
 #include "tcache.h"
-#include "translate-request.h"
+#include "translate_request.hxx"
 #include "tpool.h"
 #include "beng-proxy/translation.h"
 

@@ -9,8 +9,8 @@
 #define BENG_PROXY_REQUEST_HXX
 
 #include "uri-parser.h"
-#include "translate-request.h"
-#include "translate-response.h"
+#include "translate_request.hxx"
+#include "translate_response.hxx"
 #include "penv.h"
 #include "async.h"
 #include "session.h"

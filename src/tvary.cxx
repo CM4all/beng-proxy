@@ -3,7 +3,7 @@
  */
 
 #include "tvary.h"
-#include "translate-response.h"
+#include "translate_response.hxx"
 #include "strmap.h"
 #include "growing-buffer.h"
 #include "header-writer.h"

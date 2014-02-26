@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_TRANSLATE_REQUEST_H
-#define BENG_PROXY_TRANSLATE_REQUEST_H
+#ifndef BENG_PROXY_TRANSLATE_REQUEST_HXX
+#define BENG_PROXY_TRANSLATE_REQUEST_HXX
 
 #include "strref.h"
 

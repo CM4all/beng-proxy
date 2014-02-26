@@ -267,8 +267,8 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cookie_client.c src/cookie_client.h \
 	src/cookie_server.c src/cookie_server.h \
 	src/translate_client.cxx src/translate-client.h \
-	src/translate-request.h \
-	src/translate-response.c rc/translate-response.h \
+	src/translate_request.hxx \
+	src/translate_response.cxx rc/translate_response.hxx \
 	src/tvary.cxx src/tvary.h \
 	src/lhttp_quark.h \
 	src/lhttp_launch.c src/lhttp_launch.h \
@@ -861,7 +861,7 @@ test_t_cache_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS)
 
 test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.c \
-	src/translate-response.c \
+	src/translate_response.cxx \
 	src/hashmap.c src/strmap.c \
 	src/widget-view.c \
 	src/strset.c \
@@ -1293,7 +1293,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/transformation.c \
 	src/tcache.cxx src/cache.c \
-	src/translate-response.c \
+	src/translate_response.cxx \
 	src/widget-view.c \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/strset.c \

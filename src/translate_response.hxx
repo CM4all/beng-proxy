@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_TRANSLATE_RESPONSE_H
-#define BENG_PROXY_TRANSLATE_RESPONSE_H
+#ifndef BENG_PROXY_TRANSLATE_RESPONSE_HXX
+#define BENG_PROXY_TRANSLATE_RESPONSE_HXX
 
 #include "resource-address.h"
 #include "header-forward.h"
@@ -15,7 +15,6 @@
 #include <http/status.h>
 
 #include <glib.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 struct pool;
