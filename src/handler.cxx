@@ -328,7 +328,8 @@ handler_translate_response(const struct translate_response *response,
 {
     struct request &request = *(struct request *)ctx;
 
-    translation_protocol_version = response->protocol_version;
+    if (response->protocol_version > translation_protocol_version)
+        translation_protocol_version = response->protocol_version;
 
     /* just in case we error out before handle_translated_request()
        assigns the real response */
