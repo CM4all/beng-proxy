@@ -58,6 +58,8 @@ struct tcache_item {
         const char *user_agent;
         const char *ua_class;
         const char *query_string;
+
+        bool want;
     } request;
 
     TranslateResponse response;
@@ -189,7 +191,8 @@ static const char *
 tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                http_status_t status,
                const struct strref *check,
-               const struct strref *want_full_uri)
+               const struct strref *want_full_uri,
+               bool want)
 {
     const char *key = status != 0
         ? p_sprintf(pool, "ERR%u_%s", status, uri)
@@ -224,6 +227,9 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                         nullptr);
     }
 
+    if (want)
+        key = p_strcat(pool, "|W_", key, nullptr);
+
     return key;
 }
 
@@ -233,7 +239,8 @@ tcache_request_key(struct pool *pool, const TranslateRequest *request)
     return request->uri != nullptr
         ? tcache_uri_key(pool, request->uri, request->host,
                          request->error_document_status,
-                         &request->check, &request->want_full_uri)
+                         &request->check, &request->want_full_uri,
+                         !request->want.IsEmpty())
         : request->widget_type;
 }
 
@@ -405,7 +412,8 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
     if (key != nullptr)
         key = tcache_uri_key(pool, key, request->host,
                              request->error_document_status,
-                             &request->check, &request->want_full_uri);
+                             &request->check, &request->want_full_uri,
+                             !request->want.IsEmpty());
 
     return key;
 }

@@ -29,6 +29,7 @@
 #include "istream.h"
 #include "translate_client.hxx"
 #include "ua_classification.h"
+#include "beng-proxy/translation.h"
 
 #include <daemon/log.h>
 
@@ -319,6 +320,69 @@ uri_without_query_string(struct pool *pool, const char *uri)
 }
 
 static void
+fill_translate_request_local_address(TranslateRequest &t,
+                                     const http_server_request &r)
+{
+    t.local_address = r.local_address;
+    t.local_address_length = r.local_address_length;
+}
+
+static void
+fill_translate_request_remote_host(TranslateRequest &t,
+                                   const http_server_request &r)
+{
+    t.remote_host = r.remote_host_and_port;
+}
+
+static void
+fill_translate_request_user_agent(TranslateRequest &t,
+                                  const strmap *headers)
+{
+    t.user_agent = strmap_get(headers, "user-agent");
+}
+
+static void
+fill_translate_request_ua_class(TranslateRequest &t,
+                                const strmap *headers)
+{
+    const char *user_agent = strmap_get(headers, "user-agent");
+
+    t.ua_class = user_agent != nullptr
+        ? ua_classification_lookup(user_agent)
+        : nullptr;
+}
+
+static void
+fill_translate_request_language(TranslateRequest &t,
+                                const strmap *headers)
+{
+    t.accept_language = strmap_get(headers, "accept-language");
+}
+
+static void
+fill_translate_request_args(TranslateRequest &t,
+                            struct pool *pool, strmap *args)
+{
+    t.args = args != nullptr
+        ? args_format(pool, args,
+                      nullptr, nullptr, nullptr, nullptr,
+                      "translate")
+        : nullptr;
+    if (t.args != nullptr && *t.args == 0)
+        t.args = nullptr;
+}
+
+static void
+fill_translate_request_query_string(TranslateRequest &t,
+                                    struct pool *pool,
+                                    const parsed_uri &uri)
+{
+    t.query_string = strref_is_empty(&uri.query)
+        ? nullptr
+        : strref_dup(pool, &uri.query);
+}
+
+static void
 repeat_translation(struct request &request, const TranslateResponse &response)
 {
     if (!strref_is_null(&response.check)) {
@@ -334,6 +398,42 @@ repeat_translation(struct request &request, const TranslateResponse &response)
 
         request.translate.previous = &response;
         request.translate.request.check = response.check;
+    }
+
+    if (response.protocol_version >= 1) {
+        /* handle WANT */
+
+        request.translate.request.want = response.want;
+
+        if (response.Wants(TRANSLATE_LOCAL_ADDRESS))
+            fill_translate_request_local_address(request.translate.request,
+                                                 *request.request);
+
+        if (response.Wants(TRANSLATE_REMOTE_HOST))
+            fill_translate_request_remote_host(request.translate.request,
+                                               *request.request);
+
+        if (response.Wants(TRANSLATE_USER_AGENT))
+            fill_translate_request_user_agent(request.translate.request,
+                                              request.request->headers);
+
+        if (response.Wants(TRANSLATE_UA_CLASS))
+            fill_translate_request_ua_class(request.translate.request,
+                                            request.request->headers);
+
+        if (response.Wants(TRANSLATE_LANGUAGE))
+            fill_translate_request_language(request.translate.request,
+                                            request.request->headers);
+
+        if (response.Wants(TRANSLATE_ARGS) &&
+            request.translate.request.args == nullptr)
+            fill_translate_request_args(request.translate.request,
+                                        request.request->pool, request.args);
+
+        if (response.Wants(TRANSLATE_QUERY_STRING))
+            fill_translate_request_query_string(request.translate.request,
+                                                request.request->pool,
+                                                request.uri);
     }
 
     if (!strref_is_null(&response.want_full_uri)) {
@@ -378,6 +478,7 @@ handler_translate_response(const TranslateResponse *response,
     install_error_response(request);
 
     if (!strref_is_null(&response->check) ||
+        !response->want.IsEmpty() ||
         !strref_is_null(&response->want_full_uri)) {
         repeat_translation(request, *response);
         return;
@@ -459,32 +560,35 @@ fill_translate_request(TranslateRequest *t,
                        const struct parsed_uri *uri,
                        struct strmap *args)
 {
-    t->local_address = request->local_address;
-    t->local_address_length = request->local_address_length;
+    t->remote_host = nullptr;
+    t->local_address = nullptr;
+    t->local_address_length = 0;
     t->remote_host = request->remote_host_and_port;
     t->host = strmap_get(request->headers, "host");
-    t->user_agent = strmap_get(request->headers, "user-agent");
-    t->ua_class = t->user_agent != nullptr
-        ? ua_classification_lookup(t->user_agent)
-        : nullptr;
-    t->accept_language = strmap_get(request->headers, "accept-language");
+    t->user_agent = nullptr;
+    t->ua_class = nullptr;
+    t->accept_language = nullptr;
     t->authorization = strmap_get(request->headers, "authorization");
     t->uri = strref_dup(request->pool, &uri->base);
-    t->args = args != nullptr
-        ? args_format(request->pool, args,
-                      nullptr, nullptr, nullptr, nullptr,
-                      "translate")
-        : nullptr;
-    if (t->args != nullptr && *t->args == 0)
-        t->args = nullptr;
-
-    t->query_string = strref_is_empty(&uri->query)
-        ? nullptr
-        : strref_dup(request->pool, &uri->query);
+    t->args = nullptr;
+    t->query_string = nullptr;
     t->widget_type = nullptr;
     strref_null(&t->check);
     strref_null(&t->want_full_uri);
+    t->want = nullptr;
     t->error_document_status = (http_status_t)0;
+
+    if (translation_protocol_version < 1) {
+        /* old translation server: send all packets that have become
+           optional */
+        fill_translate_request_local_address(*t, *request);
+        fill_translate_request_remote_host(*t, *request);
+        fill_translate_request_user_agent(*t, request->headers);
+        fill_translate_request_ua_class(*t, request->headers);
+        fill_translate_request_language(*t, request->headers);
+        fill_translate_request_args(*t, request->pool, args);
+        fill_translate_request_query_string(*t, request->pool, *uri);
+    }
 }
 
 static void

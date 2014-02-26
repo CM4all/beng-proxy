@@ -70,6 +70,8 @@ struct TranslateClient {
 
     struct {
         bool want_full_uri;
+
+        bool want;
     } from_request;
 
     /** the marshalled translate request */
@@ -232,6 +234,15 @@ write_packet(struct growing_buffer *gb, uint16_t command,
                           error_r);
 }
 
+template<typename T>
+static bool
+write_buffer(growing_buffer *gb, uint16_t command,
+             ConstBuffer<T> buffer, GError **error_r)
+{
+    return write_packet_n(gb, command, buffer.data, buffer.size * sizeof(T),
+                          error_r);
+}
+
 static bool
 write_strref(struct growing_buffer *gb, uint16_t command,
              const struct strref *payload, GError **error_r)
@@ -251,6 +262,14 @@ write_optional_packet(struct growing_buffer *gb, uint16_t command,
         return true;
 
     return write_packet(gb, command, payload, error_r);
+}
+
+template<typename T>
+static bool
+write_optional_buffer(growing_buffer *gb, uint16_t command,
+                      ConstBuffer<T> buffer, GError **error_r)
+{
+    return buffer.IsNull() || write_buffer(gb, command, buffer, error_r);
 }
 
 /**
@@ -346,6 +365,7 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
                               error_r) &&
         write_optional_strref(gb, TRANSLATE_WANT_FULL_URI,
                               &request->want_full_uri, error_r) &&
+        write_optional_buffer(gb, TRANSLATE_WANT, request->want, error_r) &&
         write_optional_packet(gb, TRANSLATE_PARAM, request->param,
                               error_r) &&
         write_packet(gb, TRANSLATE_END, nullptr, error_r);
@@ -885,6 +905,34 @@ translate_client_rlimits(TranslateClient *client,
         return false;
     }
 
+    return true;
+}
+
+static bool
+translate_client_want(TranslateClient *client,
+                      const uint16_t *payload, size_t payload_length)
+{
+    if (client->response.protocol_version < 1) {
+        translate_client_error(client, "WANT requires protocol version 1");
+        return false;
+    }
+
+    if (client->from_request.want) {
+        translate_client_error(client, "WANT loop");
+        return false;
+    }
+
+    if (!client->response.want.IsEmpty()) {
+        translate_client_error(client, "duplicate WANT packet");
+        return false;
+    }
+
+    if (payload_length % sizeof(payload[0]) != 0) {
+        translate_client_error(client, "malformed WANT packet");
+        return false;
+    }
+
+    client->response.want = { payload, payload_length / sizeof(payload[0]) };
     return true;
 }
 
@@ -2290,6 +2338,10 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_RLIMITS:
         return translate_client_rlimits(client, payload);
+
+    case TRANSLATE_WANT:
+        return translate_client_want(client, (const uint16_t *)_payload,
+                                     payload_length);
     }
 
     error = g_error_new(translate_quark(), 0,
@@ -2485,6 +2537,7 @@ translate(struct pool *pool, int fd,
 
     client->from_request.want_full_uri =
         !strref_is_null(&request->want_full_uri);
+    client->from_request.want = !request->want.IsEmpty();
 
     growing_buffer_reader_init(&client->request, gb);
     client->handler = handler;

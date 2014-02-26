@@ -122,7 +122,7 @@ class Translation(Protocol):
         return username == 'hansi' and password == 'hansilein'
 
     def _handle_http(self, raw_uri, uri, authorization,
-                     check, want_full_uri,
+                     check, want_full_uri, want,
                      ua_class, response):
         if uri[:6] == '/site/':
             x = uri[6:]
@@ -193,6 +193,10 @@ class Translation(Protocol):
             response.request_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
             response.response_header_forward((HEADER_GROUP_ALL, HEADER_FORWARD_MANGLE))
         elif raw_uri[:24] == '/vary-user-agent/remote/':
+            if want is None or TRANSLATE_USER_AGENT not in want:
+                response.want(TRANSLATE_USER_AGENT)
+                return
+
             response.vary(TRANSLATE_USER_AGENT)
             response.http('http://cfatest01.intern.cm-ag/' + raw_uri[24:])
         elif raw_uri[:5] == '/ajp/':
@@ -430,11 +434,19 @@ class Translation(Protocol):
                           ('172.30.0.23:80', '172.30.0.23:8080'))
             response.packet(TRANSLATE_STICKY)
         elif raw_uri[:23] == '/vary-user-agent/local/':
+            if want is None or TRANSLATE_USER_AGENT not in want:
+                response.want(TRANSLATE_USER_AGENT)
+                return
+
             response.vary(TRANSLATE_USER_AGENT)
             self._handle_local_file('/var/www' + uri[22:], response,
                                     error_document=True)
         elif raw_uri == '/ua_class':
-            response.vary(TRANSLATE_UA_CLASS)
+            if want is None or TRANSLATE_UA_CLASS not in want:
+                response.want(TRANSLATE_UA_CLASS)
+                return
+
+            response.vary(TRANSLATE_UA_CLASS, TRANSLATE_WANT)
             response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'env.py'))
             response.packet(TRANSLATE_SCRIPT_NAME, uri)
             if ua_class is not None:
@@ -470,7 +482,7 @@ class Translation(Protocol):
             # 
             user = session = None
 
-        response = Response()
+        response = Response(protocol_version=1)
         if user is not None:
             response.packet(TRANSLATE_USER, user)
         if session is not None:
@@ -482,7 +494,7 @@ class Translation(Protocol):
 
         if request.uri is not None:
             self._handle_http(request.raw_uri, request.uri, request.authorization,
-                              request.check, request.want_full_uri,
+                              request.check, request.want_full_uri, request.want,
                               request.ua_class, response)
 
         return response

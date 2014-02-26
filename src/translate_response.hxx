@@ -16,6 +16,8 @@
 #include <http/status.h>
 
 #include <glib.h>
+
+#include <assert.h>
 #include <stdint.h>
 
 struct pool;
@@ -138,6 +140,7 @@ struct TranslateResponse {
 
     ConstBuffer<uint16_t> vary;
     ConstBuffer<uint16_t> invalidate;
+    ConstBuffer<uint16_t> want;
 
     struct {
         uint64_t mtime;
@@ -145,6 +148,16 @@ struct TranslateResponse {
     } validate_mtime;
 
     void Clear();
+
+    bool Wants(uint16_t cmd) const {
+        assert(protocol_version >= 1);
+
+        for (auto i : want)
+            if (i == cmd)
+                return true;
+
+        return false;
+    }
 };
 
 #ifdef __cplusplus

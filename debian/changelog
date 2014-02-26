@@ -1,5 +1,6 @@
 cm4all-beng-proxy (4.0.19) unstable; urgency=low
 
+  * translation: add packet WANT, make several packets optional
   * translate_client: allow combining CHECK and WANT_FULL_URI
   * tcache: make PARAM cacheable, supported by VARY
   * python/translation/request: accept BEGIN in packetReceived()

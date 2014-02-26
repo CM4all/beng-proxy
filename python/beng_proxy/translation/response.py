@@ -132,6 +132,14 @@ class Response:
         payload = array.array('H', args).tostring()
         return self.packet(TRANSLATE_INVALIDATE, payload)
 
+    def want(self, *args):
+        """Send a WANT packet.  All arguments are packet ids which are
+        put into the WANT packet payload."""
+
+        assert len(args) > 0
+        payload = array.array('H', args).tostring()
+        return self.packet(TRANSLATE_WANT, payload)
+
     def pipe(self, path, *args):
         """Send a PIPE packet.  You may pass additional arguments
         which are sent as APPEND packets."""

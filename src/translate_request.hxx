@@ -7,11 +7,13 @@
 #ifndef BENG_PROXY_TRANSLATE_REQUEST_HXX
 #define BENG_PROXY_TRANSLATE_REQUEST_HXX
 
+#include "util/ConstBuffer.hxx"
 #include "strref.h"
 
 #include <http/status.h>
 
 #include <stddef.h>
+#include <stdint.h>
 
 struct TranslateRequest {
     const struct sockaddr *local_address;
@@ -48,6 +50,8 @@ struct TranslateRequest {
      * #TRANSLATE_WANT_FULL_URI packet was received.
      */
     struct strref want_full_uri;
+
+    ConstBuffer<uint16_t> want;
 
     http_status_t error_document_status;
 };

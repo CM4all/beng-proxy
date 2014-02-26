@@ -4,7 +4,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
-import struct
+import array, struct
 import urllib
 from beng_proxy.translation.protocol import *
 import beng_proxy.translation.uri
@@ -52,6 +52,7 @@ class Request:
         self.accept_language = None
         self.authorization = None
         self.status = None
+        self.want = None
         self.error_document = False
 
     def __getattr__(self, name):
@@ -106,6 +107,9 @@ class Request:
         elif packet.command == TRANSLATE_STATUS:
             if len(packet.payload) == 2:
                 self.status = struct.unpack('H', packet.payload)[0]
+        elif packet.command == TRANSLATE_WANT:
+            self.want = array.array('H')
+            self.want.fromstring(packet.payload)
         elif packet.command == TRANSLATE_ERROR_DOCUMENT:
             self.error_document = True
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:

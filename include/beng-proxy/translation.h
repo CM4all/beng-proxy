@@ -419,6 +419,13 @@ enum beng_translation_command {
      * Set resource limits via setrlimit().
      */
     TRANSLATE_RLIMITS = 114,
+
+    /**
+     * The translation server wishes to have the specified data:
+     * payload is an array of uint16_t containing translation
+     * commands.
+     */
+    TRANSLATE_WANT = 115,
 };
 
 struct beng_translation_header {
