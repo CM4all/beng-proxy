@@ -10,7 +10,7 @@
 #include "header-writer.h"
 #include "format.h"
 #include "date.h"
-#include "request.h"
+#include "request.hxx"
 #include "http_server.h"
 #include "http_util.h"
 #include "tvary.h"

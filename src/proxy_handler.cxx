@@ -5,7 +5,7 @@
  */
 
 #include "handler.hxx"
-#include "request.h"
+#include "request.hxx"
 #include "request_forward.hxx"
 #include "http_server.h"
 #include "http_cache.h"

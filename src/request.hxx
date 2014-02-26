@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_REQUEST_H
-#define __BENG_REQUEST_H
+#ifndef BENG_PROXY_REQUEST_HXX
+#define BENG_PROXY_REQUEST_HXX
 
 #include "uri-parser.h"
 #include "translate-request.h"
@@ -63,7 +63,7 @@ struct request {
         const struct transformation *transformation;
 
         /**
-         * A pointer to the "previous" translate response, non-NULL
+         * A pointer to the "previous" translate response, non-nullptr
          * only if beng-proxy sends a second translate request with a
          * CHECK packet.
          */
@@ -83,7 +83,7 @@ struct request {
     } translate;
 
     /**
-     * The product token (RFC 2616 3.8) being forwarded; NULL if
+     * The product token (RFC 2616 3.8) being forwarded; nullptr if
      * beng-proxy shall generate one.
      */
     const char *product_token;
@@ -91,7 +91,7 @@ struct request {
 #ifndef NO_DATE_HEADER
     /**
      * The "date" response header (RFC 2616 14.18) being forwarded;
-     * NULL if beng-proxy shall generate one.
+     * nullptr if beng-proxy shall generate one.
      */
     const char *date;
 #endif
@@ -106,7 +106,7 @@ struct request {
     struct processor_env env;
 
     /**
-     * A pointer to the request body, or NULL if there is none.  Once
+     * A pointer to the request body, or nullptr if there is none.  Once
      * the request body has been "used", this pointer gets cleared.
      */
     struct istream *body;
@@ -138,7 +138,7 @@ struct request {
 static inline bool
 request_transformation_enabled(const struct request *request)
 {
-    return request->translate.response->views->transformation != NULL;
+    return request->translate.response->views->transformation != nullptr;
 }
 
 /**
@@ -147,19 +147,10 @@ request_transformation_enabled(const struct request *request)
 static inline bool
 request_processor_first(const struct request *request)
 {
-#ifdef __cplusplus
-    static constexpr auto TRANSFORMATION_PROCESS =
-        transformation::TRANSFORMATION_PROCESS;
-#endif
-
     return request_transformation_enabled(request) &&
         request->translate.response->views->transformation->type
-        == TRANSFORMATION_PROCESS;
+        == transformation::TRANSFORMATION_PROCESS;
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 bool
 request_processor_enabled(const struct request *request);
@@ -182,7 +173,7 @@ request_get_session(const struct request *request)
 {
     return session_id_is_defined(request->session_id)
         ? session_get(request->session_id)
-        : NULL;
+        : nullptr;
 }
 
 struct session *
@@ -218,9 +209,5 @@ response_dispatch_redirect(struct request *request2, http_status_t status,
                            const char *location, const char *msg);
 
 extern const struct http_response_handler response_handler;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

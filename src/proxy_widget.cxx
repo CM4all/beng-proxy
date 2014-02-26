@@ -10,7 +10,7 @@
 #include "widget-resolver.h"
 #include "widget.h"
 #include "frame.h"
-#include "request.h"
+#include "request.hxx"
 #include "header-writer.h"
 #include "header-forward.h"
 #include "http_server.h"

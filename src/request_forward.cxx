@@ -5,7 +5,7 @@
  */
 
 #include "request_forward.hxx"
-#include "request.h"
+#include "request.hxx"
 #include "http_server.h"
 #include "header-forward.h"
 

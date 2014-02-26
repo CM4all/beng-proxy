@@ -10,7 +10,7 @@
 #include "cast.hxx"
 #include "file_handler.hxx"
 #include "nfs_handler.h"
-#include "request.h"
+#include "request.hxx"
 #include "connection.h"
 #include "args.h"
 #include "session.h"

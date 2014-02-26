@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "request.h"
+#include "request.hxx"
 #include "transformation.h"
 #include "http_server.h"
 #include "http_response.h"

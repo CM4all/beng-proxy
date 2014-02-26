@@ -5,7 +5,7 @@
  */
 
 #include "generate_response.hxx"
-#include "request.h"
+#include "request.hxx"
 #include "http_server.h"
 #include "header-writer.h"
 #include "growing-buffer.h"

@@ -6,7 +6,7 @@
 
 #include "file_handler.hxx"
 #include "file_headers.hxx"
-#include "request.h"
+#include "request.hxx"
 #include "generate_response.hxx"
 #include "static-headers.h"
 #include "header-writer.h"

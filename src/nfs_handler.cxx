@@ -12,7 +12,7 @@
 #include "header-writer.h"
 #include "generate_response.hxx"
 #include "growing-buffer.h"
-#include "request.h"
+#include "request.hxx"
 #include "connection.h"
 #include "bp_instance.hxx"
 #include "http_server.h"

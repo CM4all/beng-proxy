@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "request.h"
+#include "request.hxx"
 #include "translate-client.h"
 #include "http_client.h"
 #include "ajp-client.h"
