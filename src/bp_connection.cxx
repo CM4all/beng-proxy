@@ -154,8 +154,7 @@ http_listener_connected(int fd,
     pool = pool_new_linear(instance->pool, "client_connection", 2048);
     pool_set_major(pool);
 
-    client_connection *connection = (client_connection *)
-        p_malloc(pool, sizeof(*connection));
+    client_connection *connection = PoolAlloc<client_connection>(pool);
     connection->instance = instance;
     connection->pool = pool;
     connection->config = &instance->config;

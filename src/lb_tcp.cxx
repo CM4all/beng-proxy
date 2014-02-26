@@ -336,7 +336,7 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
            const struct lb_tcp_handler *handler, void *ctx,
            lb_tcp **tcp_r)
 {
-    lb_tcp *tcp = (lb_tcp *)p_malloc(pool, sizeof(*tcp));
+    lb_tcp *tcp = NewFromPool<lb_tcp>(pool);
     tcp->pool = pool;
     tcp->pipe_stock = pipe_stock;
     tcp->handler = handler;

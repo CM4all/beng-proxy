@@ -154,7 +154,7 @@ nfs_cache_put(NFSCacheStore *store, unsigned rubber_id)
     cache_log(4, "nfs_cache: put %s\n", store->key);
 
     struct pool *pool = pool_new_libc(cache->pool, "nfs_cache_item");
-    nfs_cache_item *item = (nfs_cache_item *)p_malloc(pool, sizeof(*item));
+    nfs_cache_item *item = NewFromPool<nfs_cache_item>(pool);
     item->pool = pool;
     item->stat = store->stat;
     item->rubber = cache->rubber;
@@ -320,7 +320,7 @@ nfs_cache_new(struct pool *pool, size_t max_size,
               struct nfs_stock *stock)
 {
     pool = pool_new_libc(pool, "nfs_cache");
-    nfs_cache *cache = (nfs_cache *)p_malloc(pool, sizeof(*cache));
+    nfs_cache *cache = NewFromPool<nfs_cache>(pool);
     cache->pool = pool;
     cache->stock = stock;
     cache->cache = cache_new(pool, &nfs_cache_class, 65521, max_size * 7 / 8);
@@ -375,7 +375,7 @@ nfs_cache_request(struct pool *pool, struct nfs_cache *cache,
 
     cache_log(4, "nfs_cache: miss %s\n", key);
 
-    NFSCacheRequest *r = (NFSCacheRequest *)p_malloc(pool, sizeof(*r));
+    NFSCacheRequest *r = NewFromPool<NFSCacheRequest>(pool);
 
     r->pool = pool;
     r->cache = cache;
@@ -432,7 +432,7 @@ nfs_cache_file_open(struct pool *pool, struct nfs_cache *cache,
        it */
     struct pool *pool2 = pool_new_linear(cache->pool,
                                          "nfs_cache_tee", 1024);
-    NFSCacheStore *store = (NFSCacheStore *)p_malloc(pool2, sizeof(*store));
+    NFSCacheStore *store = NewFromPool<NFSCacheStore>(pool2);
     store->pool = pool2;
     store->cache = cache;
     store->key = p_strdup(pool2, key);

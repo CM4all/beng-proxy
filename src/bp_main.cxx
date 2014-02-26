@@ -236,8 +236,7 @@ add_listener(struct instance *instance, struct addrinfo *ai)
     assert(ai != NULL);
 
     do {
-        listener_node *node = (listener_node *)
-            p_malloc(instance->pool, sizeof(*node));
+        listener_node *node = NewFromPool<listener_node>(instance->pool);
 
         node->listener = listener_new(instance->pool, ai->ai_family, ai->ai_socktype,
                                       ai->ai_protocol, ai->ai_addr,
@@ -259,8 +258,7 @@ add_listener(struct instance *instance, struct addrinfo *ai)
 static void
 add_tcp_listener(struct instance *instance, int port)
 {
-    listener_node *node = (listener_node *)
-        p_malloc(instance->pool, sizeof(*node));
+    listener_node *node = NewFromPool<listener_node>(instance->pool);
     GError *error = NULL;
 
     node->listener = listener_tcp_port_new(instance->pool, port,

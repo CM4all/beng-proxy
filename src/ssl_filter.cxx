@@ -300,7 +300,7 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
 {
     assert(pool != NULL);
 
-    struct ssl_filter *ssl = (struct ssl_filter *)p_malloc(pool, sizeof(*ssl));
+    ssl_filter *ssl = NewFromPool<ssl_filter>(pool);
     ssl->pool = pool;
 
     ssl->ssl = ssl_factory_make(factory);

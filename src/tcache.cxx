@@ -145,8 +145,7 @@ tcache_add_per_host(struct tcache *tcache, struct tcache_item *item)
     tcache_per_host *per_host = (tcache_per_host *)
         hashmap_get(tcache->per_host, host);
     if (per_host == nullptr) {
-        per_host = (tcache_per_host *)p_malloc(tcache->pool,
-                                               sizeof(*per_host));
+        per_host = NewFromPool<tcache_per_host>(tcache->pool);
         list_init(&per_host->items);
         per_host->tcache = tcache;
         per_host->host = p_strdup(tcache->pool, host);
@@ -770,7 +769,7 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
     if (tcache_response_evaluate(response)) {
         struct pool *pool = pool_new_slice(tcr->tcache->pool, "tcache_item",
                                            tcr->tcache->slice_pool);
-        tcache_item *item = (tcache_item *)p_malloc(pool, sizeof(*item));
+        tcache_item *item = NewFromPool<tcache_item>(pool);
         unsigned max_age = response->max_age;
         const char *key;
 
@@ -907,8 +906,7 @@ tcache_hit(struct pool *pool, const char *uri, const char *key,
            const struct tcache_item *item,
            const struct translate_handler *handler, void *ctx)
 {
-    translate_response *response = (translate_response *)
-        p_malloc(pool, sizeof(*response));
+    translate_response *response = NewFromPool<translate_response>(pool);
 
     cache_log(4, "translate_cache: hit %s\n", key);
 
@@ -933,7 +931,7 @@ tcache_miss(struct pool *pool, struct tcache *tcache,
             const struct translate_handler *handler, void *ctx,
             struct async_operation_ref *async_ref)
 {
-    tcache_request *tcr = (tcache_request *)p_malloc(pool, sizeof(*tcr));
+    tcache_request *tcr = NewFromPool<tcache_request>(pool);
 
     cache_log(4, "translate_cache: miss %s\n", key);
 
@@ -1032,7 +1030,7 @@ translate_cache_new(struct pool *pool, struct tstock *stock,
                     unsigned max_size)
 {
     pool = pool_new_libc(pool, "translate_cache");
-    tcache *tcache = (struct tcache *)p_malloc(pool, sizeof(*tcache));
+    tcache *tcache = NewFromPool<struct tcache>(pool);
 
     assert(stock != nullptr);
 

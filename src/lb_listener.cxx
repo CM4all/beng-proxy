@@ -65,8 +65,7 @@ lb_listener_new(struct lb_instance *instance,
 {
     struct pool *pool = pool_new_linear(instance->pool, "lb_listener", 8192);
 
-    struct lb_listener *listener =
-        (struct lb_listener *)p_malloc(pool, sizeof(*listener));
+    lb_listener *listener = NewFromPool<lb_listener>(pool);
     listener->pool = pool;
     listener->instance = instance;
     listener->config = config;

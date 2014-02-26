@@ -331,8 +331,7 @@ lb_http_connection_request(struct http_server_request *request,
 
     connection->request_start_time = now_us();
 
-    struct lb_request *request2 =
-        (struct lb_request *)p_malloc(request->pool, sizeof(*request2));
+    lb_request *request2 = NewFromPool<lb_request>(request->pool);
     request2->connection = connection;
     const lb_cluster_config *cluster = request2->cluster =
         lb_http_select_cluster(connection->listener->destination, *request);

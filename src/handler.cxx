@@ -280,8 +280,8 @@ handle_translated_request(request &request, const translate_response &response)
     /* copy the translate_response just in case the cache item is
        freed before we send the final response */
     /* TODO: use cache_item_lock() instead */
-    translate_response *response2 = (translate_response *)
-        p_malloc(request.request->pool, sizeof(*response2));
+    translate_response *response2 =
+        NewFromPool<translate_response>(request.request->pool);
     *response2 = response;
     translate_response_copy(request.request->pool, response2, &response);
     request.translate.response = response2;
@@ -532,10 +532,9 @@ serve_document_root_file(request &request2,
     }
 
     if (process) {
-        struct transformation *transformation = (struct transformation *)
-            p_malloc(request.pool, sizeof(*transformation));
-        widget_view *view = (widget_view *)
-            p_malloc(request.pool, sizeof(*view));
+        transformation *transformation =
+            NewFromPool<struct transformation>(request.pool);
+        widget_view *view = NewFromPool<widget_view>(request.pool);
         widget_view_init(view);
 
         transformation->next = nullptr;
@@ -545,8 +544,7 @@ serve_document_root_file(request &request2,
 
         tr->views = view;
     } else {
-        widget_view *view = (widget_view *)
-            p_malloc(request.pool, sizeof(*view));
+        widget_view *view = NewFromPool<widget_view>(request.pool);
         widget_view_init(view);
 
         tr->views = view;
@@ -555,7 +553,7 @@ serve_document_root_file(request &request2,
 
     request2.translate.transformation = tr->views->transformation;
 
-    file_address *fa = (file_address *)p_malloc(request.pool, sizeof(*fa));
+    file_address *fa = NewFromPool<file_address>(request.pool);
     file_address_init(fa, p_strncat(request.pool,
                                     config->document_root,
                                     strlen(config->document_root),
@@ -624,8 +622,7 @@ handle_http_request(client_connection &connection,
                     http_server_request &request,
                     struct async_operation_ref *async_ref)
 {
-    struct request *request2 = (struct request *)
-        p_malloc(request.pool, sizeof(*request2));
+    struct request *request2 = NewFromPool<struct request>(request.pool);
     request2->connection = &connection;
     request2->request = &request;
     request2->product_token = nullptr;

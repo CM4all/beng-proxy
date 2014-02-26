@@ -144,7 +144,7 @@ node_status_response(struct control_server *server, struct pool *pool,
     size_t status_length = strlen(status);
 
     size_t response_length = length + 1 + status_length;
-    char *response = (char *)p_malloc(tpool, response_length);
+    char *response = PoolAlloc<char>(tpool, response_length);
     memcpy(response, payload, length);
     response[length] = 0;
     memcpy(response + length + 1, status, status_length);
@@ -305,8 +305,7 @@ lb_control_new(struct lb_instance *instance,
 {
     struct pool *pool = pool_new_linear(instance->pool, "lb_control", 1024);
 
-    struct lb_control *control =
-        (struct lb_control *)p_malloc(pool, sizeof(*control));
+    lb_control *control = NewFromPool<lb_control>(pool);
     control->pool = pool;
     control->instance = instance;
 

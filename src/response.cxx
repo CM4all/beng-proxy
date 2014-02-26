@@ -130,8 +130,7 @@ response_invoke_processor(request &request2,
         return;
     }
 
-    struct widget *widget = (struct widget *)
-        p_malloc(request->pool, sizeof(*widget));
+    struct widget *widget = NewFromPool<struct widget>(request->pool);
     widget_init_root(widget, request->pool,
                      request2.translate.response->uri != nullptr
                      ? request2.translate.response->uri
@@ -288,8 +287,7 @@ response_invoke_css_processor(request &request2,
         return;
     }
 
-    struct widget *widget = (struct widget *)
-        p_malloc(request->pool, sizeof(*widget));
+    struct widget *widget = NewFromPool<struct widget>(request->pool);
     widget_init_root(widget, request->pool,
                      strref_dup(request->pool, &request2.uri.base));
 
@@ -359,8 +357,7 @@ response_invoke_text_processor(request &request2,
         return;
     }
 
-    struct widget *widget = (struct widget *)
-        p_malloc(request->pool, sizeof(*widget));
+    struct widget *widget = NewFromPool<struct widget>(request->pool);
     widget_init_root(widget, request->pool,
                      strref_dup(request->pool, &request2.uri.base));
 

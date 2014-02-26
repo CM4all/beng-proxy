@@ -209,8 +209,7 @@ worker_new(struct instance *instance)
 
         event_reinit(instance->event_base);
 
-        struct worker *worker = (struct worker *)
-            p_malloc(instance->pool, sizeof(*worker));
+        worker *worker = NewFromPool<struct worker>(instance->pool);
         worker->instance = instance;
         worker->pid = pid;
         worker->crash = crash;

@@ -112,7 +112,7 @@ struct FilterCacheRequest {
 static filter_cache_info *
 filter_cache_info_new(struct pool *pool)
 {
-    filter_cache_info *info = (filter_cache_info *)p_malloc(pool, sizeof(*info));
+    filter_cache_info *info = NewFromPool<filter_cache_info>(pool);
 
     info->expires = (time_t)-1;
     return info;
@@ -174,8 +174,7 @@ filter_cache_info_copy(struct pool *pool, filter_cache_info *dest,
 static filter_cache_info *
 filter_cache_info_dup(struct pool *pool, const filter_cache_info *src)
 {
-    filter_cache_info *dest = (filter_cache_info *)
-        p_malloc(pool, sizeof(*dest));
+    filter_cache_info *dest = NewFromPool<filter_cache_info>(pool);
 
     filter_cache_info_copy(pool, dest, src);
     return dest;
@@ -185,8 +184,7 @@ static FilterCacheRequest *
 filter_cache_request_dup(struct pool *pool,
                          const struct FilterCacheRequest *src)
 {
-    FilterCacheRequest *dest = (FilterCacheRequest *)
-        p_malloc(pool, sizeof(*dest));
+    FilterCacheRequest *dest = NewFromPool<FilterCacheRequest>(pool);
 
     dest->pool = pool;
     dest->caller_pool = src->caller_pool;
@@ -213,7 +211,7 @@ filter_cache_put(FilterCacheRequest *request,
 
     struct pool *pool = pool_new_slice(request->cache->pool, "FilterCacheItem",
                                        request->cache->slice_pool);
-    FilterCacheItem *item = (FilterCacheItem *)p_malloc(pool, sizeof(*item));
+    FilterCacheItem *item = NewFromPool<FilterCacheItem>(pool);
     item->pool = pool;
     filter_cache_info_copy(pool, &item->info, request->info);
 
@@ -483,7 +481,7 @@ filter_cache_new(struct pool *pool, size_t max_size,
 {
     if (max_size == 0) {
         /* the filter cache is disabled, return a nullptred object */
-        filter_cache *cache = (filter_cache *)p_malloc(pool, sizeof(*cache));
+        filter_cache *cache = NewFromPool<filter_cache>(pool);
         cache->pool = pool;
         cache->cache = nullptr;
         cache->resource_loader = resource_loader;
@@ -492,7 +490,7 @@ filter_cache_new(struct pool *pool, size_t max_size,
 
     pool = pool_new_libc(pool, "filter_cache");
 
-    filter_cache *cache = (filter_cache *)p_malloc(pool, sizeof(*cache));
+    filter_cache *cache = NewFromPool<filter_cache>(pool);
     cache->pool = pool;
 
     if (max_size == 0) {
@@ -599,8 +597,7 @@ filter_cache_miss(struct filter_cache *cache, struct pool *caller_pool,
        allocate a new pool for it from cache->pool */
     pool = pool_new_linear(cache->pool, "filter_cache_request", 8192);
 
-    FilterCacheRequest *request = (FilterCacheRequest *)
-        p_malloc(pool, sizeof(*request));
+    FilterCacheRequest *request = NewFromPool<FilterCacheRequest>(pool);
     request->pool = pool;
     request->caller_pool = caller_pool;
     request->cache = cache;

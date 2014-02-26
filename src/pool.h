@@ -11,6 +11,11 @@
 
 #include <inline/compiler.h>
 
+#ifdef __cplusplus
+#include <utility>
+#include <new>
+#endif
+
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -334,6 +339,29 @@ p_strncat(struct pool *pool, const char *s, size_t length, ...);
 
 #ifdef __cplusplus
 }
+
+template<typename T>
+T *
+PoolAlloc(pool *p)
+{
+    return (T *)p_malloc(p, sizeof(T));
+}
+
+template<typename T>
+T *
+PoolAlloc(pool *p, size_t n)
+{
+    return (T *)p_malloc(p, sizeof(T) * n);
+}
+
+template<typename T, typename... Args>
+T *
+NewFromPool(pool *p, Args&&... args)
+{
+    void *t = PoolAlloc<T>(p);
+    return ::new(t) T(std::forward<Args>(args)...);
+}
+
 #endif
 
 #endif
