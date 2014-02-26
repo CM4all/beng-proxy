@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "translate-client.h"
+#include "translate_client.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "buffered_socket.h"

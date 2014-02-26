@@ -10,11 +10,11 @@
 #include "bp_instance.hxx"
 #include "http_server.h"
 #include "http_response.h"
-#include "tcache.h"
+#include "tcache.hxx"
 #include "get.h"
 #include "http_response.h"
 #include "istream.h"
-#include "translate-client.h"
+#include "translate_client.hxx"
 
 #include <daemon/log.h>
 

@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tcache.h"
-#include "tstock.h"
+#include "tcache.hxx"
+#include "tstock.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "translate-client.h"
+#include "translate_client.hxx"
 #include "http_quark.h"
 #include "widget-class.h"
 #include "cache.h"

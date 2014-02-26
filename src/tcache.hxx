@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_TCACHE_H
-#define __BENG_TCACHE_H
+#ifndef BENG_PROXY_TCACHE_HXX
+#define BENG_PROXY_TCACHE_HXX
 
 #include <stdint.h>
 
@@ -16,10 +16,6 @@ struct translate_handler;
 struct translate_request;
 struct async_operation_ref;
 struct cache_stats;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct tcache *
 translate_cache_new(struct pool *pool, struct tstock *stock,
@@ -61,9 +57,5 @@ translate_cache_invalidate(struct tcache *tcache,
                            const struct translate_request *request,
                            const uint16_t *vary, unsigned num_vary,
                            const char *site);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

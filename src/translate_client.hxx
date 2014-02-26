@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_TRANSLATE_CLIENT_H
-#define BENG_PROXY_TRANSLATE_CLIENT_H
+#ifndef BENG_PROXY_TRANSLATE_CLIENT_HXX
+#define BENG_PROXY_TRANSLATE_CLIENT_HXX
 
 #include "resource-address.h"
 #include "header-forward.h"
@@ -36,19 +36,11 @@ translate_quark(void)
     return g_quark_from_static_string("translate");
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
 translate(struct pool *pool, int fd,
           const struct lease *lease, void *lease_ctx,
           const struct translate_request *request,
           const struct translate_handler *handler, void *ctx,
           struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

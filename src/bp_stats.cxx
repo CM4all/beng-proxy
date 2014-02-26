@@ -9,7 +9,7 @@
 #include "hstock.h"
 #include "stock.h"
 #include "cache.h"
-#include "tcache.h"
+#include "tcache.hxx"
 #include "http_cache.h"
 #include "fcache.h"
 #include "child_manager.h"

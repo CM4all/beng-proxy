@@ -14,7 +14,7 @@
 #include "connection.h"
 #include "args.h"
 #include "session.h"
-#include "tcache.h"
+#include "tcache.hxx"
 #include "growing-buffer.h"
 #include "header-writer.h"
 #include "strref-pool.h"
@@ -27,7 +27,7 @@
 #include "strutil.h"
 #include "strmap.h"
 #include "istream.h"
-#include "translate-client.h"
+#include "translate_client.hxx"
 #include "ua_classification.h"
 
 #include <daemon/log.h>

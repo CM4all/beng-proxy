@@ -231,12 +231,12 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/strmap.c src/strmap.h \
 	src/strref-dpool.h \
 	src/strref-pool.h \
-	src/tcache.cxx src/tcache.h \
+	src/tcache.cxx src/tcache.hxx \
 	src/tcp-stock.c src/tcp-stock.h \
 	src/tcp-balancer.c src/tcp-balancer.h \
 	src/tpool.h \
 	src/transformation.c src/transformation.h \
-	src/tstock.c src/tstock.h \
+	src/tstock.cxx src/tstock.hxx \
 	src/udp-listener.h \
 	src/udp-distribute.h \
 	src/uri-edit.h \
@@ -266,7 +266,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cookie_jar.c src/cookie_jar.h \
 	src/cookie_client.c src/cookie_client.h \
 	src/cookie_server.c src/cookie_server.h \
-	src/translate_client.cxx src/translate-client.h \
+	src/translate_client.cxx src/translate_client.hxx \
 	src/translate_request.hxx \
 	src/translate_response.cxx rc/translate_response.hxx \
 	src/tvary.cxx src/tvary.h \
@@ -1374,7 +1374,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/fifo-buffer.c src/buffered_io.c src/direct.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
-	src/translate_client.cxx src/tstock.c src/growing-buffer.c src/gb-io.c \
+	src/translate_client.cxx src/tstock.cxx src/growing-buffer.c src/gb-io.c \
 	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
 	src/tcp-stock.c src/client-socket.c \
 	src/fd_util.c src/fd-util.c \
