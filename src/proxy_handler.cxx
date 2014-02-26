@@ -6,7 +6,7 @@
 
 #include "handler.hxx"
 #include "request.h"
-#include "request-forward.h"
+#include "request_forward.hxx"
 #include "http_server.h"
 #include "http_cache.h"
 #include "http_response.h"

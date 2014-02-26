@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "request-forward.h"
+#include "request_forward.hxx"
 #include "request.h"
 #include "http_server.h"
 #include "header-forward.h"
@@ -19,7 +19,7 @@ request_forward(struct forward_request *dest, struct request *request2,
     struct session *session;
 
     assert(!http_server_request_has_body(request) ||
-           request2->body != NULL);
+           request2->body != nullptr);
 
     /* send a request body? */
 
@@ -28,13 +28,13 @@ request_forward(struct forward_request *dest, struct request *request2,
            convert this request to a GET */
 
         dest->method = HTTP_METHOD_GET;
-        dest->body = NULL;
+        dest->body = nullptr;
     } else {
         /* forward body (if any) to the real server */
 
         dest->method = request->method;
         dest->body = request2->body;
-        request2->body = NULL;
+        request2->body = nullptr;
     }
 
     /* generate request headers */
@@ -44,11 +44,11 @@ request_forward(struct forward_request *dest, struct request *request2,
                                             request->local_host_and_port,
                                             request->remote_host,
                                             exclude_host,
-                                            dest->body != NULL,
+                                            dest->body != nullptr,
                                             !request_processor_enabled(request2),
                                             !request_transformation_enabled(request2),
                                             header_forward,
                                             session, host_and_port, uri);
-    if (session != NULL)
+    if (session != nullptr)
         session_put(session);
 }

@@ -207,7 +207,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/proxy_widget.cxx src/proxy_widget.hxx \
 	src/random.c src/random.h \
 	src/refcount.h \
-	src/request-forward.c src/request-forward.h \
+	src/request_forward.cxx src/request_forward.hxx \
 	src/request.cxx src/request.h \
 	src/rerror.cxx \
 	src/response.cxx \
