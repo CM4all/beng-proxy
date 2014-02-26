@@ -1,6 +1,7 @@
 cm4all-beng-proxy (4.0.19) unstable; urgency=low
 
   * tcache: make PARAM cacheable, supported by VARY
+  * python/translation/request: accept BEGIN in packetReceived()
 
  --   
 

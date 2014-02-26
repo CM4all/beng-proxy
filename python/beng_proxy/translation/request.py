@@ -66,7 +66,9 @@ class Request:
         """Feed a packet into this object.  Returns true when the
         request is finished."""
 
-        if packet.command == TRANSLATE_END:
+        if packet.command == TRANSLATE_BEGIN:
+            pass
+        elif packet.command == TRANSLATE_END:
             return True
         elif packet.command == TRANSLATE_HOST:
             self.host = packet.payload
