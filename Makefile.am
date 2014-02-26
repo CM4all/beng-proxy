@@ -269,7 +269,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/translate_client.cxx src/translate-client.h \
 	src/translate-request.h \
 	src/translate-response.c rc/translate-response.h \
-	src/tvary.c src/tvary.h \
+	src/tvary.cxx src/tvary.h \
 	src/lhttp_quark.h \
 	src/lhttp_launch.c src/lhttp_launch.h \
 	src/lhttp_stock.c src/lhttp_stock.h \
