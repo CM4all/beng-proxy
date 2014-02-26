@@ -10,10 +10,7 @@ extern "C" {
 #include "address_envelope.h"
 
 #include <inline/compiler.h>
-
-extern "C" {
 #include <socket/resolver.h>
-}
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
