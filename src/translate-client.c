@@ -891,7 +891,8 @@ translate_client_rlimits(struct translate_client *client,
  */
 static bool
 translate_handle_packet(struct translate_client *client,
-                        unsigned command, const char *payload,
+                        enum beng_translation_command command,
+                        const char *payload,
                         size_t payload_length)
 {
     struct transformation *transformation;
@@ -916,7 +917,7 @@ translate_handle_packet(struct translate_client *client,
 
     GError *error = NULL;
 
-    switch ((enum beng_translation_command)command) {
+    switch (command) {
     case TRANSLATE_END:
         stopwatch_event(client->stopwatch, "end");
 
@@ -2320,7 +2321,7 @@ translate_client_feed(struct translate_client *client,
             break;
 
         if (!translate_handle_packet(client,
-                                     client->reader.header.command,
+                                     (enum beng_translation_command)client->reader.header.command,
                                      client->reader.payload == NULL
                                      ? "" : client->reader.payload,
                                      client->reader.header.length))
