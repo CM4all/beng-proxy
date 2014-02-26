@@ -149,8 +149,8 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/was_glue.c \
 	src/fd-util.c src/fd-util.h \
 	src/fd_util.c src/fd_util.h \
-	src/file_headers.c src/file_headers.h \
-	src/file_handler.c src/file_handler.h \
+	src/file_headers.cxx src/file_headers.hxx \
+	src/file_handler.cxx src/file_handler.hxx \
 	src/fork.c src/fork.h \
 	src/gb-io.c src/gb-io.h \
 	src/get.c src/get.h \

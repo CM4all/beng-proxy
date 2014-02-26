@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "file_handler.h"
-#include "file_headers.h"
+#include "file_handler.hxx"
+#include "file_headers.hxx"
 #include "request.h"
 #include "generate_response.h"
 #include "static-headers.h"
@@ -106,7 +106,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
     struct stat st2;
 
     accept_encoding = strmap_get(request->headers, "accept-encoding");
-    if (accept_encoding == NULL ||
+    if (accept_encoding == nullptr ||
         !http_list_contains(accept_encoding, encoding))
         /* encoding not supported by the client */
         return false;
@@ -114,7 +114,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
     /* open compressed file */
 
     compressed_body = istream_file_stat_new(request->pool, path, &st2);
-    if (compressed_body == NULL)
+    if (compressed_body == nullptr)
         return false;
 
     if (!S_ISREG(st2.st_mode)) {
@@ -158,9 +158,9 @@ file_callback(struct request *request2)
         .skip = 0,
     };
 
-    assert(tr != NULL);
-    assert(tr->address.u.file->path != NULL);
-    assert(tr->address.u.file->delegate == NULL);
+    assert(tr != nullptr);
+    assert(tr->address.u.file->path != nullptr);
+    assert(tr->address.u.file->delegate == nullptr);
 
     path = tr->address.u.file->path;
 
@@ -176,7 +176,7 @@ file_callback(struct request *request2)
     /* open the file */
 
     body = istream_file_stat_new(request->pool, path, &st);
-    if (body == NULL) {
+    if (body == nullptr) {
         if (errno == ENOENT) {
             response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                       "The requested file does not exist.");
@@ -192,7 +192,7 @@ file_callback(struct request *request2)
 
     if (S_ISCHR(st.st_mode)) {
         /* allow character devices, but skip range etc. */
-        response_dispatch(request2, HTTP_STATUS_OK, NULL, body);
+        response_dispatch(request2, HTTP_STATUS_OK, nullptr, body);
         return;
     }
 
@@ -217,10 +217,10 @@ file_callback(struct request *request2)
 
     if (file_request.range == RANGE_NONE &&
         !request_transformation_enabled(request2) &&
-        ((tr->address.u.file->deflated != NULL &&
+        ((tr->address.u.file->deflated != nullptr &&
           file_dispatch_compressed(request2, &st, body, "deflate",
                                    tr->address.u.file->deflated)) ||
-         (tr->address.u.file->gzipped != NULL &&
+         (tr->address.u.file->gzipped != nullptr &&
           file_dispatch_compressed(request2, &st, body, "gzip",
                                    tr->address.u.file->gzipped))))
         return;

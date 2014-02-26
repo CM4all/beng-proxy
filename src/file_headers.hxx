@@ -4,10 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_FILE_HEADERS_H
-#define BENG_PROXY_FILE_HEADERS_H
+#ifndef BENG_PROXY_FILE_HEADERS_HXX
+#define BENG_PROXY_FILE_HEADERS_HXX
 
-#include <stdbool.h>
 #include <sys/types.h>
 
 struct growing_buffer;

@@ -4,20 +4,15 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_FILE_HANDLER_H
-#define BENG_PROXY_FILE_HANDLER_H
+#ifndef BENG_PROXY_FILE_HANDLER_HXX
+#define BENG_PROXY_FILE_HANDLER_HXX
 
-#include <stdbool.h>
 #include <sys/types.h>
 
 struct istream;
 struct request;
 struct file_request;
 struct stat;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 file_dispatch(struct request *request2, const struct stat *st,
@@ -26,9 +21,5 @@ file_dispatch(struct request *request2, const struct stat *st,
 
 void
 file_callback(struct request *request);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

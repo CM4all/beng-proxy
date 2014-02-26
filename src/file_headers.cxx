@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "file_headers.h"
+#include "file_headers.hxx"
 #include "static-headers.h"
 #include "growing-buffer.h"
 #include "header-writer.h"
@@ -33,9 +33,9 @@ parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
     unsigned long v;
     char *endptr;
 
-    assert(p != NULL);
-    assert(skip_r != NULL);
-    assert(size_r != NULL);
+    assert(p != nullptr);
+    assert(skip_r != nullptr);
+    assert(size_r != nullptr);
 
     if (memcmp(p, "bytes=", 6) != 0)
         return RANGE_INVALID;
@@ -80,7 +80,7 @@ parse_range_header(const char *p, off_t *skip_r, off_t *size_r)
 static bool
 check_if_range(const char *if_range, const struct stat *st)
 {
-    if (if_range == NULL)
+    if (if_range == nullptr)
         return true;
 
     time_t t = http_date_parse(if_range);
@@ -106,7 +106,7 @@ file_evaluate_request(struct request *request2,
         !request_transformation_enabled(request2)) {
         p = strmap_get(request->headers, "range");
 
-        if (p != NULL &&
+        if (p != nullptr &&
             check_if_range(strmap_get(request->headers, "if-range"), st))
             file_request->range =
                 parse_range_header(p, &file_request->skip,
@@ -115,10 +115,10 @@ file_evaluate_request(struct request *request2,
 
     if (!request_processor_enabled(request2)) {
         p = strmap_get(request->headers, "if-modified-since");
-        if (p != NULL) {
+        if (p != nullptr) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st->st_mtime <= t) {
-                struct growing_buffer *headers = NULL;
+                struct growing_buffer *headers = nullptr;
                 headers = growing_buffer_new(request->pool, 512);
 
                 if (fd >= 0)
@@ -128,17 +128,17 @@ file_evaluate_request(struct request *request2,
                                               request2->translate.response);
 
                 response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
-                                  headers, NULL);
+                                  headers, nullptr);
                 return false;
             }
         }
 
         p = strmap_get(request->headers, "if-unmodified-since");
-        if (p != NULL) {
+        if (p != nullptr) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st->st_mtime > t) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  NULL, NULL);
+                                  nullptr, nullptr);
                 return false;
             }
         }
@@ -146,29 +146,29 @@ file_evaluate_request(struct request *request2,
 
     if (!request_transformation_enabled(request2)) {
         p = strmap_get(request->headers, "if-match");
-        if (p != NULL && strcmp(p, "*") != 0) {
+        if (p != nullptr && strcmp(p, "*") != 0) {
             static_etag(buffer, st);
 
             if (!http_list_contains(p, buffer)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  NULL, NULL);
+                                  nullptr, nullptr);
                 return false;
             }
         }
 
         p = strmap_get(request->headers, "if-none-match");
-        if (p != NULL && strcmp(p, "*") == 0) {
+        if (p != nullptr && strcmp(p, "*") == 0) {
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                              NULL, NULL);
+                              nullptr, nullptr);
             return false;
         }
 
-        if (p != NULL) {
+        if (p != nullptr) {
             static_etag(buffer, st);
 
             if (http_list_contains(p, buffer)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  NULL, NULL);
+                                  nullptr, nullptr);
                 return false;
             }
         }
@@ -226,7 +226,7 @@ file_cache_headers(struct growing_buffer *headers,
 
             /* generate an "Expires" response header */
             header_write(headers, "expires",
-                         http_date_format(time(NULL) + max_age));
+                         http_date_format(time(nullptr) + max_age));
         }
     }
 #endif
@@ -246,7 +246,7 @@ file_response_headers(struct growing_buffer *headers,
         header_write(headers, "etag", etag);
     }
 
-    if (override_content_type != NULL) {
+    if (override_content_type != nullptr) {
         /* content type override from the translation server */
         header_write(headers, "content-type", override_content_type);
     } else {

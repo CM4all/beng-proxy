@@ -8,7 +8,7 @@
 #include "config.hxx"
 #include "bp_instance.hxx"
 #include "cast.hxx"
-#include "file_handler.h"
+#include "file_handler.hxx"
 #include "nfs_handler.h"
 #include "request.h"
 #include "connection.h"

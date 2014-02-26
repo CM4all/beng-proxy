@@ -5,8 +5,8 @@
  */
 
 #include "handler.hxx"
-#include "file_handler.h"
-#include "file_headers.h"
+#include "file_handler.hxx"
+#include "file_headers.hxx"
 #include "static-headers.h"
 #include "delegate_glue.h"
 #include "http_error.h"
