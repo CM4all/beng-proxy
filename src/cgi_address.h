@@ -63,6 +63,10 @@ struct cgi_address {
     struct address_list address_list;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 cgi_address_init(struct cgi_address *cgi, const char *path,
                  bool have_address_list);
@@ -131,5 +135,9 @@ cgi_address_is_expandable(const struct cgi_address *address)
 bool
 cgi_address_expand(struct pool *pool, struct cgi_address *address,
                    const GMatchInfo *match_info, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

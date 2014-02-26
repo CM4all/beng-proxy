@@ -41,6 +41,10 @@ strset_is_empty(const struct strset *s)
     return s->head == NULL;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_pure
 bool
 strset_contains(const struct strset *s, const char *p);
@@ -61,5 +65,9 @@ strset_add(struct pool *pool, struct strset *s, const char *p);
  */
 void
 strset_copy(struct pool *pool, struct strset *d, const struct strset *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

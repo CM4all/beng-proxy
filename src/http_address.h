@@ -65,6 +65,10 @@ http_address_quark(void)
     return g_quark_from_static_string("http_address");
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Parse the given absolute URI into a newly allocated
  * #http_address object.
@@ -196,5 +200,9 @@ http_address_default_port(const struct http_address *address)
 
     gcc_unreachable();
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

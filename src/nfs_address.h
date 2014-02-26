@@ -43,6 +43,10 @@ nfs_address_init(struct nfs_address *nfs, const char *server,
     nfs->content_type = NULL;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct nfs_address *
 nfs_address_new(struct pool *pool, const char *server,
                 const char *export_name, const char *path);
@@ -78,5 +82,9 @@ nfs_address_is_expandable(const struct nfs_address *address)
 const struct nfs_address *
 nfs_address_expand(struct pool *pool, const struct nfs_address *src,
                    const GMatchInfo *match_info, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

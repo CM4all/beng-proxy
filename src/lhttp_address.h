@@ -47,6 +47,10 @@ struct lhttp_address {
     unsigned concurrency;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 lhttp_address_init(struct lhttp_address *address, const char *path);
 
@@ -141,5 +145,9 @@ lhttp_address_is_expandable(const struct lhttp_address *address)
 bool
 lhttp_address_expand(struct pool *pool, struct lhttp_address *address,
                      const GMatchInfo *match_info, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

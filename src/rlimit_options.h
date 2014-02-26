@@ -33,6 +33,10 @@ rlimit_options_copy(struct rlimit_options *dest,
     *dest = *src;
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char *
 rlimit_options_id(const struct rlimit_options *r, char *p);
 
@@ -41,5 +45,9 @@ rlimit_options_apply(const struct rlimit_options *r);
 
 bool
 rlimit_options_parse(struct rlimit_options *r, const char *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
