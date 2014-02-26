@@ -34,6 +34,7 @@ class Request:
     Never ever access the 'args' property."""
 
     def __init__(self):
+        self.protocol_version = 0
         self.host = None
         self.raw_uri = None
         self.args = None
@@ -67,7 +68,8 @@ class Request:
         request is finished."""
 
         if packet.command == TRANSLATE_BEGIN:
-            pass
+            if len(packet.payload) > 0:
+                self.protocol_version = ord(packet.payload[0])
         elif packet.command == TRANSLATE_END:
             return True
         elif packet.command == TRANSLATE_HOST:
