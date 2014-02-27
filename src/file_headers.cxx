@@ -13,7 +13,7 @@
 #include "request.hxx"
 #include "http_server.h"
 #include "http_util.h"
-#include "tvary.h"
+#include "tvary.hxx"
 
 #include <assert.h>
 #include <stdlib.h>

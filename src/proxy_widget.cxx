@@ -20,7 +20,7 @@
 #include "global.h"
 #include "istream-impl.h"
 #include "istream.h"
-#include "tvary.h"
+#include "tvary.hxx"
 
 #include <daemon/log.h>
 

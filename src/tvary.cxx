@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tvary.h"
+#include "tvary.hxx"
 #include "translate_response.hxx"
 #include "strmap.h"
 #include "growing-buffer.h"
