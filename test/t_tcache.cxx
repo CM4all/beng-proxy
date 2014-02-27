@@ -459,8 +459,7 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
         },
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
-        .vary = response5_vary,
-        .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
+        .vary = { response5_vary, sizeof(response5_vary) / sizeof(response5_vary[0]), },
     };
 
     static const struct file_address file5b = {
@@ -475,8 +474,7 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
         },
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
-        .vary = response5_vary,
-        .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
+        .vary = { response5_vary, sizeof(response5_vary) / sizeof(response5_vary[0]), },
     };
 
     static const uint16_t response5_invalidate[] = {
@@ -495,10 +493,8 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
         },
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
-        .vary = response5_vary,
-        .num_vary = sizeof(response5_vary) / sizeof(response5_vary[0]),
-        .invalidate = response5_invalidate,
-        .num_invalidate = sizeof(response5_invalidate) / sizeof(response5_invalidate[0]),
+        .vary = { response5_vary, sizeof(response5_vary) / sizeof(response5_vary[0]), },
+        .invalidate = { response5_invalidate, sizeof(response5_invalidate) / sizeof(response5_invalidate[0]) },
     };
 
     struct async_operation_ref async_ref;
@@ -716,8 +712,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
         },
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
-        .invalidate = response5_invalidate,
-        .num_invalidate = sizeof(response5_invalidate) / sizeof(response5_invalidate[0]),
+        .invalidate = { response5_invalidate, sizeof(response5_invalidate) / sizeof(response5_invalidate[0]) },
     };
 
     next_response = expected_response = &response5;

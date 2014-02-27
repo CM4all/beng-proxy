@@ -42,8 +42,9 @@ translation_vary_header(const TranslateResponse *response)
 
     static char buffer[256];
     char *p = buffer;
-    for (unsigned i = 0, n = response->num_vary; i != n; ++i) {
-        const auto cmd = beng_translation_command(response->vary[i]);
+
+    for (auto i : response->vary) {
+        const auto cmd = beng_translation_command(i);
         const char *name = translation_vary_name(cmd);
         if (name == nullptr)
             continue;
@@ -93,8 +94,8 @@ write_translation_vary_header(struct growing_buffer *headers,
     assert(response != nullptr);
 
     bool active = false;
-    for (unsigned i = 0, n = response->num_vary; i != n; ++i) {
-        const auto cmd = beng_translation_command(response->vary[i]);
+    for (auto i : response->vary) {
+        const auto cmd = beng_translation_command(i);
         const char *name = translation_vary_name(cmd);
         if (name == nullptr)
             continue;

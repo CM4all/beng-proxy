@@ -1653,26 +1653,26 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_VARY:
         if (payload_length == 0 ||
-            payload_length % sizeof(client->response.vary[0]) != 0) {
+            payload_length % sizeof(client->response.vary.data[0]) != 0) {
             translate_client_error(client, "malformed VARY packet");
             return false;
         }
 
-        client->response.vary = (const uint16_t *)_payload;
-        client->response.num_vary = payload_length / sizeof(client->response.vary[0]);
+        client->response.vary.data = (const uint16_t *)_payload;
+        client->response.vary.size = payload_length / sizeof(client->response.vary.data[0]);
         return true;
 
     case TRANSLATE_INVALIDATE:
         if (payload_length == 0 ||
-            payload_length % sizeof(client->response.invalidate[0]) != 0) {
+            payload_length % sizeof(client->response.invalidate.data[0]) != 0) {
             translate_client_error(client,
                                    "malformed INVALIDATE packet");
             return false;
         }
 
-        client->response.invalidate = (const uint16_t *)_payload;
-        client->response.num_invalidate = payload_length /
-            sizeof(client->response.invalidate[0]);
+        client->response.invalidate.data = (const uint16_t *)_payload;
+        client->response.invalidate.size = payload_length /
+            sizeof(client->response.invalidate.data[0]);
         return true;
 
     case TRANSLATE_BASE:

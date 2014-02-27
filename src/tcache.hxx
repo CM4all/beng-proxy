@@ -16,6 +16,7 @@ struct TranslateHandler;
 struct TranslateRequest;
 struct async_operation_ref;
 struct cache_stats;
+template<typename T> struct ConstBuffer;
 
 struct tcache *
 translate_cache_new(struct pool *pool, struct tstock *stock,
@@ -55,7 +56,7 @@ translate_cache(struct pool *pool, struct tcache *tcache,
 void
 translate_cache_invalidate(struct tcache *tcache,
                            const TranslateRequest *request,
-                           const uint16_t *vary, unsigned num_vary,
+                           ConstBuffer<uint16_t> vary,
                            const char *site);
 
 #endif

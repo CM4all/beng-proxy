@@ -95,17 +95,17 @@ translate_response_copy(struct pool *pool, TranslateResponse *dest,
         ? widget_view_dup_chain(pool, src->views)
         : nullptr;
 
-    dest->num_vary = src->num_vary;
-    if (dest->num_vary > 0)
-        dest->vary = (const uint16_t *)
-            p_memdup(pool, src->vary,
-                     dest->num_vary * sizeof(dest->vary[0]));
+    dest->vary.size = src->vary.size;
+    if (!dest->vary.IsEmpty())
+        dest->vary.data = (const uint16_t *)
+            p_memdup(pool, src->vary.data,
+                     dest->vary.size * sizeof(dest->vary.data[0]));
 
-    dest->num_invalidate = src->num_invalidate;
-    if (dest->num_invalidate > 0)
-        dest->invalidate = (const uint16_t *)
-            p_memdup(pool, src->invalidate,
-                     dest->num_invalidate * sizeof(dest->invalidate[0]));
+    dest->invalidate.size = src->invalidate.size;
+    if (!dest->invalidate.IsEmpty())
+        dest->invalidate.data = (const uint16_t *)
+            p_memdup(pool, src->invalidate.data,
+                     dest->invalidate.size * sizeof(dest->invalidate.data[0]));
 
     dest->validate_mtime.mtime = src->validate_mtime.mtime;
     dest->validate_mtime.path =

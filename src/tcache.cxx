@@ -599,9 +599,9 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
         /* the URI did not match the regular expression */
         return false;
 
-    for (unsigned i = 0; i < item->response.num_vary; ++i)
+    for (auto i : item->response.vary)
         if (!tcache_vary_match(item, request,
-                               (enum beng_translation_command)item->response.vary[i],
+                               beng_translation_command(i),
                                false))
             return false;
 
@@ -662,8 +662,7 @@ tcache_lookup(struct pool *pool, struct tcache *tcache,
 struct tcache_invalidate_data {
     const TranslateRequest *request;
 
-    const uint16_t *vary;
-    unsigned num_vary;
+    ConstBuffer<uint16_t> vary;
 
     const char *site;
  };
@@ -673,16 +672,14 @@ tcache_invalidate_match(const struct cache_item *_item, void *ctx)
 {
     const struct tcache_item *item = (const struct tcache_item *)_item;
     const tcache_invalidate_data *data = (const tcache_invalidate_data *)ctx;
-    const uint16_t *invalidate = data->vary;
-    unsigned num_invalidate = data->num_vary;
 
     if (data->site != nullptr &&
         (item->response.site == nullptr || strcmp(data->site, item->response.site) != 0))
         return false;
 
-    for (unsigned i = 0; i < num_invalidate; ++i)
+    for (auto i : data->vary)
         if (!tcache_vary_match(item, data->request,
-                               (enum beng_translation_command)invalidate[i],
+                               beng_translation_command(i),
                                true))
             return false;
 
@@ -727,20 +724,19 @@ translate_cache_invalidate_host(struct tcache *tcache, const char *host)
 void
 translate_cache_invalidate(struct tcache *tcache,
                            const TranslateRequest *request,
-                           const uint16_t *vary, unsigned num_vary,
+                           ConstBuffer<uint16_t> vary,
                            const char *site)
 {
     struct tcache_invalidate_data data = {
         .request = request,
         .vary = vary,
-        .num_vary = num_vary,
         .site = site,
     };
 
     /* TODO: optimize the case when there is more than just
        TRANSLATE_HOST */
     gcc_unused
-    unsigned removed = num_vary == 1 && vary[0] == TRANSLATE_HOST
+    unsigned removed = vary.size == 1 && vary.data[0] == TRANSLATE_HOST
         ? translate_cache_invalidate_host(tcache, request->host)
         : cache_remove_all_match(tcache->cache,
                                  tcache_invalidate_match, &data);
@@ -760,10 +756,9 @@ tcache_handler_response(const TranslateResponse *response, void *ctx)
 
     assert(response != nullptr);
 
-    if (response->num_invalidate > 0)
+    if (!response->invalidate.IsEmpty())
         translate_cache_invalidate(tcr->tcache, tcr->request,
                                    response->invalidate,
-                                   response->num_invalidate,
                                    nullptr);
 
     if (tcache_response_evaluate(response)) {

@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_TRANSLATE_RESPONSE_HXX
 #define BENG_PROXY_TRANSLATE_RESPONSE_HXX
 
+#include "util/ConstBuffer.hxx"
 #include "resource-address.h"
 #include "header-forward.h"
 #include "strref.h"
@@ -135,11 +136,8 @@ struct TranslateResponse {
      */
     struct strset container_groups;
 
-    const uint16_t *vary;
-    unsigned num_vary;
-
-    const uint16_t *invalidate;
-    unsigned num_invalidate;
+    ConstBuffer<uint16_t> vary;
+    ConstBuffer<uint16_t> invalidate;
 
     struct {
         uint64_t mtime;
@@ -158,8 +156,8 @@ static inline bool
 translate_response_vary_contains(const TranslateResponse *response,
                                  uint16_t cmd)
 {
-    for (unsigned i = 0; i < response->num_vary; ++i)
-        if (response->vary[i] == cmd)
+    for (auto i : response->vary)
+        if (i == cmd)
             return true;
 
     return false;

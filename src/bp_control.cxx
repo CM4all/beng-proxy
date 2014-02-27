@@ -14,6 +14,7 @@
 #include "translate_request.hxx"
 #include "tpool.h"
 #include "beng-proxy/translation.h"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -149,7 +150,7 @@ control_tcache_invalidate(struct instance *instance,
     }
 
     translate_cache_invalidate(instance->translate_cache, &request,
-                               cmds, num_cmds,
+                               ConstBuffer<uint16_t>(cmds, num_cmds),
                                site);
 
     pool_rewind(tpool, &mark);
