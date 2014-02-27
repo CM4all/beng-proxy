@@ -145,6 +145,8 @@ struct TranslateResponse {
         uint64_t mtime;
         const char *path;
     } validate_mtime;
+
+    void Clear();
 };
 
 #ifdef __cplusplus

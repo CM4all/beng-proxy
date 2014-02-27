@@ -517,8 +517,8 @@ serve_document_root_file(request &request2,
 
     struct parsed_uri *uri = &request2.uri;
 
-    TranslateResponse *tr = (TranslateResponse *)
-        p_calloc(request.pool, sizeof(*tr));
+    auto tr = NewFromPool<TranslateResponse>(request.pool);
+    tr->Clear();
     request2.translate.response = tr;
 
     const char *index_file = nullptr;

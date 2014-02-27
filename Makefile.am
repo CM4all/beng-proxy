@@ -1375,6 +1375,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/fifo-buffer.c src/buffered_io.c src/direct.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/translate_client.cxx src/tstock.cxx src/growing-buffer.c src/gb-io.c \
+	src/translate_response.cxx \
 	src/failure.c src/bulldog.c src/balancer.c src/cache.c \
 	src/tcp-stock.c src/client-socket.c \
 	src/fd_util.c src/fd-util.c \

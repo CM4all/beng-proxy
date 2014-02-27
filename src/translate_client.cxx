@@ -936,7 +936,7 @@ translate_handle_packet(TranslateClient *client,
         return false;
 
     case TRANSLATE_BEGIN:
-        memset(&client->response, 0, sizeof(client->response));
+        client->response.Clear();
         client->previous_command = command;
         client->resource_address = &client->response.address;
         client->jail = nullptr;

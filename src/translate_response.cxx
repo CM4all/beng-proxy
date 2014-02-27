@@ -10,6 +10,14 @@
 #include "strmap.h"
 #include "widget-view.h"
 
+#include <string.h>
+
+void
+TranslateResponse::Clear()
+{
+    memset(this, 0, sizeof(*this));
+}
+
 void
 translate_response_copy(struct pool *pool, TranslateResponse *dest,
                         const TranslateResponse *src)
