@@ -22,7 +22,7 @@
 #include <arpa/inet.h>
 
 static bool
-apply_translation_packet(struct translate_request *request,
+apply_translation_packet(TranslateRequest *request,
                          enum beng_translation_command command,
                          const char *payload)
 {
@@ -74,7 +74,7 @@ apply_translation_packet(struct translate_request *request,
 }
 
 static unsigned
-decode_translation_packets(struct pool *pool, struct translate_request *request,
+decode_translation_packets(struct pool *pool, TranslateRequest *request,
                            uint16_t *cmds, unsigned max_cmds,
                            const void *data, size_t length,
                            const char **site_r)
@@ -134,7 +134,7 @@ control_tcache_invalidate(struct instance *instance,
     struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
-    struct translate_request request;
+    TranslateRequest request;
     memset(&request, 0, sizeof(request));
 
     const char *site;

@@ -38,7 +38,7 @@ static unsigned translation_protocol_version;
 
 static const char *
 bounce_uri(struct pool *pool, const struct request *request,
-           const translate_response &response)
+           const TranslateResponse &response)
 {
     const char *scheme = response.scheme != nullptr
         ? response.scheme : "http";
@@ -71,7 +71,7 @@ bounce_uri(struct pool *pool, const struct request *request,
  */
 static const char *
 get_request_realm(struct pool *pool, const struct strmap *request_headers,
-                  const translate_response &response)
+                  const TranslateResponse &response)
 {
     if (response.realm != nullptr)
         return response.realm;
@@ -89,13 +89,13 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
 }
 
 /**
- * Apply session-specific data from the #translate_response.  Returns
+ * Apply session-specific data from the #TranslateResponse.  Returns
  * the session object or nullptr.  The session must be freed by the
  * caller using session_put().
  */
 static struct session *
 apply_translate_response_session(request &request,
-                                 const translate_response &response)
+                                 const TranslateResponse &response)
 {
     request.realm = get_request_realm(request.request->pool,
                                       request.request->headers, response);
@@ -189,12 +189,12 @@ apply_translate_response_session(request &request,
 }
 
 /**
- * Called by handle_translated_request() with the #translate_response
+ * Called by handle_translated_request() with the #TranslateResponse
  * copy.
  */
 static void
 handle_translated_request2(request &request,
-                           const translate_response &response)
+                           const TranslateResponse &response)
 {
     request.translate.transformation = response.views != nullptr
         ? response.views->transformation
@@ -275,13 +275,12 @@ handle_translated_request2(request &request,
 }
 
 static void
-handle_translated_request(request &request, const translate_response &response)
+handle_translated_request(request &request, const TranslateResponse &response)
 {
-    /* copy the translate_response just in case the cache item is
+    /* copy the TranslateResponse just in case the cache item is
        freed before we send the final response */
     /* TODO: use cache_item_lock() instead */
-    translate_response *response2 =
-        NewFromPool<translate_response>(request.request->pool);
+    auto response2 = NewFromPool<TranslateResponse>(request.request->pool);
     *response2 = response;
     translate_response_copy(request.request->pool, response2, &response);
     request.translate.response = response2;
@@ -289,17 +288,17 @@ handle_translated_request(request &request, const translate_response &response)
     handle_translated_request2(request, *response2);
 }
 
-extern const struct translate_handler handler_translate_handler;
+extern const TranslateHandler handler_translate_handler;
 
 /**
- * Install a fake #translate_response.  This is sometimes necessary
+ * Install a fake #TranslateResponse.  This is sometimes necessary
  * when we don't have a "real" response (yet), because much of the
- * code in response.c dereferences the #translate_response pointer.
+ * code in response.c dereferences the #TranslateResponse pointer.
  */
 static void
 install_error_response(request &request)
 {
-    static struct translate_response error_response;
+    static TranslateResponse error_response;
     error_response.status = (http_status_t)-1;
 
     request.translate.response = &error_response;
@@ -320,7 +319,7 @@ uri_without_query_string(struct pool *pool, const char *uri)
 }
 
 static void
-handler_translate_response(const struct translate_response *response,
+handler_translate_response(const TranslateResponse *response,
                            void *ctx)
 {
     struct request &request = *(struct request *)ctx;
@@ -435,7 +434,7 @@ handler_translate_error(GError *error, void *ctx)
     g_error_free(error);
 }
 
-const struct translate_handler handler_translate_handler = {
+const TranslateHandler handler_translate_handler = {
     .response = handler_translate_response,
     .error = handler_translate_error,
 };
@@ -462,7 +461,7 @@ request_uri_parse(request &request2, parsed_uri &dest)
 }
 
 static void
-fill_translate_request(struct translate_request *t,
+fill_translate_request(TranslateRequest *t,
                        const struct http_server_request *request,
                        const struct parsed_uri *uri,
                        struct strmap *args)
@@ -518,7 +517,7 @@ serve_document_root_file(request &request2,
 
     struct parsed_uri *uri = &request2.uri;
 
-    translate_response *tr = (translate_response *)
+    TranslateResponse *tr = (TranslateResponse *)
         p_calloc(request.pool, sizeof(*tr));
     request2.translate.response = tr;
 

@@ -21,11 +21,11 @@ struct pool;
 struct sockaddr;
 struct lease;
 struct async_operation_ref;
-struct translate_request;
-struct translate_response;
+struct TranslateRequest;
+struct TranslateResponse;
 
-struct translate_handler {
-    void (*response)(const struct translate_response *response, void *ctx);
+struct TranslateHandler {
+    void (*response)(const TranslateResponse *response, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 
@@ -39,8 +39,8 @@ translate_quark(void)
 void
 translate(struct pool *pool, int fd,
           const struct lease *lease, void *lease_ctx,
-          const struct translate_request *request,
-          const struct translate_handler *handler, void *ctx,
+          const TranslateRequest *request,
+          const TranslateHandler *handler, void *ctx,
           struct async_operation_ref *async_ref);
 
 #endif

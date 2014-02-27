@@ -19,7 +19,7 @@
 
 struct pool;
 
-struct translate_response {
+struct TranslateResponse {
     /**
      * The protocol version from the BEGIN packet.
      */
@@ -153,7 +153,7 @@ extern "C" {
 
 gcc_pure
 static inline bool
-translate_response_vary_contains(const struct translate_response *response,
+translate_response_vary_contains(const TranslateResponse *response,
                                  uint16_t cmd)
 {
     for (unsigned i = 0; i < response->num_vary; ++i)
@@ -164,8 +164,8 @@ translate_response_vary_contains(const struct translate_response *response,
 }
 
 void
-translate_response_copy(struct pool *pool, struct translate_response *dest,
-                        const struct translate_response *src);
+translate_response_copy(struct pool *pool, TranslateResponse *dest,
+                        const TranslateResponse *src);
 
 /**
  * Does any response need to be expanded with
@@ -173,7 +173,7 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
  */
 gcc_pure
 bool
-translate_response_is_expandable(const struct translate_response *response);
+translate_response_is_expandable(const TranslateResponse *response);
 
 /**
  * Expand the strings in this response with the specified regex
@@ -181,7 +181,7 @@ translate_response_is_expandable(const struct translate_response *response);
  */
 bool
 translate_response_expand(struct pool *pool,
-                          struct translate_response *response,
+                          TranslateResponse *response,
                           const GMatchInfo *match_info, GError **error_r);
 
 #ifdef __cplusplus

@@ -28,7 +28,7 @@ struct error_response {
     struct growing_buffer *headers;
     struct istream *body;
 
-    struct translate_request translate_request;
+    TranslateRequest translate_request;
 };
 
 static void
@@ -87,7 +87,7 @@ const struct http_response_handler errdoc_response_handler = {
  */
 
 static void
-errdoc_translate_response(const struct translate_response *response, void *ctx)
+errdoc_translate_response(const TranslateResponse *response, void *ctx)
 {
     error_response &er = *(error_response *)ctx;
 
@@ -123,14 +123,14 @@ errdoc_translate_error(GError *error, void *ctx)
     errdoc_resubmit(er);
 }
 
-static const struct translate_handler errdoc_translate_handler = {
+static const TranslateHandler errdoc_translate_handler = {
     .response = errdoc_translate_response,
     .error = errdoc_translate_error,
 };
 
 static void
-fill_translate_request(struct translate_request *t,
-                       const struct translate_request *src,
+fill_translate_request(TranslateRequest *t,
+                       const TranslateRequest *src,
                        http_status_t status)
 {
     *t = *src;

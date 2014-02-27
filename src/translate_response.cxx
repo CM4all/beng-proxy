@@ -11,8 +11,8 @@
 #include "widget-view.h"
 
 void
-translate_response_copy(struct pool *pool, struct translate_response *dest,
-                        const struct translate_response *src)
+translate_response_copy(struct pool *pool, TranslateResponse *dest,
+                        const TranslateResponse *src)
 {
     /* we don't copy the "max_age" attribute, because it's only used
        by the tcache itself */
@@ -105,7 +105,7 @@ translate_response_copy(struct pool *pool, struct translate_response *dest,
 }
 
 bool
-translate_response_is_expandable(const struct translate_response *response)
+translate_response_is_expandable(const TranslateResponse *response)
 {
     return response->regex != nullptr &&
         (resource_address_is_expandable(&response->address) ||
@@ -114,7 +114,7 @@ translate_response_is_expandable(const struct translate_response *response)
 
 bool
 translate_response_expand(struct pool *pool,
-                          struct translate_response *response,
+                          TranslateResponse *response,
                           const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != nullptr);

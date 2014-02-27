@@ -42,7 +42,7 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
     request *request2 = (request *)ctx;
     struct http_server_request *const request = request2->request;
     struct pool *const pool = request->pool;
-    const struct translate_response *const tr = request2->translate.response;
+    const TranslateResponse *const tr = request2->translate.response;
 
     struct file_request file_request = {
         .range = RANGE_NONE,
@@ -121,7 +121,7 @@ nfs_handler(struct request *request2)
 {
     struct http_server_request *const request = request2->request;
     struct pool *const pool = request->pool;
-    const struct translate_response *const tr = request2->translate.response;
+    const TranslateResponse *const tr = request2->translate.response;
 
     assert(tr != NULL);
     assert(tr->address.u.nfs != NULL);

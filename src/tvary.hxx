@@ -6,15 +6,15 @@
 #define BENG_PROXY_TRANSLATE_VARY_HXX
 
 struct pool;
-struct translate_response;
+struct TranslateResponse;
 struct growing_buffer;
 
 struct strmap *
 add_translation_vary_header(struct pool *pool, struct strmap *headers,
-                            const struct translate_response *response);
+                            const TranslateResponse *response);
 
 void
 write_translation_vary_header(struct growing_buffer *headers,
-                              const struct translate_response *response);
+                              const TranslateResponse *response);
 
 #endif

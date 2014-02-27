@@ -36,7 +36,7 @@ translation_vary_name(beng_translation_command cmd)
 }
 
 static const char *
-translation_vary_header(const struct translate_response *response)
+translation_vary_header(const TranslateResponse *response)
 {
     assert(response != nullptr);
 
@@ -61,7 +61,7 @@ translation_vary_header(const struct translate_response *response)
 
 struct strmap *
 add_translation_vary_header(struct pool *pool, struct strmap *headers,
-                            const struct translate_response *response)
+                            const TranslateResponse *response)
 {
     assert(pool != nullptr);
     assert(response != nullptr);
@@ -87,7 +87,7 @@ add_translation_vary_header(struct pool *pool, struct strmap *headers,
 
 void
 write_translation_vary_header(struct growing_buffer *headers,
-                              const struct translate_response *response)
+                              const TranslateResponse *response)
 {
     assert(headers != nullptr);
     assert(response != nullptr);

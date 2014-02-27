@@ -13,7 +13,7 @@
 
 #include <stddef.h>
 
-struct translate_request {
+struct TranslateRequest {
     const struct sockaddr *local_address;
     size_t local_address_length;
 

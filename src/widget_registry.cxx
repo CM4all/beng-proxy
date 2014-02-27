@@ -25,10 +25,10 @@ static void
 widget_registry_lookup(struct pool *pool,
                        struct tcache *tcache,
                        const char *widget_type,
-                       const struct translate_handler *handler, void *ctx,
+                       const TranslateHandler *handler, void *ctx,
                        struct async_operation_ref *async_ref)
 {
-    translate_request *request = NewFromPool<translate_request>(pool);
+    auto request = NewFromPool<TranslateRequest>(pool);
 
     request->local_address = nullptr;
     request->local_address_length = 0;
@@ -60,7 +60,7 @@ struct widget_class_lookup {
 };
 
 static void
-widget_translate_response(const translate_response *response, void *ctx)
+widget_translate_response(const TranslateResponse *response, void *ctx)
 {
     struct widget_class_lookup *lookup = (struct widget_class_lookup *)ctx;
 
@@ -104,7 +104,7 @@ widget_translate_error(GError *error, void *ctx)
     lookup->callback(nullptr, lookup->callback_ctx);
 }
 
-static const struct translate_handler widget_translate_handler = {
+static const TranslateHandler widget_translate_handler = {
     .response = widget_translate_response,
     .error = widget_translate_error,
 };

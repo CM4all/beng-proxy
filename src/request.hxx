@@ -58,8 +58,8 @@ struct request {
     bool stateless;
 
     struct {
-        struct translate_request request;
-        const struct translate_response *response;
+        TranslateRequest request;
+        const TranslateResponse *response;
         const struct transformation *transformation;
 
         /**
@@ -67,7 +67,7 @@ struct request {
          * only if beng-proxy sends a second translate request with a
          * CHECK packet.
          */
-        const struct translate_response *previous;
+        const TranslateResponse *previous;
 
         /**
          * Number of CHECK packets followed so far.  This variable is

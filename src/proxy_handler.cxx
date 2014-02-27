@@ -23,7 +23,7 @@
 static void
 proxy_collect_cookies(request &request2, const struct strmap *headers)
 {
-    const struct translate_response *tr = request2.translate.response;
+    const TranslateResponse *tr = request2.translate.response;
     struct session *session;
 
     if (headers == NULL)
@@ -68,7 +68,7 @@ proxy_response(http_status_t status, struct strmap *headers,
     request &request2 = *(request *)ctx;
 
 #ifndef NDEBUG
-    const struct translate_response *tr = request2.translate.response;
+    const TranslateResponse *tr = request2.translate.response;
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
            tr->address.type == RESOURCE_ADDRESS_LHTTP ||
            tr->address.type == RESOURCE_ADDRESS_AJP ||
@@ -99,7 +99,7 @@ void
 proxy_handler(request &request2)
 {
     struct http_server_request *request = request2.request;
-    const struct translate_response *tr = request2.translate.response;
+    const TranslateResponse *tr = request2.translate.response;
     struct forward_request forward;
 
     assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||

@@ -45,14 +45,14 @@
 
 static const uint8_t PROTOCOL_VERSION = 1;
 
-enum packet_reader_state {
-    PACKET_READER_HEADER,
-    PACKET_READER_PAYLOAD,
-    PACKET_READER_COMPLETE,
-};
+struct TranslatePacketReader {
+    enum class State {
+        HEADER,
+        PAYLOAD,
+        COMPLETE,
+    };
 
-struct packet_reader {
-    enum packet_reader_state state;
+    State state;
 
     struct beng_translation_header header;
 
@@ -60,7 +60,7 @@ struct packet_reader {
     size_t payload_position;
 };
 
-struct translate_client {
+struct TranslateClient {
     struct pool *pool;
 
     struct stopwatch *stopwatch;
@@ -71,11 +71,11 @@ struct translate_client {
     /** the marshalled translate request */
     struct growing_buffer_reader request;
 
-    const struct translate_handler *handler;
+    const TranslateHandler *handler;
     void *handler_ctx;
 
-    struct packet_reader reader;
-    struct translate_response response;
+    TranslatePacketReader reader;
+    TranslateResponse response;
 
     enum beng_translation_command previous_command;
 
@@ -145,7 +145,7 @@ static const struct timeval translate_write_timeout = {
 };
 
 static void
-translate_client_release_socket(struct translate_client *client, bool reuse)
+translate_client_release_socket(TranslateClient *client, bool reuse)
 {
     assert(client != nullptr);
     assert(buffered_socket_connected(&client->socket));
@@ -163,7 +163,7 @@ translate_client_release_socket(struct translate_client *client, bool reuse)
  * lease, and the pool reference.
  */
 static void
-translate_client_release(struct translate_client *client, bool reuse)
+translate_client_release(TranslateClient *client, bool reuse)
 {
     assert(client != nullptr);
 
@@ -172,7 +172,7 @@ translate_client_release(struct translate_client *client, bool reuse)
 }
 
 static void
-translate_client_abort(struct translate_client *client, GError *error)
+translate_client_abort(TranslateClient *client, GError *error)
 {
     stopwatch_event(client->stopwatch, "error");
 
@@ -184,7 +184,7 @@ translate_client_abort(struct translate_client *client, GError *error)
 }
 
 static void
-translate_client_error(struct translate_client *client, const char *msg)
+translate_client_error(TranslateClient *client, const char *msg)
 {
     GError *error = g_error_new_literal(translate_quark(), 0, msg);
     translate_client_abort(client, error);
@@ -300,7 +300,7 @@ write_optional_sockaddr(struct growing_buffer *gb,
 }
 
 static struct growing_buffer *
-marshal_request(struct pool *pool, const struct translate_request *request,
+marshal_request(struct pool *pool, const TranslateRequest *request,
                 GError **error_r)
 {
     struct growing_buffer *gb;
@@ -358,9 +358,9 @@ marshal_request(struct pool *pool, const struct translate_request *request,
  */
 
 static void
-packet_reader_init(struct packet_reader *reader)
+packet_reader_init(TranslatePacketReader *reader)
 {
-    reader->state = PACKET_READER_HEADER;
+    reader->state = TranslatePacketReader::State::HEADER;
 }
 
 /**
@@ -369,21 +369,21 @@ packet_reader_init(struct packet_reader *reader)
  * @return the number of bytes consumed
  */
 static size_t
-packet_reader_feed(struct pool *pool, struct packet_reader *reader,
+packet_reader_feed(struct pool *pool, TranslatePacketReader *reader,
                    const uint8_t *data, size_t length)
 {
-    assert(reader->state == PACKET_READER_HEADER ||
-           reader->state == PACKET_READER_PAYLOAD ||
-           reader->state == PACKET_READER_COMPLETE);
+    assert(reader->state == TranslatePacketReader::State::HEADER ||
+           reader->state == TranslatePacketReader::State::PAYLOAD ||
+           reader->state == TranslatePacketReader::State::COMPLETE);
 
     /* discard the packet that was completed (and consumed) by the
        previous call */
-    if (reader->state == PACKET_READER_COMPLETE)
-        reader->state = PACKET_READER_HEADER;
+    if (reader->state == TranslatePacketReader::State::COMPLETE)
+        reader->state = TranslatePacketReader::State::HEADER;
 
     size_t consumed = 0;
 
-    if (reader->state == PACKET_READER_HEADER) {
+    if (reader->state == TranslatePacketReader::State::HEADER) {
         if (length < sizeof(reader->header))
             /* need more data */
             return 0;
@@ -392,7 +392,7 @@ packet_reader_feed(struct pool *pool, struct packet_reader *reader,
 
         if (reader->header.length == 0) {
             reader->payload = nullptr;
-            reader->state = PACKET_READER_COMPLETE;
+            reader->state = TranslatePacketReader::State::COMPLETE;
             return sizeof(reader->header);
         }
 
@@ -400,7 +400,7 @@ packet_reader_feed(struct pool *pool, struct packet_reader *reader,
         data += sizeof(reader->header);
         length -= sizeof(reader->header);
 
-        reader->state = PACKET_READER_PAYLOAD;
+        reader->state = TranslatePacketReader::State::PAYLOAD;
 
         reader->payload_position = 0;
         reader->payload = PoolAlloc<char>(pool, reader->header.length + 1);
@@ -410,7 +410,7 @@ packet_reader_feed(struct pool *pool, struct packet_reader *reader,
             return consumed;
     }
 
-    assert(reader->state == PACKET_READER_PAYLOAD);
+    assert(reader->state == TranslatePacketReader::State::PAYLOAD);
 
     assert(reader->payload_position < reader->header.length);
 
@@ -421,7 +421,7 @@ packet_reader_feed(struct pool *pool, struct packet_reader *reader,
     memcpy(reader->payload + reader->payload_position, data, nbytes);
     reader->payload_position += nbytes;
     if (reader->payload_position == reader->header.length)
-        reader->state = PACKET_READER_COMPLETE;
+        reader->state = TranslatePacketReader::State::COMPLETE;
 
     consumed += nbytes;
     return consumed;
@@ -434,7 +434,7 @@ packet_reader_feed(struct pool *pool, struct packet_reader *reader,
  */
 
 static struct transformation *
-translate_add_transformation(struct translate_client *client)
+translate_add_transformation(TranslateClient *client)
 {
     transformation *transformation = (struct transformation *)
         p_malloc(client->pool, sizeof(*transformation));
@@ -510,7 +510,7 @@ valid_view_name(const char *name)
  * the "parent" view.
  */
 static void
-finish_view(struct translate_client *client)
+finish_view(TranslateClient *client)
 {
     assert(client != nullptr);
     assert(client->response.views != nullptr);
@@ -540,7 +540,7 @@ finish_view(struct translate_client *client)
 }
 
 static void
-add_view(struct translate_client *client, const char *name)
+add_view(TranslateClient *client, const char *name)
 {
     finish_view(client);
 
@@ -606,7 +606,7 @@ parse_header_forward(struct header_forward_settings *settings,
 }
 
 static bool
-parse_header(struct pool *pool, struct translate_response *response,
+parse_header(struct pool *pool, TranslateResponse *response,
              const char *payload, size_t payload_length,
              GError **error_r)
 {
@@ -639,7 +639,7 @@ parse_header(struct pool *pool, struct translate_response *response,
 
 static bool
 translate_jail_finish(struct jail_params *jail,
-                      const struct translate_response *response,
+                      const TranslateResponse *response,
                       const char *document_root,
                       GError **error_r)
 {
@@ -665,7 +665,7 @@ translate_jail_finish(struct jail_params *jail,
  * Final fixups for the response before it is passed to the handler.
  */
 static bool
-translate_response_finish(struct translate_response *response,
+translate_response_finish(TranslateResponse *response,
                           GError **error_r)
 {
     if (resource_address_is_cgi_alike(&response->address)) {
@@ -697,7 +697,7 @@ translate_response_finish(struct translate_response *response,
 }
 
 static bool
-translate_client_pivot_root(struct translate_client *client,
+translate_client_pivot_root(TranslateClient *client,
                             const char *payload)
 {
     if (*payload != '/') {
@@ -719,7 +719,7 @@ translate_client_pivot_root(struct translate_client *client,
 }
 
 static bool
-translate_client_home(struct translate_client *client,
+translate_client_home(TranslateClient *client,
                       const char *payload)
 {
     if (*payload != '/') {
@@ -750,7 +750,7 @@ translate_client_home(struct translate_client *client,
 }
 
 static bool
-translate_client_mount_proc(struct translate_client *client,
+translate_client_mount_proc(TranslateClient *client,
                             size_t payload_length)
 {
     if (payload_length > 0) {
@@ -772,7 +772,7 @@ translate_client_mount_proc(struct translate_client *client,
 }
 
 static bool
-translate_client_mount_tmp_tmpfs(struct translate_client *client,
+translate_client_mount_tmp_tmpfs(TranslateClient *client,
                                  size_t payload_length)
 {
     if (payload_length > 0) {
@@ -794,7 +794,7 @@ translate_client_mount_tmp_tmpfs(struct translate_client *client,
 }
 
 static bool
-translate_client_mount_home(struct translate_client *client,
+translate_client_mount_home(TranslateClient *client,
                             const char *payload)
 {
     if (*payload != '/') {
@@ -817,7 +817,7 @@ translate_client_mount_home(struct translate_client *client,
 }
 
 static bool
-translate_client_bind_mount(struct translate_client *client,
+translate_client_bind_mount(TranslateClient *client,
                             const char *payload, size_t payload_length)
 {
     if (*payload != '/') {
@@ -847,7 +847,7 @@ translate_client_bind_mount(struct translate_client *client,
 }
 
 static bool
-translate_client_uts_namespace(struct translate_client *client,
+translate_client_uts_namespace(TranslateClient *client,
                                const char *payload)
 {
     if (*payload == 0) {
@@ -868,7 +868,7 @@ translate_client_uts_namespace(struct translate_client *client,
 }
 
 static bool
-translate_client_rlimits(struct translate_client *client,
+translate_client_rlimits(TranslateClient *client,
                          const char *payload)
 {
     if (client->child_options == nullptr) {
@@ -888,7 +888,7 @@ translate_client_rlimits(struct translate_client *client,
  * Returns false if the client has been closed.
  */
 static bool
-translate_handle_packet(struct translate_client *client,
+translate_handle_packet(TranslateClient *client,
                         enum beng_translation_command command,
                         const void *const _payload,
                         size_t payload_length)
@@ -2302,7 +2302,7 @@ translate_handle_packet(struct translate_client *client,
 }
 
 static enum buffered_result
-translate_client_feed(struct translate_client *client,
+translate_client_feed(TranslateClient *client,
                       const uint8_t *data, size_t length)
 {
     size_t consumed = 0;
@@ -2316,7 +2316,7 @@ translate_client_feed(struct translate_client *client,
         consumed += nbytes;
         buffered_socket_consumed(&client->socket, nbytes);
 
-        if (client->reader.state != PACKET_READER_COMPLETE)
+        if (client->reader.state != TranslatePacketReader::State::COMPLETE)
             /* need more data */
             break;
 
@@ -2337,7 +2337,7 @@ translate_client_feed(struct translate_client *client,
  */
 
 static bool
-translate_try_write(struct translate_client *client)
+translate_try_write(TranslateClient *client)
 {
     size_t length;
     const void *data = growing_buffer_reader_read(&client->request, &length);
@@ -2379,7 +2379,7 @@ translate_try_write(struct translate_client *client)
 static enum buffered_result
 translate_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    translate_client *client = (translate_client *)ctx;
+    TranslateClient *client = (TranslateClient *)ctx;
 
     return translate_client_feed(client, (const uint8_t *)buffer, size);
 }
@@ -2387,7 +2387,7 @@ translate_client_socket_data(const void *buffer, size_t size, void *ctx)
 static bool
 translate_client_socket_closed(void *ctx)
 {
-    translate_client *client = (translate_client *)ctx;
+    TranslateClient *client = (TranslateClient *)ctx;
 
     translate_client_release_socket(client, false);
     return true;
@@ -2396,7 +2396,7 @@ translate_client_socket_closed(void *ctx)
 static bool
 translate_client_socket_write(void *ctx)
 {
-    translate_client *client = (translate_client *)ctx;
+    TranslateClient *client = (TranslateClient *)ctx;
 
     return translate_try_write(client);
 }
@@ -2404,7 +2404,7 @@ translate_client_socket_write(void *ctx)
 static void
 translate_client_socket_error(GError *error, void *ctx)
 {
-    translate_client *client = (translate_client *)ctx;
+    TranslateClient *client = (TranslateClient *)ctx;
 
     g_prefix_error(&error, "Translation server connection failed: ");
     translate_client_abort(client, error);
@@ -2422,17 +2422,17 @@ static const struct buffered_socket_handler translate_client_socket_handler = {
  *
  */
 
-static translate_client *
+static TranslateClient *
 async_to_translate_connection(struct async_operation *ao)
 {
-    void *p = (char *)ao - offsetof(translate_client, async);
-    return (translate_client *)p;
+    void *p = (char *)ao - offsetof(TranslateClient, async);
+    return (TranslateClient *)p;
 }
 
 static void
 translate_connection_abort(struct async_operation *ao)
 {
-    struct translate_client *client = async_to_translate_connection(ao);
+    TranslateClient *client = async_to_translate_connection(ao);
 
     stopwatch_event(client->stopwatch, "abort");
     translate_client_release(client, false);
@@ -2451,8 +2451,8 @@ static const struct async_operation_class translate_operation = {
 void
 translate(struct pool *pool, int fd,
           const struct lease *lease, void *lease_ctx,
-          const struct translate_request *request,
-          const struct translate_handler *handler, void *ctx,
+          const TranslateRequest *request,
+          const TranslateHandler *handler, void *ctx,
           struct async_operation_ref *async_ref)
 {
     assert(pool != nullptr);
@@ -2474,7 +2474,7 @@ translate(struct pool *pool, int fd,
         return;
     }
 
-    translate_client *client = NewFromPool<translate_client>(pool);
+    TranslateClient *client = NewFromPool<TranslateClient>(pool);
     client->pool = pool;
     client->stopwatch = stopwatch_fd_new(pool, fd,
                                          request->uri != nullptr ? request->uri

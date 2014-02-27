@@ -28,9 +28,9 @@ struct tstock_request {
     struct tstock *stock;
     struct stock_item *item;
 
-    const struct translate_request *request;
+    const TranslateRequest *request;
 
-    const struct translate_handler *handler;
+    const TranslateHandler *handler;
     void *handler_ctx;
 
     struct async_operation_ref *async_ref;
@@ -114,8 +114,8 @@ tstock_new(struct pool *pool, struct hstock *tcp_stock, const char *socket_path)
 
 void
 tstock_translate(struct tstock *stock, struct pool *pool,
-                 const struct translate_request *request,
-                 const struct translate_handler *handler, void *ctx,
+                 const TranslateRequest *request,
+                 const TranslateHandler *handler, void *ctx,
                  struct async_operation_ref *async_ref)
 {
     auto r = NewFromPool<tstock_request>(pool);

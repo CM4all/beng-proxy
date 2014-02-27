@@ -39,7 +39,7 @@ file_dispatch(struct request *request2, const struct stat *st,
               struct istream *body)
 {
     struct http_server_request *request = request2->request;
-    const struct translate_response *tr = request2->translate.response;
+    const TranslateResponse *tr = request2->translate.response;
     struct growing_buffer *headers;
     http_status_t status;
 
@@ -98,7 +98,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
                          const char *path)
 {
     struct http_server_request *request = request2->request;
-    const struct translate_response *tr = request2->translate.response;
+    const TranslateResponse *tr = request2->translate.response;
     const char *accept_encoding;
     struct growing_buffer *headers;
     http_status_t status;
@@ -149,7 +149,7 @@ void
 file_callback(struct request *request2)
 {
     struct http_server_request *request = request2->request;
-    const struct translate_response *tr = request2->translate.response;
+    const TranslateResponse *tr = request2->translate.response;
     const char *path;
     struct istream *body;
     struct stat st;

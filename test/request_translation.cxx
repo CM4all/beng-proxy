@@ -62,7 +62,7 @@ print_resource_address(const struct resource_address *address)
 }
 
 static void
-my_translate_response(const struct translate_response *response,
+my_translate_response(const TranslateResponse *response,
                       void *ctx)
 {
     const struct widget_view *view;
@@ -118,13 +118,13 @@ my_translate_error(GError *error, G_GNUC_UNUSED void *ctx)
     g_error_free(error);
 }
 
-static const struct translate_handler my_translate_handler = {
+static const TranslateHandler my_translate_handler = {
     .response = my_translate_response,
     .error = my_translate_error,
 };
 
 int main(int argc, char **argv) {
-    struct translate_request request = {
+    TranslateRequest request = {
         .host = "example.com",
         .uri = "/foo/index.html",
     };

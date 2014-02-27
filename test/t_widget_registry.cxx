@@ -54,8 +54,8 @@ static const struct async_operation_class my_operation = {
 
 void
 tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
-                 const struct translate_request *request,
-                 const struct translate_handler *handler, void *ctx,
+                 const TranslateRequest *request,
+                 const TranslateHandler *handler, void *ctx,
                  struct async_operation_ref *async_ref)
 {
     assert(request->remote_host == NULL);
@@ -66,7 +66,7 @@ tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
     assert(request->param == NULL);
 
     if (strcmp(request->widget_type, "sync") == 0) {
-        translate_response *response = NewFromPool<translate_response>(pool);
+        auto response = NewFromPool<TranslateResponse>(pool);
         response->address.type = RESOURCE_ADDRESS_HTTP;
         response->address.u.http = http_address_parse(pool, "http://foo/", NULL);
         response->views = (widget_view *)p_calloc(pool, sizeof(*response->views));

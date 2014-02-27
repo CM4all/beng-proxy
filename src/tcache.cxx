@@ -60,7 +60,7 @@ struct tcache_item {
         const char *query_string;
     } request;
 
-    struct translate_response response;
+    TranslateResponse response;
 
     GRegex *regex, *inverse_regex;
 };
@@ -103,14 +103,14 @@ struct tcache_request {
 
     struct tcache *tcache;
 
-    const struct translate_request *request;
+    const TranslateRequest *request;
 
     /** are we looking for a "BASE" cache entry? */
     bool find_base;
 
     const char *key;
 
-    const struct translate_handler *handler;
+    const TranslateHandler *handler;
     void *handler_ctx;
 };
 
@@ -228,7 +228,7 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
 }
 
 static const char *
-tcache_request_key(struct pool *pool, const struct translate_request *request)
+tcache_request_key(struct pool *pool, const TranslateRequest *request)
 {
     return request->uri != nullptr
         ? tcache_uri_key(pool, request->uri, request->host,
@@ -239,7 +239,7 @@ tcache_request_key(struct pool *pool, const struct translate_request *request)
 
 /* check whether the request could produce a cacheable response */
 static bool
-tcache_request_evaluate(const struct translate_request *request)
+tcache_request_evaluate(const TranslateRequest *request)
 {
     return (request->uri != nullptr || request->widget_type != nullptr) &&
         request->check.length < MAX_CACHE_CHECK &&
@@ -249,7 +249,7 @@ tcache_request_evaluate(const struct translate_request *request)
 
 /* check whether the response is cacheable */
 static bool
-tcache_response_evaluate(const struct translate_response *response)
+tcache_response_evaluate(const TranslateResponse *response)
 {
     assert(response != nullptr);
 
@@ -263,7 +263,7 @@ tcache_response_evaluate(const struct translate_response *response)
  * instances.
  */
 static bool
-tcache_expand_response(struct pool *pool, struct translate_response *response,
+tcache_expand_response(struct pool *pool, TranslateResponse *response,
                        const struct tcache_item *item, const char *uri,
                        GError **error_r)
 {
@@ -367,9 +367,9 @@ tcache_store_address(struct pool *pool, struct resource_address *dest,
 }
 
 static const char *
-tcache_store_response(struct pool *pool, struct translate_response *dest,
-                      const struct translate_response *src,
-                      const struct translate_request *request)
+tcache_store_response(struct pool *pool, TranslateResponse *dest,
+                      const TranslateResponse *src,
+                      const TranslateRequest *request)
 {
     const char *base = src->base;
     char *new_base = nullptr;
@@ -417,7 +417,7 @@ tcache_store_response(struct pool *pool, struct translate_response *dest,
 static bool
 tcache_load_address(struct pool *pool, const char *uri,
                     struct resource_address *dest,
-                    const struct translate_response *src,
+                    const TranslateResponse *src,
                     GError **error_r)
 {
     if (src->base != nullptr && !translate_response_is_expandable(src)) {
@@ -447,8 +447,8 @@ tcache_load_address(struct pool *pool, const char *uri,
 }
 
 static bool
-tcache_load_response(struct pool *pool, struct translate_response *dest,
-                     const struct translate_response *src,
+tcache_load_response(struct pool *pool, TranslateResponse *dest,
+                     const TranslateResponse *src,
                      const char *uri, GError **error_r)
 {
     if (!tcache_load_address(pool, uri, &dest->address, src, error_r))
@@ -460,7 +460,7 @@ tcache_load_response(struct pool *pool, struct translate_response *dest,
 
 static const char *
 tcache_vary_copy(struct pool *pool, const char *p,
-                 const struct translate_response *response,
+                 const TranslateResponse *response,
                  enum beng_translation_command command)
 {
     return p != nullptr && translate_response_vary_contains(response, command)
@@ -521,7 +521,7 @@ tcache_uri_match(const char *a, const char *b, bool strict)
  */
 static bool
 tcache_vary_match(const struct tcache_item *item,
-                  const struct translate_request *request,
+                  const TranslateRequest *request,
                   enum beng_translation_command command,
                   bool strict)
 {
@@ -578,7 +578,7 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
 {
     const tcache_item *item = (const struct tcache_item *)_item;
     tcache_request *tcr = (tcache_request *)ctx;
-    const translate_request *request = tcr->request;
+    const TranslateRequest *request = tcr->request;
 
     if (tcr->find_base && item->response.base == nullptr)
         /* this is a "base" lookup, but this response does not contain
@@ -609,7 +609,7 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
 }
 
 static struct tcache_item *
-tcache_get(struct tcache *tcache, const struct translate_request *request,
+tcache_get(struct tcache *tcache, const TranslateRequest *request,
            const char *key, bool find_base)
 {
     struct tcache_request match_ctx = {
@@ -623,7 +623,7 @@ tcache_get(struct tcache *tcache, const struct translate_request *request,
 
 static struct tcache_item *
 tcache_lookup(struct pool *pool, struct tcache *tcache,
-              const struct translate_request *request, const char *key)
+              const TranslateRequest *request, const char *key)
 {
     struct tcache_item *item;
     char *uri, *slash;
@@ -660,7 +660,7 @@ tcache_lookup(struct pool *pool, struct tcache *tcache,
 }
 
 struct tcache_invalidate_data {
-    const struct translate_request *request;
+    const TranslateRequest *request;
 
     const uint16_t *vary;
     unsigned num_vary;
@@ -726,7 +726,7 @@ translate_cache_invalidate_host(struct tcache *tcache, const char *host)
 
 void
 translate_cache_invalidate(struct tcache *tcache,
-                           const struct translate_request *request,
+                           const TranslateRequest *request,
                            const uint16_t *vary, unsigned num_vary,
                            const char *site)
 {
@@ -754,7 +754,7 @@ translate_cache_invalidate(struct tcache *tcache,
  */
 
 static void
-tcache_handler_response(const struct translate_response *response, void *ctx)
+tcache_handler_response(const TranslateResponse *response, void *ctx)
 {
     tcache_request *tcr = (tcache_request *)ctx;
 
@@ -867,7 +867,7 @@ tcache_handler_response(const struct translate_response *response, void *ctx)
         if (tcr->request->uri != nullptr &&
             translate_response_is_expandable(response)) {
             /* create a writable copy and expand it */
-            translate_response *response2 = (translate_response *)
+            TranslateResponse *response2 = (TranslateResponse *)
                 p_memdup(pool, response, sizeof(*response));
 
             GError *error = nullptr;
@@ -896,7 +896,7 @@ tcache_handler_error(GError *error, void *ctx)
     tcr->handler->error(error, tcr->handler_ctx);
 }
 
-static const struct translate_handler tcache_handler = {
+static const TranslateHandler tcache_handler = {
     .response = tcache_handler_response,
     .error = tcache_handler_error,
 };
@@ -904,9 +904,9 @@ static const struct translate_handler tcache_handler = {
 static void
 tcache_hit(struct pool *pool, const char *uri, const char *key,
            const struct tcache_item *item,
-           const struct translate_handler *handler, void *ctx)
+           const TranslateHandler *handler, void *ctx)
 {
-    translate_response *response = NewFromPool<translate_response>(pool);
+    auto response = NewFromPool<TranslateResponse>(pool);
 
     cache_log(4, "translate_cache: hit %s\n", key);
 
@@ -927,8 +927,8 @@ tcache_hit(struct pool *pool, const char *uri, const char *key,
 
 static void
 tcache_miss(struct pool *pool, struct tcache *tcache,
-            const struct translate_request *request, const char *key,
-            const struct translate_handler *handler, void *ctx,
+            const TranslateRequest *request, const char *key,
+            const TranslateHandler *handler, void *ctx,
             struct async_operation_ref *async_ref)
 {
     tcache_request *tcr = NewFromPool<tcache_request>(pool);
@@ -949,7 +949,7 @@ tcache_miss(struct pool *pool, struct tcache *tcache,
 
 gcc_pure
 static bool
-tcache_validate_mtime(const struct translate_response *response,
+tcache_validate_mtime(const TranslateResponse *response,
                       gcc_unused const char *key)
 {
     if (response->validate_mtime.path == nullptr)
@@ -1078,8 +1078,8 @@ translate_cache_flush(struct tcache *tcache)
 
 void
 translate_cache(struct pool *pool, struct tcache *tcache,
-                const struct translate_request *request,
-                const struct translate_handler *handler, void *ctx,
+                const TranslateRequest *request,
+                const TranslateHandler *handler, void *ctx,
                 struct async_operation_ref *async_ref)
 {
     if (tcache_request_evaluate(request)) {

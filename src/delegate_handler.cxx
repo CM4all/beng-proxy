@@ -31,7 +31,7 @@ delegate_handler_callback(int fd, void *ctx)
 {
     request &request2 = *(request *)ctx;
     struct http_server_request *request = request2.request;
-    const struct translate_response *tr = request2.translate.response;
+    const TranslateResponse *tr = request2.translate.response;
     int ret;
     struct stat st;
     struct file_request file_request = {
@@ -99,7 +99,7 @@ void
 delegate_handler(request &request2)
 {
     struct http_server_request *request = request2.request;
-    const struct translate_response *tr = request2.translate.response;
+    const TranslateResponse *tr = request2.translate.response;
 
     assert(tr != NULL);
     assert(tr->address.u.file->path != NULL);

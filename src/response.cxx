@@ -407,7 +407,7 @@ response_invoke_text_processor(request &request2,
  */
 static void
 translation_response_headers(struct growing_buffer *headers,
-                             const struct translate_response *tr)
+                             const TranslateResponse *tr)
 {
     if (tr->www_authenticate != nullptr)
         header_write(headers, "www-authenticate", tr->www_authenticate);
@@ -446,7 +446,7 @@ more_response_headers(const request &request2,
                  : http_date_format(time(nullptr)));
 #endif
 
-    const struct translate_response *tr = request2.translate.response;
+    const TranslateResponse *tr = request2.translate.response;
     translation_response_headers(headers, tr);
 
     return headers;
@@ -627,7 +627,7 @@ response_apply_transformation(request &request2,
 }
 
 static bool
-filter_enabled(const struct translate_response *tr,
+filter_enabled(const TranslateResponse *tr,
                http_status_t status)
 {
     return http_status_is_success(status) ||

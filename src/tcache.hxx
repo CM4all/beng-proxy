@@ -12,8 +12,8 @@
 struct pool;
 struct tcache;
 struct tstock;
-struct translate_handler;
-struct translate_request;
+struct TranslateHandler;
+struct TranslateRequest;
 struct async_operation_ref;
 struct cache_stats;
 
@@ -41,8 +41,8 @@ translate_cache_flush(struct tcache *tcache);
  */
 void
 translate_cache(struct pool *pool, struct tcache *tcache,
-                const struct translate_request *request,
-                const struct translate_handler *handler, void *ctx,
+                const TranslateRequest *request,
+                const TranslateHandler *handler, void *ctx,
                 struct async_operation_ref *async_ref);
 
 /**
@@ -54,7 +54,7 @@ translate_cache(struct pool *pool, struct tcache *tcache,
  */
 void
 translate_cache_invalidate(struct tcache *tcache,
-                           const struct translate_request *request,
+                           const TranslateRequest *request,
                            const uint16_t *vary, unsigned num_vary,
                            const char *site);
 

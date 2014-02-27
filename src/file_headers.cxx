@@ -98,7 +98,7 @@ file_evaluate_request(struct request *request2,
                       struct file_request *file_request)
 {
     struct http_server_request *request = request2->request;
-    const struct translate_response *tr = request2->translate.response;
+    const TranslateResponse *tr = request2->translate.response;
     const char *p;
     char buffer[64];
 
