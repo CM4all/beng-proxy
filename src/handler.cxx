@@ -319,6 +319,52 @@ uri_without_query_string(struct pool *pool, const char *uri)
 }
 
 static void
+repeat_translation(struct request &request, const TranslateResponse &response)
+{
+    if (!strref_is_null(&response.check)) {
+        /* repeat request with CHECK set */
+
+        if (++request.translate.checks > 4) {
+            daemon_log(2, "got too many consecutive CHECK packets\n");
+            response_dispatch_message(&request,
+                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                      "Internal server error");
+            return;
+        }
+
+        request.translate.previous = &response;
+        request.translate.request.check = response.check;
+    }
+
+    if (!strref_is_null(&response.want_full_uri)) {
+        /* repeat request with full URI */
+
+        /* echo the server's WANT_FULL_URI packet */
+        request.translate.request.want_full_uri = response.want_full_uri;
+
+        /* send the full URI this time */
+        request.translate.request.uri =
+            uri_without_query_string(request.request->pool,
+                                     request.request->uri);
+
+        /* undo the uri_parse() call (but leave the query_string) */
+
+        strref_set_c(&request.uri.base, request.translate.request.uri);
+        strref_clear(&request.uri.args);
+        strref_clear(&request.uri.path_info);
+    }
+
+    /* resend the modified request */
+
+    translate_cache(request.request->pool,
+                    request.connection->instance->translate_cache,
+                    &request.translate.request,
+                    &handler_translate_handler, &request,
+                    &request.async_ref);
+}
+
+
+static void
 handler_translate_response(const TranslateResponse *response,
                            void *ctx)
 {
@@ -331,52 +377,9 @@ handler_translate_response(const TranslateResponse *response,
        assigns the real response */
     install_error_response(request);
 
-    if (!strref_is_null(&response->check)) {
-        /* repeat request with CHECK set */
-
-        if (++request.translate.checks > 4) {
-            daemon_log(2, "got too many consecutive CHECK packets\n");
-            response_dispatch_message(&request,
-                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                      "Internal server error");
-            return;
-        }
-
-        request.translate.previous = response;
-        request.translate.request.check = response->check;
-
-        translate_cache(request.request->pool,
-                        request.connection->instance->translate_cache,
-                        &request.translate.request,
-                        &handler_translate_handler, &request,
-                        &request.async_ref);
-        return;
-    }
-
-    if (!strref_is_null(&response->want_full_uri)) {
-        /* repeat request with full URI */
-
-        /* echo the server's WANT_FULL_URI packet */
-        request.translate.request.want_full_uri = response->want_full_uri;
-
-        /* send the full URI this time */
-        request.translate.request.uri =
-            uri_without_query_string(request.request->pool,
-                                     request.request->uri);
-
-        /* undo the uri_parse() call (but leave the query_string) */
-
-        strref_set_c(&request.uri.base, request.translate.request.uri);
-        strref_clear(&request.uri.args);
-        strref_clear(&request.uri.path_info);
-
-        /* resend the modified request */
-
-        translate_cache(request.request->pool,
-                        request.connection->instance->translate_cache,
-                        &request.translate.request,
-                        &handler_translate_handler, &request,
-                        &request.async_ref);
+    if (!strref_is_null(&response->check) ||
+        !strref_is_null(&response->want_full_uri)) {
+        repeat_translation(request, *response);
         return;
     }
 
