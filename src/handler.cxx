@@ -356,16 +356,6 @@ handler_translate_response(const TranslateResponse *response,
     if (!strref_is_null(&response->want_full_uri)) {
         /* repeat request with full URI */
 
-        if (request.translate.want_full_uri) {
-            daemon_log(2, "duplicate TRANSLATE_WANT_FULL_URI packet\n");
-            response_dispatch_message(&request,
-                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                      "Internal server error");
-            return;
-        }
-
-        request.translate.want_full_uri = true;
-
         /* echo the server's WANT_FULL_URI packet */
         request.translate.request.want_full_uri = response->want_full_uri;
 
@@ -499,7 +489,6 @@ ask_translation_server(struct request *request2, struct tcache *tcache)
 {
     request2->translate.previous = nullptr;
     request2->translate.checks = 0;
-    request2->translate.want_full_uri = false;
 
     http_server_request &request = *request2->request;
     fill_translate_request(&request2->translate.request, request2->request,

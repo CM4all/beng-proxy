@@ -68,6 +68,10 @@ struct TranslateClient {
     struct buffered_socket socket;
     struct lease_ref lease_ref;
 
+    struct {
+        bool want_full_uri;
+    } from_request;
+
     /** the marshalled translate request */
     struct growing_buffer_reader request;
 
@@ -2206,6 +2210,11 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_WANT_FULL_URI:
+        if (client->from_request.want_full_uri) {
+            translate_client_error(client, "WANT_FULL_URI loop");
+            return false;
+        }
+
         if (!strref_is_null(&client->response.want_full_uri)) {
             translate_client_error(client,
                                    "duplicate WANT_FULL_URI packet");
@@ -2485,6 +2494,9 @@ translate(struct pool *pool, int fd,
                          &translate_client_socket_handler, client);
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "translate_lease");
+
+    client->from_request.want_full_uri =
+        !strref_is_null(&request->want_full_uri);
 
     growing_buffer_reader_init(&client->request, gb);
     client->handler = handler;
