@@ -18,6 +18,18 @@ TranslateResponse::Clear()
     memset(this, 0, sizeof(*this));
 }
 
+template<typename T>
+static ConstBuffer<T>
+Copy(pool *p, ConstBuffer<T> src)
+{
+    if (src.IsEmpty())
+        return ConstBuffer<T>::Null();
+
+    ConstBuffer<void> src_v = src.ToVoid();
+    ConstBuffer<void> dest_v(p_memdup(p, src_v.data, src_v.size), src_v.size);
+    return ConstBuffer<T>::FromVoid(dest_v);
+}
+
 void
 translate_response_copy(struct pool *pool, TranslateResponse *dest,
                         const TranslateResponse *src)
@@ -95,17 +107,8 @@ translate_response_copy(struct pool *pool, TranslateResponse *dest,
         ? widget_view_dup_chain(pool, src->views)
         : nullptr;
 
-    dest->vary.size = src->vary.size;
-    if (!dest->vary.IsEmpty())
-        dest->vary.data = (const uint16_t *)
-            p_memdup(pool, src->vary.data,
-                     dest->vary.size * sizeof(dest->vary.data[0]));
-
-    dest->invalidate.size = src->invalidate.size;
-    if (!dest->invalidate.IsEmpty())
-        dest->invalidate.data = (const uint16_t *)
-            p_memdup(pool, src->invalidate.data,
-                     dest->invalidate.size * sizeof(dest->invalidate.data[0]));
+    dest->vary = Copy(pool, src->vary);
+    dest->invalidate = Copy(pool, src->invalidate);
 
     dest->validate_mtime.mtime = src->validate_mtime.mtime;
     dest->validate_mtime.path =
