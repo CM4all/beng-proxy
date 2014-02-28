@@ -7,7 +7,7 @@
 #include "nfs_handler.h"
 #include "nfs_cache.h"
 #include "file_headers.hxx"
-#include "tvary.h"
+#include "tvary.hxx"
 #include "static-headers.h"
 #include "header-writer.h"
 #include "generate_response.hxx"
