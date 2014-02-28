@@ -1913,12 +1913,6 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (!strref_is_null(&client->response.want_full_uri)) {
-            translate_client_error(client,
-                                   "TRANSLATE_CHECK and WANT_FULL_URI can't be combined");
-            return false;
-        }
-
         if (payload != nullptr)
             strref_set(&client->response.check, payload, payload_length);
         else
@@ -2218,12 +2212,6 @@ translate_handle_packet(TranslateClient *client,
         if (!strref_is_null(&client->response.want_full_uri)) {
             translate_client_error(client,
                                    "duplicate WANT_FULL_URI packet");
-            return false;
-        }
-
-        if (!strref_is_null(&client->response.check)) {
-            translate_client_error(client,
-                                   "TRANSLATE_CHECK and WANT_FULL_URI can't be combined");
             return false;
         }
 
