@@ -4,7 +4,7 @@
 # Author: Max Kellermann <mk@cm4all.com>
 #
 
-import struct
+import array, struct
 from protocol import *
 from serialize import packet_header
 
@@ -121,7 +121,7 @@ class Response:
         put into the VARY packet payload."""
 
         assert len(args) > 0
-        payload = ''.join(map(lambda x: struct.pack('H', x), args))
+        payload = array.array('H', args).tostring()
         return self.packet(TRANSLATE_VARY, payload)
 
     def invalidate(self, *args):
@@ -129,7 +129,7 @@ class Response:
         which are put into the INVALIDATE packet payload."""
 
         assert len(args) > 0
-        payload = ''.join(map(lambda x: struct.pack('H', x), args))
+        payload = array.array('H', args).tostring()
         return self.packet(TRANSLATE_INVALIDATE, payload)
 
     def pipe(self, path, *args):
