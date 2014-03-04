@@ -34,6 +34,8 @@ void
 translate_response_copy(struct pool *pool, TranslateResponse *dest,
                         const TranslateResponse *src)
 {
+    dest->protocol_version = src->protocol_version;
+
     /* we don't copy the "max_age" attribute, because it's only used
        by the tcache itself */
 
