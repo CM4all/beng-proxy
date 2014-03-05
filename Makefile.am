@@ -367,6 +367,7 @@ src_cm4all_beng_proxy_SOURCES += \
 endif
 
 src_cm4all_beng_lb_SOURCES = \
+	src/isolate.cxx src/isolate.hxx \
 	src/abort-close.c src/abort-close.h \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/clock.c src/clock.h \

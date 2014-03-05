@@ -27,6 +27,7 @@
 #include "thread_pool.h"
 #include "fb_pool.h"
 #include "capabilities.hxx"
+#include "isolate.hxx"
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
@@ -310,6 +311,8 @@ int main(int argc, char **argv)
 
     if (daemon_user_set(&instance.cmdline.user) < 0)
         return EXIT_FAILURE;
+
+    isolate_from_filesystem();
 
     if (daemon_user_defined(&instance.cmdline.user))
         capabilities_post_setuid(cap_keep_list, G_N_ELEMENTS(cap_keep_list));
