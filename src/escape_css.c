@@ -31,7 +31,7 @@ css_unescape(const char *p, size_t length, char *q)
 
     const char *bs;
     while ((bs = memchr(p, '\\', p_end - p)) != NULL) {
-        memcpy(q, p, bs - p);
+        memmove(q, p, bs - p);
         q += bs - p;
 
         p = bs + 1;
@@ -43,7 +43,7 @@ css_unescape(const char *p, size_t length, char *q)
             *q++ = '\\';
     }
 
-    memcpy(q, p, p_end - p);
+    memmove(q, p, p_end - p);
     q += p_end - p;
 
     return q - q_start;

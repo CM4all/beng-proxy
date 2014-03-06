@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0.20) unstable; urgency=low
 
-  * 
+  * merge release 3.1.25
 
  --   
 
@@ -161,6 +161,12 @@ cm4all-beng-proxy (4.0) unstable; urgency=low
   * translate-client, resource-loader: support https://
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 23 Oct 2013 19:29:38 -0000
+
+cm4all-beng-proxy (3.1.25) unstable; urgency=low
+
+  * escape: fix data corruption with glibc 2.18
+
+ -- Max Kellermann <mk@cm4all.com>  Thu, 06 Mar 2014 11:47:14 -0000
 
 cm4all-beng-proxy (3.1.24) unstable; urgency=low
 

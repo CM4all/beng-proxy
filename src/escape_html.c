@@ -40,7 +40,7 @@ html_unescape(const char *p, size_t length, char *q)
 
     const char *amp;
     while ((amp = memchr(p, '&', p_end - p)) != NULL) {
-        memcpy(q, p, amp - p);
+        memmove(q, p, amp - p);
         q += amp - p;
 
         struct strref entity;
@@ -69,7 +69,7 @@ html_unescape(const char *p, size_t length, char *q)
         p = semicolon + 1;
     }
 
-    memcpy(q, p, p_end - p);
+    memmove(q, p, p_end - p);
     q += p_end - p;
 
     return q - q_start;
@@ -161,27 +161,27 @@ html_escape(const char *p, size_t length, char *q)
         char ch = *p++;
         switch (ch) {
         case '&':
-            memcpy(q, "&amp;", 5);
+            memmove(q, "&amp;", 5);
             q += 5;
             break;
 
         case '"':
-            memcpy(q, "&quot;", 6);
+            memmove(q, "&quot;", 6);
             q += 6;
             break;
 
         case '\'':
-            memcpy(q, "&apos;", 6);
+            memmove(q, "&apos;", 6);
             q += 6;
             break;
 
         case '<':
-            memcpy(q, "&lt;", 4);
+            memmove(q, "&lt;", 4);
             q += 4;
             break;
 
         case '>':
-            memcpy(q, "&gt;", 4);
+            memmove(q, "&gt;", 4);
             q += 4;
             break;
 
