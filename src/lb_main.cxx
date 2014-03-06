@@ -42,6 +42,14 @@
 #include <string.h>
 #include <netdb.h>
 
+#ifdef __linux
+#include <sys/prctl.h>
+
+#ifndef PR_SET_NO_NEW_PRIVS
+#define PR_SET_NO_NEW_PRIVS 38
+#endif
+#endif
+
 #include <event.h>
 
 static constexpr cap_value_t cap_keep_list[1] = {
@@ -316,6 +324,10 @@ int main(int argc, char **argv)
 
     if (daemon_user_defined(&instance.cmdline.user))
         capabilities_post_setuid(cap_keep_list, G_N_ELEMENTS(cap_keep_list));
+
+#ifdef __linux
+    prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+#endif
 
     /* main loop */
 

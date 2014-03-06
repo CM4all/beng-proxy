@@ -1,6 +1,7 @@
 cm4all-beng-proxy (4.0.20) unstable; urgency=low
 
   * merge release 3.1.25
+  * lb: drop root privileges irreversibly using PR_SET_NO_NEW_PRIVS
 
  --   
 
