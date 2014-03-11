@@ -1805,6 +1805,22 @@ translate_handle_packet(TranslateClient *client,
         client->response.base = payload;
         return true;
 
+    case TRANSLATE_UNSAFE_BASE:
+        if (*payload != '/' || payload[payload_length - 1] != '/' ||
+            has_null_byte(payload, payload_length)) {
+            translate_client_error(client, "malformed UNSAFE_BASE packet");
+            return false;
+        }
+
+        if (client->response.base != nullptr) {
+            translate_client_error(client, "misplaced UNSAFE_BASE packet");
+            return false;
+        }
+
+        client->response.base = payload;
+        client->response.unsafe_base = true;
+        return true;
+
     case TRANSLATE_REGEX:
         if (client->response.base == nullptr) {
             translate_client_error(client, "REGEX without BASE");

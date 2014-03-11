@@ -433,7 +433,7 @@ tcache_load_address(struct pool *pool, const char *uri,
 
         const char *suffix = uri + strlen(src->base);
 
-        if (!uri_path_verify_paranoid(suffix - 1)) {
+        if (!src->unsafe_base && !uri_path_verify_paranoid(suffix - 1)) {
             g_set_error(error_r, http_response_quark(),
                         HTTP_STATUS_BAD_REQUEST, "Malformed URI");
             return false;

@@ -953,6 +953,12 @@ the translation server. \\
 
 \hline
 
+\verb|UNSAFE_BASE| & Behaves like \verb|BASE|, but omits the security
+checks.  This allows \verb|/../| to be part of the remaining URI,
+possibly allowing clients to break out of the given directory. \\
+
+\hline
+
 \verb|REGEX| & Reuse a cached response only if the request \verb|URI|
 matches the specified regular expression (Perl compatible).  This
 works only when a BASE was specified.

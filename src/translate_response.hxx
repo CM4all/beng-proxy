@@ -64,6 +64,8 @@ struct TranslateResponse {
     const char *untrusted_prefix;
     const char *untrusted_site_suffix;
 
+    bool unsafe_base;
+
     bool direct_addressing;
 
     bool stateful;

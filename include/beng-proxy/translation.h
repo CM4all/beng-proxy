@@ -426,6 +426,12 @@ enum beng_translation_command {
      * commands.
      */
     TRANSLATE_WANT = 115,
+
+    /**
+     * Like #TRANSLATE_BASE, but do not perform any safety checks on
+     * the tail string.
+     */
+    TRANSLATE_UNSAFE_BASE = 116,
 };
 
 struct beng_translation_header {
