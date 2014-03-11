@@ -67,8 +67,10 @@ struct libc_pool_chunk {
     unsigned char data[sizeof(size_t)];
 };
 
+#ifdef POISON
 static const size_t LIBC_POOL_CHUNK_HEADER =
     offsetof(struct libc_pool_chunk, data);
+#endif
 
 struct linear_pool_area {
     struct linear_pool_area *prev;
@@ -525,7 +527,7 @@ pool_check_attachments(struct pool *pool)
 }
 
 static void
-pool_destroy(struct pool *pool, struct pool *parent,
+pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
              struct pool *reparent_to TRACE_ARGS_DECL)
 {
     assert(pool->ref == 0);

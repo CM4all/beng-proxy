@@ -32,7 +32,9 @@ struct stopwatch_event {
 struct stopwatch {
     struct pool *pool;
 
+#ifndef NDEBUG
     struct pool_notify_state pool_notify;
+#endif
 
     const char *name;
 

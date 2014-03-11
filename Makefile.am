@@ -1631,7 +1631,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/istream-ajp-body.c \
 	src/stock.c src/pipe-stock.c \
 	src/shutdown_listener.c \
-	src/stopwatch.c \
+	$(STOPWATCH_SRC) \
 	src/tpool.c \
 	src/direct.c 
 test_run_client_LDADD = $(AM_LDADD) \

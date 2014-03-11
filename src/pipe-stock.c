@@ -24,11 +24,15 @@ struct pipe_stock_item {
     int fds[2];
 };
 
+#ifndef NDEBUG
+
 static inline bool
 valid_fd(int fd)
 {
     return fcntl(fd, F_GETFL) >= 0;
 }
+
+#endif
 
 /*
  * stock class

@@ -905,7 +905,7 @@ static const TranslateHandler tcache_handler = {
 };
 
 static void
-tcache_hit(struct pool *pool, const char *uri, const char *key,
+tcache_hit(struct pool *pool, const char *uri, gcc_unused const char *key,
            const struct tcache_item *item,
            const TranslateHandler *handler, void *ctx)
 {
