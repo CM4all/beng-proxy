@@ -1791,6 +1791,12 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_BASE:
+        if (*payload != '/' || payload[payload_length - 1] != '/' ||
+            has_null_byte(payload, payload_length)) {
+            translate_client_error(client, "malformed BASE packet");
+            return false;
+        }
+
         client->response.base = payload;
         return true;
 
