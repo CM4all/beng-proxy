@@ -945,6 +945,8 @@ translate_handle_packet(TranslateClient *client,
                         const void *const _payload,
                         size_t payload_length)
 {
+    assert(_payload != nullptr);
+
     const char *const payload = (const char *)_payload;
 
     struct transformation *transformation;
@@ -1072,7 +1074,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_PATH:
         if (client->nfs_address != nullptr && *client->nfs_address->path == 0) {
-            if (payload == nullptr || *payload != '/') {
+            if (payload_length == 0 || *payload != '/') {
                 translate_client_error(client,
                                        "malformed PATH packet");
                 return false;
@@ -1088,7 +1090,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client, "malformed PATH packet");
             return false;
         }
@@ -1213,7 +1215,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client, "malformed HTTP packet");
             return false;
         }
@@ -1301,7 +1303,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_GROUP_CONTAINER:
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed GROUP_CONTAINER packet");
             return false;
@@ -1319,7 +1321,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_WIDGET_GROUP:
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed WIDGET_GROUP packet");
             return false;
@@ -1329,7 +1331,8 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_UNTRUSTED:
-        if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
+        if (payload_length == 0 || *payload == '.' ||
+            payload[payload_length - 1] == '.') {
             translate_client_error(client,
                                    "malformed UNTRUSTED packet");
             return false;
@@ -1346,7 +1349,8 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_UNTRUSTED_PREFIX:
-        if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
+        if (payload_length == 0 || *payload == '.' ||
+            payload[payload_length - 1] == '.') {
             translate_client_error(client,
                                    "malformed UNTRUSTED_PREFIX packet");
             return false;
@@ -1363,7 +1367,8 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_UNTRUSTED_SITE_SUFFIX:
-        if (*payload == 0 || *payload == '.' || payload[strlen(payload) - 1] == '.') {
+        if (payload_length == 0 || *payload == '.' ||
+            payload[payload_length - 1] == '.') {
             daemon_log(2, "malformed UNTRUSTED_SITE_SUFFIX packet\n");
             return false;
         }
@@ -1392,7 +1397,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_URI:
-        if (payload == nullptr || *payload != '/') {
+        if (payload_length == 0 || *payload != '/') {
             translate_client_error(client, "malformed URI packet");
             return false;
         }
@@ -1432,7 +1437,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client, "malformed PIPE packet");
             return false;
         }
@@ -1454,7 +1459,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client, "malformed CGI packet");
             return false;
         }
@@ -1478,7 +1483,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed FASTCGI packet");
             return false;
@@ -1503,7 +1508,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client, "malformed AJP packet");
             return false;
         }
@@ -1532,7 +1537,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client, "malformed NFS_SERVER packet");
             return false;
         }
@@ -1549,7 +1554,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr || *payload != '/') {
+        if (payload_length == 0 || *payload != '/') {
             translate_client_error(client, "malformed NFS_EXPORT packet");
             return false;
         }
@@ -1756,7 +1761,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed DELEGATE packet");
             return false;
@@ -1770,7 +1775,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_APPEND:
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed APPEND packet");
             return false;
@@ -1807,7 +1812,7 @@ translate_handle_packet(TranslateClient *client,
         }
 
     case TRANSLATE_EXPAND_APPEND:
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed EXPAND_APPEND packet");
             return false;
@@ -1851,7 +1856,7 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (payload == nullptr || *payload == '=' ||
+            if (payload_length == 0 || *payload == '=' ||
                 strchr(payload + 1, '=') == nullptr) {
                 translate_client_error(client,
                                        "malformed PAIR packet");
@@ -1875,7 +1880,7 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (payload == nullptr || *payload == '=' ||
+            if (payload_length == 0 || *payload == '=' ||
                 strchr(payload + 1, '=') == nullptr) {
                 translate_client_error(client,
                                        "malformed EXPAND_PAIR packet");
@@ -1941,7 +1946,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed COOKIE_DOMAIN packet");
             return false;
@@ -1961,10 +1966,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload != nullptr)
-            strref_set(&client->response.check, payload, payload_length);
-        else
-            strref_set(&client->response.check, "", 0);
+        strref_set(&client->response.check, payload, payload_length);
         return true;
 
     case TRANSLATE_PREVIOUS:
@@ -1979,7 +1981,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed WAS packet");
             return false;
@@ -2026,7 +2028,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed COOKIE_HOST packet");
             return false;
@@ -2134,8 +2136,8 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr || *payload == 0 ||
-            payload[strlen(payload) - 1] != '/') {
+        if (payload_length == 0 ||
+            payload[payload_length - 1] != '/') {
             translate_client_error(client,
                                    "malformed LOCAL_URI packet");
             return false;
@@ -2177,7 +2179,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr || *payload != '/') {
+        if (payload_length == 0 || *payload != '/') {
             translate_client_error(client, "malformed LHTTP_PATH packet");
             return false;
         }
@@ -2199,7 +2201,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr || *payload != '/') {
+        if (payload_length == 0 || *payload != '/') {
             translate_client_error(client, "malformed LHTTP_URI packet");
             return false;
         }
@@ -2228,7 +2230,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr) {
+        if (payload_length == 0) {
             translate_client_error(client, "malformed LHTTP_HOST packet");
             return false;
         }
@@ -2263,11 +2265,8 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload != nullptr)
-            strref_set(&client->response.want_full_uri,
-                       payload, payload_length);
-        else
-            strref_set(&client->response.want_full_uri, "", 0);
+        strref_set(&client->response.want_full_uri,
+                   payload, payload_length);
         return true;
 
     case TRANSLATE_USER_NAMESPACE:
