@@ -1050,8 +1050,9 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_LOCAL_ADDRESS_STRING:
     case TRANSLATE_AUTHORIZATION:
     case TRANSLATE_UA_CLASS:
-        daemon_log(2, "misplaced translate request packet\n");
-        return true;
+        translate_client_error(client,
+                               "misplaced translate request packet");
+        return false;
 
     case TRANSLATE_STATUS:
         if (payload_length != 2) {
