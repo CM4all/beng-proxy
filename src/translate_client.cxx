@@ -1797,6 +1797,11 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
+        if (client->response.base != nullptr) {
+            translate_client_error(client, "misplaced BASE packet");
+            return false;
+        }
+
         client->response.base = payload;
         return true;
 
