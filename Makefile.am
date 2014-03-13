@@ -256,8 +256,8 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/crash.c \
 	src/bp_worker.cxx src/worker.h \
 	src/dstring.c \
-	src/istream_rubber.c src/istream_rubber.h \
-	src/sink_rubber.c src/sink_rubber.h \
+	src/istream_rubber.cxx src/istream_rubber.hxx \
+	src/sink_rubber.cxx src/sink_rubber.hxx \
 	src/session.c src/session.h \
 	src/session_id.c src/session_id.h \
 	src/session_manager.c src/session_manager.h \
@@ -616,7 +616,7 @@ libmemory_a_SOURCES = \
 	src/mmap.h \
 	src/fb_pool.c src/fb_pool.h \
 	src/slice.c src/slice.h \
-	src/rubber.c src/rubber.h
+	src/rubber.cxx src/rubber.hxx
 
 libpool_a_SOURCES = \
 	src/pstring.c \
@@ -1178,12 +1178,12 @@ test_t_http_util_LDADD = $(AM_LDADD) \
 
 test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/tpool.c \
-	src/sink_rubber.c \
+	src/sink_rubber.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/header-parser.c \
 	src/growing-buffer.c \
-	src/istream_rubber.c \
+	src/istream_rubber.cxx \
 	src/istream-gb.c \
 	src/http_cache.cxx src/http_cache_rfc.cxx \
 	src/http_cache_info.cxx src/http_cache_document.cxx \
@@ -1256,7 +1256,7 @@ test_t_rubber_LDADD = $(AM_LDADD) \
 	$(CPPUNIT_LIBS)
 
 test_t_sink_rubber_SOURCES = \
-	src/sink_rubber.c \
+	src/sink_rubber.cxx \
 	test/t_sink_rubber.cxx
 test_t_sink_rubber_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_sink_rubber_LDADD = $(AM_LDADD) \
@@ -1662,7 +1662,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/tpool.c \
 	src/clock.c \
-	src/istream_rubber.c
+	src/istream_rubber.cxx
 test_run_http_cache_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libutil.a \

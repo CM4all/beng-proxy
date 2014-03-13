@@ -1,7 +1,7 @@
 #include "PoolTest.hxx"
 #include "async.h"
-#include "rubber.h"
-#include "sink_rubber.h"
+#include "rubber.hxx"
+#include "sink_rubber.hxx"
 #include "pool.h"
 #include "istream-impl.h"
 #include "istream.h"
@@ -23,7 +23,7 @@ struct Data {
         NONE, DONE, OOM, TOO_LARGE, ERROR
     } result;
 
-    rubber *r;
+    Rubber *r;
 
     unsigned rubber_id;
     size_t size;
@@ -31,7 +31,7 @@ struct Data {
 
     struct async_operation_ref async_ref;
 
-    Data(rubber *_r):result(NONE), r(_r), rubber_id(0), error(NULL) {}
+    Data(Rubber *_r):result(NONE), r(_r), rubber_id(0), error(NULL) {}
     ~Data() {
         if (error != NULL)
             g_error_free(error);
@@ -98,7 +98,7 @@ class SinkRubberTest : public PoolTest {
     CPPUNIT_TEST(TestAbort);
     CPPUNIT_TEST_SUITE_END();
 
-    rubber *r;
+    Rubber *r;
 
 public:
     virtual void setUp() {

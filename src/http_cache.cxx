@@ -19,9 +19,9 @@
 #include "istream-gb.h"
 #include "istream.h"
 #include "cache.h"
-#include "rubber.h"
-#include "sink_rubber.h"
-#include "istream_rubber.h"
+#include "rubber.hxx"
+#include "sink_rubber.hxx"
+#include "istream_rubber.hxx"
 #include "istream_tee.h"
 
 #include <glib.h>
@@ -35,7 +35,7 @@
 struct http_cache {
     struct pool *pool;
 
-    struct rubber *rubber;
+    Rubber *rubber;
 
     struct http_cache_heap heap;
 

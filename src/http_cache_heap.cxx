@@ -9,8 +9,8 @@
 #include "http_cache_age.hxx"
 #include "cache.h"
 #include "istream.h"
-#include "rubber.h"
-#include "istream_rubber.h"
+#include "rubber.hxx"
+#include "istream_rubber.hxx"
 #include "slice.h"
 
 #include <time.h>
@@ -28,7 +28,7 @@ struct http_cache_item {
 
     size_t size;
 
-    struct rubber *rubber;
+    Rubber *rubber;
     unsigned rubber_id;
 };
 
@@ -70,7 +70,7 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     struct strmap *request_headers,
                     http_status_t status,
                     struct strmap *response_headers,
-                    struct rubber *rubber, unsigned rubber_id, size_t size)
+                    Rubber *rubber, unsigned rubber_id, size_t size)
 {
 
     struct pool *pool = pool_new_slice(cache->pool, "http_cache_item",
@@ -211,7 +211,7 @@ http_cache_heap_deinit(struct http_cache_heap *cache)
 
 void
 http_cache_heap_get_stats(const struct http_cache_heap *cache,
-                          const struct rubber *rubber,
+                          const Rubber *rubber,
                           struct cache_stats *data)
 {
     cache_get_stats(cache->cache, data);

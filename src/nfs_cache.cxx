@@ -12,9 +12,9 @@
 #include "static-headers.h"
 #include "strmap.h"
 #include "pool.h"
-#include "rubber.h"
-#include "sink_rubber.h"
-#include "istream_rubber.h"
+#include "rubber.hxx"
+#include "sink_rubber.hxx"
+#include "istream_rubber.hxx"
 #include "istream_tee.h"
 #include "cache.h"
 #include "async.h"
@@ -41,7 +41,7 @@ struct nfs_cache {
 
     struct cache *cache;
 
-    struct rubber *rubber;
+    Rubber *rubber;
 
     /**
      * A list of requests that are currently saving their contents to
@@ -94,7 +94,7 @@ struct nfs_cache_item {
 
     struct stat stat;
 
-    struct rubber *rubber;
+    Rubber *rubber;
     unsigned rubber_id;
 };
 

@@ -19,10 +19,10 @@
 #include "resource-address.h"
 #include "resource-loader.h"
 #include "istream.h"
-#include "rubber.h"
+#include "rubber.hxx"
 #include "slice.h"
-#include "istream_rubber.h"
-#include "sink_rubber.h"
+#include "istream_rubber.hxx"
+#include "sink_rubber.hxx"
 #include "istream_tee.h"
 #include "async.h"
 #include "cast.hxx"
@@ -50,7 +50,7 @@ static constexpr struct timeval fcache_timeout = { 60, 0 };
 struct filter_cache {
     struct pool *pool;
     struct cache *cache;
-    struct rubber *rubber;
+    Rubber *rubber;
     struct slice_pool *slice_pool;
 
     struct resource_loader *resource_loader;
@@ -77,7 +77,7 @@ struct FilterCacheItem {
     struct strmap *headers;
 
     size_t size;
-    struct rubber *rubber;
+    Rubber *rubber;
     unsigned rubber_id;
 };
 

@@ -4,15 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SINK_RUBBER_H
-#define BENG_PROXY_SINK_RUBBER_H
+#ifndef BENG_PROXY_SINK_RUBBER_HXX
+#define BENG_PROXY_SINK_RUBBER_HXX
+
+#include "gerror.h"
 
 #include <stddef.h>
-#include <glib.h>
 
 struct pool;
 struct istream;
-struct rubber;
+class Rubber;
 struct async_operation_ref;
 
 struct sink_rubber_handler {
@@ -22,18 +23,10 @@ struct sink_rubber_handler {
     void (*error)(GError *error, void *ctx);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
 sink_rubber_new(struct pool *pool, struct istream *input,
-                struct rubber *rubber, size_t max_size,
+                Rubber *rubber, size_t max_size,
                 const struct sink_rubber_handler *handler, void *ctx,
                 struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

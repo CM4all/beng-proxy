@@ -1,4 +1,4 @@
-#include "rubber.h"
+#include "rubber.hxx"
 
 #include <inline/compiler.h>
 
@@ -31,13 +31,13 @@ Check(const void *_p, size_t length, unsigned seed)
 }
 
 static void
-FillRubber(rubber *r, unsigned id, size_t length)
+FillRubber(Rubber *r, unsigned id, size_t length)
 {
     Fill(rubber_write(r, id), length, id);
 }
 
 static unsigned
-AddFillRubber(rubber *r, size_t length)
+AddFillRubber(Rubber *r, size_t length)
 {
     unsigned id = rubber_add(r, length);
     if (id != 0)
@@ -48,7 +48,7 @@ AddFillRubber(rubber *r, size_t length)
 
 gcc_pure
 static bool
-CheckRubber(rubber *r, unsigned id, size_t length)
+CheckRubber(Rubber *r, unsigned id, size_t length)
 {
     return Check(rubber_read(r, id), length, id);
 }
@@ -64,7 +64,7 @@ public:
     void TestBasic() {
         size_t total = 4 * 1024 * 1024;
 
-        rubber *r = rubber_new(total);
+        Rubber *r = rubber_new(total);
         CPPUNIT_ASSERT(r != NULL);
 
         total = rubber_get_max_size(r);
@@ -165,7 +165,7 @@ public:
     void TestShrink() {
         size_t total = 4 * 1024 * 1024;
 
-        rubber *r = rubber_new(total);
+        Rubber *r = rubber_new(total);
         CPPUNIT_ASSERT(r != NULL);
 
         total = rubber_get_max_size(r);
@@ -242,7 +242,7 @@ public:
     void TestFullTable() {
         size_t total = 64 * 1024 * 1024;
 
-        rubber *r = rubber_new(total);
+        Rubber *r = rubber_new(total);
         CPPUNIT_ASSERT(r != NULL);
 
         total = rubber_get_max_size(r);

@@ -20,7 +20,7 @@ struct http_cache_heap {
 };
 
 struct pool;
-struct rubber;
+class Rubber;
 struct strmap;
 struct cache_stats;
 struct http_cache_info;
@@ -46,7 +46,7 @@ http_cache_heap_deinit(struct http_cache_heap *cache);
 
 void
 http_cache_heap_get_stats(const struct http_cache_heap *cache,
-                          const struct rubber *rubber,
+                          const Rubber *rubber,
                           struct cache_stats *data);
 
 struct http_cache_document *
@@ -60,7 +60,7 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     struct strmap *request_headers,
                     http_status_t status,
                     struct strmap *response_headers,
-                    struct rubber *rubber, unsigned rubber_id, size_t size);
+                    Rubber *rubber, unsigned rubber_id, size_t size);
 
 void
 http_cache_heap_remove(struct http_cache_heap *cache, const char *url,

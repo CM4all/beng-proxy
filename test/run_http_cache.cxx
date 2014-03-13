@@ -4,7 +4,7 @@
 #include "http_cache_heap.hxx"
 #include "http_cache_internal.hxx"
 #include "strmap.h"
-#include "rubber.h"
+#include "rubber.hxx"
 
 #include <inline/compiler.h>
 
@@ -13,7 +13,7 @@
 #include <stdlib.h>
 
 static void
-put_random(struct http_cache_heap *cache, struct rubber *rubber)
+put_random(struct http_cache_heap *cache, Rubber *rubber)
 {
     struct pool_mark_state mark;
     pool_mark(tpool, &mark);
@@ -72,7 +72,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 {
     static const size_t max_size = 256 * 1024 * 1024;
 
-    struct rubber *rubber = rubber_new(max_size);
+    Rubber *rubber = rubber_new(max_size);
     if (rubber == NULL)
         return EXIT_FAILURE;
 

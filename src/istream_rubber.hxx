@@ -4,31 +4,22 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ISTREAM_RUBBER_H
-#define BENG_PROXY_ISTREAM_RUBBER_H
+#ifndef BENG_PROXY_ISTREAM_RUBBER_HXX
+#define BENG_PROXY_ISTREAM_RUBBER_HXX
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
 struct istream;
-struct rubber;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+class Rubber;
 
 /**
  * @param auto_remove shall the allocation be removed when this
  * istream is closed?
  */
 struct istream *
-istream_rubber_new(struct pool *pool, struct rubber *rubber,
+istream_rubber_new(struct pool *pool, Rubber *rubber,
                    unsigned id, size_t start, size_t end,
                    bool auto_remove);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

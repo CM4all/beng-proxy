@@ -4,16 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream_rubber.h"
+#include "istream_rubber.hxx"
 #include "istream-internal.h"
-#include "rubber.h"
+#include "rubber.hxx"
 
 #include <assert.h>
 
 struct istream_rubber {
     struct istream base;
 
-    struct rubber *rubber;
+    Rubber *rubber;
     unsigned id;
 
     size_t position, end;
@@ -24,7 +24,8 @@ struct istream_rubber {
 static inline struct istream_rubber *
 istream_to_rubber(struct istream *istream)
 {
-    return (struct istream_rubber *)(((char*)istream) - offsetof(struct istream_rubber, base));
+    void *p = ((char *)istream) - offsetof(struct istream_rubber, base);
+    return (struct istream_rubber *)p;
 }
 
 static off_t
@@ -59,7 +60,7 @@ istream_rubber_read(struct istream *istream)
     struct istream_rubber *r = istream_to_rubber(istream);
     assert(r->position <= r->end);
 
-    const uint8_t *data = rubber_read(r->rubber, r->id);
+    const uint8_t *data = (const uint8_t *)rubber_read(r->rubber, r->id);
     const size_t remaining = r->end - r->position;
 
     if (remaining > 0) {
@@ -98,11 +99,11 @@ static const struct istream_class istream_rubber = {
 };
 
 struct istream *
-istream_rubber_new(struct pool *pool, struct rubber *rubber,
+istream_rubber_new(struct pool *pool, Rubber *rubber,
                    unsigned id, size_t start, size_t end,
                    bool auto_remove)
 {
-    assert(rubber != NULL);
+    assert(rubber != nullptr);
     assert(id > 0);
     assert(start <= end);
 
