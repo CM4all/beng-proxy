@@ -10,6 +10,10 @@
 #include "fb_pool.h"
 #include "pool.h"
 #include "lhttp_address.h"
+#include "http_address.h"
+#include "file_address.h"
+#include "cgi_address.h"
+#include "nfs_address.h"
 
 #include <stdio.h>
 #include <event.h>

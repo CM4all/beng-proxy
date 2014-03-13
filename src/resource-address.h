@@ -8,14 +8,12 @@
 #ifndef __BENG_RESOURCE_ADDRESS_H
 #define __BENG_RESOURCE_ADDRESS_H
 
-#include "file_address.h"
-#include "http_address.h"
-#include "cgi_address.h"
-#include "nfs_address.h"
-#include "jail.h"
+#include <inline/compiler.h>
 
 #include <glib.h>
+
 #include <assert.h>
+#include <stdbool.h>
 
 struct pool;
 struct strref;

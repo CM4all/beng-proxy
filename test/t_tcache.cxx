@@ -7,6 +7,9 @@
 #include "transformation.h"
 #include "widget-view.h"
 #include "beng-proxy/translation.h"
+#include "http_address.h"
+#include "file_address.h"
+#include "cgi_address.h"
 #include "pool.h"
 
 #include <event.h>

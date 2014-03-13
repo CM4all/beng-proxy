@@ -1,4 +1,6 @@
 #include "resource-address.h"
+#include "file_address.h"
+#include "cgi_address.h"
 #include "pool.h"
 
 #include <assert.h>

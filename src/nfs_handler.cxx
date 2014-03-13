@@ -6,6 +6,7 @@
 
 #include "nfs_handler.h"
 #include "nfs_cache.h"
+#include "nfs_address.h"
 #include "file_headers.hxx"
 #include "tvary.hxx"
 #include "static-headers.h"

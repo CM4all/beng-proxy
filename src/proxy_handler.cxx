@@ -11,6 +11,7 @@
 #include "http_cache.h"
 #include "http_response.h"
 #include "http_address.h"
+#include "cgi_address.h"
 #include "global.h"
 #include "cookie_client.h"
 #include "uri-extract.h"

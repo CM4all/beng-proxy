@@ -6,6 +6,7 @@
 
 #include "file_handler.hxx"
 #include "file_headers.hxx"
+#include "file_address.h"
 #include "request.hxx"
 #include "generate_response.hxx"
 #include "static-headers.h"

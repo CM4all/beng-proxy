@@ -15,6 +15,7 @@
 #include "strref-pool.h"
 #include "http_address.h"
 #include "lhttp_address.h"
+#include "cgi_address.h"
 
 #include <assert.h>
 

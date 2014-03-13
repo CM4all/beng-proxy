@@ -2,6 +2,7 @@
 #include "widget-class.h"
 #include "widget-http.h"
 #include "widget-lookup.h"
+#include "http_address.h"
 #include "strmap.h"
 #include "growing-buffer.h"
 #include "header-parser.h"

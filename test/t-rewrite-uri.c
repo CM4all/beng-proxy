@@ -1,4 +1,5 @@
 #include "rewrite-uri.h"
+#include "http_address.h"
 #include "session.h"
 #include "widget.h"
 #include "widget-class.h"

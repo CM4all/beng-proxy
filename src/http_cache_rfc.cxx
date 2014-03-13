@@ -12,6 +12,8 @@
 #include "date.h"
 #include "tpool.h"
 #include "resource-address.h"
+#include "http_address.h"
+#include "cgi_address.h"
 #include "lhttp_address.h"
 
 #include <assert.h>
