@@ -9,6 +9,7 @@
 #include "stock.h"
 #include "tcp-stock.h"
 #include "lease.h"
+#include "pool.h"
 
 #include <daemon/log.h>
 

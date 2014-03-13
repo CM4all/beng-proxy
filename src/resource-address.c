@@ -11,6 +11,7 @@
 #include "uri-edit.h"
 #include "uri-extract.h"
 #include "strref.h"
+#include "pool.h"
 
 void
 resource_address_copy(struct pool *pool, struct resource_address *dest,
@@ -50,6 +51,16 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
         dest->u.nfs = nfs_address_dup(pool, src->u.nfs);
         break;
     }
+}
+
+struct resource_address *
+resource_address_dup(struct pool *pool, const struct resource_address *src)
+{
+    struct resource_address *dest = (struct resource_address *)
+        p_malloc(pool, sizeof(*dest));
+
+    resource_address_copy(pool, dest, src);
+    return dest;
 }
 
 struct resource_address *

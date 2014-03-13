@@ -8,6 +8,7 @@
 #include "tcp-stock.h"
 #include "async.h"
 #include "fb_pool.h"
+#include "pool.h"
 #include "lhttp_address.h"
 
 #include <stdio.h>

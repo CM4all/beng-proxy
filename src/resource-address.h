@@ -8,7 +8,6 @@
 #ifndef __BENG_RESOURCE_ADDRESS_H
 #define __BENG_RESOURCE_ADDRESS_H
 
-#include "pool.h"
 #include "file_address.h"
 #include "http_address.h"
 #include "cgi_address.h"
@@ -18,6 +17,7 @@
 #include <glib.h>
 #include <assert.h>
 
+struct pool;
 struct strref;
 
 enum resource_address_type {
@@ -95,15 +95,8 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
                       const struct resource_address *src);
 
 gcc_malloc
-static inline struct resource_address *
-resource_address_dup(struct pool *pool, const struct resource_address *src)
-{
-    struct resource_address *dest = (struct resource_address *)
-        p_malloc(pool, sizeof(*dest));
-
-    resource_address_copy(pool, dest, src);
-    return dest;
-}
+struct resource_address *
+resource_address_dup(struct pool *pool, const struct resource_address *src);
 
 /**
  * Duplicate the #resource_address object, but replace the HTTP/AJP

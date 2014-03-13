@@ -18,6 +18,7 @@
 #include "http_server.h"
 #include "http_quark.h"
 #include "gerrno.h"
+#include "pool.h"
 
 #ifdef HAVE_LIBNFS
 #include "nfs_client.h"

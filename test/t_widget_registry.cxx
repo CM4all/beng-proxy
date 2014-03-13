@@ -10,6 +10,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "transformation.h"
+#include "pool.h"
 
 #include <string.h>
 #include <event.h>

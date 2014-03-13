@@ -3,6 +3,7 @@
 #include "async.h"
 #include "widget.h"
 #include "widget-class.h"
+#include "pool.h"
 
 #include <event.h>
 

@@ -7,6 +7,7 @@
 #include "transformation.h"
 #include "widget-view.h"
 #include "beng-proxy/translation.h"
+#include "pool.h"
 
 #include <event.h>
 

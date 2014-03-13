@@ -1,4 +1,5 @@
 #include "resource-address.h"
+#include "pool.h"
 
 #include <assert.h>
 #include <string.h>

@@ -11,6 +11,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "async.h"
+#include "pool.h"
 
 #include <inline/list.h>
 
