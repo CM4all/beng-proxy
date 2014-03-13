@@ -12,6 +12,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_pure
 unsigned
 djb_hash(const void *p, size_t size);
@@ -19,5 +23,9 @@ djb_hash(const void *p, size_t size);
 gcc_pure
 unsigned
 djb_hash_string(const char *p);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

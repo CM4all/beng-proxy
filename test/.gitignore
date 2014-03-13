@@ -3,5 +3,12 @@ run_nfs_client
 /request_translation
 /t_tcache
 /t_widget_registry
+/dump_memcached_choice
+/cleanup_memcached_choice
+/run_memcached_client
+/t_http_cache
+/t_memcached_client
+/t_sink_header
+/t_sink_header_empty
 
 *.trs

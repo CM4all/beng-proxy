@@ -165,15 +165,15 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/header-copy.c src/header-copy.h \
 	src/hostname.c src/hostname.h \
 	src/http_body.c src/http_body.h \
-	src/http_cache.c src/http_cache.h \
-	src/http_cache_choice.c src/http_cache_choice.h \
-	src/http_cache_internal.h \
-	src/http_cache_document.c \
-	src/http_cache_age.c src/http_cache_age.h \
-	src/http_cache_heap.c src/http_cache_heap.h \
-	src/http_cache_info.c \
-	src/http_cache_memcached.c src/http_cache_memcached.h \
-	src/http_cache_rfc.c \
+	src/http_cache.cxx src/http_cache.h \
+	src/http_cache_choice.cxx src/http_cache_choice.hxx \
+	src/http_cache_internal.hxx \
+	src/http_cache_document.cxx \
+	src/http_cache_age.cxx src/http_cache_age.hxx \
+	src/http_cache_heap.cxx src/http_cache_heap.hxx \
+	src/http_cache_info.cxx \
+	src/http_cache_memcached.cxx src/http_cache_memcached.hxx \
+	src/http_cache_rfc.cxx \
 	src/http_client.c src/http_client.h \
 	src/http_error.c src/http_error.h \
 	src/http_request.c src/http_request.h \
@@ -193,11 +193,11 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/bp_control.cxx src/bp_control.hxx \
 	src/listener.c src/listener.h \
 	src/lock.h \
-	src/memcached-client.c src/memcached-client.h \
-	src/memcached-packet.h \
-	src/memcached-protocol.h \
-	src/memcached-stock.c src/memcached-stock.h \
-	src/memcached-packet.c \
+	src/memcached_client.cxx src/memcached_client.hxx \
+	src/memcached_packet.hxx \
+	src/memcached_protocol.hxx \
+	src/memcached_stock.cxx src/memcached_stock.hxx \
+	src/memcached_packet.cxx \
 	src/xml_parser.c src/xml_parser.h \
 	src/pevent.h \
 	src/pipe-stock.c src/pipe-stock.h \
@@ -683,8 +683,8 @@ libistream_a_SOURCES = \
 	src/istream-notify.c \
 	src/fifo-buffer.c src/fifo-buffer.h \
 	src/sink-null.c \
-	src/sink-buffer.c \
-	src/sink-header.c \
+	src/sink_buffer.cxx \
+	src/sink_header.cxx \
 	src/sink_fd.c src/sink_fd.h
 
 pkginclude_HEADERS = \
@@ -716,10 +716,10 @@ noinst_PROGRAMS = \
 	test/run-processor \
 	test/run-client-balancer \
 	test/run_client \
-	test/run-memcached-client \
+	test/run_memcached_client \
 	test/run_http_cache \
-	test/dump-memcached-choice \
-	test/cleanup-memcached-choice \
+	test/dump_memcached_choice \
+	test/cleanup_memcached_choice \
 	test/fake-memcached-server \
 	test/run_delegate \
 	test/dump-udp test/dump-control test/send-control \
@@ -735,8 +735,8 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 	test/t-istream-subst test/t-istream-deflate test/t-istream-byte \
 	test/t-istream-iconv test/t-istream-replace test/t-istream-replace2 \
 	test/t-istream-html-escape test/t-istream-fcgi \
-	test/t-sink-header \
-	test/t-sink-header-empty \
+	test/t_sink_header \
+	test/t_sink_header_empty \
 	test/t-istream-processor
 
 check_PROGRAMS = \
@@ -758,7 +758,7 @@ check_PROGRAMS = \
 	test/run_http_server \
 	test/t-http-server \
 	test/t-http-client test/t-http-util \
-	test/t-http-cache \
+	test/t_http_cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
 	test/t-cookie-client \
@@ -772,7 +772,7 @@ check_PROGRAMS = \
 	test/t-widget-resolver \
 	test/t-wembed test/t-widget-http \
 	test/t-processor \
-	test/t-memcached-client
+	test/t_memcached_client
 
 TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t-header-forward \
@@ -791,11 +791,11 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t-cgi \
 	test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
-	test/t-http-cache \
+	test/t_http_cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
 	test/t-processor \
-	test/t-memcached-client \
+	test/t_memcached_client \
 	test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
 	test/t-shm test/t-dpool test/t-session \
@@ -1031,11 +1031,11 @@ test_t_istream_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_sink_header_SOURCES = test/t-sink-header.c \
+test_t_sink_header_SOURCES = test/t_sink_header.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_sink_header_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_sink_header_empty_SOURCES = test/t-sink-header-empty.c \
+test_t_sink_header_empty_SOURCES = test/t_sink_header_empty.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_sink_header_empty_LDADD = $(T_ISTREAM_FILTER_LIB)
 
@@ -1176,7 +1176,7 @@ test_t_http_util_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
-test_t_http_cache_SOURCES = test/t-http-cache.c \
+test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/tpool.c \
 	src/sink_rubber.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
@@ -1185,9 +1185,9 @@ test_t_http_cache_SOURCES = test/t-http-cache.c \
 	src/growing-buffer.c \
 	src/istream_rubber.c \
 	src/istream-gb.c \
-	src/http_cache.c src/http_cache_rfc.c \
-	src/http_cache_info.c src/http_cache_document.c \
-	src/http_cache_heap.c src/http_cache_age.c \
+	src/http_cache.cxx src/http_cache_rfc.cxx \
+	src/http_cache_info.cxx src/http_cache_document.cxx \
+	src/http_cache_heap.cxx src/http_cache_age.cxx \
 	src/uri-edit.c src/uri-relative.c src/uri-escape.c \
 	src/uri-extract.c src/uri-base.c \
 	src/abort-unref.c src/cache.c \
@@ -1643,12 +1643,12 @@ test_run_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_run_http_cache_SOURCES = test/run_http_cache.c \
-	src/http_cache_heap.c \
-	src/http_cache_info.c \
-	src/http_cache_rfc.c \
-	src/http_cache_document.c \
-	src/http_cache_age.c \
+test_run_http_cache_SOURCES = test/run_http_cache.cxx \
+	src/http_cache_heap.cxx \
+	src/http_cache_info.cxx \
+	src/http_cache_rfc.cxx \
+	src/http_cache_document.cxx \
+	src/http_cache_age.cxx \
 	src/http_util.c \
 	src/http_address.c src/uri-edit.c \
 	src/uri-base.c src/uri-relative.c src/uri-extract.c \
@@ -1670,8 +1670,8 @@ test_run_http_cache_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
-test_run_memcached_client_SOURCES = test/run-memcached-client.c \
-	src/memcached-client.c src/memcached-packet.c \
+test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
+	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/stock.c src/pipe-stock.c \
@@ -1684,15 +1684,15 @@ test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_dump_memcached_choice_SOURCES = test/dump-memcached-choice.c \
-	src/memcached-client.c src/memcached-packet.c \
+test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
+	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/fd-util.c src/fd_util.c \
 	src/cleanup_timer.c \
 	src/direct.c \
 	src/serialize.c \
-	src/growing-buffer.c src/sink-buffer.c \
+	src/growing-buffer.c src/sink_buffer.cxx \
 	src/strmap.c src/hashmap.c \
 	src/tpool.c
 test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
@@ -1701,7 +1701,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
+test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/address_list.c src/address_resolver.c \
 	src/failure.c src/bulldog.c src/balancer.c \
 	src/tcp-stock.c src/tcp-balancer.c \
@@ -1711,12 +1711,12 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup-memcached-choice.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/client-socket.c src/fd_util.c src/fd-util.c \
 	src/stock.c src/hstock.c \
-	src/memcached-client.c src/memcached-packet.c \
-	src/memcached-stock.c \
-	src/http_cache_choice.c src/http_cache_rfc.c \
+	src/memcached_client.cxx src/memcached_packet.cxx \
+	src/memcached_stock.cxx \
+	src/http_cache_choice.cxx src/http_cache_rfc.cxx \
 	src/http_util.c \
 	src/serialize.c \
-	src/sink-buffer.c \
+	src/sink_buffer.cxx \
 	src/growing-buffer.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/hashmap.c src/strmap.c \
@@ -1731,8 +1731,8 @@ test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
 
 test_fake_memcached_server_SOURCES = test/fake-memcached-server.c
 
-test_t_memcached_client_SOURCES = test/t-memcached-client.c \
-	src/memcached-client.c src/memcached-packet.c \
+test_t_memcached_client_SOURCES = test/t_memcached_client.cxx \
+	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/cleanup_timer.c \
 	src/direct.c \

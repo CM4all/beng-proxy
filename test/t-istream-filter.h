@@ -52,7 +52,7 @@ struct ctx {
 static size_t
 my_istream_data(const void *data, size_t length, void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
     (void)data;
 
@@ -103,7 +103,7 @@ static ssize_t
 my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
                   size_t max_length, void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
     (void)fd;
 
@@ -123,7 +123,7 @@ my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
 static void
 my_istream_eof(void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
     //printf("eof\n");
     ctx->eof = true;
@@ -132,7 +132,7 @@ my_istream_eof(void *_ctx)
 static void
 my_istream_abort(GError *error, void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
     //g_printerr("%s\n", error->message);
     g_error_free(error);

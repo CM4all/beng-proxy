@@ -10,7 +10,15 @@
 struct pool;
 struct growing_buffer;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct istream *
 istream_gb_new(struct pool *pool, const struct growing_buffer *gb);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

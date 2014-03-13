@@ -8,7 +8,7 @@
 #include "translate_client.hxx"
 #include "http_client.h"
 #include "ajp-client.h"
-#include "memcached-client.h"
+#include "memcached_client.hxx"
 #include "cgi_quark.h"
 #include "fcgi_quark.h"
 #include "was_quark.h"

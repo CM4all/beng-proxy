@@ -72,7 +72,8 @@ background_job_abort_internal(struct background_job *job)
 static inline struct background_job *
 list_head_to_background_job(struct list_head *head)
 {
-    return (struct background_job *)(((char*)head) - offsetof(struct background_job, siblings));
+    const void *p = ((char *)head) - offsetof(struct background_job, siblings);
+    return (struct background_job *)p;
 }
 
 /**

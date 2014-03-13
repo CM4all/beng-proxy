@@ -1,4 +1,4 @@
-#include "memcached-protocol.h"
+#include "memcached_protocol.hxx"
 
 #include <glib.h>
 

@@ -9,6 +9,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int
 fd_mask_status_flags(int fd, int and_mask, int xor_mask);
 
@@ -17,5 +21,9 @@ fd_set_nonblock(int fd, bool value);
 
 bool
 fd_ready_for_writing(int fd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
