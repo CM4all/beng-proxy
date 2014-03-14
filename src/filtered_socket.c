@@ -132,6 +132,10 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
                          read_timeout, write_timeout,
                          &filtered_socket_bs_handler, s);
 
+#ifndef NDEBUG
+    s->ended = false;
+#endif
+
     s->filter = filter;
     s->filter_ctx = filter_ctx;
     s->handler = handler;
