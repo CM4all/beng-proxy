@@ -297,7 +297,7 @@ http_client_response_stream_available(struct istream *istream, bool partial)
     struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client != NULL);
-    assert(filtered_socket_connected(&client->socket) ||
+    assert(!client->socket.ended ||
            http_body_socket_is_done(&client->response.body_reader,
                                     &client->socket));
     assert(client->response.read_state == READ_BODY);
@@ -313,7 +313,7 @@ http_client_response_stream_read(struct istream *istream)
     struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client != NULL);
-    assert(filtered_socket_connected(&client->socket) ||
+    assert(!client->socket.ended ||
            http_body_socket_is_done(&client->response.body_reader,
                                     &client->socket));
     assert(client->response.read_state == READ_BODY);
@@ -338,7 +338,7 @@ http_client_response_stream_as_fd(struct istream *istream)
     struct http_client *client = response_stream_to_http_client(istream);
 
     assert(client != NULL);
-    assert(filtered_socket_connected(&client->socket) ||
+    assert(!client->socket.ended ||
            http_body_socket_is_done(&client->response.body_reader,
                                     &client->socket));
     assert(client->response.read_state == READ_BODY);

@@ -25,6 +25,9 @@ buffered_socket_closed_prematurely(struct buffered_socket *s)
 static void
 buffered_socket_ended(struct buffered_socket *s)
 {
+    assert(!buffered_socket_connected(s));
+    assert(!s->ended);
+
 #ifndef NDEBUG
     s->ended = true;
 #endif

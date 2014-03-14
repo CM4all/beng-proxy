@@ -97,6 +97,10 @@ struct socket_filter {
 struct filtered_socket {
     struct buffered_socket base;
 
+#ifndef NDEBUG
+    bool ended;
+#endif
+
     /**
      * The actual filter.  If this is NULL, then this object behaves
      * just like #buffered_socket.
@@ -459,6 +463,12 @@ static inline void
 filtered_socket_invoke_end(struct filtered_socket *s)
 {
     assert(s->filter != NULL);
+    assert(!s->ended);
+    assert(s->base.ended);
+
+#ifndef NDEBUG
+    s->ended = true;
+#endif
 
     if (s->handler->end != NULL)
         s->handler->end(s->handler_ctx);
