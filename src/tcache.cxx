@@ -309,8 +309,10 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
 static const char *
 base_tail(const char *uri, const char *base)
 {
-    if (uri == nullptr || base == nullptr)
+    if (base == nullptr)
         return nullptr;
+
+    assert(uri != nullptr);
 
     const size_t uri_length = strlen(uri);
     const size_t base_length = strlen(base);
