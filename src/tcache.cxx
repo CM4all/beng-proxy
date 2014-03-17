@@ -32,7 +32,7 @@
 #define MAX_CACHE_CHECK 256
 #define MAX_CACHE_WFU 256
 
-struct tcache_item {
+struct TranslateCacheItem {
     struct cache_item item;
 
     /**
@@ -67,9 +67,9 @@ struct tcache_item {
     GRegex *regex, *inverse_regex;
 };
 
-struct tcache_per_host {
+struct TranslateCachePerHost {
     /**
-     * A double-linked list of #tcache_items (by its attribute
+     * A double-linked list of #TranslateCacheItems (by its attribute
      * per_host_siblings).
      *
      * This must be the first attribute in the struct.
@@ -100,7 +100,7 @@ struct tcache {
     struct tstock *stock;
 };
 
-struct tcache_request {
+struct TranslateCacheRequest {
     struct pool *pool;
 
     struct tcache *tcache;
@@ -128,15 +128,15 @@ static const GRegexCompileFlags default_regex_compile_flags =
 #define cache_log(...) do {} while (0)
 #endif
 
-static struct tcache_item *
+static TranslateCacheItem *
 cast_per_host_sibling_to_item(struct list_head *lh)
 {
-    void *p = ((char *)lh) - offsetof(struct tcache_item, per_host_siblings);
-    return (struct tcache_item *)p;
+    void *p = ((char *)lh) - offsetof(TranslateCacheItem, per_host_siblings);
+    return (TranslateCacheItem *)p;
 }
 
 static void
-tcache_add_per_host(struct tcache *tcache, struct tcache_item *item)
+tcache_add_per_host(struct tcache *tcache, TranslateCacheItem *item)
 {
     assert(translate_response_vary_contains(&item->response, TRANSLATE_HOST));
 
@@ -144,10 +144,10 @@ tcache_add_per_host(struct tcache *tcache, struct tcache_item *item)
     if (host == nullptr)
         host = "";
 
-    tcache_per_host *per_host = (tcache_per_host *)
+    TranslateCachePerHost *per_host = (TranslateCachePerHost *)
         hashmap_get(tcache->per_host, host);
     if (per_host == nullptr) {
-        per_host = NewFromPool<tcache_per_host>(tcache->pool);
+        per_host = NewFromPool<TranslateCachePerHost>(tcache->pool);
         list_init(&per_host->items);
         per_host->tcache = tcache;
         per_host->host = p_strdup(tcache->pool, host);
@@ -159,7 +159,7 @@ tcache_add_per_host(struct tcache *tcache, struct tcache_item *item)
 }
 
 static void
-tcache_remove_per_host(struct tcache_item *item)
+tcache_remove_per_host(TranslateCacheItem *item)
 {
     assert(!list_empty(&item->per_host_siblings));
     assert(translate_response_vary_contains(&item->response, TRANSLATE_HOST));
@@ -170,7 +170,7 @@ tcache_remove_per_host(struct tcache_item *item)
     if (list_empty(next)) {
         /* if the next item is now empty, this can only be the
            per_host object - delete it */
-        struct tcache_per_host *per_host = (struct tcache_per_host *)next;
+        TranslateCachePerHost *per_host = (TranslateCachePerHost *)next;
 
         const char *host = item->request.host;
         if (host == nullptr)
@@ -271,7 +271,7 @@ tcache_response_evaluate(const TranslateResponse *response)
  */
 static bool
 tcache_expand_response(struct pool *pool, TranslateResponse *response,
-                       const struct tcache_item *item, const char *uri,
+                       const TranslateCacheItem *item, const char *uri,
                        GError **error_r)
 {
     assert(pool != nullptr);
@@ -528,7 +528,7 @@ tcache_uri_match(const char *a, const char *b, bool strict)
  * a mismatch
  */
 static bool
-tcache_vary_match(const struct tcache_item *item,
+tcache_vary_match(const TranslateCacheItem *item,
                   const TranslateRequest *request,
                   enum beng_translation_command command,
                   bool strict)
@@ -584,8 +584,8 @@ tcache_vary_match(const struct tcache_item *item,
 static bool
 tcache_item_match(const struct cache_item *_item, void *ctx)
 {
-    const tcache_item *item = (const struct tcache_item *)_item;
-    tcache_request *tcr = (tcache_request *)ctx;
+    auto item = (const TranslateCacheItem *)_item;
+    TranslateCacheRequest *tcr = (TranslateCacheRequest *)ctx;
     const TranslateRequest *request = tcr->request;
 
     if (tcr->find_base && item->response.base == nullptr)
@@ -616,24 +616,24 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
     return true;
 }
 
-static struct tcache_item *
+static TranslateCacheItem *
 tcache_get(struct tcache *tcache, const TranslateRequest *request,
            const char *key, bool find_base)
 {
-    struct tcache_request match_ctx = {
+    TranslateCacheRequest match_ctx = {
         .request = request,
         .find_base = find_base,
     };
 
-    return (struct tcache_item *)cache_get_match(tcache->cache, key,
+    return (TranslateCacheItem *)cache_get_match(tcache->cache, key,
                                                  tcache_item_match, &match_ctx);
 }
 
-static struct tcache_item *
+static TranslateCacheItem *
 tcache_lookup(struct pool *pool, struct tcache *tcache,
               const TranslateRequest *request, const char *key)
 {
-    struct tcache_item *item;
+    TranslateCacheItem *item;
     char *uri, *slash;
 
     item = tcache_get(tcache, request, key, false);
@@ -678,7 +678,7 @@ struct tcache_invalidate_data {
 static bool
 tcache_invalidate_match(const struct cache_item *_item, void *ctx)
 {
-    const struct tcache_item *item = (const struct tcache_item *)_item;
+    const TranslateCacheItem *item = (const TranslateCacheItem *)_item;
     const tcache_invalidate_data *data = (const tcache_invalidate_data *)ctx;
 
     if (data->site != nullptr &&
@@ -700,7 +700,7 @@ translate_cache_invalidate_host(struct tcache *tcache, const char *host)
     if (host == nullptr)
         host = "";
 
-    tcache_per_host *per_host = (tcache_per_host *)
+    TranslateCachePerHost *per_host = (TranslateCachePerHost *)
         hashmap_get(tcache->per_host, host);
     if (per_host == nullptr)
         return 0;
@@ -713,12 +713,12 @@ translate_cache_invalidate_host(struct tcache *tcache, const char *host)
     do {
         assert(!list_empty(&per_host->items));
 
-        struct tcache_item *item =
+        TranslateCacheItem *item =
             cast_per_host_sibling_to_item(per_host->items.next);
 
         /* we're done when we're about to remove the last item - the
-           last item will destroy the #tcache_per_host object, so we
-           need to check the condition before removing the cache
+           last item will destroy the #TranslateCachePerHost object,
+           so we need to check the condition before removing the cache
            item */
         done = item->per_host_siblings.next == &per_host->items;
 
@@ -751,12 +751,12 @@ translate_cache_invalidate(struct tcache *tcache,
     cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
 }
 
-static const tcache_item *
-tcache_store(tcache_request *tcr, const TranslateResponse *response)
+static const TranslateCacheItem *
+tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response)
 {
     struct pool *pool = pool_new_slice(tcr->tcache->pool, "tcache_item",
                                        tcr->tcache->slice_pool);
-    tcache_item *item = NewFromPool<tcache_item>(pool);
+    auto item = NewFromPool<TranslateCacheItem>(pool);
     unsigned max_age = response->max_age;
     const char *key;
 
@@ -862,7 +862,7 @@ tcache_store(tcache_request *tcr, const TranslateResponse *response)
 static void
 tcache_handler_response(const TranslateResponse *response, void *ctx)
 {
-    tcache_request *tcr = (tcache_request *)ctx;
+    TranslateCacheRequest *tcr = (TranslateCacheRequest *)ctx;
 
     assert(response != nullptr);
 
@@ -899,7 +899,7 @@ tcache_handler_response(const TranslateResponse *response, void *ctx)
 static void
 tcache_handler_error(GError *error, void *ctx)
 {
-    tcache_request *tcr = (tcache_request *)ctx;
+    TranslateCacheRequest *tcr = (TranslateCacheRequest *)ctx;
 
     cache_log(4, "translate_cache: error %s\n", tcr->key);
 
@@ -913,7 +913,7 @@ static const TranslateHandler tcache_handler = {
 
 static void
 tcache_hit(struct pool *pool, const char *uri, gcc_unused const char *key,
-           const struct tcache_item *item,
+           const TranslateCacheItem *item,
            const TranslateHandler *handler, void *ctx)
 {
     auto response = NewFromPool<TranslateResponse>(pool);
@@ -941,7 +941,7 @@ tcache_miss(struct pool *pool, struct tcache *tcache,
             const TranslateHandler *handler, void *ctx,
             struct async_operation_ref *async_ref)
 {
-    tcache_request *tcr = NewFromPool<tcache_request>(pool);
+    auto tcr = NewFromPool<TranslateCacheRequest>(pool);
 
     cache_log(4, "translate_cache: miss %s\n", key);
 
@@ -1002,7 +1002,7 @@ tcache_validate_mtime(const TranslateResponse *response,
 static bool
 tcache_validate(struct cache_item *_item)
 {
-    struct tcache_item *item = (struct tcache_item *)_item;
+    TranslateCacheItem *item = (TranslateCacheItem *)_item;
 
     return tcache_validate_mtime(&item->response, item->item.key);
 }
@@ -1010,7 +1010,7 @@ tcache_validate(struct cache_item *_item)
 static void
 tcache_destroy(struct cache_item *_item)
 {
-    struct tcache_item *item = (struct tcache_item *)_item;
+    TranslateCacheItem *item = (TranslateCacheItem *)_item;
 
     if (!list_empty(&item->per_host_siblings))
         tcache_remove_per_host(item);
@@ -1094,7 +1094,7 @@ translate_cache(struct pool *pool, struct tcache *tcache,
 {
     if (tcache_request_evaluate(request)) {
         const char *key = tcache_request_key(pool, request);
-        struct tcache_item *item = tcache_lookup(pool, tcache, request, key);
+        TranslateCacheItem *item = tcache_lookup(pool, tcache, request, key);
 
         if (item != nullptr)
             tcache_hit(pool, request->uri, key, item, handler, ctx);
