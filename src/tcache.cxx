@@ -608,16 +608,14 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
         return false;
 
     if (item->response.base != nullptr && item->inverse_regex != nullptr &&
-        request->uri != nullptr &&
         g_regex_match(item->inverse_regex, request->uri, GRegexMatchFlags(0),
                       nullptr))
         /* the URI matches the inverse regular expression */
         return false;
 
     if (item->response.base != nullptr && item->regex != nullptr &&
-        (request->uri == nullptr ||
-         !g_regex_match(item->regex, request->uri, GRegexMatchFlags(0),
-                        nullptr)))
+        !g_regex_match(item->regex, request->uri, GRegexMatchFlags(0),
+                       nullptr))
         /* the URI did not match the regular expression */
         return false;
 
