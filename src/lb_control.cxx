@@ -30,8 +30,7 @@ enable_node(const struct lb_instance *instance,
         return;
     }
 
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(tpool);
 
     char *node_name = p_strndup(tpool, payload, length);
     char *port_string = node_name + (colon - payload);
@@ -39,7 +38,6 @@ enable_node(const struct lb_instance *instance,
 
     const lb_node_config *node = instance->config->FindNode(node_name);
     if (node == NULL) {
-        pool_rewind(tpool, &mark);
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
     }
@@ -47,7 +45,6 @@ enable_node(const struct lb_instance *instance,
     char *endptr;
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
-        pool_rewind(tpool, &mark);
         daemon_log(3, "malformed FADE_NODE control packet: port is not a number\n");
         return;
     }
@@ -63,8 +60,6 @@ enable_node(const struct lb_instance *instance,
     daemon_log(4, "enabling node %s (%s)\n", node_name, buffer);
 
     failure_unset(with_port, node->envelope->length, FAILURE_OK);
-
-    pool_rewind(tpool, &mark);
 }
 
 static void
@@ -77,8 +72,7 @@ fade_node(const struct lb_instance *instance,
         return;
     }
 
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(tpool);
 
     char *node_name = p_strndup(tpool, payload, length);
     char *port_string = node_name + (colon - payload);
@@ -86,7 +80,6 @@ fade_node(const struct lb_instance *instance,
 
     const lb_node_config *node = instance->config->FindNode(node_name);
     if (node == NULL) {
-        pool_rewind(tpool, &mark);
         daemon_log(3, "unknown node in FADE_NODE control packet\n");
         return;
     }
@@ -94,7 +87,6 @@ fade_node(const struct lb_instance *instance,
     char *endptr;
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
-        pool_rewind(tpool, &mark);
         daemon_log(3, "malformed FADE_NODE control packet: port is not a number\n");
         return;
     }
@@ -111,8 +103,6 @@ fade_node(const struct lb_instance *instance,
 
     /* set status "FADE" for 3 hours */
     failure_set(with_port, node->envelope->length, FAILURE_FADE, 3 * 3600);
-
-    pool_rewind(tpool, &mark);
 }
 
 G_GNUC_CONST
@@ -172,8 +162,7 @@ query_node_status(struct lb_control *control,
         return;
     }
 
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(tpool);
 
     char *node_name = p_strndup(tpool, payload, length);
     char *port_string = node_name + (colon - payload);
@@ -184,7 +173,6 @@ query_node_status(struct lb_control *control,
     if (node == NULL) {
         node_status_response(control->server, tpool, address, address_length,
                              payload, length, "unknown", NULL);
-        pool_rewind(tpool, &mark);
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
         return;
     }
@@ -194,7 +182,6 @@ query_node_status(struct lb_control *control,
     if (port == 0 || *endptr != 0) {
         node_status_response(control->server, tpool, address, address_length,
                              payload, length, "malformed", NULL);
-        pool_rewind(tpool, &mark);
         daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
         return;
     }
@@ -219,8 +206,6 @@ query_node_status(struct lb_control *control,
         daemon_log(3, "%s\n", error->message);
         g_error_free(error);
     }
-
-    pool_rewind(tpool, &mark);
 }
 
 static void
@@ -230,8 +215,7 @@ query_stats(struct lb_control *control,
     struct beng_control_stats stats;
     lb_get_stats(control->instance, &stats);
 
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(tpool);
 
     GError *error = NULL;
     if (!control_server_reply(control->server, tpool, address, address_length,
@@ -240,8 +224,6 @@ query_stats(struct lb_control *control,
         daemon_log(3, "%s\n", error->message);
         g_error_free(error);
     }
-
-    pool_rewind(tpool, &mark);
 }
 
 static void

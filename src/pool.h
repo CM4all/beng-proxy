@@ -282,6 +282,24 @@ pool_mark(struct pool *pool, struct pool_mark_state *mark);
 void
 pool_rewind(struct pool *pool, const struct pool_mark_state *mark);
 
+#ifdef __cplusplus
+
+class AutoRewindPool {
+    struct pool *const pool;
+    pool_mark_state mark;
+
+public:
+    AutoRewindPool(struct pool *_pool):pool(_pool) {
+        pool_mark(pool, &mark);
+    }
+
+    ~AutoRewindPool() {
+        pool_rewind(pool, &mark);
+    }
+};
+
+#endif
+
 gcc_malloc
 void *
 p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL);

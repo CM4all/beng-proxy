@@ -14,11 +14,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-G_GNUC_PURE
-static unsigned
-lb_jvm_route_get_internal(const struct strmap *request_headers,
-                          const struct lb_cluster_config *cluster)
+unsigned
+lb_jvm_route_get(const struct strmap *request_headers,
+                 const struct lb_cluster_config *cluster)
 {
+    const AutoRewindPool auto_rewind(tpool);
+
     const char *cookie = strmap_get(request_headers, "cookie");
     if (cookie == NULL)
         return 0;
@@ -43,17 +44,4 @@ lb_jvm_route_get_internal(const struct strmap *request_headers,
        node index, but the first node is not referred to as zero
        (special value for "no session") */
     return i + cluster->members.size();
-}
-
-unsigned
-lb_jvm_route_get(const struct strmap *request_headers,
-                 const struct lb_cluster_config *cluster)
-{
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
-
-    unsigned id = lb_jvm_route_get_internal(request_headers, cluster);
-    pool_rewind(tpool, &mark);
-
-    return id;
 }

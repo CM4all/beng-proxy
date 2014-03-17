@@ -13,9 +13,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-static unsigned
-lb_cookie_get_internal(const struct strmap *request_headers)
+unsigned
+lb_cookie_get(const struct strmap *request_headers)
 {
+    const AutoRewindPool auto_rewind(tpool);
+
     const char *cookie = strmap_get(request_headers, "cookie");
     if (cookie == NULL)
         return 0;
@@ -35,18 +37,6 @@ lb_cookie_get_internal(const struct strmap *request_headers)
         return 0;
 
     return (unsigned)id;
-}
-
-unsigned
-lb_cookie_get(const struct strmap *request_headers)
-{
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
-
-    unsigned id = lb_cookie_get_internal(request_headers);
-    pool_rewind(tpool, &mark);
-
-    return id;
 }
 
 unsigned

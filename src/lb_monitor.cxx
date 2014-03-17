@@ -29,7 +29,6 @@ struct lb_monitor final : public LBMonitorHandler {
     struct timeval timeout;
     struct event timeout_event;
 
-    struct pool_mark_state mark;
     struct async_operation_ref async_ref;
 
     bool state;

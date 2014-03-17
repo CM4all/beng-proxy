@@ -132,8 +132,7 @@ control_tcache_invalidate(struct instance *instance,
 {
     (void)instance;
 
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(tpool);
 
     TranslateRequest request;
     memset(&request, 0, sizeof(request));
@@ -144,7 +143,6 @@ control_tcache_invalidate(struct instance *instance,
         decode_translation_packets(tpool, &request, cmds, G_N_ELEMENTS(cmds),
                                    payload, payload_length, &site);
     if (num_cmds == 0 && site == NULL) {
-        pool_rewind(tpool, &mark);
         daemon_log(2, "malformed TCACHE_INVALIDATE control packet\n");
         return;
     }
@@ -152,8 +150,6 @@ control_tcache_invalidate(struct instance *instance,
     translate_cache_invalidate(instance->translate_cache, &request,
                                ConstBuffer<uint16_t>(cmds, num_cmds),
                                site);
-
-    pool_rewind(tpool, &mark);
 }
 
 static void
@@ -170,8 +166,7 @@ query_stats(struct instance *instance, struct control_server *server,
     struct beng_control_stats stats;
     bp_get_stats(instance, &stats);
 
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(tpool);
 
     GError *error = NULL;
     if (!control_server_reply(server, tpool,
@@ -181,8 +176,6 @@ query_stats(struct instance *instance, struct control_server *server,
         daemon_log(3, "%s\n", error->message);
         g_error_free(error);
     }
-
-    pool_rewind(tpool, &mark);
 }
 
 static void

@@ -75,8 +75,8 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
 
     assert(class_ != NULL);
 
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(tpool);
+
     const char *key = p_sprintf(tpool, "%s:[%s]:%u",
                                 config->name.c_str(), node->name.c_str(),
                                 port);
@@ -98,6 +98,4 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
         pool_unref(pool);
         hashmap_add(hmonitor_map, key, monitor);
     }
-
-    pool_rewind(tpool, &mark);
 }

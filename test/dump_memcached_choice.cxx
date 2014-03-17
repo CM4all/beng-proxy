@@ -84,15 +84,13 @@ static void
 my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
 {
     struct strref data;
-    struct pool_mark_state mark;
     struct http_cache_document document;
     /*uint32_t magic;*/
 
     strref_set(&data, (const char *)data0, length);
 
     while (!strref_is_empty(&data)) {
-
-        pool_mark(tpool, &mark);
+        const AutoRewindPool auto_rewind(tpool);
 
         /*magic = */deserialize_uint32(&data);
         /*
@@ -103,15 +101,11 @@ my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
         document.info.expires = deserialize_uint64(&data);
         document.vary = deserialize_strmap(&data, tpool);
 
-        if (strref_is_null(&data)) {
+        if (strref_is_null(&data))
             /* deserialization failure */
-            pool_rewind(tpool, &mark);
             break;
-        }
 
         dump_choice(&document);
-
-        pool_rewind(tpool, &mark);
     }
 }
 

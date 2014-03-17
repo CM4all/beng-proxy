@@ -12,10 +12,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-static unsigned
-lb_session_get_internal(const struct strmap *request_headers,
+unsigned
+lb_session_get(const struct strmap *request_headers,
                         const char *cookie_name)
 {
+    const AutoRewindPool auto_rewind(tpool);
+
     const char *cookie = strmap_get(request_headers, "cookie");
     if (cookie == NULL)
         return 0;
@@ -38,16 +40,4 @@ lb_session_get_internal(const struct strmap *request_headers,
         return 0;
 
     return (unsigned)id;
-}
-
-unsigned
-lb_session_get(const struct strmap *request_headers, const char *cookie_name)
-{
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
-
-    unsigned id = lb_session_get_internal(request_headers, cookie_name);
-    pool_rewind(tpool, &mark);
-
-    return id;
 }

@@ -117,7 +117,6 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
     http_cache_choice *choice = (http_cache_choice *)ctx;
     struct strref data;
     time_t now = time(nullptr);
-    struct pool_mark_state mark;
     uint32_t magic;
     struct http_cache_document document;
     const char *uri = nullptr;
@@ -135,12 +134,12 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 
         document.info.expires = deserialize_uint64(&data);
 
-        pool_mark(tpool, &mark);
+        const AutoRewindPool auto_rewind(tpool);
+
         document.vary = deserialize_strmap(&data, tpool);
 
         if (strref_is_null(&data)) {
             /* deserialization failure */
-            pool_rewind(tpool, &mark);
             unclean = true;
             break;
         }
@@ -160,8 +159,6 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
                                           choice->request_headers))
             uri = http_cache_choice_vary_key(choice->pool, choice->uri,
                                              document.vary);
-
-        pool_rewind(tpool, &mark);
 
         if (uri != nullptr && unclean)
             /* we have already found something, and we think that this
@@ -414,7 +411,6 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
     http_cache_choice *choice = (http_cache_choice *)ctx;
     struct strref data;
     const char *current;
-    struct pool_mark_state mark;
     uint32_t magic;
     struct http_cache_document document;
 
@@ -430,21 +426,17 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 
         document.info.expires = deserialize_uint64(&data);
 
-        pool_mark(tpool, &mark);
+        const AutoRewindPool auto_rewind(tpool);
         document.vary = deserialize_strmap(&data, tpool);
 
-        if (strref_is_null(&data)) {
+        if (strref_is_null(&data))
             /* deserialization failure */
-            pool_rewind(tpool, &mark);
             break;
-        }
 
         if (choice->callback.filter(&document, nullptr, choice->callback_ctx)) {
             memmove(dest, current, strref_end(&data) - current);
             dest += data.data - current;
         }
-
-        pool_rewind(tpool, &mark);
     }
 
     if (dest - length == data0)

@@ -382,7 +382,6 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
                          struct async_operation_ref *async_ref)
 {
     auto request = PoolAlloc<http_cache_memcached_request>(pool);
-    struct pool_mark_state mark;
     struct strmap *vary;
     struct growing_buffer *gb;
     const char *key;
@@ -394,7 +393,7 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
     request->uri = uri;
     request->async_ref = async_ref;
 
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(tpool);
 
     vary = info->vary != nullptr
         ? http_cache_copy_vary(tpool, info->vary, request_headers)
@@ -432,8 +431,6 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
 
     request->callback.put = callback;
     request->callback_ctx = callback_ctx;
-
-    pool_rewind(tpool, &mark);
 
     memcached_stock_invoke(pool, stock,
                            MEMCACHED_OPCODE_SET,

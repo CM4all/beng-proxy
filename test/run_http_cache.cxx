@@ -15,8 +15,7 @@
 static void
 put_random(struct http_cache_heap *cache, Rubber *rubber)
 {
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
+    const AutoRewindPool auto_rewind(tpool);
 
     char uri[8];
     uri[0] = '0' + random() % 10;
@@ -58,8 +57,6 @@ put_random(struct http_cache_heap *cache, Rubber *rubber)
     http_cache_heap_put(cache, uri, &info, request_headers,
                         HTTP_STATUS_OK, response_headers,
                         rubber, rubber_id, length);
-
-    pool_rewind(tpool, &mark);
 }
 
 /*
