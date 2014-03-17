@@ -12,7 +12,6 @@
 #include "http_response.h"
 #include "resource-address.h"
 #include "strref2.h"
-#include "tpool.h"
 #include "http_util.h"
 #include "async.h"
 #include "background.h"
