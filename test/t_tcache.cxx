@@ -179,6 +179,8 @@ translate_response_equals(const TranslateResponse *a,
         return a == nullptr && b == nullptr;
 
     return string_equals(a->base, b->base) &&
+        a->easy_base == b->easy_base &&
+        a->unsafe_base == b->unsafe_base &&
         strref_is_null(&a->check) == strref_is_null(&b->check) &&
         strref_cmp2(&a->check, &b->check) == 0 &&
         strref_is_null(&a->want_full_uri) == strref_is_null(&b->want_full_uri) &&
@@ -429,6 +431,80 @@ test_basic(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response9;
     translate_cache(pool, cache, &request9,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
+static void
+test_easy_base(struct pool *pool, struct tcache *cache)
+{
+    static const TranslateRequest request1 = {
+        .uri = "/easy/bar.html",
+    };
+    static const TranslateRequest request2 = {
+        .uri = "/easy/index.html",
+    };
+
+    static const struct file_address file1 = {
+        .path = "/var/www/",
+    };
+    static const TranslateResponse response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1,
+            },
+        },
+        .base = "/easy/",
+        .easy_base = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    static const struct file_address file1b = {
+        .path = "/var/www/bar.html",
+    };
+    static const TranslateResponse response1b = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1b,
+            },
+        },
+        .base = "/easy/",
+        .easy_base = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    static const struct file_address file2 = {
+        .path = "/var/www/index.html",
+    };
+    static const TranslateResponse response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file2,
+            },
+        },
+        .base = "/easy/",
+        .easy_base = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    struct async_operation_ref async_ref;
+
+    next_response = &response1;
+    expected_response = &response1b;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    next_response = nullptr;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    expected_response = &response2;
+    translate_cache(pool, cache, &request2,
                     &my_translate_handler, nullptr, &async_ref);
 }
 
@@ -1704,6 +1780,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* test */
 
     test_basic(pool, cache);
+    test_easy_base(pool, cache);
     test_vary_invalidate(pool, cache);
     test_invalidate_uri(pool, cache);
     test_regex(pool, cache);

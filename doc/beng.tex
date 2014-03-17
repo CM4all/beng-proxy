@@ -959,6 +959,16 @@ possibly allowing clients to break out of the given directory. \\
 
 \hline
 
+\verb|EASY_BASE| & Modifier \verb|BASE| which aims to simplify its
+usage: the resource address given in the response refers to the
+\verb|BASE|, not to the actual request URI.  It is important to
+include the trailing slash which is part of \verb|BASE| in the
+resource address (e.g. \verb|BASE|=''/foo/'',
+\verb|PATH|=''/var/www/foo/'').  \emph{beng-proxy} applies the URI
+suffix before handling the HTTP request. \\
+
+\hline
+
 \verb|REGEX| & Reuse a cached response only if the request \verb|URI|
 matches the specified regular expression (Perl compatible).  This
 works only when a BASE was specified.

@@ -432,6 +432,13 @@ enum beng_translation_command {
      * on the tail string.
      */
     TRANSLATE_UNSAFE_BASE = 116,
+
+    /**
+     * Enables "easy" mode for #TRANSLATE_BASE or
+     * #TRANSLATE_UNSAFE_BASE: the returned resource address refers to
+     * the base, not to the actual request URI.
+     */
+    TRANSLATE_EASY_BASE = 117,
 };
 
 struct beng_translation_header {

@@ -66,6 +66,8 @@ struct TranslateResponse {
 
     bool unsafe_base;
 
+    bool easy_base;
+
     bool direct_addressing;
 
     bool stateful;

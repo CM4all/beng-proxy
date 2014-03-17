@@ -1835,6 +1835,25 @@ translate_handle_packet(TranslateClient *client,
         client->response.unsafe_base = true;
         return true;
 
+    case TRANSLATE_EASY_BASE:
+        if (payload_length > 0) {
+            translate_client_error(client, "malformed EASY_BASE");
+            return false;
+        }
+
+        if (client->response.base == nullptr) {
+            translate_client_error(client, "EASY_BASE without BASE");
+            return false;
+        }
+
+        if (client->response.easy_base) {
+            translate_client_error(client, "duplicate EASY_BASE");
+            return false;
+        }
+
+        client->response.easy_base = true;
+        return true;
+
     case TRANSLATE_REGEX:
         if (client->response.base == nullptr) {
             translate_client_error(client, "REGEX without BASE");

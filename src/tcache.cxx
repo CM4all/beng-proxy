@@ -341,14 +341,15 @@ base_string(const char *p, const char *suffix)
 static const char *
 tcache_store_address(struct pool *pool, struct resource_address *dest,
                      const struct resource_address *src,
-                     const char *uri, const char *base, bool expandable)
+                     const char *uri, const char *base,
+                     bool easy_base, bool expandable)
 {
     const char *suffix = base_suffix(uri, base);
     if (suffix != nullptr) {
         /* we received a valid BASE packet - store only the base
            URI */
 
-        if (expandable) {
+        if (easy_base || expandable) {
             /* when the response is expandable, skip appending the
                base suffix, don't call resource_address_save_base() */
             resource_address_copy(pool, dest, src);
@@ -387,6 +388,7 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
 
     key = tcache_store_address(pool, &dest->address, &src->address,
                                request->uri, base,
+                               src->easy_base,
                                translate_response_is_expandable(src));
     translate_response_copy(pool, dest, src);
 
@@ -881,6 +883,18 @@ tcache_handler_response(const TranslateResponse *response, void *ctx)
             GError *error = nullptr;
             if (!tcache_expand_response(tcr->pool, response2, item,
                                         tcr->request->uri, &error)) {
+                tcr->handler->error(error, tcr->handler_ctx);
+                return;
+            }
+
+            response = response2;
+        } else if (response->easy_base) {
+            /* create a writable copy and apply the BASE */
+            auto response2 = NewFromPool<TranslateResponse>(tcr->pool);
+
+            GError *error = nullptr;
+            if (!tcache_load_response(tcr->pool, response2, response,
+                                      tcr->request->uri, &error)) {
                 tcr->handler->error(error, tcr->handler_ctx);
                 return;
             }

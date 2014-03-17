@@ -234,6 +234,12 @@ class Translation(Protocol):
             response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
             response.packet(TRANSLATE_URI, '/foo/' + uri[6:])
             self._handle_local_file('/var/www' + uri[5:], response)
+        elif uri[:11] == '/easy-base/':
+            response.packet(TRANSLATE_BASE, '/easy-base/')
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_SCHEME, 'https')
+            response.packet(TRANSLATE_HOST, 'xyz.intern.cm-ag')
+            response.path('/var/www/')
         elif uri[:6] == '/coma/':
             self._handle_coma(response, uri[:6], uri[6:], '/home/max/svn/mod_coma/t/src')
         elif uri[:10] == '/coma-was/':
