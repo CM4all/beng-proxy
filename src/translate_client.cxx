@@ -1808,6 +1808,7 @@ translate_handle_packet(TranslateClient *client,
         }
 
         if (client->from_request.uri == nullptr ||
+            client->response.auto_base ||
             client->response.base != nullptr) {
             translate_client_error(client, "misplaced BASE packet");
             return false;
@@ -2293,6 +2294,8 @@ translate_handle_packet(TranslateClient *client,
         if (client->resource_address != &client->response.address ||
             client->cgi_address != client->response.address.u.cgi ||
             client->cgi_address->path_info == nullptr ||
+            client->from_request.uri == nullptr ||
+            client->response.base != nullptr ||
             client->response.auto_base) {
             translate_client_error(client,
                                    "misplaced AUTO_BASE packet");

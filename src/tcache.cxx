@@ -394,9 +394,13 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
     const char *base = src->base;
     char *new_base = nullptr;
 
-    if (src->auto_base && base == nullptr && request->uri != nullptr)
+    if (src->auto_base) {
+        assert(base == nullptr);
+        assert(request->uri != nullptr);
+
         base = new_base = resource_address_auto_base(pool, &src->address,
                                                      request->uri);
+    }
 
     const char *key = tcache_store_address(pool, &dest->address, &src->address,
                                            request->uri, base,
