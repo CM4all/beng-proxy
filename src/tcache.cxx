@@ -297,16 +297,17 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
 }
 
 /**
- * Calculate the suffix relative to a base URI from an incoming URI.
- * Returns nullptr if no such suffix is possible (e.g. if the specified
- * URI is not "within" the base, or if there is no base at all).
+ * Calculate the URI tail after a base URI from a request URI.
+ * Returns nullptr if no such tail URI is possible (e.g. if the
+ * specified URI is not "within" the base, or if there is no base at
+ * all).
  *
  * @param uri the URI specified by the tcache client, may be nullptr
  * @param base the base URI, as given by the translation server,
  * stored in the cache item, may be nullptr
  */
 static const char *
-base_suffix(const char *uri, const char *base)
+base_tail(const char *uri, const char *base)
 {
     size_t uri_length, base_length;
 
@@ -323,13 +324,13 @@ base_suffix(const char *uri, const char *base)
 }
 
 static size_t
-base_string(const char *p, const char *suffix)
+base_string(const char *p, const char *tail)
 {
-    size_t length = strlen(p), suffix_length = strlen(suffix);
+    size_t length = strlen(p), tail_length = strlen(tail);
 
-    return length > suffix_length && p[length - suffix_length - 1] == '/' &&
-        memcmp(p + length - suffix_length, suffix, suffix_length) == 0
-        ? length - suffix_length
+    return length > tail_length && p[length - tail_length - 1] == '/' &&
+        memcmp(p + length - tail_length, tail, tail_length) == 0
+        ? length - tail_length
         : 0;
 }
 
@@ -344,16 +345,16 @@ tcache_store_address(struct pool *pool, struct resource_address *dest,
                      const char *uri, const char *base,
                      bool easy_base, bool expandable)
 {
-    const char *suffix = base_suffix(uri, base);
-    if (suffix != nullptr) {
+    const char *tail = base_tail(uri, base);
+    if (tail != nullptr) {
         /* we received a valid BASE packet - store only the base
            URI */
 
         if (easy_base || expandable) {
             /* when the response is expandable, skip appending the
-               base suffix, don't call resource_address_save_base() */
+               tail URI, don't call resource_address_save_base() */
             resource_address_copy(pool, dest, src);
-            return p_strndup(pool, uri, suffix - uri);
+            return p_strndup(pool, uri, tail - uri);
         }
 
         if (src->type == RESOURCE_ADDRESS_NONE) {
@@ -361,11 +362,11 @@ tcache_store_address(struct pool *pool, struct resource_address *dest,
                case, the operation is useful and is allowed as a
                special case */
             dest->type = RESOURCE_ADDRESS_NONE;
-            return p_strndup(pool, uri, suffix - uri);
+            return p_strndup(pool, uri, tail - uri);
         }
 
-        if (resource_address_save_base(pool, dest, src, suffix) != nullptr)
-            return p_strndup(pool, uri, suffix - uri);
+        if (resource_address_save_base(pool, dest, src, tail) != nullptr)
+            return p_strndup(pool, uri, tail - uri);
     }
 
     resource_address_copy(pool, dest, src);
@@ -399,10 +400,10 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
         dest->base = new_base;
 
     if (dest->uri != nullptr) {
-        const char *suffix = base_suffix(request->uri, src->base);
+        const char *tail = base_tail(request->uri, src->base);
 
-        if (suffix != nullptr) {
-            size_t length = base_string(dest->uri, suffix);
+        if (tail != nullptr) {
+            size_t length = base_string(dest->uri, tail);
             dest->uri = length > 0
                 ? p_strndup(pool, dest->uri, length)
                 : nullptr;
@@ -431,9 +432,9 @@ tcache_load_address(struct pool *pool, const char *uri,
     if (src->base != nullptr && !translate_response_is_expandable(src)) {
         assert(memcmp(src->base, uri, strlen(src->base)) == 0);
 
-        const char *suffix = uri + strlen(src->base);
+        const char *tail = uri + strlen(src->base);
 
-        if (!src->unsafe_base && !uri_path_verify_paranoid(suffix - 1)) {
+        if (!src->unsafe_base && !uri_path_verify_paranoid(tail - 1)) {
             g_set_error(error_r, http_response_quark(),
                         HTTP_STATUS_BAD_REQUEST, "Malformed URI");
             return false;
@@ -446,7 +447,7 @@ tcache_load_address(struct pool *pool, const char *uri,
         }
 
         if (resource_address_load_base(pool, dest, &src->address,
-                                       suffix) != nullptr)
+                                       tail) != nullptr)
             return true;
     }
 
