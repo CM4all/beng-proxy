@@ -26,6 +26,7 @@
 #include "stopwatch.h"
 #include "beng-proxy/translation.h"
 #include "gerrno.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -141,6 +142,10 @@ struct TranslateClient {
     /** this asynchronous operation is the translate request; aborting
         it causes the request to be cancelled */
     struct async_operation async;
+
+    static TranslateClient *FromAsync(async_operation *ao) {
+        return ContainerCast(ao, TranslateClient, async);
+    }
 };
 
 static const struct timeval translate_read_timeout = {
@@ -2591,17 +2596,10 @@ static const struct buffered_socket_handler translate_client_socket_handler = {
  *
  */
 
-static TranslateClient *
-async_to_translate_connection(struct async_operation *ao)
-{
-    void *p = (char *)ao - offsetof(TranslateClient, async);
-    return (TranslateClient *)p;
-}
-
 static void
 translate_connection_abort(struct async_operation *ao)
 {
-    TranslateClient *client = async_to_translate_connection(ao);
+    TranslateClient *client = TranslateClient::FromAsync(ao);
 
     stopwatch_event(client->stopwatch, "abort");
     translate_client_release(client, false);

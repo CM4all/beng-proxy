@@ -80,6 +80,7 @@ bin_PROGRAMS = src/cm4all-beng-proxy \
 src_cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
+	src/util/Cast.hxx \
 	src/util/ConstBuffer.hxx \
 	src/product.h \
 	src/capabilities.cxx src/capabilities.hxx \

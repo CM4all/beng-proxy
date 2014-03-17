@@ -23,6 +23,7 @@
 #include "sink_rubber.hxx"
 #include "istream_rubber.hxx"
 #include "istream_tee.h"
+#include "util/Cast.hxx"
 
 #include <glib.h>
 
@@ -114,6 +115,14 @@ struct http_cache_request {
 
     struct async_operation operation;
     struct async_operation_ref async_ref;
+
+    static http_cache_request *FromSiblings(list_head *lh) {
+        return ContainerCast(lh, http_cache_request, siblings);
+    }
+
+    static http_cache_request *FromAsync(async_operation *ao) {
+        return ContainerCast(ao, http_cache_request, operation);
+    }
 };
 
 static const char *
@@ -470,17 +479,10 @@ static const struct http_response_handler http_cache_response_handler = {
  *
  */
 
-static struct http_cache_request *
-async_to_request(struct async_operation *ao)
-{
-    void *p = ((char *)ao) - offsetof(struct http_cache_request, operation);
-        return (struct http_cache_request *)p;
-}
-
 static void
 http_cache_abort(struct async_operation *ao)
 {
-    struct http_cache_request *request = async_to_request(ao);
+    auto request = http_cache_request::FromAsync(ao);
 
     if (request->document != nullptr &&
         http_cache_heap_is_defined(&request->cache->heap))
@@ -549,13 +551,6 @@ http_cache_new(struct pool *pool, size_t max_size,
     return cache;
 }
 
-static inline struct http_cache_request *
-list_head_to_request(struct list_head *head)
-{
-    void *p = ((char *)head) - offsetof(struct http_cache_request, siblings);
-    return (struct http_cache_request *)p;
-}
-
 static void
 http_cache_request_close(struct http_cache_request *request)
 {
@@ -570,8 +565,7 @@ http_cache_close(struct http_cache *cache)
 {
 
     while (!list_empty(&cache->requests)) {
-        struct http_cache_request *request =
-            list_head_to_request(cache->requests.next);
+        auto request = http_cache_request::FromSiblings(cache->requests.next);
 
         http_cache_request_close(request);
     }

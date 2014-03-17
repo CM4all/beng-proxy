@@ -20,6 +20,7 @@
 #include "strref-pool.h"
 #include "slice.h"
 #include "beng-proxy/translation.h"
+#include "util/Cast.hxx"
 
 #include <inline/list.h>
 
@@ -65,6 +66,10 @@ struct TranslateCacheItem {
     TranslateResponse response;
 
     GRegex *regex, *inverse_regex;
+
+    static TranslateCacheItem *FromPerHostSibling(list_head *lh) {
+        return ContainerCast(lh, TranslateCacheItem, per_host_siblings);
+    }
 };
 
 struct TranslateCachePerHost {
@@ -127,13 +132,6 @@ static const GRegexCompileFlags default_regex_compile_flags =
 #else
 #define cache_log(...) do {} while (0)
 #endif
-
-static TranslateCacheItem *
-cast_per_host_sibling_to_item(struct list_head *lh)
-{
-    void *p = ((char *)lh) - offsetof(TranslateCacheItem, per_host_siblings);
-    return (TranslateCacheItem *)p;
-}
 
 static void
 tcache_add_per_host(struct tcache *tcache, TranslateCacheItem *item)
@@ -714,7 +712,7 @@ translate_cache_invalidate_host(struct tcache *tcache, const char *host)
         assert(!list_empty(&per_host->items));
 
         TranslateCacheItem *item =
-            cast_per_host_sibling_to_item(per_host->items.next);
+            TranslateCacheItem::FromPerHostSibling(per_host->items.next);
 
         /* we're done when we're about to remove the last item - the
            last item will destroy the #TranslateCachePerHost object,

@@ -12,6 +12,7 @@
 #include "rubber.hxx"
 #include "istream_rubber.hxx"
 #include "slice.h"
+#include "util/Cast.hxx"
 
 #include <time.h>
 #include <string.h>
@@ -30,14 +31,11 @@ struct http_cache_item {
 
     Rubber *rubber;
     unsigned rubber_id;
-};
 
-static inline struct http_cache_item *
-document_to_item(struct http_cache_document *document)
-{
-    void *p = ((char *)document) - offsetof(struct http_cache_item, document);
-        return (struct http_cache_item *)p;
-}
+    static http_cache_item *FromDocument(http_cache_document *document) {
+        return ContainerCast(document, http_cache_item, document);
+    }
+};
 
 static bool
 http_cache_item_match(const struct cache_item *_item, void *ctx)
@@ -99,7 +97,7 @@ http_cache_heap_remove(struct http_cache_heap *cache, const char *url,
                        struct http_cache_document *document)
 {
     struct cache *cache2 = cache->cache;
-    struct http_cache_item *item = document_to_item(document);
+    auto item = http_cache_item::FromDocument(document);
 
     cache_remove_item(cache2, url, &item->item);
     cache_item_unlock(cache2, &item->item);
@@ -123,7 +121,7 @@ http_cache_heap_flush(struct http_cache_heap *cache)
 void
 http_cache_heap_lock(struct http_cache_document *document)
 {
-    struct http_cache_item *item = document_to_item(document);
+    auto item = http_cache_item::FromDocument(document);
 
     cache_item_lock(&item->item);
 }
@@ -132,7 +130,7 @@ void
 http_cache_heap_unlock(struct http_cache_heap *cache,
                        struct http_cache_document *document)
 {
-    struct http_cache_item *item = document_to_item(document);
+    auto item = http_cache_item::FromDocument(document);
 
     cache_item_unlock(cache->cache, &item->item);
 }
@@ -141,7 +139,7 @@ struct istream *
 http_cache_heap_istream(struct pool *pool, struct http_cache_heap *cache,
                         struct http_cache_document *document)
 {
-    struct http_cache_item *item = document_to_item(document);
+    auto item = http_cache_item::FromDocument(document);
 
     if (item->rubber_id == 0)
         /* don't lock the item */
