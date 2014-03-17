@@ -73,6 +73,8 @@ struct TranslateClient {
     struct lease_ref lease_ref;
 
     struct {
+        const char *uri;
+
         bool want_full_uri;
 
         bool want;
@@ -1805,8 +1807,14 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (client->response.base != nullptr) {
+        if (client->from_request.uri == nullptr ||
+            client->response.base != nullptr) {
             translate_client_error(client, "misplaced BASE packet");
+            return false;
+        }
+
+        if (memcmp(client->from_request.uri, payload, payload_length) != 0) {
+            translate_client_error(client, "BASE mismatches request URI");
             return false;
         }
 
@@ -1820,8 +1828,14 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (client->response.base != nullptr) {
+        if (client->from_request.uri == nullptr ||
+            client->response.base != nullptr) {
             translate_client_error(client, "misplaced UNSAFE_BASE packet");
+            return false;
+        }
+
+        if (memcmp(client->from_request.uri, payload, payload_length) != 0) {
+            translate_client_error(client, "UNSAFE_BASE mismatches request URI");
             return false;
         }
 
@@ -2653,6 +2667,7 @@ translate(struct pool *pool, int fd,
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "translate_lease");
 
+    client->from_request.uri = request->uri;
     client->from_request.want_full_uri =
         !strref_is_null(&request->want_full_uri);
     client->from_request.want = !request->want.IsEmpty();
