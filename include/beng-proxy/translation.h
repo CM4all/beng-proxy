@@ -428,8 +428,8 @@ enum beng_translation_command {
     TRANSLATE_WANT = 115,
 
     /**
-     * Like #TRANSLATE_BASE, but do not perform any safety checks on
-     * the tail string.
+     * Modifier for #TRANSLATE_BASE: do not perform any safety checks
+     * on the tail string.
      */
     TRANSLATE_UNSAFE_BASE = 116,
 };

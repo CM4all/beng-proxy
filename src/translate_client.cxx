@@ -1822,24 +1822,16 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_UNSAFE_BASE:
-        if (*payload != '/' || payload[payload_length - 1] != '/' ||
-            has_null_byte(payload, payload_length)) {
+        if (payload_length > 0) {
             translate_client_error(client, "malformed UNSAFE_BASE packet");
             return false;
         }
 
-        if (client->from_request.uri == nullptr ||
-            client->response.base != nullptr) {
+        if (client->response.base == nullptr) {
             translate_client_error(client, "misplaced UNSAFE_BASE packet");
             return false;
         }
 
-        if (memcmp(client->from_request.uri, payload, payload_length) != 0) {
-            translate_client_error(client, "UNSAFE_BASE mismatches request URI");
-            return false;
-        }
-
-        client->response.base = payload;
         client->response.unsafe_base = true;
         return true;
 
