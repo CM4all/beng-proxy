@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri-base.h"
+#include "uri_base.hxx"
 #include "uri-escape.h"
 #include "pool.h"
 
@@ -19,8 +19,8 @@
 size_t
 base_string(const char *p, const char *suffix)
 {
-    assert(p != NULL);
-    assert(suffix != NULL);
+    assert(p != nullptr);
+    assert(suffix != nullptr);
 
     size_t length = strlen(p), suffix_length = strlen(suffix);
 
@@ -42,9 +42,9 @@ base_string(const char *p, const char *suffix)
 size_t
 base_string_unescape(struct pool *pool, const char *p, const char *suffix)
 {
-    assert(pool != NULL);
-    assert(p != NULL);
-    assert(suffix != NULL);
+    assert(pool != nullptr);
+    assert(p != nullptr);
+    assert(suffix != nullptr);
 
     char *unescaped = p_strdup(pool, suffix);
     unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;

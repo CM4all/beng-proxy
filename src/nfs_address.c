@@ -3,7 +3,7 @@
  */
 
 #include "nfs_address.h"
-#include "uri-base.h"
+#include "uri_base.hxx"
 #include "uri-escape.h"
 #include "regex.h"
 #include "pool.h"
