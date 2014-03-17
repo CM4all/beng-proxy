@@ -17,6 +17,7 @@
 #include "http_address.h"
 #include "uri-verify.h"
 #include "uri-escape.h"
+#include "uri_base.hxx"
 #include "strref-pool.h"
 #include "slice.h"
 #include "beng-proxy/translation.h"
@@ -336,17 +337,6 @@ require_base_tail(const char *uri, const char *base)
     return uri + strlen(base);
 }
 
-static size_t
-base_string(const char *p, const char *tail)
-{
-    size_t length = strlen(p), tail_length = strlen(tail);
-
-    return length > tail_length && p[length - tail_length - 1] == '/' &&
-        memcmp(p + length - tail_length, tail, tail_length) == 0
-        ? length - tail_length
-        : 0;
-}
-
 /**
  * Copies the address #src to #dest and returns the new cache key.
  * Returns nullptr if the cache key should not be modified (i.e. if there
@@ -419,7 +409,7 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
 
         if (tail != nullptr) {
             size_t length = base_string(dest->uri, tail);
-            dest->uri = length > 0
+            dest->uri = length != (size_t)-1
                 ? p_strndup(pool, dest->uri, length)
                 : nullptr;
         }
