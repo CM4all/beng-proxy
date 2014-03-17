@@ -266,6 +266,25 @@ tcache_response_evaluate(const TranslateResponse *response)
 }
 
 /**
+ * Returns the string that shall be used for (inverse) regex matching.
+ */
+static const char *
+tcache_regex_input(const char *uri, const TranslateResponse &response)
+{
+    assert(uri != nullptr);
+
+    if (response.regex_tail) {
+        assert(response.base != nullptr);
+        assert(response.regex != nullptr ||
+               response.inverse_regex != nullptr);
+
+        uri = require_base_tail(uri, response.base);
+    }
+
+    return uri;
+}
+
+/**
  * Expand EXPAND_PATH_INFO specifications in all #resource_address
  * instances.
  */
@@ -285,7 +304,9 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
     assert(response->base != nullptr);
 
     GMatchInfo *match_info;
-    if (!g_regex_match(item->regex, uri, GRegexMatchFlags(0), &match_info)) {
+    if (!g_regex_match(item->regex,
+                       tcache_regex_input(uri, *response),
+                       GRegexMatchFlags(0), &match_info)) {
         /* shouldn't happen, as this has already been matched */
         g_set_error(error_r, http_response_quark(),
                     HTTP_STATUS_BAD_REQUEST, "Regex mismatch");
@@ -559,14 +580,16 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
         return false;
 
     if (item->response.base != nullptr && item->inverse_regex != nullptr &&
-        g_regex_match(item->inverse_regex, request->uri, GRegexMatchFlags(0),
-                      nullptr))
+        g_regex_match(item->inverse_regex,
+                      tcache_regex_input(request->uri, item->response),
+                      GRegexMatchFlags(0), nullptr))
         /* the URI matches the inverse regular expression */
         return false;
 
     if (item->response.base != nullptr && item->regex != nullptr &&
-        !g_regex_match(item->regex, request->uri, GRegexMatchFlags(0),
-                       nullptr))
+        !g_regex_match(item->regex,
+                       tcache_regex_input(request->uri, item->response),
+                       GRegexMatchFlags(0), nullptr))
         /* the URI did not match the regular expression */
         return false;
 

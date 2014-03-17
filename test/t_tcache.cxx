@@ -179,6 +179,7 @@ translate_response_equals(const TranslateResponse *a,
         return a == nullptr && b == nullptr;
 
     return string_equals(a->base, b->base) &&
+        a->regex_tail == b->regex_tail &&
         a->easy_base == b->easy_base &&
         a->unsafe_base == b->unsafe_base &&
         strref_is_null(&a->check) == strref_is_null(&b->check) &&
@@ -965,6 +966,69 @@ test_regex(struct pool *pool, struct tcache *cache)
     next_response = nullptr;
     expected_response = &response_i2;
     translate_cache(pool, cache, &request_i2,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
+static void
+test_regex_tail(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    static const TranslateRequest request1 = {
+        .uri = "/regex_tail/a/foo.jpg",
+    };
+    static const struct file_address file1 = {
+        .path = "/var/www/regex/images/a/foo.jpg",
+    };
+    static const TranslateResponse response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1,
+            },
+        },
+        .base = "/regex_tail/",
+        .regex = "^a/",
+        .regex_tail = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    static const TranslateRequest request2 = {
+        .uri = "/regex_tail/b/foo.html",
+    };
+
+    next_response = expected_response = nullptr;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    static const TranslateRequest request3 = {
+        .uri = "/regex_tail/a/bar.jpg",
+    };
+    static const struct file_address file3 = {
+        .path = "/var/www/regex/images/a/bar.jpg",
+    };
+    static const TranslateResponse response3 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file3,
+            },
+        },
+        .base = "/regex_tail/",
+        .regex = "^a/",
+        .regex_tail = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = nullptr;
+    expected_response = &response3;
+    translate_cache(pool, cache, &request3,
                     &my_translate_handler, nullptr, &async_ref);
 }
 
@@ -1784,6 +1848,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_vary_invalidate(pool, cache);
     test_invalidate_uri(pool, cache);
     test_regex(pool, cache);
+    test_regex_tail(pool, cache);
     test_expand(pool, cache);
     test_expand_local(pool, cache);
     test_expand_local_filter(pool, cache);

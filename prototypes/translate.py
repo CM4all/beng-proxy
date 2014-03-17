@@ -275,7 +275,8 @@ class Translation(Protocol):
             uri, path_info = uri[:i], uri[i:]
 
             response.packet(TRANSLATE_BASE, "/imageprocessor-filter/")
-            response.packet(TRANSLATE_REGEX, "^/imageprocessor-filter/(.+\.(?:jpe?g|png|gif|bmp))/([^/]+(?:/[^/])?)")
+            response.packet(TRANSLATE_REGEX, "^(.+\.(?:jpe?g|png|gif|bmp))/([^/]+(?:/[^/])?)")
+            response.packet(TRANSLATE_REGEX_TAIL)
             response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
             response.path('/var/www' + uri)
             response.packet(TRANSLATE_EXPAND_PATH, r"/var/www/\1")
@@ -308,7 +309,8 @@ class Translation(Protocol):
             response.pair('TICKET_MAX_SIZE', str(4*1024*1024))
         elif uri[:16] == '/ticket/create2/':
             response.packet(TRANSLATE_BASE, '/ticket/create2/')
-            response.packet(TRANSLATE_REGEX, "^/ticket/create2/(.*)$")
+            response.packet(TRANSLATE_REGEX, "^(.*)$")
+            response.packet(TRANSLATE_REGEX_TAIL)
             response.packet(TRANSLATE_FASTCGI, os.path.join(ticket_fastcgi_dir,
                                                             'create'))
             response.pair('TICKET_VAR', ticket_database_uri)

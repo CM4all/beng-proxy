@@ -439,6 +439,13 @@ enum beng_translation_command {
      * the base, not to the actual request URI.
      */
     TRANSLATE_EASY_BASE = 117,
+
+    /**
+     * Apply #TRANSLATE_REGEX and #TRANSLATE_INVERSE_REGEX to the
+     * remaining URI following #TRANSLATE_BASE instead of the whole
+     * request URI?
+     */
+    TRANSLATE_REGEX_TAIL = 118,
 };
 
 struct beng_translation_header {

@@ -61,6 +61,7 @@ translate_response_copy(struct pool *pool, TranslateResponse *dest,
         p_strdup_checked(pool, src->untrusted_site_suffix);
     dest->unsafe_base = src->unsafe_base;
     dest->easy_base = src->easy_base;
+    dest->regex_tail = src->regex_tail;
     dest->direct_addressing = src->direct_addressing;
     dest->stateful = src->stateful;
     dest->discard_session = src->discard_session;

@@ -68,6 +68,8 @@ struct TranslateResponse {
 
     bool easy_base;
 
+    bool regex_tail;
+
     bool direct_addressing;
 
     bool stateful;
