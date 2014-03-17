@@ -17,22 +17,22 @@
  * @return (size_t)-1 on mismatch
  */
 size_t
-base_string(const char *p, const char *suffix)
+base_string(const char *p, const char *tail)
 {
     assert(p != nullptr);
-    assert(suffix != nullptr);
+    assert(tail != nullptr);
 
-    size_t length = strlen(p), suffix_length = strlen(suffix);
+    size_t length = strlen(p), tail_length = strlen(tail);
 
-    if (length == suffix_length)
+    if (length == tail_length)
         /* special case: zero-length prefix (not followed by a
            slash) */
-        return memcmp(p, suffix, length) == 0
+        return memcmp(p, tail, length) == 0
             ? 0 : (size_t)-1;
 
-    return length > suffix_length && p[length - suffix_length - 1] == '/' &&
-        memcmp(p + length - suffix_length, suffix, suffix_length) == 0
-        ? length - suffix_length
+    return length > tail_length && p[length - tail_length - 1] == '/' &&
+        memcmp(p + length - tail_length, tail, tail_length) == 0
+        ? length - tail_length
         : (size_t)-1;
 }
 
@@ -40,13 +40,13 @@ base_string(const char *p, const char *suffix)
  * @return (size_t)-1 on mismatch
  */
 size_t
-base_string_unescape(struct pool *pool, const char *p, const char *suffix)
+base_string_unescape(struct pool *pool, const char *p, const char *tail)
 {
     assert(pool != nullptr);
     assert(p != nullptr);
-    assert(suffix != nullptr);
+    assert(tail != nullptr);
 
-    char *unescaped = p_strdup(pool, suffix);
+    char *unescaped = p_strdup(pool, tail);
     unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
 
     return base_string(p, unescaped);

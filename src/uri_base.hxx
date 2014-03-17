@@ -19,11 +19,11 @@ extern "C" {
 
 gcc_pure
 size_t
-base_string(const char *p, const char *suffix);
+base_string(const char *p, const char *tail);
 
 gcc_pure
 size_t
-base_string_unescape(struct pool *pool, const char *p, const char *suffix);
+base_string_unescape(struct pool *pool, const char *p, const char *tail);
 
 #ifdef __cplusplus
 }
