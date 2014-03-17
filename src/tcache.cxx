@@ -323,6 +323,19 @@ base_tail(const char *uri, const char *base)
         : nullptr;
 }
 
+/**
+ * Similar to base_tail(), but assert that there is a base match.
+ */
+static const char *
+require_base_tail(const char *uri, const char *base)
+{
+    assert(uri != nullptr);
+    assert(base != nullptr);
+    assert(memcmp(base, uri, strlen(base)) == 0);
+
+    return uri + strlen(base);
+}
+
 static size_t
 base_string(const char *p, const char *tail)
 {
@@ -428,9 +441,7 @@ tcache_load_address(struct pool *pool, const char *uri,
                     GError **error_r)
 {
     if (src->base != nullptr && !translate_response_is_expandable(src)) {
-        assert(memcmp(src->base, uri, strlen(src->base)) == 0);
-
-        const char *tail = uri + strlen(src->base);
+        const char *tail = require_base_tail(uri, src->base);
 
         if (!src->unsafe_base && !uri_path_verify_paranoid(tail - 1)) {
             g_set_error(error_r, http_response_quark(),
