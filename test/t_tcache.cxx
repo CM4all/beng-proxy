@@ -1030,6 +1030,14 @@ test_regex_tail(struct pool *pool, struct tcache *cache)
     expected_response = &response3;
     translate_cache(pool, cache, &request3,
                     &my_translate_handler, nullptr, &async_ref);
+
+    static const TranslateRequest request4 = {
+        .uri = "/regex_tail/%61/escaped.html",
+    };
+
+    next_response = expected_response = nullptr;
+    translate_cache(pool, cache, &request4,
+                    &my_translate_handler, nullptr, &async_ref);
 }
 
 static void
