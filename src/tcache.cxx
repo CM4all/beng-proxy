@@ -751,6 +751,108 @@ translate_cache_invalidate(struct tcache *tcache,
     cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
 }
 
+static const tcache_item *
+tcache_store(tcache_request *tcr, const TranslateResponse *response)
+{
+    struct pool *pool = pool_new_slice(tcr->tcache->pool, "tcache_item",
+                                       tcr->tcache->slice_pool);
+    tcache_item *item = NewFromPool<tcache_item>(pool);
+    unsigned max_age = response->max_age;
+    const char *key;
+
+    cache_log(4, "translate_cache: store %s\n", tcr->key);
+
+    if (max_age > 300)
+        max_age = 300;
+
+    cache_item_init_relative(&item->item, max_age, 1);
+    item->pool = pool;
+
+    item->request.param =
+        tcache_vary_copy(pool, tcr->request->session,
+                         response, TRANSLATE_PARAM);
+
+    item->request.session =
+        tcache_vary_copy(pool, tcr->request->session,
+                         response, TRANSLATE_SESSION);
+
+    item->request.local_address =
+        tcr->request->local_address != nullptr &&
+        translate_response_vary_contains(response, TRANSLATE_LOCAL_ADDRESS)
+        ? (const struct sockaddr *)
+        p_memdup(pool, tcr->request->local_address,
+                 tcr->request->local_address_length)
+        : nullptr;
+    item->request.local_address_length =
+        tcr->request->local_address_length;
+
+    tcache_vary_copy(pool, tcr->request->remote_host,
+                     response, TRANSLATE_REMOTE_HOST);
+    item->request.remote_host =
+        tcache_vary_copy(pool, tcr->request->remote_host,
+                         response, TRANSLATE_REMOTE_HOST);
+    item->request.host = tcache_vary_copy(pool, tcr->request->host,
+                                          response, TRANSLATE_HOST);
+    item->request.accept_language =
+        tcache_vary_copy(pool, tcr->request->accept_language,
+                         response, TRANSLATE_LANGUAGE);
+    item->request.user_agent =
+        tcache_vary_copy(pool, tcr->request->user_agent,
+                         response, TRANSLATE_USER_AGENT);
+    item->request.ua_class =
+        tcache_vary_copy(pool, tcr->request->ua_class,
+                         response, TRANSLATE_UA_CLASS);
+    item->request.query_string =
+        tcache_vary_copy(pool, tcr->request->query_string,
+                         response, TRANSLATE_QUERY_STRING);
+
+    key = tcache_store_response(pool, &item->response, response,
+                                tcr->request);
+    if (key == nullptr)
+        key = p_strdup(pool, tcr->key);
+
+    if (response->regex != nullptr) {
+        GRegexCompileFlags compile_flags = default_regex_compile_flags;
+        if (translate_response_is_expandable(response))
+            /* enable capturing if we need the match groups */
+            compile_flags = GRegexCompileFlags(compile_flags &
+                                               ~G_REGEX_NO_AUTO_CAPTURE);
+
+        GError *error = nullptr;
+        item->regex = g_regex_new(response->regex,
+                                  compile_flags,
+                                  GRegexMatchFlags(0), &error);
+        if (item->regex == nullptr) {
+            cache_log(2, "translate_cache: failed to compile regular expression: %s",
+                      error->message);
+            g_error_free(error);
+        }
+    } else
+        item->regex = nullptr;
+
+    if (response->inverse_regex != nullptr) {
+        GError *error = nullptr;
+        item->inverse_regex = g_regex_new(response->inverse_regex,
+                                          default_regex_compile_flags,
+                                          GRegexMatchFlags(0), &error);
+        if (item->inverse_regex == nullptr) {
+            cache_log(2, "translate_cache: failed to compile regular expression: %s",
+                      error->message);
+            g_error_free(error);
+        }
+    } else
+        item->inverse_regex = nullptr;
+
+    if (translate_response_vary_contains(response, TRANSLATE_HOST))
+        tcache_add_per_host(tcr->tcache, item);
+    else
+        list_init(&item->per_host_siblings);
+
+    cache_put_match(tcr->tcache->cache, key, &item->item,
+                    tcache_item_match, tcr);
+
+    return item;
+}
 
 /*
  * translate callback
@@ -770,102 +872,7 @@ tcache_handler_response(const TranslateResponse *response, void *ctx)
                                    nullptr);
 
     if (tcache_response_evaluate(response)) {
-        struct pool *pool = pool_new_slice(tcr->tcache->pool, "tcache_item",
-                                           tcr->tcache->slice_pool);
-        tcache_item *item = NewFromPool<tcache_item>(pool);
-        unsigned max_age = response->max_age;
-        const char *key;
-
-        cache_log(4, "translate_cache: store %s\n", tcr->key);
-
-        if (max_age > 300)
-            max_age = 300;
-
-        cache_item_init_relative(&item->item, max_age, 1);
-        item->pool = pool;
-
-        item->request.param =
-            tcache_vary_copy(pool, tcr->request->session,
-                             response, TRANSLATE_PARAM);
-
-        item->request.session =
-            tcache_vary_copy(pool, tcr->request->session,
-                             response, TRANSLATE_SESSION);
-
-        item->request.local_address =
-            tcr->request->local_address != nullptr &&
-            translate_response_vary_contains(response, TRANSLATE_LOCAL_ADDRESS)
-            ? (const struct sockaddr *)
-            p_memdup(pool, tcr->request->local_address,
-                     tcr->request->local_address_length)
-            : nullptr;
-        item->request.local_address_length =
-            tcr->request->local_address_length;
-
-        tcache_vary_copy(pool, tcr->request->remote_host,
-                         response, TRANSLATE_REMOTE_HOST);
-        item->request.remote_host =
-            tcache_vary_copy(pool, tcr->request->remote_host,
-                             response, TRANSLATE_REMOTE_HOST);
-        item->request.host = tcache_vary_copy(pool, tcr->request->host,
-                                              response, TRANSLATE_HOST);
-        item->request.accept_language =
-            tcache_vary_copy(pool, tcr->request->accept_language,
-                             response, TRANSLATE_LANGUAGE);
-        item->request.user_agent =
-            tcache_vary_copy(pool, tcr->request->user_agent,
-                             response, TRANSLATE_USER_AGENT);
-        item->request.ua_class =
-            tcache_vary_copy(pool, tcr->request->ua_class,
-                             response, TRANSLATE_UA_CLASS);
-        item->request.query_string =
-            tcache_vary_copy(pool, tcr->request->query_string,
-                             response, TRANSLATE_QUERY_STRING);
-
-        key = tcache_store_response(pool, &item->response, response,
-                                    tcr->request);
-        if (key == nullptr)
-            key = p_strdup(pool, tcr->key);
-
-        if (response->regex != nullptr) {
-            GRegexCompileFlags compile_flags = default_regex_compile_flags;
-            if (translate_response_is_expandable(response))
-                /* enable capturing if we need the match groups */
-                compile_flags = GRegexCompileFlags(compile_flags &
-                                                   ~G_REGEX_NO_AUTO_CAPTURE);
-
-            GError *error = nullptr;
-            item->regex = g_regex_new(response->regex,
-                                      compile_flags,
-                                      GRegexMatchFlags(0), &error);
-            if (item->regex == nullptr) {
-                cache_log(2, "translate_cache: failed to compile regular expression: %s",
-                          error->message);
-                g_error_free(error);
-            }
-        } else
-            item->regex = nullptr;
-
-        if (response->inverse_regex != nullptr) {
-            GError *error = nullptr;
-            item->inverse_regex = g_regex_new(response->inverse_regex,
-                                              default_regex_compile_flags,
-                                              GRegexMatchFlags(0), &error);
-            if (item->inverse_regex == nullptr) {
-                cache_log(2, "translate_cache: failed to compile regular expression: %s",
-                          error->message);
-                g_error_free(error);
-            }
-        } else
-            item->inverse_regex = nullptr;
-
-        if (translate_response_vary_contains(response, TRANSLATE_HOST))
-            tcache_add_per_host(tcr->tcache, item);
-        else
-            list_init(&item->per_host_siblings);
-
-        cache_put_match(tcr->tcache->cache, key, &item->item,
-                        tcache_item_match, tcr);
+        auto item = tcache_store(tcr, response);
 
         if (tcr->request->uri != nullptr &&
             translate_response_is_expandable(response)) {
