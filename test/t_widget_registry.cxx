@@ -11,6 +11,7 @@
 #include "widget-class.h"
 #include "transformation.h"
 #include "pool.h"
+#include "tpool.h"
 
 #include <string.h>
 #include <event.h>
@@ -174,6 +175,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     event_base = event_init();
 
     root_pool = pool_new_libc(NULL, "root");
+    tpool_init(root_pool);
 
     /* run test suite */
 
@@ -181,6 +183,9 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_abort(root_pool);
 
     /* cleanup */
+
+    tpool_deinit();
+    pool_commit();
 
     pool_unref(root_pool);
     pool_commit();

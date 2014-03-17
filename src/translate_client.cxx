@@ -1903,6 +1903,26 @@ translate_handle_packet(TranslateClient *client,
         client->response.regex_tail = true;
         return true;
 
+    case TRANSLATE_REGEX_UNESCAPE:
+        if (payload_length > 0) {
+            translate_client_error(client, "malformed REGEX_UNESCAPE packet");
+            return false;
+        }
+
+        if (client->response.regex == nullptr &&
+            client->response.inverse_regex == nullptr) {
+            translate_client_error(client, "misplaced REGEX_UNESCAPE packet");
+            return false;
+        }
+
+        if (client->response.regex_unescape) {
+            translate_client_error(client, "duplicate REGEX_UNESCAPE packet");
+            return false;
+        }
+
+        client->response.regex_unescape = true;
+        return true;
+
     case TRANSLATE_DELEGATE:
         if (client->file_address == nullptr) {
             translate_client_error(client,

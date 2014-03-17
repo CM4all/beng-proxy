@@ -7,7 +7,7 @@ cm4all-beng-proxy (4.0.21) unstable; urgency=low
   * translate_client: check if BASE matches request URI
   * translation: make "UNSAFE_BASE" a modifier for "BASE"
   * translation: new packet "EASY_BASE" simplifies "BASE" usage
-  * translation: new packet "REGEX_SUFFIX"
+  * translation: new packets "REGEX_SUFFIX", "REGEX_UNESCAPE"
 
  --   
 

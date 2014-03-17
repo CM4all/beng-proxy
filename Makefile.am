@@ -872,6 +872,7 @@ test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.c \
 	src/uri-extract.c src/uri_base.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/clock.c \
+	src/tpool.c \
 	src/transformation.c
 test_t_tcache_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1302,6 +1303,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/strset.c \
 	src/uri-relative.c src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
+	src/tpool.c \
 	src/clock.c
 test_t_widget_registry_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \

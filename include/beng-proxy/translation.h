@@ -446,6 +446,12 @@ enum beng_translation_command {
      * request URI?
      */
     TRANSLATE_REGEX_TAIL = 118,
+
+    /**
+     * Unescape the URI for #TRANSLATE_REGEX and
+     * #TRANSLATE_INVERSE_REGEX?
+     */
+    TRANSLATE_REGEX_UNESCAPE = 119,
 };
 
 struct beng_translation_header {

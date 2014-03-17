@@ -11,6 +11,7 @@
 #include "file_address.h"
 #include "cgi_address.h"
 #include "pool.h"
+#include "tpool.h"
 
 #include <event.h>
 
@@ -1041,6 +1042,97 @@ test_regex_tail(struct pool *pool, struct tcache *cache)
 }
 
 static void
+test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    static const TranslateRequest request1 = {
+        .uri = "/regex_unescape/a/foo.jpg",
+    };
+    static const struct file_address file1 = {
+        .path = "/var/www/regex/images/a/foo.jpg",
+    };
+    static const TranslateResponse response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1,
+            },
+        },
+        .base = "/regex_unescape/",
+        .regex = "^a/",
+        .regex_tail = true,
+        .regex_unescape = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    static const TranslateRequest request2 = {
+        .uri = "/regex_unescape/b/foo.html",
+    };
+
+    next_response = expected_response = nullptr;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    static const TranslateRequest request3 = {
+        .uri = "/regex_unescape/a/bar.jpg",
+    };
+    static const struct file_address file3 = {
+        .path = "/var/www/regex/images/a/bar.jpg",
+    };
+    static const TranslateResponse response3 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file3,
+            },
+        },
+        .base = "/regex_unescape/",
+        .regex = "^a/",
+        .regex_tail = true,
+        .regex_unescape = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = nullptr;
+    expected_response = &response3;
+    translate_cache(pool, cache, &request3,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    static const TranslateRequest request4 = {
+        .uri = "/regex_unescape/%61/escaped.html",
+    };
+    static const struct file_address file4 = {
+        .path = "/var/www/regex/images/a/escaped.html",
+    };
+    static const TranslateResponse response4 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file4,
+            },
+        },
+        .base = "/regex_unescape/",
+        .regex = "^a/",
+        .regex_tail = true,
+        .regex_unescape = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = nullptr;
+    expected_response = &response4;
+    translate_cache(pool, cache, &request4,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
+static void
 test_expand(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
@@ -1846,6 +1938,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     event_base = event_init();
 
     pool = pool_new_libc(nullptr, "root");
+    tpool_init(pool);
 
     cache = translate_cache_new(pool, translate_stock, 1024);
 
@@ -1857,6 +1950,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_invalidate_uri(pool, cache);
     test_regex(pool, cache);
     test_regex_tail(pool, cache);
+    test_regex_tail_unescape(pool, cache);
     test_expand(pool, cache);
     test_expand_local(pool, cache);
     test_expand_local_filter(pool, cache);
@@ -1868,6 +1962,9 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* cleanup */
 
     translate_cache_close(cache);
+
+    tpool_deinit();
+    pool_commit();
 
     pool_unref(pool);
     pool_commit();
