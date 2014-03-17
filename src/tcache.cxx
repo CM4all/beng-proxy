@@ -15,6 +15,7 @@
 #include "stock.h"
 #include "hashmap.h"
 #include "http_address.h"
+#include "uri_base.hxx"
 #include "uri-verify.h"
 #include "uri-escape.h"
 #include "uri_base.hxx"
@@ -295,46 +296,6 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
                                              match_info, error_r);
     g_match_info_free(match_info);
     return success;
-}
-
-/**
- * Calculate the URI tail after a base URI from a request URI.
- * Returns nullptr if no such tail URI is possible (e.g. if the
- * specified URI is not "within" the base, or if there is no base at
- * all).
- *
- * @param uri the URI specified by the tcache client, may be nullptr
- * @param base the base URI, as given by the translation server,
- * stored in the cache item, may be nullptr
- */
-static const char *
-base_tail(const char *uri, const char *base)
-{
-    if (base == nullptr)
-        return nullptr;
-
-    assert(uri != nullptr);
-
-    const size_t uri_length = strlen(uri);
-    const size_t base_length = strlen(base);
-
-    return base_length > 0 && base[base_length - 1] == '/' &&
-        uri_length > base_length && memcmp(uri, base, base_length) == 0
-        ? uri + base_length
-        : nullptr;
-}
-
-/**
- * Similar to base_tail(), but assert that there is a base match.
- */
-static const char *
-require_base_tail(const char *uri, const char *base)
-{
-    assert(uri != nullptr);
-    assert(base != nullptr);
-    assert(memcmp(base, uri, strlen(base)) == 0);
-
-    return uri + strlen(base);
 }
 
 /**
