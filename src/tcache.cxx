@@ -871,10 +871,10 @@ tcache_handler_response(const TranslateResponse *response, void *ctx)
             translate_response_is_expandable(response)) {
             /* create a writable copy and expand it */
             TranslateResponse *response2 = (TranslateResponse *)
-                p_memdup(pool, response, sizeof(*response));
+                p_memdup(tcr->pool, response, sizeof(*response));
 
             GError *error = nullptr;
-            if (!tcache_expand_response(pool, response2, item,
+            if (!tcache_expand_response(tcr->pool, response2, item,
                                         tcr->request->uri, &error)) {
                 tcr->handler->error(error, tcr->handler_ctx);
                 return;
