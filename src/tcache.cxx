@@ -309,13 +309,11 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
 static const char *
 base_tail(const char *uri, const char *base)
 {
-    size_t uri_length, base_length;
-
     if (uri == nullptr || base == nullptr)
         return nullptr;
 
-    uri_length = strlen(uri);
-    base_length = strlen(base);
+    const size_t uri_length = strlen(uri);
+    const size_t base_length = strlen(base);
 
     return base_length > 0 && base[base_length - 1] == '/' &&
         uri_length > base_length && memcmp(uri, base, base_length) == 0
@@ -385,12 +383,10 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
         base = new_base = resource_address_auto_base(pool, &src->address,
                                                      request->uri);
 
-    const char *key;
-
-    key = tcache_store_address(pool, &dest->address, &src->address,
-                               request->uri, base,
-                               src->easy_base,
-                               translate_response_is_expandable(src));
+    const char *key = tcache_store_address(pool, &dest->address, &src->address,
+                                           request->uri, base,
+                                           src->easy_base,
+                                           translate_response_is_expandable(src));
     translate_response_copy(pool, dest, src);
 
     if (key == nullptr)
@@ -634,17 +630,14 @@ static TranslateCacheItem *
 tcache_lookup(struct pool *pool, struct tcache *tcache,
               const TranslateRequest *request, const char *key)
 {
-    TranslateCacheItem *item;
-    char *uri, *slash;
-
-    item = tcache_get(tcache, request, key, false);
+    TranslateCacheItem *item = tcache_get(tcache, request, key, false);
     if (item != nullptr || request->uri == nullptr)
         return item;
 
     /* no match - look for matching BASE responses */
 
-    uri = p_strdup(pool, key);
-    slash = strrchr(uri, '/');
+    char *uri = p_strdup(pool, key);
+    char *slash = strrchr(uri, '/');
 
     if (slash != nullptr && slash[1] == 0) {
         /* if the URI already ends with a slash, don't repeat the
@@ -759,7 +752,6 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response)
                                        tcr->tcache->slice_pool);
     auto item = NewFromPool<TranslateCacheItem>(pool);
     unsigned max_age = response->max_age;
-    const char *key;
 
     cache_log(4, "translate_cache: store %s\n", tcr->key);
 
@@ -807,8 +799,8 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response)
         tcache_vary_copy(pool, tcr->request->query_string,
                          response, TRANSLATE_QUERY_STRING);
 
-    key = tcache_store_response(pool, &item->response, response,
-                                tcr->request);
+    const char *key = tcache_store_response(pool, &item->response, response,
+                                            tcr->request);
     if (key == nullptr)
         key = p_strdup(pool, tcr->key);
 
