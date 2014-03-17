@@ -566,7 +566,7 @@ fill_translate_request(TranslateRequest *t,
     t->remote_host = nullptr;
     t->local_address = nullptr;
     t->local_address_length = 0;
-    t->remote_host = request->remote_host_and_port;
+    t->remote_host = nullptr;
     t->host = strmap_get(request->headers, "host");
     t->user_agent = nullptr;
     t->ua_class = nullptr;
