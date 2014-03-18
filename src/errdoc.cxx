@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "errdoc.h"
+#include "errdoc.hxx"
 #include "request.hxx"
 #include "connection.h"
 #include "bp_instance.hxx"
@@ -49,14 +49,14 @@ errdoc_response_response(http_status_t status, struct strmap *headers,
     error_response &er = *(error_response *)ctx;
 
     if (http_status_is_success(status)) {
-        if (er.body != NULL)
+        if (er.body != nullptr)
             /* close the original (error) response body */
             istream_close_unused(er.body);
 
         http_response_handler_direct_response(&response_handler, er.request2,
                                               er.status, headers, body);
     } else {
-        if (body != NULL)
+        if (body != nullptr)
             /* discard the error document response */
             istream_close_unused(body);
 
@@ -105,7 +105,7 @@ errdoc_translate_response(const TranslateResponse *response, void *ctx)
                      instance->delegate_stock,
                      instance->nfs_cache,
                      pool, 0, HTTP_METHOD_GET,
-                     &response->address, HTTP_STATUS_OK, NULL, NULL,
+                     &response->address, HTTP_STATUS_OK, nullptr, nullptr,
                      &errdoc_response_handler, &er,
                      &request2->async_ref);
     } else
@@ -147,7 +147,7 @@ errdoc_abort(struct async_operation *ao)
 {
     error_response &er = (error_response &)ao;
 
-    if (er.body != NULL)
+    if (er.body != nullptr)
         istream_close_unused(er.body);
 
     async_abort(&er.async_ref);
@@ -168,16 +168,16 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
 {
     struct instance *instance = request2->connection->instance;
 
-    assert(instance->translate_cache != NULL);
+    assert(instance->translate_cache != nullptr);
 
     struct pool *pool = request2->request->pool;
     error_response *er = NewFromPool<error_response>(pool);
     er->request2 = request2;
     er->status = status;
     er->headers = headers;
-    er->body = body != NULL
+    er->body = body != nullptr
         ? istream_hold_new(pool, body)
-        : NULL;
+        : nullptr;
 
     async_init(&er->operation, &errdoc_operation);
     async_ref_set(&request2->async_ref, &er->operation);

@@ -24,7 +24,7 @@
 #include "resource-tag.h"
 #include "hostname.h"
 #include "dhashmap.h"
-#include "errdoc.h"
+#include "errdoc.hxx"
 #include "connection.h"
 #include "bp_instance.hxx"
 #include "strmap.h"
