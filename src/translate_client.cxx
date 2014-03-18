@@ -249,8 +249,8 @@ static bool
 write_buffer(growing_buffer *gb, uint16_t command,
              ConstBuffer<T> buffer, GError **error_r)
 {
-    return write_packet_n(gb, command, buffer.data, buffer.size * sizeof(T),
-                          error_r);
+    auto b = buffer.ToVoid();
+    return write_packet_n(gb, command, b.data, b.size, error_r);
 }
 
 static bool
