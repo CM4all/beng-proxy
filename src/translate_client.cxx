@@ -358,6 +358,8 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
         write_optional_buffer(gb, TRANSLATE_WANT_FULL_URI,
                               request->want_full_uri, error_r) &&
         write_optional_buffer(gb, TRANSLATE_WANT, request->want, error_r) &&
+        write_optional_buffer(gb, TRANSLATE_FILE_NOT_FOUND,
+                              request->file_not_found, error_r) &&
         write_optional_packet(gb, TRANSLATE_PARAM, request->param,
                               error_r) &&
         write_packet(gb, TRANSLATE_END, nullptr, error_r);
@@ -933,6 +935,46 @@ translate_client_want(TranslateClient *client,
     }
 
     client->response.want = { payload, payload_length / sizeof(payload[0]) };
+    return true;
+}
+
+static bool
+translate_client_file_not_found(TranslateClient *client,
+                                ConstBuffer<void> payload)
+{
+    if (!client->response.file_not_found.IsNull()) {
+        translate_client_error(client, "duplicate FIlE_NOT_FOUND packet");
+        return false;
+    }
+
+    switch (client->response.address.type) {
+    case RESOURCE_ADDRESS_NONE:
+        translate_client_error(client,
+                               "FIlE_NOT_FOUND without resource address");
+        return false;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_LHTTP:
+    case RESOURCE_ADDRESS_AJP:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        translate_client_error(client,
+                               "FIlE_NOT_FOUND not compatible with resource address");
+        return false;
+
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_NFS:
+        break;
+    }
+
+    if (!client->response.file_not_found.IsNull()) {
+        translate_client_error(client, "duplicate FIlE_NOT_FOUND packet");
+        return false;
+    }
+
+    client->response.file_not_found = payload;
     return true;
 }
 
@@ -2516,6 +2558,10 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_WANT:
         return translate_client_want(client, (const uint16_t *)_payload,
                                      payload_length);
+
+    case TRANSLATE_FILE_NOT_FOUND:
+        return translate_client_file_not_found(client,
+                                               { _payload, payload_length });
     }
 
     error = g_error_new(translate_quark(), 0,

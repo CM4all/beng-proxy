@@ -51,6 +51,8 @@ struct TranslateRequest {
 
     ConstBuffer<uint16_t> want;
 
+    ConstBuffer<void> file_not_found;
+
     ConstBuffer<void> error_document;
 
     http_status_t error_document_status;
@@ -73,6 +75,7 @@ struct TranslateRequest {
         check = nullptr;
         want_full_uri = nullptr;
         want = nullptr;
+        file_not_found = nullptr;
         error_document = nullptr;
         error_document_status = http_status_t(0);
     }

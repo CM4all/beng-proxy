@@ -122,7 +122,7 @@ class Translation(Protocol):
         return username == 'hansi' and password == 'hansilein'
 
     def _handle_http(self, raw_uri, uri, authorization,
-                     check, want_full_uri, want,
+                     check, want_full_uri, want, file_not_found,
                      ua_class, response):
         if uri[:6] == '/site/':
             x = uri[6:]
@@ -459,6 +459,15 @@ class Translation(Protocol):
             response.packet(TRANSLATE_SCRIPT_NAME, uri)
             if ua_class is not None:
                 response.packet(TRANSLATE_PATH_INFO, ua_class)
+        elif uri[:16] == '/file_not_found/':
+            if file_not_found is not None:
+                assert file_not_found == 'hansi'
+                response.packet(TRANSLATE_BASE, '/file_not_found/')
+                response.status(204)
+                return
+
+            self._handle_local_file('/var/www' + uri[15:], response)
+            response.packet(TRANSLATE_FILE_NOT_FOUND, 'hansi')
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
@@ -503,6 +512,7 @@ class Translation(Protocol):
         if request.uri is not None:
             self._handle_http(request.raw_uri, request.uri, request.authorization,
                               request.check, request.want_full_uri, request.want,
+                              request.file_not_found,
                               request.ua_class, response)
 
         return response

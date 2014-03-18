@@ -144,6 +144,8 @@ struct TranslateResponse {
     ConstBuffer<uint16_t> invalidate;
     ConstBuffer<uint16_t> want;
 
+    ConstBuffer<void> file_not_found;
+
     ConstBuffer<void> error_document;
 
     struct {

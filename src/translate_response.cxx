@@ -112,6 +112,7 @@ translate_response_copy(struct pool *pool, TranslateResponse *dest,
     dest->vary = Copy(pool, src->vary);
     dest->invalidate = Copy(pool, src->invalidate);
     dest->want = Copy(pool, src->want);
+    dest->file_not_found = Copy(pool, src->file_not_found);
     dest->error_document = Copy(pool, src->error_document);
 
     dest->validate_mtime.mtime = src->validate_mtime.mtime;

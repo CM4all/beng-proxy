@@ -758,6 +758,13 @@ is followed by the packets \verb|URI| and \verb|STATUS|.  See
 
 \hline
 
+\verb|FILE_NOT_FOUND| & The specified file does not exist.  The
+translation server is asked to provide an alterate translation.  This
+is an echo if the \verb|FILE_NOT_FOUND| from the previous translation
+response. \\
+
+\hline
+
 \label{want}
 \verb|WANT| & causes \emph{beng-proxy} to submit the same translation
 request again, with this packet echoed plus the requested packets.
@@ -1204,6 +1211,13 @@ response header. \\
 \verb|ERROR_DOCUMENT| & Indicates that the translation server is
 willing to provide a custom error document.  See \ref{errdoc} for a
 detailed description. \\
+
+\hline
+
+\verb|FILE_NOT_FOUND| & Indicates that the translation server would
+like to provide an alternate translation when the specified file does
+not exist.  \emph{beng-proxy} will repeat the translation request with
+this packet echoed. \\
 
 \hline
 

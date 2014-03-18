@@ -8,6 +8,7 @@
 #include "config.hxx"
 #include "bp_instance.hxx"
 #include "cast.hxx"
+#include "file_not_found.hxx"
 #include "file_handler.hxx"
 #include "file_address.h"
 #include "nfs_handler.h"
@@ -36,6 +37,7 @@
 #include <daemon/log.h>
 
 #include <assert.h>
+#include <sys/stat.h>
 
 static unsigned translation_protocol_version;
 
@@ -459,7 +461,6 @@ repeat_translation(struct request &request, const TranslateResponse &response)
     request.SubmitTranslateRequest();
 }
 
-
 static void
 handler_translate_response(const TranslateResponse *response,
                            void *ctx)
@@ -498,6 +499,11 @@ handler_translate_response(const TranslateResponse *response,
 
         response = request.translate.previous;
     }
+
+    /* check if the file exists */
+    if (!response->file_not_found.IsNull() &&
+        !check_file_not_found(request, *response))
+        return;
 
     handle_translated_request(request, *response);
 }
@@ -590,6 +596,7 @@ ask_translation_server(struct request *request2)
 {
     request2->translate.previous = nullptr;
     request2->translate.checks = 0;
+    request2->translate.n_file_not_found = 0;
 
     fill_translate_request(&request2->translate.request, request2->request,
                            &request2->uri, request2->args);

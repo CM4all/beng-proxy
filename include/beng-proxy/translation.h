@@ -452,6 +452,11 @@ enum beng_translation_command {
      * #TRANSLATE_INVERSE_REGEX?
      */
     TRANSLATE_REGEX_UNESCAPE = 119,
+
+    /**
+     * Retranslate if the file does not exist.
+     */
+    TRANSLATE_FILE_NOT_FOUND = 120,
 };
 
 struct beng_translation_header {

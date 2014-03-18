@@ -53,6 +53,7 @@ class Request:
         self.authorization = None
         self.status = None
         self.want = None
+        self.file_not_found = None
         self.error_document = False
         self.error_document_payload = None
 
@@ -111,6 +112,8 @@ class Request:
         elif packet.command == TRANSLATE_WANT:
             self.want = array.array('H')
             self.want.fromstring(packet.payload)
+        elif packet.command == TRANSLATE_FILE_NOT_FOUND:
+            self.file_not_found = packet.payload
         elif packet.command == TRANSLATE_ERROR_DOCUMENT:
             self.error_document = True
             self.error_document_payload = packet.payload

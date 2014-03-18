@@ -74,6 +74,12 @@ struct request {
          * used for loop detection.
          */
         unsigned checks;
+
+        /**
+         * Number of FILE_NOT_FOUND packets followed so far.  This
+         * variable is used for loop detection.
+         */
+        unsigned n_file_not_found;
     } translate;
 
     /**
