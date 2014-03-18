@@ -191,8 +191,8 @@ tcache_remove_per_host(TranslateCacheItem *item)
 static const char *
 tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                http_status_t status,
-               const struct strref *check,
-               const struct strref *want_full_uri,
+               ConstBuffer<void> check,
+               ConstBuffer<void> want_full_uri,
                bool want)
 {
     const char *key = status != 0
@@ -205,9 +205,10 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
            key */
         key = p_strcat(pool, host, ":", key, nullptr);
 
-    if (check != nullptr && !strref_is_null(check)) {
+    if (!check.IsNull()) {
         char buffer[MAX_CACHE_CHECK * 3];
-        size_t length = uri_escape(buffer, check->data, check->length, '%');
+        size_t length = uri_escape(buffer, (const char *)check.data,
+                                   check.size, '%');
 
         key = p_strncat(pool,
                         "|CHECK=", (size_t)7,
@@ -216,10 +217,10 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                         nullptr);
     }
 
-    if (want_full_uri != nullptr && !strref_is_null(want_full_uri)) {
+    if (!want_full_uri.IsNull()) {
         char buffer[MAX_CACHE_WFU * 3];
-        size_t length = uri_escape(buffer, want_full_uri->data,
-                                   want_full_uri->length, '%');
+        size_t length = uri_escape(buffer, (const char *)want_full_uri.data,
+                                   want_full_uri.size, '%');
 
         key = p_strncat(pool,
                         "|WFU=", (size_t)5,
@@ -240,7 +241,7 @@ tcache_request_key(struct pool *pool, const TranslateRequest *request)
     return request->uri != nullptr
         ? tcache_uri_key(pool, request->uri, request->host,
                          request->error_document_status,
-                         &request->check, &request->want_full_uri,
+                         request->check, request->want_full_uri,
                          !request->want.IsEmpty())
         : request->widget_type;
 }
@@ -250,8 +251,8 @@ static bool
 tcache_request_evaluate(const TranslateRequest *request)
 {
     return (request->uri != nullptr || request->widget_type != nullptr) &&
-        request->check.length < MAX_CACHE_CHECK &&
-        request->want_full_uri.length <= MAX_CACHE_WFU &&
+        request->check.size < MAX_CACHE_CHECK &&
+        request->want_full_uri.size <= MAX_CACHE_WFU &&
         request->authorization == nullptr;
 }
 
@@ -414,7 +415,7 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
     if (key != nullptr)
         key = tcache_uri_key(pool, key, request->host,
                              request->error_document_status,
-                             &request->check, &request->want_full_uri,
+                             request->check, request->want_full_uri,
                              !request->want.IsEmpty());
 
     return key;

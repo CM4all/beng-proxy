@@ -8,7 +8,6 @@
 #define BENG_PROXY_TRANSLATE_REQUEST_HXX
 
 #include "util/ConstBuffer.hxx"
-#include "strref.h"
 
 #include <http/status.h>
 
@@ -38,18 +37,17 @@ struct TranslateRequest {
     const char *param;
 
     /**
-     * The payload of the CHECK packet.  If
-     * strref_is_null(&response.check), then no CHECK packet will be
-     * sent.
+     * The payload of the CHECK packet.  If ConstBuffer::IsNull(),
+     * then no CHECK packet will be sent.
      */
-    struct strref check;
+    ConstBuffer<void> check;
 
     /**
      * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
-     * strref_is_null(&response.want_full_uri), then no
-     * #TRANSLATE_WANT_FULL_URI packet was received.
+     * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
+     * was received.
      */
-    struct strref want_full_uri;
+    ConstBuffer<void> want_full_uri;
 
     ConstBuffer<uint16_t> want;
 
@@ -70,8 +68,8 @@ struct TranslateRequest {
         widget_type = nullptr;
         session = nullptr;
         param = nullptr;
-        strref_null(&check);
-        strref_null(&want_full_uri);
+        check = nullptr;
+        want_full_uri = nullptr;
         want = nullptr;
         error_document_status = http_status_t(0);
     }

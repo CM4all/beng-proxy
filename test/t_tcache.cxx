@@ -40,6 +40,16 @@ string_equals(const char *a, const char *b)
     return strcmp(a, b) == 0;
 }
 
+template<typename T>
+static bool
+buffer_equals(ConstBuffer<T> a, ConstBuffer<T> b)
+{
+    if (a.IsNull() || b.IsNull())
+        return a.IsNull() == b.IsNull();
+
+    return a.size == b.size && memcmp(a.data, b.data, a.ToVoid().size) == 0;
+}
+
 static bool
 http_address_equals(const struct http_address *a,
                     const struct http_address *b)
@@ -183,10 +193,8 @@ translate_response_equals(const TranslateResponse *a,
         a->regex_tail == b->regex_tail &&
         a->easy_base == b->easy_base &&
         a->unsafe_base == b->unsafe_base &&
-        strref_is_null(&a->check) == strref_is_null(&b->check) &&
-        strref_cmp2(&a->check, &b->check) == 0 &&
-        strref_is_null(&a->want_full_uri) == strref_is_null(&b->want_full_uri) &&
-        strref_cmp2(&a->want_full_uri, &b->want_full_uri) == 0 &&
+        buffer_equals(a->check, b->check) &&
+        buffer_equals(a->want_full_uri, b->want_full_uri) &&
         resource_address_equals(&a->address, &b->address) &&
         view_chain_equals(a->views, b->views);
 }
@@ -651,10 +659,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest request2 = {
         .uri = "/invalidate/uri",
-        .check = {
-            .length = 1,
-            .data = "x",
-        },
+        .check = { "x", 1 },
     };
     static const TranslateResponse response2 = {
         .address = {
@@ -696,10 +701,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     static const TranslateRequest request4 = {
         .uri = "/invalidate/uri",
         .error_document_status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
-        .check = {
-            .length = 1,
-            .data = "x",
-        },
+        .check = { "x", 1 },
     };
     static const struct file_address file4 = {
         .path = "/var/www/500/check/invalidate/uri",
@@ -722,14 +724,8 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
     static const TranslateRequest request4b = {
         .uri = "/invalidate/uri",
         .error_document_status = HTTP_STATUS_INTERNAL_SERVER_ERROR,
-        .check = {
-            .length = 1,
-            .data = "x",
-        },
-        .want_full_uri = {
-            .length = 4,
-            .data = "a\0/b",
-        },
+        .check = { "x", 1 },
+        .want_full_uri = { "a\0/b", 4 },
     };
     static const struct file_address file4b = {
         .path = "/var/www/500/check/wfu/invalidate/uri",
@@ -1580,10 +1576,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
             .type = RESOURCE_ADDRESS_NONE,
         },
         .base = "/a/",
-        .check = {
-            .length = 1,
-            .data = "x",
-        },
+        .check = { "x", 1 },
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1594,10 +1587,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest request2 = {
         .uri = "/a/b/c.html",
-        .check = {
-            .length = 1,
-            .data = "x",
-        },
+        .check = { "x", 1 },
     };
     static const struct file_address file2 = {
         .path = "/var/www/vol0/a/b/c.html",
@@ -1620,10 +1610,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest request3 = {
         .uri = "/a/d/e.html",
-        .check = {
-            .length = 1,
-            .data = "x",
-        },
+        .check = { "x", 1 },
     };
     static const struct file_address file3 = {
         .path = "/var/www/vol1/a/d/e.html",
@@ -1657,10 +1644,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
             .type = RESOURCE_ADDRESS_NONE,
         },
         .base = "/a/",
-        .check = {
-            .length = 1,
-            .data = "x",
-        },
+        .check = { "x", 1 },
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1678,10 +1662,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest request6 = {
         .uri = "/a/b/0/1.html",
-        .check = {
-            .length = 1,
-            .data = "x",
-        },
+        .check = { "x", 1 },
     };
     static const struct file_address file6 = {
         .path = "/var/www/vol0/a/b/0/1.html",
@@ -1704,10 +1685,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest request7 = {
         .uri = "/a/d/2/3.html",
-        .check = {
-            .length = 1,
-            .data = "x",
-        },
+        .check = { "x", 1 },
     };
     static const struct file_address file7 = {
         .path = "/var/www/vol1/a/d/2/3.html",
@@ -1734,10 +1712,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest miss1 = {
         .uri = "/a/f/g.html",
-        .check = {
-            .length = 1,
-            .data = "y",
-        },
+        .check = { "y", 1 },
     };
 
     translate_cache(pool, cache, &miss1,
@@ -1762,10 +1737,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             .type = RESOURCE_ADDRESS_NONE,
         },
         .base = "/wfu/a/",
-        .want_full_uri = {
-            .length = 1,
-            .data = "x",
-        },
+        .want_full_uri = { "x", 1 },
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1776,10 +1748,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest request2 = {
         .uri = "/wfu/a/b/c.html",
-        .want_full_uri = {
-            .length = 1,
-            .data = "x",
-        },
+        .want_full_uri = { "x", 1 },
     };
     static const struct file_address file2 = {
         .path = "/var/www/vol0/a/b/c.html",
@@ -1803,10 +1772,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest request3 = {
         .uri = "/wfu/a/d/e.html",
-        .want_full_uri = {
-            .length = 1,
-            .data = "x",
-        },
+        .want_full_uri = { "x", 1 },
     };
     static const struct file_address file3 = {
         .path = "/var/www/vol1/a/d/e.html",
@@ -1840,10 +1806,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             .type = RESOURCE_ADDRESS_NONE,
         },
         .base = "/wfu/a/",
-        .want_full_uri = {
-            .length = 1,
-            .data = "x",
-        },
+        .want_full_uri = { "x", 1 },
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1861,10 +1824,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest request6 = {
         .uri = "/wfu/a/b/0/1.html",
-        .want_full_uri = {
-            .length = 1,
-            .data = "x",
-        },
+        .want_full_uri = { "x", 1 },
     };
     static const struct file_address file6 = {
         .path = "/var/www/vol0/a/b/0/1.html",
@@ -1887,10 +1847,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest request7 = {
         .uri = "/wfu/a/d/2/3.html",
-        .want_full_uri = {
-            .length = 1,
-            .data = "x",
-        },
+        .want_full_uri = { "x", 1 },
     };
     static const struct file_address file7 = {
         .path = "/var/www/vol1/a/d/2/3.html",
@@ -1917,10 +1874,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
 
     static const TranslateRequest miss1 = {
         .uri = "/wfu/a/f/g.html",
-        .want_full_uri = {
-            .length = 1,
-            .data = "y",
-        },
+        .want_full_uri = { "y", 1 },
     };
 
     translate_cache(pool, cache, &miss1,

@@ -12,6 +12,7 @@
 #include <beng-proxy/translation.h>
 
 #include <assert.h>
+#include <string.h>
 
 static const char *
 translation_vary_name(beng_translation_command cmd)

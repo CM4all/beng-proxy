@@ -85,15 +85,8 @@ translate_response_copy(struct pool *pool, TranslateResponse *dest,
     dest->dump_headers = src->dump_headers;
     dest->session = nullptr;
 
-    if (strref_is_null(&src->check))
-        strref_null(&dest->check);
-    else
-        strref_set_dup(pool, &dest->check, &src->check);
-
-    if (strref_is_null(&src->want_full_uri))
-        strref_null(&dest->want_full_uri);
-    else
-        strref_set_dup(pool, &dest->want_full_uri, &src->want_full_uri);
+    dest->check = Copy(pool, src->check);
+    dest->want_full_uri = Copy(pool, src->want_full_uri);
 
     /* The "user" attribute must not be present in cached responses,
        because they belong to only that one session.  For the same

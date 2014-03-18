@@ -253,14 +253,6 @@ write_buffer(growing_buffer *gb, uint16_t command,
     return write_packet_n(gb, command, b.data, b.size, error_r);
 }
 
-static bool
-write_strref(struct growing_buffer *gb, uint16_t command,
-             const struct strref *payload, GError **error_r)
-{
-    return write_packet_n(gb, command, payload->data, payload->length,
-                          error_r);
-}
-
 /**
  * Forward the command to write_packet() only if #payload is not nullptr.
  */
@@ -280,18 +272,6 @@ write_optional_buffer(growing_buffer *gb, uint16_t command,
                       ConstBuffer<T> buffer, GError **error_r)
 {
     return buffer.IsNull() || write_buffer(gb, command, buffer, error_r);
-}
-
-/**
- * Forward the command to write_packet() only if #payload is not nullptr,
- * and strref_is_null(#payload) is false.
- */
-static bool
-write_optional_strref(struct growing_buffer *gb, uint16_t command,
-                      const struct strref *payload, GError **error_r)
-{
-    return payload == nullptr || strref_is_null(payload) ||
-        write_strref(gb, command, payload, error_r);
 }
 
 static bool
@@ -371,10 +351,10 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
                               request->widget_type, error_r) &&
         write_optional_packet(gb, TRANSLATE_SESSION, request->session,
                               error_r) &&
-        write_optional_strref(gb, TRANSLATE_CHECK, &request->check,
+        write_optional_buffer(gb, TRANSLATE_CHECK, request->check,
                               error_r) &&
-        write_optional_strref(gb, TRANSLATE_WANT_FULL_URI,
-                              &request->want_full_uri, error_r) &&
+        write_optional_buffer(gb, TRANSLATE_WANT_FULL_URI,
+                              request->want_full_uri, error_r) &&
         write_optional_buffer(gb, TRANSLATE_WANT, request->want, error_r) &&
         write_optional_packet(gb, TRANSLATE_PARAM, request->param,
                               error_r) &&
@@ -2143,13 +2123,13 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_CHECK:
-        if (!strref_is_null(&client->response.check)) {
+        if (!client->response.check.IsNull()) {
             translate_client_error(client,
                                    "duplicate CHECK packet");
             return false;
         }
 
-        strref_set(&client->response.check, payload, payload_length);
+        client->response.check = { payload, payload_length };
         return true;
 
     case TRANSLATE_PREVIOUS:
@@ -2453,14 +2433,13 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (!strref_is_null(&client->response.want_full_uri)) {
+        if (!client->response.want_full_uri.IsNull()) {
             translate_client_error(client,
                                    "duplicate WANT_FULL_URI packet");
             return false;
         }
 
-        strref_set(&client->response.want_full_uri,
-                   payload, payload_length);
+        client->response.want_full_uri = { payload, payload_length };
         return true;
 
     case TRANSLATE_USER_NAMESPACE:
@@ -2722,8 +2701,7 @@ translate(struct pool *pool, int fd,
                     pool, "translate_lease");
 
     client->from_request.uri = request->uri;
-    client->from_request.want_full_uri =
-        !strref_is_null(&request->want_full_uri);
+    client->from_request.want_full_uri = !request->want_full_uri.IsNull();
     client->from_request.want = !request->want.IsEmpty();
 
     growing_buffer_reader_init(&client->request, gb);

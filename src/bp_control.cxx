@@ -21,6 +21,7 @@
 #include <glib.h>
 #include <assert.h>
 #include <arpa/inet.h>
+#include <string.h>
 
 static bool
 apply_translation_packet(TranslateRequest *request,

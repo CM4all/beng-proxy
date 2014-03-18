@@ -387,7 +387,7 @@ fill_translate_request_query_string(TranslateRequest &t,
 static void
 repeat_translation(struct request &request, const TranslateResponse &response)
 {
-    if (!strref_is_null(&response.check)) {
+    if (!response.check.IsNull()) {
         /* repeat request with CHECK set */
 
         if (++request.translate.checks > 4) {
@@ -438,7 +438,7 @@ repeat_translation(struct request &request, const TranslateResponse &response)
                                                 request.uri);
     }
 
-    if (!strref_is_null(&response.want_full_uri)) {
+    if (!response.want_full_uri.IsNull()) {
         /* repeat request with full URI */
 
         /* echo the server's WANT_FULL_URI packet */
@@ -479,9 +479,9 @@ handler_translate_response(const TranslateResponse *response,
        assigns the real response */
     install_error_response(request);
 
-    if (!strref_is_null(&response->check) ||
+    if (!response->check.IsNull() ||
         !response->want.IsEmpty() ||
-        !strref_is_null(&response->want_full_uri)) {
+        !response->want_full_uri.IsNull()) {
         repeat_translation(request, *response);
         return;
     }
