@@ -291,8 +291,6 @@ handle_translated_request(request &request, const TranslateResponse &response)
     handle_translated_request2(request, *response2);
 }
 
-extern const TranslateHandler handler_translate_handler;
-
 /**
  * Install a fake #TranslateResponse.  This is sometimes necessary
  * when we don't have a "real" response (yet), because much of the
@@ -458,11 +456,7 @@ repeat_translation(struct request &request, const TranslateResponse &response)
 
     /* resend the modified request */
 
-    translate_cache(request.request->pool,
-                    request.connection->instance->translate_cache,
-                    &request.translate.request,
-                    &handler_translate_handler, &request,
-                    &request.async_ref);
+    request.SubmitTranslateRequest();
 }
 
 
@@ -531,10 +525,20 @@ handler_translate_error(GError *error, void *ctx)
     g_error_free(error);
 }
 
-const TranslateHandler handler_translate_handler = {
+static constexpr TranslateHandler handler_translate_handler = {
     .response = handler_translate_response,
     .error = handler_translate_error,
 };
+
+void
+request::SubmitTranslateRequest()
+{
+    translate_cache(request->pool,
+                    connection->instance->translate_cache,
+                    &translate.request,
+                    &handler_translate_handler, this,
+                    &async_ref);
+}
 
 static bool
 request_uri_parse(request &request2, parsed_uri &dest)
@@ -582,17 +586,14 @@ fill_translate_request(TranslateRequest *t,
 }
 
 static void
-ask_translation_server(struct request *request2, struct tcache *tcache)
+ask_translation_server(struct request *request2)
 {
     request2->translate.previous = nullptr;
     request2->translate.checks = 0;
 
-    http_server_request &request = *request2->request;
     fill_translate_request(&request2->translate.request, request2->request,
                            &request2->uri, request2->args);
-    translate_cache(request.pool, tcache, &request2->translate.request,
-                    &handler_translate_handler, request2,
-                    &request2->async_ref);
+    request2->SubmitTranslateRequest();
 }
 
 static void
@@ -746,5 +747,5 @@ handle_http_request(client_connection &connection,
     if (connection.instance->translate_cache == nullptr)
         serve_document_root_file(*request2, connection.config);
     else
-        ask_translation_server(request2, connection.instance->translate_cache);
+        ask_translation_server(request2);
 }

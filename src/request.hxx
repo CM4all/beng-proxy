@@ -127,6 +127,11 @@ struct request {
     struct async_operation operation;
 
     struct async_operation_ref async_ref;
+
+    /**
+     * Submit the #TranslateResponse to the translation cache.
+     */
+    void SubmitTranslateRequest();
 };
 
 static inline bool
