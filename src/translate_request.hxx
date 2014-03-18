@@ -54,6 +54,27 @@ struct TranslateRequest {
     ConstBuffer<uint16_t> want;
 
     http_status_t error_document_status;
+
+    void Clear() {
+        local_address = nullptr;
+        local_address_length = 0;
+        remote_host = nullptr;
+        host = nullptr;
+        user_agent = nullptr;
+        ua_class = nullptr;
+        accept_language = nullptr;
+        authorization = nullptr;
+        uri = nullptr;
+        args = nullptr;
+        query_string = nullptr;
+        widget_type = nullptr;
+        session = nullptr;
+        param = nullptr;
+        strref_null(&check);
+        strref_null(&want_full_uri);
+        want = nullptr;
+        error_document_status = http_status_t(0);
+    }
 };
 
 #endif

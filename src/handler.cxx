@@ -563,23 +563,10 @@ fill_translate_request(TranslateRequest *t,
                        const struct parsed_uri *uri,
                        struct strmap *args)
 {
-    t->remote_host = nullptr;
-    t->local_address = nullptr;
-    t->local_address_length = 0;
-    t->remote_host = nullptr;
+    t->Clear();
     t->host = strmap_get(request->headers, "host");
-    t->user_agent = nullptr;
-    t->ua_class = nullptr;
-    t->accept_language = nullptr;
     t->authorization = strmap_get(request->headers, "authorization");
     t->uri = strref_dup(request->pool, &uri->base);
-    t->args = nullptr;
-    t->query_string = nullptr;
-    t->widget_type = nullptr;
-    strref_null(&t->check);
-    strref_null(&t->want_full_uri);
-    t->want = nullptr;
-    t->error_document_status = (http_status_t)0;
 
     if (translation_protocol_version < 1) {
         /* old translation server: send all packets that have become

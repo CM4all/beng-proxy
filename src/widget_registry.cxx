@@ -29,24 +29,9 @@ widget_registry_lookup(struct pool *pool,
                        struct async_operation_ref *async_ref)
 {
     auto request = NewFromPool<TranslateRequest>(pool);
+    request->Clear();
 
-    request->local_address = nullptr;
-    request->local_address_length = 0;
-    request->remote_host = nullptr;
-    request->host = nullptr;
-    request->user_agent = nullptr;
-    request->ua_class = nullptr;
-    request->accept_language = nullptr;
-    request->authorization = nullptr;
-    request->uri = nullptr;
-    request->args = nullptr;
-    request->query_string = nullptr;
     request->widget_type = widget_type;
-    request->session = nullptr;
-    request->param = nullptr;
-    strref_null(&request->check);
-    strref_null(&request->want_full_uri);
-    request->error_document_status = http_status_t(0);
 
     translate_cache(pool, tcache, request,
                     handler, ctx, async_ref);
