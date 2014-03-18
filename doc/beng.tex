@@ -1715,7 +1715,8 @@ error document by sending an empty \verb|ERROR_DOCUMENT| packet in
 the translation response.  As soon as an error occurs (response status
 400..599), \emph{beng-proxy} sends another translation request,
 consisting of \verb|ERROR_DOCUMENT|, \verb|URI| and
-\verb|STATUS|.
+\verb|STATUS|.  The payload of \verb|ERROR_DOCUMENT| is opaque to
+\emph{beng-proxy}, and will be echoed.
 
 The translation server responds with a pointer to another resource
 which shall be used as the error document.  If the translation

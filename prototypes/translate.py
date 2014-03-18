@@ -471,7 +471,7 @@ class Translation(Protocol):
             return self._handle_widget_lookup(request.widget_type)
 
         if request.error_document:
-            log.msg("error %s %u" % (request.uri, request.status))
+            log.msg("error %s %s %u" % (request.uri, repr(request.error_document_payload), request.status))
             return Response().path('/var/www/%u.html' % request.status).content_type('text/html')
 
         if request.session is not None: log.msg("- session = %s" % request.session)

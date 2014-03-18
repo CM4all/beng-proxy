@@ -79,8 +79,6 @@ struct TranslateResponse {
 
     bool filter_4xx;
 
-    bool error_document;
-
     bool previous;
 
     bool transparent;
@@ -145,6 +143,8 @@ struct TranslateResponse {
     ConstBuffer<uint16_t> vary;
     ConstBuffer<uint16_t> invalidate;
     ConstBuffer<uint16_t> want;
+
+    ConstBuffer<void> error_document;
 
     struct {
         uint64_t mtime;

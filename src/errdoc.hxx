@@ -12,14 +12,19 @@
 struct istream;
 struct request;
 struct growing_buffer;
+template<typename T> struct ConstBuffer;
 
 /**
  * Asks the translation server for an error document, and submits it
  * to response_dispatch().  If there is no error document, or the
  * error document resource fails, it resubmits the original response.
+ *
+ * @param error_document the payload of the #TRANSLATE_ERROR_DOCUMENT
+ * translate response packet
  */
 void
 errdoc_dispatch_response(struct request *request2, http_status_t status,
+                         ConstBuffer<void> error_document,
                          struct growing_buffer *headers, struct istream *body);
 
 #endif

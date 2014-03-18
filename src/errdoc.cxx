@@ -131,9 +131,11 @@ static const TranslateHandler errdoc_translate_handler = {
 static void
 fill_translate_request(TranslateRequest *t,
                        const TranslateRequest *src,
+                       ConstBuffer<void> error_document,
                        http_status_t status)
 {
     *t = *src;
+    t->error_document = error_document;
     t->error_document_status = status;
 }
 
@@ -164,8 +166,11 @@ static const struct async_operation_class errdoc_operation = {
 
 void
 errdoc_dispatch_response(struct request *request2, http_status_t status,
+                         ConstBuffer<void> error_document,
                          struct growing_buffer *headers, struct istream *body)
 {
+    assert(!error_document.IsNull());
+
     struct instance *instance = request2->connection->instance;
 
     assert(instance->translate_cache != nullptr);
@@ -183,7 +188,8 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
     async_ref_set(&request2->async_ref, &er->operation);
 
     fill_translate_request(&er->translate_request,
-                           &request2->translate.request, status);
+                           &request2->translate.request,
+                           error_document, status);
     translate_cache(pool, instance->translate_cache,
                     &er->translate_request,
                     &errdoc_translate_handler, er,

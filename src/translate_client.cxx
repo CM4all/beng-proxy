@@ -324,10 +324,12 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
     success = write_packet_n(gb, TRANSLATE_BEGIN,
                              &PROTOCOL_VERSION, sizeof(PROTOCOL_VERSION),
                              error_r) &&
+        write_optional_buffer(gb, TRANSLATE_ERROR_DOCUMENT,
+                              request->error_document,
+                              error_r) &&
         (request->error_document_status == 0 ||
-         (write_packet(gb, TRANSLATE_ERROR_DOCUMENT, "", error_r) &&
-          write_short(gb, TRANSLATE_STATUS,
-                      request->error_document_status, error_r))) &&
+         write_short(gb, TRANSLATE_STATUS,
+                     request->error_document_status, error_r)) &&
         write_optional_sockaddr(gb, TRANSLATE_LOCAL_ADDRESS,
                                 TRANSLATE_LOCAL_ADDRESS_STRING,
                                 request->local_address,
@@ -2119,7 +2121,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_ERROR_DOCUMENT:
-        client->response.error_document = true;
+        client->response.error_document = { payload, payload_length };
         return true;
 
     case TRANSLATE_CHECK:
