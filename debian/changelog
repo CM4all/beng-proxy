@@ -3,6 +3,7 @@ cm4all-beng-proxy (4.0.22) unstable; urgency=low
   * translation: allow ERROR_DOCUMENT payload, echo
   * translation: new packet FILE_NOT_FOUND
   * translate_client: check for multiple REGEX / INVERSE_REGEX
+  * translate_client: support abstract sockets in ADDRESS_STRING
 
  --   
 

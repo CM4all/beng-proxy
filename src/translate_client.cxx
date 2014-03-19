@@ -476,7 +476,7 @@ static bool
 parse_address_string(struct pool *pool, struct address_list *list,
                      const char *p, int default_port)
 {
-    if (*p == '/') {
+    if (*p == '/' || *p == '@') {
         /* unix domain socket */
 
         struct sockaddr_un sun;
@@ -488,8 +488,14 @@ parse_address_string(struct pool *pool, struct address_list *list,
         sun.sun_family = AF_UNIX;
         memcpy(sun.sun_path, p, path_length + 1);
 
+        size_t size = SUN_LEN(&sun);
+
+        if (*p == '@')
+            /* abstract socket */
+            sun.sun_path[0] = 0;
+
         address_list_add(pool, list,
-                         (const struct sockaddr *)&sun, SUN_LEN(&sun));
+                         (const struct sockaddr *)&sun, size);
         return true;
     }
 
