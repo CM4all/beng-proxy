@@ -112,7 +112,6 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
     struct failure *failure;
 
     assert(addr != NULL);
-    assert(addrlen >= sizeof(failure->envelope.address));
     assert(status > FAILURE_OK);
 
     const unsigned now = now_s();
