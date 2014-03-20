@@ -1885,6 +1885,11 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
+        if (client->response.regex != nullptr) {
+            translate_client_error(client, "duplicate REGEX");
+            return false;
+        }
+
         if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client, "malformed REGEX packet");
             return false;
@@ -1896,6 +1901,11 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_INVERSE_REGEX:
         if (client->response.base == nullptr) {
             translate_client_error(client, "INVERSE_REGEX without BASE");
+            return false;
+        }
+
+        if (client->response.inverse_regex != nullptr) {
+            translate_client_error(client, "duplicate INVERSE_REGEX");
             return false;
         }
 
