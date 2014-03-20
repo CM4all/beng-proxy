@@ -646,12 +646,12 @@ side closes the connection.
 \subsection{Example conversation}
 
 \begin{itemize}
-\item client sends \verb|BEGIN|
+\item client sends \verb|BEGIN| ``\textbackslash{}x01''
 \item client sends \verb|REMOTE_HOST| ``192.168.1.77:1234''
 \item client sends \verb|HOST| ``www.example.com''
 \item client sends \verb|URI| ``/foo/index.html''
 \item client sends \verb|END|
-\item server sends \verb|BEGIN| ``\\x01''
+\item server sends \verb|BEGIN| ``\textbackslash{}x01''
 \item server sends \verb|PATH| ``/var/www/foo/index.html''
 \item server sends \verb|CONTENT_TYPE| ``text/html; charset=utf8''
 \item server sends \verb|PROCESS|
