@@ -975,11 +975,6 @@ translate_client_file_not_found(TranslateClient *client,
         break;
     }
 
-    if (!client->response.file_not_found.IsNull()) {
-        translate_client_error(client, "duplicate FIlE_NOT_FOUND packet");
-        return false;
-    }
-
     client->response.file_not_found = payload;
     return true;
 }
