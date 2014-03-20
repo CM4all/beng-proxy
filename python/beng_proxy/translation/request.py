@@ -54,6 +54,8 @@ class Request:
         self.status = None
         self.want = None
         self.file_not_found = None
+        self.content_type_lookup = None
+        self.suffix = None
         self.error_document = False
         self.error_document_payload = None
 
@@ -114,6 +116,10 @@ class Request:
             self.want.fromstring(packet.payload)
         elif packet.command == TRANSLATE_FILE_NOT_FOUND:
             self.file_not_found = packet.payload
+        elif packet.command == TRANSLATE_CONTENT_TYPE_LOOKUP:
+            self.content_type_lookup = packet.payload
+        elif packet.command == TRANSLATE_SUFFIX:
+            self.suffix = packet.payload
         elif packet.command == TRANSLATE_ERROR_DOCUMENT:
             self.error_document = True
             self.error_document_payload = packet.payload

@@ -78,6 +78,8 @@ struct TranslateClient {
         bool want_full_uri;
 
         bool want;
+
+        bool content_type_lookup;
     } from_request;
 
     /** the marshalled translate request */
@@ -360,6 +362,10 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
         write_optional_buffer(gb, TRANSLATE_WANT, request->want, error_r) &&
         write_optional_buffer(gb, TRANSLATE_FILE_NOT_FOUND,
                               request->file_not_found, error_r) &&
+        write_optional_buffer(gb, TRANSLATE_CONTENT_TYPE_LOOKUP,
+                              request->content_type_lookup, error_r) &&
+        write_optional_packet(gb, TRANSLATE_SUFFIX, request->suffix,
+                              error_r) &&
         write_optional_packet(gb, TRANSLATE_PARAM, request->param,
                               error_r) &&
         write_packet(gb, TRANSLATE_END, nullptr, error_r);
@@ -979,6 +985,58 @@ translate_client_file_not_found(TranslateClient *client,
     return true;
 }
 
+gcc_pure
+static bool
+has_content_type(const TranslateClient &client)
+{
+    if (client.file_address != nullptr)
+        return client.file_address->content_type != nullptr;
+    else if (client.nfs_address != nullptr)
+        return client.nfs_address->content_type != nullptr;
+    else
+        return false;
+}
+
+static bool
+translate_client_content_type_lookup(TranslateClient &client,
+                                     ConstBuffer<void> payload)
+{
+    if (!client.response.content_type_lookup.IsNull()) {
+        translate_client_error(&client, "duplicate CONTENT_TYPE_LOOKUP");
+        return false;
+    }
+
+    if (has_content_type(client)) {
+        translate_client_error(&client, "CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
+        return false;
+    }
+
+    switch (client.response.address.type) {
+    case RESOURCE_ADDRESS_NONE:
+        translate_client_error(&client,
+                               "CONTENT_TYPE_LOOKUP without resource address");
+        return false;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_LHTTP:
+    case RESOURCE_ADDRESS_AJP:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        translate_client_error(&client,
+                               "CONTENT_TYPE_LOOKUP not compatible with resource address");
+        return false;
+
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_NFS:
+        break;
+    }
+
+    client.response.content_type_lookup = payload;
+    return true;
+}
+
 /**
  * Returns false if the client has been closed.
  */
@@ -1093,6 +1151,7 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_LOCAL_ADDRESS_STRING:
     case TRANSLATE_AUTHORIZATION:
     case TRANSLATE_UA_CLASS:
+    case TRANSLATE_SUFFIX:
         translate_client_error(client,
                                "misplaced translate request packet");
         return false;
@@ -1277,11 +1336,19 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
+        if (!client->response.content_type_lookup.IsNull()) {
+            translate_client_error(client, "CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
+            return false;
+        }
+
         if (client->file_address != nullptr) {
             client->file_address->content_type = payload;
             return true;
         } else if (client->nfs_address != nullptr) {
             client->nfs_address->content_type = payload;
+            return true;
+        } else if (client->from_request.content_type_lookup) {
+            client->response.content_type = payload;
             return true;
         } else {
             translate_client_error(client, "misplaced CONTENT_TYPE packet");
@@ -2573,6 +2640,10 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_FILE_NOT_FOUND:
         return translate_client_file_not_found(client,
                                                { _payload, payload_length });
+
+    case TRANSLATE_CONTENT_TYPE_LOOKUP:
+        return translate_client_content_type_lookup(*client,
+                                                    { _payload, payload_length });
     }
 
     error = g_error_new(translate_quark(), 0,
@@ -2732,7 +2803,9 @@ translate(struct pool *pool, int fd,
     assert(fd >= 0);
     assert(lease != nullptr);
     assert(request != nullptr);
-    assert(request->uri != nullptr || request->widget_type != nullptr);
+    assert(request->uri != nullptr || request->widget_type != nullptr ||
+           (!request->content_type_lookup.IsNull() &&
+            request->suffix != nullptr));
     assert(handler != nullptr);
     assert(handler->response != nullptr);
     assert(handler->error != nullptr);
@@ -2762,6 +2835,8 @@ translate(struct pool *pool, int fd,
     client->from_request.uri = request->uri;
     client->from_request.want_full_uri = !request->want_full_uri.IsNull();
     client->from_request.want = !request->want.IsEmpty();
+    client->from_request.content_type_lookup =
+        !request->content_type_lookup.IsNull();
 
     growing_buffer_reader_init(&client->request, gb);
     client->handler = handler;

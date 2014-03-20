@@ -54,11 +54,15 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
     if (!file_evaluate_request(request2, -1, st, &file_request))
         return;
 
+    const char *override_content_type = request2->translate.content_type;
+    if (override_content_type == nullptr)
+        override_content_type = tr->address.u.nfs->content_type;
+
     struct growing_buffer *headers = growing_buffer_new(pool, 2048);
     header_write(headers, "cache-control", "max-age=60");
 
     file_response_headers(headers,
-                          tr->address.u.nfs->content_type,
+                          override_content_type,
                           -1, st,
                           request_processor_enabled(request2),
                           request_processor_first(request2));

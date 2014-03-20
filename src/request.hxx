@@ -80,6 +80,11 @@ struct request {
          * variable is used for loop detection.
          */
         unsigned n_file_not_found;
+
+        /**
+         * The Content-Type returned by suffix_registry_lookup().
+         */
+        const char *content_type;
     } translate;
 
     /**

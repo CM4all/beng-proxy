@@ -35,6 +35,7 @@
 
 #define MAX_CACHE_CHECK 256
 #define MAX_CACHE_WFU 256
+static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
 static constexpr size_t MAX_FILE_NOT_FOUND = 256;
 
 struct TranslateCacheItem {
@@ -249,9 +250,35 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
     return key;
 }
 
+static bool
+tcache_is_content_type_lookup(const TranslateRequest &request)
+{
+    return !request.content_type_lookup.IsNull() &&
+        request.content_type_lookup.size <= MAX_CONTENT_TYPE_LOOKUP &&
+        request.suffix != nullptr;
+}
+
+static const char *
+tcache_content_type_lookup_key(struct pool *pool,
+                               const TranslateRequest &request)
+{
+    char buffer[MAX_CONTENT_TYPE_LOOKUP * 3];
+    size_t length = uri_escape(buffer,
+                               (const char *)request.content_type_lookup.data,
+                               request.content_type_lookup.size, '%');
+    return p_strncat(pool, "CTL|", size_t(4),
+                     buffer, length,
+                     "|", size_t(1),
+                     request.suffix, strlen(request.suffix),
+                     nullptr);
+}
+
 static const char *
 tcache_request_key(struct pool *pool, const TranslateRequest *request)
 {
+    if (tcache_is_content_type_lookup(*request))
+        return tcache_content_type_lookup_key(pool, *request);
+
     return request->uri != nullptr
         ? tcache_uri_key(pool, request->uri, request->host,
                          request->error_document_status,
@@ -265,7 +292,8 @@ tcache_request_key(struct pool *pool, const TranslateRequest *request)
 static bool
 tcache_request_evaluate(const TranslateRequest *request)
 {
-    return (request->uri != nullptr || request->widget_type != nullptr) &&
+    return (request->uri != nullptr || request->widget_type != nullptr ||
+            tcache_is_content_type_lookup(*request)) &&
         request->check.size < MAX_CACHE_CHECK &&
         request->want_full_uri.size <= MAX_CACHE_WFU &&
         request->file_not_found.size <= MAX_FILE_NOT_FOUND &&

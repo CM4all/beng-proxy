@@ -112,6 +112,8 @@ translate_response_copy(struct pool *pool, TranslateResponse *dest,
     dest->invalidate = Copy(pool, src->invalidate);
     dest->want = Copy(pool, src->want);
     dest->file_not_found = Copy(pool, src->file_not_found);
+    dest->content_type_lookup = Copy(pool, src->content_type_lookup);
+    dest->content_type = p_strdup_checked(pool, src->content_type);
     dest->error_document = Copy(pool, src->error_document);
 
     dest->validate_mtime.mtime = src->validate_mtime.mtime;

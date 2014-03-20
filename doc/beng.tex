@@ -751,6 +751,17 @@ sent by the client (see RFC 2617) \\
 
 \hline
 
+\verb|CONTENT_TYPE_LOOKUP| & Look up the \texttt{Content-Type} of a
+file name suffix.  See \ref{ctlookup} for a detailed description. \\
+
+\hline
+
+\verb|SUFFIX| & The file name suffix without the dot for
+\verb|CONTENT_TYPE_LOOKUP|.  See \ref{ctlookup} for a detailed
+description. \\
+
+\hline
+
 \verb|ERROR_DOCUMENT| & a resource has failed, and the translation
 server is asked to provide the location of the error document.  This
 is followed by the packets \verb|URI| and \verb|STATUS|.  See
@@ -1205,6 +1216,12 @@ This will not override existing headers.  It is not allowed to set
 hop-by-hop headers (RFC 2616 13.5.1) this way.  This packet shall only
 be a last resort, when there is no other way to set a required
 response header. \\
+
+\hline
+
+\verb|CONTENT_TYPE_LOOKUP| & Indicates that the translation server is
+willing to look up \texttt{Content-Type} by file name suffix.  See
+\ref{ctlookup} for a detailed description. \\
 
 \hline
 
@@ -1717,6 +1734,38 @@ the translation server to manage its contents.  With every translation
 request, \emph{beng-proxy} sends its contents unless it is empty (in
 which case it omits this parameter).  With every response, the
 translation server may provide a new value (which may be empty).
+
+\subsection{\texttt{Content-Type} Lookup}
+\label{ctlookup}
+
+The presence of \verb|CONTENT_TYPE_LOOKUP| in a translation response
+indicates that the translation server is willing to look up
+\texttt{Content-Type} by file name suffix.  It will disable the normal
+lookup via \textit{extended attributes}.
+
+When a HTTP request for a static file (local file or NFS file) is
+handled, \emph{beng-proxy} will check if the file name has a
+``suffix'' (short alphanumeric name after a dot).  If will ask the
+translation server for a \texttt{Content-Type} for this suffix.  This
+translation request contains the packets \verb|CONTENT_TYPE_LOOKUP|
+(echoing the server's packet) and \verb|SUFFIX| (containing the
+non-empty suffix without the dot).
+
+Example conversation:
+
+\begin{itemize}
+\item client sends \verb|BEGIN| ``\textbackslash{}x01''
+\item client sends \verb|CONTENT_TYPE_LOOKUP| ``foo''
+\item client sends \verb|SUFFIX| ``png''
+\item client sends \verb|END|
+\item server sends \verb|BEGIN| ``\textbackslash{}x01''
+\item server sends \verb|CONTENT_TYPE| ``image/png''
+\item server sends \verb|END|
+\end{itemize}
+
+If the suffix is unknown, the translation server may omit the
+\verb|CONTENT_TYPE| packet and only reply with \verb|BEGIN| and
+\verb|END|.
 
 \subsection{Error documents}
 \label{errdoc}

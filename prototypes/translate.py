@@ -30,6 +30,14 @@ cgi_re = re.compile(r'\.(?:sh|rb|py|pl|cgi)$')
 php_re = re.compile(r'^(.*\.php\d*)((?:/.*)?)$')
 coma_apps_re = re.compile(r'^/coma-apps/([-\w]+)/(\w+\.cls(?:/.*)?)$')
 
+content_types = {
+    'html': 'text/html',
+    'txt': 'text/plain',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+}
+
 class Translation(Protocol):
     def connectionMade(self):
         log.msg("Connected from %s" % str(self.transport.client))
@@ -43,6 +51,14 @@ class Translation(Protocol):
         except:
             log.err()
             return Response().status(500)
+
+    def _handle_content_type_lookup(self, payload, suffix):
+        log.msg("content_type_lookup '%s' suffix='%s'" % (payload, suffix))
+
+        response = Response(protocol_version=1)
+        if suffix in content_types:
+            response.packet(TRANSLATE_CONTENT_TYPE, content_types[suffix])
+        return response
 
     def _handle_local_file(self, path, response, delegate=False, jail=False, fastcgi=True, error_document=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
@@ -468,6 +484,9 @@ class Translation(Protocol):
 
             self._handle_local_file('/var/www' + uri[15:], response)
             response.packet(TRANSLATE_FILE_NOT_FOUND, 'hansi')
+        elif uri[:5] == '/ctl/':
+            self._handle_local_file('/var/www' + uri[4:], response)
+            response.packet(TRANSLATE_CONTENT_TYPE_LOOKUP, 'xyz')
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
@@ -476,6 +495,10 @@ class Translation(Protocol):
         # .... PROXY 'http://cfatest01.intern.cm-ag/filter.py'
 
     def _handle_request(self, request):
+        if request.content_type_lookup is not None:
+            return self._handle_content_type_lookup(request.content_type_lookup,
+                                                    request.suffix)
+
         if request.widget_type is not None:
             return self._handle_widget_lookup(request.widget_type)
 

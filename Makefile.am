@@ -234,6 +234,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/strmap.c src/strmap.h \
 	src/strref-dpool.h \
 	src/strref-pool.h \
+	src/suffix_registry.cxx src/suffix_registry.hxx \
 	src/tcache.cxx src/tcache.hxx \
 	src/tcp-stock.c src/tcp-stock.h \
 	src/tcp-balancer.c src/tcp-balancer.h \

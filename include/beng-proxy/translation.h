@@ -457,6 +457,20 @@ enum beng_translation_command {
      * Retranslate if the file does not exist.
      */
     TRANSLATE_FILE_NOT_FOUND = 120,
+
+    /**
+     * Translation server indicates that Content-Type lookup should be
+     * performed for static files.  Upon request, this packet is
+     * echoed to the translation server, accompanied by a
+     * #TRANSLATE_SUFFIX packet.
+     */
+    TRANSLATE_CONTENT_TYPE_LOOKUP = 121,
+
+    /**
+     * Payload is the file name suffix without the dot.  Part of a
+     * #TRANSLATE_CONTENT_TYPE_LOOKUP translation request.
+     */
+    TRANSLATE_SUFFIX = 122,
 };
 
 struct beng_translation_header {

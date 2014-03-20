@@ -44,8 +44,12 @@ file_dispatch(struct request *request2, const struct stat *st,
     struct growing_buffer *headers;
     http_status_t status;
 
+    const char *override_content_type = request2->translate.content_type;
+    if (override_content_type == nullptr)
+        override_content_type = tr->address.u.file->content_type;
+
     headers = growing_buffer_new(request->pool, 2048);
-    file_response_headers(headers, tr->address.u.file->content_type,
+    file_response_headers(headers, override_content_type,
                           istream_file_fd(body), st,
                           request_processor_enabled(request2),
                           request_processor_first(request2));
@@ -125,8 +129,12 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
 
     /* response headers with information from uncompressed file */
 
+    const char *override_content_type = request2->translate.content_type;
+    if (override_content_type == nullptr)
+        override_content_type = tr->address.u.file->content_type;
+
     headers = growing_buffer_new(request->pool, 2048);
-    file_response_headers(headers, tr->address.u.file->content_type,
+    file_response_headers(headers, override_content_type,
                           istream_file_fd(body), st,
                           request_processor_enabled(request2),
                           request_processor_first(request2));

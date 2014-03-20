@@ -11,12 +11,14 @@
 #include "file_not_found.hxx"
 #include "file_handler.hxx"
 #include "file_address.h"
+#include "nfs_address.h"
 #include "nfs_handler.h"
 #include "request.hxx"
 #include "connection.h"
 #include "args.h"
 #include "session.h"
 #include "tcache.hxx"
+#include "suffix_registry.hxx"
 #include "growing-buffer.h"
 #include "header-writer.h"
 #include "strref-pool.h"
@@ -279,6 +281,118 @@ handle_translated_request2(request &request,
     }
 }
 
+gcc_pure
+static const char *
+get_suffix(const char *path)
+{
+    const char *slash = strrchr(path, '/');
+    if (slash != nullptr)
+        path = slash + 1;
+
+    while (*path == '.')
+        ++path;
+
+    const char *dot = strrchr(path, '.');
+    if (dot == nullptr || dot[1] == 0)
+        return nullptr;
+
+    return dot + 1;
+}
+
+gcc_pure
+static const char *
+get_suffix(const resource_address &address)
+{
+    switch (address.type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_LHTTP:
+    case RESOURCE_ADDRESS_AJP:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        return nullptr;
+
+    case RESOURCE_ADDRESS_LOCAL:
+        return get_suffix(address.u.file->path);
+
+    case RESOURCE_ADDRESS_NFS:
+        return get_suffix(address.u.nfs->path);
+    }
+
+    assert(false);
+    gcc_unreachable();
+}
+
+gcc_pure
+static const char *
+get_suffix(const TranslateResponse &response)
+{
+    return get_suffix(response.address);
+}
+
+static void
+handler_suffix_registry_success(const char *content_type, void *ctx)
+{
+    struct request &request = *(struct request *)ctx;
+
+    request.translate.content_type = content_type;
+    handle_translated_request2(request, *request.translate.response);
+}
+
+static void
+handler_suffix_registry_error(GError *error, void *ctx)
+{
+    struct request &request = *(struct request *)ctx;
+
+    daemon_log(1, "translation error on '%s': %s\n",
+               request.request->uri, error->message);
+
+    response_dispatch_error(&request, error);
+    g_error_free(error);
+}
+
+static constexpr SuffixRegistryHandler handler_suffix_registry_handler = {
+    .success = handler_suffix_registry_success,
+    .error = handler_suffix_registry_error,
+};
+
+static bool
+do_content_type_lookup(request &request, const TranslateResponse &response)
+{
+    if (response.content_type_lookup.IsNull())
+        return false;
+
+    const char *suffix = get_suffix(response);
+    if (suffix == nullptr)
+        return false;
+
+    const size_t length = strlen(suffix);
+    if (length > 5)
+        return false;
+
+    /* duplicate the suffix, convert to lower case, check for
+       "illegal" characters (non-alphanumeric) */
+    char *buffer = p_strdup(request.request->pool, suffix);
+    for (char *p = buffer; *p != 0; ++p) {
+        const char ch = *p;
+        if (char_is_capital_letter(ch))
+            /* convert to lower case */
+            *p += 'a' - 'A';
+        else if (!char_is_minuscule_letter(ch) && !char_is_digit(ch))
+            /* no, we won't look this up */
+            return false;
+    }
+
+    suffix_registry_lookup(request.request->pool,
+                           *request.connection->instance->translate_cache,
+                           response.content_type_lookup, buffer,
+                           handler_suffix_registry_handler, &request,
+                           &request.async_ref);
+    return true;
+}
+
 static void
 handle_translated_request(request &request, const TranslateResponse &response)
 {
@@ -290,7 +404,8 @@ handle_translated_request(request &request, const TranslateResponse &response)
     translate_response_copy(request.request->pool, response2, &response);
     request.translate.response = response2;
 
-    handle_translated_request2(request, *response2);
+    if (!do_content_type_lookup(request, *response2))
+        handle_translated_request2(request, *response2);
 }
 
 /**
@@ -718,6 +833,7 @@ handle_http_request(client_connection &connection,
     struct request *request2 = NewFromPool<struct request>(request.pool);
     request2->connection = &connection;
     request2->request = &request;
+    request2->translate.content_type = nullptr;
     request2->product_token = nullptr;
 #ifndef NO_DATE_HEADER
     request2->date = nullptr;
