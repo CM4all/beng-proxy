@@ -71,7 +71,6 @@ translate_response_copy(struct pool *pool, TranslateResponse *dest,
     dest->discard_session = src->discard_session;
     dest->secure_cookie = src->secure_cookie;
     dest->filter_4xx = src->filter_4xx;
-    dest->error_document = src->error_document;
     dest->previous = src->previous;
     dest->transparent = src->transparent;
     dest->auto_base = src->auto_base;
