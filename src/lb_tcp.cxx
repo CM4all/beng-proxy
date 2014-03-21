@@ -64,6 +64,12 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         /* outbound is not yet connected */
         return BUFFERED_BLOCKING;
 
+    if (!buffered_socket_valid(&tcp->outbound)) {
+        lb_tcp_close(tcp);
+        tcp->handler->error("Send error", "Broken socket", tcp->handler_ctx);
+        return BUFFERED_CLOSED;
+    }
+
     ssize_t nbytes = buffered_socket_write(&tcp->outbound, buffer, size);
     if (nbytes > 0) {
         filtered_socket_consumed(&tcp->inbound, nbytes);
@@ -117,6 +123,23 @@ inbound_buffered_socket_write(void *ctx)
 }
 
 static bool
+inbound_buffered_socket_drained(void *ctx)
+{
+    struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+
+    if (!buffered_socket_valid(&tcp->outbound)) {
+        /* now that inbound's output buffers are drained, we can
+           finally close the connection (postponed from
+           outbound_buffered_socket_end()) */
+        lb_tcp_close(tcp);
+        tcp->handler->eof(tcp->handler_ctx);
+        return false;
+    }
+
+    return true;
+}
+
+static bool
 inbound_buffered_socket_broken(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
@@ -142,7 +165,7 @@ static constexpr struct buffered_socket_handler inbound_buffered_socket_handler 
     nullptr,
     nullptr,
     inbound_buffered_socket_write,
-    nullptr,
+    inbound_buffered_socket_drained,
     nullptr,
     inbound_buffered_socket_broken,
     inbound_buffered_socket_error,
@@ -207,8 +230,17 @@ outbound_buffered_socket_end(void *ctx)
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
     buffered_socket_destroy(&tcp->outbound);
-    lb_tcp_close(tcp);
-    tcp->handler->eof(tcp->handler_ctx);
+
+    if (filtered_socket_is_drained(&tcp->inbound)) {
+        /* all output buffers to "inbound" are drained; close the
+           connection, because there's nothing left to do */
+        lb_tcp_close(tcp);
+        tcp->handler->eof(tcp->handler_ctx);
+
+        /* nothing will be done if the buffers are not yet drained;
+           we're waiting for inbound_buffered_socket_drained() to be
+           called */
+    }
 }
 
 static bool
