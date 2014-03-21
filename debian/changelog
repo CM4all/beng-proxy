@@ -2,7 +2,7 @@ cm4all-beng-proxy (4.0.23) unstable; urgency=low
 
   * translation: new packet DIRECTORY_INDEX
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 21 Mar 2014 13:00:39 -0000
 
 cm4all-beng-proxy (4.0.22) unstable; urgency=low
 
