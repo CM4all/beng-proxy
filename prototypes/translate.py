@@ -138,7 +138,7 @@ class Translation(Protocol):
         return username == 'hansi' and password == 'hansilein'
 
     def _handle_http(self, raw_uri, uri, authorization,
-                     check, want_full_uri, want, file_not_found,
+                     check, want_full_uri, want, file_not_found, directory_index,
                      ua_class, response):
         if uri[:6] == '/site/':
             x = uri[6:]
@@ -484,6 +484,19 @@ class Translation(Protocol):
 
             self._handle_local_file('/var/www' + uri[15:], response)
             response.packet(TRANSLATE_FILE_NOT_FOUND, 'hansi')
+        elif uri[:17] == '/directory_index/':
+            if directory_index is not None:
+                assert directory_index == 'abc'
+                response.packet(TRANSLATE_BASE, '/directory_index/')
+                response.packet(TRANSLATE_REGEX, "^(.*)$")
+                response.packet(TRANSLATE_REGEX_TAIL)
+                response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'directory_index.py'))
+                response.pair('DIRECTORY', 'dummy')
+                response.packet(TRANSLATE_EXPAND_PAIR, r'DIRECTORY=/var/www/\1')
+                return
+
+            self._handle_local_file('/var/www' + uri[16:], response)
+            response.packet(TRANSLATE_DIRECTORY_INDEX, 'abc')
         elif uri[:5] == '/ctl/':
             self._handle_local_file('/var/www' + uri[4:], response)
             response.packet(TRANSLATE_CONTENT_TYPE_LOOKUP, 'xyz')
@@ -535,7 +548,7 @@ class Translation(Protocol):
         if request.uri is not None:
             self._handle_http(request.raw_uri, request.uri, request.authorization,
                               request.check, request.want_full_uri, request.want,
-                              request.file_not_found,
+                              request.file_not_found, request.directory_index,
                               request.ua_class, response)
 
         return response

@@ -471,6 +471,11 @@ enum beng_translation_command {
      * #TRANSLATE_CONTENT_TYPE_LOOKUP translation request.
      */
     TRANSLATE_SUFFIX = 122,
+
+    /**
+     * Retranslate if the file is a directory.
+     */
+    TRANSLATE_DIRECTORY_INDEX = 123,
 };
 
 struct beng_translation_header {

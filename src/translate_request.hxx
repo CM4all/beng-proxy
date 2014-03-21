@@ -57,6 +57,8 @@ struct TranslateRequest {
 
     const char *suffix;
 
+    ConstBuffer<void> directory_index;
+
     ConstBuffer<void> error_document;
 
     http_status_t error_document_status;
@@ -82,6 +84,7 @@ struct TranslateRequest {
         file_not_found = nullptr;
         content_type_lookup = nullptr;
         suffix = nullptr;
+        directory_index = nullptr;
         error_document = nullptr;
         error_document_status = http_status_t(0);
     }

@@ -366,6 +366,8 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
                               request->content_type_lookup, error_r) &&
         write_optional_packet(gb, TRANSLATE_SUFFIX, request->suffix,
                               error_r) &&
+        write_optional_buffer(gb, TRANSLATE_DIRECTORY_INDEX,
+                              request->directory_index, error_r) &&
         write_optional_packet(gb, TRANSLATE_PARAM, request->param,
                               error_r) &&
         write_packet(gb, TRANSLATE_END, nullptr, error_r);
@@ -1034,6 +1036,41 @@ translate_client_content_type_lookup(TranslateClient &client,
     }
 
     client.response.content_type_lookup = payload;
+    return true;
+}
+
+static bool
+translate_client_directory_index(TranslateClient &client,
+                                     ConstBuffer<void> payload)
+{
+    if (!client.response.directory_index.IsNull()) {
+        translate_client_error(&client, "duplicate DIRECTORY_INDEX");
+        return false;
+    }
+
+    switch (client.response.address.type) {
+    case RESOURCE_ADDRESS_NONE:
+        translate_client_error(&client,
+                               "DIRECTORY_INDEX without resource address");
+        return false;
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_LHTTP:
+    case RESOURCE_ADDRESS_AJP:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        translate_client_error(&client,
+                               "DIRECTORY_INDEX not compatible with resource address");
+        return false;
+
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_NFS:
+        break;
+    }
+
+    client.response.directory_index = payload;
     return true;
 }
 
@@ -2644,6 +2681,10 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_CONTENT_TYPE_LOOKUP:
         return translate_client_content_type_lookup(*client,
                                                     { _payload, payload_length });
+
+    case TRANSLATE_DIRECTORY_INDEX:
+        return translate_client_directory_index(*client,
+                                                { _payload, payload_length });
     }
 
     error = g_error_new(translate_quark(), 0,

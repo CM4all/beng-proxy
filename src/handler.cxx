@@ -9,6 +9,7 @@
 #include "bp_instance.hxx"
 #include "cast.hxx"
 #include "file_not_found.hxx"
+#include "file_directory_index.hxx"
 #include "file_handler.hxx"
 #include "file_address.h"
 #include "nfs_address.h"
@@ -620,6 +621,11 @@ handler_translate_response(const TranslateResponse *response,
         !check_file_not_found(request, *response))
         return;
 
+    /* check if it's a directory */
+    if (!response->directory_index.IsNull() &&
+        !check_directory_index(request, *response))
+        return;
+
     handle_translated_request(request, *response);
 }
 
@@ -712,6 +718,7 @@ ask_translation_server(struct request *request2)
     request2->translate.previous = nullptr;
     request2->translate.checks = 0;
     request2->translate.n_file_not_found = 0;
+    request2->translate.n_directory_index = 0;
 
     fill_translate_request(&request2->translate.request, request2->request,
                            &request2->uri, request2->args);

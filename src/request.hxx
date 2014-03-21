@@ -82,6 +82,12 @@ struct request {
         unsigned n_file_not_found;
 
         /**
+         * Number of #TRANSLATE_DIRECTORY_INDEX packets followed so
+         * far.  This variable is used for loop detection.
+         */
+        unsigned n_directory_index;
+
+        /**
          * The Content-Type returned by suffix_registry_lookup().
          */
         const char *content_type;

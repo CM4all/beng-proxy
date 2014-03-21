@@ -776,6 +776,13 @@ response. \\
 
 \hline
 
+\verb|DIRECTORY_INDEX| & The specified file is a directory.  The
+translation server is asked to provide an alterate translation.  This
+is an echo if the \verb|DIRECTORY_INDEX| from the previous translation
+response. \\
+
+\hline
+
 \label{want}
 \verb|WANT| & causes \emph{beng-proxy} to submit the same translation
 request again, with this packet echoed plus the requested packets.
@@ -1234,6 +1241,13 @@ detailed description. \\
 \verb|FILE_NOT_FOUND| & Indicates that the translation server would
 like to provide an alternate translation when the specified file does
 not exist.  \emph{beng-proxy} will repeat the translation request with
+this packet echoed. \\
+
+\hline
+
+\verb|DIRECTORY_INDEX| & Indicates that the translation server would
+like to provide an alternate translation when the specified file is a
+directory.  \emph{beng-proxy} will repeat the translation request with
 this packet echoed. \\
 
 \hline

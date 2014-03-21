@@ -160,6 +160,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/growing-buffer.c src/growing-buffer.h \
 	src/handler.cxx src/handler.hxx \
 	src/file_not_found.cxx src/file_not_found.hxx \
+	src/file_directory_index.cxx src/file_directory_index.hxx \
 	src/hashmap.c src/hashmap.h \
 	src/header-forward.c src/header-forward.h \
 	src/header-parser.c src/header-parser.h \

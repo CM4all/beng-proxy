@@ -154,6 +154,8 @@ struct TranslateResponse {
      */
     const char *content_type;
 
+    ConstBuffer<void> directory_index;
+
     ConstBuffer<void> error_document;
 
     struct {

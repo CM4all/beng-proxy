@@ -37,6 +37,7 @@
 #define MAX_CACHE_WFU 256
 static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
 static constexpr size_t MAX_FILE_NOT_FOUND = 256;
+static constexpr size_t MAX_DIRECTORY_INDEX = 256;
 
 struct TranslateCacheItem {
     struct cache_item item;
@@ -196,6 +197,7 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                ConstBuffer<void> check,
                ConstBuffer<void> want_full_uri,
                ConstBuffer<void> file_not_found,
+               ConstBuffer<void> directory_index,
                bool want)
 {
     const char *key = status != 0
@@ -247,6 +249,18 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                         nullptr);
     }
 
+    if (!directory_index.IsNull()) {
+        char buffer[MAX_DIRECTORY_INDEX * 3];
+        size_t length = uri_escape(buffer, (const char *)directory_index.data,
+                                   directory_index.size, '%');
+
+        key = p_strncat(pool,
+                        buffer, length,
+                        "=DIR]", (size_t)5,
+                        key, strlen(key),
+                        nullptr);
+    }
+
     return key;
 }
 
@@ -284,6 +298,7 @@ tcache_request_key(struct pool *pool, const TranslateRequest *request)
                          request->error_document_status,
                          request->check, request->want_full_uri,
                          request->file_not_found,
+                         request->directory_index,
                          !request->want.IsEmpty())
         : request->widget_type;
 }
@@ -297,6 +312,7 @@ tcache_request_evaluate(const TranslateRequest *request)
         request->check.size < MAX_CACHE_CHECK &&
         request->want_full_uri.size <= MAX_CACHE_WFU &&
         request->file_not_found.size <= MAX_FILE_NOT_FOUND &&
+        request->directory_index.size <= MAX_DIRECTORY_INDEX &&
         request->authorization == nullptr;
 }
 
@@ -461,6 +477,7 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
                              request->error_document_status,
                              request->check, request->want_full_uri,
                              request->file_not_found,
+                             request->directory_index,
                              !request->want.IsEmpty());
 
     return key;
