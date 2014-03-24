@@ -286,7 +286,14 @@ thread_socket_filter_done(struct thread_job *job)
     if (!thread_socket_filter_check_write(f))
         return;
 
+    const bool drained = f->connected && f->drained &&
+        fifo_buffer_empty(f->plain_output) &&
+        fifo_buffer_empty(f->encrypted_output);
+
     pthread_mutex_unlock(&f->mutex);
+
+    if (drained && !filtered_socket_internal_drained(f->socket))
+        return;
 
     thread_socket_filter_submit_decrypted_input(f);
 }
@@ -421,6 +428,9 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
 
     pthread_mutex_unlock(&f->mutex);
 
+    if (nbytes > 0)
+        filtered_socket_internal_undrained(f->socket);
+
     thread_socket_filter_schedule(f);
 
     return nbytes;
@@ -505,6 +515,8 @@ thread_socket_filter_internal_write(void *ctx)
         const bool add = fifo_buffer_full(f->encrypted_output);
         fifo_buffer_consume(f->encrypted_output, nbytes);
         const bool empty = fifo_buffer_empty(f->encrypted_output);
+        const bool drained = empty && f->drained &&
+            fifo_buffer_empty(f->plain_output);
         pthread_mutex_unlock(&f->mutex);
 
         if (add)
@@ -514,6 +526,9 @@ thread_socket_filter_internal_write(void *ctx)
 
         if (empty)
             filtered_socket_internal_unschedule_write(f->socket);
+
+        if (drained && !filtered_socket_internal_drained(f->socket))
+            return false;
     }
 
     return true;
@@ -676,6 +691,8 @@ thread_socket_filter_new(struct pool *pool,
     f->want_read = false;
     f->read_scheduled = false;
     f->want_write = false;
+    f->drained = true;
+
     f->read_timeout = nullptr;
 
     pthread_mutex_init(&f->mutex, nullptr);

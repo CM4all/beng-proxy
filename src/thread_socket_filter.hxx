@@ -94,6 +94,15 @@ struct ThreadSocketFilter {
      */
     bool want_write;
 
+    /**
+     * True when #ThreadSocketFilterHandler's internal output buffers
+     * are empty.  Set by #ThreadSocketFilterHandler::run() before
+     * returning.
+     *
+     * Protected by #mutex.
+     */
+    bool drained;
+
     struct timeval read_timeout_buffer;
     const struct timeval *read_timeout;
 

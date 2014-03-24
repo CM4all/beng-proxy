@@ -267,6 +267,8 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
     pthread_mutex_lock(&f.mutex);
     copy_fifo_buffer(f.decrypted_input, ssl->decrypted_input);
     copy_bio_to_fifo_buffer(f.encrypted_output, ssl->encrypted_output);
+    f.drained = fifo_buffer_empty(ssl->plain_output) &&
+        BIO_eof(ssl->encrypted_output);
     pthread_mutex_unlock(&f.mutex);
 
     return true;

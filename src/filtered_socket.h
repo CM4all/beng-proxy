@@ -110,6 +110,13 @@ struct filtered_socket {
 
     const struct buffered_socket_handler *handler;
     void *handler_ctx;
+
+    /**
+     * Is there still data in the filter's output?  Once this turns
+     * from "false" to "true", the #buffered_socket_handler method
+     * drained() will be invoked.
+     */
+    bool drained;
 };
 
 gcc_const
@@ -228,6 +235,19 @@ filtered_socket_valid(const struct filtered_socket *s)
     assert(s != NULL);
 
     return buffered_socket_valid(&s->base);
+}
+
+/**
+ * Accessor for #drained.
+ */
+static inline bool
+filtered_socket_is_drained(const struct filtered_socket *s)
+{
+    assert(s != NULL);
+    assert(filtered_socket_valid(s));
+
+    return s->drained;
+
 }
 
 /**
@@ -406,6 +426,27 @@ filtered_socket_internal_write(struct filtered_socket *s,
 
     return buffered_socket_write(&s->base, data, length);
 }
+
+/**
+ * A #socket_filter must call this function whenever it adds data to
+ * its output buffer (only if it implements such a buffer).
+ */
+static inline void
+filtered_socket_internal_undrained(struct filtered_socket *s)
+{
+    assert(s != NULL);
+    assert(s->filter != NULL);
+    assert(filtered_socket_connected(s));
+
+    s->drained = false;
+}
+
+/**
+ * A #socket_filter must call this function whenever its output buffer
+ * drains (only if it implements such a buffer).
+ */
+bool
+filtered_socket_internal_drained(struct filtered_socket *s);
 
 static inline void
 filtered_socket_internal_schedule_read(struct filtered_socket *s,

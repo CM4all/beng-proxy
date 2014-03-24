@@ -199,6 +199,17 @@ struct buffered_socket_handler {
     bool (*write)(void *ctx);
 
     /**
+     * The output buffer was drained, and all data that has been
+     * passed to buffered_socket_write() was written to the socket.
+     *
+     * This method is not actually used by #buffered_socket; it is
+     * only implemented for #filtered_socket.
+     *
+     * @return false if the method has destroyed the socket
+     */
+    bool (*drained)(void *ctx);
+
+    /**
      * @return false when the socket has been closed
      */
     bool (*timeout)(void *ctx);

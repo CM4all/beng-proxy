@@ -143,6 +143,7 @@ static constexpr struct buffered_socket_handler inbound_buffered_socket_handler 
     nullptr,
     inbound_buffered_socket_write,
     nullptr,
+    nullptr,
     inbound_buffered_socket_broken,
     inbound_buffered_socket_error,
 };
@@ -244,6 +245,7 @@ static constexpr struct buffered_socket_handler outbound_buffered_socket_handler
     nullptr,
     outbound_buffered_socket_end,
     outbound_buffered_socket_write,
+    nullptr,
     nullptr,
     outbound_buffered_socket_broken,
     outbound_buffered_socket_error,

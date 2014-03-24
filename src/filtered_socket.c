@@ -146,6 +146,8 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
     s->ended = false;
 #endif
 
+    s->drained = true;
+
     if (filter != NULL)
         filter->init(s, filter_ctx);
 }
@@ -210,4 +212,18 @@ filtered_socket_write(struct filtered_socket *s,
     return s->filter != NULL
         ? s->filter->write(data, length, s->filter_ctx)
         : buffered_socket_write(&s->base, data, length);
+}
+
+bool
+filtered_socket_internal_drained(struct filtered_socket *s)
+{
+    assert(s != NULL);
+    assert(s->filter != NULL);
+    assert(filtered_socket_connected(s));
+
+    if (s->drained || s->handler->drained == NULL)
+        return true;
+
+    s->drained = true;
+    return s->handler->drained(s->handler_ctx);
 }
