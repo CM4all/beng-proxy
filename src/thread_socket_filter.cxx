@@ -16,6 +16,8 @@ extern "C" {
 
 #include "gerrno.h"
 
+#include <algorithm>
+
 #include <string.h>
 #include <errno.h>
 
@@ -412,7 +414,7 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
     size_t max_length;
     void *p = fifo_buffer_write(f->plain_output, &max_length);
     if (p != nullptr) {
-        nbytes = length <= max_length ? length : max_length;
+        nbytes = std::min(length, max_length);
         memcpy(p, data, nbytes);
         fifo_buffer_append(f->plain_output, nbytes);
     }
