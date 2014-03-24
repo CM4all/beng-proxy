@@ -78,6 +78,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         gcc_unreachable();
 
     case WRITE_ERRNO:
+        lb_tcp_close(tcp);
         tcp->handler->_errno("Send failed", errno, tcp->handler_ctx);
         return BUFFERED_CLOSED;
 
@@ -88,6 +89,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BUFFERED_CLOSED;
 
     case WRITE_BROKEN:
+        lb_tcp_close(tcp);
         tcp->handler->eof(tcp->handler_ctx);
         return BUFFERED_CLOSED;
     }
@@ -180,6 +182,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         return BUFFERED_CLOSED;
 
     case WRITE_BROKEN:
+        lb_tcp_close(tcp);
         tcp->handler->eof(tcp->handler_ctx);
         return BUFFERED_CLOSED;
     }
@@ -220,6 +223,7 @@ outbound_buffered_socket_broken(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
+    lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
     return false;
 }
