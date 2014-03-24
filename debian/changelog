@@ -4,7 +4,7 @@ cm4all-beng-proxy (4.0.24) unstable; urgency=low
   * lb/tcp: fix memory leaks
   * lb/tcp: drain output buffers before closing the connection
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 24 Mar 2014 17:42:04 -0000
 
 cm4all-beng-proxy (4.0.23) unstable; urgency=low
 
