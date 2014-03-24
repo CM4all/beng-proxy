@@ -1852,7 +1852,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length < 7) {
+        if (payload_length == 0) {
             translate_client_error(client,
                                    "malformed ADDRESS_STRING packet");
             return false;
