@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0.24) unstable; urgency=low
 
-  * 
+  * failure: fix bogus assertion failure with abstract sockets
 
  --   
 

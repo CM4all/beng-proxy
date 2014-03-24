@@ -176,7 +176,6 @@ failure_unset(const struct sockaddr *addr, size_t addrlen,
     struct failure **failure_r, *failure;
 
     assert(addr != NULL);
-    assert(addrlen >= sizeof(failure->envelope.address));
 
     for (failure_r = &fl.slots[slot], failure = *failure_r;
          failure != NULL;
