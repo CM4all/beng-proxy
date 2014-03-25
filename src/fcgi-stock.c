@@ -184,6 +184,25 @@ fcgi_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
 {
     struct fcgi_connection *connection = (struct fcgi_connection *)item;
 
+    /* check the connection status before using it, just in case the
+       FastCGI server has decided to close the connection before
+       fcgi_connection_event_callback() got invoked */
+    char buffer;
+    ssize_t nbytes = recv(connection->fd, &buffer, sizeof(buffer),
+                          MSG_DONTWAIT);
+    if (nbytes > 0) {
+        daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
+                   fcgi_connection_key(connection));
+        return false;
+    } else if (nbytes == 0) {
+        /* connection closed (not worth a log message) */
+        return false;
+    } else if (errno != EAGAIN) {
+        daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
+                   fcgi_connection_key(connection), strerror(errno));
+        return false;
+    }
+
     p_event_del(&connection->event, connection->base.pool);
     return true;
 }
