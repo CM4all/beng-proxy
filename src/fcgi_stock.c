@@ -85,6 +85,13 @@ fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
     return key;
 }
 
+gcc_pure
+static const char *
+fcgi_connection_key(const struct fcgi_connection *connection)
+{
+    return child_stock_item_key(connection->child);
+}
+
 /*
  * libevent callback
  *
@@ -103,10 +110,11 @@ fcgi_connection_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
         char buffer;
         ssize_t nbytes = recv(fd, &buffer, sizeof(buffer), MSG_DONTWAIT);
         if (nbytes < 0)
-            daemon_log(2, "error on idle FastCGI connection: %s\n",
-                       strerror(errno));
+            daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
+                       fcgi_connection_key(connection), strerror(errno));
         else if (nbytes > 0)
-            daemon_log(2, "unexpected data from idle FastCGI connection\n");
+            daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
+                       fcgi_connection_key(connection));
     }
 
     stock_del(&connection->base);
@@ -223,6 +231,25 @@ static bool
 fcgi_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
 {
     struct fcgi_connection *connection = (struct fcgi_connection *)item;
+
+    /* check the connection status before using it, just in case the
+       FastCGI server has decided to close the connection before
+       fcgi_connection_event_callback() got invoked */
+    char buffer;
+    ssize_t nbytes = recv(connection->fd, &buffer, sizeof(buffer),
+                          MSG_DONTWAIT);
+    if (nbytes > 0) {
+        daemon_log(2, "unexpected data from idle FastCGI connection '%s'\n",
+                   fcgi_connection_key(connection));
+        return false;
+    } else if (nbytes == 0) {
+        /* connection closed (not worth a log message) */
+        return false;
+    } else if (errno != EAGAIN) {
+        daemon_log(2, "error on idle FastCGI connection '%s': %s\n",
+                   fcgi_connection_key(connection), strerror(errno));
+        return false;
+    }
 
     p_event_del(&connection->event, connection->base.pool);
     connection->aborted = false;
