@@ -289,7 +289,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget-session.c \
 	src/widget-uri.c \
 	src/widget-quark.h \
-	src/widget-request.c src/widget-request.h \
+	src/widget_request.cxx src/widget_request.hxx \
 	src/widget_registry.cxx src/widget-registry.h \
 	src/widget-resolver.c \
 	src/widget_approval.cxx src/widget_approval.hxx \
@@ -1017,7 +1017,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/penv.c src/processor.cxx \
 	src/text_processor.c \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
-	src/widget-request.c src/widget_approval.cxx \
+	src/widget_request.cxx src/widget_approval.cxx \
 	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/xml_parser.c src/widget-class.c \
 	src/widget-view.c \
@@ -1340,7 +1340,7 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 
 test_t_widget_http_SOURCES = test/t_widget_http.cxx \
-	src/widget_http.cxx src/widget-uri.c src/widget-request.c \
+	src/widget_http.cxx src/widget-uri.c src/widget_request.cxx \
 	src/pheaders.c \
 	src/crash.c \
 	src/widget-session.c src/session.c src/session_manager.c src/session_id.c \
@@ -1477,7 +1477,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/header-parser.c \
-	src/widget-request.c \
+	src/widget_request.cxx \
 	src/widget-view.c \
 	src/transformation.c \
 	src/failure.c src/bulldog.c \
@@ -1511,7 +1511,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/header-parser.c \
-	src/widget-request.c \
+	src/widget_request.cxx \
 	src/widget-view.c \
 	src/transformation.c \
 	src/failure.c src/bulldog.c \

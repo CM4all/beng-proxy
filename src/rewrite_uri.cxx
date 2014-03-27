@@ -6,7 +6,7 @@
 
 #include "rewrite_uri.hxx"
 #include "widget.h"
-#include "widget-request.h"
+#include "widget_request.hxx"
 #include "widget-resolver.h"
 #include "widget-class.h"
 #include "strref-pool.h"

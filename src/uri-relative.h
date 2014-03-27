@@ -14,6 +14,10 @@
 struct pool;
 struct strref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Compresses an URI (eliminates all "/./" and "/../"), and returns
  * the result.  May return NULL if there are too many "/../".
@@ -38,5 +42,9 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
  */
 const struct strref *
 uri_relative(const struct strref *base, struct strref *uri);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

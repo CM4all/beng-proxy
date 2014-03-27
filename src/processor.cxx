@@ -14,7 +14,7 @@
 #include "uri-extract.h"
 #include "widget.h"
 #include "widget_approval.hxx"
-#include "widget-request.h"
+#include "widget_request.hxx"
 #include "widget-lookup.h"
 #include "widget-class.h"
 #include "widget-quark.h"

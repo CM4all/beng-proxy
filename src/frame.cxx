@@ -13,7 +13,7 @@
 #include "widget_approval.hxx"
 #include "widget-resolver.h"
 #include "widget-lookup.h"
-#include "widget-request.h"
+#include "widget_request.hxx"
 #include "global.h"
 #include "http_response.h"
 #include "istream.h"

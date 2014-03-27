@@ -12,7 +12,7 @@
 #include "widget-class.h"
 #include "widget-resolver.h"
 #include "widget_approval.hxx"
-#include "widget-request.h"
+#include "widget_request.hxx"
 #include "async.h"
 #include "global.h"
 #include "http_util.h"
