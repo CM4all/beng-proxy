@@ -206,7 +206,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/pipe-stock.c src/pipe-stock.h \
 	src/pipe.c src/pipe.h \
 	src/tpool.c \
-	src/processor.c src/processor.h \
+	src/processor.cxx src/processor.h \
 	src/penv.c src/penv.h \
 	src/proxy_widget.cxx src/proxy_widget.hxx \
 	src/random.c src/random.h \
@@ -1015,7 +1015,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/http_string.c \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
-	src/penv.c src/processor.c \
+	src/penv.c src/processor.cxx \
 	src/text_processor.c \
 	src/css_processor.c src/css_parser.c src/css_rewrite.c \
 	src/widget-request.c src/widget-approval.c \
@@ -1463,7 +1463,7 @@ test_t_escape_css_SOURCES = \
 test_t_escape_css_LDADD = $(AM_LDADD) libutil.a
 
 test_run_processor_SOURCES = test/run-processor.c \
-	src/processor.c src/penv.c src/xml_parser.c \
+	src/processor.cxx src/penv.c src/xml_parser.c \
 	src/text_processor.c \
 	src/css_processor.c src/css_parser.c src/css_rewrite.c \
 	src/widget.c src/widget-init.c src/widget-approval.c src/widget-ref.c \
@@ -1497,7 +1497,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_processor_SOURCES = test/t-processor.c \
-	src/processor.c src/penv.c src/xml_parser.c \
+	src/processor.cxx src/penv.c src/xml_parser.c \
 	src/text_processor.c \
 	src/css_processor.c src/css_parser.c src/css_rewrite.c \
 	src/widget.c src/widget-init.c src/widget-approval.c src/widget-ref.c \

@@ -178,7 +178,7 @@ processable(const struct strmap *headers)
     const char *content_type;
 
     content_type = strmap_get_checked(headers, "content-type");
-    return content_type != NULL &&
+    return content_type != nullptr &&
         (strncmp(content_type, "text/html", 9) == 0 ||
          strncmp(content_type, "text/xml", 8) == 0 ||
          strncmp(content_type, "application/xhtml+xml", 21) == 0);
@@ -187,7 +187,7 @@ processable(const struct strmap *headers)
 static inline bool
 processor_option_quiet(const struct processor *processor)
 {
-    return processor->replace == NULL;
+    return processor->replace == nullptr;
 }
 
 static inline bool
@@ -245,7 +245,7 @@ processor_async_abort(struct async_operation *ao)
     struct processor *processor = async_to_processor(ao);
     struct pool *const widget_pool = processor->container->pool;
 
-    if (processor->container->for_focused.body != NULL)
+    if (processor->container->for_focused.body != nullptr)
         /* the request body was not yet submitted to the focused
            widget; dispose it now */
         istream_free_unused(&processor->container->for_focused.body);
@@ -253,7 +253,7 @@ processor_async_abort(struct async_operation *ao)
     pool_unref(widget_pool);
     pool_unref(processor->caller_pool);
 
-    if (processor->parser != NULL)
+    if (processor->parser != nullptr)
         parser_close(processor->parser);
 }
 
@@ -276,7 +276,7 @@ processor_new(struct pool *caller_pool,
               struct processor_env *env,
               unsigned options)
 {
-    assert(widget != NULL);
+    assert(widget != nullptr);
 
     struct pool *pool = pool_new_linear(caller_pool, "processor", 32768);
     struct processor *processor;
@@ -300,7 +300,7 @@ processor_new(struct pool *caller_pool,
     processor->postponed_rewrite.value =
         expansible_buffer_new(pool, 1024, 8192);
 
-    processor->widget.widget = NULL;
+    processor->widget.widget = nullptr;
     processor->widget.param.name = expansible_buffer_new(pool, 128, 512);
     processor->widget.param.value = expansible_buffer_new(pool, 512, 4096);
     processor->widget.params = expansible_buffer_new(pool, 1024, 8192);
@@ -314,13 +314,13 @@ processor_process(struct pool *caller_pool, struct istream *istream,
                   struct processor_env *env,
                   unsigned options)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream_has_handler(istream));
 
     struct processor *processor = processor_new(caller_pool, widget,
                                                 env, options);
 
-    processor->lookup_id = NULL;
+    processor->lookup_id = nullptr;
 
     /* the text processor will expand entities */
     istream = text_processor(processor->pool, istream, widget, env);
@@ -358,10 +358,10 @@ processor_lookup_widget(struct pool *caller_pool,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream_has_handler(istream));
-    assert(widget != NULL);
-    assert(id != NULL);
+    assert(widget != nullptr);
+    assert(id != nullptr);
 
     if ((options & PROCESSOR_CONTAINER) == 0) {
         GError *error =
@@ -376,7 +376,7 @@ processor_lookup_widget(struct pool *caller_pool,
 
     processor->lookup_id = id;
 
-    processor->replace = NULL;
+    processor->replace = nullptr;
 
     processor_parser_init(processor, istream);
 
@@ -392,7 +392,7 @@ processor_lookup_widget(struct pool *caller_pool,
     do {
         processor->had_input = false;
         parser_read(processor->parser);
-    } while (processor->had_input && processor->parser != NULL);
+    } while (processor->had_input && processor->parser != nullptr);
 
     pool_unref(processor->pool);
 }
@@ -439,7 +439,7 @@ processor_uri_rewrite_delete(struct processor *processor,
 
     if (!processor->postponed_rewrite.pending) {
         /* no URI attribute found yet: delete immediately */
-        istream_replace_add(processor->replace, start, end, NULL);
+        istream_replace_add(processor->replace, start, end, nullptr);
         return;
     }
 
@@ -480,7 +480,7 @@ processor_uri_rewrite_refresh_attribute(struct processor *processor,
 {
     const char *end = strref_end(&attr->value);
     const char *p = strref_chr(&attr->value, ';');
-    if (p == NULL || p + 7 > end || memcmp(p + 1, "URL='", 5) != 0 ||
+    if (p == nullptr || p + 7 > end || memcmp(p + 1, "URL='", 5) != 0 ||
         end[-1] != '\'')
         return;
 
@@ -516,7 +516,7 @@ processor_uri_rewrite_commit(struct processor *processor)
                             processor->uri_rewrite.base,
                             processor->uri_rewrite.mode,
                             processor->uri_rewrite.view[0] != 0
-                            ? processor->uri_rewrite.view : NULL);
+                            ? processor->uri_rewrite.view : nullptr);
 
     /* now delete all c:base/c:mode attributes which followed the
        URI */
@@ -526,7 +526,7 @@ processor_uri_rewrite_commit(struct processor *processor)
             istream_replace_add(processor->replace,
                                 processor->postponed_rewrite.delete[i].start,
                                 processor->postponed_rewrite.delete[i].end,
-                                NULL);
+                                nullptr);
 }
 
 /*
@@ -649,7 +649,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     processor->tag = TAG_IGNORE;
 
-    if (processor->widget.widget != NULL)
+    if (processor->widget.widget != nullptr)
         return parser_element_start_in_widget(processor, tag->type, &tag->name);
 
     if (tag->type == TAG_PI)
@@ -657,18 +657,18 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
     if (strref_cmp_literal(&tag->name, "c:widget") == 0) {
         if ((processor->options & PROCESSOR_CONTAINER) == 0 ||
-            global_translate_cache == NULL)
+            global_translate_cache == nullptr)
             return false;
 
         if (tag->type == TAG_CLOSE) {
-            assert(processor->widget.widget == NULL);
+            assert(processor->widget.widget == nullptr);
             return false;
         }
 
         processor->tag = TAG_WIDGET;
         processor->widget.widget = p_malloc(processor->widget.pool,
                                             sizeof(*processor->widget.widget));
-        widget_init(processor->widget.widget, processor->widget.pool, NULL);
+        widget_init(processor->widget.widget, processor->widget.pool, nullptr);
         expansible_buffer_reset(processor->widget.params);
 
         processor->widget.widget->parent = processor->container;
@@ -756,7 +756,7 @@ strref_split(const struct strref *in, char separator,
 {
     const char *x = strref_chr(in, separator);
 
-    if (x != NULL) {
+    if (x != nullptr) {
         strref_set(before, in->data, x - in->data);
         strref_set(after, x + 1, in->data + in->length - (x + 1));
     } else {
@@ -781,7 +781,7 @@ transform_uri_attribute(struct processor *processor,
         /* can't rewrite if the specified URI is absolute */
         return;
 
-    struct widget *widget = NULL;
+    struct widget *widget = nullptr;
     struct strref child_id, suffix;
     struct istream *istream;
 
@@ -799,7 +799,7 @@ transform_uri_attribute(struct processor *processor,
 
         widget = widget_get_child(processor->container,
                                   strref_dup(processor->pool, &child_id));
-        if (widget == NULL)
+        if (widget == nullptr)
             return;
 
         if (!strref_is_null(&suffix))
@@ -807,25 +807,25 @@ transform_uri_attribute(struct processor *processor,
             value = &suffix;
         else
             /* no slash, use the default path_info */
-            value = NULL;
+            value = nullptr;
         break;
 
     case URI_BASE_PARENT:
         widget = processor->container->parent;
-        if (widget == NULL)
+        if (widget == nullptr)
             return;
 
         break;
     }
 
-    assert(widget != NULL);
+    assert(widget != nullptr);
 
-    if (widget->cls == NULL && widget->class_name == NULL)
+    if (widget->cls == nullptr && widget->class_name == nullptr)
         return;
 
-    const char *hash = value != NULL ? strref_chr(value, '#') : NULL;
+    const char *hash = value != nullptr ? strref_chr(value, '#') : nullptr;
     struct strref value_buffer, fragment;
-    if (hash != NULL) {
+    if (hash != nullptr) {
         /* save the unescaped fragment part of the URI, don't pass it
            to rewrite_widget_uri() */
         strref_set2(&fragment, hash, strref_end(value));
@@ -845,7 +845,7 @@ transform_uri_attribute(struct processor *processor,
                                  value, mode, widget == processor->container,
                                  view,
                                  &html_escape_class);
-    if (istream == NULL)
+    if (istream == nullptr)
         return;
 
     if (!strref_is_empty(&fragment)) {
@@ -857,7 +857,7 @@ transform_uri_attribute(struct processor *processor,
                                                fragment.length);
         s = istream_html_escape_new(processor->pool, s);
 
-        istream = istream_cat_new(processor->pool, istream, s, NULL);
+        istream = istream_cat_new(processor->pool, istream, s, nullptr);
     }
 
     replace_attribute_value(processor, attr, istream);
@@ -949,20 +949,20 @@ link_attr_finished(struct processor *processor, const struct parser_attr *attr)
 static const char *
 find_underscore(const char *p, const char *end)
 {
-    assert(p != NULL);
-    assert(end != NULL);
+    assert(p != nullptr);
+    assert(end != nullptr);
     assert(p <= end);
 
     if (p == end)
-        return NULL;
+        return nullptr;
 
     if (is_underscore_prefix(p, end))
         return p;
 
     while (true) {
         p = memchr(p + 1, '_', end - p);
-        if (p == NULL)
-            return NULL;
+        if (p == nullptr)
+            return nullptr;
 
         if (char_is_whitespace(p[-1]) &&
             is_underscore_prefix(p, end))
@@ -977,7 +977,7 @@ handle_class_attribute(struct processor *processor,
     const char *p = attr->value.data, *const end = strref_end(&attr->value);
 
     const char *u = find_underscore(p, end);
-    if (u == NULL)
+    if (u == nullptr)
         return;
 
     struct expansible_buffer *const buffer = processor->buffer;
@@ -991,12 +991,12 @@ handle_class_attribute(struct processor *processor,
 
         const unsigned n = underscore_prefix(p, end);
         const char *prefix;
-        if (n == 3 && (prefix = widget_prefix(processor->container)) != NULL) {
+        if (n == 3 && (prefix = widget_prefix(processor->container)) != nullptr) {
             if (!expansible_buffer_write_string(buffer, prefix))
                 return;
 
             p += 3;
-        } else if (n == 2 && (prefix = widget_get_quoted_class_name(processor->container)) != NULL) {
+        } else if (n == 2 && (prefix = widget_get_quoted_class_name(processor->container)) != nullptr) {
             if (!expansible_buffer_write_string(buffer, prefix))
                 return;
 
@@ -1014,7 +1014,7 @@ handle_class_attribute(struct processor *processor,
         }
 
         u = find_underscore(p, end);
-    } while (u != NULL);
+    } while (u != nullptr);
 
     if (!expansible_buffer_write_buffer(buffer, p, end - p))
         return;
@@ -1036,7 +1036,7 @@ handle_id_attribute(struct processor *processor,
         /* triple underscore: add widget path prefix */
 
         const char *prefix = widget_prefix(processor->container);
-        if (prefix == NULL)
+        if (prefix == nullptr)
             return;
 
         processor_replace_add(processor, attr->value_start,
@@ -1047,7 +1047,7 @@ handle_id_attribute(struct processor *processor,
 
         const char *class_name =
             widget_get_quoted_class_name(processor->container);
-        if (class_name == NULL)
+        if (class_name == nullptr)
             return;
 
         processor_replace_add(processor, attr->value_start,
@@ -1074,7 +1074,7 @@ handle_style_attribute(struct processor *processor,
                                processor->env->session_id,
                                attr->value,
                                &html_escape_class);
-    if (result != NULL)
+    if (result != nullptr)
         processor_replace_add(processor, attr->value_start, attr->value_end,
                               result);
 }
@@ -1163,7 +1163,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_WIDGET:
-        assert(processor->widget.widget != NULL);
+        assert(processor->widget.widget != nullptr);
 
         parser_widget_attr_finished(processor->widget.widget,
                                     processor->widget.pool,
@@ -1172,7 +1172,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 
     case TAG_WIDGET_PARAM:
     case TAG_WIDGET_HEADER:
-        assert(processor->widget.widget != NULL);
+        assert(processor->widget.widget != nullptr);
 
         if (strref_cmp_literal(&attr->name, "name") == 0) {
             expansible_buffer_set_strref(processor->widget.param.name,
@@ -1185,7 +1185,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_WIDGET_PATH_INFO:
-        assert(processor->widget.widget != NULL);
+        assert(processor->widget.widget != nullptr);
 
         if (strref_cmp_literal(&attr->name, "value") == 0) {
             processor->widget.widget->path_info
@@ -1195,7 +1195,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         break;
 
     case TAG_WIDGET_VIEW:
-        assert(processor->widget.widget != NULL);
+        assert(processor->widget.widget != nullptr);
 
         if (strref_cmp_literal(&attr->name, "name") == 0) {
             if (strref_is_empty(&attr->value)) {
@@ -1264,29 +1264,29 @@ widget_catch_callback(GError *error, void *ctx)
     daemon_log(3, "error from widget '%s': %s\n",
                widget_path(widget), error->message);
     g_error_free(error);
-    return NULL;
+    return nullptr;
 }
 
 static struct istream *
 embed_widget(struct processor *processor, struct processor_env *env,
              struct widget *widget)
 {
-    assert(widget->class_name != NULL);
+    assert(widget->class_name != nullptr);
 
-    if (processor->replace != NULL) {
-        if (!widget_copy_from_request(widget, env, NULL)) {
+    if (processor->replace != nullptr) {
+        if (!widget_copy_from_request(widget, env, nullptr)) {
             widget_cancel(widget);
-            return NULL;
+            return nullptr;
         }
 
         struct istream *istream = embed_inline_widget(processor->pool,
                                                       env, widget);
-        if (istream != NULL)
+        if (istream != nullptr)
             istream = istream_catch_new(processor->pool, istream,
                                         widget_catch_callback, widget);
 
         return istream;
-    } else if (widget->id != NULL &&
+    } else if (widget->id != nullptr &&
                strcmp(processor->lookup_id, widget->id) == 0) {
         struct pool *caller_pool = processor->caller_pool;
         struct pool *const widget_pool = processor->container->pool;
@@ -1294,15 +1294,15 @@ embed_widget(struct processor *processor, struct processor_env *env,
         void *handler_ctx = processor->handler_ctx;
 
         parser_close(processor->parser);
-        processor->parser = NULL;
+        processor->parser = nullptr;
 
-        GError *error = NULL;
+        GError *error = nullptr;
         if (!widget_copy_from_request(widget, env, &error)) {
             widget_cancel(widget);
             processor->handler->error(error, processor->handler_ctx);
             pool_unref(widget_pool);
             pool_unref(caller_pool);
-            return NULL;
+            return nullptr;
         }
 
         handler->found(widget, handler_ctx);
@@ -1310,10 +1310,10 @@ embed_widget(struct processor *processor, struct processor_env *env,
         pool_unref(caller_pool);
         pool_unref(widget_pool);
 
-        return NULL;
+        return nullptr;
     } else {
         widget_cancel(widget);
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -1322,9 +1322,9 @@ open_widget_element(struct processor *processor, struct widget *widget)
 {
     assert(widget->parent == processor->container);
 
-    if (widget->class_name == NULL) {
+    if (widget->class_name == nullptr) {
         daemon_log(5, "widget without a class\n");
-        return NULL;
+        return nullptr;
     }
 
     /* enforce the SELF_CONTAINER flag */
@@ -1335,12 +1335,12 @@ open_widget_element(struct processor *processor, struct widget *widget)
                    widget_path(processor->container),
                    processor->container->class_name,
                    widget->class_name);
-        return NULL;
+        return nullptr;
     }
 
     if (widget_check_recursion(widget->parent)) {
         daemon_log(5, "maximum widget depth exceeded\n");
-        return NULL;
+        return nullptr;
     }
 
     if (!expansible_buffer_is_empty(processor->widget.params))
@@ -1357,9 +1357,9 @@ widget_element_finished(struct processor *processor,
                         const struct parser_tag *tag, struct widget *widget)
 {
     struct istream *istream = open_widget_element(processor, widget);
-    assert(istream == NULL || processor->replace != NULL);
+    assert(istream == nullptr || processor->replace != nullptr);
 
-    if (processor->replace != NULL)
+    if (processor->replace != nullptr)
         processor_replace_add(processor, processor->widget.start_offset,
                               tag->end, istream);
 }
@@ -1403,16 +1403,16 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
     if (processor->tag == TAG_WIDGET) {
         if (tag->type == TAG_OPEN || tag->type == TAG_SHORT)
             processor->widget.start_offset = tag->start;
-        else if (processor->widget.widget == NULL)
+        else if (processor->widget.widget == nullptr)
             return;
 
-        assert(processor->widget.widget != NULL);
+        assert(processor->widget.widget != nullptr);
 
         if (tag->type == TAG_OPEN)
             return;
 
         struct widget *widget = processor->widget.widget;
-        processor->widget.widget = NULL;
+        processor->widget.widget = nullptr;
 
         widget_element_finished(processor, tag, widget);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
@@ -1420,7 +1420,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         const char *p;
         size_t length;
 
-        assert(processor->widget.widget != NULL);
+        assert(processor->widget.widget != nullptr);
 
         if (expansible_buffer_is_empty(processor->widget.param.name))
             return;
@@ -1428,7 +1428,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         pool_mark(tpool, &mark);
 
         p = expansible_buffer_read(processor->widget.param.value, &length);
-        if (memchr(p, '&', length) != NULL) {
+        if (memchr(p, '&', length) != nullptr) {
             char *q = p_memdup(tpool, p, length);
             length = unescape_inplace(&html_escape_class, q, length);
             p = q;
@@ -1454,7 +1454,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         const char *name;
         size_t length;
 
-        assert(processor->widget.widget != NULL);
+        assert(processor->widget.widget != nullptr);
 
         if (tag->type == TAG_CLOSE)
             return;
@@ -1465,13 +1465,13 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
             return;
         }
 
-        if (processor->widget.widget->headers == NULL)
+        if (processor->widget.widget->headers == nullptr)
             processor->widget.widget->headers =
                 strmap_new(processor->widget.pool, 16);
 
         char *value = expansible_buffer_strdup(processor->widget.param.value,
                                                processor->widget.pool);
-        if (strchr(value, '&') != NULL) {
+        if (strchr(value, '&') != nullptr) {
             length = unescape_inplace(&html_escape_class,
                                       value, strlen(value));
             value[length] = 0;
@@ -1490,7 +1490,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         /* the settings of this tag become the new default */
         processor->default_uri_rewrite = processor->uri_rewrite;
 
-        processor_replace_add(processor, tag->start, tag->end, NULL);
+        processor_replace_add(processor, tag->start, tag->end, nullptr);
     } else if (processor->tag == TAG_STYLE) {
         if (tag->type == TAG_OPEN && !processor_option_quiet(processor) &&
             processor_option_style(processor)) {
@@ -1538,7 +1538,7 @@ processor_parser_cdata(const char *p gcc_unused, size_t length,
         if (length > 0)
             istream_replace_extend(processor->replace, processor->cdata_start,
                                    start + length);
-    } else if (processor->replace != NULL && processor->widget.widget == NULL)
+    } else if (processor->replace != nullptr && processor->widget.widget == nullptr)
         istream_replace_settle(processor->replace, start + length);
 
     return length;
@@ -1550,21 +1550,21 @@ processor_parser_eof(void *ctx, off_t length gcc_unused)
     struct processor *processor = ctx;
     struct pool *const widget_pool = processor->container->pool;
 
-    assert(processor->parser != NULL);
+    assert(processor->parser != nullptr);
 
-    processor->parser = NULL;
+    processor->parser = nullptr;
 
     processor_stop_cdata_stream(processor);
 
-    if (processor->container->for_focused.body != NULL)
+    if (processor->container->for_focused.body != nullptr)
         /* the request body could not be submitted to the focused
            widget, because we didn't find it; dispose it now */
         istream_free_unused(&processor->container->for_focused.body);
 
-    if (processor->replace != NULL)
+    if (processor->replace != nullptr)
         istream_replace_finish(processor->replace);
 
-    if (processor->lookup_id != NULL) {
+    if (processor->lookup_id != nullptr) {
         /* widget was not found */
         async_operation_finished(&processor->async);
 
@@ -1581,18 +1581,18 @@ processor_parser_abort(GError *error, void *ctx)
     struct processor *processor = ctx;
     struct pool *const widget_pool = processor->container->pool;
 
-    assert(processor->parser != NULL);
+    assert(processor->parser != nullptr);
 
-    processor->parser = NULL;
+    processor->parser = nullptr;
 
     processor_stop_cdata_stream(processor);
 
-    if (processor->container->for_focused.body != NULL)
+    if (processor->container->for_focused.body != nullptr)
         /* the request body could not be submitted to the focused
            widget, because we didn't find it; dispose it now */
         istream_free_unused(&processor->container->for_focused.body);
 
-    if (processor->lookup_id != NULL) {
+    if (processor->lookup_id != nullptr) {
         async_operation_finished(&processor->async);
         processor->handler->error(error, processor->handler_ctx);
         pool_unref(processor->caller_pool);
