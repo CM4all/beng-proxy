@@ -308,7 +308,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/text_processor.c src/text_processor.h \
 	src/resource-loader.c \
 	src/widget-http.c \
-	src/inline-widget.c \
+	src/inline_widget.cxx src/inline_widget.hxx \
 	src/frame.cxx src/frame.hxx \
 	src/udp-listener.c \
 	src/udp-distribute.c \
@@ -774,7 +774,7 @@ check_PROGRAMS = \
 	test/t-rewrite-uri \
 	test/t_widget_registry \
 	test/t-widget-resolver \
-	test/t-wembed test/t-widget-http \
+	test/t_wembed test/t-widget-http \
 	test/t-processor \
 	test/t_memcached_client
 
@@ -809,7 +809,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t-rewrite-uri \
 	test/t_widget_registry \
 	test/t-widget-resolver \
-	test/t-wembed test/t-widget-http
+	test/t_wembed test/t-widget-http
 
 test_run_ping_SOURCES = test/run-ping.c \
 	src/ping.c \
@@ -1324,10 +1324,10 @@ test_t_widget_resolver_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS)
 
-test_t_wembed_SOURCES = test/t-wembed.c \
+test_t_wembed_SOURCES = test/t_wembed.cxx \
 	src/widget-init.c \
 	src/widget-approval.c \
-	src/inline-widget.c \
+	src/inline_widget.cxx \
 	src/istream-escape.c src/istream-html-escape.c \
 	src/fifo-buffer.c \
 	src/hashmap.c src/strmap.c src/strset.c \

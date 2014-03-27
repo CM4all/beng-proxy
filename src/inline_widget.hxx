@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_INLINE_WIDGET_H
-#define BENG_PROXY_INLINE_WIDGET_H
+#ifndef BENG_PROXY_INLINE_WIDGET_HXX
+#define BENG_PROXY_INLINE_WIDGET_HXX
 
 struct pool;
 struct widget;

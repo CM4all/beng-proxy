@@ -10,10 +10,18 @@
 struct pool;
 struct istream;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct istream *
 istream_pause_new(struct pool *pool, struct istream *input);
 
 void
 istream_pause_resume(struct istream *istream);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,7 +1,7 @@
 #include "processor.h"
 #include "penv.h"
 #include "uri-parser.h"
-#include "inline-widget.h"
+#include "inline_widget.hxx"
 #include "widget.h"
 #include "widget-class.h"
 #include "rewrite-uri.h"

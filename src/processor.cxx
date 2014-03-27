@@ -20,7 +20,7 @@
 #include "widget-quark.h"
 #include "growing-buffer.h"
 #include "tpool.h"
-#include "inline-widget.h"
+#include "inline_widget.hxx"
 #include "async.h"
 #include "rewrite-uri.h"
 #include "strref2.h"

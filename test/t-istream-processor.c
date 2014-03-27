@@ -5,7 +5,7 @@
 #include "penv.h"
 #include "uri-parser.h"
 #include "session_manager.h"
-#include "inline-widget.h"
+#include "inline_widget.hxx"
 #include "widget-registry.h"
 #include "http_address.h"
 #include "global.h"

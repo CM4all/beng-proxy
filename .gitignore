@@ -54,7 +54,6 @@ test/t-cookie-server
 test/t-widget-resolver
 test/t-session
 test/run-header-parser
-test/t-wembed
 test/run-client-balancer
 test/run_client
 test/t_ajp_client

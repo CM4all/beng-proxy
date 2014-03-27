@@ -10,5 +10,6 @@ run_nfs_client
 /t_memcached_client
 /t_sink_header
 /t_sink_header_empty
+/t_wembed
 
 *.trs
