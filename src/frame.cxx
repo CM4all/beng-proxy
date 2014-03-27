@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "frame.h"
+#include "frame.hxx"
 #include "widget-http.h"
 #include "widget-quark.h"
 #include "penv.h"
@@ -27,10 +27,10 @@ frame_top_widget(struct pool *pool, struct widget *widget,
                  void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    assert(widget != NULL);
-    assert(widget->cls != NULL);
+    assert(widget != nullptr);
+    assert(widget->cls != nullptr);
     assert(widget_has_default_view(widget));
-    assert(env != NULL);
+    assert(env != nullptr);
 
     if (!widget_check_approval(widget)) {
         GError *error =
@@ -56,7 +56,7 @@ frame_top_widget(struct pool *pool, struct widget *widget,
 
     if (widget->session_sync_pending) {
         struct session *session = session_get(env->session_id);
-        if (session != NULL) {
+        if (session != nullptr) {
             widget_sync_session(widget, session);
             session_put(session);
         } else
@@ -74,11 +74,11 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    assert(widget != NULL);
-    assert(widget->cls != NULL);
+    assert(widget != nullptr);
+    assert(widget->cls != nullptr);
     assert(widget_has_default_view(widget));
-    assert(id != NULL);
-    assert(env != NULL);
+    assert(id != nullptr);
+    assert(env != nullptr);
 
     if (!widget_is_container(widget)) {
         /* this widget cannot possibly be the parent of a framed
@@ -106,7 +106,7 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
 
     if (widget->session_sync_pending) {
         struct session *session = session_get(env->session_id);
-        if (session != NULL) {
+        if (session != nullptr) {
             widget_sync_session(widget, session);
             session_put(session);
         } else

@@ -11,6 +11,10 @@
 
 struct widget;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool
 widget_init_approval(struct widget *widget, bool self_container);
 
@@ -25,5 +29,9 @@ widget_init_approval(struct widget *widget, bool self_container);
 gcc_pure
 bool
 widget_check_approval(struct widget *widget);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

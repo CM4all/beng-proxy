@@ -309,7 +309,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/resource-loader.c \
 	src/widget-http.c \
 	src/inline-widget.c \
-	src/frame.c \
+	src/frame.cxx src/frame.hxx \
 	src/udp-listener.c \
 	src/udp-distribute.c \
 	src/istream-ajp-body.c \

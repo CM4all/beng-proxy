@@ -9,7 +9,7 @@
 #include "widget-lookup.h"
 #include "widget-resolver.h"
 #include "widget.h"
-#include "frame.h"
+#include "frame.hxx"
 #include "request.hxx"
 #include "header-writer.h"
 #include "header-forward.h"

@@ -17,6 +17,10 @@ struct widget;
 struct processor_env;
 struct session;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Copy parameters from the request to the widget.
  */
@@ -45,5 +49,9 @@ void
 widget_copy_from_location(struct widget *widget, struct session *session,
                           const char *location, size_t location_length,
                           struct pool *pool);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

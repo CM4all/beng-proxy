@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_FRAME_H
-#define BENG_PROXY_FRAME_H
+#ifndef BENG_PROXY_FRAME_HXX
+#define BENG_PROXY_FRAME_HXX
 
 struct pool;
 struct widget;
@@ -13,10 +13,6 @@ struct processor_env;
 struct http_response_handler;
 struct widget_lookup_handler;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Request the contents of the specified widget.  This is a wrapper
@@ -41,9 +37,5 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
                     const struct widget_lookup_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
