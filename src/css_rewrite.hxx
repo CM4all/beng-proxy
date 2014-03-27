@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CSS_REWRITE_H
-#define BENG_PROXY_CSS_REWRITE_H
+#ifndef BENG_PROXY_CSS_REWRITE_HXX
+#define BENG_PROXY_CSS_REWRITE_HXX
 
 #include "session_id.h"
 
@@ -20,10 +20,6 @@ struct escape_class;
 struct widget;
 struct tcache;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * @return NULL if no rewrite is necessary
  */
@@ -37,9 +33,5 @@ css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
                        session_id_t session_id,
                        const struct strref block,
                        const struct escape_class *escape);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "css_rewrite.h"
+#include "css_rewrite.hxx"
 #include "css_parser.h"
 #include "rewrite-uri.h"
 #include "pool.h"
@@ -32,8 +32,8 @@ struct css_rewrite {
 static void
 css_rewrite_parser_url(const struct css_parser_value *url, void *ctx)
 {
-    struct css_rewrite *rewrite = ctx;
-    assert(rewrite->parser != NULL);
+    struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
+    assert(rewrite->parser != nullptr);
 
     if (rewrite->n_urls < G_N_ELEMENTS(rewrite->urls)) {
         struct css_url *p = &rewrite->urls[rewrite->n_urls++];
@@ -45,10 +45,10 @@ css_rewrite_parser_url(const struct css_parser_value *url, void *ctx)
 static void
 css_rewrite_parser_eof(void *ctx, off_t length gcc_unused)
 {
-    struct css_rewrite *rewrite = ctx;
-    assert(rewrite->parser != NULL);
+    struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
+    assert(rewrite->parser != nullptr);
 
-    rewrite->parser = NULL;
+    rewrite->parser = nullptr;
 }
 
 #ifndef NDEBUG
@@ -57,7 +57,7 @@ gcc_noreturn
 static void
 css_rewrite_parser_error(GError *error, void *ctx)
 {
-    struct css_rewrite *rewrite = ctx;
+    struct css_rewrite *rewrite = (struct css_rewrite *)ctx;
     (void)rewrite;
 
     /* shouldn't happen - input is an istream_memory which never
@@ -101,13 +101,13 @@ css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
                                     true,
                                     &css_rewrite_parser_handler, &rewrite);
     css_parser_read(rewrite.parser);
-    assert(rewrite.parser == NULL);
+    assert(rewrite.parser == nullptr);
 
     pool_rewind(tpool, &mark);
 
     if (rewrite.n_urls == 0)
         /* no URLs found, no rewriting necessary */
-        return NULL;
+        return nullptr;
 
     struct istream *input =
         istream_memory_new(pool, p_memdup(pool, block.data, block.length),
@@ -129,9 +129,9 @@ css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
                                widget,
                                session_id,
                                &buffer,
-                               URI_MODE_PARTIAL, false, NULL,
+                               URI_MODE_PARTIAL, false, nullptr,
                                escape);
-        if (value == NULL)
+        if (value == nullptr)
             continue;
 
         istream_replace_add(replace, url->start, url->end, value);
@@ -140,7 +140,7 @@ css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
 
     if (!modified) {
         istream_close(replace);
-        return NULL;
+        return nullptr;
     }
 
     istream_replace_finish(replace);

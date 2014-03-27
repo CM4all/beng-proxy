@@ -7,7 +7,7 @@
 #include "processor.h"
 #include "text_processor.h"
 #include "css_processor.h"
-#include "css_rewrite.h"
+#include "css_rewrite.hxx"
 #include "penv.h"
 #include "xml_parser.h"
 #include "uri-escape.h"
