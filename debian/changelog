@@ -3,7 +3,7 @@ cm4all-beng-proxy (4.0.25) unstable; urgency=low
   * merge release 3.1.27
   * lb/tcp: fix busy loop
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 27 Mar 2014 11:22:05 -0000
 
 cm4all-beng-proxy (4.0.24) unstable; urgency=low
 
