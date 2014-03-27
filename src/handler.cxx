@@ -26,7 +26,7 @@
 #include "dpool.h"
 #include "http_server.h"
 #include "http_quark.h"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "expiry.h"
 #include "uri-escape.h"
 #include "uri-verify.h"

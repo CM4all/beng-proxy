@@ -240,7 +240,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/tcp-stock.c src/tcp-stock.h \
 	src/tcp-balancer.c src/tcp-balancer.h \
 	src/tpool.h \
-	src/transformation.c src/transformation.h \
+	src/transformation.cxx src/transformation.hxx \
 	src/tstock.cxx src/tstock.hxx \
 	src/udp-listener.h \
 	src/udp-distribute.h \
@@ -874,7 +874,7 @@ test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/clock.c \
 	src/tpool.c \
-	src/transformation.c
+	src/transformation.cxx
 test_t_tcache_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libraddress.a \
@@ -1023,7 +1023,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/uri-extract.c \
 	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
-	src/global.c src/transformation.c \
+	src/global.c src/transformation.cxx \
 	src/expansible-buffer.c \
 	src/clock.c \
 	$(T_ISTREAM_FILTER_SRC)
@@ -1280,7 +1280,7 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/istream-escape.c \
 	src/istream-html-escape.c \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
-	src/widget_init.cxx src/widget_view.cxx src/transformation.c \
+	src/widget_init.cxx src/widget_view.cxx src/transformation.cxx \
 	src/sink-gstring.c \
 	src/args.c \
 	src/strmap.c src/hashmap.c \
@@ -1296,7 +1296,7 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/widget_registry.cxx src/stock.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
-	src/transformation.c \
+	src/transformation.cxx \
 	src/tcache.cxx src/cache.c \
 	src/translate_response.cxx \
 	src/widget_view.cxx \
@@ -1357,7 +1357,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/http_string.c src/http_util.c \
 	src/istream-escape.c \
-	src/transformation.c \
+	src/transformation.cxx \
 	src/dpool.c src/dstring.c src/dhashmap.c src/shm.c \
 	src/clock.c \
 	src/tpool.c
@@ -1392,7 +1392,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/uri-escape.c src/uri-relative.c \
 	src/uri-extract.c \
 	src/widget_view.cxx \
-	src/transformation.c \
+	src/transformation.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
@@ -1478,7 +1478,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/header-parser.c \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
-	src/transformation.c \
+	src/transformation.cxx \
 	src/failure.c src/bulldog.c \
 	src/balancer.c src/http_address.c src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
@@ -1512,7 +1512,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/header-parser.c \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
-	src/transformation.c \
+	src/transformation.cxx \
 	src/failure.c src/bulldog.c \
 	src/balancer.c src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \

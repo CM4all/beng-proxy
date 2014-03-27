@@ -12,7 +12,7 @@
 #include "session_manager.h"
 #include "http_server.h"
 #include "cookie_server.h"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "args.h"
 #include "bot.h"
 #include "dpool.h"

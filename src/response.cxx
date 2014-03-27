@@ -5,7 +5,7 @@
  */
 
 #include "request.hxx"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "http_server.h"
 #include "http_response.h"
 #include "header-writer.h"

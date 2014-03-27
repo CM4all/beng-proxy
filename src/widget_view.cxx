@@ -5,7 +5,7 @@
  */
 
 #include "widget_view.hxx"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "pool.h"
 
 #include <string.h>
@@ -95,13 +95,13 @@ widget_view_lookup(const struct widget_view *view, const char *name)
 bool
 widget_view_has_processor(const struct widget_view *view)
 {
-    return transformation_has_processor(view->transformation);
+    return view->transformation->HasProcessor();
 }
 
 bool
 widget_view_is_container(const struct widget_view *view)
 {
-    return transformation_is_container(view->transformation);
+    return view->transformation->IsContainer();
 }
 
 static struct widget_view *
@@ -114,7 +114,7 @@ widget_view_dup(struct pool *pool, const struct widget_view *src)
     resource_address_copy(pool, &dest->address, &src->address);
     dest->filter_4xx = src->filter_4xx;
     dest->inherited = src->inherited;
-    dest->transformation = transformation_dup_chain(pool, src->transformation);
+    dest->transformation = src->transformation->DupChain(pool);
     dest->request_header_forward = src->request_header_forward;
     dest->response_header_forward = src->response_header_forward;
 
@@ -142,7 +142,7 @@ bool
 widget_view_is_expandable(const struct widget_view *view)
 {
     return resource_address_is_expandable(&view->address) ||
-        transformation_any_is_expandable(view->transformation);
+        view->transformation->IsChainExpandable();
 }
 
 bool
@@ -168,8 +168,7 @@ widget_view_expand(struct pool *pool, struct widget_view *view,
 
     return resource_address_expand(pool, &view->address,
                                    match_info, error_r) &&
-        transformation_expand_all(pool, view->transformation,
-                                  match_info, error_r);
+        view->transformation->ExpandChain(pool, match_info, error_r);
 }
 
 bool

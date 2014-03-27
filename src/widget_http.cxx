@@ -24,7 +24,7 @@
 #include "fcache.h"
 #include "header-writer.h"
 #include "header-forward.h"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "global.h"
 #include "resource-tag.h"
 #include "uri-extract.h"
@@ -591,14 +591,14 @@ widget_response_response(http_status_t status, struct strmap *headers,
     /* temporary kludge for widgets that are still using the
        "mode=proxy" feature that has been deprecated since beng-proxy
        0.4 */
-    if (transformation_has_processor(embed->transformation) &&
+    if (embed->transformation->HasProcessor() &&
         g_getenv("VERBATIM_UNPROCESSABLE") != nullptr &&
         !processable(headers))
         embed->transformation = nullptr;
 #endif
 
     if (widget->session_save_pending &&
-        transformation_has_processor(embed->transformation)) {
+        embed->transformation->HasProcessor()) {
         struct session *session = session_get(embed->env->session_id);
         if (session != nullptr) {
             widget_save_session(widget, session);

@@ -4,7 +4,7 @@
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "async.h"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "widget_view.hxx"
 #include "beng-proxy/translation.h"
 #include "http_address.h"

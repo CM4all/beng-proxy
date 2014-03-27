@@ -14,7 +14,7 @@
 #include "penv.h"
 #include "async.h"
 #include "session.h"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "widget_class.hxx"
 
 #include <glib.h>

@@ -8,7 +8,7 @@
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "buffered_socket.h"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "widget_class.hxx"
 #include "please.h"
 #include "growing-buffer.h"

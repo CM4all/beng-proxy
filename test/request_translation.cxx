@@ -3,7 +3,7 @@
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "widget_view.hxx"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "balancer.h"
 #include "tcp-stock.h"
 #include "async.h"

@@ -15,7 +15,7 @@
 #include "penv.h"
 #include "async.h"
 #include "fcache.h"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "crash.h"
 #include "istream.h"
 #include "session_manager.h"

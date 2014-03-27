@@ -9,7 +9,7 @@
 #include "translate_response.hxx"
 #include "widget.h"
 #include "widget_class.hxx"
-#include "transformation.h"
+#include "transformation.hxx"
 #include "pool.h"
 #include "tpool.h"
 
