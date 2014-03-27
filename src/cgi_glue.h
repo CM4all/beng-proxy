@@ -16,6 +16,10 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 cgi_new(struct pool *pool, http_method_t method,
         const struct cgi_address *address,
@@ -24,5 +28,9 @@ cgi_new(struct pool *pool, http_method_t method,
         const struct http_response_handler *handler,
         void *handler_ctx,
         struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

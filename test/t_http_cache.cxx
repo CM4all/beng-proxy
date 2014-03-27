@@ -1,6 +1,6 @@
 #include "http_cache.h"
 #include "http_cache_memcached.hxx"
-#include "resource-loader.h"
+#include "resource_loader.hxx"
 #include "resource-address.h"
 #include "http_address.h"
 #include "growing-buffer.h"

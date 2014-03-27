@@ -17,6 +17,10 @@ struct growing_buffer;
 struct http_response_handler;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
               const struct lhttp_address *address,
@@ -24,5 +28,9 @@ lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
               struct growing_buffer *headers, struct istream *body,
               const struct http_response_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

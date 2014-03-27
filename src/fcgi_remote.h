@@ -17,6 +17,10 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     const struct address_list *address_list,
@@ -31,5 +35,9 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

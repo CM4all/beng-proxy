@@ -14,6 +14,10 @@ struct http_response_handler;
 struct async_operation_ref;
 struct child_options;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 delegate_stock_request(struct hstock *stock, struct pool *pool,
                        const char *helper,
@@ -21,5 +25,9 @@ delegate_stock_request(struct hstock *stock, struct pool *pool,
                        const char *path, const char *content_type,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

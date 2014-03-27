@@ -16,6 +16,10 @@ struct http_response_handler;
 struct namespace_options;
 struct rlimit_options;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param status the HTTP status code to be sent to the response
  * handler
@@ -28,5 +32,9 @@ pipe_filter(struct pool *pool, const char *path,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "resource-loader.h"
+#include "resource_loader.hxx"
 #include "resource-address.h"
 #include "http_request.h"
 #include "http_response.h"
@@ -64,9 +64,9 @@ resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     struct hstock *delegate_stock,
                     struct nfs_cache *nfs_cache)
 {
-    assert(fcgi_stock != NULL);
+    assert(fcgi_stock != nullptr);
 
-    struct resource_loader *rl = p_malloc(pool, sizeof(*rl));
+    auto rl = NewFromPool<struct resource_loader>(pool);
 
     rl->pool = pool;
     rl->tcp_balancer = tcp_balancer;
@@ -88,12 +88,12 @@ static const char *
 extract_remote_addr(const struct strmap *headers)
 {
     const char *xff = strmap_get_checked(headers, "x-forwarded-for");
-    if (xff == NULL)
-        return NULL;
+    if (xff == nullptr)
+        return nullptr;
 
     /* extract the last host name in X-Forwarded-For */
     const char *p = strrchr(xff, ',');
-    if (p == NULL)
+    if (p == nullptr)
         p = xff;
     else
         ++p;
@@ -108,7 +108,7 @@ static const char *
 extract_remote_ip(struct pool *pool, const struct strmap *headers)
 {
     const char *p = extract_remote_addr(headers);
-    if (p == NULL)
+    if (p == nullptr)
         return p;
 
     size_t length;
@@ -125,14 +125,14 @@ extract_server_name(struct pool *pool, const struct strmap *headers,
                     unsigned *port_r)
 {
     const char *p = strmap_get_checked(headers, "host");
-    if (p == NULL)
-        return NULL;
+    if (p == nullptr)
+        return nullptr;
 
     const char *colon = strchr(p, ':');
-    if (colon == NULL)
+    if (colon == nullptr)
         return p;
 
-    if (strchr(colon + 1, ':') != NULL)
+    if (strchr(colon + 1, ':') != nullptr)
         /* XXX handle IPv6 addresses properly */
         return p;
 
@@ -155,9 +155,9 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref)
 {
-    assert(rl != NULL);
-    assert(pool != NULL);
-    assert(address != NULL);
+    assert(rl != nullptr);
+    assert(pool != nullptr);
+    assert(address != nullptr);
 
     switch (address->type) {
         const struct file_address *file;
@@ -171,13 +171,13 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         break;
 
     case RESOURCE_ADDRESS_LOCAL:
-        if (body != NULL)
+        if (body != nullptr)
             /* static files cannot receive a request body, close it */
             istream_close_unused(body);
 
         file = address->u.file;
-        if (file->delegate != NULL) {
-            if (rl->delegate_stock == NULL) {
+        if (file->delegate != nullptr) {
+            if (rl->delegate_stock == nullptr) {
                 GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                                     "No delegate stock");
                 http_response_handler_direct_abort(handler, handler_ctx, error);
@@ -201,7 +201,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     case RESOURCE_ADDRESS_NFS:
 #ifdef HAVE_LIBNFS
-        if (body != NULL)
+        if (body != nullptr)
             /* NFS files cannot receive a request body, close it */
             istream_close_unused(body);
 
@@ -283,12 +283,12 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     case RESOURCE_ADDRESS_HTTP:
         if (address->u.http->ssl) {
-            GError *error = NULL;
+            GError *error = nullptr;
             filter_ctx = ssl_client_create(rl->pool, pool,
                                            /* TODO: only host */
                                            address->u.http->host_and_port,
                                            &error);
-            if (filter_ctx == NULL) {
+            if (filter_ctx == nullptr) {
                 http_response_handler_direct_abort(handler, handler_ctx,
                                                    error);
                 return;
@@ -296,8 +296,8 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
             filter = ssl_client_get_filter();
         } else {
-            filter = NULL;
-            filter_ctx = NULL;
+            filter = nullptr;
+            filter_ctx = nullptr;
         }
 
         http_request(pool, rl->tcp_balancer, session_sticky,
@@ -312,7 +312,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         server_name = extract_server_name(pool, headers, &server_port);
         ajp_stock_request(pool, rl->tcp_balancer, session_sticky,
                           "http", extract_remote_ip(pool, headers),
-                          NULL,
+                          nullptr,
                           server_name, server_port,
                           false,
                           method, address->u.http,
@@ -329,7 +329,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     /* the resource could not be located, abort the request */
 
-    if (body != NULL)
+    if (body != nullptr)
         istream_close_unused(body);
 
     GError *error = g_error_new_literal(resource_loader_quark(), 0,

@@ -16,7 +16,7 @@
 #include "tpool.h"
 #include "http_util.h"
 #include "resource-address.h"
-#include "resource-loader.h"
+#include "resource_loader.hxx"
 #include "istream.h"
 #include "rubber.hxx"
 #include "slice.h"

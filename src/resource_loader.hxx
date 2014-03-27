@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_RESOURCE_LOADER_H
-#define BENG_PROXY_RESOURCE_LOADER_H
+#ifndef BENG_PROXY_RESOURCE_LOADER_HXX
+#define BENG_PROXY_RESOURCE_LOADER_HXX
 
 #include <http/method.h>
 #include <http/status.h>
@@ -22,10 +22,6 @@ struct resource_address;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct resource_loader *
 resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
@@ -54,9 +50,5 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                         const struct http_response_handler *handler,
                         void *handler_ctx,
                         struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

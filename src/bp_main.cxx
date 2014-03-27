@@ -33,7 +33,7 @@
 #include "balancer.h"
 #include "listener.h"
 #include "pipe-stock.h"
-#include "resource-loader.h"
+#include "resource_loader.hxx"
 #include "bp_control.hxx"
 #include "log-glue.h"
 #include "ua_classification.h"

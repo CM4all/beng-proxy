@@ -18,6 +18,10 @@ struct http_response_handler;
 struct async_operation_ref;
 struct child_options;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param jail run the WAS application with JailCGI?
  * @param args command-line arguments
@@ -36,5 +40,9 @@ was_request(struct pool *pool, struct hstock *was_stock,
             const struct http_response_handler *handler,
             void *handler_ctx,
             struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

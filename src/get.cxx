@@ -6,7 +6,7 @@
  */
 
 #include "get.hxx"
-#include "resource-loader.h"
+#include "resource_loader.hxx"
 #include "http_cache.h"
 
 void

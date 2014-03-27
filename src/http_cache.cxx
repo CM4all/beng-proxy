@@ -7,7 +7,7 @@
 #include "http_cache_internal.hxx"
 #include "http_cache_heap.hxx"
 #include "http_cache_memcached.hxx"
-#include "resource-loader.h"
+#include "resource_loader.hxx"
 #include "strmap.h"
 #include "http_response.h"
 #include "resource-address.h"

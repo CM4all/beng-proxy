@@ -17,6 +17,10 @@ struct http_response_handler;
 struct async_operation_ref;
 struct child_options;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param jail run the FastCGI application with JailCGI?
  * @param args command-line arguments
@@ -37,5 +41,9 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
