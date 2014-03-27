@@ -64,6 +64,10 @@ struct css_parser_handler {
     void (*error)(GError *error, void *ctx);
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param block true when the input consists of only one block
  */
@@ -83,5 +87,9 @@ css_parser_close(struct css_parser *parser);
  */
 void
 css_parser_read(struct css_parser *parser);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
