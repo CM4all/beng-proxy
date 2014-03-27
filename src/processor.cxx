@@ -37,6 +37,7 @@
 #include "istream-replace.h"
 #include "istream-catch.h"
 #include "istream_tee.h"
+#include "cast.hxx"
 
 #include <daemon/log.h>
 
@@ -141,7 +142,7 @@ struct processor {
          */
         struct {
             off_t start, end;
-        } delete[4];
+        } delete_[4];
     } postponed_rewrite;
 
     struct {
@@ -236,7 +237,7 @@ processor_replace_add(struct processor *processor, off_t start, off_t end,
 static struct processor *
 async_to_processor(struct async_operation *ao)
 {
-    return (struct processor*)(((char*)ao) - offsetof(struct processor, async));
+    return ContainerCast(ao, struct processor, async);
 }
 
 static void
@@ -279,9 +280,8 @@ processor_new(struct pool *caller_pool,
     assert(widget != nullptr);
 
     struct pool *pool = pool_new_linear(caller_pool, "processor", 32768);
-    struct processor *processor;
 
-    processor = p_malloc(pool, sizeof(*processor));
+    auto processor = NewFromPool<struct processor>(pool);
     processor->pool = pool;
     processor->caller_pool = caller_pool;
 
@@ -426,8 +426,8 @@ processor_uri_rewrite_postpone(struct processor *processor,
     bool success = expansible_buffer_set(processor->postponed_rewrite.value,
                                          value, length);
 
-    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete); ++i)
-        processor->postponed_rewrite.delete[i].start = 0;
+    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete_); ++i)
+        processor->postponed_rewrite.delete_[i].start = 0;
     processor->postponed_rewrite.pending = success;
 }
 
@@ -445,17 +445,17 @@ processor_uri_rewrite_delete(struct processor *processor,
 
     /* find a free position in the "delete" array */
 
-    while (processor->postponed_rewrite.delete[i].start > 0) {
+    while (processor->postponed_rewrite.delete_[i].start > 0) {
         ++i;
-        if (i >= G_N_ELEMENTS(processor->postponed_rewrite.delete))
+        if (i >= G_N_ELEMENTS(processor->postponed_rewrite.delete_))
             /* no more room in the array */
             return;
     }
 
     /* postpone the delete until the URI attribute has been replaced */
 
-    processor->postponed_rewrite.delete[i].start = start;
-    processor->postponed_rewrite.delete[i].end = end;
+    processor->postponed_rewrite.delete_[i].start = start;
+    processor->postponed_rewrite.delete_[i].end = end;
 }
 
 static void
@@ -521,11 +521,11 @@ processor_uri_rewrite_commit(struct processor *processor)
     /* now delete all c:base/c:mode attributes which followed the
        URI */
 
-    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete); ++i)
-        if (processor->postponed_rewrite.delete[i].start > 0)
+    for (unsigned i = 0; i < G_N_ELEMENTS(processor->postponed_rewrite.delete_); ++i)
+        if (processor->postponed_rewrite.delete_[i].start > 0)
             istream_replace_add(processor->replace,
-                                processor->postponed_rewrite.delete[i].start,
-                                processor->postponed_rewrite.delete[i].end,
+                                processor->postponed_rewrite.delete_[i].start,
+                                processor->postponed_rewrite.delete_[i].end,
                                 nullptr);
 }
 
@@ -547,7 +547,7 @@ processor_stop_cdata_stream(struct processor *processor)
 static inline struct processor *
 cdata_stream_to_processor(struct istream *istream)
 {
-    return (struct processor *)(((char*)istream) - offsetof(struct processor, cdata_stream));
+    return ContainerCast(istream, struct processor, cdata_stream);
 }
 
 static void
@@ -635,7 +635,7 @@ parser_element_start_in_widget(struct processor *processor,
 static bool
 processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 {
-    struct processor *processor = ctx;
+    struct processor *processor = (struct processor *)ctx;
 
     processor->had_input = true;
 
@@ -666,8 +666,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         }
 
         processor->tag = TAG_WIDGET;
-        processor->widget.widget = p_malloc(processor->widget.pool,
-                                            sizeof(*processor->widget.widget));
+        processor->widget.widget = NewFromPool<widget>(processor->widget.pool);
         widget_init(processor->widget.widget, processor->widget.pool, nullptr);
         expansible_buffer_reset(processor->widget.params);
 
@@ -876,16 +875,16 @@ parser_widget_attr_finished(struct widget *widget,
             widget_set_id(widget, pool, value);
     } else if (strref_cmp_literal(name, "display") == 0) {
         if (strref_cmp_literal(value, "inline") == 0)
-            widget->display = WIDGET_DISPLAY_INLINE;
+            widget->display = widget::WIDGET_DISPLAY_INLINE;
         if (strref_cmp_literal(value, "none") == 0)
-            widget->display = WIDGET_DISPLAY_NONE;
+            widget->display = widget::WIDGET_DISPLAY_NONE;
         else
-            widget->display = WIDGET_DISPLAY_NONE;
+            widget->display = widget::WIDGET_DISPLAY_NONE;
     } else if (strref_cmp_literal(name, "session") == 0) {
         if (strref_cmp_literal(value, "resource") == 0)
-            widget->session = WIDGET_SESSION_RESOURCE;
+            widget->session = widget::WIDGET_SESSION_RESOURCE;
         else if (strref_cmp_literal(value, "site") == 0)
-            widget->session = WIDGET_SESSION_SITE;
+            widget->session = widget::WIDGET_SESSION_SITE;
     }
 }
 
@@ -960,7 +959,7 @@ find_underscore(const char *p, const char *end)
         return p;
 
     while (true) {
-        p = memchr(p + 1, '_', end - p);
+        p = (const char *)memchr(p + 1, '_', end - p);
         if (p == nullptr)
             return nullptr;
 
@@ -1103,7 +1102,7 @@ is_html_tag(enum tag tag)
 static void
 processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 {
-    struct processor *processor = ctx;
+    struct processor *processor = (struct processor *)ctx;
 
     processor->had_input = true;
 
@@ -1259,7 +1258,7 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
 static GError *
 widget_catch_callback(GError *error, void *ctx)
 {
-    struct widget *widget = ctx;
+    struct widget *widget = (struct widget *)ctx;
 
     daemon_log(3, "error from widget '%s': %s\n",
                widget_path(widget), error->message);
@@ -1385,7 +1384,7 @@ static void
 expansible_buffer_append_uri_escaped(struct expansible_buffer *buffer,
                                      const char *value, size_t length)
 {
-    char *escaped = p_malloc(tpool, length * 3);
+    char *escaped = (char *)p_malloc(tpool, length * 3);
     length = uri_escape(escaped, value, length, '%');
     expansible_buffer_write_buffer(buffer, escaped, length);
 }
@@ -1393,7 +1392,7 @@ expansible_buffer_append_uri_escaped(struct expansible_buffer *buffer,
 static void
 processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 {
-    struct processor *processor = ctx;
+    struct processor *processor = (struct processor *)ctx;
 
     processor->had_input = true;
 
@@ -1417,8 +1416,6 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
         widget_element_finished(processor, tag, widget);
     } else if (processor->tag == TAG_WIDGET_PARAM) {
         struct pool_mark_state mark;
-        const char *p;
-        size_t length;
 
         assert(processor->widget.widget != nullptr);
 
@@ -1427,9 +1424,11 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         pool_mark(tpool, &mark);
 
-        p = expansible_buffer_read(processor->widget.param.value, &length);
+        size_t length;
+        const char *p = (const char *)
+            expansible_buffer_read(processor->widget.param.value, &length);
         if (memchr(p, '&', length) != nullptr) {
-            char *q = p_memdup(tpool, p, length);
+            char *q = (char *)p_memdup(tpool, p, length);
             length = unescape_inplace(&html_escape_class, q, length);
             p = q;
         }
@@ -1438,8 +1437,8 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
             expansible_buffer_write_buffer(processor->widget.params, "&", 1);
 
         size_t name_length;
-        const char *name = expansible_buffer_read(processor->widget.param.name,
-                                                  &name_length);
+        const char *name = (const char *)
+            expansible_buffer_read(processor->widget.param.name, &name_length);
 
         expansible_buffer_append_uri_escaped(processor->widget.params,
                                              name, name_length);
@@ -1451,15 +1450,14 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         pool_rewind(tpool, &mark);
     } else if (processor->tag == TAG_WIDGET_HEADER) {
-        const char *name;
-        size_t length;
-
         assert(processor->widget.widget != nullptr);
 
         if (tag->type == TAG_CLOSE)
             return;
 
-        name = expansible_buffer_read(processor->widget.param.name, &length);
+        size_t length;
+        const char *name = (const char *)
+            expansible_buffer_read(processor->widget.param.name, &length);
         if (!header_name_valid(name, length)) {
             daemon_log(3, "invalid widget HTTP header name\n");
             return;
@@ -1528,7 +1526,7 @@ processor_parser_cdata(const char *p gcc_unused, size_t length,
                        gcc_unused bool escaped, off_t start,
                        void *ctx)
 {
-    struct processor *processor = ctx;
+    struct processor *processor = (struct processor *)ctx;
 
     processor->had_input = true;
 
@@ -1547,7 +1545,7 @@ processor_parser_cdata(const char *p gcc_unused, size_t length,
 static void
 processor_parser_eof(void *ctx, off_t length gcc_unused)
 {
-    struct processor *processor = ctx;
+    struct processor *processor = (struct processor *)ctx;
     struct pool *const widget_pool = processor->container->pool;
 
     assert(processor->parser != nullptr);
@@ -1578,7 +1576,7 @@ processor_parser_eof(void *ctx, off_t length gcc_unused)
 static void
 processor_parser_abort(GError *error, void *ctx)
 {
-    struct processor *processor = ctx;
+    struct processor *processor = (struct processor *)ctx;
     struct pool *const widget_pool = processor->container->pool;
 
     assert(processor->parser != nullptr);

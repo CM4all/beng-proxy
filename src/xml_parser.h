@@ -56,6 +56,10 @@ struct parser_handler {
 
 struct parser;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct parser * gcc_malloc
 parser_new(struct pool *pool, struct istream *input,
            const struct parser_handler *handler, void *handler_ctx);
@@ -72,5 +76,9 @@ parser_read(struct parser *parser);
 
 void
 parser_script(struct parser *parser);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

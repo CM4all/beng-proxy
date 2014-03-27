@@ -14,6 +14,10 @@
 
 struct pool;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_pure
 bool
 uri_has_protocol(const char *uri, size_t length);
@@ -29,5 +33,9 @@ uri_path(const char *uri);
 gcc_pure
 const char *
 uri_query_string(const char *uri);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

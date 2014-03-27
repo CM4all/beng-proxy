@@ -11,6 +11,10 @@ struct pool;
 struct widget;
 struct processor_env;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Utility function for the HTML processor which prepares a widget for
  * inlining into a HTML template.
@@ -21,5 +25,9 @@ struct processor_env;
 struct istream *
 embed_inline_widget(struct pool *pool, struct processor_env *env,
                     struct widget *widget);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

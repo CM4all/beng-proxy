@@ -12,6 +12,10 @@
 struct pool;
 struct istream;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct istream *
 istream_replace_new(struct pool *pool, struct istream *input);
 
@@ -41,5 +45,9 @@ istream_replace_settle(struct istream *istream, off_t offset);
 
 void
 istream_replace_finish(struct istream *istream);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -13,8 +13,16 @@
 struct pool;
 struct istream;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct istream *
 istream_catch_new(struct pool *pool, struct istream *input,
                   GError *(*callback)(GError *error, void *ctx), void *ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

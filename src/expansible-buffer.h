@@ -16,6 +16,10 @@ struct pool;
 struct expansible_buffer;
 struct strref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param hard_limit the buffer will refuse to grow beyond this size
  */
@@ -81,5 +85,9 @@ expansible_buffer_dup(const struct expansible_buffer *eb, struct pool *pool);
 char *
 expansible_buffer_strdup(const struct expansible_buffer *eb,
                          struct pool *pool);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
