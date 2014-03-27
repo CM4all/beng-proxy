@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_GET_H
-#define __BENG_GET_H
+#ifndef BENG_PROXY_GET_HXX
+#define BENG_PROXY_GET_HXX
 
 #include <http/method.h>
 #include <http/status.h>
@@ -23,10 +23,6 @@ struct resource_address;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Requests a resource.  This is a glue function which integrates all
@@ -59,9 +55,5 @@ resource_get(struct http_cache *cache,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

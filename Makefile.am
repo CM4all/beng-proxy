@@ -155,7 +155,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/file_handler.cxx src/file_handler.hxx \
 	src/fork.c src/fork.h \
 	src/gb-io.c src/gb-io.h \
-	src/get.c src/get.h \
+	src/get.cxx src/get.hxx \
 	src/global.c src/global.h \
 	src/growing-buffer.c src/growing-buffer.h \
 	src/handler.cxx src/handler.hxx \

@@ -11,7 +11,7 @@
 #include "http_server.h"
 #include "http_response.h"
 #include "tcache.hxx"
-#include "get.h"
+#include "get.hxx"
 #include "http_response.h"
 #include "istream.h"
 #include "translate_client.hxx"

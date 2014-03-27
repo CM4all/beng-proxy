@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "get.h"
+#include "get.hxx"
 #include "resource-loader.h"
 #include "http_cache.h"
 
@@ -27,11 +27,11 @@ resource_get(struct http_cache *cache,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
 {
-    assert(fcgi_stock != NULL);
-    assert(pool != NULL);
-    assert(address != NULL);
+    assert(fcgi_stock != nullptr);
+    assert(pool != nullptr);
+    assert(address != nullptr);
 
-    if (cache != NULL) {
+    if (cache != nullptr) {
         http_cache_request(cache, pool, session_sticky,
                            method, address,
                            headers, body,

@@ -7,7 +7,7 @@
 #include "growing-buffer.h"
 #include "header-parser.h"
 #include "tpool.h"
-#include "get.h"
+#include "get.hxx"
 #include "http_response.h"
 #include "processor.h"
 #include "css_processor.h"

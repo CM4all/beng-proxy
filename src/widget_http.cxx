@@ -20,7 +20,7 @@
 #include "cookie_client.h"
 #include "async.h"
 #include "dpool.h"
-#include "get.h"
+#include "get.hxx"
 #include "fcache.h"
 #include "header-writer.h"
 #include "header-forward.h"
