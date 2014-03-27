@@ -51,37 +51,37 @@ struct escape_class {
 
 gcc_pure
 static inline const char *
-unescape_find(const struct escape_class *class, const char *p, size_t length)
+unescape_find(const struct escape_class *cls, const char *p, size_t length)
 {
-    assert(class != NULL);
-    assert(class->unescape_find != NULL);
+    assert(cls != NULL);
+    assert(cls->unescape_find != NULL);
     assert(p != NULL);
 
-    return class->unescape_find(p, length);
+    return cls->unescape_find(p, length);
 }
 
 static inline size_t
-unescape_buffer(const struct escape_class *class, const char *p, size_t length,
+unescape_buffer(const struct escape_class *cls, const char *p, size_t length,
                 char *q)
 {
-    assert(class != NULL);
-    assert(class->unescape != NULL);
+    assert(cls != NULL);
+    assert(cls->unescape != NULL);
     assert(p != NULL);
     assert(q != NULL);
 
-    size_t length2 = class->unescape(p, length, q);
+    size_t length2 = cls->unescape(p, length, q);
     assert(length2 <= length);
 
     return length2;
 }
 
 static inline size_t
-unescape_inplace(const struct escape_class *class, char *p, size_t length)
+unescape_inplace(const struct escape_class *cls, char *p, size_t length)
 {
-    assert(class != NULL);
-    assert(class->unescape != NULL);
+    assert(cls != NULL);
+    assert(cls->unescape != NULL);
 
-    size_t length2 = class->unescape(p, length, p);
+    size_t length2 = cls->unescape(p, length, p);
     assert(length2 <= length);
 
     return length2;
@@ -89,46 +89,46 @@ unescape_inplace(const struct escape_class *class, char *p, size_t length)
 
 gcc_pure
 static inline const char *
-escape_find(const struct escape_class *class, const char *p, size_t length)
+escape_find(const struct escape_class *cls, const char *p, size_t length)
 {
-    assert(class != NULL);
-    assert(class->escape_find != NULL);
+    assert(cls != NULL);
+    assert(cls->escape_find != NULL);
 
-    return class->escape_find(p, length);
+    return cls->escape_find(p, length);
 }
 
 gcc_pure
 static inline size_t
-escape_size(const struct escape_class *class, const char *p, size_t length)
+escape_size(const struct escape_class *cls, const char *p, size_t length)
 {
-    assert(class != NULL);
-    assert(class->escape_size != NULL);
+    assert(cls != NULL);
+    assert(cls->escape_size != NULL);
 
-    return class->escape_size(p, length);
+    return cls->escape_size(p, length);
 }
 
 gcc_pure
 static inline const char *
-escape_char(const struct escape_class *class, char ch)
+escape_char(const struct escape_class *cls, char ch)
 {
-    assert(class != NULL);
-    assert(class->escape_char != NULL);
+    assert(cls != NULL);
+    assert(cls->escape_char != NULL);
 
-    const char *q = class->escape_char(ch);
+    const char *q = cls->escape_char(ch);
     assert(q != NULL);
     return q;
 }
 
 static inline size_t
-escape_buffer(const struct escape_class *class, const char *p, size_t length,
+escape_buffer(const struct escape_class *cls, const char *p, size_t length,
               char *q)
 {
-    assert(class != NULL);
-    assert(class->escape != NULL);
+    assert(cls != NULL);
+    assert(cls->escape != NULL);
     assert(p != NULL);
     assert(q != NULL);
 
-    size_t length2 = class->escape(p, length, q);
+    size_t length2 = cls->escape(p, length, q);
     assert(length2 >= length);
 
     return length2;
