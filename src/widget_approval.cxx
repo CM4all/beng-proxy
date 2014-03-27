@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget-approval.h"
+#include "widget_approval.hxx"
 #include "widget-class.h"
 #include "widget.h"
 
@@ -13,7 +13,7 @@ widget_init_approval(struct widget *widget, bool self_container)
 {
     assert(widget != NULL);
     assert(widget->parent != NULL);
-    assert(widget->approval == WIDGET_APPROVAL_GIVEN);
+    assert(widget->approval == widget::WIDGET_APPROVAL_GIVEN);
 
     const struct widget *parent = widget->parent;
 
@@ -21,7 +21,7 @@ widget_init_approval(struct widget *widget, bool self_container)
         if (widget_class_has_groups(parent->cls))
             /* the container limits the groups; postpone a check until
                we know the widget's group */
-            widget->approval = WIDGET_APPROVAL_UNKNOWN;
+            widget->approval = widget::WIDGET_APPROVAL_UNKNOWN;
 
         return true;
     }
@@ -37,13 +37,13 @@ widget_init_approval(struct widget *widget, bool self_container)
         /* the container allows a set of groups - postpone the
            approval check until we know this widget's group
            (if any) */
-        widget->approval = WIDGET_APPROVAL_UNKNOWN;
+        widget->approval = widget::WIDGET_APPROVAL_UNKNOWN;
         return true;
     } else {
         /* the container does not allow any additional group,
            which means this widget's approval check has
            ultimately failed */
-        widget->approval = WIDGET_APPROVAL_DENIED;
+        widget->approval = widget::WIDGET_APPROVAL_DENIED;
         return false;
     }
 }
@@ -70,10 +70,10 @@ widget_check_approval(struct widget *widget)
     assert(widget != NULL);
     assert(widget->parent != NULL);
 
-    if (widget->approval == WIDGET_APPROVAL_UNKNOWN)
+    if (widget->approval == widget::WIDGET_APPROVAL_UNKNOWN)
         widget->approval = widget_check_group_approval(widget)
-            ? WIDGET_APPROVAL_GIVEN
-            : WIDGET_APPROVAL_DENIED;
+            ? widget::WIDGET_APPROVAL_GIVEN
+            : widget::WIDGET_APPROVAL_DENIED;
 
-    return widget->approval == WIDGET_APPROVAL_GIVEN;
+    return widget->approval == widget::WIDGET_APPROVAL_GIVEN;
 }

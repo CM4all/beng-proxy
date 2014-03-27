@@ -292,7 +292,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget-request.c src/widget-request.h \
 	src/widget_registry.cxx src/widget-registry.h \
 	src/widget-resolver.c \
-	src/widget-approval.c src/widget-approval.h \
+	src/widget_approval.cxx src/widget_approval.hxx \
 	src/widget-dump.h \
 	src/widget-dump.c \
 	src/escape_pool.c src/escape_pool.h \
@@ -1017,7 +1017,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/penv.c src/processor.cxx \
 	src/text_processor.c \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.c \
-	src/widget-request.c src/widget-approval.c \
+	src/widget-request.c src/widget_approval.cxx \
 	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/xml_parser.c src/widget-class.c \
 	src/widget-view.c \
@@ -1325,7 +1325,7 @@ test_t_widget_resolver_LDADD = $(AM_LDADD) \
 
 test_t_wembed_SOURCES = test/t_wembed.cxx \
 	src/widget-init.c \
-	src/widget-approval.c \
+	src/widget_approval.cxx \
 	src/inline_widget.cxx \
 	src/istream-escape.c src/istream-html-escape.c \
 	src/fifo-buffer.c \
@@ -1465,7 +1465,7 @@ test_run_processor_SOURCES = test/run-processor.c \
 	src/processor.cxx src/penv.c src/xml_parser.c \
 	src/text_processor.c \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.c \
-	src/widget.c src/widget-init.c src/widget-approval.c src/widget-ref.c \
+	src/widget.c src/widget-init.c src/widget_approval.cxx src/widget-ref.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/uri-escape.c \
 	src/strmap.c src/hashmap.c \
@@ -1499,7 +1499,7 @@ test_t_processor_SOURCES = test/t-processor.c \
 	src/processor.cxx src/penv.c src/xml_parser.c \
 	src/text_processor.c \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.c \
-	src/widget.c src/widget-init.c src/widget-approval.c src/widget-ref.c \
+	src/widget.c src/widget-init.c src/widget_approval.cxx src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c src/uri_base.cxx \
 	src/uri-escape.c \
 	src/strmap.c src/hashmap.c \

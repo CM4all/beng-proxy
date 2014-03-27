@@ -13,7 +13,7 @@
 #include "uri-escape.h"
 #include "uri-extract.h"
 #include "widget.h"
-#include "widget-approval.h"
+#include "widget_approval.hxx"
 #include "widget-request.h"
 #include "widget-lookup.h"
 #include "widget-class.h"

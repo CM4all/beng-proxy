@@ -2,18 +2,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WIDGET_APPROVAL_H
-#define BENG_PROXY_WIDGET_APPROVAL_H
+#ifndef BENG_PROXY_WIDGET_APPROVAL_HXX
+#define BENG_PROXY_WIDGET_APPROVAL_HXX
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
-
 struct widget;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 bool
 widget_init_approval(struct widget *widget, bool self_container);
@@ -29,9 +23,5 @@ widget_init_approval(struct widget *widget, bool self_container);
 gcc_pure
 bool
 widget_check_approval(struct widget *widget);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

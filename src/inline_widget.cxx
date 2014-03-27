@@ -11,7 +11,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-resolver.h"
-#include "widget-approval.h"
+#include "widget_approval.hxx"
 #include "widget-request.h"
 #include "async.h"
 #include "global.h"
