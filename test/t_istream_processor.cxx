@@ -6,7 +6,7 @@
 #include "uri-parser.h"
 #include "session_manager.h"
 #include "inline_widget.hxx"
-#include "widget-registry.h"
+#include "widget_registry.hxx"
 #include "http_address.h"
 #include "global.h"
 #include "crash.h"

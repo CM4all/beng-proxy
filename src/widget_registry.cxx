@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget-registry.h"
+#include "widget_registry.hxx"
 #include "widget-class.h"
 #include "processor.h"
 #include "widget.h"

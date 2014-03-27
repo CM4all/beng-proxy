@@ -1,13 +1,13 @@
 /*
- * Wrapper for widget-registry.h which resolves widget classes.  This
- * library can manage several concurrent requests for one widget
+ * Wrapper for widget_registry.hxx which resolves widget classes.
+ * This library can manage several concurrent requests for one widget
  * object.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
 #include "widget_resolver.hxx"
-#include "widget-registry.h"
+#include "widget_registry.hxx"
 #include "widget.h"
 #include "widget-class.h"
 #include "async.h"

@@ -1,4 +1,4 @@
-#include "widget-registry.h"
+#include "widget_registry.hxx"
 #include "async.h"
 #include "stock.h"
 #include "http_address.h"

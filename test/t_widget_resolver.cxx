@@ -1,5 +1,5 @@
 #include "widget_resolver.hxx"
-#include "widget-registry.h"
+#include "widget_registry.hxx"
 #include "async.h"
 #include "widget.h"
 #include "widget-class.h"
