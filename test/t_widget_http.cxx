@@ -11,7 +11,7 @@
 #include "http_response.h"
 #include "processor.h"
 #include "css_processor.h"
-#include "text_processor.h"
+#include "text_processor.hxx"
 #include "penv.h"
 #include "async.h"
 #include "fcache.h"

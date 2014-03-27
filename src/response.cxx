@@ -31,7 +31,7 @@
 #include "pheaders.h"
 #include "processor.h"
 #include "css_processor.h"
-#include "text_processor.h"
+#include "text_processor.hxx"
 #include "istream.h"
 #include "tvary.hxx"
 #include "date.h"

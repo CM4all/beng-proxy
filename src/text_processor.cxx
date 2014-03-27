@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "text_processor.h"
+#include "text_processor.hxx"
 #include "strmap.h"
 #include "istream.h"
 #include "widget.h"

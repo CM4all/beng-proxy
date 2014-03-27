@@ -303,7 +303,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/css_parser.c src/css_parser.h \
 	src/css_processor.cxx src/css_processor.h \
 	src/css_rewrite.cxx src/css_rewrite.hxx \
-	src/text_processor.c src/text_processor.h \
+	src/text_processor.cxx src/text_processor.hxx \
 	src/resource-loader.c \
 	src/widget_http.cxx src/widget_http.hxx \
 	src/inline_widget.cxx src/inline_widget.hxx \
@@ -1014,7 +1014,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
 	src/penv.c src/processor.cxx \
-	src/text_processor.c \
+	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget_request.cxx src/widget_approval.cxx \
 	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
@@ -1462,7 +1462,7 @@ test_t_escape_css_LDADD = $(AM_LDADD) libutil.a
 
 test_run_processor_SOURCES = test/run-processor.c \
 	src/processor.cxx src/penv.c src/xml_parser.c \
-	src/text_processor.c \
+	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget.c src/widget-init.c src/widget_approval.cxx src/widget-ref.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-edit.c src/uri-extract.c \
@@ -1496,7 +1496,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 
 test_t_processor_SOURCES = test/t-processor.c \
 	src/processor.cxx src/penv.c src/xml_parser.c \
-	src/text_processor.c \
+	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget.c src/widget-init.c src/widget_approval.cxx src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c src/uri_base.cxx \

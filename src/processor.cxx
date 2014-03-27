@@ -5,7 +5,7 @@
  */
 
 #include "processor.h"
-#include "text_processor.h"
+#include "text_processor.hxx"
 #include "css_processor.h"
 #include "css_rewrite.hxx"
 #include "penv.h"

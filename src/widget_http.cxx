@@ -9,7 +9,7 @@
 #include "pheaders.h"
 #include "processor.h"
 #include "css_processor.h"
-#include "text_processor.h"
+#include "text_processor.hxx"
 #include "penv.h"
 #include "widget.h"
 #include "widget-class.h"
