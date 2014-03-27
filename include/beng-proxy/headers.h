@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_HEADERS_H
 #define BENG_PROXY_HEADERS_H
 
+#include <inline/compiler.h>
+
 #include <stdint.h>
 
 /**
@@ -110,6 +112,6 @@ struct beng_header_forward_packet {
      * Unused padding byte.  Set 0.
      */
     uint8_t reserved;
-} __attr_packed;
+} gcc_packed;
 
 #endif

@@ -6,4 +6,5 @@ includedir=@includedir@
 Name: libcm4all-beng-proxy
 Description: CM4all BENG proxy library
 Version: @VERSION@
+Requires: libcm4all-inline >= 0.3.4
 Cflags: -I${includedir}
