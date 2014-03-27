@@ -248,7 +248,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/uri-escape.h \
 	src/uri-extract.h \
 	src/uri-relative.h \
-	src/widget-resolver.h \
 	src/widget.h \
 	$(STOPWATCH_SRC) \
 	src/clock.c src/clock.h \
@@ -291,7 +290,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget-quark.h \
 	src/widget_request.cxx src/widget_request.hxx \
 	src/widget_registry.cxx src/widget-registry.h \
-	src/widget-resolver.c \
+	src/widget_resolver.cxx src/widget_resolver.hxx \
 	src/widget_approval.cxx src/widget_approval.hxx \
 	src/widget-dump.h \
 	src/widget-dump.c \
@@ -772,7 +771,7 @@ check_PROGRAMS = \
 	test/t_slice \
 	test/t_rewrite_uri \
 	test/t_widget_registry \
-	test/t-widget-resolver \
+	test/t_widget_resolver \
 	test/t_wembed test/t_widget_http \
 	test/t-processor \
 	test/t_memcached_client
@@ -807,7 +806,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t_slice \
 	test/t_rewrite_uri \
 	test/t_widget_registry \
-	test/t-widget-resolver \
+	test/t_widget_resolver \
 	test/t_wembed test/t_widget_http
 
 test_run_ping_SOURCES = test/run-ping.c \
@@ -1021,7 +1020,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/xml_parser.c src/widget-class.c \
 	src/widget-view.c \
-	src/tpool.c src/rewrite_uri.cxx src/widget-resolver.c \
+	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/uri-extract.c \
 	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
 	src/global.c src/transformation.c \
@@ -1314,8 +1313,8 @@ test_t_widget_registry_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_widget_resolver_SOURCES = test/t-widget-resolver.c \
-	src/widget-resolver.c \
+test_t_widget_resolver_SOURCES = test/t_widget_resolver.cxx \
+	src/widget_resolver.cxx \
 	src/widget-init.c
 test_t_widget_resolver_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \

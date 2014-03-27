@@ -1,9 +1,10 @@
-#include "widget-resolver.h"
+#include "widget_resolver.hxx"
 #include "widget-registry.h"
 #include "async.h"
 #include "widget.h"
 #include "widget-class.h"
 #include "pool.h"
+#include "cast.hxx"
 
 #include <event.h>
 
@@ -46,7 +47,7 @@ data_init(struct data *data)
     data->registry.requested = false;
     data->registry.finished = false;
     data->registry.aborted = false;
-    data->registry.callback = NULL;
+    data->registry.callback = nullptr;
 
     global = data;
 }
@@ -54,7 +55,7 @@ data_init(struct data *data)
 static void
 widget_resolver_callback1(void *ctx)
 {
-    struct data *data = ctx;
+    struct data *data = (struct data *)ctx;
 
     assert(!data->first.finished);
     assert(!data->second.finished);
@@ -68,7 +69,7 @@ widget_resolver_callback1(void *ctx)
 static void
 widget_resolver_callback2(void *ctx)
 {
-    struct data *data = ctx;
+    struct data *data = (struct data *)ctx;
 
     assert(data->first.finished);
     assert(!data->second.finished);
@@ -89,7 +90,7 @@ widget_resolver_callback2(void *ctx)
 static struct data *
 async_to_data(struct async_operation *ao)
 {
-    return (struct data *)(((char *)ao) - offsetof(struct data, registry.operation));
+    return ContainerCast(ao, struct data, registry.operation);
 }
 
 static void
@@ -122,7 +123,7 @@ widget_class_lookup(gcc_unused struct pool *pool,
     assert(!data->registry.requested);
     assert(!data->registry.finished);
     assert(!data->registry.aborted);
-    assert(data->registry.callback == NULL);
+    assert(data->registry.callback == nullptr);
 
     data->registry.requested = true;
     data->registry.callback = callback;
@@ -137,13 +138,13 @@ widget_registry_finish(struct data *data)
     assert(data->registry.requested);
     assert(!data->registry.finished);
     assert(!data->registry.aborted);
-    assert(data->registry.callback != NULL);
+    assert(data->registry.callback != nullptr);
 
     data->registry.finished = true;
 
-    static const struct widget_class class;
+    static const struct widget_class cls = widget_class();
 
-    data->registry.callback(&class, data->registry.ctx);
+    data->registry.callback(&cls, data->registry.ctx);
 }
 
 
@@ -160,8 +161,8 @@ test_normal(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    struct widget *widget = p_malloc(pool, sizeof(*widget));
-    widget_init(widget, pool, NULL);
+    auto widget = NewFromPool<struct widget>(pool);
+    widget_init(widget, pool, nullptr);
     widget->class_name = "foo";
 
     widget_resolver_new(pool, pool, widget,
@@ -195,8 +196,8 @@ test_abort(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    struct widget *widget = p_malloc(pool, sizeof(*widget));
-    widget_init(widget, pool, NULL);
+    auto widget = NewFromPool<struct widget>(pool);
+    widget_init(widget, pool, nullptr);
     widget->class_name = "foo";
 
     widget_resolver_new(pool, pool, widget,
@@ -230,8 +231,8 @@ test_two_clients(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    struct widget *widget = p_malloc(pool, sizeof(*widget));
-    widget_init(widget, pool, NULL);
+    auto widget = NewFromPool<struct widget>(pool);
+    widget_init(widget, pool, nullptr);
     widget->class_name = "foo";
 
     widget_resolver_new(pool, pool, widget,
@@ -271,8 +272,8 @@ test_two_abort(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    struct widget *widget = p_malloc(pool, sizeof(*widget));
-    widget_init(widget, pool, NULL);
+    auto widget = NewFromPool<struct widget>(pool);
+    widget_init(widget, pool, nullptr);
     widget->class_name = "foo";
 
     widget_resolver_new(pool, pool, widget,
@@ -315,7 +316,7 @@ int main(int argc __attr_unused, char **argv __attr_unused) {
 
     event_base = event_init();
 
-    root_pool = pool_new_libc(NULL, "root");
+    root_pool = pool_new_libc(nullptr, "root");
 
     /* run test suite */
 

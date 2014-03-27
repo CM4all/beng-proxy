@@ -2,7 +2,7 @@
 #include "uri-parser.h"
 #include "widget.h"
 #include "widget_http.hxx"
-#include "widget-resolver.h"
+#include "widget_resolver.hxx"
 #include "widget_request.hxx"
 #include "processor.h"
 #include "penv.h"

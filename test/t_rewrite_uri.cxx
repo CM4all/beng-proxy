@@ -3,7 +3,7 @@
 #include "session.h"
 #include "widget.h"
 #include "widget-class.h"
-#include "widget-resolver.h"
+#include "widget_resolver.hxx"
 #include "widget_request.hxx"
 #include "uri-parser.h"
 #include "sink-gstring.h"

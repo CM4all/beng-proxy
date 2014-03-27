@@ -6,12 +6,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget-resolver.h"
+#include "widget_resolver.hxx"
 #include "widget-registry.h"
 #include "widget.h"
 #include "widget-class.h"
 #include "async.h"
 #include "pool.h"
+#include "cast.hxx"
 
 #include <inline/list.h>
 
@@ -63,7 +64,7 @@ struct widget_resolver {
 static struct widget_resolver_listener *
 async_to_wrl(struct async_operation *ao)
 {
-    return (struct widget_resolver_listener*)(((char*)ao) - offsetof(struct widget_resolver_listener, operation));
+    return ContainerCast(ao, struct widget_resolver_listener, operation);
 }
 
 static void
@@ -99,7 +100,7 @@ wrl_abort(struct async_operation *ao)
         resolver->aborted = true;
 #endif
 
-        resolver->widget->resolver = NULL;
+        resolver->widget->resolver = nullptr;
         async_abort(&resolver->async_ref);
         pool_unref(resolver->pool);
     }
@@ -116,13 +117,13 @@ static const struct async_operation_class listener_async_operation = {
  */
 
 static void
-widget_resolver_callback(const struct widget_class *class, void *ctx)
+widget_resolver_callback(const struct widget_class *cls, void *ctx)
 {
-    struct widget *widget = ctx;
+    struct widget *widget = (struct widget *)ctx;
     struct widget_resolver *resolver = widget->resolver;
 
-    assert(widget->cls == NULL);
-    assert(resolver != NULL);
+    assert(widget->cls == nullptr);
+    assert(resolver != nullptr);
     assert(resolver->widget == widget);
     assert(!list_empty(&resolver->listeners));
     assert(!resolver->finished);
@@ -135,15 +136,15 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
     resolver->running = true;
 #endif
 
-    widget->cls = class;
+    widget->cls = cls;
 
-    widget->view = widget->from_request.view = class != NULL
-        ? widget_view_lookup(&class->views, widget->view_name)
-        : NULL;
+    widget->view = widget->from_request.view = cls != nullptr
+        ? widget_view_lookup(&cls->views, widget->view_name)
+        : nullptr;
 
-    widget->session_sync_pending = class != NULL && class->stateful &&
+    widget->session_sync_pending = cls != nullptr && cls->stateful &&
         /* the widget session code requires a valid view */
-        widget->view != NULL;
+        widget->view != nullptr;
 
     do {
         struct widget_resolver_listener *listener =
@@ -185,10 +186,10 @@ widget_resolver_callback(const struct widget_class *class, void *ctx)
 static struct widget_resolver *
 widget_resolver_alloc(struct pool *pool, struct widget *widget)
 {
-    struct widget_resolver *resolver = p_malloc(pool, sizeof(*resolver));
+    auto resolver = NewFromPool<struct widget_resolver>(pool);
 
     pool_ref(pool);
-    
+
     resolver->pool = pool;
     resolver->widget = widget;
     list_init(&resolver->listeners);
@@ -214,20 +215,19 @@ widget_resolver_new(struct pool *pool, struct pool *widget_pool,
                     struct async_operation_ref *async_ref)
 {
     struct widget_resolver *resolver;
-    struct widget_resolver_listener *listener;
-    bool new = false;
+    bool is_new = false;
 
-    assert(widget != NULL);
-    assert(widget->class_name != NULL);
-    assert(widget->cls == NULL);
+    assert(widget != nullptr);
+    assert(widget->class_name != nullptr);
+    assert(widget->cls == nullptr);
     assert(pool_contains(widget_pool, widget, sizeof(*widget)));
 
     /* create new resolver object if it does not already exist */
 
     resolver = widget->resolver;
-    if (resolver == NULL) {
+    if (resolver == nullptr) {
         resolver = widget_resolver_alloc(widget_pool, widget);
-        new = true;
+        is_new = true;
     } else if (resolver->finished) {
         /* we have already failed to resolve this widget class; return
            immediately, don't try again */
@@ -242,7 +242,7 @@ widget_resolver_new(struct pool *pool, struct pool *widget_pool,
     /* add a new listener to the resolver */
 
     pool_ref(pool);
-    listener = p_malloc(pool, sizeof(*listener));
+    auto listener = NewFromPool<struct widget_resolver_listener>(pool);
     listener->pool = pool;
     listener->resolver = resolver;
 
@@ -266,7 +266,7 @@ widget_resolver_new(struct pool *pool, struct pool *widget_pool,
 
     /* finally send request to the widget registry */
 
-    if (new)
+    if (is_new)
         /* don't pass "pool" here because the listener pool may be
            aborted, while the others still run */
         widget_class_lookup(widget_pool, widget_pool, translate_cache,

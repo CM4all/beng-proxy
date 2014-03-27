@@ -6,8 +6,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_WIDGET_RESOLVER_H
-#define __BENG_WIDGET_RESOLVER_H
+#ifndef BENG_PROXY_WIDGET_RESOLVER_HXX
+#define BENG_PROXY_WIDGET_RESOLVER_HXX
 
 struct pool;
 struct widget;
@@ -17,19 +17,11 @@ struct async_operation_ref;
 
 typedef void (*widget_resolver_callback_t)(void *ctx);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
 widget_resolver_new(struct pool *pool, struct pool *widget_pool,
                     struct widget *widget,
                     struct tcache *translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
                     struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
