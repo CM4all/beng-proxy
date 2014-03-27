@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_WIDGET_HTTP_H
-#define __BENG_WIDGET_HTTP_H
+#ifndef BENG_PROXY_WIDGET_HTTP_HXX
+#define BENG_PROXY_WIDGET_HTTP_HXX
 
 struct pool;
 struct widget;
@@ -13,10 +13,6 @@ struct widget_lookup_handler;
 struct processor_env;
 struct http_response_handler;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Sends a HTTP request to the widget, apply all transformations, and
@@ -42,9 +38,5 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
                    const struct widget_lookup_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

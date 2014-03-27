@@ -248,7 +248,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/uri-escape.h \
 	src/uri-extract.h \
 	src/uri-relative.h \
-	src/widget-http.h \
 	src/widget-resolver.h \
 	src/widget.h \
 	$(STOPWATCH_SRC) \
@@ -307,7 +306,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/css_rewrite.c src/css_rewrite.h \
 	src/text_processor.c src/text_processor.h \
 	src/resource-loader.c \
-	src/widget-http.c \
+	src/widget_http.cxx src/widget_http.hxx \
 	src/inline_widget.cxx src/inline_widget.hxx \
 	src/frame.cxx src/frame.hxx \
 	src/udp-listener.c \
@@ -774,7 +773,7 @@ check_PROGRAMS = \
 	test/t-rewrite-uri \
 	test/t_widget_registry \
 	test/t-widget-resolver \
-	test/t_wembed test/t-widget-http \
+	test/t_wembed test/t_widget_http \
 	test/t-processor \
 	test/t_memcached_client
 
@@ -809,7 +808,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t-rewrite-uri \
 	test/t_widget_registry \
 	test/t-widget-resolver \
-	test/t_wembed test/t-widget-http
+	test/t_wembed test/t_widget_http
 
 test_run_ping_SOURCES = test/run-ping.c \
 	src/ping.c \
@@ -1340,8 +1339,8 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(GLIB_LIBS)
 
-test_t_widget_http_SOURCES = test/t-widget-http.c \
-	src/widget-http.c src/widget-uri.c src/widget-request.c \
+test_t_widget_http_SOURCES = test/t_widget_http.cxx \
+	src/widget_http.cxx src/widget-uri.c src/widget-request.c \
 	src/pheaders.c \
 	src/crash.c \
 	src/widget-session.c src/session.c src/session_manager.c src/session_id.c \

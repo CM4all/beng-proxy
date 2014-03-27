@@ -1,7 +1,7 @@
 #include "inline_widget.hxx"
 #include "uri-parser.h"
 #include "widget.h"
-#include "widget-http.h"
+#include "widget_http.hxx"
 #include "widget-resolver.h"
 #include "widget-request.h"
 #include "processor.h"

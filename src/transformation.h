@@ -39,6 +39,10 @@ struct transformation {
     } u;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Returns true if the chain contains at least one "PROCESS"
  * transformation.
@@ -105,5 +109,9 @@ bool
 transformation_expand_all(struct pool *pool,
                           struct transformation *transformation,
                           const GMatchInfo *match_info, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

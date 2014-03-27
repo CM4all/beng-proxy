@@ -1,6 +1,6 @@
 #include "widget.h"
 #include "widget-class.h"
-#include "widget-http.h"
+#include "widget_http.hxx"
 #include "widget-lookup.h"
 #include "http_address.h"
 #include "strmap.h"
@@ -50,7 +50,7 @@ int global_was_stock;
 int global_http_cache;
 int global_nfs_cache;
 int global_tcp_balancer;
-const struct widget_class root_widget_class;
+const widget_class root_widget_class = widget_class();
 
 static unsigned test_id;
 static bool got_request, got_response;
@@ -163,17 +163,17 @@ resource_get(gcc_unused struct http_cache *cache,
 
     assert(!got_request);
     assert(method == HTTP_METHOD_GET);
-    assert(body == NULL);
+    assert(body == nullptr);
 
     got_request = true;
 
-    if (body != NULL)
+    if (body != nullptr)
         istream_close_unused(body);
 
     switch (test_id) {
     case 0:
         p = strmap_get(headers, "cookie");
-        assert(p == NULL);
+        assert(p == nullptr);
 
         /* set one cookie */
         strmap_add(response_headers, "set-cookie", "foo=bar");
@@ -182,7 +182,7 @@ resource_get(gcc_unused struct http_cache *cache,
     case 1:
         /* is the one cookie present? */
         p = strmap_get(headers, "cookie");
-        assert(p != NULL);
+        assert(p != nullptr);
         assert(strcmp(p, "foo=bar") == 0);
 
         /* add 2 more cookies */
@@ -192,7 +192,7 @@ resource_get(gcc_unused struct http_cache *cache,
     case 2:
         /* are 3 cookies present? */
         p = strmap_get(headers, "cookie");
-        assert(p != NULL);
+        assert(p != nullptr);
         assert(strcmp(p, "c=d; a=b; foo=bar") == 0);
 
         /* set two cookies in two headers */
@@ -203,7 +203,7 @@ resource_get(gcc_unused struct http_cache *cache,
     case 3:
         /* check for 5 cookies */
         p = strmap_get(headers, "cookie");
-        assert(p != NULL);
+        assert(p != nullptr);
         assert(strcmp(p, "g=h; e=f; c=d; a=b; foo=bar") == 0);
         break;
     }
@@ -219,7 +219,7 @@ my_http_response(http_status_t status, gcc_unused struct strmap *headers,
 {
     assert(!got_response);
     assert(status == 200);
-    assert(body != NULL);
+    assert(body != nullptr);
 
     istream_close_unused(body);
 
@@ -298,7 +298,7 @@ test_cookie_client(struct pool *pool)
         got_response = false;
 
         widget_http_request(pool, &widget, &env,
-                            &my_http_response_handler, NULL,
+                            &my_http_response_handler, nullptr,
                             &async_ref);
 
         assert(got_request);
@@ -320,7 +320,7 @@ int main(int argc, char **argv) {
     success = session_manager_init(1200, 0, 0);
     assert(success);
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
     test_cookie_client(pool);

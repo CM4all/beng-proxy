@@ -5,7 +5,7 @@
  */
 
 #include "frame.hxx"
-#include "widget-http.h"
+#include "widget_http.hxx"
 #include "widget-quark.h"
 #include "penv.h"
 #include "widget.h"

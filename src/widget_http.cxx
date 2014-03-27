@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget-http.h"
+#include "widget_http.hxx"
 #include "http_response.h"
 #include "pheaders.h"
 #include "processor.h"
@@ -30,6 +30,7 @@
 #include "uri-extract.h"
 #include "strmap.h"
 #include "istream.h"
+#include "cast.hxx"
 
 #include <daemon/log.h>
 
@@ -72,15 +73,15 @@ session_get_if_stateful(const struct embed *embed)
 {
     return embed->widget->cls->stateful
         ? session_get(embed->env->session_id)
-        : NULL;
+        : nullptr;
 }
 
 static const char *
 widget_uri(struct widget *widget)
 {
     const struct resource_address *address = widget_address(widget);
-    if (address == NULL)
-        return NULL;
+    if (address == nullptr)
+        return nullptr;
 
     return resource_address_uri_path(address);
 }
@@ -105,28 +106,28 @@ widget_request_headers(struct embed *embed, const struct widget_view *view,
                                       embed->host_and_port,
                                       widget_uri(widget));
 
-    if (session != NULL)
+    if (session != nullptr)
         session_put(session);
 
     if (widget->cls->info_headers) {
-        if (widget->id != NULL)
+        if (widget->id != nullptr)
             strmap_add(headers, "x-cm4all-widget-id", widget->id);
 
-        if (widget->class_name != NULL)
+        if (widget->class_name != nullptr)
             strmap_add(headers, "x-cm4all-widget-type", widget->class_name);
 
         const char *prefix = widget_prefix(widget);
-        if (prefix != NULL)
+        if (prefix != nullptr)
             strmap_add(headers, "x-cm4all-widget-prefix", prefix);
     }
 
-    if (widget->headers != NULL) {
+    if (widget->headers != nullptr) {
         /* copy HTTP request headers from template */
         const struct strmap_pair *pair;
 
         strmap_rewind(widget->headers);
 
-        while ((pair = strmap_next(widget->headers)) != NULL)
+        while ((pair = strmap_next(widget->headers)) != nullptr)
             strmap_add(headers,
                        p_strdup(embed->pool, pair->key),
                        p_strdup(embed->pool, pair->value));
@@ -135,7 +136,7 @@ widget_request_headers(struct embed *embed, const struct widget_view *view,
     return headers;
 }
 
-static const struct http_response_handler widget_response_handler;
+extern const struct http_response_handler widget_response_handler;
 
 static bool
 widget_response_redirect(struct embed *embed, const char *location,
@@ -153,7 +154,7 @@ widget_response_redirect(struct embed *embed, const char *location,
         return false;
 
     const struct widget_view *view = widget_get_address_view(widget);
-    assert(view != NULL);
+    assert(view != nullptr);
 
     if (view->address.type != RESOURCE_ADDRESS_HTTP)
         /* a static or CGI widget cannot send redirects */
@@ -162,13 +163,13 @@ widget_response_redirect(struct embed *embed, const char *location,
     p = widget_relative_uri(embed->pool, widget, true,
                             location, strlen(location),
                             &strref_buffer);
-    if (p == NULL)
+    if (p == nullptr)
         return false;
 
     session = session_get_if_stateful(embed);
     widget_copy_from_location(widget, session,
                               p->data, p->length, embed->pool);
-    if (session != NULL)
+    if (session != nullptr)
         session_put(session);
 
     ++embed->num_redirects;
@@ -176,10 +177,10 @@ widget_response_redirect(struct embed *embed, const char *location,
     address = resource_address_apply(embed->pool, widget_address(widget),
                                      location, strlen(location),
                                      &address_buffer);
-    if (address == NULL)
+    if (address == nullptr)
         return false;
 
-    if (body != NULL)
+    if (body != nullptr)
         istream_close_unused(body);
 
     headers = widget_request_headers(embed, view,
@@ -192,7 +193,7 @@ widget_response_redirect(struct embed *embed, const char *location,
                  global_fcgi_stock, global_was_stock, global_delegate_stock,
                  global_nfs_cache,
                  embed->pool, session_id_low(embed->env->session_id),
-                 HTTP_METHOD_GET, address, HTTP_STATUS_OK, headers, NULL,
+                 HTTP_METHOD_GET, address, HTTP_STATUS_OK, headers, nullptr,
                  &widget_response_handler, embed,
                  &embed->async_ref);
 
@@ -206,10 +207,10 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
 static void
 widget_dispatch_error(struct embed *embed, GError *error)
 {
-    assert(embed != NULL);
-    assert(error != NULL);
+    assert(embed != nullptr);
+    assert(error != nullptr);
 
-    if (embed->lookup_id != NULL)
+    if (embed->lookup_id != nullptr)
         embed->lookup_handler->error(error, embed->lookup_handler_ctx);
     else
         http_response_handler_invoke_abort(&embed->handler_ref, error);
@@ -226,7 +227,7 @@ widget_response_process(struct embed *embed, http_status_t status,
 {
     struct widget *widget = embed->widget;
 
-    if (body == NULL) {
+    if (body == nullptr) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
@@ -246,7 +247,7 @@ widget_response_process(struct embed *embed, http_status_t status,
         return;
     }
 
-    if (embed->lookup_id != NULL)
+    if (embed->lookup_id != nullptr)
         processor_lookup_widget(embed->pool, body,
                                 widget, embed->lookup_id,
                                 embed->env, options,
@@ -268,7 +269,7 @@ css_processable(const struct strmap *headers)
     const char *content_type;
 
     content_type = strmap_get_checked(headers, "content-type");
-    return content_type != NULL &&
+    return content_type != nullptr &&
         strncmp(content_type, "text/css", 8) == 0;
 }
 
@@ -279,7 +280,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
 {
     struct widget *widget = embed->widget;
 
-    if (body == NULL) {
+    if (body == nullptr) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
@@ -310,7 +311,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
 {
     const struct widget *widget = embed->widget;
 
-    if (body == NULL) {
+    if (body == nullptr) {
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
@@ -343,14 +344,14 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
     const char *source_tag;
     source_tag = resource_tag_append_etag(embed->pool,
                                           embed->resource_tag, headers);
-    embed->resource_tag = source_tag != NULL
+    embed->resource_tag = source_tag != nullptr
         ? p_strcat(embed->pool, source_tag, "|",
                    resource_address_id(filter, embed->pool),
-                   NULL)
-        : NULL;
+                   nullptr)
+        : nullptr;
 
 #ifdef SPLICE
-    if (body != NULL)
+    if (body != nullptr)
         body = istream_pipe_new(embed->pool, body, global_pipe_stock);
 #endif
 
@@ -371,12 +372,12 @@ widget_response_transform(struct embed *embed, http_status_t status,
 {
     const char *p;
 
-    assert(transformation != NULL);
+    assert(transformation != nullptr);
     assert(embed->transformation == transformation->next);
 
     p = strmap_get_checked(headers, "content-encoding");
-    if (p != NULL && strcmp(p, "identity") != 0) {
-        if (body != NULL)
+    if (p != nullptr && strcmp(p, "identity") != 0) {
+        if (body != nullptr)
             istream_close_unused(body);
 
         GError *error =
@@ -390,30 +391,30 @@ widget_response_transform(struct embed *embed, http_status_t status,
     }
 
     switch (transformation->type) {
-    case TRANSFORMATION_PROCESS:
+    case transformation::TRANSFORMATION_PROCESS:
         /* processor responses cannot be cached */
-        embed->resource_tag = NULL;
+        embed->resource_tag = nullptr;
 
         widget_response_process(embed, status, headers, body,
                                 transformation->u.processor.options);
         break;
 
-    case TRANSFORMATION_PROCESS_CSS:
+    case transformation::TRANSFORMATION_PROCESS_CSS:
         /* processor responses cannot be cached */
-        embed->resource_tag = NULL;
+        embed->resource_tag = nullptr;
 
         widget_response_process_css(embed, status, headers, body,
                                     transformation->u.css_processor.options);
         break;
 
-    case TRANSFORMATION_PROCESS_TEXT:
+    case transformation::TRANSFORMATION_PROCESS_TEXT:
         /* processor responses cannot be cached */
-        embed->resource_tag = NULL;
+        embed->resource_tag = nullptr;
 
         widget_response_process_text(embed, status, headers, body);
         break;
 
-    case TRANSFORMATION_FILTER:
+    case transformation::TRANSFORMATION_FILTER:
         widget_response_apply_filter(embed, status, headers, body,
                                      &transformation->u.filter);
         break;
@@ -424,7 +425,7 @@ static bool
 widget_transformation_enabled(const struct widget *widget,
                               http_status_t status)
 {
-    assert(widget_get_transformation_view(widget) != NULL);
+    assert(widget_get_transformation_view(widget) != nullptr);
 
     return http_status_is_success(status) ||
         (http_status_is_client_error(status) &&
@@ -443,7 +444,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
 {
     const struct transformation *transformation = embed->transformation;
 
-    if (transformation != NULL &&
+    if (transformation != nullptr &&
         widget_transformation_enabled(embed->widget, status)) {
         /* transform this response */
 
@@ -451,8 +452,8 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
 
         widget_response_transform(embed, status, headers,
                                   body, transformation);
-    } else if (embed->lookup_id != NULL) {
-        if (body != NULL)
+    } else if (embed->lookup_id != nullptr) {
+        if (body != nullptr)
             istream_close_unused(body);
 
         GError *error =
@@ -475,17 +476,17 @@ widget_collect_cookies(struct cookie_jar *jar, const struct strmap *headers,
 {
     const struct strmap_pair *cookies =
         strmap_lookup_first(headers, "set-cookie2");
-    if (cookies == NULL) {
+    if (cookies == nullptr) {
         cookies = strmap_lookup_first(headers, "set-cookie");
-        if (cookies == NULL)
+        if (cookies == nullptr)
             return;
     }
 
     do {
-        cookie_jar_set_cookie2(jar, cookies->value, host_and_port, NULL);
+        cookie_jar_set_cookie2(jar, cookies->value, host_and_port, nullptr);
 
         cookies = strmap_lookup_next(cookies);
-    } while (cookies != NULL);
+    } while (cookies != nullptr);
 }
 
 static bool
@@ -495,12 +496,12 @@ widget_update_view(struct embed *embed, struct strmap *headers,
     struct widget *widget = embed->widget;
 
     const char *view_name = strmap_get(headers, "x-cm4all-view");
-    if (view_name != NULL) {
+    if (view_name != nullptr) {
         /* yes, look it up in the class */
 
         const struct widget_view *view =
             widget_class_view_lookup(widget->cls, view_name);
-        if (view == NULL) {
+        if (view == nullptr) {
             /* the view specified in the response header does not
                exist, bail out */
 
@@ -533,23 +534,23 @@ static void
 widget_response_response(http_status_t status, struct strmap *headers,
                          struct istream *body, void *ctx)
 {
-    struct embed *embed = ctx;
+    struct embed *embed = (struct embed *)ctx;
     struct widget *widget = embed->widget;
     /*const char *translate;*/
 
-    if (headers != NULL) {
+    if (headers != nullptr) {
         if (widget->cls->dump_headers) {
             daemon_log(4, "response headers from widget '%s'\n",
                        widget_path(widget));
             strmap_rewind(headers);
             const struct strmap_pair *pair;
-            while ((pair = strmap_next(headers)) != NULL)
+            while ((pair = strmap_next(headers)) != nullptr)
                 daemon_log(4, "  %s: %s\n", pair->key, pair->value);
         }
 
-        if (embed->host_and_port != NULL) {
+        if (embed->host_and_port != nullptr) {
             struct session *session = session_get(embed->env->session_id);
-            if (session != NULL) {
+            if (session != nullptr) {
                 widget_collect_cookies(session->cookies, headers,
                                        embed->host_and_port);
                 session_put(session);
@@ -558,9 +559,9 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
         /*
         translate = strmap_get(headers, "x-cm4all-beng-translate");
-        if (translate != NULL) {
+        if (translate != nullptr) {
             struct session *session = session_get(embed->env->session_id);
-            if (session != NULL)
+            if (session != nullptr)
                 session->translate = d_strdup(session->pool, translate);
             session_put(session);
         }
@@ -568,7 +569,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
         if (http_status_is_redirect(status)) {
             const char *location = strmap_get(headers, "location");
-            if (location != NULL &&
+            if (location != nullptr &&
                 widget_response_redirect(embed, location, body)) {
                 return;
             }
@@ -576,9 +577,9 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
         /* select a new view? */
 
-        GError *error = NULL;
+        GError *error = nullptr;
         if (!widget_update_view(embed, headers, &error)) {
-            if (body != NULL)
+            if (body != nullptr)
                 istream_close_unused(body);
 
             widget_dispatch_error(embed, error);
@@ -591,15 +592,15 @@ widget_response_response(http_status_t status, struct strmap *headers,
        "mode=proxy" feature that has been deprecated since beng-proxy
        0.4 */
     if (transformation_has_processor(embed->transformation) &&
-        g_getenv("VERBATIM_UNPROCESSABLE") != NULL &&
+        g_getenv("VERBATIM_UNPROCESSABLE") != nullptr &&
         !processable(headers))
-        embed->transformation = NULL;
+        embed->transformation = nullptr;
 #endif
 
     if (widget->session_save_pending &&
         transformation_has_processor(embed->transformation)) {
         struct session *session = session_get(embed->env->session_id);
-        if (session != NULL) {
+        if (session != nullptr) {
             widget_save_session(widget, session);
             session_put(session);
         }
@@ -611,12 +612,12 @@ widget_response_response(http_status_t status, struct strmap *headers,
 static void
 widget_response_abort(GError *error, void *ctx)
 {
-    struct embed *embed = ctx;
+    struct embed *embed = (struct embed *)ctx;
 
     widget_dispatch_error(embed, error);
 }
 
-static const struct http_response_handler widget_response_handler = {
+const struct http_response_handler widget_response_handler = {
     .response = widget_response_response,
     .abort = widget_response_abort,
 };
@@ -630,7 +631,7 @@ static const struct http_response_handler widget_response_handler = {
 static struct embed *
 async_to_embed(struct async_operation *ao)
 {
-    return (struct embed *)(((char*)ao) - offsetof(struct embed, operation));
+    return ContainerCast(ao, struct embed, operation);
 }
 
 static void
@@ -660,27 +661,26 @@ widget_http_request(struct pool *pool, struct widget *widget,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    struct embed *embed;
     struct strmap *headers;
     const struct resource_address *address;
 
-    assert(widget != NULL);
-    assert(widget->cls != NULL);
+    assert(widget != nullptr);
+    assert(widget->cls != nullptr);
 
     const struct widget_view *a_view = widget_get_address_view(widget);
-    assert(a_view != NULL);
+    assert(a_view != nullptr);
 
     const struct widget_view *t_view = widget_get_transformation_view(widget);
-    assert(t_view != NULL);
+    assert(t_view != nullptr);
 
-    embed = p_malloc(pool, sizeof(*embed));
+    auto embed = NewFromPool<struct embed>(pool);
     embed->pool = pool;
 
     embed->num_redirects = 0;
     embed->widget = widget;
-    embed->lookup_id = NULL;
+    embed->lookup_id = nullptr;
     embed->env = env;
-    embed->host_and_port = widget->cls->cookie_host != NULL
+    embed->host_and_port = widget->cls->cookie_host != nullptr
         ? widget->cls->cookie_host
         : resource_address_host_and_port(&a_view->address);
     embed->transformation = t_view->transformation;
@@ -688,13 +688,13 @@ widget_http_request(struct pool *pool, struct widget *widget,
     headers = widget_request_headers(embed, a_view,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP ||
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_LHTTP,
-                                     widget->from_request.body != NULL);
+                                     widget->from_request.body != nullptr);
 
     if (widget->cls->dump_headers) {
         daemon_log(4, "request headers for widget '%s'\n", widget_path(widget));
         strmap_rewind(headers);
         const struct strmap_pair *pair;
-        while ((pair = strmap_next(headers)) != NULL)
+        while ((pair = strmap_next(headers)) != nullptr)
             daemon_log(4, "  %s: %s\n", pair->key, pair->value);
     }
 
@@ -707,7 +707,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
     embed->resource_tag = resource_address_id(address, pool);
 
     struct istream *request_body = widget->from_request.body;
-    widget->from_request.body = NULL;
+    widget->from_request.body = nullptr;
 
     resource_get(global_http_cache, global_tcp_balancer,
                  global_lhttp_stock,
@@ -728,32 +728,31 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    struct embed *embed;
     struct strmap *headers;
     const struct resource_address *address;
 
-    assert(widget != NULL);
-    assert(widget->cls != NULL);
-    assert(id != NULL);
-    assert(handler != NULL);
-    assert(handler->found != NULL);
-    assert(handler->not_found != NULL);
-    assert(handler->error != NULL);
+    assert(widget != nullptr);
+    assert(widget->cls != nullptr);
+    assert(id != nullptr);
+    assert(handler != nullptr);
+    assert(handler->found != nullptr);
+    assert(handler->not_found != nullptr);
+    assert(handler->error != nullptr);
 
     const struct widget_view *a_view = widget_get_address_view(widget);
-    assert(a_view != NULL);
+    assert(a_view != nullptr);
 
     const struct widget_view *t_view = widget_get_transformation_view(widget);
-    assert(t_view != NULL);
+    assert(t_view != nullptr);
 
-    embed = p_malloc(pool, sizeof(*embed));
+    auto embed = NewFromPool<struct embed>(pool);
     embed->pool = pool;
 
     embed->num_redirects = 0;
     embed->widget = widget;
     embed->lookup_id = id;
     embed->env = env;
-    embed->host_and_port = widget->cls->cookie_host != NULL
+    embed->host_and_port = widget->cls->cookie_host != nullptr
         ? widget->cls->cookie_host
         : resource_address_host_and_port(&a_view->address);
     embed->transformation = t_view->transformation;
@@ -761,7 +760,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     headers = widget_request_headers(embed, a_view,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP ||
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_LHTTP,
-                                     widget->from_request.body != NULL);
+                                     widget->from_request.body != nullptr);
 
     embed->lookup_handler = handler;
     embed->lookup_handler_ctx = handler_ctx;
@@ -773,7 +772,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     embed->resource_tag = resource_address_id(address, pool);
 
     struct istream *request_body = widget->from_request.body;
-    widget->from_request.body = NULL;
+    widget->from_request.body = nullptr;
 
     resource_get(global_http_cache, global_tcp_balancer,
                  global_lhttp_stock,
