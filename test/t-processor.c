@@ -5,7 +5,7 @@
 #include "widget.h"
 #include "widget-class.h"
 #include "widget-lookup.h"
-#include "rewrite-uri.h"
+#include "rewrite_uri.hxx"
 #include "async.h"
 #include "istream.h"
 

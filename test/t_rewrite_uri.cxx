@@ -1,4 +1,4 @@
-#include "rewrite-uri.h"
+#include "rewrite_uri.hxx"
 #include "http_address.h"
 #include "session.h"
 #include "widget.h"
@@ -141,7 +141,7 @@ struct sink_gstring_ctx {
 static void
 sink_gstring_callback(GString *value, GError *error, void *_ctx)
 {
-    struct sink_gstring_ctx *ctx = _ctx;
+    struct sink_gstring_ctx *ctx = (struct sink_gstring_ctx *)_ctx;
 
     if (error != NULL)
         g_error_free(error);

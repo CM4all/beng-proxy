@@ -12,5 +12,6 @@ run_nfs_client
 /t_sink_header_empty
 /t_wembed
 /t_widget_http
+/t_rewrite_uri
 
 *.trs

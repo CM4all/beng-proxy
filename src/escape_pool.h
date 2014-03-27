@@ -12,8 +12,16 @@
 struct pool;
 struct escape_class;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char *
-escape_dup(struct pool *pool, const struct escape_class *class,
+escape_dup(struct pool *pool, const struct escape_class *cls,
            const char *p, size_t length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

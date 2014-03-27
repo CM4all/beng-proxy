@@ -22,7 +22,7 @@
 #include "tpool.h"
 #include "inline_widget.hxx"
 #include "async.h"
-#include "rewrite-uri.h"
+#include "rewrite_uri.hxx"
 #include "strref2.h"
 #include "strref-pool.h"
 #include "global.h"

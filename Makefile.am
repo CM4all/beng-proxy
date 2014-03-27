@@ -217,7 +217,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/response.cxx \
 	src/generate_response.cxx src/generate_response.hxx \
 	src/resource-tag.c src/resource-tag.h \
-	src/rewrite-uri.c src/rewrite-uri.h \
+	src/rewrite_uri.cxx src/rewrite_uri.hxx \
 	src/rwlock.h \
 	src/serialize.c src/serialize.h \
 	src/shm.c src/shm.h \
@@ -770,7 +770,7 @@ check_PROGRAMS = \
 	test/t-shm test/t-dpool test/t-session \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
-	test/t-rewrite-uri \
+	test/t_rewrite_uri \
 	test/t_widget_registry \
 	test/t-widget-resolver \
 	test/t_wembed test/t_widget_http \
@@ -805,7 +805,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t_pool \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
-	test/t-rewrite-uri \
+	test/t_rewrite_uri \
 	test/t_widget_registry \
 	test/t-widget-resolver \
 	test/t_wembed test/t_widget_http
@@ -1021,7 +1021,7 @@ test_t_istream_processor_SOURCES = test/t-istream-processor.c \
 	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
 	src/widget-session.c src/xml_parser.c src/widget-class.c \
 	src/widget-view.c \
-	src/tpool.c src/rewrite-uri.c src/widget-resolver.c \
+	src/tpool.c src/rewrite_uri.cxx src/widget-resolver.c \
 	src/uri-extract.c \
 	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
 	src/global.c src/transformation.c \
@@ -1274,13 +1274,13 @@ test_t_slice_LDADD = $(AM_LDADD) \
 	libmemory.a \
 	$(CPPUNIT_LIBS)
 
-test_t_rewrite_uri_SOURCES = test/t-rewrite-uri.c \
+test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/tpool.c \
 	src/strset.c \
 	src/escape_pool.c \
 	src/istream-escape.c \
 	src/istream-html-escape.c \
-	src/rewrite-uri.c src/widget-uri.c src/widget.c \
+	src/rewrite_uri.cxx src/widget-uri.c src/widget.c \
 	src/widget-init.c src/widget-view.c src/transformation.c \
 	src/sink-gstring.c \
 	src/args.c \

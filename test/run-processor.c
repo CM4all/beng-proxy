@@ -4,7 +4,7 @@
 #include "inline_widget.hxx"
 #include "widget.h"
 #include "widget-class.h"
-#include "rewrite-uri.h"
+#include "rewrite_uri.hxx"
 #include "istream_file.h"
 #include "istream.h"
 

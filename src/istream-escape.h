@@ -11,8 +11,16 @@ struct pool;
 struct istream;
 struct escape_class;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct istream *
 istream_escape_new(struct pool *pool, struct istream *input,
-                   const struct escape_class *class);
+                   const struct escape_class *cls);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
