@@ -1,5 +1,5 @@
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "widget_http.hxx"
 #include "widget-lookup.h"
 #include "http_address.h"

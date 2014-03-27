@@ -2,7 +2,7 @@
 #include "translate_client.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "widget-view.h"
+#include "widget_view.hxx"
 #include "transformation.h"
 #include "balancer.h"
 #include "tcp-stock.h"

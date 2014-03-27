@@ -8,7 +8,7 @@
 #include "pool.h"
 #include "strref-pool.h"
 #include "strmap.h"
-#include "widget-view.h"
+#include "widget_view.hxx"
 
 #include <string.h>
 

@@ -4,8 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget-class.h"
-#include "widget-view.h"
+#include "widget_class.hxx"
 
 const struct widget_class root_widget_class = {
     .views = {

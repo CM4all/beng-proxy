@@ -8,7 +8,7 @@
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "transformation.h"
 #include "pool.h"
 #include "tpool.h"

@@ -6,7 +6,7 @@
  */
 
 #include "widget_registry.hxx"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "processor.h"
 #include "widget.h"
 #include "tcache.hxx"

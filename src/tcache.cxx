@@ -10,7 +10,6 @@
 #include "translate_response.hxx"
 #include "translate_client.hxx"
 #include "http_quark.h"
-#include "widget-class.h"
 #include "cache.h"
 #include "stock.h"
 #include "hashmap.h"

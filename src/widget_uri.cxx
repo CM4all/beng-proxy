@@ -5,7 +5,7 @@
  */
 
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "uri-relative.h"
 #include "uri-parser.h"
 #include "uri-edit.h"
@@ -30,7 +30,7 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
         ? widget_address(widget) : widget_stateless_address(widget);
     const char *uri;
 
-    if (src->type != RESOURCE_ADDRESS_HTTP || widget->query_string == NULL)
+    if (src->type != RESOURCE_ADDRESS_HTTP || widget->query_string == nullptr)
         return src;
 
     uri = uri_delete_query_string(pool, src->u.http->path,
@@ -51,11 +51,11 @@ widget_base_address(struct pool *pool, struct widget *widget, bool stateful)
 static const struct resource_address *
 widget_get_original_address(const struct widget *widget)
 {
-    assert(widget != NULL);
-    assert(widget->cls != NULL);
+    assert(widget != nullptr);
+    assert(widget->cls != nullptr);
 
     const struct widget_view *view = widget_get_address_view(widget);
-    assert(view != NULL);
+    assert(view != nullptr);
 
     return &view->address;
 }
@@ -67,11 +67,11 @@ widget_determine_address(const struct widget *widget, bool stateful)
     const char *path_info, *uri;
     struct resource_address *address;
 
-    assert(widget != NULL);
-    assert(widget->cls != NULL);
+    assert(widget != nullptr);
+    assert(widget->cls != nullptr);
 
     path_info = stateful ? widget_get_path_info(widget) : widget->path_info;
-    assert(path_info != NULL);
+    assert(path_info != nullptr);
 
     const struct resource_address *original_address =
         widget_get_original_address(widget);
@@ -86,20 +86,20 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
-        assert(original_address->u.http->path != NULL);
+        assert(original_address->u.http->path != nullptr);
 
         if ((!stateful ||
              strref_is_empty(&widget->from_request.query_string)) &&
             *path_info == 0 &&
-            widget->query_string == NULL)
+            widget->query_string == nullptr)
             break;
 
         uri = original_address->u.http->path;
 
         if (*path_info != 0)
-            uri = p_strcat(pool, uri, path_info, NULL);
+            uri = p_strcat(pool, uri, path_info, nullptr);
 
-        if (widget->query_string != NULL)
+        if (widget->query_string != nullptr)
             uri = uri_insert_query_string(pool, uri,
                                           widget->query_string);
 
@@ -111,20 +111,20 @@ widget_determine_address(const struct widget *widget, bool stateful)
         return resource_address_dup_with_path(pool, original_address, uri);
 
     case RESOURCE_ADDRESS_LHTTP:
-        assert(original_address->u.lhttp->uri != NULL);
+        assert(original_address->u.lhttp->uri != nullptr);
 
         if ((!stateful ||
              strref_is_empty(&widget->from_request.query_string)) &&
             *path_info == 0 &&
-            widget->query_string == NULL)
+            widget->query_string == nullptr)
             break;
 
         uri = original_address->u.lhttp->uri;
 
         if (*path_info != 0)
-            uri = p_strcat(pool, uri, path_info, NULL);
+            uri = p_strcat(pool, uri, path_info, nullptr);
 
-        if (widget->query_string != NULL)
+        if (widget->query_string != nullptr)
             uri = uri_insert_query_string(pool, uri,
                                           widget->query_string);
 
@@ -141,14 +141,14 @@ widget_determine_address(const struct widget *widget, bool stateful)
         if ((!stateful ||
              strref_is_empty(&widget->from_request.query_string)) &&
             *path_info == 0 &&
-            widget->query_string == NULL)
+            widget->query_string == nullptr)
             break;
 
         address = resource_address_dup(pool, original_address);
         cgi = resource_address_get_cgi(address);
 
         if (*path_info != 0)
-            cgi->path_info = cgi->path_info != NULL
+            cgi->path_info = cgi->path_info != nullptr
                 ? uri_absolute(pool, cgi->path_info,
                                path_info, strlen(path_info))
                 : path_info;
@@ -157,7 +157,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
             cgi->query_string = widget->query_string;
         else if (strref_is_empty(&widget->from_request.query_string))
             cgi->query_string = widget->query_string;
-        else if (widget->query_string == NULL)
+        else if (widget->query_string == nullptr)
             cgi->query_string =
                 strref_dup(pool, &widget->from_request.query_string);
         else
@@ -167,7 +167,7 @@ widget_determine_address(const struct widget *widget, bool stateful)
                           widget->from_request.query_string.length,
                           "&", (size_t)1,
                           widget->query_string, strlen(widget->query_string),
-                          NULL);
+                          nullptr);
 
         return address;
     }
@@ -182,14 +182,14 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
     assert(widget_address(widget)->type == RESOURCE_ADDRESS_HTTP);
 
     struct strref buffer;
-    if (relative_uri != NULL && strref_starts_with_n(relative_uri, "~/", 2)) {
+    if (relative_uri != nullptr && strref_starts_with_n(relative_uri, "~/", 2)) {
         buffer = *relative_uri;
         strref_skip(&buffer, 2);
         relative_uri = &buffer;
         stateful = false;
-    } else if (relative_uri != NULL &&
+    } else if (relative_uri != nullptr &&
                strref_starts_with_n(relative_uri, "/", 1) &&
-               widget->cls != NULL && widget->cls->anchor_absolute) {
+               widget->cls != nullptr && widget->cls->anchor_absolute) {
         buffer = *relative_uri;
         strref_skip(&buffer, 1);
         relative_uri = &buffer;
@@ -201,13 +201,13 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
          ? widget_address(widget)
          : widget_stateless_address(widget))->u.http;
     const char *base = uwa->path;
-    if (relative_uri == NULL)
+    if (relative_uri == nullptr)
         return http_address_absolute(pool, uwa);
 
     const char *uri = uri_absolute(pool, base, relative_uri->data,
                                    relative_uri->length);
-    assert(uri != NULL);
-    if (!strref_is_empty(relative_uri) && widget->query_string != NULL)
+    assert(uri != nullptr);
+    if (!strref_is_empty(relative_uri) && widget->query_string != nullptr)
         /* the relative_uri is non-empty, and uri_absolute() has
            removed the query string: re-add the configured query
            string */
@@ -228,7 +228,7 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
         relative_uri_length -= 2;
         base = widget_get_original_address(widget);
     } else if (relative_uri_length >= 1 && relative_uri[0] == '/' &&
-               widget->cls != NULL && widget->cls->anchor_absolute) {
+               widget->cls != nullptr && widget->cls->anchor_absolute) {
         relative_uri += 1;
         relative_uri_length -= 1;
         base = widget_get_original_address(widget);
@@ -241,8 +241,8 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
     address = resource_address_apply(pool, base,
                                      relative_uri, relative_uri_length,
                                      &address_buffer);
-    if (address == NULL)
-        return NULL;
+    if (address == nullptr)
+        return nullptr;
 
     const struct resource_address *original_address =
         widget_get_original_address(widget);
@@ -252,20 +252,20 @@ widget_relative_uri(struct pool *pool, struct widget *widget, bool stateful,
 /**
  * Returns true when the widget has the specified widget path.
  *
- * @param other the path to compare with; may be NULL (i.e. never
+ * @param other the path to compare with; may be nullptr (i.e. never
  * matches)
  */
 gcc_pure
 static bool
 compare_widget_path(const struct widget *widget, const char *other)
 {
-    assert(widget != NULL);
+    assert(widget != nullptr);
 
-    if (other == NULL)
+    if (other == nullptr)
         return false;
 
     const char *path = widget_path(widget);
-    if (path == NULL)
+    if (path == nullptr)
         return false;
 
     return strcmp(path, other) == 0;
@@ -286,26 +286,26 @@ widget_external_uri(struct pool *pool,
     struct pool_mark_state mark;
 
     path = widget_path(widget);
-    if (path == NULL ||
-        external_uri == NULL ||
+    if (path == nullptr ||
+        external_uri == nullptr ||
         widget->cls == &root_widget_class)
-        return NULL;
+        return nullptr;
 
     pool_mark(tpool, &mark);
 
-    if (relative_uri != NULL) {
+    if (relative_uri != nullptr) {
         p = widget_relative_uri(tpool, widget, stateful,
                                 relative_uri->data, relative_uri->length,
                                 &buffer);
-        if (p == NULL) {
+        if (p == nullptr) {
             pool_rewind(tpool, &mark);
-            return NULL;
+            return nullptr;
         }
     } else
-        p = NULL;
+        p = nullptr;
 
-    if (p != NULL && strref_chr(relative_uri, '?') == 0 &&
-        widget->query_string != NULL) {
+    if (p != nullptr && strref_chr(relative_uri, '?') == 0 &&
+        widget->query_string != nullptr) {
         /* no query string in relative_uri: if there is one in the new
            URI, check it and remove the configured parameters */
         const char *uri =
@@ -316,7 +316,8 @@ widget_external_uri(struct pool *pool,
         p = &buffer;
     }
 
-    if (p != NULL && (qmark = memchr(p->data, '?', p->length)) != NULL) {
+    if (p != nullptr &&
+        (qmark = (const char *)memchr(p->data, '?', p->length)) != nullptr) {
         /* separate query_string from path_info */
         strref_set2(&query_string, qmark, strref_end(p));
         strref_set2(&buffer, p->data, qmark);
@@ -326,11 +327,11 @@ widget_external_uri(struct pool *pool,
     }
 
     struct strref suffix;
-    if (p != NULL && widget->cls->direct_addressing &&
+    if (p != nullptr && widget->cls->direct_addressing &&
         compare_widget_path(widget, frame)) {
         /* new-style direct URI addressing: append */
         suffix = *p;
-        p = NULL;
+        p = nullptr;
     } else
         strref_set_empty(&suffix);
 
@@ -339,25 +340,25 @@ widget_external_uri(struct pool *pool,
        add the appropriate args. */
     args2 = args_format_n(tpool, args,
                           "focus", path, strlen(path),
-                          p == NULL ? NULL : "path",
-                          p == NULL ? NULL : p->data,
-                          p == NULL ? (size_t)0 : p->length,
-                          frame == NULL ? NULL : "frame", frame,
-                          frame == NULL ? 0 : strlen(frame),
-                          NULL);
+                          p == nullptr ? nullptr : "path",
+                          p == nullptr ? nullptr : p->data,
+                          p == nullptr ? (size_t)0 : p->length,
+                          frame == nullptr ? nullptr : "frame", frame,
+                          frame == nullptr ? 0 : strlen(frame),
+                          nullptr);
 
     new_uri = p_strncat(pool,
                         external_uri->base.data,
                         external_uri->base.length,
                         ";", (size_t)1,
                         args2, strlen(args2),
-                        "&view=", (size_t)(view != NULL ? 6 : 0),
-                        view != NULL ? view : "",
-                        view != NULL ? strlen(view) : (size_t)0,
+                        "&view=", (size_t)(view != nullptr ? 6 : 0),
+                        view != nullptr ? view : "",
+                        view != nullptr ? strlen(view) : (size_t)0,
                         "/", (size_t)(suffix.length > 0),
                         suffix.data, suffix.length,
                         query_string.data, query_string.length,
-                        NULL);
+                        nullptr);
 
     pool_rewind(tpool, &mark);
     return new_uri;

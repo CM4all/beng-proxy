@@ -15,7 +15,7 @@
 #include "async.h"
 #include "session.h"
 #include "transformation.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 
 #include <glib.h>
 

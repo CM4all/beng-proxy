@@ -279,14 +279,14 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/lhttp_request.c src/lhttp_request.h \
 	src/proxy_handler.cxx \
 	src/errdoc.cxx src/errdoc.hxx \
-	src/widget.c \
-	src/widget-init.c \
-	src/widget-root.c \
-	src/widget-class.c \
-	src/widget-view.c \
+	src/widget.cxx \
+	src/widget_init.cxx \
+	src/widget_root.cxx \
+	src/widget_class.cxx \
+	src/widget_view.cxx src/widget_view.hxx \
 	src/widget-ref.c \
 	src/widget-session.c \
-	src/widget-uri.c \
+	src/widget_uri.cxx \
 	src/widget-quark.h \
 	src/widget_request.cxx src/widget_request.hxx \
 	src/widget_registry.cxx src/widget_registry.hxx \
@@ -867,7 +867,7 @@ test_t_cache_LDADD = $(AM_LDADD) \
 test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.c \
 	src/translate_response.cxx \
 	src/hashmap.c src/strmap.c \
-	src/widget-view.c \
+	src/widget_view.cxx \
 	src/strset.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c \
 	src/uri-extract.c src/uri_base.cxx \
@@ -1017,9 +1017,9 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget_request.cxx src/widget_approval.cxx \
-	src/widget.c src/widget-init.c src/widget-ref.c src/widget-uri.c src/args.c \
-	src/widget-session.c src/xml_parser.c src/widget-class.c \
-	src/widget-view.c \
+	src/widget.cxx src/widget_init.cxx src/widget-ref.c src/widget_uri.cxx src/args.c \
+	src/widget-session.c src/xml_parser.c src/widget_class.cxx \
+	src/widget_view.cxx \
 	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/uri-extract.c \
 	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
@@ -1279,8 +1279,8 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/escape_pool.c \
 	src/istream-escape.c \
 	src/istream-html-escape.c \
-	src/rewrite_uri.cxx src/widget-uri.c src/widget.c \
-	src/widget-init.c src/widget-view.c src/transformation.c \
+	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
+	src/widget_init.cxx src/widget_view.cxx src/transformation.c \
 	src/sink-gstring.c \
 	src/args.c \
 	src/strmap.c src/hashmap.c \
@@ -1299,7 +1299,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/transformation.c \
 	src/tcache.cxx src/cache.c \
 	src/translate_response.cxx \
-	src/widget-view.c \
+	src/widget_view.cxx \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/strset.c \
 	src/uri-relative.c src/uri-escape.c src/uri-edit.c \
@@ -1315,7 +1315,7 @@ test_t_widget_registry_LDADD = $(AM_LDADD) \
 
 test_t_widget_resolver_SOURCES = test/t_widget_resolver.cxx \
 	src/widget_resolver.cxx \
-	src/widget-init.c
+	src/widget_init.cxx
 test_t_widget_resolver_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1323,7 +1323,7 @@ test_t_widget_resolver_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_wembed_SOURCES = test/t_wembed.cxx \
-	src/widget-init.c \
+	src/widget_init.cxx \
 	src/widget_approval.cxx \
 	src/inline_widget.cxx \
 	src/istream-escape.c src/istream-html-escape.c \
@@ -1339,11 +1339,11 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 
 test_t_widget_http_SOURCES = test/t_widget_http.cxx \
-	src/widget_http.cxx src/widget-uri.c src/widget_request.cxx \
+	src/widget_http.cxx src/widget_uri.cxx src/widget_request.cxx \
 	src/pheaders.c \
 	src/crash.c \
 	src/widget-session.c src/session.c src/session_manager.c src/session_id.c \
-	src/widget-view.c src/widget.c src/widget-init.c \
+	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \
 	src/args.c src/uri-escape.c \
@@ -1391,7 +1391,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/uri-edit.c src/uri_base.cxx \
 	src/uri-escape.c src/uri-relative.c \
 	src/uri-extract.c \
-	src/widget-view.c \
+	src/widget_view.cxx \
 	src/transformation.c \
 	src/clock.c \
 	$(STOPWATCH_SRC)
@@ -1464,7 +1464,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/processor.cxx src/penv.c src/xml_parser.c \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
-	src/widget.c src/widget-init.c src/widget_approval.cxx src/widget-ref.c \
+	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/uri-escape.c \
 	src/strmap.c src/hashmap.c \
@@ -1477,7 +1477,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/client-socket.c src/fd_util.c \
 	src/header-parser.c \
 	src/widget_request.cxx \
-	src/widget-view.c \
+	src/widget_view.cxx \
 	src/transformation.c \
 	src/failure.c src/bulldog.c \
 	src/balancer.c src/http_address.c src/cache.c \
@@ -1498,7 +1498,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/processor.cxx src/penv.c src/xml_parser.c \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
-	src/widget.c src/widget-init.c src/widget_approval.cxx src/widget-ref.c \
+	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c src/uri_base.cxx \
 	src/uri-escape.c \
 	src/strmap.c src/hashmap.c \
@@ -1511,7 +1511,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/client-socket.c src/fd_util.c \
 	src/header-parser.c \
 	src/widget_request.cxx \
-	src/widget-view.c \
+	src/widget_view.cxx \
 	src/transformation.c \
 	src/failure.c src/bulldog.c \
 	src/balancer.c src/cache.c \

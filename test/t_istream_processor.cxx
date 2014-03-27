@@ -1,6 +1,6 @@
 #include "istream.h"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "processor.h"
 #include "penv.h"
 #include "uri-parser.h"

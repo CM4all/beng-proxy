@@ -5,7 +5,7 @@
  */
 
 #include "widget_approval.hxx"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "widget.h"
 
 bool

@@ -12,7 +12,7 @@
 #include "text_processor.hxx"
 #include "penv.h"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "widget_request.hxx"
 #include "widget-lookup.h"
 #include "widget-quark.h"

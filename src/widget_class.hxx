@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WIDGET_CLASS_H
-#define BENG_PROXY_WIDGET_CLASS_H
+#ifndef BENG_PROXY_WIDGET_CLASS_HXX
+#define BENG_PROXY_WIDGET_CLASS_HXX
 
-#include "widget-view.h"
+#include "widget_view.hxx"
 #include "strset.h"
 
 /**

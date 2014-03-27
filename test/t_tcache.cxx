@@ -5,7 +5,7 @@
 #include "translate_response.hxx"
 #include "async.h"
 #include "transformation.h"
-#include "widget-view.h"
+#include "widget_view.hxx"
 #include "beng-proxy/translation.h"
 #include "http_address.h"
 #include "file_address.h"

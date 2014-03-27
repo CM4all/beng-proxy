@@ -8,7 +8,7 @@
 #include "strmap.h"
 #include "istream.h"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "penv.h"
 
 #include <assert.h>

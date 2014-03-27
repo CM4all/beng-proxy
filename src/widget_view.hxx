@@ -4,15 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WIDGET_VIEW_H
-#define BENG_PROXY_WIDGET_VIEW_H
+#ifndef BENG_PROXY_WIDGET_VIEW_HXX
+#define BENG_PROXY_WIDGET_VIEW_HXX
 
 #include "resource-address.h"
 #include "header-forward.h"
+#include "gerror.h"
 
 #include <inline/compiler.h>
-
-#include <glib.h>
 
 struct pool;
 

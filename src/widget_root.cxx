@@ -5,7 +5,7 @@
  */
 
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 
 void
 widget_init_root(struct widget *widget, struct pool *pool, const char *id)

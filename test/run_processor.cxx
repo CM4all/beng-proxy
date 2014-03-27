@@ -3,7 +3,7 @@
 #include "uri-parser.h"
 #include "inline_widget.hxx"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "rewrite_uri.hxx"
 #include "istream_file.h"
 #include "istream.h"

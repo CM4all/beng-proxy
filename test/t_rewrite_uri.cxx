@@ -2,7 +2,7 @@
 #include "http_address.h"
 #include "session.h"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "widget_resolver.hxx"
 #include "widget_request.hxx"
 #include "uri-parser.h"

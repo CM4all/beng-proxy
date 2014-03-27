@@ -16,7 +16,7 @@
 #include "widget_approval.hxx"
 #include "widget_request.hxx"
 #include "widget-lookup.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "widget-quark.h"
 #include "growing-buffer.h"
 #include "tpool.h"

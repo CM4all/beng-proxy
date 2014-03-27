@@ -9,7 +9,7 @@
 #include "widget_resolver.hxx"
 #include "widget_registry.hxx"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "async.h"
 #include "pool.h"
 #include "cast.hxx"

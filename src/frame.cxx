@@ -9,7 +9,7 @@
 #include "widget-quark.h"
 #include "penv.h"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "widget_approval.hxx"
 #include "widget_resolver.hxx"
 #include "widget-lookup.h"

@@ -9,7 +9,7 @@
 #include "translate_response.hxx"
 #include "buffered_socket.h"
 #include "transformation.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "please.h"
 #include "growing-buffer.h"
 #include "processor.h"

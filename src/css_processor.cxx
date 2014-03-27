@@ -11,7 +11,6 @@
 #include "strmap.h"
 #include "widget.h"
 #include "widget-lookup.h"
-#include "widget-class.h"
 #include "growing-buffer.h"
 #include "tpool.h"
 #include "async.h"

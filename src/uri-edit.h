@@ -13,6 +13,10 @@
 
 struct pool;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_pure gcc_malloc
 const char *
 uri_insert_query_string(struct pool *pool, const char *uri,
@@ -37,5 +41,9 @@ const char *
 uri_insert_args(struct pool *pool, const char *uri,
                 const char *args, size_t args_length,
                 const char *path, size_t path_length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

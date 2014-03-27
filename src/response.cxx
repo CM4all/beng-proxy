@@ -11,7 +11,7 @@
 #include "header-writer.h"
 #include "header-forward.h"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "widget-dump.h"
 #include "proxy_widget.hxx"
 #include "session.h"

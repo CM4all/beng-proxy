@@ -8,7 +8,7 @@
 #include "widget.h"
 #include "widget_request.hxx"
 #include "widget_resolver.hxx"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "strref-pool.h"
 #include "uri-parser.h"
 #include "uri-extract.h"

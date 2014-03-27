@@ -2,7 +2,7 @@
 #include "widget_registry.hxx"
 #include "async.h"
 #include "widget.h"
-#include "widget-class.h"
+#include "widget_class.hxx"
 #include "pool.h"
 #include "cast.hxx"
 

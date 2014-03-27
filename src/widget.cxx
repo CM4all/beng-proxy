@@ -5,8 +5,8 @@
  */
 
 #include "widget.h"
-#include "widget-class.h"
-#include "widget-view.h"
+#include "widget_class.hxx"
+#include "widget_view.hxx"
 #include "strref-pool.h"
 #include "format.h"
 #include "istream.h"
@@ -65,7 +65,8 @@ quote_prefix(struct pool *pool, const char *p)
         return p;
 
     const size_t src_length = strlen(p);
-    char *buffer = p_malloc(pool, src_length + n_quotes * 2 + 1), *q = buffer;
+    char *buffer = (char *) p_malloc(pool, src_length + n_quotes * 2 + 1);
+    char *q = buffer;
 
     if (!valid_prefix_start_char(*p))
         q = quote_byte(q, *p++);
@@ -87,35 +88,35 @@ widget_set_id(struct widget *widget, struct pool *pool,
 {
     const char *p;
 
-    assert(id != NULL);
-    assert(widget->parent != NULL);
+    assert(id != nullptr);
+    assert(widget->parent != nullptr);
     assert(!strref_is_empty(id));
 
     widget->id = strref_dup(pool, id);
 
     p = widget_path(widget->parent);
-    if (p != NULL)
+    if (p != nullptr)
         widget->lazy.path = *p == 0
             ? widget->id
-            : p_strcat(pool, p, WIDGET_REF_SEPARATOR_S, widget->id, NULL);
+            : p_strcat(pool, p, WIDGET_REF_SEPARATOR_S, widget->id, nullptr);
 
     p = widget_prefix(widget->parent);
-    if (p != NULL)
+    if (p != nullptr)
         widget->lazy.prefix = p_strcat(pool, p,
                                        quote_prefix(pool, widget->id),
-                                       "__", NULL);
+                                       "__", nullptr);
 }
 
 void
 widget_set_class_name(struct widget *widget, struct pool *pool,
                       const struct strref *class_name)
 {
-    assert(widget != NULL);
-    assert(widget->parent != NULL);
-    assert(widget->class_name == NULL);
-    assert(widget->cls == NULL);
-    assert(pool != NULL);
-    assert(class_name != NULL);
+    assert(widget != nullptr);
+    assert(widget->parent != nullptr);
+    assert(widget->class_name == nullptr);
+    assert(widget->cls == nullptr);
+    assert(pool != nullptr);
+    assert(class_name != nullptr);
 
     widget->class_name = strref_dup(pool, class_name);
     widget->lazy.quoted_class_name = quote_prefix(pool, widget->class_name);
@@ -125,14 +126,14 @@ bool
 widget_is_container_by_default(const struct widget *widget)
 {
     const struct widget_view *view = widget_get_default_view(widget);
-    return view != NULL && widget_view_is_container(view);
+    return view != nullptr && widget_view_is_container(view);
 }
 
 bool
 widget_has_processor(const struct widget *widget)
 {
     const struct widget_view *view = widget_get_view(widget);
-    assert(view != NULL);
+    assert(view != nullptr);
     return widget_view_has_processor(view);
 }
 
@@ -140,7 +141,7 @@ bool
 widget_is_container(const struct widget *widget)
 {
     const struct widget_view *view = widget_get_transformation_view(widget);
-    return view != NULL && widget_view_is_container(view);
+    return view != nullptr && widget_view_is_container(view);
 }
 
 struct widget *
@@ -148,30 +149,30 @@ widget_get_child(struct widget *widget, const char *id)
 {
     struct widget *child;
 
-    assert(widget != NULL);
-    assert(id != NULL);
+    assert(widget != nullptr);
+    assert(id != nullptr);
 
     for (child = (struct widget *)widget->children.next;
          child != (struct widget *)&widget->children;
          child = (struct widget *)child->siblings.next) {
-        if (child->id != NULL && strcmp(child->id, id) == 0)
+        if (child->id != nullptr && strcmp(child->id, id) == 0)
             return child;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 static bool
 widget_check_untrusted_host(const struct widget *widget, const char *host)
 {
-    assert(widget->cls != NULL);
+    assert(widget->cls != nullptr);
 
-    if (widget->cls->untrusted_host == NULL)
+    if (widget->cls->untrusted_host == nullptr)
         /* trusted widget is only allowed on a trusted host name
-           (host==NULL) */
-        return host == NULL;
+           (host==nullptr) */
+        return host == nullptr;
 
-    if (host == NULL)
+    if (host == nullptr)
         /* untrusted widget not allowed on trusted host name */
         return false;
 
@@ -183,14 +184,14 @@ widget_check_untrusted_host(const struct widget *widget, const char *host)
 static bool
 widget_check_untrusted_prefix(const struct widget *widget, const char *host)
 {
-    assert(widget->cls != NULL);
+    assert(widget->cls != nullptr);
 
-    if (widget->cls->untrusted_prefix == NULL)
+    if (widget->cls->untrusted_prefix == nullptr)
         /* trusted widget is only allowed on a trusted host name
-           (host==NULL) */
-        return host == NULL;
+           (host==nullptr) */
+        return host == nullptr;
 
-    if (host == NULL)
+    if (host == nullptr)
         /* untrusted widget not allowed on trusted host name */
         return false;
 
@@ -205,14 +206,14 @@ static bool
 widget_check_untrusted_site_suffix(const struct widget *widget,
                                    const char *host, const char *site_name)
 {
-    assert(widget->cls != NULL);
+    assert(widget->cls != nullptr);
 
-    if (widget->cls->untrusted_site_suffix == NULL)
+    if (widget->cls->untrusted_site_suffix == nullptr)
         /* trusted widget is only allowed on a trusted host name
-           (host==NULL) */
-        return host == NULL;
+           (host==nullptr) */
+        return host == nullptr;
 
-    if (host == NULL || site_name == NULL)
+    if (host == nullptr || site_name == nullptr)
         /* untrusted widget not allowed on trusted host name */
         return false;
 
@@ -227,18 +228,18 @@ bool
 widget_check_host(const struct widget *widget, const char *host,
                   const char *site_name)
 {
-    assert(widget->cls != NULL);
+    assert(widget->cls != nullptr);
 
-    if (widget->cls->untrusted_host != NULL)
+    if (widget->cls->untrusted_host != nullptr)
         return widget_check_untrusted_host(widget, host);
-    else if (widget->cls->untrusted_prefix != NULL)
+    else if (widget->cls->untrusted_prefix != nullptr)
         return widget_check_untrusted_prefix(widget, host);
-    else if (widget->cls->untrusted_site_suffix != NULL)
+    else if (widget->cls->untrusted_site_suffix != nullptr)
         return widget_check_untrusted_site_suffix(widget, host, site_name);
     else
         /* trusted widget is only allowed on a trusted host name
-           (host==NULL) */
-        return host == NULL;
+           (host==nullptr) */
+        return host == nullptr;
 }
 
 bool
@@ -246,14 +247,14 @@ widget_check_recursion(const struct widget *widget)
 {
     unsigned depth = 0;
 
-    assert(widget != NULL);
+    assert(widget != nullptr);
 
     do {
         if (++depth >= 8)
             return true;
 
         widget = widget->parent;
-    } while (widget != NULL);
+    } while (widget != nullptr);
 
     return false;
 }
@@ -261,12 +262,12 @@ widget_check_recursion(const struct widget *widget)
 void
 widget_cancel(struct widget *widget)
 {
-    if (widget->from_request.body != NULL)
+    if (widget->from_request.body != nullptr)
         /* we are not going to consume the request body, so abort
            it */
         istream_free_unused(&widget->from_request.body);
 
-    if (widget->for_focused.body != NULL)
+    if (widget->for_focused.body != nullptr)
         /* the request body was not forwarded to the focused widget,
            so discard it */
         istream_free_unused(&widget->for_focused.body);
