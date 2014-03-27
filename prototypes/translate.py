@@ -89,6 +89,7 @@ class Translation(Protocol):
         if path[-4:] == '.cls':
             response.packet(TRANSLATE_FASTCGI, path)
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
+            response.pair('UPLOAD_BUFFER_SIZE', '4M')
             if jail:
                 response.packet(TRANSLATE_JAILCGI)
         else:
