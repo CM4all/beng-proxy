@@ -715,7 +715,7 @@ noinst_PROGRAMS = \
 	test/run-cookie-server \
 	test/run-header-parser \
 	test/run-html-unescape test/run-html-escape \
-	test/run-processor \
+	test/run_processor \
 	test/run-client-balancer \
 	test/run_client \
 	test/run_memcached_client \
@@ -773,7 +773,7 @@ check_PROGRAMS = \
 	test/t_widget_registry \
 	test/t_widget_resolver \
 	test/t_wembed test/t_widget_http \
-	test/t-processor \
+	test/t_processor \
 	test/t_memcached_client
 
 TESTS = test/t-hashmap test/t-cache test/t_tcache \
@@ -796,7 +796,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t_http_cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
-	test/t-processor \
+	test/t_processor \
 	test/t_memcached_client \
 	test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
@@ -1460,7 +1460,7 @@ test_t_escape_css_SOURCES = \
 	test/t-escape-css.c
 test_t_escape_css_LDADD = $(AM_LDADD) libutil.a
 
-test_run_processor_SOURCES = test/run-processor.c \
+test_run_processor_SOURCES = test/run_processor.cxx \
 	src/processor.cxx src/penv.c src/xml_parser.c \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
@@ -1494,7 +1494,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_processor_SOURCES = test/t-processor.c \
+test_t_processor_SOURCES = test/t_processor.cxx \
 	src/processor.cxx src/penv.c src/xml_parser.c \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \

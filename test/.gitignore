@@ -6,6 +6,7 @@ run_nfs_client
 /dump_memcached_choice
 /cleanup_memcached_choice
 /run_memcached_client
+/run_processor
 /t_http_cache
 /t_memcached_client
 /t_sink_header
@@ -15,5 +16,7 @@ run_nfs_client
 /t_rewrite_uri
 /t_widget_resolver
 /t_istream_processor
+/t_processor
+
 
 *.trs

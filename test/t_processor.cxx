@@ -39,7 +39,7 @@ embed_inline_widget(struct pool *pool,
                     struct widget *widget)
 {
     const char *s = widget_path(widget);
-    if (s == NULL)
+    if (s == nullptr)
         s = "widget";
 
     return istream_string_new(pool, s);
@@ -50,7 +50,7 @@ widget_get_session(gcc_unused struct widget *widget,
                    gcc_unused struct session *session,
                    gcc_unused bool create)
 {
-    return NULL;
+    return nullptr;
 }
 
 enum uri_mode
@@ -75,7 +75,7 @@ rewrite_widget_uri(gcc_unused struct pool *pool, gcc_unused struct pool *widget_
                    gcc_unused const char *view,
                    gcc_unused const struct escape_class *escape)
 {
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -130,20 +130,20 @@ test_proxy_abort(struct pool *pool)
 
     struct processor_env env;
     processor_env_init(pool, &env,
-                       NULL, NULL,
+                       nullptr, nullptr,
                        "localhost:8080",
                        "localhost:8080",
                        "/beng.html",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
-                       NULL,
+                       nullptr,
                        0xdeadbeef,
-                       HTTP_METHOD_GET, NULL);
+                       HTTP_METHOD_GET, nullptr);
 
     struct async_operation_ref async_ref;
     processor_lookup_widget(pool, istream_block_new(pool),
                             &widget, "foo", &env, PROCESSOR_CONTAINER,
-                            &my_widget_lookup_handler, NULL,
+                            &my_widget_lookup_handler, nullptr,
                             &async_ref);
 
     pool_unref(pool);
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
     (void)argc;
     (void)argv;
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     test_proxy_abort(pool);
 

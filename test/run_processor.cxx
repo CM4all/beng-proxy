@@ -41,7 +41,7 @@ embed_inline_widget(struct pool *pool,
                     struct widget *widget)
 {
     const char *s = widget_path(widget);
-    if (s == NULL)
+    if (s == nullptr)
         s = "widget";
 
     return istream_string_new(pool, s);
@@ -52,7 +52,7 @@ widget_get_session(gcc_unused struct widget *widget,
                    gcc_unused struct session *session,
                    gcc_unused bool create)
 {
-    return NULL;
+    return nullptr;
 }
 
 enum uri_mode
@@ -78,7 +78,7 @@ rewrite_widget_uri(gcc_unused struct pool *pool,
                    gcc_unused const char *view,
                    gcc_unused const struct escape_class *escape)
 {
-    return NULL;
+    return nullptr;
 }
 
 
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
 
     event_base = event_init();
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     uri = "/beng.html";
     ret = uri_parse(&parsed_uri, uri);
@@ -157,21 +157,21 @@ int main(int argc, char **argv) {
     widget_init(&widget, pool, &root_widget_class);
 
     processor_env_init(pool, &env,
-                       NULL, NULL,
+                       nullptr, nullptr,
                        "localhost:8080",
                        "localhost:8080",
                        "/beng.html",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
-                       NULL,
+                       nullptr,
                        0xdeadbeef,
-                       HTTP_METHOD_GET, NULL);
+                       HTTP_METHOD_GET, nullptr);
 
     struct istream *result =
         processor_process(pool,
                           istream_file_new(pool, "/dev/stdin", (off_t)-1),
                           &widget, &env, PROCESSOR_CONTAINER);
-    istream_handler_set(result, &my_istream_handler, NULL, 0);
+    istream_handler_set(result, &my_istream_handler, nullptr, 0);
 
     if (!is_eof)
         event_dispatch();
