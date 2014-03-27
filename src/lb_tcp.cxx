@@ -28,6 +28,8 @@ struct lb_tcp {
     struct buffered_socket outbound;
 
     struct async_operation_ref connect;
+
+    bool got_inbound_data, got_outbound_data;
 };
 
 static constexpr timeval write_timeout = { 30, 0 };
@@ -59,6 +61,8 @@ static enum buffered_result
 inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+
+    tcp->got_inbound_data = true;
 
     if (async_ref_defined(&tcp->connect))
         /* outbound is not yet connected */
@@ -119,7 +123,14 @@ inbound_buffered_socket_write(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    return buffered_socket_read(&tcp->outbound, false);
+    tcp->got_outbound_data = false;
+
+    if (!buffered_socket_read(&tcp->outbound, false))
+        return false;
+
+    if (!tcp->got_outbound_data)
+        filtered_socket_unschedule_write(&tcp->inbound);
+    return true;
 }
 
 static bool
@@ -180,6 +191,8 @@ static enum buffered_result
 outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
+
+    tcp->got_outbound_data = true;
 
     ssize_t nbytes = filtered_socket_write(&tcp->inbound, buffer, size);
     if (nbytes > 0) {
@@ -248,7 +261,14 @@ outbound_buffered_socket_write(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    return filtered_socket_read(&tcp->inbound, false);
+    tcp->got_inbound_data = false;
+
+    if (!filtered_socket_read(&tcp->inbound, false))
+        return false;
+
+    if (!tcp->got_inbound_data)
+        buffered_socket_unschedule_write(&tcp->outbound);
+    return true;
 }
 
 static bool
