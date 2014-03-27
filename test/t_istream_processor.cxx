@@ -24,7 +24,7 @@ widget_class_lookup(gcc_unused struct pool *pool, gcc_unused struct pool *widget
                     void *ctx,
                     gcc_unused struct async_operation_ref *async_ref)
 {
-    callback(NULL, ctx);
+    callback(nullptr, ctx);
 }
 
 struct istream *
@@ -65,15 +65,15 @@ create_test(struct pool *pool, struct istream *input)
 
     session = session_new();
     processor_env_init(pool, &env,
-                       NULL, NULL,
+                       nullptr, nullptr,
                        "localhost:8080",
                        "localhost:8080",
                        "/beng.html",
                        "http://localhost:8080/beng.html",
                        &parsed_uri,
-                       NULL,
+                       nullptr,
                        session->id,
-                       HTTP_METHOD_GET, NULL);
+                       HTTP_METHOD_GET, nullptr);
     session_put(session);
 
     return processor_process(pool, input, &widget, &env, PROCESSOR_CONTAINER);

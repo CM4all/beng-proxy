@@ -36,7 +36,6 @@ test/t-html-escape
 test/t-escape-css
 test/run_http_server
 test/run-processor
-test/t-istream-processor
 test/t-istream-replace
 test/t-istream-replace2
 test/t-istream-iconv

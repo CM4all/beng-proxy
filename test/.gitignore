@@ -14,5 +14,6 @@ run_nfs_client
 /t_widget_http
 /t_rewrite_uri
 /t_widget_resolver
+/t_istream_processor
 
 *.trs

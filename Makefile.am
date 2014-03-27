@@ -739,7 +739,7 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 	test/t-istream-html-escape test/t-istream-fcgi \
 	test/t_sink_header \
 	test/t_sink_header_empty \
-	test/t-istream-processor
+	test/t_istream_processor
 
 check_PROGRAMS = \
 	test/t-hashmap test/t-cache test/t_tcache \
@@ -1001,7 +1001,7 @@ test_t_istream_html_escape_LDADD = $(T_ISTREAM_FILTER_LIB)
 test_t_istream_fcgi_SOURCES = test/t-istream-cat.c $(T_ISTREAM_FILTER_SRC)
 test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_processor_SOURCES = test/t-istream-processor.c \
+test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/istream-escape.c \
 	src/istream-html-escape.c \
 	src/uri-relative.c src/uri-escape.c src/uri-edit.c \
