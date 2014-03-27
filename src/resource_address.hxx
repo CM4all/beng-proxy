@@ -5,15 +5,15 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_RESOURCE_ADDRESS_H
-#define __BENG_RESOURCE_ADDRESS_H
+#ifndef BENG_PROXY_RESOURCE_ADDRESS_HXX
+#define BENG_PROXY_RESOURCE_ADDRESS_HXX
 
 #include <inline/compiler.h>
 
 #include <glib.h>
 
 #include <assert.h>
-#include <stdbool.h>
+#include <stddef.h>
 
 struct pool;
 struct strref;
@@ -46,10 +46,6 @@ struct resource_address {
         const struct nfs_address *nfs;
     } u;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Is this a CGI address, or a similar protocol?
@@ -225,9 +221,5 @@ resource_address_is_expandable(const struct resource_address *address);
 bool
 resource_address_expand(struct pool *pool, struct resource_address *address,
                         const GMatchInfo *match_info, GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

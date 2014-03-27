@@ -15,7 +15,7 @@
 #include "abort-unref.h"
 #include "tpool.h"
 #include "http_util.h"
-#include "resource-address.h"
+#include "resource_address.hxx"
 #include "resource_loader.hxx"
 #include "istream.h"
 #include "rubber.hxx"

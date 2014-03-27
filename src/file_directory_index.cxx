@@ -7,7 +7,7 @@
 #include "file_directory_index.hxx"
 #include "request.hxx"
 #include "translate_response.hxx"
-#include "resource-address.h"
+#include "resource_address.hxx"
 #include "file_address.h"
 
 #include <daemon/log.h>

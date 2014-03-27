@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "resource-address.h"
+#include "resource_address.hxx"
 #include "file_address.h"
 #include "lhttp_address.h"
 #include "http_address.h"
@@ -72,7 +72,7 @@ resource_address_dup_with_path(struct pool *pool,
                                const struct resource_address *src,
                                const char *path)
 {
-    struct resource_address *dest = p_malloc(pool, sizeof(*dest));
+    auto dest = NewFromPool<struct resource_address>(pool);
     dest->type = src->type;
 
     switch (src->type) {
@@ -126,7 +126,7 @@ resource_address_insert_query_string_from(struct pool *pool,
             /* no query string in URI */
             return src;
 
-        dest = p_malloc(pool, sizeof(*dest));
+        dest = NewFromPool<struct resource_address>(pool);
         dest->type = src->type;
         dest->u.http = http_address_insert_query_string(pool, src->u.http,
                                                         query_string);
@@ -140,7 +140,7 @@ resource_address_insert_query_string_from(struct pool *pool,
             /* no query string in URI */
             return src;
 
-        dest = p_malloc(pool, sizeof(*dest));
+        dest = NewFromPool<struct resource_address>(pool);
         dest->type = src->type;
         dest->u.lhttp = lhttp_address_insert_query_string(pool, src->u.lhttp,
                                                           query_string);
@@ -193,7 +193,7 @@ resource_address_insert_args(struct pool *pool,
     case RESOURCE_ADDRESS_AJP:
         assert(src->u.http != NULL);
 
-        dest = p_malloc(pool, sizeof(*dest));
+        dest = NewFromPool<struct resource_address>(pool);
         dest->type = src->type;
         dest->u.http = http_address_insert_args(pool, src->u.http,
                                                 args, args_length,
@@ -203,7 +203,7 @@ resource_address_insert_args(struct pool *pool,
     case RESOURCE_ADDRESS_LHTTP:
         assert(src->u.lhttp != NULL);
 
-        dest = p_malloc(pool, sizeof(*dest));
+        dest = NewFromPool<struct resource_address>(pool);
         dest->type = src->type;
         dest->u.lhttp = lhttp_address_insert_args(pool, src->u.lhttp,
                                                   args, args_length,

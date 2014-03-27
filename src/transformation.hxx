@@ -7,7 +7,7 @@
 #ifndef BENG_TRANSFORMATION_HXX
 #define BENG_TRANSFORMATION_HXX
 
-#include "resource-address.h"
+#include "resource_address.hxx"
 #include "gerror.h"
 
 #include <inline/compiler.h>

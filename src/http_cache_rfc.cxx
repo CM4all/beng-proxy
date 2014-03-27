@@ -11,7 +11,7 @@
 #include "strmap.h"
 #include "date.h"
 #include "tpool.h"
-#include "resource-address.h"
+#include "resource_address.hxx"
 #include "http_address.h"
 #include "cgi_address.h"
 #include "lhttp_address.h"

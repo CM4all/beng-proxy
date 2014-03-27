@@ -8,7 +8,7 @@
 #define BENG_PROXY_TRANSLATE_RESPONSE_HXX
 
 #include "util/ConstBuffer.hxx"
-#include "resource-address.h"
+#include "resource_address.hxx"
 #include "header-forward.h"
 #include "strset.h"
 

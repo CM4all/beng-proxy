@@ -10,7 +10,7 @@
 #include "resource_loader.hxx"
 #include "strmap.h"
 #include "http_response.h"
-#include "resource-address.h"
+#include "resource_address.hxx"
 #include "strref2.h"
 #include "http_util.h"
 #include "async.h"

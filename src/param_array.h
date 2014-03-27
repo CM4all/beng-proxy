@@ -30,6 +30,10 @@ struct param_array {
     const char *expand_values[PARAM_ARRAY_SIZE];
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static inline void
 param_array_init(struct param_array *pa)
 {
@@ -82,5 +86,9 @@ param_array_is_expandable(const struct param_array *pa);
 bool
 param_array_expand(struct pool *pool, struct param_array *pa,
                    const GMatchInfo *match_info, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

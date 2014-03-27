@@ -7,7 +7,6 @@
 #ifndef BENG_PROXY_TRANSLATE_CLIENT_HXX
 #define BENG_PROXY_TRANSLATE_CLIENT_HXX
 
-#include "resource-address.h"
 #include "header-forward.h"
 #include "strref.h"
 

@@ -640,7 +640,7 @@ libraddress_a_SOURCES = \
 	src/http_address.c src/http_address.h \
 	src/address_list.h \
 	src/address_list.c \
-	src/resource-address.c src/resource-address.h
+	src/resource_address.cxx src/resource_address.hxx
 
 libistream_a_SOURCES = \
 	src/istream_pause.c src/istream_pause.h \
@@ -745,7 +745,7 @@ check_PROGRAMS = \
 	test/t-hashmap test/t-cache test/t_tcache \
 	test/t-header-forward \
 	test/t-stock \
-	test/t-resource-address \
+	test/t_resource_address \
 	test/t_http_address \
 	test/t-uri-verify \
 	test/t-uri-relative \
@@ -779,7 +779,7 @@ check_PROGRAMS = \
 TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t-header-forward \
 	test/t-stock \
-	test/t-resource-address \
+	test/t_resource_address \
 	test/t_http_address \
 	test/t-uri-verify \
 	test/t-uri-relative \
@@ -908,7 +908,7 @@ test_t_stock_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
-test_t_resource_address_SOURCES = test/t-resource-address.c \
+test_t_resource_address_SOURCES = test/t_resource_address.cxx \
 	src/regex.c \
 	src/http_address.c src/uri-relative.c \
 	src/uri-escape.c src/uri-edit.c \

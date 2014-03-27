@@ -1,4 +1,4 @@
-#include "resource-address.h"
+#include "resource_address.hxx"
 #include "file_address.h"
 #include "cgi_address.h"
 #include "pool.h"

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WIDGET_VIEW_HXX
 #define BENG_PROXY_WIDGET_VIEW_HXX
 
-#include "resource-address.h"
+#include "resource_address.hxx"
 #include "header-forward.h"
 #include "gerror.h"
 
