@@ -53,26 +53,6 @@ struct css_processor {
 
     struct uri_rewrite uri_rewrite;
 
-    /**
-     * These values are used to buffer c:mode/c:base values in any
-     * order, even after the actual URI attribute.
-     */
-    struct {
-        bool pending;
-
-        off_t uri_start, uri_end;
-        struct expansible_buffer *value;
-
-        /**
-         * The positions of the c:mode/c:base attributes after the URI
-         * attribute.  These have to be deleted *after* the URI
-         * attribute has been rewritten.
-         */
-        struct {
-            off_t start, end;
-        } delete[4];
-    } postponed_rewrite;
-
     struct async_operation async;
 };
 
@@ -315,10 +295,6 @@ css_processor(struct pool *caller_pool, struct istream *istream,
     processor->container = widget;
     processor->env = env;
     processor->options = options;
-
-    processor->postponed_rewrite.pending = false;
-    processor->postponed_rewrite.value =
-        expansible_buffer_new(pool, 1024, 8192);
 
     istream = istream_tee_new(processor->pool, istream, true, true);
     processor->replace = istream_replace_new(processor->pool,
