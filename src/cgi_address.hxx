@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CGI_ADDRESS_H
-#define BENG_PROXY_CGI_ADDRESS_H
+#ifndef BENG_PROXY_CGI_ADDRESS_HXX
+#define BENG_PROXY_CGI_ADDRESS_HXX
 
 #include "child_options.h"
 #include "address_list.h"
@@ -62,10 +62,6 @@ struct cgi_address {
      */
     struct address_list address_list;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 cgi_address_init(struct cgi_address *cgi, const char *path,
@@ -135,9 +131,5 @@ cgi_address_is_expandable(const struct cgi_address *address)
 bool
 cgi_address_expand(struct pool *pool, struct cgi_address *address,
                    const GMatchInfo *match_info, GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

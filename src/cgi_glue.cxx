@@ -5,7 +5,7 @@
  */
 
 #include "cgi_glue.hxx"
-#include "cgi_address.h"
+#include "cgi_address.hxx"
 #include "cgi_client.h"
 #include "cgi_launch.hxx"
 #include "abort-flag.h"

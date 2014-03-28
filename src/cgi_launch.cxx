@@ -5,7 +5,7 @@
  */
 
 #include "cgi_launch.hxx"
-#include "cgi_address.h"
+#include "cgi_address.hxx"
 #include "istream.h"
 #include "fork.h"
 #include "strutil.h"

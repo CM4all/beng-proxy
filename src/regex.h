@@ -11,6 +11,10 @@
 
 struct pool;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @return NULL on error
  */
@@ -28,5 +32,9 @@ const char *
 expand_string_unescaped(struct pool *pool, const char *src,
                         const GMatchInfo *match_info,
                         GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

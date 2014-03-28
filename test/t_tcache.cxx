@@ -9,7 +9,7 @@
 #include "beng-proxy/translation.h"
 #include "http_address.h"
 #include "file_address.h"
-#include "cgi_address.h"
+#include "cgi_address.hxx"
 #include "pool.h"
 #include "tpool.h"
 

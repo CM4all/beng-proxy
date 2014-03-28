@@ -13,7 +13,7 @@
 #include "tpool.h"
 #include "resource_address.hxx"
 #include "http_address.h"
-#include "cgi_address.h"
+#include "cgi_address.hxx"
 #include "lhttp_address.h"
 
 #include <assert.h>

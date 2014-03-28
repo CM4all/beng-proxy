@@ -633,7 +633,7 @@ libraddress_a_SOURCES = \
 	src/jail.c src/jail.h \
 	src/child_options.h \
 	src/rlimit_options.c src/rlimit_options.h \
-	src/cgi_address.c src/cgi_address.h \
+	src/cgi_address.cxx src/cgi_address.hxx \
 	src/file_address.c src/file_address.h \
 	src/nfs_address.c src/nfs_address.h \
 	src/lhttp_address.c src/lhttp_address.h \
