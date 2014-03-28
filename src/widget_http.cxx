@@ -26,7 +26,7 @@
 #include "header-forward.h"
 #include "transformation.hxx"
 #include "global.h"
-#include "resource-tag.h"
+#include "resource_tag.hxx"
 #include "uri-extract.h"
 #include "strmap.h"
 #include "istream.h"

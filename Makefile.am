@@ -216,7 +216,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/rerror.cxx \
 	src/response.cxx \
 	src/generate_response.cxx src/generate_response.hxx \
-	src/resource-tag.c src/resource-tag.h \
+	src/resource_tag.cxx src/resource_tag.hxx \
 	src/rewrite_uri.cxx src/rewrite_uri.hxx \
 	src/rwlock.h \
 	src/serialize.c src/serialize.h \
@@ -1348,7 +1348,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/fd_util.c \
 	src/args.c src/uri-escape.c \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c src/uri_base.cxx \
-	src/resource-tag.c \
+	src/resource_tag.cxx \
 	src/cookie_client.c src/cookie_jar.c \
 	src/header-parser.c src/header-forward.c src/header-writer.c \
 	src/header-copy.c \

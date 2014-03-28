@@ -21,7 +21,7 @@
 #include "growing-buffer.h"
 #include "header-parser.h"
 #include "global.h"
-#include "resource-tag.h"
+#include "resource_tag.hxx"
 #include "hostname.h"
 #include "dhashmap.h"
 #include "errdoc.hxx"

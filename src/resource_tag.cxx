@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "resource-tag.h"
+#include "resource_tag.hxx"
 #include "strmap.h"
 #include "http_util.h"
 #include "pool.h"
