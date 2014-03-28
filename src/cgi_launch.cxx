@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cgi_launch.h"
+#include "cgi_launch.hxx"
 #include "cgi_address.h"
 #include "istream.h"
 #include "fork.h"
@@ -38,22 +38,22 @@ cgi_run(const struct jail_params *jail,
         const char *const env[], unsigned num_env)
 {
     const struct strmap_pair *pair;
-    const char *arg = NULL;
+    const char *arg = nullptr;
 
-    assert(path != NULL);
+    assert(path != nullptr);
     assert(http_method_is_valid(method));
-    assert(uri != NULL);
+    assert(uri != nullptr);
 
-    if (script_name == NULL)
+    if (script_name == nullptr)
         script_name = "";
 
-    if (path_info == NULL)
+    if (path_info == nullptr)
         path_info = "";
 
-    if (query_string == NULL)
+    if (query_string == nullptr)
         query_string = "";
 
-    if (document_root == NULL)
+    if (document_root == nullptr)
         document_root = "/var/www";
 
     clearenv();
@@ -81,35 +81,35 @@ cgi_run(const struct jail_params *jail,
     setenv("DOCUMENT_ROOT", document_root, 1);
     setenv("SERVER_SOFTWARE", PRODUCT_TOKEN, 1);
 
-    if (remote_addr != NULL)
+    if (remote_addr != nullptr)
         setenv("REMOTE_ADDR", remote_addr, 1);
 
-    if (jail != NULL && jail->enabled) {
+    if (jail != nullptr && jail->enabled) {
         setenv("JAILCGI_FILENAME", path, 1);
         path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
 
-        if (jail->home_directory != NULL)
+        if (jail->home_directory != nullptr)
             setenv("JETSERV_HOME", jail->home_directory, 1);
 
-        if (interpreter != NULL)
+        if (interpreter != nullptr)
             setenv("JAILCGI_INTERPRETER", interpreter, 1);
 
-        if (action != NULL)
+        if (action != nullptr)
             setenv("JAILCGI_ACTION", action, 1);
     } else {
-        if (action != NULL)
+        if (action != nullptr)
             path = action;
 
-        if (interpreter != NULL) {
+        if (interpreter != nullptr) {
             arg = path;
             path = interpreter;
         }
     }
 
-    const char *content_type = NULL;
-    if (headers != NULL) {
+    const char *content_type = nullptr;
+    if (headers != nullptr) {
         strmap_rewind(headers);
-        while ((pair = strmap_next(headers)) != NULL) {
+        while ((pair = strmap_next(headers)) != nullptr) {
             if (strcmp(pair->key, "content-type") == 0) {
                 content_type = pair->value;
                 continue;
@@ -132,7 +132,7 @@ cgi_run(const struct jail_params *jail,
         }
     }
 
-    if (content_type != NULL)
+    if (content_type != nullptr)
         setenv("CONTENT_TYPE", content_type, 1);
 
     if (content_length >= 0) {
@@ -147,7 +147,7 @@ cgi_run(const struct jail_params *jail,
     exec_append(&e, path);
     for (unsigned i = 0; i < n_args; ++i)
         exec_append(&e, args[i]);
-    if (arg != NULL)
+    if (arg != nullptr)
         exec_append(&e, arg);
     exec_do(&e);
 
@@ -170,7 +170,7 @@ struct cgi_ctx {
 static int
 cgi_fn(void *ctx)
 {
-    struct cgi_ctx *c = ctx;
+    struct cgi_ctx *c = (struct cgi_ctx *)ctx;
     const struct cgi_address *address = c->address;
 
     install_default_signal_handlers();
@@ -212,13 +212,13 @@ cgi_child_callback(int status, void *ctx gcc_unused)
 static const char *
 cgi_address_name(const struct cgi_address *address)
 {
-    if (address->interpreter != NULL)
+    if (address->interpreter != nullptr)
         return address->interpreter;
 
-    if (address->action != NULL)
+    if (address->action != nullptr)
         return address->action;
 
-    if (address->path != NULL)
+    if (address->path != nullptr)
         return address->path;
 
     return "CGI";
@@ -235,7 +235,7 @@ cgi_launch(struct pool *pool, http_method_t method,
         .method = method,
         .address = address,
         .uri = cgi_address_uri(pool, address),
-        .available = body != NULL ? istream_available(body, false) : -1,
+        .available = body != nullptr ? istream_available(body, false) : -1,
         .remote_addr = remote_addr,
         .headers = headers,
     };
@@ -251,17 +251,17 @@ cgi_launch(struct pool *pool, http_method_t method,
     pid_t pid = beng_fork(pool, cgi_address_name(address), body, &input,
                           clone_flags,
                           cgi_fn, &c,
-                          cgi_child_callback, NULL, error_r);
+                          cgi_child_callback, nullptr, error_r);
     if (pid < 0) {
         leave_signal_section(&c.signals);
 
-        if (body != NULL)
+        if (body != nullptr)
             /* beng_fork() left the request body open - free this
                resource, because our caller always assume that we have
                consumed it */
             istream_close_unused(body);
 
-        return NULL;
+        return nullptr;
     }
 
     leave_signal_section(&c.signals);

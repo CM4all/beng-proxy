@@ -109,7 +109,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cgi_quark.h \
 	src/cgi_parser.c src/cgi_parser.h \
 	src/cgi_client.c src/cgi_client.h \
-	src/cgi_launch.c src/cgi_launch.h \
+	src/cgi_launch.cxx src/cgi_launch.hxx \
 	src/pivot_root.h \
 	src/child_manager.c src/child_manager.h \
 	src/child_socket.c src/child_socket.h \
@@ -1073,7 +1073,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	$(STOPWATCH_SRC) \
 	src/clock.c \
 	src/cgi_glue.cxx src/fork.c \
-	src/cgi_client.c src/cgi_launch.c \
+	src/cgi_client.c src/cgi_launch.cxx \
 	src/cgi_parser.c \
 	src/uri_base.cxx src/uri-escape.c src/uri-relative.c \
 	src/uri-extract.c \

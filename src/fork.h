@@ -20,6 +20,10 @@ fork_quark(void)
     return g_quark_from_static_string("fork");
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Wrapper for the fork() system call.  Forks a sub process, returns
  * its standard output stream as an istream, and optionally sends the
@@ -39,5 +43,9 @@ beng_fork(struct pool *pool, const char *name,
           int (*fn)(void *ctx), void *fn_ctx,
           child_callback_t callback, void *ctx,
           GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

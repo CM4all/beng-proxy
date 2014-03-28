@@ -7,7 +7,7 @@
 #include "cgi_glue.hxx"
 #include "cgi_address.h"
 #include "cgi_client.h"
-#include "cgi_launch.h"
+#include "cgi_launch.hxx"
 #include "abort-flag.h"
 #include "stopwatch.h"
 #include "http_response.h"

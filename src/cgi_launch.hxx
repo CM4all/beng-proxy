@@ -4,21 +4,17 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CGI_LAUNCH_H
-#define BENG_PROXY_CGI_LAUNCH_H
+#ifndef BENG_PROXY_CGI_LAUNCH_HXX
+#define BENG_PROXY_CGI_LAUNCH_HXX
+
+#include "gerror.h"
 
 #include <http/method.h>
-
-#include <glib.h>
 
 struct pool;
 struct istream;
 struct cgi_address;
 struct strmap;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct istream *
 cgi_launch(struct pool *pool, http_method_t method,
@@ -26,9 +22,5 @@ cgi_launch(struct pool *pool, http_method_t method,
            const char *remote_addr,
            struct strmap *headers, struct istream *body,
            GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
