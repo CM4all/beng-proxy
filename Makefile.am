@@ -105,7 +105,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/buffered_io.c src/buffered_io.h \
 	src/bulldog.c src/bulldog.h \
 	src/cache.c src/cache.h \
-	src/cgi_glue.c src/cgi_glue.h \
+	src/cgi_glue.cxx src/cgi_glue.hxx \
 	src/cgi_quark.h \
 	src/cgi_parser.c src/cgi_parser.h \
 	src/cgi_client.c src/cgi_client.h \
@@ -756,7 +756,7 @@ check_PROGRAMS = \
 	test/t-istream-tee \
 	test/t-growing-buffer \
 	test/t_balancer \
-	test/t-cgi \
+	test/t_cgi \
 	test/run_http_server \
 	test/t-http-server \
 	test/t-http-client test/t-http-util \
@@ -790,7 +790,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t-istream-tee \
 	test/t-growing-buffer \
 	test/t_balancer \
-	test/t-cgi \
+	test/t_cgi \
 	test/t-http-server.py test/t-http-server \
 	test/t-http-client test/t-http-util \
 	test/t_http_cache \
@@ -1069,10 +1069,10 @@ test_t_balancer_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(CPPUNIT_LIBS)
 
-test_t_cgi_SOURCES = test/t-cgi.c \
+test_t_cgi_SOURCES = test/t_cgi.cxx \
 	$(STOPWATCH_SRC) \
 	src/clock.c \
-	src/cgi_glue.c src/fork.c \
+	src/cgi_glue.cxx src/fork.c \
 	src/cgi_client.c src/cgi_launch.c \
 	src/cgi_parser.c \
 	src/uri_base.cxx src/uri-escape.c src/uri-relative.c \

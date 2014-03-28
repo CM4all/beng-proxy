@@ -20,6 +20,10 @@ struct abort_flag {
     bool aborted;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize the abort_flag object, which was allocated by the
  * caller.
@@ -37,5 +41,9 @@ abort_flag_set(struct abort_flag *af, struct async_operation_ref *async_ref)
     abort_flag_init(af);
     async_ref_set(async_ref, &af->operation);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

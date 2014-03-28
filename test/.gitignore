@@ -18,5 +18,6 @@ run_nfs_client
 /t_istream_processor
 /t_processor
 /t_resource_address
+/t_cgi
 
 *.trs

@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_CGI_H
-#define __BENG_CGI_H
+#ifndef BENG_PROXY_CGI_GLUE_HXX
+#define BENG_PROXY_CGI_GLUE_HXX
 
 #include <http/method.h>
 
@@ -16,10 +16,6 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
 cgi_new(struct pool *pool, http_method_t method,
         const struct cgi_address *address,
@@ -28,9 +24,5 @@ cgi_new(struct pool *pool, http_method_t method,
         const struct http_response_handler *handler,
         void *handler_ctx,
         struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

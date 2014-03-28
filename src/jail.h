@@ -30,6 +30,10 @@ struct jail_params {
     const char *home_directory;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Loads the JailCGI configuration file, usually located in
  * /etc/cm4all/jailcgi/jail.conf.
@@ -67,5 +71,9 @@ jail_translate_path(const struct jail_config *config, const char *path,
 void
 jail_wrapper_insert(struct exec *e, const struct jail_params *params,
                     const char *document_root);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

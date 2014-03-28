@@ -13,7 +13,7 @@
 #include "file_address.h"
 #include "lhttp_request.h"
 #include "http_address.h"
-#include "cgi_glue.h"
+#include "cgi_glue.hxx"
 #include "cgi_address.h"
 #include "fcgi_request.h"
 #include "fcgi_remote.h"

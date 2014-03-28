@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cgi_glue.h"
+#include "cgi_glue.hxx"
 #include "cgi_address.h"
 #include "cgi_client.h"
 #include "cgi_launch.h"
@@ -27,10 +27,10 @@ cgi_new(struct pool *pool, http_method_t method,
     struct abort_flag abort_flag;
     abort_flag_set(&abort_flag, async_ref);
 
-    GError *error = NULL;
+    GError *error = nullptr;
     struct istream *input = cgi_launch(pool, method, address,
                                        remote_addr, headers, body, &error);
-    if (input == NULL) {
+    if (input == nullptr) {
         if (abort_flag.aborted) {
             /* the operation was aborted - don't call the
                http_response_handler */

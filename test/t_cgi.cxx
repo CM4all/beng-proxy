@@ -1,4 +1,4 @@
-#include "cgi_glue.h"
+#include "cgi_glue.hxx"
 #include "cgi_address.h"
 #include "async.h"
 #include "http_response.h"
@@ -45,7 +45,7 @@ static istream_direct_t my_handler_direct = 0;
 static size_t
 my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     c->body_data += length;
 
@@ -68,7 +68,7 @@ static ssize_t
 my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
                   size_t max_length, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     if (c->close_response_body_data) {
         c->body_closed = true;
@@ -97,7 +97,7 @@ my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
 static void
 my_istream_eof(void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     c->body = NULL;
     c->body_eof = true;
@@ -108,7 +108,7 @@ my_istream_eof(void *ctx)
 static void
 my_istream_abort(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     g_error_free(error);
 
@@ -136,7 +136,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
             struct istream *body,
             void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     assert(!c->no_content || body == NULL);
 
@@ -169,7 +169,7 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
