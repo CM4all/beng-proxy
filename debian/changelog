@@ -3,7 +3,7 @@ cm4all-beng-proxy (4.0.26) unstable; urgency=low
   * merge release 3.1.28
   * translation: add packet EXPIRES_RELATIVE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 01 Apr 2014 17:18:55 -0000
 
 cm4all-beng-proxy (4.0.25) unstable; urgency=low
 
