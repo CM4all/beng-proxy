@@ -402,7 +402,7 @@ handle_translated_request(request &request, const TranslateResponse &response)
     /* TODO: use cache_item_lock() instead */
     auto response2 = NewFromPool<TranslateResponse>(request.request->pool);
     *response2 = response;
-    translate_response_copy(request.request->pool, response2, &response);
+    response2->CopyFrom(request.request->pool, response);
     request.translate.response = response2;
 
     if (!do_content_type_lookup(request, *response2))

@@ -141,7 +141,7 @@ static const GRegexCompileFlags default_regex_compile_flags =
 static void
 tcache_add_per_host(struct tcache *tcache, TranslateCacheItem *item)
 {
-    assert(translate_response_vary_contains(&item->response, TRANSLATE_HOST));
+    assert(item->response.VaryContains(TRANSLATE_HOST));
 
     const char *host = item->request.host;
     if (host == nullptr)
@@ -165,7 +165,7 @@ static void
 tcache_remove_per_host(TranslateCacheItem *item)
 {
     assert(!list_empty(&item->per_host_siblings));
-    assert(translate_response_vary_contains(&item->response, TRANSLATE_HOST));
+    assert(item->response.VaryContains(TRANSLATE_HOST));
 
     struct list_head *next = item->per_host_siblings.next;
     list_remove(&item->per_host_siblings);
@@ -387,8 +387,7 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
         return false;
     }
 
-    bool success = translate_response_expand(pool, response,
-                                             match_info, error_r);
+    bool success = response->Expand(pool, match_info, error_r);
     g_match_info_free(match_info);
     return success;
 }
@@ -451,8 +450,8 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
     const char *key = tcache_store_address(pool, &dest->address, &src->address,
                                            request->uri, base,
                                            src->easy_base,
-                                           translate_response_is_expandable(src));
-    translate_response_copy(pool, dest, src);
+                                           src->IsExpandable());
+    dest->CopyFrom(pool, *src);
 
     if (key == nullptr)
         /* the BASE value didn't match - clear it */
@@ -492,7 +491,7 @@ tcache_load_address(struct pool *pool, const char *uri,
                     const TranslateResponse *src,
                     GError **error_r)
 {
-    if (src->base != nullptr && !translate_response_is_expandable(src)) {
+    if (src->base != nullptr && !src->IsExpandable()) {
         const char *tail = require_base_tail(uri, src->base);
 
         if (!src->unsafe_base && !uri_path_verify_paranoid(tail - 1)) {
@@ -524,7 +523,7 @@ tcache_load_response(struct pool *pool, TranslateResponse *dest,
     if (!tcache_load_address(pool, uri, &dest->address, src, error_r))
         return false;
 
-    translate_response_copy(pool, dest, src);
+    dest->CopyFrom(pool, *src);
     return true;
 }
 
@@ -533,7 +532,7 @@ tcache_vary_copy(struct pool *pool, const char *p,
                  const TranslateResponse *response,
                  enum beng_translation_command command)
 {
-    return p != nullptr && translate_response_vary_contains(response, command)
+    return p != nullptr && response->VaryContains(command)
         ? p_strdup(pool, p)
         : nullptr;
 }
@@ -838,7 +837,7 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response)
 
     item->request.local_address =
         tcr->request->local_address != nullptr &&
-        translate_response_vary_contains(response, TRANSLATE_LOCAL_ADDRESS)
+        response->VaryContains(TRANSLATE_LOCAL_ADDRESS)
         ? (const struct sockaddr *)
         p_memdup(pool, tcr->request->local_address,
                  tcr->request->local_address_length)
@@ -873,7 +872,7 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response)
 
     if (response->regex != nullptr) {
         GRegexCompileFlags compile_flags = default_regex_compile_flags;
-        if (translate_response_is_expandable(response))
+        if (response->IsExpandable())
             /* enable capturing if we need the match groups */
             compile_flags = GRegexCompileFlags(compile_flags &
                                                ~G_REGEX_NO_AUTO_CAPTURE);
@@ -903,7 +902,7 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response)
     } else
         item->inverse_regex = nullptr;
 
-    if (translate_response_vary_contains(response, TRANSLATE_HOST))
+    if (response->VaryContains(TRANSLATE_HOST))
         tcache_add_per_host(tcr->tcache, item);
     else
         list_init(&item->per_host_siblings);
@@ -934,8 +933,7 @@ tcache_handler_response(const TranslateResponse *response, void *ctx)
     if (tcache_response_evaluate(response)) {
         auto item = tcache_store(tcr, response);
 
-        if (tcr->request->uri != nullptr &&
-            translate_response_is_expandable(response)) {
+        if (tcr->request->uri != nullptr && response->IsExpandable()) {
             /* create a writable copy and expand it */
             TranslateResponse *response2 = (TranslateResponse *)
                 p_memdup(tcr->pool, response, sizeof(*response));
@@ -998,7 +996,7 @@ tcache_hit(struct pool *pool, const char *uri, gcc_unused const char *key,
         return;
     }
 
-    if (uri != nullptr && translate_response_is_expandable(response) &&
+    if (uri != nullptr && response->IsExpandable() &&
         !tcache_expand_response(pool, response, item, uri, &error)) {
         handler->error(error, ctx);
         return;

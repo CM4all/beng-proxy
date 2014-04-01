@@ -174,47 +174,31 @@ struct TranslateResponse {
 
         return false;
     }
+
+    gcc_pure
+    bool VaryContains(uint16_t cmd) const {
+        for (auto i : vary)
+            if (i == cmd)
+                return true;
+
+        return false;
+    }
+
+    void CopyFrom(struct pool *pool, const TranslateResponse &src);
+
+    /**
+     * Does any response need to be expanded with
+     * translate_response_expand()?
+     */
+    gcc_pure
+    bool IsExpandable() const;
+
+    /**
+     * Expand the strings in this response with the specified regex
+     * result.
+     */
+    bool Expand(struct pool *pool,
+                const GMatchInfo *match_info, GError **error_r);
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-gcc_pure
-static inline bool
-translate_response_vary_contains(const TranslateResponse *response,
-                                 uint16_t cmd)
-{
-    for (auto i : response->vary)
-        if (i == cmd)
-            return true;
-
-    return false;
-}
-
-void
-translate_response_copy(struct pool *pool, TranslateResponse *dest,
-                        const TranslateResponse *src);
-
-/**
- * Does any response need to be expanded with
- * translate_response_expand()?
- */
-gcc_pure
-bool
-translate_response_is_expandable(const TranslateResponse *response);
-
-/**
- * Expand the strings in this response with the specified regex
- * result.
- */
-bool
-translate_response_expand(struct pool *pool,
-                          TranslateResponse *response,
-                          const GMatchInfo *match_info, GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
