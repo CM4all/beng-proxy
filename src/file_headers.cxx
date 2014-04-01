@@ -199,6 +199,18 @@ read_xattr_max_age(int fd)
     return max_age;
 }
 
+static void
+generate_expires(struct growing_buffer *headers, unsigned max_age)
+{
+    if (max_age > 365 * 24 * 3600)
+        /* limit max_age to approximately one year */
+        max_age = 365 * 24 * 3600;
+
+    /* generate an "Expires" response header */
+    header_write(headers, "expires",
+                 http_date_format(time(nullptr) + max_age));
+}
+
 void
 file_cache_headers(struct growing_buffer *headers,
                    int fd, const struct stat *st)
@@ -233,15 +245,8 @@ file_cache_headers(struct growing_buffer *headers,
 
 #ifndef NO_XATTR
     unsigned max_age = read_xattr_max_age(fd);
-    if (max_age > 0) {
-        if (max_age > 365 * 24 * 3600)
-            /* limit max_age to approximately one year */
-            max_age = 365 * 24 * 3600;
-
-        /* generate an "Expires" response header */
-        header_write(headers, "expires",
-                     http_date_format(time(nullptr) + max_age));
-    }
+    if (max_age > 0)
+        generate_expires(headers, max_age);
 #endif
 }
 
