@@ -340,7 +340,6 @@ static inline bool
 buffered_socket_connected(const struct buffered_socket *s)
 {
     assert(s != NULL);
-    assert(!s->ended);
     assert(!s->destroyed);
 
     return socket_wrapper_valid(&s->base);
