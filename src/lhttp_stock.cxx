@@ -6,7 +6,7 @@
 
 #include "lhttp_stock.hxx"
 #include "lhttp_quark.h"
-#include "lhttp_launch.h"
+#include "lhttp_launch.hxx"
 #include "lhttp_address.h"
 #include "hstock.h"
 #include "mstock.h"

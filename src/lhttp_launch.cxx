@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lhttp_launch.h"
+#include "lhttp_launch.hxx"
 #include "lhttp_address.h"
 #include "exec.h"
 
@@ -29,7 +29,7 @@ lhttp_run(const struct lhttp_address *address, int fd)
 
     struct exec e;
     exec_init(&e);
-    jail_wrapper_insert(&e, &address->options.jail, NULL);
+    jail_wrapper_insert(&e, &address->options.jail, nullptr);
     exec_append(&e, address->path);
 
     for (unsigned i = 0; i < address->args.n; ++i)
