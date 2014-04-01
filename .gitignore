@@ -1,6 +1,7 @@
 .stgit*
 *~
 *.o
+*.o????????
 *.a
 *.bc
 *.s
@@ -107,3 +108,5 @@ aclocal.m4
 *.pc
 perf.data
 perf.data.old
+/confdefs.h
+/conftest.err
