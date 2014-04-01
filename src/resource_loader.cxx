@@ -11,7 +11,7 @@
 #include "http_response.h"
 #include "static-file.h"
 #include "file_address.h"
-#include "lhttp_request.h"
+#include "lhttp_request.hxx"
 #include "http_address.h"
 #include "cgi_glue.hxx"
 #include "cgi_address.hxx"

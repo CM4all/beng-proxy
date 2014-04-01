@@ -276,7 +276,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/lhttp_quark.h \
 	src/lhttp_launch.c src/lhttp_launch.h \
 	src/lhttp_stock.c src/lhttp_stock.h \
-	src/lhttp_request.c src/lhttp_request.h \
+	src/lhttp_request.cxx src/lhttp_request.hxx \
 	src/proxy_handler.cxx \
 	src/errdoc.cxx src/errdoc.hxx \
 	src/widget.cxx \

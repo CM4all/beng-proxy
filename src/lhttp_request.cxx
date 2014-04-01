@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lhttp_request.h"
+#include "lhttp_request.hxx"
 #include "lhttp_stock.h"
 #include "lhttp_address.h"
 #include "http_response.h"
@@ -28,7 +28,7 @@ struct lhttp_request {
 static void
 lhttp_socket_release(bool reuse, void *ctx)
 {
-    struct lhttp_request *request = ctx;
+    struct lhttp_request *request = (struct lhttp_request *)ctx;
 
     lhttp_stock_put(request->lhttp_stock, request->stock_item, !reuse);
 }
@@ -50,26 +50,24 @@ lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
               const struct http_response_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
-    struct lhttp_request *request;
-
-    GError *error = NULL;
+    GError *error = nullptr;
     if (!jail_params_check(&address->options.jail, &error)) {
-        if (body != NULL)
+        if (body != nullptr)
             istream_close(body);
 
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 
-    request = p_malloc(pool, sizeof(*request));
+    auto request = NewFromPool<struct lhttp_request>(pool);
     request->pool = pool;
     request->lhttp_stock = lhttp_stock;
 
     struct stock_item *stock_item =
         lhttp_stock_get(lhttp_stock, pool, address,
                         &error);
-    if (stock_item == NULL) {
-        if (body != NULL)
+    if (stock_item == nullptr) {
+        if (body != nullptr)
             istream_close(body);
 
         http_response_handler_direct_abort(handler, handler_ctx, error);
@@ -78,14 +76,14 @@ lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
 
     request->stock_item = stock_item;
 
-    if (address->host_and_port != NULL)
+    if (address->host_and_port != nullptr)
         header_write(headers, "host", address->host_and_port);
 
     http_client_request(request->pool,
                         lhttp_stock_item_get_socket(stock_item),
                         lhttp_stock_item_get_type(stock_item),
                         &lhttp_socket_lease, request,
-                        NULL, NULL,
+                        nullptr, nullptr,
                         method, address->uri, headers, body, true,
                         handler, handler_ctx,
                         async_ref);
