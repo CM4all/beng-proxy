@@ -41,6 +41,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     /* we don't copy the "max_age" attribute, because it's only used
        by the tcache itself */
 
+    expires_relative = src.expires_relative;
+
     status = src.status;
 
     request_header_forward = src.request_header_forward;

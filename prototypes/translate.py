@@ -94,6 +94,7 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_JAILCGI)
         else:
             response.path(path)
+            response.expires_relative(1800)
             if delegate and jail:
                 response.delegate('/usr/bin/cm4all-beng-proxy-delegate-helper')
                 response.packet(TRANSLATE_JAILCGI)

@@ -29,6 +29,11 @@ struct TranslateResponse {
 
     unsigned max_age;
 
+    /**
+     * From #TRANSLATE_EXPIRES_RELATIVE
+     */
+    unsigned expires_relative;
+
     http_status_t status;
 
     struct resource_address address;

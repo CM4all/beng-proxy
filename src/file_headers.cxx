@@ -122,7 +122,7 @@ file_evaluate_request(struct request *request2,
                 headers = growing_buffer_new(request->pool, 512);
 
                 if (fd >= 0)
-                    file_cache_headers(headers, fd, st);
+                    file_cache_headers(headers, fd, st, tr->expires_relative);
 
                 write_translation_vary_header(headers,
                                               request2->translate.response);
@@ -213,7 +213,8 @@ generate_expires(struct growing_buffer *headers, unsigned max_age)
 
 void
 file_cache_headers(struct growing_buffer *headers,
-                   int fd, const struct stat *st)
+                   int fd, const struct stat *st,
+                   unsigned max_age)
 {
     assert(fd >= 0);
 
@@ -244,24 +245,29 @@ file_cache_headers(struct growing_buffer *headers,
 #endif
 
 #ifndef NO_XATTR
-    unsigned max_age = read_xattr_max_age(fd);
+    if (max_age == 0)
+        max_age = read_xattr_max_age(fd);
+#endif
     if (max_age > 0)
         generate_expires(headers, max_age);
-#endif
 }
 
 void
 file_response_headers(struct growing_buffer *headers,
                       const char *override_content_type,
                       int fd, const struct stat *st,
+                      unsigned expires_relative,
                       bool processor_enabled, bool processor_first)
 {
     if (!processor_first && fd >= 0)
-        file_cache_headers(headers, fd, st);
+        file_cache_headers(headers, fd, st, expires_relative);
     else {
         char etag[64];
         static_etag(etag, st);
         header_write(headers, "etag", etag);
+
+        if (expires_relative > 0)
+            generate_expires(headers, expires_relative);
     }
 
     if (override_content_type != nullptr) {

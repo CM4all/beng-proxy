@@ -476,6 +476,12 @@ enum beng_translation_command {
      * Retranslate if the file is a directory.
      */
     TRANSLATE_DIRECTORY_INDEX = 123,
+
+    /**
+     * Generate an "Expires" header for static files.  Payload is a 32
+     * bit integer specifying the number of seconds from now on.
+     */
+    TRANSLATE_EXPIRES_RELATIVE = 124,
 };
 
 struct beng_translation_header {

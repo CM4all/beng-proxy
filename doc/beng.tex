@@ -1321,6 +1321,12 @@ file.  The file is compressed with \texttt{gzip}.  May follow the
 \verb|CONTENT_TYPE| & MIME type of the file (optional) \\
 
 \hline
+
+\verb|EXPIRES_RELATIVE| & Generate an \texttt{Expires} response
+header.  The payload is a 32 bit integer specifying the number of
+seconds from now. \\
+
+\hline
 \end{longtable}
 
 \subsection{Delegates}

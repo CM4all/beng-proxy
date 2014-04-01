@@ -116,6 +116,10 @@ class Response:
         assert isinstance(seconds, int)
         return self.packet(TRANSLATE_MAX_AGE, struct.pack('I', seconds))
 
+    def expires_relative(self, seconds):
+        assert isinstance(seconds, int)
+        return self.packet(TRANSLATE_EXPIRES_RELATIVE, struct.pack('I', seconds))
+
     def vary(self, *args):
         """Send a VARY packet.  All arguments are packet ids which are
         put into the VARY packet payload."""

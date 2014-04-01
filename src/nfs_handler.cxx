@@ -64,6 +64,7 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
     file_response_headers(headers,
                           override_content_type,
                           -1, st,
+                          tr->expires_relative,
                           request_processor_enabled(request2),
                           request_processor_first(request2));
     write_translation_vary_header(headers, request2->translate.response);

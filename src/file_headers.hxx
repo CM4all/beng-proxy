@@ -37,12 +37,14 @@ file_evaluate_request(struct request *request2,
 
 void
 file_cache_headers(struct growing_buffer *headers,
-                   int fd, const struct stat *st);
+                   int fd, const struct stat *st,
+                   unsigned expires_relative);
 
 void
 file_response_headers(struct growing_buffer *headers,
                       const char *override_content_type,
                       int fd, const struct stat *st,
+                      unsigned expires_relative,
                       bool processor_enabled, bool processor_first);
 
 #ifdef __cplusplus

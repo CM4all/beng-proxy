@@ -1074,6 +1074,24 @@ translate_client_directory_index(TranslateClient &client,
     return true;
 }
 
+static bool
+translate_client_expires_relative(TranslateClient &client,
+                                  ConstBuffer<void> payload)
+{
+    if (client.response.expires_relative > 0) {
+        translate_client_error(&client, "duplicate EXPIRES_RELATIVE");
+        return false;
+    }
+
+    if (payload.size != sizeof(uint32_t)) {
+        translate_client_error(&client, "malformed EXPIRES_RELATIVE");
+        return false;
+    }
+
+    client.response.expires_relative = *(const uint32_t *)payload.data;
+    return true;
+}
+
 /**
  * Returns false if the client has been closed.
  */
@@ -2685,6 +2703,10 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_DIRECTORY_INDEX:
         return translate_client_directory_index(*client,
                                                 { _payload, payload_length });
+
+    case TRANSLATE_EXPIRES_RELATIVE:
+        return translate_client_expires_relative(*client,
+                                                 { _payload, payload_length });
     }
 
     error = g_error_new(translate_quark(), 0,

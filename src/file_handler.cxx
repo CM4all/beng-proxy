@@ -51,6 +51,7 @@ file_dispatch(struct request *request2, const struct stat *st,
     headers = growing_buffer_new(request->pool, 2048);
     file_response_headers(headers, override_content_type,
                           istream_file_fd(body), st,
+                          tr->expires_relative,
                           request_processor_enabled(request2),
                           request_processor_first(request2));
     write_translation_vary_header(headers, request2->translate.response);
@@ -136,6 +137,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
     headers = growing_buffer_new(request->pool, 2048);
     file_response_headers(headers, override_content_type,
                           istream_file_fd(body), st,
+                          tr->expires_relative,
                           request_processor_enabled(request2),
                           request_processor_first(request2));
     write_translation_vary_header(headers, request2->translate.response);
