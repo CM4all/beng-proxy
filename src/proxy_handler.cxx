@@ -19,7 +19,7 @@
 #include "strmap.h"
 #include "http_response.h"
 #include "istream-impl.h"
-#include "lhttp_address.h"
+#include "lhttp_address.hxx"
 
 static void
 proxy_collect_cookies(request &request2, const struct strmap *headers)

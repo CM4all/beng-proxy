@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LHTTP_ADDRESS_H
-#define BENG_PROXY_LHTTP_ADDRESS_H
+#ifndef BENG_PROXY_LHTTP_ADDRESS_HXX
+#define BENG_PROXY_LHTTP_ADDRESS_HXX
 
 #include "child_options.h"
 #include "param_array.h"
@@ -13,7 +13,6 @@
 #include <glib.h>
 
 #include <assert.h>
-#include <stdbool.h>
 
 struct pool;
 
@@ -46,10 +45,6 @@ struct lhttp_address {
      */
     unsigned concurrency;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 lhttp_address_init(struct lhttp_address *address, const char *path);
@@ -116,7 +111,7 @@ lhttp_address_load_base(struct pool *pool, const struct lhttp_address *src,
                         const char *suffix);
 
 /**
- * @return a new object on success, src if no change is needed, NULL
+ * @return a new object on success, src if no change is needed, nullptr
  * on error
  */
 const struct lhttp_address *
@@ -136,18 +131,14 @@ gcc_pure
 static inline bool
 lhttp_address_is_expandable(const struct lhttp_address *address)
 {
-    assert(address != NULL);
+    assert(address != nullptr);
 
-    return address->expand_uri != NULL ||
+    return address->expand_uri != nullptr ||
         param_array_is_expandable(&address->args);
 }
 
 bool
 lhttp_address_expand(struct pool *pool, struct lhttp_address *address,
                      const GMatchInfo *match_info, GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

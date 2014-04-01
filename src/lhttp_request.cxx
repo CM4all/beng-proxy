@@ -6,7 +6,7 @@
 
 #include "lhttp_request.hxx"
 #include "lhttp_stock.hxx"
-#include "lhttp_address.h"
+#include "lhttp_address.hxx"
 #include "http_response.h"
 #include "http_client.h"
 #include "lease.h"

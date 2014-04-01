@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lhttp_address.h"
+#include "lhttp_address.hxx"
 #include "pool.h"
 #include "uri-edit.h"
 #include "uri_base.hxx"
@@ -29,7 +29,7 @@ lhttp_address_init(struct lhttp_address *address, const char *path)
 struct lhttp_address *
 lhttp_address_new(struct pool *pool, const char *path)
 {
-    struct lhttp_address *address = p_malloc(pool, sizeof(*address));
+    auto address = NewFromPool<struct lhttp_address>(pool);
     lhttp_address_init(address, path);
     return address;
 }
@@ -83,7 +83,7 @@ lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
 struct lhttp_address *
 lhttp_address_dup(struct pool *pool, const struct lhttp_address *old)
 {
-    struct lhttp_address *n = p_malloc(pool, sizeof(*n));
+    auto n = NewFromPool<struct lhttp_address>(pool);
     lhttp_address_copy(pool, n, old);
     return n;
 }

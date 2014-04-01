@@ -9,7 +9,7 @@
 #include "async.h"
 #include "fb_pool.h"
 #include "pool.h"
-#include "lhttp_address.h"
+#include "lhttp_address.hxx"
 #include "http_address.h"
 #include "file_address.h"
 #include "cgi_address.hxx"

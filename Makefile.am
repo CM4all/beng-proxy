@@ -636,7 +636,7 @@ libraddress_a_SOURCES = \
 	src/cgi_address.cxx src/cgi_address.hxx \
 	src/file_address.c src/file_address.h \
 	src/nfs_address.c src/nfs_address.h \
-	src/lhttp_address.c src/lhttp_address.h \
+	src/lhttp_address.cxx src/lhttp_address.hxx \
 	src/http_address.c src/http_address.h \
 	src/address_list.h \
 	src/address_list.c \

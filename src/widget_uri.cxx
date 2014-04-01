@@ -14,7 +14,7 @@
 #include "strref.h"
 #include "strref-pool.h"
 #include "http_address.h"
-#include "lhttp_address.h"
+#include "lhttp_address.hxx"
 #include "cgi_address.hxx"
 
 #include <assert.h>

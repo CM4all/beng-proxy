@@ -5,7 +5,7 @@
  */
 
 #include "lhttp_launch.hxx"
-#include "lhttp_address.h"
+#include "lhttp_address.hxx"
 #include "exec.h"
 
 #include <daemon/log.h>
