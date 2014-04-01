@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "lhttp_stock.h"
+#include "lhttp_stock.hxx"
 #include "lhttp_quark.h"
 #include "lhttp_launch.h"
 #include "lhttp_address.h"
@@ -55,7 +55,7 @@ lhttp_stock_key(struct pool *pool, const struct lhttp_address *address)
 static void
 lhttp_connection_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 {
-    struct lhttp_connection *connection = ctx;
+    auto connection = (struct lhttp_connection *)ctx;
 
     assert(fd == connection->fd);
 
@@ -84,7 +84,7 @@ static int
 lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
                               gcc_unused void *ctx)
 {
-    const struct lhttp_address *address = info;
+    auto address = (struct lhttp_address *)info;
 
     return namespace_options_clone_flags(&address->options.ns, flags);
 }
@@ -93,7 +93,7 @@ static int
 lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
                       void *info, gcc_unused void *ctx)
 {
-    const struct lhttp_address *address = info;
+    auto address = (struct lhttp_address *)info;
 
     namespace_options_setup(&address->options.ns);
     rlimit_options_apply(&address->options.rlimits);
@@ -125,16 +125,16 @@ lhttp_stock_create(void *ctx, struct stock_item *item,
                    gcc_unused struct pool *caller_pool,
                    gcc_unused struct async_operation_ref *async_ref)
 {
-    struct lhttp_stock *lhttp_stock = ctx;
+    auto lhttp_stock = (struct lhttp_stock *)ctx;
     struct pool *pool = item->pool;
-    const struct lhttp_address *address = info;
+    const auto *address = (const struct lhttp_address *)info;
     struct lhttp_connection *connection = (struct lhttp_connection *)item;
 
-    assert(key != NULL);
-    assert(address != NULL);
-    assert(address->path != NULL);
+    assert(key != nullptr);
+    assert(address != nullptr);
+    assert(address->path != nullptr);
 
-    GError *error = NULL;
+    GError *error = nullptr;
     connection->child = mstock_get_now(lhttp_stock->child_stock, pool,
                                        key, info, address->concurrency,
                                        &connection->lease_ref,
@@ -207,7 +207,7 @@ static const struct stock_class lhttp_stock_class = {
 struct lhttp_stock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    struct lhttp_stock *lhttp_stock = p_malloc(pool, sizeof(*lhttp_stock));
+    auto lhttp_stock = NewFromPool<struct lhttp_stock>(pool);
 
     struct hstock *child_stock = child_stock_new(pool, limit, max_idle,
                                                  &lhttp_child_stock_class);
@@ -231,10 +231,10 @@ lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
                 GError **error_r)
 {
     const struct jail_params *const jail = &address->options.jail;
-    if (jail->enabled && jail->home_directory == NULL) {
+    if (jail->enabled && jail->home_directory == nullptr) {
         g_set_error(error_r, lhttp_quark(), 0,
                     "No home directory for jailed LHTTP");
-        return NULL;
+        return nullptr;
     }
 
     union {

@@ -20,7 +20,7 @@
 #include "hstock.h"
 #include "tcache.hxx"
 #include "http_cache.h"
-#include "lhttp_stock.h"
+#include "lhttp_stock.hxx"
 #include "fcgi_stock.h"
 #include "was_stock.h"
 #include "delegate_stock.h"

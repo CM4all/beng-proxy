@@ -36,6 +36,10 @@ struct child_stock_class {
     void (*free)(void *ctx);
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct hstock *
 child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
                 const struct child_stock_class *cls);
@@ -66,5 +70,9 @@ child_stock_item_get_type(gcc_unused const struct stock_item *item)
 void
 child_stock_put(struct hstock *hstock, struct stock_item *item,
                 bool destroy);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

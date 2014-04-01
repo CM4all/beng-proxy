@@ -5,7 +5,7 @@
  */
 
 #include "lhttp_request.hxx"
-#include "lhttp_stock.h"
+#include "lhttp_stock.hxx"
 #include "lhttp_address.h"
 #include "http_response.h"
 #include "http_client.h"

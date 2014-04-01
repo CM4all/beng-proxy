@@ -11,8 +11,16 @@
 
 struct lhttp_address;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_noreturn
 void
 lhttp_run(const struct lhttp_address *address, int fd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

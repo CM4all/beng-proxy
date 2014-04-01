@@ -4,16 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LHTTP_STOCK_H
-#define BENG_PROXY_LHTTP_STOCK_H
+#ifndef BENG_PROXY_LHTTP_STOCK_HXX
+#define BENG_PROXY_LHTTP_STOCK_HXX
 
 #include "istream-direct.h"
+#include "gerror.h"
 
 #include <inline/compiler.h>
-
-#include <glib.h>
-
-#include <stdbool.h>
 
 struct pool;
 struct lhttp_stock;
@@ -21,10 +18,6 @@ struct stock_item;
 struct stock_get_handler;
 struct lhttp_address;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct lhttp_stock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
@@ -53,9 +46,5 @@ lhttp_stock_item_get_type(const struct stock_item *item);
  */
 void
 lhttp_stock_put(struct lhttp_stock *stock, struct stock_item *item, bool destroy);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
