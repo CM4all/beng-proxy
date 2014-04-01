@@ -177,6 +177,28 @@ file_evaluate_request(struct request *request2,
     return true;
 }
 
+gcc_pure
+static unsigned
+read_xattr_max_age(int fd)
+{
+    assert(fd >= 0);
+
+    char buffer[32];
+    ssize_t nbytes = fgetxattr(fd, "user.MaxAge",
+                               buffer, sizeof(buffer) - 1);
+    if (nbytes <= 0)
+        return 0;
+
+    buffer[nbytes] = 0;
+
+    char *endptr;
+    unsigned long max_age = strtoul(buffer, &endptr, 10);
+    if (*endptr != 0)
+        return 0;
+
+    return max_age;
+}
+
 void
 file_cache_headers(struct growing_buffer *headers,
                    int fd, const struct stat *st)
@@ -210,24 +232,15 @@ file_cache_headers(struct growing_buffer *headers,
 #endif
 
 #ifndef NO_XATTR
-    nbytes = fgetxattr(fd, "user.MaxAge",
-                       buffer, sizeof(buffer) - 1);
-    if (nbytes > 0) {
-        char *endptr;
-        long max_age;
+    unsigned max_age = read_xattr_max_age(fd);
+    if (max_age > 0) {
+        if (max_age > 365 * 24 * 3600)
+            /* limit max_age to approximately one year */
+            max_age = 365 * 24 * 3600;
 
-        buffer[nbytes] = 0;
-        max_age = strtol(buffer, &endptr, 10);
-
-        if (*endptr == 0 && max_age > 0) {
-            if (max_age > 365 * 24 * 3600)
-                /* limit max_age to approximately one year */
-                max_age = 365 * 24 * 3600;
-
-            /* generate an "Expires" response header */
-            header_write(headers, "expires",
-                         http_date_format(time(nullptr) + max_age));
-        }
+        /* generate an "Expires" response header */
+        header_write(headers, "expires",
+                     http_date_format(time(nullptr) + max_age));
     }
 #endif
 }
