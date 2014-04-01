@@ -2096,22 +2096,22 @@ translate_handle_packet(TranslateClient *client,
         }
 
         if (client->cgi_address != nullptr) {
-            if (param_array_full(&client->cgi_address->args)) {
+            if (client->cgi_address->args.IsFull()) {
                 translate_client_error(client,
                                        "too many APPEND packets");
                 return false;
             }
 
-            param_array_append(&client->cgi_address->args, payload);
+            client->cgi_address->args.Append(payload);
             return true;
         } else if (client->lhttp_address != nullptr) {
-            if (param_array_full(&client->lhttp_address->args)) {
+            if (client->lhttp_address->args.IsFull()) {
                 translate_client_error(client,
                                        "too many APPEND packets");
                 return false;
             }
 
-            param_array_append(&client->lhttp_address->args, payload);
+            client->lhttp_address->args.Append(payload);
             return true;
         } else {
             translate_client_error(client,
@@ -2133,22 +2133,22 @@ translate_handle_packet(TranslateClient *client,
         }
 
         if (client->cgi_address != nullptr) {
-            if (param_array_full(&client->cgi_address->args)) {
+            if (!client->cgi_address->args.CanSetExpand()) {
                 translate_client_error(client,
                                        "misplaced EXPAND_APPEND packet");
                 return false;
             }
 
-            param_array_set_expand(&client->cgi_address->args, payload);
+            client->cgi_address->args.SetExpand(payload);
             return true;
         } else if (client->lhttp_address != nullptr) {
-            if (param_array_full(&client->lhttp_address->args)) {
+            if (!client->lhttp_address->args.CanSetExpand()) {
                 translate_client_error(client,
                                        "misplaced EXPAND_APPEND packet");
                 return false;
             }
 
-            param_array_set_expand(&client->lhttp_address->args, payload);
+            client->lhttp_address->args.SetExpand(payload);
             return true;
         } else {
             translate_client_error(client,
@@ -2158,7 +2158,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_PAIR:
         if (client->cgi_address != nullptr) {
-            if (param_array_full(&client->cgi_address->env)) {
+            if (client->cgi_address->env.IsFull()) {
                 translate_client_error(client,
                                        "too many PAIR packets");
                 return false;
@@ -2172,7 +2172,7 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            param_array_append(&client->cgi_address->env, payload);
+            client->cgi_address->env.Append(payload);
         } else {
             translate_client_error(client,
                                    "misplaced PAIR packet");
@@ -2183,7 +2183,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_EXPAND_PAIR:
         if (client->cgi_address != nullptr) {
-            if (!param_array_can_set_expand(&client->cgi_address->env)) {
+            if (!client->cgi_address->env.CanSetExpand()) {
                 translate_client_error(client,
                                        "misplaced EXPAND_PAIR packet");
                 return false;
@@ -2197,7 +2197,7 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            param_array_set_expand(&client->cgi_address->env, payload);
+            client->cgi_address->env.SetExpand(payload);
         } else {
             translate_client_error(client,
                                    "misplaced EXPAND_PAIR packet");

@@ -626,7 +626,7 @@ libpool_a_SOURCES = \
 
 libraddress_a_SOURCES = \
 	src/regex.c src/regex.h \
-	src/param_array.h src/param_array.c \
+	src/param_array.hxx src/param_array.cxx \
 	src/namespace_options.c src/namespace_options.h \
 	src/mount_list.c src/mount_list.h \
 	src/bind_mount.c src/bind_mount.h \

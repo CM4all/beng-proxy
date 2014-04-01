@@ -6,7 +6,7 @@
 #define BENG_PROXY_LHTTP_ADDRESS_HXX
 
 #include "child_options.h"
-#include "param_array.h"
+#include "param_array.hxx"
 
 #include <inline/compiler.h>
 
@@ -134,7 +134,7 @@ lhttp_address_is_expandable(const struct lhttp_address *address)
     assert(address != nullptr);
 
     return address->expand_uri != nullptr ||
-        param_array_is_expandable(&address->args);
+        address->args.IsExpandable();
 }
 
 bool

@@ -21,7 +21,7 @@ lhttp_address_init(struct lhttp_address *address, const char *path)
 
     memset(address, 0, sizeof(*address));
     address->path = path;
-    param_array_init(&address->args);
+    address->args.Init();
     child_options_init(&address->options);
     address->concurrency = 1;
 }
@@ -69,7 +69,7 @@ lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
 
     dest->path = p_strdup(pool, src->path);
 
-    param_array_copy(pool, &dest->args, &src->args);
+    dest->args.CopyFrom(pool, src->args);
 
     child_options_copy(pool, &dest->options, &src->options);
 
@@ -197,5 +197,5 @@ lhttp_address_expand(struct pool *pool, struct lhttp_address *address,
             return false;
     }
 
-    return param_array_expand(pool, &address->args, match_info, error_r);
+    return address->args.Expand(pool, match_info, error_r);
 }

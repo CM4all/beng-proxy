@@ -7,7 +7,7 @@
 
 #include "child_options.h"
 #include "address_list.h"
-#include "param_array.h"
+#include "param_array.hxx"
 
 #include <inline/compiler.h>
 
@@ -124,8 +124,8 @@ cgi_address_is_expandable(const struct cgi_address *address)
 
     return address->expand_path != NULL ||
         address->expand_path_info != NULL ||
-        param_array_is_expandable(&address->args) ||
-        param_array_is_expandable(&address->env);
+        address->args.IsExpandable() ||
+        address->env.IsExpandable();
 }
 
 bool

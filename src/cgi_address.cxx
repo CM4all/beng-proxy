@@ -21,8 +21,8 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
     memset(cgi, 0, sizeof(*cgi));
     cgi->path = path;
 
-    param_array_init(&cgi->args);
-    param_array_init(&cgi->env);
+    cgi->args.Init();
+    cgi->env.Init();
     child_options_init(&cgi->options);
 
     if (have_address_list)
@@ -103,8 +103,8 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
 
     dest->path = p_strdup(pool, src->path);
 
-    param_array_copy(pool, &dest->args, &src->args);
-    param_array_copy(pool, &dest->env, &src->env);
+    dest->args.CopyFrom(pool, src->args);
+    dest->env.CopyFrom(pool, src->env);
 
     child_options_copy(pool, &dest->options, &src->options);
 
@@ -247,6 +247,6 @@ cgi_address_expand(struct pool *pool, struct cgi_address *address,
             return false;
     }
 
-    return param_array_expand(pool, &address->args, match_info, error_r) &&
-        param_array_expand(pool, &address->env, match_info, error_r);
+    return address->args.Expand(pool, match_info, error_r) &&
+        address->env.Expand(pool, match_info, error_r);
 }
