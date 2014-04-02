@@ -120,7 +120,7 @@ AC_SUBST(AM_LDFLAGS)
 AM_CFLAGS=""
 AM_CXXFLAGS="-std=gnu++0x"
 AM_CPPFLAGS="-D_REENTRANT"
-AM_LDFLAGS=""
+AM_LDFLAGS="-Wl,--as-needed"
 
 if test "$am_cv_CC_dependencies_compiler_type" = "gcc3"; then
 	AM_CFLAGS="$AM_CFLAGS -Wall -Wextra -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Wno-long-long -Wstrict-prototypes -Wundef -pedantic"
