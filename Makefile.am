@@ -344,6 +344,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/shutdown_listener.c src/shutdown_listener.h \
 	src/bp_main.cxx
 src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
+	-lcap \
 	libistream.a libpool.a libmemory.a \
 	libraddress.a \
 	libutil.a \
@@ -356,7 +357,6 @@ src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBNFS_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBZ_LIBS)
-src_cm4all_beng_proxy_LDFLAGS = $(AM_LDFLAGS) -lcap
 
 if HAVE_LIBNFS
 src_cm4all_beng_proxy_SOURCES += \
@@ -488,17 +488,16 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_hmonitor.cxx \
 	src/lb_main.cxx
 src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
+	-lcap \
 	libistream.a libpool.a libmemory.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_INLINE_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
+	$(GTHREAD_LIBS) \
 	$(LIBSSL_LIBS) \
 	$(LIBEVENT_LIBS)
-src_cm4all_beng_lb_LDFLAGS = $(AM_LDFLAGS) \
-	-lcap \
-	$(GTHREAD_LIBS)
 
 src_cm4all_beng_proxy_log_cat_SOURCES = \
 	src/log-server.c \
