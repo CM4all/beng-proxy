@@ -113,6 +113,9 @@ tstock_new(struct pool *pool, struct hstock *tcp_stock, const char *socket_path)
 
     stock->address_size = SUN_LEN(&stock->address);
 
+    if (socket_path[0] == '@')
+        stock->address.sun_path[0] = 0;
+
     return stock;
 }
 
