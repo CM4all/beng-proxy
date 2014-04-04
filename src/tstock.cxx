@@ -21,6 +21,7 @@ struct tstock {
     struct hstock *tcp_stock;
 
     struct sockaddr_un address;
+    socklen_t address_size;
 };
 
 struct tstock_request {
@@ -110,6 +111,8 @@ tstock_new(struct pool *pool, struct hstock *tcp_stock, const char *socket_path)
     memcpy(stock->address.sun_path, socket_path, socket_path_length);
     stock->address.sun_path[socket_path_length] = 0;
 
+    stock->address_size = SUN_LEN(&stock->address);
+
     return stock;
 }
 
@@ -131,7 +134,7 @@ tstock_translate(struct tstock *stock, struct pool *pool,
     tcp_stock_get(stock->tcp_stock, pool, stock->address.sun_path,
                   false, nullptr, 0,
                   (const struct sockaddr *)&stock->address,
-                  SUN_LEN(&stock->address),
+                  stock->address_size,
                   10,
                   &tstock_stock_handler, r,
                   async_ref);
