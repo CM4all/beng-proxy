@@ -2,7 +2,7 @@ cm4all-beng-proxy (4.0.27) unstable; urgency=low
 
   * tstock: support abstract sockets
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 04 Apr 2014 12:58:09 -0000
 
 cm4all-beng-proxy (4.0.26) unstable; urgency=low
 
