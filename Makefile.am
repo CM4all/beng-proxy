@@ -285,7 +285,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget_class.cxx \
 	src/widget_view.cxx src/widget_view.hxx \
 	src/widget-ref.c \
-	src/widget-session.c \
+	src/widget_session.cxx \
 	src/widget_uri.cxx \
 	src/widget-quark.h \
 	src/widget_request.cxx src/widget_request.hxx \
@@ -1017,7 +1017,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget_request.cxx src/widget_approval.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget-ref.c src/widget_uri.cxx src/args.c \
-	src/widget-session.c src/xml_parser.c src/widget_class.cxx \
+	src/widget_session.cxx src/xml_parser.c src/widget_class.cxx \
 	src/widget_view.cxx \
 	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/uri-extract.c \
@@ -1341,7 +1341,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_http.cxx src/widget_uri.cxx src/widget_request.cxx \
 	src/pheaders.c \
 	src/crash.c \
-	src/widget-session.c src/session.c src/session_manager.c src/session_id.c \
+	src/widget_session.cxx src/session.c src/session_manager.c src/session_id.c \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \

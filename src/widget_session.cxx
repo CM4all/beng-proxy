@@ -29,7 +29,7 @@ widget_get_session(struct widget *widget, struct session *session,
         return session_get_widget(session, widget->id, create);
 
     switch (widget->session) {
-    case WIDGET_SESSION_RESOURCE:
+    case widget::WIDGET_SESSION_RESOURCE:
         /* the session is bound to the resource: determine
            widget_session from the parent's session */
 
@@ -42,7 +42,7 @@ widget_get_session(struct widget *widget, struct session *session,
         pool_rewind(tpool, &mark);
         return ws;
 
-    case WIDGET_SESSION_SITE:
+    case widget::WIDGET_SESSION_SITE:
         /* this is a site-global widget: get the widget_session
            directly from the session struct (which is site
            specific) */
