@@ -828,7 +828,7 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response)
     item->pool = pool;
 
     item->request.param =
-        tcache_vary_copy(pool, tcr->request->session,
+        tcache_vary_copy(pool, tcr->request->param,
                          response, TRANSLATE_PARAM);
 
     item->request.session =

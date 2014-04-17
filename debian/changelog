@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0.28) unstable; urgency=low
 
-  * 
+  * tcache: fix VARY/PARAM check
 
  --   
 
