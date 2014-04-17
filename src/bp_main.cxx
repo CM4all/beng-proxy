@@ -12,7 +12,7 @@
 #include "crash.h"
 #include "fb_pool.h"
 #include "session_manager.h"
-#include "session_save.h"
+#include "session_save.hxx"
 #include "tstock.hxx"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"

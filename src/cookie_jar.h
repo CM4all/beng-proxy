@@ -33,6 +33,10 @@ struct cookie_jar {
     struct list_head cookies;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 cookie_free(struct dpool *pool, struct cookie *cookie);
 
@@ -53,5 +57,9 @@ cookie_jar_add(struct cookie_jar *jar, struct cookie *cookie)
 
 void
 cookie_delete(struct cookie_jar *jar, struct cookie *cookie);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "session_save.h"
-#include "session_write.h"
-#include "session_read.h"
+#include "session_save.hxx"
+#include "session_write.hxx"
+#include "session_read.hxx"
 #include "session_file.h"
 #include "session_manager.h"
 #include "session.h"
@@ -36,7 +36,7 @@ static struct event session_save_timer;
 static bool
 session_save_callback(const struct session *session, void *ctx)
 {
-    FILE *file = ctx;
+    FILE *file = (FILE *)ctx;
     return session_write_magic(file, MAGIC_SESSION) &&
         session_write(file, session);
 }
@@ -66,11 +66,11 @@ session_manager_load(FILE *file)
             return false;
 
         struct dpool *pool = session_manager_new_dpool();
-        if (pool == NULL)
+        if (pool == nullptr)
             return false;
 
         struct session *session = session_read(file, pool);
-        if (session == NULL) {
+        if (session == nullptr) {
             dpool_destroy(pool);
             return false;
         }
@@ -108,7 +108,7 @@ session_save(void)
     }
 
     FILE *file = fopen(path, "wb");
-    if (file == NULL) {
+    if (file == nullptr) {
         daemon_log(2, "Failed to create %s: %s\n", path, strerror(errno));
         return;
     }
@@ -140,26 +140,26 @@ session_save_event_callback(gcc_unused int fd, gcc_unused short event,
 void
 session_save_init(const char *path)
 {
-    assert(session_save_path == NULL);
+    assert(session_save_path == nullptr);
 
-    if (path == NULL)
+    if (path == nullptr)
         return;
 
     session_save_path = path;
-    evtimer_set(&session_save_timer, session_save_event_callback, NULL);
+    evtimer_set(&session_save_timer, session_save_event_callback, nullptr);
     evtimer_add(&session_save_timer, &session_save_interval);
 
     FILE *file = fopen(session_save_path, "rb");
-    if (file != NULL) {
+    if (file != nullptr) {
         session_manager_load(file);
         fclose(file);
     }
 }
 
 void
-session_save_deinit(void)
+session_save_deinit()
 {
-    if (session_save_path == NULL)
+    if (session_save_path == nullptr)
         return;
 
     evtimer_del(&session_save_timer);

@@ -263,9 +263,9 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/session.c src/session.h \
 	src/session_id.c src/session_id.h \
 	src/session_manager.c src/session_manager.h \
-	src/session_write.c src/session_write.h \
-	src/session_read.c src/session_read.h \
-	src/session_save.c src/session_save.h \
+	src/session_write.cxx src/session_write.hxx \
+	src/session_read.cxx src/session_read.hxx \
+	src/session_save.cxx src/session_save.hxx \
 	src/cookie_jar.c src/cookie_jar.h \
 	src/cookie_client.c src/cookie_client.h \
 	src/cookie_server.c src/cookie_server.h \

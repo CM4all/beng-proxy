@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "session_write.h"
+#include "session_write.hxx"
 #include "session_file.h"
 #include "session.h"
 #include "dhashmap.h"
@@ -57,7 +57,7 @@ write_session_id(FILE *file, const session_id_t *id)
 static bool
 write_string(FILE *file, const char *s)
 {
-    if (s == NULL)
+    if (s == nullptr)
         return write_16(file, (uint16_t)-1);
 
     uint32_t length = strlen(s);
@@ -70,9 +70,9 @@ write_string(FILE *file, const char *s)
 static bool
 write_strref(FILE *file, const struct strref *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
 
-    if (s->data == NULL)
+    if (s->data == nullptr)
         return write_16(file, (uint16_t)-1);
 
     if (s->length >= (uint16_t)-1)
@@ -91,7 +91,7 @@ session_write_magic(FILE *file, uint32_t magic)
 bool
 session_write_file_header(FILE *file)
 {
-    const struct session *session = NULL;
+    const struct session *session = nullptr;
 
     return session_write_magic(file, MAGIC_FILE) &&
         write_32(file, sizeof(*session));
@@ -109,7 +109,7 @@ write_widget_sessions(FILE *file, struct dhashmap *widgets);
 static bool
 write_widget_session(FILE *file, const struct widget_session *session)
 {
-    assert(session != NULL);
+    assert(session != nullptr);
 
     return write_string(file, session->id) &&
         write_widget_sessions(file, session->children) &&
@@ -121,13 +121,14 @@ write_widget_session(FILE *file, const struct widget_session *session)
 static bool
 write_widget_sessions(FILE *file, struct dhashmap *widgets)
 {
-    if (widgets == NULL)
+    if (widgets == nullptr)
         return session_write_magic(file, MAGIC_END_OF_LIST);
 
     dhashmap_rewind(widgets);
     const struct dhashmap_pair *pair;
-    while ((pair = dhashmap_next(widgets)) != NULL) {
-        const struct widget_session *ws = pair->value;
+    while ((pair = dhashmap_next(widgets)) != nullptr) {
+        const struct widget_session *ws =
+            (const struct widget_session *)pair->value;
         if (!session_write_magic(file, MAGIC_WIDGET_SESSION) ||
             !write_widget_session(file, ws))
             return false;
@@ -139,7 +140,7 @@ write_widget_sessions(FILE *file, struct dhashmap *widgets)
 static bool
 write_cookie(FILE *file, const struct cookie *cookie)
 {
-    assert(cookie != NULL);
+    assert(cookie != nullptr);
 
     return write_strref(file, &cookie->name) &&
         write_strref(file, &cookie->value) &&

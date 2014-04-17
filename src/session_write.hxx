@@ -4,10 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SESSION_WRITE_H
-#define BENG_PROXY_SESSION_WRITE_H
+#ifndef BENG_PROXY_SESSION_WRITE_HXX
+#define BENG_PROXY_SESSION_WRITE_HXX
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
