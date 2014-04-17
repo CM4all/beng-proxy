@@ -262,7 +262,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/sink_rubber.cxx src/sink_rubber.hxx \
 	src/session.c src/session.h \
 	src/session_id.c src/session_id.h \
-	src/session_manager.c src/session_manager.h \
+	src/session_manager.cxx src/session_manager.hxx \
 	src/session_write.cxx src/session_write.hxx \
 	src/session_read.cxx src/session_read.hxx \
 	src/session_save.cxx src/session_save.hxx \
@@ -765,7 +765,7 @@ check_PROGRAMS = \
 	test/t-cookie-client \
 	test/t-cookie-server \
 	test/t_pool \
-	test/t-shm test/t-dpool test/t-session \
+	test/t-shm test/t-dpool test/t_session \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
 	test/t_rewrite_uri \
@@ -799,7 +799,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t_memcached_client \
 	test/t-cookie-client.py test/t-cookie-client \
 	test/t-cookie-server \
-	test/t-shm test/t-dpool test/t-session \
+	test/t-shm test/t-dpool test/t_session \
 	test/t_pool \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
@@ -1007,7 +1007,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/uri_base.cxx \
 	src/random.c \
 	src/crash.c \
-	src/session.c src/session_manager.c \
+	src/session.c src/session_manager.cxx \
 	src/cookie_client.c src/cookie_jar.c \
 	src/http_string.c \
 	src/strmap.c src/hashmap.c \
@@ -1234,12 +1234,12 @@ test_t_shm_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 test_t_dpool_SOURCES = test/t-dpool.c src/shm.c src/dpool.c
 test_t_dpool_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
-test_t_session_SOURCES = test/t-session.c src/shm.c \
+test_t_session_SOURCES = test/t_session.cxx src/shm.c \
 	src/dpool.c src/dstring.c src/dhashmap.c \
 	src/clock.c \
 	src/random.c src/fd-util.c src/fd_util.c \
 	src/crash.c \
-	src/session.c src/session_manager.c
+	src/session.c src/session_manager.cxx
 test_t_session_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
@@ -1341,7 +1341,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_http.cxx src/widget_uri.cxx src/widget_request.cxx \
 	src/pheaders.cxx \
 	src/crash.c \
-	src/widget_session.cxx src/session.c src/session_manager.c src/session_id.c \
+	src/widget_session.cxx src/session.c src/session_manager.cxx src/session_id.c \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \

@@ -50,7 +50,6 @@ test/t-shm
 test/t-dpool
 test/t-cookie-client
 test/t-cookie-server
-test/t-session
 test/run-header-parser
 test/run-client-balancer
 test/run_client

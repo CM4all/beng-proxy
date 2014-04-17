@@ -4,18 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SESSION_MANAGER_H
-#define BENG_PROXY_SESSION_MANAGER_H
+#ifndef BENG_PROXY_SESSION_MANAGER_HXX
+#define BENG_PROXY_SESSION_MANAGER_HXX
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
-
 struct session;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Initialize the global session manager or increase the reference
@@ -34,20 +28,20 @@ session_manager_init(unsigned idle_timeout,
  * manager if it has become zero.
  */
 void
-session_manager_deinit(void);
+session_manager_deinit();
 
 /**
  * Release the session manager and try not to access the shared
  * memory, because we assume it may be corrupted.
  */
 void
-session_manager_abandon(void);
+session_manager_abandon();
 
 /**
  * Re-add all libevent events after session_manager_event_del().
  */
 void
-session_manager_event_add(void);
+session_manager_event_add();
 
 /**
  * Removes all libevent events.  Call this before fork(), or before
@@ -55,14 +49,14 @@ session_manager_event_add(void);
  * session_manager_event_add() afterwards.
  */
 void
-session_manager_event_del(void);
+session_manager_event_del();
 
 /**
  * Returns the number of sessions.
  */
 gcc_pure
 unsigned
-session_manager_get_count(void);
+session_manager_get_count();
 
 /**
  * Create a new #dpool object.  The caller is responsible for
@@ -70,7 +64,7 @@ session_manager_get_count(void);
  * session_manager_add().
  */
 struct dpool *
-session_manager_new_dpool(void);
+session_manager_new_dpool();
 
 /**
  * Add an initialized #session object to the session manager.  Its
@@ -89,7 +83,7 @@ session_manager_add(struct session *session);
  * session_put().
  */
 struct session * gcc_malloc
-session_new(void);
+session_new();
 
 /**
  * Invoke the callback for each session.  The session and the session
@@ -98,9 +92,5 @@ session_new(void);
 bool
 session_manager_visit(bool (*callback)(const struct session *session,
                                        void *ctx), void *ctx);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

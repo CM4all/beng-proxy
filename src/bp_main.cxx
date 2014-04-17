@@ -11,7 +11,7 @@
 #include "connection.h"
 #include "crash.h"
 #include "fb_pool.h"
-#include "session_manager.h"
+#include "session_manager.hxx"
 #include "session_save.hxx"
 #include "tstock.hxx"
 #include "tcp-stock.h"

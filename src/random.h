@@ -9,7 +9,15 @@
 
 #include <glib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 obtain_entropy(GRand *r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -11,6 +11,10 @@
 
 struct shm;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct shm *
 shm_new(size_t page_size, unsigned num_pages);
 
@@ -28,5 +32,9 @@ shm_alloc(struct shm *shm, unsigned num_pages);
 
 void
 shm_free(struct shm *shm, const void *p);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

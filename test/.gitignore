@@ -20,5 +20,6 @@ run_nfs_client
 /t_resource_address
 /t_cgi
 /t_header_forward
+/t_session
 
 *.trs

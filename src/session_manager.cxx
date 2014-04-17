@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "session_manager.h"
+#include "session_manager.hxx"
 #include "session.h"
 #include "shm.h"
 #include "dpool.h"
@@ -106,7 +106,7 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
     bool non_empty;
 
     assert(!crash_in_unsafe());
-    assert(locked_session == NULL);
+    assert(locked_session == nullptr);
 
     const unsigned now = now_s();
 
@@ -144,17 +144,15 @@ static struct session_manager *
 session_manager_new(unsigned idle_timeout,
                     unsigned cluster_size, unsigned cluster_node)
 {
-    struct shm *shm;
-    struct session_manager *sm;
     unsigned i;
 
-    shm = shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES);
-    if (shm == NULL) {
+    struct shm *shm = shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES);
+    if (shm == nullptr) {
         daemon_log(1, "shm_new() failed\n");
         abort();
     }
 
-    sm = shm_alloc(shm, SM_PAGES);
+    struct session_manager *sm = (struct session_manager *)shm_alloc(shm, SM_PAGES);
     refcount_init(&sm->ref);
     sm->idle_timeout = idle_timeout;
     sm->cluster_size = cluster_size;
@@ -183,17 +181,17 @@ session_manager_init(unsigned idle_timeout,
     session_rand = g_rand_new();
     obtain_entropy(session_rand);
 
-    if (session_manager == NULL) {
+    if (session_manager == nullptr) {
         session_manager = session_manager_new(idle_timeout,
                                               cluster_size, cluster_node);
-        if (session_manager == NULL)
+        if (session_manager == nullptr)
                 return false;
     } else {
         refcount_get(&session_manager->ref);
         shm_ref(session_manager->shm);
     }
 
-    evtimer_set(&session_cleanup_event, cleanup_event_callback, NULL);
+    evtimer_set(&session_cleanup_event, cleanup_event_callback, nullptr);
 
     return true;
 }
@@ -203,7 +201,7 @@ session_manager_destroy(struct session_manager *sm)
 {
     unsigned i;
 
-    assert(locked_session == NULL);
+    assert(locked_session == nullptr);
 
     crash_unsafe_enter();
     rwlock_wlock(&sm->lock);
@@ -223,11 +221,11 @@ session_manager_destroy(struct session_manager *sm)
 }
 
 void
-session_manager_deinit(void)
+session_manager_deinit()
 {
-    assert(session_manager != NULL);
-    assert(session_manager->shm != NULL);
-    assert(locked_session == NULL);
+    assert(session_manager != nullptr);
+    assert(session_manager->shm != nullptr);
+    assert(locked_session == nullptr);
 
     event_del(&session_cleanup_event);
 
@@ -238,14 +236,14 @@ session_manager_deinit(void)
        anymore by this process; other processes may still use it */
     shm_close(session_manager->shm);
 
-    session_manager = NULL;
+    session_manager = nullptr;
 }
 
 void
-session_manager_abandon(void)
+session_manager_abandon()
 {
-    assert(session_manager != NULL);
-    assert(session_manager->shm != NULL);
+    assert(session_manager != nullptr);
+    assert(session_manager->shm != nullptr);
 
     session_manager->abandoned = true;
 
@@ -253,30 +251,30 @@ session_manager_abandon(void)
 
     /* XXX move the "shm" pointer out of the shared memory */
     shm_close(session_manager->shm);
-    session_manager = NULL;
+    session_manager = nullptr;
 }
 
 void
-session_manager_event_add(void)
+session_manager_event_add()
 {
     if (session_manager->num_sessions == 0)
         evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
 void
-session_manager_event_del(void)
+session_manager_event_del()
 {
     event_del(&session_cleanup_event);
 }
 
 unsigned
-session_manager_get_count(void)
+session_manager_get_count()
 {
     return session_manager->num_sessions;
 }
 
 struct dpool *
-session_manager_new_dpool(void)
+session_manager_new_dpool()
 {
     return dpool_new(session_manager->shm);
 }
@@ -285,13 +283,13 @@ session_manager_new_dpool(void)
  * Forcefully deletes at least one session.
  */
 static bool
-session_manager_purge(void)
+session_manager_purge()
 {
     /* collect at most 256 sessions */
     struct session *sessions[256];
     unsigned num_sessions = 0, highest_score = 0;
 
-    assert(locked_session == NULL);
+    assert(locked_session == nullptr);
 
     crash_unsafe_enter();
     rwlock_wlock(&session_manager->lock);
@@ -344,7 +342,7 @@ session_slot(session_id_t id)
 void
 session_manager_add(struct session *session)
 {
-    assert(session != NULL);
+    assert(session != nullptr);
 
     rwlock_wlock(&session_manager->lock);
 
@@ -362,7 +360,7 @@ session_manager_add(struct session *session)
 static uint32_t
 cluster_session_id(uint32_t id)
 {
-    if (session_manager == NULL || session_manager->cluster_size == 0)
+    if (session_manager == nullptr || session_manager->cluster_size == 0)
         return id;
 
     uint32_t remainder = id % (uint32_t)session_manager->cluster_size;
@@ -389,34 +387,34 @@ session_generate_id(session_id_t *id_r)
 }
 
 static struct session *
-session_new_unsafe(void)
+session_new_unsafe()
 {
     struct dpool *pool;
     struct session *session;
     unsigned num_sessions;
 
     assert(crash_in_unsafe());
-    assert(locked_session == NULL);
+    assert(locked_session == nullptr);
 
     if (session_manager->abandoned)
-        return NULL;
+        return nullptr;
 
     pool = dpool_new(session_manager->shm);
-    if (pool == NULL) {
+    if (pool == nullptr) {
         if (!session_manager_purge())
-            return NULL;
+            return nullptr;
 
         /* at least one session has been purged: try again */
         pool = dpool_new(session_manager->shm);
-        if (pool == NULL)
+        if (pool == nullptr)
             /* nope. fail. */
-            return NULL;
+            return nullptr;
     }
 
     session = session_allocate(pool);
-    if (session == NULL) {
+    if (session == nullptr) {
         dpool_destroy(pool);
-        return NULL;
+        return nullptr;
     }
 
     session_generate_id(&session->id);
@@ -441,11 +439,11 @@ session_new_unsafe(void)
 }
 
 struct session *
-session_new(void)
+session_new()
 {
     crash_unsafe_enter();
     struct session *session = session_new_unsafe();
-    if (session == NULL)
+    if (session == nullptr)
         crash_unsafe_leave();
     return session;
 }
@@ -465,11 +463,11 @@ session_defragment(struct session *src)
     struct session *dest;
 
     pool = dpool_new(session_manager->shm);
-    if (pool == NULL)
-        return NULL;
+    if (pool == nullptr)
+        return nullptr;
 
     dest = session_dup(pool, src);
-    if (dest == NULL) {
+    if (dest == nullptr) {
         dpool_destroy(pool);
         return src;
     }
@@ -485,13 +483,13 @@ static struct session *
 session_find(session_id_t id)
 {
     if (session_manager->abandoned)
-        return NULL;
+        return nullptr;
 
     struct list_head *head = session_slot(id);
     struct session *session;
 
     assert(crash_in_unsafe());
-    assert(locked_session == NULL);
+    assert(locked_session == nullptr);
 
     for (session = (struct session *)head->next;
          &session->hash_siblings != head;
@@ -510,7 +508,7 @@ session_find(session_id_t id)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 struct session *
@@ -518,14 +516,14 @@ session_get(session_id_t id)
 {
     struct session *session;
 
-    assert(locked_session == NULL);
+    assert(locked_session == nullptr);
 
     crash_unsafe_enter();
     rwlock_rlock(&session_manager->lock);
     session = session_find(id);
     rwlock_runlock(&session_manager->lock);
 
-    if (session == NULL)
+    if (session == nullptr)
         crash_unsafe_leave();
 
     return session;
@@ -540,7 +538,7 @@ session_put_internal(struct session *session)
     lock_unlock(&session->lock);
 
 #ifndef NDEBUG
-    locked_session = NULL;
+    locked_session = nullptr;
 #endif
 }
 
@@ -550,7 +548,7 @@ session_defragment_id(session_id_t id)
     assert(crash_in_unsafe());
 
     struct session *session = session_find(id);
-    if (session == NULL)
+    if (session == nullptr)
         return;
 
     /* unlock the session, because session_defragment() may call
@@ -593,13 +591,13 @@ session_delete(session_id_t id)
 {
     struct session *session;
 
-    assert(locked_session == NULL);
+    assert(locked_session == nullptr);
 
     crash_unsafe_enter();
     rwlock_wlock(&session_manager->lock);
 
     session = session_find(id);
-    if (session != NULL) {
+    if (session != nullptr) {
         session_put_internal(session);
         session_remove(session);
     }

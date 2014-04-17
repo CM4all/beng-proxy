@@ -13,7 +13,7 @@
 #include "http_cache.h"
 #include "fcache.h"
 #include "child_manager.h"
-#include "session_manager.h"
+#include "session_manager.hxx"
 #include "beng-proxy/control.h"
 
 #include <glib.h>

@@ -9,7 +9,7 @@
 #include "pool.h"
 #include "bp_instance.hxx"
 #include "connection.h"
-#include "session_manager.h"
+#include "session_manager.hxx"
 #include "child_manager.h"
 #include "listener.h"
 #include "bp_control.hxx"

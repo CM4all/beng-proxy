@@ -9,7 +9,7 @@
 #include "connection.h"
 #include "bp_instance.hxx"
 #include "session.h"
-#include "session_manager.h"
+#include "session_manager.hxx"
 #include "http_server.h"
 #include "cookie_server.h"
 #include "transformation.hxx"
