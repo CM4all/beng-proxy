@@ -694,7 +694,16 @@ fill_translate_request(TranslateRequest *t,
                        const struct parsed_uri *uri,
                        struct strmap *args)
 {
+    /* these two were set by request_args_parse() */
+    const auto session = t->session;
+    const auto param = t->param;
+
     t->Clear();
+
+    /* restore */
+    t->session = session;
+    t->param = param;
+
     t->host = strmap_get(request->headers, "host");
     t->authorization = strmap_get(request->headers, "authorization");
     t->uri = strref_dup(request->pool, &uri->base);
