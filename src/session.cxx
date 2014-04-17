@@ -8,6 +8,7 @@
 #include "cookie_jar.h"
 #include "dpool.h"
 #include "dhashmap.h"
+#include "dbuffer.hxx"
 #include "lock.h"
 #include "expiry.h"
 #include "crash.h"
@@ -77,8 +78,8 @@ session_clear_translate(struct session *session)
     assert(crash_in_unsafe());
     assert(session != nullptr);
 
-    if (session->translate != nullptr) {
-        d_free(session->pool, session->translate);
+    if (!session->translate.IsEmpty()) {
+        d_free(session->pool, session->translate.data);
         session->translate = nullptr;
     }
 }
@@ -108,20 +109,22 @@ session_clear_language(struct session *session)
 }
 
 bool
-session_set_translate(struct session *session, const char *translate)
+session_set_translate(struct session *session, ConstBuffer<void> translate)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
-    assert(translate != nullptr);
+    assert(!translate.IsNull());
 
-    if (session->translate != nullptr && strcmp(session->translate, translate) == 0)
+    if (!session->translate.IsNull() &&
+        session->translate.size == translate.size &&
+        memcmp(session->translate.data, translate.data, translate.size) == 0)
         /* same value as before: no-op */
         return true;
 
     session_clear_translate(session);
 
-    session->translate = d_strdup(session->pool, translate);
-    return session->translate != nullptr;
+    session->translate = DupBuffer(session->pool, translate);
+    return !session->translate.IsNull();
 }
 
 bool
@@ -266,10 +269,7 @@ session_dup(struct dpool *pool, const struct session *src)
     else
         dest->realm = nullptr;
 
-    if (src->translate != nullptr)
-        dest->translate = d_strdup(pool, src->translate);
-    else
-        dest->translate = nullptr;
+    dest->translate = DupBuffer(pool, src->translate);
 
     if (src->user != nullptr)
         dest->user = d_strdup(pool, src->user);

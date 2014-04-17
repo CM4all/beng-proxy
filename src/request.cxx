@@ -16,6 +16,7 @@
 #include "args.h"
 #include "bot.h"
 #include "dpool.h"
+#include "pbuffer.hxx"
 #include "strmap.h"
 #include "istream.h"
 #include "crc.h"
@@ -101,9 +102,9 @@ request_load_session(struct request *request, const char *session_id)
     if (session == nullptr)
         return nullptr;
 
-    if (session->translate != nullptr)
-        request->translate.request.session =
-            p_strdup(request->request->pool, session->translate);
+    if (!session->translate.IsNull())
+        request->translate.request.session = DupBuffer(request->request->pool,
+                                                       session->translate);
 
     if (!session->cookie_sent)
         request->send_session_cookie = true;

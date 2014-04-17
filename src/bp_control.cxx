@@ -26,7 +26,7 @@
 static bool
 apply_translation_packet(TranslateRequest *request,
                          enum beng_translation_command command,
-                         const char *payload)
+                         const char *payload, size_t payload_length)
 {
     switch (command) {
     case TRANSLATE_URI:
@@ -34,7 +34,7 @@ apply_translation_packet(TranslateRequest *request,
         break;
 
     case TRANSLATE_SESSION:
-        request->session = payload;
+        request->session = { payload, payload_length };
         break;
 
         /* XXX
@@ -110,7 +110,8 @@ decode_translation_packets(struct pool *pool, TranslateRequest *request,
             : NULL;
         if (command == TRANSLATE_SITE)
             *site_r = payload;
-        else if (apply_translation_packet(request, command, payload)) {
+        else if (apply_translation_packet(request, command, payload,
+                                          payload_length)) {
             if (num_cmds >= max_cmds)
                 return 0;
 

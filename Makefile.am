@@ -258,6 +258,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/crash.c \
 	src/bp_worker.cxx src/worker.h \
 	src/dstring.c \
+	src/dbuffer.hxx \
 	src/istream_rubber.cxx src/istream_rubber.hxx \
 	src/sink_rubber.cxx src/sink_rubber.hxx \
 	src/session.cxx src/session.hxx \

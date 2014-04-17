@@ -110,8 +110,9 @@ my_translate_response(const TranslateResponse *response,
 
     if (response->redirect != nullptr)
         printf("redirect=%s\n", response->redirect);
-    if (response->session != nullptr)
-        printf("session=%s\n", response->session);
+    if (response->session.IsNull())
+        printf("session=%.*s\n", (int)response->session.size,
+               (const char *)response->session.data);
     if (response->user != nullptr)
         printf("user=%s\n", response->user);
 }

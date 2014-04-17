@@ -68,6 +68,19 @@ write_string(FILE *file, const char *s)
 }
 
 static bool
+write_buffer(FILE *file, ConstBuffer<void> buffer)
+{
+    if (buffer.IsNull())
+        return write_16(file, (uint16_t)-1);
+
+    if (buffer.size >= (uint16_t)-1)
+        return false;
+
+    return write_16(file, buffer.size) &&
+        write_buffer(file, buffer.data, buffer.size);
+}
+
+static bool
 write_strref(FILE *file, const struct strref *s)
 {
     assert(s != nullptr);
@@ -173,7 +186,7 @@ session_write(FILE *file, const struct session *session)
         write_bool(file, session->cookie_sent) &&
         write_bool(file, session->cookie_received) &&
         write_string(file, session->realm) &&
-        write_string(file, session->translate) &&
+        write_buffer(file, session->translate) &&
         write_string(file, session->user) &&
         write_64(file, session->user_expires) &&
         write_string(file, session->language) &&

@@ -19,7 +19,7 @@
 #include "uri-escape.h"
 #include "uri_base.hxx"
 #include "tpool.h"
-#include "strref-pool.h"
+#include "pbuffer.hxx"
 #include "slice.h"
 #include "beng-proxy/translation.h"
 #include "util/Cast.hxx"
@@ -53,7 +53,7 @@ struct TranslateCacheItem {
 
     struct {
         const char *param;
-        const char *session;
+        ConstBuffer<void> session;
 
         const struct sockaddr *local_address;
         size_t local_address_length;
@@ -537,6 +537,17 @@ tcache_vary_copy(struct pool *pool, const char *p,
         : nullptr;
 }
 
+template<typename T>
+static ConstBuffer<T>
+tcache_vary_copy(struct pool *pool, ConstBuffer<T> value,
+                 const TranslateResponse *response,
+                 enum beng_translation_command command)
+{
+    return !value.IsNull() && response->VaryContains(command)
+        ? DupBuffer(pool, value)
+        : nullptr;
+}
+
 /**
  * @param strict in strict mode, nullptr values are a mismatch
  */
@@ -567,6 +578,18 @@ tcache_string_match(const char *a, const char *b, bool strict)
         return !strict && a == b;
 
     return strcmp(a, b) == 0;
+}
+
+/**
+ * @param strict in strict mode, nullptr values are a mismatch
+ */
+static bool
+tcache_buffer_match(ConstBuffer<void> a, ConstBuffer<void> b, bool strict)
+{
+    if (a.IsNull() || b.IsNull())
+        return !strict && a.data == b.data;
+
+    return a.size == b.size && memcmp(a.data, b.data, a.size) == 0;
 }
 
 /**
@@ -604,7 +627,7 @@ tcache_vary_match(const TranslateCacheItem *item,
                                    request->param, strict);
 
     case TRANSLATE_SESSION:
-        return tcache_string_match(item->request.session,
+        return tcache_buffer_match(item->request.session,
                                    request->session, strict);
 
     case TRANSLATE_LOCAL_ADDRESS:

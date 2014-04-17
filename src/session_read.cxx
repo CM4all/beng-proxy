@@ -140,6 +140,36 @@ read_strref(FILE *file, struct dpool *pool, struct strref *s)
 }
 
 static bool
+read_buffer(FILE *file, struct dpool *pool, ConstBuffer<void> &buffer)
+{
+    assert(pool != nullptr);
+
+    uint16_t size;
+    if (!read_16(file, &size))
+        return false;
+
+    if (size == (uint16_t)-1) {
+        buffer = ConstBuffer<void>::Null();
+        return true;
+    }
+
+    if (size == 0) {
+        buffer = { "", 0 };
+        return true;
+    }
+
+    void *p = d_malloc(pool, size);
+    if (p == nullptr)
+        return false;
+
+    if (!read_buffer(file, p, size))
+        return false;
+
+    buffer = { p, size };
+    return true;
+}
+
+static bool
 expect_32(FILE *file, uint32_t expected)
 {
     uint32_t value;
@@ -287,7 +317,7 @@ do_read_session(FILE *file, struct dpool *pool, struct session *session)
         read_bool(file, &session->cookie_sent) &&
         read_bool(file, &session->cookie_received) &&
         read_string_const(file, pool, &session->realm) &&
-        read_string_const(file, pool, &session->translate) &&
+        read_buffer(file, pool, session->translate) &&
         read_string_const(file, pool, &session->user) &&
         read_time(file, &session->user_expires) &&
         read_string_const(file, pool, &session->language) &&

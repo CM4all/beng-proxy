@@ -9,6 +9,7 @@
 
 #include "lock.h"
 #include "session_id.h"
+#include "util/ConstBuffer.hxx"
 
 #include <inline/list.h>
 #include <inline/compiler.h>
@@ -82,7 +83,7 @@ struct session {
     const char *realm;
 
     /** an opaque string for the translation server */
-    const char *translate;
+    ConstBuffer<void> translate;
 
     /** the user name which is logged in (nullptr if anonymous), provided
         by the translation server */
@@ -127,7 +128,7 @@ void
 session_clear_language(struct session *session);
 
 bool
-session_set_translate(struct session *session, const char *translate);
+session_set_translate(struct session *session, ConstBuffer<void> translate);
 
 bool
 session_set_user(struct session *session, const char *user, unsigned max_age);

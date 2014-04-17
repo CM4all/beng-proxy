@@ -64,7 +64,7 @@ tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
     assert(request->host == NULL);
     assert(request->uri == NULL);
     assert(request->widget_type != NULL);
-    assert(request->session == NULL);
+    assert(request->session.IsNull());
     assert(request->param == NULL);
 
     if (strcmp(request->widget_type, "sync") == 0) {

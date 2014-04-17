@@ -33,7 +33,7 @@ struct TranslateRequest {
     const char *args;
     const char *query_string;
     const char *widget_type;
-    const char *session;
+    ConstBuffer<void> session;
     const char *param;
 
     /**

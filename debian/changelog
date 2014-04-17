@@ -2,6 +2,7 @@ cm4all-beng-proxy (4.0.28) unstable; urgency=low
 
   * handler: fix SESSION and PARAM breakage
   * tcache: fix VARY/PARAM check
+  * translation: allow null bytes in SESSION
 
  --   
 

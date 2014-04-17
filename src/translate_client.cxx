@@ -353,7 +353,7 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
                               request->query_string, error_r) &&
         write_optional_packet(gb, TRANSLATE_WIDGET_TYPE,
                               request->widget_type, error_r) &&
-        write_optional_packet(gb, TRANSLATE_SESSION, request->session,
+        write_optional_buffer(gb, TRANSLATE_SESSION, request->session,
                               error_r) &&
         write_optional_buffer(gb, TRANSLATE_CHECK, request->check,
                               error_r) &&
@@ -1629,7 +1629,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_SESSION:
-        client->response.session = payload;
+        client->response.session = { payload, payload_length };
         return true;
 
     case TRANSLATE_USER:

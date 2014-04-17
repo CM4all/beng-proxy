@@ -96,7 +96,7 @@ struct TranslateResponse {
 
     bool dump_headers;
 
-    const char *session;
+    ConstBuffer<void> session;
 
     /**
      * The payload of the CHECK packet.  If ConstBuffer::IsNull(),

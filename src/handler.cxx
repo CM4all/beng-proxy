@@ -24,6 +24,7 @@
 #include "header-writer.h"
 #include "strref-pool.h"
 #include "dpool.h"
+#include "pbuffer.hxx"
 #include "http_server.h"
 #include "http_quark.h"
 #include "transformation.hxx"
@@ -129,15 +130,15 @@ apply_translate_response_session(request &request,
         request_ignore_session(&request);
 
     struct session *session;
-    if (response.session != nullptr || response.user != nullptr ||
+    if (!response.session.IsNull() || response.user != nullptr ||
         response.language != nullptr ||
         response.views->transformation != nullptr)
         session = request_get_session(&request);
     else
         session = nullptr;
 
-    if (response.session != nullptr) {
-        if (*response.session == 0) {
+    if (!response.session.IsNull()) {
+        if (response.session.IsEmpty()) {
             /* clear translate session */
 
             if (session != nullptr)
@@ -406,8 +407,7 @@ handle_translated_request(request &request, const TranslateResponse &response)
 
     /* copy TRANSLATE_SESSION because TranslateResponse::CopyFrom()
        clears it */
-    response2->session = p_strdup_checked(request.request->pool,
-                                          response.session);
+    response2->session = DupBuffer(request.request->pool, response.session);
 
     request.translate.response = response2;
 
