@@ -6,7 +6,7 @@
 
 #include "translate_response.hxx"
 #include "pool.h"
-#include "strref-pool.h"
+#include "pbuffer.hxx"
 #include "strmap.h"
 #include "widget_view.hxx"
 
@@ -16,21 +16,6 @@ void
 TranslateResponse::Clear()
 {
     memset(this, 0, sizeof(*this));
-}
-
-template<typename T>
-static ConstBuffer<T>
-Copy(pool *p, ConstBuffer<T> src)
-{
-    if (src.IsNull())
-        return ConstBuffer<T>::Null();
-
-    if (src.IsEmpty())
-        return ConstBuffer<T>::FromVoid({"", 0});
-
-    ConstBuffer<void> src_v = src.ToVoid();
-    ConstBuffer<void> dest_v(p_memdup(p, src_v.data, src_v.size), src_v.size);
-    return ConstBuffer<T>::FromVoid(dest_v);
 }
 
 void
@@ -85,8 +70,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     dump_headers = src.dump_headers;
     session = nullptr;
 
-    check = Copy(pool, src.check);
-    want_full_uri = Copy(pool, src.want_full_uri);
+    check = DupBuffer(pool, src.check);
+    want_full_uri = DupBuffer(pool, src.want_full_uri);
 
     /* The "user" attribute must not be present in cached responses,
        because they belong to only that one session.  For the same
@@ -108,14 +93,14 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
         ? widget_view_dup_chain(pool, src.views)
         : nullptr;
 
-    vary = Copy(pool, src.vary);
-    invalidate = Copy(pool, src.invalidate);
-    want = Copy(pool, src.want);
-    file_not_found = Copy(pool, src.file_not_found);
-    content_type_lookup = Copy(pool, src.content_type_lookup);
+    vary = DupBuffer(pool, src.vary);
+    invalidate = DupBuffer(pool, src.invalidate);
+    want = DupBuffer(pool, src.want);
+    file_not_found = DupBuffer(pool, src.file_not_found);
+    content_type_lookup = DupBuffer(pool, src.content_type_lookup);
     content_type = p_strdup_checked(pool, src.content_type);
-    directory_index = Copy(pool, src.directory_index);
-    error_document = Copy(pool, src.error_document);
+    directory_index = DupBuffer(pool, src.directory_index);
+    error_document = DupBuffer(pool, src.error_document);
 
     validate_mtime.mtime = src.validate_mtime.mtime;
     validate_mtime.path =
