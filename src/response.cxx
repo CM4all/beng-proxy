@@ -14,7 +14,7 @@
 #include "widget_class.hxx"
 #include "widget-dump.h"
 #include "proxy_widget.hxx"
-#include "session.h"
+#include "session.hxx"
 #include "fcache.h"
 #include "http_address.h"
 #include "strref-pool.h"

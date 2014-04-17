@@ -23,6 +23,7 @@
 #include "http_response.h"
 #include "istream.h"
 #include "istream_pause.h"
+#include "session.hxx"
 
 #include <daemon/log.h>
 

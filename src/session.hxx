@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_SESSION_H
-#define __BENG_SESSION_H
+#ifndef BENG_PROXY_SESSION_HXX
+#define BENG_PROXY_SESSION_HXX
 
 #include "lock.h"
 #include "session_id.h"
@@ -14,7 +14,6 @@
 #include <inline/compiler.h>
 
 #include <time.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef SESSION_ID_SIZE
@@ -32,7 +31,7 @@ struct widget_session {
 
     struct session *session;
 
-    /** local id of this widget; must not be NULL since widgets
+    /** local id of this widget; must not be nullptr since widgets
         without an id cannot have a session */
     const char *id;
     struct dhashmap *children;
@@ -78,14 +77,14 @@ struct session {
     bool cookie_received;
 
     /**
-     * The name of this session's realm.  It is always non-NULL.
+     * The name of this session's realm.  It is always non-nullptr.
      */
     const char *realm;
 
     /** an opaque string for the translation server */
     const char *translate;
 
-    /** the user name which is logged in (NULL if anonymous), provided
+    /** the user name which is logged in (nullptr if anonymous), provided
         by the translation server */
     const char *user;
 
@@ -102,10 +101,6 @@ struct session {
     /** all cookies received by widget servers */
     struct cookie_jar *cookies;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 gcc_malloc
 struct session *
@@ -178,9 +173,5 @@ widget_session_delete(struct dpool *pool, struct widget_session *ws);
 
 void
 session_delete_widgets(struct session *session);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

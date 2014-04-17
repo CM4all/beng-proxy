@@ -5,7 +5,7 @@
  */
 
 #include "session_manager.hxx"
-#include "session.h"
+#include "session.hxx"
 #include "shm.h"
 #include "dpool.h"
 #include "rwlock.h"

@@ -19,6 +19,7 @@
 #include "crash.h"
 #include "istream.h"
 #include "session_manager.hxx"
+#include "session.hxx"
 
 #include <inline/compiler.h>
 

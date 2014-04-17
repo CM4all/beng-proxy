@@ -8,7 +8,7 @@
 #include "widget-quark.h"
 #include "widget.h"
 #include "widget_class.hxx"
-#include "session.h"
+#include "session.hxx"
 #include "penv.hxx"
 #include "uri-parser.h"
 #include "uri-relative.h"

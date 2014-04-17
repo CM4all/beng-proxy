@@ -5,7 +5,7 @@
  */
 
 #include "penv.hxx"
-#include "session.h"
+#include "session.hxx"
 #include "istream.h"
 #include "strmap.h"
 #include "istream.h"

@@ -8,7 +8,7 @@
 #include "header_copy.hxx"
 #include "header-writer.h"
 #include "strmap.h"
-#include "session.h"
+#include "session.hxx"
 #include "cookie_client.h"
 #include "growing-buffer.h"
 #include "pool.h"

@@ -6,7 +6,7 @@
 
 #include "session_write.hxx"
 #include "session_file.h"
-#include "session.h"
+#include "session.hxx"
 #include "dhashmap.h"
 #include "cookie_jar.h"
 

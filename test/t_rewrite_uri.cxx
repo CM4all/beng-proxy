@@ -1,6 +1,6 @@
 #include "rewrite_uri.hxx"
 #include "http_address.h"
-#include "session.h"
+#include "session.hxx"
 #include "widget.h"
 #include "widget_class.hxx"
 #include "widget_resolver.hxx"

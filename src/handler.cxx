@@ -17,7 +17,7 @@
 #include "request.hxx"
 #include "connection.h"
 #include "args.h"
-#include "session.h"
+#include "session.hxx"
 #include "tcache.hxx"
 #include "suffix_registry.hxx"
 #include "growing-buffer.h"

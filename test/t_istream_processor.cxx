@@ -10,6 +10,7 @@
 #include "http_address.h"
 #include "global.h"
 #include "crash.h"
+#include "session.hxx"
 
 #include <stdlib.h>
 #include <stdio.h>

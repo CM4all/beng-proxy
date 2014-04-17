@@ -9,7 +9,7 @@
 #include "session_read.hxx"
 #include "session_file.h"
 #include "session_manager.hxx"
-#include "session.h"
+#include "session.hxx"
 #include "dpool.h"
 #include "clock.h"
 

@@ -7,7 +7,7 @@
 #ifndef __BENG_REWRITE_URI_H
 #define __BENG_REWRITE_URI_H
 
-#include "session.h"
+#include "session_id.h"
 
 #include <glib.h>
 

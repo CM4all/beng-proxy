@@ -17,6 +17,7 @@
 #include "global.h"
 #include "http_response.h"
 #include "istream.h"
+#include "session.hxx"
 
 #include <assert.h>
 
