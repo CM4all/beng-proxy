@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "header-forward.h"
-#include "header-copy.h"
+#include "header_forward.hxx"
+#include "header_copy.hxx"
 #include "header-writer.h"
 #include "strmap.h"
 #include "session.h"
@@ -26,12 +26,12 @@ static const char *const basic_request_headers[] = {
     "accept",
     "from",
     "cache-control",
-    NULL,
+    nullptr,
 };
 
 static const char *const language_request_headers[] = {
     "accept-language",
-    NULL,
+    nullptr,
 };
 
 static const char *const body_request_headers[] = {
@@ -41,13 +41,13 @@ static const char *const body_request_headers[] = {
     "content-range",
     "content-type",
     "content-disposition",
-    NULL,
+    nullptr,
 };
 
 static const char *const cookie_request_headers[] = {
     "cookie",
     "cookie2",
-    NULL,
+    nullptr,
 };
 
 /**
@@ -57,7 +57,7 @@ static const char *const cors_request_headers[] = {
     "origin",
     "access-control-request-method",
     "access-control-request-headers",
-    NULL,
+    nullptr,
 };
 
 /**
@@ -71,7 +71,7 @@ static const char *const exclude_request_headers[] = {
     "via",
     "x-forwarded-for",
     "host",
-    NULL,
+    nullptr,
 };
 
 static const char *const basic_response_headers[] = {
@@ -89,13 +89,13 @@ static const char *const basic_response_headers[] = {
     "retry-after",
     "vary",
     "location",
-    NULL,
+    nullptr,
 };
 
 static const char *const cookie_response_headers[] = {
     "set-cookie",
     "set-cookie2",
-    NULL,
+    nullptr,
 };
 
 /**
@@ -108,7 +108,7 @@ static const char *const cors_response_headers[] = {
     "access-control-max-age",
     "access-control-allow-methods",
     "access-control-allow-headers",
-    NULL,
+    nullptr,
 };
 
 /**
@@ -118,7 +118,7 @@ static const char *const exclude_response_headers[] = {
     "server",
     "via",
     "date",
-    NULL,
+    nullptr,
 };
 
 /**
@@ -146,7 +146,7 @@ forward_secure_headers(struct strmap *dest, struct strmap *src)
     strmap_rewind(src);
 
     const struct strmap_pair *pair;
-    while ((pair = strmap_next(src)) != NULL)
+    while ((pair = strmap_next(src)) != nullptr)
         if (is_secure_header(pair->key))
             strmap_add(dest, pair->key, pair->value);
 }
@@ -159,8 +159,8 @@ forward_user_agent(struct strmap *dest, const struct strmap *src,
 
     p = !mangle
         ? strmap_get_checked(src, "user-agent")
-        : NULL;
-    if (p == NULL)
+        : nullptr;
+    if (p == nullptr)
         p = PRODUCT_TOKEN;
 
     strmap_add(dest, "user-agent", p);
@@ -173,16 +173,16 @@ forward_via(struct pool *pool, struct strmap *dest, const struct strmap *src,
     const char *p;
 
     p = strmap_get_checked(src, "via");
-    if (p == NULL) {
-        if (local_host != NULL && mangle)
+    if (p == nullptr) {
+        if (local_host != nullptr && mangle)
             strmap_add(dest, "via",
-                       p_strcat(pool, "1.1 ", local_host, NULL));
+                       p_strcat(pool, "1.1 ", local_host, nullptr));
     } else {
-        if (local_host == NULL || !mangle)
+        if (local_host == nullptr || !mangle)
             strmap_add(dest, "via", p);
         else
             strmap_add(dest, "via",
-                       p_strcat(pool, p, ", 1.1 ", local_host, NULL));
+                       p_strcat(pool, p, ", 1.1 ", local_host, nullptr));
     }
 }
 
@@ -193,15 +193,15 @@ forward_xff(struct pool *pool, struct strmap *dest, const struct strmap *src,
     const char *p;
 
     p = strmap_get_checked(src, "x-forwarded-for");
-    if (p == NULL) {
-        if (remote_host != NULL && mangle)
+    if (p == nullptr) {
+        if (remote_host != nullptr && mangle)
             strmap_add(dest, "x-forwarded-for", remote_host);
     } else {
-        if (remote_host == NULL || !mangle)
+        if (remote_host == nullptr || !mangle)
             strmap_add(dest, "x-forwarded-for", p);
         else
             strmap_add(dest, "x-forwarded-for",
-                       p_strcat(pool, p, ", ", remote_host, NULL));
+                       p_strcat(pool, p, ", ", remote_host, nullptr));
     }
 }
 
@@ -217,7 +217,7 @@ forward_identity(struct pool *pool, struct strmap *dest, const struct strmap *sr
 static bool
 string_in_array(const char *const array[], const char *value)
 {
-    for (unsigned i = 0; array[i] != NULL; ++i)
+    for (unsigned i = 0; array[i] != nullptr; ++i)
         if (strcmp(array[i], value) == 0)
             return true;
 
@@ -230,7 +230,7 @@ forward_other_headers(struct strmap *dest, struct strmap *src)
     const struct strmap_pair *pair;
 
     strmap_rewind(src);
-    while ((pair = strmap_next(src)) != NULL)
+    while ((pair = strmap_next(src)) != nullptr)
         if (!string_in_array(basic_request_headers, pair->key) &&
             !string_in_array(body_request_headers, pair->key) &&
             !string_in_array(language_request_headers, pair->key) &&
@@ -255,26 +255,26 @@ forward_request_headers(struct pool *pool, struct strmap *src,
     struct strmap *dest;
     const char *p;
 
-    assert(settings != NULL);
+    assert(settings != nullptr);
 
 #ifndef NDEBUG
-    if (session != NULL && daemon_log_config.verbose >= 10) {
+    if (session != nullptr && daemon_log_config.verbose >= 10) {
         struct session_id_string s;
         daemon_log(10, "forward_request_headers remote_host='%s' "
                    "host='%s' uri='%s' session=%s user='%s' cookie='%s'\n",
                    remote_host, host_and_port, uri,
                    session_id_format(session->id, &s),
                    session->user,
-                   host_and_port != NULL && uri != NULL
+                   host_and_port != nullptr && uri != nullptr
                    ? cookie_jar_http_header_value(session->cookies,
                                                   host_and_port, uri, pool)
-                   : NULL);
+                   : nullptr);
     }
 #endif
 
     dest = strmap_new(pool, 32);
 
-    if (src != NULL) {
+    if (src != nullptr) {
         forward_basic_headers(dest, src, with_body);
 
         if (!exclude_host)
@@ -292,29 +292,29 @@ forward_request_headers(struct pool *pool, struct strmap *src,
 
     p = forward_charset
         ? strmap_get_checked(src, "accept-charset")
-        : NULL;
-    if (p == NULL)
+        : nullptr;
+    if (p == nullptr)
         p = "utf-8";
     strmap_add(dest, "accept-charset", p);
 
     if (forward_encoding &&
-        (p = strmap_get_checked(src, "accept-encoding")) != NULL)
+        (p = strmap_get_checked(src, "accept-encoding")) != nullptr)
         strmap_add(dest, "accept-encoding", p);
 
     if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
-        if (src != NULL)
+        if (src != nullptr)
             header_copy_list(src, dest, cookie_request_headers);
     } else if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_MANGLE &&
-               session != NULL && host_and_port != NULL && uri != NULL)
+               session != nullptr && host_and_port != nullptr && uri != nullptr)
         cookie_jar_http_header(session->cookies, host_and_port, uri,
                                dest, pool);
 
-    if (session != NULL && session->language != NULL)
+    if (session != nullptr && session->language != nullptr)
         strmap_add(dest, "accept-language", p_strdup(pool, session->language));
-    else if (src != NULL)
+    else if (src != nullptr)
         header_copy_list(src, dest, language_request_headers);
 
-    if (session != NULL && session->user != NULL)
+    if (session != nullptr && session->user != nullptr)
         strmap_add(dest, "x-cm4all-beng-user", p_strdup(pool, session->user));
 
     if (settings->modes[HEADER_GROUP_CAPABILITIES] != HEADER_FORWARD_NO)
@@ -327,7 +327,7 @@ forward_request_headers(struct pool *pool, struct strmap *src,
 
     if (settings->modes[HEADER_GROUP_FORWARD] == HEADER_FORWARD_MANGLE) {
         const char *host = strmap_get_checked(src, "host");
-        if (host != NULL)
+        if (host != nullptr)
             strmap_add(dest, "x-forwarded-host", host);
     }
 
@@ -340,7 +340,7 @@ forward_other_response_headers(struct strmap *dest, struct strmap *src)
     const struct strmap_pair *pair;
 
     strmap_rewind(src);
-    while ((pair = strmap_next(src)) != NULL)
+    while ((pair = strmap_next(src)) != nullptr)
         if (!string_in_array(basic_response_headers, pair->key) &&
             !string_in_array(cookie_response_headers, pair->key) &&
             !string_in_array(cors_response_headers, pair->key) &&
@@ -360,7 +360,7 @@ forward_server(struct strmap *dest, const struct strmap *src,
         return;
 
     p = strmap_get_checked(src, "server");
-    if (p == NULL)
+    if (p == nullptr)
         return;
 
     strmap_add(dest, "server", p);
@@ -373,10 +373,10 @@ forward_response_headers(struct pool *pool, struct strmap *src,
 {
     struct strmap *dest;
 
-    assert(settings != NULL);
+    assert(settings != nullptr);
 
     dest = strmap_new(pool, 61);
-    if (src != NULL) {
+    if (src != nullptr) {
         header_copy_list(src, dest, basic_response_headers);
 
         if (settings->modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)

@@ -67,7 +67,6 @@ test/t_http_address
 test/t-uri-relative
 test/t-uri-verify
 test/t-istream-tee
-test/t-header-forward
 test/t-growing-buffer
 test/fake-memcached-server
 test/t-processor

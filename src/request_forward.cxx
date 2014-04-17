@@ -7,7 +7,7 @@
 #include "request_forward.hxx"
 #include "request.hxx"
 #include "http_server.h"
-#include "header-forward.h"
+#include "header_forward.hxx"
 
 void
 request_forward(struct forward_request *dest, struct request *request2,

@@ -9,7 +9,7 @@
 
 #include "util/ConstBuffer.hxx"
 #include "resource_address.hxx"
-#include "header-forward.h"
+#include "header_forward.hxx"
 #include "strset.h"
 
 #include <http/status.h>

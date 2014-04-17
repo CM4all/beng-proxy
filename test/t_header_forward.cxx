@@ -1,4 +1,4 @@
-#include "header-forward.h"
+#include "header_forward.hxx"
 #include "tpool.h"
 #include "strmap.h"
 #include "product.h"
@@ -11,8 +11,8 @@
 static inline gint
 cmp_pair(gconstpointer _a, gconstpointer _b)
 {
-    const struct strmap_pair *a = _a;
-    const struct strmap_pair *b = _b;
+    const strmap_pair *a = (strmap_pair *)_a;
+    const strmap_pair *b = (strmap_pair *)_b;
 
     return strcmp(a->key, b->key);
 }
@@ -20,8 +20,8 @@ cmp_pair(gconstpointer _a, gconstpointer _b)
 static void
 print_pair(gpointer data, gpointer user_data)
 {
-    const struct strmap_pair *pair = data;
-    char *p = user_data;
+    const strmap_pair *pair = (strmap_pair *)data;
+    char *p = (char *)user_data;
 
     strcat(p, pair->key);
     strcat(p, "=");

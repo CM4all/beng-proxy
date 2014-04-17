@@ -6,7 +6,7 @@
 
 #include "widget_http.hxx"
 #include "http_response.h"
-#include "pheaders.h"
+#include "pheaders.hxx"
 #include "processor.h"
 #include "css_processor.h"
 #include "text_processor.hxx"
@@ -23,7 +23,7 @@
 #include "get.hxx"
 #include "fcache.h"
 #include "header-writer.h"
-#include "header-forward.h"
+#include "header_forward.hxx"
 #include "transformation.hxx"
 #include "global.h"
 #include "resource_tag.hxx"

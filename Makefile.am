@@ -162,10 +162,10 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/file_not_found.cxx src/file_not_found.hxx \
 	src/file_directory_index.cxx src/file_directory_index.hxx \
 	src/hashmap.c src/hashmap.h \
-	src/header-forward.c src/header-forward.h \
+	src/header_forward.cxx src/header_forward.hxx \
 	src/header-parser.c src/header-parser.h \
 	src/header-writer.c src/header-writer.h \
-	src/header-copy.c src/header-copy.h \
+	src/header_copy.cxx src/header_copy.hxx \
 	src/hostname.c src/hostname.h \
 	src/http_body.c src/http_body.h \
 	src/http_cache.cxx src/http_cache.h \
@@ -297,7 +297,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/escape_pool.c src/escape_pool.h \
 	src/istream-escape.c src/istream-escape.h \
 	src/istream-html-escape.c \
-	src/pheaders.c src/pheaders.h \
+	src/pheaders.cxx src/pheaders.hxx \
 	src/css_syntax.h \
 	src/css_util.h \
 	src/css_parser.c src/css_parser.h \
@@ -742,7 +742,7 @@ FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk 
 
 check_PROGRAMS = \
 	test/t-hashmap test/t-cache test/t_tcache \
-	test/t-header-forward \
+	test/t_header_forward \
 	test/t-stock \
 	test/t_resource_address \
 	test/t_http_address \
@@ -776,7 +776,7 @@ check_PROGRAMS = \
 	test/t_memcached_client
 
 TESTS = test/t-hashmap test/t-cache test/t_tcache \
-	test/t-header-forward \
+	test/t_header_forward \
 	test/t-stock \
 	test/t_resource_address \
 	test/t_http_address \
@@ -882,9 +882,9 @@ test_t_tcache_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
 
-test_t_header_forward_SOURCES = test/t-header-forward.c \
-	src/header-forward.c src/header-writer.c \
-	src/header-copy.c \
+test_t_header_forward_SOURCES = test/t_header_forward.cxx \
+	src/header_forward.cxx src/header-writer.c \
+	src/header_copy.cxx \
 	src/http_string.c \
 	src/hashmap.c src/strmap.c \
 	src/growing-buffer.c \
@@ -1339,7 +1339,7 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 
 test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_http.cxx src/widget_uri.cxx src/widget_request.cxx \
-	src/pheaders.c \
+	src/pheaders.cxx \
 	src/crash.c \
 	src/widget_session.cxx src/session.c src/session_manager.c src/session_id.c \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
@@ -1349,8 +1349,8 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c src/uri_base.cxx \
 	src/resource_tag.cxx \
 	src/cookie_client.c src/cookie_jar.c \
-	src/header-parser.c src/header-forward.c src/header-writer.c \
-	src/header-copy.c \
+	src/header-parser.c src/header_forward.cxx src/header-writer.c \
+	src/header_copy.cxx \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
 	src/growing-buffer.c src/fifo-buffer.c \

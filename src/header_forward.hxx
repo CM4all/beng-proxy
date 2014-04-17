@@ -4,12 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef HEADER_FORWARD_H
-#define HEADER_FORWARD_H
+#ifndef HEADER_FORWARD_HXX
+#define HEADER_FORWARD_HXX
 
 #include <beng-proxy/headers.h>
-
-#include <stdbool.h>
 
 struct header_forward_settings {
     enum beng_header_forward_mode modes[HEADER_GROUP_MAX];
@@ -17,10 +15,6 @@ struct header_forward_settings {
 
 struct pool;
 struct session;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @param exclude_host suppress the "Host" header?  The "Host" request
@@ -41,9 +35,5 @@ struct strmap *
 forward_response_headers(struct pool *pool, struct strmap *src,
                          const char *local_host,
                          const struct header_forward_settings *settings);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
