@@ -4,9 +4,6 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-/* for struct ucred */
-#define _GNU_SOURCE 1
-
 #include "udp-listener.h"
 #include "fd_util.h"
 #include "address_string.h"

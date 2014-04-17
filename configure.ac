@@ -119,7 +119,7 @@ AC_SUBST(AM_LDFLAGS)
 
 AM_CFLAGS=""
 AM_CXXFLAGS="-std=gnu++0x"
-AM_CPPFLAGS="-D_REENTRANT"
+AM_CPPFLAGS="-D_REENTRANT -D_GNU_SOURCE"
 AM_LDFLAGS="-Wl,--as-needed"
 
 if test "$am_cv_CC_dependencies_compiler_type" = "gcc3"; then
