@@ -403,6 +403,12 @@ handle_translated_request(request &request, const TranslateResponse &response)
     auto response2 = NewFromPool<TranslateResponse>(request.request->pool);
     *response2 = response;
     response2->CopyFrom(request.request->pool, response);
+
+    /* copy TRANSLATE_SESSION because TranslateResponse::CopyFrom()
+       clears it */
+    response2->session = p_strdup_checked(request.request->pool,
+                                          response.session);
+
     request.translate.response = response2;
 
     if (!do_content_type_lookup(request, *response2))
