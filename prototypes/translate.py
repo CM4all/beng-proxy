@@ -545,7 +545,7 @@ class Translation(Protocol):
 
         if request.host is not None and 'untrusted' in request.host:
             response.packet(TRANSLATE_UNTRUSTED, request.host)
-        response.vary(TRANSLATE_HOST)
+        response.vary(TRANSLATE_HOST, TRANSLATE_PARAM)
 
         if request.uri is not None:
             self._handle_http(request.raw_uri, request.uri, request.authorization,
