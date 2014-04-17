@@ -5,7 +5,7 @@
 #include "widget_resolver.hxx"
 #include "widget_request.hxx"
 #include "processor.h"
-#include "penv.h"
+#include "penv.hxx"
 #include "async.h"
 #include "http_response.h"
 #include "istream.h"

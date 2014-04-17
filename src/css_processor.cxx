@@ -7,7 +7,7 @@
 #include "css_processor.h"
 #include "css_parser.h"
 #include "css_util.h"
-#include "penv.h"
+#include "penv.hxx"
 #include "strmap.h"
 #include "widget.h"
 #include "widget-lookup.h"

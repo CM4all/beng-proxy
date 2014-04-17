@@ -11,7 +11,7 @@
 #include "uri-parser.h"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "penv.h"
+#include "penv.hxx"
 #include "async.h"
 #include "session.h"
 #include "transformation.hxx"

@@ -2,7 +2,7 @@
 #include "widget.h"
 #include "widget_class.hxx"
 #include "processor.h"
-#include "penv.h"
+#include "penv.hxx"
 #include "uri-parser.h"
 #include "session_manager.h"
 #include "inline_widget.hxx"

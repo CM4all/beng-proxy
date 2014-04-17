@@ -7,7 +7,7 @@
 #include "frame.hxx"
 #include "widget_http.hxx"
 #include "widget-quark.h"
-#include "penv.h"
+#include "penv.hxx"
 #include "widget.h"
 #include "widget_class.hxx"
 #include "widget_approval.hxx"

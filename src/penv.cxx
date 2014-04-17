@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "penv.h"
+#include "penv.hxx"
 #include "session.h"
 #include "istream.h"
 #include "strmap.h"

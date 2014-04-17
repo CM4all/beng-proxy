@@ -9,7 +9,7 @@
 #include "istream.h"
 #include "widget.h"
 #include "widget_class.hxx"
-#include "penv.h"
+#include "penv.hxx"
 
 #include <assert.h>
 
