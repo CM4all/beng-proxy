@@ -834,13 +834,9 @@ transform_uri_attribute(struct processor *processor,
         strref_clear(&fragment);
 
     istream = rewrite_widget_uri(processor->pool, processor->env->pool,
+                                 processor->env,
                                  global_translate_cache,
-                                 processor->env->absolute_uri,
-                                 processor->env->external_uri,
-                                 processor->env->site_name,
-                                 processor->env->untrusted_host,
-                                 processor->env->args, widget,
-                                 processor->env->session_id,
+                                 widget,
                                  value, mode, widget == processor->container,
                                  view,
                                  &html_escape_class);
@@ -1063,14 +1059,9 @@ handle_style_attribute(struct processor *processor,
     struct widget *widget = processor->container;
     struct istream *result =
         css_rewrite_block_uris(processor->pool, processor->env->pool,
+                               processor->env,
                                global_translate_cache,
-                               processor->env->absolute_uri,
-                               processor->env->external_uri,
-                               processor->env->site_name,
-                               processor->env->untrusted_host,
-                               processor->env->args,
                                widget,
-                               processor->env->session_id,
                                attr->value,
                                &html_escape_class);
     if (result != nullptr)

@@ -7,8 +7,6 @@
 #ifndef __BENG_REWRITE_URI_H
 #define __BENG_REWRITE_URI_H
 
-#include "session_id.h"
-
 #include <inline/compiler.h>
 
 struct pool;
@@ -39,13 +37,9 @@ parse_uri_mode(const struct strref *s);
 gcc_malloc
 struct istream *
 rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
+                   struct processor_env *env,
                    struct tcache *translate_cache,
-                   const char *absolute_uri,
-                   const struct parsed_uri *external_uri,
-                   const char *site_name,
-                   const char *untrusted_host,
-                   struct strmap *args, struct widget *widget,
-                   session_id_t session_id,
+                   struct widget *widget,
                    const struct strref *value,
                    enum uri_mode mode, bool stateful,
                    const char *view,

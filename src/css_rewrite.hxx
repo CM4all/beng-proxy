@@ -12,8 +12,8 @@
 #include <stddef.h>
 
 struct pool;
+struct processor_env;
 struct strref;
-struct strmap;
 struct parsed_uri;
 struct istream;
 struct escape_class;
@@ -25,12 +25,9 @@ struct tcache;
  */
 struct istream *
 css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
+                       struct processor_env *env,
                        struct tcache *translate_cache,
-                       const char *absolute_uri,
-                       const struct parsed_uri *external_uri,
-                       const char *site_name, const char *untrusted_host,
-                       struct strmap *args, struct widget *widget,
-                       session_id_t session_id,
+                       struct widget *widget,
                        const struct strref block,
                        const struct escape_class *escape);
 

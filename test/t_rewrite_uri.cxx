@@ -12,6 +12,7 @@
 #include "escape_pool.h"
 #include "escape_html.h"
 #include "istream.h"
+#include "penv.hxx"
 
 #include <glib.h>
 
@@ -193,9 +194,19 @@ assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
                             result, strlen(result));
     }
 
-    istream = rewrite_widget_uri(pool, widget_pool, (struct tcache *)0x1,
-                                 NULL, &external_uri, NULL, NULL,
-                                 NULL, widget, 1,
+    struct processor_env env;
+    processor_env_init(widget_pool, &env,
+                       nullptr, nullptr,
+                       nullptr, nullptr,
+                       nullptr, nullptr,
+                       &external_uri,
+                       nullptr,
+                       0,
+                       HTTP_METHOD_GET,
+                       nullptr);
+
+    istream = rewrite_widget_uri(pool, widget_pool, &env, (struct tcache *)0x1,
+                                 widget,
                                  value != NULL ? &value2 : NULL,
                                  mode, stateful, view, &html_escape_class);
     if (result == NULL)

@@ -79,12 +79,9 @@ static const struct css_parser_handler css_rewrite_parser_handler = {
 
 struct istream *
 css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
+                       struct processor_env *env,
                        struct tcache *translate_cache,
-                       const char *absolute_uri,
-                       const struct parsed_uri *external_uri,
-                       const char *site_name, const char *untrusted_host,
-                       struct strmap *args, struct widget *widget,
-                       session_id_t session_id,
+                       struct widget *widget,
                        const struct strref block,
                        const struct escape_class *escape)
 {
@@ -122,12 +119,8 @@ css_rewrite_block_uris(struct pool *pool, struct pool *widget_pool,
         strref_set(&buffer, block.data + url->start, url->end - url->start);
 
         struct istream *value =
-            rewrite_widget_uri(pool, widget_pool, translate_cache,
-                               absolute_uri, external_uri,
-                               site_name, untrusted_host,
-                               args,
+            rewrite_widget_uri(pool, widget_pool, env, translate_cache,
                                widget,
-                               session_id,
                                &buffer,
                                URI_MODE_PARTIAL, false, nullptr,
                                escape);

@@ -5,6 +5,7 @@
  */
 
 #include "rewrite_uri.hxx"
+#include "penv.hxx"
 #include "widget.h"
 #include "widget_request.hxx"
 #include "widget_resolver.hxx"
@@ -135,12 +136,8 @@ uri_add_site_suffix(struct pool *pool, const char *uri, const char *site_name,
  * @return the new URI or nullptr if it is unchanged
  */
 static const char *
-do_rewrite_widget_uri(struct pool *pool,
-                      const char *absolute_uri,
-                      const struct parsed_uri *external_uri,
-                      const char *site_name,
-                      const char *untrusted_host,
-                      struct strmap *args, struct widget *widget,
+do_rewrite_widget_uri(struct pool *pool, struct processor_env *env,
+                      struct widget *widget,
                       const struct strref *value,
                       enum uri_mode mode, bool stateful,
                       const char *view)
@@ -167,7 +164,7 @@ do_rewrite_widget_uri(struct pool *pool,
         return widget_absolute_uri(pool, widget, stateful, value);
 
     case URI_MODE_FOCUS:
-        frame = strmap_get_checked(args, "frame");
+        frame = strmap_get_checked(env->args, "frame");
         break;
 
     case URI_MODE_PARTIAL:
@@ -179,7 +176,7 @@ do_rewrite_widget_uri(struct pool *pool,
         break;
     }
 
-    uri = widget_external_uri(pool, external_uri, args,
+    uri = widget_external_uri(pool, env->external_uri, env->args,
                               widget, stateful,
                               value,
                               frame, view);
@@ -197,14 +194,15 @@ do_rewrite_widget_uri(struct pool *pool,
     }
 
     if (widget->cls->untrusted_host != nullptr &&
-        (untrusted_host == nullptr ||
-         strcmp(widget->cls->untrusted_host, untrusted_host) != 0))
+        (env->untrusted_host == nullptr ||
+         strcmp(widget->cls->untrusted_host, env->untrusted_host) != 0))
         uri = uri_replace_hostname(pool, uri, widget->cls->untrusted_host);
     else if (widget->cls->untrusted_prefix != nullptr)
-        uri = uri_add_prefix(pool, uri, absolute_uri, untrusted_host,
+        uri = uri_add_prefix(pool, uri, env->absolute_uri, env->untrusted_host,
                              widget->cls->untrusted_prefix);
     else if (widget->cls->untrusted_site_suffix != nullptr)
-        uri = uri_add_site_suffix(pool, uri, site_name, untrusted_host,
+        uri = uri_add_site_suffix(pool, uri, env->site_name,
+                                  env->untrusted_host,
                                   widget->cls->untrusted_site_suffix);
 
     return uri;
@@ -218,13 +216,8 @@ do_rewrite_widget_uri(struct pool *pool,
 
 struct rewrite_widget_uri {
     struct pool *pool;
-    const char *absolute_uri;
-    const struct parsed_uri *external_uri;
-    const char *site_name;
-    const char *untrusted_host;
-    struct strmap *args;
+    struct processor_env *env;
     struct widget *widget;
-    session_id_t session_id;
 
     /** buffer for #value */
     struct strref s;
@@ -254,7 +247,7 @@ class_lookup_callback(void *ctx)
         const char *uri;
 
         if (rwu->widget->session_sync_pending) {
-            struct session *session = session_get(rwu->session_id);
+            struct session *session = session_get(rwu->env->session_id);
             if (session != nullptr) {
                 widget_sync_session(rwu->widget, session);
                 session_put(session);
@@ -272,10 +265,8 @@ class_lookup_callback(void *ctx)
             value = &unescaped;
         }
 
-        uri = do_rewrite_widget_uri(rwu->pool,
-                                    rwu->absolute_uri, rwu->external_uri,
-                                    rwu->site_name, rwu->untrusted_host,
-                                    rwu->args, rwu->widget,
+        uri = do_rewrite_widget_uri(rwu->pool, rwu->env,
+                                    rwu->widget,
                                     value, rwu->mode, rwu->stateful,
                                     rwu->view);
 
@@ -313,13 +304,9 @@ class_lookup_callback(void *ctx)
 
 struct istream *
 rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
+                   struct processor_env *env,
                    struct tcache *translate_cache,
-                   const char *absolute_uri,
-                   const struct parsed_uri *external_uri,
-                   const char *site_name,
-                   const char *untrusted_host,
-                   struct strmap *args, struct widget *widget,
-                   session_id_t session_id,
+                   struct widget *widget,
                    const struct strref *value,
                    enum uri_mode mode, bool stateful,
                    const char *view,
@@ -348,9 +335,8 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
             value = &unescaped;
         }
 
-        uri = do_rewrite_widget_uri(pool, absolute_uri, external_uri,
-                                    site_name, untrusted_host,
-                                    args, widget, value, mode, stateful, view);
+        uri = do_rewrite_widget_uri(pool, env, widget, value, mode, stateful,
+                                    view);
         if (value == &unescaped)
             pool_rewind(tpool, &mark);
 
@@ -366,13 +352,8 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
         auto rwu = NewFromPool<struct rewrite_widget_uri>(pool);
 
         rwu->pool = pool;
-        rwu->external_uri = external_uri;
-        rwu->absolute_uri = absolute_uri;
-        rwu->site_name = site_name;
-        rwu->untrusted_host = untrusted_host;
-        rwu->args = args;
+        rwu->env = env;
         rwu->widget = widget;
-        rwu->session_id = session_id;
 
         if (value != nullptr) {
             strref_set_dup(pool, &rwu->s, value);

@@ -1276,6 +1276,7 @@ test_t_slice_LDADD = $(AM_LDADD) \
 
 test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/tpool.c \
+	src/penv.cxx \
 	src/strset.c \
 	src/escape_pool.c \
 	src/istream-escape.c \

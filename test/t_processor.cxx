@@ -62,14 +62,9 @@ parse_uri_mode(G_GNUC_UNUSED const struct strref *s)
 
 struct istream *
 rewrite_widget_uri(gcc_unused struct pool *pool, gcc_unused struct pool *widget_pool,
+                   gcc_unused struct processor_env *env,
                    gcc_unused struct tcache *translate_cache,
-                   gcc_unused const char *absolute_uri,
-                   gcc_unused const struct parsed_uri *external_uri,
-                   gcc_unused const char *site_name,
-                   gcc_unused const char *untrusted_host,
-                   gcc_unused struct strmap *args,
                    gcc_unused struct widget *widget,
-                   gcc_unused session_id_t session_id,
                    gcc_unused const struct strref *value,
                    gcc_unused enum uri_mode mode,
                    gcc_unused bool stateful,

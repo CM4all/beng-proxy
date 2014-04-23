@@ -196,14 +196,9 @@ css_processor_parser_url(const struct css_parser_value *url, void *ctx)
 
     struct istream *istream =
         rewrite_widget_uri(processor->pool, processor->env->pool,
+                           processor->env,
                            global_translate_cache,
-                           processor->env->absolute_uri,
-                           processor->env->external_uri,
-                           processor->env->site_name,
-                           processor->env->untrusted_host,
-                           processor->env->args,
                            processor->container,
-                           processor->env->session_id,
                            &url->value, processor->uri_rewrite.mode, false,
                            processor->uri_rewrite.view[0] != 0
                            ? processor->uri_rewrite.view : nullptr,
@@ -222,14 +217,9 @@ css_processor_parser_import(const struct css_parser_value *url, void *ctx)
 
     struct istream *istream =
         rewrite_widget_uri(processor->pool, processor->env->pool,
+                           processor->env,
                            global_translate_cache,
-                           processor->env->absolute_uri,
-                           processor->env->external_uri,
-                           processor->env->site_name,
-                           processor->env->untrusted_host,
-                           processor->env->args,
                            processor->container,
-                           processor->env->session_id,
                            &url->value, URI_MODE_PARTIAL, false, nullptr,
                            &css_escape_class);
     if (istream != nullptr)
