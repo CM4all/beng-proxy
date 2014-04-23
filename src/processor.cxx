@@ -1273,7 +1273,8 @@ embed_widget(struct processor *processor, struct processor_env *env,
     assert(widget->class_name != nullptr);
 
     if (processor->replace != nullptr) {
-        if (!widget_copy_from_request(widget, env, nullptr)) {
+        if (!widget_copy_from_request(widget, env, nullptr) ||
+            widget->display == widget::WIDGET_DISPLAY_NONE) {
             widget_cancel(widget);
             return nullptr;
         }

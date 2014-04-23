@@ -280,11 +280,6 @@ embed_inline_widget(struct pool *pool, struct processor_env *env,
     assert(env != nullptr);
     assert(widget != nullptr);
 
-    if (widget->display == widget::WIDGET_DISPLAY_NONE) {
-        widget_cancel(widget);
-        return nullptr;
-    }
-
     struct istream *request_body = nullptr;
     if (widget->from_request.body != nullptr) {
         /* use a "paused" stream, to avoid a recursion bug: when
