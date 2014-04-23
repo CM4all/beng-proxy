@@ -9,7 +9,7 @@
 
 #include "session_id.h"
 
-#include <glib.h>
+#include <inline/compiler.h>
 
 struct pool;
 struct tcache;
@@ -25,7 +25,7 @@ enum uri_mode {
     URI_MODE_PARTIAL,
 };
 
-G_GNUC_PURE
+gcc_pure
 enum uri_mode
 parse_uri_mode(const struct strref *s);
 
@@ -36,7 +36,7 @@ parse_uri_mode(const struct strref *s);
  * taken into account (path_info and query_string)
  * @param view the name of a view, or NULL to use the default view
  */
-G_GNUC_MALLOC
+gcc_malloc
 struct istream *
 rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
                    struct tcache *translate_cache,
