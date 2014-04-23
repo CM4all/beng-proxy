@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_SETUP_H
 #define BENG_PROXY_LB_SETUP_H
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 struct lb_instance;
 

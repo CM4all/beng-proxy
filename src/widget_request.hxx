@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WIDGET_REQUEST_H
 #define BENG_PROXY_WIDGET_REQUEST_H
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 #include <stddef.h>
 

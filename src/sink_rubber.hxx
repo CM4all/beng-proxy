@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SINK_RUBBER_HXX
 #define BENG_PROXY_SINK_RUBBER_HXX
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 #include <stddef.h>
 

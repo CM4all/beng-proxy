@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_MONITOR_H
 #define BENG_PROXY_LB_MONITOR_H
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_CONTROL_H
 #define BENG_PROXY_LB_CONTROL_H
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 #include <inline/list.h>
 

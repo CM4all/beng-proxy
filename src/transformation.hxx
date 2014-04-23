@@ -8,7 +8,7 @@
 #define BENG_TRANSFORMATION_HXX
 
 #include "resource_address.hxx"
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 

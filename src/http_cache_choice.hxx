@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_CHOICE_HXX
 #define BENG_PROXY_HTTP_CACHE_CHOICE_HXX
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 struct pool;
 struct http_cache_choice;

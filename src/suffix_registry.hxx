@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SUFFIX_REGISTRY_HXX
 #define BENG_PROXY_SUFFIX_REGISTRY_HXX
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 struct pool;
 struct tcache;

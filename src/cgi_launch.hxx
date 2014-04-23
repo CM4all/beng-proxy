@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_CGI_LAUNCH_HXX
 #define BENG_PROXY_CGI_LAUNCH_HXX
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 #include <http/method.h>
 

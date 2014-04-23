@@ -9,7 +9,7 @@
 
 #include "resource_address.hxx"
 #include "header_forward.hxx"
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 

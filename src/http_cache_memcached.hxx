@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_MEMCACHED_HXX
 #define BENG_PROXY_HTTP_CACHE_MEMCACHED_HXX
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 #include <http/status.h>
 

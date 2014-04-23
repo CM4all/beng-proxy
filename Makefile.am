@@ -85,7 +85,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/product.h \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/gerrno.h \
-	src/gerror.h \
+	src/glibfwd.hxx \
 	src/abort-close.c src/abort-close.h \
 	src/abort-flag.c src/abort-flag.h \
 	src/abort-unref.c src/abort-unref.h \

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_SSL_FACTORY_H
 #define BENG_PROXY_SSL_FACTORY_H
 
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 struct pool;
 struct ssl_config;

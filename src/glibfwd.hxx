@@ -1,11 +1,11 @@
 /*
- * GError forward declaration.
+ * GLib forward declaration.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef GERROR_H
-#define GERROR_H
+#ifndef GLIBFWD_HXX
+#define GLIBFWD_HXX
 
 typedef struct _GError GError;
 

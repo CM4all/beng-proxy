@@ -8,7 +8,7 @@
 #define BENG_PROXY_LHTTP_STOCK_HXX
 
 #include "istream-direct.h"
-#include "gerror.h"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
