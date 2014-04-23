@@ -25,10 +25,6 @@ enum uri_mode {
     URI_MODE_PARTIAL,
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 G_GNUC_PURE
 enum uri_mode
 parse_uri_mode(const struct strref *s);
@@ -54,9 +50,5 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
                    enum uri_mode mode, bool stateful,
                    const char *view,
                    const struct escape_class *escape);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
