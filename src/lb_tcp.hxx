@@ -9,7 +9,6 @@
 
 #include "istream-direct.h"
 
-#include <stdbool.h>
 #include <stddef.h>
 
 typedef struct _GError GError;

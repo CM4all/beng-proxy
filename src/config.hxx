@@ -9,8 +9,7 @@
 
 #include <daemon/user.h>
 
-#include <sys/types.h>
-#include <stdbool.h>
+#include <stddef.h>
 
 struct pool;
 

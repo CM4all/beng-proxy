@@ -12,7 +12,6 @@
 #include <inline/compiler.h>
 
 #include <glib.h>
-#include <stdbool.h>
 
 struct pool;
 

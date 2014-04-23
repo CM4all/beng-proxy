@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_CONTROL_HANDLER_HXX
 #define BENG_PROXY_CONTROL_HANDLER_HXX
 
-#include <stdbool.h>
-
 struct pool;
 struct instance;
 

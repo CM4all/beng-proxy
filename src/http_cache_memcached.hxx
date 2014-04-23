@@ -7,11 +7,9 @@
 #ifndef BENG_PROXY_HTTP_CACHE_MEMCACHED_HXX
 #define BENG_PROXY_HTTP_CACHE_MEMCACHED_HXX
 
+#include "gerror.h"
+
 #include <http/status.h>
-
-#include <glib.h>
-
-#include <stdbool.h>
 
 struct async_operation_ref;
 struct pool;

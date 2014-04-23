@@ -11,7 +11,6 @@
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
 #include <stddef.h>
 
 class Rubber;
