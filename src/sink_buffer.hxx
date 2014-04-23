@@ -1,8 +1,9 @@
 #ifndef BENG_PROXY_SINK_BUFFER_HXX
 #define BENG_PROXY_SINK_BUFFER_HXX
 
+#include "glibfwd.hxx"
+
 #include <stddef.h>
-#include <glib.h>
 
 struct pool;
 struct istream;

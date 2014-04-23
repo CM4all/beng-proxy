@@ -11,10 +11,9 @@
 #include "resource_address.hxx"
 #include "header_forward.hxx"
 #include "strset.h"
+#include "glibfwd.hxx"
 
 #include <http/status.h>
-
-#include <glib.h>
 
 #include <assert.h>
 #include <stdint.h>

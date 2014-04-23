@@ -5,11 +5,12 @@
 #ifndef BENG_PROXY_PARAM_ARRAY_HXX
 #define BENG_PROXY_PARAM_ARRAY_HXX
 
+#include "glibfwd.hxx"
+
 #include <inline/compiler.h>
 
-#include <glib.h>
-
 #include <assert.h>
+#include <stddef.h>
 
 struct pool;
 

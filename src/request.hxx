@@ -16,8 +16,7 @@
 #include "session.hxx"
 #include "transformation.hxx"
 #include "widget_class.hxx"
-
-#include <glib.h>
+#include "glibfwd.hxx"
 
 struct request {
     struct client_connection *connection;

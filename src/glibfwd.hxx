@@ -9,4 +9,7 @@
 
 typedef struct _GError GError;
 
+typedef struct _GRegex GRegex;
+typedef struct _GMatchInfo GMatchInfo;
+
 #endif

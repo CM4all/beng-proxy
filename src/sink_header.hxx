@@ -9,8 +9,9 @@
 #ifndef BENG_PROXY_SINK_HEADER_HXX
 #define BENG_PROXY_SINK_HEADER_HXX
 
+#include "glibfwd.hxx"
+
 #include <stddef.h>
-#include <glib.h>
 
 struct pool;
 struct istream;

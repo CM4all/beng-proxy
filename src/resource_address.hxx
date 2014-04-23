@@ -8,9 +8,9 @@
 #ifndef BENG_PROXY_RESOURCE_ADDRESS_HXX
 #define BENG_PROXY_RESOURCE_ADDRESS_HXX
 
-#include <inline/compiler.h>
+#include "glibfwd.hxx"
 
-#include <glib.h>
+#include <inline/compiler.h>
 
 #include <assert.h>
 #include <stddef.h>

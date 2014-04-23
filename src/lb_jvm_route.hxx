@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_JVM_ROUTE_H
 #define BENG_PROXY_LB_JVM_ROUTE_H
 
-#include <glib.h>
+#include <inline/compiler.h>
 
 struct strmap;
 struct lb_cluster_config;
@@ -15,7 +15,7 @@ struct lb_cluster_config;
 /**
  * Extract a jvm_route cookie from the request headers.
  */
-G_GNUC_PURE
+gcc_pure
 unsigned
 lb_jvm_route_get(const struct strmap *request_headers,
                  const struct lb_cluster_config *cluster);

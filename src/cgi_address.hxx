@@ -8,10 +8,9 @@
 #include "child_options.h"
 #include "address_list.h"
 #include "param_array.hxx"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
-
-#include <glib.h>
 
 struct pool;
 

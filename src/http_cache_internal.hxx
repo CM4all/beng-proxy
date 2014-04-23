@@ -12,7 +12,6 @@
 #define cache_log(...) do {} while (0)
 #endif
 
-#include <glib.h>
 #include <sys/time.h>
 #include <sys/types.h> /* for off_t */
 

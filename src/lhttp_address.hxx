@@ -7,10 +7,9 @@
 
 #include "child_options.h"
 #include "param_array.hxx"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
-
-#include <glib.h>
 
 #include <assert.h>
 
