@@ -131,6 +131,9 @@ uri_add_site_suffix(struct pool *pool, const char *uri, const char *site_name,
                     path, nullptr);
 }
 
+/**
+ * @return the new URI or nullptr if it is unchanged
+ */
 static const char *
 do_rewrite_widget_uri(struct pool *pool,
                       const char *absolute_uri,
