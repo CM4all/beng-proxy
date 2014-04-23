@@ -247,6 +247,7 @@ class_lookup_callback(void *ctx)
     struct rewrite_widget_uri *rwu = (struct rewrite_widget_uri *)ctx;
     struct istream *istream;
 
+    const struct strref *value = rwu->value;
     bool escape = false;
     if (rwu->widget->cls != nullptr &&
         widget_has_default_view(rwu->widget)) {
@@ -263,34 +264,34 @@ class_lookup_callback(void *ctx)
 
         struct pool_mark_state mark;
         struct strref unescaped;
-        if (rwu->value != nullptr && strref_chr(rwu->value, '&') != nullptr) {
+        if (value != nullptr && strref_chr(value, '&') != nullptr) {
             pool_mark(tpool, &mark);
-            char *unescaped2 = strref_set_dup(tpool, &unescaped, rwu->value);
+            char *unescaped2 = strref_set_dup(tpool, &unescaped, value);
             unescaped.length = unescape_inplace(rwu->escape,
                                                 unescaped2, unescaped.length);
-            rwu->value = &unescaped;
+            value = &unescaped;
         }
 
         uri = do_rewrite_widget_uri(rwu->pool,
                                     rwu->absolute_uri, rwu->external_uri,
                                     rwu->site_name, rwu->untrusted_host,
                                     rwu->args, rwu->widget,
-                                    rwu->value, rwu->mode, rwu->stateful,
+                                    value, rwu->mode, rwu->stateful,
                                     rwu->view);
 
-        if (rwu->value == &unescaped)
+        if (value == &unescaped)
             pool_rewind(tpool, &mark);
 
         if (uri != nullptr) {
             strref_set_c(&rwu->s, uri);
-            rwu->value = &rwu->s;
+            value = &rwu->s;
             escape = true;
         }
     }
 
-    if (rwu->value != nullptr) {
+    if (value != nullptr) {
         istream = istream_memory_new(rwu->pool,
-                                     rwu->value->data, rwu->value->length);
+                                     value->data, value->length);
 
         if (escape && rwu->escape != nullptr)
             istream = istream_escape_new(rwu->pool, istream, rwu->escape);
