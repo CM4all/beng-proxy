@@ -19,6 +19,7 @@
 #include "strmap.h"
 #include "istream.h"
 #include "session.hxx"
+#include "inline_widget.hxx"
 
 #include <daemon/log.h>
 
@@ -31,6 +32,8 @@ parse_uri_mode(const struct strref *s)
         return URI_MODE_FOCUS;
     else if (strref_cmp_literal(s, "partial") == 0)
         return URI_MODE_PARTIAL;
+    else if (strref_cmp_literal(s, "response") == 0)
+        return URI_MODE_RESPONSE;
     else
         return URI_MODE_PARTIAL;
 }
@@ -174,6 +177,10 @@ do_rewrite_widget_uri(struct pool *pool, struct processor_env *env,
             /* no widget_path available - "frame=" not possible*/
             return nullptr;
         break;
+
+    case URI_MODE_RESPONSE:
+        assert(false);
+        gcc_unreachable();
     }
 
     uri = widget_external_uri(pool, env->external_uri, env->args,
@@ -315,6 +322,13 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
     if (value != nullptr && uri_has_protocol(value->data, value->length))
         /* can't rewrite if the specified URI is absolute */
         return nullptr;
+
+    if (mode == URI_MODE_RESPONSE) {
+        struct istream *istream = embed_inline_widget(pool, env, true, widget);
+        if (escape != nullptr)
+            istream = istream_escape_new(pool, istream, escape);
+        return istream;
+    }
 
     const char *uri;
 

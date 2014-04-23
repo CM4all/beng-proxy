@@ -21,6 +21,12 @@ enum uri_mode {
     URI_MODE_DIRECT,
     URI_MODE_FOCUS,
     URI_MODE_PARTIAL,
+
+    /**
+     * Embed the widget's HTTP response instead of generating an URI
+     * to the widget server.
+     */
+    URI_MODE_RESPONSE,
 };
 
 gcc_pure

@@ -13,6 +13,7 @@
 #include "escape_html.h"
 #include "istream.h"
 #include "penv.hxx"
+#include "inline_widget.hxx"
 
 #include <glib.h>
 
@@ -47,6 +48,15 @@ widget_sync_session(G_GNUC_UNUSED struct widget *widget,
 {
 }
 
+struct istream *
+embed_inline_widget(struct pool *pool, gcc_unused struct processor_env *env,
+                    gcc_unused bool plain_text,
+                    struct widget *widget)
+{
+    assert(plain_text);
+
+    return istream_string_new(pool, widget->class_name);
+}
 
 /*
  * A dummy resolver
@@ -462,6 +472,10 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                          "/resources/3/foo");
     assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_PARTIAL,
                          "/resources/3/foo");
+
+    /* test URI_MODE_RESPONSE */
+
+    assert_rewrite_check(pool, &widget, "123", URI_MODE_RESPONSE, "3");
 
     /* cleanup */
 
