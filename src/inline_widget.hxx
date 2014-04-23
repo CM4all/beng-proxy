@@ -17,9 +17,12 @@ struct processor_env;
  *
  * It requests the specified widget and formats the response in a way
  * that is suitable for embedding in HTML.
+ *
+ * @param plain_text expect text/plain?
  */
 struct istream *
 embed_inline_widget(struct pool *pool, struct processor_env *env,
+                    bool plain_text,
                     struct widget *widget);
 
 #endif

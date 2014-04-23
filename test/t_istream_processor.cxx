@@ -30,6 +30,7 @@ widget_class_lookup(gcc_unused struct pool *pool, gcc_unused struct pool *widget
 
 struct istream *
 embed_inline_widget(struct pool *pool, gcc_unused struct processor_env *env,
+                    gcc_unused bool plain_text,
                     struct widget *widget)
 {
     return istream_string_new(pool, p_strdup(pool, widget->class_name));

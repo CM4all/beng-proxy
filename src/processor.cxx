@@ -1280,7 +1280,7 @@ embed_widget(struct processor *processor, struct processor_env *env,
         }
 
         struct istream *istream = embed_inline_widget(processor->pool,
-                                                      env, widget);
+                                                      env, false, widget);
         if (istream != nullptr)
             istream = istream_catch_new(processor->pool, istream,
                                         widget_catch_callback, widget);

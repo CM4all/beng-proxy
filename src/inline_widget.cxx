@@ -32,6 +32,7 @@
 struct inline_widget {
     struct pool *pool;
     struct processor_env *env;
+    bool plain_text;
     struct widget *widget;
 
     struct istream *delayed;
@@ -51,6 +52,7 @@ inline_widget_close(struct inline_widget *iw, GError *error)
 static struct istream *
 widget_response_format(struct pool *pool, const struct widget *widget,
                        const struct strmap *headers, struct istream *body,
+                       bool plain_text,
                        GError **error_r)
 {
     const char *p, *content_type;
@@ -68,6 +70,19 @@ widget_response_format(struct pool *pool, const struct widget *widget,
     }
 
     content_type = strmap_get_checked(headers, "content-type");
+
+    if (plain_text) {
+        if (content_type == nullptr ||
+            memcmp(content_type, "text/plain", 10) != 0) {
+            g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
+                        "widget '%s' sent non-text/plain response",
+                        widget_path(widget));
+            istream_close_unused(body);
+            return nullptr;
+        }
+
+        return body;
+    }
 
     if (content_type == nullptr ||
         (strncmp(content_type, "text/", 5) != 0 &&
@@ -152,7 +167,7 @@ inline_widget_response(http_status_t status,
            a template, and convert if possible */
         GError *error = nullptr;
         body = widget_response_format(iw->pool, iw->widget,
-                                      headers, body, &error);
+                                      headers, body, iw->plain_text, &error);
         if (body == nullptr) {
             inline_widget_close(iw, error);
             return;
@@ -266,6 +281,7 @@ class_lookup_callback(void *_ctx)
 
 struct istream *
 embed_inline_widget(struct pool *pool, struct processor_env *env,
+                    bool plain_text,
                     struct widget *widget)
 {
     auto iw = NewFromPool<struct inline_widget>(pool);
@@ -292,6 +308,7 @@ embed_inline_widget(struct pool *pool, struct processor_env *env,
 
     iw->pool = pool;
     iw->env = env;
+    iw->plain_text = plain_text;
     iw->widget = widget;
     iw->delayed = istream_delayed_new(pool);
     hold = istream_hold_new(pool, iw->delayed);

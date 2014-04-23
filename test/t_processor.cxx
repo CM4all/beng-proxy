@@ -36,6 +36,7 @@ struct tcache *global_translate_cache;
 struct istream *
 embed_inline_widget(struct pool *pool,
                     gcc_unused struct processor_env *env,
+                    gcc_unused bool plain_text,
                     struct widget *widget)
 {
     const char *s = widget_path(widget);

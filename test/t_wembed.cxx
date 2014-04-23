@@ -112,7 +112,7 @@ test_abort_resolver(struct pool *pool)
 
     widget_init(&widget, pool, NULL);
 
-    istream = embed_inline_widget(pool, &env, &widget);
+    istream = embed_inline_widget(pool, &env, false, &widget);
     pool_unref(pool);
 
     istream_close_unused(istream);
