@@ -587,16 +587,6 @@ widget_response_response(http_status_t status, struct strmap *headers,
         }
     }
 
-#ifndef NDEBUG
-    /* temporary kludge for widgets that are still using the
-       "mode=proxy" feature that has been deprecated since beng-proxy
-       0.4 */
-    if (embed->transformation->HasProcessor() &&
-        g_getenv("VERBATIM_UNPROCESSABLE") != nullptr &&
-        !processable(headers))
-        embed->transformation = nullptr;
-#endif
-
     if (widget->session_save_pending &&
         embed->transformation->HasProcessor()) {
         struct session *session = session_get(embed->env->session_id);
