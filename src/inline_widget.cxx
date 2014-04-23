@@ -50,10 +50,9 @@ inline_widget_close(struct inline_widget *iw, GError *error)
  */
 static struct istream *
 widget_response_format(struct pool *pool, const struct widget *widget,
-                       struct strmap **headers_r, struct istream *body,
+                       const struct strmap *headers, struct istream *body,
                        GError **error_r)
 {
-    struct strmap *headers = *headers_r;
     const char *p, *content_type;
     struct strref *charset, charset_buffer;
 
@@ -99,9 +98,6 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         daemon_log(6, "widget '%s': charset conversion '%s' -> utf-8\n",
                    widget_path(widget), charset2);
         body = ic;
-
-        headers = strmap_dup(pool, headers, 17);
-        strmap_set(headers, "content-type", "text/html; charset=utf-8");
     }
 
     if (strncmp(content_type, "text/", 5) == 0 &&
@@ -121,7 +117,6 @@ widget_response_format(struct pool *pool, const struct widget *widget,
                                nullptr);
     }
 
-    *headers_r = headers;
     return body;
 }
 
@@ -157,7 +152,7 @@ inline_widget_response(http_status_t status,
            a template, and convert if possible */
         GError *error = nullptr;
         body = widget_response_format(iw->pool, iw->widget,
-                                      &headers, body, &error);
+                                      headers, body, &error);
         if (body == nullptr) {
             inline_widget_close(iw, error);
             return;
