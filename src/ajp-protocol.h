@@ -95,6 +95,10 @@ struct ajp_get_body_chunk {
     uint16_t length;
 } gcc_packed;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_const
 enum ajp_method
 to_ajp_method(http_method_t method);
@@ -114,5 +118,9 @@ ajp_encode_response_header_name(const char *name);
 gcc_pure
 const char *
 ajp_decode_response_header_name(enum ajp_response_header_code code);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

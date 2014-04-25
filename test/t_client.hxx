@@ -4,6 +4,7 @@
 #include "istream.h"
 #include "strmap.h"
 #include "fb_pool.h"
+#include "util/Cast.hxx"
 
 #ifdef HAVE_EXPECT_100
 #include "http_client.h"
@@ -123,11 +124,11 @@ struct context {
 static void
 my_release(bool reuse gcc_unused, void *ctx)
 {
-    struct context *c = ctx;
-    assert(c->connection != NULL);
+    struct context *c = (struct context *)ctx;
+    assert(c->connection != nullptr);
 
     connection_close(c->connection);
-    c->connection = NULL;
+    c->connection = nullptr;
     c->released = true;
 }
 
@@ -143,7 +144,7 @@ static const struct lease my_lease = {
 static struct context *
 async_to_context(struct async_operation *ao)
 {
-    return (struct context *)(((char *)ao) - offsetof(struct context, operation));
+    return ContainerCast(ao, struct context, operation);
 }
 
 static void
@@ -151,10 +152,10 @@ my_async_abort(struct async_operation *ao)
 {
     g_printerr("MY_ASYNC_ABORT\n");
     struct context *c = async_to_context(ao);
-    assert(c->request_body != NULL);
+    assert(c->request_body != nullptr);
     assert(!c->aborted_request_body);
 
-    c->request_body = NULL;
+    c->request_body = nullptr;
     c->aborted_request_body = true;
 }
 
@@ -170,7 +171,7 @@ static const struct async_operation_class my_async_class = {
 static size_t
 my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     c->body_data += length;
 
@@ -192,9 +193,9 @@ my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
 static void
 my_istream_eof(void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
-    c->body = NULL;
+    c->body = nullptr;
     c->body_eof = true;
 
     if (c->close_request_body_eof && !c->aborted_request_body) {
@@ -207,12 +208,12 @@ my_istream_eof(void *ctx)
 static void
 my_istream_abort(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
-    c->body = NULL;
+    c->body = nullptr;
     c->body_abort = true;
 
-    assert(c->body_error == NULL);
+    assert(c->body_error == nullptr);
     c->body_error = error;
 }
 
@@ -232,14 +233,14 @@ static void
 my_response(http_status_t status, struct strmap *headers, struct istream *body,
             void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     c->status = status;
     const char *content_length =
         strmap_get_checked(headers, "content-length");
-    if (content_length != NULL)
+    if (content_length != nullptr)
         c->content_length = strdup(content_length);
-    c->available = body != NULL
+    c->available = body != nullptr
         ? istream_available(body, false)
         : -2;
 
@@ -250,13 +251,13 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
     }
 
     if (c->response_body_byte) {
-        assert(body != NULL);
+        assert(body != nullptr);
         body = istream_byte_new(c->pool, body);
     }
 
     if (c->close_response_body_early)
         istream_close_unused(body);
-    else if (body != NULL)
+    else if (body != nullptr)
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
 
     if (c->read_response_body)
@@ -267,7 +268,7 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
         istream_free_handler(&c->body);
     }
 
-    if (c->delayed != NULL) {
+    if (c->delayed != nullptr) {
         GError *error = g_error_new_literal(test_quark(), 0,
                                             "delayed_fail");
         istream_delayed_set(c->delayed, istream_fail_new(c->pool, error));
@@ -280,9 +281,9 @@ my_response(http_status_t status, struct strmap *headers, struct istream *body,
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
-    assert(c->request_error == NULL);
+    assert(c->request_error == nullptr);
     c->request_error = error;
 
     c->aborted = true;
@@ -304,7 +305,7 @@ test_empty(struct pool *pool, struct context *c)
 {
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL, NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -315,14 +316,14 @@ test_empty(struct pool *pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->connection == NULL);
+    assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == NULL);
-    assert(c->body == NULL);
+    assert(c->content_length == nullptr);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 static void
@@ -330,7 +331,7 @@ test_body(struct pool *pool, struct context *c)
 {
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -341,19 +342,19 @@ test_body(struct pool *pool, struct context *c)
 
     event_dispatch();
 
-    if (c->body != NULL)
+    if (c->body != nullptr)
         istream_read(c->body);
 
     event_dispatch();
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == NULL);
+    assert(c->content_length == nullptr);
     assert(c->available == 6);
     assert(c->body_eof);
     assert(c->body_data == 6);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 /**
@@ -366,7 +367,7 @@ test_read_body(struct pool *pool, struct context *c)
     c->read_response_body = true;
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -379,12 +380,12 @@ test_read_body(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == NULL);
+    assert(c->content_length == nullptr);
     assert(c->available == 6);
     assert(c->body_eof);
     assert(c->body_data == 6);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 static void
@@ -393,7 +394,7 @@ test_close_response_body_early(struct pool *pool, struct context *c)
     c->close_response_body_early = true;
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -406,14 +407,14 @@ test_close_response_body_early(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == NULL);
+    assert(c->content_length == nullptr);
     assert(c->available == 6);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(c->body_data == 0);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 static void
@@ -422,7 +423,7 @@ test_close_response_body_late(struct pool *pool, struct context *c)
     c->close_response_body_late = true;
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -435,14 +436,14 @@ test_close_response_body_late(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == NULL);
+    assert(c->content_length == nullptr);
     assert(c->available == 6);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(c->body_data == 0);
     assert(!c->body_eof);
     assert(c->body_abort || c->body_closed);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 static void
@@ -451,7 +452,7 @@ test_close_response_body_data(struct pool *pool, struct context *c)
     c->close_response_body_data = true;
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -462,22 +463,22 @@ test_close_response_body_data(struct pool *pool, struct context *c)
 
     event_dispatch();
 
-    if (c->body != NULL)
+    if (c->body != nullptr)
         istream_read(c->body);
 
     event_dispatch();
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == NULL);
+    assert(c->content_length == nullptr);
     assert(c->available == 6);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(c->body_data == 6);
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->body_closed);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 static struct istream *
@@ -508,7 +509,7 @@ test_close_request_body_early(struct pool *pool, struct context *c)
 
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -526,10 +527,10 @@ test_close_request_body_early(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == 0);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->body_error == NULL);
+    assert(c->body_error == nullptr);
     assert(c->request_error == error);
     g_error_free(error);
 }
@@ -543,12 +544,12 @@ test_close_request_body_fail(struct pool *pool, struct context *c)
                         istream_head_new(pool, istream_zero_new(pool),
                                          4096, false),
                         delayed,
-                        NULL);
+                        nullptr);
 
     c->delayed = delayed;
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -561,25 +562,25 @@ test_close_request_body_fail(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == 200);
-    assert(c->content_length == NULL);
+    assert(c->content_length == nullptr);
 #ifdef HAVE_CHUNKED_REQUEST_BODY
     assert(c->available == -1);
 #else
     assert(c->available == 8192);
 #endif
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(c->body_abort);
 
-    if (c->body_error != NULL && c->request_error == NULL) {
+    if (c->body_error != nullptr && c->request_error == nullptr) {
         c->request_error = c->body_error;
-        c->body_error = NULL;
+        c->body_error = nullptr;
     }
 
-    assert(c->request_error != NULL);
+    assert(c->request_error != nullptr);
     assert(strstr(c->request_error->message, "delayed_fail") != 0);
     g_error_free(c->request_error);
-    assert(c->body_error == NULL);
+    assert(c->body_error == nullptr);
 }
 
 static void
@@ -591,7 +592,7 @@ test_data_blocking(struct pool *pool, struct context *c)
     c->data_blocking = 5;
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -601,33 +602,33 @@ test_data_blocking(struct pool *pool, struct context *c)
     pool_commit();
 
     while (c->data_blocking > 0) {
-        if (c->body != NULL)
+        if (c->body != nullptr)
             istream_read(c->body);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
     assert(!c->released);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == NULL);
+    assert(c->content_length == nullptr);
 #ifdef HAVE_CHUNKED_REQUEST_BODY
     assert(c->available == -1);
 #else
     assert(c->available == 8192);
 #endif
-    assert(c->body != NULL);
+    assert(c->body != nullptr);
     assert(c->body_data > 0);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 
     istream_close_handler(c->body);
 
     assert(c->released);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 
     /* flush all remaining events */
     event_dispatch();
@@ -655,7 +656,7 @@ test_data_blocking2(struct pool *pool, struct context *c)
     pool_unref(pool);
     pool_commit();
 
-    if (c->body != NULL)
+    if (c->body != nullptr)
         istream_read(c->body);
     event_dispatch();
 
@@ -663,17 +664,17 @@ test_data_blocking2(struct pool *pool, struct context *c)
        yet */
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == NULL);
+    assert(c->content_length == nullptr);
     assert(c->available == 256);
-    assert(c->body != NULL);
+    assert(c->body != nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->consumed_body_data < 256);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 
     /* receive the rest of the response body from the buffer */
-    while (c->body != NULL) {
+    while (c->body != nullptr) {
         istream_read(c->body);
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
@@ -682,8 +683,8 @@ test_data_blocking2(struct pool *pool, struct context *c)
     assert(c->body_eof);
     assert(!c->body_abort);
     assert(c->consumed_body_data == 256);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 static void
@@ -695,7 +696,7 @@ test_body_fail(struct pool *pool, struct context *c)
                                         "body_fail");
 
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, istream_fail_new(pool, error)),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -709,14 +710,14 @@ test_body_fail(struct pool *pool, struct context *c)
     assert(c->released);
     assert(c->aborted || c->body_abort);
 
-    if (c->body_error != NULL && c->request_error == NULL) {
+    if (c->body_error != nullptr && c->request_error == nullptr) {
         c->request_error = c->body_error;
-        c->body_error = NULL;
+        c->body_error = nullptr;
     }
 
     assert(c->request_error == error);
     g_error_free(error);
-    assert(c->body_error == NULL);
+    assert(c->body_error == nullptr);
 }
 
 static void
@@ -724,7 +725,7 @@ test_head(struct pool *pool, struct context *c)
 {
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_HEAD, "/foo", NULL,
+                   HTTP_METHOD_HEAD, "/foo", nullptr,
                    istream_string_new(pool, "foobar"),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -736,16 +737,16 @@ test_head(struct pool *pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->connection == NULL);
+    assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length != NULL);
+    assert(c->content_length != nullptr);
     assert(strcmp(c->content_length, "6") == 0);
     free(c->content_length);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 /**
@@ -757,8 +758,8 @@ test_head_discard(struct pool *pool, struct context *c)
 {
     c->connection = connect_fixed();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_HEAD, "/foo", NULL,
-                   NULL,
+                   HTTP_METHOD_HEAD, "/foo", nullptr,
+                   nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -769,13 +770,13 @@ test_head_discard(struct pool *pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->connection == NULL);
+    assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 /**
@@ -786,8 +787,8 @@ test_head_discard2(struct pool *pool, struct context *c)
 {
     c->connection = connect_tiny();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_HEAD, "/foo", NULL,
-                   NULL,
+                   HTTP_METHOD_HEAD, "/foo", nullptr,
+                   nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -798,17 +799,17 @@ test_head_discard2(struct pool *pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->connection == NULL);
+    assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length != NULL);
-    unsigned long content_length = strtoul(c->content_length, NULL, 10);
+    assert(c->content_length != nullptr);
+    unsigned long content_length = strtoul(c->content_length, nullptr, 10);
     assert(content_length == 5 || content_length == 256);
     free(c->content_length);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 static void
@@ -816,7 +817,7 @@ test_ignored_body(struct pool *pool, struct context *c)
 {
     c->connection = connect_null();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, istream_zero_new(pool)),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -828,14 +829,14 @@ test_ignored_body(struct pool *pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->connection == NULL);
+    assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == NULL);
-    assert(c->body == NULL);
+    assert(c->content_length == nullptr);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 #ifdef ENABLE_CLOSE_IGNORED_REQUEST_BODY
@@ -851,7 +852,7 @@ test_close_ignored_request_body(struct pool *pool, struct context *c)
     c->connection = connect_null();
     c->close_request_body_early = true;
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -863,14 +864,14 @@ test_close_ignored_request_body(struct pool *pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->connection == NULL);
+    assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == NULL);
-    assert(c->body == NULL);
+    assert(c->content_length == nullptr);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 /**
@@ -885,7 +886,7 @@ test_head_close_ignored_request_body(struct pool *pool, struct context *c)
     c->connection = connect_null();
     c->close_request_body_early = true;
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_HEAD, "/foo", NULL,
+                   HTTP_METHOD_HEAD, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -897,14 +898,14 @@ test_head_close_ignored_request_body(struct pool *pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->connection == NULL);
+    assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == NULL);
-    assert(c->body == NULL);
+    assert(c->content_length == nullptr);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 /**
@@ -918,7 +919,7 @@ test_close_request_body_eor(struct pool *pool, struct context *c)
     c->connection = connect_dummy();
     c->close_request_body_eof = true;
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -930,14 +931,14 @@ test_close_request_body_eor(struct pool *pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->connection == NULL);
+    assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == NULL);
-    assert(c->body == NULL);
+    assert(c->content_length == nullptr);
+    assert(c->body == nullptr);
     assert(c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 /**
@@ -951,7 +952,7 @@ test_close_request_body_eor2(struct pool *pool, struct context *c)
     c->connection = connect_fixed();
     c->close_request_body_eof = true;
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    request_body,
 #ifdef HAVE_EXPECT_100
                    false,
@@ -963,14 +964,14 @@ test_close_request_body_eor2(struct pool *pool, struct context *c)
     event_dispatch();
 
     assert(c->released);
-    assert(c->connection == NULL);
+    assert(c->connection == nullptr);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->content_length == NULL);
-    assert(c->body == NULL);
+    assert(c->content_length == nullptr);
+    assert(c->body == nullptr);
     assert(c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 #endif
@@ -986,7 +987,7 @@ test_bogus_100(struct pool *pool, struct context *c)
 {
     c->connection = connect_twice_100();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL, NULL, false,
+                   HTTP_METHOD_GET, "/foo", nullptr, nullptr, false,
                    &my_response_handler, c, &c->async_ref);
 
     pool_unref(pool);
@@ -996,12 +997,12 @@ test_bogus_100(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->aborted);
-    assert(c->request_error != NULL);
+    assert(c->request_error != nullptr);
     assert(c->request_error->domain == http_client_quark());
     assert(c->request_error->code == HTTP_CLIENT_UNSPECIFIED);
-    assert(strstr(c->request_error->message, "unexpected status 100") != NULL);
+    assert(strstr(c->request_error->message, "unexpected status 100") != nullptr);
     g_error_free(c->request_error);
-    assert(c->body_error == NULL);
+    assert(c->body_error == nullptr);
 }
 
 /**
@@ -1015,7 +1016,7 @@ test_twice_100(struct pool *pool, struct context *c)
     c->request_body = istream_delayed_new(pool);
     async_ref_clear(istream_delayed_async_ref(c->request_body));
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    c->request_body,
                    false,
                    &my_response_handler, c, &c->async_ref);
@@ -1028,12 +1029,12 @@ test_twice_100(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->aborted);
-    assert(c->request_error != NULL);
+    assert(c->request_error != nullptr);
     assert(c->request_error->domain == http_client_quark());
     assert(c->request_error->code == HTTP_CLIENT_UNSPECIFIED);
-    assert(strstr(c->request_error->message, "unexpected status 100") != NULL);
+    assert(strstr(c->request_error->message, "unexpected status 100") != nullptr);
     g_error_free(c->request_error);
-    assert(c->body_error == NULL);
+    assert(c->body_error == nullptr);
 }
 
 /**
@@ -1047,7 +1048,7 @@ test_close_100(struct pool *pool, struct context *c)
 
     c->connection = connect_close_100();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_POST, "/foo", NULL, request_body, true,
+                   HTTP_METHOD_POST, "/foo", nullptr, request_body, true,
                    &my_response_handler, c, &c->async_ref);
 
     pool_unref(pool);
@@ -1057,10 +1058,10 @@ test_close_100(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->aborted);
-    assert(c->request_error != NULL);
-    assert(strstr(c->request_error->message, "closed the socket prematurely") != NULL);
+    assert(c->request_error != nullptr);
+    assert(strstr(c->request_error->message, "closed the socket prematurely") != nullptr);
     g_error_free(c->request_error);
-    assert(c->body_error == NULL);
+    assert(c->body_error == nullptr);
 }
 
 #endif
@@ -1076,7 +1077,7 @@ test_no_body_while_sending(struct pool *pool, struct context *c)
 
     c->connection = connect_null();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -1090,11 +1091,11 @@ test_no_body_while_sending(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 static void
@@ -1104,7 +1105,7 @@ test_hold(struct pool *pool, struct context *c)
 
     c->connection = connect_hold();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr,
                    wrap_fake_request_body(pool, request_body),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -1118,11 +1119,11 @@ test_hold(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error != NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error != nullptr);
     g_error_free(c->body_error);
 }
 
@@ -1137,7 +1138,7 @@ test_premature_close_headers(struct pool *pool, struct context *c)
 {
     c->connection = connect_premature_close_headers();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL, NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -1150,10 +1151,10 @@ test_premature_close_headers(struct pool *pool, struct context *c)
 
     assert(c->released);
     assert(c->status == 0);
-    assert(c->body == NULL);
+    assert(c->body == nullptr);
     assert(!c->body_eof);
     assert(!c->body_abort);
-    assert(c->request_error != NULL);
+    assert(c->request_error != nullptr);
     g_error_free(c->request_error);
 }
 
@@ -1170,7 +1171,7 @@ test_premature_close_body(struct pool *pool, struct context *c)
 {
     c->connection = connect_premature_close_body();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_GET, "/foo", NULL, NULL,
+                   HTTP_METHOD_GET, "/foo", nullptr, nullptr,
 #ifdef HAVE_EXPECT_100
                    false,
 #endif
@@ -1185,8 +1186,8 @@ test_premature_close_body(struct pool *pool, struct context *c)
     assert(c->status == HTTP_STATUS_OK);
     assert(!c->body_eof);
     assert(c->body_abort);
-    assert(c->request_error == NULL);
-    assert(c->body_error != NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error != nullptr);
     g_error_free(c->body_error);
 }
 
@@ -1200,7 +1201,7 @@ test_post_empty(struct pool *pool, struct context *c)
 {
     c->connection = connect_mirror();
     client_request(pool, c->connection, &my_lease, c,
-                   HTTP_METHOD_POST, "/foo", NULL,
+                   HTTP_METHOD_POST, "/foo", nullptr,
                    istream_null_new(pool),
 #ifdef HAVE_EXPECT_100
                    false,
@@ -1211,7 +1212,7 @@ test_post_empty(struct pool *pool, struct context *c)
 
     event_dispatch();
 
-    if (c->body != NULL)
+    if (c->body != nullptr)
         istream_read(c->body);
 
     event_dispatch();
@@ -1219,14 +1220,14 @@ test_post_empty(struct pool *pool, struct context *c)
     assert(c->released);
     assert(c->status == HTTP_STATUS_OK ||
            c->status == HTTP_STATUS_NO_CONTENT);
-    assert(c->content_length == NULL ||
+    assert(c->content_length == nullptr ||
            strcmp(c->content_length, "0") == 0);
     assert(c->available == -2);
     assert(!c->body_eof);
     assert(!c->body_abort);
     assert(c->body_data == 0);
-    assert(c->request_error == NULL);
-    assert(c->body_error == NULL);
+    assert(c->request_error == nullptr);
+    assert(c->body_error == nullptr);
 }
 
 

@@ -1,8 +1,8 @@
 #define ENABLE_PREMATURE_CLOSE_HEADERS
 #define ENABLE_PREMATURE_CLOSE_BODY
 
-#include "tio.h"
-#include "t_client.h"
+#include "tio.hxx"
+#include "t_client.hxx"
 #include "ajp-client.h"
 #include "ajp-protocol.h"
 #include "http_response.h"
@@ -48,7 +48,7 @@ client_request(struct pool *pool, struct connection *connection,
 static void
 connection_close(struct connection *c)
 {
-    assert(c != NULL);
+    assert(c != nullptr);
     assert(c->pid >= 1);
     assert(c->fd >= 0);
 
@@ -78,12 +78,12 @@ static char *
 read_string_n(struct pool *pool, size_t length, size_t *remaining_r)
 {
     if (length == 0xffff)
-        return NULL;
+        return nullptr;
 
     if (*remaining_r < length + 1)
         exit(EXIT_FAILURE);
 
-    char *value = p_malloc(pool, length + 1);
+    char *value = (char *)p_malloc(pool, length + 1);
     read_full(value, length + 1);
     if (value[length] != 0)
         exit(EXIT_FAILURE);
@@ -110,7 +110,7 @@ read_ajp_header(struct ajp_header *header)
 static void
 write_string(const char *value)
 {
-    if (value != NULL) {
+    if (value != nullptr) {
         size_t length = strlen(value);
         if (length > 0xfffe)
             length = 0xfffe;
@@ -146,13 +146,13 @@ read_ajp_request(struct pool *pool, struct ajp_request *r)
 
     size_t remaining = ntohs(header.length);
 
-    r->code = read_byte(&remaining);
+    r->code = (ajp_code)read_byte(&remaining);
     if (r->code != AJP_CODE_FORWARD_REQUEST) {
         discard(remaining);
         return;
     }
 
-    r->method = read_byte(&remaining);
+    r->method = (ajp_method)read_byte(&remaining);
 
     read_string(pool, &remaining); /* protocol */
     r->uri = read_string(pool, &remaining);
@@ -167,11 +167,11 @@ read_ajp_request(struct pool *pool, struct ajp_request *r)
     unsigned n_headers = read_short(&remaining);
     while (n_headers-- > 0) {
         unsigned name_length = read_short(&remaining);
-        const enum ajp_header_code code = name_length;
+        const ajp_header_code code = (ajp_header_code)name_length;
         const char *name = ajp_decode_header_name(code);
-        if (name == NULL) {
+        if (name == nullptr) {
             char *name2 = read_string_n(pool, name_length, &remaining);
-            if (name2 == NULL)
+            if (name2 == nullptr)
                 exit(EXIT_FAILURE);
 
             str_to_lower(name2);
@@ -187,12 +187,12 @@ read_ajp_request(struct pool *pool, struct ajp_request *r)
     discard(remaining);
 
     const char *length_string = strmap_get(r->headers, "content-length");
-    r->length = length_string != NULL
-        ? strtoul(length_string, NULL, 10)
+    r->length = length_string != nullptr
+        ? strtoul(length_string, nullptr, 10)
         : 0;
     r->body = r->length > 0
-        ? p_malloc(pool, r->length)
-        : NULL;
+        ? (uint8_t *)p_malloc(pool, r->length)
+        : nullptr;
     r->requested = 0;
     r->received = 0;
 }
@@ -202,7 +202,7 @@ read_ajp_request_body_chunk(struct ajp_request *r)
 {
     assert(r->length > 0);
     assert(r->received < r->length);
-    assert(r->body != NULL);
+    assert(r->body != nullptr);
 
     const size_t remaining = r->length - r->received;
 
@@ -236,7 +236,7 @@ read_ajp_end_request_body_chunk(struct ajp_request *r)
 {
     assert(r->length > 0);
     assert(r->received == r->length);
-    assert(r->body != NULL);
+    assert(r->body != nullptr);
 
     struct ajp_header header;
     read_ajp_header(&header);
@@ -269,10 +269,10 @@ write_headers(http_status_t status, struct strmap *headers)
     unsigned n = 0;
     size_t length = 7;
 
-    if (headers != NULL) {
+    if (headers != nullptr) {
         strmap_rewind(headers);
         const struct strmap_pair *pair;
-        while ((pair = strmap_next(headers)) != NULL) {
+        while ((pair = strmap_next(headers)) != nullptr) {
             ++n;
             length += 4;
 
@@ -294,14 +294,14 @@ write_headers(http_status_t status, struct strmap *headers)
     write_full(&header, sizeof(header));
     write_byte(AJP_CODE_SEND_HEADERS);
     write_short(status);
-    write_string(NULL);
+    write_string(nullptr);
 
     write_short(n);
 
-    if (headers != NULL) {
+    if (headers != nullptr) {
         strmap_rewind(headers);
         const struct strmap_pair *pair;
-        while ((pair = strmap_next(headers)) != NULL) {
+        while ((pair = strmap_next(headers)) != nullptr) {
             enum ajp_response_header_code code =
                 ajp_encode_response_header_name(pair->key);
             if (code == AJP_RESPONSE_HEADER_NONE)
@@ -368,7 +368,7 @@ connect_server(void (*f)(struct pool *pool))
         close(sv[0]);
         close(sv[1]);
 
-        struct pool *pool = pool_new_libc(NULL, "f");
+        struct pool *pool = pool_new_libc(nullptr, "f");
         f(pool);
         shutdown(0, SHUT_RDWR);
         pool_unref(pool);
@@ -394,7 +394,7 @@ ajp_server_null(struct pool *pool)
     if (request.code != AJP_CODE_FORWARD_REQUEST)
         exit(EXIT_FAILURE);
 
-    write_headers(HTTP_STATUS_NO_CONTENT, NULL);
+    write_headers(HTTP_STATUS_NO_CONTENT, nullptr);
     write_end();
 }
 
@@ -413,7 +413,7 @@ ajp_server_hello(struct pool *pool)
     if (request.code != AJP_CODE_FORWARD_REQUEST)
         exit(EXIT_FAILURE);
 
-    write_headers(HTTP_STATUS_OK, NULL);
+    write_headers(HTTP_STATUS_OK, nullptr);
     write_body_chunk("hello", 5, 0);
     write_end();
 }
@@ -508,7 +508,7 @@ ajp_server_hold(struct pool *pool)
 {
     struct ajp_request request;
     read_ajp_request(pool, &request);
-    write_headers(HTTP_STATUS_OK, NULL);
+    write_headers(HTTP_STATUS_OK, nullptr);
 
     /* wait until the connection gets closed */
     struct ajp_header header;
@@ -548,7 +548,7 @@ ajp_server_premature_close_body(gcc_unused struct pool *pool)
     struct ajp_request request;
     read_ajp_request(pool, &request);
 
-    write_headers(HTTP_STATUS_OK, NULL);
+    write_headers(HTTP_STATUS_OK, nullptr);
 
     const struct ajp_header header = {
         .a = 'A',
@@ -585,7 +585,7 @@ int main(int argc, char **argv) {
     event_base = event_init();
     fb_pool_init(false);
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     run_all_tests(pool);
 

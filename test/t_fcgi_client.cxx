@@ -1,8 +1,8 @@
 #define ENABLE_PREMATURE_CLOSE_HEADERS
 #define ENABLE_PREMATURE_CLOSE_BODY
 
-#include "t_client.h"
-#include "tio.h"
+#include "t_client.hxx"
+#include "tio.hxx"
 #include "fcgi_client.h"
 #include "fcgi_protocol.h"
 #include "http_response.h"
@@ -39,17 +39,17 @@ client_request(struct pool *pool, struct connection *connection,
 {
     fcgi_client_request(pool, connection->fd, ISTREAM_SOCKET,
                         lease, lease_ctx,
-                        method, uri, uri, NULL, NULL, NULL,
-                        NULL, "192.168.1.100",
+                        method, uri, uri, nullptr, nullptr, nullptr,
+                        nullptr, "192.168.1.100",
                         headers, body,
-                        NULL, 0,
+                        nullptr, 0,
                         handler, ctx, async_ref);
 }
 
 static void
 connection_close(struct connection *c)
 {
-    assert(c != NULL);
+    assert(c != nullptr);
     assert(c->pid >= 1);
     assert(c->fd >= 0);
 
@@ -141,7 +141,7 @@ static void
 read_fcgi_params(struct pool *pool, struct fcgi_request *r)
 {
     r->method = HTTP_METHOD_GET;
-    r->uri = NULL;
+    r->uri = nullptr;
     r->headers = strmap_new(pool, 17);
 
     char name[1024], value[8192];
@@ -191,11 +191,11 @@ read_fcgi_request(struct pool *pool, struct fcgi_request *r)
     read_fcgi_params(pool, r);
 
     const char *content_length = strmap_remove(r->headers, "content-length");
-    r->length = content_length != NULL
-        ? strtol(content_length, NULL, 10)
+    r->length = content_length != nullptr
+        ? strtol(content_length, nullptr, 10)
         : -1;
 
-    if (content_length == NULL) {
+    if (content_length == nullptr) {
         struct fcgi_record_header header;
         ssize_t nbytes = recv(0, &header, sizeof(header),
                               MSG_DONTWAIT|MSG_PEEK);
@@ -258,10 +258,10 @@ write_fcgi_headers(const struct fcgi_request *r, http_status_t status,
     char buffer[8192], *p = buffer;
     p += sprintf(p, "status: %u\n", status);
 
-    if (headers != NULL) {
+    if (headers != nullptr) {
         strmap_rewind(headers);
         const struct strmap_pair *pair;
-        while ((pair = strmap_next(headers)) != NULL)
+        while ((pair = strmap_next(headers)) != nullptr)
             p += sprintf(p, "%s: %s\n", pair->key, pair->value);
     }
 
@@ -308,7 +308,7 @@ connect_server(void (*f)(struct pool *pool))
         close(sv[0]);
         close(sv[1]);
 
-        struct pool *pool = pool_new_libc(NULL, "f");
+        struct pool *pool = pool_new_libc(nullptr, "f");
         f(pool);
         shutdown(0, SHUT_RDWR);
         pool_unref(pool);
@@ -330,7 +330,7 @@ fcgi_server_null(struct pool *pool)
 {
     struct fcgi_request request;
     read_fcgi_request(pool, &request);
-    write_fcgi_headers(&request, HTTP_STATUS_NO_CONTENT, NULL);
+    write_fcgi_headers(&request, HTTP_STATUS_NO_CONTENT, nullptr);
     write_fcgi_end(&request);
     discard_fcgi_request_body(&request);
 }
@@ -347,7 +347,7 @@ fcgi_server_hello(struct pool *pool)
     struct fcgi_request request;
     read_fcgi_request(pool, &request);
 
-    write_fcgi_headers(&request, HTTP_STATUS_OK, NULL);
+    write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
     discard_fcgi_request_body(&request);
     write_fcgi_stdout_string(&request, "hello");
     write_fcgi_end(&request);
@@ -459,7 +459,7 @@ fcgi_server_hold(struct pool *pool)
 {
     struct fcgi_request request;
     read_fcgi_request(pool, &request);
-    write_fcgi_headers(&request, HTTP_STATUS_OK, NULL);
+    write_fcgi_headers(&request, HTTP_STATUS_OK, nullptr);
 
     /* wait until the connection gets closed */
     struct fcgi_record_header header;
@@ -546,7 +546,7 @@ int main(int argc, char **argv) {
     event_base = event_init();
     fb_pool_init(false);
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
     run_all_tests(pool);

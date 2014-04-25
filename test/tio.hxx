@@ -15,7 +15,7 @@
 static void
 read_full(void *_p, size_t length)
 {
-    uint8_t *p = _p, *const end = p + length;
+    uint8_t *p = (uint8_t *)_p, *const end = p + length;
 
     while (p < end) {
         ssize_t nbytes = recv(0, p, length, MSG_WAITALL);
@@ -70,7 +70,7 @@ discard(size_t length)
 static void
 write_full(const void *_p, size_t length)
 {
-    const uint8_t *p = _p, *const end = p + length;
+    const uint8_t *p = (uint8_t *)_p, *const end = p + length;
 
     while (p < end) {
         ssize_t nbytes = send(0, p, length, MSG_NOSIGNAL);
@@ -100,7 +100,7 @@ static void
 fill(size_t length)
 {
     while (length > 0) {
-        static const uint8_t buffer[1024];
+        static uint8_t buffer[1024];
         size_t nbytes = length;
         if (nbytes > sizeof(buffer))
             nbytes = sizeof(buffer);

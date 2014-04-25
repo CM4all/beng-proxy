@@ -2,7 +2,7 @@
 #define HAVE_CHUNKED_REQUEST_BODY
 #define ENABLE_CLOSE_IGNORED_REQUEST_BODY
 
-#include "t_client.h"
+#include "t_client.hxx"
 #include "http_client.h"
 #include "header-writer.h"
 #include "growing-buffer.h"
@@ -29,15 +29,15 @@ client_request(struct pool *pool, struct connection *connection,
                void *ctx,
                struct async_operation_ref *async_ref)
 {
-    struct growing_buffer *headers2 = NULL;
-    if (headers != NULL) {
+    struct growing_buffer *headers2 = nullptr;
+    if (headers != nullptr) {
         headers2 = growing_buffer_new(pool, 2048);
         headers_copy_all(headers, headers2);
     }
 
     http_client_request(pool, connection->fd, ISTREAM_SOCKET,
                         lease, lease_ctx,
-                        NULL, NULL,
+                        nullptr, nullptr,
                         method, uri, headers2, body, expect_100,
                         handler, ctx, async_ref);
 }
@@ -45,7 +45,7 @@ client_request(struct pool *pool, struct connection *connection,
 static void
 connection_close(struct connection *c)
 {
-    assert(c != NULL);
+    assert(c != nullptr);
     assert(c->pid >= 1);
     assert(c->fd >= 0);
 
@@ -84,14 +84,14 @@ connect_server(const char *path, const char *mode)
         close(sv[0]);
         close(sv[1]);
         execl(path, path,
-              "0", "0", mode, NULL);
+              "0", "0", mode, nullptr);
 
         const char *srcdir = getenv("srcdir");
-        if (srcdir != NULL) {
+        if (srcdir != nullptr) {
             /* support automake out-of-tree build */
             if (chdir(srcdir) == 0)
                 execl(path, path,
-                      "0", "0", mode, NULL);
+                      "0", "0", mode, nullptr);
         }
 
         perror("exec() failed");
@@ -142,7 +142,7 @@ connect_tiny(void)
 static struct connection *
 connect_twice_100(void)
 {
-    return connect_server("./test/twice_100.sh", NULL);
+    return connect_server("./test/twice_100.sh", nullptr);
 }
 
 static struct connection *
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
     event_base = event_init();
     fb_pool_init(false);
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     run_all_tests(pool);
 

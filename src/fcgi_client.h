@@ -18,6 +18,10 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Sends a HTTP request on a socket to an FastCGI server, and passes
  * the response to the handler.
@@ -55,5 +59,9 @@ fcgi_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

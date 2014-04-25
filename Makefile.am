@@ -760,7 +760,7 @@ check_PROGRAMS = \
 	test/t_cgi \
 	test/run_http_server \
 	test/t-http-server \
-	test/t-http-client test/t-http-util \
+	test/t_http_client test/t-http-util \
 	test/t_http_cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
@@ -793,7 +793,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t_balancer \
 	test/t_cgi \
 	test/t-http-server.py test/t-http-server \
-	test/t-http-client test/t-http-util \
+	test/t_http_client test/t-http-util \
 	test/t_http_cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
@@ -1151,8 +1151,8 @@ test_run_http_server_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_http_client_SOURCES = test/t-http-client.c \
-	src/t_client.h \
+test_t_http_client_SOURCES = test/t_http_client.cxx \
+	src/t_client.hxx \
 	src/http_client.c \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
 	src/cleanup_timer.c \
@@ -1574,7 +1574,7 @@ test_run_nfs_client_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 endif
 
-test_t_fcgi_client_SOURCES = test/t_fcgi_client.c \
+test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/fcgi_client.c src/fcgi_serialize.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/buffered_io.c src/fifo-buffer.c \
@@ -1594,7 +1594,7 @@ test_t_fcgi_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_ajp_client_SOURCES = test/t_ajp_client.c \
-	src/t_client.h src/tio.h \
+	src/t_client.hxx src/tio.hxx \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \
 	src/socket_wrapper.c src/buffered_socket.c \
