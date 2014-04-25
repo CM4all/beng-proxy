@@ -48,7 +48,7 @@ sink_buffer_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-sink_buffer_input_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
+sink_buffer_input_direct(G_GNUC_UNUSED istream_direct type, int fd,
                          size_t max_length, void *ctx)
 {
     sink_buffer *buffer = (sink_buffer *)ctx;

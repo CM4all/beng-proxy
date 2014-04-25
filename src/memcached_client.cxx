@@ -536,7 +536,7 @@ memcached_feed(struct memcached_client *client,
 
 static enum direct_result
 memcached_client_try_read_direct(struct memcached_client *client,
-                                 int fd, istream_direct_t type)
+                                 int fd, istream_direct type)
 {
     assert(client->response.read_state == memcached_client::ReadState::VALUE);
     assert(client->response.remaining > 0);

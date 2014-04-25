@@ -65,7 +65,7 @@ my_istream_data(const void *data gcc_unused, size_t length, void *ctx)
 }
 
 static ssize_t
-my_istream_direct(G_GNUC_UNUSED istream_direct_t type, int fd,
+my_istream_direct(G_GNUC_UNUSED istream_direct type, int fd,
                   size_t max_length, void *ctx)
 {
     struct context *c = (struct context *)ctx;

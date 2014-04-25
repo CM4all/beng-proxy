@@ -209,7 +209,8 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
 }
 
 static ssize_t
-sink_header_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+sink_header_input_direct(istream_direct type, int fd, size_t max_length,
+                         void *ctx)
 {
     sink_header *header = (sink_header *)ctx;
 

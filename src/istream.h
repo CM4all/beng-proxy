@@ -72,7 +72,8 @@ struct istream_handler {
      * @return the number of bytes consumed, or one of the
      * #istream_result values
      */
-    ssize_t (*direct)(istream_direct_t type, int fd, size_t max_length, void *ctx);
+    ssize_t (*direct)(enum istream_direct type, int fd, size_t max_length,
+                      void *ctx);
 
     /**
      * End of file encountered.

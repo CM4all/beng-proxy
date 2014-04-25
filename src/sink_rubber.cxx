@@ -94,7 +94,7 @@ sink_rubber_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-sink_rubber_input_direct(istream_direct_t type, int fd,
+sink_rubber_input_direct(istream_direct type, int fd,
                          size_t max_length, void *ctx)
 {
     sink_rubber *s = (sink_rubber *)ctx;
