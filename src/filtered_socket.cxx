@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "filtered_socket.h"
+#include "filtered_socket.hxx"
 #include "fifo-buffer.h"
 #include "fb_pool.h"
 
@@ -20,7 +20,7 @@
 static enum buffered_result
 filtered_socket_bs_data(const void *buffer, size_t size, void *ctx)
 {
-    struct filtered_socket *s = ctx;
+    struct filtered_socket *s = (struct filtered_socket *)ctx;
 
     return s->filter->data(buffer, size, s->filter_ctx);
 }
@@ -28,7 +28,7 @@ filtered_socket_bs_data(const void *buffer, size_t size, void *ctx)
 static bool
 filtered_socket_bs_closed(void *ctx)
 {
-    struct filtered_socket *s = ctx;
+    struct filtered_socket *s = (struct filtered_socket *)ctx;
 
     return s->filter->closed(s->filter_ctx);
 }
@@ -36,7 +36,7 @@ filtered_socket_bs_closed(void *ctx)
 static bool
 filtered_socket_bs_remaining(size_t remaining, void *ctx)
 {
-    struct filtered_socket *s = ctx;
+    struct filtered_socket *s = (struct filtered_socket *)ctx;
 
     return s->filter->remaining(remaining, s->filter_ctx);
 }
@@ -44,7 +44,7 @@ filtered_socket_bs_remaining(size_t remaining, void *ctx)
 static bool
 filtered_socket_bs_write(void *ctx)
 {
-    struct filtered_socket *s = ctx;
+    struct filtered_socket *s = (struct filtered_socket *)ctx;
 
     return s->filter->internal_write(s->filter_ctx);
 }
@@ -52,7 +52,7 @@ filtered_socket_bs_write(void *ctx)
 static void
 filtered_socket_bs_end(void *ctx)
 {
-    struct filtered_socket *s = ctx;
+    struct filtered_socket *s = (struct filtered_socket *)ctx;
 
     s->filter->end(s->filter_ctx);
 }
@@ -60,10 +60,10 @@ filtered_socket_bs_end(void *ctx)
 static bool
 filtered_socket_bs_timeout(void *ctx)
 {
-    struct filtered_socket *s = ctx;
+    struct filtered_socket *s = (struct filtered_socket *)ctx;
 
     // TODO: let handler intercept this call
-    if (s->handler->timeout != NULL)
+    if (s->handler->timeout != nullptr)
         return s->handler->timeout(s->handler_ctx);
     else {
         s->handler->error(g_error_new_literal(buffered_socket_quark(), 0,
@@ -76,15 +76,15 @@ filtered_socket_bs_timeout(void *ctx)
 static bool
 filtered_socket_bs_broken(void *ctx)
 {
-    struct filtered_socket *s = ctx;
+    struct filtered_socket *s = (struct filtered_socket *)ctx;
 
-    return s->handler->broken != NULL && s->handler->broken(s->handler_ctx);
+    return s->handler->broken != nullptr && s->handler->broken(s->handler_ctx);
 }
 
 static void
 filtered_socket_bs_error(GError *error, void *ctx)
 {
-    struct filtered_socket *s = ctx;
+    struct filtered_socket *s = (struct filtered_socket *)ctx;
 
     s->handler->error(error, s->handler_ctx);
 }
@@ -118,18 +118,18 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
     s->filter = filter;
     s->filter_ctx = filter_ctx;
 
-    if (filter != NULL) {
-        assert(filter->init != NULL);
-        assert(filter->data != NULL);
-        assert(filter->is_empty != NULL);
-        assert(filter->is_full != NULL);
-        assert(filter->available != NULL);
-        assert(filter->consumed != NULL);
-        assert(filter->read != NULL);
-        assert(filter->write != NULL);
-        assert(filter->internal_write != NULL);
-        assert(filter->closed != NULL);
-        assert(filter->close != NULL);
+    if (filter != nullptr) {
+        assert(filter->init != nullptr);
+        assert(filter->data != nullptr);
+        assert(filter->is_empty != nullptr);
+        assert(filter->is_full != nullptr);
+        assert(filter->available != nullptr);
+        assert(filter->consumed != nullptr);
+        assert(filter->read != nullptr);
+        assert(filter->write != nullptr);
+        assert(filter->internal_write != nullptr);
+        assert(filter->closed != nullptr);
+        assert(filter->close != nullptr);
 
         s->handler = handler;
         s->handler_ctx = handler_ctx;
@@ -148,16 +148,16 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
 
     s->drained = true;
 
-    if (filter != NULL)
+    if (filter != nullptr)
         filter->init(s, filter_ctx);
 }
 
 void
 filtered_socket_destroy(struct filtered_socket *s)
 {
-    if (s->filter != NULL) {
+    if (s->filter != nullptr) {
         s->filter->close(s->filter_ctx);
-        s->filter = NULL;
+        s->filter = nullptr;
     }
 
     buffered_socket_destroy(&s->base);
@@ -166,7 +166,7 @@ filtered_socket_destroy(struct filtered_socket *s)
 bool
 filtered_socket_empty(const struct filtered_socket *s)
 {
-    return s->filter != NULL
+    return s->filter != nullptr
         ? s->filter->is_empty(s->filter_ctx)
         : buffered_socket_empty(&s->base);
 }
@@ -174,7 +174,7 @@ filtered_socket_empty(const struct filtered_socket *s)
 bool
 filtered_socket_full(const struct filtered_socket *s)
 {
-    return s->filter != NULL
+    return s->filter != nullptr
         ? s->filter->is_full(s->filter_ctx)
         : buffered_socket_full(&s->base);
 }
@@ -182,7 +182,7 @@ filtered_socket_full(const struct filtered_socket *s)
 size_t
 filtered_socket_available(const struct filtered_socket *s)
 {
-    return s->filter != NULL
+    return s->filter != nullptr
         ? s->filter->available(s->filter_ctx)
         : buffered_socket_available(&s->base);
 }
@@ -190,7 +190,7 @@ filtered_socket_available(const struct filtered_socket *s)
 void
 filtered_socket_consumed(struct filtered_socket *s, size_t nbytes)
 {
-    if (s->filter != NULL)
+    if (s->filter != nullptr)
         s->filter->consumed(nbytes, s->filter_ctx);
     else
         buffered_socket_consumed(&s->base, nbytes);
@@ -199,7 +199,7 @@ filtered_socket_consumed(struct filtered_socket *s, size_t nbytes)
 bool
 filtered_socket_read(struct filtered_socket *s, bool expect_more)
 {
-    if (s->filter != NULL)
+    if (s->filter != nullptr)
         return s->filter->read(expect_more, s->filter_ctx);
     else
         return buffered_socket_read(&s->base, expect_more);
@@ -209,7 +209,7 @@ ssize_t
 filtered_socket_write(struct filtered_socket *s,
                       const void *data, size_t length)
 {
-    return s->filter != NULL
+    return s->filter != nullptr
         ? s->filter->write(data, length, s->filter_ctx)
         : buffered_socket_write(&s->base, data, length);
 }
@@ -217,11 +217,11 @@ filtered_socket_write(struct filtered_socket *s,
 bool
 filtered_socket_internal_drained(struct filtered_socket *s)
 {
-    assert(s != NULL);
-    assert(s->filter != NULL);
+    assert(s != nullptr);
+    assert(s->filter != nullptr);
     assert(filtered_socket_connected(s));
 
-    if (s->drained || s->handler->drained == NULL)
+    if (s->drained || s->handler->drained == nullptr)
         return true;
 
     s->drained = true;

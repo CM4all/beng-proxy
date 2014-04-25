@@ -5,7 +5,7 @@
  */
 
 #include "lb_tcp.hxx"
-#include "filtered_socket.h"
+#include "filtered_socket.hxx"
 #include "address_list.h"
 #include "client-balancer.h"
 #include "client-socket.h"

@@ -11,7 +11,7 @@
 #include "fifo-buffer.h"
 #include "http_body.hxx"
 #include "async.h"
-#include "filtered_socket.h"
+#include "filtered_socket.hxx"
 
 struct http_server_connection {
     struct pool *pool;

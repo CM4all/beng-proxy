@@ -19,7 +19,7 @@
 #include "failure.h"
 #include "address_envelope.h"
 #include "istream.h"
-#include "filtered_socket.h"
+#include "filtered_socket.hxx"
 
 #include <inline/compiler.h>
 

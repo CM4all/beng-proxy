@@ -225,7 +225,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/sink-impl.h \
 	src/socket_wrapper.c src/socket_wrapper.h \
 	src/buffered_socket.c src/buffered_socket.h \
-	src/filtered_socket.c src/filtered_socket.h \
+	src/filtered_socket.cxx src/filtered_socket.hxx \
 	src/nop_socket_filter.cxx src/nop_socket_filter.hxx \
 	src/static-file.c src/static-file.h \
 	src/static-headers.c src/static-headers.h \
@@ -447,7 +447,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/ssl_factory.cxx \
 	src/ssl_filter.hxx \
 	src/ssl_filter.cxx \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/nop_thread_socket_filter.cxx src/nop_thread_socket_filter.hxx \
 	src/ping.c src/ping.h \
@@ -1099,7 +1099,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_util.c \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
 	src/cleanup_timer.c \
 	src/address.c \
 	src/fifo-buffer.c \
@@ -1126,7 +1126,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_util.c \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1154,7 +1154,7 @@ test_run_http_server_LDADD = $(AM_LDADD) \
 test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/t_client.hxx \
 	src/http_client.cxx \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
 	src/cleanup_timer.c \
 	$(STOPWATCH_SRC) \
 	src/strmap.c src/hashmap.c \
@@ -1627,7 +1627,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/header-writer.c src/header-parser.c \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
 	src/serialize.c \
 	src/cleanup_timer.c \
 	src/buffered_io.c src/fifo-buffer.c \

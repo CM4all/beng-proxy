@@ -24,7 +24,7 @@
 #include "stopwatch.h"
 #include "strmap.h"
 #include "completion.h"
-#include "filtered_socket.h"
+#include "filtered_socket.hxx"
 #include "util/Cast.hxx"
 
 #include <inline/compiler.h>

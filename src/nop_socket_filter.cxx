@@ -3,7 +3,7 @@
  */
 
 #include "nop_socket_filter.hxx"
-#include "filtered_socket.h"
+#include "filtered_socket.hxx"
 #include "fifo-buffer.h"
 #include "fb_pool.h"
 #include "thread_queue.h"

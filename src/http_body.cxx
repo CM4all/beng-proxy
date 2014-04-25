@@ -7,7 +7,7 @@
 #include "http_body.hxx"
 #include "http_error.h"
 #include "istream-internal.h"
-#include "filtered_socket.h"
+#include "filtered_socket.hxx"
 
 #include <assert.h>
 #include <limits.h>
