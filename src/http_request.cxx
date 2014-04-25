@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_request.h"
+#include "http_request.hxx"
 #include "http_response.h"
 #include "header-writer.h"
 #include "tcp-stock.h"
@@ -60,7 +60,7 @@ is_server_failure(GError *error)
         error->code != HTTP_CLIENT_UNSPECIFIED;
 }
 
-static const struct stock_get_handler http_request_stock_handler;
+extern const struct stock_get_handler http_request_stock_handler;
 
 /*
  * HTTP response handler
@@ -71,7 +71,7 @@ static void
 http_request_response_response(http_status_t status, struct strmap *headers,
                                struct istream *body, void *ctx)
 {
-    struct http_request *hr = ctx;
+    struct http_request *hr = (struct http_request *)ctx;
 
     failure_unset(&hr->current_address->address,
                   hr->current_address->length,
@@ -84,9 +84,9 @@ http_request_response_response(http_status_t status, struct strmap *headers,
 static void
 http_request_response_abort(GError *error, void *ctx)
 {
-    struct http_request *hr = ctx;
+    struct http_request *hr = (struct http_request *)ctx;
 
-    if (hr->retries > 0 && hr->body == NULL &&
+    if (hr->retries > 0 && hr->body == nullptr &&
         error->domain == http_client_quark() &&
         error->code == HTTP_CLIENT_REFUSED) {
         /* the server has closed the connection prematurely, maybe
@@ -97,7 +97,7 @@ http_request_response_abort(GError *error, void *ctx)
 
         --hr->retries;
         tcp_balancer_get(hr->tcp_balancer, hr->pool,
-                         false, NULL, 0,
+                         false, nullptr, 0,
                          hr->session_sticky,
                          &hr->uwa->addresses,
                          30,
@@ -127,7 +127,7 @@ static const struct http_response_handler http_request_response_handler = {
 static void
 http_socket_release(bool reuse, void *ctx)
 {
-    struct http_request *hr = ctx;
+    struct http_request *hr = (struct http_request *)ctx;
 
     tcp_balancer_put(hr->tcp_balancer, hr->stock_item, !reuse);
 }
@@ -145,7 +145,7 @@ static const struct lease http_socket_lease = {
 static void
 http_request_stock_ready(struct stock_item *item, void *ctx)
 {
-    struct http_request *hr = ctx;
+    struct http_request *hr = (struct http_request *)ctx;
 
     hr->stock_item = item;
     hr->current_address = tcp_balancer_get_last();
@@ -165,18 +165,18 @@ http_request_stock_ready(struct stock_item *item, void *ctx)
 static void
 http_request_stock_error(GError *error, void *ctx)
 {
-    struct http_request *hr = ctx;
+    struct http_request *hr = (struct http_request *)ctx;
 
-    if (hr->body != NULL)
+    if (hr->body != nullptr)
         istream_close_unused(hr->body);
 
-    if (hr->filter != NULL)
+    if (hr->filter != nullptr)
         hr->filter->close(hr->filter_ctx);
 
     http_response_handler_invoke_abort(&hr->handler, error);
 }
 
-static const struct stock_get_handler http_request_stock_handler = {
+const struct stock_get_handler http_request_stock_handler = {
     .ready = http_request_stock_ready,
     .error = http_request_stock_error,
 };
@@ -200,16 +200,14 @@ http_request(struct pool *pool,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
 {
-    struct http_request *hr;
+    assert(uwa != nullptr);
+    assert(uwa->host_and_port != nullptr);
+    assert(uwa->path != nullptr);
+    assert(handler != nullptr);
+    assert(handler->response != nullptr);
+    assert(body == nullptr || !istream_has_handler(body));
 
-    assert(uwa != NULL);
-    assert(uwa->host_and_port != NULL);
-    assert(uwa->path != NULL);
-    assert(handler != NULL);
-    assert(handler->response != NULL);
-    assert(body == NULL || !istream_has_handler(body));
-
-    hr = p_malloc(pool, sizeof(*hr));
+    auto hr = NewFromPool<struct http_request>(pool);
     hr->pool = pool;
     hr->tcp_balancer = tcp_balancer;
     hr->session_sticky = session_sticky;
@@ -219,26 +217,26 @@ http_request(struct pool *pool,
     hr->uwa = uwa;
 
     hr->headers = headers;
-    if (hr->headers == NULL)
+    if (hr->headers == nullptr)
         hr->headers = growing_buffer_new(pool, 512);
 
     http_response_handler_set(&hr->handler, handler, handler_ctx);
     hr->async_ref = async_ref;
 
-    if (body != NULL) {
+    if (body != nullptr) {
         hr->body = istream_hold_new(pool, body);
         async_ref = async_close_on_abort(pool, hr->body, async_ref);
     } else
-        hr->body = NULL;
+        hr->body = nullptr;
 
-    if (uwa->host_and_port != NULL)
+    if (uwa->host_and_port != nullptr)
         header_write(hr->headers, "host", uwa->host_and_port);
 
     header_write(hr->headers, "connection", "keep-alive");
 
     hr->retries = 2;
     tcp_balancer_get(tcp_balancer, pool,
-                     false, NULL, 0,
+                     false, nullptr, 0,
                      session_sticky,
                      &uwa->addresses,
                      30,

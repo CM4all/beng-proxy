@@ -7,7 +7,7 @@
 
 #include "resource_loader.hxx"
 #include "resource_address.hxx"
-#include "http_request.h"
+#include "http_request.hxx"
 #include "http_response.h"
 #include "static-file.h"
 #include "file_address.h"

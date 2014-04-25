@@ -179,7 +179,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/http_cache_rfc.cxx \
 	src/http_client.c src/http_client.h \
 	src/http_error.c src/http_error.h \
-	src/http_request.c src/http_request.h \
+	src/http_request.cxx src/http_request.hxx \
 	src/http_server_internal.h \
 	src/http_server.c src/http_server.h \
 	src/http_server_send.c \
