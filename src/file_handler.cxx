@@ -15,7 +15,7 @@
 #include "format.h"
 #include "http_util.h"
 #include "growing-buffer.h"
-#include "http_server.h"
+#include "http_server.hxx"
 #include "global.h"
 #include "istream_file.h"
 #include "istream.h"

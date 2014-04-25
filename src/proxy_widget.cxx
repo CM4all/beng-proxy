@@ -13,7 +13,7 @@
 #include "request.hxx"
 #include "header-writer.h"
 #include "header_forward.hxx"
-#include "http_server.h"
+#include "http_server.hxx"
 #include "http_util.h"
 #include "http_response.h"
 #include "processor.h"

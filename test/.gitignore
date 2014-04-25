@@ -22,5 +22,6 @@ run_nfs_client
 /t_header_forward
 /t_session
 /t_http_client
+/t_http_server
 
 *.trs

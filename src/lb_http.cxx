@@ -16,7 +16,7 @@
 #include "ssl_filter.hxx"
 #include "address_envelope.h"
 #include "address_sticky.h"
-#include "http_server.h"
+#include "http_server.hxx"
 #include "http_client.hxx"
 #include "tcp-stock.h"
 #include "tcp-balancer.h"

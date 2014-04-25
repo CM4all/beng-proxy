@@ -1,4 +1,4 @@
-#include "http_server.h"
+#include "http_server.hxx"
 #include "duplex.h"
 #include "direct.h"
 #include "sink-impl.h"
@@ -19,12 +19,12 @@ struct context {
 
     struct shutdown_listener shutdown_listener;
 
-    enum {
+    enum class Mode {
         MODE_NULL,
-        MODE_MIRROR,
-        MODE_DUMMY,
-        MODE_FIXED,
-        MODE_HOLD,
+        MIRROR,
+        DUMMY,
+        FIXED,
+        HOLD,
     } mode;
 
     struct http_server_connection *connection;
@@ -37,7 +37,7 @@ struct context {
 static void
 shutdown_callback(void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     http_server_connection_close(c->connection);
 }
@@ -46,7 +46,7 @@ static void
 timer_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
                            void *_ctx)
 {
-    struct context *ctx = _ctx;
+    struct context *ctx = (struct context *)_ctx;
 
     http_server_connection_close(ctx->connection);
     shutdown_listener_deinit(&ctx->shutdown_listener);
@@ -81,20 +81,20 @@ static void
 my_request(struct http_server_request *request, void *_ctx,
            struct async_operation_ref *async_ref gcc_unused)
 {
-    struct context *ctx = _ctx;
+    struct context *ctx = (struct context *)_ctx;
 
     switch (ctx->mode) {
         struct istream *body;
-        static const char data[0x100];
+        static char data[0x100];
 
-    case MODE_NULL:
+    case context::Mode::MODE_NULL:
         if (request->body != NULL)
             sink_null_new(request->body);
 
         http_server_response(request, HTTP_STATUS_NO_CONTENT, NULL, NULL);
         break;
 
-    case MODE_MIRROR:
+    case context::Mode::MIRROR:
         http_server_response(request,
                              request->body == NULL
                              ? HTTP_STATUS_NO_CONTENT : HTTP_STATUS_OK,
@@ -102,7 +102,7 @@ my_request(struct http_server_request *request, void *_ctx,
                              request->body);
         break;
 
-    case MODE_DUMMY:
+    case context::Mode::DUMMY:
         if (request->body != NULL)
             sink_null_new(request->body);
 
@@ -114,7 +114,7 @@ my_request(struct http_server_request *request, void *_ctx,
         http_server_response(request, HTTP_STATUS_OK, NULL, body);
         break;
 
-    case MODE_FIXED:
+    case context::Mode::FIXED:
         if (request->body != NULL)
             sink_null_new(request->body);
 
@@ -122,7 +122,7 @@ my_request(struct http_server_request *request, void *_ctx,
                              istream_memory_new(request->pool, data, sizeof(data)));
         break;
 
-    case MODE_HOLD:
+    case context::Mode::HOLD:
         ctx->request_body = request->body != NULL
             ? istream_hold_new(request->pool, request->body)
             : NULL;
@@ -133,7 +133,7 @@ my_request(struct http_server_request *request, void *_ctx,
 
         http_server_response(request, HTTP_STATUS_OK, NULL, body);
 
-        static const struct timeval t;
+        static constexpr struct timeval t{0,0};
         evtimer_add(&ctx->timer, &t);
         break;
     }
@@ -142,7 +142,7 @@ my_request(struct http_server_request *request, void *_ctx,
 static void
 my_error(GError *error, void *_ctx)
 {
-    struct context *ctx = _ctx;
+    struct context *ctx = (struct context *)_ctx;
 
     evtimer_del(&ctx->timer);
     shutdown_listener_deinit(&ctx->shutdown_listener);
@@ -154,7 +154,7 @@ my_error(GError *error, void *_ctx)
 static void
 my_free(void *_ctx)
 {
-    struct context *ctx = _ctx;
+    struct context *ctx = (struct context *)_ctx;
 
     evtimer_del(&ctx->timer);
     shutdown_listener_deinit(&ctx->shutdown_listener);
@@ -213,15 +213,15 @@ int main(int argc, char **argv) {
 
     const char *mode = argv[3];
     if (strcmp(mode, "null") == 0)
-        ctx.mode = MODE_NULL;
+        ctx.mode = context::Mode::MODE_NULL;
     else if (strcmp(mode, "mirror") == 0)
-        ctx.mode = MODE_MIRROR;
+        ctx.mode = context::Mode::MIRROR;
     else if (strcmp(mode, "dummy") == 0)
-        ctx.mode = MODE_DUMMY;
+        ctx.mode = context::Mode::DUMMY;
     else if (strcmp(mode, "fixed") == 0)
-        ctx.mode = MODE_FIXED;
+        ctx.mode = context::Mode::FIXED;
     else if (strcmp(mode, "hold") == 0)
-        ctx.mode = MODE_HOLD;
+        ctx.mode = context::Mode::HOLD;
     else {
         fprintf(stderr, "Unknown mode: %s\n", mode);
         return EXIT_FAILURE;

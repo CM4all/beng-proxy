@@ -13,7 +13,7 @@
 #include "http_error.h"
 #include "generate_response.hxx"
 #include "request.hxx"
-#include "http_server.h"
+#include "http_server.hxx"
 #include "http_response.h"
 #include "global.h"
 #include "istream_file.h"

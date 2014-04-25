@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_server_internal.h"
+#include "http_server_internal.hxx"
 #include "direct.h"
 #include "istream-internal.h"
 #include "fd-util.h"
@@ -18,11 +18,12 @@
 static size_t
 http_server_response_stream_data(const void *data, size_t length, void *ctx)
 {
-    struct http_server_connection *connection = ctx;
+    struct http_server_connection *connection =
+        (struct http_server_connection *)ctx;
 
     assert(filtered_socket_connected(&connection->socket) ||
-           connection->request.request == NULL);
-    assert(connection->response.istream != NULL);
+           connection->request.request == nullptr);
+    assert(connection->response.istream != nullptr);
 
     if (!filtered_socket_connected(&connection->socket))
         return 0;
@@ -50,13 +51,14 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
 
 #ifdef __linux
 static ssize_t
-http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+http_server_response_stream_direct(istream_direct type, int fd, size_t max_length, void *ctx)
 {
-    struct http_server_connection *connection = ctx;
+    struct http_server_connection *connection =
+        (struct http_server_connection *)ctx;
 
     assert(filtered_socket_connected(&connection->socket) ||
-           connection->request.request == NULL);
-    assert(connection->response.istream != NULL);
+           connection->request.request == nullptr);
+    assert(connection->response.istream != nullptr);
 
     if (!filtered_socket_connected(&connection->socket))
         return 0;
@@ -80,18 +82,19 @@ http_server_response_stream_direct(istream_direct_t type, int fd, size_t max_len
 static void
 http_server_response_stream_eof(void *ctx)
 {
-    struct http_server_connection *connection = ctx;
+    struct http_server_connection *connection =
+        (struct http_server_connection *)ctx;
 
-    assert(connection->request.read_state != READ_START &&
-           connection->request.read_state != READ_HEADERS);
-    assert(connection->request.request != NULL);
-    assert(connection->response.istream != NULL);
+    assert(connection->request.read_state != http_server_connection::Request::START &&
+           connection->request.read_state != http_server_connection::Request::HEADERS);
+    assert(connection->request.request != nullptr);
+    assert(connection->response.istream != nullptr);
 
-    connection->response.istream = NULL;
+    connection->response.istream = nullptr;
 
     filtered_socket_unschedule_write(&connection->socket);
 
-    if (connection->handler->log != NULL)
+    if (connection->handler->log != nullptr)
         connection->handler->log(connection->request.request,
                                  connection->response.status,
                                  connection->response.length,
@@ -99,14 +102,14 @@ http_server_response_stream_eof(void *ctx)
                                  connection->response.bytes_sent,
                                  connection->handler_ctx);
 
-    if (connection->request.read_state == READ_BODY &&
+    if (connection->request.read_state == http_server_connection::Request::BODY &&
         !connection->request.expect_100_continue) {
         /* We are still reading the request body, which we don't need
            anymore.  To discard it, we simply close the connection by
            disabling keepalive; this seems cheaper than redirecting
            the rest of the body to /dev/null */
         connection->keep_alive = false;
-        connection->request.read_state = READ_END;
+        connection->request.read_state = http_server_connection::Request::END;
 
         GError *error =
             g_error_new_literal(http_server_quark(), 0,
@@ -118,11 +121,11 @@ http_server_response_stream_eof(void *ctx)
 
     pool_trash(connection->request.request->pool);
     pool_unref(connection->request.request->pool);
-    connection->request.request = NULL;
+    connection->request.request = nullptr;
     connection->request.bytes_received = 0;
     connection->response.bytes_sent = 0;
 
-    connection->request.read_state = READ_START;
+    connection->request.read_state = http_server_connection::Request::START;
 
     if (connection->keep_alive) {
         /* handle pipelined request (if any), or set up events for
@@ -140,11 +143,12 @@ http_server_response_stream_eof(void *ctx)
 static void
 http_server_response_stream_abort(GError *error, void *ctx)
 {
-    struct http_server_connection *connection = ctx;
+    struct http_server_connection *connection =
+        (struct http_server_connection *)ctx;
 
-    assert(connection->response.istream != NULL);
+    assert(connection->response.istream != nullptr);
 
-    connection->response.istream = NULL;
+    connection->response.istream = nullptr;
 
     /* we clear this async_ref here so http_server_request_close()
        won't think we havn't sent a response yet */

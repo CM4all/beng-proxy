@@ -7,7 +7,7 @@
 #ifndef __BENG_HTTP_SERVER_INTERNAL_H
 #define __BENG_HTTP_SERVER_INTERNAL_H
 
-#include "http_server.h"
+#include "http_server.hxx"
 #include "fifo-buffer.h"
 #include "http_body.h"
 #include "async.h"
@@ -44,20 +44,20 @@ struct http_server_connection {
     const char *remote_host_and_port, *remote_host;
 
     /* request */
-    struct {
+    struct Request {
         enum {
             /** there is no request (yet); waiting for the request
                 line */
-            READ_START,
+            START,
 
             /** parsing request headers; waiting for empty line */
-            READ_HEADERS,
+            HEADERS,
 
             /** reading the request body */
-            READ_BODY,
+            BODY,
 
             /** the request has been consumed, and we are going to send the response */
-            READ_END
+            END
         } read_state;
 
         /**

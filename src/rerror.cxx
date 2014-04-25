@@ -15,7 +15,7 @@
 #include "widget-quark.h"
 #include "http_error.h"
 #include "http_response.h"
-#include "http_server.h"
+#include "http_server.hxx"
 #include "http_quark.h"
 #include "gerrno.h"
 #include "pool.h"

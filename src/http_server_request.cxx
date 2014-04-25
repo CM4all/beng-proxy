@@ -6,16 +6,17 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_server_internal.h"
+#include "http_server_internal.hxx"
 #include "istream-internal.h"
+#include "util/Cast.hxx"
 
 enum buffered_result
 http_server_feed_body(struct http_server_connection *connection,
                       const void *data, size_t length)
 {
-    assert(connection != NULL);
-    assert(connection->request.read_state == READ_BODY);
-    assert(connection->request.request->body != NULL);
+    assert(connection != nullptr);
+    assert(connection->request.read_state == http_server_connection::Request::BODY);
+    assert(connection->request.request->body != nullptr);
 
     /* checking request.request->body and not request.body_reader,
        because the dechunker might be attached to the
@@ -42,9 +43,9 @@ http_server_feed_body(struct http_server_connection *connection,
     connection->request.bytes_received += nbytes;
     filtered_socket_consumed(&connection->socket, nbytes);
 
-    if (connection->request.read_state == READ_BODY &&
+    if (connection->request.read_state == http_server_connection::Request::BODY &&
         http_body_eof(&connection->request.body_reader)) {
-        connection->request.read_state = READ_END;
+        connection->request.read_state = http_server_connection::Request::END;
 
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
@@ -64,14 +65,11 @@ http_server_feed_body(struct http_server_connection *connection,
         : BUFFERED_PARTIAL;
 }
 
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wextended-offsetof"
-#endif
-
 static inline struct http_server_connection *
 response_stream_to_connection(struct istream *istream)
 {
-    return (struct http_server_connection *)(((char*)istream) - offsetof(struct http_server_connection, request.body_reader.output));
+    return ContainerCast(istream, struct http_server_connection,
+                         request.body_reader.output);
 }
 
 static off_t
@@ -80,7 +78,7 @@ http_server_request_stream_available(struct istream *istream, bool partial)
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
     assert(http_server_connection_valid(connection));
-    assert(connection->request.read_state == READ_BODY);
+    assert(connection->request.read_state == http_server_connection::Request::BODY);
 
     return http_body_available(&connection->request.body_reader,
                                &connection->socket, partial);
@@ -92,9 +90,9 @@ http_server_request_stream_read(struct istream *istream)
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
     assert(http_server_connection_valid(connection));
-    assert(connection->request.read_state == READ_BODY);
+    assert(connection->request.read_state == http_server_connection::Request::BODY);
     assert(istream_has_handler(http_body_istream(&connection->request.body_reader)));
-    assert(connection->request.request->body != NULL);
+    assert(connection->request.request->body != nullptr);
     assert(istream_has_handler(connection->request.request->body));
 
     if (connection->request.in_handler)
@@ -113,10 +111,10 @@ http_server_request_stream_close(struct istream *istream)
 {
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
-    if (connection->request.read_state == READ_END)
+    if (connection->request.read_state == http_server_connection::Request::END)
         return;
 
-    assert(connection->request.read_state == READ_BODY);
+    assert(connection->request.read_state == http_server_connection::Request::BODY);
     assert(!http_body_eof(&connection->request.body_reader));
 
     if (!filtered_socket_valid(&connection->socket) ||
@@ -126,13 +124,13 @@ http_server_request_stream_close(struct istream *istream)
            submitted, and this HTTP server library invokes the
            handler's abort method; the handler will free the request
            body, but the socket is already closed */
-        assert(connection->request.request == NULL);
+        assert(connection->request.request == nullptr);
     }
 
-    connection->request.read_state = READ_END;
+    connection->request.read_state = http_server_connection::Request::END;
 
-    if (connection->request.request != NULL)
-        connection->request.request->body = NULL;
+    if (connection->request.request != nullptr)
+        connection->request.request->body = nullptr;
 
     connection->keep_alive = false;
 

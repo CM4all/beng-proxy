@@ -6,7 +6,7 @@
 
 #include "request_forward.hxx"
 #include "request.hxx"
-#include "http_server.h"
+#include "http_server.hxx"
 #include "header_forward.hxx"
 
 void

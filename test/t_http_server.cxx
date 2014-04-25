@@ -1,4 +1,4 @@
-#include "http_server.h"
+#include "http_server.hxx"
 #include "sink-impl.h"
 #include "direct.h"
 #include "pool.h"

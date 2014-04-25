@@ -10,7 +10,7 @@
 #include "bp_instance.hxx"
 #include "session.hxx"
 #include "session_manager.hxx"
-#include "http_server.h"
+#include "http_server.hxx"
 #include "cookie_server.h"
 #include "transformation.hxx"
 #include "args.h"

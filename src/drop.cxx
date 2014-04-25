@@ -7,7 +7,7 @@
 #include "drop.h"
 #include "connection.h"
 #include "bp_instance.hxx"
-#include "http_server.h"
+#include "http_server.hxx"
 
 #include <glib.h>
 

@@ -7,7 +7,7 @@
 #include "connection.h"
 #include "bp_instance.hxx"
 #include "strmap.h"
-#include "http_server.h"
+#include "http_server.hxx"
 #include "handler.hxx"
 #include "access-log.h"
 #include "drop.h"

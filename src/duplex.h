@@ -9,7 +9,15 @@
 
 struct pool;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int
 duplex_new(struct pool *pool, int read_fd, int write_fd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

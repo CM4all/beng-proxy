@@ -180,12 +180,12 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/http_client.cxx src/http_client.hxx \
 	src/http_error.c src/http_error.h \
 	src/http_request.cxx src/http_request.hxx \
-	src/http_server_internal.h \
-	src/http_server.c src/http_server.h \
-	src/http_server_send.c \
-	src/http_server_request.c \
-	src/http_server_read.c \
-	src/http_server_response.c \
+	src/http_server_internal.hxx \
+	src/http_server.cxx src/http_server.hxx \
+	src/http_server_send.cxx \
+	src/http_server_request.cxx \
+	src/http_server_read.cxx \
+	src/http_server_response.cxx \
 	src/http_string.c src/http_string.h \
 	src/http_util.c src/http_util.h \
 	src/http_quark.h \
@@ -400,11 +400,11 @@ src_cm4all_beng_lb_SOURCES = \
 	src/strmap.c \
 	src/cache.c \
 	src/http_body.c \
-	src/http_server.c \
-	src/http_server_send.c \
-	src/http_server_request.c \
-	src/http_server_read.c \
-	src/http_server_response.c \
+	src/http_server.cxx \
+	src/http_server_send.cxx \
+	src/http_server_request.cxx \
+	src/http_server_read.cxx \
+	src/http_server_response.cxx \
 	src/http_client.cxx \
 	src/http_string.c \
 	src/http_util.c src/http_util.h \
@@ -759,7 +759,7 @@ check_PROGRAMS = \
 	test/t_balancer \
 	test/t_cgi \
 	test/run_http_server \
-	test/t-http-server \
+	test/t_http_server \
 	test/t_http_client test/t-http-util \
 	test/t_http_cache \
 	test/t_ajp_client \
@@ -792,7 +792,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t-growing-buffer \
 	test/t_balancer \
 	test/t_cgi \
-	test/t-http-server.py test/t-http-server \
+	test/t-http-server.py test/t_http_server \
 	test/t_http_client test/t-http-util \
 	test/t_http_cache \
 	test/t_ajp_client \
@@ -1095,10 +1095,10 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_http_server_SOURCES = test/t-http-server.c \
+test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_util.c \
-	src/http_server.c src/http_server_send.c src/http_server_request.c \
-	src/http_server_read.c src/http_server_response.c \
+	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
+	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
 	src/cleanup_timer.c \
 	src/address.c \
@@ -1122,10 +1122,10 @@ test_t_http_server_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_run_http_server_SOURCES = test/run_http_server.c \
+test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_util.c \
-	src/http_server.c src/http_server_send.c src/http_server_request.c \
-	src/http_server_read.c src/http_server_response.c \
+	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
+	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
 	src/address.c \
 	src/fifo-buffer.c \

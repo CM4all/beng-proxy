@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_server_internal.h"
+#include "http_server_internal.hxx"
 #include "direct.h"
 #include "header-writer.h"
 #include "format.h"
@@ -18,7 +18,7 @@ bool
 http_server_maybe_send_100_continue(struct http_server_connection *connection)
 {
     assert(http_server_connection_valid(connection));
-    assert(connection->request.read_state == READ_BODY);
+    assert(connection->request.read_state == http_server_connection::Request::BODY);
 
     if (!connection->request.expect_100_continue)
         return true;
@@ -83,7 +83,7 @@ http_server_response(const struct http_server_request *request,
         connection->score = HTTP_SERVER_ERROR;
     }
 
-    if (connection->request.read_state == READ_BODY &&
+    if (connection->request.read_state == http_server_connection::Request::BODY &&
         /* if we didn't send "100 Continue" yet, we should do it now;
            we don't know if the request body will be used, but at
            least it hasn't been closed yet */

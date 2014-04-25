@@ -25,7 +25,7 @@
 #include "strref-pool.h"
 #include "dpool.h"
 #include "pbuffer.hxx"
-#include "http_server.h"
+#include "http_server.hxx"
 #include "http_quark.h"
 #include "transformation.hxx"
 #include "expiry.h"
