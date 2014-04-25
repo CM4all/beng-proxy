@@ -281,13 +281,10 @@ http_server_feed_headers(struct http_server_connection *connection,
     if (connection->request.bytes_received >= 64 * 1024) {
         daemon_log(2, "http_server: too many request headers\n");
         http_server_connection_close(connection);
-        return false;
+        return BUFFERED_CLOSED;
     }
 
     const char *const buffer = _data, *const buffer_end = buffer + length;
-    if (buffer == NULL)
-        return true;
-
     const char *start = buffer, *end, *next = NULL;
     while ((end = memchr(start, '\n', buffer_end - start)) != NULL) {
         next = end + 1;
