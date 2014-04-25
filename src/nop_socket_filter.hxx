@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_NOP_SOCKET_FILTER_H
-#define BENG_PROXY_NOP_SOCKET_FILTER_H
+#ifndef BENG_PROXY_NOP_SOCKET_FILTER_HXX
+#define BENG_PROXY_NOP_SOCKET_FILTER_HXX
 
 struct pool;
 

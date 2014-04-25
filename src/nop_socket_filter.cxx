@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nop_socket_filter.h"
+#include "nop_socket_filter.hxx"
 #include "filtered_socket.h"
 #include "fifo-buffer.h"
 #include "fb_pool.h"
@@ -25,7 +25,7 @@ struct nop_socket_filter {
 static void
 nop_socket_filter_init(struct filtered_socket *s, void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     f->socket = s;
 }
@@ -33,7 +33,7 @@ nop_socket_filter_init(struct filtered_socket *s, void *ctx)
 static enum buffered_result
 nop_socket_filter_data(const void *data, size_t length, void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     return filtered_socket_invoke_data(f->socket, data, length);
 }
@@ -41,7 +41,7 @@ nop_socket_filter_data(const void *data, size_t length, void *ctx)
 static bool
 nop_socket_filter_is_empty(void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     return filtered_socket_internal_is_empty(f->socket);
 }
@@ -49,7 +49,7 @@ nop_socket_filter_is_empty(void *ctx)
 static bool
 nop_socket_filter_is_full(void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     return filtered_socket_internal_is_full(f->socket);
 }
@@ -57,7 +57,7 @@ nop_socket_filter_is_full(void *ctx)
 static size_t
 nop_socket_filter_available(void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     return filtered_socket_internal_available(f->socket);
 }
@@ -65,7 +65,7 @@ nop_socket_filter_available(void *ctx)
 static void
 nop_socket_filter_consumed(size_t nbytes, void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     filtered_socket_internal_consumed(f->socket, nbytes);
 }
@@ -73,7 +73,7 @@ nop_socket_filter_consumed(size_t nbytes, void *ctx)
 static bool
 nop_socket_filter_read(bool expect_more, void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     return filtered_socket_internal_read(f->socket, expect_more);
 }
@@ -81,7 +81,7 @@ nop_socket_filter_read(bool expect_more, void *ctx)
 static ssize_t
 nop_socket_filter_write(const void *data, size_t length, void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     return filtered_socket_internal_write(f->socket, data, length);
 }
@@ -89,7 +89,7 @@ nop_socket_filter_write(const void *data, size_t length, void *ctx)
 static bool
 nop_socket_filter_internal_write(void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     return filtered_socket_invoke_write(f->socket);
 }
@@ -97,7 +97,7 @@ nop_socket_filter_internal_write(void *ctx)
 static bool
 nop_socket_filter_closed(void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     return filtered_socket_invoke_closed(f->socket);
 }
@@ -105,7 +105,7 @@ nop_socket_filter_closed(void *ctx)
 static bool
 nop_socket_filter_remaining(size_t remaining, void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     return filtered_socket_invoke_remaining(f->socket, remaining);
 }
@@ -113,7 +113,7 @@ nop_socket_filter_remaining(size_t remaining, void *ctx)
 static void
 nop_socket_filter_end(void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     filtered_socket_invoke_end(f->socket);
 }
@@ -121,7 +121,7 @@ nop_socket_filter_end(void *ctx)
 static void
 nop_socket_filter_close(void *ctx)
 {
-    struct nop_socket_filter *f = ctx;
+    struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
     (void)f;
 }
@@ -150,6 +150,5 @@ const struct socket_filter nop_socket_filter = {
 void *
 nop_socket_filter_new(struct pool *pool)
 {
-    struct nop_socket_filter *n = p_malloc(pool, sizeof(*n));
-    return n;
+    return NewFromPool<struct nop_socket_filter>(pool);
 }
