@@ -177,7 +177,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/http_cache_info.cxx \
 	src/http_cache_memcached.cxx src/http_cache_memcached.hxx \
 	src/http_cache_rfc.cxx \
-	src/http_client.c src/http_client.h \
+	src/http_client.cxx src/http_client.hxx \
 	src/http_error.c src/http_error.h \
 	src/http_request.cxx src/http_request.hxx \
 	src/http_server_internal.h \
@@ -405,7 +405,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/http_server_request.c \
 	src/http_server_read.c \
 	src/http_server_response.c \
-	src/http_client.c \
+	src/http_client.cxx \
 	src/http_string.c \
 	src/http_util.c src/http_util.h \
 	src/header-writer.c \
@@ -1153,7 +1153,7 @@ test_run_http_server_LDADD = $(AM_LDADD) \
 
 test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/t_client.hxx \
-	src/http_client.c \
+	src/http_client.cxx \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.c \
 	src/cleanup_timer.c \
 	$(STOPWATCH_SRC) \
@@ -1623,7 +1623,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/thread_pool.c src/thread_queue.c src/thread_worker.c \
 	src/notify.c \
 	src/client-socket.c \
-	src/http_client.c src/http_body.c \
+	src/http_client.cxx src/http_body.c \
 	src/header-writer.c src/header-parser.c \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \

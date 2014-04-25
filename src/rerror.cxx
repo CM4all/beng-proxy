@@ -6,7 +6,7 @@
 
 #include "request.hxx"
 #include "translate_client.hxx"
-#include "http_client.h"
+#include "http_client.hxx"
 #include "ajp-client.h"
 #include "memcached_client.hxx"
 #include "cgi_quark.h"

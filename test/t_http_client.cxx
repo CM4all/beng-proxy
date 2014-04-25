@@ -3,7 +3,7 @@
 #define ENABLE_CLOSE_IGNORED_REQUEST_BODY
 
 #include "t_client.hxx"
-#include "http_client.h"
+#include "http_client.hxx"
 #include "header-writer.h"
 #include "growing-buffer.h"
 #include "fd-util.h"

@@ -7,7 +7,7 @@
 #include "util/Cast.hxx"
 
 #ifdef HAVE_EXPECT_100
-#include "http_client.h"
+#include "http_client.hxx"
 #endif
 
 #include <inline/compiler.h>

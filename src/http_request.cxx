@@ -11,7 +11,7 @@
 #include "tcp-balancer.h"
 #include "stock.h"
 #include "async.h"
-#include "http_client.h"
+#include "http_client.hxx"
 #include "http_address.h"
 #include "growing-buffer.h"
 #include "lease.h"

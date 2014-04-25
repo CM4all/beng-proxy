@@ -8,7 +8,7 @@
 #include "lhttp_stock.hxx"
 #include "lhttp_address.hxx"
 #include "http_response.h"
-#include "http_client.h"
+#include "http_client.hxx"
 #include "lease.h"
 #include "istream.h"
 #include "header-writer.h"
