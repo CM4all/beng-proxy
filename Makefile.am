@@ -167,7 +167,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/header-writer.c src/header-writer.h \
 	src/header_copy.cxx src/header_copy.hxx \
 	src/hostname.c src/hostname.h \
-	src/http_body.c src/http_body.h \
+	src/http_body.cxx src/http_body.hxx \
 	src/http_cache.cxx src/http_cache.h \
 	src/http_cache_choice.cxx src/http_cache_choice.hxx \
 	src/http_cache_internal.hxx \
@@ -399,7 +399,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/hashmap.c \
 	src/strmap.c \
 	src/cache.c \
-	src/http_body.c \
+	src/http_body.cxx \
 	src/http_server.cxx \
 	src/http_server_send.cxx \
 	src/http_server_request.cxx \
@@ -1109,7 +1109,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/istream-gb.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
-	src/http_body.c \
+	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/growing-buffer.c \
 	src/header-parser.c \
@@ -1136,7 +1136,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/istream-gb.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
-	src/http_body.c \
+	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/cleanup_timer.c \
 	src/shutdown_listener.c \
@@ -1162,7 +1162,7 @@ test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/header-writer.c \
 	src/istream-gb.c \
 	src/direct.c \
-	src/http_body.c src/header-parser.c \
+	src/http_body.cxx src/header-parser.c \
 	src/buffered_io.c src/fd_util.c src/fd-util.c \
 	src/tpool.c
 test_t_http_client_LDADD = $(AM_LDADD) \
@@ -1623,7 +1623,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/thread_pool.c src/thread_queue.c src/thread_worker.c \
 	src/notify.c \
 	src/client-socket.c \
-	src/http_client.cxx src/http_body.c \
+	src/http_client.cxx src/http_body.cxx \
 	src/header-writer.c src/header-parser.c \
 	src/ajp-client.c src/ajp-serialize.c \
 	src/ajp-headers.c src/ajp-protocol.c \

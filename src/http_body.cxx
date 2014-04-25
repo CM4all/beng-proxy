@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_body.h"
+#include "http_body.hxx"
 #include "http_error.h"
 #include "istream-internal.h"
 #include "filtered_socket.h"
@@ -81,7 +81,7 @@ http_body_try_direct(struct http_body_reader *body, int fd,
 {
     assert(fd >= 0);
     assert(istream_check_direct(&body->output, fd_type));
-    assert(body->output.handler->direct != NULL);
+    assert(body->output.handler->direct != nullptr);
 
     ssize_t nbytes = istream_invoke_direct(&body->output,
                                            fd_type, fd,
@@ -142,7 +142,7 @@ http_body_socket_eof(struct http_body_reader *body, size_t remaining)
 static void
 http_body_dechunker_eof(void *ctx)
 {
-    struct http_body_reader *body = ctx;
+    struct http_body_reader *body = (struct http_body_reader *)ctx;
 
     assert(body->chunked);
     assert(body->rest == HTTP_BODY_REST_CHUNKED);

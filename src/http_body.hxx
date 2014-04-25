@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_HTTP_BODY_H
-#define __BENG_HTTP_BODY_H
+#ifndef BENG_PROXY_HTTP_BODY_HXX
+#define BENG_PROXY_HTTP_BODY_HXX
 
 #include "istream.h"
 
@@ -35,18 +35,18 @@ struct http_body_reader {
 /**
  * The remaining size is unknown.
  */
-static const off_t HTTP_BODY_REST_UNKNOWN = -1;
+static constexpr off_t HTTP_BODY_REST_UNKNOWN = -1;
 
 /**
  * EOF chunk has been seen.
  */
-static const off_t HTTP_BODY_REST_EOF_CHUNK = -2;
+static constexpr off_t HTTP_BODY_REST_EOF_CHUNK = -2;
 
 /**
  * Chunked response.  Will flip to #HTTP_BODY_REST_EOF_CHUNK as soon
  * as the EOF chunk is seen.
  */
-static const off_t HTTP_BODY_REST_CHUNKED = -3;
+static constexpr off_t HTTP_BODY_REST_CHUNKED = -3;
 
 static inline struct istream *
 http_body_istream(struct http_body_reader *body)

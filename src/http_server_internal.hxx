@@ -9,7 +9,7 @@
 
 #include "http_server.hxx"
 #include "fifo-buffer.h"
-#include "http_body.h"
+#include "http_body.hxx"
 #include "async.h"
 #include "filtered_socket.h"
 
