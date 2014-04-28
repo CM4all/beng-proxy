@@ -1,3 +1,9 @@
+cm4all-beng-proxy (3.1.30) unstable; urgency=low
+
+  * 
+
+ --   
+
 cm4all-beng-proxy (3.1.29) unstable; urgency=low
 
   * http-server: fix potential crash with too many request headers
