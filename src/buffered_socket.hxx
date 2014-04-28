@@ -254,7 +254,7 @@ struct buffered_socket_handler {
  * - destroyed (after buffered_socket_destroy())
  */
 struct buffered_socket {
-    struct socket_wrapper base;
+    SocketWrapper base;
 
     const struct timeval *read_timeout, *write_timeout;
 

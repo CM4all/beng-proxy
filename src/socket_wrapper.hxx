@@ -40,7 +40,7 @@ struct socket_handler {
     bool (*timeout)(void *ctx);
 };
 
-struct socket_wrapper {
+struct SocketWrapper {
     struct pool *pool;
 
     int fd;
