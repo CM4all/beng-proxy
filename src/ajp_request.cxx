@@ -9,7 +9,7 @@
 #include "header-writer.h"
 #include "stock.h"
 #include "async.h"
-#include "ajp-client.h"
+#include "ajp_client.hxx"
 #include "http_address.h"
 #include "strmap.h"
 #include "lease.h"

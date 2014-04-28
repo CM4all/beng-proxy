@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_AJP_CLIENT_H
-#define __BENG_AJP_CLIENT_H
+#ifndef BENG_PROXY_AJP_CLIENT_HXX
+#define BENG_PROXY_AJP_CLIENT_HXX
 
 #include "istream-direct.h"
 
@@ -26,10 +26,6 @@ ajp_client_quark(void)
 {
     return g_quark_from_static_string("ajp_client");
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Sends a HTTP request on a socket to an AJPv13 server, and passes
@@ -66,9 +62,5 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                    const struct http_response_handler *handler,
                    void *ctx,
                    struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

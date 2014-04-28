@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ajp-headers.h"
+#include "ajp_headers.hxx"
 #include "ajp-protocol.h"
-#include "ajp-serialize.h"
+#include "ajp_serialize.hxx"
 #include "serialize.h"
 #include "growing-buffer.h"
 #include "strmap.h"
@@ -38,7 +38,7 @@ serialize_ajp_headers(struct growing_buffer *gb, struct strmap *headers)
     unsigned n = 0;
 
     strmap_rewind(headers);
-    while ((pair = strmap_next(headers)) != NULL) {
+    while ((pair = strmap_next(headers)) != nullptr) {
         if (serialize_ajp_header_name(gb, pair->key)) {
             serialize_ajp_string(gb, pair->value);
             ++n;
@@ -61,8 +61,8 @@ deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
             break;
 
         if (length >= AJP_HEADER_CODE_START) {
-            name = ajp_decode_header_name(length);
-            if (name == NULL) {
+            name = ajp_decode_header_name((enum ajp_header_code)length);
+            if (name == nullptr) {
                 /* unknown - ignore it, it's the best we can do now */
                 deserialize_ajp_string(input);
                 continue;
@@ -73,10 +73,10 @@ deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
         }
 
         value = deserialize_ajp_string(input);
-        if (value == NULL)
+        if (value == nullptr)
             break;
 
-        assert(name != NULL);
+        assert(name != nullptr);
 
         lname = p_strdup(pool, name);
         str_to_lower(lname);
@@ -98,8 +98,8 @@ deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
             break;
 
         if (length >= AJP_RESPONSE_HEADER_CODE_START) {
-            name = ajp_decode_response_header_name(length);
-            if (name == NULL) {
+            name = ajp_decode_response_header_name((enum ajp_response_header_code)length);
+            if (name == nullptr) {
                 /* unknown - ignore it, it's the best we can do now */
                 deserialize_ajp_string(input);
                 continue;
@@ -110,10 +110,10 @@ deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
         }
 
         value = deserialize_ajp_string(input);
-        if (value == NULL)
+        if (value == nullptr)
             break;
 
-        assert(name != NULL);
+        assert(name != nullptr);
 
         lname = p_strdup(pool, name);
         str_to_lower(lname);

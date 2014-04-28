@@ -4,10 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_AJP_SERIALIZE_H
-#define BENG_PROXY_AJP_SERIALIZE_H
+#ifndef BENG_PROXY_AJP_SERIALIZE_HXX
+#define BENG_PROXY_AJP_SERIALIZE_HXX
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct growing_buffer;

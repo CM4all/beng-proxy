@@ -91,12 +91,12 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/abort-unref.c src/abort-unref.h \
 	src/access-log.c src/access-log.h \
 	src/address.c src/address.h \
-	src/ajp-client.c src/ajp-client.h \
-	src/ajp-headers.c src/ajp-headers.h \
+	src/ajp_client.cxx src/ajp_client.hxx \
+	src/ajp_headers.cxx src/ajp_headers.hxx \
 	src/ajp-protocol.c src/ajp-protocol.h \
 	src/ajp-read.h \
 	src/ajp_request.cxx src/ajp_request.hxx \
-	src/ajp-serialize.c src/ajp-serialize.h \
+	src/ajp_serialize.cxx src/ajp_serialize.hxx \
 	src/ajp-util.h \
 	src/args.c src/args.h \
 	src/background.h \
@@ -1595,8 +1595,8 @@ test_t_fcgi_client_LDADD = $(AM_LDADD) \
 
 test_t_ajp_client_SOURCES = test/t_ajp_client.c \
 	src/t_client.hxx src/tio.hxx \
-	src/ajp-client.c src/ajp-serialize.c \
-	src/ajp-headers.c src/ajp-protocol.c \
+	src/ajp_client.cxx src/ajp_serialize.cxx \
+	src/ajp_headers.cxx src/ajp-protocol.c \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/cleanup_timer.c \
 	src/serialize.c \
@@ -1625,8 +1625,8 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/client-socket.c \
 	src/http_client.cxx src/http_body.cxx \
 	src/header-writer.c src/header-parser.c \
-	src/ajp-client.c src/ajp-serialize.c \
-	src/ajp-headers.c src/ajp-protocol.c \
+	src/ajp_client.cxx src/ajp_serialize.cxx \
+	src/ajp_headers.cxx src/ajp-protocol.c \
 	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
 	src/serialize.c \
 	src/cleanup_timer.c \

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ajp-serialize.h"
+#include "ajp_serialize.hxx"
 #include "serialize.h"
 #include "growing-buffer.h"
 #include "strref.h"
@@ -15,14 +15,15 @@
 void
 serialize_ajp_string_n(struct growing_buffer *gb, const char *s, size_t length)
 {
-    assert(gb != NULL);
-    assert(s != NULL);
+    assert(gb != nullptr);
+    assert(s != nullptr);
 
     if (length > 0xfffe)
         length = 0xfffe; /* XXX too long, cut off */
 
-    char *p = growing_buffer_write(gb, 2 + length + 1);
-    *(uint16_t*)p = htons(length);
+    void *v = growing_buffer_write(gb, 2 + length + 1);
+    char *p = (char *)v;
+    *(uint16_t *)v = htons(length);
     memcpy(p + 2, s, length);
     p[2 + length] = 0;
 }
@@ -30,11 +31,11 @@ serialize_ajp_string_n(struct growing_buffer *gb, const char *s, size_t length)
 void
 serialize_ajp_string(struct growing_buffer *gb, const char *s)
 {
-    if (s == NULL) {
-        /* 0xffff means NULL; this is not documented, I have
+    if (s == nullptr) {
+        /* 0xffff means nullptr; this is not documented, I have
            determined it from a wireshark dump */
 
-        uint16_t *p = growing_buffer_write(gb, 2);
+        uint16_t *p = (uint16_t *)growing_buffer_write(gb, 2);
         *p = 0xffff;
         return;
     }
@@ -51,9 +52,7 @@ serialize_ajp_integer(struct growing_buffer *gb, int i)
 void
 serialize_ajp_bool(struct growing_buffer *gb, bool b)
 {
-    bool *p;
-
-    p = growing_buffer_write(gb, sizeof(*p));
+    bool *p = (bool *)growing_buffer_write(gb, sizeof(*p));
     *p = b ? 1 : 0;
 }
 
@@ -62,15 +61,15 @@ deserialize_ajp_string(struct strref *input)
 {
     size_t length = deserialize_uint16(input);
     if (length == 0xffff)
-        /* 0xffff means NULL; this is not documented, I have
+        /* 0xffff means nullptr; this is not documented, I have
            determined it from a wireshark dump */
-        return NULL;
+        return nullptr;
 
     const char *value;
 
     if (input->length <= length || input->data[length] != 0) {
         strref_null(input);
-        return NULL;
+        return nullptr;
     }
 
     value = input->data;

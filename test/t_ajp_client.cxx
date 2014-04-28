@@ -3,7 +3,7 @@
 
 #include "tio.hxx"
 #include "t_client.hxx"
-#include "ajp-client.h"
+#include "ajp_client.hxx"
 #include "ajp-protocol.h"
 #include "http_response.h"
 #include "duplex.h"
