@@ -89,7 +89,7 @@ filtered_socket_bs_error(GError *error, void *ctx)
     s->handler->error(error, s->handler_ctx);
 }
 
-static const struct buffered_socket_handler filtered_socket_bs_handler = {
+static constexpr BufferedSocketHandler filtered_socket_bs_handler = {
     .data = filtered_socket_bs_data,
     .closed = filtered_socket_bs_closed,
     .remaining = filtered_socket_bs_remaining,
@@ -112,7 +112,7 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
                      const struct timeval *write_timeout,
                      const struct socket_filter *filter,
                      void *filter_ctx,
-                     const struct buffered_socket_handler *handler,
+                     const BufferedSocketHandler *handler,
                      void *handler_ctx)
 {
     s->filter = filter;

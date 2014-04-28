@@ -40,7 +40,7 @@ struct ajp_client {
     struct pool *pool;
 
     /* I/O */
-    struct buffered_socket socket;
+    BufferedSocket socket;
     struct lease_ref lease_ref;
 
     /* request */
@@ -823,7 +823,7 @@ ajp_client_socket_error(GError *error, void *ctx)
     ajp_client_abort_response(client, error);
 }
 
-static const struct buffered_socket_handler ajp_client_socket_handler = {
+static constexpr BufferedSocketHandler ajp_client_socket_handler = {
     .data = ajp_client_socket_data,
     .closed = ajp_client_socket_closed,
     .remaining = ajp_client_socket_remaining,

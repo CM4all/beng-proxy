@@ -25,7 +25,7 @@ struct lb_tcp {
 
     struct filtered_socket inbound;
 
-    struct buffered_socket outbound;
+    BufferedSocket outbound;
 
     struct async_operation_ref connect;
 
@@ -169,7 +169,7 @@ inbound_buffered_socket_error(GError *error, void *ctx)
     tcp->handler->gerror("Error", error, tcp->handler_ctx);
 }
 
-static constexpr struct buffered_socket_handler inbound_buffered_socket_handler = {
+static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
     inbound_buffered_socket_data,
     nullptr, // TODO: inbound_buffered_socket_direct,
     inbound_buffered_socket_closed,
@@ -290,7 +290,7 @@ outbound_buffered_socket_error(GError *error, void *ctx)
     tcp->handler->gerror("Error", error, tcp->handler_ctx);
 }
 
-static constexpr struct buffered_socket_handler outbound_buffered_socket_handler = {
+static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
     outbound_buffered_socket_data,
     nullptr, // TODO: outbound_buffered_socket_direct,
     outbound_buffered_socket_closed,

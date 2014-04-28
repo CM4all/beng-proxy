@@ -14,7 +14,7 @@
 #include <errno.h>
 
 static void
-buffered_socket_closed_prematurely(struct buffered_socket *s)
+buffered_socket_closed_prematurely(BufferedSocket *s)
 {
     GError *error =
         g_error_new_literal(buffered_socket_quark(), 0,
@@ -23,7 +23,7 @@ buffered_socket_closed_prematurely(struct buffered_socket *s)
 }
 
 static void
-buffered_socket_ended(struct buffered_socket *s)
+buffered_socket_ended(BufferedSocket *s)
 {
     assert(!buffered_socket_connected(s));
     assert(!s->ended);
@@ -39,7 +39,7 @@ buffered_socket_ended(struct buffered_socket *s)
 }
 
 static bool
-buffered_socket_input_empty(const struct buffered_socket *s)
+buffered_socket_input_empty(const BufferedSocket *s)
 {
     assert(s != nullptr);
     assert(!s->ended);
@@ -48,7 +48,7 @@ buffered_socket_input_empty(const struct buffered_socket *s)
 }
 
 static bool
-buffered_socket_input_full(const struct buffered_socket *s)
+buffered_socket_input_full(const BufferedSocket *s)
 {
     assert(s != nullptr);
     assert(!s->ended);
@@ -57,7 +57,7 @@ buffered_socket_input_full(const struct buffered_socket *s)
 }
 
 int
-buffered_socket_as_fd(struct buffered_socket *s)
+buffered_socket_as_fd(BufferedSocket *s)
 {
     if (!buffered_socket_input_empty(s))
         /* can switch to the raw socket descriptor only if the input
@@ -68,7 +68,7 @@ buffered_socket_as_fd(struct buffered_socket *s)
 }
 
 size_t
-buffered_socket_available(const struct buffered_socket *s)
+buffered_socket_available(const BufferedSocket *s)
 {
     assert(s != nullptr);
     assert(!s->ended);
@@ -79,7 +79,7 @@ buffered_socket_available(const struct buffered_socket *s)
 }
 
 void
-buffered_socket_consumed(struct buffered_socket *s, size_t nbytes)
+buffered_socket_consumed(BufferedSocket *s, size_t nbytes)
 {
     assert(s != nullptr);
     assert(!s->ended);
@@ -93,7 +93,7 @@ buffered_socket_consumed(struct buffered_socket *s, size_t nbytes)
  * #BUFFERED_AGAIN_OPTIONAL and #BUFFERED_AGAIN_EXPECT.
  */
 static enum buffered_result
-buffered_socket_invoke_data(struct buffered_socket *s)
+buffered_socket_invoke_data(BufferedSocket *s)
 {
     assert(!buffered_socket_input_empty(s));
 
@@ -135,7 +135,7 @@ buffered_socket_invoke_data(struct buffered_socket *s)
 }
 
 static bool
-buffered_socket_submit_from_buffer(struct buffered_socket *s)
+buffered_socket_submit_from_buffer(BufferedSocket *s)
 {
     if (buffered_socket_input_empty(s))
         return true;
@@ -210,7 +210,7 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
  * @return true if more data should be read from the socket
  */
 static bool
-buffered_socket_submit_direct(struct buffered_socket *s)
+buffered_socket_submit_direct(BufferedSocket *s)
 {
     assert(buffered_socket_connected(s));
     assert(buffered_socket_input_empty(s));
@@ -255,7 +255,7 @@ buffered_socket_submit_direct(struct buffered_socket *s)
 }
 
 static bool
-buffered_socket_fill_buffer(struct buffered_socket *s)
+buffered_socket_fill_buffer(BufferedSocket *s)
 {
     assert(buffered_socket_connected(s));
 
@@ -325,7 +325,7 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
 }
 
 static bool
-buffered_socket_try_read2(struct buffered_socket *s)
+buffered_socket_try_read2(BufferedSocket *s)
 {
     assert(buffered_socket_valid(s));
     assert(!s->destroyed);
@@ -373,7 +373,7 @@ buffered_socket_try_read2(struct buffered_socket *s)
 }
 
 static bool
-buffered_socket_try_read(struct buffered_socket *s)
+buffered_socket_try_read(BufferedSocket *s)
 {
     assert(buffered_socket_valid(s));
     assert(!s->destroyed);
@@ -406,7 +406,7 @@ buffered_socket_try_read(struct buffered_socket *s)
 static bool
 buffered_socket_wrapper_write(void *ctx)
 {
-    struct buffered_socket *s = (struct buffered_socket *)ctx;
+    BufferedSocket *s = (BufferedSocket *)ctx;
     assert(!s->destroyed);
     assert(!s->ended);
 
@@ -416,7 +416,7 @@ buffered_socket_wrapper_write(void *ctx)
 static bool
 buffered_socket_wrapper_read(void *ctx)
 {
-    struct buffered_socket *s = (struct buffered_socket *)ctx;
+    BufferedSocket *s = (BufferedSocket *)ctx;
     assert(!s->destroyed);
     assert(!s->ended);
 
@@ -426,7 +426,7 @@ buffered_socket_wrapper_read(void *ctx)
 static bool
 buffered_socket_wrapper_timeout(void *ctx)
 {
-    struct buffered_socket *s = (struct buffered_socket *)ctx;
+    BufferedSocket *s = (BufferedSocket *)ctx;
     assert(!s->destroyed);
     assert(!s->ended);
 
@@ -451,11 +451,11 @@ static const struct socket_handler buffered_socket_handler = {
  */
 
 void
-buffered_socket_init(struct buffered_socket *s, struct pool *pool,
+buffered_socket_init(BufferedSocket *s, struct pool *pool,
                      int fd, enum istream_direct fd_type,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
-                     const struct buffered_socket_handler *handler, void *ctx)
+                     const BufferedSocketHandler *handler, void *ctx)
 {
     assert(handler != nullptr);
     assert(handler->data != nullptr);
@@ -484,7 +484,7 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
 }
 
 void
-buffered_socket_destroy(struct buffered_socket *s)
+buffered_socket_destroy(BufferedSocket *s)
 {
     assert(!s->base.IsValid());
     assert(!s->destroyed);
@@ -500,7 +500,7 @@ buffered_socket_destroy(struct buffered_socket *s)
 }
 
 bool
-buffered_socket_empty(const struct buffered_socket *s)
+buffered_socket_empty(const BufferedSocket *s)
 {
     assert(s != nullptr);
     assert(!s->ended);
@@ -509,13 +509,13 @@ buffered_socket_empty(const struct buffered_socket *s)
 }
 
 bool
-buffered_socket_full(const struct buffered_socket *s)
+buffered_socket_full(const BufferedSocket *s)
 {
     return buffered_socket_input_full(s);
 }
 
 bool
-buffered_socket_read(struct buffered_socket *s, bool expect_more)
+buffered_socket_read(BufferedSocket *s, bool expect_more)
 {
     assert(!s->reading);
     assert(!s->destroyed);
@@ -535,7 +535,7 @@ buffered_socket_read(struct buffered_socket *s, bool expect_more)
 }
 
 ssize_t
-buffered_socket_write(struct buffered_socket *s,
+buffered_socket_write(BufferedSocket *s,
                       const void *data, size_t length)
 {
     ssize_t nbytes = s->base.Write(data, length);
@@ -556,7 +556,7 @@ buffered_socket_write(struct buffered_socket *s,
 }
 
 ssize_t
-buffered_socket_write_from(struct buffered_socket *s,
+buffered_socket_write_from(BufferedSocket *s,
                            int fd, enum istream_direct fd_type,
                            size_t length)
 {

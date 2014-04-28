@@ -139,7 +139,7 @@ enum write_result {
     WRITE_BROKEN = -4,
 };
 
-struct buffered_socket_handler {
+struct BufferedSocketHandler {
     /**
      * Data has been read from the socket into the input buffer.  Call
      * buffered_socket_consumed() each time you consume data from the
@@ -253,12 +253,12 @@ struct buffered_socket_handler {
  *
  * - destroyed (after buffered_socket_destroy())
  */
-struct buffered_socket {
+struct BufferedSocket {
     SocketWrapper base;
 
     const struct timeval *read_timeout, *write_timeout;
 
-    const struct buffered_socket_handler *handler;
+    const BufferedSocketHandler *handler;
     void *handler_ctx;
 
     struct fifo_buffer *input;
@@ -294,18 +294,18 @@ buffered_socket_quark(void)
 }
 
 void
-buffered_socket_init(struct buffered_socket *s, struct pool *pool,
+buffered_socket_init(struct BufferedSocket *s, struct pool *pool,
                      int fd, enum istream_direct fd_type,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
-                     const struct buffered_socket_handler *handler, void *ctx);
+                     const BufferedSocketHandler *handler, void *ctx);
 
 /**
  * Close the physical socket, but do not destroy the input buffer.  To
  * do the latter, call buffered_socket_destroy().
  */
 static inline void
-buffered_socket_close(struct buffered_socket *s)
+buffered_socket_close(struct BufferedSocket *s)
 {
     assert(!s->ended);
     assert(!s->destroyed);
@@ -319,7 +319,7 @@ buffered_socket_close(struct buffered_socket *s)
  * scheduling it for reuse).
  */
 static inline void
-buffered_socket_abandon(struct buffered_socket *s)
+buffered_socket_abandon(struct BufferedSocket *s)
 {
     assert(!s->ended);
     assert(!s->destroyed);
@@ -333,14 +333,14 @@ buffered_socket_abandon(struct buffered_socket *s)
  * buffered_socket_abandon().
  */
 void
-buffered_socket_destroy(struct buffered_socket *s);
+buffered_socket_destroy(struct BufferedSocket *s);
 
 /**
  * Returns the socket descriptor and calls buffered_socket_abandon().
  * Returns -1 if the input buffer is not empty.
  */
 int
-buffered_socket_as_fd(struct buffered_socket *s);
+buffered_socket_as_fd(struct BufferedSocket *s);
 
 /**
  * Is the socket still connected?  This does not actually check
@@ -348,7 +348,7 @@ buffered_socket_as_fd(struct buffered_socket *s);
  * closed.
  */
 static inline bool
-buffered_socket_connected(const struct buffered_socket *s)
+buffered_socket_connected(const struct BufferedSocket *s)
 {
     assert(s != nullptr);
     assert(!s->destroyed);
@@ -361,7 +361,7 @@ buffered_socket_connected(const struct buffered_socket *s)
  * the input buffer may still have data.
  */
 static inline bool
-buffered_socket_valid(const struct buffered_socket *s)
+buffered_socket_valid(const struct BufferedSocket *s)
 {
     assert(s != nullptr);
 
@@ -377,21 +377,21 @@ buffered_socket_valid(const struct buffered_socket *s)
  */
 gcc_pure
 bool
-buffered_socket_empty(const struct buffered_socket *s);
+buffered_socket_empty(const struct BufferedSocket *s);
 
 /**
  * Is the input buffer full?
  */
 gcc_pure
 bool
-buffered_socket_full(const struct buffered_socket *s);
+buffered_socket_full(const struct BufferedSocket *s);
 
 /**
  * Returns the number of bytes in the input buffer.
  */
 gcc_pure
 size_t
-buffered_socket_available(const struct buffered_socket *s);
+buffered_socket_available(const struct BufferedSocket *s);
 
 /**
  * Mark the specified number of bytes of the input buffer as
@@ -400,13 +400,13 @@ buffered_socket_available(const struct buffered_socket *s);
  * repeatedly.
  */
 void
-buffered_socket_consumed(struct buffered_socket *s, size_t nbytes);
+buffered_socket_consumed(struct BufferedSocket *s, size_t nbytes);
 
 /**
  * Returns the istream_direct mask for splicing data into this socket.
  */
 static inline enum istream_direct
-buffered_socket_direct_mask(const struct buffered_socket *s)
+buffered_socket_direct_mask(const struct BufferedSocket *s)
 {
     assert(s != nullptr);
     assert(!s->ended);
@@ -427,10 +427,10 @@ buffered_socket_direct_mask(const struct buffered_socket *s)
  * existing expect_more state is unmodified
  */
 bool
-buffered_socket_read(struct buffered_socket *s, bool expect_more);
+buffered_socket_read(struct BufferedSocket *s, bool expect_more);
 
 static inline void
-buffered_socket_set_cork(struct buffered_socket *s, bool cork)
+buffered_socket_set_cork(struct BufferedSocket *s, bool cork)
 {
     s->base.SetCork(cork);
 }
@@ -442,7 +442,7 @@ buffered_socket_set_cork(struct buffered_socket *s, bool cork)
  * code
  */
 ssize_t
-buffered_socket_write(struct buffered_socket *s,
+buffered_socket_write(struct BufferedSocket *s,
                       const void *data, size_t length);
 
 /**
@@ -452,13 +452,13 @@ buffered_socket_write(struct buffered_socket *s,
  * code
  */
 ssize_t
-buffered_socket_write_from(struct buffered_socket *s,
+buffered_socket_write_from(struct BufferedSocket *s,
                            int fd, enum istream_direct fd_type,
                            size_t length);
 
 gcc_pure
 static inline bool
-buffered_socket_ready_for_writing(const struct buffered_socket *s)
+buffered_socket_ready_for_writing(const struct BufferedSocket *s)
 {
     assert(!s->destroyed);
 
@@ -466,7 +466,7 @@ buffered_socket_ready_for_writing(const struct buffered_socket *s)
 }
 
 static inline void
-buffered_socket_schedule_read_timeout(struct buffered_socket *s,
+buffered_socket_schedule_read_timeout(struct BufferedSocket *s,
                                       bool expect_more,
                                       const struct timeval *timeout)
 {
@@ -488,14 +488,14 @@ buffered_socket_schedule_read_timeout(struct buffered_socket *s,
  * you should call buffered_socket_read() to enable the read timeout.
  */
 static inline void
-buffered_socket_schedule_read_no_timeout(struct buffered_socket *s,
+buffered_socket_schedule_read_no_timeout(struct BufferedSocket *s,
                                          bool expect_more)
 {
     buffered_socket_schedule_read_timeout(s, expect_more, nullptr);
 }
 
 static inline void
-buffered_socket_schedule_write(struct buffered_socket *s)
+buffered_socket_schedule_write(struct BufferedSocket *s)
 {
     assert(!s->ended);
     assert(!s->destroyed);
@@ -504,7 +504,7 @@ buffered_socket_schedule_write(struct buffered_socket *s)
 }
 
 static inline void
-buffered_socket_unschedule_write(struct buffered_socket *s)
+buffered_socket_unschedule_write(struct BufferedSocket *s)
 {
     assert(!s->ended);
     assert(!s->destroyed);

@@ -34,7 +34,7 @@ struct memcached_client {
     struct pool *pool, *caller_pool;
 
     /* I/O */
-    struct buffered_socket socket;
+    BufferedSocket socket;
     struct lease_ref lease_ref;
 
     /* request */
@@ -646,7 +646,7 @@ memcached_client_socket_error(GError *error, void *ctx)
     memcached_connection_abort_response(client, error);
 }
 
-static const struct buffered_socket_handler memcached_client_socket_handler = {
+static constexpr BufferedSocketHandler memcached_client_socket_handler = {
     .data = memcached_client_socket_data,
     .direct = memcached_client_socket_direct,
     .closed = memcached_client_socket_closed,

@@ -69,7 +69,7 @@ struct TranslateClient {
 
     struct stopwatch *stopwatch;
 
-    struct buffered_socket socket;
+    BufferedSocket socket;
     struct lease_ref lease_ref;
 
     struct {
@@ -2828,7 +2828,7 @@ translate_client_socket_error(GError *error, void *ctx)
     translate_client_abort(client, error);
 }
 
-static const struct buffered_socket_handler translate_client_socket_handler = {
+static constexpr BufferedSocketHandler translate_client_socket_handler = {
     .data = translate_client_socket_data,
     .closed = translate_client_socket_closed,
     .write = translate_client_socket_write,

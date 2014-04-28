@@ -54,7 +54,7 @@ struct fcgi_client {
 
     struct pool *pool, *caller_pool;
 
-    struct buffered_socket socket;
+    BufferedSocket socket;
 
     struct lease_ref lease_ref;
 
@@ -845,7 +845,7 @@ fcgi_client_socket_error(GError *error, void *ctx)
     fcgi_client_abort_response(client, error);
 }
 
-static const struct buffered_socket_handler fcgi_client_socket_handler = {
+static constexpr BufferedSocketHandler fcgi_client_socket_handler = {
     .data = fcgi_client_socket_data,
     .closed = fcgi_client_socket_closed,
     .remaining = fcgi_client_socket_remaining,

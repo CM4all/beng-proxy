@@ -95,7 +95,7 @@ struct socket_filter {
  * A wrapper for #buffered_socket that can filter input and output.
  */
 struct filtered_socket {
-    struct buffered_socket base;
+    BufferedSocket base;
 
 #ifndef NDEBUG
     bool ended;
@@ -108,7 +108,7 @@ struct filtered_socket {
     const struct socket_filter *filter;
     void *filter_ctx;
 
-    const struct buffered_socket_handler *handler;
+    const BufferedSocketHandler *handler;
     void *handler_ctx;
 
     /**
@@ -137,7 +137,7 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
                      const struct timeval *write_timeout,
                      const struct socket_filter *filter,
                      void *filter_ctx,
-                     const struct buffered_socket_handler *handler,
+                     const BufferedSocketHandler *handler,
                      void *handler_ctx);
 
 static inline bool

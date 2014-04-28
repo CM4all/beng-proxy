@@ -986,7 +986,7 @@ http_client_socket_error(GError *error, void *ctx)
     http_client_abort_response(client, error);
 }
 
-static const struct buffered_socket_handler http_client_socket_handler = {
+static constexpr BufferedSocketHandler http_client_socket_handler = {
     .data = http_client_socket_data,
     .direct = http_client_socket_direct,
     .closed = http_client_socket_closed,

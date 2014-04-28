@@ -152,7 +152,7 @@ http_server_socket_error(GError *error, void *ctx)
     http_server_error(connection, error);
 }
 
-static const struct buffered_socket_handler http_server_socket_handler = {
+static constexpr BufferedSocketHandler http_server_socket_handler = {
     .data = http_server_socket_data,
     .direct = http_server_socket_direct,
     .closed = http_server_socket_closed,
