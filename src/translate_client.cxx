@@ -1302,6 +1302,10 @@ translate_handle_packet(TranslateClient *client,
                    client->file_address->expand_path == nullptr) {
             client->file_address->expand_path = payload;
             return true;
+        } else if (client->http_address != NULL &&
+                   client->http_address->expand_path == NULL) {
+            client->http_address->expand_path = payload;
+            return true;
         } else {
             translate_client_error(client,
                                    "misplaced EXPAND_PATH packet");
