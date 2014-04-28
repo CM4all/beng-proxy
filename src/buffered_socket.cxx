@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "buffered_socket.h"
+#include "buffered_socket.hxx"
 #include "fifo-buffer.h"
 #include "fb_pool.h"
 #include "gerrno.h"
@@ -32,7 +32,7 @@ buffered_socket_ended(struct buffered_socket *s)
     s->ended = true;
 #endif
 
-    if (s->handler->end == NULL)
+    if (s->handler->end == nullptr)
         buffered_socket_closed_prematurely(s);
     else
         s->handler->end(s->handler_ctx);
@@ -41,19 +41,19 @@ buffered_socket_ended(struct buffered_socket *s)
 static bool
 buffered_socket_input_empty(const struct buffered_socket *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
     assert(!s->ended);
 
-    return s->input == NULL || fifo_buffer_empty(s->input);
+    return s->input == nullptr || fifo_buffer_empty(s->input);
 }
 
 static bool
 buffered_socket_input_full(const struct buffered_socket *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
     assert(!s->ended);
 
-    return s->input != NULL && fifo_buffer_full(s->input);
+    return s->input != nullptr && fifo_buffer_full(s->input);
 }
 
 int
@@ -70,10 +70,10 @@ buffered_socket_as_fd(struct buffered_socket *s)
 size_t
 buffered_socket_available(const struct buffered_socket *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
     assert(!s->ended);
 
-    return s->input != NULL
+    return s->input != nullptr
         ? fifo_buffer_available(s->input)
         : 0;
 }
@@ -81,9 +81,9 @@ buffered_socket_available(const struct buffered_socket *s)
 void
 buffered_socket_consumed(struct buffered_socket *s, size_t nbytes)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
     assert(!s->ended);
-    assert(s->input != NULL);
+    assert(s->input != nullptr);
 
     fifo_buffer_consume(s->input, nbytes);
 }
@@ -103,7 +103,7 @@ buffered_socket_invoke_data(struct buffered_socket *s)
         size_t length;
         const void *data = fifo_buffer_read(s->input, &length);
         data = fifo_buffer_read(s->input, &length);
-        if (data == NULL)
+        if (data == nullptr)
             return s->expect_more || local_expect_more
                 ? BUFFERED_MORE
                 : BUFFERED_OK;
@@ -260,7 +260,7 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
     assert(buffered_socket_connected(s));
 
     struct fifo_buffer *buffer = s->input;
-    if (buffer == NULL)
+    if (buffer == nullptr)
         buffer = s->input = fb_pool_alloc();
 
     ssize_t nbytes = socket_wrapper_read_to_buffer(&s->base, buffer, INT_MAX);
@@ -280,12 +280,12 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
             return false;
         }
 
-        assert(s->handler->closed != NULL);
+        assert(s->handler->closed != nullptr);
 
         const size_t remaining = fifo_buffer_available(buffer);
 
         if (!s->handler->closed(s->handler_ctx) ||
-            (s->handler->remaining != NULL &&
+            (s->handler->remaining != nullptr &&
              !s->handler->remaining(remaining, s->handler_ctx)))
             return false;
 
@@ -406,7 +406,7 @@ buffered_socket_try_read(struct buffered_socket *s)
 static bool
 buffered_socket_wrapper_write(void *ctx)
 {
-    struct buffered_socket *s = ctx;
+    struct buffered_socket *s = (struct buffered_socket *)ctx;
     assert(!s->destroyed);
     assert(!s->ended);
 
@@ -416,7 +416,7 @@ buffered_socket_wrapper_write(void *ctx)
 static bool
 buffered_socket_wrapper_read(void *ctx)
 {
-    struct buffered_socket *s = ctx;
+    struct buffered_socket *s = (struct buffered_socket *)ctx;
     assert(!s->destroyed);
     assert(!s->ended);
 
@@ -426,11 +426,11 @@ buffered_socket_wrapper_read(void *ctx)
 static bool
 buffered_socket_wrapper_timeout(void *ctx)
 {
-    struct buffered_socket *s = ctx;
+    struct buffered_socket *s = (struct buffered_socket *)ctx;
     assert(!s->destroyed);
     assert(!s->ended);
 
-    if (s->handler->timeout != NULL)
+    if (s->handler->timeout != nullptr)
         return s->handler->timeout(s->handler_ctx);
 
     s->handler->error(g_error_new_literal(buffered_socket_quark(), 0,
@@ -457,11 +457,11 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
                      const struct timeval *write_timeout,
                      const struct buffered_socket_handler *handler, void *ctx)
 {
-    assert(handler != NULL);
-    assert(handler->data != NULL);
+    assert(handler != nullptr);
+    assert(handler->data != nullptr);
     /* handler method closed() is optional */
-    assert(handler->write != NULL);
-    assert(handler->error != NULL);
+    assert(handler->write != nullptr);
+    assert(handler->error != nullptr);
 
     socket_wrapper_init(&s->base, pool, fd, fd_type,
                         &buffered_socket_handler, s);
@@ -471,7 +471,7 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
 
     s->handler = handler;
     s->handler_ctx = ctx;
-    s->input = NULL;
+    s->input = nullptr;
     s->direct = false;
     s->expect_more = false;
 
@@ -479,7 +479,7 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
     s->reading = false;
     s->ended = false;
     s->destroyed = false;
-    s->last_buffered_result = -1;
+    s->last_buffered_result = (buffered_result)-1;
 #endif
 }
 
@@ -489,9 +489,9 @@ buffered_socket_destroy(struct buffered_socket *s)
     assert(!socket_wrapper_valid(&s->base));
     assert(!s->destroyed);
 
-    if (s->input != NULL) {
+    if (s->input != nullptr) {
         fb_pool_free(s->input);
-        s->input = NULL;
+        s->input = nullptr;
     }
 
 #ifndef NDEBUG
@@ -502,10 +502,10 @@ buffered_socket_destroy(struct buffered_socket *s)
 bool
 buffered_socket_empty(const struct buffered_socket *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
     assert(!s->ended);
 
-    return s->input == NULL || fifo_buffer_empty(s->input);
+    return s->input == nullptr || fifo_buffer_empty(s->input);
 }
 
 bool
@@ -545,7 +545,7 @@ buffered_socket_write(struct buffered_socket *s,
             buffered_socket_schedule_write(s);
             return WRITE_BLOCKING;
         } else if ((errno == EPIPE || errno == ECONNRESET) &&
-                   s->handler->broken != NULL &&
+                   s->handler->broken != nullptr &&
                    s->handler->broken(s->handler_ctx)) {
             buffered_socket_unschedule_write(s);
             return WRITE_BROKEN;

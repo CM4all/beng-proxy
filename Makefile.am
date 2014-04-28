@@ -224,7 +224,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/sink-gstring.h \
 	src/sink-impl.h \
 	src/socket_wrapper.c src/socket_wrapper.h \
-	src/buffered_socket.c src/buffered_socket.h \
+	src/buffered_socket.cxx src/buffered_socket.hxx \
 	src/filtered_socket.cxx src/filtered_socket.hxx \
 	src/nop_socket_filter.cxx src/nop_socket_filter.hxx \
 	src/static-file.c src/static-file.h \
@@ -447,7 +447,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/ssl_factory.cxx \
 	src/ssl_filter.hxx \
 	src/ssl_filter.cxx \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
+	src/socket_wrapper.c src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/nop_thread_socket_filter.cxx src/nop_thread_socket_filter.hxx \
 	src/ping.c src/ping.h \
@@ -1099,7 +1099,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_util.c \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
+	src/socket_wrapper.c src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/cleanup_timer.c \
 	src/address.c \
 	src/fifo-buffer.c \
@@ -1126,7 +1126,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_util.c \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
+	src/socket_wrapper.c src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/duplex.c \
@@ -1154,7 +1154,7 @@ test_run_http_server_LDADD = $(AM_LDADD) \
 test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/t_client.hxx \
 	src/http_client.cxx \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
+	src/socket_wrapper.c src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/cleanup_timer.c \
 	$(STOPWATCH_SRC) \
 	src/strmap.c src/hashmap.c \
@@ -1379,7 +1379,7 @@ test_format_http_date_SOURCES = test/format-http-date.c
 test_format_http_date_LDADD = $(AM_LDADD) libutil.a
 
 test_request_translation_SOURCES = test/request_translation.cxx \
-	src/socket_wrapper.c src/buffered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.cxx \
 	src/fifo-buffer.c src/buffered_io.c src/direct.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/translate_client.cxx src/tstock.cxx src/growing-buffer.c src/gb-io.c \
@@ -1576,7 +1576,7 @@ endif
 
 test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/fcgi_client.cxx src/fcgi_serialize.cxx \
-	src/socket_wrapper.c src/buffered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/cleanup_timer.c \
 	src/strmap.c src/hashmap.c \
@@ -1597,7 +1597,7 @@ test_t_ajp_client_SOURCES = test/t_ajp_client.c \
 	src/t_client.hxx src/tio.hxx \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
 	src/ajp_headers.cxx src/ajp-protocol.c \
-	src/socket_wrapper.c src/buffered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.cxx \
 	src/cleanup_timer.c \
 	src/serialize.c \
 	src/buffered_io.c src/fifo-buffer.c \
@@ -1627,7 +1627,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/header-writer.c src/header-parser.c \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
 	src/ajp_headers.cxx src/ajp-protocol.c \
-	src/socket_wrapper.c src/buffered_socket.c src/filtered_socket.cxx \
+	src/socket_wrapper.c src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/serialize.c \
 	src/cleanup_timer.c \
 	src/buffered_io.c src/fifo-buffer.c \
@@ -1679,7 +1679,7 @@ test_run_http_cache_LDADD = $(AM_LDADD) \
 test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
-	src/socket_wrapper.c src/buffered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.cxx \
 	src/stock.c src/pipe-stock.c \
 	src/fd-util.c src/fd_util.c \
 	src/cleanup_timer.c \
@@ -1693,7 +1693,7 @@ test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
-	src/socket_wrapper.c src/buffered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/cleanup_timer.c \
 	src/direct.c \
@@ -1711,7 +1711,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/address_list.c src/address_resolver.c \
 	src/failure.c src/bulldog.c src/balancer.c \
 	src/tcp-stock.c src/tcp-balancer.c \
-	src/socket_wrapper.c src/buffered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.cxx \
 	src/direct.c \
 	src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
@@ -1739,7 +1739,7 @@ test_fake_memcached_server_SOURCES = test/fake-memcached-server.c
 
 test_t_memcached_client_SOURCES = test/t_memcached_client.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
-	src/socket_wrapper.c src/buffered_socket.c \
+	src/socket_wrapper.c src/buffered_socket.cxx \
 	src/cleanup_timer.c \
 	src/direct.c \
 	src/fifo-buffer.c src/buffered_io.c \

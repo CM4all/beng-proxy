@@ -7,7 +7,7 @@
 #include "ajp_client.hxx"
 #include "ajp_headers.hxx"
 #include "ajp_serialize.hxx"
-#include "buffered_socket.h"
+#include "buffered_socket.hxx"
 #include "http_response.h"
 #include "async.h"
 #include "growing-buffer.h"

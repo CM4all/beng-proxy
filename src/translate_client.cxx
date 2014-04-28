@@ -7,7 +7,7 @@
 #include "translate_client.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "buffered_socket.h"
+#include "buffered_socket.hxx"
 #include "transformation.hxx"
 #include "widget_class.hxx"
 #include "please.h"

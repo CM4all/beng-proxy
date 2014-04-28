@@ -6,7 +6,7 @@
 
 #include "memcached_client.hxx"
 #include "memcached_packet.hxx"
-#include "buffered_socket.h"
+#include "buffered_socket.hxx"
 #include "please.h"
 #include "async.h"
 #include "pevent.h"

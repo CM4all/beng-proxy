@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_BUFFERED_SOCKET_H
-#define BENG_PROXY_BUFFERED_SOCKET_H
+#ifndef BENG_PROXY_BUFFERED_SOCKET_HXX
+#define BENG_PROXY_BUFFERED_SOCKET_HXX
 
 #include "socket_wrapper.h"
 
@@ -293,10 +293,6 @@ buffered_socket_quark(void)
     return g_quark_from_static_string("buffered_socket");
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
 buffered_socket_init(struct buffered_socket *s, struct pool *pool,
                      int fd, enum istream_direct fd_type,
@@ -354,7 +350,7 @@ buffered_socket_as_fd(struct buffered_socket *s);
 static inline bool
 buffered_socket_connected(const struct buffered_socket *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
     assert(!s->destroyed);
 
     return socket_wrapper_valid(&s->base);
@@ -367,13 +363,13 @@ buffered_socket_connected(const struct buffered_socket *s)
 static inline bool
 buffered_socket_valid(const struct buffered_socket *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
 
     /* the object is valid if there is either a valid socket or a
        buffer that may have more data; in the latter case, the socket
        may be closed already because no more data is needed from
        there */
-    return socket_wrapper_valid(&s->base) || s->input != NULL;
+    return socket_wrapper_valid(&s->base) || s->input != nullptr;
 }
 
 /**
@@ -412,7 +408,7 @@ buffered_socket_consumed(struct buffered_socket *s, size_t nbytes);
 static inline enum istream_direct
 buffered_socket_direct_mask(const struct buffered_socket *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
     assert(!s->ended);
     assert(!s->destroyed);
 
@@ -495,7 +491,7 @@ static inline void
 buffered_socket_schedule_read_no_timeout(struct buffered_socket *s,
                                          bool expect_more)
 {
-    buffered_socket_schedule_read_timeout(s, expect_more, NULL);
+    buffered_socket_schedule_read_timeout(s, expect_more, nullptr);
 }
 
 static inline void
@@ -515,9 +511,5 @@ buffered_socket_unschedule_write(struct buffered_socket *s)
 
     socket_wrapper_unschedule_write(&s->base);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
