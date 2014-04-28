@@ -384,7 +384,9 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
 
         rwu->mode = mode;
         rwu->stateful = stateful;
-        rwu->view = view;
+        rwu->view = view != NULL
+            ? (*view != 0 ? p_strdup(pool, view) : "")
+            : NULL;
         rwu->escape = escape;
         rwu->delayed = istream_delayed_new(pool);
 
