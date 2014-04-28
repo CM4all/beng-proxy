@@ -859,6 +859,10 @@ translate_handle_packet(struct translate_client *client,
                    client->file_address->expand_path == NULL) {
             client->file_address->expand_path = payload;
             return true;
+        } else if (client->http_address != NULL &&
+                   client->http_address->expand_path == NULL) {
+            client->http_address->expand_path = payload;
+            return true;
         } else {
             translate_client_error(client,
                                    "misplaced TRANSLATE_EXPAND_PATH packet");
