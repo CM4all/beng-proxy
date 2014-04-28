@@ -40,7 +40,7 @@ struct socket_handler {
     bool (*timeout)(void *ctx);
 };
 
-struct SocketWrapper {
+class SocketWrapper {
     struct pool *pool;
 
     int fd;
@@ -53,6 +53,7 @@ struct SocketWrapper {
     const struct socket_handler *handler;
     void *handler_ctx;
 
+public:
     void Init(struct pool *_pool,
               int _fd, enum istream_direct _fd_type,
               const struct socket_handler *_handler, void *_ctx);
@@ -71,8 +72,20 @@ struct SocketWrapper {
      */
     int AsFD();
 
+    struct pool *GetPool() {
+        return pool;
+    }
+
     bool IsValid() const {
         return fd >= 0;
+    }
+
+    int GetFD() const {
+        return fd;
+    }
+
+    istream_direct GetType() const {
+        return fd_type;
     }
 
     /**

@@ -110,7 +110,7 @@ buffered_socket_invoke_data(struct buffered_socket *s)
 
 #ifndef NDEBUG
         struct pool_notify_state notify;
-        pool_notify(s->base.pool, &notify);
+        pool_notify(s->base.GetPool(), &notify);
 #endif
 
         enum buffered_result result =
@@ -219,7 +219,7 @@ buffered_socket_submit_direct(struct buffered_socket *s)
     s->expect_more = false;
 
     const enum direct_result result =
-        s->handler->direct(s->base.fd, s->base.fd_type, s->handler_ctx);
+        s->handler->direct(s->base.GetFD(), s->base.GetType(), s->handler_ctx);
     switch (result) {
     case DIRECT_OK:
         /* some data was transferred: refresh the read timeout */
@@ -382,7 +382,7 @@ buffered_socket_try_read(struct buffered_socket *s)
 
 #ifndef NDEBUG
     struct pool_notify_state notify;
-    pool_notify(s->base.pool, &notify);
+    pool_notify(s->base.GetPool(), &notify);
     s->reading = true;
 #endif
 

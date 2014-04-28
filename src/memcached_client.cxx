@@ -97,7 +97,7 @@ memcached_client_check_direct(const struct memcached_client *client)
     assert(client->response.read_state == memcached_client::ReadState::VALUE);
 
     return istream_check_direct(&client->response.value,
-                                client->socket.base.fd_type);
+                                client->socket.base.GetType());
 }
 
 static void

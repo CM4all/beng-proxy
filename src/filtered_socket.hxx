@@ -150,7 +150,7 @@ static inline enum istream_direct
 filtered_socket_fd_type(const struct filtered_socket *s)
 {
     return s->filter == nullptr
-        ? s->base.base.fd_type
+        ? s->base.base.GetType()
         /* can't do splice() with a filter */
         : ISTREAM_NONE;
 }
