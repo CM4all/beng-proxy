@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_AJP_REQUEST_H
-#define __BENG_AJP_REQUEST_H
+#ifndef BENG_PROXY_AJP_REQUEST_HXX
+#define BENG_PROXY_AJP_REQUEST_HXX
 
 #include <http/method.h>
 
@@ -16,10 +16,6 @@ struct http_address;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @param session_sticky a portion of the session id that is used to
@@ -38,9 +34,5 @@ ajp_stock_request(struct pool *pool,
                   const struct http_response_handler *handler,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -95,7 +95,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/ajp-headers.c src/ajp-headers.h \
 	src/ajp-protocol.c src/ajp-protocol.h \
 	src/ajp-read.h \
-	src/ajp-request.c src/ajp-request.h \
+	src/ajp_request.cxx src/ajp_request.hxx \
 	src/ajp-serialize.c src/ajp-serialize.h \
 	src/ajp-util.h \
 	src/args.c src/args.h \

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ajp-request.h"
+#include "ajp_request.hxx"
 #include "http_response.h"
 #include "header-writer.h"
 #include "stock.h"
@@ -53,7 +53,7 @@ struct ajp_request {
 static void
 ajp_socket_release(bool reuse, void *ctx)
 {
-    struct ajp_request *hr = ctx;
+    struct ajp_request *hr = (struct ajp_request *)ctx;
 
     tcp_balancer_put(hr->tcp_balancer, hr->stock_item, !reuse);
 }
@@ -71,7 +71,7 @@ static const struct lease ajp_socket_lease = {
 static void
 ajp_request_stock_ready(struct stock_item *item, void *ctx)
 {
-    struct ajp_request *hr = ctx;
+    struct ajp_request *hr = (struct ajp_request *)ctx;
 
     hr->stock_item = item;
 
@@ -91,11 +91,11 @@ ajp_request_stock_ready(struct stock_item *item, void *ctx)
 static void
 ajp_request_stock_error(GError *error, void *ctx)
 {
-    struct ajp_request *hr = ctx;
+    struct ajp_request *hr = (struct ajp_request *)ctx;
 
     http_response_handler_invoke_abort(&hr->handler, error);
 
-    if (hr->body != NULL)
+    if (hr->body != nullptr)
         istream_close_unused(hr->body);
 }
 
@@ -125,15 +125,13 @@ ajp_stock_request(struct pool *pool,
                   void *handler_ctx,
                   struct async_operation_ref *async_ref)
 {
-    struct ajp_request *hr;
+    assert(uwa != nullptr);
+    assert(uwa->path != nullptr);
+    assert(handler != nullptr);
+    assert(handler->response != nullptr);
+    assert(body == nullptr || !istream_has_handler(body));
 
-    assert(uwa != NULL);
-    assert(uwa->path != NULL);
-    assert(handler != NULL);
-    assert(handler->response != NULL);
-    assert(body == NULL || !istream_has_handler(body));
-
-    hr = p_malloc(pool, sizeof(*hr));
+    auto hr = NewFromPool<struct ajp_request>(pool);
     hr->pool = pool;
     hr->tcp_balancer = tcp_balancer;
     hr->protocol = protocol;
@@ -145,22 +143,22 @@ ajp_stock_request(struct pool *pool,
     hr->method = method;
 
     hr->headers = headers;
-    if (hr->headers == NULL)
+    if (hr->headers == nullptr)
         hr->headers = strmap_new(pool, 16);
 
     http_response_handler_set(&hr->handler, handler, handler_ctx);
     hr->async_ref = async_ref;
 
-    if (body != NULL) {
+    if (body != nullptr) {
         hr->body = istream_hold_new(pool, body);
         async_ref = async_close_on_abort(pool, hr->body, async_ref);
     } else
-        hr->body = NULL;
+        hr->body = nullptr;
 
     hr->uri = uwa->path;
 
     tcp_balancer_get(tcp_balancer, pool,
-                     false, NULL, 0,
+                     false, nullptr, 0,
                      session_sticky,
                      &uwa->addresses,
                      20,

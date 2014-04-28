@@ -19,7 +19,7 @@
 #include "fcgi_remote.h"
 #include "nfs_address.h"
 #include "was_glue.h"
-#include "ajp-request.h"
+#include "ajp_request.hxx"
 #include "header-writer.h"
 #include "pipe.h"
 #include "delegate_request.h"
