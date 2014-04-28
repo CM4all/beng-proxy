@@ -17,8 +17,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-static void
-socket_read_event_callback(gcc_unused int fd, short event, void *ctx)
+void
+SocketWrapper::ReadEventCallback(gcc_unused int fd, short event, void *ctx)
 {
     SocketWrapper *s = (SocketWrapper *)ctx;
     assert(s->IsValid());
@@ -31,9 +31,9 @@ socket_read_event_callback(gcc_unused int fd, short event, void *ctx)
     pool_commit();
 }
 
-static void
-socket_write_event_callback(gcc_unused int fd, gcc_unused short event,
-                            void *ctx)
+void
+SocketWrapper::WriteEventCallback(gcc_unused int fd, gcc_unused short event,
+                                  void *ctx)
 {
     SocketWrapper *s = (SocketWrapper *)ctx;
     assert(s->IsValid());
@@ -63,10 +63,10 @@ SocketWrapper::Init(struct pool *_pool,
     direct_mask = istream_direct_mask_to(fd_type);
 
     event_set(&read_event, fd, EV_READ|EV_PERSIST|EV_TIMEOUT,
-              socket_read_event_callback, this);
+              ReadEventCallback, this);
 
     event_set(&write_event, fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT,
-              socket_write_event_callback, this);
+              WriteEventCallback, this);
 
     handler = _handler;
     handler_ctx = _ctx;

@@ -138,6 +138,10 @@ struct SocketWrapper {
 
     ssize_t WriteFrom(int other_fd, enum istream_direct other_fd_type,
                       size_t length);
+
+private:
+    static void ReadEventCallback(int _fd, short event, void *ctx);
+    static void WriteEventCallback(int _fd, short event, void *ctx);
 };
 
 #endif
