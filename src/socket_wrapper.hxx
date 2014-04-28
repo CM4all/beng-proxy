@@ -52,124 +52,92 @@ struct socket_wrapper {
 
     const struct socket_handler *handler;
     void *handler_ctx;
+
+    void Init(struct pool *_pool,
+              int _fd, enum istream_direct _fd_type,
+              const struct socket_handler *_handler, void *_ctx);
+
+    void Close();
+
+    /**
+     * Just like Close(), but do not actually close the
+     * socket.  The caller is responsible for closing the socket (or
+     * scheduling it for reuse).
+     */
+    void Abandon();
+
+    /**
+     * Returns the socket descriptor and calls socket_wrapper_abandon().
+     */
+    int AsFD();
+
+    bool IsValid() const {
+        return fd >= 0;
+    }
+
+    /**
+     * Returns the istream_direct mask for splicing data into this socket.
+     */
+    enum istream_direct GetDirectMask() const {
+        assert(IsValid());
+
+        return direct_mask;
+    }
+
+    void ScheduleRead(const struct timeval *timeout) {
+        assert(IsValid());
+
+        if (timeout == nullptr && event_pending(&read_event, EV_TIMEOUT, nullptr))
+            /* work around libevent bug: event_add() should disable the
+               timeout if tv==nullptr, but in fact it does not; workaround:
+               delete the whole event first, then re-add it */
+            p_event_del(&read_event, pool);
+
+        p_event_add(&read_event, timeout, pool, "socket_read");
+    }
+
+    void UnscheduleRead() {
+        p_event_del(&read_event, pool);
+    }
+
+    void ScheduleWrite(const struct timeval *timeout) {
+        assert(IsValid());
+
+        if (timeout == nullptr &&
+            event_pending(&write_event, EV_TIMEOUT, nullptr))
+            /* work around libevent bug: event_add() should disable the
+               timeout if tv==nullptr, but in fact it does not; workaround:
+               delete the whole event first, then re-add it */
+            p_event_del(&write_event, pool);
+
+        p_event_add(&write_event, timeout, pool, "socket_write");
+    }
+
+    void UnscheduleWrite() {
+        p_event_del(&write_event, pool);
+    }
+
+    gcc_pure
+    bool IsReadPending() const {
+        return event_pending(&read_event, EV_READ, nullptr);
+    }
+
+    gcc_pure
+    bool IsWritePending() const {
+        return event_pending(&write_event, EV_WRITE, nullptr);
+    }
+
+    ssize_t ReadToBuffer(struct fifo_buffer *buffer, size_t length);
+
+    void SetCork(bool cork);
+
+    gcc_pure
+    bool IsReadyForWriting() const;
+
+    ssize_t Write(const void *data, size_t length);
+
+    ssize_t WriteFrom(int other_fd, enum istream_direct other_fd_type,
+                      size_t length);
 };
-
-void
-socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
-                    int fd, enum istream_direct fd_type,
-                    const struct socket_handler *handler, void *ctx);
-
-void
-socket_wrapper_close(struct socket_wrapper *s);
-
-/**
- * Just like socket_wrapper_close(), but do not actually close the
- * socket.  The caller is responsible for closing the socket (or
- * scheduling it for reuse).
- */
-void
-socket_wrapper_abandon(struct socket_wrapper *s);
-
-/**
- * Returns the socket descriptor and calls socket_wrapper_abandon().
- */
-int
-socket_wrapper_as_fd(struct socket_wrapper *s);
-
-static inline bool
-socket_wrapper_valid(const struct socket_wrapper *s)
-{
-    assert(s != nullptr);
-
-    return s->fd >= 0;
-}
-
-/**
- * Returns the istream_direct mask for splicing data into this socket.
- */
-static inline enum istream_direct
-socket_wrapper_direct_mask(const struct socket_wrapper *s)
-{
-    assert(socket_wrapper_valid(s));
-
-    return s->direct_mask;
-}
-
-static inline void
-socket_wrapper_schedule_read(struct socket_wrapper *s,
-                             const struct timeval *timeout)
-{
-    assert(socket_wrapper_valid(s));
-
-    if (timeout == nullptr && event_pending(&s->read_event, EV_TIMEOUT, nullptr))
-        /* work around libevent bug: event_add() should disable the
-           timeout if tv==nullptr, but in fact it does not; workaround:
-           delete the whole event first, then re-add it */
-        p_event_del(&s->read_event, s->pool);
-
-    p_event_add(&s->read_event, timeout, s->pool, "socket_read");
-}
-
-static inline void
-socket_wrapper_unschedule_read(struct socket_wrapper *s)
-{
-    p_event_del(&s->read_event, s->pool);
-}
-
-static inline void
-socket_wrapper_schedule_write(struct socket_wrapper *s,
-                              const struct timeval *timeout)
-{
-    assert(socket_wrapper_valid(s));
-
-    if (timeout == nullptr &&
-        event_pending(&s->write_event, EV_TIMEOUT, nullptr))
-        /* work around libevent bug: event_add() should disable the
-           timeout if tv==nullptr, but in fact it does not; workaround:
-           delete the whole event first, then re-add it */
-        p_event_del(&s->write_event, s->pool);
-
-    p_event_add(&s->write_event, timeout, s->pool, "socket_write");
-}
-
-static inline void
-socket_wrapper_unschedule_write(struct socket_wrapper *s)
-{
-    p_event_del(&s->write_event, s->pool);
-}
-
-gcc_pure
-static inline bool
-socket_wrapper_is_read_pending(const struct socket_wrapper *s)
-{
-    return event_pending(&s->read_event, EV_READ, nullptr);
-}
-
-gcc_pure
-static inline bool
-socket_wrapper_is_write_pending(const struct socket_wrapper *s)
-{
-    return event_pending(&s->write_event, EV_WRITE, nullptr);
-}
-
-ssize_t
-socket_wrapper_read_to_buffer(struct socket_wrapper *s,
-                              struct fifo_buffer *buffer, size_t length);
-
-void
-socket_wrapper_set_cork(struct socket_wrapper *s, bool cork);
-
-gcc_pure
-bool
-socket_wrapper_ready_for_writing(const struct socket_wrapper *s);
-
-ssize_t
-socket_wrapper_write(struct socket_wrapper *s,
-                     const void *data, size_t length);
-
-ssize_t
-socket_wrapper_write_from(struct socket_wrapper *s,
-                          int fd, enum istream_direct fd_type,
-                          size_t length);
 
 #endif

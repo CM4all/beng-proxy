@@ -310,7 +310,7 @@ buffered_socket_close(struct buffered_socket *s)
     assert(!s->ended);
     assert(!s->destroyed);
 
-    socket_wrapper_close(&s->base);
+    s->base.Close();
 }
 
 /**
@@ -324,7 +324,7 @@ buffered_socket_abandon(struct buffered_socket *s)
     assert(!s->ended);
     assert(!s->destroyed);
 
-    socket_wrapper_abandon(&s->base);
+    s->base.Abandon();
 }
 
 /**
@@ -353,7 +353,7 @@ buffered_socket_connected(const struct buffered_socket *s)
     assert(s != nullptr);
     assert(!s->destroyed);
 
-    return socket_wrapper_valid(&s->base);
+    return s->base.IsValid();
 }
 
 /**
@@ -369,7 +369,7 @@ buffered_socket_valid(const struct buffered_socket *s)
        buffer that may have more data; in the latter case, the socket
        may be closed already because no more data is needed from
        there */
-    return socket_wrapper_valid(&s->base) || s->input != nullptr;
+    return s->base.IsValid() || s->input != nullptr;
 }
 
 /**
@@ -412,7 +412,7 @@ buffered_socket_direct_mask(const struct buffered_socket *s)
     assert(!s->ended);
     assert(!s->destroyed);
 
-    return socket_wrapper_direct_mask(&s->base);
+    return s->base.GetDirectMask();
 }
 
 /**
@@ -432,7 +432,7 @@ buffered_socket_read(struct buffered_socket *s, bool expect_more);
 static inline void
 buffered_socket_set_cork(struct buffered_socket *s, bool cork)
 {
-    socket_wrapper_set_cork(&s->base, cork);
+    s->base.SetCork(cork);
 }
 
 /**
@@ -462,7 +462,7 @@ buffered_socket_ready_for_writing(const struct buffered_socket *s)
 {
     assert(!s->destroyed);
 
-    return socket_wrapper_ready_for_writing(&s->base);
+    return s->base.IsReadyForWriting();
 }
 
 static inline void
@@ -477,7 +477,7 @@ buffered_socket_schedule_read_timeout(struct buffered_socket *s,
         s->expect_more = true;
 
     s->read_timeout = timeout;
-    socket_wrapper_schedule_read(&s->base, timeout);
+    s->base.ScheduleRead(timeout);
 }
 
 /**
@@ -500,7 +500,7 @@ buffered_socket_schedule_write(struct buffered_socket *s)
     assert(!s->ended);
     assert(!s->destroyed);
 
-    socket_wrapper_schedule_write(&s->base, s->write_timeout);
+    s->base.ScheduleWrite(s->write_timeout);
 }
 
 static inline void
@@ -509,7 +509,7 @@ buffered_socket_unschedule_write(struct buffered_socket *s)
     assert(!s->ended);
     assert(!s->destroyed);
 
-    socket_wrapper_unschedule_write(&s->base);
+    s->base.UnscheduleWrite();
 }
 
 #endif

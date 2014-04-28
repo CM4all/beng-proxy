@@ -21,7 +21,7 @@ static void
 socket_read_event_callback(gcc_unused int fd, short event, void *ctx)
 {
     struct socket_wrapper *s = (struct socket_wrapper *)ctx;
-    assert(socket_wrapper_valid(s));
+    assert(s->IsValid());
 
     if (event & EV_TIMEOUT)
         s->handler->timeout(s->handler_ctx);
@@ -36,7 +36,7 @@ socket_write_event_callback(gcc_unused int fd, gcc_unused short event,
                             void *ctx)
 {
     struct socket_wrapper *s = (struct socket_wrapper *)ctx;
-    assert(socket_wrapper_valid(s));
+    assert(s->IsValid());
 
     if (event & EV_TIMEOUT)
         s->handler->timeout(s->handler_ctx);
@@ -47,105 +47,101 @@ socket_write_event_callback(gcc_unused int fd, gcc_unused short event,
 }
 
 void
-socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
-                    int fd, enum istream_direct fd_type,
-                    const struct socket_handler *handler, void *ctx)
+socket_wrapper::Init(struct pool *_pool,
+                     int _fd, enum istream_direct _fd_type,
+                     const struct socket_handler *_handler, void *_ctx)
 {
-    assert(s != nullptr);
-    assert(pool != nullptr);
-    assert(fd >= 0);
-    assert(handler != nullptr);
-    assert(handler->read != nullptr);
-    assert(handler->write != nullptr);
+    assert(_pool != nullptr);
+    assert(_fd >= 0);
+    assert(_handler != nullptr);
+    assert(_handler->read != nullptr);
+    assert(_handler->write != nullptr);
 
-    s->pool = pool;
-    s->fd = fd;
-    s->fd_type = fd_type;
-    s->direct_mask = istream_direct_mask_to(fd_type);
+    pool = _pool;
+    fd = _fd;
+    fd_type = _fd_type;
+    direct_mask = istream_direct_mask_to(fd_type);
 
-    event_set(&s->read_event, fd, EV_READ|EV_PERSIST|EV_TIMEOUT,
-              socket_read_event_callback, s);
+    event_set(&read_event, fd, EV_READ|EV_PERSIST|EV_TIMEOUT,
+              socket_read_event_callback, this);
 
-    event_set(&s->write_event, fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT,
-              socket_write_event_callback, s);
+    event_set(&write_event, fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT,
+              socket_write_event_callback, this);
 
-    s->handler = handler;
-    s->handler_ctx = ctx;
+    handler = _handler;
+    handler_ctx = _ctx;
 }
 
 void
-socket_wrapper_close(struct socket_wrapper *s)
+socket_wrapper::Close()
 {
-    if (s->fd < 0)
+    if (fd < 0)
         return;
 
-    p_event_del(&s->read_event, s->pool);
-    p_event_del(&s->write_event, s->pool);
+    p_event_del(&read_event, pool);
+    p_event_del(&write_event, pool);
 
-    close(s->fd);
-    s->fd = -1;
+    close(fd);
+    fd = -1;
 }
 
 void
-socket_wrapper_abandon(struct socket_wrapper *s)
+socket_wrapper::Abandon()
 {
-    assert(s->fd >= 0);
+    assert(fd >= 0);
 
-    p_event_del(&s->read_event, s->pool);
-    p_event_del(&s->write_event, s->pool);
+    p_event_del(&read_event, pool);
+    p_event_del(&write_event, pool);
 
-    s->fd = -1;
+    fd = -1;
 }
 
 int
-socket_wrapper_as_fd(struct socket_wrapper *s)
+socket_wrapper::AsFD()
 {
-    assert(socket_wrapper_valid(s));
+    assert(IsValid());
 
-    const int fd = dup_cloexec(s->fd);
-    socket_wrapper_abandon(s);
-    return fd;
+    const int result = dup_cloexec(fd);
+    Abandon();
+    return result;
 }
 
 ssize_t
-socket_wrapper_read_to_buffer(struct socket_wrapper *s,
-                              struct fifo_buffer *buffer, size_t length)
+socket_wrapper::ReadToBuffer(struct fifo_buffer *buffer, size_t length)
 {
-    assert(socket_wrapper_valid(s));
+    assert(IsValid());
 
-    return recv_to_buffer(s->fd, buffer, length);
+    return recv_to_buffer(fd, buffer, length);
 }
 
 void
-socket_wrapper_set_cork(struct socket_wrapper *s, bool cork)
+socket_wrapper::SetCork(bool cork)
 {
-    assert(socket_wrapper_valid(s));
+    assert(IsValid());
 
-    socket_set_cork(s->fd, cork);
+    socket_set_cork(fd, cork);
 }
 
 bool
-socket_wrapper_ready_for_writing(const struct socket_wrapper *s)
+socket_wrapper::IsReadyForWriting() const
 {
-    assert(socket_wrapper_valid(s));
+    assert(IsValid());
 
-    return fd_ready_for_writing(s->fd);
+    return fd_ready_for_writing(fd);
 }
 
 ssize_t
-socket_wrapper_write(struct socket_wrapper *s,
-                     const void *data, size_t length)
+socket_wrapper::Write(const void *data, size_t length)
 {
-    assert(socket_wrapper_valid(s));
+    assert(IsValid());
 
-    return send(s->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    return send(fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
 }
 
 ssize_t
-socket_wrapper_write_from(struct socket_wrapper *s,
-                          int fd, enum istream_direct fd_type,
+socket_wrapper::WriteFrom(int other_fd, enum istream_direct other_fd_type,
                           size_t length)
 {
-    return istream_direct_to_socket(fd_type, fd, s->fd, length);
+    return istream_direct_to_socket(other_fd_type, other_fd, fd, length);
 }
 

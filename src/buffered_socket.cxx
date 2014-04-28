@@ -64,7 +64,7 @@ buffered_socket_as_fd(struct buffered_socket *s)
            buffer is empty */
         return -1;
 
-    return socket_wrapper_as_fd(&s->base);
+    return s->base.AsFD();
 }
 
 size_t
@@ -193,7 +193,7 @@ buffered_socket_submit_from_buffer(struct buffered_socket *s)
 
     case BUFFERED_BLOCKING:
         s->expect_more = old_expect_more;
-        socket_wrapper_unschedule_read(&s->base);
+        s->base.UnscheduleRead();
         return false;
 
     case BUFFERED_CLOSED:
@@ -223,19 +223,19 @@ buffered_socket_submit_direct(struct buffered_socket *s)
     switch (result) {
     case DIRECT_OK:
         /* some data was transferred: refresh the read timeout */
-        socket_wrapper_schedule_read(&s->base, s->read_timeout);
+        s->base.ScheduleRead(s->read_timeout);
         return true;
 
     case DIRECT_BLOCKING:
         s->expect_more = old_expect_more;
-        socket_wrapper_unschedule_read(&s->base);
+        s->base.UnscheduleRead();
         return false;
 
     case DIRECT_EMPTY:
         /* schedule read, but don't refresh timeout of old scheduled
            read */
-        if (!socket_wrapper_is_read_pending(&s->base))
-            socket_wrapper_schedule_read(&s->base, s->read_timeout);
+        if (!s->base.IsReadPending())
+            s->base.ScheduleRead(s->read_timeout);
         return true;
 
     case DIRECT_END:
@@ -263,7 +263,7 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
     if (buffer == nullptr)
         buffer = s->input = fb_pool_alloc();
 
-    ssize_t nbytes = socket_wrapper_read_to_buffer(&s->base, buffer, INT_MAX);
+    ssize_t nbytes = s->base.ReadToBuffer(buffer, INT_MAX);
     if (gcc_likely(nbytes > 0)) {
         /* success: data was added to the buffer */
         s->expect_more = false;
@@ -303,7 +303,7 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
 
     if (nbytes == -2) {
         /* input buffer is full */
-        socket_wrapper_unschedule_read(&s->base);
+        s->base.UnscheduleRead();
         return true;
     }
 
@@ -311,8 +311,8 @@ buffered_socket_fill_buffer(struct buffered_socket *s)
         if (errno == EAGAIN) {
             /* schedule read, but don't refresh timeout of old
                scheduled read */
-            if (!socket_wrapper_is_read_pending(&s->base))
-                socket_wrapper_schedule_read(&s->base, s->read_timeout);
+            if (!s->base.IsReadPending())
+                s->base.ScheduleRead(s->read_timeout);
             return true;
         } else {
             GError *error = new_error_errno_msg("recv() failed");
@@ -351,7 +351,7 @@ buffered_socket_try_read2(struct buffered_socket *s)
             /* there's still data in the buffer, but our handler isn't
                ready for consuming it - stop reading from the
                socket */
-            socket_wrapper_unschedule_read(&s->base);
+            s->base.UnscheduleRead();
             return true;
         }
 
@@ -367,7 +367,7 @@ buffered_socket_try_read2(struct buffered_socket *s)
 
         if (s->got_data)
             /* refresh the timeout each time data was received */
-            socket_wrapper_schedule_read(&s->base, s->read_timeout);
+            s->base.ScheduleRead(s->read_timeout);
         return true;
     }
 }
@@ -463,8 +463,8 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
     assert(handler->write != nullptr);
     assert(handler->error != nullptr);
 
-    socket_wrapper_init(&s->base, pool, fd, fd_type,
-                        &buffered_socket_handler, s);
+    s->base.Init(pool, fd, fd_type,
+                 &buffered_socket_handler, s);
 
     s->read_timeout = read_timeout;
     s->write_timeout = write_timeout;
@@ -486,7 +486,7 @@ buffered_socket_init(struct buffered_socket *s, struct pool *pool,
 void
 buffered_socket_destroy(struct buffered_socket *s)
 {
-    assert(!socket_wrapper_valid(&s->base));
+    assert(!s->base.IsValid());
     assert(!s->destroyed);
 
     if (s->input != nullptr) {
@@ -538,7 +538,7 @@ ssize_t
 buffered_socket_write(struct buffered_socket *s,
                       const void *data, size_t length)
 {
-    ssize_t nbytes = socket_wrapper_write(&s->base, data, length);
+    ssize_t nbytes = s->base.Write(data, length);
 
     if (gcc_unlikely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
@@ -560,7 +560,7 @@ buffered_socket_write_from(struct buffered_socket *s,
                            int fd, enum istream_direct fd_type,
                            size_t length)
 {
-    ssize_t nbytes = socket_wrapper_write_from(&s->base, fd, fd_type, length);
+    ssize_t nbytes = s->base.WriteFrom(fd, fd_type, length);
     if (gcc_unlikely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
             if (!buffered_socket_ready_for_writing(s)) {
@@ -571,7 +571,7 @@ buffered_socket_write_from(struct buffered_socket *s,
             /* try again, just in case our fd has become ready between
                the first socket_wrapper_write_from() call and
                fd_ready_for_writing() */
-            nbytes = socket_wrapper_write_from(&s->base, fd, fd_type, length);
+            nbytes = s->base.WriteFrom(fd, fd_type, length);
         }
     }
 
