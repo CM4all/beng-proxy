@@ -57,7 +57,7 @@ enum buffered_result {
 
     /**
      * The handler blocks.  The handler is responsible for calling
-     * buffered_socket_read() as soon as it's ready for more data.
+     * BufferedSocket::Read() as soon as it's ready for more data.
      */
     BUFFERED_BLOCKING,
 
@@ -75,7 +75,7 @@ enum direct_result {
 
     /**
      * The handler blocks.  The handler is responsible for calling
-     * buffered_socket_read() as soon as it's ready for more data.
+     * BufferedSocket::Read() as soon as it's ready for more data.
      */
     DIRECT_BLOCKING,
 
@@ -105,8 +105,8 @@ enum direct_result {
 };
 
 /**
- * Special return values for buffered_socket_write() and
- * buffered_socket_write_from().
+ * Special return values for BufferedSocket::Write() and
+ * BufferedSocket::WriteFrom().
  */
 enum write_result {
     /**
@@ -284,6 +284,185 @@ struct BufferedSocket {
 
     enum buffered_result last_buffered_result;
 #endif
+
+    void Init(struct pool *_pool,
+              int _fd, enum istream_direct _fd_type,
+              const struct timeval *_read_timeout,
+              const struct timeval *_write_timeout,
+              const BufferedSocketHandler *_handler, void *_ctx);
+
+    /**
+     * Close the physical socket, but do not destroy the input buffer.  To
+     * do the latter, call buffered_socket_destroy().
+     */
+    void Close() {
+        assert(!ended);
+        assert(!destroyed);
+
+        base.Close();
+    }
+
+    /**
+     * Just like buffered_socket_close(), but do not actually close the
+     * socket.  The caller is responsible for closing the socket (or
+     * scheduling it for reuse).
+     */
+    void Abandon() {
+        assert(!ended);
+        assert(!destroyed);
+
+        base.Abandon();
+    }
+
+    /**
+     * Destroy the object.  Prior to that, the socket must be removed by
+     * calling either buffered_socket_close() or
+     * buffered_socket_abandon().
+     */
+    void Destroy();
+
+    /**
+     * Is the object still usable?  The socket may be closed already, but
+     * the input buffer may still have data.
+     */
+    bool IsValid() const {
+        /* the object is valid if there is either a valid socket or a
+           buffer that may have more data; in the latter case, the socket
+           may be closed already because no more data is needed from
+           there */
+        return base.IsValid() || input != nullptr;
+    }
+
+    /**
+     * Is the socket still connected?  This does not actually check
+     * whether the socket is connected, just whether it is known to be
+     * closed.
+     */
+    bool IsConnected() const {
+        assert(!destroyed);
+
+        return base.IsValid();
+    }
+
+    /**
+     * Returns the socket descriptor and calls buffered_socket_abandon().
+     * Returns -1 if the input buffer is not empty.
+     */
+    int AsFD();
+
+    /**
+     * Is the input buffer empty?
+     */
+    gcc_pure
+    bool IsEmpty() const;
+
+    /**
+     * Is the input buffer full?
+     */
+    gcc_pure
+    bool IsFull() const;
+
+    /**
+     * Returns the number of bytes in the input buffer.
+     */
+    gcc_pure
+    size_t GetAvailable() const;
+
+    /**
+     * Mark the specified number of bytes of the input buffer as
+     * "consumed".  Call this in the data() method.  Note that this method
+     * does not invalidate the buffer passed to data().  It may be called
+     * repeatedly.
+     */
+    void Consumed(size_t nbytes);
+
+    /**
+     * Returns the istream_direct mask for splicing data into this socket.
+     */
+    istream_direct GetDirectMask() const {
+        assert(!ended);
+        assert(!destroyed);
+
+        return base.GetDirectMask();
+    }
+
+    /**
+     * The caller wants to read more data from the socket.  There are four
+     * possible outcomes: a call to buffered_socket_handler.read, a call
+     * to buffered_socket_handler.direct, a call to
+     * buffered_socket_handler.error or (if there is no data available
+     * yet) an event gets scheduled and the function returns immediately.
+     *
+     * @param expect_more if true, generates an error if no more data can
+     * be read (socket already shut down, buffer empty); if false, the
+     * existing expect_more state is unmodified
+     */
+    bool Read(bool expect_more);
+
+    void SetCork(bool cork) {
+        base.SetCork(cork);
+    }
+
+    /**
+     * Write data to the socket.
+     *
+     * @return the positive number of bytes written or a #write_result
+     * code
+     */
+    ssize_t Write(const void *data, size_t length);
+
+    /**
+     * Transfer data from the given file descriptor to the socket.
+     *
+     * @return the positive number of bytes transferred or a #write_result
+     * code
+     */
+    ssize_t WriteFrom(int other_fd, enum istream_direct other_fd_type,
+                      size_t length);
+
+    gcc_pure
+    bool IsReadyForWriting() const {
+        assert(!destroyed);
+
+        return base.IsReadyForWriting();
+    }
+
+    void ScheduleReadTimeout(bool _expect_more,
+                             const struct timeval *timeout) {
+        assert(!ended);
+        assert(!destroyed);
+
+        if (_expect_more)
+            expect_more = true;
+
+        read_timeout = timeout;
+        base.ScheduleRead(timeout);
+    }
+
+    /**
+     * Schedules reading on the socket with timeout disabled, to indicate
+     * that you are willing to read, but do not expect it yet.  No direct
+     * action is taken.  Use this to enable reading when you are still
+     * sending the request.  When you are finished sending the request,
+     * you should call BufferedSocket::Read() to enable the read timeout.
+     */
+    void ScheduleReadNoTimeout(bool _expect_more) {
+        ScheduleReadTimeout(_expect_more, nullptr);
+    }
+
+    void ScheduleWrite() {
+        assert(!ended);
+        assert(!destroyed);
+
+        base.ScheduleWrite(write_timeout);
+    }
+
+    void UnscheduleWrite() {
+        assert(!ended);
+        assert(!destroyed);
+
+        base.UnscheduleWrite();
+    }
 };
 
 gcc_const
@@ -291,225 +470,6 @@ static inline GQuark
 buffered_socket_quark(void)
 {
     return g_quark_from_static_string("buffered_socket");
-}
-
-void
-buffered_socket_init(struct BufferedSocket *s, struct pool *pool,
-                     int fd, enum istream_direct fd_type,
-                     const struct timeval *read_timeout,
-                     const struct timeval *write_timeout,
-                     const BufferedSocketHandler *handler, void *ctx);
-
-/**
- * Close the physical socket, but do not destroy the input buffer.  To
- * do the latter, call buffered_socket_destroy().
- */
-static inline void
-buffered_socket_close(struct BufferedSocket *s)
-{
-    assert(!s->ended);
-    assert(!s->destroyed);
-
-    s->base.Close();
-}
-
-/**
- * Just like buffered_socket_close(), but do not actually close the
- * socket.  The caller is responsible for closing the socket (or
- * scheduling it for reuse).
- */
-static inline void
-buffered_socket_abandon(struct BufferedSocket *s)
-{
-    assert(!s->ended);
-    assert(!s->destroyed);
-
-    s->base.Abandon();
-}
-
-/**
- * Destroy the object.  Prior to that, the socket must be removed by
- * calling either buffered_socket_close() or
- * buffered_socket_abandon().
- */
-void
-buffered_socket_destroy(struct BufferedSocket *s);
-
-/**
- * Returns the socket descriptor and calls buffered_socket_abandon().
- * Returns -1 if the input buffer is not empty.
- */
-int
-buffered_socket_as_fd(struct BufferedSocket *s);
-
-/**
- * Is the socket still connected?  This does not actually check
- * whether the socket is connected, just whether it is known to be
- * closed.
- */
-static inline bool
-buffered_socket_connected(const struct BufferedSocket *s)
-{
-    assert(s != nullptr);
-    assert(!s->destroyed);
-
-    return s->base.IsValid();
-}
-
-/**
- * Is the object still usable?  The socket may be closed already, but
- * the input buffer may still have data.
- */
-static inline bool
-buffered_socket_valid(const struct BufferedSocket *s)
-{
-    assert(s != nullptr);
-
-    /* the object is valid if there is either a valid socket or a
-       buffer that may have more data; in the latter case, the socket
-       may be closed already because no more data is needed from
-       there */
-    return s->base.IsValid() || s->input != nullptr;
-}
-
-/**
- * Is the input buffer empty?
- */
-gcc_pure
-bool
-buffered_socket_empty(const struct BufferedSocket *s);
-
-/**
- * Is the input buffer full?
- */
-gcc_pure
-bool
-buffered_socket_full(const struct BufferedSocket *s);
-
-/**
- * Returns the number of bytes in the input buffer.
- */
-gcc_pure
-size_t
-buffered_socket_available(const struct BufferedSocket *s);
-
-/**
- * Mark the specified number of bytes of the input buffer as
- * "consumed".  Call this in the data() method.  Note that this method
- * does not invalidate the buffer passed to data().  It may be called
- * repeatedly.
- */
-void
-buffered_socket_consumed(struct BufferedSocket *s, size_t nbytes);
-
-/**
- * Returns the istream_direct mask for splicing data into this socket.
- */
-static inline enum istream_direct
-buffered_socket_direct_mask(const struct BufferedSocket *s)
-{
-    assert(s != nullptr);
-    assert(!s->ended);
-    assert(!s->destroyed);
-
-    return s->base.GetDirectMask();
-}
-
-/**
- * The caller wants to read more data from the socket.  There are four
- * possible outcomes: a call to buffered_socket_handler.read, a call
- * to buffered_socket_handler.direct, a call to
- * buffered_socket_handler.error or (if there is no data available
- * yet) an event gets scheduled and the function returns immediately.
- *
- * @param expect_more if true, generates an error if no more data can
- * be read (socket already shut down, buffer empty); if false, the
- * existing expect_more state is unmodified
- */
-bool
-buffered_socket_read(struct BufferedSocket *s, bool expect_more);
-
-static inline void
-buffered_socket_set_cork(struct BufferedSocket *s, bool cork)
-{
-    s->base.SetCork(cork);
-}
-
-/**
- * Write data to the socket.
- *
- * @return the positive number of bytes written or a #write_result
- * code
- */
-ssize_t
-buffered_socket_write(struct BufferedSocket *s,
-                      const void *data, size_t length);
-
-/**
- * Transfer data from the given file descriptor to the socket.
- *
- * @return the positive number of bytes transferred or a #write_result
- * code
- */
-ssize_t
-buffered_socket_write_from(struct BufferedSocket *s,
-                           int fd, enum istream_direct fd_type,
-                           size_t length);
-
-gcc_pure
-static inline bool
-buffered_socket_ready_for_writing(const struct BufferedSocket *s)
-{
-    assert(!s->destroyed);
-
-    return s->base.IsReadyForWriting();
-}
-
-static inline void
-buffered_socket_schedule_read_timeout(struct BufferedSocket *s,
-                                      bool expect_more,
-                                      const struct timeval *timeout)
-{
-    assert(!s->ended);
-    assert(!s->destroyed);
-
-    if (expect_more)
-        s->expect_more = true;
-
-    s->read_timeout = timeout;
-    s->base.ScheduleRead(timeout);
-}
-
-/**
- * Schedules reading on the socket with timeout disabled, to indicate
- * that you are willing to read, but do not expect it yet.  No direct
- * action is taken.  Use this to enable reading when you are still
- * sending the request.  When you are finished sending the request,
- * you should call buffered_socket_read() to enable the read timeout.
- */
-static inline void
-buffered_socket_schedule_read_no_timeout(struct BufferedSocket *s,
-                                         bool expect_more)
-{
-    buffered_socket_schedule_read_timeout(s, expect_more, nullptr);
-}
-
-static inline void
-buffered_socket_schedule_write(struct BufferedSocket *s)
-{
-    assert(!s->ended);
-    assert(!s->destroyed);
-
-    s->base.ScheduleWrite(s->write_timeout);
-}
-
-static inline void
-buffered_socket_unschedule_write(struct BufferedSocket *s)
-{
-    assert(!s->ended);
-    assert(!s->destroyed);
-
-    s->base.UnscheduleWrite();
 }
 
 #endif

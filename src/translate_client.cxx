@@ -166,12 +166,12 @@ static void
 translate_client_release_socket(TranslateClient *client, bool reuse)
 {
     assert(client != nullptr);
-    assert(buffered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
 
     stopwatch_dump(client->stopwatch);
 
-    buffered_socket_abandon(&client->socket);
-    buffered_socket_destroy(&client->socket);
+    client->socket.Abandon();
+    client->socket.Destroy();
 
     p_lease_release(&client->lease_ref, reuse, client->pool);
 }
@@ -2732,7 +2732,7 @@ translate_client_feed(TranslateClient *client,
             break;
 
         consumed += nbytes;
-        buffered_socket_consumed(&client->socket, nbytes);
+        client->socket.Consumed(nbytes);
 
         if (client->reader.state != TranslatePacketReader::State::COMPLETE)
             /* need more data */
@@ -2761,7 +2761,7 @@ translate_try_write(TranslateClient *client)
     const void *data = growing_buffer_reader_read(&client->request, &length);
     assert(data != nullptr);
 
-    ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
+    ssize_t nbytes = client->socket.Write(data, length);
     if (gcc_unlikely(nbytes < 0)) {
         if (gcc_likely(nbytes == WRITE_BLOCKING))
             return true;
@@ -2778,13 +2778,13 @@ translate_try_write(TranslateClient *client)
 
         stopwatch_event(client->stopwatch, "request");
 
-        buffered_socket_unschedule_write(&client->socket);
+        client->socket.UnscheduleWrite();
 
         packet_reader_init(&client->reader);
-        return buffered_socket_read(&client->socket, true);
+        return client->socket.Read(true);
     }
 
-    buffered_socket_schedule_write(&client->socket);
+    client->socket.ScheduleWrite();
     return true;
 }
 
@@ -2892,10 +2892,10 @@ translate(struct pool *pool, int fd,
     client->stopwatch = stopwatch_fd_new(pool, fd,
                                          request->uri != nullptr ? request->uri
                                          : request->widget_type);
-    buffered_socket_init(&client->socket, pool, fd, ISTREAM_SOCKET,
-                         &translate_read_timeout,
-                         &translate_write_timeout,
-                         &translate_client_socket_handler, client);
+    client->socket.Init(pool, fd, ISTREAM_SOCKET,
+                        &translate_read_timeout,
+                        &translate_write_timeout,
+                        &translate_client_socket_handler, client);
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "translate_lease");
 

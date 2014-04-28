@@ -138,9 +138,9 @@ filtered_socket_init(struct filtered_socket *s, struct pool *pool,
         handler_ctx = s;
     }
 
-    buffered_socket_init(&s->base, pool, fd, fd_type,
-                         read_timeout, write_timeout,
-                         handler, handler_ctx);
+    s->base.Init(pool, fd, fd_type,
+                 read_timeout, write_timeout,
+                 handler, handler_ctx);
 
 #ifndef NDEBUG
     s->ended = false;
@@ -160,7 +160,7 @@ filtered_socket_destroy(struct filtered_socket *s)
         s->filter = nullptr;
     }
 
-    buffered_socket_destroy(&s->base);
+    s->base.Destroy();
 }
 
 bool
@@ -168,7 +168,7 @@ filtered_socket_empty(const struct filtered_socket *s)
 {
     return s->filter != nullptr
         ? s->filter->is_empty(s->filter_ctx)
-        : buffered_socket_empty(&s->base);
+        : s->base.IsEmpty();
 }
 
 bool
@@ -176,7 +176,7 @@ filtered_socket_full(const struct filtered_socket *s)
 {
     return s->filter != nullptr
         ? s->filter->is_full(s->filter_ctx)
-        : buffered_socket_full(&s->base);
+        : s->base.IsFull();
 }
 
 size_t
@@ -184,7 +184,7 @@ filtered_socket_available(const struct filtered_socket *s)
 {
     return s->filter != nullptr
         ? s->filter->available(s->filter_ctx)
-        : buffered_socket_available(&s->base);
+        : s->base.GetAvailable();
 }
 
 void
@@ -193,7 +193,7 @@ filtered_socket_consumed(struct filtered_socket *s, size_t nbytes)
     if (s->filter != nullptr)
         s->filter->consumed(nbytes, s->filter_ctx);
     else
-        buffered_socket_consumed(&s->base, nbytes);
+        s->base.Consumed(nbytes);
 }
 
 bool
@@ -202,7 +202,7 @@ filtered_socket_read(struct filtered_socket *s, bool expect_more)
     if (s->filter != nullptr)
         return s->filter->read(expect_more, s->filter_ctx);
     else
-        return buffered_socket_read(&s->base, expect_more);
+        return s->base.Read(expect_more);
 }
 
 ssize_t
@@ -211,7 +211,7 @@ filtered_socket_write(struct filtered_socket *s,
 {
     return s->filter != nullptr
         ? s->filter->write(data, length, s->filter_ctx)
-        : buffered_socket_write(&s->base, data, length);
+        : s->base.Write(data, length);
 }
 
 bool

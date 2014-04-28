@@ -140,7 +140,7 @@ fcgi_client_release_socket(struct fcgi_client *client, bool reuse)
 {
     assert(client != nullptr);
 
-    buffered_socket_abandon(&client->socket);
+    client->socket.Abandon();
     p_lease_release(&client->lease_ref, reuse, client->pool);
 }
 
@@ -153,10 +153,10 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
 {
     assert(client != nullptr);
 
-    if (buffered_socket_connected(&client->socket))
+    if (client->socket.IsConnected())
         fcgi_client_release_socket(client, reuse);
 
-    buffered_socket_destroy(&client->socket);
+    client->socket.Destroy();
 
 #ifndef NDEBUG
     list_remove(&client->siblings);
@@ -178,7 +178,7 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 
     async_operation_finished(&client->async);
 
-    if (buffered_socket_connected(&client->socket))
+    if (client->socket.IsConnected())
         fcgi_client_release_socket(client, false);
 
     if (client->request.istream != nullptr)
@@ -198,7 +198,7 @@ fcgi_client_abort_response_body(struct fcgi_client *client, GError *error)
 {
     assert(client->response.read_state == fcgi_client::Response::READ_BODY);
 
-    if (buffered_socket_connected(&client->socket))
+    if (client->socket.IsConnected())
         fcgi_client_release_socket(client, false);
 
     if (client->request.istream != nullptr)
@@ -236,7 +236,7 @@ fcgi_client_close_response_body(struct fcgi_client *client)
 {
     assert(client->response.read_state == fcgi_client::Response::READ_BODY);
 
-    if (buffered_socket_connected(&client->socket))
+    if (client->socket.IsConnected())
         fcgi_client_release_socket(client, false);
 
     if (client->request.istream != nullptr)
@@ -430,7 +430,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
 
     pool_unref(caller_pool);
 
-    return buffered_socket_valid(&client->socket);
+    return client->socket.IsValid();
 }
 
 /**
@@ -440,7 +440,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
 static void
 fcgi_client_handle_end(struct fcgi_client *client)
 {
-    assert(!buffered_socket_connected(&client->socket));
+    assert(!client->socket.IsConnected());
 
     if (client->response.read_state == fcgi_client::Response::READ_HEADERS) {
         GError *error =
@@ -535,11 +535,11 @@ fcgi_client_consume_input(struct fcgi_client *client,
                     /* incomplete header line received, want more
                        data */
                     assert(client->response.read_state == fcgi_client::Response::READ_HEADERS);
-                    assert(buffered_socket_valid(&client->socket));
+                    assert(client->socket.IsValid());
                     return BUFFERED_MORE;
                 }
 
-                if (!buffered_socket_valid(&client->socket))
+                if (!client->socket.IsValid())
                     return BUFFERED_CLOSED;
 
                 /* the response body handler blocks, wait for it to
@@ -549,7 +549,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
 
             data += nbytes;
             client->content_length -= nbytes;
-            buffered_socket_consumed(&client->socket, nbytes);
+            client->socket.Consumed(nbytes);
 
             if (at_headers && client->response.read_state == fcgi_client::Response::READ_BODY) {
                 /* the read_state has been switched from HEADERS to
@@ -580,7 +580,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
 
             data += nbytes;
             client->skip_length -= nbytes;
-            buffered_socket_consumed(&client->socket, nbytes);
+            client->socket.Consumed(nbytes);
 
             if (client->skip_length > 0)
                 return BUFFERED_MORE;
@@ -595,7 +595,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
             return BUFFERED_MORE;
 
         data += sizeof(*header);
-        buffered_socket_consumed(&client->socket, sizeof(*header));
+        client->socket.Consumed(sizeof(*header));
 
         if (!fcgi_client_handle_header(client, header))
             return BUFFERED_CLOSED;
@@ -614,14 +614,14 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
 {
     struct fcgi_client *client = (struct fcgi_client *)ctx;
 
-    assert(buffered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
     assert(client->request.istream != nullptr);
 
     client->request.got_data = true;
 
-    ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
+    ssize_t nbytes = client->socket.Write(data, length);
     if (nbytes > 0)
-        buffered_socket_schedule_write(&client->socket);
+        client->socket.ScheduleWrite();
     else if (gcc_likely(nbytes == WRITE_BLOCKING || nbytes == WRITE_DESTROYED))
         return 0;
     else if (nbytes < 0) {
@@ -641,21 +641,20 @@ fcgi_request_stream_direct(istream_direct type, int fd,
 {
     struct fcgi_client *client = (struct fcgi_client *)ctx;
 
-    assert(buffered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
 
     client->request.got_data = true;
 
-    ssize_t nbytes = buffered_socket_write_from(&client->socket, fd, type,
-                                                max_length);
+    ssize_t nbytes = client->socket.WriteFrom(fd, type, max_length);
     if (likely(nbytes > 0))
-        buffered_socket_schedule_write(&client->socket);
+        client->socket.ScheduleWrite();
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
     else if (nbytes == WRITE_DESTROYED)
         return ISTREAM_RESULT_CLOSED;
     else if (nbytes < 0 && errno == EAGAIN) {
         client->request.got_data = false;
-        buffered_socket_unschedule_write(&client->socket);
+        client->socket.UnscheduleWrite();
     }
 
     return nbytes;
@@ -670,7 +669,7 @@ fcgi_request_stream_eof(void *ctx)
 
     client->request.istream = nullptr;
 
-    buffered_socket_unschedule_write(&client->socket);
+    client->socket.UnscheduleWrite();
 }
 
 static void
@@ -729,7 +728,7 @@ fcgi_client_response_body_read(struct istream *istream)
            continue parsing the response if possible */
         return;
 
-    buffered_socket_read(&client->socket, true);
+    client->socket.Read(true);
 }
 
 static void
@@ -763,7 +762,7 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct fcgi_client *client = (struct fcgi_client *)ctx;
 
-    if (buffered_socket_connected(&client->socket)) {
+    if (client->socket.IsConnected()) {
         /* check if the #FCGI_END_REQUEST packet can be found in the
            following data chunk */
         size_t offset =
@@ -815,12 +814,12 @@ fcgi_client_socket_write(void *ctx)
     client->request.got_data = false;
     istream_read(client->request.istream);
 
-    const bool result = buffered_socket_valid(&client->socket);
+    const bool result = client->socket.IsValid();
     if (result && client->request.istream != nullptr) {
         if (client->request.got_data)
-            buffered_socket_schedule_write(&client->socket);
+            client->socket.ScheduleWrite();
         else
-            buffered_socket_unschedule_write(&client->socket);
+            client->socket.UnscheduleWrite();
     }
 
     pool_unref(client->pool);
@@ -933,9 +932,9 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;
 
-    buffered_socket_init(&client->socket, pool, fd, fd_type,
-                         &fcgi_client_timeout, &fcgi_client_timeout,
-                         &fcgi_client_socket_handler, client);
+    client->socket.Init(pool, fd, fd_type,
+                        &fcgi_client_timeout, &fcgi_client_timeout,
+                        &fcgi_client_socket_handler, client);
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "fcgi_client_lease");
@@ -1027,8 +1026,8 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     istream_assign_handler(&client->request.istream, request,
                            &fcgi_request_stream_handler, client,
-                           buffered_socket_direct_mask(&client->socket));
+                           client->socket.GetDirectMask());
 
-    buffered_socket_schedule_read_no_timeout(&client->socket, true);
+    client->socket.ScheduleReadNoTimeout(true);
     istream_read(client->request.istream);
 }

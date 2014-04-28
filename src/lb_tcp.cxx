@@ -46,14 +46,14 @@ lb_tcp_destroy_inbound(struct lb_tcp *tcp)
 static void
 lb_tcp_destroy_outbound(struct lb_tcp *tcp)
 {
-    if (buffered_socket_connected(&tcp->outbound))
-        buffered_socket_close(&tcp->outbound);
+    if (tcp->outbound.IsConnected())
+        tcp->outbound.Close();
 
-    buffered_socket_destroy(&tcp->outbound);
+    tcp->outbound.Destroy();
 }
 
 /*
- * inbound buffered_socket_handler
+ * inbound BufferedSocketHandler
  *
  */
 
@@ -68,13 +68,13 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
         /* outbound is not yet connected */
         return BUFFERED_BLOCKING;
 
-    if (!buffered_socket_valid(&tcp->outbound)) {
+    if (!tcp->outbound.IsValid()) {
         lb_tcp_close(tcp);
         tcp->handler->error("Send error", "Broken socket", tcp->handler_ctx);
         return BUFFERED_CLOSED;
     }
 
-    ssize_t nbytes = buffered_socket_write(&tcp->outbound, buffer, size);
+    ssize_t nbytes = tcp->outbound.Write(buffer, size);
     if (nbytes > 0) {
         filtered_socket_consumed(&tcp->inbound, nbytes);
         return (size_t)nbytes == size
@@ -125,7 +125,7 @@ inbound_buffered_socket_write(void *ctx)
 
     tcp->got_outbound_data = false;
 
-    if (!buffered_socket_read(&tcp->outbound, false))
+    if (!tcp->outbound.Read(false))
         return false;
 
     if (!tcp->got_outbound_data)
@@ -138,7 +138,7 @@ inbound_buffered_socket_drained(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    if (!buffered_socket_valid(&tcp->outbound)) {
+    if (!tcp->outbound.IsValid()) {
         /* now that inbound's output buffers are drained, we can
            finally close the connection (postponed from
            outbound_buffered_socket_end()) */
@@ -196,7 +196,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     ssize_t nbytes = filtered_socket_write(&tcp->inbound, buffer, size);
     if (nbytes > 0) {
-        buffered_socket_consumed(&tcp->outbound, nbytes);
+        tcp->outbound.Consumed(nbytes);
         return (size_t)nbytes == size
             ? BUFFERED_OK
             : BUFFERED_PARTIAL;
@@ -233,7 +233,7 @@ outbound_buffered_socket_closed(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    buffered_socket_close(&tcp->outbound);
+    tcp->outbound.Close();
     return true;
 }
 
@@ -242,7 +242,7 @@ outbound_buffered_socket_end(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    buffered_socket_destroy(&tcp->outbound);
+    tcp->outbound.Destroy();
 
     if (filtered_socket_is_drained(&tcp->inbound)) {
         /* all output buffers to "inbound" are drained; close the
@@ -267,7 +267,7 @@ outbound_buffered_socket_write(void *ctx)
         return false;
 
     if (!tcp->got_inbound_data)
-        buffered_socket_unschedule_write(&tcp->outbound);
+        tcp->outbound.UnscheduleWrite();
     return true;
 }
 
@@ -315,10 +315,10 @@ lb_tcp_client_socket_success(int fd, void *ctx)
 
     async_ref_clear(&tcp->connect);
 
-    buffered_socket_init(&tcp->outbound, tcp->pool,
-                         fd, ISTREAM_TCP,
-                         nullptr, &write_timeout,
-                         &outbound_buffered_socket_handler, tcp);
+    tcp->outbound.Init(tcp->pool,
+                       fd, ISTREAM_TCP,
+                       nullptr, &write_timeout,
+                       &outbound_buffered_socket_handler, tcp);
 
     /* TODO
     tcp->outbound.direct = tcp->pipe_stock != nullptr &&
@@ -327,7 +327,7 @@ lb_tcp_client_socket_success(int fd, void *ctx)
     */
 
     if (filtered_socket_read(&tcp->inbound, false))
-        buffered_socket_read(&tcp->outbound, false);
+        tcp->outbound.Read(false);
 }
 
 static void
@@ -453,6 +453,6 @@ lb_tcp_close(struct lb_tcp *tcp)
 
     if (async_ref_defined(&tcp->connect))
         async_abort(&tcp->connect);
-    else if (buffered_socket_valid(&tcp->outbound))
+    else if (tcp->outbound.IsValid())
         lb_tcp_destroy_outbound(tcp);
 }

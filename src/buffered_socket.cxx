@@ -25,7 +25,7 @@ buffered_socket_closed_prematurely(BufferedSocket *s)
 static void
 buffered_socket_ended(BufferedSocket *s)
 {
-    assert(!buffered_socket_connected(s));
+    assert(!s->IsConnected());
     assert(!s->ended);
 
 #ifndef NDEBUG
@@ -57,35 +57,33 @@ buffered_socket_input_full(const BufferedSocket *s)
 }
 
 int
-buffered_socket_as_fd(BufferedSocket *s)
+BufferedSocket::AsFD()
 {
-    if (!buffered_socket_input_empty(s))
+    if (!buffered_socket_input_empty(this))
         /* can switch to the raw socket descriptor only if the input
            buffer is empty */
         return -1;
 
-    return s->base.AsFD();
+    return base.AsFD();
 }
 
 size_t
-buffered_socket_available(const BufferedSocket *s)
+BufferedSocket::GetAvailable() const
 {
-    assert(s != nullptr);
-    assert(!s->ended);
+    assert(!ended);
 
-    return s->input != nullptr
-        ? fifo_buffer_available(s->input)
+    return input != nullptr
+        ? fifo_buffer_available(input)
         : 0;
 }
 
 void
-buffered_socket_consumed(BufferedSocket *s, size_t nbytes)
+BufferedSocket::Consumed( size_t nbytes)
 {
-    assert(s != nullptr);
-    assert(!s->ended);
-    assert(s->input != nullptr);
+    assert(!ended);
+    assert(input != nullptr);
 
-    fifo_buffer_consume(s->input, nbytes);
+    fifo_buffer_consume(input, nbytes);
 }
 
 /**
@@ -121,7 +119,7 @@ buffered_socket_invoke_data(BufferedSocket *s)
             assert(result == BUFFERED_CLOSED);
         } else {
             s->last_buffered_result = result;
-            assert((result == BUFFERED_CLOSED) == !buffered_socket_valid(s));
+            assert((result == BUFFERED_CLOSED) == !s->IsValid());
         }
 #endif
 
@@ -144,14 +142,14 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
     s->expect_more = false;
 
     enum buffered_result result = buffered_socket_invoke_data(s);
-    assert((result == BUFFERED_CLOSED) || buffered_socket_valid(s));
+    assert((result == BUFFERED_CLOSED) || s->IsValid());
 
     switch (result) {
     case BUFFERED_OK:
         assert(fifo_buffer_empty(s->input));
         assert(!s->expect_more);
 
-        if (!buffered_socket_connected(s)) {
+        if (!s->IsConnected()) {
             buffered_socket_ended(s);
             return false;
         }
@@ -161,7 +159,7 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
     case BUFFERED_PARTIAL:
         assert(!fifo_buffer_empty(s->input));
 
-        if (!buffered_socket_connected(s))
+        if (!s->IsConnected())
             return false;
 
         return true;
@@ -169,12 +167,12 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
     case BUFFERED_MORE:
         s->expect_more = true;
 
-        if (!buffered_socket_connected(s)) {
+        if (!s->IsConnected()) {
             buffered_socket_closed_prematurely(s);
             return false;
         }
 
-        if (buffered_socket_full(s)) {
+        if (s->IsFull()) {
             GError *error =
                 g_error_new_literal(buffered_socket_quark(), 0,
                                     "Input buffer overflow");
@@ -212,7 +210,7 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
 static bool
 buffered_socket_submit_direct(BufferedSocket *s)
 {
-    assert(buffered_socket_connected(s));
+    assert(s->IsConnected());
     assert(buffered_socket_input_empty(s));
 
     const bool old_expect_more = s->expect_more;
@@ -257,7 +255,7 @@ buffered_socket_submit_direct(BufferedSocket *s)
 static bool
 buffered_socket_fill_buffer(BufferedSocket *s)
 {
-    assert(buffered_socket_connected(s));
+    assert(s->IsConnected());
 
     struct fifo_buffer *buffer = s->input;
     if (buffer == nullptr)
@@ -289,7 +287,7 @@ buffered_socket_fill_buffer(BufferedSocket *s)
              !s->handler->remaining(remaining, s->handler_ctx)))
             return false;
 
-        assert(!buffered_socket_connected(s));
+        assert(!s->IsConnected());
         assert(s->input == buffer);
         assert(remaining == fifo_buffer_available(buffer));
 
@@ -327,12 +325,12 @@ buffered_socket_fill_buffer(BufferedSocket *s)
 static bool
 buffered_socket_try_read2(BufferedSocket *s)
 {
-    assert(buffered_socket_valid(s));
+    assert(s->IsValid());
     assert(!s->destroyed);
     assert(!s->ended);
     assert(s->reading);
 
-    if (!buffered_socket_connected(s)) {
+    if (!s->IsConnected()) {
         assert(!buffered_socket_input_empty(s));
 
         buffered_socket_submit_from_buffer(s);
@@ -375,7 +373,7 @@ buffered_socket_try_read2(BufferedSocket *s)
 static bool
 buffered_socket_try_read(BufferedSocket *s)
 {
-    assert(buffered_socket_valid(s));
+    assert(s->IsValid());
     assert(!s->destroyed);
     assert(!s->ended);
     assert(!s->reading);
@@ -451,103 +449,101 @@ static const struct socket_handler buffered_socket_handler = {
  */
 
 void
-buffered_socket_init(BufferedSocket *s, struct pool *pool,
-                     int fd, enum istream_direct fd_type,
-                     const struct timeval *read_timeout,
-                     const struct timeval *write_timeout,
-                     const BufferedSocketHandler *handler, void *ctx)
+BufferedSocket::Init(struct pool *_pool,
+                     int _fd, enum istream_direct _fd_type,
+                     const struct timeval *_read_timeout,
+                     const struct timeval *_write_timeout,
+                     const BufferedSocketHandler *_handler, void *_ctx)
 {
-    assert(handler != nullptr);
-    assert(handler->data != nullptr);
+    assert(_handler != nullptr);
+    assert(_handler->data != nullptr);
     /* handler method closed() is optional */
-    assert(handler->write != nullptr);
-    assert(handler->error != nullptr);
+    assert(_handler->write != nullptr);
+    assert(_handler->error != nullptr);
 
-    s->base.Init(pool, fd, fd_type,
-                 &buffered_socket_handler, s);
+    base.Init(_pool, _fd, _fd_type,
+              &buffered_socket_handler, this);
 
-    s->read_timeout = read_timeout;
-    s->write_timeout = write_timeout;
+    read_timeout = _read_timeout;
+    write_timeout = _write_timeout;
 
-    s->handler = handler;
-    s->handler_ctx = ctx;
-    s->input = nullptr;
-    s->direct = false;
-    s->expect_more = false;
+    handler = _handler;
+    handler_ctx = _ctx;
+    input = nullptr;
+    direct = false;
+    expect_more = false;
 
 #ifndef NDEBUG
-    s->reading = false;
-    s->ended = false;
-    s->destroyed = false;
-    s->last_buffered_result = (buffered_result)-1;
+    reading = false;
+    ended = false;
+    destroyed = false;
+    last_buffered_result = (buffered_result)-1;
 #endif
 }
 
 void
-buffered_socket_destroy(BufferedSocket *s)
+BufferedSocket::Destroy()
 {
-    assert(!s->base.IsValid());
-    assert(!s->destroyed);
+    assert(!base.IsValid());
+    assert(!destroyed);
 
-    if (s->input != nullptr) {
-        fb_pool_free(s->input);
-        s->input = nullptr;
+    if (input != nullptr) {
+        fb_pool_free(input);
+        input = nullptr;
     }
 
 #ifndef NDEBUG
-    s->destroyed = true;
+    destroyed = true;
 #endif
 }
 
 bool
-buffered_socket_empty(const BufferedSocket *s)
+BufferedSocket::IsEmpty() const
 {
-    assert(s != nullptr);
-    assert(!s->ended);
+    assert(!ended);
 
-    return s->input == nullptr || fifo_buffer_empty(s->input);
+    return input == nullptr || fifo_buffer_empty(input);
 }
 
 bool
-buffered_socket_full(const BufferedSocket *s)
+BufferedSocket::IsFull() const
 {
-    return buffered_socket_input_full(s);
+    return buffered_socket_input_full(this);
 }
 
 bool
-buffered_socket_read(BufferedSocket *s, bool expect_more)
+BufferedSocket::Read(bool _expect_more)
 {
-    assert(!s->reading);
-    assert(!s->destroyed);
-    assert(!s->ended);
+    assert(!reading);
+    assert(!destroyed);
+    assert(!ended);
 
-    if (expect_more) {
-        if (!buffered_socket_connected(s) &&
-            buffered_socket_input_empty(s)) {
-            buffered_socket_closed_prematurely(s);
+    if (_expect_more) {
+        if (!IsConnected() &&
+            buffered_socket_input_empty(this)) {
+            buffered_socket_closed_prematurely(this);
             return false;
         }
 
-        s->expect_more = true;
+        expect_more = true;
     }
 
-    return buffered_socket_try_read(s);
+    return buffered_socket_try_read(this);
 }
 
 ssize_t
-buffered_socket_write(BufferedSocket *s,
-                      const void *data, size_t length)
+BufferedSocket::Write(const void *data, size_t length)
 {
-    ssize_t nbytes = s->base.Write(data, length);
+    ssize_t nbytes = base.Write(data, length);
 
     if (gcc_unlikely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
-            buffered_socket_schedule_write(s);
+            ScheduleWrite();
             return WRITE_BLOCKING;
         } else if ((errno == EPIPE || errno == ECONNRESET) &&
-                   s->handler->broken != nullptr &&
-                   s->handler->broken(s->handler_ctx)) {
-            buffered_socket_unschedule_write(s);
+                   handler->broken != nullptr &&
+                   handler->broken(handler_ctx)) {
+            UnscheduleWrite();
             return WRITE_BROKEN;
         }
     }
@@ -556,22 +552,21 @@ buffered_socket_write(BufferedSocket *s,
 }
 
 ssize_t
-buffered_socket_write_from(BufferedSocket *s,
-                           int fd, enum istream_direct fd_type,
-                           size_t length)
+BufferedSocket::WriteFrom(int other_fd, enum istream_direct other_fd_type,
+                          size_t length)
 {
-    ssize_t nbytes = s->base.WriteFrom(fd, fd_type, length);
+    ssize_t nbytes = base.WriteFrom(other_fd, other_fd_type, length);
     if (gcc_unlikely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
-            if (!buffered_socket_ready_for_writing(s)) {
-                buffered_socket_schedule_write(s);
+            if (!IsReadyForWriting()) {
+                ScheduleWrite();
                 return WRITE_BLOCKING;
             }
 
             /* try again, just in case our fd has become ready between
                the first socket_wrapper_write_from() call and
                fd_ready_for_writing() */
-            nbytes = s->base.WriteFrom(fd, fd_type, length);
+            nbytes = base.WriteFrom(other_fd, other_fd_type, length);
         }
     }
 

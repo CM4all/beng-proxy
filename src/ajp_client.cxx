@@ -125,7 +125,7 @@ static const struct ajp_header empty_body_chunk = {
 static void
 ajp_client_schedule_write(struct ajp_client *client)
 {
-    buffered_socket_schedule_write(&client->socket);
+    client->socket.ScheduleWrite();
 }
 
 /**
@@ -135,11 +135,11 @@ static void
 ajp_client_release_socket(struct ajp_client *client, bool reuse)
 {
     assert(client != nullptr);
-    assert(buffered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
     assert(client->response.read_state == ajp_client::Response::READ_BODY ||
            client->response.read_state == ajp_client::Response::READ_END);
 
-    buffered_socket_abandon(&client->socket);
+    client->socket.Abandon();
     p_lease_release(&client->lease_ref, reuse, client->pool);
 }
 
@@ -151,13 +151,13 @@ static void
 ajp_client_release(struct ajp_client *client, bool reuse)
 {
     assert(client != nullptr);
-    assert(buffered_socket_valid(&client->socket));
+    assert(client->socket.IsValid());
     assert(client->response.read_state == ajp_client::Response::READ_END);
 
-    if (buffered_socket_connected(&client->socket))
+    if (client->socket.IsConnected())
         ajp_client_release_socket(client, reuse);
 
-    buffered_socket_destroy(&client->socket);
+    client->socket.Destroy();
 
     if (client->request.istream != nullptr)
         istream_free_handler(&client->request.istream);
@@ -265,7 +265,7 @@ istream_ajp_read(struct istream *istream)
     if (client->response.in_handler)
         return;
 
-    buffered_socket_read(&client->socket, true);
+    client->socket.Read(true);
 }
 
 static void
@@ -377,7 +377,7 @@ ajp_consume_send_headers(struct ajp_client *client,
                                           headers, body);
     client->response.in_handler = false;
 
-    return buffered_socket_valid(&client->socket);
+    return client->socket.IsValid();
 }
 
 /**
@@ -420,7 +420,7 @@ ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
             istream_deinit_eof(&client->response.body);
         } else if (client->response.read_state == ajp_client::Response::READ_NO_BODY) {
             client->response.read_state = ajp_client::Response::READ_END;
-            ajp_client_release(client, buffered_socket_empty(&client->socket));
+            ajp_client_release(client, client->socket.IsEmpty());
 
             http_response_handler_invoke_response(&client->request.handler,
                                                   client->response.status,
@@ -537,12 +537,12 @@ ajp_client_feed(struct ajp_client *client,
                 size_t nbytes = ajp_consume_body_chunk(client, data,
                                                        remaining);
                 if (nbytes == 0)
-                    return buffered_socket_valid(&client->socket)
+                    return client->socket.IsValid()
                         ? BUFFERED_BLOCKING
                         : BUFFERED_CLOSED;
 
                 data += nbytes;
-                buffered_socket_consumed(&client->socket, nbytes);
+                client->socket.Consumed(nbytes);
                 if (data == end || client->response.chunk_length > 0)
                     /* want more data */
                     return nbytes < remaining
@@ -555,7 +555,7 @@ ajp_client_feed(struct ajp_client *client,
                 assert(nbytes > 0);
 
                 data += nbytes;
-                buffered_socket_consumed(&client->socket, nbytes);
+                client->socket.Consumed(nbytes);
                 if (data == end || client->response.chunk_length > 0)
                     /* want more data */
                     return BUFFERED_MORE;
@@ -625,7 +625,7 @@ ajp_client_feed(struct ajp_client *client,
 
             /* consume the body chunk header and start sending the
                body */
-            buffered_socket_consumed(&client->socket, nbytes);
+            client->socket.Consumed(nbytes);
             data += nbytes;
             continue;
         }
@@ -636,7 +636,7 @@ ajp_client_feed(struct ajp_client *client,
             /* the packet is not complete yet */
             return BUFFERED_MORE;
 
-        buffered_socket_consumed(&client->socket, nbytes);
+        client->socket.Consumed(nbytes);
 
         if (!ajp_consume_packet(client, code,
                                 data + sizeof(*header) + 1,
@@ -660,14 +660,14 @@ ajp_request_stream_data(const void *data, size_t length, void *ctx)
     struct ajp_client *client = (struct ajp_client *)ctx;
 
     assert(client != nullptr);
-    assert(buffered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
     assert(client->request.istream != nullptr);
     assert(data != nullptr);
     assert(length > 0);
 
     client->request.got_data = true;
 
-    ssize_t nbytes = buffered_socket_write(&client->socket, data, length);
+    ssize_t nbytes = client->socket.Write(data, length);
     if (likely(nbytes >= 0)) {
         ajp_client_schedule_write(client);
         return (size_t)nbytes;
@@ -691,13 +691,12 @@ ajp_request_stream_direct(istream_direct type, int fd, size_t max_length,
     struct ajp_client *client = (struct ajp_client *)ctx;
 
     assert(client != nullptr);
-    assert(buffered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
     assert(client->request.istream != nullptr);
 
     client->request.got_data = true;
 
-    ssize_t nbytes = buffered_socket_write_from(&client->socket, fd, type,
-                                                max_length);
+    ssize_t nbytes = client->socket.WriteFrom(fd, type, max_length);
     if (likely(nbytes > 0))
         ajp_client_schedule_write(client);
     else if (nbytes == WRITE_BLOCKING)
@@ -706,7 +705,7 @@ ajp_request_stream_direct(istream_direct type, int fd, size_t max_length,
         return ISTREAM_RESULT_CLOSED;
     else if (nbytes < 0 && errno == EAGAIN) {
         client->request.got_data = false;
-        buffered_socket_unschedule_write(&client->socket);
+        client->socket.UnscheduleWrite();
     }
 
     return nbytes;
@@ -721,8 +720,8 @@ ajp_request_stream_eof(void *ctx)
 
     client->request.istream = nullptr;
 
-    buffered_socket_unschedule_write(&client->socket);
-    buffered_socket_read(&client->socket, true);
+    client->socket.UnscheduleWrite();
+    client->socket.Read(true);
 }
 
 static void
@@ -801,13 +800,13 @@ ajp_client_socket_write(void *ctx)
     client->request.got_data = false;
     istream_read(client->request.istream);
 
-    const bool result = buffered_socket_valid(&client->socket) &&
-        buffered_socket_connected(&client->socket);
+    const bool result = client->socket.IsValid() &&
+        client->socket.IsConnected();
     if (result && client->request.istream != nullptr) {
         if (client->request.got_data)
             ajp_client_schedule_write(client);
         else
-            buffered_socket_unschedule_write(&client->socket);
+            client->socket.UnscheduleWrite();
     }
 
     pool_unref(client->pool);
@@ -899,9 +898,9 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     auto client = NewFromPool<struct ajp_client>(pool);
     client->pool = pool;
 
-    buffered_socket_init(&client->socket, pool, fd, fd_type,
-                         &ajp_client_timeout, &ajp_client_timeout,
-                         &ajp_client_socket_handler, client);
+    client->socket.Init(pool, fd, fd_type,
+                        &ajp_client_timeout, &ajp_client_timeout,
+                        &ajp_client_socket_handler, client);
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "ajp_client_lease");
@@ -1025,7 +1024,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
 
     istream_assign_handler(&client->request.istream, request,
                            &ajp_request_stream_handler, client,
-                           buffered_socket_direct_mask(&client->socket));
+                           client->socket.GetDirectMask());
 
     http_response_handler_set(&client->request.handler, handler, handler_ctx);
 
@@ -1039,6 +1038,6 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     client->response.no_body = http_method_is_empty(method);
     client->response.in_handler = false;
 
-    buffered_socket_schedule_read_no_timeout(&client->socket, true);
+    client->socket.ScheduleReadNoTimeout(true);
     istream_read(client->request.istream);
 }

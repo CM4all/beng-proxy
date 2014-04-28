@@ -168,7 +168,7 @@ filtered_socket_close(struct filtered_socket *s)
         return;
 #endif
 
-    buffered_socket_close(&s->base);
+    s->base.Close();
 }
 
 /**
@@ -185,7 +185,7 @@ filtered_socket_abandon(struct filtered_socket *s)
         return;
 #endif
 
-    buffered_socket_abandon(&s->base);
+    s->base.Abandon();
 }
 
 /**
@@ -205,7 +205,7 @@ filtered_socket_as_fd(struct filtered_socket *s)
 {
     return s->filter != nullptr
         ? -1
-        : buffered_socket_as_fd(&s->base);
+        : s->base.AsFD();
 }
 
 /**
@@ -222,7 +222,7 @@ filtered_socket_connected(const struct filtered_socket *s)
         return false;
 #endif
 
-    return buffered_socket_connected(&s->base);
+    return s->base.IsConnected();
 }
 
 /**
@@ -234,7 +234,7 @@ filtered_socket_valid(const struct filtered_socket *s)
 {
     assert(s != nullptr);
 
-    return buffered_socket_valid(&s->base);
+    return s->base.IsValid();
 }
 
 /**
@@ -290,7 +290,7 @@ filtered_socket_direct_mask(const struct filtered_socket *s)
 
     return s->filter != nullptr
         ? ISTREAM_NONE
-        : buffered_socket_direct_mask(&s->base);
+        : s->base.GetDirectMask();
 }
 
 /**
@@ -306,7 +306,7 @@ filtered_socket_read(struct filtered_socket *s, bool expect_more);
 static inline void
 filtered_socket_set_cork(struct filtered_socket *s, bool cork)
 {
-    buffered_socket_set_cork(&s->base, cork);
+    s->base.SetCork(cork);
 }
 
 ssize_t
@@ -320,7 +320,7 @@ filtered_socket_write_from(struct filtered_socket *s,
 {
     assert(s->filter == nullptr);
 
-    return buffered_socket_write_from(&s->base, fd, fd_type, length);
+    return s->base.WriteFrom(fd, fd_type, length);
 }
 
 gcc_pure
@@ -329,7 +329,7 @@ filtered_socket_ready_for_writing(const struct filtered_socket *s)
 {
     assert(s->filter == nullptr);
 
-    return buffered_socket_ready_for_writing(&s->base);
+    return s->base.IsReadyForWriting();
 }
 
 static inline void
@@ -340,7 +340,7 @@ filtered_socket_schedule_read_timeout(struct filtered_socket *s,
     if (s->filter != nullptr && s->filter->schedule_read != nullptr)
         s->filter->schedule_read(expect_more, timeout, s->filter_ctx);
     else
-        buffered_socket_schedule_read_timeout(&s->base, expect_more, timeout);
+        s->base.ScheduleReadTimeout(expect_more, timeout);
 }
 
 /**
@@ -363,7 +363,7 @@ filtered_socket_schedule_write(struct filtered_socket *s)
     if (s->filter != nullptr && s->filter->schedule_write != nullptr)
         s->filter->schedule_write(s->filter_ctx);
     else
-        buffered_socket_schedule_write(&s->base);
+        s->base.ScheduleWrite();
 }
 
 static inline void
@@ -372,7 +372,7 @@ filtered_socket_unschedule_write(struct filtered_socket *s)
     if (s->filter != nullptr && s->filter->unschedule_write != nullptr)
         s->filter->unschedule_write(s->filter_ctx);
     else
-        buffered_socket_unschedule_write(&s->base);
+        s->base.UnscheduleWrite();
 }
 
 gcc_pure
@@ -381,7 +381,7 @@ filtered_socket_internal_is_empty(const struct filtered_socket *s)
 {
     assert(s->filter != nullptr);
 
-    return buffered_socket_empty(&s->base);
+    return s->base.IsEmpty();
 }
 
 gcc_pure
@@ -390,7 +390,7 @@ filtered_socket_internal_is_full(const struct filtered_socket *s)
 {
     assert(s->filter != nullptr);
 
-    return buffered_socket_full(&s->base);
+    return s->base.IsFull();
 }
 
 gcc_pure
@@ -399,7 +399,7 @@ filtered_socket_internal_available(const struct filtered_socket *s)
 {
     assert(s->filter != nullptr);
 
-    return buffered_socket_available(&s->base);
+    return s->base.GetAvailable();
 }
 
 static inline void
@@ -407,7 +407,7 @@ filtered_socket_internal_consumed(struct filtered_socket *s, size_t nbytes)
 {
     assert(s->filter != nullptr);
 
-    buffered_socket_consumed(&s->base, nbytes);
+    s->base.Consumed(nbytes);
 }
 
 static inline bool
@@ -415,7 +415,7 @@ filtered_socket_internal_read(struct filtered_socket *s, bool expect_more)
 {
     assert(s->filter != nullptr);
 
-    return buffered_socket_read(&s->base, expect_more);
+    return s->base.Read(expect_more);
 }
 
 static inline ssize_t
@@ -424,7 +424,7 @@ filtered_socket_internal_write(struct filtered_socket *s,
 {
     assert(s->filter != nullptr);
 
-    return buffered_socket_write(&s->base, data, length);
+    return s->base.Write(data, length);
 }
 
 /**
@@ -455,7 +455,7 @@ filtered_socket_internal_schedule_read(struct filtered_socket *s,
 {
     assert(s->filter != nullptr);
 
-    buffered_socket_schedule_read_timeout(&s->base, expect_more, timeout);
+    s->base.ScheduleReadTimeout(expect_more, timeout);
 }
 
 static inline void
@@ -463,7 +463,7 @@ filtered_socket_internal_schedule_write(struct filtered_socket *s)
 {
     assert(s->filter != nullptr);
 
-    buffered_socket_schedule_write(&s->base);
+    s->base.ScheduleWrite();
 }
 
 static inline void
@@ -471,7 +471,7 @@ filtered_socket_internal_unschedule_write(struct filtered_socket *s)
 {
     assert(s->filter != nullptr);
 
-    buffered_socket_unschedule_write(&s->base);
+    s->base.UnscheduleWrite();
 }
 
 static inline enum buffered_result
