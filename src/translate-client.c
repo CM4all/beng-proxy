@@ -86,6 +86,9 @@ struct translate_client {
     /** the current local file address being edited */
     struct file_address *file_address;
 
+    /** the current HTTP/AJP address being edited */
+    struct uri_with_address *http_address;
+
     /** the current CGI/FastCGI/WAS address being edited */
     struct cgi_address *cgi_address;
 
@@ -536,6 +539,7 @@ add_view(struct translate_client *client, const char *name)
     client->resource_address = &view->address;
     client->jail = NULL;
     client->file_address = NULL;
+    client->http_address = NULL;
     client->cgi_address = NULL;
     client->nfs_address = NULL;
     client->lhttp_address = NULL;
@@ -724,6 +728,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address = &client->response.address;
         client->jail = NULL;
         client->file_address = NULL;
+        client->http_address = NULL;
         client->cgi_address = NULL;
         client->nfs_address = NULL;
         client->lhttp_address = NULL;
@@ -942,7 +947,7 @@ translate_handle_packet(struct translate_client *client,
         }
 
         client->resource_address->type = RESOURCE_ADDRESS_HTTP;
-        client->resource_address->u.http = uwa =
+        client->resource_address->u.http = client->http_address = uwa =
             uri_address_parse(client->pool, payload, &error);
         if (uwa == NULL) {
             translate_client_abort(client, error);
@@ -972,6 +977,7 @@ translate_handle_packet(struct translate_client *client,
         client->resource_address = &transformation->u.filter;
         client->jail = NULL;
         client->file_address = NULL;
+        client->http_address = NULL;
         client->cgi_address = NULL;
         client->nfs_address = NULL;
         client->lhttp_address = NULL;
