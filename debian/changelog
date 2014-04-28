@@ -2,7 +2,7 @@ cm4all-beng-proxy (3.1.31) unstable; urgency=low
 
   * rewrite-uri: fix view name corruption
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 28 Apr 2014 16:30:17 -0000
 
 cm4all-beng-proxy (3.1.30) unstable; urgency=low
 
