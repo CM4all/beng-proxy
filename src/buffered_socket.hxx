@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_BUFFERED_SOCKET_HXX
 #define BENG_PROXY_BUFFERED_SOCKET_HXX
 
-#include "socket_wrapper.h"
+#include "socket_wrapper.hxx"
 
 #include <glib.h>
 

@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SOCKET_WRAPPER_H
-#define BENG_PROXY_SOCKET_WRAPPER_H
+#ifndef BENG_PROXY_SOCKET_WRAPPER_HXX
+#define BENG_PROXY_SOCKET_WRAPPER_HXX
 
 #include "istream-direct.h"
 #include "pevent.h"
@@ -16,7 +16,6 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <stddef.h>
-#include <stdbool.h>
 
 struct fifo_buffer;
 
@@ -55,10 +54,6 @@ struct socket_wrapper {
     void *handler_ctx;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
 socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
                     int fd, enum istream_direct fd_type,
@@ -84,7 +79,7 @@ socket_wrapper_as_fd(struct socket_wrapper *s);
 static inline bool
 socket_wrapper_valid(const struct socket_wrapper *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
 
     return s->fd >= 0;
 }
@@ -106,9 +101,9 @@ socket_wrapper_schedule_read(struct socket_wrapper *s,
 {
     assert(socket_wrapper_valid(s));
 
-    if (timeout == NULL && event_pending(&s->read_event, EV_TIMEOUT, NULL))
+    if (timeout == nullptr && event_pending(&s->read_event, EV_TIMEOUT, nullptr))
         /* work around libevent bug: event_add() should disable the
-           timeout if tv==NULL, but in fact it does not; workaround:
+           timeout if tv==nullptr, but in fact it does not; workaround:
            delete the whole event first, then re-add it */
         p_event_del(&s->read_event, s->pool);
 
@@ -127,9 +122,10 @@ socket_wrapper_schedule_write(struct socket_wrapper *s,
 {
     assert(socket_wrapper_valid(s));
 
-    if (timeout == NULL && event_pending(&s->write_event, EV_TIMEOUT, NULL))
+    if (timeout == nullptr &&
+        event_pending(&s->write_event, EV_TIMEOUT, nullptr))
         /* work around libevent bug: event_add() should disable the
-           timeout if tv==NULL, but in fact it does not; workaround:
+           timeout if tv==nullptr, but in fact it does not; workaround:
            delete the whole event first, then re-add it */
         p_event_del(&s->write_event, s->pool);
 
@@ -146,14 +142,14 @@ gcc_pure
 static inline bool
 socket_wrapper_is_read_pending(const struct socket_wrapper *s)
 {
-    return event_pending(&s->read_event, EV_READ, NULL);
+    return event_pending(&s->read_event, EV_READ, nullptr);
 }
 
 gcc_pure
 static inline bool
 socket_wrapper_is_write_pending(const struct socket_wrapper *s)
 {
-    return event_pending(&s->write_event, EV_WRITE, NULL);
+    return event_pending(&s->write_event, EV_WRITE, nullptr);
 }
 
 ssize_t
@@ -175,9 +171,5 @@ ssize_t
 socket_wrapper_write_from(struct socket_wrapper *s,
                           int fd, enum istream_direct fd_type,
                           size_t length);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

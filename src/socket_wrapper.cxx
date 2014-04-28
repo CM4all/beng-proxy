@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "socket_wrapper.h"
+#include "socket_wrapper.hxx"
 #include "direct.h"
 #include "buffered_io.h"
 #include "fd-util.h"
@@ -20,7 +20,7 @@
 static void
 socket_read_event_callback(gcc_unused int fd, short event, void *ctx)
 {
-    struct socket_wrapper *s = ctx;
+    struct socket_wrapper *s = (struct socket_wrapper *)ctx;
     assert(socket_wrapper_valid(s));
 
     if (event & EV_TIMEOUT)
@@ -35,7 +35,7 @@ static void
 socket_write_event_callback(gcc_unused int fd, gcc_unused short event,
                             void *ctx)
 {
-    struct socket_wrapper *s = ctx;
+    struct socket_wrapper *s = (struct socket_wrapper *)ctx;
     assert(socket_wrapper_valid(s));
 
     if (event & EV_TIMEOUT)
@@ -51,12 +51,12 @@ socket_wrapper_init(struct socket_wrapper *s, struct pool *pool,
                     int fd, enum istream_direct fd_type,
                     const struct socket_handler *handler, void *ctx)
 {
-    assert(s != NULL);
-    assert(pool != NULL);
+    assert(s != nullptr);
+    assert(pool != nullptr);
     assert(fd >= 0);
-    assert(handler != NULL);
-    assert(handler->read != NULL);
-    assert(handler->write != NULL);
+    assert(handler != nullptr);
+    assert(handler->read != nullptr);
+    assert(handler->write != nullptr);
 
     s->pool = pool;
     s->fd = fd;
