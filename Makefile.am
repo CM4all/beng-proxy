@@ -135,12 +135,12 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/expiry.h \
 	src/failure.c src/failure.h \
 	src/fcache.cxx src/fcache.h \
-	src/fcgi_client.c src/fcgi_client.h \
+	src/fcgi_client.cxx src/fcgi_client.hxx \
 	src/fcgi_launch.c src/fcgi_launch.h \
-	src/fcgi_remote.c src/fcgi_remote.h \
+	src/fcgi_remote.cxx src/fcgi_remote.hxx \
 	src/fcgi_protocol.h \
-	src/fcgi_request.c src/fcgi_request.h \
-	src/fcgi_serialize.c src/fcgi_serialize.h \
+	src/fcgi_request.cxx src/fcgi_request.hxx \
+	src/fcgi_serialize.cxx src/fcgi_serialize.hxx \
 	src/fcgi_stock.c src/fcgi_stock.h \
 	src/was_control.c src/was_control.h \
 	src/was_output.c src/was_output.h \
@@ -1575,7 +1575,7 @@ test_run_nfs_client_LDADD = $(AM_LDADD) \
 endif
 
 test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
-	src/fcgi_client.c src/fcgi_serialize.c \
+	src/fcgi_client.cxx src/fcgi_serialize.cxx \
 	src/socket_wrapper.c src/buffered_socket.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/cleanup_timer.c \

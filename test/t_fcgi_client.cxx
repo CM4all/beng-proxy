@@ -3,7 +3,7 @@
 
 #include "t_client.hxx"
 #include "tio.hxx"
-#include "fcgi_client.h"
+#include "fcgi_client.hxx"
 #include "fcgi_protocol.h"
 #include "http_response.h"
 #include "async.h"

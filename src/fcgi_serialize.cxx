@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi_serialize.h"
+#include "fcgi_serialize.hxx"
 #include "fcgi_protocol.h"
 #include "growing-buffer.h"
 #include "strmap.h"
@@ -38,9 +38,9 @@ fcgi_serialize_pair(struct growing_buffer *gb, const char *name,
 {
     size_t size, name_length, value_length;
 
-    assert(name != NULL);
+    assert(name != nullptr);
 
-    if (value == NULL)
+    if (value == nullptr)
         value = "";
 
     name_length = strlen(name);
@@ -57,11 +57,11 @@ fcgi_serialize_pair(struct growing_buffer *gb, const char *name,
 static size_t
 fcgi_serialize_pair1(struct growing_buffer *gb, const char *name_and_value)
 {
-    assert(name_and_value != NULL);
+    assert(name_and_value != nullptr);
 
     size_t size, name_length, value_length;
     const char *value = strchr(name_and_value, '=');
-    if (value != NULL) {
+    if (value != nullptr) {
         name_length = value - name_and_value;
         ++value;
         value_length = strlen(value);
@@ -83,10 +83,10 @@ fcgi_serialize_pair1(struct growing_buffer *gb, const char *name_and_value)
 void
 fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...)
 {
-    struct fcgi_record_header *header;
     size_t content_length = 0;
 
-    header = growing_buffer_write(gb, sizeof(*header));
+    struct fcgi_record_header *header = (struct fcgi_record_header *)
+        growing_buffer_write(gb, sizeof(*header));
     header->version = FCGI_VERSION_1;
     header->type = FCGI_PARAMS;
     header->request_id = request_id;
@@ -97,7 +97,7 @@ fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...)
     va_start(ap, request_id);
 
     const char *name, *value;
-    while ((name = va_arg(ap, const char *)) != NULL) {
+    while ((name = va_arg(ap, const char *)) != nullptr) {
         value = va_arg(ap, const char *);
         content_length += fcgi_serialize_pair(gb, name, value);
     }
@@ -111,18 +111,17 @@ void
 fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
                        const char *const params[], unsigned num_params)
 {
-    struct fcgi_record_header *header;
-    size_t content_length = 0;
-
     assert(num_params > 0);
 
-    header = growing_buffer_write(gb, sizeof(*header));
+    struct fcgi_record_header *header = (struct fcgi_record_header *)
+        growing_buffer_write(gb, sizeof(*header));
     header->version = FCGI_VERSION_1;
     header->type = FCGI_PARAMS;
     header->request_id = request_id;
     header->padding_length = 0;
     header->reserved = 0;
 
+    size_t content_length = 0;
     for (unsigned i = 0; i < num_params; ++i)
         content_length += fcgi_serialize_pair1(gb, params[i]);
 
@@ -133,20 +132,19 @@ void
 fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,
                        struct strmap *headers)
 {
-    struct fcgi_record_header *header;
-    size_t content_length = 0;
-
-    header = growing_buffer_write(gb, sizeof(*header));
+    struct fcgi_record_header *header = (struct fcgi_record_header *)
+        growing_buffer_write(gb, sizeof(*header));
     header->version = FCGI_VERSION_1;
     header->type = FCGI_PARAMS;
     header->request_id = request_id;
     header->padding_length = 0;
     header->reserved = 0;
 
+    size_t content_length = 0;
     char buffer[512] = "HTTP_";
     const struct strmap_pair *pair;
     strmap_rewind(headers);
-    while ((pair = strmap_next(headers)) != NULL) {
+    while ((pair = strmap_next(headers)) != nullptr) {
         size_t i;
 
         for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {

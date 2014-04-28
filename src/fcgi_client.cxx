@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi_client.h"
+#include "fcgi_client.hxx"
 #include "fcgi_quark.h"
 #include "fcgi_protocol.h"
-#include "fcgi_serialize.h"
+#include "fcgi_serialize.hxx"
 #include "buffered_socket.h"
 #include "growing-buffer.h"
 #include "http_response.h"
@@ -22,6 +22,7 @@
 #include "fd-util.h"
 #include "strmap.h"
 #include "product.h"
+#include "util/Cast.hxx"
 
 #include <glib.h>
 
@@ -73,7 +74,7 @@ struct fcgi_client {
         bool got_data;
     } request;
 
-    struct {
+    struct Response {
         enum {
             READ_HEADERS,
 
@@ -137,7 +138,7 @@ fcgi_client_response_body_init(struct fcgi_client *client);
 static void
 fcgi_client_release_socket(struct fcgi_client *client, bool reuse)
 {
-    assert(client != NULL);
+    assert(client != nullptr);
 
     buffered_socket_abandon(&client->socket);
     p_lease_release(&client->lease_ref, reuse, client->pool);
@@ -150,7 +151,7 @@ fcgi_client_release_socket(struct fcgi_client *client, bool reuse)
 static void
 fcgi_client_release(struct fcgi_client *client, bool reuse)
 {
-    assert(client != NULL);
+    assert(client != nullptr);
 
     if (buffered_socket_connected(&client->socket))
         fcgi_client_release_socket(client, reuse);
@@ -172,15 +173,15 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
 static void
 fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 {
-    assert(client->response.read_state == READ_HEADERS ||
-           client->response.read_state == READ_NO_BODY);
+    assert(client->response.read_state == fcgi_client::Response::READ_HEADERS ||
+           client->response.read_state == fcgi_client::Response::READ_NO_BODY);
 
     async_operation_finished(&client->async);
 
     if (buffered_socket_connected(&client->socket))
         fcgi_client_release_socket(client, false);
 
-    if (client->request.istream != NULL)
+    if (client->request.istream != nullptr)
         istream_free_handler(&client->request.istream);
 
     http_response_handler_invoke_abort(&client->handler, error);
@@ -195,12 +196,12 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
 static void
 fcgi_client_abort_response_body(struct fcgi_client *client, GError *error)
 {
-    assert(client->response.read_state == READ_BODY);
+    assert(client->response.read_state == fcgi_client::Response::READ_BODY);
 
     if (buffered_socket_connected(&client->socket))
         fcgi_client_release_socket(client, false);
 
-    if (client->request.istream != NULL)
+    if (client->request.istream != nullptr)
         istream_free_handler(&client->request.istream);
 
     istream_deinit_abort(&client->response.body, error);
@@ -215,11 +216,11 @@ fcgi_client_abort_response_body(struct fcgi_client *client, GError *error)
 static void
 fcgi_client_abort_response(struct fcgi_client *client, GError *error)
 {
-    assert(client->response.read_state == READ_HEADERS ||
-           client->response.read_state == READ_NO_BODY ||
-           client->response.read_state == READ_BODY);
+    assert(client->response.read_state == fcgi_client::Response::READ_HEADERS ||
+           client->response.read_state == fcgi_client::Response::READ_NO_BODY ||
+           client->response.read_state == fcgi_client::Response::READ_BODY);
 
-    if (client->response.read_state != READ_BODY)
+    if (client->response.read_state != fcgi_client::Response::READ_BODY)
         fcgi_client_abort_response_headers(client, error);
     else
         fcgi_client_abort_response_body(client, error);
@@ -233,12 +234,12 @@ fcgi_client_abort_response(struct fcgi_client *client, GError *error)
 static void
 fcgi_client_close_response_body(struct fcgi_client *client)
 {
-    assert(client->response.read_state == READ_BODY);
+    assert(client->response.read_state == fcgi_client::Response::READ_BODY);
 
     if (buffered_socket_connected(&client->socket))
         fcgi_client_release_socket(client, false);
 
-    if (client->request.istream != NULL)
+    if (client->request.istream != nullptr)
         istream_free_handler(&client->request.istream);
 
     istream_deinit(&client->response.body);
@@ -281,16 +282,16 @@ static bool
 fcgi_client_handle_line(struct fcgi_client *client,
                         const char *line, size_t length)
 {
-    assert(client != NULL);
-    assert(client->response.headers != NULL);
-    assert(line != NULL);
+    assert(client != nullptr);
+    assert(client->response.headers != nullptr);
+    assert(line != nullptr);
 
     if (length > 0) {
         header_parse_line(client->pool, client->response.headers,
                           line, length);
         return false;
     } else {
-        client->response.read_state = READ_BODY;
+        client->response.read_state = fcgi_client::Response::READ_BODY;
         client->response.stderr = false;
         return true;
     }
@@ -302,11 +303,11 @@ fcgi_client_parse_headers(struct fcgi_client *client,
 {
     const char *p = data, *const data_end = data + length;
 
-    const char *next = NULL;
+    const char *next = nullptr;
     bool finished = false;
 
     const char *eol;
-    while ((eol = memchr(p, '\n', data_end - p)) != NULL) {
+    while ((eol = (const char *)memchr(p, '\n', data_end - p)) != nullptr) {
         next = eol + 1;
         --eol;
         while (eol >= p && char_is_whitespace(*eol))
@@ -319,7 +320,7 @@ fcgi_client_parse_headers(struct fcgi_client *client,
         p = next;
     }
 
-    return next != NULL ? next - data : 0;
+    return next != nullptr ? next - data : 0;
 }
 
 /**
@@ -340,15 +341,15 @@ fcgi_client_feed(struct fcgi_client *client,
     switch (client->response.read_state) {
         size_t consumed;
 
-    case READ_HEADERS:
+    case fcgi_client::Response::READ_HEADERS:
         return fcgi_client_parse_headers(client, (const char *)data, length);
 
-    case READ_NO_BODY:
+    case fcgi_client::Response::READ_NO_BODY:
         /* unreachable */
         assert(false);
         return 0;
 
-    case READ_BODY:
+    case fcgi_client::Response::READ_BODY:
         if (client->response.available == 0)
             /* discard following data */
             /* TODO: emit an error when that happens */
@@ -381,20 +382,20 @@ fcgi_client_feed(struct fcgi_client *client,
 static bool
 fcgi_client_submit_response(struct fcgi_client *client)
 {
-    assert(client->response.read_state == READ_BODY);
+    assert(client->response.read_state == fcgi_client::Response::READ_BODY);
 
     http_status_t status = HTTP_STATUS_OK;
 
     const char *p = strmap_remove(client->response.headers,
                                   "status");
-    if (p != NULL) {
+    if (p != nullptr) {
         int i = atoi(p);
-        if (http_status_is_valid(i))
+        if (http_status_is_valid((http_status_t)i))
             status = (http_status_t)i;
     }
 
     if (http_status_is_empty(status) || client->response.no_body) {
-        client->response.read_state = READ_NO_BODY;
+        client->response.read_state = fcgi_client::Response::READ_NO_BODY;
         client->response.status = status;
 
         /* ignore the rest of this STDOUT payload */
@@ -406,7 +407,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
     client->response.available = -1;
     p = strmap_remove(client->response.headers,
                       "content-length");
-    if (p != NULL) {
+    if (p != nullptr) {
         char *endptr;
         unsigned long long l = strtoull(p, &endptr, 10);
         if (endptr > p && *endptr == 0)
@@ -441,7 +442,7 @@ fcgi_client_handle_end(struct fcgi_client *client)
 {
     assert(!buffered_socket_connected(&client->socket));
 
-    if (client->response.read_state == READ_HEADERS) {
+    if (client->response.read_state == fcgi_client::Response::READ_HEADERS) {
         GError *error =
             g_error_new_literal(fcgi_quark(), 0,
                                 "premature end of headers "
@@ -450,15 +451,15 @@ fcgi_client_handle_end(struct fcgi_client *client)
         return;
     }
 
-    if (client->request.istream != NULL)
+    if (client->request.istream != nullptr)
         istream_close_handler(client->request.istream);
 
-    if (client->response.read_state == READ_NO_BODY) {
+    if (client->response.read_state == fcgi_client::Response::READ_NO_BODY) {
         async_operation_finished(&client->async);
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               client->response.headers,
-                                              NULL);
+                                              nullptr);
     } else
         istream_deinit_eof(&client->response.body);
 
@@ -488,7 +489,7 @@ fcgi_client_handle_header(struct fcgi_client *client,
     case FCGI_STDOUT:
         client->response.stderr = false;
 
-        if (client->response.read_state == READ_NO_BODY) {
+        if (client->response.read_state == fcgi_client::Response::READ_NO_BODY) {
             /* ignore all payloads until #FCGI_END_REQUEST */
             client->skip_length += client->content_length;
             client->content_length = 0;
@@ -522,7 +523,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
 
     do {
         if (client->content_length > 0) {
-            bool at_headers = client->response.read_state == READ_HEADERS;
+            bool at_headers = client->response.read_state == fcgi_client::Response::READ_HEADERS;
 
             size_t length = end - data;
             if (length > client->content_length)
@@ -533,7 +534,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
                 if (at_headers) {
                     /* incomplete header line received, want more
                        data */
-                    assert(client->response.read_state == READ_HEADERS);
+                    assert(client->response.read_state == fcgi_client::Response::READ_HEADERS);
                     assert(buffered_socket_valid(&client->socket));
                     return BUFFERED_MORE;
                 }
@@ -550,7 +551,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
             client->content_length -= nbytes;
             buffered_socket_consumed(&client->socket, nbytes);
 
-            if (at_headers && client->response.read_state == READ_BODY) {
+            if (at_headers && client->response.read_state == fcgi_client::Response::READ_BODY) {
                 /* the read_state has been switched from HEADERS to
                    BODY: we have to deliver the response now */
 
@@ -563,7 +564,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
             }
 
             if (client->content_length > 0)
-                return data < end && client->response.read_state != READ_HEADERS
+                return data < end && client->response.read_state != fcgi_client::Response::READ_HEADERS
                     /* some was consumed, try again later */
                     ? BUFFERED_PARTIAL
                     /* all input was consumed, want more */
@@ -611,10 +612,10 @@ fcgi_client_consume_input(struct fcgi_client *client,
 static size_t
 fcgi_request_stream_data(const void *data, size_t length, void *ctx)
 {
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
     assert(buffered_socket_connected(&client->socket));
-    assert(client->request.istream != NULL);
+    assert(client->request.istream != nullptr);
 
     client->request.got_data = true;
 
@@ -635,10 +636,10 @@ fcgi_request_stream_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-fcgi_request_stream_direct(istream_direct_t type, int fd,
+fcgi_request_stream_direct(istream_direct type, int fd,
                            size_t max_length, void *ctx)
 {
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
     assert(buffered_socket_connected(&client->socket));
 
@@ -663,11 +664,11 @@ fcgi_request_stream_direct(istream_direct_t type, int fd,
 static void
 fcgi_request_stream_eof(void *ctx)
 {
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
-    assert(client->request.istream != NULL);
+    assert(client->request.istream != nullptr);
 
-    client->request.istream = NULL;
+    client->request.istream = nullptr;
 
     buffered_socket_unschedule_write(&client->socket);
 }
@@ -675,11 +676,11 @@ fcgi_request_stream_eof(void *ctx)
 static void
 fcgi_request_stream_abort(GError *error, void *ctx)
 {
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
-    assert(client->request.istream != NULL);
+    assert(client->request.istream != nullptr);
 
-    client->request.istream = NULL;
+    client->request.istream = nullptr;
 
     g_prefix_error(&error, "FastCGI request stream failed: ");
     fcgi_client_abort_response(client, error);
@@ -698,14 +699,10 @@ static const struct istream_handler fcgi_request_stream_handler = {
  *
  */
 
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wextended-offsetof"
-#endif
-
 static inline struct fcgi_client *
 response_stream_to_client(struct istream *istream)
 {
-    return (struct fcgi_client *)(((char*)istream) - offsetof(struct fcgi_client, response.body));
+    return ContainerCast(istream, struct fcgi_client, response.body);
 }
 
 static off_t
@@ -764,12 +761,14 @@ fcgi_client_response_body_init(struct fcgi_client *client)
 static enum buffered_result
 fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
     if (buffered_socket_connected(&client->socket)) {
         /* check if the #FCGI_END_REQUEST packet can be found in the
            following data chunk */
-        size_t offset = fcgi_client_find_end_request(client, buffer, size);
+        size_t offset =
+            fcgi_client_find_end_request(client,
+                                         (const uint8_t *)buffer, size);
         if (offset > 0)
             /* found it: we no longer need the socket, everything we
                need is already in the given buffer */
@@ -778,7 +777,7 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
 
     pool_ref(client->pool);
     const enum buffered_result result =
-        fcgi_client_consume_input(client, buffer, size);
+        fcgi_client_consume_input(client, (const uint8_t *)buffer, size);
     pool_unref(client->pool);
     return result;
 }
@@ -786,7 +785,7 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
 static bool
 fcgi_client_socket_closed(void *ctx)
 {
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
     /* the rest of the response may already be in the input buffer */
     fcgi_client_release_socket(client, false);
@@ -797,10 +796,10 @@ static bool
 fcgi_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 {
     gcc_unused
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
     /* only READ_BODY could have blocked */
-    assert(client->response.read_state == READ_BODY);
+    assert(client->response.read_state == fcgi_client::Response::READ_BODY);
 
     /* the rest of the response may already be in the input buffer */
     return true;
@@ -809,7 +808,7 @@ fcgi_client_socket_remaining(gcc_unused size_t remaining, void *ctx)
 static bool
 fcgi_client_socket_write(void *ctx)
 {
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
     pool_ref(client->pool);
 
@@ -817,7 +816,7 @@ fcgi_client_socket_write(void *ctx)
     istream_read(client->request.istream);
 
     const bool result = buffered_socket_valid(&client->socket);
-    if (result && client->request.istream != NULL) {
+    if (result && client->request.istream != nullptr) {
         if (client->request.got_data)
             buffered_socket_schedule_write(&client->socket);
         else
@@ -831,7 +830,7 @@ fcgi_client_socket_write(void *ctx)
 static bool
 fcgi_client_socket_timeout(void *ctx)
 {
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
     GError *error = g_error_new_literal(fcgi_quark(), 0, "timeout");
     fcgi_client_abort_response(client, error);
@@ -841,7 +840,7 @@ fcgi_client_socket_timeout(void *ctx)
 static void
 fcgi_client_socket_error(GError *error, void *ctx)
 {
-    struct fcgi_client *client = ctx;
+    struct fcgi_client *client = (struct fcgi_client *)ctx;
 
     fcgi_client_abort_response(client, error);
 }
@@ -863,7 +862,7 @@ static const struct buffered_socket_handler fcgi_client_socket_handler = {
 static struct fcgi_client *
 async_to_fcgi_client(struct async_operation *ao)
 {
-    return (struct fcgi_client*)(((char*)ao) - offsetof(struct fcgi_client, async));
+    return ContainerCast(ao, struct fcgi_client, async);
 }
 
 static void
@@ -874,10 +873,10 @@ fcgi_client_request_abort(struct async_operation *ao)
 
     /* async_abort() can only be used before the response was
        delivered to our callback */
-    assert(client->response.read_state == READ_HEADERS ||
-           client->response.read_state == READ_NO_BODY);
+    assert(client->response.read_state == fcgi_client::Response::READ_HEADERS ||
+           client->response.read_state == fcgi_client::Response::READ_NO_BODY);
 
-    if (client->request.istream != NULL)
+    if (client->request.istream != nullptr)
         istream_close_handler(client->request.istream);
 
     fcgi_client_release(client, false);
@@ -926,7 +925,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     struct pool *pool = pool_new_linear(caller_pool, "fcgi_client_request",
                                         2048);
-    struct fcgi_client *client = p_malloc(pool, sizeof(*client));
+    auto client = NewFromPool<struct fcgi_client>(pool);
 #ifndef NDEBUG
     list_add(&client->siblings, &fcgi_clients);
 #endif
@@ -948,7 +947,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     client->id = header.request_id;
 
-    client->response.read_state = READ_HEADERS;
+    client->response.read_state = fcgi_client::Response::READ_HEADERS;
     client->response.headers = strmap_new(client->caller_pool, 17);
     client->response.no_body = http_method_is_empty(method);
     client->content_length = 0;
@@ -969,14 +968,14 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
                           "QUERY_STRING", query_string,
                           "DOCUMENT_ROOT", document_root,
                           "SERVER_SOFTWARE", PRODUCT_TOKEN,
-                          NULL);
+                          nullptr);
 
-    if (remote_addr != NULL)
+    if (remote_addr != nullptr)
         fcgi_serialize_params(buffer, header.request_id,
                               "REMOTE_ADDR", remote_addr,
-                              NULL);
+                              nullptr);
 
-    off_t available = body != NULL
+    off_t available = body != nullptr
         ? istream_available(body, false)
         : -1;
     if (available >= 0) {
@@ -993,12 +992,12 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
                               "CONTENT_LENGTH", value,
                               /* same for the "Content-Type" request
                                  header */
-                              content_type != NULL ? "CONTENT_TYPE" : NULL,
+                              content_type != nullptr ? "CONTENT_TYPE" : nullptr,
                               content_type,
-                              NULL);
+                              nullptr);
     }
 
-    if (headers != NULL)
+    if (headers != nullptr)
         fcgi_serialize_headers(buffer, header.request_id, headers);
 
     if (num_params > 0)
@@ -1010,13 +1009,13 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     struct istream *request;
 
-    if (body != NULL)
+    if (body != nullptr)
         /* format the request body */
         request = istream_cat_new(pool,
                                   istream_gb_new(pool, buffer),
                                   istream_fcgi_new(pool, body,
                                                    header.request_id),
-                                  NULL);
+                                  nullptr);
     else {
         /* no request body - append an empty STDIN packet */
         header.type = FCGI_STDIN;

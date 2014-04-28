@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_FCGI_CLIENT_H
-#define __BENG_FCGI_CLIENT_H
+#ifndef BENG_PROXY_FCGI_CLIENT_HXX
+#define BENG_PROXY_FCGI_CLIENT_HXX
 
 #include "istream-direct.h"
 
@@ -17,10 +17,6 @@ struct lease;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Sends a HTTP request on a socket to an FastCGI server, and passes
@@ -59,9 +55,5 @@ fcgi_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

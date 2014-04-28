@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_FCGI_REMOTE_H
-#define BENG_PROXY_FCGI_REMOTE_H
+#ifndef BENG_PROXY_FCGI_REMOTE_HXX
+#define BENG_PROXY_FCGI_REMOTE_HXX
 
 #include <http/method.h>
 
@@ -16,10 +16,6 @@ struct address_list;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
@@ -35,9 +31,5 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

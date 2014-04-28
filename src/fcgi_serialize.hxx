@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_FCGI_SERIALIZE_H
-#define BENG_PROXY_FCGI_SERIALIZE_H
+#ifndef BENG_PROXY_FCGI_SERIALIZE_HXX
+#define BENG_PROXY_FCGI_SERIALIZE_HXX
 
 #include <stdint.h>
 

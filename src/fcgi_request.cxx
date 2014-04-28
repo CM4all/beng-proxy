@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi_request.h"
+#include "fcgi_request.hxx"
 #include "fcgi_stock.h"
-#include "fcgi_client.h"
+#include "fcgi_client.hxx"
 #include "http_response.h"
 #include "lease.h"
 #include "tcp-stock.h"
@@ -14,6 +14,7 @@
 #include "child_options.h"
 #include "istream.h"
 #include "async.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -40,10 +41,10 @@ struct fcgi_request {
 static void
 fcgi_socket_release(bool reuse, void *ctx)
 {
-    struct fcgi_request *request = ctx;
+    struct fcgi_request *request = (struct fcgi_request *)ctx;
 
     fcgi_stock_put(request->fcgi_stock, request->stock_item, !reuse);
-    request->stock_item = NULL;
+    request->stock_item = nullptr;
 }
 
 static const struct lease fcgi_socket_lease = {
@@ -59,7 +60,7 @@ static const struct lease fcgi_socket_lease = {
 static struct fcgi_request *
 async_to_fcgi_request(struct async_operation *ao)
 {
-    return (struct fcgi_request *)(((char *)ao) - offsetof(struct fcgi_request, async));
+    return ContainerCast(ao, struct fcgi_request, async);
 }
 
 static void
@@ -67,7 +68,7 @@ fcgi_request_abort(struct async_operation *ao)
 {
     struct fcgi_request *request = async_to_fcgi_request(ao);
 
-    if (request->stock_item != NULL)
+    if (request->stock_item != nullptr)
         fcgi_stock_aborted(request->stock_item);
 
     async_abort(&request->async_ref);
@@ -100,21 +101,19 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
 {
-    struct fcgi_request *request;
-
-    GError *error = NULL;
+    GError *error = nullptr;
     if (!jail_params_check(&options->jail, &error)) {
-        if (body != NULL)
+        if (body != nullptr)
             istream_close_unused(body);
 
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 
-    if (action == NULL)
+    if (action == nullptr)
         action = path;
 
-    request = p_malloc(pool, sizeof(*request));
+    auto request = NewFromPool<struct fcgi_request>(pool);
     request->pool = pool;
     request->fcgi_stock = fcgi_stock;
 
@@ -123,8 +122,8 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
                        action,
                        args, n_args,
                        &error);
-    if (stock_item == NULL) {
-        if (body != NULL)
+    if (stock_item == nullptr) {
+        if (body != nullptr)
             istream_close_unused(body);
 
         http_response_handler_direct_abort(handler, handler_ctx, error);

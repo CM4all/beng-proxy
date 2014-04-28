@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_FCGI_REQUEST_H
-#define __BENG_FCGI_REQUEST_H
+#ifndef BENG_PROXY_FCGI_REQUEST_HXX
+#define BENG_PROXY_FCGI_REQUEST_HXX
 
 #include <http/method.h>
 
@@ -16,10 +16,6 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 struct child_options;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @param jail run the FastCGI application with JailCGI?
@@ -41,9 +37,5 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
