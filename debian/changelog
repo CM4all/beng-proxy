@@ -3,7 +3,7 @@ cm4all-beng-proxy (4.0.30) unstable; urgency=low
   * merge release 3.1.31
   * uri_base: fix BASE store bug after request to the BASE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 29 Apr 2014 21:53:37 -0000
 
 cm4all-beng-proxy (4.0.29) unstable; urgency=low
 
