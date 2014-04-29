@@ -444,6 +444,61 @@ test_basic(struct pool *pool, struct tcache *cache)
                     &my_translate_handler, nullptr, &async_ref);
 }
 
+/**
+ * Feed the cache with a request to the BASE.  This was buggy until
+ * 4.0.30.
+ */
+static void
+test_base_root(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    static constexpr TranslateRequest request1 = {
+        .uri = "/base_root/",
+    };
+    static constexpr struct file_address file1 = {
+        .path = "/var/www/",
+    };
+    static constexpr TranslateResponse response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1,
+            },
+        },
+        .base = "/base_root/",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    static constexpr TranslateRequest request2 = {
+        .uri = "/base_root/hansi",
+    };
+    static constexpr struct file_address file2 = {
+        .path = "/var/www/hansi",
+    };
+    static constexpr TranslateResponse response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file2,
+            },
+        },
+        .base = "/base_root/",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = nullptr;
+    expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
 static void
 test_easy_base(struct pool *pool, struct tcache *cache)
 {
@@ -1899,6 +1954,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* test */
 
     test_basic(pool, cache);
+    test_base_root(pool, cache);
     test_easy_base(pool, cache);
     test_vary_invalidate(pool, cache);
     test_invalidate_uri(pool, cache);

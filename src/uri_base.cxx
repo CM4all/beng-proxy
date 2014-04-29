@@ -23,7 +23,7 @@ base_tail(const char *uri, const char *base)
     const size_t base_length = strlen(base);
 
     return base_length > 0 && base[base_length - 1] == '/' &&
-        uri_length > base_length && memcmp(uri, base, base_length) == 0
+        uri_length >= base_length && memcmp(uri, base, base_length) == 0
         ? uri + base_length
         : nullptr;
 }
