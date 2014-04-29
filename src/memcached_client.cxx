@@ -13,6 +13,7 @@
 #include "istream-internal.h"
 #include "buffered_io.h"
 #include "fifo-buffer.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -217,15 +218,11 @@ memcached_connection_abort_response(struct memcached_client *client,
  *
  */
 
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wextended-offsetof"
-#endif
-
 static inline struct memcached_client *
 istream_to_memcached_client(struct istream *istream)
 {
-    void *p = ((char *)istream) - offsetof(struct memcached_client, response.value);
-        return (struct memcached_client *)p;
+    return ContainerCast(istream, struct memcached_client,
+                         response.value);
 }
 
 static off_t
