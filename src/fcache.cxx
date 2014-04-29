@@ -24,7 +24,7 @@
 #include "sink_rubber.hxx"
 #include "istream_tee.h"
 #include "async.h"
-#include "cast.hxx"
+#include "util/Cast.hxx"
 
 #include <event.h>
 

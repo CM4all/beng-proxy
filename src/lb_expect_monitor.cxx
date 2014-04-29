@@ -10,8 +10,8 @@
 #include "client-socket.h"
 #include "pool.h"
 #include "async.h"
-#include "cast.hxx"
 #include "gerrno.h"
+#include "util/Cast.hxx"
 
 #include <event.h>
 #include <unistd.h>

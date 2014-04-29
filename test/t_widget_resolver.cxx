@@ -4,7 +4,7 @@
 #include "widget.h"
 #include "widget_class.hxx"
 #include "pool.h"
-#include "cast.hxx"
+#include "util/Cast.hxx"
 
 #include <event.h>
 

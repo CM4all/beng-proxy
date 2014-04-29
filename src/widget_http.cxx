@@ -30,7 +30,7 @@
 #include "uri-extract.h"
 #include "strmap.h"
 #include "istream.h"
-#include "cast.hxx"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 

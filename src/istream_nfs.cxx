@@ -9,7 +9,7 @@
 #include "istream-buffer.h"
 #include "nfs_client.h"
 #include "fifo-buffer.h"
-#include "cast.hxx"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>

@@ -7,7 +7,6 @@
 #include "handler.hxx"
 #include "config.hxx"
 #include "bp_instance.hxx"
-#include "cast.hxx"
 #include "file_not_found.hxx"
 #include "file_directory_index.hxx"
 #include "file_handler.hxx"
@@ -37,6 +36,7 @@
 #include "translate_client.hxx"
 #include "ua_classification.h"
 #include "beng-proxy/translation.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 

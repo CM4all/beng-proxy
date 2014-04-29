@@ -12,7 +12,7 @@
 #include "widget_class.hxx"
 #include "async.h"
 #include "pool.h"
-#include "cast.hxx"
+#include "util/Cast.hxx"
 
 #include <inline/list.h>
 
