@@ -9,6 +9,7 @@
 #include "pbuffer.hxx"
 #include "strmap.h"
 #include "widget_view.hxx"
+#include "regex.h"
 
 #include <string.h>
 
@@ -39,6 +40,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     site = p_strdup_checked(pool, src.site);
     document_root = p_strdup_checked(pool, src.document_root);
     redirect = p_strdup_checked(pool, src.redirect);
+    expand_redirect = p_strdup_checked(pool, src.expand_redirect);
     bounce = p_strdup_checked(pool, src.bounce);
     scheme = p_strdup_checked(pool, src.scheme);
     host = p_strdup_checked(pool, src.host);
@@ -111,7 +113,8 @@ bool
 TranslateResponse::IsExpandable() const
 {
     return regex != nullptr &&
-        (resource_address_is_expandable(&address) ||
+        (expand_redirect != nullptr ||
+         resource_address_is_expandable(&address) ||
          widget_view_any_is_expandable(views));
 }
 
@@ -122,6 +125,13 @@ TranslateResponse::Expand(struct pool *pool,
     assert(pool != nullptr);
     assert(regex != nullptr);
     assert(match_info != nullptr);
+
+    if (expand_redirect != nullptr) {
+        redirect = expand_string_unescaped(pool, expand_redirect,
+                                           match_info, error_r);
+        if (redirect == nullptr)
+            return false;
+    }
 
     return resource_address_expand(pool, &address, match_info, error_r) &&
         widget_view_expand_all(pool, views, match_info, error_r);

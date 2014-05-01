@@ -1453,6 +1453,21 @@ translate_handle_packet(TranslateClient *client,
         client->response.redirect = payload;
         return true;
 
+    case TRANSLATE_EXPAND_REDIRECT:
+        if (client->response.redirect == nullptr ||
+            client->response.expand_redirect != nullptr) {
+            translate_client_error(client, "misplaced EXPAND_REDIRECT packet");
+            return false;
+        }
+
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+            translate_client_error(client, "malformed EXPAND_REDIRECT packet");
+            return false;
+        }
+
+        client->response.expand_redirect = payload;
+        return true;
+
     case TRANSLATE_BOUNCE:
         if (payload == nullptr || has_null_byte(payload, payload_length)) {
             translate_client_error(client, "malformed BOUNCE packet");

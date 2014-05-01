@@ -482,6 +482,8 @@ enum beng_translation_command {
      * bit integer specifying the number of seconds from now on.
      */
     TRANSLATE_EXPIRES_RELATIVE = 124,
+
+    TRANSLATE_EXPAND_REDIRECT = 125,
 };
 
 struct beng_translation_header {
