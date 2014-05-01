@@ -896,6 +896,14 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
 
     const char *key = tcache_store_response(pool, &item->response, response,
                                             tcr->request);
+    if (item->response.base == nullptr && response->base != nullptr) {
+        /* base mismatch - refuse to use this response */
+        pool_unref(pool);
+        g_set_error(error_r, http_response_quark(),
+                    HTTP_STATUS_BAD_REQUEST, "Base mismatch");
+        return nullptr;
+    }
+
     if (key == nullptr)
         key = p_strdup(pool, tcr->key);
 

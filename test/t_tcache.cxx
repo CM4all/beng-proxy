@@ -500,6 +500,35 @@ test_base_root(struct pool *pool, struct tcache *cache)
 }
 
 static void
+test_base_mismatch(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    static constexpr TranslateRequest request1 = {
+        .uri = "/base_mismatch/hansi",
+    };
+    static constexpr struct file_address file1 = {
+        .path = "/var/www/",
+    };
+    static constexpr TranslateResponse response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1,
+            },
+        },
+        .base = "/different_base/",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = &response1;
+    expected_response = nullptr;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
+static void
 test_easy_base(struct pool *pool, struct tcache *cache)
 {
     static const TranslateRequest request1 = {
@@ -1986,6 +2015,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     test_basic(pool, cache);
     test_base_root(pool, cache);
+    test_base_mismatch(pool, cache);
     test_easy_base(pool, cache);
     test_vary_invalidate(pool, cache);
     test_invalidate_uri(pool, cache);
