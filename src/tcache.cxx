@@ -834,9 +834,15 @@ translate_cache_invalidate(struct tcache *tcache,
     cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
 }
 
+/**
+ * @return nullptr on error
+ */
 static const TranslateCacheItem *
-tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response)
+tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
+             GError **error_r)
 {
+    assert(error_r == nullptr || *error_r == nullptr);
+
     struct pool *pool = pool_new_slice(tcr->tcache->pool, "tcache_item",
                                        tcr->tcache->slice_pool);
     auto item = NewFromPool<TranslateCacheItem>(pool);
@@ -900,27 +906,27 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response)
             compile_flags = GRegexCompileFlags(compile_flags &
                                                ~G_REGEX_NO_AUTO_CAPTURE);
 
-        GError *error = nullptr;
         item->regex = g_regex_new(response->regex,
                                   compile_flags,
-                                  GRegexMatchFlags(0), &error);
+                                  GRegexMatchFlags(0), error_r);
         if (item->regex == nullptr) {
-            cache_log(2, "translate_cache: failed to compile regular expression: %s",
-                      error->message);
-            g_error_free(error);
+            pool_unref(pool);
+            g_prefix_error(error_r,
+                           "translate_cache: ");
+            return nullptr;
         }
     } else
         item->regex = nullptr;
 
     if (response->inverse_regex != nullptr) {
-        GError *error = nullptr;
         item->inverse_regex = g_regex_new(response->inverse_regex,
                                           default_regex_compile_flags,
-                                          GRegexMatchFlags(0), &error);
+                                          GRegexMatchFlags(0), error_r);
         if (item->inverse_regex == nullptr) {
-            cache_log(2, "translate_cache: failed to compile regular expression: %s",
-                      error->message);
-            g_error_free(error);
+            pool_unref(pool);
+            g_prefix_error(error_r,
+                           "translate_cache: ");
+            return nullptr;
         }
     } else
         item->inverse_regex = nullptr;
@@ -954,14 +960,18 @@ tcache_handler_response(const TranslateResponse *response, void *ctx)
                                    nullptr);
 
     if (tcache_response_evaluate(response)) {
-        auto item = tcache_store(tcr, response);
+        GError *error = nullptr;
+        auto item = tcache_store(tcr, response, &error);
+        if (item == nullptr) {
+            tcr->handler->error(error, tcr->handler_ctx);
+            return;
+        }
 
         if (tcr->request->uri != nullptr && response->IsExpandable()) {
             /* create a writable copy and expand it */
             TranslateResponse *response2 = (TranslateResponse *)
                 p_memdup(tcr->pool, response, sizeof(*response));
 
-            GError *error = nullptr;
             if (!tcache_expand_response(tcr->pool, response2, item,
                                         tcr->request->uri, &error)) {
                 tcr->handler->error(error, tcr->handler_ctx);
@@ -973,7 +983,6 @@ tcache_handler_response(const TranslateResponse *response, void *ctx)
             /* create a writable copy and apply the BASE */
             auto response2 = NewFromPool<TranslateResponse>(tcr->pool);
 
-            GError *error = nullptr;
             if (!tcache_load_response(tcr->pool, response2, response,
                                       tcr->request->uri, &error)) {
                 tcr->handler->error(error, tcr->handler_ctx);

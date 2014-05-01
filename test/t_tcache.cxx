@@ -1022,6 +1022,37 @@ test_regex(struct pool *pool, struct tcache *cache)
 }
 
 static void
+test_regex_error(struct pool *pool, struct tcache *cache)
+{
+    static const TranslateRequest request = {
+        .uri = "/regex-error",
+    };
+    static const struct file_address file = {
+        .path = "/error",
+    };
+    static const TranslateResponse response = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file,
+            },
+        },
+        .base = "/regex/",
+        .regex = "(",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    struct async_operation_ref async_ref;
+
+    /* this must fail */
+    next_response = &response;
+    expected_response = nullptr;
+    translate_cache(pool, cache, &request,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
+static void
 test_regex_tail(struct pool *pool, struct tcache *cache)
 {
     struct async_operation_ref async_ref;
@@ -1959,6 +1990,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_vary_invalidate(pool, cache);
     test_invalidate_uri(pool, cache);
     test_regex(pool, cache);
+    test_regex_error(pool, cache);
     test_regex_tail(pool, cache);
     test_regex_tail_unescape(pool, cache);
     test_expand(pool, cache);
