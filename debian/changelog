@@ -3,7 +3,7 @@ cm4all-beng-proxy (4.0.31) unstable; urgency=low
   * translation: add packet EXPAND_REDIRECT
   * tcache: regex compiler errors and base mismatches are fatal
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 01 May 2014 18:23:24 -0000
 
 cm4all-beng-proxy (4.0.30) unstable; urgency=low
 
