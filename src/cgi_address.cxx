@@ -166,23 +166,21 @@ cgi_address_save_base(struct pool *pool, const struct cgi_address *src,
     assert(src != nullptr);
     assert(suffix != nullptr);
 
-    if (src->path_info == nullptr)
-        return nullptr;
-
     size_t uri_length = src->uri != nullptr
         ? base_string_unescape(pool, src->uri, suffix)
         : 0;
     if (uri_length == (size_t)-1)
         return nullptr;
 
-    size_t length = base_string_unescape(pool, src->path_info, suffix);
+    const char *path_info = src->path_info != nullptr ? src->path_info : "";
+    size_t length = base_string_unescape(pool, path_info, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
     struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
     if (dest->uri != nullptr)
         dest->uri = p_strndup(pool, dest->uri, uri_length);
-    dest->path_info = p_strndup(pool, dest->path_info, length);
+    dest->path_info = p_strndup(pool, path_info, length);
     return dest;
 }
 
@@ -192,7 +190,6 @@ cgi_address_load_base(struct pool *pool, const struct cgi_address *src,
 {
     assert(pool != nullptr);
     assert(src != nullptr);
-    assert(src->path_info != nullptr);
     assert(suffix != nullptr);
 
     char *unescaped = p_strdup(pool, suffix);
@@ -201,7 +198,9 @@ cgi_address_load_base(struct pool *pool, const struct cgi_address *src,
     struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
     if (dest->uri != nullptr)
         dest->uri = p_strcat(pool, dest->uri, unescaped, nullptr);
-    dest->path_info = p_strcat(pool, dest->path_info, unescaped, nullptr);
+
+    const char *path_info = src->path_info != nullptr ? src->path_info : "";
+    dest->path_info = p_strcat(pool, path_info, unescaped, nullptr);
     return dest;
 }
 

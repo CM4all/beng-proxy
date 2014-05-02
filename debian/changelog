@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.0.32) unstable; urgency=low
 
-  * 
+  * cgi_address: allow BASE without PATH_INFO
 
  --   
 

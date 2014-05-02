@@ -56,6 +56,35 @@ test_auto_base(struct pool *pool)
     assert(strcmp(a, "/foo/") == 0);
 }
 
+static void
+test_base_no_path_info(struct pool *pool)
+{
+    static const struct cgi_address cgi0 = {
+        .path = "/usr/lib/cgi-bin/foo.pl",
+    };
+    static const struct resource_address ra0 = {
+        .type = RESOURCE_ADDRESS_CGI,
+        .u = {
+            .cgi = &cgi0,
+        },
+    };
+
+    struct resource_address dest, *b;
+
+    b = resource_address_save_base(pool, &dest, &ra0, "");
+    assert(b != nullptr);
+    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(strcmp(b->u.cgi->path, ra0.u.cgi->path) == 0);
+    assert(b->u.cgi->path_info == nullptr ||
+           strcmp(b->u.cgi->path_info, "") == 0);
+
+    b = resource_address_load_base(pool, &dest, &ra0, "foo/bar");
+    assert(b != nullptr);
+    assert(b->type == RESOURCE_ADDRESS_CGI);
+    assert(strcmp(b->u.cgi->path, ra0.u.cgi->path) == 0);
+    assert(strcmp(b->u.cgi->path_info, "foo/bar") == 0);
+}
+
 /*
  * main
  *
@@ -163,6 +192,7 @@ int main(int argc, char **argv) {
     assert(strcmp(b->u.cgi->path_info, "/bar/bar/xyz") == 0);
 
     test_auto_base(pool);
+    test_base_no_path_info(pool);
 
     pool_unref(pool);
     pool_commit();
