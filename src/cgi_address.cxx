@@ -115,6 +115,7 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
         p_strdup_checked(pool, src->uri);
     dest->script_name =
         p_strdup_checked(pool, src->script_name);
+    dest->expand_script_name = p_strdup_checked(pool, src->expand_script_name);
     dest->path_info = p_strdup_checked(pool, src->path_info);
     dest->expand_path = p_strdup_checked(pool, src->expand_path);
     dest->expand_path_info =
@@ -236,6 +237,14 @@ cgi_address_expand(struct pool *pool, struct cgi_address *address,
         address->path = expand_string_unescaped(pool, address->expand_path,
                                                 match_info, error_r);
         if (address->path == nullptr)
+            return false;
+    }
+
+    if (address->expand_script_name != nullptr) {
+        address->script_name = expand_string_unescaped(pool,
+                                                       address->expand_script_name,
+                                                       match_info, error_r);
+        if (address->script_name == nullptr)
             return false;
     }
 

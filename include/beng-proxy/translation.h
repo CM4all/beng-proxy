@@ -484,6 +484,8 @@ enum beng_translation_command {
     TRANSLATE_EXPIRES_RELATIVE = 124,
 
     TRANSLATE_EXPAND_REDIRECT = 125,
+
+    TRANSLATE_EXPAND_SCRIPT_NAME = 126,
 };
 
 struct beng_translation_header {

@@ -47,6 +47,12 @@ struct cgi_address {
     const char *expand_path;
 
     /**
+     * The value of #TRANSLATE_EXPAND_SCRIPT_NAME.  Only used by the
+     * translation cache.
+     */
+    const char *expand_script_name;
+
+    /**
      * The value of #TRANSLATE_EXPAND_PATH_INFO.  Only used by
      * the translation cache.
      */
@@ -121,6 +127,7 @@ cgi_address_is_expandable(const struct cgi_address *address)
     assert(address != NULL);
 
     return address->expand_path != NULL ||
+        address->expand_script_name != nullptr ||
         address->expand_path_info != NULL ||
         address->args.IsExpandable() ||
         address->env.IsExpandable();

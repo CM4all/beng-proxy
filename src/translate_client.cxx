@@ -1849,6 +1849,23 @@ translate_handle_packet(TranslateClient *client,
         client->cgi_address->script_name = payload;
         return true;
 
+    case TRANSLATE_EXPAND_SCRIPT_NAME:
+        if (has_null_byte(payload, payload_length)) {
+            translate_client_error(client, "malformed EXPAND_SCRIPT_NAME packet");
+            return false;
+        }
+
+        if (client->response.regex == nullptr ||
+            client->cgi_address == nullptr ||
+            client->cgi_address->expand_script_name != nullptr) {
+            translate_client_error(client,
+                                   "misplaced EXPAND_SCRIPT_NAME packet");
+            return false;
+        }
+
+        client->cgi_address->expand_script_name = payload;
+        return true;
+
     case TRANSLATE_DOCUMENT_ROOT:
         if (*payload != '/') {
             translate_client_error(client, "malformed DOCUMENT_ROOT packet");
