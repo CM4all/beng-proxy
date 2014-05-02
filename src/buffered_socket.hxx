@@ -13,18 +13,18 @@
 
 struct fifo_buffer;
 
-enum buffered_result {
+enum class BufferedResult {
     /**
      * The handler has consumed all data successfully, and is willing
      * to receive more data.
      */
-    BUFFERED_OK,
+    OK,
 
     /**
      * The handler has consumed some data successfully, and is willing
      * to receive more data.
      */
-    BUFFERED_PARTIAL,
+    PARTIAL,
 
     /**
      * The handler needs more data to finish the operation.  If no
@@ -33,7 +33,7 @@ enum buffered_result {
      * If the input buffer is already full, an error will be
      * generated, too.
      */
-    BUFFERED_MORE,
+    MORE,
 
     /**
      * The handler wants to be called again immediately, without
@@ -41,9 +41,9 @@ enum buffered_result {
      * can be used to simplify the handler code.
      *
      * If the input buffer is empty, this return value behaves like
-     * #BUFFERED_OK or #BUFFERED_PARTIAL.
+     * #OK or #PARTIAL.
      */
-    BUFFERED_AGAIN_OPTIONAL,
+    AGAIN_OPTIONAL,
 
     /**
      * The handler wants to be called again immediately, without
@@ -51,20 +51,20 @@ enum buffered_result {
      * can be used to simplify the handler code.
      *
      * If the input buffer is empty, this return value behaves like
-     * #BUFFERED_MORE.
+     * #MORE.
      */
-    BUFFERED_AGAIN_EXPECT,
+    AGAIN_EXPECT,
 
     /**
      * The handler blocks.  The handler is responsible for calling
      * BufferedSocket::Read() as soon as it's ready for more data.
      */
-    BUFFERED_BLOCKING,
+    BLOCKING,
 
     /**
      * The buffered_socket object has been closed by the handler.
      */
-    BUFFERED_CLOSED,
+    CLOSED,
 };
 
 enum direct_result {
@@ -145,7 +145,7 @@ struct BufferedSocketHandler {
      * buffered_socket_consumed() each time you consume data from the
      * given buffer.
      */
-    enum buffered_result (*data)(const void *buffer, size_t size, void *ctx);
+    BufferedResult (*data)(const void *buffer, size_t size, void *ctx);
 
     /**
      * The socket is ready for reading.  It is suggested to attempt a
@@ -282,7 +282,7 @@ struct BufferedSocket {
 #ifndef NDEBUG
     bool reading, ended, destroyed;
 
-    enum buffered_result last_buffered_result;
+    BufferedResult last_buffered_result;
 #endif
 
     void Init(struct pool *_pool,

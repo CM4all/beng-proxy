@@ -30,7 +30,7 @@ nop_socket_filter_init(struct filtered_socket *s, void *ctx)
     f->socket = s;
 }
 
-static enum buffered_result
+static BufferedResult
 nop_socket_filter_data(const void *data, size_t length, void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;

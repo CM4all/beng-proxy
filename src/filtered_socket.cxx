@@ -17,7 +17,7 @@
  *
  */
 
-static enum buffered_result
+static BufferedResult
 filtered_socket_bs_data(const void *buffer, size_t size, void *ctx)
 {
     struct filtered_socket *s = (struct filtered_socket *)ctx;

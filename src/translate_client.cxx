@@ -2734,7 +2734,7 @@ translate_handle_packet(TranslateClient *client,
     return false;
 }
 
-static enum buffered_result
+static BufferedResult
 translate_client_feed(TranslateClient *client,
                       const uint8_t *data, size_t length)
 {
@@ -2758,10 +2758,10 @@ translate_client_feed(TranslateClient *client,
                                      client->reader.payload == nullptr
                                      ? "" : client->reader.payload,
                                      client->reader.header.length))
-            return BUFFERED_CLOSED;
+            return BufferedResult::CLOSED;
     }
 
-    return BUFFERED_MORE;
+    return BufferedResult::MORE;
 }
 
 /*
@@ -2809,7 +2809,7 @@ translate_try_write(TranslateClient *client)
  *
  */
 
-static enum buffered_result
+static BufferedResult
 translate_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     TranslateClient *client = (TranslateClient *)ctx;

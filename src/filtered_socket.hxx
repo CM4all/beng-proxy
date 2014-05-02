@@ -23,7 +23,7 @@ struct socket_filter {
      * filtered_socket_internal_consumed() each time you consume data
      * from the given buffer.
      */
-    enum buffered_result (*data)(const void *buffer, size_t size, void *ctx);
+    BufferedResult (*data)(const void *buffer, size_t size, void *ctx);
 
     bool (*is_empty)(void *ctx);
 
@@ -474,7 +474,7 @@ filtered_socket_internal_unschedule_write(struct filtered_socket *s)
     s->base.UnscheduleWrite();
 }
 
-static inline enum buffered_result
+static inline BufferedResult
 filtered_socket_invoke_data(struct filtered_socket *s,
                             const void *data, size_t size)
 {

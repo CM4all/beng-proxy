@@ -10,7 +10,7 @@
 #include "istream-internal.h"
 #include "util/Cast.hxx"
 
-enum buffered_result
+BufferedResult
 http_server_feed_body(struct http_server_connection *connection,
                       const void *data, size_t length)
 {
@@ -23,7 +23,7 @@ http_server_feed_body(struct http_server_connection *connection,
        http_body_reader */
     if (!istream_has_handler(connection->request.request->body))
         /* the handler is not yet connected */
-        return BUFFERED_BLOCKING;
+        return BufferedResult::BLOCKING;
 
     struct pool *pool = connection->pool;
     pool_ref(pool);
@@ -34,8 +34,8 @@ http_server_feed_body(struct http_server_connection *connection,
         const bool valid = filtered_socket_valid(&connection->socket);
         pool_unref(pool);
         return valid
-            ? BUFFERED_BLOCKING
-            : BUFFERED_CLOSED;
+            ? BufferedResult::BLOCKING
+            : BufferedResult::CLOSED;
     }
 
     pool_unref(pool);
@@ -57,12 +57,12 @@ http_server_feed_body(struct http_server_connection *connection,
         pool_unref(connection->pool);
 
         if (!valid)
-            return BUFFERED_CLOSED;
+            return BufferedResult::CLOSED;
     }
 
     return nbytes == length
-        ? BUFFERED_OK
-        : BUFFERED_PARTIAL;
+        ? BufferedResult::OK
+        : BufferedResult::PARTIAL;
 }
 
 static inline struct http_server_connection *

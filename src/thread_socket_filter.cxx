@@ -95,25 +95,25 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
         f->read_timeout = nullptr;
 
         switch (filtered_socket_invoke_data(f->socket, copy, length)) {
-        case BUFFERED_OK:
+        case BufferedResult::OK:
             return true;
 
-        case BUFFERED_PARTIAL:
-        case BUFFERED_BLOCKING:
+        case BufferedResult::PARTIAL:
+        case BufferedResult::BLOCKING:
             return true;
 
-        case BUFFERED_MORE:
+        case BufferedResult::MORE:
             f->expect_more = true;
             return true;
 
-        case BUFFERED_AGAIN_OPTIONAL:
+        case BufferedResult::AGAIN_OPTIONAL:
             break;
 
-        case BUFFERED_AGAIN_EXPECT:
+        case BufferedResult::AGAIN_EXPECT:
             f->expect_more = true;
             break;
 
-        case BUFFERED_CLOSED:
+        case BufferedResult::CLOSED:
             return false;
         }
     }
@@ -311,7 +311,7 @@ thread_socket_filter_init_(struct filtered_socket *s, void *ctx)
     f->socket = s;
 }
 
-static enum buffered_result
+static BufferedResult
 thread_socket_filter_data(const void *data, size_t length, void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
@@ -324,13 +324,13 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
     void *p = fifo_buffer_write(f->encrypted_input, &max_length);
     if (p == nullptr) {
         pthread_mutex_unlock(&f->mutex);
-        return BUFFERED_BLOCKING;
+        return BufferedResult::BLOCKING;
     }
 
-    enum buffered_result result = BUFFERED_OK;
+    BufferedResult result = BufferedResult::OK;
     if (length > max_length) {
         length = max_length;
-        result = BUFFERED_PARTIAL;
+        result = BufferedResult::PARTIAL;
     }
 
     memcpy(p, data, length);

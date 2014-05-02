@@ -84,7 +84,7 @@ http_server_try_write(struct http_server_connection *connection)
  *
  */
 
-static enum buffered_result
+static BufferedResult
 http_server_socket_data(const void *data, size_t length, void *ctx)
 {
     struct http_server_connection *connection =

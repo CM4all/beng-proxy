@@ -271,7 +271,7 @@ http_server_handle_line(struct http_server_connection *connection,
     }
 }
 
-static enum buffered_result
+static BufferedResult
 http_server_feed_headers(struct http_server_connection *connection,
                          const void *_data, size_t length)
 {
@@ -281,7 +281,7 @@ http_server_feed_headers(struct http_server_connection *connection,
     if (connection->request.bytes_received >= 64 * 1024) {
         daemon_log(2, "http_server: too many request headers\n");
         http_server_connection_close(connection);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 
     const char *const buffer = (const char *)_data;
@@ -295,7 +295,7 @@ http_server_feed_headers(struct http_server_connection *connection,
             --end;
 
         if (!http_server_handle_line(connection, start, end - start + 1))
-            return BUFFERED_CLOSED;
+            return BufferedResult::CLOSED;
 
         if (connection->request.read_state != http_server_connection::Request::HEADERS)
             break;
@@ -311,8 +311,8 @@ http_server_feed_headers(struct http_server_connection *connection,
     }
 
     return connection->request.read_state == http_server_connection::Request::HEADERS
-        ? BUFFERED_MORE
-        : (consumed == length ? BUFFERED_OK : BUFFERED_PARTIAL);
+        ? BufferedResult::MORE
+        : (consumed == length ? BufferedResult::OK : BufferedResult::PARTIAL);
 }
 
 /**
@@ -346,12 +346,12 @@ http_server_submit_request(struct http_server_connection *connection)
     return ret;
 }
 
-enum buffered_result
+BufferedResult
 http_server_feed(struct http_server_connection *connection,
                   const void *data, size_t length)
 {
     switch (connection->request.read_state) {
-        enum buffered_result result;
+        BufferedResult result;
 
     case http_server_connection::Request::START:
     case http_server_connection::Request::HEADERS:
@@ -359,17 +359,17 @@ http_server_feed(struct http_server_connection *connection,
             connection->score = HTTP_SERVER_FIRST;
 
         result = http_server_feed_headers(connection, data, length);
-        if ((result == BUFFERED_OK || result == BUFFERED_PARTIAL) &&
+        if ((result == BufferedResult::OK || result == BufferedResult::PARTIAL) &&
             (connection->request.read_state == http_server_connection::Request::BODY ||
              connection->request.read_state == http_server_connection::Request::END)) {
             if (connection->request.read_state == http_server_connection::Request::BODY)
                 result =
                     http_body_require_more(&connection->request.body_reader)
-                    ? BUFFERED_AGAIN_EXPECT
-                    : BUFFERED_AGAIN_OPTIONAL;
+                    ? BufferedResult::AGAIN_EXPECT
+                    : BufferedResult::AGAIN_OPTIONAL;
 
             if (!http_server_submit_request(connection))
-                result = BUFFERED_CLOSED;
+                result = BufferedResult::CLOSED;
         }
 
         return result;
@@ -391,10 +391,10 @@ http_server_feed(struct http_server_connection *connection,
             /* discard all pipelined input when keep-alive has been
                disabled */
             filtered_socket_consumed(&connection->socket, length);
-            return BUFFERED_OK;
+            return BufferedResult::OK;
         }
 
-        return BUFFERED_MORE;
+        return BufferedResult::MORE;
     }
 
     assert(false);

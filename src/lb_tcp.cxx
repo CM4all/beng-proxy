@@ -57,7 +57,7 @@ lb_tcp_destroy_outbound(struct lb_tcp *tcp)
  *
  */
 
-static enum buffered_result
+static BufferedResult
 inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
@@ -66,20 +66,20 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     if (async_ref_defined(&tcp->connect))
         /* outbound is not yet connected */
-        return BUFFERED_BLOCKING;
+        return BufferedResult::BLOCKING;
 
     if (!tcp->outbound.IsValid()) {
         lb_tcp_close(tcp);
         tcp->handler->error("Send error", "Broken socket", tcp->handler_ctx);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 
     ssize_t nbytes = tcp->outbound.Write(buffer, size);
     if (nbytes > 0) {
         filtered_socket_consumed(&tcp->inbound, nbytes);
         return (size_t)nbytes == size
-            ? BUFFERED_OK
-            : BUFFERED_PARTIAL;
+            ? BufferedResult::OK
+            : BufferedResult::PARTIAL;
     }
 
     switch ((enum write_result)nbytes) {
@@ -90,18 +90,18 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
     case WRITE_ERRNO:
         lb_tcp_close(tcp);
         tcp->handler->_errno("Send failed", errno, tcp->handler_ctx);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:
-        return BUFFERED_BLOCKING;
+        return BufferedResult::BLOCKING;
 
     case WRITE_DESTROYED:
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
         lb_tcp_close(tcp);
         tcp->handler->eof(tcp->handler_ctx);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 
     assert(false);
@@ -187,7 +187,7 @@ static constexpr BufferedSocketHandler inbound_buffered_socket_handler = {
  *
  */
 
-static enum buffered_result
+static BufferedResult
 outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
@@ -198,8 +198,8 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
     if (nbytes > 0) {
         tcp->outbound.Consumed(nbytes);
         return (size_t)nbytes == size
-            ? BUFFERED_OK
-            : BUFFERED_PARTIAL;
+            ? BufferedResult::OK
+            : BufferedResult::PARTIAL;
     }
 
     switch ((enum write_result)nbytes) {
@@ -210,18 +210,18 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
     case WRITE_ERRNO:
         lb_tcp_close(tcp);
         tcp->handler->_errno("Send failed", errno, tcp->handler_ctx);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:
-        return BUFFERED_BLOCKING;
+        return BufferedResult::BLOCKING;
 
     case WRITE_DESTROYED:
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
 
     case WRITE_BROKEN:
         lb_tcp_close(tcp);
         tcp->handler->eof(tcp->handler_ctx);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 
     assert(false);

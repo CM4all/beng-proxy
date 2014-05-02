@@ -608,7 +608,7 @@ http_client_response_finished(struct http_client *client)
                         client->request.istream == nullptr);
 }
 
-static enum buffered_result
+static BufferedResult
 http_client_parse_headers(struct http_client *client,
                           const void *_data, size_t length)
 {
@@ -634,11 +634,11 @@ http_client_parse_headers(struct http_client *client,
 
         /* handle this line */
         if (!http_client_handle_line(client, start, end - start + 1))
-            return BUFFERED_CLOSED;
+            return BufferedResult::CLOSED;
         if (client->response.read_state != http_client::response::READ_HEADERS) {
             /* header parsing is finished */
             filtered_socket_consumed(&client->socket, next - buffer);
-            return BUFFERED_AGAIN_EXPECT;
+            return BufferedResult::AGAIN_EXPECT;
         }
 
         start = next;
@@ -646,7 +646,7 @@ http_client_parse_headers(struct http_client *client,
 
     /* remove the parsed part of the buffer */
     filtered_socket_consumed(&client->socket, start - buffer);
-    return BUFFERED_MORE;
+    return BufferedResult::MORE;
 }
 
 static void
@@ -673,7 +673,7 @@ http_client_response_stream_eof(struct http_client *client)
  * Returns true if data has been consumed; false if nothing has been
  * consumed or if the client has been closed.
  */
-static enum buffered_result
+static BufferedResult
 http_client_feed_body(struct http_client *client,
                       const void *data, size_t length)
 {
@@ -684,29 +684,29 @@ http_client_feed_body(struct http_client *client,
                                         data, length);
     if (nbytes == 0)
         return filtered_socket_valid(&client->socket)
-            ? BUFFERED_BLOCKING
-            : BUFFERED_CLOSED;
+            ? BufferedResult::BLOCKING
+            : BufferedResult::CLOSED;
 
     filtered_socket_consumed(&client->socket, nbytes);
 
     if (http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 
     if (nbytes < length)
-        return BUFFERED_PARTIAL;
+        return BufferedResult::PARTIAL;
 
     if (client->response.body_reader.rest > 0 ||
         /* the expect_more flag is true when the response body is
            chunked */
         client->socket.base.expect_more)
-        return BUFFERED_MORE;
+        return BufferedResult::MORE;
 
-    return BUFFERED_OK;
+    return BufferedResult::OK;
 }
 
-static enum buffered_result
+static BufferedResult
 http_client_feed_headers(struct http_client *client,
                          const void *data, size_t length)
 {
@@ -714,9 +714,9 @@ http_client_feed_headers(struct http_client *client,
     assert(client->response.read_state == http_client::response::READ_STATUS ||
            client->response.read_state == http_client::response::READ_HEADERS);
 
-    const enum buffered_result result =
+    const BufferedResult result =
         http_client_parse_headers(client, data, length);
-    if (result != BUFFERED_AGAIN_EXPECT)
+    if (result != BufferedResult::AGAIN_EXPECT)
         return result;
 
     /* the headers are finished, we can now report the response to
@@ -735,7 +735,7 @@ http_client_feed_headers(struct http_client *client,
             client->response.read_state = http_client::response::READ_STATUS;
 #endif
             http_client_abort_response_headers(client, error);
-            return BUFFERED_CLOSED;
+            return BufferedResult::CLOSED;
         }
 
         /* reset read_state, we're now expecting the real response */
@@ -753,13 +753,13 @@ http_client_feed_headers(struct http_client *client,
             client->response.read_state = http_client::response::READ_STATUS;
 #endif
             http_client_abort_response_headers(client, error);
-            return BUFFERED_CLOSED;
+            return BufferedResult::CLOSED;
         }
 
         http_client_schedule_write(client);
 
         /* try again */
-        return BUFFERED_AGAIN_EXPECT;
+        return BufferedResult::AGAIN_EXPECT;
     } else if (client->request.body != nullptr) {
         /* the server begins sending a response - he's not interested
            in the request body, discard it now */
@@ -790,17 +790,17 @@ http_client_feed_headers(struct http_client *client,
     pool_unref(client->pool);
 
     if (!valid)
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
 
     if (client->response.body == nullptr) {
         http_client_response_finished(client);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 
     /* now do the response body */
     return http_body_require_more(&client->response.body_reader)
-        ? BUFFERED_AGAIN_EXPECT
-        : BUFFERED_AGAIN_OPTIONAL;
+        ? BufferedResult::AGAIN_EXPECT
+        : BufferedResult::AGAIN_OPTIONAL;
 }
 
 static enum direct_result
@@ -847,7 +847,7 @@ http_client_try_response_direct(struct http_client *client,
     return DIRECT_OK;
 }
 
-static enum buffered_result
+static BufferedResult
 http_client_feed(struct http_client *client, const void *data, size_t length)
 {
     switch (client->response.read_state) {
@@ -877,13 +877,13 @@ http_client_feed(struct http_client *client, const void *data, size_t length)
  *
  */
 
-static enum buffered_result
+static BufferedResult
 http_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct http_client *client = (struct http_client *)ctx;
 
     pool_ref(client->pool);
-    enum buffered_result result = http_client_feed(client, buffer, size);
+    BufferedResult result = http_client_feed(client, buffer, size);
     pool_unref(client->pool);
 
     return result;

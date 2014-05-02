@@ -177,7 +177,7 @@ http_server_maybe_send_100_continue(struct http_server_connection *connection);
 /**
  * @return false if the connection has been closed
  */
-enum buffered_result
+BufferedResult
 http_server_feed(struct http_server_connection *connection,
                  const void *data, size_t length);
 
@@ -193,7 +193,7 @@ http_server_try_request_direct(struct http_server_connection *connection,
  * Send data from the input buffer to the request body istream
  * handler.
  */
-enum buffered_result
+BufferedResult
 http_server_feed_body(struct http_server_connection *connection,
                       const void *data, size_t length);
 

@@ -88,9 +88,9 @@ BufferedSocket::Consumed( size_t nbytes)
 
 /**
  * Invokes the data handler, and takes care for
- * #BUFFERED_AGAIN_OPTIONAL and #BUFFERED_AGAIN_EXPECT.
+ * #BufferedResult::AGAIN_OPTIONAL and #BufferedResult::AGAIN_EXPECT.
  */
-static enum buffered_result
+static BufferedResult
 buffered_socket_invoke_data(BufferedSocket *s)
 {
     assert(!buffered_socket_input_empty(s));
@@ -103,29 +103,29 @@ buffered_socket_invoke_data(BufferedSocket *s)
         data = fifo_buffer_read(s->input, &length);
         if (data == nullptr)
             return s->expect_more || local_expect_more
-                ? BUFFERED_MORE
-                : BUFFERED_OK;
+                ? BufferedResult::MORE
+                : BufferedResult::OK;
 
 #ifndef NDEBUG
         struct pool_notify_state notify;
         pool_notify(s->base.GetPool(), &notify);
 #endif
 
-        enum buffered_result result =
+        BufferedResult result =
             s->handler->data(data, length, s->handler_ctx);
 
 #ifndef NDEBUG
         if (pool_denotify(&notify)) {
-            assert(result == BUFFERED_CLOSED);
+            assert(result == BufferedResult::CLOSED);
         } else {
             s->last_buffered_result = result;
-            assert((result == BUFFERED_CLOSED) == !s->IsValid());
+            assert((result == BufferedResult::CLOSED) == !s->IsValid());
         }
 #endif
 
-        if (result == BUFFERED_AGAIN_EXPECT)
+        if (result == BufferedResult::AGAIN_EXPECT)
             local_expect_more = true;
-        else if (result == BUFFERED_AGAIN_OPTIONAL)
+        else if (result == BufferedResult::AGAIN_OPTIONAL)
             local_expect_more = false;
         else
             return result;
@@ -141,11 +141,11 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
     const bool old_expect_more = s->expect_more;
     s->expect_more = false;
 
-    enum buffered_result result = buffered_socket_invoke_data(s);
-    assert((result == BUFFERED_CLOSED) || s->IsValid());
+    BufferedResult result = buffered_socket_invoke_data(s);
+    assert((result == BufferedResult::CLOSED) || s->IsValid());
 
     switch (result) {
-    case BUFFERED_OK:
+    case BufferedResult::OK:
         assert(fifo_buffer_empty(s->input));
         assert(!s->expect_more);
 
@@ -156,7 +156,7 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
 
         return true;
 
-    case BUFFERED_PARTIAL:
+    case BufferedResult::PARTIAL:
         assert(!fifo_buffer_empty(s->input));
 
         if (!s->IsConnected())
@@ -164,7 +164,7 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
 
         return true;
 
-    case BUFFERED_MORE:
+    case BufferedResult::MORE:
         s->expect_more = true;
 
         if (!s->IsConnected()) {
@@ -182,19 +182,19 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
 
         return true;
 
-    case BUFFERED_AGAIN_OPTIONAL:
-    case BUFFERED_AGAIN_EXPECT:
+    case BufferedResult::AGAIN_OPTIONAL:
+    case BufferedResult::AGAIN_EXPECT:
         /* unreachable, has been handled by
            buffered_socket_invoke_data() */
         assert(false);
         return false;
 
-    case BUFFERED_BLOCKING:
+    case BufferedResult::BLOCKING:
         s->expect_more = old_expect_more;
         s->base.UnscheduleRead();
         return false;
 
-    case BUFFERED_CLOSED:
+    case BufferedResult::CLOSED:
         /* the buffered_socket object has been destroyed by the
            handler */
         return false;
@@ -477,7 +477,7 @@ BufferedSocket::Init(struct pool *_pool,
     reading = false;
     ended = false;
     destroyed = false;
-    last_buffered_result = (buffered_result)-1;
+    last_buffered_result = BufferedResult(-1);
 #endif
 }
 

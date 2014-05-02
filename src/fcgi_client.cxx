@@ -515,7 +515,7 @@ fcgi_client_handle_header(struct fcgi_client *client,
 /**
  * Consume data from the input buffer.
  */
-static enum buffered_result
+static BufferedResult
 fcgi_client_consume_input(struct fcgi_client *client,
                           const uint8_t *data0, size_t length0)
 {
@@ -536,15 +536,15 @@ fcgi_client_consume_input(struct fcgi_client *client,
                        data */
                     assert(client->response.read_state == fcgi_client::Response::READ_HEADERS);
                     assert(client->socket.IsValid());
-                    return BUFFERED_MORE;
+                    return BufferedResult::MORE;
                 }
 
                 if (!client->socket.IsValid())
-                    return BUFFERED_CLOSED;
+                    return BufferedResult::CLOSED;
 
                 /* the response body handler blocks, wait for it to
                    become ready */
-                return BUFFERED_BLOCKING;
+                return BufferedResult::BLOCKING;
             }
 
             data += nbytes;
@@ -556,7 +556,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
                    BODY: we have to deliver the response now */
 
                 if (!fcgi_client_submit_response(client))
-                    return BUFFERED_CLOSED;
+                    return BufferedResult::CLOSED;
 
                 /* continue parsing the response body from the
                    buffer */
@@ -566,9 +566,9 @@ fcgi_client_consume_input(struct fcgi_client *client,
             if (client->content_length > 0)
                 return data < end && client->response.read_state != fcgi_client::Response::READ_HEADERS
                     /* some was consumed, try again later */
-                    ? BUFFERED_PARTIAL
+                    ? BufferedResult::PARTIAL
                     /* all input was consumed, want more */
-                    : BUFFERED_MORE;
+                    : BufferedResult::MORE;
 
             continue;
         }
@@ -583,7 +583,7 @@ fcgi_client_consume_input(struct fcgi_client *client,
             client->socket.Consumed(nbytes);
 
             if (client->skip_length > 0)
-                return BUFFERED_MORE;
+                return BufferedResult::MORE;
 
             continue;
         }
@@ -592,16 +592,16 @@ fcgi_client_consume_input(struct fcgi_client *client,
             (const struct fcgi_record_header *)data;
         const size_t remaining = end - data;
         if (remaining < sizeof(*header))
-            return BUFFERED_MORE;
+            return BufferedResult::MORE;
 
         data += sizeof(*header);
         client->socket.Consumed(sizeof(*header));
 
         if (!fcgi_client_handle_header(client, header))
-            return BUFFERED_CLOSED;
+            return BufferedResult::CLOSED;
     } while (data != end);
 
-    return BUFFERED_MORE;
+    return BufferedResult::MORE;
 }
 
 /*
@@ -757,7 +757,7 @@ fcgi_client_response_body_init(struct fcgi_client *client)
  *
  */
 
-static enum buffered_result
+static BufferedResult
 fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct fcgi_client *client = (struct fcgi_client *)ctx;
@@ -775,7 +775,7 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
     }
 
     pool_ref(client->pool);
-    const enum buffered_result result =
+    const BufferedResult result =
         fcgi_client_consume_input(client, (const uint8_t *)buffer, size);
     pool_unref(client->pool);
     return result;

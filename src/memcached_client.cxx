@@ -281,7 +281,7 @@ static const struct istream_class memcached_response_value = {
  *
  */
 
-static enum buffered_result
+static BufferedResult
 memcached_submit_response(struct memcached_client *client)
 {
     assert(client->response.read_state == memcached_client::ReadState::KEY);
@@ -294,7 +294,7 @@ memcached_submit_response(struct memcached_client *client)
             g_error_new_literal(memcached_client_quark(), 0,
                                 "memcached server sends response too early");
         memcached_connection_abort_response_header(client, error);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 
     if (client->response.remaining > 0) {
@@ -335,8 +335,8 @@ memcached_submit_response(struct memcached_client *client)
         pool_unref(client->pool);
 
         return valid
-            ? BUFFERED_AGAIN_EXPECT
-            : BUFFERED_CLOSED;
+            ? BufferedResult::AGAIN_EXPECT
+            : BufferedResult::CLOSED;
     } else {
         /* no value: invoke the callback, quit */
 
@@ -353,11 +353,11 @@ memcached_submit_response(struct memcached_client *client)
         pool_unref(client->caller_pool);
 
         memcached_client_release(client, false);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 }
 
-static enum buffered_result
+static BufferedResult
 memcached_begin_key(struct memcached_client *client)
 {
     assert(client->response.read_state == memcached_client::ReadState::EXTRAS);
@@ -376,10 +376,10 @@ memcached_begin_key(struct memcached_client *client)
         = (unsigned char *)p_malloc(client->pool,
                                     client->response.key.remaining);
 
-    return BUFFERED_AGAIN_EXPECT;
+    return BufferedResult::AGAIN_EXPECT;
 }
 
-static enum buffered_result
+static BufferedResult
 memcached_feed_header(struct memcached_client *client,
                       const void *data, size_t length)
 {
@@ -387,7 +387,7 @@ memcached_feed_header(struct memcached_client *client,
 
     if (length < sizeof(client->response.header))
         /* not enough data yet */
-        return BUFFERED_MORE;
+        return BufferedResult::MORE;
 
     memcpy(&client->response.header, data, sizeof(client->response.header));
     client->socket.Consumed(sizeof(client->response.header));
@@ -403,7 +403,7 @@ memcached_feed_header(struct memcached_client *client,
             g_error_new_literal(memcached_client_quark(), 0,
                                 "memcached protocol error");
         memcached_connection_abort_response_header(client, error);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 
     if (client->response.header.extras_length == 0) {
@@ -411,10 +411,10 @@ memcached_feed_header(struct memcached_client *client,
         return memcached_begin_key(client);
     }
 
-    return BUFFERED_AGAIN_EXPECT;
+    return BufferedResult::AGAIN_EXPECT;
 }
 
-static enum buffered_result
+static BufferedResult
 memcached_feed_extras(struct memcached_client *client,
                       const void *data, size_t length)
 {
@@ -423,7 +423,7 @@ memcached_feed_extras(struct memcached_client *client,
 
     if (data == nullptr ||
         length < sizeof(client->response.header.extras_length))
-        return BUFFERED_MORE;
+        return BufferedResult::MORE;
 
     client->response.extras = (unsigned char *)
         p_malloc(client->pool,
@@ -437,7 +437,7 @@ memcached_feed_extras(struct memcached_client *client,
     return memcached_begin_key(client);
 }
 
-static enum buffered_result
+static BufferedResult
 memcached_feed_key(struct memcached_client *client,
                    const void *data, size_t length)
 {
@@ -458,10 +458,10 @@ memcached_feed_key(struct memcached_client *client,
     if (client->response.key.remaining == 0)
         return memcached_submit_response(client);
 
-    return BUFFERED_MORE;
+    return BufferedResult::MORE;
 }
 
-static enum buffered_result
+static BufferedResult
 memcached_feed_value(struct memcached_client *client,
                      const void *data, size_t length)
 {
@@ -479,16 +479,16 @@ memcached_feed_value(struct memcached_client *client,
     size_t nbytes = istream_invoke_data(&client->response.value, data, length);
     if (nbytes == 0)
         return memcached_connection_valid(client)
-            ? BUFFERED_BLOCKING
-            : BUFFERED_CLOSED;
+            ? BufferedResult::BLOCKING
+            : BufferedResult::CLOSED;
 
     client->socket.Consumed(nbytes);
 
     client->response.remaining -= nbytes;
     if (client->response.remaining > 0)
         return nbytes < length
-            ? BUFFERED_PARTIAL
-            : BUFFERED_MORE;
+            ? BufferedResult::PARTIAL
+            : BufferedResult::MORE;
 
     assert(!client->socket.IsConnected());
     assert(client->request.istream == nullptr);
@@ -498,10 +498,10 @@ memcached_feed_value(struct memcached_client *client,
     pool_unref(client->caller_pool);
 
     memcached_client_release(client, false);
-    return BUFFERED_CLOSED;
+    return BufferedResult::CLOSED;
 }
 
-static enum buffered_result
+static BufferedResult
 memcached_feed(struct memcached_client *client,
                const void *data, size_t length)
 {
@@ -521,12 +521,12 @@ memcached_feed(struct memcached_client *client,
     case memcached_client::ReadState::END:
         /* unreachable */
         assert(false);
-        return BUFFERED_CLOSED;
+        return BufferedResult::CLOSED;
     }
 
     /* unreachable */
     assert(false);
-    return BUFFERED_CLOSED;
+    return BufferedResult::CLOSED;
 }
 
 static enum direct_result
@@ -586,14 +586,14 @@ memcached_client_socket_write(void *ctx)
     return result;
 }
 
-static enum buffered_result
+static BufferedResult
 memcached_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     memcached_client *client = (memcached_client *)ctx;
     assert(client->response.read_state != memcached_client::ReadState::END);
 
     pool_ref(client->pool);
-    enum buffered_result result = memcached_feed(client, buffer, size);
+    BufferedResult result = memcached_feed(client, buffer, size);
     pool_unref(client->pool);
     return result;
 }
