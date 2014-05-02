@@ -187,7 +187,7 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
         /* unreachable, has been handled by
            buffered_socket_invoke_data() */
         assert(false);
-        return false;
+        gcc_unreachable();
 
     case BufferedResult::BLOCKING:
         s->expect_more = old_expect_more;
