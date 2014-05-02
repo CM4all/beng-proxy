@@ -185,7 +185,7 @@ http_server_feed(struct http_server_connection *connection,
  * Attempt a "direct" transfer of the request body.  Caller must hold
  * an additional pool reference.
  */
-enum direct_result
+DirectResult
 http_server_try_request_direct(struct http_server_connection *connection,
                                int fd, enum istream_direct fd_type);
 

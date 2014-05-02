@@ -216,34 +216,34 @@ buffered_socket_submit_direct(BufferedSocket *s)
     const bool old_expect_more = s->expect_more;
     s->expect_more = false;
 
-    const enum direct_result result =
+    const DirectResult result =
         s->handler->direct(s->base.GetFD(), s->base.GetType(), s->handler_ctx);
     switch (result) {
-    case DIRECT_OK:
+    case DirectResult::OK:
         /* some data was transferred: refresh the read timeout */
         s->base.ScheduleRead(s->read_timeout);
         return true;
 
-    case DIRECT_BLOCKING:
+    case DirectResult::BLOCKING:
         s->expect_more = old_expect_more;
         s->base.UnscheduleRead();
         return false;
 
-    case DIRECT_EMPTY:
+    case DirectResult::EMPTY:
         /* schedule read, but don't refresh timeout of old scheduled
            read */
         if (!s->base.IsReadPending())
             s->base.ScheduleRead(s->read_timeout);
         return true;
 
-    case DIRECT_END:
+    case DirectResult::END:
         buffered_socket_ended(s);
         return false;
 
-    case DIRECT_CLOSED:
+    case DirectResult::CLOSED:
         return false;
 
-    case DIRECT_ERRNO:
+    case DirectResult::ERRNO:
         s->handler->error(new_error_errno(), s->handler_ctx);
         return false;
     }

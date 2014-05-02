@@ -401,7 +401,7 @@ http_server_feed(struct http_server_connection *connection,
     gcc_unreachable();
 }
 
-enum direct_result
+DirectResult
 http_server_try_request_direct(struct http_server_connection *connection,
                                int fd, enum istream_direct fd_type)
 {
@@ -409,28 +409,28 @@ http_server_try_request_direct(struct http_server_connection *connection,
     assert(connection->request.read_state == http_server_connection::Request::BODY);
 
     if (!http_server_maybe_send_100_continue(connection))
-        return DIRECT_CLOSED;
+        return DirectResult::CLOSED;
 
     ssize_t nbytes = http_body_try_direct(&connection->request.body_reader,
                                           fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
-        return DIRECT_BLOCKING;
+        return DirectResult::BLOCKING;
 
     if (nbytes == ISTREAM_RESULT_CLOSED)
         /* the stream (and the whole connection) has been closed
            during the direct() callback (-3); no further checks */
-        return DIRECT_CLOSED;
+        return DirectResult::CLOSED;
 
     if (nbytes < 0) {
         if (errno == EAGAIN)
-            return DIRECT_EMPTY;
+            return DirectResult::EMPTY;
 
-        return DIRECT_ERRNO;
+        return DirectResult::ERRNO;
     }
 
     if (nbytes == ISTREAM_RESULT_EOF)
-        return DIRECT_END;
+        return DirectResult::END;
 
     connection->request.bytes_received += nbytes;
 
@@ -438,9 +438,9 @@ http_server_try_request_direct(struct http_server_connection *connection,
         connection->request.read_state = http_server_connection::Request::END;
         istream_deinit_eof(&connection->request.body_reader.output);
         return http_server_connection_valid(connection)
-            ? DIRECT_OK
-            : DIRECT_CLOSED;
+            ? DirectResult::OK
+            : DirectResult::CLOSED;
     } else {
-        return DIRECT_OK;
+        return DirectResult::OK;
     }
 }

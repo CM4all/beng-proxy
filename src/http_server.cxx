@@ -93,7 +93,7 @@ http_server_socket_data(const void *data, size_t length, void *ctx)
     return http_server_feed(connection, data, length);
 }
 
-static enum direct_result
+static DirectResult
 http_server_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
 {
     struct http_server_connection *connection =

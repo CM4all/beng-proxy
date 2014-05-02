@@ -803,7 +803,7 @@ http_client_feed_headers(struct http_client *client,
         : BufferedResult::AGAIN_OPTIONAL;
 }
 
-static enum direct_result
+static DirectResult
 http_client_try_response_direct(struct http_client *client,
                                 int fd, enum istream_direct fd_type)
 {
@@ -815,19 +815,19 @@ http_client_try_response_direct(struct http_client *client,
                                           fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
-        return DIRECT_BLOCKING;
+        return DirectResult::BLOCKING;
 
     if (nbytes == ISTREAM_RESULT_CLOSED)
         /* the stream (and the whole connection) has been closed
            during the direct() callback */
-        return DIRECT_CLOSED;
+        return DirectResult::CLOSED;
 
     if (nbytes < 0) {
         if (errno == EAGAIN)
             /* the source fd (= ours) blocks */
-            return DIRECT_EMPTY;
+            return DirectResult::EMPTY;
 
-        return DIRECT_ERRNO;
+        return DirectResult::ERRNO;
     }
 
     if (nbytes == ISTREAM_RESULT_EOF) {
@@ -836,15 +836,15 @@ http_client_try_response_direct(struct http_client *client,
 
         http_body_socket_eof(&client->response.body_reader, 0);
         http_client_release(client, false);
-        return DIRECT_CLOSED;
+        return DirectResult::CLOSED;
    }
 
     if (http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
-        return DIRECT_CLOSED;
+        return DirectResult::CLOSED;
     }
 
-    return DIRECT_OK;
+    return DirectResult::OK;
 }
 
 static BufferedResult
@@ -889,7 +889,7 @@ http_client_socket_data(const void *buffer, size_t size, void *ctx)
     return result;
 }
 
-static enum direct_result
+static DirectResult
 http_client_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
 {
     struct http_client *client = (struct http_client *)ctx;

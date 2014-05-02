@@ -529,7 +529,7 @@ memcached_feed(struct memcached_client *client,
     return BufferedResult::CLOSED;
 }
 
-static enum direct_result
+static DirectResult
 memcached_client_try_read_direct(struct memcached_client *client,
                                  int fd, istream_direct type)
 {
@@ -546,19 +546,19 @@ memcached_client_try_read_direct(struct memcached_client *client,
             istream_deinit_eof(&client->response.value);
             pool_unref(client->caller_pool);
             pool_unref(client->pool);
-            return DIRECT_CLOSED;
+            return DirectResult::CLOSED;
         } else
-            return DIRECT_OK;
+            return DirectResult::OK;
     } else if (unlikely(nbytes == ISTREAM_RESULT_EOF)) {
-        return DIRECT_END;
+        return DirectResult::END;
     } else if (nbytes == ISTREAM_RESULT_BLOCKING) {
-        return DIRECT_BLOCKING;
+        return DirectResult::BLOCKING;
     } else if (nbytes == ISTREAM_RESULT_CLOSED) {
-        return DIRECT_CLOSED;
+        return DirectResult::CLOSED;
     } else if (errno == EAGAIN) {
-        return DIRECT_EMPTY;
+        return DirectResult::EMPTY;
     } else {
-        return DIRECT_ERRNO;
+        return DirectResult::ERRNO;
     }
 }
 
@@ -598,7 +598,7 @@ memcached_client_socket_data(const void *buffer, size_t size, void *ctx)
     return result;
 }
 
-static enum direct_result
+static DirectResult
 memcached_client_socket_direct(int fd, enum istream_direct type, void *ctx)
 {
     memcached_client *client = (memcached_client *)ctx;

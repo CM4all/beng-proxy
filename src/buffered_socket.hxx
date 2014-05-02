@@ -67,41 +67,41 @@ enum class BufferedResult {
     CLOSED,
 };
 
-enum direct_result {
+enum class DirectResult {
     /**
      * Some data has been read from the provided socket.
      */
-    DIRECT_OK,
+    OK,
 
     /**
      * The handler blocks.  The handler is responsible for calling
      * BufferedSocket::Read() as soon as it's ready for more data.
      */
-    DIRECT_BLOCKING,
+    BLOCKING,
 
     /**
      * The provided socket blocks.  The caller is responsible for
      * listening on the socket.
      */
-    DIRECT_EMPTY,
+    EMPTY,
 
     /**
      * The handler has determined that no more data can be received on
      * the provided socket, because the peer has closed it.
      */
-    DIRECT_END,
+    END,
 
     /**
      * The buffered_socket object has been closed by the handler.
      */
-    DIRECT_CLOSED,
+    CLOSED,
 
     /**
      * There was an I/O error on the socket and errno contains the
      * error code.  The caller will create a GError object and will
      * invoke the error() handler method.
      */
-    DIRECT_ERRNO,
+    ERRNO,
 };
 
 /**
@@ -151,8 +151,7 @@ struct BufferedSocketHandler {
      * The socket is ready for reading.  It is suggested to attempt a
      * "direct" tansfer.
      */
-    enum direct_result (*direct)(int fd, enum istream_direct fd_type,
-                                 void *ctx);
+    DirectResult (*direct)(int fd, enum istream_direct fd_type, void *ctx);
 
     /**
      * The peer has finished sending and has closed the socket.  The
