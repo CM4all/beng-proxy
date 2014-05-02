@@ -3,7 +3,7 @@ cm4all-beng-proxy (4.0.32) unstable; urgency=low
   * cgi_address: allow BASE without PATH_INFO
   * implement FILE_NOT_FOUND support for CGI, FastCGI, WAS, LHTTP
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 02 May 2014 14:32:47 -0000
 
 cm4all-beng-proxy (4.0.31) unstable; urgency=low
 
