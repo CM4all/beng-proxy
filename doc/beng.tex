@@ -1251,7 +1251,9 @@ detailed description. \\
 \verb|FILE_NOT_FOUND| & Indicates that the translation server would
 like to provide an alternate translation when the specified file does
 not exist.  \emph{beng-proxy} will repeat the translation request with
-this packet echoed. \\
+this packet echoed.  This is supported by the following address types:
+\verb|PATH|, \verb|CGI|, \verb|FASTCGI|, \verb|WAS|,
+\verb|LHTTP_PATH|. \\
 
 \hline
 

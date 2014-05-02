@@ -968,18 +968,18 @@ translate_client_file_not_found(TranslateClient *client,
         return false;
 
     case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_LHTTP:
     case RESOURCE_ADDRESS_AJP:
     case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
         translate_client_error(client,
                                "FIlE_NOT_FOUND not compatible with resource address");
         return false;
 
     case RESOURCE_ADDRESS_LOCAL:
     case RESOURCE_ADDRESS_NFS:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+    case RESOURCE_ADDRESS_LHTTP:
         break;
     }
 

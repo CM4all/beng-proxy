@@ -9,6 +9,8 @@
 #include "translate_response.hxx"
 #include "resource_address.hxx"
 #include "file_address.h"
+#include "cgi_address.hxx"
+#include "lhttp_address.hxx"
 
 #include <daemon/log.h>
 
@@ -33,17 +35,27 @@ check_file_not_found(struct request &request,
     switch (response.address.type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_LHTTP:
     case RESOURCE_ADDRESS_AJP:
     case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
     case RESOURCE_ADDRESS_NFS:
         daemon_log(2, "resource address not compatible with TRANSLATE_FILE_NOT_FOUND\n");
         response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal Server Error");
         return false;
+
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        if (!is_enoent(response.address.u.cgi->path))
+            return true;
+
+        break;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        if (!is_enoent(response.address.u.lhttp->path))
+            return true;
+
+        break;
 
     case RESOURCE_ADDRESS_LOCAL:
         if (!is_enoent(response.address.u.file->path))
