@@ -1050,26 +1050,28 @@ translate_client_directory_index(TranslateClient &client,
         return false;
     }
 
-    switch (client.response.address.type) {
-    case RESOURCE_ADDRESS_NONE:
-        translate_client_error(&client,
-                               "DIRECTORY_INDEX without resource address");
-        return false;
+    if (client.response.test_path == nullptr) {
+        switch (client.response.address.type) {
+        case RESOURCE_ADDRESS_NONE:
+            translate_client_error(&client,
+                                   "DIRECTORY_INDEX without resource address");
+            return false;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_LHTTP:
-    case RESOURCE_ADDRESS_AJP:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-        translate_client_error(&client,
-                               "DIRECTORY_INDEX not compatible with resource address");
-        return false;
+        case RESOURCE_ADDRESS_HTTP:
+        case RESOURCE_ADDRESS_LHTTP:
+        case RESOURCE_ADDRESS_AJP:
+        case RESOURCE_ADDRESS_PIPE:
+        case RESOURCE_ADDRESS_CGI:
+        case RESOURCE_ADDRESS_FASTCGI:
+        case RESOURCE_ADDRESS_WAS:
+            translate_client_error(&client,
+                                   "DIRECTORY_INDEX not compatible with resource address");
+            return false;
 
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_NFS:
-        break;
+        case RESOURCE_ADDRESS_LOCAL:
+        case RESOURCE_ADDRESS_NFS:
+            break;
+        }
     }
 
     client.response.directory_index = payload;
