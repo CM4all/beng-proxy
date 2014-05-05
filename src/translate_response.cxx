@@ -106,6 +106,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     file_not_found = DupBuffer(pool, src.file_not_found);
     content_type_lookup = DupBuffer(pool, src.content_type_lookup);
     content_type = p_strdup_checked(pool, src.content_type);
+    enotdir = DupBuffer(pool, src.enotdir);
     directory_index = DupBuffer(pool, src.directory_index);
     error_document = DupBuffer(pool, src.error_document);
 

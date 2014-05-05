@@ -501,6 +501,12 @@ enum beng_translation_command {
      * Copy the query string to the redirect URI?
      */
     TRANSLATE_REDIRECT_QUERY_STRING = 129,
+
+    /**
+     * Negotiate how to handle requests to regular file with
+     * path info.
+     */
+    TRANSLATE_ENOTDIR = 130,
 };
 
 struct beng_translation_header {

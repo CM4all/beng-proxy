@@ -94,6 +94,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
+            response.packet(TRANSLATE_ENOTDIR, 'foo')
         elif uri[-4:] == '.php':
             # run PHP-FastCGI
             response.packet(TRANSLATE_EASY_BASE)
@@ -103,6 +104,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
             response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
+            response.packet(TRANSLATE_ENOTDIR, 'foo')
         elif uri == '' or uri[-1] == '/':
             # deliver index.html with fallback (via TRANSLATE_FILE_NOT_FOUND)
             response.packet(TRANSLATE_REGEX, r'^(.*/)?$')
@@ -110,11 +112,13 @@ class Translation(Protocol):
             response.path('/dummy')
             response.packet(TRANSLATE_EXPAND_PATH, r"/var/www/\1index.html")
             response.packet(TRANSLATE_FILE_NOT_FOUND, 'index.html')
+            response.packet(TRANSLATE_ENOTDIR, 'foo')
         else:
             # static file
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_INVERSE_REGEX, r'(\.(cls|php)|/)$')
             response.packet(TRANSLATE_PATH, easy_path)
+            response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_DIRECTORY_INDEX, 'foo')
 
     def _handle_local_file(self, path, response, delegate=False, jail=False, fastcgi=True, error_document=False):

@@ -63,6 +63,8 @@ struct TranslateCacheItem {
         const char *ua_class;
         const char *query_string;
 
+        ConstBuffer<void> enotdir;
+
         bool want;
     } request;
 
@@ -193,8 +195,8 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
                http_status_t status,
                ConstBuffer<void> check,
                ConstBuffer<void> want_full_uri,
-               ConstBuffer<void> file_not_found,
                ConstBuffer<void> directory_index,
+               ConstBuffer<void> file_not_found,
                bool want)
 {
     const char *key = status != 0
@@ -547,6 +549,10 @@ tcache_vary_match(const TranslateCacheItem *item,
         return tcache_string_match(item->request.query_string,
                                    request->query_string, strict);
 
+    case TRANSLATE_ENOTDIR:
+        return tcache_buffer_match(item->request.enotdir,
+                                   request->enotdir, strict);
+
     default:
         return !strict;
     }
@@ -778,6 +784,9 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
     item->request.query_string =
         tcache_vary_copy(pool, tcr->request->query_string,
                          response, TRANSLATE_QUERY_STRING);
+    item->request.enotdir =
+        tcache_vary_copy(pool, tcr->request->enotdir,
+                         response, TRANSLATE_ENOTDIR);
 
     const char *key = tcache_store_response(pool, &item->response, response,
                                             tcr->request);

@@ -776,6 +776,15 @@ response. \\
 
 \hline
 
+\verb|ENOTDIR| & The specified file does not exist, but a portion of
+the path points to a regular file.  This is an echo of the
+\verb|ENOTDIR| packet from the previous translation response.  The
+given URI has been shortened: the last slash and what follows has been
+moved to \verb|PATH_INFO|.  This may be repeated until the regular
+file has been found. \\
+
+\hline
+
 \verb|DIRECTORY_INDEX| & The specified file is a directory.  The
 translation server is asked to provide an alterate translation.  This
 is an echo of the \verb|DIRECTORY_INDEX| from the previous translation
@@ -1137,7 +1146,8 @@ The following request packets are currently supported:
 \verb|SESSION|,
 \verb|LOCAL_ADDRESS|,
 \verb|REMOTE_HOST|, \verb|HOST|, \verb|LANGUAGE|,
-\verb|USER_AGENT|, \verb|UA_CLASS|, \verb|QUERY_STRING|.
+\verb|USER_AGENT|, \verb|UA_CLASS|, \verb|QUERY_STRING|,
+\verb|ENOTDIR|.
 
 The following request packets are on ``vary'' implicitly:
 \verb|WIDGET_TYPE|, \verb|CONTENT_TYPE_LOOKUP|, \verb|URI|,
@@ -1262,6 +1272,12 @@ this packet echoed.  This is supported by the following address types:
 
 \hline
 
+\verb|ENOTDIR| & Indicates that the translation server would like to
+provide an alternate translation when the specified file does not
+exist, but a portion of the path points to a regular file. \\
+
+\hline
+
 \verb|DIRECTORY_INDEX| & Indicates that the translation server would
 like to provide an alternate translation when the specified file is a
 directory.  \emph{beng-proxy} will repeat the translation request with
@@ -1272,7 +1288,7 @@ this packet echoed. \\
 \verb|TEST_PATH| & Test the specified file.  If this packet is not
 present, then the path from the resource address is used (\verb|PATH|,
 \verb|CGI|, \verb|FASTCGI|, \verb|LHTTP_PATH|).  Affects the packets
-\verb|FILE_NOT_FOUND|, \verb|DIRECTORY_INDEX|. \\
+\verb|FILE_NOT_FOUND|, \verb|DIRECTORY_INDEX|, \verb|ENOTDIR|. \\
 
 \hline
 

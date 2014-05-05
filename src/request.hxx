@@ -93,6 +93,10 @@ struct request {
          * The Content-Type returned by suffix_registry_lookup().
          */
         const char *content_type;
+
+        char *enotdir_uri;
+        const char *enotdir_path_info;
+        struct resource_address enotdir_address;
     } translate;
 
     /**

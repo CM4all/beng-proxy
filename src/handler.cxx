@@ -8,6 +8,7 @@
 #include "config.hxx"
 #include "bp_instance.hxx"
 #include "file_not_found.hxx"
+#include "file_enotdir.hxx"
 #include "file_directory_index.hxx"
 #include "file_handler.hxx"
 #include "file_address.h"
@@ -415,6 +416,8 @@ handle_translated_request(request &request, const TranslateResponse &response)
     request.translate.response = response2;
     request.translate.address = &response2->address;
 
+    apply_file_enotdir(request);
+
     if (!do_content_type_lookup(request, *response2))
         handle_translated_request2(request, *response2);
 }
@@ -627,6 +630,10 @@ handler_translate_response(const TranslateResponse *response,
         response = request.translate.previous;
     }
 
+    /* check ENOTDIR */
+    if (!response->enotdir.IsNull() && !check_file_enotdir(request, *response))
+        return;
+
     /* check if the file exists */
     if (!response->file_not_found.IsNull() &&
         !check_file_not_found(request, *response))
@@ -739,6 +746,8 @@ ask_translation_server(struct request *request2)
     request2->translate.n_checks = 0;
     request2->translate.n_file_not_found = 0;
     request2->translate.n_directory_index = 0;
+    request2->translate.enotdir_uri = nullptr;
+    request2->translate.enotdir_path_info = nullptr;
 
     fill_translate_request(&request2->translate.request, request2->request,
                            &request2->uri, request2->args);

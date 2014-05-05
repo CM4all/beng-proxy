@@ -171,6 +171,8 @@ struct TranslateResponse {
      */
     const char *content_type;
 
+    ConstBuffer<void> enotdir;
+
     ConstBuffer<void> directory_index;
 
     ConstBuffer<void> error_document;
