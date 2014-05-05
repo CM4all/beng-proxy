@@ -6,6 +6,7 @@
 
 import re
 import os
+import urllib
 from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.internet.protocol import Protocol, Factory
@@ -59,6 +60,50 @@ class Translation(Protocol):
         if suffix in content_types:
             response.packet(TRANSLATE_CONTENT_TYPE, content_types[suffix])
         return response
+
+    def _handle_hosting(self, request, response, base, uri,
+                        document_root='/var/www'):
+        response.packet(TRANSLATE_BASE, base)
+        response.packet(TRANSLATE_DOCUMENT_ROOT, document_root)
+
+        path = os.path.join(document_root, urllib.unquote(uri))
+        easy_path = document_root + '/'
+
+        if request.file_not_found:
+            response.status(404)
+        elif request.directory_index:
+            response.packet(TRANSLATE_REGEX, r'^(.*)$')
+            response.packet(TRANSLATE_REDIRECT, 'dummy')
+            response.packet(TRANSLATE_EXPAND_REDIRECT, r'\1/')
+        elif uri[-4:] == '.cls':
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_REGEX, r'^(.*\.cls)$')
+            response.packet(TRANSLATE_REGEX_TAIL)
+            response.packet(TRANSLATE_FASTCGI, easy_path)
+            response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
+            response.packet(TRANSLATE_ACTION, coma_fastcgi)
+            response.pair('UPLOAD_BUFFER_SIZE', '4M')
+            response.packet(TRANSLATE_FILE_NOT_FOUND, 'foo')
+        elif uri[-4:] == '.php':
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_REGEX, r'^(.*\.php)$')
+            response.packet(TRANSLATE_REGEX_TAIL)
+            response.packet(TRANSLATE_FASTCGI, easy_path)
+            response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
+            response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
+            response.packet(TRANSLATE_FILE_NOT_FOUND, 'foo')
+        elif uri == '' or uri[-1] == '/':
+            response.packet(TRANSLATE_REGEX, r'^(.*)$')
+            response.packet(TRANSLATE_REGEX_TAIL)
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'directory_index.py'))
+            response.packet(TRANSLATE_PATH_INFO, os.path.join(cgi_path, 'directory_index.py'))
+            response.pair('DIRECTORY', '/dummy')
+            response.packet(TRANSLATE_EXPAND_PAIR, r'DIRECTORY=%s/\1' % document_root)
+        else:
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_INVERSE_REGEX, r'(\.(cls|php)|/)$')
+            response.packet(TRANSLATE_PATH, easy_path)
+            response.packet(TRANSLATE_DIRECTORY_INDEX, 'foo')
 
     def _handle_local_file(self, path, response, delegate=False, jail=False, fastcgi=True, error_document=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
@@ -139,7 +184,7 @@ class Translation(Protocol):
         username, password = x
         return username == 'hansi' and password == 'hansilein'
 
-    def _handle_http(self, raw_uri, uri, authorization,
+    def _handle_http(self, request, raw_uri, uri, authorization,
                      check, want_full_uri, want, file_not_found, directory_index,
                      ua_class, response):
         if uri[:6] == '/site/':
@@ -502,6 +547,8 @@ class Translation(Protocol):
         elif uri[:5] == '/ctl/':
             self._handle_local_file('/var/www' + uri[4:], response)
             response.packet(TRANSLATE_CONTENT_TYPE_LOOKUP, 'xyz')
+        elif raw_uri[:9] == '/hosting/':
+            self._handle_hosting(request, response, '/hosting/', raw_uri[9:])
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)
@@ -548,7 +595,8 @@ class Translation(Protocol):
         response.vary(TRANSLATE_HOST, TRANSLATE_PARAM)
 
         if request.uri is not None:
-            self._handle_http(request.raw_uri, request.uri, request.authorization,
+            self._handle_http(request,
+                              request.raw_uri, request.uri, request.authorization,
                               request.check, request.want_full_uri, request.want,
                               request.file_not_found, request.directory_index,
                               request.ua_class, response)
