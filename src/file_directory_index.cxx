@@ -30,28 +30,33 @@ check_directory_index(struct request &request,
 {
     assert(!response.directory_index.IsNull());
 
-    switch (response.address.type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_LHTTP:
-    case RESOURCE_ADDRESS_AJP:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-    case RESOURCE_ADDRESS_NFS:
-        daemon_log(2, "resource address not compatible with TRANSLATE_DIRECTORY_INDEX\n");
-        response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "Internal Server Error");
-        return false;
-
-    case RESOURCE_ADDRESS_LOCAL:
-        if (!is_dir(response.address.u.file->path))
+    if (response.test_path != nullptr) {
+        if (!is_dir(response.test_path))
             return true;
+    } else {
+        switch (response.address.type) {
+        case RESOURCE_ADDRESS_NONE:
+        case RESOURCE_ADDRESS_HTTP:
+        case RESOURCE_ADDRESS_LHTTP:
+        case RESOURCE_ADDRESS_AJP:
+        case RESOURCE_ADDRESS_PIPE:
+        case RESOURCE_ADDRESS_CGI:
+        case RESOURCE_ADDRESS_FASTCGI:
+        case RESOURCE_ADDRESS_WAS:
+        case RESOURCE_ADDRESS_NFS:
+            daemon_log(2, "resource address not compatible with TRANSLATE_DIRECTORY_INDEX\n");
+            response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                      "Internal Server Error");
+            return false;
 
-        break;
+        case RESOURCE_ADDRESS_LOCAL:
+            if (!is_dir(response.address.u.file->path))
+                return true;
 
-        // TODO: implement NFS
+            break;
+
+            // TODO: implement NFS
+        }
     }
 
     if (++request.translate.n_directory_index > 4) {

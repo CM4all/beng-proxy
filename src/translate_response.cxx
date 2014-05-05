@@ -64,6 +64,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     auto_base = src.auto_base;
     widget_info = src.widget_info;
     widget_group = p_strdup_checked(pool, src.widget_group);
+    test_path = p_strdup_checked(pool, src.test_path);
 
     strset_init(&container_groups);
     strset_copy(pool, &container_groups, &src.container_groups);

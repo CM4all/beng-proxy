@@ -68,6 +68,11 @@ struct TranslateResponse {
     const char *untrusted_prefix;
     const char *untrusted_site_suffix;
 
+    /**
+     * @see #TRANSLATE_TEST_PATH
+     */
+    const char *test_path;
+
     bool unsafe_base;
 
     bool easy_base;

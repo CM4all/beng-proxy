@@ -486,6 +486,11 @@ enum beng_translation_command {
     TRANSLATE_EXPAND_REDIRECT = 125,
 
     TRANSLATE_EXPAND_SCRIPT_NAME = 126,
+
+    /**
+     * Override the path to be tested by #TRANSLATE_FILE_NOT_FOUND.
+     */
+    TRANSLATE_TEST_PATH = 127,
 };
 
 struct beng_translation_header {

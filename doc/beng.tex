@@ -1264,6 +1264,13 @@ this packet echoed. \\
 
 \hline
 
+\verb|TEST_PATH| & Test the specified file.  If this packet is not
+present, then the path from the resource address is used (\verb|PATH|,
+\verb|CGI|, \verb|FASTCGI|, \verb|LHTTP_PATH|).  Affects the packets
+\verb|FILE_NOT_FOUND|, \verb|DIRECTORY_INDEX|. \\
+
+\hline
+
 \verb|COOKIE_DOMAIN| & Set the session cookie's "Domain" attribute. \\
 
 \hline

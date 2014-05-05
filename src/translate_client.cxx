@@ -961,26 +961,28 @@ translate_client_file_not_found(TranslateClient *client,
         return false;
     }
 
-    switch (client->response.address.type) {
-    case RESOURCE_ADDRESS_NONE:
-        translate_client_error(client,
-                               "FIlE_NOT_FOUND without resource address");
-        return false;
+    if (client->response.test_path == nullptr) {
+        switch (client->response.address.type) {
+        case RESOURCE_ADDRESS_NONE:
+            translate_client_error(client,
+                                   "FIlE_NOT_FOUND without resource address");
+            return false;
 
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_AJP:
-    case RESOURCE_ADDRESS_PIPE:
-        translate_client_error(client,
-                               "FIlE_NOT_FOUND not compatible with resource address");
-        return false;
+        case RESOURCE_ADDRESS_HTTP:
+        case RESOURCE_ADDRESS_AJP:
+        case RESOURCE_ADDRESS_PIPE:
+            translate_client_error(client,
+                                   "FIlE_NOT_FOUND not compatible with resource address");
+            return false;
 
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_NFS:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-    case RESOURCE_ADDRESS_LHTTP:
-        break;
+        case RESOURCE_ADDRESS_LOCAL:
+        case RESOURCE_ADDRESS_NFS:
+        case RESOURCE_ADDRESS_CGI:
+        case RESOURCE_ADDRESS_FASTCGI:
+        case RESOURCE_ADDRESS_WAS:
+        case RESOURCE_ADDRESS_LHTTP:
+            break;
+        }
     }
 
     client->response.file_not_found = payload;
@@ -2743,6 +2745,24 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_EXPIRES_RELATIVE:
         return translate_client_expires_relative(*client,
                                                  { _payload, payload_length });
+
+
+    case TRANSLATE_TEST_PATH:
+        if (payload_length == 0 || has_null_byte(payload, payload_length) ||
+            *payload != '/') {
+            translate_client_error(client,
+                                   "malformed TEST_PATH packet");
+            return false;
+        }
+
+        if (client->response.test_path != nullptr) {
+            translate_client_error(client,
+                                   "duplicate TEST_PATH packet");
+            return false;
+        }
+
+        client->response.test_path = payload;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,
