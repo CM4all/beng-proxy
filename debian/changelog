@@ -2,6 +2,7 @@ cm4all-beng-proxy (4.0.34) unstable; urgency=low
 
   * tcache: fix URI with BASE
   * tcache: allow URI with AUTO_BASE/EASY_BASE
+  * tcache: allow TEST_PATH with BASE
 
  --   
 
