@@ -194,6 +194,7 @@ translate_response_equals(const TranslateResponse *a,
         a->easy_base == b->easy_base &&
         a->unsafe_base == b->unsafe_base &&
         string_equals(a->uri, b->uri) &&
+        string_equals(a->test_path, b->test_path) &&
         buffer_equals(a->check, b->check) &&
         buffer_equals(a->want_full_uri, b->want_full_uri) &&
         resource_address_equals(&a->address, &b->address) &&
@@ -585,6 +586,62 @@ test_base_uri(struct pool *pool, struct tcache *cache)
                     &my_translate_handler, nullptr, &async_ref);
 }
 
+/**
+ * Test BASE+TEST_PATH.
+ */
+static void
+test_base_test_path(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    static constexpr TranslateRequest request1 = {
+        .uri = "/base_test_path/foo",
+    };
+    static constexpr struct file_address file1 = {
+        .path = "/var/www/foo",
+    };
+    static constexpr TranslateResponse response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1,
+            },
+        },
+        .base = "/base_test_path/",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+        .test_path = "/modified/foo",
+    };
+
+    next_response = expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    static constexpr TranslateRequest request2 = {
+        .uri = "/base_test_path/hansi",
+    };
+    static constexpr struct file_address file2 = {
+        .path = "/var/www/hansi",
+    };
+    static constexpr TranslateResponse response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file2,
+            },
+        },
+        .base = "/base_test_path/",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+        .test_path = "/modified/hansi",
+    };
+
+    next_response = nullptr;
+    expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
 static void
 test_easy_base(struct pool *pool, struct tcache *cache)
 {
@@ -728,6 +785,83 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .uri = "/modified/hansi",
+    };
+
+    next_response = nullptr;
+    expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
+/**
+ * Test EASY_BASE + TEST_PATH.
+ */
+static void
+test_easy_base_test_path(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    static constexpr TranslateRequest request1 = {
+        .uri = "/easy_base_test_path/foo",
+    };
+
+    static constexpr struct file_address file1 = {
+        .path = "/var/www/",
+    };
+    static constexpr TranslateResponse response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1,
+            },
+        },
+        .base = "/easy_base_test_path/",
+        .easy_base = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+        .test_path = "/modified/",
+    };
+
+    static constexpr struct file_address file1b = {
+        .path = "/var/www/foo",
+    };
+    static constexpr TranslateResponse response1b = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1b,
+            },
+        },
+        .base = "/easy_base_test_path/",
+        .easy_base = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+        .test_path = "/modified/foo",
+    };
+
+    next_response = &response1;
+    expected_response = &response1b;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    static constexpr TranslateRequest request2 = {
+        .uri = "/easy_base_test_path/hansi",
+    };
+    static constexpr struct file_address file2 = {
+        .path = "/var/www/hansi",
+    };
+    static constexpr TranslateResponse response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file2,
+            },
+        },
+        .base = "/easy_base_test_path/",
+        .easy_base = true,
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+        .test_path = "/modified/hansi",
     };
 
     next_response = nullptr;
@@ -2151,8 +2285,10 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_base_root(pool, cache);
     test_base_mismatch(pool, cache);
     test_base_uri(pool, cache);
+    test_base_test_path(pool, cache);
     test_easy_base(pool, cache);
     test_easy_base_uri(pool, cache);
+    test_easy_base_test_path(pool, cache);
     test_vary_invalidate(pool, cache);
     test_invalidate_uri(pool, cache);
     test_regex(pool, cache);
