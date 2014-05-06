@@ -9,6 +9,7 @@
 #include "pbuffer.hxx"
 #include "strmap.h"
 #include "widget_view.hxx"
+#include "uri_base.hxx"
 #include "regex.h"
 
 #include <string.h>
@@ -108,6 +109,46 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     validate_mtime.mtime = src.validate_mtime.mtime;
     validate_mtime.path =
         p_strdup_checked(pool, src.validate_mtime.path);
+}
+
+bool
+TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
+                              const char *request_uri)
+{
+    CopyFrom(pool, src);
+
+    char *new_base = nullptr;
+    if (auto_base) {
+        assert(base == nullptr);
+        assert(request_uri != nullptr);
+
+        base = new_base = resource_address_auto_base(pool, &src.address,
+                                                     request_uri);
+    }
+
+    const bool has_base = address.CacheStore(pool, &src.address,
+                                             request_uri, base,
+                                             easy_base,
+                                             src.IsExpandable());
+
+    if (!has_base)
+        /* the BASE value didn't match - clear it */
+        base = nullptr;
+    else if (new_base != nullptr)
+        base = new_base;
+
+    if (uri != nullptr) {
+        const char *tail = base_tail(request_uri, base);
+
+        if (tail != nullptr) {
+            size_t length = base_string(uri, tail);
+            uri = length != (size_t)-1
+                ? p_strndup(pool, uri, length)
+                : nullptr;
+        }
+    }
+
+    return has_base;
 }
 
 bool

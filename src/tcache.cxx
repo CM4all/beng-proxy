@@ -397,43 +397,10 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
                       const TranslateResponse *src,
                       const TranslateRequest *request)
 {
-    const char *base = src->base;
-    char *new_base = nullptr;
-
-    if (src->auto_base) {
-        assert(base == nullptr);
-        assert(request->uri != nullptr);
-
-        base = new_base = resource_address_auto_base(pool, &src->address,
-                                                     request->uri);
-    }
-
-    const bool has_base = dest->address.CacheStore(pool, &src->address,
-                                                   request->uri, base,
-                                                   src->easy_base,
-                                                   src->IsExpandable());
-    dest->CopyFrom(pool, *src);
-
-    if (!has_base)
-        /* the BASE value didn't match - clear it */
-        dest->base = base = nullptr;
-    else if (new_base != nullptr)
-        dest->base = new_base;
-
-    if (dest->uri != nullptr) {
-        const char *tail = base_tail(request->uri, base);
-
-        if (tail != nullptr) {
-            size_t length = base_string(dest->uri, tail);
-            dest->uri = length != (size_t)-1
-                ? p_strndup(pool, dest->uri, length)
-                : nullptr;
-        }
-    }
-
+    const bool has_base = dest->CacheStore(pool, *src, request->uri);
     return has_base
         /* generate a new cache key for the BASE */
-        ? tcache_uri_key(pool, base, request->host,
+        ? tcache_uri_key(pool, dest->base, request->host,
                          request->error_document_status,
                          request->check, request->want_full_uri,
                          request->file_not_found,

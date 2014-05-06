@@ -197,6 +197,15 @@ struct TranslateResponse {
     void CopyFrom(struct pool *pool, const TranslateResponse &src);
 
     /**
+     * Copy data from #src for storing in the translation cache.
+     *
+     * @return true if a #base was given and it was applied
+     * successfully
+     */
+    bool CacheStore(struct pool *pool, const TranslateResponse &src,
+                    const char *uri);
+
+    /**
      * Does any response need to be expanded with
      * translate_response_expand()?
      */
