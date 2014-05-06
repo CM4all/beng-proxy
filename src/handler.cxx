@@ -28,6 +28,7 @@
 #include "http_quark.h"
 #include "transformation.hxx"
 #include "expiry.h"
+#include "uri-edit.h"
 #include "uri-escape.h"
 #include "uri-verify.h"
 #include "strutil.h"
@@ -263,7 +264,14 @@ handle_translated_request2(request &request,
     } else if (response.redirect != nullptr) {
         http_status_t status = response.status != (http_status_t)0
             ? response.status : HTTP_STATUS_SEE_OTHER;
-        response_dispatch_redirect(&request, status, response.redirect,
+
+        const char *uri = response.redirect;
+        if (response.redirect_query_string && request.uri.query.length > 0)
+            uri = uri_append_query_string_n(request.request->pool, uri,
+                                            request.uri.query.data,
+                                            request.uri.query.length);
+
+        response_dispatch_redirect(&request, status, uri,
                                    nullptr);
     } else if (response.bounce != nullptr) {
         response_dispatch_redirect(&request, HTTP_STATUS_SEE_OTHER,

@@ -496,6 +496,11 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_TEST_PATH.
      */
     TRANSLATE_EXPAND_TEST_PATH = 128,
+
+    /**
+     * Copy the query string to the redirect URI?
+     */
+    TRANSLATE_REDIRECT_QUERY_STRING = 129,
 };
 
 struct beng_translation_header {

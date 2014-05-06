@@ -63,6 +63,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     filter_4xx = src.filter_4xx;
     previous = src.previous;
     transparent = src.transparent;
+    redirect_query_string = src.redirect_query_string;
     auto_base = src.auto_base;
     widget_info = src.widget_info;
     widget_group = p_strdup_checked(pool, src.widget_group);

@@ -98,6 +98,8 @@ struct TranslateResponse {
 
     bool transparent;
 
+    bool redirect_query_string;
+
     bool auto_base;
 
     bool widget_info;

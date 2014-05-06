@@ -420,6 +420,9 @@ class Translation(Protocol):
             response.pipe(os.path.join(cgi_path, 'pipe2.sed'))
         elif uri == '/redirect':
             response.packet(TRANSLATE_REDIRECT, 'http://cfatest01.intern.cm-ag/')
+        elif uri == '/redirect/query_string':
+            response.packet(TRANSLATE_REDIRECT, 'http://cfatest01.intern.cm-ag/')
+            response.packet(TRANSLATE_REDIRECT_QUERY_STRING)
         elif uri == '/redirect/permanent':
             response.status(301)
             response.packet(TRANSLATE_REDIRECT, 'http://cfatest01.intern.cm-ag/')

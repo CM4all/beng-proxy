@@ -2783,6 +2783,22 @@ translate_handle_packet(TranslateClient *client,
 
         client->response.expand_test_path = payload;
         return true;
+
+    case TRANSLATE_REDIRECT_QUERY_STRING:
+        if (payload_length != 0) {
+            translate_client_error(client, "malformed REDIRECT_QUERY_STRING packet");
+            return false;
+        }
+
+        if (client->response.redirect_query_string ||
+            (client->response.redirect == nullptr &&
+             client->response.expand_redirect == nullptr)) {
+            translate_client_error(client, "misplaced REDIRECT_QUERY_STRING packet");
+            return false;
+        }
+
+        client->response.redirect_query_string = true;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,
