@@ -126,10 +126,12 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
                                                      request_uri);
     }
 
+    const bool expandable = src.IsExpandable();
+
     const bool has_base = address.CacheStore(pool, &src.address,
                                              request_uri, base,
                                              easy_base,
-                                             src.IsExpandable());
+                                             expandable);
 
     if (!has_base)
         /* the BASE value didn't match - clear it */
@@ -137,7 +139,7 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
     else if (new_base != nullptr)
         base = new_base;
 
-    if (base != nullptr) {
+    if (base != nullptr && !expandable && !easy_base) {
         const char *tail = base_tail(request_uri, base);
         if (tail != nullptr) {
             if (uri != nullptr) {
