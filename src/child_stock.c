@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <unistd.h>
+#include <sched.h>
 
 struct child_stock_item {
     struct stock_item base;

@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <sched.h>
 #include <signal.h>
 #include <limits.h>
 

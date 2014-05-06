@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <unistd.h>
+#include <sched.h>
 #include <sys/un.h>
 #include <stdlib.h>
 #include <sys/socket.h>
