@@ -2270,6 +2270,97 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
                     &my_translate_handler, nullptr, &async_ref);
 }
 
+/**
+ * Test UNSAFE_BASE.
+ */
+static void
+test_unsafe_base(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    /* feed */
+    static constexpr TranslateRequest request1 = {
+        .uri = "/unsafe_base1/foo",
+    };
+    static constexpr struct file_address file1 = {
+        .path = "/var/www/foo",
+    };
+    static constexpr TranslateResponse response1 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file1,
+            },
+        },
+        .base = "/unsafe_base1/",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = expected_response = &response1;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    static constexpr TranslateRequest request2 = {
+        .uri = "/unsafe_base2/foo",
+    };
+    static constexpr struct file_address file2 = {
+        .path = "/var/www/foo",
+    };
+    static constexpr TranslateResponse response2 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file2,
+            },
+        },
+        .base = "/unsafe_base2/",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+        .unsafe_base = true,
+    };
+
+    next_response = expected_response = &response2;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    /* fail (no UNSAFE_BASE) */
+
+    static constexpr TranslateRequest request3 = {
+        .uri = "/unsafe_base1/../x",
+    };
+
+    next_response = expected_response = nullptr;
+    translate_cache(pool, cache, &request3,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    /* success (with UNSAFE_BASE) */
+
+    static constexpr TranslateRequest request4 = {
+        .uri = "/unsafe_base2/../x",
+    };
+    static constexpr struct file_address file4 = {
+        .path = "/var/www/../x",
+    };
+    static constexpr TranslateResponse response4 = {
+        .address = {
+            .type = RESOURCE_ADDRESS_LOCAL,
+            .u = {
+                .file = &file4,
+            },
+        },
+        .base = "/unsafe_base2/",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+        .unsafe_base = true,
+    };
+
+    next_response = nullptr;
+    expected_response = &response4;
+    translate_cache(pool, cache, &request4,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
@@ -2308,6 +2399,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_auto_base(pool, cache);
     test_base_check(pool, cache);
     test_base_wfu(pool, cache);
+    test_unsafe_base(pool, cache);
 
     /* cleanup */
 
