@@ -14,6 +14,7 @@
 #include "uri-relative.h"
 #include "uri-edit.h"
 #include "uri-extract.h"
+#include "uri_base.hxx"
 #include "strref.h"
 #include "pool.h"
 
@@ -329,6 +330,40 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
 
     assert(false);
     gcc_unreachable();
+}
+
+bool
+resource_address::CacheStore(struct pool *pool,
+                             const struct resource_address *src,
+                             const char *uri, const char *base,
+                             bool easy_base, bool expandable)
+{
+    const char *tail = base_tail(uri, base);
+    if (tail != nullptr) {
+        /* we received a valid BASE packet - store only the base
+           URI */
+
+        if (easy_base || expandable) {
+            /* when the response is expandable, skip appending the
+               tail URI, don't call resource_address_save_base() */
+            resource_address_copy(pool, this, src);
+            return true;
+        }
+
+        if (src->type == RESOURCE_ADDRESS_NONE) {
+            /* _save_base() will fail on a "NONE" address, but in this
+               case, the operation is useful and is allowed as a
+               special case */
+            type = RESOURCE_ADDRESS_NONE;
+            return true;
+        }
+
+        if (resource_address_save_base(pool, this, src, tail) != nullptr)
+            return true;
+    }
+
+    resource_address_copy(pool, this, src);
+    return false;
 }
 
 struct resource_address *

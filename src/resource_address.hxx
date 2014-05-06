@@ -45,6 +45,17 @@ struct resource_address {
 
         const struct nfs_address *nfs;
     } u;
+
+    /**
+     * Copies data from #src for storing in the translation cache.
+     *
+     * @return true if a #base was given and it was applied
+     * successfully
+     */
+    bool CacheStore(struct pool *pool,
+                    const struct resource_address *src,
+                    const char *uri, const char *base,
+                    bool easy_base, bool expandable);
 };
 
 /**

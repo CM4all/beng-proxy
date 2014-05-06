@@ -403,32 +403,9 @@ tcache_store_address(struct pool *pool, struct resource_address *dest,
                      const char *uri, const char *base,
                      bool easy_base, bool expandable)
 {
-    const char *tail = base_tail(uri, base);
-    if (tail != nullptr) {
-        /* we received a valid BASE packet - store only the base
-           URI */
-
-        if (easy_base || expandable) {
-            /* when the response is expandable, skip appending the
-               tail URI, don't call resource_address_save_base() */
-            resource_address_copy(pool, dest, src);
-            return p_strndup(pool, uri, tail - uri);
-        }
-
-        if (src->type == RESOURCE_ADDRESS_NONE) {
-            /* _save_base() will fail on a "NONE" address, but in this
-               case, the operation is useful and is allowed as a
-               special case */
-            dest->type = RESOURCE_ADDRESS_NONE;
-            return p_strndup(pool, uri, tail - uri);
-        }
-
-        if (resource_address_save_base(pool, dest, src, tail) != nullptr)
-            return p_strndup(pool, uri, tail - uri);
-    }
-
-    resource_address_copy(pool, dest, src);
-    return nullptr;
+    return dest->CacheStore(pool, src, uri, base, easy_base, expandable)
+        ? p_strdup(pool, base)
+        : nullptr;
 }
 
 static const char *
