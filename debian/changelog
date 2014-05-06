@@ -4,7 +4,7 @@ cm4all-beng-proxy (4.0.35) unstable; urgency=low
   * tcache: paranoid checks for REGEX (optional via UNSAFE_BASE)
   * translation: add packet REDIRECT_QUERY_STRING
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 06 May 2014 16:20:22 -0000
 
 cm4all-beng-proxy (4.0.34) unstable; urgency=low
 
