@@ -392,22 +392,6 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
     return success;
 }
 
-/**
- * Copies the address #src to #dest and returns the new cache key.
- * Returns nullptr if the cache key should not be modified (i.e. if there
- * is no matching BASE packet).
- */
-static const char *
-tcache_store_address(struct pool *pool, struct resource_address *dest,
-                     const struct resource_address *src,
-                     const char *uri, const char *base,
-                     bool easy_base, bool expandable)
-{
-    return dest->CacheStore(pool, src, uri, base, easy_base, expandable)
-        ? p_strdup(pool, base)
-        : nullptr;
-}
-
 static const char *
 tcache_store_response(struct pool *pool, TranslateResponse *dest,
                       const TranslateResponse *src,
@@ -424,13 +408,13 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
                                                      request->uri);
     }
 
-    const char *key = tcache_store_address(pool, &dest->address, &src->address,
-                                           request->uri, base,
-                                           src->easy_base,
-                                           src->IsExpandable());
+    const bool has_base = dest->address.CacheStore(pool, &src->address,
+                                                   request->uri, base,
+                                                   src->easy_base,
+                                                   src->IsExpandable());
     dest->CopyFrom(pool, *src);
 
-    if (key == nullptr)
+    if (!has_base)
         /* the BASE value didn't match - clear it */
         dest->base = base = nullptr;
     else if (new_base != nullptr)
@@ -447,15 +431,16 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
         }
     }
 
-    if (key != nullptr)
-        key = tcache_uri_key(pool, key, request->host,
-                             request->error_document_status,
-                             request->check, request->want_full_uri,
-                             request->file_not_found,
-                             request->directory_index,
-                             !request->want.IsEmpty());
-
-    return key;
+    return has_base
+        /* generate a new cache key for the BASE */
+        ? tcache_uri_key(pool, base, request->host,
+                         request->error_document_status,
+                         request->check, request->want_full_uri,
+                         request->file_not_found,
+                         request->directory_index,
+                         !request->want.IsEmpty())
+        /* no BASE, cache key unmodified */
+        : nullptr;
 }
 
 /**
