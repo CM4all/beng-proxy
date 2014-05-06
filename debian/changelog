@@ -1,6 +1,7 @@
 cm4all-beng-proxy (4.0.35) unstable; urgency=low
 
   * namespace_options, client-socket: Debian Squeeze compatibility tweaks
+  * tcache: paranoid checks for REGEX (optional via UNSAFE_BASE)
 
  --   
 

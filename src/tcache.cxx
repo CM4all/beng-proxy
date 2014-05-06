@@ -376,9 +376,15 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
 
     const AutoRewindPool auto_rewind(tpool);
 
+    uri = tcache_regex_input(tpool, uri, *response);
+    if (!response->unsafe_base && !uri_path_verify_paranoid(uri)) {
+        g_set_error(error_r, http_response_quark(),
+                    HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+        return false;
+    }
+
     GMatchInfo *match_info;
-    if (!g_regex_match(item->regex,
-                       tcache_regex_input(tpool, uri, *response),
+    if (!g_regex_match(item->regex, uri,
                        GRegexMatchFlags(0), &match_info)) {
         /* shouldn't happen, as this has already been matched */
         g_set_error(error_r, http_response_quark(),
