@@ -67,6 +67,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     widget_info = src.widget_info;
     widget_group = p_strdup_checked(pool, src.widget_group);
     test_path = p_strdup_checked(pool, src.test_path);
+    expand_test_path = p_strdup_checked(pool, src.expand_test_path);
 
     strset_init(&container_groups);
     strset_copy(pool, &container_groups, &src.container_groups);
@@ -196,6 +197,7 @@ TranslateResponse::IsExpandable() const
 {
     return regex != nullptr &&
         (expand_redirect != nullptr ||
+         expand_test_path != nullptr ||
          resource_address_is_expandable(&address) ||
          widget_view_any_is_expandable(views));
 }
@@ -212,6 +214,13 @@ TranslateResponse::Expand(struct pool *pool,
         redirect = expand_string_unescaped(pool, expand_redirect,
                                            match_info, error_r);
         if (redirect == nullptr)
+            return false;
+    }
+
+    if (expand_test_path != nullptr) {
+        test_path = expand_string_unescaped(pool, expand_test_path,
+                                            match_info, error_r);
+        if (test_path == nullptr)
             return false;
     }
 

@@ -73,6 +73,11 @@ struct TranslateResponse {
      */
     const char *test_path;
 
+    /**
+     * @see #TRANSLATE_EXPAND_TEST_PATH
+     */
+    const char *expand_test_path;
+
     bool unsafe_base;
 
     bool easy_base;

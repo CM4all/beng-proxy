@@ -961,7 +961,8 @@ translate_client_file_not_found(TranslateClient *client,
         return false;
     }
 
-    if (client->response.test_path == nullptr) {
+    if (client->response.test_path == nullptr &&
+        client->response.expand_test_path == nullptr) {
         switch (client->response.address.type) {
         case RESOURCE_ADDRESS_NONE:
             translate_client_error(client,
@@ -1050,7 +1051,8 @@ translate_client_directory_index(TranslateClient &client,
         return false;
     }
 
-    if (client.response.test_path == nullptr) {
+    if (client.response.test_path == nullptr &&
+        client.response.expand_test_path == nullptr) {
         switch (client.response.address.type) {
         case RESOURCE_ADDRESS_NONE:
             translate_client_error(&client,
@@ -2764,6 +2766,22 @@ translate_handle_packet(TranslateClient *client,
         }
 
         client->response.test_path = payload;
+        return true;
+
+    case TRANSLATE_EXPAND_TEST_PATH:
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+            translate_client_error(client,
+                                   "malformed EXPAND_TEST_PATH packet");
+            return false;
+        }
+
+        if (client->response.expand_test_path != nullptr) {
+            translate_client_error(client,
+                                   "duplicate EXPAND_TEST_PATH packet");
+            return false;
+        }
+
+        client->response.expand_test_path = payload;
         return true;
     }
 
