@@ -432,12 +432,12 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
 
     if (key == nullptr)
         /* the BASE value didn't match - clear it */
-        dest->base = nullptr;
+        dest->base = base = nullptr;
     else if (new_base != nullptr)
         dest->base = new_base;
 
     if (dest->uri != nullptr) {
-        const char *tail = base_tail(request->uri, src->base);
+        const char *tail = base_tail(request->uri, base);
 
         if (tail != nullptr) {
             size_t length = base_string(dest->uri, tail);
