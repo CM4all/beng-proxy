@@ -80,10 +80,12 @@ class Translation(Protocol):
             response.pair('DIRECTORY', '/dummy')
             response.packet(TRANSLATE_EXPAND_PAIR, r'DIRECTORY=%s/\1' % document_root)
         elif request.directory_index:
+            # directory without trailing slash: redirect with slash appended
             response.packet(TRANSLATE_REGEX, r'^(.*)$')
             response.packet(TRANSLATE_REDIRECT, 'dummy')
             response.packet(TRANSLATE_EXPAND_REDIRECT, r'\1/')
         elif uri[-4:] == '.cls':
+            # run COMA-FastCGI
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_REGEX, r'^(.*\.cls)$')
             response.packet(TRANSLATE_REGEX_TAIL)
@@ -93,6 +95,7 @@ class Translation(Protocol):
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
         elif uri[-4:] == '.php':
+            # run PHP-FastCGI
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_REGEX, r'^(.*\.php)$')
             response.packet(TRANSLATE_REGEX_TAIL)
@@ -108,6 +111,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_EXPAND_PATH, r"/var/www/\1index.html")
             response.packet(TRANSLATE_FILE_NOT_FOUND, 'index.html')
         else:
+            # static file
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_INVERSE_REGEX, r'(\.(cls|php)|/)$')
             response.packet(TRANSLATE_PATH, easy_path)
