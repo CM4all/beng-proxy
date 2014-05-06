@@ -152,6 +152,18 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
 }
 
 bool
+TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
+                             const char *request_uri, GError **error_r)
+{
+    if (!address.CacheLoad(pool, src.address, request_uri, src.base,
+                           src.unsafe_base, src.IsExpandable(), error_r))
+        return false;
+
+    CopyFrom(pool, src);
+    return true;
+}
+
+bool
 TranslateResponse::IsExpandable() const
 {
     return regex != nullptr &&

@@ -410,32 +410,6 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
         : nullptr;
 }
 
-/**
- * Load an address from a cached translate_response object, and apply
- * any BASE changes (if a BASE is present).
- */
-static bool
-tcache_load_address(struct pool *pool, const char *uri,
-                    struct resource_address *dest,
-                    const TranslateResponse *src,
-                    GError **error_r)
-{
-    return dest->CacheLoad(pool, src->address, uri, src->base,
-                           src->unsafe_base, src->IsExpandable(), error_r);
-}
-
-static bool
-tcache_load_response(struct pool *pool, TranslateResponse *dest,
-                     const TranslateResponse *src,
-                     const char *uri, GError **error_r)
-{
-    if (!tcache_load_address(pool, uri, &dest->address, src, error_r))
-        return false;
-
-    dest->CopyFrom(pool, *src);
-    return true;
-}
-
 static const char *
 tcache_vary_copy(struct pool *pool, const char *p,
                  const TranslateResponse *response,
@@ -900,7 +874,7 @@ tcache_handler_response(const TranslateResponse *response, void *ctx)
             /* create a writable copy and apply the BASE */
             auto response2 = NewFromPool<TranslateResponse>(tcr->pool);
 
-            if (!tcache_load_response(tcr->pool, response2, response,
+            if (!response2->CacheLoad(tcr->pool, *response,
                                       tcr->request->uri, &error)) {
                 tcr->handler->error(error, tcr->handler_ctx);
                 return;
@@ -940,7 +914,7 @@ tcache_hit(struct pool *pool, const char *uri, gcc_unused const char *key,
     cache_log(4, "translate_cache: hit %s\n", key);
 
     GError *error = nullptr;
-    if (!tcache_load_response(pool, response, &item->response, uri, &error)) {
+    if (!response->CacheLoad(pool, item->response, uri, &error)) {
         handler->error(error, ctx);
         return;
     }

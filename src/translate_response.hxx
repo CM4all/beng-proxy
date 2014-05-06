@@ -205,6 +205,9 @@ struct TranslateResponse {
     bool CacheStore(struct pool *pool, const TranslateResponse &src,
                     const char *uri);
 
+    bool CacheLoad(struct pool *pool, const TranslateResponse &src,
+                   const char *uri, GError **error_r);
+
     /**
      * Does any response need to be expanded with
      * translate_response_expand()?
