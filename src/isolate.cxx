@@ -5,6 +5,8 @@
 #include "namespace_options.h"
 #include "pivot_root.h"
 
+#include <daemon/log.h>
+
 #include <sched.h>
 #include <unistd.h>
 #include <string.h>
@@ -12,7 +14,10 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#include <daemon/log.h>
+#if !defined(MS_PRIVATE) && !defined(MS_REC)
+/* necessary on Debian Squeeze */
+#include <linux/fs.h>
+#endif
 
 #ifndef __linux
 #error This library requires Linux
