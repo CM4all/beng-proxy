@@ -69,8 +69,16 @@ class Translation(Protocol):
         path = os.path.join(document_root, urllib.unquote(uri))
         easy_path = document_root + '/'
 
-        if request.file_not_found:
+        if request.file_not_found == '404':
             response.status(404)
+        elif request.file_not_found == 'index.html':
+            # index.html does not exist, fall back to directory_index.py
+            response.packet(TRANSLATE_REGEX, r'^(.*)$')
+            response.packet(TRANSLATE_REGEX_TAIL)
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'directory_index.py'))
+            response.packet(TRANSLATE_PATH_INFO, os.path.join(cgi_path, 'directory_index.py'))
+            response.pair('DIRECTORY', '/dummy')
+            response.packet(TRANSLATE_EXPAND_PAIR, r'DIRECTORY=%s/\1' % document_root)
         elif request.directory_index:
             response.packet(TRANSLATE_REGEX, r'^(.*)$')
             response.packet(TRANSLATE_REDIRECT, 'dummy')
@@ -83,7 +91,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
             response.packet(TRANSLATE_ACTION, coma_fastcgi)
             response.pair('UPLOAD_BUFFER_SIZE', '4M')
-            response.packet(TRANSLATE_FILE_NOT_FOUND, 'foo')
+            response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
         elif uri[-4:] == '.php':
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_REGEX, r'^(.*\.php)$')
@@ -91,14 +99,14 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FASTCGI, easy_path)
             response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
             response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
-            response.packet(TRANSLATE_FILE_NOT_FOUND, 'foo')
+            response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
         elif uri == '' or uri[-1] == '/':
+            # deliver index.html with fallback (via TRANSLATE_FILE_NOT_FOUND)
             response.packet(TRANSLATE_REGEX, r'^(.*)$')
             response.packet(TRANSLATE_REGEX_TAIL)
-            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'directory_index.py'))
-            response.packet(TRANSLATE_PATH_INFO, os.path.join(cgi_path, 'directory_index.py'))
-            response.pair('DIRECTORY', '/dummy')
-            response.packet(TRANSLATE_EXPAND_PAIR, r'DIRECTORY=%s/\1' % document_root)
+            response.path('/dummy')
+            response.packet(TRANSLATE_EXPAND_PATH, r"/var/www/\1index.html")
+            response.packet(TRANSLATE_FILE_NOT_FOUND, 'index.html')
         else:
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_INVERSE_REGEX, r'(\.(cls|php)|/)$')
