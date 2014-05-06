@@ -27,6 +27,11 @@
 
 #include <event.h>
 
+#ifndef IP_TRANSPARENT
+/* necessary on Debian Squeeze */
+#define IP_TRANSPARENT 19
+#endif
+
 struct client_socket {
     struct async_operation operation;
     struct pool *pool;
