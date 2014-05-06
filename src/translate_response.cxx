@@ -155,11 +155,21 @@ bool
 TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
                              const char *request_uri, GError **error_r)
 {
+    const bool expandable = src.IsExpandable();
+
     if (!address.CacheLoad(pool, src.address, request_uri, src.base,
-                           src.unsafe_base, src.IsExpandable(), error_r))
+                           src.unsafe_base, expandable, error_r))
         return false;
 
     CopyFrom(pool, src);
+
+    if (base != nullptr && !expandable) {
+        const char *tail = require_base_tail(request_uri, base);
+
+        if (uri != nullptr)
+            uri = p_strcat(pool, uri, tail, nullptr);
+    }
+
     return true;
 }
 
