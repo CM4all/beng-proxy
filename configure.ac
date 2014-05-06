@@ -78,8 +78,8 @@ PKG_CHECK_MODULES([LIBSSL], [openssl],,
 
 AC_ARG_ENABLE(nfs,
 	AS_HELP_STRING([--enable-nfs],
-		[Enable the NFS client (default: disabled)]),,
-	enable_nfs=no)
+		[Enable the NFS client (default: enabled)]),,
+	enable_nfs=yes)
 AM_CONDITIONAL(HAVE_LIBNFS, test x$enable_nfs = xyes)
 if test x$enable_nfs = xyes; then
 	AC_DEFINE_UNQUOTED([HAVE_LIBNFS], 1)
