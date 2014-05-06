@@ -56,6 +56,15 @@ struct resource_address {
                     const struct resource_address *src,
                     const char *uri, const char *base,
                     bool easy_base, bool expandable);
+
+    /**
+     * Load an address from a cached object, and apply any BASE
+     * changes (if a BASE is present).
+     */
+    bool CacheLoad(struct pool *pool, const struct resource_address &src,
+                   const char *uri, const char *base,
+                   bool unsafe_base, bool expandable,
+                   GError **error_r);
 };
 
 /**

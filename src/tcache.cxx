@@ -420,28 +420,8 @@ tcache_load_address(struct pool *pool, const char *uri,
                     const TranslateResponse *src,
                     GError **error_r)
 {
-    if (src->base != nullptr && !src->IsExpandable()) {
-        const char *tail = require_base_tail(uri, src->base);
-
-        if (!src->unsafe_base && !uri_path_verify_paranoid(tail - 1)) {
-            g_set_error(error_r, http_response_quark(),
-                        HTTP_STATUS_BAD_REQUEST, "Malformed URI");
-            return false;
-        }
-
-        if (src->address.type == RESOURCE_ADDRESS_NONE) {
-            /* see code comment in tcache_store_address() */
-            dest->type = RESOURCE_ADDRESS_NONE;
-            return true;
-        }
-
-        if (resource_address_load_base(pool, dest, &src->address,
-                                       tail) != nullptr)
-            return true;
-    }
-
-    resource_address_copy(pool, dest, &src->address);
-    return true;
+    return dest->CacheLoad(pool, src->address, uri, src->base,
+                           src->unsafe_base, src->IsExpandable(), error_r);
 }
 
 static bool

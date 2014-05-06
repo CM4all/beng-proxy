@@ -14,9 +14,13 @@
 #include "uri-relative.h"
 #include "uri-edit.h"
 #include "uri-extract.h"
+#include "uri-verify.h"
 #include "uri_base.hxx"
 #include "strref.h"
 #include "pool.h"
+#include "http_quark.h"
+
+#include <http/status.h>
 
 void
 resource_address_copy(struct pool *pool, struct resource_address *dest,
@@ -419,6 +423,36 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
 
     assert(false);
     gcc_unreachable();
+}
+
+bool
+resource_address::CacheLoad(struct pool *pool,
+                            const struct resource_address &src,
+                            const char *uri, const char *base,
+                            bool unsafe_base, bool expandable,
+                            GError **error_r)
+{
+    if (base != nullptr && !expandable) {
+        const char *tail = require_base_tail(uri, base);
+
+        if (!unsafe_base && !uri_path_verify_paranoid(tail - 1)) {
+            g_set_error(error_r, http_response_quark(),
+                        HTTP_STATUS_BAD_REQUEST, "Malformed URI");
+            return false;
+        }
+
+        if (src.type == RESOURCE_ADDRESS_NONE) {
+            /* see code comment in tcache_store_address() */
+            type = RESOURCE_ADDRESS_NONE;
+            return true;
+        }
+
+        if (resource_address_load_base(pool, this, &src, tail) != nullptr)
+            return true;
+    }
+
+    resource_address_copy(pool, this, &src);
+    return true;
 }
 
 const struct resource_address *
