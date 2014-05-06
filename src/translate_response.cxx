@@ -137,14 +137,15 @@ TranslateResponse::CacheStore(struct pool *pool, const TranslateResponse &src,
     else if (new_base != nullptr)
         base = new_base;
 
-    if (uri != nullptr) {
+    if (base != nullptr) {
         const char *tail = base_tail(request_uri, base);
-
         if (tail != nullptr) {
-            size_t length = base_string(uri, tail);
-            uri = length != (size_t)-1
-                ? p_strndup(pool, uri, length)
-                : nullptr;
+            if (uri != nullptr) {
+                size_t length = base_string(uri, tail);
+                uri = length != (size_t)-1
+                    ? p_strndup(pool, uri, length)
+                    : nullptr;
+            }
         }
     }
 
