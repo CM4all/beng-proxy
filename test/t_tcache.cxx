@@ -191,6 +191,8 @@ translate_response_equals(const TranslateResponse *a,
 
     return string_equals(a->base, b->base) &&
         a->regex_tail == b->regex_tail &&
+        string_equals(a->regex, b->regex) &&
+        string_equals(a->inverse_regex, b->inverse_regex) &&
         a->easy_base == b->easy_base &&
         a->unsafe_base == b->unsafe_base &&
         string_equals(a->uri, b->uri) &&
@@ -1577,6 +1579,7 @@ test_expand(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/regex-expand/",
+        .regex = "^/regex-expand/(.+=.+)$",
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1652,6 +1655,7 @@ test_expand_local(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/regex-expand2/",
+        .regex = "^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$",
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1779,6 +1783,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/regex-expand3/",
+        .regex = "^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$",
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .views = &view2,
@@ -1859,6 +1864,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/regex-expand4/",
+        .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
