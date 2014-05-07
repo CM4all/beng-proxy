@@ -2,7 +2,7 @@
 #include "http_cache_memcached.hxx"
 #include "resource_loader.hxx"
 #include "resource_address.hxx"
-#include "http_address.h"
+#include "http_address.hxx"
 #include "growing-buffer.h"
 #include "header-parser.h"
 #include "strmap.h"

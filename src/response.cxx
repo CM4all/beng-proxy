@@ -16,7 +16,6 @@
 #include "proxy_widget.hxx"
 #include "session.hxx"
 #include "fcache.h"
-#include "http_address.h"
 #include "strref-pool.h"
 #include "growing-buffer.h"
 #include "header-parser.h"

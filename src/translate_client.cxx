@@ -17,7 +17,7 @@
 #include "async.h"
 #include "file_address.h"
 #include "lhttp_address.hxx"
-#include "http_address.h"
+#include "http_address.hxx"
 #include "cgi_address.hxx"
 #include "nfs_address.h"
 #include "mount_list.h"

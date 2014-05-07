@@ -7,7 +7,6 @@
 #include "session_manager.hxx"
 #include "inline_widget.hxx"
 #include "widget_registry.hxx"
-#include "http_address.h"
 #include "global.h"
 #include "crash.h"
 #include "session.hxx"

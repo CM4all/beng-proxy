@@ -13,7 +13,7 @@
 #include "tpool.h"
 #include "strref.h"
 #include "strref-pool.h"
-#include "http_address.h"
+#include "http_address.hxx"
 #include "lhttp_address.hxx"
 #include "cgi_address.hxx"
 

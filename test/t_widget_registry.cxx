@@ -1,7 +1,7 @@
 #include "widget_registry.hxx"
 #include "async.h"
 #include "stock.h"
-#include "http_address.h"
+#include "http_address.hxx"
 #include "tcache.hxx"
 #include "tstock.hxx"
 #include "translate_client.hxx"

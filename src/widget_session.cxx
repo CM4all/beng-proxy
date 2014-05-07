@@ -7,7 +7,6 @@
 #include "widget.h"
 #include "session.hxx"
 #include "tpool.h"
-#include "http_address.h"
 
 #include <assert.h>
 

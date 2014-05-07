@@ -1,4 +1,4 @@
-#include "http_address.h"
+#include "http_address.hxx"
 #include "pool.h"
 
 #include <assert.h>

@@ -6,11 +6,11 @@
 
 #include "ajp_request.hxx"
 #include "http_response.h"
+#include "http_address.hxx"
 #include "header-writer.h"
 #include "stock.h"
 #include "async.h"
 #include "ajp_client.hxx"
-#include "http_address.h"
 #include "strmap.h"
 #include "lease.h"
 #include "tcp-stock.h"

@@ -12,7 +12,7 @@
 #include "static-file.h"
 #include "file_address.h"
 #include "lhttp_request.hxx"
-#include "http_address.h"
+#include "http_address.hxx"
 #include "cgi_glue.hxx"
 #include "cgi_address.hxx"
 #include "fcgi_request.hxx"

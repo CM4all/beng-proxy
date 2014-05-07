@@ -13,7 +13,6 @@
 #include "translate_client.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "http_address.h"
 #include "transformation.hxx"
 #include "pool.h"
 

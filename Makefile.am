@@ -412,7 +412,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/header-parser.c \
 	src/uri_base.cxx src/uri_base.hxx \
 	src/regex.c src/regex.h \
-	src/http_address.c \
+	src/http_address.cxx \
 	src/uri-relative.c \
 	src/uri-extract.c \
 	src/uri-edit.c \
@@ -637,7 +637,7 @@ libraddress_a_SOURCES = \
 	src/file_address.c src/file_address.h \
 	src/nfs_address.c src/nfs_address.h \
 	src/lhttp_address.cxx src/lhttp_address.hxx \
-	src/http_address.c src/http_address.h \
+	src/http_address.cxx src/http_address.hxx \
 	src/address_list.h \
 	src/address_list.c \
 	src/resource_address.cxx src/resource_address.hxx
@@ -910,7 +910,7 @@ test_t_stock_LDADD = $(AM_LDADD) \
 
 test_t_resource_address_SOURCES = test/t_resource_address.cxx \
 	src/regex.c \
-	src/http_address.c src/uri-relative.c \
+	src/http_address.cxx src/uri-relative.c \
 	src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
 	src/address_list.c
@@ -920,8 +920,8 @@ test_t_resource_address_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_http_address_SOURCES = test/t_http_address.c \
-	src/http_address.c src/uri-relative.c \
+test_t_http_address_SOURCES = test/t_http_address.cxx \
+	src/http_address.cxx src/uri-relative.c \
 	src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
 	src/regex.c \
@@ -1481,7 +1481,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \
 	src/failure.c src/bulldog.c \
-	src/balancer.c src/http_address.c src/cache.c \
+	src/balancer.c src/http_address.cxx src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/expansible-buffer.c \
@@ -1655,7 +1655,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/http_cache_document.cxx \
 	src/http_cache_age.cxx \
 	src/http_util.c \
-	src/http_address.c src/uri-edit.c \
+	src/http_address.cxx src/uri-edit.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-extract.c \
 	src/uri-escape.c \
 	src/regex.c \

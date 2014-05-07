@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_HTTP_ADDRESS_H
-#define BENG_PROXY_HTTP_ADDRESS_H
+#ifndef BENG_PROXY_HTTP_ADDRESS_HXX
+#define BENG_PROXY_HTTP_ADDRESS_HXX
 
 #include "address_list.h"
 
@@ -39,7 +39,7 @@ struct http_address {
     bool ssl;
 
     /**
-     * The host part of the URI (including the port, if any).  NULL if
+     * The host part of the URI (including the port, if any).  nullptr if
      * scheme is URI_SCHEME_UNIX.
      */
     const char *host_and_port;
@@ -65,15 +65,11 @@ http_address_quark(void)
     return g_quark_from_static_string("http_address");
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Parse the given absolute URI into a newly allocated
  * #http_address object.
  *
- * @return NULL on error
+ * @return nullptr on error
  */
 gcc_malloc
 struct http_address *
@@ -159,7 +155,7 @@ http_address_apply(struct pool *pool, const struct http_address *src,
 
 /**
  * Check if one #http_address is relative to the base
- * #http_address, and return the relative part.  Returns NULL if
+ * #http_address, and return the relative part.  Returns nullptr if
  * both URIs do not match.
  */
 const struct strref *
@@ -174,9 +170,9 @@ gcc_pure
 static inline bool
 http_address_is_expandable(const struct http_address *address)
 {
-    assert(address != NULL);
+    assert(address != nullptr);
 
-    return address->expand_path != NULL;
+    return address->expand_path != nullptr;
 }
 
 bool
@@ -200,9 +196,5 @@ http_address_default_port(const struct http_address *address)
 
     gcc_unreachable();
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

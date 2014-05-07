@@ -7,7 +7,7 @@
 #include "transformation.hxx"
 #include "widget_view.hxx"
 #include "beng-proxy/translation.h"
-#include "http_address.h"
+#include "http_address.hxx"
 #include "file_address.h"
 #include "cgi_address.hxx"
 #include "pool.h"

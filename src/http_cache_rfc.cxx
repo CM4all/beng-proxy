@@ -6,13 +6,13 @@
  */
 
 #include "http_cache_internal.hxx"
+#include "http_address.hxx"
 #include "http_util.h"
 #include "strref2.h"
 #include "strmap.h"
 #include "date.h"
 #include "tpool.h"
 #include "resource_address.hxx"
-#include "http_address.h"
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
 
