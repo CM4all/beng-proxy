@@ -736,8 +736,6 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
     auto item = NewFromPool<TranslateCacheItem>(pool);
     unsigned max_age = response->max_age;
 
-    cache_log(4, "translate_cache: store %s\n", tcr->key);
-
     if (max_age > 300)
         max_age = 300;
 
@@ -794,6 +792,8 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
 
     if (key == nullptr)
         key = p_strdup(pool, tcr->key);
+
+    cache_log(4, "translate_cache: store %s\n", key);
 
     if (response->regex != nullptr) {
         GRegexCompileFlags compile_flags = default_regex_compile_flags;
