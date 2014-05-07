@@ -520,7 +520,7 @@ repeat_translation(struct request &request, const TranslateResponse &response)
     if (!response.check.IsNull()) {
         /* repeat request with CHECK set */
 
-        if (++request.translate.checks > 4) {
+        if (++request.translate.n_checks > 4) {
             daemon_log(2, "got too many consecutive CHECK packets\n");
             response_dispatch_message(&request,
                                       HTTP_STATUS_INTERNAL_SERVER_ERROR,
@@ -739,7 +739,7 @@ static void
 ask_translation_server(struct request *request2)
 {
     request2->translate.previous = nullptr;
-    request2->translate.checks = 0;
+    request2->translate.n_checks = 0;
     request2->translate.n_file_not_found = 0;
     request2->translate.n_directory_index = 0;
 

@@ -72,7 +72,7 @@ struct request {
          * Number of CHECK packets followed so far.  This variable is
          * used for loop detection.
          */
-        unsigned checks;
+        unsigned n_checks;
 
         /**
          * Number of FILE_NOT_FOUND packets followed so far.  This
