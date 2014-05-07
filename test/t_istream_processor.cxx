@@ -49,7 +49,6 @@ create_test(struct pool *pool, struct istream *input)
     const char *uri;
     static struct parsed_uri parsed_uri;
     static struct widget widget;
-    static struct processor_env env;
     struct session *session;
 
     /* HACK, processor.c will ignore c:widget otherwise */
@@ -66,16 +65,18 @@ create_test(struct pool *pool, struct istream *input)
     session_manager_init(1200, 0, 0);
 
     session = session_new();
-    processor_env_init(pool, &env,
-                       nullptr, nullptr,
-                       "localhost:8080",
-                       "localhost:8080",
-                       "/beng.html",
-                       "http://localhost:8080/beng.html",
-                       &parsed_uri,
-                       nullptr,
-                       session->id,
-                       HTTP_METHOD_GET, nullptr);
+
+    static struct processor_env env;
+    env = processor_env(pool,
+                        nullptr, nullptr,
+                        "localhost:8080",
+                        "localhost:8080",
+                        "/beng.html",
+                        "http://localhost:8080/beng.html",
+                        &parsed_uri,
+                        nullptr,
+                        session->id,
+                        HTTP_METHOD_GET, nullptr);
     session_put(session);
 
     return processor_process(pool, input, &widget, &env, PROCESSOR_CONTAINER);

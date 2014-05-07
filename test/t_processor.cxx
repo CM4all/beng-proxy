@@ -124,17 +124,16 @@ test_proxy_abort(struct pool *pool)
     struct widget widget;
     widget_init(&widget, pool, &root_widget_class);
 
-    struct processor_env env;
-    processor_env_init(pool, &env,
-                       nullptr, nullptr,
-                       "localhost:8080",
-                       "localhost:8080",
-                       "/beng.html",
-                       "http://localhost:8080/beng.html",
-                       &parsed_uri,
-                       nullptr,
-                       0xdeadbeef,
-                       HTTP_METHOD_GET, nullptr);
+    struct processor_env env(pool,
+                             nullptr, nullptr,
+                             "localhost:8080",
+                             "localhost:8080",
+                             "/beng.html",
+                             "http://localhost:8080/beng.html",
+                             &parsed_uri,
+                             nullptr,
+                             0xdeadbeef,
+                             HTTP_METHOD_GET, nullptr);
 
     struct async_operation_ref async_ref;
     processor_lookup_widget(pool, istream_block_new(pool),

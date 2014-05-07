@@ -206,19 +206,19 @@ response_invoke_processor(request &request2,
            HEAD to the processor */
         method = HTTP_METHOD_GET;
 
-    processor_env_init(request->pool, &request2.env,
-                       request2.translate.response->site,
-                       request2.translate.response->untrusted,
-                       request->local_host_and_port, request->remote_host,
-                       uri,
-                       request_absolute_uri(request,
-                                            request2.translate.response->scheme,
-                                            request2.translate.response->host,
-                                            uri),
-                       &request2.uri,
-                       request2.args,
-                       request2.session_id,
-                       method, request->headers);
+    request2.env = processor_env(request->pool,
+                                 request2.translate.response->site,
+                                 request2.translate.response->untrusted,
+                                 request->local_host_and_port, request->remote_host,
+                                 uri,
+                                 request_absolute_uri(request,
+                                                      request2.translate.response->scheme,
+                                                      request2.translate.response->host,
+                                                      uri),
+                                 &request2.uri,
+                                 request2.args,
+                                 request2.session_id,
+                                 method, request->headers);
 
     if (proxy_ref != nullptr) {
         /* the client requests a widget in proxy mode */
@@ -307,19 +307,19 @@ response_invoke_css_processor(request &request2,
     if (request2.translate.response->uri != nullptr)
         strref_set_c(&request2.uri.base, request2.translate.response->uri);
 
-    processor_env_init(request->pool, &request2.env,
-                       request2.translate.response->site,
-                       request2.translate.response->untrusted,
-                       request->local_host_and_port, request->remote_host,
-                       uri,
-                       request_absolute_uri(request,
-                                            request2.translate.response->scheme,
-                                            request2.translate.response->host,
-                                            uri),
-                       &request2.uri,
-                       request2.args,
-                       request2.session_id,
-                       HTTP_METHOD_GET, request->headers);
+    request2.env = processor_env(request->pool,
+                                 request2.translate.response->site,
+                                 request2.translate.response->untrusted,
+                                 request->local_host_and_port, request->remote_host,
+                                 uri,
+                                 request_absolute_uri(request,
+                                                      request2.translate.response->scheme,
+                                                      request2.translate.response->host,
+                                                      uri),
+                                 &request2.uri,
+                                 request2.args,
+                                 request2.session_id,
+                                 HTTP_METHOD_GET, request->headers);
 
     body = css_processor(request->pool, body,
                          widget, &request2.env,
@@ -377,19 +377,19 @@ response_invoke_text_processor(request &request2,
     if (request2.translate.response->uri != nullptr)
         strref_set_c(&request2.uri.base, request2.translate.response->uri);
 
-    processor_env_init(request->pool, &request2.env,
-                       request2.translate.response->site,
-                       request2.translate.response->untrusted,
-                       request->local_host_and_port, request->remote_host,
-                       uri,
-                       request_absolute_uri(request,
-                                            request2.translate.response->scheme,
-                                            request2.translate.response->host,
-                                            uri),
-                       &request2.uri,
-                       request2.args,
-                       request2.session_id,
-                       HTTP_METHOD_GET, request->headers);
+    request2.env = processor_env(request->pool,
+                                 request2.translate.response->site,
+                                 request2.translate.response->untrusted,
+                                 request->local_host_and_port, request->remote_host,
+                                 uri,
+                                 request_absolute_uri(request,
+                                                      request2.translate.response->scheme,
+                                                      request2.translate.response->host,
+                                                      uri),
+                                 &request2.uri,
+                                 request2.args,
+                                 request2.session_id,
+                                 HTTP_METHOD_GET, request->headers);
 
     body = text_processor(request->pool, body,
                           widget, &request2.env);

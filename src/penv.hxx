@@ -53,21 +53,21 @@ struct processor_env {
     struct strmap *request_headers;
 
     session_id_t session_id;
-};
 
-void
-processor_env_init(struct pool *pool,
-                   struct processor_env *env,
-                   const char *site_name,
-                   const char *untrusted_host,
-                   const char *local_host,
-                   const char *remote_host,
-                   const char *request_uri,
-                   const char *absolute_uri,
-                   const struct parsed_uri *uri,
-                   struct strmap *args,
-                   session_id_t session_id,
-                   http_method_t method,
-                   struct strmap *request_headers);
+    processor_env() = default;
+
+    processor_env(struct pool *pool,
+                  const char *site_name,
+                  const char *untrusted_host,
+                  const char *local_host,
+                  const char *remote_host,
+                  const char *request_uri,
+                  const char *absolute_uri,
+                  const struct parsed_uri *uri,
+                  struct strmap *args,
+                  session_id_t session_id,
+                  http_method_t method,
+                  struct strmap *request_headers);
+};
 
 #endif

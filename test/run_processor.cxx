@@ -133,7 +133,6 @@ int main(int argc, char **argv) {
     bool ret;
     struct parsed_uri parsed_uri;
     struct widget widget;
-    struct processor_env env;
 
     (void)argc;
     (void)argv;
@@ -151,16 +150,16 @@ int main(int argc, char **argv) {
 
     widget_init(&widget, pool, &root_widget_class);
 
-    processor_env_init(pool, &env,
-                       nullptr, nullptr,
-                       "localhost:8080",
-                       "localhost:8080",
-                       "/beng.html",
-                       "http://localhost:8080/beng.html",
-                       &parsed_uri,
-                       nullptr,
-                       0xdeadbeef,
-                       HTTP_METHOD_GET, nullptr);
+    struct processor_env env(pool,
+                             nullptr, nullptr,
+                             "localhost:8080",
+                             "localhost:8080",
+                             "/beng.html",
+                             "http://localhost:8080/beng.html",
+                             &parsed_uri,
+                             nullptr,
+                             0xdeadbeef,
+                             HTTP_METHOD_GET, nullptr);
 
     struct istream *result =
         processor_process(pool,

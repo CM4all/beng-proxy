@@ -204,16 +204,15 @@ assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
                             result, strlen(result));
     }
 
-    struct processor_env env;
-    processor_env_init(widget_pool, &env,
-                       nullptr, nullptr,
-                       nullptr, nullptr,
-                       nullptr, nullptr,
-                       &external_uri,
-                       nullptr,
-                       0,
-                       HTTP_METHOD_GET,
-                       nullptr);
+    struct processor_env env(widget_pool,
+                             nullptr, nullptr,
+                             nullptr, nullptr,
+                             nullptr, nullptr,
+                             &external_uri,
+                             nullptr,
+                             0,
+                             HTTP_METHOD_GET,
+                             nullptr);
 
     istream = rewrite_widget_uri(pool, widget_pool, &env, (struct tcache *)0x1,
                                  widget,
