@@ -40,6 +40,7 @@ pipe_fn(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
 
+    c->options.SetupStderr();
     namespace_options_setup(&c->options.ns);
     rlimit_options_apply(&c->options.rlimits);
 

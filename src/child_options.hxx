@@ -13,6 +13,11 @@
  * Options for launching a child process.
  */
 struct child_options {
+    /**
+     * An absolute path where STDERR output will be appended.
+     */
+    const char *stderr_path;
+
     struct rlimit_options rlimits;
 
     struct namespace_options ns;
@@ -20,6 +25,7 @@ struct child_options {
     struct jail_params jail;
 
     void Init() {
+        stderr_path = nullptr;
         rlimit_options_init(&rlimits);
         namespace_options_init(&ns);
         jail_params_init(&jail);
@@ -28,6 +34,8 @@ struct child_options {
     void CopyFrom(struct pool *pool, const struct child_options *src);
 
     char *MakeId(char *p) const;
+
+    void SetupStderr() const;
 };
 
 #endif

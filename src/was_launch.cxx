@@ -44,6 +44,7 @@ was_run(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&args->signals);
 
+    args->options->SetupStderr();
     namespace_options_setup(&args->options->ns);
     rlimit_options_apply(&args->options->rlimits);
 

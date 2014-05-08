@@ -507,6 +507,11 @@ enum beng_translation_command {
      * path info.
      */
     TRANSLATE_ENOTDIR = 130,
+
+    /**
+     * An absolute path where STDERR output will be appended.
+     */
+    TRANSLATE_STDERR_PATH = 131,
 };
 
 struct beng_translation_header {

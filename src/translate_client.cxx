@@ -468,6 +468,13 @@ has_null_byte(const void *p, size_t size)
     return memchr(p, 0, size) != nullptr;
 }
 
+gcc_pure
+static bool
+has_null_byte(ConstBuffer<void> buffer)
+{
+    return has_null_byte(buffer.data, buffer.size);
+}
+
 static struct transformation *
 translate_add_transformation(TranslateClient *client)
 {
@@ -1134,6 +1141,30 @@ translate_client_expires_relative(TranslateClient &client,
     }
 
     client.response.expires_relative = *(const uint32_t *)payload.data;
+    return true;
+}
+
+static bool
+translate_client_stderr_path(TranslateClient &client,
+                             ConstBuffer<void> payload)
+{
+    const char *path = (const char *)payload.data;
+    if (*path != '/' || has_null_byte(payload)) {
+        translate_client_error(&client, "malformed STDERR_PATH packet");
+        return false;
+    }
+
+    if (client.child_options == nullptr) {
+        translate_client_error(&client, "misplaced STDERR_PATH packet");
+        return false;
+    }
+
+    if (client.child_options->stderr_path != nullptr) {
+        translate_client_error(&client, "duplicate STDERR_PATH packet");
+        return false;
+    }
+
+    client.child_options->stderr_path = path;
     return true;
 }
 
@@ -2873,6 +2904,10 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_ENOTDIR:
         return translate_client_enotdir(*client, { _payload, payload_length });
+
+    case TRANSLATE_STDERR_PATH:
+        return translate_client_stderr_path(*client,
+                                            { _payload, payload_length });
     }
 
     error = g_error_new(translate_quark(), 0,

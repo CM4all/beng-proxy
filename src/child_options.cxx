@@ -3,10 +3,20 @@
  */
 
 #include "child_options.hxx"
+#include "pool.h"
+#include "djbhash.h"
+
+#include <string.h>
+#include <stdio.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 void
 child_options::CopyFrom(struct pool *pool, const struct child_options *src)
 {
+    stderr_path = p_strdup_checked(pool, src->stderr_path);
+
     rlimit_options_copy(&rlimits, &src->rlimits);
     namespace_options_copy(pool, &ns, &src->ns);
     jail_params_copy(pool, &jail, &src->jail);
@@ -15,8 +25,30 @@ child_options::CopyFrom(struct pool *pool, const struct child_options *src)
 char *
 child_options::MakeId(char *p) const
 {
+    if (stderr_path != nullptr)
+        p += sprintf(p, ";e%08x", djb_hash_string(stderr_path));
+
     p = rlimit_options_id(&rlimits, p);
     p = namespace_options_id(&ns, p);
     p = jail_params_id(&jail, p);
     return p;
+}
+
+void
+child_options::SetupStderr() const
+{
+    if (stderr_path == nullptr)
+        return;
+
+    int fd = open(stderr_path, O_CREAT|O_WRONLY|O_APPEND|O_CLOEXEC|O_NOCTTY,
+                  0666);
+    if (fd < 0) {
+        fprintf(stderr, "open('%s') failed: %s\n",
+                stderr_path, strerror(errno));
+        _exit(2);
+    }
+
+    if (fd != 2)
+        dup2(fd, 2);
+    close(fd);
 }

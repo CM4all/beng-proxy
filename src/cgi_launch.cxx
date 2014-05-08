@@ -176,6 +176,8 @@ cgi_fn(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
 
+    address->options.SetupStderr();
+
     namespace_options_setup(&address->options.ns);
     rlimit_options_apply(&address->options.rlimits);
 

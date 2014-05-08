@@ -145,6 +145,8 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
         (const struct fcgi_child_params *)info;
     const struct child_options *const options = params->options;
 
+    options->SetupStderr();
+
     rlimit_options_apply(&options->rlimits);
     namespace_options_setup(&options->ns);
 

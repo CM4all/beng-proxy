@@ -1771,6 +1771,11 @@ It lives in another filesystem namespace.  It can access the directory
 \texttt{/var/www/foo} at \texttt{/home/www}.  The \texttt{proc}
 filesystem is not mounted.
 
+\subsection{Other Child Process Options}
+
+\verb|STDERR_PATH| specifies an absolute path that will be created.
+The child's error messages will be appended there.
+
 \subsection{Filters}
 \label{filter}
 
