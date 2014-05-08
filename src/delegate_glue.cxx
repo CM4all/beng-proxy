@@ -5,8 +5,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate_glue.h"
-#include "delegate_stock.h"
+#include "delegate_glue.hxx"
+#include "delegate_client.hxx"
+#include "delegate_stock.hxx"
 #include "stock.h"
 #include "lease.h"
 #include "pool.h"
@@ -34,7 +35,7 @@ struct delegate_glue {
 static void
 delegate_socket_release(bool reuse, void *ctx)
 {
-    struct delegate_glue *glue = ctx;
+    struct delegate_glue *glue = (struct delegate_glue *)ctx;
 
     delegate_stock_put(glue->stock, glue->item, !reuse);
 }
@@ -46,7 +47,7 @@ static const struct lease delegate_socket_lease = {
 static void
 delegate_stock_ready(struct stock_item *item, void *_ctx)
 {
-    struct delegate_glue *glue = _ctx;
+    struct delegate_glue *glue = (struct delegate_glue *)_ctx;
 
     glue->item = item;
 
@@ -59,7 +60,7 @@ delegate_stock_ready(struct stock_item *item, void *_ctx)
 static void
 delegate_stock_error(GError *error, void *ctx)
 {
-    struct delegate_glue *glue = ctx;
+    struct delegate_glue *glue = (struct delegate_glue *)ctx;
 
     glue->handler->error(error, glue->handler_ctx);
 }
@@ -78,7 +79,7 @@ delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref *async_ref)
 {
-    struct delegate_glue *glue = p_malloc(pool, sizeof(*glue));
+    auto glue = NewFromPool<struct delegate_glue>(pool);
 
     glue->pool = pool;
     glue->path = path;

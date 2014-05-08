@@ -5,13 +5,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate_client.h"
+#include "delegate_client.hxx"
 #include "delegate_protocol.h"
 #include "async.h"
 #include "please.h"
 #include "fd_util.h"
 #include "pevent.h"
 #include "gerrno.h"
+#include "util/Cast.hxx"
 
 #ifdef __linux
 #include <fcntl.h>
@@ -51,7 +52,7 @@ delegate_free(struct delegate *d)
 static void
 delegate_release_socket(struct delegate_client *d, bool reuse)
 {
-    assert(d != NULL);
+    assert(d != nullptr);
     assert(d->fd >= 0);
 
     p_lease_release(&d->lease_ref, reuse, d->pool);
@@ -72,7 +73,7 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
     }
 
     struct cmsghdr *cmsg = CMSG_FIRSTHDR(msg);
-    if (cmsg == NULL) {
+    if (cmsg == nullptr) {
         delegate_release_socket(d, false);
 
         GError *error = g_error_new_literal(delegate_client_quark(), 0,
@@ -95,7 +96,8 @@ delegate_handle_fd(struct delegate_client *d, const struct msghdr *msg,
 
     delegate_release_socket(d, true);
 
-    const int *fd_p = (const int *)CMSG_DATA(cmsg);
+    const void *data = CMSG_DATA(cmsg);
+    const int *fd_p = (const int *)data;
 
     int fd = *fd_p;
     d->handler->success(fd, d->handler_ctx);
@@ -167,7 +169,7 @@ delegate_try_read(struct delegate_client *d)
     int fd;
     char ccmsg[CMSG_SPACE(sizeof(fd))];
     struct msghdr msg = {
-        .msg_name = NULL,
+        .msg_name = nullptr,
         .msg_namelen = 0,
         .msg_iov = &iov,
         .msg_iovlen = 1,
@@ -202,14 +204,15 @@ delegate_try_read(struct delegate_client *d)
         return;
     }
 
-    delegate_handle_msghdr(d, &msg, header.command, header.length);
+    delegate_handle_msghdr(d, &msg, delegate_response_command(header.command),
+                           header.length);
 }
 
 static void
 delegate_read_event_callback(int fd gcc_unused, short event gcc_unused,
                               void *ctx)
 {
-    struct delegate_client *d = ctx;
+    struct delegate_client *d = (struct delegate_client *)ctx;
 
     p_event_consumed(&d->event, d->pool);
 
@@ -242,14 +245,14 @@ delegate_try_write(struct delegate_client *d)
         event_set(&d->event, d->fd, EV_READ,
                   delegate_read_event_callback, d);
 
-    p_event_add(&d->event, NULL, d->pool, "delegate_client_event");
+    p_event_add(&d->event, nullptr, d->pool, "delegate_client_event");
 }
 
 static void
 delegate_write_event_callback(int fd gcc_unused, short event gcc_unused,
                               void *ctx)
 {
-    struct delegate_client *d = ctx;
+    struct delegate_client *d = (struct delegate_client *)ctx;
 
     assert(d->fd == fd);
     assert(d->payload_rest > 0);
@@ -266,7 +269,7 @@ delegate_write_event_callback(int fd gcc_unused, short event gcc_unused,
 static struct delegate_client *
 async_to_delegate_client(struct async_operation *ao)
 {
-    return (struct delegate_client*)(((char*)ao) - offsetof(struct delegate_client, operation));
+    return ContainerCast(ao, struct delegate_client, operation);
 }
 
 static void
@@ -295,21 +298,18 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               const struct delegate_handler *handler, void *ctx,
               struct async_operation_ref *async_ref)
 {
-    struct delegate_client *d;
-    ssize_t nbytes;
-
-    d = p_malloc(pool, sizeof(*d));
+    auto d = NewFromPool<struct delegate_client>(pool);
     p_lease_ref_set(&d->lease_ref, lease, lease_ctx,
                     pool, "delegate_client_lease");
     d->fd = fd;
     d->pool = pool;
 
     struct delegate_header header = {
-        .length = strlen(path),
+        .length = (uint16_t)strlen(path),
         .command = DELEGATE_OPEN,
     };
 
-    nbytes = send(d->fd, &header, sizeof(header), MSG_DONTWAIT);
+    ssize_t nbytes = send(d->fd, &header, sizeof(header), MSG_DONTWAIT);
     if (nbytes < 0) {
         GError *error = new_error_errno_msg("failed to send to delegate");
         delegate_release_socket(d, false);

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate_stock.h"
+#include "delegate_stock.hxx"
 #include "hstock.h"
 #include "async.h"
 #include "failure.h"
@@ -52,7 +52,7 @@ struct delegate_process {
 static void
 delegate_stock_event(int fd, short event, void *ctx)
 {
-    struct delegate_process *process = ctx;
+    struct delegate_process *process = (struct delegate_process *)ctx;
 
     assert(fd == process->fd);
 
@@ -82,7 +82,7 @@ delegate_stock_event(int fd, short event, void *ctx)
 static int
 delegate_stock_fn(void *ctx)
 {
-    struct delegate_info *info = ctx;
+    struct delegate_info *info = (struct delegate_info *)ctx;
 
     install_default_signal_handlers();
     leave_signal_section(&info->signals);
@@ -124,7 +124,7 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
                       struct async_operation_ref *async_ref gcc_unused)
 {
     struct delegate_process *process = (struct delegate_process *)item;
-    struct delegate_info *const info = _info;
+    struct delegate_info *const info = (struct delegate_info *)_info;
     const struct child_options *const options = info->options;
 
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
@@ -236,7 +236,7 @@ delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
     if (*options_buffer != 0)
         uri = p_strcat(pool, helper, "|", options_buffer, NULL);
 
-    struct delegate_info *info = p_malloc(pool, sizeof(*info));
+    auto info = NewFromPool<struct delegate_info>(pool);
     info->helper = helper;
     info->options = options;
 

@@ -106,6 +106,10 @@ http_response_handler_direct_abort(const struct http_response_handler *handler,
     handler->abort(error, ctx);
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Sends a plain-text message.
  */
@@ -165,5 +169,9 @@ void
 http_response_handler_invoke_message(struct http_response_handler_ref *ref,
                                      struct pool *pool,
                                      http_status_t status, const char *msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

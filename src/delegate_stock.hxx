@@ -4,17 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_DELEGATE_STOCK_H
-#define BENG_DELEGATE_STOCK_H
+#ifndef BENG_DELEGATE_STOCK_HXX
+#define BENG_DELEGATE_STOCK_HXX
 
 #include "stock.h"
 
 struct pool;
 struct child_options;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct hstock *
 delegate_stock_new(struct pool *pool);
@@ -32,9 +28,5 @@ delegate_stock_put(struct hstock *delegate_stock,
 
 int
 delegate_stock_item_get(struct stock_item *item);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

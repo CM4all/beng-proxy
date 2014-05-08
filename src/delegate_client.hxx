@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_DELEGATE_CLIENT_H
-#define BENG_DELEGATE_CLIENT_H
+#ifndef BENG_DELEGATE_CLIENT_HXX
+#define BENG_DELEGATE_CLIENT_HXX
 
 #include <glib.h>
 

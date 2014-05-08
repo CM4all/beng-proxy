@@ -120,12 +120,11 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/dchunk.h \
 	src/defer.c src/defer.h \
 	src/defer_event.h \
-	src/delegate_client.c \
-	src/delegate_client.h \
-	src/delegate_glue.c src/delegate_glue.h \
+	src/delegate_client.cxx src/delegate_client.hxx \
+	src/delegate_glue.cxx src/delegate_glue.hxx \
 	src/delegate_protocol.h \
-	src/delegate_request.c src/delegate_request.h \
-	src/delegate_stock.c src/delegate_stock.h \
+	src/delegate_request.cxx src/delegate_request.hxx \
+	src/delegate_stock.cxx src/delegate_stock.hxx \
 	src/delegate_handler.cxx \
 	src/dhashmap.h \
 	src/direct.c src/direct.h \
@@ -1749,8 +1748,8 @@ test_t_memcached_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
-test_run_delegate_SOURCES = test/run_delegate.c \
-	src/delegate_stock.c src/delegate_client.c src/delegate_glue.c \
+test_run_delegate_SOURCES = test/run_delegate.cxx \
+	src/delegate_stock.cxx src/delegate_client.cxx src/delegate_glue.cxx \
 	src/hashmap.c src/hstock.c src/stock.c \
 	src/defer.c \
 	src/fd_util.c

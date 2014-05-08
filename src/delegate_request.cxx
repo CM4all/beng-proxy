@@ -5,8 +5,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "delegate_request.h"
-#include "delegate_glue.h"
+#include "delegate_request.hxx"
+#include "delegate_client.hxx"
+#include "delegate_glue.hxx"
 #include "static-headers.h"
 #include "http_response.h"
 #include "http_error.h"
@@ -34,14 +35,10 @@ struct delegate_get {
 static void
 delegate_get_callback(int fd, void *ctx)
 {
-    struct delegate_get *get = ctx;
-    int ret;
-    struct stat st;
-    struct strmap *headers;
-    struct istream *body;
+    struct delegate_get *get = (struct delegate_get *)ctx;
 
-    ret = fstat(fd, &st);
-    if (ret < 0) {
+    struct stat st;
+    if (fstat(fd, &st) < 0) {
         int error = errno;
         close(fd);
         http_response_handler_invoke_errno(&get->handler, get->pool, error);
@@ -58,11 +55,11 @@ delegate_get_callback(int fd, void *ctx)
 
     /* XXX handle if-modified-since, ... */
 
-    headers = strmap_new(get->pool, 13);
+    struct strmap *headers = strmap_new(get->pool, 13);
     static_response_headers(get->pool, headers, fd, &st, get->content_type);
 
-    body = istream_file_fd_new(get->pool, get->path,
-                               fd, ISTREAM_FILE, st.st_size);
+    struct istream *body = istream_file_fd_new(get->pool, get->path,
+                                               fd, ISTREAM_FILE, st.st_size);
     http_response_handler_invoke_response(&get->handler, HTTP_STATUS_OK,
                                           headers, body);
 }
@@ -70,7 +67,7 @@ delegate_get_callback(int fd, void *ctx)
 static void
 delegate_get_error(GError *error, void *ctx)
 {
-    struct delegate_get *get = ctx;
+    struct delegate_get *get = (struct delegate_get *)ctx;
 
     http_response_handler_invoke_abort(&get->handler, error);
 }
@@ -93,7 +90,7 @@ delegate_stock_request(struct hstock *stock, struct pool *pool,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref *async_ref)
 {
-    struct delegate_get *get = p_malloc(pool, sizeof(*get));
+    auto get = NewFromPool<struct delegate_get>(pool);
 
     get->pool = pool;
     get->path = path;

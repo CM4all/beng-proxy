@@ -23,7 +23,7 @@
 #include "lhttp_stock.hxx"
 #include "fcgi_stock.h"
 #include "was_stock.h"
-#include "delegate_stock.h"
+#include "delegate_stock.hxx"
 #include "fcache.h"
 #include "child_manager.h"
 #include "thread_pool.h"

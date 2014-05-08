@@ -13,6 +13,10 @@ struct async_operation_ref;
 
 typedef void (*defer_callback_t)(void *ctx);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @param async_ref this parameter may be NULL, for simplicity (if you
  * know you'll never need to abort this callback)
@@ -20,5 +24,9 @@ typedef void (*defer_callback_t)(void *ctx);
 void
 defer(struct pool *pool, defer_callback_t callback, void *ctx,
       struct async_operation_ref *async_ref);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

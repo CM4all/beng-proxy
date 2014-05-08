@@ -5,18 +5,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_DELEGATE_REQUEST_H
-#define BENG_PROXY_DELEGATE_REQUEST_H
+#ifndef BENG_PROXY_DELEGATE_REQUEST_HXX
+#define BENG_PROXY_DELEGATE_REQUEST_HXX
 
 struct pool;
 struct hstock;
 struct http_response_handler;
 struct async_operation_ref;
 struct child_options;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 delegate_stock_request(struct hstock *stock, struct pool *pool,
@@ -25,9 +21,5 @@ delegate_stock_request(struct hstock *stock, struct pool *pool,
                        const char *path, const char *content_type,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

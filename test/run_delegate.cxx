@@ -1,5 +1,6 @@
-#include "delegate_glue.h"
-#include "delegate_stock.h"
+#include "delegate_glue.hxx"
+#include "delegate_client.hxx"
+#include "delegate_stock.hxx"
 #include "hstock.h"
 #include "async.h"
 #include "defer.h"

@@ -5,18 +5,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_DELEGATE_GLUE_H
-#define BENG_DELEGATE_GLUE_H
-
-#include "delegate_client.h"
+#ifndef BENG_DELEGATE_GLUE_HXX
+#define BENG_DELEGATE_GLUE_HXX
 
 struct async_operation_ref;
 struct hstock;
 struct child_options;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 delegate_stock_open(struct hstock *stock, struct pool *pool,
@@ -25,9 +19,5 @@ delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const char *path,
                     const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
