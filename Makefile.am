@@ -204,7 +204,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/xml_parser.c src/xml_parser.h \
 	src/pevent.h \
 	src/pipe-stock.c src/pipe-stock.h \
-	src/pipe.c src/pipe.h \
+	src/pipe_filter.cxx src/pipe_filter.hxx \
 	src/tpool.c \
 	src/processor.cxx src/processor.h \
 	src/penv.cxx src/penv.hxx \

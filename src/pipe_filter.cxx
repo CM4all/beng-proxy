@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "pipe.h"
+#include "pipe_filter.hxx"
 #include "http_response.h"
 #include "fork.h"
 #include "format.h"
@@ -37,7 +37,7 @@ struct pipe_ctx {
 static int
 pipe_fn(void *ctx)
 {
-    struct pipe_ctx *c = ctx;
+    struct pipe_ctx *c = (struct pipe_ctx *)ctx;
 
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
@@ -76,14 +76,14 @@ append_etag(struct pool *pool, const char *in, const char *suffix)
 
     if (*in != '"')
         /* simple concatenation */
-        return p_strcat(pool, in, suffix, NULL);
+        return p_strcat(pool, in, suffix, nullptr);
 
     length = strlen(in + 1);
     if (in[length] != '"')
-        return p_strcat(pool, in, suffix, NULL);
+        return p_strcat(pool, in, suffix, nullptr);
 
     return p_strncat(pool, in, length, suffix, strlen(suffix),
-                     "\"", (size_t)1, NULL);
+                     "\"", (size_t)1, nullptr);
 }
 
 static const char *
@@ -120,11 +120,11 @@ pipe_filter(struct pool *pool, const char *path,
     char *argv[1 + num_args + 1];
     const char *etag;
 
-    if (body == NULL) {
+    if (body == nullptr) {
         /* if the resource does not have a body (which is different
            from Content-Length:0), don't filter it */
         http_response_handler_direct_response(handler, handler_ctx,
-                                              status, headers, NULL);
+                                              status, headers, nullptr);
         return;
     }
 
@@ -146,11 +146,11 @@ pipe_filter(struct pool *pool, const char *path,
        process */
     enter_signal_section(&c.signals);
 
-    GError *error = NULL;
+    GError *error = nullptr;
     pid_t pid = beng_fork(pool, path, body, &response,
                           clone_flags,
                           pipe_fn, &c,
-                          pipe_child_callback, NULL, &error);
+                          pipe_child_callback, nullptr, &error);
     if (pid < 0) {
         leave_signal_section(&c.signals);
 
@@ -161,21 +161,21 @@ pipe_filter(struct pool *pool, const char *path,
 
     argv[0] = p_strdup(pool, path);
     memcpy(argv + 1, args, num_args * sizeof(argv[0]));
-    argv[1 + num_args] = NULL;
+    argv[1 + num_args] = nullptr;
 
     leave_signal_section(&c.signals);
 
     stopwatch_event(stopwatch, "fork");
 
     etag = strmap_get(headers, "etag");
-    if (etag != NULL) {
+    if (etag != nullptr) {
         /* we cannot pass the original ETag to the client, because the
            pipe has modified the resource (which is what the pipe is
            all about) - append a digest value to the ETag, which is
            built from the program path and its arguments */
 
         etag = make_pipe_etag(pool, etag, path, args, num_args);
-        assert(etag != NULL);
+        assert(etag != nullptr);
 
         headers = strmap_dup(pool, headers, 17);
         strmap_set(headers, "etag", etag);
