@@ -13,8 +13,7 @@ struct pool;
 struct istream;
 struct strmap;
 struct http_response_handler;
-struct namespace_options;
-struct rlimit_options;
+struct child_options;
 
 /**
  * @param status the HTTP status code to be sent to the response
@@ -23,8 +22,7 @@ struct rlimit_options;
 void
 pipe_filter(struct pool *pool, const char *path,
             const char *const* args, unsigned num_args,
-            const struct namespace_options *ns,
-            const struct rlimit_options *rlimits,
+            const struct child_options &options,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx);

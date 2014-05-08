@@ -13,8 +13,7 @@
 #include "pool.h"
 #include "istream.h"
 #include "sigutil.h"
-#include "namespace_options.h"
-#include "rlimit_options.h"
+#include "child_options.hxx"
 #include "djbhash.h"
 
 #include <daemon/log.h>
@@ -26,8 +25,7 @@
 #include <errno.h>
 
 struct pipe_ctx {
-    const struct namespace_options *ns;
-    const struct rlimit_options *rlimits;
+    const struct child_options &options;
     const char *path;
     char *const*argv;
 
@@ -42,8 +40,8 @@ pipe_fn(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&c->signals);
 
-    namespace_options_setup(c->ns);
-    rlimit_options_apply(c->rlimits);
+    namespace_options_setup(&c->options.ns);
+    rlimit_options_apply(&c->options.rlimits);
 
     execv(c->path, c->argv);
     fprintf(stderr, "exec('%s') failed: %s\n",
@@ -109,8 +107,7 @@ make_pipe_etag(struct pool *pool, const char *in,
 void
 pipe_filter(struct pool *pool, const char *path,
             const char *const* args, unsigned num_args,
-            const struct namespace_options *ns,
-            const struct rlimit_options *rlimits,
+            const struct child_options &options,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx)
@@ -133,14 +130,13 @@ pipe_filter(struct pool *pool, const char *path,
     stopwatch = stopwatch_new(pool, path);
 
     struct pipe_ctx c = {
-        .ns = ns,
-        .rlimits = rlimits,
+        .options = options,
         .path = path,
         .argv = argv,
     };
 
     const int clone_flags =
-        namespace_options_clone_flags(ns, SIGCHLD);
+        namespace_options_clone_flags(&options.ns, SIGCHLD);
 
     /* avoid race condition due to libevent signal handler in child
        process */
