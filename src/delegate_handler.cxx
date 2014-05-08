@@ -7,7 +7,7 @@
 #include "handler.hxx"
 #include "file_handler.hxx"
 #include "file_headers.hxx"
-#include "file_address.h"
+#include "file_address.hxx"
 #include "static-headers.h"
 #include "delegate_glue.h"
 #include "http_error.h"

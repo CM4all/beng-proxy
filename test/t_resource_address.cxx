@@ -1,5 +1,5 @@
 #include "resource_address.hxx"
-#include "file_address.h"
+#include "file_address.hxx"
 #include "cgi_address.hxx"
 #include "pool.h"
 

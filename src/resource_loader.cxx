@@ -10,7 +10,7 @@
 #include "http_request.hxx"
 #include "http_response.h"
 #include "static-file.h"
-#include "file_address.h"
+#include "file_address.hxx"
 #include "lhttp_request.hxx"
 #include "http_address.hxx"
 #include "cgi_glue.hxx"

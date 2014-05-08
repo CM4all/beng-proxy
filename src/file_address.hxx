@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_FILE_ADDRESS_H
-#define BENG_PROXY_FILE_ADDRESS_H
+#ifndef BENG_PROXY_FILE_ADDRESS_HXX
+#define BENG_PROXY_FILE_ADDRESS_HXX
 
 #include "child_options.h"
 
@@ -36,10 +36,6 @@ struct file_address {
      */
     struct child_options child_options;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 file_address_init(struct file_address *cgi, const char *path);
@@ -76,9 +72,5 @@ file_address_is_expandable(const struct file_address *address);
 bool
 file_address_expand(struct pool *pool, struct file_address *address,
                     const GMatchInfo *match_info, GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

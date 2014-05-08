@@ -8,7 +8,7 @@
 #include "request.hxx"
 #include "translate_response.hxx"
 #include "resource_address.hxx"
-#include "file_address.h"
+#include "file_address.hxx"
 
 #include <daemon/log.h>
 

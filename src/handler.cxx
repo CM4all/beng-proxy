@@ -11,7 +11,7 @@
 #include "file_enotdir.hxx"
 #include "file_directory_index.hxx"
 #include "file_handler.hxx"
-#include "file_address.h"
+#include "file_address.hxx"
 #include "nfs_address.h"
 #include "nfs_handler.h"
 #include "request.hxx"

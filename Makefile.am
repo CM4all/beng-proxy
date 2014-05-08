@@ -635,7 +635,7 @@ libraddress_a_SOURCES = \
 	src/child_options.h \
 	src/rlimit_options.c src/rlimit_options.h \
 	src/cgi_address.cxx src/cgi_address.hxx \
-	src/file_address.c src/file_address.h \
+	src/file_address.cxx src/file_address.hxx \
 	src/nfs_address.c src/nfs_address.h \
 	src/lhttp_address.cxx src/lhttp_address.hxx \
 	src/http_address.cxx src/http_address.hxx \

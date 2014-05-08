@@ -15,7 +15,7 @@
 #include "processor.h"
 #include "css_processor.h"
 #include "async.h"
-#include "file_address.h"
+#include "file_address.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
