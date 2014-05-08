@@ -553,12 +553,67 @@ valid_view_name(const char *name)
     return true;
 }
 
+static bool
+finish_lhttp_address(const struct lhttp_address &address, GError **error_r)
+{
+    if (address.uri == nullptr) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "missing LHTTP_URI");
+        return false;
+    }
+
+    return true;
+}
+
+static bool
+finish_nfs_address(const struct nfs_address &address, GError **error_r)
+{
+    if (address.export_name == nullptr || *address.export_name == 0) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "missing NFS_EXPORT");
+        return false;
+    }
+
+    if (address.path == nullptr || *address.path == 0) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "missing NFS PATH");
+        return false;
+    }
+
+    return true;
+}
+
+static bool
+finish_resource_address(const struct resource_address &address,
+                        GError **error_r)
+{
+    switch (address.type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_HTTP:
+        return true;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        return finish_lhttp_address(*address.u.lhttp, error_r);
+
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+    case RESOURCE_ADDRESS_AJP:
+        return true;
+
+    case RESOURCE_ADDRESS_NFS:
+        return finish_nfs_address(*address.u.nfs, error_r);
+    }
+}
+
 /**
  * Finish the settings in the current view, i.e. copy attributes from
  * the "parent" view.
  */
-static void
-finish_view(TranslateClient *client)
+static bool
+finish_view(TranslateClient *client, GError **error_r)
 {
     assert(client != nullptr);
     assert(client->response.views != nullptr);
@@ -568,7 +623,7 @@ finish_view(TranslateClient *client)
         view = client->response.views;
         assert(view != nullptr);
 
-        const struct resource_address *address = &client->response.address;
+        const struct resource_address *address = &view->address;
         if (address->type != RESOURCE_ADDRESS_NONE &&
             view->address.type == RESOURCE_ADDRESS_NONE) {
             /* no address yet: copy address from response */
@@ -585,12 +640,18 @@ finish_view(TranslateClient *client)
             widget_view_inherit_from(client->pool, client->view,
                                      client->response.views);
     }
+
+    if (!finish_resource_address(view->address, error_r))
+        return false;
+
+    return true;
 }
 
-static void
-add_view(TranslateClient *client, const char *name)
+static bool
+add_view(TranslateClient *client, const char *name, GError **error_r)
 {
-    finish_view(client);
+    if (!finish_view(client, error_r))
+        return false;
 
     widget_view *view = (widget_view *)p_malloc(client->pool, sizeof(*view));
     widget_view_init(view);
@@ -614,6 +675,8 @@ add_view(TranslateClient *client, const char *name)
     client->address_list = nullptr;
     client->transformation_tail = &view->transformation;
     client->transformation = nullptr;
+
+    return true;
 }
 
 static bool
@@ -717,6 +780,9 @@ static bool
 translate_response_finish(TranslateResponse *response,
                           GError **error_r)
 {
+    if (!finish_resource_address(response->address, error_r))
+        return false;
+
     if (resource_address_is_cgi_alike(&response->address)) {
         struct cgi_address *cgi = resource_address_get_cgi(&response->address);
 
@@ -1212,7 +1278,10 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        finish_view(client);
+        if (!finish_view(client, &error)) {
+            translate_client_abort(client, error);
+            return false;
+        }
 
         translate_client_release_socket(client, true);
 
@@ -2008,7 +2077,11 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        add_view(client, payload);
+        if (!add_view(client, payload, &error)) {
+            translate_client_abort(client, error);
+            return false;
+        }
+
         return true;
 
     case TRANSLATE_MAX_AGE:
