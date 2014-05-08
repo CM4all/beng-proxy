@@ -13,7 +13,7 @@
 #include "child_manager.h"
 #include "async.h"
 #include "client-socket.h"
-#include "child_options.h"
+#include "child_options.hxx"
 #include "pevent.h"
 
 #include <daemon/log.h>

@@ -5,12 +5,11 @@
 #ifndef BENG_PROXY_FILE_ADDRESS_HXX
 #define BENG_PROXY_FILE_ADDRESS_HXX
 
-#include "child_options.h"
+#include "child_options.hxx"
 
 #include <inline/compiler.h>
 
 #include <glib.h>
-#include <stdbool.h>
 
 struct pool;
 

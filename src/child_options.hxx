@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CHILD_OPTIONS_H
-#define BENG_PROXY_CHILD_OPTIONS_H
+#ifndef BENG_PROXY_CHILD_OPTIONS_HXX
+#define BENG_PROXY_CHILD_OPTIONS_HXX
 
 #include "rlimit_options.h"
 #include "namespace_options.h"

@@ -11,7 +11,7 @@
 #include "lease.h"
 #include "tcp-stock.h"
 #include "stock.h"
-#include "child_options.h"
+#include "child_options.hxx"
 #include "istream.h"
 #include "async.h"
 #include "util/Cast.hxx"

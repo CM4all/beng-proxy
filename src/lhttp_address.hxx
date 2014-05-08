@@ -5,7 +5,7 @@
 #ifndef BENG_PROXY_LHTTP_ADDRESS_HXX
 #define BENG_PROXY_LHTTP_ADDRESS_HXX
 
-#include "child_options.h"
+#include "child_options.hxx"
 #include "param_array.hxx"
 #include "glibfwd.hxx"
 

@@ -13,7 +13,7 @@
 #include "tcp-stock.h"
 #include "stock.h"
 #include "abort-close.h"
-#include "child_options.h"
+#include "child_options.hxx"
 #include "istream.h"
 
 #include <daemon/log.h>
