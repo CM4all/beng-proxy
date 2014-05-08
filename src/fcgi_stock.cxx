@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi_stock.h"
+#include "fcgi_stock.hxx"
 #include "fcgi_quark.h"
 #include "fcgi_launch.h"
 #include "child_stock.h"
@@ -75,12 +75,12 @@ fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
 {
     const char *key = params->executable_path;
     for (unsigned i = 0, n = params->n_args; i < n; ++i)
-        key = p_strcat(pool, key, " ", params->args[i], NULL);
+        key = p_strcat(pool, key, " ", params->args[i], nullptr);
 
     char options_buffer[4096];
     *child_options_id(params->options, options_buffer) = 0;
     if (*options_buffer != 0)
-        key = p_strcat(pool, key, options_buffer, NULL);
+        key = p_strcat(pool, key, options_buffer, nullptr);
 
     return key;
 }
@@ -100,7 +100,7 @@ fcgi_connection_key(const struct fcgi_connection *connection)
 static void
 fcgi_connection_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 {
-    struct fcgi_connection *connection = ctx;
+    struct fcgi_connection *connection = (struct fcgi_connection *)ctx;
 
     assert(fd == connection->fd);
 
@@ -130,7 +130,8 @@ static int
 fcgi_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
                              gcc_unused void *ctx)
 {
-    const struct fcgi_child_params *params = info;
+    const struct fcgi_child_params *params =
+        (const struct fcgi_child_params *)info;
     const struct child_options *const options = params->options;
 
     return namespace_options_clone_flags(&options->ns, flags);
@@ -140,7 +141,8 @@ static int
 fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
                      void *info, gcc_unused void *ctx)
 {
-    const struct fcgi_child_params *params = info;
+    const struct fcgi_child_params *params =
+        (const struct fcgi_child_params *)info;
     const struct child_options *const options = params->options;
 
     rlimit_options_apply(&options->rlimits);
@@ -174,14 +176,14 @@ fcgi_stock_create(void *ctx, struct stock_item *item,
                   gcc_unused struct pool *caller_pool,
                   gcc_unused struct async_operation_ref *async_ref)
 {
-    struct fcgi_stock *fcgi_stock = ctx;
+    struct fcgi_stock *fcgi_stock = (struct fcgi_stock *)ctx;
     struct pool *pool = item->pool;
-    struct fcgi_child_params *params = info;
+    struct fcgi_child_params *params = (struct fcgi_child_params *)info;
     struct fcgi_connection *connection = (struct fcgi_connection *)item;
 
-    assert(key != NULL);
-    assert(params != NULL);
-    assert(params->executable_path != NULL);
+    assert(key != nullptr);
+    assert(params != nullptr);
+    assert(params->executable_path != nullptr);
 
     const struct child_options *const options = params->options;
     if (options->jail.enabled) {
@@ -197,10 +199,10 @@ fcgi_stock_create(void *ctx, struct stock_item *item,
     } else
         connection->jail_params.enabled = false;
 
-    GError *error = NULL;
+    GError *error = nullptr;
     connection->child = hstock_get_now(fcgi_stock->child_stock, pool,
                                        key, params, &error);
-    if (connection->child == NULL) {
+    if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to start to FastCGI server '%s': ",
                        key);
 
@@ -274,7 +276,7 @@ fcgi_stock_release(void *ctx gcc_unused, struct stock_item *item)
 static void
 fcgi_stock_destroy(void *ctx, struct stock_item *item)
 {
-    struct fcgi_stock *fcgi_stock = ctx;
+    struct fcgi_stock *fcgi_stock = (struct fcgi_stock *)ctx;
     struct fcgi_connection *connection =
         (struct fcgi_connection *)item;
 
@@ -303,7 +305,7 @@ static const struct stock_class fcgi_stock_class = {
 struct fcgi_stock *
 fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    struct fcgi_stock *fcgi_stock = p_malloc(pool, sizeof(*fcgi_stock));
+    auto fcgi_stock = NewFromPool<struct fcgi_stock>(pool);
     fcgi_stock->child_stock = child_stock_new(pool, limit, max_idle,
                                               &fcgi_child_stock_class);
     fcgi_stock->hstock = hstock_new(pool, &fcgi_stock_class, fcgi_stock,
@@ -327,9 +329,9 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                GError **error_r)
 {
     if (!jail_params_check(&options->jail, error_r))
-        return NULL;
+        return nullptr;
 
-    struct fcgi_child_params *params = p_malloc(pool, sizeof(*params));
+    auto params = NewFromPool<struct fcgi_child_params>(pool);
     params->executable_path = executable_path;
     params->args = args;
     params->n_args = n_args;
@@ -374,7 +376,7 @@ fcgi_stock_translate_path(const struct stock_item *item,
     const char *jailed = jail_translate_path(&connection->jail_config, path,
                                              connection->jail_params.home_directory,
                                              pool);
-    return jailed != NULL ? jailed : path;
+    return jailed != nullptr ? jailed : path;
 }
 
 void

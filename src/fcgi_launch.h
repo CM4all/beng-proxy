@@ -11,10 +11,18 @@
 
 struct jail_params;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 gcc_noreturn
 void
 fcgi_run(const struct jail_params *jail,
          const char *executable_path,
          const char *const*args, unsigned n_args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

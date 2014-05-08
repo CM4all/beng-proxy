@@ -21,7 +21,7 @@
 #include "tcache.hxx"
 #include "http_cache.h"
 #include "lhttp_stock.hxx"
-#include "fcgi_stock.h"
+#include "fcgi_stock.hxx"
 #include "was_stock.hxx"
 #include "delegate_stock.hxx"
 #include "fcache.h"

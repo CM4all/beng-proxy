@@ -140,7 +140,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/fcgi_protocol.h \
 	src/fcgi_request.cxx src/fcgi_request.hxx \
 	src/fcgi_serialize.cxx src/fcgi_serialize.hxx \
-	src/fcgi_stock.c src/fcgi_stock.h \
+	src/fcgi_stock.cxx src/fcgi_stock.hxx \
 	src/was_control.cxx src/was_control.hxx \
 	src/was_output.cxx src/was_output.hxx \
 	src/was_input.cxx src/was_input.hxx \

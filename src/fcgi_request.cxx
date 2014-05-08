@@ -5,7 +5,7 @@
  */
 
 #include "fcgi_request.hxx"
-#include "fcgi_stock.h"
+#include "fcgi_stock.hxx"
 #include "fcgi_client.hxx"
 #include "http_response.h"
 #include "lease.h"

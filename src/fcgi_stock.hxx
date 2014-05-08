@@ -4,22 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_FCGI_STOCK_H
-#define __BENG_FCGI_STOCK_H
+#ifndef BENG_PROXY_FCGI_STOCK_HXX
+#define BENG_PROXY_FCGI_STOCK_HXX
 
 #include <glib.h>
-
-#include <stdbool.h>
 
 struct pool;
 struct stock_item;
 struct stock_get_handler;
 struct child_options;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct fcgi_stock *
 fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
@@ -69,9 +63,5 @@ fcgi_stock_put(struct fcgi_stock *fcgi_stock, struct stock_item *item,
  */
 void
 fcgi_stock_aborted(struct stock_item *item);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
