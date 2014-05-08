@@ -412,6 +412,7 @@ handle_translated_request(request &request, const TranslateResponse &response)
     /* copy TRANSLATE_SESSION because TranslateResponse::CopyFrom()
        clears it */
     response2->session = DupBuffer(request.request->pool, response.session);
+    response2->user = p_strdup_checked(request.request->pool, response.user);
 
     request.translate.response = response2;
     request.translate.address = &response2->address;
