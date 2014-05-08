@@ -105,7 +105,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
         elif uri == '' or uri[-1] == '/':
             # deliver index.html with fallback (via TRANSLATE_FILE_NOT_FOUND)
-            response.packet(TRANSLATE_REGEX, r'^(.*)$')
+            response.packet(TRANSLATE_REGEX, r'^(.*/)?$')
             response.packet(TRANSLATE_REGEX_TAIL)
             response.path('/dummy')
             response.packet(TRANSLATE_EXPAND_PATH, r"/var/www/\1index.html")
