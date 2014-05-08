@@ -1,6 +1,7 @@
 cm4all-beng-proxy (4.0.37) unstable; urgency=low
 
   * enotdir: forward PATH_INFO to LHTTP server
+  * lhttp: support environment variables via PAIR
 
  --   
 

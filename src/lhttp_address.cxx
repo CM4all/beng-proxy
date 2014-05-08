@@ -22,6 +22,7 @@ lhttp_address_init(struct lhttp_address *address, const char *path)
     memset(address, 0, sizeof(*address));
     address->path = path;
     address->args.Init();
+    address->env.Init();
     child_options_init(&address->options);
     address->concurrency = 1;
 }
@@ -47,6 +48,9 @@ lhttp_address_server_id(struct pool *pool, const struct lhttp_address *address)
     for (unsigned i = 0; i < address->args.n; ++i)
         p = p_strcat(pool, p, "!", address->args.values[i], NULL);
 
+    for (unsigned i = 0; i < address->env.n; ++i)
+        p = p_strcat(pool, p, "$", address->env.values[i], nullptr);
+
     return p;
 }
 
@@ -70,6 +74,7 @@ lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
     dest->path = p_strdup(pool, src->path);
 
     dest->args.CopyFrom(pool, src->args);
+    dest->env.CopyFrom(pool, src->env);
 
     child_options_copy(pool, &dest->options, &src->options);
 
@@ -197,5 +202,6 @@ lhttp_address_expand(struct pool *pool, struct lhttp_address *address,
             return false;
     }
 
-    return address->args.Expand(pool, match_info, error_r);
+    return address->args.Expand(pool, match_info, error_r) &&
+        address->env.Expand(pool, match_info, error_r);
 }

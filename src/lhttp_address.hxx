@@ -24,6 +24,11 @@ struct lhttp_address {
 
     struct param_array args;
 
+    /**
+     * Environment variables.
+     */
+    struct param_array env;
+
     struct child_options options;
 
     /**

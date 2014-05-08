@@ -2272,6 +2272,22 @@ translate_handle_packet(TranslateClient *client,
             }
 
             client->cgi_address->env.Append(payload);
+        } else if (client->lhttp_address != nullptr) {
+            if (client->lhttp_address->env.IsFull()) {
+                translate_client_error(client,
+                                       "too many PAIR packets");
+                return false;
+            }
+
+            if (payload_length == 0 || *payload == '=' ||
+                has_null_byte(payload, payload_length) ||
+                strchr(payload + 1, '=') == nullptr) {
+                translate_client_error(client,
+                                       "malformed PAIR packet");
+                return false;
+            }
+
+            client->lhttp_address->env.Append(payload);
         } else {
             translate_client_error(client,
                                    "misplaced PAIR packet");
@@ -2297,6 +2313,22 @@ translate_handle_packet(TranslateClient *client,
             }
 
             client->cgi_address->env.SetExpand(payload);
+        } else if (client->lhttp_address != nullptr) {
+            if (!client->lhttp_address->env.CanSetExpand()) {
+                translate_client_error(client,
+                                       "misplaced EXPAND_PAIR packet");
+                return false;
+            }
+
+            if (payload_length == 0 || *payload == '=' ||
+                has_null_byte(payload, payload_length) ||
+                strchr(payload + 1, '=') == nullptr) {
+                translate_client_error(client,
+                                       "malformed EXPAND_PAIR packet");
+                return false;
+            }
+
+            client->lhttp_address->env.SetExpand(payload);
         } else {
             translate_client_error(client,
                                    "misplaced EXPAND_PAIR packet");
