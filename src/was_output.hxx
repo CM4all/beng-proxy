@@ -4,12 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WAS_OUTPUT_H
-#define BENG_PROXY_WAS_OUTPUT_H
+#ifndef BENG_PROXY_WAS_OUTPUT_HXX
+#define BENG_PROXY_WAS_OUTPUT_HXX
 
 #include <glib.h>
 
-#include <stdbool.h>
 #include <stdint.h>
 
 struct pool;
@@ -52,7 +51,7 @@ static inline uint64_t
 was_output_free_p(struct was_output **output_p)
 {
     struct was_output *output = *output_p;
-    *output_p = NULL;
+    *output_p = nullptr;
     return was_output_free(output);
 }
 

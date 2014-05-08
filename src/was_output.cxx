@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_output.h"
+#include "was_output.hxx"
 #include "was_quark.h"
 #include "pevent.h"
 #include "direct.h"
@@ -51,7 +51,7 @@ was_output_abort(struct was_output *output, GError *error)
 {
     p_event_del(&output->event, output->pool);
 
-    if (output->input != NULL)
+    if (output->input != nullptr)
         istream_free_handler(&output->input);
 
     output->handler->abort(error, output->handler_ctx);
@@ -66,10 +66,10 @@ was_output_abort(struct was_output *output, GError *error)
 static void
 was_output_event_callback(gcc_unused int fd, short event, void *ctx)
 {
-    struct was_output *output = ctx;
+    struct was_output *output = (struct was_output *)ctx;
 
     assert(output->fd >= 0);
-    assert(output->input != NULL);
+    assert(output->input != nullptr);
 
     p_event_consumed(&output->event, output->pool);
 
@@ -103,10 +103,10 @@ was_output_event_callback(gcc_unused int fd, short event, void *ctx)
 static size_t
 was_output_stream_data(const void *p, size_t length, void *ctx)
 {
-    struct was_output *output = ctx;
+    struct was_output *output = (struct was_output *)ctx;
 
     assert(output->fd >= 0);
-    assert(output->input != NULL);
+    assert(output->input != nullptr);
 
     ssize_t nbytes = write(output->fd, p, length);
     if (likely(nbytes > 0)) {
@@ -128,15 +128,14 @@ was_output_stream_data(const void *p, size_t length, void *ctx)
 }
 
 static ssize_t
-was_output_stream_direct(istream_direct_t type, int fd,
+was_output_stream_direct(enum istream_direct type, int fd,
                          size_t max_length, void *ctx)
 {
-    struct was_output *output = ctx;
-    ssize_t nbytes;
+    struct was_output *output = (struct was_output *)ctx;
 
     assert(output->fd >= 0);
 
-    nbytes = istream_direct_to_pipe(type, fd, output->fd, max_length);
+    ssize_t nbytes = istream_direct_to_pipe(type, fd, output->fd, max_length);
     if (likely(nbytes > 0)) {
         output->sent += nbytes;
         was_output_schedule_write(output);
@@ -158,11 +157,11 @@ was_output_stream_direct(istream_direct_t type, int fd,
 static void
 was_output_stream_eof(void *ctx)
 {
-    struct was_output *output = ctx;
+    struct was_output *output = (struct was_output *)ctx;
 
-    assert(output->input != NULL);
+    assert(output->input != nullptr);
 
-    output->input = NULL;
+    output->input = nullptr;
     p_event_del(&output->event, output->pool);
 
     if (!output->known_length &&
@@ -175,11 +174,11 @@ was_output_stream_eof(void *ctx)
 static void
 was_output_stream_abort(GError *error, void *ctx)
 {
-    struct was_output *output = ctx;
+    struct was_output *output = (struct was_output *)ctx;
 
-    assert(output->input != NULL);
+    assert(output->input != nullptr);
 
-    output->input = NULL;
+    output->input = nullptr;
     p_event_del(&output->event, output->pool);
 
     output->handler->premature(output->sent, error, output->handler_ctx);
@@ -203,14 +202,14 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
                const struct was_output_handler *handler, void *handler_ctx)
 {
     assert(fd >= 0);
-    assert(input != NULL);
-    assert(handler != NULL);
-    assert(handler->length != NULL);
-    assert(handler->premature != NULL);
-    assert(handler->eof != NULL);
-    assert(handler->abort != NULL);
+    assert(input != nullptr);
+    assert(handler != nullptr);
+    assert(handler->length != nullptr);
+    assert(handler->premature != nullptr);
+    assert(handler->eof != nullptr);
+    assert(handler->abort != nullptr);
 
-    struct was_output *output = p_malloc(pool, sizeof(*output));
+    auto output = NewFromPool<struct was_output>(pool);
     output->pool = pool;
     output->fd = fd;
     event_set(&output->event, output->fd, EV_WRITE|EV_TIMEOUT,
@@ -234,9 +233,9 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
 uint64_t
 was_output_free(struct was_output *output)
 {
-    assert(output != NULL);
+    assert(output != nullptr);
 
-    if (output->input != NULL)
+    if (output->input != nullptr)
         istream_free_handler(&output->input);
 
     p_event_del(&output->event, output->pool);

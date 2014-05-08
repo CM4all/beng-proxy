@@ -1,4 +1,4 @@
-#include "was_server.h"
+#include "was_server.hxx"
 #include "duplex.h"
 #include "direct.h"
 #include "pool.h"
@@ -17,7 +17,7 @@ static void
 mirror_request(struct pool *pool, http_method_t method, const char *uri,
                struct strmap *headers, struct istream *body, void *ctx)
 {
-    struct instance *instance = ctx;
+    struct instance *instance = (struct instance *)ctx;
 
     (void)pool;
     (void)method;
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     direct_global_init();
     struct event_base *event_base = event_init();
 
-    struct pool *pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(nullptr, "root");
 
     struct instance instance;
     instance.server = was_server_new(pool, control_fd, in_fd, out_fd,

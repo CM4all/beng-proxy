@@ -1,5 +1,5 @@
-#include "was_client.h"
-#include "was_launch.h"
+#include "was_client.hxx"
+#include "was_launch.hxx"
 #include "lease.h"
 #include "http_response.h"
 #include "direct.h"
@@ -39,7 +39,7 @@ struct context {
 static void
 my_lease_release(bool reuse, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     (void)reuse;
 
@@ -63,7 +63,7 @@ static const struct lease my_lease = {
 static size_t
 my_istream_data(const void *data, size_t length, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
     ssize_t nbytes;
 
     nbytes = write(1, data, length);
@@ -79,20 +79,20 @@ my_istream_data(const void *data, size_t length, void *ctx)
 static void
 my_istream_eof(void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
-    c->body = NULL;
+    c->body = nullptr;
 }
 
 static void
 my_istream_abort(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
 
-    c->body = NULL;
+    c->body = nullptr;
     c->error = true;
 }
 
@@ -114,18 +114,18 @@ my_response(http_status_t status, struct strmap *headers gcc_unused,
             struct istream *body gcc_unused,
             void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     (void)status;
 
-    if (body != NULL)
+    if (body != nullptr)
         istream_assign_handler(&c->body, body, &my_istream_handler, c, 0);
 }
 
 static void
 my_response_abort(GError *error, void *ctx)
 {
-    struct context *c = ctx;
+    struct context *c = (struct context *)ctx;
 
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -144,28 +144,28 @@ request_body(struct pool *pool)
     struct stat st;
     return fstat(0, &st) == 0 && S_ISREG(st.st_mode)
         ? istream_file_fd_new(pool, "/dev/stdin", 0, ISTREAM_FILE, -1)
-        : NULL;
+        : nullptr;
 }
 
 int main(int argc, char **argv) {
     daemon_log_config.verbose = 5;
 
-    gchar **parameters = NULL;
+    gchar **parameters = nullptr;
     const GOptionEntry option_entries[] = {
         { .long_name = "parameter", .short_name = 'p',
           .arg = G_OPTION_ARG_STRING_ARRAY,
           .arg_data = &parameters,
           .description = "Pass a parameter to the application",
         },
-        { .long_name = NULL }
+        { .long_name = nullptr }
     };
 
     GOptionContext *option_context = g_option_context_new("PATH");
-    g_option_context_add_main_entries(option_context, option_entries, NULL);
+    g_option_context_add_main_entries(option_context, option_entries, nullptr);
     g_option_context_set_summary(option_context,
                                  "Command-line interface for WAS applications.");
 
-    GError *error = NULL;
+    GError *error = nullptr;
     if (!g_option_context_parse(option_context, &argc, &argv, &error)) {
         g_printerr("option parsing failed: %s\n", error->message);
         return EXIT_FAILURE;
@@ -181,7 +181,7 @@ int main(int argc, char **argv) {
     child_options_init(&child_options);
 
     static struct context context;
-    if (!was_launch(&context.process, argv[1], NULL, 0,
+    if (!was_launch(&context.process, argv[1], nullptr, 0,
                     &child_options,
                     &error)) {
         g_printerr("%s\n", error->message);
@@ -189,19 +189,19 @@ int main(int argc, char **argv) {
         return 2;
     }
 
-    struct pool *pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(nullptr, "root");
 
     unsigned num_parameters = 0;
-    if (parameters != NULL)
-        while (parameters[num_parameters] != NULL)
+    if (parameters != nullptr)
+        while (parameters[num_parameters] != nullptr)
             ++num_parameters;
 
     was_client_request(pool, context.process.control_fd,
                        context.process.input_fd, context.process.output_fd,
                        &my_lease, &context,
                        HTTP_METHOD_GET, "/",
-                       NULL, NULL, NULL,
-                       NULL, request_body(pool),
+                       nullptr, nullptr, nullptr,
+                       nullptr, request_body(pool),
                        (const char *const*)parameters, num_parameters,
                        &my_response_handler, &context,
                        &context.async_ref);

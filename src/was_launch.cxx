@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_launch.h"
+#include "was_launch.hxx"
 #include "fd_util.h"
 #include "fd-util.h"
 #include "exec.h"
@@ -40,7 +40,7 @@ gcc_noreturn
 static int
 was_run(void *ctx)
 {
-    struct was_run_args *args = ctx;
+    struct was_run_args *args = (struct was_run_args *)ctx;
 
     install_default_signal_handlers();
     leave_signal_section(&args->signals);
@@ -99,7 +99,7 @@ was_launch(struct was_process *process,
     };
 
     exec_init(&run_args.exec);
-    jail_wrapper_insert(&run_args.exec, &options->jail, NULL);
+    jail_wrapper_insert(&run_args.exec, &options->jail, nullptr);
     exec_append(&run_args.exec, executable_path);
     for (unsigned i = 0; i < n_args; ++i)
         exec_append(&run_args.exec, args[i]);

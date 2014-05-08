@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_control.h"
+#include "was_control.hxx"
 #include "was_quark.h"
 #include "fifo-buffer.h"
 #include "buffered_io.h"
@@ -54,7 +54,7 @@ was_control_schedule_read(struct was_control *control)
 
     p_event_add(&control->input.event,
                 fifo_buffer_empty(control->input.buffer)
-                ? NULL : &was_control_timeout,
+                ? nullptr : &was_control_timeout,
                 control->pool, "was_control_input");
 }
 
@@ -73,7 +73,7 @@ was_control_schedule_write(struct was_control *control)
 static void
 was_control_release_socket(struct was_control *control)
 {
-    assert(control != NULL);
+    assert(control != nullptr);
     assert(control->fd >= 0);
 
     p_event_del(&control->input.event, control->pool);
@@ -95,7 +95,7 @@ was_control_eof(struct was_control *control)
 static void
 was_control_abort(struct was_control *control, GError *error)
 {
-    assert(error != NULL);
+    assert(error != nullptr);
 
     was_control_release_socket(control);
 
@@ -105,7 +105,7 @@ was_control_abort(struct was_control *control, GError *error)
 static bool
 was_control_drained(struct was_control *control)
 {
-    return control->handler->drained == NULL ||
+    return control->handler->drained == nullptr ||
         control->handler->drained(control->handler_ctx);
 }
 
@@ -122,11 +122,11 @@ was_control_consume_input(struct was_control *control)
 
     while (true) {
         data = fifo_buffer_read(control->input.buffer, &length);
-        if (data == NULL || length < sizeof(*header))
+        if (data == nullptr || length < sizeof(*header))
             /* not enough data yet */
             return was_control_drained(control);
 
-        header = data;
+        header = (const struct was_header *)data;
         if (length < sizeof(*header) + header->length) {
             /* not enough data yet */
 
@@ -151,7 +151,8 @@ was_control_consume_input(struct was_control *control)
         fifo_buffer_consume(control->input.buffer,
                             sizeof(*header) + header->length);
 
-        if (!control->handler->packet(header->command, payload, header->length,
+        if (!control->handler->packet(was_command(header->command),
+                                      payload, header->length,
                                       control->handler_ctx))
             return false;
 
@@ -221,7 +222,7 @@ was_control_try_write(struct was_control *control)
     if (!fifo_buffer_empty(control->output.buffer))
         was_control_schedule_write(control);
     else if (control->done) {
-        was_control_eof(control->handler_ctx);
+        was_control_eof((struct was_control *)control->handler_ctx);
         return false;
     } else
         p_event_del(&control->output.event, control->pool);
@@ -238,7 +239,7 @@ was_control_try_write(struct was_control *control)
 static void
 was_control_input_event_callback(int fd gcc_unused, short event, void *ctx)
 {
-    struct was_control *control = ctx;
+    struct was_control *control = (struct was_control *)ctx;
 
     assert(control->fd >= 0);
 
@@ -268,7 +269,7 @@ was_control_input_event_callback(int fd gcc_unused, short event, void *ctx)
 static void
 was_control_output_event_callback(int fd gcc_unused, short event, void *ctx)
 {
-    struct was_control *control = ctx;
+    struct was_control *control = (struct was_control *)ctx;
 
     assert(control->fd >= 0);
     assert(!fifo_buffer_empty(control->output.buffer));
@@ -300,12 +301,12 @@ was_control_new(struct pool *pool, int fd,
                 void *handler_ctx)
 {
     assert(fd >= 0);
-    assert(handler != NULL);
-    assert(handler->packet != NULL);
-    assert(handler->eof != NULL);
-    assert(handler->abort != NULL);
+    assert(handler != nullptr);
+    assert(handler->packet != nullptr);
+    assert(handler->eof != nullptr);
+    assert(handler->abort != nullptr);
 
-    struct was_control *control = p_malloc(pool, sizeof(*control));
+    auto control = NewFromPool<struct was_control>(pool);
     control->pool = pool;
     control->fd = fd;
     control->done = false;
@@ -342,14 +343,14 @@ was_control_start(struct was_control *control, enum was_command cmd,
     assert(!control->done);
 
     size_t max_length;
-    struct was_header *header = fifo_buffer_write(control->output.buffer,
-                                                  &max_length);
-    if (header == NULL || max_length < sizeof(*header) + payload_length) {
+    struct was_header *header = (struct was_header *)
+        fifo_buffer_write(control->output.buffer, &max_length);
+    if (header == nullptr || max_length < sizeof(*header) + payload_length) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control output is too large");
         was_control_abort(control, error);
-        return NULL;
+        return nullptr;
     }
 
     header->command = cmd;
@@ -375,7 +376,7 @@ was_control_send(struct was_control *control, enum was_command cmd,
     assert(!control->done);
 
     void *dest = was_control_start(control, cmd, payload_length);
-    if (dest == NULL)
+    if (dest == nullptr)
         return false;
 
     memcpy(dest, payload, payload_length);
@@ -386,7 +387,7 @@ bool
 was_control_send_string(struct was_control *control, enum was_command cmd,
                         const char *payload)
 {
-    assert(payload != NULL);
+    assert(payload != nullptr);
 
     return was_control_send(control, cmd, payload, strlen(payload));
 }
@@ -395,12 +396,12 @@ bool
 was_control_send_array(struct was_control *control, enum was_command cmd,
                        const char *const values[], unsigned num_values)
 {
-    assert(control != NULL);
-    assert(values != NULL || num_values == 0);
+    assert(control != nullptr);
+    assert(values != nullptr || num_values == 0);
 
     for (unsigned i = 0; i < num_values; ++i) {
         const char *value = values[i];
-        assert(value != NULL);
+        assert(value != nullptr);
 
         if (!was_control_send_string(control, cmd, value))
             return false;
@@ -413,19 +414,20 @@ bool
 was_control_send_strmap(struct was_control *control, enum was_command cmd,
                         struct strmap *map)
 {
-    assert(control != NULL);
-    assert(map != NULL);
+    assert(control != nullptr);
+    assert(map != nullptr);
 
     strmap_rewind(map);
 
     const struct strmap_pair *pair;
-    while ((pair = strmap_next(map)) != NULL) {
+    while ((pair = strmap_next(map)) != nullptr) {
         size_t key_length = strlen(pair->key);
         size_t value_length = strlen(pair->value);
         size_t payload_length = key_length + 1 + value_length;
 
-        char *dest = was_control_start(control, cmd, payload_length);
-        if (dest == NULL)
+        uint8_t *dest = (uint8_t *)
+            was_control_start(control, cmd, payload_length);
+        if (dest == nullptr)
             return false;
 
         memcpy(dest, pair->key, key_length);

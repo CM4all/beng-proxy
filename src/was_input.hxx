@@ -4,12 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WAS_INPUT_H
-#define BENG_PROXY_WAS_INPUT_H
+#ifndef BENG_PROXY_WAS_INPUT_HXX
+#define BENG_PROXY_WAS_INPUT_HXX
 
 #include <glib.h>
 
-#include <stdbool.h>
 #include <stdint.h>
 
 struct pool;
@@ -41,7 +40,7 @@ static inline void
 was_input_free_p(struct was_input **input_p, GError *error)
 {
     struct was_input *input = *input_p;
-    *input_p = NULL;
+    *input_p = nullptr;
     was_input_free(input, error);
 }
 
@@ -56,7 +55,7 @@ static inline void
 was_input_free_unused_p(struct was_input **input_p)
 {
     struct was_input *input = *input_p;
-    *input_p = NULL;
+    *input_p = nullptr;
     was_input_free_unused(input);
 }
 

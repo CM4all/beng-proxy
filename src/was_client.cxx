@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_client.h"
+#include "was_client.hxx"
 #include "was_quark.h"
-#include "was_control.h"
-#include "was_output.h"
-#include "was_input.h"
+#include "was_control.hxx"
+#include "was_output.hxx"
+#include "was_input.hxx"
 #include "http_response.h"
 #include "async.h"
 #include "please.h"
@@ -19,6 +19,7 @@
 #include "buffered_io.h"
 #include "fd-util.h"
 #include "strmap.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -46,7 +47,7 @@ struct was_client {
 
         /**
          * Response headers being assembled.  This pointer is set to
-         * NULL before the response is dispatched to the response
+         * nullptr before the response is dispatched to the response
          * handler.
          */
         struct strmap *headers;
@@ -68,7 +69,7 @@ struct was_client {
 static bool
 was_client_receiving_metadata(const struct was_client *client)
 {
-    return client->response.headers != NULL && !client->response.pending;
+    return client->response.headers != nullptr && !client->response.pending;
 }
 
 /**
@@ -77,13 +78,13 @@ was_client_receiving_metadata(const struct was_client *client)
 static bool
 was_client_response_submitted(const struct was_client *client)
 {
-    return client->response.headers == NULL;
+    return client->response.headers == nullptr;
 }
 
 static void
 was_client_clear_request_body(struct was_client *client)
 {
-    if (client->request.body != NULL)
+    if (client->request.body != nullptr)
         was_output_free_p(&client->request.body);
 }
 
@@ -96,14 +97,14 @@ was_client_clear(struct was_client *client, GError *error)
 {
     was_client_clear_request_body(client);
 
-    if (client->response.body != NULL)
+    if (client->response.body != nullptr)
         was_input_free_p(&client->response.body, error);
     else
         g_error_free(error);
 
-    if (client->control != NULL) {
+    if (client->control != nullptr) {
         was_control_free(client->control);
-        client->control = NULL;
+        client->control = nullptr;
     }
 
     p_lease_release(&client->lease_ref, false, client->pool);
@@ -118,12 +119,12 @@ was_client_clear_unused(struct was_client *client)
 {
     was_client_clear_request_body(client);
 
-    if (client->response.body != NULL)
+    if (client->response.body != nullptr)
         was_input_free_unused_p(&client->response.body);
 
-    if (client->control != NULL) {
+    if (client->control != nullptr) {
         was_control_free(client->control);
-        client->control = NULL;
+        client->control = nullptr;
     }
 
     p_lease_release(&client->lease_ref, false, client->pool);
@@ -182,16 +183,16 @@ static void
 was_client_response_eof(struct was_client *client)
 {
     assert(was_client_response_submitted(client));
-    assert(client->response.body == NULL);
+    assert(client->response.body == nullptr);
 
-    if (client->request.body != NULL ||
+    if (client->request.body != nullptr ||
         !was_control_is_empty(client->control)) {
         was_client_abort_response_empty(client);
         return;
     }
 
     was_control_free(client->control);
-    client->control = NULL;
+    client->control = nullptr;
 
     p_lease_release(&client->lease_ref, true, client->pool);
     pool_unref(client->caller_pool);
@@ -239,10 +240,11 @@ static bool
 was_client_control_packet(enum was_command cmd, const void *payload,
                           size_t payload_length, void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
     GError *error;
 
     switch (cmd) {
+        const uint32_t *status_r;
         struct strmap *headers;
         const uint64_t *length_p;
         const char *p;
@@ -270,8 +272,8 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        p = memchr(payload, '=', payload_length);
-        if (p == NULL || p == payload) {
+        p = (const char *)memchr(payload, '=', payload_length);
+        if (p == nullptr || p == payload) {
             error = g_error_new_literal(was_quark(), 0,
                                         "Malformed WAS HEADER packet");
             was_client_abort_response_headers(client, error);
@@ -279,7 +281,8 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         }
 
         strmap_add(client->response.headers,
-                   p_strndup(client->pool, payload, p - (const char*)payload),
+                   p_strndup(client->pool, (const char *)payload,
+                             p - (const char *)payload),
                    p_strndup(client->pool, p + 1,
                              (const char*)payload + payload_length - p - 1));
         break;
@@ -292,7 +295,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        const uint32_t *status_r = payload;
+        status_r = (const uint32_t *)payload;
         if (payload_length != sizeof(*status_r) ||
             !http_status_is_valid((http_status_t)*status_r)) {
             error = g_error_new_literal(was_quark(), 0,
@@ -304,7 +307,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         client->response.status = (http_status_t)*status_r;
 
         if (http_status_is_empty(client->response.status) &&
-            client->response.body != NULL)
+            client->response.body != nullptr)
             /* no response body possible with this status; release the
                object */
             was_input_free_unused_p(&client->response.body);
@@ -320,13 +323,13 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         }
 
         headers = client->response.headers;
-        client->response.headers = NULL;
+        client->response.headers = nullptr;
 
-        if (client->response.body != NULL) {
+        if (client->response.body != nullptr) {
             pool_ref(client->pool);
             was_input_free_unused_p(&client->response.body);
 
-            if (client->control == NULL) {
+            if (client->control == nullptr) {
                 /* aborted; don't invoke response handler */
                 pool_unref(client->pool);
                 return false;
@@ -341,7 +344,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
-                                              headers, NULL);
+                                              headers, nullptr);
         was_client_response_eof(client);
         return false;
 
@@ -353,7 +356,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        if (client->response.body == NULL) {
+        if (client->response.body == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "no response body allowed");
             was_client_abort_response_headers(client, error);
@@ -371,14 +374,14 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        if (client->response.body == NULL) {
+        if (client->response.body == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "LENGTH after NO_DATA");
             was_client_abort_response_body(client, error);
             return false;
         }
 
-        length_p = payload;
+        length_p = (const uint64_t *)payload;
         if (payload_length != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed LENGTH packet");
@@ -392,7 +395,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_STOP:
-        if (client->request.body != NULL) {
+        if (client->request.body != nullptr) {
             uint64_t sent = was_output_free_p(&client->request.body);
             return was_control_send_uint64(client->control,
                                            WAS_COMMAND_PREMATURE, sent);
@@ -408,7 +411,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        length_p = payload;
+        length_p = (const uint64_t *)payload;
         if (payload_length != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed PREMATURE packet");
@@ -416,7 +419,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        if (client->response.body == NULL)
+        if (client->response.body == nullptr)
             break;
 
         if (!was_input_premature(client->response.body, *length_p))
@@ -431,7 +434,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 static bool
 was_client_control_drained(void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
 
     if (!client->response.pending)
         return true;
@@ -441,7 +444,7 @@ was_client_control_drained(void *ctx)
     client->response.pending = false;
 
     struct strmap *headers = client->response.headers;
-    client->response.headers = NULL;
+    client->response.headers = nullptr;
 
     struct istream *body = was_input_enable(client->response.body);
 
@@ -454,7 +457,7 @@ was_client_control_drained(void *ctx)
     http_response_handler_invoke_response(&client->handler,
                                           client->response.status,
                                           headers, body);
-    if (client->control == NULL) {
+    if (client->control == nullptr) {
         /* closed, must return false */
         pool_unref_denotify(client->pool, &notify);
         return false;
@@ -467,20 +470,20 @@ was_client_control_drained(void *ctx)
 static void
 was_client_control_eof(void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
 
-    assert(client->request.body == NULL);
-    assert(client->response.body == NULL);
+    assert(client->request.body == nullptr);
+    assert(client->response.body == nullptr);
 
-    client->control = NULL;
+    client->control = nullptr;
 }
 
 static void
 was_client_control_abort(GError *error, void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
 
-    client->control = NULL;
+    client->control = nullptr;
 
     was_client_abort(client, error);
 }
@@ -499,10 +502,10 @@ static const struct was_control_handler was_client_control_handler = {
 static bool
 was_client_output_length(uint64_t length, void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
 
-    assert(client->control != NULL);
-    assert(client->request.body != NULL);
+    assert(client->control != nullptr);
+    assert(client->request.body != nullptr);
 
     return was_control_send_uint64(client->control,
                                    WAS_COMMAND_LENGTH, length);
@@ -511,12 +514,12 @@ was_client_output_length(uint64_t length, void *ctx)
 static bool
 was_client_output_premature(uint64_t length, GError *error, void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
 
-    assert(client->control != NULL);
-    assert(client->request.body != NULL);
+    assert(client->control != nullptr);
+    assert(client->request.body != nullptr);
 
-    client->request.body = NULL;
+    client->request.body = nullptr;
 
     /* XXX send PREMATURE, recover */
     (void)length;
@@ -528,21 +531,21 @@ was_client_output_premature(uint64_t length, GError *error, void *ctx)
 static void
 was_client_output_eof(void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
 
-    assert(client->request.body != NULL);
+    assert(client->request.body != nullptr);
 
-    client->request.body = NULL;
+    client->request.body = nullptr;
 }
 
 static void
 was_client_output_abort(GError *error, void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
 
-    assert(client->request.body != NULL);
+    assert(client->request.body != nullptr);
 
-    client->request.body = NULL;
+    client->request.body = nullptr;
 
     was_client_abort(client, error);
 }
@@ -562,12 +565,12 @@ static const struct was_output_handler was_client_output_handler = {
 static void
 was_client_input_eof(void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
 
     assert(was_client_response_submitted(client) || client->response.pending);
-    assert(client->response.body != NULL);
+    assert(client->response.body != nullptr);
 
-    client->response.body = NULL;
+    client->response.body = nullptr;
 
     if (client->response.pending) {
         struct strmap *headers = client->response.headers;
@@ -582,7 +585,7 @@ was_client_input_eof(void *ctx)
                                               client->response.status,
                                               headers, body);
 
-        if (client->request.body == NULL) {
+        if (client->request.body == nullptr) {
             /* reuse the connection */
             was_control_free(client->control);
             p_lease_release(&client->lease_ref, true, client->pool);
@@ -599,12 +602,12 @@ was_client_input_eof(void *ctx)
 static void
 was_client_input_abort(void *ctx)
 {
-    struct was_client *client = ctx;
+    struct was_client *client = (struct was_client *)ctx;
 
     assert(was_client_response_submitted(client));
-    assert(client->response.body != NULL);
+    assert(client->response.body != nullptr);
 
-    client->response.body = NULL;
+    client->response.body = nullptr;
 
     was_client_abort_response_empty(client);
 }
@@ -624,7 +627,7 @@ static const struct was_input_handler was_client_input_handler = {
 static struct was_client *
 async_to_was_client(struct async_operation *ao)
 {
-    return (struct was_client*)(((char*)ao) - offsetof(struct was_client, async));
+    return ContainerCast(ao, struct was_client, async);
 }
 
 static void
@@ -666,10 +669,10 @@ was_client_request(struct pool *caller_pool, int control_fd,
                    struct async_operation_ref *async_ref)
 {
     assert(http_method_is_valid(method));
-    assert(uri != NULL);
+    assert(uri != nullptr);
 
     struct pool *pool = pool_new_linear(caller_pool, "was_client_request", 32768);
-    struct was_client *client = p_malloc(pool, sizeof(*client));
+    auto client = NewFromPool<struct was_client>(pool);
     client->pool = pool;
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;
@@ -685,16 +688,16 @@ was_client_request(struct pool *caller_pool, int control_fd,
     async_init(&client->async, &was_client_async_operation);
     async_ref_set(async_ref, &client->async);
 
-    client->request.body = body != NULL
+    client->request.body = body != nullptr
         ? was_output_new(pool, output_fd, body,
                          &was_client_output_handler, client)
-        : NULL;
+        : nullptr;
 
     client->response.status = HTTP_STATUS_OK;
     client->response.headers = strmap_new(caller_pool, 41);
     client->response.body = !http_method_is_empty(method)
         ? was_input_new(pool, input_fd, &was_client_input_handler, client)
-        : NULL;
+        : nullptr;
     client->response.pending = false;
 
     uint32_t method32 = (uint32_t)method;
@@ -708,21 +711,22 @@ was_client_request(struct pool *caller_pool, int control_fd,
         !was_control_send_string(client->control, WAS_COMMAND_URI, uri))
         return;
 
-    if ((script_name != NULL &&
+    if ((script_name != nullptr &&
          !was_control_send_string(client->control, WAS_COMMAND_SCRIPT_NAME,
                                   script_name)) ||
-        (path_info != NULL &&
+        (path_info != nullptr &&
          !was_control_send_string(client->control, WAS_COMMAND_PATH_INFO,
                                   path_info)) ||
-        (query_string != NULL &&
+        (query_string != nullptr &&
          !was_control_send_string(client->control, WAS_COMMAND_QUERY_STRING,
                                   query_string)) ||
-        (headers != NULL &&
+        (headers != nullptr &&
          !was_control_send_strmap(client->control, WAS_COMMAND_HEADER,
                                   headers)) ||
         !was_control_send_array(client->control, WAS_COMMAND_PARAMETER,
                                 params, num_params) ||
-        !was_control_send_empty(client->control, client->request.body != NULL
+        !was_control_send_empty(client->control,
+                                client->request.body != nullptr
                                 ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA)) {
         GError *error = g_error_new_literal(was_quark(), 0,
                                             "Failed to send WAS request");

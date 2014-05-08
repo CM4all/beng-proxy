@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WAS_SERVER_H
-#define BENG_PROXY_WAS_SERVER_H
+#ifndef BENG_PROXY_WAS_SERVER_HXX
+#define BENG_PROXY_WAS_SERVER_HXX
 
 #include <http/method.h>
 #include <http/status.h>

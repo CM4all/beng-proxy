@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_glue.h"
+#include "was_glue.hxx"
 #include "was_quark.h"
-#include "was_stock.h"
-#include "was_client.h"
+#include "was_stock.hxx"
+#include "was_client.hxx"
 #include "http_response.h"
 #include "lease.h"
 #include "tcp-stock.h"
@@ -54,7 +54,7 @@ struct was_request {
 static void
 was_socket_release(bool reuse, void *ctx)
 {
-    struct was_request *request = ctx;
+    struct was_request *request = (struct was_request *)ctx;
 
     was_stock_put(request->was_stock, request->stock_item, !reuse);
 }
@@ -72,7 +72,7 @@ static const struct lease was_socket_lease = {
 static void
 was_stock_ready(struct stock_item *item, void *ctx)
 {
-    struct was_request *request = ctx;
+    struct was_request *request = (struct was_request *)ctx;
 
     request->stock_item = item;
 
@@ -93,11 +93,11 @@ was_stock_ready(struct stock_item *item, void *ctx)
 static void
 was_stock_error(GError *error, void *ctx)
 {
-    struct was_request *request = ctx;
+    struct was_request *request = (struct was_request *)ctx;
 
     http_response_handler_invoke_abort(&request->handler, error);
 
-    if (request->body != NULL)
+    if (request->body != nullptr)
         istream_close_unused(request->body);
 }
 
@@ -127,21 +127,19 @@ was_request(struct pool *pool, struct hstock *was_stock,
             void *handler_ctx,
             struct async_operation_ref *async_ref)
 {
-    struct was_request *request;
-
-    GError *error = NULL;
+    GError *error = nullptr;
     if (!jail_params_check(&options->jail, &error)) {
-        if (body != NULL)
+        if (body != nullptr)
             istream_close_unused(body);
 
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 
-    if (action == NULL)
+    if (action == nullptr)
         action = path;
 
-    request = p_malloc(pool, sizeof(*request));
+    auto request = NewFromPool<struct was_request>(pool);
     request->pool = pool;
     request->was_stock = was_stock;
     request->action = action;
@@ -157,11 +155,11 @@ was_request(struct pool *pool, struct hstock *was_stock,
     http_response_handler_set(&request->handler, handler, handler_ctx);
     request->async_ref = async_ref;
 
-    if (body != NULL) {
+    if (body != nullptr) {
         request->body = istream_hold_new(pool, body);
         async_ref = async_close_on_abort(pool, request->body, async_ref);
     } else
-        request->body = NULL;
+        request->body = nullptr;
 
     was_stock_get(was_stock, pool,
                   options,

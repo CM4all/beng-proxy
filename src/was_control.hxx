@@ -4,15 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WAS_CONTROL_H
-#define BENG_PROXY_WAS_CONTROL_H
+#ifndef BENG_PROXY_WAS_CONTROL_HXX
+#define BENG_PROXY_WAS_CONTROL_HXX
 
 #include <was/protocol.h>
 
 #include <glib.h>
 
 #include <stddef.h>
-#include <stdbool.h>
 
 struct pool;
 struct strmap;
@@ -53,7 +52,7 @@ was_control_send(struct was_control *control, enum was_command cmd,
 static inline bool
 was_control_send_empty(struct was_control *control, enum was_command cmd)
 {
-    return was_control_send(control, cmd, NULL, 0);
+    return was_control_send(control, cmd, nullptr, 0);
 }
 
 bool

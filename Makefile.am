@@ -141,13 +141,13 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/fcgi_request.cxx src/fcgi_request.hxx \
 	src/fcgi_serialize.cxx src/fcgi_serialize.hxx \
 	src/fcgi_stock.c src/fcgi_stock.h \
-	src/was_control.c src/was_control.h \
-	src/was_output.c src/was_output.h \
-	src/was_input.c src/was_input.h \
-	src/was_client.c src/was_client.h \
-	src/was_stock.c src/was_stock.h \
-	src/was_launch.c \
-	src/was_glue.c \
+	src/was_control.cxx src/was_control.hxx \
+	src/was_output.cxx src/was_output.hxx \
+	src/was_input.cxx src/was_input.hxx \
+	src/was_client.cxx src/was_client.hxx \
+	src/was_stock.cxx src/was_stock.hxx \
+	src/was_launch.cxx src/was_launch.hxx \
+	src/was_glue.cxx src/was_glue.hxx \
 	src/fd-util.c src/fd-util.h \
 	src/fd_util.c src/fd_util.h \
 	src/file_headers.cxx src/file_headers.hxx \
@@ -818,8 +818,9 @@ test_run_ping_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
 
-test_run_was_SOURCES = test/run_was.c \
-	src/was_launch.c src/was_client.c src/was_control.c src/was_input.c src/was_output.c \
+test_run_was_SOURCES = test/run_was.cxx \
+	src/was_launch.cxx src/was_client.cxx \
+	src/was_control.cxx src/was_input.cxx src/was_output.cxx \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/cleanup_timer.c \
@@ -835,7 +836,8 @@ test_run_was_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 
 test_was_mirror_SOURCES = test/was_mirror.c \
-	src/was_server.c src/was_control.c src/was_input.c src/was_output.c \
+	src/was_server.cxx src/was_server.hxx \
+	src/was_control.cxx src/was_input.cxx src/was_output.cxx \
 	src/fifo-buffer.c \
 	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \

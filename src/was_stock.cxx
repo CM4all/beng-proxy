@@ -1,12 +1,13 @@
+
 /*
  * Launch and manage WAS child processes.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_stock.h"
+#include "was_stock.hxx"
 #include "was_quark.h"
-#include "was_launch.h"
+#include "was_launch.hxx"
 #include "hstock.h"
 #include "stock.h"
 #include "child_manager.h"
@@ -56,12 +57,12 @@ was_stock_key(struct pool *pool, const struct was_child_params *params)
 {
     const char *key = params->executable_path;
     for (unsigned i = 0, n = params->n_args; i < n; ++i)
-        key = p_strcat(pool, key, " ", params->args[i], NULL);
+        key = p_strcat(pool, key, " ", params->args[i], nullptr);
 
     char options_buffer[4096];
     *child_options_id(params->options, options_buffer) = 0;
     if (*options_buffer != 0)
-        key = p_strcat(pool, key, options_buffer, NULL);
+        key = p_strcat(pool, key, options_buffer, nullptr);
 
     return key;
 }
@@ -69,7 +70,7 @@ was_stock_key(struct pool *pool, const struct was_child_params *params)
 static void
 was_child_callback(gcc_unused int status, void *ctx)
 {
-    struct was_child *child = ctx;
+    struct was_child *child = (struct was_child *)ctx;
 
     child->process.pid = -1;
 }
@@ -82,7 +83,7 @@ was_child_callback(gcc_unused int status, void *ctx)
 static void
 was_child_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 {
-    struct was_child *child = ctx;
+    struct was_child *child = (struct was_child *)ctx;
 
     assert(fd == child->process.control_fd);
 
@@ -121,15 +122,15 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
                  struct async_operation_ref *async_ref)
 {
     struct pool *pool = item->pool;
-    struct was_child_params *params = info;
+    struct was_child_params *params = (struct was_child_params *)info;
     struct was_child *child = (struct was_child *)item;
 
     (void)caller_pool;
     (void)async_ref;
 
-    assert(key != NULL);
-    assert(params != NULL);
-    assert(params->executable_path != NULL);
+    assert(key != nullptr);
+    assert(params != nullptr);
+    assert(params->executable_path != nullptr);
 
     child->key = p_strdup(pool, key);
 
@@ -147,7 +148,7 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
     } else
         child->jail_params.enabled = false;
 
-    GError *error = NULL;
+    GError *error = nullptr;
     if (!was_launch(&child->process, params->executable_path,
                     params->args, params->n_args,
                     options,
@@ -221,7 +222,7 @@ static const struct stock_class was_stock_class = {
 struct hstock *
 was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    return hstock_new(pool, &was_stock_class, NULL, limit, max_idle);
+    return hstock_new(pool, &was_stock_class, nullptr, limit, max_idle);
 }
 
 void
@@ -232,13 +233,13 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
-    GError *error = NULL;
+    GError *error = nullptr;
     if (!jail_params_check(&options->jail, &error)) {
         handler->error(error, handler_ctx);
         return;
     }
 
-    struct was_child_params *params = p_malloc(pool, sizeof(*params));
+    auto params = NewFromPool<struct was_child_params>(pool);
     params->executable_path = executable_path;
     params->args = args;
     params->n_args = n_args;
@@ -270,7 +271,7 @@ was_stock_translate_path(const struct stock_item *item,
     const char *jailed = jail_translate_path(&child->jail_config, path,
                                              child->jail_params.home_directory,
                                              pool);
-    return jailed != NULL ? jailed : path;
+    return jailed != nullptr ? jailed : path;
 }
 
 void

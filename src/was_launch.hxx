@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WAS_LAUNCH_H
-#define BENG_PROXY_WAS_LAUNCH_H
+#ifndef BENG_PROXY_WAS_LAUNCH_HXX
+#define BENG_PROXY_WAS_LAUNCH_HXX
 
 #include <glib.h>
 #include <stdbool.h>

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_input.h"
+#include "was_input.hxx"
 #include "was_quark.h"
 #include "pevent.h"
 #include "direct.h"
@@ -12,6 +12,7 @@
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "fd-util.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -51,10 +52,10 @@ static void
 was_input_schedule_read(struct was_input *input)
 {
     assert(input->fd >= 0);
-    assert(input->buffer == NULL || !fifo_buffer_full(input->buffer));
+    assert(input->buffer == nullptr || !fifo_buffer_full(input->buffer));
 
     p_event_add(&input->event,
-                input->timeout ? &was_input_timeout : NULL,
+                input->timeout ? &was_input_timeout : nullptr,
                 input->output.pool, "was_input");
 }
 
@@ -98,7 +99,7 @@ static bool
 was_input_check_eof(struct was_input *input)
 {
     if (input->known_length && input->received >= input->length &&
-        (input->buffer == NULL || fifo_buffer_empty(input->buffer))) {
+        (input->buffer == nullptr || fifo_buffer_empty(input->buffer))) {
         was_input_eof(input);
         return true;
     } else
@@ -112,11 +113,11 @@ was_input_check_eof(struct was_input *input)
 static bool
 was_input_consume_buffer(struct was_input *input)
 {
-    assert(input->buffer != NULL);
+    assert(input->buffer != nullptr);
 
     size_t length;
     const void *p = fifo_buffer_read(input->buffer, &length);
-    if (p == NULL)
+    if (p == nullptr)
         return true;
 
     size_t nbytes = istream_invoke_data(&input->output, p, length);
@@ -140,7 +141,7 @@ was_input_consume_buffer(struct was_input *input)
 static bool
 was_input_try_buffered(struct was_input *input)
 {
-    if (input->buffer == NULL)
+    if (input->buffer == nullptr)
         input->buffer = fifo_buffer_new(input->output.pool, 4096);
 
     size_t max_length = 4096;
@@ -188,7 +189,7 @@ was_input_try_buffered(struct was_input *input)
 static bool
 was_input_try_direct(struct was_input *input)
 {
-    assert(input->buffer == NULL || fifo_buffer_empty(input->buffer));
+    assert(input->buffer == nullptr || fifo_buffer_empty(input->buffer));
 
     size_t max_length = 0x1000000;
     if (input->known_length) {
@@ -230,7 +231,7 @@ static void
 was_input_try_read(struct was_input *input)
 {
     if (istream_check_direct(&input->output, ISTREAM_PIPE)) {
-        if (input->buffer == NULL || was_input_consume_buffer(input))
+        if (input->buffer == nullptr || was_input_consume_buffer(input))
             was_input_try_direct(input);
     } else {
         was_input_try_buffered(input);
@@ -246,7 +247,7 @@ was_input_try_read(struct was_input *input)
 static void
 was_input_event_callback(int fd gcc_unused, short event, void *ctx)
 {
-    struct was_input *input = ctx;
+    struct was_input *input = (struct was_input *)ctx;
 
     assert(input->fd >= 0);
 
@@ -274,7 +275,7 @@ was_input_event_callback(int fd gcc_unused, short event, void *ctx)
 static inline struct was_input *
 response_stream_to_data(struct istream *istream)
 {
-    return (struct was_input *)(((char*)istream) - offsetof(struct was_input, output));
+    return ContainerCast(istream, struct was_input, output);
 }
 
 static off_t
@@ -297,7 +298,7 @@ was_input_istream_read(struct istream *istream)
 
     p_event_del(&input->event, input->output.pool);
 
-    if (input->buffer == NULL || was_input_consume_buffer(input))
+    if (input->buffer == nullptr || was_input_consume_buffer(input))
         was_input_try_read(input);
 }
 
@@ -334,12 +335,12 @@ was_input_new(struct pool *pool, int fd,
               const struct was_input_handler *handler, void *handler_ctx)
 {
     assert(fd >= 0);
-    assert(handler != NULL);
-    assert(handler->eof != NULL);
-    assert(handler->premature != NULL);
-    assert(handler->abort != NULL);
+    assert(handler != nullptr);
+    assert(handler->eof != nullptr);
+    assert(handler->premature != nullptr);
+    assert(handler->abort != nullptr);
 
-    struct was_input *input = p_malloc(pool, sizeof(*input));
+    auto input = NewFromPool<struct was_input>(pool);
     istream_init(&input->output, &was_input_stream, pool);
 
     input->fd = fd;
@@ -349,7 +350,7 @@ was_input_new(struct pool *pool, int fd,
     input->handler = handler;
     input->handler_ctx = handler_ctx;
 
-    input->buffer = NULL;
+    input->buffer = nullptr;
 
     input->received = 0;
     input->guaranteed = 0;
@@ -363,20 +364,20 @@ was_input_new(struct pool *pool, int fd,
 void
 was_input_free(struct was_input *input, GError *error)
 {
-    assert(error != NULL || input->closed);
+    assert(error != nullptr || input->closed);
 
     p_event_del(&input->event, input->output.pool);
 
     if (!input->closed)
         istream_deinit_abort(&input->output, error);
-    else if (error != NULL)
+    else if (error != nullptr)
         g_error_free(error);
 }
 
 void
 was_input_free_unused(struct was_input *input)
 {
-    assert(input->output.handler == NULL);
+    assert(input->output.handler == nullptr);
     assert(!input->closed);
 
     istream_deinit(&input->output);

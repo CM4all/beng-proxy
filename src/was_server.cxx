@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "was_server.h"
+#include "was_server.hxx"
 #include "was_quark.h"
-#include "was_control.h"
-#include "was_output.h"
-#include "was_input.h"
+#include "was_control.hxx"
+#include "was_output.hxx"
+#include "was_input.hxx"
 #include "http_response.h"
 #include "async.h"
 #include "pevent.h"
@@ -45,7 +45,7 @@ struct was_server {
 
         /**
          * Request headers being assembled.  This pointer is set to
-         * NULL before before the request is dispatched to the
+         * nullptr before before the request is dispatched to the
          * handler.
          */
         struct strmap *headers;
@@ -64,13 +64,13 @@ struct was_server {
 static void
 was_server_release(struct was_server *server, GError *error)
 {
-    if (server->request.pool != NULL) {
-        if (server->request.body != NULL)
+    if (server->request.pool != nullptr) {
+        if (server->request.body != nullptr)
             was_input_free_p(&server->request.body, error);
         else
             g_error_free(error);
 
-        if (server->request.headers == NULL && server->response.body != NULL)
+        if (server->request.headers == nullptr && server->response.body != nullptr)
             was_output_free_p(&server->response.body);
 
         pool_unref(server->request.pool);
@@ -85,11 +85,11 @@ was_server_release(struct was_server *server, GError *error)
 static void
 was_server_release_unused(struct was_server *server)
 {
-    if (server->request.pool != NULL) {
-        if (server->request.body != NULL)
+    if (server->request.pool != nullptr) {
+        if (server->request.body != nullptr)
             was_input_free_unused_p(&server->request.body);
 
-        if (server->request.headers == NULL && server->response.body != NULL)
+        if (server->request.headers == nullptr && server->response.body != nullptr)
             was_output_free_p(&server->response.body);
 
         pool_unref(server->request.pool);
@@ -129,10 +129,10 @@ was_server_abort_unused(struct was_server *server)
 static bool
 was_server_output_length(uint64_t length, void *ctx)
 {
-    struct was_server *server = ctx;
+    struct was_server *server = (struct was_server *)ctx;
 
-    assert(server->control != NULL);
-    assert(server->response.body != NULL);
+    assert(server->control != nullptr);
+    assert(server->response.body != nullptr);
 
     return was_control_send_uint64(server->control,
                                    WAS_COMMAND_LENGTH, length);
@@ -141,12 +141,12 @@ was_server_output_length(uint64_t length, void *ctx)
 static bool
 was_server_output_premature(uint64_t length, GError *error, void *ctx)
 {
-    struct was_server *server = ctx;
+    struct was_server *server = (struct was_server *)ctx;
 
-    assert(server->control != NULL);
-    assert(server->response.body != NULL);
+    assert(server->control != nullptr);
+    assert(server->response.body != nullptr);
 
-    server->response.body = NULL;
+    server->response.body = nullptr;
 
     /* XXX send PREMATURE, recover */
     (void)length;
@@ -157,21 +157,21 @@ was_server_output_premature(uint64_t length, GError *error, void *ctx)
 static void
 was_server_output_eof(void *ctx)
 {
-    struct was_server *server = ctx;
+    struct was_server *server = (struct was_server *)ctx;
 
-    assert(server->response.body != NULL);
+    assert(server->response.body != nullptr);
 
-    server->response.body = NULL;
+    server->response.body = nullptr;
 }
 
 static void
 was_server_output_abort(GError *error, void *ctx)
 {
-    struct was_server *server = ctx;
+    struct was_server *server = (struct was_server *)ctx;
 
-    assert(server->response.body != NULL);
+    assert(server->response.body != nullptr);
 
-    server->response.body = NULL;
+    server->response.body = nullptr;
     was_server_abort(server, error);
 }
 
@@ -190,12 +190,12 @@ static const struct was_output_handler was_server_output_handler = {
 static void
 was_server_input_eof(void *ctx)
 {
-    struct was_server *server = ctx;
+    struct was_server *server = (struct was_server *)ctx;
 
-    assert(server->request.headers == NULL);
-    assert(server->request.body != NULL);
+    assert(server->request.headers == nullptr);
+    assert(server->request.body != nullptr);
 
-    server->request.body = NULL;
+    server->request.body = nullptr;
 
     // XXX
 }
@@ -203,12 +203,12 @@ was_server_input_eof(void *ctx)
 static void
 was_server_input_abort(void *ctx)
 {
-    struct was_server *server = ctx;
+    struct was_server *server = (struct was_server *)ctx;
 
-    assert(server->request.headers == NULL);
-    assert(server->request.body != NULL);
+    assert(server->request.headers == nullptr);
+    assert(server->request.body != nullptr);
 
-    server->request.body = NULL;
+    server->request.body = nullptr;
 
     was_server_abort_unused(server);
 }
@@ -227,7 +227,7 @@ static bool
 was_server_control_packet(enum was_command cmd, const void *payload,
                           size_t payload_length, void *ctx)
 {
-    struct was_server *server = ctx;
+    struct was_server *server = (struct was_server *)ctx;
     GError *error;
 
     switch (cmd) {
@@ -240,7 +240,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_REQUEST:
-        if (server->request.pool != NULL) {
+        if (server->request.pool != nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced REQUEST packet");
             was_server_abort(server, error);
@@ -250,10 +250,10 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         server->request.pool = pool_new_linear(server->pool,
                                                "was_server_request", 32768);
         server->request.method = HTTP_METHOD_GET;
-        server->request.uri = NULL;
+        server->request.uri = nullptr;
         server->request.headers = strmap_new(server->request.pool, 41);
-        server->request.body = NULL;
-        server->response.body = NULL;
+        server->request.body = nullptr;
+        server->response.body = nullptr;
         break;
 
     case WAS_COMMAND_METHOD:
@@ -285,7 +285,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_URI:
-        if (server->request.pool == NULL || server->request.uri != NULL) {
+        if (server->request.pool == nullptr || server->request.uri != nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced URI packet");
             was_server_abort(server, error);
@@ -293,7 +293,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         }
 
         server->request.uri = p_strndup(server->request.pool,
-                                        payload, payload_length);
+                                        (const char *)payload, payload_length);
         break;
 
     case WAS_COMMAND_SCRIPT_NAME:
@@ -303,15 +303,15 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_HEADER:
-        if (server->request.pool == NULL || server->request.headers == NULL) {
+        if (server->request.pool == nullptr || server->request.headers == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced HEADER packet");
             was_server_abort(server, error);
             return false;
         }
 
-        p = memchr(payload, '=', payload_length);
-        if (p == NULL) {
+        p = (const char *)memchr(payload, '=', payload_length);
+        if (p == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed HEADER packet");
             was_server_abort(server, error);
@@ -333,8 +333,8 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         return false;
 
     case WAS_COMMAND_NO_DATA:
-        if (server->request.pool == NULL || server->request.uri == NULL ||
-            server->request.headers == NULL) {
+        if (server->request.pool == nullptr || server->request.uri == nullptr ||
+            server->request.headers == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced NO_DATA packet");
             was_server_abort(server, error);
@@ -342,19 +342,19 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         }
 
         headers = server->request.headers;
-        server->request.headers = NULL;
+        server->request.headers = nullptr;
 
-        server->request.body = NULL;
+        server->request.body = nullptr;
 
         server->handler->request(server->request.pool, server->request.method,
-                                 server->request.uri, headers, NULL,
+                                 server->request.uri, headers, nullptr,
                                  server->handler_ctx);
         /* XXX check if connection has been closed */
         break;
 
     case WAS_COMMAND_DATA:
-        if (server->request.pool == NULL || server->request.uri == NULL ||
-            server->request.headers == NULL) {
+        if (server->request.pool == nullptr || server->request.uri == nullptr ||
+            server->request.headers == nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced DATA packet");
             was_server_abort(server, error);
@@ -362,7 +362,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         }
 
         headers = server->request.headers;
-        server->request.headers = NULL;
+        server->request.headers = nullptr;
 
         server->request.body = was_input_new(server->request.pool,
                                              server->input_fd,
@@ -377,15 +377,15 @@ was_server_control_packet(enum was_command cmd, const void *payload,
         break;
 
     case WAS_COMMAND_LENGTH:
-        if (server->request.pool == NULL || server->request.headers != NULL) {
+        if (server->request.pool == nullptr || server->request.headers != nullptr) {
             error = g_error_new_literal(was_quark(), 0,
                                         "misplaced LENGTH packet");
             was_server_abort(server, error);
             return false;
         }
 
-        length_p = payload;
-        if (server->response.body == NULL ||
+        length_p = (const uint64_t *)payload;
+        if (server->response.body == nullptr ||
             payload_length != sizeof(*length_p)) {
             error = g_error_new_literal(was_quark(), 0,
                                         "malformed LENGTH packet");
@@ -420,7 +420,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
 static void
 was_server_control_eof(void *ctx)
 {
-    struct was_server *server = ctx;
+    struct was_server *server = (struct was_server *)ctx;
 
     (void)server;
 }
@@ -428,7 +428,7 @@ was_server_control_eof(void *ctx)
 static void
 was_server_control_abort(GError *error, void *ctx)
 {
-    struct was_server *server = ctx;
+    struct was_server *server = (struct was_server *)ctx;
 
     was_server_abort(server, error);
 }
@@ -449,15 +449,15 @@ struct was_server *
 was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
                const struct was_server_handler *handler, void *handler_ctx)
 {
-    assert(pool != NULL);
+    assert(pool != nullptr);
     assert(control_fd >= 0);
     assert(input_fd >= 0);
     assert(output_fd >= 0);
-    assert(handler != NULL);
-    assert(handler->request != NULL);
-    assert(handler->free != NULL);
+    assert(handler != nullptr);
+    assert(handler->request != nullptr);
+    assert(handler->free != nullptr);
 
-    struct was_server *server = p_malloc(pool, sizeof(*server));
+    auto server = NewFromPool<struct was_server>(pool);
     server->pool = pool;
     server->control_fd = control_fd;
     server->input_fd = input_fd;
@@ -469,7 +469,7 @@ was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
     server->handler = handler;
     server->handler_ctx = handler_ctx;
 
-    server->request.pool = NULL;
+    server->request.pool = nullptr;
 
     return server;
 }
@@ -486,18 +486,18 @@ void
 was_server_response(struct was_server *server, http_status_t status,
                     struct strmap *headers, struct istream *body)
 {
-    assert(server != NULL);
-    assert(server->request.pool != NULL);
-    assert(server->request.headers == NULL);
-    assert(server->response.body == NULL);
+    assert(server != nullptr);
+    assert(server->request.pool != nullptr);
+    assert(server->request.headers == nullptr);
+    assert(server->response.body == nullptr);
     assert(http_status_is_valid(status));
-    assert(!http_status_is_empty(status) || body == NULL);
+    assert(!http_status_is_empty(status) || body == nullptr);
 
     if (!was_control_send(server->control, WAS_COMMAND_STATUS,
                           &status, sizeof(status)))
         return;
 
-    if (body != NULL) {
+    if (body != nullptr) {
         server->response.body = was_output_new(server->request.pool,
                                                server->output_fd, body,
                                                &was_server_output_handler,

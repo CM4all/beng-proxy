@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WAS_GLUE_H
-#define BENG_PROXY_WAS_GLUE_H
+#ifndef BENG_PROXY_WAS_GLUE_HXX
+#define BENG_PROXY_WAS_GLUE_HXX
 
 #include <http/method.h>
 
@@ -17,10 +17,6 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 struct child_options;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @param jail run the WAS application with JailCGI?
@@ -40,9 +36,5 @@ was_request(struct pool *pool, struct hstock *was_stock,
             const struct http_response_handler *handler,
             void *handler_ctx,
             struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
