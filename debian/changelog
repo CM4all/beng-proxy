@@ -3,7 +3,7 @@ cm4all-beng-proxy (4.0.36) unstable; urgency=low
   * tcache: log the final cache key
   * translation: add packet ENOTDIR
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 08 May 2014 08:56:13 -0000
 
 cm4all-beng-proxy (4.0.35) unstable; urgency=low
 
