@@ -103,13 +103,13 @@ apply_file_enotdir(struct request &request)
         resource_address_is_cgi_alike(request.translate.address)) {
         /* append the path_info to the resource address */
 
-        request.translate.enotdir_address.type = request.translate.address->type;
-        request.translate.enotdir_address.u.cgi =
-            cgi_address_apply(request.request->pool,
-                              request.translate.address->u.cgi,
-                              request.translate.enotdir_path_info,
-                              strlen(request.translate.enotdir_path_info),
-                              request.translate.address->type == RESOURCE_ADDRESS_FASTCGI);
-        request.translate.address = &request.translate.enotdir_address;
+        auto address =
+            resource_address_apply(request.request->pool,
+                                   request.translate.address,
+                                   request.translate.enotdir_path_info,
+                                   strlen(request.translate.enotdir_path_info),
+                                   &request.translate.enotdir_address);
+        if (address != nullptr)
+            request.translate.address = address;
     }
 }
