@@ -32,7 +32,6 @@ delegate_handler_callback(int fd, void *ctx)
 {
     request &request2 = *(request *)ctx;
     struct http_server_request *request = request2.request;
-    const TranslateResponse *tr = request2.translate.response;
     int ret;
     struct stat st;
     struct file_request file_request = {
@@ -71,9 +70,11 @@ delegate_handler_callback(int fd, void *ctx)
 
     /* build the response */
 
+    const struct file_address &address = *request2.translate.address->u.file;
+
     file_dispatch(&request2, &st, &file_request,
                   istream_file_fd_new(request->pool,
-                                      tr->address.u.file->path,
+                                      address.path,
                                       fd, ISTREAM_FILE, file_request.size));
 }
 
@@ -100,11 +101,10 @@ void
 delegate_handler(request &request2)
 {
     struct http_server_request *request = request2.request;
-    const TranslateResponse *tr = request2.translate.response;
+    const struct file_address &address = *request2.translate.address->u.file;
 
-    assert(tr != NULL);
-    assert(tr->address.u.file->path != NULL);
-    assert(tr->address.u.file->delegate != NULL);
+    assert(address.path != NULL);
+    assert(address.delegate != NULL);
 
     /* check request */
 
@@ -118,9 +118,9 @@ delegate_handler(request &request2)
     /* run the delegate helper */
 
     delegate_stock_open(global_delegate_stock, request->pool,
-                        tr->address.u.file->delegate,
-                        &tr->address.u.file->child_options,
-                        tr->address.u.file->path,
+                        address.delegate,
+                        &address.child_options,
+                        address.path,
                         &delegate_handler_handler, &request2,
                         &request2.async_ref);
 }

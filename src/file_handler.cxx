@@ -41,12 +41,13 @@ file_dispatch(struct request *request2, const struct stat *st,
 {
     struct http_server_request *request = request2->request;
     const TranslateResponse *tr = request2->translate.response;
+    const struct file_address &address = *request2->translate.address->u.file;
     struct growing_buffer *headers;
     http_status_t status;
 
     const char *override_content_type = request2->translate.content_type;
     if (override_content_type == nullptr)
-        override_content_type = tr->address.u.file->content_type;
+        override_content_type = address.content_type;
 
     headers = growing_buffer_new(request->pool, 2048);
     file_response_headers(headers, override_content_type,
@@ -105,6 +106,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
 {
     struct http_server_request *request = request2->request;
     const TranslateResponse *tr = request2->translate.response;
+    const struct file_address &address = *request2->translate.address->u.file;
     const char *accept_encoding;
     struct growing_buffer *headers;
     http_status_t status;
@@ -132,7 +134,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
 
     const char *override_content_type = request2->translate.content_type;
     if (override_content_type == nullptr)
-        override_content_type = tr->address.u.file->content_type;
+        override_content_type = address.content_type;
 
     headers = growing_buffer_new(request->pool, 2048);
     file_response_headers(headers, override_content_type,
@@ -161,6 +163,7 @@ file_callback(struct request *request2)
 {
     struct http_server_request *request = request2->request;
     const TranslateResponse *tr = request2->translate.response;
+    const struct file_address &address = *request2->translate.address->u.file;
     const char *path;
     struct istream *body;
     struct stat st;
@@ -170,10 +173,10 @@ file_callback(struct request *request2)
     };
 
     assert(tr != nullptr);
-    assert(tr->address.u.file->path != nullptr);
-    assert(tr->address.u.file->delegate == nullptr);
+    assert(address.path != nullptr);
+    assert(address.delegate == nullptr);
 
-    path = tr->address.u.file->path;
+    path = address.path;
 
     /* check request */
 
@@ -228,12 +231,12 @@ file_callback(struct request *request2)
 
     if (file_request.range == RANGE_NONE &&
         !request_transformation_enabled(request2) &&
-        ((tr->address.u.file->deflated != nullptr &&
+        ((address.deflated != nullptr &&
           file_dispatch_compressed(request2, &st, body, "deflate",
-                                   tr->address.u.file->deflated)) ||
-         (tr->address.u.file->gzipped != nullptr &&
+                                   address.deflated)) ||
+         (address.gzipped != nullptr &&
           file_dispatch_compressed(request2, &st, body, "gzip",
-                                   tr->address.u.file->gzipped))))
+                                   address.gzipped))))
         return;
 
     /* build the response */

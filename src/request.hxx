@@ -59,6 +59,9 @@ struct request {
     struct {
         TranslateRequest request;
         const TranslateResponse *response;
+
+        const struct resource_address *address;
+
         const struct transformation *transformation;
 
         /**

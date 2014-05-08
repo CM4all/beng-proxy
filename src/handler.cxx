@@ -206,6 +206,8 @@ static void
 handle_translated_request2(request &request,
                            const TranslateResponse &response)
 {
+    const struct resource_address &address = *request.translate.address;
+
     request.translate.transformation = response.views != nullptr
         ? response.views->transformation
         : nullptr;
@@ -220,7 +222,7 @@ handle_translated_request2(request &request,
 
     if (response.status == (http_status_t)-1 ||
         (response.status == (http_status_t)0 &&
-         response.address.type == RESOURCE_ADDRESS_NONE &&
+         address.type == RESOURCE_ADDRESS_NONE &&
          response.www_authenticate == nullptr &&
          response.bounce == nullptr &&
          response.redirect == nullptr)) {
@@ -239,27 +241,27 @@ handle_translated_request2(request &request,
     if (session != nullptr)
         session_put(session);
 
-    request.resource_tag = resource_address_id(&response.address,
+    request.resource_tag = resource_address_id(&address,
                                                request.request->pool);
 
     request.processor_focus = request.args != nullptr &&
         request_processor_enabled(&request) &&
         strmap_get(request.args, "focus") != nullptr;
 
-    if (response.address.type == RESOURCE_ADDRESS_LOCAL) {
-        if (response.address.u.file->delegate != nullptr)
+    if (address.type == RESOURCE_ADDRESS_LOCAL) {
+        if (address.u.file->delegate != nullptr)
             delegate_handler(request);
         else
             file_callback(&request);
 #ifdef HAVE_LIBNFS
-    } else if (response.address.type == RESOURCE_ADDRESS_NFS) {
+    } else if (address.type == RESOURCE_ADDRESS_NFS) {
         nfs_handler(&request);
 #endif
-    } else if (response.address.type == RESOURCE_ADDRESS_HTTP ||
-               response.address.type == RESOURCE_ADDRESS_LHTTP ||
-               resource_address_is_cgi_alike(&response.address) ||
-               response.address.type == RESOURCE_ADDRESS_NFS ||
-               response.address.type == RESOURCE_ADDRESS_AJP) {
+    } else if (address.type == RESOURCE_ADDRESS_HTTP ||
+               address.type == RESOURCE_ADDRESS_LHTTP ||
+               resource_address_is_cgi_alike(&address) ||
+               address.type == RESOURCE_ADDRESS_NFS ||
+               address.type == RESOURCE_ADDRESS_AJP) {
         proxy_handler(request);
     } else if (response.redirect != nullptr) {
         http_status_t status = response.status != (http_status_t)0
@@ -335,13 +337,6 @@ get_suffix(const resource_address &address)
     gcc_unreachable();
 }
 
-gcc_pure
-static const char *
-get_suffix(const TranslateResponse &response)
-{
-    return get_suffix(response.address);
-}
-
 static void
 handler_suffix_registry_success(const char *content_type, void *ctx)
 {
@@ -374,7 +369,7 @@ do_content_type_lookup(request &request, const TranslateResponse &response)
     if (response.content_type_lookup.IsNull())
         return false;
 
-    const char *suffix = get_suffix(response);
+    const char *suffix = get_suffix(*request.translate.address);
     if (suffix == nullptr)
         return false;
 
@@ -418,6 +413,7 @@ handle_translated_request(request &request, const TranslateResponse &response)
     response2->session = DupBuffer(request.request->pool, response.session);
 
     request.translate.response = response2;
+    request.translate.address = &response2->address;
 
     if (!do_content_type_lookup(request, *response2))
         handle_translated_request2(request, *response2);
@@ -435,6 +431,7 @@ install_error_response(request &request)
     error_response.status = (http_status_t)-1;
 
     request.translate.response = &error_response;
+    request.translate.address = &error_response.address;
     request.translate.transformation = nullptr;
 }
 
@@ -803,6 +800,8 @@ serve_document_root_file(request &request2,
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
     tr->address.u.file = fa;
 
+    request2.translate.address = &tr->address;
+
     tr->request_header_forward = (struct header_forward_settings){
         .modes = {
             [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
@@ -823,7 +822,7 @@ serve_document_root_file(request &request2,
         },
     };
 
-    request2.resource_tag = tr->address.u.file->path;
+    request2.resource_tag = request2.translate.address->u.file->path;
     request2.processor_focus = process &&
         strmap_get_checked(request2.args, "focus") != nullptr;
 

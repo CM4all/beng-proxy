@@ -56,7 +56,7 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
 
     const char *override_content_type = request2->translate.content_type;
     if (override_content_type == nullptr)
-        override_content_type = tr->address.u.nfs->content_type;
+        override_content_type = request2->translate.address->u.nfs->content_type;
 
     struct growing_buffer *headers = growing_buffer_new(pool, 2048);
     header_write(headers, "cache-control", "max-age=60");
@@ -127,12 +127,9 @@ nfs_handler(struct request *request2)
 {
     struct http_server_request *const request = request2->request;
     struct pool *const pool = request->pool;
-    const TranslateResponse *const tr = request2->translate.response;
 
-    assert(tr != NULL);
-    assert(tr->address.u.nfs != NULL);
-
-    const struct nfs_address *const address = tr->address.u.nfs;
+    const struct nfs_address *const address =
+        request2->translate.address->u.nfs;
     assert(address->server != NULL);
     assert(address->export_name != NULL);
     assert(address->path != NULL);

@@ -24,7 +24,7 @@
 static void
 proxy_collect_cookies(request &request2, const struct strmap *headers)
 {
-    const TranslateResponse *tr = request2.translate.response;
+    const struct resource_address &address = *request2.translate.address;
     struct session *session;
 
     if (headers == NULL)
@@ -40,11 +40,11 @@ proxy_collect_cookies(request &request2, const struct strmap *headers)
 
     const char *host_and_port = request2.translate.response->cookie_host;
     if (host_and_port == NULL)
-        host_and_port = resource_address_host_and_port(&tr->address);
+        host_and_port = resource_address_host_and_port(&address);
     if (host_and_port == NULL)
         return;
 
-    const char *path = resource_address_uri_path(&tr->address);
+    const char *path = resource_address_uri_path(&address);
     if (path == NULL)
         return;
 
@@ -69,12 +69,12 @@ proxy_response(http_status_t status, struct strmap *headers,
     request &request2 = *(request *)ctx;
 
 #ifndef NDEBUG
-    const TranslateResponse *tr = request2.translate.response;
-    assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
-           tr->address.type == RESOURCE_ADDRESS_LHTTP ||
-           tr->address.type == RESOURCE_ADDRESS_AJP ||
-           tr->address.type == RESOURCE_ADDRESS_NFS ||
-           resource_address_is_cgi_alike(&tr->address));
+    const struct resource_address &address = *request2.translate.address;
+    assert(address.type == RESOURCE_ADDRESS_HTTP ||
+           address.type == RESOURCE_ADDRESS_LHTTP ||
+           address.type == RESOURCE_ADDRESS_AJP ||
+           address.type == RESOURCE_ADDRESS_NFS ||
+           resource_address_is_cgi_alike(&address));
 #endif
 
     proxy_collect_cookies(request2, headers);
@@ -101,31 +101,31 @@ proxy_handler(request &request2)
 {
     struct http_server_request *request = request2.request;
     const TranslateResponse *tr = request2.translate.response;
+    const struct resource_address *address = request2.translate.address;
     struct forward_request forward;
 
-    assert(tr->address.type == RESOURCE_ADDRESS_HTTP ||
-           tr->address.type == RESOURCE_ADDRESS_LHTTP ||
-           tr->address.type == RESOURCE_ADDRESS_AJP ||
-           tr->address.type == RESOURCE_ADDRESS_NFS ||
-           resource_address_is_cgi_alike(&tr->address));
+    assert(address->type == RESOURCE_ADDRESS_HTTP ||
+           address->type == RESOURCE_ADDRESS_LHTTP ||
+           address->type == RESOURCE_ADDRESS_AJP ||
+           address->type == RESOURCE_ADDRESS_NFS ||
+           resource_address_is_cgi_alike(address));
 
     const char *host_and_port = NULL, *uri_p = NULL;
-    if (tr->address.type == RESOURCE_ADDRESS_HTTP ||
-        tr->address.type == RESOURCE_ADDRESS_AJP) {
-        host_and_port = tr->address.u.http->host_and_port;
-        uri_p = tr->address.u.http->path;
-    } else if (tr->address.type == RESOURCE_ADDRESS_LHTTP) {
-        host_and_port = tr->address.u.lhttp->host_and_port;
-        uri_p = tr->address.u.lhttp->uri;
+    if (address->type == RESOURCE_ADDRESS_HTTP ||
+        address->type == RESOURCE_ADDRESS_AJP) {
+        host_and_port = address->u.http->host_and_port;
+        uri_p = address->u.http->path;
+    } else if (address->type == RESOURCE_ADDRESS_LHTTP) {
+        host_and_port = address->u.lhttp->host_and_port;
+        uri_p = address->u.lhttp->uri;
     }
 
     request_forward(&forward, &request2,
                     &tr->request_header_forward,
                     host_and_port, uri_p,
-                    tr->address.type == RESOURCE_ADDRESS_HTTP ||
-                    tr->address.type == RESOURCE_ADDRESS_LHTTP);
+                    address->type == RESOURCE_ADDRESS_HTTP ||
+                    address->type == RESOURCE_ADDRESS_LHTTP);
 
-    const struct resource_address *address = &tr->address;
     if (request2.translate.response->transparent &&
         (!strref_is_empty(&request2.uri.args) ||
          !strref_is_empty(&request2.uri.path_info)))
