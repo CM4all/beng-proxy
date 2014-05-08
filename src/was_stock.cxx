@@ -60,7 +60,7 @@ was_stock_key(struct pool *pool, const struct was_child_params *params)
         key = p_strcat(pool, key, " ", params->args[i], nullptr);
 
     char options_buffer[4096];
-    *child_options_id(params->options, options_buffer) = 0;
+    *params->options->MakeId(options_buffer) = 0;
     if (*options_buffer != 0)
         key = p_strcat(pool, key, options_buffer, nullptr);
 

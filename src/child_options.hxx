@@ -18,32 +18,16 @@ struct child_options {
     struct namespace_options ns;
 
     struct jail_params jail;
+
+    void Init() {
+        rlimit_options_init(&rlimits);
+        namespace_options_init(&ns);
+        jail_params_init(&jail);
+    }
+
+    void CopyFrom(struct pool *pool, const struct child_options *src);
+
+    char *MakeId(char *p) const;
 };
-
-static inline void
-child_options_init(struct child_options *options)
-{
-    rlimit_options_init(&options->rlimits);
-    namespace_options_init(&options->ns);
-    jail_params_init(&options->jail);
-}
-
-static inline void
-child_options_copy(struct pool *pool, struct child_options *dest,
-                   const struct child_options *src)
-{
-    rlimit_options_copy(&dest->rlimits, &src->rlimits);
-    namespace_options_copy(pool, &dest->ns, &src->ns);
-    jail_params_copy(pool, &dest->jail, &src->jail);
-}
-
-static inline char *
-child_options_id(const struct child_options *options, char *p)
-{
-    p = rlimit_options_id(&options->rlimits, p);
-    p = namespace_options_id(&options->ns, p);
-    p = jail_params_id(&options->jail, p);
-    return p;
-}
 
 #endif

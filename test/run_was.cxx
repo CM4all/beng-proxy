@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
     fb_pool_init(false);
 
     struct child_options child_options;
-    child_options_init(&child_options);
+    child_options.Init();
 
     static struct context context;
     if (!was_launch(&context.process, argv[1], nullptr, 0,

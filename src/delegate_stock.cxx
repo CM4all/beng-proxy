@@ -232,7 +232,7 @@ delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
     const char *uri = helper;
 
     char options_buffer[4096];
-    *child_options_id(options, options_buffer) = 0;
+    *options->MakeId(options_buffer) = 0;
     if (*options_buffer != 0)
         uri = p_strcat(pool, helper, "|", options_buffer, NULL);
 

@@ -208,7 +208,7 @@ test_normal(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -244,7 +244,7 @@ test_tiny(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -282,7 +282,7 @@ test_close_early(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -320,7 +320,7 @@ test_close_late(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -357,7 +357,7 @@ test_close_data(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -395,7 +395,7 @@ test_post(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_POST, &address,
             NULL, NULL, istream_file_new(pool, "Makefile", 8192),
@@ -433,7 +433,7 @@ test_status(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -471,7 +471,7 @@ test_no_content(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -507,7 +507,7 @@ test_no_length(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -541,7 +541,7 @@ test_length_ok(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -577,7 +577,7 @@ test_length_ok_large(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -611,7 +611,7 @@ test_length_too_small(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -644,7 +644,7 @@ test_length_too_big(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -678,7 +678,7 @@ test_length_too_small_late(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,
@@ -715,7 +715,7 @@ test_large_header(struct pool *pool, struct context *c)
         .document_root = "/var/www",
     };
 
-    child_options_init(&address.options);
+    address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_GET, &address,
             NULL, NULL, NULL,

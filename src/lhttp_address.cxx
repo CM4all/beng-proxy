@@ -23,7 +23,7 @@ lhttp_address_init(struct lhttp_address *address, const char *path)
     address->path = path;
     address->args.Init();
     address->env.Init();
-    child_options_init(&address->options);
+    address->options.Init();
     address->concurrency = 1;
 }
 
@@ -39,7 +39,7 @@ const char *
 lhttp_address_server_id(struct pool *pool, const struct lhttp_address *address)
 {
     char child_options_buffer[4096];
-    *child_options_id(&address->options, child_options_buffer) = 0;
+    *address->options.MakeId(child_options_buffer) = 0;
 
     const char *p = p_strcat(pool, address->path,
                              child_options_buffer,
@@ -76,7 +76,7 @@ lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
     dest->args.CopyFrom(pool, src->args);
     dest->env.CopyFrom(pool, src->env);
 
-    child_options_copy(pool, &dest->options, &src->options);
+    dest->options.CopyFrom(pool, &src->options);
 
     dest->host_and_port = p_strdup_checked(pool, src->host_and_port);
     dest->uri = p_strdup(pool, src->uri);

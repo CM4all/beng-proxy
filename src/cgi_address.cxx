@@ -23,7 +23,7 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
 
     cgi->args.Init();
     cgi->env.Init();
-    child_options_init(&cgi->options);
+    cgi->options.Init();
 
     if (have_address_list)
         address_list_init(&cgi->address_list);
@@ -60,7 +60,7 @@ const char *
 cgi_address_id(struct pool *pool, const struct cgi_address *address)
 {
     char child_options_buffer[4096];
-    *child_options_id(&address->options, child_options_buffer) = 0;
+    *address->options.MakeId(child_options_buffer) = 0;
 
     const char *p = p_strcat(pool, address->path,
                              child_options_buffer,
@@ -106,7 +106,7 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
     dest->args.CopyFrom(pool, src->args);
     dest->env.CopyFrom(pool, src->env);
 
-    child_options_copy(pool, &dest->options, &src->options);
+    dest->options.CopyFrom(pool, &src->options);
 
     dest->interpreter =
         p_strdup_checked(pool, src->interpreter);

@@ -19,7 +19,7 @@ file_address_init(struct file_address *address, const char *path)
 
     memset(address, 0, sizeof(*address));
     address->path = path;
-    child_options_init(&address->child_options);
+    address->child_options.Init();
 }
 
 struct file_address *
@@ -46,7 +46,7 @@ file_address_copy(struct pool *pool, struct file_address *dest,
 
     dest->expand_path = p_strdup_checked(pool, src->expand_path);
 
-    child_options_copy(pool, &dest->child_options, &src->child_options);
+    dest->child_options.CopyFrom(pool, &src->child_options);
 }
 
 struct file_address *
