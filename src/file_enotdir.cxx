@@ -99,8 +99,7 @@ check_file_enotdir(struct request &request,
 void
 apply_file_enotdir(struct request &request)
 {
-    if (request.translate.enotdir_path_info != nullptr &&
-        resource_address_is_cgi_alike(request.translate.address)) {
+    if (request.translate.enotdir_path_info != nullptr) {
         /* append the path_info to the resource address */
 
         auto address =
