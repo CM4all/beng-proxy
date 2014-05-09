@@ -24,16 +24,10 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
                 const struct http_response_handler *handler,
                 void *handler_ctx)
 {
-    int ret;
-    struct stat st;
-    off_t size;
-    struct istream *body;
-    struct strmap *headers;
-
     assert(path != NULL);
 
-    ret = lstat(path, &st);
-    if (ret != 0) {
+    struct stat st;
+    if (lstat(path, &st) != 0) {
         struct http_response_handler_ref handler_ref;
         http_response_handler_set(&handler_ref, handler, handler_ctx);
         http_response_handler_invoke_errno(&handler_ref, pool, errno);
@@ -49,12 +43,10 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
         return;
     }
 
-    size = st.st_size;
+    const off_t size = S_ISCHR(st.st_mode)
+        ? -1 : st.st_size;
 
-    if (S_ISCHR(st.st_mode))
-        size = -1;
-
-    body = istream_file_new(pool, path, size);
+    struct istream *body = istream_file_new(pool, path, size);
     if (body == NULL) {
         struct http_response_handler_ref handler_ref;
         http_response_handler_set(&handler_ref, handler, handler_ctx);
@@ -62,7 +54,7 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
         return;
     }
 
-    headers = strmap_new(pool, 16);
+    struct strmap *headers = strmap_new(pool, 16);
     static_response_headers(pool, headers,
                             istream_file_fd(body), &st,
                             content_type);
