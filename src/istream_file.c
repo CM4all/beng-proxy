@@ -11,8 +11,6 @@
 #include "gerrno.h"
 #include "fb_pool.h"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -385,24 +383,23 @@ istream_file_fd_new(struct pool *pool, const char *path,
 }
 
 struct istream *
-istream_file_stat_new(struct pool *pool, const char *path, struct stat *st)
+istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
+                      GError **error_r)
 {
     assert(path != NULL);
     assert(st != NULL);
 
     int fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
     if (fd < 0) {
-        daemon_log(1, "failed to open '%s': %s\n",
-                   path, strerror(errno));
+        set_error_errno(error_r);
+        g_prefix_error(error_r, "Failed to open %s: ", path);
         return NULL;
     }
 
     if (fstat(fd, st) < 0) {
-        int save_errno = errno;
-        daemon_log(1, "failed to stat '%s': %s\n",
-                   path, strerror(errno));
+        set_error_errno(error_r);
+        g_prefix_error(error_r, "Failed to stat %s: ", path);
         close(fd);
-        errno = save_errno;
         return NULL;
     }
 
@@ -418,14 +415,15 @@ istream_file_stat_new(struct pool *pool, const char *path, struct stat *st)
 }
 
 struct istream *
-istream_file_new(struct pool *pool, const char *path, off_t length)
+istream_file_new(struct pool *pool, const char *path, off_t length,
+                 GError **error_r)
 {
     assert(length >= -1);
 
     int fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
     if (fd < 0) {
-        daemon_log(1, "failed to open '%s': %s\n",
-                   path, strerror(errno));
+        set_error_errno(error_r);
+        g_prefix_error(error_r, "Failed to open %s: ", path);
         return NULL;
     }
 

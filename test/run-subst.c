@@ -76,7 +76,9 @@ int main(int argc, char **argv) {
 
     pool = pool_new_linear(root_pool, "test", 8192);
 
-    istream = istream_subst_new(pool, istream_file_new(pool, "/dev/stdin", (off_t)-1));
+    istream = istream_subst_new(pool,
+                                istream_file_new(pool, "/dev/stdin", (off_t)-1,
+                                                 NULL));
 
     for (i = 1; i <= argc - 2; i += 2) {
         istream_subst_add(istream, argv[i], argv[i + 1]);

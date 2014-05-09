@@ -163,7 +163,8 @@ int main(int argc, char **argv) {
 
     struct istream *result =
         processor_process(pool,
-                          istream_file_new(pool, "/dev/stdin", (off_t)-1),
+                          istream_file_new(pool, "/dev/stdin", (off_t)-1,
+                                           NULL),
                           &widget, &env, PROCESSOR_CONTAINER);
     istream_handler_set(result, &my_istream_handler, nullptr, 0);
 

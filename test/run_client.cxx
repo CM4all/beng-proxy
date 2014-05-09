@@ -400,7 +400,14 @@ main(int argc, char **argv)
         }
 
         ctx.method = HTTP_METHOD_POST;
-        ctx.request_body = istream_file_new(pool, argv[2], st.st_size);
+
+        GError *error = nullptr;
+        ctx.request_body = istream_file_new(pool, argv[2], st.st_size, &error);
+        if (ctx.request_body == nullptr) {
+            fprintf(stderr, "%s\n", error->message);
+            g_error_free(error);
+            return EXIT_FAILURE;
+        }
     } else {
         ctx.method = HTTP_METHOD_GET;
         ctx.request_body = nullptr;

@@ -398,7 +398,7 @@ test_post(struct pool *pool, struct context *c)
     address.options.Init();
 
     cgi_new(pool, HTTP_METHOD_POST, &address,
-            NULL, NULL, istream_file_new(pool, "Makefile", 8192),
+            NULL, NULL, istream_file_new(pool, "Makefile", 8192, NULL),
             &my_response_handler, c,
             &c->async_ref);
 

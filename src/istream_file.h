@@ -11,6 +11,8 @@
 
 #include <inline/compiler.h>
 
+#include <glib.h>
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -30,10 +32,12 @@ istream_file_fd_new(struct pool *pool, const char *path,
  * Opens a file and stats it.
  */
 struct istream *
-istream_file_stat_new(struct pool *pool, const char *path, struct stat *st);
+istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
+                      GError **error_r);
 
 struct istream * gcc_malloc
-istream_file_new(struct pool *pool, const char *path, off_t length);
+istream_file_new(struct pool *pool, const char *path, off_t length,
+                 GError **error_r);
 
 int
 istream_file_fd(struct istream * istream);

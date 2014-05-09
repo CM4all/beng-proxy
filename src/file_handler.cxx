@@ -121,7 +121,7 @@ file_dispatch_compressed(struct request *request2, const struct stat *st,
 
     /* open compressed file */
 
-    compressed_body = istream_file_stat_new(request->pool, path, &st2);
+    compressed_body = istream_file_stat_new(request->pool, path, &st2, NULL);
     if (compressed_body == nullptr)
         return false;
 
@@ -189,16 +189,10 @@ file_callback(struct request *request2)
 
     /* open the file */
 
-    body = istream_file_stat_new(request->pool, path, &st);
+    GError *error = nullptr;
+    body = istream_file_stat_new(request->pool, path, &st, &error);
     if (body == nullptr) {
-        if (errno == ENOENT) {
-            response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
-                                      "The requested file does not exist.");
-        } else {
-            response_dispatch_message(request2,
-                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                      "Internal server error");
-        }
+        response_dispatch_error(request2, error);
         return;
     }
 

@@ -46,11 +46,10 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
     const off_t size = S_ISCHR(st.st_mode)
         ? -1 : st.st_size;
 
-    struct istream *body = istream_file_new(pool, path, size);
+    GError *error = NULL;
+    struct istream *body = istream_file_new(pool, path, size, &error);
     if (body == NULL) {
-        struct http_response_handler_ref handler_ref;
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_errno(&handler_ref, pool, errno);
+        http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 

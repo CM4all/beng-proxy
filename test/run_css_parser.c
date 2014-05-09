@@ -100,7 +100,8 @@ int main(int argc, char **argv) {
     struct pool *root_pool = pool_new_libc(NULL, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
-    struct istream *istream = istream_file_new(pool, "/dev/stdin", (off_t)-1);
+    struct istream *istream = istream_file_new(pool, "/dev/stdin", (off_t)-1,
+                                               NULL);
     struct css_parser *parser =
         css_parser_new(pool, istream, false, &my_parser_handler, NULL);
 
