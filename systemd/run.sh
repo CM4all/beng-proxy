@@ -33,6 +33,10 @@ if test -n "$SESSION_SAVE_PATH"; then
     OPTIONS="$OPTIONS --set session_save_path=$SESSION_SAVE_PATH"
 fi
 
+if test -n "$VERBOSE_RESPONSE"; then
+    OPTIONS="$OPTIONS --set verbose_response=$VERBOSE_RESPONSE"
+fi
+
 install -d -m 0711 $RUNDIR
 exec /usr/sbin/cm4all-beng-proxy \
     --no-daemon \

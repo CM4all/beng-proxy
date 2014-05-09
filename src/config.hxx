@@ -92,6 +92,8 @@ struct config {
      * Dump widget trees to the log file?
      */
     bool dump_widget_tree;
+
+    bool verbose_response;
 };
 
 void

@@ -35,6 +35,9 @@
 # Path of the persistent session file
 #SESSION_SAVE_PATH=
 
+# Reveal internal error messages in HTTP responses?
+#VERBOSE_RESPONSE=yes
+
 # Other options
 #OPTIONS="-v"
 

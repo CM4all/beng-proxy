@@ -176,6 +176,7 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
     static const char translate_cache_size[] = "translate_cache_size";
     static const char stopwatch[] = "stopwatch";
     static const char dump_widget_tree[] = "dump_widget_tree";
+    static const char verbose_response[] = "verbose_response";
 #ifndef NDEBUG
     static const char args_escape_char[] = "args_escape_char";
 #endif
@@ -277,6 +278,13 @@ handle_set2(struct config *config, struct pool *pool, const char *argv0,
             config->dump_widget_tree = true;
         else if (strcmp(value, "no") != 0)
             arg_error(argv0, "Invalid value for dump_widget_tree");
+    } else if (name_length == sizeof(verbose_response) - 1 &&
+               memcmp(name, verbose_response,
+                      sizeof(verbose_response) - 1) == 0) {
+        if (strcmp(value, "yes") == 0)
+            config->verbose_response = true;
+        else if (strcmp(value, "no") != 0)
+            arg_error(argv0, "Invalid value for verbose_response");
 #ifndef NDEBUG
     } else if (name_length == sizeof(args_escape_char) - 1 &&
                memcmp(name, args_escape_char,
