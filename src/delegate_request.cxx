@@ -14,6 +14,7 @@
 #include "strmap.h"
 #include "istream.h"
 #include "istream_file.h"
+#include "gerrno.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,9 +40,9 @@ delegate_get_callback(int fd, void *ctx)
 
     struct stat st;
     if (fstat(fd, &st) < 0) {
-        int error = errno;
-        close(fd);
-        http_response_handler_invoke_errno(&get->handler, get->pool, error);
+        GError *error = new_error_errno();
+        g_prefix_error(&error, "Failed to stat %s: ", get->path);
+        http_response_handler_invoke_abort(&get->handler, error);
         return;
     }
 

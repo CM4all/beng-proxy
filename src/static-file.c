@@ -7,7 +7,7 @@
 #include "static-file.h"
 #include "static-headers.h"
 #include "http_response.h"
-#include "http_error.h"
+#include "gerrno.h"
 #include "strmap.h"
 #include "istream.h"
 #include "istream_file.h"
@@ -17,7 +17,6 @@
 
 #include <assert.h>
 #include <sys/stat.h>
-#include <errno.h>
 
 void
 static_file_get(struct pool *pool, const char *path, const char *content_type,
@@ -28,9 +27,9 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
 
     struct stat st;
     if (lstat(path, &st) != 0) {
-        struct http_response_handler_ref handler_ref;
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_errno(&handler_ref, pool, errno);
+        GError *error = new_error_errno();
+        g_prefix_error(&error, "Failed to open %s: ", path);
+        http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
 
