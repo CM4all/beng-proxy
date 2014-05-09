@@ -11,7 +11,6 @@
 #include "static-headers.h"
 #include "delegate_glue.hxx"
 #include "delegate_client.hxx"
-#include "http_error.h"
 #include "generate_response.hxx"
 #include "request.hxx"
 #include "http_server.hxx"

@@ -5,7 +5,6 @@
  */
 
 #include "http_body.hxx"
-#include "http_error.h"
 #include "istream-internal.h"
 #include "filtered_socket.hxx"
 
@@ -132,7 +131,7 @@ http_body_socket_eof(struct http_body_reader *body, size_t remaining)
     } else {
         /* something has gone wrong: either not enough or too much
            data left in the buffer */
-        GError *error = g_error_new_literal(http_quark(), 0,
+        GError *error = g_error_new_literal(buffered_socket_quark(), 0,
                                             "premature end of socket");
         istream_deinit_abort(&body->output, error);
         return false;

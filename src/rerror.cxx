@@ -13,7 +13,6 @@
 #include "fcgi_quark.h"
 #include "was_quark.h"
 #include "widget-quark.h"
-#include "http_error.h"
 #include "http_response.h"
 #include "http_server.hxx"
 #include "http_quark.h"
@@ -89,10 +88,17 @@ response_dispatch_error(struct request *request, GError *error)
         response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,
                                   "Script failed");
     else if (error->domain == errno_quark()) {
-        struct http_response_handler_ref ref;
-        http_response_handler_set(&ref, &response_handler, request);
-        http_response_handler_invoke_errno(&ref, request->request->pool,
-                                           error->code);
+        switch (error->code) {
+        case ENOENT:
+        case ENOTDIR:
+            response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
+                                      "The requested file does not exist.");
+            break;
+
+        default:
+            response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                      "Internal server error");
+        }
     } else if (error->domain == memcached_client_quark())
         response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Cache server failed");
