@@ -193,6 +193,7 @@ file_callback(struct request *request2)
     body = istream_file_stat_new(request->pool, path, &st, &error);
     if (body == nullptr) {
         response_dispatch_error(request2, error);
+        g_error_free(error);
         return;
     }
 
