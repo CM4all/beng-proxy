@@ -741,8 +741,9 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
     auto item = NewFromPool<TranslateCacheItem>(pool);
     unsigned max_age = response->max_age;
 
-    if (max_age > 300)
-        max_age = 300;
+    if (max_age > 86400)
+        /* limit to one day */
+        max_age = 86400;
 
     cache_item_init_relative(&item->item, max_age, 1);
     item->pool = pool;
