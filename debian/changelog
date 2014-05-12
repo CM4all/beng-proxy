@@ -4,6 +4,7 @@ cm4all-beng-proxy (4.0.40) unstable; urgency=low
   * rerror: add option "verbose_response"
   * translation: rename LHTTP_EXPAND_URI to EXPAND_LHTTP_URI
   * tcache: raise MAX_AGE limit to one day
+  * ajp_client: fix header corruption
   * python/translation/response: add method expand_pair()
 
  --   
