@@ -472,7 +472,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_global.cxx \
 	src/lb_cmdline.hxx \
 	src/lb_cmdline.cxx \
-	src/lb_stats.c src/lb_stats.hxx \
+	src/lb_stats.cxx src/lb_stats.hxx \
 	src/lb_control.hxx \
 	src/lb_control.cxx \
 	src/lb_listener.hxx \
@@ -482,8 +482,8 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_log.h src/lb_log.cxx \
 	src/lb_http.hxx \
 	src/lb_http.cxx \
-	src/lb_jvm_route.c src/lb_jvm_route.hxx \
-	src/lb_headers.c src/lb_headers.hxx \
+	src/lb_jvm_route.cxx src/lb_jvm_route.hxx \
+	src/lb_headers.cxx src/lb_headers.hxx \
 	src/lb_tcp.hxx \
 	src/lb_tcp.cxx \
 	src/lb_session.hxx \
