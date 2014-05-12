@@ -174,6 +174,13 @@ class Response:
         assert name.find('=') < 0
         return self.packet(TRANSLATE_PAIR, name + '=' + value)
 
+    def expand_pair(self, name, value):
+        assert isinstance(name, str)
+        assert isinstance(value, str)
+        assert len(name) > 0
+        assert name.find('=') < 0
+        return self.packet(TRANSLATE_EXPAND_PAIR, name + '=' + value)
+
     def content_type(self, content_type):
         assert isinstance(content_type, str)
         assert content_type.find('/') > 0
