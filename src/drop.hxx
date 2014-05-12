@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_DROP_H
-#define BENG_PROXY_DROP_H
+#ifndef BENG_PROXY_DROP_HXX
+#define BENG_PROXY_DROP_HXX
 
 struct instance;
 

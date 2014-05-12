@@ -12,7 +12,7 @@
 #include "lb_tcp.hxx"
 #include "strmap.h"
 #include "http_server.hxx"
-#include "drop.h"
+#include "drop.hxx"
 #include "ssl_filter.hxx"
 #include "pool.h"
 #include "thread_socket_filter.hxx"

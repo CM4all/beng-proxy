@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "drop.h"
+#include "drop.hxx"
 #include "connection.h"
 #include "bp_instance.hxx"
 #include "http_server.hxx"

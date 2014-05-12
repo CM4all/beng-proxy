@@ -129,7 +129,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/dhashmap.h \
 	src/direct.c src/direct.h \
 	src/dpool.c src/dpool.h \
-	src/drop.c src/drop.h \
+	src/drop.cxx src/drop.hxx \
 	src/expansible-buffer.c src/expansible-buffer.h \
 	src/expiry.h \
 	src/failure.c src/failure.h \

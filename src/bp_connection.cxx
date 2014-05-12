@@ -10,7 +10,7 @@
 #include "http_server.hxx"
 #include "handler.hxx"
 #include "access-log.h"
-#include "drop.h"
+#include "drop.hxx"
 #include "clock.h"
 #include "listener.h"
 #include "gerrno.h"
