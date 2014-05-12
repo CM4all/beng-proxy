@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nfs_handler.h"
+#include "nfs_handler.hxx"
 #include "nfs_cache.h"
 #include "nfs_address.h"
 #include "file_headers.hxx"

@@ -13,7 +13,7 @@
 #include "file_handler.hxx"
 #include "file_address.hxx"
 #include "nfs_address.h"
-#include "nfs_handler.h"
+#include "nfs_handler.hxx"
 #include "request.hxx"
 #include "connection.h"
 #include "args.h"
