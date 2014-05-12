@@ -2771,19 +2771,19 @@ translate_handle_packet(TranslateClient *client,
         client->lhttp_address->uri = payload;
         return true;
 
-    case TRANSLATE_LHTTP_EXPAND_URI:
+    case TRANSLATE_EXPAND_LHTTP_URI:
         if (client->lhttp_address == nullptr ||
             client->lhttp_address->uri == nullptr ||
             client->lhttp_address->expand_uri != nullptr ||
             client->response.regex == nullptr) {
             translate_client_error(client,
-                                   "misplaced LHTTP_EXPAND_URI packet");
+                                   "misplaced EXPAND_LHTTP_URI packet");
             return false;
         }
 
         if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client,
-                                   "malformed LHTTP_EXPAND_URI packet");
+                                   "malformed EXPAND_LHTTP_URI packet");
             return false;
         }
 

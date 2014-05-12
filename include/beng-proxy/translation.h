@@ -333,7 +333,7 @@ enum beng_translation_command {
      * #TRANSLATE_LHTTP_URI value.  Sub-strings in the form "\1" will
      * be replaced.
      */
-    TRANSLATE_LHTTP_EXPAND_URI = 99,
+    TRANSLATE_EXPAND_LHTTP_URI = 99,
 
     /**
      * The "Host" request header for the #TRANSLATE_LHTTP_PATH.
