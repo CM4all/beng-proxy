@@ -68,6 +68,10 @@ deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
                 continue;
             }
         } else {
+            if (length >= input->length || input->data[length] != 0)
+                /* buffer overflow */
+                break;
+
             name = input->data;
             strref_skip(input, length + 1);
         }
@@ -105,6 +109,10 @@ deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
                 continue;
             }
         } else {
+            if (length >= input->length || input->data[length] != 0)
+                /* buffer overflow */
+                break;
+
             name = input->data;
             strref_skip(input, length + 1);
         }
