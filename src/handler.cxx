@@ -402,25 +402,13 @@ do_content_type_lookup(request &request, const TranslateResponse &response)
 static void
 handle_translated_request(request &request, const TranslateResponse &response)
 {
-    /* copy the TranslateResponse just in case the cache item is
-       freed before we send the final response */
-    /* TODO: use cache_item_lock() instead */
-    auto response2 = NewFromPool<TranslateResponse>(request.request->pool);
-    *response2 = response;
-    response2->CopyFrom(request.request->pool, response);
-
-    /* copy TRANSLATE_SESSION because TranslateResponse::CopyFrom()
-       clears it */
-    response2->session = DupBuffer(request.request->pool, response.session);
-    response2->user = p_strdup_checked(request.request->pool, response.user);
-
-    request.translate.response = response2;
-    request.translate.address = &response2->address;
+    request.translate.response = &response;
+    request.translate.address = &response.address;
 
     apply_file_enotdir(request);
 
-    if (!do_content_type_lookup(request, *response2))
-        handle_translated_request2(request, *response2);
+    if (!do_content_type_lookup(request, response))
+        handle_translated_request2(request, response);
 }
 
 /**
