@@ -5,7 +5,7 @@
  */
 
 #include "drop.hxx"
-#include "connection.h"
+#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_server.hxx"
 

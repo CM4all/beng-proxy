@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "connection.h"
+#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "strmap.h"
 #include "http_server.hxx"

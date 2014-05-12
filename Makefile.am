@@ -116,7 +116,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/child_stock.c src/child_stock.h \
 	src/client-socket.c src/client-socket.h \
 	src/config.hxx \
-	src/bp_connection.cxx src/connection.h \
+	src/bp_connection.cxx src/bp_connection.hxx \
 	src/dchunk.h \
 	src/defer.c src/defer.h \
 	src/defer_event.h \

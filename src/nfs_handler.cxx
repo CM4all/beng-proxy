@@ -14,7 +14,7 @@
 #include "generate_response.hxx"
 #include "growing-buffer.h"
 #include "request.hxx"
-#include "connection.h"
+#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_server.hxx"
 

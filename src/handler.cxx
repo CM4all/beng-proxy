@@ -6,6 +6,7 @@
 
 #include "handler.hxx"
 #include "config.hxx"
+#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "file_not_found.hxx"
 #include "file_enotdir.hxx"
@@ -15,7 +16,6 @@
 #include "nfs_address.h"
 #include "nfs_handler.hxx"
 #include "request.hxx"
-#include "connection.h"
 #include "args.h"
 #include "session.hxx"
 #include "tcache.hxx"

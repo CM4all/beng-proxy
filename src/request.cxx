@@ -6,7 +6,7 @@
  */
 
 #include "request.hxx"
-#include "connection.h"
+#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "session.hxx"
 #include "session_manager.hxx"

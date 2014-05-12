@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_CONNECTION_H
-#define __BENG_CONNECTION_H
+#ifndef BENG_PROXY_CONNECTION_HXX
+#define BENG_PROXY_CONNECTION_HXX
 
 #include "pool.h"
 

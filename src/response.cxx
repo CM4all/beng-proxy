@@ -24,7 +24,7 @@
 #include "hostname.h"
 #include "dhashmap.h"
 #include "errdoc.hxx"
-#include "connection.h"
+#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "strmap.h"
 #include "pheaders.hxx"

@@ -8,7 +8,7 @@
 #include "http_server.hxx"
 #include "pool.h"
 #include "bp_instance.hxx"
-#include "connection.h"
+#include "bp_connection.hxx"
 #include "session_manager.hxx"
 #include "child_manager.h"
 #include "listener.h"

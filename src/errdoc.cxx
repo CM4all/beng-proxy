@@ -6,7 +6,7 @@
 
 #include "errdoc.hxx"
 #include "request.hxx"
-#include "connection.h"
+#include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_server.hxx"
 #include "http_response.h"
