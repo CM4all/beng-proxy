@@ -1036,11 +1036,11 @@ test_t_istream_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_sink_header_SOURCES = test/t_sink_header.c \
+test_t_sink_header_SOURCES = test/t_sink_header.cxx \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_sink_header_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_sink_header_empty_SOURCES = test/t_sink_header_empty.c \
+test_t_sink_header_empty_SOURCES = test/t_sink_header_empty.cxx \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_sink_header_empty_LDADD = $(T_ISTREAM_FILTER_LIB)
 
@@ -1594,7 +1594,7 @@ test_t_fcgi_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_ajp_client_SOURCES = test/t_ajp_client.c \
+test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	src/t_client.hxx src/tio.hxx \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
 	src/ajp_headers.cxx src/ajp-protocol.c \
