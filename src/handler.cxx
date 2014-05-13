@@ -608,6 +608,9 @@ handler_translate_response(const TranslateResponse *response,
     /* the CHECK is done by now; don't carry the CHECK value on to
        further translation requests */
     request.translate.request.check = nullptr;
+    /* also reset the counter so we don't trigger the endless
+       recursion detection by the ENOTDIR chain */
+    request.translate.n_checks = 0;
 
     if (response->previous) {
         if (request.translate.previous == nullptr) {
