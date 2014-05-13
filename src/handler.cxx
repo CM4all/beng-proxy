@@ -600,6 +600,10 @@ handler_translate_response(const TranslateResponse *response,
         return;
     }
 
+    /* the CHECK is done by now; don't carry the CHECK value on to
+       further translation requests */
+    request.translate.request.check = nullptr;
+
     if (response->previous) {
         if (request.translate.previous == nullptr) {
             daemon_log(2, "no previous translation response\n");
