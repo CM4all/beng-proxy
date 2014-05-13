@@ -296,8 +296,8 @@ tcache_request_key(struct pool *pool, const TranslateRequest *request)
         ? tcache_uri_key(pool, request->uri, request->host,
                          request->error_document_status,
                          request->check, request->want_full_uri,
-                         request->file_not_found,
                          request->directory_index,
+                         request->file_not_found,
                          !request->want.IsEmpty())
         : request->widget_type;
 }
@@ -409,8 +409,8 @@ tcache_store_response(struct pool *pool, TranslateResponse *dest,
         ? tcache_uri_key(pool, dest->base, request->host,
                          request->error_document_status,
                          request->check, request->want_full_uri,
-                         request->file_not_found,
                          request->directory_index,
+                         request->file_not_found,
                          !request->want.IsEmpty())
         /* no BASE, cache key unmodified */
         : nullptr;
