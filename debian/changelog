@@ -2,6 +2,7 @@ cm4all-beng-proxy (4.0.41) unstable; urgency=low
 
   * handler: forget CHECK after the check has completed
   * handler: apply SESSION before repeating translation
+  * fcgi, lhttp, delegate: apply STDERR_PATH to stdout
 
  --   
 

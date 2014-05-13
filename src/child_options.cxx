@@ -35,7 +35,7 @@ child_options::MakeId(char *p) const
 }
 
 void
-child_options::SetupStderr() const
+child_options::SetupStderr(bool stdout) const
 {
     if (stderr_path == nullptr)
         return;
@@ -50,5 +50,9 @@ child_options::SetupStderr() const
 
     if (fd != 2)
         dup2(fd, 2);
+
+    if (stdout && fd != 1)
+        dup2(fd, 1);
+
     close(fd);
 }

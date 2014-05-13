@@ -87,7 +87,7 @@ delegate_stock_fn(void *ctx)
     install_default_signal_handlers();
     leave_signal_section(&info->signals);
 
-    info->options->SetupStderr();
+    info->options->SetupStderr(true);
 
     namespace_options_setup(&info->options->ns);
     rlimit_options_apply(&info->options->rlimits);
