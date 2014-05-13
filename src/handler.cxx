@@ -586,6 +586,11 @@ handler_translate_response(const TranslateResponse *response,
 {
     struct request &request = *(struct request *)ctx;
 
+    if (!response->session.IsNull())
+        /* must apply SESSION early so it gets used by
+           repeat_translation() */
+        request.translate.request.session = response->session;
+
     if (response->protocol_version > translation_protocol_version)
         translation_protocol_version = response->protocol_version;
 
