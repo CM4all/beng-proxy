@@ -75,8 +75,7 @@ http_next_value(struct pool *pool, struct strref *input, struct strref *value);
 
 void
 http_next_name_value(struct pool *pool, struct strref *input,
-                     struct strref *name, struct strref *value,
-                     bool rfc_ignorant);
+                     struct strref *name, struct strref *value);
 
 gcc_pure
 static inline bool

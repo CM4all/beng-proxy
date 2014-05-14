@@ -105,7 +105,7 @@ parse_next_cookie(struct dpool *pool, struct strref *input)
     while (!strref_is_empty(input) && input->data[0] == ';') {
         strref_skip(input, 1);
 
-        http_next_name_value(tpool, input, &name, &value, false);
+        http_next_name_value(tpool, input, &name, &value);
         if (strref_lower_cmp_literal(&name, "domain") == 0)
             cookie->domain = strref_dup_d(pool, &value);
         else if (strref_lower_cmp_literal(&name, "path") == 0)
