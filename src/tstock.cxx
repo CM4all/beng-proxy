@@ -22,6 +22,8 @@ struct tstock {
 
     struct sockaddr_un address;
     socklen_t address_size;
+
+    const char *address_string;
 };
 
 struct tstock_request {
@@ -116,6 +118,8 @@ tstock_new(struct pool *pool, struct hstock *tcp_stock, const char *socket_path)
     if (socket_path[0] == '@')
         stock->address.sun_path[0] = 0;
 
+    stock->address_string = socket_path;
+
     return stock;
 }
 
@@ -134,7 +138,7 @@ tstock_translate(struct tstock *stock, struct pool *pool,
     r->handler_ctx = ctx;
     r->async_ref = async_ref;
 
-    tcp_stock_get(stock->tcp_stock, pool, stock->address.sun_path,
+    tcp_stock_get(stock->tcp_stock, pool, stock->address_string,
                   false, nullptr, 0,
                   (const struct sockaddr *)&stock->address,
                   stock->address_size,
