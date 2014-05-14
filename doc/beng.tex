@@ -1315,6 +1315,13 @@ CGI. \\
 
 \hline
 
+\verb|COOKIE_PATH| & Override the cookie's \texttt{Path} attribute.
+This is sent to the client when \emph{beng-proxy} generates a new
+session cookie.  Be careful with overlapping locations that create
+conflicting cookies. \\
+
+\hline
+
 \verb|VALIDATE_MTIME| & A cached response is valid only if the file
 specified in this packet is not modified.
 The first 8 bytes is the mtime (seconds since UNIX epoch), the rest is

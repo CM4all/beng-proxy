@@ -469,8 +469,14 @@ response_generate_set_cookie(request &request2,
         growing_buffer_write_string(headers,
                                     session_id_format(request2.session_id,
                                                       &request2.session_id_string));
-        growing_buffer_write_string(headers,
-                                    "; HttpOnly; Path=/; Version=1");
+        growing_buffer_write_string(headers, "; HttpOnly; Path=");
+
+        const char *cookie_path = request2.translate.response->cookie_path;
+        if (cookie_path == nullptr)
+            cookie_path = "/";
+
+        growing_buffer_write_string(headers, cookie_path);
+        growing_buffer_write_string(headers, "; Version=1");
 
         if (request2.translate.response->secure_cookie)
             growing_buffer_write_string(headers, "; Secure");
@@ -502,9 +508,14 @@ response_generate_set_cookie(request &request2,
         /* delete the cookie for the discarded session */
         header_write_begin(headers, "set-cookie");
         growing_buffer_write_string(headers, request2.session_cookie);
-        growing_buffer_write_string(headers,
-                                    "=; HttpOnly; Path=/; Version=1"
-                                    "; Max-Age=0");
+        growing_buffer_write_string(headers, "=; HttpOnly; Path=");
+
+        const char *cookie_path = request2.translate.response->cookie_path;
+        if (cookie_path == nullptr)
+            cookie_path = "/";
+
+        growing_buffer_write_string(headers, cookie_path);
+        growing_buffer_write_string(headers, "; Version=1; Max-Age=0");
 
         if (request2.translate.response->cookie_domain != nullptr) {
             growing_buffer_write_string(headers, "; Domain=\"");

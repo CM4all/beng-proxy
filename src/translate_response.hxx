@@ -142,6 +142,7 @@ struct TranslateResponse {
 
     const char *cookie_domain;
     const char *cookie_host;
+    const char *cookie_path;
 
     struct strmap *headers;
 

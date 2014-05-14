@@ -512,6 +512,11 @@ enum beng_translation_command {
      * An absolute path where STDERR output will be appended.
      */
     TRANSLATE_STDERR_PATH = 131,
+
+    /**
+     * Set the session cookie's "Path" attribute.
+     */
+    TRANSLATE_COOKIE_PATH = 132,
 };
 
 struct beng_translation_header {

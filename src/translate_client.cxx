@@ -2594,6 +2594,22 @@ translate_handle_packet(TranslateClient *client,
         client->response.cookie_host = payload;
         return true;
 
+    case TRANSLATE_COOKIE_PATH:
+        if (client->response.cookie_path != nullptr) {
+            translate_client_error(client,
+                                   "misplaced COOKIE_PATH packet");
+            return false;
+        }
+
+        if (*payload != '/' || has_null_byte(payload, payload_length)) {
+            translate_client_error(client,
+                                   "malformed COOKIE_PATH packet");
+            return false;
+        }
+
+        client->response.cookie_path = payload;
+        return true;
+
     case TRANSLATE_PROCESS_CSS:
         transformation = translate_add_transformation(client);
         transformation->type = transformation::TRANSFORMATION_PROCESS_CSS;
