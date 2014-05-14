@@ -8,7 +8,7 @@
 #include "lb_config.hxx"
 #include "strmap.h"
 #include "tpool.h"
-#include "cookie_server.h"
+#include "cookie_server.hxx"
 
 #include <assert.h>
 #include <string.h>

@@ -1,5 +1,5 @@
-#include "cookie_client.h"
-#include "cookie_jar.h"
+#include "cookie_client.hxx"
+#include "cookie_jar.hxx"
 #include "header-writer.h"
 #include "tpool.h"
 #include "shm.h"
@@ -19,7 +19,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     struct cookie_jar *jar;
     struct strmap *headers;
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
     shm = shm_new(1024, 512);
@@ -31,29 +31,29 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* empty cookie jar */
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
-    assert(strmap_get(headers, "cookie") == NULL);
-    assert(strmap_get(headers, "cookie2") == NULL);
+    assert(strmap_get(headers, "cookie") == nullptr);
+    assert(strmap_get(headers, "cookie2") == nullptr);
 
     /* wrong domain */
-    cookie_jar_set_cookie2(jar, "a=b", "other.domain", NULL);
+    cookie_jar_set_cookie2(jar, "a=b", "other.domain", nullptr);
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
-    assert(strmap_get(headers, "cookie") == NULL);
-    assert(strmap_get(headers, "cookie2") == NULL);
+    assert(strmap_get(headers, "cookie") == nullptr);
+    assert(strmap_get(headers, "cookie2") == nullptr);
 
     /* correct domain */
-    cookie_jar_set_cookie2(jar, "a=b", "foo.bar", NULL);
+    cookie_jar_set_cookie2(jar, "a=b", "foo.bar", nullptr);
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
     assert(strcmp(strmap_get(headers, "cookie"), "a=b") == 0);
 
     /* another cookie */
     headers = strmap_new(pool, 4);
-    cookie_jar_set_cookie2(jar, "c=d", "foo.bar", NULL);
+    cookie_jar_set_cookie2(jar, "c=d", "foo.bar", nullptr);
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
     assert(strcmp(strmap_get(headers, "cookie"), "c=d; a=b") == 0);
 
     /* delete a cookie */
     headers = strmap_new(pool, 4);
-    cookie_jar_set_cookie2(jar, "c=xyz;max-age=0", "foo.bar", NULL);
+    cookie_jar_set_cookie2(jar, "c=xyz;max-age=0", "foo.bar", nullptr);
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
     assert(strcmp(strmap_get(headers, "cookie"), "a=b") == 0);
 
@@ -67,8 +67,8 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     headers = strmap_new(pool, 4);
     cookie_jar_set_cookie2(jar, "a=b;path=\"/foo\"", "foo.bar", "/bar/x");
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);
-    assert(strmap_get(headers, "cookie") == NULL);
-    assert(strmap_get(headers, "cookie2") == NULL);
+    assert(strmap_get(headers, "cookie") == nullptr);
+    assert(strmap_get(headers, "cookie2") == nullptr);
 
     /* correct path */
     headers = strmap_new(pool, 4);
@@ -88,8 +88,8 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     cookie_jar_set_cookie2(jar, "a=b;path=\"/bar\";max-age=0",
                            "foo.bar", "/bar/x");
     cookie_jar_http_header(jar, "foo.bar", "/bar", headers, pool);
-    assert(strmap_get(headers, "cookie") == NULL);
-    assert(strmap_get(headers, "cookie2") == NULL);
+    assert(strmap_get(headers, "cookie") == nullptr);
+    assert(strmap_get(headers, "cookie2") == nullptr);
 
     dpool_destroy(dpool);
     shm_close(shm);

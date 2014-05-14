@@ -1,5 +1,5 @@
-#include "cookie_client.h"
-#include "cookie_jar.h"
+#include "cookie_client.hxx"
+#include "cookie_jar.hxx"
 #include "header-writer.h"
 #include "tpool.h"
 #include "shm.h"
@@ -13,7 +13,7 @@
 #include <string.h>
 
 int main(int argc, char **argv) {
-    struct pool *pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
     struct shm *shm = shm_new(1024, 512);
@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
     struct cookie_jar *jar = cookie_jar_new(dpool);
 
     for (int i = 1; i < argc; ++i)
-        cookie_jar_set_cookie2(jar, argv[i], "foo.bar", NULL);
+        cookie_jar_set_cookie2(jar, argv[i], "foo.bar", nullptr);
 
     struct strmap *headers = strmap_new(pool, 4);
     cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 
     const void *data;
     size_t length;
-    while ((data = growing_buffer_reader_read(&reader, &length)) != NULL) {
+    while ((data = growing_buffer_reader_read(&reader, &length)) != nullptr) {
         ssize_t nbytes = write(1, data, length);
         if (nbytes < 0) {
             perror("write() failed");

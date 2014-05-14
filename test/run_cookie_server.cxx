@@ -1,4 +1,4 @@
-#include "cookie_server.h"
+#include "cookie_server.hxx"
 #include "strmap.h"
 #include "pool.h"
 
@@ -12,14 +12,14 @@ int main(int argc, char **argv) {
     struct strmap *cookies;
     const struct strmap_pair *pair;
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     cookies = strmap_new(pool, 17);
     for (int i = 1; i < argc; ++i)
         cookie_map_parse(cookies, argv[i], pool);
 
     strmap_rewind(cookies);
-    while ((pair = strmap_next(cookies)) != NULL)
+    while ((pair = strmap_next(cookies)) != nullptr)
         printf("%s=%s\n", pair->key, pair->value);
 
     pool_unref(pool);

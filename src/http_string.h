@@ -65,6 +65,10 @@ char_is_http_token(char ch)
         !char_is_http_separator(ch);
 }
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 http_next_token(struct strref *input, struct strref *value);
 
@@ -94,5 +98,9 @@ http_must_quote_token(const struct strref *src)
 
 size_t
 http_quote_string(char *dest, const struct strref *src);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

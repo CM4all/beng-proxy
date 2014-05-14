@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cookie_server.h"
+#include "cookie_server.hxx"
 #include "strref2.h"
 #include "strref-pool.h"
 #include "strmap.h"
@@ -16,14 +16,14 @@
 void
 cookie_map_parse(struct strmap *cookies, const char *p, struct pool *pool)
 {
-    struct strref input, name, value;
+    assert(cookies != nullptr);
+    assert(p != nullptr);
 
-    assert(cookies != NULL);
-    assert(p != NULL);
-
+    struct strref input;
     strref_set_c(&input, p);
 
-    while (1) {
+    while (true) {
+        struct strref name, value;
         http_next_name_value(pool, &input, &name, &value, true);
         if (strref_is_empty(&name))
             break;

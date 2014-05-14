@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cookie_jar.h"
+#include "cookie_jar.hxx"
 #include "strref-dpool.h"
 #include "dpool.h"
 
@@ -19,10 +19,10 @@ cookie_free(struct dpool *pool, struct cookie *cookie)
     if (!strref_is_empty(&cookie->value))
         strref_free_d(pool, &cookie->value);
 
-    if (cookie->domain != NULL)
+    if (cookie->domain != nullptr)
         d_free(pool, cookie->domain);
 
-    if (cookie->path != NULL)
+    if (cookie->path != nullptr)
         d_free(pool, cookie->path);
 
     d_free(pool, cookie);
@@ -31,8 +31,8 @@ cookie_free(struct dpool *pool, struct cookie *cookie)
 void
 cookie_delete(struct cookie_jar *jar, struct cookie *cookie)
 {
-    assert(jar != NULL);
-    assert(cookie != NULL);
+    assert(jar != nullptr);
+    assert(cookie != nullptr);
     assert(&cookie->siblings != &jar->cookies);
 
     list_remove(&cookie->siblings);
@@ -43,9 +43,9 @@ cookie_delete(struct cookie_jar *jar, struct cookie *cookie)
 struct cookie_jar *
 cookie_jar_new(struct dpool *pool)
 {
-    struct cookie_jar *jar = d_malloc(pool, sizeof(*jar));
-    if (jar == NULL)
-        return NULL;
+    struct cookie_jar *jar = (struct cookie_jar *)d_malloc(pool, sizeof(*jar));
+    if (jar == nullptr)
+        return nullptr;
 
     jar->pool = pool;
     list_init(&jar->cookies);
@@ -68,28 +68,26 @@ cookie_jar_free(struct cookie_jar *jar)
 static struct cookie * gcc_malloc
 cookie_dup(struct dpool *pool, const struct cookie *src)
 {
-    struct cookie *dest;
+    assert(src != nullptr);
+    assert(src->domain != nullptr);
 
-    assert(src != NULL);
-    assert(src->domain != NULL);
-
-    dest = d_malloc(pool, sizeof(*dest));
-    if (dest == NULL)
-        return NULL;
+    struct cookie *dest = (struct cookie *)d_malloc(pool, sizeof(*dest));
+    if (dest == nullptr)
+        return nullptr;
 
     strref_set_dup_d(pool, &dest->name, &src->name);
     strref_set_dup_d(pool, &dest->value, &src->value);
 
     dest->domain = d_strdup(pool, src->domain);
-    if (dest->domain == NULL)
-        return NULL;
+    if (dest->domain == nullptr)
+        return nullptr;
 
-    if (src->path != NULL) {
+    if (src->path != nullptr) {
         dest->path = d_strdup(pool, src->path);
-        if (dest->path == NULL)
-            return NULL;
+        if (dest->path == nullptr)
+            return nullptr;
     } else
-        dest->path = NULL;
+        dest->path = nullptr;
 
     dest->expires = src->expires;
 
@@ -99,23 +97,22 @@ cookie_dup(struct dpool *pool, const struct cookie *src)
 struct cookie_jar * gcc_malloc
 cookie_jar_dup(struct dpool *pool, const struct cookie_jar *src)
 {
-    struct cookie_jar *dest;
-    struct cookie *src_cookie, *dest_cookie;
-
-    dest = d_malloc(pool, sizeof(*dest));
-    if (dest == NULL)
-        return NULL;
+    struct cookie_jar *dest = (struct cookie_jar *)
+        d_malloc(pool, sizeof(*dest));
+    if (dest == nullptr)
+        return nullptr;
 
     dest->pool = pool;
     list_init(&dest->cookies);
 
+    struct cookie *src_cookie;
     for (src_cookie = (struct cookie *)src->cookies.next;
          &src_cookie->siblings != &src->cookies;
          src_cookie = (struct cookie *)src_cookie->siblings.next) {
-        dest_cookie = cookie_dup(pool, src_cookie);
-        if (dest_cookie == NULL) {
+        struct cookie *dest_cookie = cookie_dup(pool, src_cookie);
+        if (dest_cookie == nullptr) {
             cookie_jar_free(dest);
-            return NULL;
+            return nullptr;
         }
 
         list_add(&dest_cookie->siblings, &dest->cookies);

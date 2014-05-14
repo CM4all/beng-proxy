@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_COOKIE_SERVER_H
-#define __BENG_COOKIE_SERVER_H
+#ifndef BENG_PROXY_COOKIE_SERVER_HXX
+#define BENG_PROXY_COOKIE_SERVER_HXX
 
 struct pool;
 struct strmap;

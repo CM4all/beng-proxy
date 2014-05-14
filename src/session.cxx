@@ -5,7 +5,7 @@
  */
 
 #include "session.hxx"
-#include "cookie_jar.h"
+#include "cookie_jar.hxx"
 #include "dpool.h"
 #include "dhashmap.h"
 #include "dbuffer.hxx"

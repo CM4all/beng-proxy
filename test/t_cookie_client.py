@@ -13,9 +13,9 @@ def command_expect(command, expected):
 prefix = 'cookie2: $Version="1"\r\n'
 suffix = '\r\n'
 
-command_expect('./test/run-cookie-client foo=bar',
+command_expect('./test/run_cookie_client foo=bar',
                prefix + 'cookie: foo=bar' + suffix)
-command_expect('./test/run-cookie-client foo=bar;a=b',
+command_expect('./test/run_cookie_client foo=bar;a=b',
                prefix + 'cookie: foo=bar' + suffix)
-command_expect('./test/run-cookie-client foo=bar,a=b',
+command_expect('./test/run_cookie_client foo=bar,a=b',
                prefix + 'cookie: a=b; foo=bar' + suffix)

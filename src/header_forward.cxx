@@ -9,7 +9,7 @@
 #include "header-writer.h"
 #include "strmap.h"
 #include "session.hxx"
-#include "cookie_client.h"
+#include "cookie_client.hxx"
 #include "growing-buffer.h"
 #include "pool.h"
 #include "product.h"

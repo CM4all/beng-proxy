@@ -13,7 +13,7 @@
 #include "http_address.hxx"
 #include "cgi_address.hxx"
 #include "global.h"
-#include "cookie_client.h"
+#include "cookie_client.hxx"
 #include "uri-extract.h"
 #include "strref-pool.h"
 #include "strmap.h"

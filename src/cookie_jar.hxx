@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_COOKIE_JAR_H
-#define BENG_PROXY_COOKIE_JAR_H
+#ifndef BENG_PROXY_COOKIE_JAR_HXX
+#define BENG_PROXY_COOKIE_JAR_HXX
 
 #include "strref.h"
 
@@ -33,10 +33,6 @@ struct cookie_jar {
     struct list_head cookies;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
 cookie_free(struct dpool *pool, struct cookie *cookie);
 
@@ -57,9 +53,5 @@ cookie_jar_add(struct cookie_jar *jar, struct cookie *cookie)
 
 void
 cookie_delete(struct cookie_jar *jar, struct cookie *cookie);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

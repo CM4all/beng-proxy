@@ -1,5 +1,7 @@
 run_nfs_client
 /run_delegate
+/run_cookie_client
+/run_cookie_server
 /request_translation
 /t_tcache
 /t_widget_registry
@@ -23,5 +25,7 @@ run_nfs_client
 /t_session
 /t_http_client
 /t_http_server
+/t_cookie_client
+/t_cookie_server
 
 *.trs

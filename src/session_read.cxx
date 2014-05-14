@@ -9,7 +9,7 @@
 #include "session.hxx"
 #include "dhashmap.h"
 #include "dpool.h"
-#include "cookie_jar.h"
+#include "cookie_jar.hxx"
 
 #include <stdint.h>
 

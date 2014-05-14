@@ -8,7 +8,7 @@
 #include "session_file.h"
 #include "session.hxx"
 #include "dhashmap.h"
-#include "cookie_jar.h"
+#include "cookie_jar.hxx"
 
 #include <stdint.h>
 

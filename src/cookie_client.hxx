@@ -4,24 +4,18 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_COOKIE_CLIENT_H
-#define __BENG_COOKIE_CLIENT_H
-
-#include <inline/compiler.h>
+#ifndef BENG_PROXY_COOKIE_CLIENT_HXX
+#define BENG_PROXY_COOKIE_CLIENT_HXX
 
 struct pool;
 struct strmap;
 struct cookie_jar;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Parse a Set-Cookie2 response header and insert new cookies into the
  * linked list.
  *
- * @param path the URI path, used for verification; if NULL, all
+ * @param path the URI path, used for verification; if nullptr, all
  * cookie paths are accepted
  */
 void
@@ -44,9 +38,5 @@ void
 cookie_jar_http_header(struct cookie_jar *jar,
                        const char *domain, const char *path,
                        struct strmap *headers, struct pool *pool);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

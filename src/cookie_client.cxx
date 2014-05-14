@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cookie_client.h"
-#include "cookie_jar.h"
+#include "cookie_client.hxx"
+#include "cookie_jar.hxx"
 #include "strref2.h"
 #include "strref-pool.h"
 #include "strref-dpool.h"
@@ -40,7 +40,7 @@ domain_matches(const char *domain, const char *match)
 static bool
 path_matches(const char *path, const char *match)
 {
-    return match == NULL || memcmp(path, match, strlen(match)) == 0;
+    return match == nullptr || memcmp(path, match, strlen(match)) == 0;
 }
 
 static void
@@ -50,15 +50,15 @@ cookie_list_delete_match(struct dpool *dpool, struct list_head *head,
 {
     struct cookie *cookie, *next;
 
-    assert(domain != NULL);
+    assert(domain != nullptr);
 
     for (cookie = (struct cookie *)head->next;
          &cookie->siblings != head; cookie = next) {
         next = (struct cookie *)cookie->siblings.next;
 
         if (domain_matches(domain, cookie->domain) &&
-            (cookie->path == NULL
-             ? path == NULL
+            (cookie->path == nullptr
+             ? path == nullptr
              : path_matches(cookie->path, path)) &&
             strref_cmp2(&cookie->name, name) == 0) {
             list_remove(&cookie->siblings);
@@ -74,18 +74,18 @@ parse_next_cookie(struct dpool *pool, struct strref *input)
 
     http_next_name_value(tpool, input, &name, &value, false);
     if (strref_is_empty(&name))
-        return NULL;
+        return nullptr;
 
-    struct cookie *cookie = d_malloc(pool, sizeof(*cookie));
-    if (cookie == NULL)
+    struct cookie *cookie = (struct cookie *)d_malloc(pool, sizeof(*cookie));
+    if (cookie == nullptr)
         /* out of memory */
-        return NULL;
+        return nullptr;
 
     strref_set_dup_d(pool, &cookie->name, &name);
     if (strref_is_empty(&cookie->name)) {
         /* out of memory */
         d_free(pool, cookie);
-        return NULL;
+        return nullptr;
     }
 
     strref_set_dup_d(pool, &cookie->value, &value);
@@ -93,11 +93,11 @@ parse_next_cookie(struct dpool *pool, struct strref *input)
         /* out of memory */
         strref_free_d(pool, &cookie->name);
         d_free(pool, cookie);
-        return NULL;
+        return nullptr;
     }
 
-    cookie->domain = NULL;
-    cookie->path = NULL;
+    cookie->domain = nullptr;
+    cookie->path = nullptr;
     cookie->expires = 0;
 
     strref_ltrim(input);
@@ -132,15 +132,15 @@ static bool
 apply_next_cookie(struct cookie_jar *jar, struct strref *input,
                   const char *domain, const char *path)
 {
-    assert(domain != NULL);
+    assert(domain != nullptr);
 
     struct cookie *cookie = parse_next_cookie(jar->pool, input);
-    if (cookie == NULL)
+    if (cookie == nullptr)
         return false;
 
-    if (cookie->domain == NULL) {
+    if (cookie->domain == nullptr) {
         cookie->domain = d_strdup(jar->pool, domain);
-        if (cookie->domain == NULL) {
+        if (cookie->domain == nullptr) {
             /* out of memory */
             cookie_free(jar->pool, cookie);
             return false;
@@ -151,7 +151,7 @@ apply_next_cookie(struct cookie_jar *jar, struct strref *input,
         return false;
     }
 
-    if (path != NULL && cookie->path != NULL &&
+    if (path != nullptr && cookie->path != nullptr &&
         !path_matches(path, cookie->path)) {
         /* discard if path mismatch */
         cookie_free(jar->pool, cookie);
@@ -211,26 +211,24 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
                              const char *domain, const char *path,
                              struct pool *pool)
 {
-    static const size_t buffer_size = 4096;
-    char *buffer;
-    struct cookie *cookie, *next;
-    size_t length;
-    struct pool_mark_state mark;
-    char *value;
+    static constexpr size_t buffer_size = 4096;
 
-    assert(domain != NULL);
-    assert(path != NULL);
+    assert(domain != nullptr);
+    assert(path != nullptr);
 
     if (list_empty(&jar->cookies))
-        return NULL;
+        return nullptr;
 
+    struct pool_mark_state mark;
     pool_mark(tpool, &mark);
-    buffer = p_malloc(tpool, buffer_size);
 
-    length = 0;
+    char *buffer = (char *)p_malloc(tpool, buffer_size);
+
+    size_t length = 0;
 
     const unsigned now = now_s();
 
+    struct cookie *cookie, *next;
     for (cookie = (struct cookie *)jar->cookies.next;
          &cookie->siblings != &jar->cookies;
          cookie = next) {
@@ -263,10 +261,11 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
         }
     }
 
+    char *value;
     if (length > 0)
         value = p_strndup(pool, buffer, length);
     else
-        value = NULL;
+        value = nullptr;
 
     pool_rewind(tpool, &mark);
     return value;
@@ -279,7 +278,7 @@ cookie_jar_http_header(struct cookie_jar *jar,
 {
     char *cookie = cookie_jar_http_header_value(jar, domain, path, pool);
 
-    if (cookie != NULL) {
+    if (cookie != nullptr) {
         strmap_add(headers, "cookie2", "$Version=\"1\"");
         strmap_add(headers, "cookie", cookie);
     }

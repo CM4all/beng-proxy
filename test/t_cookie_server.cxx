@@ -1,4 +1,4 @@
-#include "cookie_server.h"
+#include "cookie_server.hxx"
 #include "header-writer.h"
 #include "strmap.h"
 #include "pool.h"
@@ -11,7 +11,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     struct pool *pool;
     struct strmap *cookies;
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     cookies = strmap_new(pool, 17);
 

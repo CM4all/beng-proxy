@@ -7,7 +7,7 @@
 #include "lb_session.hxx"
 #include "strmap.h"
 #include "tpool.h"
-#include "cookie_server.h"
+#include "cookie_server.hxx"
 
 #include <string.h>
 #include <stdlib.h>
