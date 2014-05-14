@@ -4,16 +4,15 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CGI_PARSER_H
-#define BENG_PROXY_CGI_PARSER_H
+#ifndef BENG_PROXY_CGI_PARSER_HXX
+#define BENG_PROXY_CGI_PARSER_HXX
 
 #include "completion.h"
+#include "glibfwd.hxx"
 
 #include <http/status.h>
 
-#include <glib.h>
 #include <assert.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <sys/types.h>
 

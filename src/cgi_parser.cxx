@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cgi_parser.h"
+#include "cgi_parser.hxx"
 #include "cgi_quark.h"
 #include "fifo-buffer.h"
 #include "strmap.h"
@@ -36,9 +36,9 @@ cgi_parser_finish(struct cgi_parser *parser, struct fifo_buffer *buffer,
 {
     /* parse the status */
     const char *p = strmap_remove(parser->headers, "status");
-    if (p != NULL) {
+    if (p != nullptr) {
         int i = atoi(p);
-        if (http_status_is_valid(i))
+        if (http_status_is_valid((http_status_t)i))
             parser->status = (http_status_t)i;
     }
 
@@ -47,7 +47,7 @@ cgi_parser_finish(struct cgi_parser *parser, struct fifo_buffer *buffer,
         parser->remaining = 0;
     } else {
         p = strmap_remove(parser->headers, "content-length");
-        if (p != NULL) {
+        if (p != nullptr) {
             /* parse the Content-Length response header */
             char *endptr;
             parser->remaining = (off_t)strtoull(p, &endptr, 10);
@@ -76,16 +76,17 @@ cgi_parser_feed_headers(struct pool *pool, struct cgi_parser *parser,
     assert(!cgi_parser_headers_finished(parser));
 
     size_t length;
-    const char *data = fifo_buffer_read(buffer, &length);
-    if (data == NULL)
+    const char *data = (const char *)fifo_buffer_read(buffer, &length);
+    if (data == nullptr)
         return C_MORE;
 
     assert(length > 0);
     const char *data_end = data + length;
 
     /* parse each line until we stumble upon an empty one */
-    const char *start = data, *end, *next = NULL;
-    while ((end = memchr(start, '\n', data_end - start)) != NULL) {
+    const char *start = data, *end, *next = nullptr;
+    while ((end = (const char *)memchr(start, '\n',
+                                       data_end - start)) != nullptr) {
         next = end + 1;
         --end;
         while (end >= start && char_is_whitespace(*end))
@@ -104,7 +105,7 @@ cgi_parser_feed_headers(struct pool *pool, struct cgi_parser *parser,
         start = next;
     }
 
-    if (next != NULL) {
+    if (next != nullptr) {
         fifo_buffer_consume(buffer, next - data);
         return C_MORE;
     }

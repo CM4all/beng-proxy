@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cgi_client.h"
+#include "cgi_client.hxx"
 #include "cgi_quark.h"
-#include "cgi_parser.h"
+#include "cgi_parser.hxx"
 #include "istream-buffer.h"
 #include "async.h"
 #include "header-parser.h"
@@ -15,6 +15,7 @@
 #include "strmap.h"
 #include "http_response.h"
 #include "fb_pool.h"
+#include "util/Cast.hxx"
 
 #include <string.h>
 #include <stdlib.h>
@@ -64,7 +65,7 @@ cgi_return_response(struct cgi *cgi)
         fb_pool_free(cgi->buffer);
         istream_free_handler(&cgi->input);
         http_response_handler_invoke_response(&cgi->handler, status, headers,
-                                              NULL);
+                                              nullptr);
         pool_unref(cgi->output.pool);
         return false;
     } else if (cgi_parser_eof(&cgi->parser)) {
@@ -86,7 +87,7 @@ cgi_return_response(struct cgi *cgi)
         http_response_handler_invoke_response(&cgi->handler, status, headers,
                                               istream_struct_cast(&cgi->output));
         cgi->in_response_callback = false;
-        return cgi->input != NULL;
+        return cgi->input != nullptr;
     }
 }
 
@@ -108,7 +109,7 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
 
     size_t max_length;
     void *dest = fifo_buffer_write(cgi->buffer, &max_length);
-    assert(dest != NULL);
+    assert(dest != nullptr);
 
     if (length > max_length)
         length = max_length;
@@ -116,7 +117,7 @@ cgi_feed_headers(struct cgi *cgi, const void *data, size_t length)
     memcpy(dest, data, length);
     fifo_buffer_append(cgi->buffer, length);
 
-    GError *error = NULL;
+    GError *error = nullptr;
     enum completion c = cgi_parser_feed_headers(cgi->output.pool, &cgi->parser,
                                                 cgi->buffer, &error);
     switch (c) {
@@ -177,7 +178,7 @@ cgi_feed_headers2(struct cgi *cgi, const char *data, size_t length)
         consumed += nbytes;
     } while (consumed < length && !cgi_parser_headers_finished(&cgi->parser));
 
-    if (cgi->input == NULL)
+    if (cgi->input == nullptr)
         return 0;
 
     return consumed;
@@ -191,7 +192,7 @@ cgi_feed_headers3(struct cgi *cgi, const char *data, size_t length)
 {
     size_t nbytes = cgi_feed_headers2(cgi, data, length);
 
-    assert(nbytes == 0 || cgi->input != NULL);
+    assert(nbytes == 0 || cgi->input != nullptr);
     assert(nbytes == 0 ||
            !cgi_parser_headers_finished(&cgi->parser) ||
            !cgi_parser_eof(&cgi->parser));
@@ -240,16 +241,16 @@ cgi_feed_body(struct cgi *cgi, const char *data, size_t length)
 static size_t
 cgi_input_data(const void *data, size_t length, void *ctx)
 {
-    struct cgi *cgi = ctx;
+    struct cgi *cgi = (struct cgi *)ctx;
 
-    assert(cgi->input != NULL);
+    assert(cgi->input != nullptr);
 
     cgi->had_input = true;
 
     if (!cgi_parser_headers_finished(&cgi->parser)) {
         pool_ref(cgi->output.pool);
 
-        size_t nbytes = cgi_feed_headers3(cgi, data, length);
+        size_t nbytes = cgi_feed_headers3(cgi, (const char *)data, length);
 
         if (nbytes > 0 && nbytes < length &&
             cgi_parser_headers_finished(&cgi->parser)) {
@@ -260,7 +261,7 @@ cgi_input_data(const void *data, size_t length, void *ctx)
             if (nbytes2 > 0)
                 /* more data was consumed */
                 nbytes += nbytes2;
-            else if (cgi->input == NULL)
+            else if (cgi->input == nullptr)
                 /* the connection was closed, must return 0 */
                 nbytes = 0;
         }
@@ -269,14 +270,15 @@ cgi_input_data(const void *data, size_t length, void *ctx)
 
         return nbytes;
     } else {
-        return cgi_feed_body(cgi, data, length);
+        return cgi_feed_body(cgi, (const char *)data, length);
     }
 }
 
 static ssize_t
-cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+cgi_input_direct(enum istream_direct type, int fd, size_t max_length,
+                 void *ctx)
 {
-    struct cgi *cgi = ctx;
+    struct cgi *cgi = (struct cgi *)ctx;
 
     assert(cgi_parser_headers_finished(&cgi->parser));
 
@@ -304,9 +306,9 @@ cgi_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 static void
 cgi_input_eof(void *ctx)
 {
-    struct cgi *cgi = ctx;
+    struct cgi *cgi = (struct cgi *)ctx;
 
-    cgi->input = NULL;
+    cgi->input = nullptr;
 
     if (!cgi_parser_headers_finished(&cgi->parser)) {
         stopwatch_event(cgi->stopwatch, "malformed");
@@ -343,12 +345,12 @@ cgi_input_eof(void *ctx)
 static void
 cgi_input_abort(GError *error, void *ctx)
 {
-    struct cgi *cgi = ctx;
+    struct cgi *cgi = (struct cgi *)ctx;
 
     stopwatch_event(cgi->stopwatch, "abort");
     stopwatch_dump(cgi->stopwatch);
 
-    cgi->input = NULL;
+    cgi->input = nullptr;
 
     if (!cgi_parser_headers_finished(&cgi->parser)) {
         /* the response hasn't been sent yet: notify the response
@@ -383,7 +385,7 @@ static const struct istream_handler cgi_input_handler = {
 static inline struct cgi *
 istream_to_cgi(struct istream *istream)
 {
-    return (struct cgi *)(((char*)istream) - offsetof(struct cgi, output));
+    return ContainerCast(istream, struct cgi, output);
 }
 
 static off_t
@@ -394,7 +396,7 @@ istream_cgi_available(struct istream *istream, bool partial)
     if (cgi_parser_known_length(&cgi->parser))
         return cgi_parser_available(&cgi->parser);
 
-    if (cgi->input == NULL)
+    if (cgi->input == nullptr)
         return 0;
 
     if (cgi->in_response_callback)
@@ -411,7 +413,7 @@ istream_cgi_read(struct istream *istream)
 {
     struct cgi *cgi = istream_to_cgi(istream);
 
-    if (cgi->input != NULL) {
+    if (cgi->input != nullptr) {
         istream_handler_set_direct(cgi->input, cgi->output.handler_direct);
 
         /* this condition catches the case in cgi_parse_headers():
@@ -427,7 +429,7 @@ istream_cgi_read(struct istream *istream)
         do {
             cgi->had_input = false;
             istream_read(cgi->input);
-        } while (cgi->input != NULL && cgi->had_input &&
+        } while (cgi->input != nullptr && cgi->had_input &&
                  !cgi->had_output);
 
         pool_unref(cgi->output.pool);
@@ -441,7 +443,7 @@ istream_cgi_close(struct istream *istream)
 
     fb_pool_free(cgi->buffer);
 
-    if (cgi->input != NULL)
+    if (cgi->input != nullptr)
         istream_free_handler(&cgi->input);
 
     istream_deinit(&cgi->output);
@@ -462,7 +464,7 @@ static const struct istream_class istream_cgi = {
 static struct cgi *
 async_to_cgi(struct async_operation *ao)
 {
-    return (struct cgi*)(((char*)ao) - offsetof(struct cgi, async));
+    return ContainerCast(ao, struct cgi, async);
 }
 
 static void
@@ -470,7 +472,7 @@ cgi_async_abort(struct async_operation *ao)
 {
     struct cgi *cgi = async_to_cgi(ao);
 
-    assert(cgi->input != NULL);
+    assert(cgi->input != nullptr);
 
     fb_pool_free(cgi->buffer);
     istream_close_handler(cgi->input);
@@ -493,9 +495,9 @@ cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
                const struct http_response_handler *handler, void *handler_ctx,
                struct async_operation_ref *async_ref)
 {
-    assert(pool != NULL);
-    assert(input != NULL);
-    assert(handler != NULL);
+    assert(pool != nullptr);
+    assert(input != nullptr);
+    assert(handler != nullptr);
 
     struct cgi *cgi = (struct cgi *)istream_new(pool, &istream_cgi, sizeof(*cgi));
     cgi->stopwatch = stopwatch;
