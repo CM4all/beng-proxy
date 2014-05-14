@@ -6,7 +6,7 @@
 
 #include "fcgi_stock.hxx"
 #include "fcgi_quark.h"
-#include "fcgi_launch.h"
+#include "fcgi_launch.hxx"
 #include "child_stock.h"
 #include "hstock.h"
 #include "stock.h"

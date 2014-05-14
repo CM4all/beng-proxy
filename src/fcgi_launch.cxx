@@ -4,11 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcgi_launch.h"
+#include "fcgi_launch.hxx"
 #include "exec.h"
 #include "jail.h"
-#include "sigutil.h"
-#include "gerrno.h"
 
 #include <daemon/log.h>
 
@@ -17,7 +15,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 gcc_noreturn
 void
@@ -39,7 +36,7 @@ fcgi_run(const struct jail_params *jail,
 
     struct exec e;
     exec_init(&e);
-    jail_wrapper_insert(&e, jail, NULL);
+    jail_wrapper_insert(&e, jail, nullptr);
     exec_append(&e, executable_path);
     for (unsigned i = 0; i < n_args; ++i)
         exec_append(&e, args[i]);
