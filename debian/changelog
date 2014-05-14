@@ -2,6 +2,7 @@ cm4all-beng-proxy (4.0.42) unstable; urgency=low
 
   * tstock: log abstract socket paths properly
   * translation: add packet COOKIE_PATH
+  * http_string: allow comma in cookie values (RFC ignorant)
 
  --   
 
