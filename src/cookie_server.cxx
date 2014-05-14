@@ -8,7 +8,7 @@
 #include "strref2.h"
 #include "strref-pool.h"
 #include "strmap.h"
-#include "http_string.h"
+#include "http_string.hxx"
 #include "pool.h"
 
 #include <inline/list.h>

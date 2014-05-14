@@ -4,14 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_HTTP_STRING_H
-#define __BENG_HTTP_STRING_H
+#ifndef BENG_PROXY_HTTP_STRING_HXX
+#define BENG_PROXY_HTTP_STRING_HXX
 
 #include "strref.h"
 
 #include <inline/compiler.h>
-
-#include <stdbool.h>
 
 struct pool;
 
@@ -65,10 +63,6 @@ char_is_http_token(char ch)
         !char_is_http_separator(ch);
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
 http_next_token(struct strref *input, struct strref *value);
 
@@ -98,9 +92,5 @@ http_must_quote_token(const struct strref *src)
 
 size_t
 http_quote_string(char *dest, const struct strref *src);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

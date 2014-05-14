@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_string.h"
+#include "http_string.hxx"
 #include "strref2.h"
 #include "pool.h"
 
@@ -26,7 +26,7 @@ void
 http_next_quoted_string(struct pool *pool, struct strref *input,
                         struct strref *value)
 {
-    char *dest = p_malloc(pool, input->length); /* XXX optimize memory consumption */
+    char *dest = (char *)p_malloc(pool, input->length); /* XXX optimize memory consumption */
     size_t pos = 1;
 
     value->length = 0;
