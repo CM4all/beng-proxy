@@ -5,10 +5,10 @@
  */
 
 #include "cookie_server.hxx"
+#include "cookie_string.hxx"
 #include "strref2.h"
 #include "strref-pool.h"
 #include "strmap.h"
-#include "http_string.hxx"
 #include "pool.h"
 
 #include <inline/list.h>
@@ -24,7 +24,7 @@ cookie_map_parse(struct strmap *cookies, const char *p, struct pool *pool)
 
     while (true) {
         struct strref name, value;
-        http_next_name_value(pool, &input, &name, &value, true);
+        cookie_next_name_value(pool, &input, &name, &value, true);
         if (strref_is_empty(&name))
             break;
 

@@ -269,6 +269,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cookie_jar.cxx src/cookie_jar.hxx \
 	src/cookie_client.cxx src/cookie_client.hxx \
 	src/cookie_server.cxx src/cookie_server.hxx \
+	src/cookie_string.cxx src/cookie_string.hxx \
 	src/translate_client.cxx src/translate_client.hxx \
 	src/translate_request.hxx \
 	src/translate_response.cxx rc/translate_response.hxx \
@@ -428,6 +429,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/direct.c \
 	src/access-log.c \
 	src/cookie_server.cxx \
+	src/cookie_string.cxx \
 	src/log-glue.c \
 	src/log-client.c \
 	src/log-launch.c \
@@ -891,6 +893,7 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/hashmap.c src/strmap.c \
 	src/growing-buffer.c \
 	src/cookie_client.cxx src/cookie_jar.cxx \
+	src/cookie_string.cxx \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \
@@ -1011,6 +1014,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/crash.c \
 	src/session.cxx src/session_manager.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
+	src/cookie_string.cxx \
 	src/http_string.cxx \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
@@ -1211,6 +1215,7 @@ test_t_cookie_client_SOURCES = test/t_cookie_client.cxx \
 	src/tpool.c \
 	src/clock.c \
 	src/cookie_client.cxx src/cookie_jar.cxx \
+	src/cookie_string.cxx \
 	src/http_string.cxx \
 	src/header-writer.c src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
@@ -1223,6 +1228,7 @@ test_t_cookie_client_LDADD = $(AM_LDADD) \
 
 test_t_cookie_server_SOURCES = test/t_cookie_server.cxx \
 	src/cookie_server.cxx \
+	src/cookie_string.cxx \
 	src/http_string.cxx \
 	src/strmap.c src/hashmap.c
 test_t_cookie_server_LDADD = $(AM_LDADD) \
@@ -1352,6 +1358,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c src/uri_base.cxx \
 	src/resource_tag.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
+	src/cookie_string.cxx \
 	src/header-parser.c src/header_forward.cxx src/header-writer.c \
 	src/header_copy.cxx \
 	src/strmap.c src/hashmap.c \
@@ -1415,6 +1422,7 @@ test_run_subst_LDADD = $(AM_LDADD) \
 
 test_run_cookie_client_SOURCES = test/run_cookie_client.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx src/http_string.cxx \
+	src/cookie_string.cxx \
 	src/header-writer.c src/growing-buffer.c \
 	src/tpool.c src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c \
@@ -1427,6 +1435,7 @@ test_run_cookie_client_LDADD = $(AM_LDADD) \
 
 test_run_cookie_server_SOURCES = test/run_cookie_server.cxx \
 	src/cookie_server.cxx src/http_string.cxx \
+	src/cookie_string.cxx \
 	src/strmap.c src/hashmap.c
 test_run_cookie_server_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \

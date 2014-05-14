@@ -6,6 +6,7 @@
 
 #include "cookie_client.hxx"
 #include "cookie_jar.hxx"
+#include "cookie_string.hxx"
 #include "strref2.h"
 #include "strref-pool.h"
 #include "strref-dpool.h"
@@ -72,7 +73,7 @@ parse_next_cookie(struct dpool *pool, struct strref *input)
 {
     struct strref name, value;
 
-    http_next_name_value(tpool, input, &name, &value, false);
+    cookie_next_name_value(tpool, input, &name, &value, false);
     if (strref_is_empty(&name))
         return nullptr;
 
