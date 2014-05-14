@@ -4,14 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_JAIL_H
-#define BENG_PROXY_JAIL_H
+#ifndef BENG_PROXY_JAIL_HXX
+#define BENG_PROXY_JAIL_HXX
+
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
-
-#include <glib.h>
-
-#include <stdbool.h>
 
 struct pool;
 struct exec;
@@ -29,10 +27,6 @@ struct jail_params {
     const char *host_name;
     const char *home_directory;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Loads the JailCGI configuration file, usually located in
@@ -71,9 +65,5 @@ jail_translate_path(const struct jail_config *config, const char *path,
 void
 jail_wrapper_insert(struct exec *e, const struct jail_params *params,
                     const char *document_root);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

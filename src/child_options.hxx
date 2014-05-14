@@ -7,7 +7,7 @@
 
 #include "rlimit_options.h"
 #include "namespace_options.h"
-#include "jail.h"
+#include "jail.hxx"
 
 /**
  * Options for launching a child process.

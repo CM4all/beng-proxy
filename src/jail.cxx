@@ -4,10 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "jail.h"
+#include "jail.hxx"
 #include "strutil.h"
 #include "exec.h"
 #include "pool.h"
+
+#include <glib.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -27,7 +29,7 @@ next_word(char *p)
         ++p;
 
     if (*p == 0)
-        return NULL;
+        return nullptr;
 
     *p++ = 0;
 
@@ -35,7 +37,7 @@ next_word(char *p)
         ++p;
 
     if (*p == 0)
-        return NULL;
+        return nullptr;
 
     return p;
 }
@@ -45,14 +47,14 @@ jail_config_load(struct jail_config *config, const char *path,
                  struct pool *pool)
 {
     FILE *file = fopen(path, "r");
-    if (file == NULL)
+    if (file == nullptr)
         return false;
 
-    config->root_dir = NULL;
-    config->jailed_home = NULL;
+    config->root_dir = nullptr;
+    config->jailed_home = nullptr;
 
     char line[4096], *p, *q;
-    while ((p = fgets(line, sizeof(line), file)) != NULL) {
+    while ((p = fgets(line, sizeof(line), file)) != nullptr) {
         while (*p != 0 && char_is_whitespace(*p))
             ++p;
 
@@ -61,7 +63,7 @@ jail_config_load(struct jail_config *config, const char *path,
             continue;
 
         q = next_word(p);
-        if (q == NULL || next_word(q) != NULL)
+        if (q == nullptr || next_word(q) != nullptr)
             /* silently ignore syntax errors */
             continue;
 
@@ -80,20 +82,20 @@ jail_try_translate_path(const char *path,
                         const char *global_prefix, const char *jailed_prefix,
                         struct pool *pool)
 {
-    if (jailed_prefix == NULL)
-        return NULL;
+    if (jailed_prefix == nullptr)
+        return nullptr;
 
     size_t global_prefix_length = strlen(global_prefix);
     if (memcmp(path, global_prefix, global_prefix_length) != 0)
-        return NULL;
+        return nullptr;
 
     if (path[global_prefix_length] == '/')
         return p_strcat(pool, jailed_prefix, path + global_prefix_length,
-                        NULL);
+                        nullptr);
     else if (path[global_prefix_length] == 0)
         return jailed_prefix;
     else
-        return NULL;
+        return nullptr;
 }
 
 void
@@ -108,7 +110,7 @@ jail_params_check(const struct jail_params *jail, GError **error_r)
     if (!jail->enabled)
         return true;
 
-    if (jail->home_directory == NULL) {
+    if (jail->home_directory == nullptr) {
         g_set_error(error_r, jail_quark(), 0, "No JailCGI home directory");
         return false;
     }
@@ -133,7 +135,7 @@ char *
 jail_params_id(const struct jail_params *params, char *p)
 {
     if (params->enabled)
-        p = mempcpy(p, ";j", 2);
+        p = (char *)mempcpy(p, ";j", 2);
 
     return p;
 }
@@ -145,7 +147,7 @@ jail_translate_path(const struct jail_config *config, const char *path,
     const char *translated =
         jail_try_translate_path(path, document_root, config->jailed_home,
                                 pool);
-    if (translated == NULL)
+    if (translated == nullptr)
         translated = jail_try_translate_path(path, config->root_dir, "", pool);
     return translated;
 }
@@ -154,35 +156,35 @@ void
 jail_wrapper_insert(struct exec *e, const struct jail_params *params,
                     const char *document_root)
 {
-    if (params == NULL || !params->enabled)
+    if (params == nullptr || !params->enabled)
         return;
 
     exec_append(e, "/usr/lib/cm4all/jailcgi/bin/wrapper");
 
-    if (document_root != NULL) {
+    if (document_root != nullptr) {
         exec_append(e, "-d");
         exec_append(e, document_root);
     }
 
-    if (params->account_id != NULL) {
+    if (params->account_id != nullptr) {
         exec_append(e, "--account");
         exec_append(e, params->account_id);
     }
 
-    if (params->site_id != NULL) {
+    if (params->site_id != nullptr) {
         exec_append(e, "--site");
         exec_append(e, params->site_id);
     }
 
-    if (params->user_name != NULL) {
+    if (params->user_name != nullptr) {
         exec_append(e, "--name");
         exec_append(e, params->user_name);
     }
 
-    if (params->host_name != NULL)
+    if (params->host_name != nullptr)
         setenv("JAILCGI_SERVERNAME", params->host_name, true);
 
-    if (params->home_directory != NULL) {
+    if (params->home_directory != nullptr) {
         exec_append(e, "--home");
         exec_append(e, params->home_directory);
     }
