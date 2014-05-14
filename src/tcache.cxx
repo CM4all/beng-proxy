@@ -874,27 +874,18 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
 
         if (tcr->request->uri != nullptr && response->IsExpandable()) {
             /* create a writable copy and expand it */
-            TranslateResponse *response2 = (TranslateResponse *)
-                p_memdup(tcr->pool, response, sizeof(*response));
-
-            if (!tcache_expand_response(tcr->pool, response2, item,
+            if (!tcache_expand_response(tcr->pool, response, item,
                                         tcr->request->uri, &error)) {
                 tcr->handler->error(error, tcr->handler_ctx);
                 return;
             }
-
-            response = response2;
         } else if (response->easy_base) {
             /* create a writable copy and apply the BASE */
-            auto response2 = NewFromPool<TranslateResponse>(tcr->pool);
-
-            if (!response2->CacheLoad(tcr->pool, *response,
-                                      tcr->request->uri, &error)) {
+            if (!response->CacheLoad(tcr->pool, *response,
+                                     tcr->request->uri, &error)) {
                 tcr->handler->error(error, tcr->handler_ctx);
                 return;
             }
-
-            response = response2;
         }
     } else {
         cache_log(4, "translate_cache: nocache %s\n", tcr->key);

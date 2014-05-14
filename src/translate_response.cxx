@@ -176,7 +176,8 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
                            src.unsafe_base, expandable, error_r))
         return false;
 
-    CopyFrom(pool, src);
+    if (this != &src)
+        CopyFrom(pool, src);
 
     if (base != nullptr && !expandable) {
         const char *tail = require_base_tail(request_uri, base);

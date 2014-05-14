@@ -375,8 +375,6 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
                            const struct resource_address *src,
                            const char *suffix)
 {
-    assert(src != dest);
-
     switch (src->type) {
     case RESOURCE_ADDRESS_NONE:
     case RESOURCE_ADDRESS_PIPE:
