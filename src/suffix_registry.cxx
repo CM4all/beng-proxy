@@ -37,7 +37,7 @@ struct SuffixRegistryLookup {
  */
 
 static void
-suffix_translate_response(const TranslateResponse *response, void *ctx)
+suffix_translate_response(TranslateResponse *response, void *ctx)
 {
     SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
 

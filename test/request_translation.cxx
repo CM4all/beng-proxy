@@ -67,8 +67,7 @@ print_resource_address(const struct resource_address *address)
 }
 
 static void
-my_translate_response(const TranslateResponse *response,
-                      void *ctx)
+my_translate_response(TranslateResponse *response, void *ctx)
 {
     const struct widget_view *view;
 

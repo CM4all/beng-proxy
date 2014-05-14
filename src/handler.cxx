@@ -581,10 +581,10 @@ repeat_translation(struct request &request, const TranslateResponse &response)
 }
 
 static void
-handler_translate_response(const TranslateResponse *response,
-                           void *ctx)
+handler_translate_response(TranslateResponse *_response, void *ctx)
 {
     struct request &request = *(struct request *)ctx;
+    const TranslateResponse *response = _response;
 
     if (!response->session.IsNull())
         /* must apply SESSION early so it gets used by

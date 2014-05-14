@@ -44,7 +44,7 @@ struct widget_class_lookup {
 };
 
 static void
-widget_translate_response(const TranslateResponse *response, void *ctx)
+widget_translate_response(TranslateResponse *response, void *ctx)
 {
     struct widget_class_lookup *lookup = (struct widget_class_lookup *)ctx;
 

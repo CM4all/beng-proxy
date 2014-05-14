@@ -853,7 +853,7 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
  */
 
 static void
-tcache_handler_response(const TranslateResponse *response, void *ctx)
+tcache_handler_response(TranslateResponse *response, void *ctx)
 {
     TranslateCacheRequest *tcr = (TranslateCacheRequest *)ctx;
 

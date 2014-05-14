@@ -23,7 +23,7 @@ struct TranslateRequest;
 struct TranslateResponse;
 
 struct TranslateHandler {
-    void (*response)(const TranslateResponse *response, void *ctx);
+    void (*response)(TranslateResponse *response, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 

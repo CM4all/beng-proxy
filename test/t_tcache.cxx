@@ -25,9 +25,11 @@ tstock_translate(gcc_unused struct tstock *stock, gcc_unused struct pool *pool,
                  const TranslateHandler *handler, void *ctx,
                  gcc_unused struct async_operation_ref *async_ref)
 {
-    if (next_response != nullptr)
-        handler->response(next_response, ctx);
-    else
+    if (next_response != nullptr) {
+        TranslateResponse *response = (TranslateResponse *)
+            p_memdup(pool, next_response, sizeof(*next_response));
+        handler->response(response, ctx);
+    } else
         handler->error(g_error_new(translate_quark(), 0, "Error"), ctx);
 }
 
@@ -204,7 +206,7 @@ translate_response_equals(const TranslateResponse *a,
 }
 
 static void
-my_translate_response(const TranslateResponse *response,
+my_translate_response(TranslateResponse *response,
                       gcc_unused void *ctx)
 {
     assert(translate_response_equals(response, expected_response));

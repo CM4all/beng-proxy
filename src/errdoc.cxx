@@ -87,7 +87,7 @@ const struct http_response_handler errdoc_response_handler = {
  */
 
 static void
-errdoc_translate_response(const TranslateResponse *response, void *ctx)
+errdoc_translate_response(TranslateResponse *response, void *ctx)
 {
     error_response &er = *(error_response *)ctx;
 
