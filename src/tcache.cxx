@@ -18,7 +18,7 @@
 #include "uri-escape.h"
 #include "tpool.h"
 #include "pbuffer.hxx"
-#include "slice.h"
+#include "slice.hxx"
 #include "beng-proxy/translation.h"
 #include "util/Cast.hxx"
 

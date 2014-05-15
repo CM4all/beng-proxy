@@ -5,13 +5,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "slice.h"
+#include "slice.hxx"
 #include "mmap.h"
 
 #include <inline/list.h>
 
 #include <assert.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -125,7 +124,7 @@ slice_area_new(struct slice_pool *pool)
         abort();
     }
 
-    struct slice_area *area = p;
+    struct slice_area *area = (struct slice_area *)p;
     area->allocated_count = 0;
     area->free_head = 0;
 
@@ -195,7 +194,7 @@ static unsigned
 slice_area_index(const struct slice_pool *pool, struct slice_area *area,
                  const void *_p)
 {
-    const uint8_t *p = _p;
+    const uint8_t *p = (const uint8_t *)_p;
     assert(p >= (uint8_t *)slice_area_get_page(pool, area, 0));
     assert(p < (uint8_t *)slice_area_get_page(pool, area,
                                               pool->pages_per_area));
@@ -272,8 +271,10 @@ slice_area_punch_slice_range(struct slice_pool *pool, struct slice_area *area,
     if (start_page == end_page)
         return;
 
-    uint8_t *start_pointer = slice_area_get_page(pool, area, start_page);
-    uint8_t *end_pointer = slice_area_get_page(pool, area, end_page);
+    uint8_t *start_pointer = (uint8_t *)
+        slice_area_get_page(pool, area, start_page);
+    uint8_t *end_pointer = (uint8_t *)
+        slice_area_get_page(pool, area, end_page);
 
     mmap_discard_pages(start_pointer, end_pointer - start_pointer);
 }
@@ -307,8 +308,8 @@ slice_pool_new(size_t slice_size, unsigned slices_per_area)
     assert(slice_size > 0);
     assert(slices_per_area > 0);
 
-    struct slice_pool *pool = malloc(sizeof(*pool));
-    if (gcc_unlikely(pool == NULL)) {
+    struct slice_pool *pool = (struct slice_pool *)malloc(sizeof(*pool));
+    if (gcc_unlikely(pool == nullptr)) {
         fputs("Out of memory\n", stderr);
         abort();
     }
@@ -333,7 +334,7 @@ slice_pool_new(size_t slice_size, unsigned slices_per_area)
     pool->slices_per_area = (pool->pages_per_area / pool->pages_per_slice)
         * pool->slices_per_page;
 
-    const struct slice_area *area = NULL;
+    const struct slice_area *area = nullptr;
     const size_t header_size = sizeof(*area)
         + sizeof(area->slices[0]) * (pool->slices_per_area - 1);
     pool->header_pages = divide_round_up(header_size, mmap_page_size());
@@ -364,7 +365,7 @@ slice_pool_free(struct slice_pool *pool)
 size_t
 slice_pool_get_slice_size(const struct slice_pool *pool)
 {
-    assert(pool != NULL);
+    assert(pool != nullptr);
 
     return pool->slice_size;
 }
@@ -388,7 +389,7 @@ gcc_pure
 static struct slice_area *
 slice_pool_find_non_full_area(struct slice_pool *pool)
 {
-    assert(pool != NULL);
+    assert(pool != nullptr);
 
     for (struct slice_area *area = (struct slice_area *)pool->areas.next;
          &area->siblings != &pool->areas;
@@ -396,17 +397,17 @@ slice_pool_find_non_full_area(struct slice_pool *pool)
         if (!slice_area_is_full(pool, area))
             return area;
 
-    return NULL;
+    return nullptr;
 }
 
 struct slice_area *
 slice_pool_get_area(struct slice_pool *pool)
 
 {
-    assert(pool != NULL);
+    assert(pool != nullptr);
 
     struct slice_area *area = slice_pool_find_non_full_area(pool);
-    if (area == NULL) {
+    if (area == nullptr) {
         area = slice_area_new(pool);
         list_add(&area->siblings, &pool->areas);
     }
@@ -417,8 +418,8 @@ slice_pool_get_area(struct slice_pool *pool)
 void *
 slice_alloc(struct slice_pool *pool, struct slice_area *area)
 {
-    assert(pool != NULL);
-    assert(area != NULL);
+    assert(pool != nullptr);
+    assert(area != nullptr);
     assert(!slice_area_is_full(pool, area));
 
     const unsigned i = area->free_head;

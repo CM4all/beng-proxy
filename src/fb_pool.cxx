@@ -6,7 +6,7 @@
  */
 
 #include "fb_pool.h"
-#include "slice.h"
+#include "slice.hxx"
 #include "fifo-buffer.h"
 #include "cleanup_timer.h"
 

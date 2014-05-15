@@ -5,18 +5,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SLICE_H
-#define BENG_PROXY_SLICE_H
+#ifndef BENG_PROXY_SLICE_HXX
+#define BENG_PROXY_SLICE_HXX
 
 #include <inline/compiler.h>
 
 #include <stddef.h>
 
 struct slice_pool;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct slice_pool *
 slice_pool_new(size_t slice_size, unsigned per_area);
@@ -44,9 +40,5 @@ slice_alloc(struct slice_pool *pool, struct slice_area *area);
 gcc_nonnull_all
 void
 slice_free(struct slice_pool *pool, struct slice_area *area, void *p);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

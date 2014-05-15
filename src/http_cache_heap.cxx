@@ -11,7 +11,7 @@
 #include "istream.h"
 #include "rubber.hxx"
 #include "istream_rubber.hxx"
-#include "slice.h"
+#include "slice.hxx"
 #include "util/Cast.hxx"
 
 #include <time.h>

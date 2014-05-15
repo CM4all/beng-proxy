@@ -1,4 +1,4 @@
-#include "slice.h"
+#include "slice.hxx"
 
 #include <inline/compiler.h>
 
