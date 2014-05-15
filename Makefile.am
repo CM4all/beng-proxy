@@ -616,7 +616,7 @@ libutil_a_SOURCES = \
 
 libmemory_a_SOURCES = \
 	src/mmap.h \
-	src/fb_pool.c src/fb_pool.h \
+	src/fb_pool.cxx src/fb_pool.h \
 	src/slice.c src/slice.h \
 	src/rubber.cxx src/rubber.hxx
 

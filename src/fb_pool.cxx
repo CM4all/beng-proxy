@@ -32,20 +32,20 @@ fb_pool_cleanup(gcc_unused void *ctx)
 void
 fb_pool_init(bool auto_cleanup)
 {
-    assert(fb_pool == NULL);
+    assert(fb_pool == nullptr);
 
     fb_auto_cleanup = auto_cleanup;
 
     fb_pool = slice_pool_new(FB_SIZE, 1024);
-    assert(fb_pool != NULL);
+    assert(fb_pool != nullptr);
 
-    cleanup_timer_init(&fb_cleanup_timer, 600, fb_pool_cleanup, NULL);
+    cleanup_timer_init(&fb_cleanup_timer, 600, fb_pool_cleanup, nullptr);
 }
 
 void
 fb_pool_deinit(void)
 {
-    assert(fb_pool != NULL);
+    assert(fb_pool != nullptr);
 
     cleanup_timer_disable(&fb_cleanup_timer);
     slice_pool_free(fb_pool);
@@ -54,7 +54,7 @@ fb_pool_deinit(void)
 void
 fb_pool_disable(void)
 {
-    assert(fb_pool != NULL);
+    assert(fb_pool != nullptr);
 
     cleanup_timer_disable(&fb_cleanup_timer);
 }
@@ -62,7 +62,7 @@ fb_pool_disable(void)
 void
 fb_pool_compress(void)
 {
-    assert(fb_pool != NULL);
+    assert(fb_pool != nullptr);
 
     slice_pool_compress(fb_pool);
     cleanup_timer_disable(&fb_cleanup_timer);
@@ -73,17 +73,19 @@ to_meta(struct fifo_buffer *buffer)
 {
     char *p = (char *)buffer;
     p += FB_SIZE - sizeof(struct fbp_meta);
-    return (struct fbp_meta *)p;
+    void *q = p;
+    return (struct fbp_meta *)q;
 }
 
 struct fifo_buffer *
 fb_pool_alloc(void)
 {
     struct slice_area *area = slice_pool_get_area(fb_pool);
-    assert(area != NULL);
+    assert(area != nullptr);
 
-    struct fifo_buffer *buffer = slice_alloc(fb_pool, area);
-    assert(buffer != NULL);
+    struct fifo_buffer *buffer = (struct fifo_buffer *)
+        slice_alloc(fb_pool, area);
+    assert(buffer != nullptr);
 
     struct fbp_meta *meta = to_meta(buffer);
     meta->area = area;
@@ -95,7 +97,7 @@ fb_pool_alloc(void)
 void
 fb_pool_free(struct fifo_buffer *buffer)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
 
     struct fbp_meta *meta = to_meta(buffer);
     slice_free(fb_pool, meta->area, buffer);

@@ -10,10 +10,10 @@
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
-
 #ifdef __cplusplus
 extern "C" {
+#else
+#include <stdbool.h>
 #endif
 
 /**

@@ -8,8 +8,13 @@
 #ifndef BENG_PROXY_CLEANUP_TIMER_H
 #define BENG_PROXY_CLEANUP_TIMER_H
 
-#include <stdbool.h>
 #include <event.h>
+
+#ifdef __cplusplus
+extern "C" {
+#else
+#include <stdbool.h>
+#endif
 
 struct cleanup_timer {
     struct event event;
@@ -38,5 +43,9 @@ cleanup_timer_deinit(struct cleanup_timer *t)
 {
     cleanup_timer_disable(t);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
