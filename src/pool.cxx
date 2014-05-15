@@ -77,7 +77,7 @@ struct linear_pool_area {
 
     /**
      * The slice_area that was used to allocated this pool area.  It
-     * is NULL if this area was allocated from the libc heap.
+     * is nullptr if this area was allocated from the libc heap.
      */
     struct slice_area *slice_area;
 
@@ -169,7 +169,7 @@ static void * gcc_malloc
 xmalloc(size_t size)
 {
     void *p = malloc(size);
-    if (unlikely(p == NULL)) {
+    if (unlikely(p == nullptr)) {
         fputs("Out of memory\n", stderr);
         abort();
     }
@@ -186,14 +186,15 @@ align_size(size_t size)
 static struct allocation_info *
 get_linear_allocation_info(void *p)
 {
-    return (struct allocation_info *)((char*)p - sizeof(struct allocation_info));
+    void *q = (char *)p - sizeof(struct allocation_info);
+    return (struct allocation_info *)q;
 }
 #endif
 
 void
 pool_recycler_clear(void)
 {
-    while (recycler.pools != NULL) {
+    while (recycler.pools != nullptr) {
         struct pool *pool = recycler.pools;
         recycler.pools = pool->current_area.recycler;
         free(pool);
@@ -201,7 +202,7 @@ pool_recycler_clear(void)
 
     recycler.num_pools = 0;
 
-    while (recycler.linear_areas != NULL) {
+    while (recycler.linear_areas != nullptr) {
         struct linear_pool_area *linear = recycler.linear_areas;
         recycler.linear_areas = linear->prev;
         free(linear);
@@ -226,9 +227,9 @@ pool_recycler_put(struct pool *pool)
 static bool
 pool_recycler_put_linear(struct linear_pool_area *area)
 {
-    assert(area != NULL);
+    assert(area != nullptr);
     assert(area->size > 0);
-    assert(area->slice_area == NULL);
+    assert(area->slice_area == nullptr);
 
     if (recycler.num_linear_areas >= RECYCLER_MAX_LINEAR_AREAS)
         return false;
@@ -248,7 +249,7 @@ pool_recycler_get_linear(size_t size)
 
     struct linear_pool_area **linear_p, *linear;
     for (linear_p = &recycler.linear_areas, linear = *linear_p;
-         linear != NULL;
+         linear != nullptr;
          linear_p = &linear->prev, linear = *linear_p) {
         if (linear->size == size) {
             assert(recycler.num_linear_areas > 0);
@@ -258,13 +259,13 @@ pool_recycler_get_linear(size_t size)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 static void
 pool_free_linear_area(struct linear_pool_area *area)
 {
-    assert(area->slice_area == NULL);
+    assert(area->slice_area == nullptr);
 
     poison_undefined(area->data, area->used);
     free(area);
@@ -274,10 +275,10 @@ static bool
 pool_dispose_slice_area(struct slice_pool *slice_pool,
                         struct linear_pool_area *area)
 {
-    if (area->slice_area == NULL)
+    if (area->slice_area == nullptr)
         return false;
 
-    assert(slice_pool != NULL);
+    assert(slice_pool != nullptr);
 
     slice_free(slice_pool, area->slice_area, area);
     return true;
@@ -299,7 +300,7 @@ pool_dispose_linear_area(struct pool *pool, struct linear_pool_area *area)
 static inline void
 pool_add_child(struct pool *pool, struct pool *child)
 {
-    assert(child->parent == NULL);
+    assert(child->parent == nullptr);
 
     child->parent = pool;
     list_add(&child->siblings, &pool->children);
@@ -311,7 +312,7 @@ pool_remove_child(gcc_unused struct pool *pool, struct pool *child)
     assert(child->parent == pool);
 
     list_remove(&child->siblings);
-    child->parent = NULL;
+    child->parent = nullptr;
 }
 
 static struct pool *gcc_malloc
@@ -319,8 +320,8 @@ pool_new(struct pool *parent, const char *name)
 {
     struct pool *pool;
 
-    if (recycler.pools == NULL)
-        pool = xmalloc(sizeof(*pool));
+    if (recycler.pools == nullptr)
+        pool = (struct pool *)xmalloc(sizeof(*pool));
     else {
         pool = recycler.pools;
         recycler.pools = pool->current_area.recycler;
@@ -339,12 +340,12 @@ pool_new(struct pool *parent, const char *name)
 #endif
     pool->name = name;
 #ifndef NDEBUG
-    pool->major = parent == NULL;
+    pool->major = parent == nullptr;
     pool->persistent = false;
 #endif
 
-    pool->parent = NULL;
-    if (parent != NULL)
+    pool->parent = nullptr;
+    if (parent != nullptr)
         pool_add_child(parent, pool);
 
 #ifndef NDEBUG
@@ -372,10 +373,11 @@ pool_new_slice_area(struct slice_pool *slice_pool,
                     struct linear_pool_area *prev)
 {
     struct slice_area *slice_area = slice_pool_get_area(slice_pool);
-    assert(slice_area != NULL);
+    assert(slice_area != nullptr);
 
-    struct linear_pool_area *area = slice_alloc(slice_pool, slice_area);
-    assert(area != NULL);
+    struct linear_pool_area *area = (struct linear_pool_area *)
+        slice_alloc(slice_pool, slice_area);
+    assert(area != nullptr);
 
     area->prev = prev;
     area->slice_area = slice_area;
@@ -391,11 +393,12 @@ pool_new_slice_area(struct slice_pool *slice_pool,
 static struct linear_pool_area * gcc_malloc
 pool_new_linear_area(struct linear_pool_area *prev, size_t size)
 {
-    struct linear_pool_area *area = xmalloc(LINEAR_POOL_AREA_HEADER + size);
-    if (area == NULL)
+    struct linear_pool_area *area = (struct linear_pool_area *)
+        xmalloc(LINEAR_POOL_AREA_HEADER + size);
+    if (area == nullptr)
         abort();
 
-    area->slice_area = NULL;
+    area->slice_area = nullptr;
     area->prev = prev;
     area->size = size;
     area->used = 0;
@@ -409,7 +412,7 @@ static inline struct linear_pool_area *
 pool_get_linear_area(struct linear_pool_area *prev, size_t size)
 {
     struct linear_pool_area *area = pool_recycler_get_linear(size);
-    if (area == NULL) {
+    if (area == nullptr) {
         area = pool_new_linear_area(prev, size);
     } else {
         area->prev = prev;
@@ -429,10 +432,10 @@ pool_new_linear(struct pool *parent, const char *name, size_t initial_size)
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LINEAR;
     pool->area_size = initial_size;
-    pool->slice_pool = NULL;
-    pool->current_area.linear = NULL;
+    pool->slice_pool = nullptr;
+    pool->current_area.linear = nullptr;
 
-    assert(parent != NULL);
+    assert(parent != nullptr);
 
     return pool;
 #endif
@@ -442,7 +445,7 @@ struct pool *
 pool_new_slice(struct pool *parent, const char *name,
                struct slice_pool *slice_pool)
 {
-    assert(parent != NULL);
+    assert(parent != nullptr);
     assert(slice_pool_get_slice_size(slice_pool) > LINEAR_POOL_AREA_HEADER);
 
 #ifdef POOL_LIBC_ONLY
@@ -454,7 +457,7 @@ pool_new_slice(struct pool *parent, const char *name,
     pool->type = POOL_LINEAR;
     pool->area_size = slice_pool_get_slice_size(slice_pool) - LINEAR_POOL_AREA_HEADER;
     pool->slice_pool = slice_pool;
-    pool->current_area.linear = NULL;
+    pool->current_area.linear = nullptr;
 
     return pool;
 #endif
@@ -470,7 +473,7 @@ pool_linear_is_empty(const struct pool *pool)
     assert(pool->type == POOL_LINEAR);
 
     const struct linear_pool_area *area = pool->current_area.linear;
-    return area == NULL || (area->prev == NULL && area->used == 0);
+    return area == nullptr || (area->prev == nullptr && area->used == 0);
 }
 
 #endif
@@ -531,7 +534,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
              struct pool *reparent_to TRACE_ARGS_DECL)
 {
     assert(pool->ref == 0);
-    assert(pool->parent == NULL);
+    assert(pool->parent == nullptr);
 
 #ifdef DUMP_POOL_SIZE
     daemon_log(4, "pool '%s' size=%zu\n", pool->name, pool->netto_size);
@@ -565,7 +568,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
         pool_remove_child(pool, child);
         assert(child->ref > 0);
 
-        if (reparent_to == NULL) {
+        if (reparent_to == nullptr) {
             /* children of major pools are put on trash, so they are
                collected by pool_commit() */
             assert(pool->major || pool->trashed);
@@ -574,16 +577,16 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
             if (child->persistent) {
                 assert(child->major);
 
-                if (parent != NULL)
+                if (parent != nullptr)
                     pool_add_child(parent, child);
                 else
-                    child->parent = NULL;
+                    child->parent = nullptr;
             } else {
                 list_add(&child->siblings, &trash);
                 child->trashed = true;
             }
 #else
-            child->parent = NULL;
+            child->parent = nullptr;
 #endif
         } else {
             /* reparent all children of the destroyed pool to its
@@ -631,7 +634,7 @@ pool_destroy(struct pool *pool, gcc_unused struct pool *parent,
         break;
 
     case POOL_LINEAR:
-        while (pool->current_area.linear != NULL) {
+        while (pool->current_area.linear != nullptr) {
             struct linear_pool_area *area = pool->current_area.linear;
             pool->current_area.linear = area->prev;
             pool_dispose_linear_area(pool, area);
@@ -666,7 +669,7 @@ pool_increment_ref(gcc_unused struct pool *pool,
 #endif
     }
 
-    ref = xmalloc(sizeof(*ref));
+    ref = (struct pool_ref *)xmalloc(sizeof(*ref));
 
 #ifdef TRACE
     ref->file = file;
@@ -734,11 +737,11 @@ pool_unref_impl(struct pool *pool TRACE_ARGS_DECL)
     if (unlikely(pool->ref == 0)) {
         struct pool *parent = pool->parent;
 #ifdef NDEBUG
-        struct pool *reparent_to = NULL;
+        struct pool *reparent_to = nullptr;
 #else
-        struct pool *reparent_to = pool->major ? NULL : parent;
+        struct pool *reparent_to = pool->major ? nullptr : parent;
 #endif
-        if (parent != NULL)
+        if (parent != nullptr)
             pool_remove_child(parent, pool);
 #ifdef DUMP_POOL_UNREF
         pool_dump_refs(pool);
@@ -762,7 +765,7 @@ pool_linear_brutto_size(const struct pool *pool)
     size_t size = 0;
 
     for (const struct linear_pool_area *area = pool->current_area.linear;
-         area != NULL; area = area->prev)
+         area != nullptr; area = area->prev)
         size += area->size;
 
     return size;
@@ -833,7 +836,7 @@ pool_type_string(enum pool_type type)
     }
 
     assert(false);
-    return NULL;
+    return nullptr;
 }
 
 static void
@@ -904,7 +907,7 @@ pool_ref_notify_impl(struct pool *pool, struct pool_notify_state *notify TRACE_A
     pool_ref_impl(pool TRACE_ARGS_FWD);
 
 #ifdef TRACE
-    notify->file = NULL;
+    notify->file = nullptr;
     notify->line = -1;
 #endif
 }
@@ -916,7 +919,7 @@ pool_unref_denotify_impl(struct pool *pool, struct pool_notify_state *notify
     assert(notify->pool == pool);
     assert(!notify->destroyed);
 #ifdef TRACE
-    assert(notify->file == NULL);
+    assert(notify->file == nullptr);
     assert(notify->line == -1);
 #endif
 
@@ -935,7 +938,7 @@ pool_trash(struct pool *pool)
     if (pool->trashed)
         return;
 
-    assert(pool->parent != NULL);
+    assert(pool->parent != nullptr);
 
 #ifndef NDEBUG
     if (pool->persistent)
@@ -981,15 +984,15 @@ linear_pool_area_contains(const struct linear_pool_area *area,
 bool
 pool_contains(struct pool *pool, const void *ptr, size_t size)
 {
-    assert(pool != NULL);
-    assert(ptr != NULL);
+    assert(pool != nullptr);
+    assert(ptr != nullptr);
     assert(size > 0);
 
     if (pool->type != POOL_LINEAR)
         return true;
 
     for (const struct linear_pool_area *area = pool->current_area.linear;
-         area != NULL; area = area->prev)
+         area != nullptr; area = area->prev)
         if (linear_pool_area_contains(area, ptr, size))
             return true;
 
@@ -1005,8 +1008,8 @@ pool_mark(struct pool *pool, struct pool_mark_state *mark)
     assert(pool->type == POOL_LINEAR);
 
     mark->area = pool->current_area.linear;
-    mark->prev = mark->area != NULL ? mark->area->prev : NULL;
-    mark->position = mark->area != NULL ? mark->area->used : 0;
+    mark->prev = mark->area != nullptr ? mark->area->prev : nullptr;
+    mark->position = mark->area != nullptr ? mark->area->used : 0;
 
 #ifndef NDEBUG
     mark->was_empty = pool_linear_is_empty(pool);
@@ -1046,15 +1049,15 @@ pool_rewind(struct pool *pool, const struct pool_mark_state *mark)
 {
 #ifndef POOL_LIBC_ONLY
     assert(pool->type == POOL_LINEAR);
-    assert(mark->area == NULL || mark->position <= mark->area->used);
-    assert(mark->area != NULL || mark->position == 0);
+    assert(mark->area == nullptr || mark->position <= mark->area->used);
+    assert(mark->area != nullptr || mark->position == 0);
 
     struct linear_pool_area *const marked_area = mark->area;
 
     /* dispose all areas newer than the marked one */
     while (pool->current_area.linear != marked_area) {
         struct linear_pool_area *area = pool->current_area.linear;
-        assert(area != NULL);
+        assert(area != nullptr);
 
         pool_remove_allocations(pool, area->data, area->used);
 
@@ -1062,12 +1065,12 @@ pool_rewind(struct pool *pool, const struct pool_mark_state *mark)
         pool_dispose_linear_area(pool, area);
     }
 
-    if (marked_area != NULL) {
+    if (marked_area != nullptr) {
         /* dispose all (large) areas that were inserted before the marked
            one */
         while (marked_area->prev != mark->prev) {
             struct linear_pool_area *area = marked_area->prev;
-            assert(area != NULL);
+            assert(area != nullptr);
             /* only large areas get inserted before the current one */
             assert(area->size > pool->area_size);
             assert(area->used > pool->area_size);
@@ -1108,7 +1111,7 @@ static void *
 p_malloc_libc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 {
     const size_t aligned_size = align_size(size);
-    struct libc_pool_chunk *chunk =
+    struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)
         xmalloc(sizeof(*chunk) - sizeof(chunk->data) + aligned_size);
 
 #ifndef NDEBUG
@@ -1161,18 +1164,18 @@ p_malloc_linear(struct pool *pool, const size_t original_size
         TRACE_ARGS_IGNORE;
 #endif
 
-        if (area == NULL) {
+        if (area == nullptr) {
             /* this is the first allocation, create the initial
                area */
             area = pool->current_area.linear =
-                pool_new_linear_area(NULL, size);
+                pool_new_linear_area(nullptr, size);
         } else {
             /* put the special large area after the current one */
             area = pool_new_linear_area(area->prev, size);
             pool->current_area.linear->prev = area;
         }
-    } else if (unlikely(area == NULL || area->used + size > area->size)) {
-        if (area != NULL) {
+    } else if (unlikely(area == nullptr || area->used + size > area->size)) {
+        if (area != nullptr) {
             daemon_log(5, "growing linear pool '%s'\n", pool->name);
 #ifdef DEBUG_POOL_GROW
             pool_dump_allocations(pool);
@@ -1182,7 +1185,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 #endif
         }
 
-        area = pool->slice_pool != NULL
+        area = pool->slice_pool != nullptr
             ? pool_new_slice_area(pool->slice_pool, area)
             : pool_get_linear_area(area, pool->area_size);
         pool->current_area.linear = area;
@@ -1196,7 +1199,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
     poison_undefined(p, size);
 
 #ifndef NDEBUG
-    struct allocation_info *info = p;
+    struct allocation_info *info = (struct allocation_info *)p;
     info->file = file;
     info->line = line;
     info->size = original_size;
@@ -1209,7 +1212,7 @@ p_malloc_linear(struct pool *pool, const size_t original_size
 static void *
 internal_malloc(struct pool *pool, size_t size TRACE_ARGS_DECL)
 {
-    assert(pool != NULL);
+    assert(pool != nullptr);
 
     pool->netto_size += size;
 
@@ -1229,8 +1232,8 @@ p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL)
 static void
 p_free_libc(gcc_unused struct pool *pool, void *ptr)
 {
-    struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)(((char*)ptr) -
-                                                               offsetof(struct libc_pool_chunk, data));
+    void *q = (char *)ptr - offsetof(struct libc_pool_chunk, data);
+    struct libc_pool_chunk *chunk = (struct libc_pool_chunk *)q;
 
 #ifndef NDEBUG
     list_remove(&chunk->info.siblings);
@@ -1250,8 +1253,8 @@ p_free(struct pool *pool, const void *cptr)
     } u = { .in = cptr };
     void *ptr = u.out;
 
-    assert(pool != NULL);
-    assert(ptr != NULL);
+    assert(pool != nullptr);
+    assert(ptr != nullptr);
     assert((((unsigned long)ptr) & ALIGN_BITS) == 0);
     assert(pool_contains(pool, ptr, 1));
 
@@ -1303,11 +1306,12 @@ p_calloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL)
 void
 pool_attach(struct pool *pool, const void *p, const char *name)
 {
-    assert(pool != NULL);
-    assert(p != NULL);
-    assert(name != NULL);
+    assert(pool != nullptr);
+    assert(p != nullptr);
+    assert(name != nullptr);
 
-    struct attachment *attachment = xmalloc(sizeof(*attachment));
+    struct attachment *attachment = (struct attachment *)
+        xmalloc(sizeof(*attachment));
     attachment->value = p;
     attachment->name = name;
 
@@ -1323,17 +1327,17 @@ find_attachment(struct pool *pool, const void *p)
         if (attachment->value == p)
             return attachment;
 
-    return NULL;
+    return nullptr;
 }
 
 void
 pool_attach_checked(struct pool *pool, const void *p, const char *name)
 {
-    assert(pool != NULL);
-    assert(p != NULL);
-    assert(name != NULL);
+    assert(pool != nullptr);
+    assert(p != nullptr);
+    assert(name != nullptr);
 
-    if (find_attachment(pool, p) != NULL)
+    if (find_attachment(pool, p) != nullptr)
         return;
 
     pool_attach(pool, p, name);
@@ -1343,7 +1347,7 @@ void
 pool_detach(struct pool *pool, const void *p)
 {
     struct attachment *attachment = find_attachment(pool, p);
-    assert(attachment != NULL);
+    assert(attachment != nullptr);
 
     list_remove(&attachment->siblings);
     free(attachment);
@@ -1353,7 +1357,7 @@ void
 pool_detach_checked(struct pool *pool, const void *p)
 {
     struct attachment *attachment = find_attachment(pool, p);
-    if (attachment == NULL)
+    if (attachment == nullptr)
         return;
 
     list_remove(&attachment->siblings);
@@ -1364,9 +1368,9 @@ const char *
 pool_attachment_name(struct pool *pool, const void *p)
 {
     struct attachment *attachment = find_attachment(pool, p);
-    return attachment != NULL
+    return attachment != nullptr
         ? attachment->name
-        : NULL;
+        : nullptr;
 }
 
 #endif
