@@ -2,7 +2,7 @@ cm4all-beng-proxy (3.1.32) unstable; urgency=low
 
   * http_string: allow comma in cookie values (RFC ignorant)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 19 May 2014 07:52:24 -0000
 
 cm4all-beng-proxy (3.1.31) unstable; urgency=low
 
