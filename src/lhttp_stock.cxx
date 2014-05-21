@@ -141,6 +141,11 @@ lhttp_stock_create(void *ctx, struct stock_item *item,
                                        key, info, address->concurrency,
                                        &connection->lease_ref,
                                        &error);
+    if (connection->child == nullptr) {
+        g_prefix_error(&error, "failed to launch LHTTP server '%s': ", key);
+        stock_item_failed(item, error);
+        return;
+    }
 
     connection->fd = child_stock_item_connect(connection->child, &error);
 
