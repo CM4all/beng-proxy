@@ -220,3 +220,10 @@ class Response:
     def validate_mtime(self, mtime, path):
         return self.packet(TRANSLATE_VALIDATE_MTIME,
                            struct.pack('L', mtime) + path)
+
+    def bind_mount(self, source, target):
+        assert isinstance(source, str)
+        assert isinstance(target, str)
+        assert source[0] == '/'
+        assert target[0] == '/'
+        return self.packet(TRANSLATE_BIND_MOUNT, source + '\0' + target)
