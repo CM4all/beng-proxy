@@ -699,6 +699,11 @@ request_uri_parse(request &request2, parsed_uri &dest)
            insert an empty response here */
         install_error_response(request2);
 
+        /* enable the "stateless" flag because we're at a very early
+           stage, before request_determine_session(), and the
+           session-related attributes have not been initialized yet */
+        request2.stateless = true;
+
         response_dispatch_message(&request2, HTTP_STATUS_BAD_REQUEST,
                                   "Malformed URI");
         return false;
