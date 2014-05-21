@@ -88,7 +88,6 @@ class MultiStock : public mstock {
                 assert(&*i == this);
 
                 ++n_leases;
-                printf("AddLease n=%u max=%u\n", n_leases, max_leases);
 
                 Lease *lease = new Lease(i);
                 list_add(lease, &leases);
