@@ -216,11 +216,15 @@ cgi_address_apply(struct pool *pool, const struct cgi_address *src,
     if (uri_has_protocol(relative, relative_length))
         return nullptr;
 
+    char *unescaped = (char *)p_memdup(pool, relative, relative_length);
+    size_t unescaped_length = uri_unescape_inplace(unescaped,
+                                                   relative_length, '%');
+
     const char *path_info = src->path_info != nullptr ? src->path_info : "";
 
     struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
     dest->path_info = uri_absolute(pool, path_info,
-                                   relative, relative_length);
+                                   unescaped, unescaped_length);
     assert(dest->path_info != nullptr);
     return dest;
 }

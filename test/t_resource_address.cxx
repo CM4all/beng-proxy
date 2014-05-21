@@ -113,6 +113,11 @@ test_cgi_apply(struct pool *pool)
     assert(result == &buffer);
     assert(strcmp(result->u.cgi->path_info, "/bar") == 0);
 
+    /* PATH_INFO is unescaped (RFC 3875 4.1.5) */
+    result = resource_address_apply(pool, &ra0, "bar%2etxt", 9, &buffer);
+    assert(result == &buffer);
+    assert(strcmp(result->u.cgi->path_info, "/foo/bar.txt") == 0);
+
     result = resource_address_apply(pool, &ra0, "http://localhost/", 17, &buffer);
     assert(result == nullptr);
 }
