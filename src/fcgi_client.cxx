@@ -33,15 +33,28 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+static inline constexpr uint16_t
+ByteSwap16(uint16_t value)
+{
+  return (value >> 8) | (value << 8);
+}
+
+/**
+ * Converts a 16bit value from the system's byte order to big endian.
+ */
+static inline constexpr uint16_t
+ToBE16(uint16_t value)
+{
 #if __BYTE_ORDER == __BIG_ENDIAN
-#define macro_htons(s) ((int16_t)(s))
+    return value;
 #else
 #if __BYTE_ORDER == __LITTLE_ENDIAN 
-#define macro_htons(s) ((int16_t)((((s) >> 8) & 0xff) | (((s) << 8) & 0xff00)))
+  return ByteSwap16(value);
 #else
 #error Unknown byte order
 #endif
 #endif
+}
 
 #ifndef NDEBUG
 static LIST_HEAD(fcgi_clients);
@@ -916,7 +929,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
         .reserved = 0,
     };
     static constexpr struct fcgi_begin_request begin_request = {
-        .role = macro_htons(FCGI_RESPONDER),
+        .role = ToBE16(FCGI_RESPONDER),
         .flags = FCGI_KEEP_CONN,
     };
 
