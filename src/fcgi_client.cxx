@@ -124,7 +124,7 @@ struct fcgi_client {
     size_t content_length, skip_length;
 };
 
-static const struct timeval fcgi_client_timeout = {
+static constexpr struct timeval fcgi_client_timeout = {
     .tv_sec = 120,
     .tv_usec = 0,
 };
@@ -685,7 +685,7 @@ fcgi_request_stream_abort(GError *error, void *ctx)
     fcgi_client_abort_response(client, error);
 }
 
-static const struct istream_handler fcgi_request_stream_handler = {
+static constexpr struct istream_handler fcgi_request_stream_handler = {
     .data = fcgi_request_stream_data,
     .direct = fcgi_request_stream_direct,
     .eof = fcgi_request_stream_eof,
@@ -739,7 +739,7 @@ fcgi_client_response_body_close(struct istream *istream)
     fcgi_client_close_response_body(client);
 }
 
-static const struct istream_class fcgi_client_response_body = {
+static constexpr struct istream_class fcgi_client_response_body = {
     .available = fcgi_client_response_body_available,
     .read = fcgi_client_response_body_read,
     .close = fcgi_client_response_body_close,
@@ -881,7 +881,7 @@ fcgi_client_request_abort(struct async_operation *ao)
     fcgi_client_release(client, false);
 }
 
-static const struct async_operation_class fcgi_client_async_operation = {
+static constexpr struct async_operation_class fcgi_client_async_operation = {
     .abort = fcgi_client_request_abort,
 };
 
@@ -915,7 +915,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
         .padding_length = 0,
         .reserved = 0,
     };
-    static const struct fcgi_begin_request begin_request = {
+    static constexpr struct fcgi_begin_request begin_request = {
         .role = macro_htons(FCGI_RESPONDER),
         .flags = FCGI_KEEP_CONN,
     };
