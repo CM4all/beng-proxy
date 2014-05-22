@@ -2722,6 +2722,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_AUTO_BASE:
         if (client->resource_address != &client->response.address ||
+            client->cgi_address == nullptr ||
             client->cgi_address != client->response.address.u.cgi ||
             client->cgi_address->path_info == nullptr ||
             client->from_request.uri == nullptr ||
