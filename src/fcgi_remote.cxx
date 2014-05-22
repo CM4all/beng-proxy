@@ -44,6 +44,8 @@ struct fcgi_remote_request {
     const char *const* params;
     unsigned num_params;
 
+    int stderr_fd;
+
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
 };
@@ -91,6 +93,7 @@ fcgi_remote_stock_ready(struct stock_item *item, void *ctx)
                         request->remote_addr,
                         request->headers, request->body,
                         request->params, request->num_params,
+                        request->stderr_fd,
                         request->handler.handler, request->handler.ctx,
                         request->async_ref);
 }
@@ -99,6 +102,9 @@ static void
 fcgi_remote_stock_error(GError *error, void *ctx)
 {
     struct fcgi_remote_request *request = (struct fcgi_remote_request *)ctx;
+
+    if (request->stderr_fd >= 0)
+        close(request->stderr_fd);
 
     http_response_handler_invoke_abort(&request->handler, error);
 }
@@ -125,6 +131,7 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     const char *remote_addr,
                     struct strmap *headers, struct istream *body,
                     const char *const params[], unsigned num_params,
+                    int stderr_fd,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
@@ -143,6 +150,8 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
     request->headers = headers;
     request->params = params;
     request->num_params = num_params;
+
+    request->stderr_fd = stderr_fd;
 
     http_response_handler_set(&request->handler, handler, handler_ctx);
     request->async_ref = async_ref;

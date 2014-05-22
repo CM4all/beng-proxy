@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 static inline constexpr uint16_t
 ByteSwap16(uint16_t value)
@@ -70,6 +71,8 @@ struct fcgi_client {
     BufferedSocket socket;
 
     struct lease_ref lease_ref;
+
+    int stderr_fd;
 
     struct http_response_handler_ref handler;
     struct async_operation async;
@@ -170,6 +173,9 @@ fcgi_client_release(struct fcgi_client *client, bool reuse)
         fcgi_client_release_socket(client, reuse);
 
     client->socket.Destroy();
+
+    if (client->stderr_fd >= 0)
+        close(client->stderr_fd);
 
 #ifndef NDEBUG
     list_remove(&client->siblings);
@@ -347,7 +353,9 @@ fcgi_client_feed(struct fcgi_client *client,
                  const uint8_t *data, size_t length)
 {
     if (client->response.stderr) {
-        ssize_t nbytes = fwrite(data, 1, length, stderr);
+        ssize_t nbytes = client->stderr_fd >= 0
+            ? write(client->stderr_fd, data, length)
+            : fwrite(data, 1, length, stderr);
         return nbytes > 0 ? (size_t)nbytes : 0;
     }
 
@@ -915,6 +923,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
                     const char *remote_addr,
                     struct strmap *headers, struct istream *body,
                     const char *const params[], unsigned num_params,
+                    int stderr_fd,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
@@ -951,6 +960,8 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "fcgi_client_lease");
+
+    client->stderr_fd = stderr_fd;
 
     http_response_handler_set(&client->handler, handler, handler_ctx);
 

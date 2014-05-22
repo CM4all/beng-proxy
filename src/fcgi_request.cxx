@@ -97,6 +97,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              const char *remote_addr,
              struct strmap *headers, struct istream *body,
              const char *const env[], unsigned n_env,
+             int stderr_fd,
              const struct http_response_handler *handler,
              void *handler_ctx,
              struct async_operation_ref *async_ref)
@@ -105,6 +106,9 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     if (!jail_params_check(&options->jail, &error)) {
         if (body != nullptr)
             istream_close_unused(body);
+
+        if (stderr_fd >= 0)
+            close(stderr_fd);
 
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
@@ -125,6 +129,9 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     if (stock_item == nullptr) {
         if (body != nullptr)
             istream_close_unused(body);
+
+        if (stderr_fd >= 0)
+            close(stderr_fd);
 
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
@@ -153,6 +160,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
                         remote_addr,
                         headers, body,
                         env, n_env,
+                        stderr_fd,
                         handler, handler_ctx,
                         async_ref);
 }

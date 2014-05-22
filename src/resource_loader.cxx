@@ -27,6 +27,7 @@
 #include "strmap.h"
 #include "istream.h"
 #include "ssl_client.h"
+#include "gerrno.h"
 
 #ifdef HAVE_LIBNFS
 #include "nfs_request.h"
@@ -162,6 +163,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
     switch (address->type) {
         const struct file_address *file;
         const struct cgi_address *cgi;
+        int stderr_fd;
         const char *server_name;
         unsigned server_port;
         const struct socket_filter *filter;
@@ -235,6 +237,22 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     case RESOURCE_ADDRESS_FASTCGI:
         cgi = address->u.cgi;
+
+        if (cgi->options.stderr_path != nullptr) {
+            stderr_fd = cgi->options.OpenStderrPath();
+            if (stderr_fd < 0) {
+                int code = errno;
+                GError *error =
+                    g_error_new(errno_quark(), code, "open('%s') failed: %s",
+                                cgi->options.stderr_path,
+                                g_strerror(code));
+                http_response_handler_direct_abort(handler, handler_ctx,
+                                                   error);
+                return;
+            }
+        } else
+            stderr_fd = -1;
+
         if (address_list_is_empty(&cgi->address_list))
             fcgi_request(pool, rl->fcgi_stock,
                          &cgi->options,
@@ -249,6 +267,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                          extract_remote_ip(pool, headers),
                          headers, body,
                          cgi->env.values, cgi->env.n,
+                         stderr_fd,
                          handler, handler_ctx, async_ref);
         else
             fcgi_remote_request(pool, rl->tcp_balancer,
@@ -262,6 +281,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                                 extract_remote_ip(pool, headers),
                                 headers, body,
                                 cgi->env.values, cgi->env.n,
+                                stderr_fd,
                                 handler, handler_ctx, async_ref);
         return;
 

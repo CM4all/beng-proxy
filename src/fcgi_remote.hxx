@@ -28,6 +28,7 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     const char *remote_addr,
                     struct strmap *headers, struct istream *body,
                     const char *const params[], unsigned num_params,
+                    int stderr_fd,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref);

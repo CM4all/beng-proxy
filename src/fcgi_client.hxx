@@ -37,6 +37,8 @@ struct async_operation_ref;
  * @param document_root the absolute path of the document root
  * @param headers the serialized request headers (optional)
  * @param body the request body (optional)
+ * @param stderr_fd a file descriptor for #FCGI_STDERR packets (will
+ * be closed by this library) or -1 to send everything to stderr
  * @param handler a callback function which receives the response
  * @param ctx a context pointer for the callback function
  * @param async_ref a handle which may be used to abort the operation
@@ -52,6 +54,7 @@ fcgi_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                     const char *remote_addr,
                     struct strmap *headers, struct istream *body,
                     const char *const params[], unsigned num_params,
+                    int stderr_fd,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref);

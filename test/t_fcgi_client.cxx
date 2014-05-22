@@ -43,6 +43,7 @@ client_request(struct pool *pool, struct connection *connection,
                         nullptr, "192.168.1.100",
                         headers, body,
                         nullptr, 0,
+                        -1,
                         handler, ctx, async_ref);
 }
 
