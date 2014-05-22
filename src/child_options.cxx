@@ -6,6 +6,7 @@
 #include "pool.h"
 #include "djbhash.h"
 
+#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
@@ -34,14 +35,22 @@ child_options::MakeId(char *p) const
     return p;
 }
 
+int
+child_options::OpenStderrPath() const
+{
+    assert(stderr_path != nullptr);
+
+    return open(stderr_path, O_CREAT|O_WRONLY|O_APPEND|O_CLOEXEC|O_NOCTTY,
+                0666);
+}
+
 void
 child_options::SetupStderr(bool stdout) const
 {
     if (stderr_path == nullptr)
         return;
 
-    int fd = open(stderr_path, O_CREAT|O_WRONLY|O_APPEND|O_CLOEXEC|O_NOCTTY,
-                  0666);
+    int fd = OpenStderrPath();
     if (fd < 0) {
         fprintf(stderr, "open('%s') failed: %s\n",
                 stderr_path, strerror(errno));

@@ -35,6 +35,7 @@ struct child_options {
 
     char *MakeId(char *p) const;
 
+    int OpenStderrPath() const;
     void SetupStderr(bool stdout=false) const;
 };
 
