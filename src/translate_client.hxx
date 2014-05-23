@@ -7,16 +7,9 @@
 #ifndef BENG_PROXY_TRANSLATE_CLIENT_HXX
 #define BENG_PROXY_TRANSLATE_CLIENT_HXX
 
-#include "strref.h"
-
-#include <http/status.h>
-
 #include <glib.h>
 
-#include <stdint.h>
-
 struct pool;
-struct sockaddr;
 struct lease;
 struct async_operation_ref;
 struct TranslateRequest;
