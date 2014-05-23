@@ -137,6 +137,12 @@ lhttp_address::InsertArgs(struct pool *pool,
                                                       path_info_length));
 }
 
+bool
+lhttp_address::IsValidBase() const
+{
+    return IsExpandable() || is_base(uri);
+}
+
 struct lhttp_address *
 lhttp_address::SaveBase(struct pool *pool, const char *suffix) const
 {

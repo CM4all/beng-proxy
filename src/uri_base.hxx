@@ -50,4 +50,12 @@ gcc_pure
 size_t
 base_string_unescape(struct pool *pool, const char *p, const char *tail);
 
+/**
+ * Is the given string a valid base string?  That is, does it end with
+ * a slash?
+ */
+gcc_pure
+bool
+is_base(const char *uri);
+
 #endif

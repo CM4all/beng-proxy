@@ -673,6 +673,37 @@ resource_address::Check(GError **error_r) const
 }
 
 bool
+resource_address::IsValidBase() const
+{
+    switch (type) {
+    case RESOURCE_ADDRESS_NONE:
+        return true;
+
+    case RESOURCE_ADDRESS_LOCAL:
+        return u.file->IsValidBase();
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        return u.http->IsValidBase();
+
+    case RESOURCE_ADDRESS_LHTTP:
+        return u.lhttp->IsValidBase();
+
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        return u.cgi->IsValidBase();
+
+    case RESOURCE_ADDRESS_NFS:
+        return u.nfs->IsValidBase();
+    }
+
+    assert(false);
+    gcc_unreachable();
+}
+
+bool
 resource_address_is_expandable(const struct resource_address *address)
 {
     assert(address != NULL);

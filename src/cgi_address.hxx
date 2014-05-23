@@ -77,6 +77,9 @@ struct cgi_address {
     gcc_pure
     const char *GetId(struct pool *pool) const;
 
+    gcc_pure
+    bool IsValidBase() const;
+
     char *AutoBase(struct pool *pool, const char *request_uri) const;
 
     struct cgi_address *SaveBase(struct pool *pool, const char *suffix,

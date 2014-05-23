@@ -88,6 +88,9 @@ struct http_address {
                                     const char *path_info,
                                     size_t path_info_length) const;
 
+    gcc_pure
+    bool IsValidBase() const;
+
     gcc_malloc
     struct http_address *SaveBase(struct pool *pool, const char *suffix) const;
 

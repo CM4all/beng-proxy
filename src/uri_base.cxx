@@ -68,3 +68,12 @@ base_string_unescape(struct pool *pool, const char *p, const char *tail)
     char *unescaped = uri_unescape_dup(pool, tail, strlen(tail));
     return base_string(p, unescaped);
 }
+
+bool
+is_base(const char *uri)
+{
+    assert(uri != nullptr);
+
+    size_t length = strlen(uri);
+    return length > 0 && uri[length - 1] == '/';
+}

@@ -63,6 +63,12 @@ nfs_address::Check(GError **error_r) const
     return true;
 }
 
+bool
+nfs_address::IsValidBase() const
+{
+    return IsExpandable() || is_base(path);
+}
+
 struct nfs_address *
 nfs_address::SaveBase(struct pool *pool, const char *suffix) const
 {

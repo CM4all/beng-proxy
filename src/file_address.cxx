@@ -45,6 +45,12 @@ file_address_dup(struct pool *pool, const struct file_address *src)
     return NewFromPool<struct file_address>(pool, pool, *src);
 }
 
+bool
+file_address::IsValidBase() const
+{
+    return IsExpandable() || is_base(path);
+}
+
 struct file_address *
 file_address::SaveBase(struct pool *pool, const char *suffix) const
 {

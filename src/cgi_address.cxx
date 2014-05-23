@@ -138,6 +138,12 @@ cgi_address_dup(struct pool *pool, const struct cgi_address *old,
     return n;
 }
 
+bool
+cgi_address::IsValidBase() const
+{
+    return IsExpandable() || (path_info != nullptr && is_base(path_info));
+}
+
 char *
 cgi_address::AutoBase(struct pool *pool, const char *request_uri) const
 {

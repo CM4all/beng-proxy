@@ -195,6 +195,12 @@ http_address::InsertArgs(struct pool *pool,
                                                   path_info, path_info_length));
 }
 
+bool
+http_address::IsValidBase() const
+{
+    return IsExpandable() || is_base(path);
+}
+
 struct http_address *
 http_address::SaveBase(struct pool *pool, const char *suffix) const
 {

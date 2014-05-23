@@ -728,6 +728,13 @@ translate_response_finish(TranslateResponse *response,
     if (!response->address.Check(error_r))
         return false;
 
+    if (response->easy_base && !response->address.IsValidBase()) {
+        /* EASY_BASE was enabled, but the resource address does not
+           end with a slash, thus LoadBase() cannot work */
+        g_set_error(error_r, translate_quark(), 0, "Invalid base address");
+        return nullptr;
+    }
+
     if (resource_address_is_cgi_alike(&response->address)) {
         struct cgi_address *cgi = resource_address_get_cgi(&response->address);
 

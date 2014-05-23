@@ -40,6 +40,9 @@ struct nfs_address {
 
     bool Check(GError **error_r) const;
 
+    gcc_pure
+    bool IsValidBase() const;
+
     struct nfs_address *SaveBase(struct pool *pool, const char *suffix) const;
 
     struct nfs_address *LoadBase(struct pool *pool, const char *suffix) const;

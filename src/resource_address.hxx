@@ -48,6 +48,9 @@ struct resource_address {
 
     bool Check(GError **error_r) const;
 
+    gcc_pure
+    bool IsValidBase() const;
+
     /**
      * Copies data from #src for storing in the translation cache.
      *

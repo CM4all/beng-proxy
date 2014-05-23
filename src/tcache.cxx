@@ -797,6 +797,9 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
         return nullptr;
     }
 
+    assert(!item->response.easy_base ||
+           item->response.address.IsValidBase());
+
     if (key == nullptr)
         key = p_strdup(pool, tcr->key);
 
