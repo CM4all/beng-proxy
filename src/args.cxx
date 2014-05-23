@@ -7,6 +7,7 @@
 #include "args.hxx"
 #include "uri_escape.hxx"
 #include "strmap.h"
+#include "pool.h"
 
 #include <string.h>
 

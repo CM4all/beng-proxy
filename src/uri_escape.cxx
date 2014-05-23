@@ -7,6 +7,7 @@
 #include "uri_escape.hxx"
 #include "strutil.h"
 #include "format.h"
+#include "pool.h"
 
 #include <string.h>
 
@@ -34,6 +35,16 @@ uri_escape(char *dest, const char *src, size_t src_length,
     }
 
     return dest_length;
+}
+
+const char *
+uri_escape_dup(struct pool *pool, const char *src, size_t src_length,
+               char escape_char)
+{
+    char *dest = (char *)p_malloc(pool, src_length * 3 + 1);
+    size_t dest_length = uri_escape(dest, src, src_length, escape_char);
+    dest[dest_length] = 0;
+    return dest;
 }
 
 static int
