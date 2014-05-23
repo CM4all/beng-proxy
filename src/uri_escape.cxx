@@ -88,3 +88,14 @@ uri_unescape_inplace(char *src, size_t length, char escape_char)
 
     return end - src;
 }
+
+char *
+uri_unescape_dup(struct pool *pool, const char *src, size_t length,
+                 char escape_char)
+{
+    char *dest = (char *)p_malloc(pool, length + 1);
+    memcpy(dest, src, length);
+    size_t dest_length = uri_unescape_inplace(dest, length, escape_char);
+    dest[dest_length] = 0;
+    return dest;
+}

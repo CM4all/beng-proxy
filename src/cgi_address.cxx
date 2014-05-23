@@ -193,8 +193,7 @@ cgi_address_load_base(struct pool *pool, const struct cgi_address *src,
     assert(src != nullptr);
     assert(suffix != nullptr);
 
-    char *unescaped = p_strdup(pool, suffix);
-    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
+    char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
 
     struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
     if (dest->uri != nullptr)

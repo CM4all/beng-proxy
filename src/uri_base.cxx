@@ -65,8 +65,6 @@ base_string_unescape(struct pool *pool, const char *p, const char *tail)
     assert(p != nullptr);
     assert(tail != nullptr);
 
-    char *unescaped = p_strdup(pool, tail);
-    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
-
+    char *unescaped = uri_unescape_dup(pool, tail, strlen(tail));
     return base_string(p, unescaped);
 }

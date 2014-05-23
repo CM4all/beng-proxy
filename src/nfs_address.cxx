@@ -79,8 +79,7 @@ nfs_address_load_base(struct pool *pool, const struct nfs_address *src,
     assert(src->path[strlen(src->path) - 1] == '/');
     assert(suffix != nullptr);
 
-    char *unescaped = p_strdup(pool, suffix);
-    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
+    char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
 
     auto dest = NewFromPool<struct nfs_address>(pool,
                                                 p_strdup(pool, src->server),

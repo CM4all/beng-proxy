@@ -348,9 +348,7 @@ tcache_regex_input(struct pool *pool, const char *uri,
         assert(response.regex != nullptr ||
                response.inverse_regex != nullptr);
 
-        char *unescaped = p_strdup(pool, uri);
-        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
-        uri = unescaped;
+        uri = uri_unescape_dup(pool, uri, strlen(uri));
     }
 
     return uri;

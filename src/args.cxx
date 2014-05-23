@@ -36,10 +36,7 @@ args_parse(struct pool *pool, const char *p, size_t length)
         const char *equals = (const char *)memchr(p, '=', ampersand - p);
         if (equals > p) {
             size_t value_length = ampersand - equals - 1;
-            char *value = p_strndup(pool, equals + 1, value_length);
-            value_length = uri_unescape_inplace(value, value_length,
-                                                ARGS_ESCAPE_CHAR);
-            value[value_length] = 0;
+            char *value = uri_unescape_dup(pool, equals + 1, value_length);
 
             strmap_add(args, p_strndup(pool, p, equals - p), value);
         }
