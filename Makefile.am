@@ -98,7 +98,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/ajp_request.cxx src/ajp_request.hxx \
 	src/ajp_serialize.cxx src/ajp_serialize.hxx \
 	src/ajp-util.h \
-	src/args.c src/args.h \
+	src/args.cxx src/args.hxx \
 	src/background.h \
 	src/balancer.c src/balancer.h \
 	src/bot.c src/bot.h \
@@ -1022,7 +1022,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget_request.cxx src/widget_approval.cxx \
-	src/widget.cxx src/widget_init.cxx src/widget-ref.c src/widget_uri.cxx src/args.c \
+	src/widget.cxx src/widget_init.cxx src/widget-ref.c src/widget_uri.cxx src/args.cxx \
 	src/widget_session.cxx src/xml_parser.c src/widget_class.cxx \
 	src/widget_view.cxx \
 	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
@@ -1290,7 +1290,7 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
 	src/widget_init.cxx src/widget_view.cxx src/transformation.cxx \
 	src/sink-gstring.c \
-	src/args.c \
+	src/args.cxx \
 	src/strmap.c src/hashmap.c \
 	src/uri-relative.c src/uri-edit.c src/uri-escape.c \
 	src/uri-extract.c src/uri_base.cxx
@@ -1354,7 +1354,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \
-	src/args.c src/uri-escape.c \
+	src/args.cxx src/uri-escape.c \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c src/uri_base.cxx \
 	src/resource_tag.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
@@ -1483,7 +1483,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
-	src/header-writer.c src/args.c src/buffered_io.c \
+	src/header-writer.c src/args.cxx src/buffered_io.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/header-parser.c \
@@ -1517,7 +1517,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
-	src/header-writer.c src/args.c src/buffered_io.c \
+	src/header-writer.c src/args.cxx src/buffered_io.c \
 	src/tcp-stock.c src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/header-parser.c \

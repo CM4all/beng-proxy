@@ -9,7 +9,7 @@
 #include "uri-relative.h"
 #include "uri-parser.h"
 #include "uri-edit.h"
-#include "args.h"
+#include "args.hxx"
 #include "tpool.h"
 #include "strref.h"
 #include "strref-pool.h"

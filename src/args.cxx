@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "args.h"
+#include "args.hxx"
 #include "uri-escape.h"
 #include "strmap.h"
 
@@ -23,17 +23,18 @@ args_parse(struct pool *pool, const char *p, size_t length)
 {
     const char *end = p + length;
     struct strmap *args = strmap_new(pool, 16);
-    const char *and, *equals, *next;
 
     do {
-        next = and = memchr(p, '&', end - p);
-        if (and == NULL)
-            and = end;
+        const char *ampersand = (const char *)memchr(p, '&', end - p);
+        const char *next = ampersand;
+        if (ampersand == nullptr)
+            ampersand = end;
         else
             ++next;
-        equals = memchr(p, '=', and - p);
+
+        const char *equals = (const char *)memchr(p, '=', ampersand - p);
         if (equals > p) {
-            size_t value_length = and - equals - 1;
+            size_t value_length = ampersand - equals - 1;
             char *value = p_strndup(pool, equals + 1, value_length);
             value_length = uri_unescape_inplace(value, value_length,
                                                 ARGS_ESCAPE_CHAR);
@@ -43,7 +44,7 @@ args_parse(struct pool *pool, const char *p, size_t length)
         }
 
         p = next;
-    } while (p != NULL);
+    } while (p != nullptr);
 
     return args;
 }
@@ -60,38 +61,38 @@ args_format_n(struct pool *pool, struct strmap *args,
 {
     const struct strmap_pair *pair;
     size_t length = 0;
-    char *ret, *p;
 
     /* determine length */
 
-    if (args != NULL) {
+    if (args != nullptr) {
         strmap_rewind(args);
 
-        while ((pair = strmap_next(args)) != NULL)
+        while ((pair = strmap_next(args)) != nullptr)
             length += strlen(pair->key) + 1 + strlen(pair->value) * 3 + 1;
     }
 
-    if (replace_key != NULL)
+    if (replace_key != nullptr)
         length += strlen(replace_key) + 1 + replace_value_length * 3 + 1;
 
-    if (replace_key2 != NULL)
+    if (replace_key2 != nullptr)
         length += strlen(replace_key2) + 1 + replace_value2_length * 3 + 1;
 
-    if (replace_key3 != NULL)
+    if (replace_key3 != nullptr)
         length += strlen(replace_key3) + 1 + replace_value3_length * 3 + 1;
 
     /* allocate memory, format it */
 
-    ret = p = p_malloc(pool, length + 1);
+    char *p = (char *)p_malloc(pool, length + 1);
+    const char *const ret = p;
 
-    if (args != NULL) {
+    if (args != nullptr) {
         strmap_rewind(args);
 
-        while ((pair = strmap_next(args)) != NULL) {
-            if ((replace_key != NULL && strcmp(pair->key, replace_key) == 0) ||
-                (replace_key2 != NULL && strcmp(pair->key, replace_key2) == 0) ||
-                (replace_key3 != NULL && strcmp(pair->key, replace_key3) == 0) ||
-                (remove_key != NULL && strcmp(pair->key, remove_key) == 0))
+        while ((pair = strmap_next(args)) != nullptr) {
+            if ((replace_key != nullptr && strcmp(pair->key, replace_key) == 0) ||
+                (replace_key2 != nullptr && strcmp(pair->key, replace_key2) == 0) ||
+                (replace_key3 != nullptr && strcmp(pair->key, replace_key3) == 0) ||
+                (remove_key != nullptr && strcmp(pair->key, remove_key) == 0))
                 continue;
             if (p > ret)
                 *p++ = '&';
@@ -104,7 +105,7 @@ args_format_n(struct pool *pool, struct strmap *args,
         }
     }
 
-    if (replace_key != NULL) {
+    if (replace_key != nullptr) {
         if (p > ret)
             *p++ = '&';
         length = strlen(replace_key);
@@ -115,7 +116,7 @@ args_format_n(struct pool *pool, struct strmap *args,
                         ARGS_ESCAPE_CHAR);
     }
 
-    if (replace_key2 != NULL) {
+    if (replace_key2 != nullptr) {
         if (p > ret)
             *p++ = '&';
         length = strlen(replace_key2);
@@ -126,7 +127,7 @@ args_format_n(struct pool *pool, struct strmap *args,
                         ARGS_ESCAPE_CHAR);
     }
 
-    if (replace_key3 != NULL) {
+    if (replace_key3 != nullptr) {
         if (p > ret)
             *p++ = '&';
         length = strlen(replace_key3);
@@ -149,9 +150,9 @@ args_format(struct pool *pool, struct strmap *args,
 {
     return args_format_n(pool, args,
                          replace_key, replace_value,
-                         replace_value == NULL ? 0 : strlen(replace_value),
+                         replace_value == nullptr ? 0 : strlen(replace_value),
                          replace_key2, replace_value2,
-                         replace_value2 == NULL ? 0 : strlen(replace_value2),
-                         NULL, NULL, 0,
+                         replace_value2 == nullptr ? 0 : strlen(replace_value2),
+                         nullptr, nullptr, 0,
                          remove_key);
 }

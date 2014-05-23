@@ -16,7 +16,7 @@
 #include "nfs_address.hxx"
 #include "nfs_handler.hxx"
 #include "request.hxx"
-#include "args.h"
+#include "args.hxx"
 #include "session.hxx"
 #include "tcache.hxx"
 #include "suffix_registry.hxx"

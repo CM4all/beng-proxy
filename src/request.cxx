@@ -13,7 +13,7 @@
 #include "http_server.hxx"
 #include "cookie_server.hxx"
 #include "transformation.hxx"
-#include "args.h"
+#include "args.hxx"
 #include "bot.h"
 #include "dpool.h"
 #include "pbuffer.hxx"

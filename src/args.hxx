@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_ARGS_H
-#define __BENG_ARGS_H
+#ifndef BENG_PROXY_ARGS_HXX
+#define BENG_PROXY_ARGS_HXX
 
 #include <inline/compiler.h>
 
@@ -13,10 +13,6 @@
 
 struct pool;
 struct strmap;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 gcc_pure
 struct strmap *
@@ -27,7 +23,7 @@ args_parse(struct pool *pool, const char *p, size_t length);
  * "KEY=VALUE&KEY2=VALUE2&...".
  *
  * @param replace_key add, replace or remove an entry in the args map
- * @param replace_value the new value or NULL if the key should be removed
+ * @param replace_value the new value or nullptr if the key should be removed
  */
 gcc_pure
 const char *
@@ -46,9 +42,5 @@ args_format(struct pool *pool, struct strmap *args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2,
             const char *remove_key);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
