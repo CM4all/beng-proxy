@@ -15,12 +15,12 @@
  */
 size_t
 uri_escape(char *dest, const char *src, size_t src_length,
-           char escape_char);
+           char escape_char='%');
 
 gcc_pure gcc_malloc
 static inline const char *
 uri_escape_dup(struct pool *pool, const char *src, size_t src_length,
-               char escape_char)
+               char escape_char='%')
 {
     char *dest = (char *)p_malloc(pool, src_length * 3 + 1);
     size_t dest_length = uri_escape(dest, src, src_length, escape_char);
@@ -33,6 +33,6 @@ uri_escape_dup(struct pool *pool, const char *src, size_t src_length,
  * for normal URIs
  */
 size_t
-uri_unescape_inplace(char *src, size_t length, char escape_char);
+uri_unescape_inplace(char *src, size_t length, char escape_char='%');
 
 #endif

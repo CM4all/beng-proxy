@@ -194,7 +194,7 @@ cgi_address_load_base(struct pool *pool, const struct cgi_address *src,
     assert(suffix != nullptr);
 
     char *unescaped = p_strdup(pool, suffix);
-    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
+    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
 
     struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
     if (dest->uri != nullptr)
@@ -217,8 +217,7 @@ cgi_address_apply(struct pool *pool, const struct cgi_address *src,
         return nullptr;
 
     char *unescaped = (char *)p_memdup(pool, relative, relative_length);
-    size_t unescaped_length = uri_unescape_inplace(unescaped,
-                                                   relative_length, '%');
+    size_t unescaped_length = uri_unescape_inplace(unescaped, relative_length);
 
     const char *path_info = src->path_info != nullptr ? src->path_info : "";
 

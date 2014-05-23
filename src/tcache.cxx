@@ -212,7 +212,7 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
     if (!check.IsNull()) {
         char buffer[MAX_CACHE_CHECK * 3];
         size_t length = uri_escape(buffer, (const char *)check.data,
-                                   check.size, '%');
+                                   check.size);
 
         key = p_strncat(pool,
                         "|CHECK=", (size_t)7,
@@ -224,7 +224,7 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
     if (!want_full_uri.IsNull()) {
         char buffer[MAX_CACHE_WFU * 3];
         size_t length = uri_escape(buffer, (const char *)want_full_uri.data,
-                                   want_full_uri.size, '%');
+                                   want_full_uri.size);
 
         key = p_strncat(pool,
                         "|WFU=", (size_t)5,
@@ -239,7 +239,7 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
     if (!file_not_found.IsNull()) {
         char buffer[MAX_FILE_NOT_FOUND * 3];
         size_t length = uri_escape(buffer, (const char *)file_not_found.data,
-                                   file_not_found.size, '%');
+                                   file_not_found.size);
 
         key = p_strncat(pool,
                         buffer, length,
@@ -251,7 +251,7 @@ tcache_uri_key(struct pool *pool, const char *uri, const char *host,
     if (!directory_index.IsNull()) {
         char buffer[MAX_DIRECTORY_INDEX * 3];
         size_t length = uri_escape(buffer, (const char *)directory_index.data,
-                                   directory_index.size, '%');
+                                   directory_index.size);
 
         key = p_strncat(pool,
                         buffer, length,
@@ -278,7 +278,7 @@ tcache_content_type_lookup_key(struct pool *pool,
     char buffer[MAX_CONTENT_TYPE_LOOKUP * 3];
     size_t length = uri_escape(buffer,
                                (const char *)request.content_type_lookup.data,
-                               request.content_type_lookup.size, '%');
+                               request.content_type_lookup.size);
     return p_strncat(pool, "CTL|", size_t(4),
                      buffer, length,
                      "|", size_t(1),
@@ -349,7 +349,7 @@ tcache_regex_input(struct pool *pool, const char *uri,
                response.inverse_regex != nullptr);
 
         char *unescaped = p_strdup(pool, uri);
-        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
+        unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
         uri = unescaped;
     }
 

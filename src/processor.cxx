@@ -1377,7 +1377,7 @@ expansible_buffer_append_uri_escaped(struct expansible_buffer *buffer,
                                      const char *value, size_t length)
 {
     char *escaped = (char *)p_malloc(tpool, length * 3);
-    length = uri_escape(escaped, value, length, '%');
+    length = uri_escape(escaped, value, length);
     expansible_buffer_write_buffer(buffer, escaped, length);
 }
 

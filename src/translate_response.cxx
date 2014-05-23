@@ -187,8 +187,7 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
 
         if (test_path != nullptr) {
             char *unescaped = p_strdup(pool, tail);
-            unescaped[uri_unescape_inplace(unescaped,
-                                           strlen(unescaped), '%')] = 0;
+            unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
             test_path = p_strcat(pool, test_path, unescaped, nullptr);
         }
     }

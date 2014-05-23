@@ -70,7 +70,7 @@ expand_string_unescaped(struct pool *pool, const char *src,
         else if (ch >= '0' && ch <= '9') {
             char *s = g_match_info_fetch(match_info, ch - '0');
             if (s != nullptr) {
-                const size_t length = uri_unescape_inplace(s, strlen(s), '%');
+                const size_t length = uri_unescape_inplace(s, strlen(s));
                 g_string_append_len(result, s, length);
                 g_free(s);
             }

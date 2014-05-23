@@ -91,7 +91,7 @@ file_address_load_base(struct pool *pool, const struct file_address *src,
     assert(suffix != nullptr);
 
     char *unescaped = p_strdup(pool, suffix);
-    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped), '%')] = 0;
+    unescaped[uri_unescape_inplace(unescaped, strlen(unescaped))] = 0;
 
     struct file_address *dest = file_address_dup(pool, src);
     dest->path = p_strcat(pool, dest->path, unescaped, nullptr);
