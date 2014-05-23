@@ -10,7 +10,7 @@
 #include "css_rewrite.hxx"
 #include "penv.hxx"
 #include "xml_parser.h"
-#include "uri-escape.h"
+#include "uri_escape.hxx"
 #include "uri-extract.h"
 #include "widget.h"
 #include "widget_approval.hxx"

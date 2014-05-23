@@ -10,7 +10,7 @@
 #include "strmap.h"
 #include "widget_view.hxx"
 #include "uri_base.hxx"
-#include "uri-escape.h"
+#include "uri_escape.hxx"
 #include "regex.hxx"
 
 #include <string.h>

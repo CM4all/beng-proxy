@@ -4,7 +4,7 @@
 
 #include "nfs_address.hxx"
 #include "uri_base.hxx"
-#include "uri-escape.h"
+#include "uri_escape.hxx"
 #include "regex.hxx"
 #include "pool.h"
 

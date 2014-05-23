@@ -4,14 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_URI_ESCAPE_H
-#define __BENG_URI_ESCAPE_H
+#ifndef BENG_PROXY_URI_ESCAPE_HXX
+#define BENG_PROXY_URI_ESCAPE_HXX
 
 #include "pool.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @param escape_char the character that is used to escape; use '%'
@@ -38,9 +34,5 @@ uri_escape_dup(struct pool *pool, const char *src, size_t src_length,
  */
 size_t
 uri_unescape_inplace(char *src, size_t length, char escape_char);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

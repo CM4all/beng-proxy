@@ -6,7 +6,7 @@
 
 #include "regex.hxx"
 #include "pool.h"
-#include "uri-escape.h"
+#include "uri_escape.hxx"
 
 #include <glib.h>
 

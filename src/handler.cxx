@@ -30,7 +30,7 @@
 #include "transformation.hxx"
 #include "expiry.h"
 #include "uri-edit.h"
-#include "uri-escape.h"
+#include "uri_escape.hxx"
 #include "uri-verify.h"
 #include "strutil.h"
 #include "strmap.h"

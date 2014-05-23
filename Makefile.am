@@ -244,7 +244,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/udp-listener.h \
 	src/udp-distribute.h \
 	src/uri-edit.h \
-	src/uri-escape.h \
 	src/uri-extract.h \
 	src/uri-relative.h \
 	src/widget.h \
@@ -323,7 +322,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/uri-extract.c \
 	src/uri-relative.c \
 	src/uri_base.cxx src/uri_base.hxx \
-	src/uri-escape.c \
+	src/uri_escape.cxx src/uri_escape.hxx \
 	src/strset.c src/strset.h \
 	src/dhashmap.c \
 	src/istream-unlock.c \
@@ -416,7 +415,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/uri-relative.c \
 	src/uri-extract.c \
 	src/uri-edit.c \
-	src/uri-escape.c \
+	src/uri_escape.cxx \
 	src/fifo-buffer.c \
 	src/growing-buffer.c \
 	src/istream-gb.c \
@@ -872,7 +871,7 @@ test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.c \
 	src/hashmap.c src/strmap.c \
 	src/widget_view.cxx \
 	src/strset.c \
-	src/uri-relative.c src/uri-edit.c src/uri-escape.c \
+	src/uri-relative.c src/uri-edit.c src/uri_escape.cxx \
 	src/uri-extract.c src/uri_base.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/clock.c \
@@ -915,7 +914,7 @@ test_t_stock_LDADD = $(AM_LDADD) \
 test_t_resource_address_SOURCES = test/t_resource_address.cxx \
 	src/regex.cxx \
 	src/http_address.cxx src/uri-relative.c \
-	src/uri-escape.c src/uri-edit.c \
+	src/uri_escape.cxx src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
 	src/address_list.c
 test_t_resource_address_LDADD = $(AM_LDADD) \
@@ -926,7 +925,7 @@ test_t_resource_address_LDADD = $(AM_LDADD) \
 
 test_t_http_address_SOURCES = test/t_http_address.cxx \
 	src/http_address.cxx src/uri-relative.c \
-	src/uri-escape.c src/uri-edit.c \
+	src/uri_escape.cxx src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
 	src/regex.cxx \
 	src/address_list.c
@@ -1008,7 +1007,7 @@ test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/istream-escape.c \
 	src/istream-html-escape.c \
-	src/uri-relative.c src/uri-escape.c src/uri-edit.c \
+	src/uri-relative.c src/uri_escape.cxx src/uri-edit.c \
 	src/uri_base.cxx \
 	src/random.c \
 	src/crash.c \
@@ -1080,7 +1079,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/cgi_glue.cxx src/fork.c \
 	src/cgi_client.cxx src/cgi_launch.cxx \
 	src/cgi_parser.cxx \
-	src/uri_base.cxx src/uri-escape.c src/uri-relative.c \
+	src/uri_base.cxx src/uri_escape.cxx src/uri-relative.c \
 	src/uri-extract.c \
 	src/cleanup_timer.c \
 	src/regex.cxx \
@@ -1196,7 +1195,7 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/http_cache.cxx src/http_cache_rfc.cxx \
 	src/http_cache_info.cxx src/http_cache_document.cxx \
 	src/http_cache_heap.cxx src/http_cache_age.cxx \
-	src/uri-edit.c src/uri-relative.c src/uri-escape.c \
+	src/uri-edit.c src/uri-relative.c src/uri_escape.cxx \
 	src/uri-extract.c src/uri_base.cxx \
 	src/abort-unref.c src/cache.c \
 	src/header-writer.c src/http_util.c \
@@ -1292,7 +1291,7 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/sink-gstring.c \
 	src/args.cxx \
 	src/strmap.c src/hashmap.c \
-	src/uri-relative.c src/uri-edit.c src/uri-escape.c \
+	src/uri-relative.c src/uri-edit.c src/uri_escape.cxx \
 	src/uri-extract.c src/uri_base.cxx
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1310,7 +1309,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/widget_view.cxx \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/strset.c \
-	src/uri-relative.c src/uri-escape.c src/uri-edit.c \
+	src/uri-relative.c src/uri_escape.cxx src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
 	src/tpool.c \
 	src/clock.c
@@ -1338,7 +1337,7 @@ test_t_wembed_SOURCES = test/t_wembed.cxx \
 	src/fifo-buffer.c \
 	src/hashmap.c src/strmap.c src/strset.c \
 	src/http_util.c \
-	src/uri-escape.c \
+	src/uri_escape.cxx \
 	src/global.c
 test_t_wembed_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1354,7 +1353,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \
-	src/args.cxx src/uri-escape.c \
+	src/args.cxx src/uri_escape.cxx \
 	src/uri-relative.c src/uri-edit.c src/uri-extract.c src/uri_base.cxx \
 	src/resource_tag.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
@@ -1398,7 +1397,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/strset.c \
 	src/abort-unref.c \
 	src/uri-edit.c src/uri_base.cxx \
-	src/uri-escape.c src/uri-relative.c \
+	src/uri_escape.cxx src/uri-relative.c \
 	src/uri-extract.c \
 	src/widget_view.cxx \
 	src/transformation.cxx \
@@ -1477,7 +1476,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-edit.c src/uri-extract.c \
-	src/uri-escape.c \
+	src/uri_escape.cxx \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
 	src/growing-buffer.c src/fifo-buffer.c \
@@ -1511,7 +1510,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
 	src/uri-relative.c src/uri-edit.c src/uri_base.cxx \
-	src/uri-escape.c \
+	src/uri_escape.cxx \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
 	src/growing-buffer.c src/fifo-buffer.c \
@@ -1667,7 +1666,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/http_util.c \
 	src/http_address.cxx src/uri-edit.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-extract.c \
-	src/uri-escape.c \
+	src/uri_escape.cxx \
 	src/regex.cxx \
 	src/address_list.c \
 	src/istream-unlock.c \

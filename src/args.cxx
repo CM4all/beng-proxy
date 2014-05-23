@@ -5,7 +5,7 @@
  */
 
 #include "args.hxx"
-#include "uri-escape.h"
+#include "uri_escape.hxx"
 #include "strmap.h"
 
 #include <string.h>

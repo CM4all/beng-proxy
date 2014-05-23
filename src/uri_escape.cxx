@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri-escape.h"
+#include "uri_escape.hxx"
 #include "strutil.h"
 #include "format.h"
 
@@ -53,21 +53,19 @@ size_t
 uri_unescape_inplace(char *src, size_t length, char escape_char)
 {
     char *end = src + length, *p = src;
-    int digit1, digit2;
-    char ch;
 
-    while ((p = memchr(p, escape_char, end - p)) != NULL) {
+    while ((p = (char *)memchr(p, escape_char, end - p)) != nullptr) {
         if (p >= end - 2)
             /* percent sign at the end of string */
             return 0;
 
-        digit1 = parse_hexdigit(p[1]);
-        digit2 = parse_hexdigit(p[2]);
+        const int digit1 = parse_hexdigit(p[1]);
+        const int digit2 = parse_hexdigit(p[2]);
         if (digit1 == -1 || digit2 == -1)
             /* invalid hex digits */
             return 0;
 
-        ch = (char)((digit1 << 4) | digit2);
+        const char ch = (char)((digit1 << 4) | digit2);
         if (ch == 0)
             /* no %00 hack allowed! */
             return 0;
