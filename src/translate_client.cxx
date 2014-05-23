@@ -553,61 +553,6 @@ valid_view_name(const char *name)
     return true;
 }
 
-static bool
-finish_lhttp_address(const struct lhttp_address &address, GError **error_r)
-{
-    if (address.uri == nullptr) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "missing LHTTP_URI");
-        return false;
-    }
-
-    return true;
-}
-
-static bool
-finish_nfs_address(const struct nfs_address &address, GError **error_r)
-{
-    if (address.export_name == nullptr || *address.export_name == 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "missing NFS_EXPORT");
-        return false;
-    }
-
-    if (address.path == nullptr || *address.path == 0) {
-        g_set_error_literal(error_r, translate_quark(), 0,
-                            "missing NFS PATH");
-        return false;
-    }
-
-    return true;
-}
-
-static bool
-finish_resource_address(const struct resource_address &address,
-                        GError **error_r)
-{
-    switch (address.type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_HTTP:
-        return true;
-
-    case RESOURCE_ADDRESS_LHTTP:
-        return finish_lhttp_address(*address.u.lhttp, error_r);
-
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-    case RESOURCE_ADDRESS_AJP:
-        return true;
-
-    case RESOURCE_ADDRESS_NFS:
-        return finish_nfs_address(*address.u.nfs, error_r);
-    }
-}
-
 /**
  * Finish the settings in the current view, i.e. copy attributes from
  * the "parent" view.
@@ -641,7 +586,7 @@ finish_view(TranslateClient *client, GError **error_r)
                                      client->response.views);
     }
 
-    if (!finish_resource_address(view->address, error_r))
+    if (!view->address.Check(error_r))
         return false;
 
     return true;
@@ -780,7 +725,7 @@ static bool
 translate_response_finish(TranslateResponse *response,
                           GError **error_r)
 {
-    if (!finish_resource_address(response->address, error_r))
+    if (!response->address.Check(error_r))
         return false;
 
     if (resource_address_is_cgi_alike(&response->address)) {

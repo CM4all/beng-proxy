@@ -7,6 +7,7 @@
 #include "uri_escape.hxx"
 #include "regex.hxx"
 #include "pool.h"
+#include "translate_client.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -44,6 +45,24 @@ struct nfs_address *
 nfs_address_dup(struct pool *pool, const struct nfs_address *src)
 {
     return NewFromPool<struct nfs_address>(pool, pool, *src);
+}
+
+bool
+nfs_address::Check(GError **error_r) const
+{
+    if (export_name == nullptr || *export_name == 0) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "missing NFS_EXPORT");
+        return false;
+    }
+
+    if (path == nullptr || *path == 0) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "missing NFS PATH");
+        return false;
+    }
+
+    return true;
 }
 
 struct nfs_address *

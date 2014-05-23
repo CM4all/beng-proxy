@@ -11,6 +11,7 @@
 #include "uri-extract.h"
 #include "regex.hxx"
 #include "strref.h"
+#include "translate_client.hxx"
 
 #include <string.h>
 
@@ -91,6 +92,18 @@ lhttp_address_dup(struct pool *pool, const struct lhttp_address *old)
     auto n = NewFromPool<struct lhttp_address>(pool);
     lhttp_address_copy(pool, n, old);
     return n;
+}
+
+bool
+lhttp_address::Check(GError **error_r) const
+{
+    if (uri == nullptr) {
+        g_set_error_literal(error_r, translate_quark(), 0,
+                            "missing LHTTP_URI");
+        return false;
+    }
+
+    return true;
 }
 
 struct lhttp_address *

@@ -653,6 +653,32 @@ resource_address_uri_path(const struct resource_address *address)
 }
 
 bool
+resource_address::Check(GError **error_r) const
+{
+    switch (type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_LOCAL:
+    case RESOURCE_ADDRESS_HTTP:
+        return true;
+
+    case RESOURCE_ADDRESS_LHTTP:
+        return u.lhttp->Check(error_r);
+
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+    case RESOURCE_ADDRESS_AJP:
+        return true;
+
+    case RESOURCE_ADDRESS_NFS:
+        return u.nfs->Check(error_r);
+    }
+
+    return true;
+}
+
+bool
 resource_address_is_expandable(const struct resource_address *address)
 {
     assert(address != NULL);

@@ -48,6 +48,8 @@ struct lhttp_address {
      * The maximum number of concurrent connections to one instance.
      */
     unsigned concurrency;
+
+    bool Check(GError **error_r) const;
 };
 
 void

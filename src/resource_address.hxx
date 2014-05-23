@@ -46,6 +46,8 @@ struct resource_address {
         const struct nfs_address *nfs;
     } u;
 
+    bool Check(GError **error_r) const;
+
     /**
      * Copies data from #src for storing in the translation cache.
      *

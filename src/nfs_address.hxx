@@ -43,6 +43,8 @@ struct nfs_address {
     bool IsExpandable() const {
         return expand_path != nullptr;
     }
+
+    bool Check(GError **error_r) const;
 };
 
 struct nfs_address *
