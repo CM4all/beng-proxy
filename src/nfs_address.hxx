@@ -2,14 +2,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_NFS_ADDRESS_H
-#define BENG_PROXY_NFS_ADDRESS_H
+#ifndef BENG_PROXY_NFS_ADDRESS_HXX
+#define BENG_PROXY_NFS_ADDRESS_HXX
+
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
-
-#include <glib.h>
-#include <stdbool.h>
-#include <stddef.h>
 
 struct pool;
 
@@ -30,22 +28,22 @@ struct nfs_address {
     const char *expand_path;
 
     const char *content_type;
+
+    nfs_address(const char *_server,
+                const char *_export_name, const char *_path)
+        :server(_server), export_name(_export_name), path(_path),
+         expand_path(nullptr), content_type(nullptr) {}
+
+    nfs_address(struct pool *pool, const nfs_address &other);
+
+    /**
+     * Does this address need to be expanded with nfs_address_expand()?
+     */
+    gcc_pure
+    bool IsExpandable() const {
+        return expand_path != nullptr;
+    }
 };
-
-static inline void
-nfs_address_init(struct nfs_address *nfs, const char *server,
-                 const char *export_name, const char *path)
-{
-    nfs->server = server;
-    nfs->export_name = export_name;
-    nfs->path = path;
-    nfs->expand_path = NULL;
-    nfs->content_type = NULL;
-}
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct nfs_address *
 nfs_address_new(struct pool *pool, const char *server,
@@ -53,10 +51,6 @@ nfs_address_new(struct pool *pool, const char *server,
 
 const char *
 nfs_address_id(struct pool *pool, const struct nfs_address *address);
-
-void
-nfs_address_copy(struct pool *pool, struct nfs_address *dest,
-                 const struct nfs_address *src);
 
 struct nfs_address *
 nfs_address_dup(struct pool *pool, const struct nfs_address *src);
@@ -69,22 +63,8 @@ struct nfs_address *
 nfs_address_load_base(struct pool *pool, const struct nfs_address *src,
                       const char *suffix);
 
-/**
- * Does this address need to be expanded with nfs_address_expand()?
- */
-gcc_pure
-static inline bool
-nfs_address_is_expandable(const struct nfs_address *address)
-{
-    return address->expand_path != NULL;
-}
-
 const struct nfs_address *
 nfs_address_expand(struct pool *pool, const struct nfs_address *src,
                    const GMatchInfo *match_info, GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

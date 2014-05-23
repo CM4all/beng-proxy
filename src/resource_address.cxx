@@ -10,7 +10,7 @@
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
-#include "nfs_address.h"
+#include "nfs_address.hxx"
 #include "uri-relative.h"
 #include "uri-edit.h"
 #include "uri-extract.h"
@@ -678,7 +678,7 @@ resource_address_is_expandable(const struct resource_address *address)
         return lhttp_address_is_expandable(address->u.lhttp);
 
     case RESOURCE_ADDRESS_NFS:
-        return nfs_address_is_expandable(address->u.nfs);
+        return address->u.nfs->IsExpandable();
     }
 
     assert(false);

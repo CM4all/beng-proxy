@@ -13,7 +13,7 @@
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"
-#include "nfs_address.h"
+#include "nfs_address.hxx"
 
 #include <stdio.h>
 #include <event.h>

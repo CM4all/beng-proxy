@@ -13,10 +13,6 @@
 
 struct pool;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Calculate the URI tail after a base URI from a request URI.
  * Returns nullptr if no such tail URI is possible (e.g. if the
@@ -53,9 +49,5 @@ base_string(const char *p, const char *tail);
 gcc_pure
 size_t
 base_string_unescape(struct pool *pool, const char *p, const char *tail);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

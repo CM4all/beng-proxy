@@ -19,7 +19,7 @@
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
-#include "nfs_address.h"
+#include "nfs_address.hxx"
 #include "mount_list.h"
 #include "strutil.h"
 #include "strmap.h"

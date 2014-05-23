@@ -17,7 +17,7 @@
 #include "cgi_address.hxx"
 #include "fcgi_request.hxx"
 #include "fcgi_remote.hxx"
-#include "nfs_address.h"
+#include "nfs_address.hxx"
 #include "was_glue.hxx"
 #include "ajp_request.hxx"
 #include "header-writer.h"
