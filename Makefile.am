@@ -411,7 +411,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/header-writer.c \
 	src/header-parser.c \
 	src/uri_base.cxx src/uri_base.hxx \
-	src/regex.c src/regex.h \
+	src/regex.cxx src/regex.hxx \
 	src/http_address.cxx \
 	src/uri-relative.c \
 	src/uri-extract.c \
@@ -626,7 +626,7 @@ libpool_a_SOURCES = \
 	src/pool.cxx src/pool.h
 
 libraddress_a_SOURCES = \
-	src/regex.c src/regex.h \
+	src/regex.cxx src/regex.hxx \
 	src/param_array.hxx src/param_array.cxx \
 	src/namespace_options.c src/namespace_options.h \
 	src/mount_list.c src/mount_list.h \
@@ -913,7 +913,7 @@ test_t_stock_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
 
 test_t_resource_address_SOURCES = test/t_resource_address.cxx \
-	src/regex.c \
+	src/regex.cxx \
 	src/http_address.cxx src/uri-relative.c \
 	src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
@@ -928,7 +928,7 @@ test_t_http_address_SOURCES = test/t_http_address.cxx \
 	src/http_address.cxx src/uri-relative.c \
 	src/uri-escape.c src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
-	src/regex.c \
+	src/regex.cxx \
 	src/address_list.c
 test_t_http_address_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1083,7 +1083,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/uri_base.cxx src/uri-escape.c src/uri-relative.c \
 	src/uri-extract.c \
 	src/cleanup_timer.c \
-	src/regex.c \
+	src/regex.cxx \
 	src/tpool.c \
 	src/fifo-buffer.c src/buffered_io.c src/growing-buffer.c \
 	src/header-parser.c \
@@ -1668,7 +1668,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/http_address.cxx src/uri-edit.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-extract.c \
 	src/uri-escape.c \
-	src/regex.c \
+	src/regex.cxx \
 	src/address_list.c \
 	src/istream-unlock.c \
 	src/growing-buffer.c \

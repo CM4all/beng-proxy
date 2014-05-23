@@ -11,7 +11,7 @@
 #include "widget_view.hxx"
 #include "uri_base.hxx"
 #include "uri-escape.h"
-#include "regex.h"
+#include "regex.hxx"
 
 #include <string.h>
 

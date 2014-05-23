@@ -5,7 +5,7 @@
 #include "file_address.hxx"
 #include "uri_base.hxx"
 #include "uri-escape.h"
-#include "regex.h"
+#include "regex.hxx"
 #include "pool.h"
 
 #include <assert.h>

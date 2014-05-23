@@ -9,7 +9,7 @@
 #include "uri-relative.h"
 #include "uri-escape.h"
 #include "uri-extract.h"
-#include "regex.h"
+#include "regex.hxx"
 #include "strref.h"
 
 #include <string.h>

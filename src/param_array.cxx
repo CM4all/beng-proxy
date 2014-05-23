@@ -4,7 +4,7 @@
 
 #include "param_array.hxx"
 #include "pool.h"
-#include "regex.h"
+#include "regex.hxx"
 
 void
 param_array::CopyFrom(struct pool *pool, const struct param_array &src)
