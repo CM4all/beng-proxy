@@ -56,6 +56,73 @@ struct http_address {
     const char *expand_path;
 
     struct address_list addresses;
+
+    /**
+     * Build the absolute URI from this object, but use the specified path
+     * instead.
+     */
+    gcc_malloc
+    char *GetAbsoluteURI(struct pool *pool, const char *override_path) const;
+
+    /**
+     * Build the absolute URI from this object.
+     */
+    gcc_malloc
+    char *GetAbsoluteURI(struct pool *pool) const;
+
+    /**
+     * Duplicates this #http_address object and inserts the specified
+     * query string into the URI.
+     */
+    gcc_malloc
+    struct http_address *InsertQueryString(struct pool *pool,
+                                           const char *query_string) const;
+
+    /**
+     * Duplicates this #http_address object and inserts the specified
+     * arguments into the URI.
+     */
+    gcc_malloc
+    struct http_address *InsertArgs(struct pool *pool,
+                                    const char *args, size_t args_length,
+                                    const char *path_info,
+                                    size_t path_info_length) const;
+
+    gcc_malloc
+    struct http_address *SaveBase(struct pool *pool, const char *suffix) const;
+
+    gcc_malloc
+    struct http_address *LoadBase(struct pool *pool, const char *suffix) const;
+
+    const struct http_address *Apply(struct pool *pool, const char *relative,
+                                     size_t relative_length) const;
+
+    /**
+     * Does this address need to be expanded with http_address_expand()?
+     */
+    gcc_pure
+    bool IsExpandable() const {
+        return expand_path != nullptr;
+    }
+
+    bool Expand(struct pool *pool, const GMatchInfo *match_info,
+                GError **error_r);
+
+    gcc_pure
+    int GetDefaultPort() const {
+        switch (scheme) {
+        case URI_SCHEME_UNIX:
+            return 0;
+
+        case URI_SCHEME_HTTP:
+            return ssl ? 443 : 80;
+
+        case URI_SCHEME_AJP:
+            return 8009;
+        }
+
+        gcc_unreachable();
+    }
 };
 
 G_GNUC_CONST
@@ -102,58 +169,6 @@ http_address_dup_with_path(struct pool *pool,
                            const char *path);
 
 /**
- * Build the absolute URI from this object, but use the specified path
- * instead.
- */
-gcc_malloc
-char *
-http_address_absolute_with_path(struct pool *pool,
-                                const struct http_address *uwa,
-                                const char *path);
-
-/**
- * Build the absolute URI from this object.
- */
-gcc_malloc
-char *
-http_address_absolute(struct pool *pool, const struct http_address *uwa);
-
-/**
- * Duplicates this #http_address object and inserts the specified
- * query string into the URI.
- */
-gcc_malloc
-struct http_address *
-http_address_insert_query_string(struct pool *pool,
-                                 const struct http_address *uwa,
-                                 const char *query_string);
-
-/**
- * Duplicates this #http_address object and inserts the specified
- * arguments into the URI.
- */
-gcc_malloc
-struct http_address *
-http_address_insert_args(struct pool *pool,
-                         const struct http_address *uwa,
-                         const char *args, size_t args_length,
-                         const char *path, size_t path_length);
-
-gcc_malloc
-struct http_address *
-http_address_save_base(struct pool *pool, const struct http_address *uwa,
-                       const char *suffix);
-
-gcc_malloc
-struct http_address *
-http_address_load_base(struct pool *pool, const struct http_address *uwa,
-                       const char *suffix);
-
-const struct http_address *
-http_address_apply(struct pool *pool, const struct http_address *src,
-                   const char *relative, size_t relative_length);
-
-/**
  * Check if one #http_address is relative to the base
  * #http_address, and return the relative part.  Returns nullptr if
  * both URIs do not match.
@@ -162,39 +177,5 @@ const struct strref *
 http_address_relative(const struct http_address *base,
                       const struct http_address *uwa,
                       struct strref *buffer);
-
-/**
- * Does this address need to be expanded with http_address_expand()?
- */
-gcc_pure
-static inline bool
-http_address_is_expandable(const struct http_address *address)
-{
-    assert(address != nullptr);
-
-    return address->expand_path != nullptr;
-}
-
-bool
-http_address_expand(struct pool *pool, struct http_address *uwa,
-                   const GMatchInfo *match_info, GError **error_r);
-
-gcc_pure
-static inline int
-http_address_default_port(const struct http_address *address)
-{
-    switch (address->scheme) {
-    case URI_SCHEME_UNIX:
-        return 0;
-
-    case URI_SCHEME_HTTP:
-        return address->ssl ? 443 : 80;
-
-    case URI_SCHEME_AJP:
-        return 8009;
-    }
-
-    gcc_unreachable();
-}
 
 #endif

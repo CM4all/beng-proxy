@@ -1531,7 +1531,7 @@ translate_handle_packet(TranslateClient *client,
         }
 
         client->address_list = &client->http_address->addresses;
-        client->default_port = http_address_default_port(client->http_address);
+        client->default_port = client->http_address->GetDefaultPort();
         return true;
 
     case TRANSLATE_REDIRECT:

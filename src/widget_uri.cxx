@@ -202,7 +202,7 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
          : widget_stateless_address(widget))->u.http;
     const char *base = uwa->path;
     if (relative_uri == nullptr)
-        return http_address_absolute(pool, uwa);
+        return uwa->GetAbsoluteURI(pool);
 
     const char *uri = uri_absolute(pool, base, relative_uri->data,
                                    relative_uri->length);
@@ -213,7 +213,7 @@ widget_absolute_uri(struct pool *pool, struct widget *widget, bool stateful,
            string */
         uri = uri_insert_query_string(pool, uri, widget->query_string);
 
-    return http_address_absolute_with_path(pool, uwa, uri);
+    return uwa->GetAbsoluteURI(pool, uri);
 }
 
 const struct strref *

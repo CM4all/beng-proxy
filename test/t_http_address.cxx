@@ -26,34 +26,34 @@ test_apply(struct pool *pool)
     assert(strcmp(a->host_and_port, "localhost") == 0);
     assert(strcmp(a->path, "/foo") == 0);
 
-    const struct http_address *b = http_address_apply(pool, a, "", 0);
+    const struct http_address *b = a->Apply(pool, "", 0);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/foo") == 0);
 
-    b = http_address_apply(pool, a, "bar", 3);
+    b = a->Apply(pool, "bar", 3);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/bar") == 0);
 
-    b = http_address_apply(pool, a, "/", 1);
+    b = a->Apply(pool, "/", 1);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/") == 0);
 
-    b = http_address_apply(pool, a, "http://example.com/", 29);
+    b = a->Apply(pool, "http://example.com/", 29);
     assert(b == NULL);
 
-    b = http_address_apply(pool, a, "http://localhost/bar", 30);
+    b = a->Apply(pool, "http://localhost/bar", 30);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
     assert(strcmp(b->path, "/bar") == 0);
 
-    b = http_address_apply(pool, a, "?query", 6);
+    b = a->Apply(pool, "?query", 6);
     assert(b != NULL);
     assert(b->scheme == a->scheme);
     assert(strcmp(b->host_and_port, a->host_and_port) == 0);
