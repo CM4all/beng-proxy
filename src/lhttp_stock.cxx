@@ -44,7 +44,7 @@ struct lhttp_connection {
 static const char *
 lhttp_stock_key(struct pool *pool, const struct lhttp_address *address)
 {
-    return lhttp_address_server_id(pool, address);
+    return address->GetServerId(pool);
 }
 
 /*
