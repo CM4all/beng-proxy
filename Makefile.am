@@ -632,7 +632,7 @@ libraddress_a_SOURCES = \
 	src/bind_mount.c src/bind_mount.h \
 	src/jail.cxx src/jail.hxx \
 	src/child_options.cxx src/child_options.hxx \
-	src/rlimit_options.c src/rlimit_options.h \
+	src/rlimit_options.cxx src/rlimit_options.hxx \
 	src/cgi_address.cxx src/cgi_address.hxx \
 	src/file_address.cxx src/file_address.hxx \
 	src/nfs_address.cxx src/nfs_address.hxx \
