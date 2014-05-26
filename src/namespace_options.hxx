@@ -2,12 +2,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_NAMESPACE_OPTIONS_H
-#define BENG_PROXY_NAMESPACE_OPTIONS_H
+#ifndef BENG_PROXY_NAMESPACE_OPTIONS_HXX
+#define BENG_PROXY_NAMESPACE_OPTIONS_HXX
 
 #include <inline/compiler.h>
-
-#include <stdbool.h>
 
 struct pool;
 
@@ -56,10 +54,6 @@ struct namespace_options {
     const char *hostname;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Global library initialization.  Call after daemonization.
  */
@@ -86,9 +80,5 @@ namespace_options_setup(const struct namespace_options *options);
 
 char *
 namespace_options_id(const struct namespace_options *options, char *p);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

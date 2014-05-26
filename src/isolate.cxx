@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "namespace_options.h"
+#include "namespace_options.hxx"
 #include "pivot_root.h"
 
 #include <daemon/log.h>

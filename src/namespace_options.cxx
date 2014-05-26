@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "namespace_options.h"
+#include "namespace_options.hxx"
 #include "mount_list.h"
 #include "pool.h"
 #include "pivot_root.h"
@@ -243,30 +243,30 @@ char *
 namespace_options_id(const struct namespace_options *options, char *p)
 {
     if (options->enable_user)
-        p = mempcpy(p, ";uns", 4);
+        p = (char *)mempcpy(p, ";uns", 4);
 
     if (options->enable_pid)
-        p = mempcpy(p, ";pns", 4);
+        p = (char *)mempcpy(p, ";pns", 4);
 
     if (options->enable_network)
-        p = mempcpy(p, ";nns", 4);
+        p = (char *)mempcpy(p, ";nns", 4);
 
     if (options->enable_mount) {
-        p = mempcpy(p, ";mns", 4);
+        p = (char *)(char *)mempcpy(p, ";mns", 4);
 
         if (options->pivot_root != NULL) {
-            p = mempcpy(p, ";pvr=", 5);
+            p = (char *)mempcpy(p, ";pvr=", 5);
             p = stpcpy(p, options->pivot_root);
         }
 
         if (options->mount_proc)
-            p = mempcpy(p, ";proc", 5);
+            p = (char *)mempcpy(p, ";proc", 5);
 
         if (options->mount_proc)
-            p = mempcpy(p, ";tmpfs", 6);
+            p = (char *)mempcpy(p, ";tmpfs", 6);
 
         if (options->mount_home != NULL) {
-            p = mempcpy(p, ";h:", 3);
+            p = (char *)mempcpy(p, ";h:", 3);
             p = stpcpy(p, options->home);
             *p++ = '=';
             p = stpcpy(p, options->mount_home);
@@ -274,7 +274,7 @@ namespace_options_id(const struct namespace_options *options, char *p)
     }
 
     if (options->hostname != NULL) {
-        p = mempcpy(p, ";uts=", 5);
+        p = (char *)mempcpy(p, ";uts=", 5);
         p = stpcpy(p, options->hostname);
     }
 

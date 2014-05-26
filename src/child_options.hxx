@@ -6,7 +6,7 @@
 #define BENG_PROXY_CHILD_OPTIONS_HXX
 
 #include "rlimit_options.hxx"
-#include "namespace_options.h"
+#include "namespace_options.hxx"
 #include "jail.hxx"
 
 /**

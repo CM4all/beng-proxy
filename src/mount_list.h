@@ -18,10 +18,18 @@ struct mount_list {
     const char *target;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mount_list *
 mount_list_dup(struct pool *pool, const struct mount_list *src);
 
 void
 mount_list_apply(const struct mount_list *m);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

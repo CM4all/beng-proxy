@@ -40,7 +40,7 @@
 #include "ssl_init.hxx"
 #include "ssl_client.h"
 #include "capabilities.hxx"
-#include "namespace_options.h"
+#include "namespace_options.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
