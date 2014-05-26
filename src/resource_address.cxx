@@ -266,7 +266,7 @@ resource_address_auto_base(struct pool *pool,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return cgi_address_auto_base(pool, address->u.cgi, uri);
+        return address->u.cgi->AutoBase(pool, uri);
     }
 
     assert(false);
@@ -288,9 +288,8 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        dest->u.cgi =
-            cgi_address_save_base(pool, src->u.cgi, suffix,
-                                  src->type == RESOURCE_ADDRESS_FASTCGI);
+        dest->u.cgi = src->u.cgi->SaveBase(pool, suffix,
+                                           src->type == RESOURCE_ADDRESS_FASTCGI);
         if (dest->u.cgi == NULL)
             return NULL;
 
@@ -384,9 +383,8 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
         dest->type = src->type;
-        dest->u.cgi =
-            cgi_address_load_base(pool, src->u.cgi, suffix,
-                                  src->type == RESOURCE_ADDRESS_FASTCGI);
+        dest->u.cgi = src->u.cgi->LoadBase(pool, suffix,
+                                           src->type == RESOURCE_ADDRESS_FASTCGI);
         return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
@@ -503,8 +501,7 @@ resource_address_apply(struct pool *pool, const struct resource_address *src,
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        cgi = cgi_address_apply(pool, src->u.cgi,
-                                relative, relative_length,
+        cgi = src->u.cgi->Apply(pool, relative, relative_length,
                                 src->type == RESOURCE_ADDRESS_FASTCGI);
         if (cgi == NULL)
             return NULL;
@@ -582,7 +579,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return cgi_address_id(pool, address->u.cgi);
+        return address->u.cgi->GetId(pool);
 
     case RESOURCE_ADDRESS_NFS:
         return address->u.nfs->GetId(pool);
@@ -693,7 +690,7 @@ resource_address_is_expandable(const struct resource_address *address)
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return cgi_address_is_expandable(address->u.cgi);
+        return address->u.cgi->IsExpandable();
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:
@@ -739,7 +736,7 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
         address->u.cgi = cgi =
             cgi_address_dup(pool, address->u.cgi,
                             address->type == RESOURCE_ADDRESS_FASTCGI);
-        return cgi_address_expand(pool, cgi, match_info, error_r);
+        return cgi->Expand(pool, match_info, error_r);
 
     case RESOURCE_ADDRESS_HTTP:
     case RESOURCE_ADDRESS_AJP:

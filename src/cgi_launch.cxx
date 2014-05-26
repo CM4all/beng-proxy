@@ -236,7 +236,7 @@ cgi_launch(struct pool *pool, http_method_t method,
     struct cgi_ctx c = {
         .method = method,
         .address = address,
-        .uri = cgi_address_uri(pool, address),
+        .uri = address->GetURI(pool),
         .available = body != nullptr ? istream_available(body, false) : -1,
         .remote_addr = remote_addr,
         .headers = headers,

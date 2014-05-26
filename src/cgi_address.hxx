@@ -65,6 +65,48 @@ struct cgi_address {
      * process.
      */
     struct address_list address_list;
+
+    gcc_pure
+    const char *GetURI(struct pool *pool) const;
+
+    /**
+     * Generates a string identifying the address.  This can be used as a
+     * key in a hash table.  The string will be allocated by the specified
+     * pool.
+     */
+    gcc_pure
+    const char *GetId(struct pool *pool) const;
+
+    char *AutoBase(struct pool *pool, const char *request_uri) const;
+
+    struct cgi_address *SaveBase(struct pool *pool, const char *suffix,
+                                 bool have_address_list) const;
+
+    struct cgi_address *LoadBase(struct pool *pool, const char *suffix,
+                                 bool have_address_list) const;
+
+    /**
+     * @return a new object on success, src if no change is needed,
+     * nullptr on error
+     */
+    const struct cgi_address *Apply(struct pool *pool, const char *relative,
+                                    size_t relative_length,
+                                    bool have_address_list) const;
+
+    /**
+     * Does this address need to be expanded with Expand()?
+     */
+    gcc_pure
+    bool IsExpandable() const {
+        return expand_path != nullptr ||
+            expand_script_name != nullptr ||
+            expand_path_info != nullptr ||
+            args.IsExpandable() ||
+            env.IsExpandable();
+    }
+
+    bool Expand(struct pool *pool, const GMatchInfo *match_info,
+                GError **error_r);
 };
 
 void
@@ -75,19 +117,6 @@ struct cgi_address *
 cgi_address_new(struct pool *pool, const char *path,
                 bool have_address_list);
 
-gcc_pure
-const char *
-cgi_address_uri(struct pool *pool, const struct cgi_address *cgi);
-
-/**
- * Generates a string identifying the address.  This can be used as a
- * key in a hash table.  The string will be allocated by the specified
- * pool.
- */
-gcc_pure
-const char *
-cgi_address_id(struct pool *pool, const struct cgi_address *address);
-
 void
 cgi_address_copy(struct pool *pool, struct cgi_address *dest,
                  const struct cgi_address *src, bool have_address_list);
@@ -95,46 +124,5 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
 struct cgi_address *
 cgi_address_dup(struct pool *pool, const struct cgi_address *old,
                 bool have_address_list);
-
-char *
-cgi_address_auto_base(struct pool *pool, const struct cgi_address *address,
-                      const char *uri);
-
-struct cgi_address *
-cgi_address_save_base(struct pool *pool, const struct cgi_address *src,
-                      const char *suffix, bool have_address_list);
-
-struct cgi_address *
-cgi_address_load_base(struct pool *pool, const struct cgi_address *src,
-                      const char *suffix, bool have_address_list);
-
-/**
- * @return a new object on success, src if no change is needed, NULL
- * on error
- */
-const struct cgi_address *
-cgi_address_apply(struct pool *pool, const struct cgi_address *src,
-                  const char *relative, size_t relative_length,
-                  bool have_address_list);
-
-/**
- * Does this address need to be expanded with cgi_address_expand()?
- */
-gcc_pure
-static inline bool
-cgi_address_is_expandable(const struct cgi_address *address)
-{
-    assert(address != NULL);
-
-    return address->expand_path != NULL ||
-        address->expand_script_name != nullptr ||
-        address->expand_path_info != NULL ||
-        address->args.IsExpandable() ||
-        address->env.IsExpandable();
-}
-
-bool
-cgi_address_expand(struct pool *pool, struct cgi_address *address,
-                   const GMatchInfo *match_info, GError **error_r);
 
 #endif

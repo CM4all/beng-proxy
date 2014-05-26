@@ -38,59 +38,59 @@ cgi_address_new(struct pool *pool, const char *path, bool have_address_list)
 }
 
 const char *
-cgi_address_uri(struct pool *pool, const struct cgi_address *cgi)
+cgi_address::GetURI(struct pool *pool) const
 {
-    if (cgi->uri != nullptr)
-        return cgi->uri;
+    if (uri != nullptr)
+        return uri;
 
-    const char *p = cgi->script_name;
+    const char *p = script_name;
     if (p == nullptr)
         p = "";
 
-    if (cgi->path_info != nullptr)
-        p = p_strcat(pool, p, cgi->path_info, nullptr);
+    if (path_info != nullptr)
+        p = p_strcat(pool, p, path_info, nullptr);
 
-    if (cgi->query_string != nullptr)
-        p = p_strcat(pool, p, "?", cgi->query_string, nullptr);
+    if (query_string != nullptr)
+        p = p_strcat(pool, p, "?", query_string, nullptr);
 
     return p;
 }
 
 const char *
-cgi_address_id(struct pool *pool, const struct cgi_address *address)
+cgi_address::GetId(struct pool *pool) const
 {
     char child_options_buffer[4096];
-    *address->options.MakeId(child_options_buffer) = 0;
+    *options.MakeId(child_options_buffer) = 0;
 
-    const char *p = p_strcat(pool, address->path,
+    const char *p = p_strcat(pool, path,
                              child_options_buffer,
                              nullptr);
 
-    if (address->document_root != nullptr)
-        p = p_strcat(pool, p, ";d=", address->document_root, nullptr);
+    if (document_root != nullptr)
+        p = p_strcat(pool, p, ";d=", document_root, nullptr);
 
-    if (address->interpreter != nullptr)
-        p = p_strcat(pool, p, ";i=", address->interpreter, nullptr);
+    if (interpreter != nullptr)
+        p = p_strcat(pool, p, ";i=", interpreter, nullptr);
 
-    if (address->action != nullptr)
-        p = p_strcat(pool, p, ";a=", address->action, nullptr);
+    if (action != nullptr)
+        p = p_strcat(pool, p, ";a=", action, nullptr);
 
-    for (unsigned i = 0; i < address->args.n; ++i)
-        p = p_strcat(pool, p, "!", address->args.values[i], nullptr);
+    for (unsigned i = 0; i < args.n; ++i)
+        p = p_strcat(pool, p, "!", args.values[i], nullptr);
 
-    for (unsigned i = 0; i < address->env.n; ++i)
-        p = p_strcat(pool, p, "$", address->env.values[i], nullptr);
+    for (unsigned i = 0; i < env.n; ++i)
+        p = p_strcat(pool, p, "$", env.values[i], nullptr);
 
-    if (address->uri != nullptr)
-        p = p_strcat(pool, p, ";u=", address->uri, nullptr);
-    else if (address->script_name != nullptr)
-        p = p_strcat(pool, p, ";s=", address->script_name, nullptr);
+    if (uri != nullptr)
+        p = p_strcat(pool, p, ";u=", uri, nullptr);
+    else if (script_name != nullptr)
+        p = p_strcat(pool, p, ";s=", script_name, nullptr);
 
-    if (address->path_info != nullptr)
-        p = p_strcat(pool, p, ";p=", address->path_info, nullptr);
+    if (path_info != nullptr)
+        p = p_strcat(pool, p, ";p=", path_info, nullptr);
 
-    if (address->query_string != nullptr)
-        p = p_strcat(pool, p, "?", address->query_string, nullptr);
+    if (query_string != nullptr)
+        p = p_strcat(pool, p, "?", query_string, nullptr);
 
     return p;
 }
@@ -139,78 +139,75 @@ cgi_address_dup(struct pool *pool, const struct cgi_address *old,
 }
 
 char *
-cgi_address_auto_base(struct pool *pool, const struct cgi_address *address,
-                      const char *uri)
+cgi_address::AutoBase(struct pool *pool, const char *request_uri) const
 {
     /* auto-generate the BASE only if the path info begins with a
        slash and matches the URI */
 
-    if (address->path_info == nullptr ||
-        address->path_info[0] != '/' ||
-        address->path_info[1] == 0)
+    if (path_info == nullptr ||
+        path_info[0] != '/' ||
+        path_info[1] == 0)
         return nullptr;
 
     /* XXX implement (un-)escaping of the uri */
 
-    size_t length = base_string(uri, address->path_info + 1);
+    size_t length = base_string(request_uri, path_info + 1);
     if (length == 0 || length == (size_t)-1)
         return nullptr;
 
-    return p_strndup(pool, uri, length);
+    return p_strndup(pool, request_uri, length);
 }
 
 struct cgi_address *
-cgi_address_save_base(struct pool *pool, const struct cgi_address *src,
-                      const char *suffix, bool have_address_list)
+cgi_address::SaveBase(struct pool *pool, const char *suffix,
+                      bool have_address_list) const
 {
     assert(pool != nullptr);
-    assert(src != nullptr);
     assert(suffix != nullptr);
 
-    size_t uri_length = src->uri != nullptr
-        ? base_string_unescape(pool, src->uri, suffix)
+    size_t uri_length = uri != nullptr
+        ? base_string_unescape(pool, uri, suffix)
         : 0;
     if (uri_length == (size_t)-1)
         return nullptr;
 
-    const char *path_info = src->path_info != nullptr ? src->path_info : "";
-    size_t length = base_string_unescape(pool, path_info, suffix);
+    const char *new_path_info = path_info != nullptr ? path_info : "";
+    size_t length = base_string_unescape(pool, new_path_info, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
-    struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
+    struct cgi_address *dest = cgi_address_dup(pool, this, have_address_list);
     if (dest->uri != nullptr)
         dest->uri = p_strndup(pool, dest->uri, uri_length);
-    dest->path_info = p_strndup(pool, path_info, length);
+    dest->path_info = p_strndup(pool, new_path_info, length);
     return dest;
 }
 
 struct cgi_address *
-cgi_address_load_base(struct pool *pool, const struct cgi_address *src,
-                      const char *suffix, bool have_address_list)
+cgi_address::LoadBase(struct pool *pool, const char *suffix,
+                      bool have_address_list) const
 {
     assert(pool != nullptr);
-    assert(src != nullptr);
     assert(suffix != nullptr);
 
     char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
 
-    struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
+    struct cgi_address *dest = cgi_address_dup(pool, this, have_address_list);
     if (dest->uri != nullptr)
         dest->uri = p_strcat(pool, dest->uri, unescaped, nullptr);
 
-    const char *path_info = src->path_info != nullptr ? src->path_info : "";
-    dest->path_info = p_strcat(pool, path_info, unescaped, nullptr);
+    const char *new_path_info = path_info != nullptr ? path_info : "";
+    dest->path_info = p_strcat(pool, new_path_info, unescaped, nullptr);
     return dest;
 }
 
 const struct cgi_address *
-cgi_address_apply(struct pool *pool, const struct cgi_address *src,
-                  const char *relative, size_t relative_length,
-                  bool have_address_list)
+cgi_address::Apply(struct pool *pool,
+                   const char *relative, size_t relative_length,
+                   bool have_address_list) const
 {
     if (relative_length == 0)
-        return src;
+        return this;
 
     if (uri_has_protocol(relative, relative_length))
         return nullptr;
@@ -218,45 +215,42 @@ cgi_address_apply(struct pool *pool, const struct cgi_address *src,
     char *unescaped = (char *)p_memdup(pool, relative, relative_length);
     size_t unescaped_length = uri_unescape_inplace(unescaped, relative_length);
 
-    const char *path_info = src->path_info != nullptr ? src->path_info : "";
+    const char *new_path_info = path_info != nullptr ? path_info : "";
 
-    struct cgi_address *dest = cgi_address_dup(pool, src, have_address_list);
-    dest->path_info = uri_absolute(pool, path_info,
+    struct cgi_address *dest = cgi_address_dup(pool, this, have_address_list);
+    dest->path_info = uri_absolute(pool, new_path_info,
                                    unescaped, unescaped_length);
     assert(dest->path_info != nullptr);
     return dest;
 }
 
 bool
-cgi_address_expand(struct pool *pool, struct cgi_address *address,
-                   const GMatchInfo *match_info, GError **error_r)
+cgi_address::Expand(struct pool *pool, const GMatchInfo *match_info,
+                    GError **error_r)
 {
     assert(pool != nullptr);
-    assert(address != nullptr);
     assert(match_info != nullptr);
 
-    if (address->expand_path != nullptr) {
-        address->path = expand_string_unescaped(pool, address->expand_path,
-                                                match_info, error_r);
-        if (address->path == nullptr)
+    if (expand_path != nullptr) {
+        path = expand_string_unescaped(pool, expand_path, match_info, error_r);
+        if (path == nullptr)
             return false;
     }
 
-    if (address->expand_script_name != nullptr) {
-        address->script_name = expand_string_unescaped(pool,
-                                                       address->expand_script_name,
-                                                       match_info, error_r);
-        if (address->script_name == nullptr)
+    if (expand_script_name != nullptr) {
+        script_name = expand_string_unescaped(pool, expand_script_name,
+                                              match_info, error_r);
+        if (script_name == nullptr)
             return false;
     }
 
-    if (address->expand_path_info != nullptr) {
-        address->path_info = expand_string_unescaped(pool, address->expand_path_info,
-                                                     match_info, error_r);
-        if (address->path_info == nullptr)
+    if (expand_path_info != nullptr) {
+        path_info = expand_string_unescaped(pool, expand_path_info,
+                                            match_info, error_r);
+        if (path_info == nullptr)
             return false;
     }
 
-    return address->args.Expand(pool, match_info, error_r) &&
-        address->env.Expand(pool, match_info, error_r);
+    return args.Expand(pool, match_info, error_r) &&
+        env.Expand(pool, match_info, error_r);
 }
