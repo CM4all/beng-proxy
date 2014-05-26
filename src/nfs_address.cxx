@@ -30,15 +30,13 @@ nfs_address_new(struct pool *pool, const char *server,
 }
 
 const char *
-nfs_address_id(struct pool *pool, const struct nfs_address *address)
+nfs_address::GetId(struct pool *pool) const
 {
-    assert(address != nullptr);
-    assert(address->server != nullptr);
-    assert(address->export_name != nullptr);
-    assert(address->path != nullptr);
+    assert(server != nullptr);
+    assert(export_name != nullptr);
+    assert(path != nullptr);
 
-    return p_strcat(pool, address->server, ":", address->export_name, ":",
-                    address->path, nullptr);
+    return p_strcat(pool, server, ":", export_name, ":", path, nullptr);
 }
 
 struct nfs_address *
@@ -66,70 +64,60 @@ nfs_address::Check(GError **error_r) const
 }
 
 struct nfs_address *
-nfs_address_save_base(struct pool *pool, const struct nfs_address *src,
-                      const char *suffix)
+nfs_address::SaveBase(struct pool *pool, const char *suffix) const
 {
     assert(pool != nullptr);
-    assert(src != nullptr);
     assert(suffix != nullptr);
 
-    size_t length = base_string_unescape(pool, src->path, suffix);
+    size_t length = base_string_unescape(pool, path, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
     auto dest = NewFromPool<struct nfs_address>(pool,
-                                                p_strdup(pool, src->server),
-                                                p_strdup(pool,
-                                                         src->export_name),
-                                                p_strndup(pool,
-                                                          src->path, length));
-    dest->content_type = p_strdup_checked(pool, src->content_type);
+                                                p_strdup(pool, server),
+                                                p_strdup(pool, export_name),
+                                                p_strndup(pool, path, length));
+    dest->content_type = p_strdup_checked(pool, content_type);
     return dest;
 }
 
 struct nfs_address *
-nfs_address_load_base(struct pool *pool, const struct nfs_address *src,
-                      const char *suffix)
+nfs_address::LoadBase(struct pool *pool, const char *suffix) const
 {
     assert(pool != nullptr);
-    assert(src != nullptr);
-    assert(src->path != nullptr);
-    assert(*src->path != 0);
-    assert(src->path[strlen(src->path) - 1] == '/');
+    assert(path != nullptr);
+    assert(*path != 0);
+    assert(path[strlen(path) - 1] == '/');
     assert(suffix != nullptr);
 
     char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
 
     auto dest = NewFromPool<struct nfs_address>(pool,
-                                                p_strdup(pool, src->server),
-                                                p_strdup(pool,
-                                                         src->export_name),
-                                                p_strcat(pool, src->path,
+                                                p_strdup(pool, server),
+                                                p_strdup(pool, export_name),
+                                                p_strcat(pool, path,
                                                          unescaped, nullptr));
-    dest->content_type = p_strdup_checked(pool, src->content_type);
+    dest->content_type = p_strdup_checked(pool, content_type);
     return dest;
 }
 
 const struct nfs_address *
-nfs_address_expand(struct pool *pool, const struct nfs_address *src,
-                   const GMatchInfo *match_info, GError **error_r)
+nfs_address::Expand(struct pool *pool, const GMatchInfo *match_info,
+                    GError **error_r) const
 {
     assert(pool != nullptr);
-    assert(src != nullptr);
     assert(match_info != nullptr);
 
-    if (src->expand_path == nullptr)
-        return src;
+    if (expand_path == nullptr)
+        return this;
 
-    const char *path = expand_string_unescaped(pool, src->expand_path,
-                                               match_info, error_r);
-    if (path == nullptr)
+    const char *new_path = expand_string_unescaped(pool, expand_path,
+                                                   match_info, error_r);
+    if (new_path == nullptr)
         return nullptr;
 
-    auto dest = NewFromPool<struct nfs_address>(pool,
-                                                src->server,
-                                                src->export_name,
-                                                path);
-    dest->content_type = p_strdup_checked(pool, src->content_type);
+    auto dest = NewFromPool<struct nfs_address>(pool, server, export_name,
+                                                new_path);
+    dest->content_type = p_strdup_checked(pool, content_type);
     return dest;
 }

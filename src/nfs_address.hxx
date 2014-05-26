@@ -36,6 +36,14 @@ struct nfs_address {
 
     nfs_address(struct pool *pool, const nfs_address &other);
 
+    const char *GetId(struct pool *pool) const;
+
+    bool Check(GError **error_r) const;
+
+    struct nfs_address *SaveBase(struct pool *pool, const char *suffix) const;
+
+    struct nfs_address *LoadBase(struct pool *pool, const char *suffix) const;
+
     /**
      * Does this address need to be expanded with nfs_address_expand()?
      */
@@ -44,29 +52,16 @@ struct nfs_address {
         return expand_path != nullptr;
     }
 
-    bool Check(GError **error_r) const;
+    const struct nfs_address *Expand(struct pool *pool,
+                                     const GMatchInfo *match_info,
+                                     GError **error_r) const;
 };
 
 struct nfs_address *
 nfs_address_new(struct pool *pool, const char *server,
                 const char *export_name, const char *path);
 
-const char *
-nfs_address_id(struct pool *pool, const struct nfs_address *address);
-
 struct nfs_address *
 nfs_address_dup(struct pool *pool, const struct nfs_address *src);
-
-struct nfs_address *
-nfs_address_save_base(struct pool *pool, const struct nfs_address *src,
-                      const char *suffix);
-
-struct nfs_address *
-nfs_address_load_base(struct pool *pool, const struct nfs_address *src,
-                      const char *suffix);
-
-const struct nfs_address *
-nfs_address_expand(struct pool *pool, const struct nfs_address *src,
-                   const GMatchInfo *match_info, GError **error_r);
 
 #endif

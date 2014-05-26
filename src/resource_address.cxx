@@ -323,7 +323,7 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
         return dest;
 
     case RESOURCE_ADDRESS_NFS:
-        dest->u.nfs = nfs_address_save_base(pool, src->u.nfs, suffix);
+        dest->u.nfs = src->u.nfs->SaveBase(pool, suffix);
         if (dest->u.nfs == NULL)
             return NULL;
 
@@ -412,7 +412,7 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
         return dest;
 
     case RESOURCE_ADDRESS_NFS:
-        dest->u.nfs = nfs_address_load_base(pool, src->u.nfs, suffix);
+        dest->u.nfs = src->u.nfs->LoadBase(pool, suffix);
         assert(dest->u.nfs != NULL);
         dest->type = src->type;
         return dest;
@@ -585,7 +585,7 @@ resource_address_id(const struct resource_address *address, struct pool *pool)
         return cgi_address_id(pool, address->u.cgi);
 
     case RESOURCE_ADDRESS_NFS:
-        return nfs_address_id(pool, address->u.nfs);
+        return address->u.nfs->GetId(pool);
     }
 
     assert(false);
@@ -757,7 +757,7 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     case RESOURCE_ADDRESS_NFS:
         /* copy the nfs_address object (it's a pointer, not
            in-line) and expand it */
-        nfs = nfs_address_expand(pool, address->u.nfs, match_info, error_r);
+        nfs = address->u.nfs->Expand(pool, match_info, error_r);
         if (nfs == NULL)
             return false;
 
