@@ -126,9 +126,7 @@ test_cgi_apply(struct pool *pool)
 
 int main(int argc, char **argv) {
     struct pool *pool;
-    static const struct file_address file1 = {
-        .path = "/var/www/foo/bar.html",
-    };
+    static const struct file_address file1("/var/www/foo/bar.html");
     static const struct resource_address ra1 = {
         .type = RESOURCE_ADDRESS_LOCAL,
         .u = {
@@ -136,9 +134,7 @@ int main(int argc, char **argv) {
         },
     };
 
-    static const struct file_address file2 = {
-        .path = "/var/www/foo/space .txt",
-    };
+    static const struct file_address file2("/var/www/foo/space .txt");
     static const struct resource_address ra2 = {
         .type = RESOURCE_ADDRESS_LOCAL,
         .u = {

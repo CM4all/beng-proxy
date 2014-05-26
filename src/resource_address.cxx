@@ -299,7 +299,7 @@ resource_address_save_base(struct pool *pool, struct resource_address *dest,
         return dest;
 
     case RESOURCE_ADDRESS_LOCAL:
-        dest->u.file = file_address_save_base(pool, src->u.file, suffix);
+        dest->u.file = src->u.file->SaveBase(pool, suffix);
         if (dest->u.file == NULL)
             return NULL;
 
@@ -392,7 +392,7 @@ resource_address_load_base(struct pool *pool, struct resource_address *dest,
 
     case RESOURCE_ADDRESS_LOCAL:
         dest->type = src->type;
-        dest->u.file = file_address_load_base(pool, src->u.file, suffix);
+        dest->u.file = src->u.file->LoadBase(pool, suffix);
         return dest;
 
     case RESOURCE_ADDRESS_HTTP:
@@ -688,7 +688,7 @@ resource_address_is_expandable(const struct resource_address *address)
         return false;
 
     case RESOURCE_ADDRESS_LOCAL:
-        return file_address_is_expandable(address->u.file);
+        return address->u.file->IsExpandable();
 
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:
@@ -731,7 +731,7 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
 
     case RESOURCE_ADDRESS_LOCAL:
         address->u.file = file = file_address_dup(pool, address->u.file);
-        return file_address_expand(pool, file, match_info, error_r);
+        return file->Expand(pool, match_info, error_r);
 
     case RESOURCE_ADDRESS_PIPE:
     case RESOURCE_ADDRESS_CGI:

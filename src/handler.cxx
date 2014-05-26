@@ -803,14 +803,14 @@ serve_document_root_file(request &request2,
 
     request2.translate.transformation = tr->views->transformation;
 
-    file_address *fa = NewFromPool<file_address>(request.pool);
-    file_address_init(fa, p_strncat(request.pool,
-                                    config->document_root,
-                                    strlen(config->document_root),
-                                    uri->base.data,
-                                    uri->base.length,
-                                    index_file, (size_t)10,
-                                    nullptr));
+    const char *path = p_strncat(request.pool,
+                                 config->document_root,
+                                 strlen(config->document_root),
+                                 uri->base.data,
+                                 uri->base.length,
+                                 index_file, (size_t)10,
+                                 nullptr);
+    file_address *fa = NewFromPool<file_address>(request.pool, path);
 
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
     tr->address.u.file = fa;

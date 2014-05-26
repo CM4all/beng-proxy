@@ -11,65 +11,51 @@
 #include <assert.h>
 #include <string.h>
 
-void
-file_address_init(struct file_address *address, const char *path)
+file_address::file_address(const char *_path)
+    :path(_path),
+     deflated(nullptr), gzipped(nullptr),
+     content_type(nullptr),
+     delegate(nullptr),
+     document_root(nullptr),
+     expand_path(nullptr)
 {
-    assert(address != nullptr);
-    assert(path != nullptr);
+    child_options.Init();
+}
 
-    memset(address, 0, sizeof(*address));
-    address->path = path;
-    address->child_options.Init();
+file_address::file_address(struct pool *pool, const file_address &src)
+    :path(p_strdup(pool, src.path)),
+     deflated(p_strdup_checked(pool, src.deflated)),
+     gzipped(p_strdup_checked(pool, src.gzipped)),
+     content_type(p_strdup_checked(pool, src.content_type)),
+     delegate(p_strdup_checked(pool, src.delegate)),
+     document_root(p_strdup_checked(pool, src.document_root)),
+     expand_path(p_strdup_checked(pool, src.expand_path)) {
+    child_options.CopyFrom(pool, &src.child_options);
 }
 
 struct file_address *
 file_address_new(struct pool *pool, const char *path)
 {
-    auto file = NewFromPool<struct file_address>(pool);
-    file_address_init(file, path);
-    return file;
-}
-
-void
-file_address_copy(struct pool *pool, struct file_address *dest,
-                  const struct file_address *src)
-{
-    assert(src->path != nullptr);
-    dest->path = p_strdup(pool, src->path);
-    dest->deflated = p_strdup_checked(pool, src->deflated);
-    dest->gzipped = p_strdup_checked(pool, src->gzipped);
-    dest->content_type =
-        p_strdup_checked(pool, src->content_type);
-    dest->delegate = p_strdup_checked(pool, src->delegate);
-    dest->document_root =
-        p_strdup_checked(pool, src->document_root);
-
-    dest->expand_path = p_strdup_checked(pool, src->expand_path);
-
-    dest->child_options.CopyFrom(pool, &src->child_options);
+    return NewFromPool<struct file_address>(pool, path);
 }
 
 struct file_address *
 file_address_dup(struct pool *pool, const struct file_address *src)
 {
-    auto dest = NewFromPool<struct file_address>(pool);
-    file_address_copy(pool, dest, src);
-    return dest;
+    return NewFromPool<struct file_address>(pool, pool, *src);
 }
 
 struct file_address *
-file_address_save_base(struct pool *pool, const struct file_address *src,
-                       const char *suffix)
+file_address::SaveBase(struct pool *pool, const char *suffix) const
 {
     assert(pool != nullptr);
-    assert(src != nullptr);
     assert(suffix != nullptr);
 
-    size_t length = base_string_unescape(pool, src->path, suffix);
+    size_t length = base_string_unescape(pool, path, suffix);
     if (length == (size_t)-1)
         return nullptr;
 
-    struct file_address *dest = file_address_dup(pool, src);
+    struct file_address *dest = file_address_dup(pool, this);
     dest->path = p_strndup(pool, dest->path, length);
 
     /* BASE+DEFLATED is not supported */
@@ -80,43 +66,31 @@ file_address_save_base(struct pool *pool, const struct file_address *src,
 }
 
 struct file_address *
-file_address_load_base(struct pool *pool, const struct file_address *src,
-                       const char *suffix)
+file_address::LoadBase(struct pool *pool, const char *suffix) const
 {
     assert(pool != nullptr);
-    assert(src != nullptr);
-    assert(src->path != nullptr);
-    assert(*src->path != 0);
-    assert(src->path[strlen(src->path) - 1] == '/');
+    assert(path != nullptr);
+    assert(*path != 0);
+    assert(path[strlen(path) - 1] == '/');
     assert(suffix != nullptr);
 
     char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
 
-    struct file_address *dest = file_address_dup(pool, src);
+    struct file_address *dest = file_address_dup(pool, this);
     dest->path = p_strcat(pool, dest->path, unescaped, nullptr);
     return dest;
 }
 
 bool
-file_address_is_expandable(const struct file_address *address)
-{
-    assert(address != nullptr);
-
-    return address->expand_path != nullptr;
-}
-
-bool
-file_address_expand(struct pool *pool, struct file_address *address,
-                    const GMatchInfo *match_info, GError **error_r)
+file_address::Expand(struct pool *pool, const GMatchInfo *match_info,
+                     GError **error_r)
 {
     assert(pool != nullptr);
-    assert(address != nullptr);
     assert(match_info != nullptr);
 
-    if (address->expand_path != nullptr) {
-        address->path = expand_string_unescaped(pool, address->expand_path,
-                                                match_info, error_r);
-        if (address->path == nullptr)
+    if (expand_path != nullptr) {
+        path = expand_string_unescaped(pool, expand_path, match_info, error_r);
+        if (path == nullptr)
             return false;
     }
 
