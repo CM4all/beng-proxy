@@ -3,7 +3,7 @@ cm4all-beng-proxy (4.0.47) unstable; urgency=low
   * args: unescape values with dollar sign (4.0.46 regression)
   * translate_client: fix "Could not locate resource" (4.0.38 regression)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 26 May 2014 17:02:48 -0000
 
 cm4all-beng-proxy (4.0.46) unstable; urgency=low
 
