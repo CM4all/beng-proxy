@@ -481,6 +481,13 @@ fcgi_client_handle_end(struct fcgi_client *client)
                                               client->response.status,
                                               client->response.headers,
                                               nullptr);
+    } else if (client->response.available > 0) {
+        GError *error =
+            g_error_new_literal(fcgi_quark(), 0,
+                                "premature end of body "
+                                "from FastCGI application");
+        fcgi_client_abort_response_body(client, error);
+        return;
     } else
         istream_deinit_eof(&client->response.body);
 
