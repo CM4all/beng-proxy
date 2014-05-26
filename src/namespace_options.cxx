@@ -61,6 +61,22 @@ namespace_options_init(struct namespace_options *options)
     options->hostname = NULL;
 }
 
+namespace_options::namespace_options(struct pool *pool,
+                                     const namespace_options &src)
+        :enable_user(src.enable_user),
+         enable_pid(src.enable_pid),
+         enable_network(src.enable_network),
+         enable_mount(src.enable_mount),
+         mount_proc(src.mount_proc),
+         mount_tmp_tmpfs(src.mount_tmp_tmpfs),
+         pivot_root(p_strdup_checked(pool, src.pivot_root)),
+         home(p_strdup_checked(pool, src.home)),
+         mount_home(p_strdup_checked(pool, src.mount_home)),
+         mounts(mount_list_dup(pool, src.mounts)),
+         hostname(p_strdup_checked(pool, src.hostname))
+{
+}
+
 void
 namespace_options_copy(struct pool *pool, struct namespace_options *dest,
                        const struct namespace_options *src)

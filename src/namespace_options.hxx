@@ -52,6 +52,9 @@ struct namespace_options {
      * The hostname of the new UTS namespace.
      */
     const char *hostname;
+
+    namespace_options() = default;
+    namespace_options(struct pool *pool, const namespace_options &src);
 };
 
 /**
