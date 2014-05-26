@@ -13,6 +13,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+child_options::child_options(struct pool *pool,
+                             const struct child_options &src)
+    :stderr_path(p_strdup_checked(pool, src.stderr_path)),
+     rlimits(src.rlimits),
+     ns(pool, src.ns),
+     jail(pool, src.jail)
+{
+}
+
 void
 child_options::CopyFrom(struct pool *pool, const struct child_options *src)
 {

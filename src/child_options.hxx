@@ -24,6 +24,9 @@ struct child_options {
 
     struct jail_params jail;
 
+    child_options() = default;
+    child_options(struct pool *pool, const struct child_options &src);
+
     void Init() {
         stderr_path = nullptr;
         rlimit_options_init(&rlimits);
