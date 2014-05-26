@@ -118,12 +118,21 @@ jail_params_check(const struct jail_params *jail, GError **error_r)
     return true;
 }
 
+jail_params::jail_params(struct pool *pool, const jail_params &src)
+    :enabled(src.enabled),
+     account_id(p_strdup_checked(pool, src.account_id)),
+     site_id(p_strdup_checked(pool, src.site_id)),
+     user_name(p_strdup_checked(pool, src.user_name)),
+     host_name(p_strdup_checked(pool, src.host_name)),
+     home_directory(p_strdup_checked(pool, src.home_directory))
+{
+}
+
 void
 jail_params_copy(struct pool *pool, struct jail_params *dest,
                  const struct jail_params *src)
 {
     dest->enabled = src->enabled;
-
     dest->account_id = p_strdup_checked(pool, src->account_id);
     dest->site_id = p_strdup_checked(pool, src->site_id);
     dest->user_name = p_strdup_checked(pool, src->user_name);

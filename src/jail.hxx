@@ -26,6 +26,9 @@ struct jail_params {
     const char *user_name;
     const char *host_name;
     const char *home_directory;
+
+    jail_params() = default;
+    jail_params(struct pool *pool, const jail_params &src);
 };
 
 /**
