@@ -568,7 +568,7 @@ finish_view(TranslateClient *client, GError **error_r)
         view = client->response.views;
         assert(view != nullptr);
 
-        const struct resource_address *address = &view->address;
+        const struct resource_address *address = &client->response.address;
         if (address->type != RESOURCE_ADDRESS_NONE &&
             view->address.type == RESOURCE_ADDRESS_NONE) {
             /* no address yet: copy address from response */
