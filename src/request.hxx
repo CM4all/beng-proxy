@@ -168,6 +168,11 @@ struct request {
      * nullptr)
      */
     struct session *ApplyTranslateSession(const TranslateResponse &response);
+
+    bool CheckHandleRedirect(const TranslateResponse &response);
+    bool CheckHandleBounce(const TranslateResponse &response);
+    bool CheckHandleStatus(const TranslateResponse &response);
+    bool CheckHandleRedirectBounceStatus(const TranslateResponse &response);
 };
 
 static inline bool

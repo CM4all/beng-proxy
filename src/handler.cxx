@@ -198,25 +198,8 @@ handle_translated_request2(request &request,
                address.type == RESOURCE_ADDRESS_NFS ||
                address.type == RESOURCE_ADDRESS_AJP) {
         proxy_handler(request);
-    } else if (response.redirect != nullptr) {
-        http_status_t status = response.status != (http_status_t)0
-            ? response.status : HTTP_STATUS_SEE_OTHER;
-
-        const char *uri = response.redirect;
-        if (response.redirect_query_string && request.uri.query.length > 0)
-            uri = uri_append_query_string_n(request.request->pool, uri,
-                                            request.uri.query.data,
-                                            request.uri.query.length);
-
-        response_dispatch_redirect(&request, status, uri,
-                                   nullptr);
-    } else if (response.bounce != nullptr) {
-        response_dispatch_redirect(&request, HTTP_STATUS_SEE_OTHER,
-                                   bounce_uri(request.request->pool, &request,
-                                              response),
-                                   nullptr);
-    } else if (response.status != (http_status_t)0) {
-        response_dispatch(&request, response.status, nullptr, nullptr);
+    } else if (request.CheckHandleRedirectBounceStatus(response)) {
+        /* done */
     } else if (response.www_authenticate != nullptr) {
         response_dispatch_message(&request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
@@ -226,6 +209,57 @@ handle_translated_request2(request &request,
         response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
     }
+}
+
+inline bool
+request::CheckHandleRedirect(const TranslateResponse &response)
+{
+    if (response.redirect == nullptr)
+        return false;
+
+    http_status_t status = response.status != (http_status_t)0
+        ? response.status
+        : HTTP_STATUS_SEE_OTHER;
+
+    const char *redirect_uri = response.redirect;
+    if (response.redirect_query_string && uri.query.length > 0)
+        redirect_uri = uri_append_query_string_n(request->pool, redirect_uri,
+                                                 uri.query.data,
+                                                 uri.query.length);
+
+    response_dispatch_redirect(this, status, redirect_uri, nullptr);
+    return true;
+}
+
+inline bool
+request::CheckHandleBounce(const TranslateResponse &response)
+{
+    if (response.bounce == nullptr)
+        return false;
+
+    response_dispatch_redirect(this, HTTP_STATUS_SEE_OTHER,
+                               bounce_uri(request->pool, this,
+                                          response),
+                               nullptr);
+    return true;
+}
+
+inline bool
+request::CheckHandleStatus(const TranslateResponse &response)
+{
+    if (response.status == (http_status_t)0)
+        return false;
+
+    response_dispatch(this, response.status, nullptr, nullptr);
+    return true;
+}
+
+bool
+request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
+{
+    return CheckHandleRedirect(response) ||
+        CheckHandleBounce(response) ||
+        CheckHandleStatus(response);
 }
 
 gcc_pure
