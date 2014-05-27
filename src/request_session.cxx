@@ -25,12 +25,10 @@
 static const struct strmap *
 request_get_cookies(struct request *request)
 {
-    const char *cookie;
-
     if (request->cookies != nullptr)
         return request->cookies;
 
-    cookie = strmap_get(request->request->headers, "cookie");
+    const char *cookie = strmap_get(request->request->headers, "cookie");
     if (cookie == nullptr)
         return nullptr;
 
@@ -43,8 +41,6 @@ request_get_cookies(struct request *request)
 static struct session *
 request_load_session(struct request *request, const char *session_id)
 {
-    struct session *session;
-
     assert(request != nullptr);
     assert(!request->stateless);
     assert(!session_id_is_defined(request->session_id));
@@ -53,7 +49,7 @@ request_load_session(struct request *request, const char *session_id)
     if (!session_id_parse(session_id, &request->session_id))
         return nullptr;
 
-    session = request_get_session(request);
+    struct session *session = request_get_session(request);
     if (session == nullptr)
         return nullptr;
 
@@ -112,16 +108,12 @@ request_get_cookie_session_id(struct request *request)
 void
 request_determine_session(struct request *request)
 {
-    const char *user_agent;
-    const char *session_id;
-    bool cookie_received = false;
-    struct session *session;
-
     assert(request != nullptr);
 
     request->session_realm = nullptr;
 
-    user_agent = strmap_get(request->request->headers, "user-agent");
+    const char *user_agent = strmap_get(request->request->headers,
+                                        "user-agent");
     request->stateless = user_agent == nullptr ||
         user_agent_is_bot(user_agent);
     if (request->stateless)
@@ -132,7 +124,8 @@ request_determine_session(struct request *request)
                                   &request->connection->instance->config,
                                   request->request->headers);
 
-    session_id = request_get_uri_session_id(request);
+    const char *session_id = request_get_uri_session_id(request);
+    bool cookie_received = false;
     if (session_id == nullptr || *session_id == 0) {
         session_id = request_get_cookie_session_id(request);
         if (session_id == nullptr)
@@ -141,7 +134,7 @@ request_determine_session(struct request *request)
         cookie_received = true;
     }
 
-    session = request_load_session(request, session_id);
+    struct session *session = request_load_session(request, session_id);
     if (session == nullptr) {
         if (!cookie_received && request->args != nullptr)
             /* remove invalid session id from URI args */
@@ -173,14 +166,12 @@ request_determine_session(struct request *request)
 struct session *
 request_make_session(struct request *request)
 {
-    struct session *session;
-
     assert(request != nullptr);
 
     if (request->stateless)
         return nullptr;
 
-    session = request_get_session(request);
+    struct session *session = request_get_session(request);
     if (session != nullptr)
         return session;
 
