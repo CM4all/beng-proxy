@@ -27,15 +27,7 @@
 bool
 request_processor_enabled(const struct request *request)
 {
-    const struct transformation *transformation;
-
-    for (transformation = request->translate.response->views->transformation;
-         transformation != nullptr;
-         transformation = transformation->next)
-        if (transformation->type == transformation::TRANSFORMATION_PROCESS)
-            return true;
-
-    return false;
+    return widget_view_has_processor(request->translate.response->views);
 }
 
 void
