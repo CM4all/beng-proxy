@@ -308,6 +308,7 @@ tcache_request_evaluate(const TranslateRequest *request)
 {
     return (request->uri != nullptr || request->widget_type != nullptr ||
             tcache_is_content_type_lookup(*request)) &&
+        request->auth.IsNull() &&
         request->check.size < MAX_CACHE_CHECK &&
         request->want_full_uri.size <= MAX_CACHE_WFU &&
         request->file_not_found.size <= MAX_FILE_NOT_FOUND &&

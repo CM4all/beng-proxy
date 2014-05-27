@@ -517,6 +517,12 @@ enum beng_translation_command {
      * Set the session cookie's "Path" attribute.
      */
     TRANSLATE_COOKIE_PATH = 132,
+
+    /**
+     * Advanced authentication protocol through the translation
+     * server.
+     */
+    TRANSLATE_AUTH = 133,
 };
 
 struct beng_translation_header {

@@ -43,6 +43,12 @@ struct TranslateRequest {
     ConstBuffer<void> check;
 
     /**
+     * The payload of the AUTH packet.  If ConstBuffer::IsNull(),
+     * then no AUTH packet will be sent.
+     */
+    ConstBuffer<void> auth;
+
+    /**
      * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
      * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
      * was received.
@@ -81,6 +87,7 @@ struct TranslateRequest {
         session = nullptr;
         param = nullptr;
         check = nullptr;
+        auth = nullptr;
         want_full_uri = nullptr;
         want = nullptr;
         file_not_found = nullptr;

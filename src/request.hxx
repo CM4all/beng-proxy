@@ -157,6 +157,7 @@ struct request {
     void SubmitTranslateRequest();
 
     void OnTranslateResponse(const TranslateResponse &response);
+    void OnTranslateResponseAfterAuth(const TranslateResponse &response);
     void OnTranslateResponse2(const TranslateResponse &response);
 
     /**
@@ -178,6 +179,11 @@ struct request {
     bool CheckHandleBounce(const TranslateResponse &response);
     bool CheckHandleStatus(const TranslateResponse &response);
     bool CheckHandleRedirectBounceStatus(const TranslateResponse &response);
+
+    /**
+     * Handle #TRANSLATE_AUTH.
+     */
+    void HandleAuth(const TranslateResponse &response);
 };
 
 static inline bool

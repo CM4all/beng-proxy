@@ -78,6 +78,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     session = nullptr;
 
     check = DupBuffer(pool, src.check);
+    auth = DupBuffer(pool, src.auth);
     want_full_uri = DupBuffer(pool, src.want_full_uri);
 
     /* The "user" attribute must not be present in cached responses,

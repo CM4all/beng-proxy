@@ -42,6 +42,7 @@ class Request:
         self.widget_type = None
         self.session = None
         self.check = None
+        self.auth = None
         self.want_full_uri = None
         self.param = None
         self.local_address = None
@@ -93,6 +94,8 @@ class Request:
             self.session = packet.payload
         elif packet.command == TRANSLATE_CHECK:
             self.check = packet.payload
+        elif packet.command == TRANSLATE_AUTH:
+            self.auth = packet.payload
         elif packet.command == TRANSLATE_WANT_FULL_URI:
             self.want_full_uri = packet.payload
         elif packet.command == TRANSLATE_PARAM:

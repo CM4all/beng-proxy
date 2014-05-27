@@ -357,6 +357,7 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
                               error_r) &&
         write_optional_buffer(gb, TRANSLATE_CHECK, request->check,
                               error_r) &&
+        write_optional_buffer(gb, TRANSLATE_AUTH, request->auth, error_r) &&
         write_optional_buffer(gb, TRANSLATE_WANT_FULL_URI,
                               request->want_full_uri, error_r) &&
         write_optional_buffer(gb, TRANSLATE_WANT, request->want, error_r) &&
@@ -2950,6 +2951,16 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_STDERR_PATH:
         return translate_client_stderr_path(*client,
                                             { _payload, payload_length });
+
+    case TRANSLATE_AUTH:
+        if (!client->response.auth.IsNull()) {
+            translate_client_error(client,
+                                   "duplicate AUTH packet");
+            return false;
+        }
+
+        client->response.auth = { payload, payload_length };
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

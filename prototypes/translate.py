@@ -61,6 +61,15 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CONTENT_TYPE, content_types[suffix])
         return response
 
+    def _handle_auth(self, auth, uri, session):
+        log.msg("auth '%s' uri='%s' session='%s'" % (auth, uri, session))
+
+        response = Response(protocol_version=1)
+        response.max_age(0)
+        response.packet(TRANSLATE_USER, 'hans')
+        response.max_age(20)
+        return response
+
     def _handle_hosting(self, request, response, base, uri,
                         document_root='/var/www'):
         response.packet(TRANSLATE_BASE, base)
@@ -443,6 +452,9 @@ class Translation(Protocol):
                 self._handle_local_file('/var/www' + uri[5:], response)
             else:
                 response.packet(TRANSLATE_WWW_AUTHENTICATE, 'Basic realm="Demo"')
+        elif raw_uri[:7] == '/auth2/':
+            response.packet(TRANSLATE_AUTH, 'dummy')
+            self._handle_hosting(request, response, '/auth2/', raw_uri[7:])
         elif uri[:8] == '/header/':
             response.header('X-Foo', 'Bar')
             self._handle_local_file('/var/www' + uri[7:], response)
@@ -582,6 +594,9 @@ class Translation(Protocol):
 
         if request.widget_type is not None:
             return self._handle_widget_lookup(request.widget_type)
+
+        if request.auth is not None:
+            return self._handle_auth(request.auth, request.uri, request.session)
 
         if request.error_document:
             log.msg("error %s %s %u" % (request.uri, repr(request.error_document_payload), request.status))

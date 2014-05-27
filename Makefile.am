@@ -158,6 +158,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/global.c src/global.h \
 	src/growing-buffer.c src/growing-buffer.h \
 	src/handler.cxx src/handler.hxx \
+	src/auth.cxx \
 	src/file_not_found.cxx src/file_not_found.hxx \
 	src/file_enotdir.cxx src/file_enotdir.hxx \
 	src/file_directory_index.cxx src/file_directory_index.hxx \

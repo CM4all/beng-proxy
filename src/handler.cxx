@@ -532,6 +532,15 @@ request::OnTranslateResponse(const TranslateResponse &response)
        assigns the real response */
     install_error_response(*this);
 
+    if (!response.auth.IsNull())
+        HandleAuth(response);
+    else
+        OnTranslateResponseAfterAuth(response);
+}
+
+void
+request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
+{
     if (!response.check.IsNull() ||
         !response.want.IsEmpty() ||
         !response.want_full_uri.IsNull()) {

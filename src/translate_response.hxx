@@ -117,6 +117,12 @@ struct TranslateResponse {
     ConstBuffer<void> check;
 
     /**
+     * The payload of the AUTH packet.  If ConstBuffer::IsNull(), then
+     * no AUTH packet was received.
+     */
+    ConstBuffer<void> auth;
+
+    /**
      * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
      * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
      * was received.

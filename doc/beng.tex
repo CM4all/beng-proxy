@@ -823,6 +823,11 @@ can be used to implement authentication (see \ref{authentication}). \\
 
 \hline
 
+\verb|AUTH| & Indicates that authentication is necessary (see
+\ref{auth}). \\
+
+\hline
+
 \end{longtable}
 
 \subsection{Response}
@@ -2301,6 +2306,51 @@ Example 2, authenticated user:
   CHECK=xyz}
 \item translation server: \texttt{MAX\_AGE=300 VARY=SESSION PREVIOUS}
 \end{enumerate}
+
+
+\subsubsection{The \texttt{AUTH} packet}
+\label{auth}
+
+\texttt{AUTH} provides another authentication protocol that was
+designed to support SAM and similar authentication services.  If the
+client is not already authenticated, the translation server receives a
+dedicated authentication request, echoing the \texttt{AUTH} packet.
+Additionally, it receives the full request URI in the \texttt{URI}
+packet, the ``Host'' header in the \texttt{HOST} packet and the
+session id in the \texttt{SESSION} packet.
+
+The response to this \texttt{AUTH} request may be one of the
+following:
+
+\begin{itemize}
+\item \texttt{USER} specifying the new session user (optionally
+  followed by \verb|MAX_AGE|)
+\item \texttt{REDIRECT} (optionally with \texttt{STATUS})
+\item \texttt{BOUNCE} (optionally with \texttt{STATUS})
+\item \texttt{STATUS}
+\end{itemize}
+
+Only clients with a fresh \texttt{USER} will be allowed to actually
+perform the request.
+
+Caching \texttt{AUTH} requests is not implemented properly; to be
+future-proof, the response \textbf{must} begin with \verb|MAX_AGE=0|.
+Compatibility will not be guaranteed without it.
+
+Example:
+
+\begin{enumerate}
+\item ...
+\item translation server: ... \texttt{SESSION=opaque1}
+\item \emph{beng-proxy}: \texttt{URI=/foo.html HOST=example.com}
+\item translation server: ... \texttt{AUTH=opaque2}
+\item \emph{beng-proxy}: \texttt{AUTH=opaque2 SESSION=opaque1 URI=/foo.html;a=b?c=d HOST=example.com}
+\item translation server: \texttt{MAX\_AGE=0 USER=hans MAX\_AGE=300}
+\end{enumerate}
+
+Note the two \verb|MAX_AGE| packets.  The first one disables caching
+for the whole translation response (mandatory, see above) and the
+second one enforces revalidation every 5 minutes.
 
 
 \subsection{Referrer}
