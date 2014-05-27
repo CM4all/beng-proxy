@@ -43,17 +43,25 @@ cgi_address::GetURI(struct pool *pool) const
     if (uri != nullptr)
         return uri;
 
-    const char *p = script_name;
-    if (p == nullptr)
-        p = "";
+    const char *sn = script_name;
+    if (sn == nullptr)
+        sn = "";
 
-    if (path_info != nullptr)
-        p = p_strcat(pool, p, path_info, nullptr);
+    const char *pi = path_info;
+    const char *qm = nullptr;
+    const char *qs = query_string;
 
-    if (query_string != nullptr)
-        p = p_strcat(pool, p, "?", query_string, nullptr);
+    if (pi == nullptr) {
+        if (qs == nullptr)
+            return sn;
 
-    return p;
+        pi = "";
+    }
+
+    if (qs != nullptr)
+        qm = "?";
+
+    return p_strcat(pool, sn, pi, qm, qs, nullptr);
 }
 
 const char *
