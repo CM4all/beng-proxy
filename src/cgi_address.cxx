@@ -53,7 +53,7 @@ cgi_address::GetURI(struct pool *pool) const
 
     const char *sn = script_name;
     if (sn == nullptr)
-        sn = "";
+        sn = "/";
 
     const char *pi = path_info;
     const char *qm = nullptr;

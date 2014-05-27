@@ -24,6 +24,7 @@ public:
 
         struct cgi_address *a = cgi_address_new(pool, "/usr/bin/cgi", false);
         CPPUNIT_ASSERT_EQUAL(false, a->IsExpandable());
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/"));
 
         a->script_name = "/";
         CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/"));
@@ -55,6 +56,9 @@ public:
         CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/bar/foo"));
 
         a->script_name = "/";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/foo"));
+
+        a->script_name = nullptr;
         CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/foo"));
     }
 
