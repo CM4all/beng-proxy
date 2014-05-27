@@ -212,6 +212,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/refcount.h \
 	src/request_forward.cxx src/request_forward.hxx \
 	src/request.cxx src/request.hxx \
+	src/request_session.cxx \
 	src/rerror.cxx \
 	src/response.cxx \
 	src/generate_response.cxx src/generate_response.hxx \
