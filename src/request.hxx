@@ -156,6 +156,9 @@ struct request {
      */
     void SubmitTranslateRequest();
 
+    void OnTranslateResponse(const TranslateResponse &response);
+    void OnTranslateResponse2(const TranslateResponse &response);
+
     /**
      * Copy the packets #TRANSLATE_SESSION, #TRANSLATE_USER,
      * #TRANSLATE_LANGUAGE from the #TranslateResponse to the

@@ -514,42 +514,39 @@ repeat_translation(struct request &request, const TranslateResponse &response)
     request.SubmitTranslateRequest();
 }
 
-static void
-handler_translate_response(TranslateResponse *_response, void *ctx)
+inline void
+request::OnTranslateResponse(const TranslateResponse &response)
 {
-    struct request &request = *(struct request *)ctx;
-    const TranslateResponse *response = _response;
-
-    if (!response->session.IsNull())
+    if (!response.session.IsNull())
         /* must apply SESSION early so it gets used by
            repeat_translation() */
-        request.translate.request.session = response->session;
+        translate.request.session = response.session;
 
-    if (response->protocol_version > translation_protocol_version)
-        translation_protocol_version = response->protocol_version;
+    if (response.protocol_version > translation_protocol_version)
+        translation_protocol_version = response.protocol_version;
 
     /* just in case we error out before handle_translated_request()
        assigns the real response */
-    install_error_response(request);
+    install_error_response(*this);
 
-    if (!response->check.IsNull() ||
-        !response->want.IsEmpty() ||
-        !response->want_full_uri.IsNull()) {
-        repeat_translation(request, *response);
+    if (!response.check.IsNull() ||
+        !response.want.IsEmpty() ||
+        !response.want_full_uri.IsNull()) {
+        repeat_translation(*this, response);
         return;
     }
 
     /* the CHECK is done by now; don't carry the CHECK value on to
        further translation requests */
-    request.translate.request.check = nullptr;
+    translate.request.check = nullptr;
     /* also reset the counter so we don't trigger the endless
        recursion detection by the ENOTDIR chain */
-    request.translate.n_checks = 0;
+    translate.n_checks = 0;
 
-    if (response->previous) {
-        if (request.translate.previous == nullptr) {
+    if (response.previous) {
+        if (translate.previous == nullptr) {
             daemon_log(2, "no previous translation response\n");
-            response_dispatch_message(&request,
+            response_dispatch_message(this,
                                       HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                       "Internal server error");
             return;
@@ -558,28 +555,41 @@ handler_translate_response(TranslateResponse *_response, void *ctx)
         /* apply changes from this response, then resume the
            "previous" response */
         struct session *session =
-            apply_translate_response_session(request, *response);
+            apply_translate_response_session(*this, response);
         if (session != nullptr)
             session_put(session);
 
-        response = request.translate.previous;
-    }
+        OnTranslateResponse2(*translate.previous);
+    } else
+        OnTranslateResponse2(response);
+}
 
+void
+request::OnTranslateResponse2(const TranslateResponse &response)
+{
     /* check ENOTDIR */
-    if (!response->enotdir.IsNull() && !check_file_enotdir(request, *response))
+    if (!response.enotdir.IsNull() && !check_file_enotdir(*this, response))
         return;
 
     /* check if the file exists */
-    if (!response->file_not_found.IsNull() &&
-        !check_file_not_found(request, *response))
+    if (!response.file_not_found.IsNull() &&
+        !check_file_not_found(*this, response))
         return;
 
     /* check if it's a directory */
-    if (!response->directory_index.IsNull() &&
-        !check_directory_index(request, *response))
+    if (!response.directory_index.IsNull() &&
+        !check_directory_index(*this, response))
         return;
 
-    handle_translated_request(request, *response);
+    handle_translated_request(*this, response);
+}
+
+static void
+handler_translate_response(TranslateResponse *response, void *ctx)
+{
+    struct request &request = *(struct request *)ctx;
+
+    request.OnTranslateResponse(*response);
 }
 
 static void
