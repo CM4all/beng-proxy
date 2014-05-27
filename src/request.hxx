@@ -155,6 +155,16 @@ struct request {
      * Submit the #TranslateResponse to the translation cache.
      */
     void SubmitTranslateRequest();
+
+    /**
+     * Copy the packets #TRANSLATE_SESSION, #TRANSLATE_USER,
+     * #TRANSLATE_LANGUAGE from the #TranslateResponse to the
+     * #session.
+     *
+     * @return the session (to be released by the caller if not
+     * nullptr)
+     */
+    struct session *ApplyTranslateSession(const TranslateResponse &response);
 };
 
 static inline bool

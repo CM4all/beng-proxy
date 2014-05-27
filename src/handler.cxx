@@ -28,7 +28,6 @@
 #include "http_server.hxx"
 #include "http_quark.h"
 #include "transformation.hxx"
-#include "expiry.h"
 #include "uri-edit.h"
 #include "uri_escape.hxx"
 #include "uri-verify.h"
@@ -131,71 +130,7 @@ apply_translate_response_session(request &request,
     else if (response.transparent)
         request_ignore_session(&request);
 
-    struct session *session;
-    if (!response.session.IsNull() || response.user != nullptr ||
-        response.language != nullptr)
-        session = request_get_session(&request);
-    else
-        session = nullptr;
-
-    if (!response.session.IsNull()) {
-        if (response.session.IsEmpty()) {
-            /* clear translate session */
-
-            if (session != nullptr)
-                session_clear_translate(session);
-        } else {
-            /* set new translate session */
-
-            if (session == nullptr)
-                session = request_make_session(&request);
-
-            if (session != nullptr)
-                session_set_translate(session, response.session);
-        }
-    }
-
-    if (response.user != nullptr) {
-        if (*response.user == 0) {
-            /* log out */
-
-            if (session != nullptr)
-                session_clear_user(session);
-        } else {
-            /* log in */
-
-            if (session == nullptr)
-                session = request_make_session(&request);
-
-            if (session != nullptr)
-                session_set_user(session, response.user,
-                                 response.user_max_age);
-        }
-    } else if (session != nullptr && session->user != nullptr && session->user_expires > 0 &&
-               is_expired(session->user_expires)) {
-        daemon_log(4, "user '%s' has expired\n", session->user);
-        d_free(session->pool, session->user);
-        session->user = nullptr;
-    }
-
-    if (response.language != nullptr) {
-        if (*response.language == 0) {
-            /* reset language setting */
-
-            if (session != nullptr)
-                session_clear_language(session);
-        } else {
-            /* override language */
-
-            if (session == nullptr)
-                session = request_make_session(&request);
-
-            if (session != nullptr)
-                session_set_language(session, response.language);
-        }
-    }
-
-    return session;
+    return request.ApplyTranslateSession(response);
 }
 
 /**
