@@ -117,8 +117,6 @@ apply_translate_response_session(request &request,
         request_ignore_session(&request);
     }
 
-    request.connection->site_name = response.site;
-
     if (response.transparent) {
         session_id_clear(&request.session_id);
         request.stateless = true;
@@ -165,6 +163,8 @@ handle_translated_request2(request &request,
                                   "Internal server error");
         return;
     }
+
+    request.connection->site_name = response.site;
 
     struct session *session =
         apply_translate_response_session(request, response);
