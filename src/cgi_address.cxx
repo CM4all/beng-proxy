@@ -37,6 +37,14 @@ cgi_address_new(struct pool *pool, const char *path, bool have_address_list)
     return cgi;
 }
 
+gcc_pure
+static bool
+HasTrailingSlash(const char *p)
+{
+    size_t length = strlen(p);
+    return p > 0 && p[length - 1] == '/';
+}
+
 const char *
 cgi_address::GetURI(struct pool *pool) const
 {
@@ -60,6 +68,11 @@ cgi_address::GetURI(struct pool *pool) const
 
     if (qs != nullptr)
         qm = "?";
+
+    if (*pi == '/' && HasTrailingSlash(sn))
+        /* avoid generating a double slash when concatenating
+           script_name and path_info */
+        ++pi;
 
     return p_strcat(pool, sn, pi, qm, qs, nullptr);
 }

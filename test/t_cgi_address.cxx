@@ -50,6 +50,12 @@ public:
 
         a->path_info = "/foo";
         CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/test.cgi/foo"));
+
+        a->script_name = "/bar/";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/bar/foo"));
+
+        a->script_name = "/";
+        CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/foo"));
     }
 
     void TestApply() {
