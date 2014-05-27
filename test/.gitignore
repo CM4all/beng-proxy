@@ -27,5 +27,6 @@ run_nfs_client
 /t_http_server
 /t_cookie_client
 /t_cookie_server
+/t_cgi_address
 
 *.trs

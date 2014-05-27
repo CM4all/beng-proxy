@@ -747,6 +747,7 @@ check_PROGRAMS = \
 	test/t-stock \
 	test/t_resource_address \
 	test/t_http_address \
+	test/t_cgi_address \
 	test/t-uri-verify \
 	test/t-uri-relative \
 	test/t-html-escape \
@@ -781,6 +782,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t-stock \
 	test/t_resource_address \
 	test/t_http_address \
+	test/t_cgi_address \
 	test/t-uri-verify \
 	test/t-uri-relative \
 	test/t-html-escape \
@@ -933,6 +935,21 @@ test_t_http_address_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libutil.a \
 	$(GLIB_LIBS) $(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
+
+test_t_cgi_address_SOURCES = test/t_cgi_address.cxx \
+	src/uri-extract.c \
+	src/uri-relative.c \
+	src/uri_base.cxx \
+	src/uri_escape.cxx \
+	src/regex.cxx \
+	src/jail.cxx
+test_t_cgi_address_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
+test_t_cgi_address_LDADD = $(AM_LDADD) \
+	libraddress.a \
+	libpool.a libmemory.a \
+	libutil.a \
+	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
+	$(CPPUNIT_LIBS)
 
 test_t_uri_verify_SOURCES = test/t-uri-verify.c
 test_t_uri_verify_LDADD = $(AM_LDADD) libutil.a
