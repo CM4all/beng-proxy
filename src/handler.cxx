@@ -133,8 +133,7 @@ apply_translate_response_session(request &request,
 
     struct session *session;
     if (!response.session.IsNull() || response.user != nullptr ||
-        response.language != nullptr ||
-        response.views->transformation != nullptr)
+        response.language != nullptr)
         session = request_get_session(&request);
     else
         session = nullptr;
