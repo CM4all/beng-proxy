@@ -4,7 +4,7 @@ cm4all-beng-proxy (4.0.48) unstable; urgency=low
     path_info
   * cgi_address: default to script_name="/"
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 27 May 2014 11:47:19 -0000
 
 cm4all-beng-proxy (4.0.47) unstable; urgency=low
 
