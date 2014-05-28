@@ -114,6 +114,16 @@ class Translation(Protocol):
             response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
             response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
             response.packet(TRANSLATE_ENOTDIR, 'foo')
+        elif uri[-3:] == '.py':
+            # run Python-CGI
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_REGEX, r'^(.*\.py)$')
+            response.packet(TRANSLATE_REGEX_TAIL)
+            response.packet(TRANSLATE_CGI, easy_path)
+            response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1')
+            response.packet(TRANSLATE_INTERPRETER, '/usr/bin/python')
+            response.packet(TRANSLATE_FILE_NOT_FOUND, '404')
+            response.packet(TRANSLATE_ENOTDIR, 'foo')
         elif uri == '' or uri[-1] == '/':
             # deliver index.html with fallback (via TRANSLATE_FILE_NOT_FOUND)
             response.packet(TRANSLATE_REGEX, r'^(.*/)?$')
@@ -125,7 +135,7 @@ class Translation(Protocol):
         else:
             # static file
             response.packet(TRANSLATE_EASY_BASE)
-            response.packet(TRANSLATE_INVERSE_REGEX, r'(\.(cls|php)|/)$')
+            response.packet(TRANSLATE_INVERSE_REGEX, r'(\.(cls|php|py)|/)$')
             response.packet(TRANSLATE_PATH, easy_path)
             response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_DIRECTORY_INDEX, 'foo')
