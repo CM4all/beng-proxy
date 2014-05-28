@@ -199,6 +199,7 @@ next_unescape(char **pp)
                 *dest++ = '\n';
                 break;
 
+            case '\\':
             case '\'':
             case '\"':
                 *dest++ = ch;
