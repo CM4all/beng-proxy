@@ -19,6 +19,7 @@
 #include "crc.h"
 #include "format.h"
 #include "expiry.h"
+#include "strutil.h"
 
 #include <daemon/log.h>
 
@@ -226,6 +227,41 @@ request_discard_session(struct request *request)
 
     session_delete(request->session_id);
     session_id_clear(&request->session_id);
+}
+
+/**
+ * Determine the realm name, consider the override by the translation
+ * server.  Guaranteed to return non-nullptr.
+ */
+static const char *
+get_request_realm(struct pool *pool, const struct strmap *request_headers,
+                  const TranslateResponse &response)
+{
+    if (response.realm != nullptr)
+        return response.realm;
+
+    const char *host = strmap_get_checked(request_headers, "host");
+    if (host != nullptr) {
+        char *p = p_strdup(pool, host);
+        str_to_lower(p);
+        return p;
+    }
+
+    /* fall back to empty string as the default realm if there is no
+       "Host" header */
+    return "";
+}
+
+void
+request::ApplyTranslateRealm(const TranslateResponse &response)
+{
+    realm = get_request_realm(request->pool, request->headers, response);
+
+    if (session_realm != nullptr && strcmp(realm, session_realm) != 0) {
+        daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",
+                   realm, session_realm);
+        request_ignore_session(this);
+    }
 }
 
 struct session *

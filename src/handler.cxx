@@ -76,29 +76,6 @@ bounce_uri(struct pool *pool, const struct request *request,
 }
 
 /**
- * Determine the realm name, consider the override by the translation
- * server.  Guaranteed to return non-nullptr.
- */
-static const char *
-get_request_realm(struct pool *pool, const struct strmap *request_headers,
-                  const TranslateResponse &response)
-{
-    if (response.realm != nullptr)
-        return response.realm;
-
-    const char *host = strmap_get_checked(request_headers, "host");
-    if (host != nullptr) {
-        char *p = p_strdup(pool, host);
-        str_to_lower(p);
-        return p;
-    }
-
-    /* fall back to empty string as the default realm if there is no
-       "Host" header */
-    return "";
-}
-
-/**
  * Apply session-specific data from the #TranslateResponse.  Returns
  * the session object or nullptr.  The session must be freed by the
  * caller using session_put().
@@ -107,15 +84,7 @@ static struct session *
 apply_translate_response_session(request &request,
                                  const TranslateResponse &response)
 {
-    request.realm = get_request_realm(request.request->pool,
-                                      request.request->headers, response);
-
-    if (request.session_realm != nullptr &&
-        strcmp(request.realm, request.session_realm) != 0) {
-        daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",
-                   request.realm, request.session_realm);
-        request_ignore_session(&request);
-    }
+    request.ApplyTranslateRealm(response);
 
     if (response.transparent) {
         session_id_clear(&request.session_id);

@@ -160,6 +160,11 @@ struct request {
     void OnTranslateResponse2(const TranslateResponse &response);
 
     /**
+     * Apply and verify #TRANSLATE_REALM.
+     */
+    void ApplyTranslateRealm(const TranslateResponse &response);
+
+    /**
      * Copy the packets #TRANSLATE_SESSION, #TRANSLATE_USER,
      * #TRANSLATE_LANGUAGE from the #TranslateResponse to the
      * #session.
