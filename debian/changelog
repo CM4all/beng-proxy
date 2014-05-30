@@ -1,3 +1,9 @@
+cm4all-beng-proxy (4.1) unstable; urgency=medium
+
+  * feature freeze
+
+ -- Max Kellermann <mk@cm4all.com>  Fri, 30 May 2014 13:42:38 +0200
+
 cm4all-beng-proxy (4.0.49) unstable; urgency=low
 
   * lb_config: allow escaping backslash in lb.conf
