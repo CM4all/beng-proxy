@@ -1,5 +1,5 @@
 #include "tcp-stock.h"
-#include "tcp-balancer.h"
+#include "tcp_balancer.hxx"
 #include "balancer.h"
 #include "hstock.h"
 #include "address_list.h"

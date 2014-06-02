@@ -4,10 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_TCP_STOCK_H
-#define BENG_PROXY_TCP_STOCK_H
+#ifndef BENG_PROXY_TCP_BALANCER_HXX
+#define BENG_PROXY_TCP_BALANCER_HXX
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct hstock;
@@ -20,10 +19,6 @@ struct async_operation_ref;
 struct sockaddr;
 
 struct tcp_balancer;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Creates a new TCP connection stock.
@@ -64,9 +59,5 @@ tcp_balancer_put(struct tcp_balancer *tcp_balancer, struct stock_item *item,
  */
 const struct address_envelope *
 tcp_balancer_get_last(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

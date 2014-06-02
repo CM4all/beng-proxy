@@ -10,7 +10,7 @@
 #include "http_address.hxx"
 #include "header-writer.h"
 #include "tcp-stock.h"
-#include "tcp-balancer.h"
+#include "tcp_balancer.hxx"
 #include "stock.h"
 #include "async.h"
 #include "growing-buffer.h"

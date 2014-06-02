@@ -19,7 +19,7 @@
 #include "http_server.hxx"
 #include "http_client.hxx"
 #include "tcp-stock.h"
-#include "tcp-balancer.h"
+#include "tcp_balancer.hxx"
 #include "lease.h"
 #include "header-writer.h"
 #include "http_response.h"

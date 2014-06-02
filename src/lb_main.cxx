@@ -10,7 +10,7 @@
 #include "lb_setup.hxx"
 #include "lb_connection.hxx"
 #include "tcp-stock.h"
-#include "tcp-balancer.h"
+#include "tcp_balancer.hxx"
 #include "hstock.h"
 #include "stock.h"
 #include "global.h"

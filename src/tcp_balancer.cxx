@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tcp-balancer.h"
+#include "tcp_balancer.hxx"
 #include "tcp-stock.h"
 #include "stock.h"
 #include "address_envelope.h"
@@ -51,7 +51,7 @@ struct tcp_balancer_request {
 
 static const struct address_envelope *last_address;
 
-static const struct stock_get_handler tcp_balancer_stock_handler;
+extern const struct stock_get_handler tcp_balancer_stock_handler;
 
 static void
 tcp_balancer_next(struct tcp_balancer_request *request)
@@ -60,18 +60,19 @@ tcp_balancer_next(struct tcp_balancer_request *request)
         balancer_get(request->tcp_balancer->balancer,
                      request->address_list,
                      request->session_sticky);
-    assert(envelope != NULL);
+    assert(envelope != nullptr);
 
     /* we need to copy this address_envelope because it may come from
        the balancer's cache, and the according cache item may be
        flushed at any time */
-    request->current_address = p_memdup(request->pool, envelope,
-                                        sizeof(*envelope)
-                                        - sizeof(envelope->address)
-                                        + envelope->length);
+    request->current_address = (const struct address_envelope *)
+        p_memdup(request->pool, envelope,
+                 sizeof(*envelope)
+                 - sizeof(envelope->address)
+                 + envelope->length);
 
     tcp_stock_get(request->tcp_balancer->tcp_stock, request->pool,
-                  NULL,
+                  nullptr,
                   request->ip_transparent,
                   request->bind_address, request->bind_address_size,
                   &request->current_address->address,
@@ -89,7 +90,7 @@ tcp_balancer_next(struct tcp_balancer_request *request)
 static void
 tcp_balancer_stock_ready(struct stock_item *item, void *ctx)
 {
-    struct tcp_balancer_request *request = ctx;
+    struct tcp_balancer_request *request = (struct tcp_balancer_request *)ctx;
 
     last_address = request->current_address;
 
@@ -103,7 +104,7 @@ tcp_balancer_stock_ready(struct stock_item *item, void *ctx)
 static void
 tcp_balancer_stock_error(GError *error, void *ctx)
 {
-    struct tcp_balancer_request *request = ctx;
+    struct tcp_balancer_request *request = (struct tcp_balancer_request *)ctx;
 
     failure_add(&request->current_address->address,
                 request->current_address->length);
@@ -118,7 +119,7 @@ tcp_balancer_stock_error(GError *error, void *ctx)
         request->handler->error(error, request->handler_ctx);
 }
 
-static const struct stock_get_handler tcp_balancer_stock_handler = {
+const struct stock_get_handler tcp_balancer_stock_handler = {
     .ready = tcp_balancer_stock_ready,
     .error = tcp_balancer_stock_error,
 };
@@ -132,7 +133,7 @@ struct tcp_balancer *
 tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
                  struct balancer *balancer)
 {
-    struct tcp_balancer *tcp_balancer = p_malloc(pool, sizeof(*tcp_balancer));
+    auto tcp_balancer = NewFromPool<struct tcp_balancer>(pool);
     tcp_balancer->tcp_stock = tcp_stock;
     tcp_balancer->balancer = balancer;
     return tcp_balancer;
@@ -148,7 +149,7 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  const struct stock_get_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    struct tcp_balancer_request *request = p_malloc(pool, sizeof(*request));
+    auto request = NewFromPool<struct tcp_balancer_request>(pool);
     request->pool = pool;
     request->tcp_balancer = tcp_balancer;
     request->ip_transparent = ip_transparent;

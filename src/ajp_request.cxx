@@ -14,7 +14,7 @@
 #include "strmap.h"
 #include "lease.h"
 #include "tcp-stock.h"
-#include "tcp-balancer.h"
+#include "tcp_balancer.hxx"
 #include "abort-close.h"
 #include "istream.h"
 

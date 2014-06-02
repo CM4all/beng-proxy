@@ -239,7 +239,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/suffix_registry.cxx src/suffix_registry.hxx \
 	src/tcache.cxx src/tcache.hxx \
 	src/tcp-stock.c src/tcp-stock.h \
-	src/tcp-balancer.c src/tcp-balancer.h \
+	src/tcp_balancer.cxx src/tcp_balancer.hxx \
 	src/tpool.h \
 	src/transformation.cxx src/transformation.hxx \
 	src/tstock.cxx src/tstock.hxx \
@@ -380,7 +380,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/stock.c \
 	src/hstock.c \
 	src/tcp-stock.c \
-	src/tcp-balancer.c \
+	src/tcp_balancer.cxx \
 	src/pipe-stock.c \
 	src/failure.c \
 	src/balancer.c \
@@ -1737,7 +1737,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/address_list.c src/address_resolver.c \
 	src/failure.c src/bulldog.c src/balancer.c \
-	src/tcp-stock.c src/tcp-balancer.c \
+	src/tcp-stock.c src/tcp_balancer.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.c \
 	src/cache.c \

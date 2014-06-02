@@ -9,7 +9,7 @@
 #include "http_response.h"
 #include "lease.h"
 #include "tcp-stock.h"
-#include "tcp-balancer.h"
+#include "tcp_balancer.hxx"
 #include "stock.h"
 #include "abort-close.h"
 #include "address_list.h"
