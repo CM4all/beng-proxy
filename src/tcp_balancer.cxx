@@ -9,7 +9,7 @@
 #include "stock.h"
 #include "address_envelope.h"
 #include "address_list.h"
-#include "balancer.h"
+#include "balancer.hxx"
 #include "failure.h"
 #include "pool.h"
 
@@ -57,8 +57,8 @@ static void
 tcp_balancer_next(struct tcp_balancer_request *request)
 {
     const struct address_envelope *envelope =
-        balancer_get(request->tcp_balancer->balancer,
-                     request->address_list,
+        balancer_get(*request->tcp_balancer->balancer,
+                     *request->address_list,
                      request->session_sticky);
     assert(envelope != nullptr);
 

@@ -16,7 +16,7 @@
 #include "global.h"
 #include "failure.h"
 #include "bulldog.h"
-#include "balancer.h"
+#include "balancer.hxx"
 #include "listener.h"
 #include "pipe-stock.h"
 #include "log-glue.h"

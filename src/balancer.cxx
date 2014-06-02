@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "balancer.h"
+#include "balancer.hxx"
 #include "cache.h"
 #include "address_list.h"
 #include "address_envelope.h"
@@ -63,18 +63,18 @@ check_envelope(const struct address_envelope *envelope, bool allow_fade)
 }
 
 static const struct address_envelope *
-next_failover_address(const struct address_list *list)
+next_failover_address(const struct address_list &list)
 {
-    assert(list->size > 0);
+    assert(list.size > 0);
 
-    for (unsigned i = 0; i < list->size; ++i) {
-        const struct address_envelope *envelope = list->addresses[i];
+    for (unsigned i = 0; i < list.size; ++i) {
+        const struct address_envelope *envelope = list.addresses[i];
         if (check_envelope(envelope, true))
             return envelope;
     }
 
     /* none available - return first node as last resort */
-    return list->addresses[0];
+    return list.addresses[0];
 }
 
 static const struct address_envelope *
@@ -97,8 +97,8 @@ static const struct address_envelope *
 next_address_checked(struct balancer_item *item, bool allow_fade)
 {
     const struct address_envelope *first = next_address(item);
-    if (first == NULL)
-        return NULL;
+    if (first == nullptr)
+        return nullptr;
 
     const struct address_envelope *ret = first;
     do {
@@ -106,7 +106,7 @@ next_address_checked(struct balancer_item *item, bool allow_fade)
             return ret;
 
         ret = next_address(item);
-        assert(ret != NULL);
+        assert(ret != nullptr);
     } while (ret != first);
 
     /* all addresses failed: */
@@ -114,15 +114,15 @@ next_address_checked(struct balancer_item *item, bool allow_fade)
 }
 
 static const struct address_envelope *
-next_sticky_address_checked(const struct address_list *al, unsigned session)
+next_sticky_address_checked(const struct address_list &al, unsigned session)
 {
-    assert(al->size >= 2);
+    assert(al.size >= 2);
 
-    unsigned i = session % al->size;
+    unsigned i = session % al.size;
     bool allow_fade = true;
 
-    const struct address_envelope *first = address_list_get_n(al, i);
-    assert(first != NULL);
+    const struct address_envelope *first = address_list_get_n(&al, i);
+    assert(first != nullptr);
     const struct address_envelope *ret = first;
     do {
         if (check_envelope(ret, allow_fade))
@@ -133,10 +133,10 @@ next_sticky_address_checked(const struct address_list *al, unsigned session)
         allow_fade = false;
 
         ++i;
-        if (i >= al->size)
+        if (i >= al.size)
             i = 0;
 
-        ret = address_list_get_n(al, i);
+        ret = address_list_get_n(&al, i);
 
     } while (ret != first);
 
@@ -170,7 +170,7 @@ static const struct cache_class balancer_cache_class = {
 struct balancer *
 balancer_new(struct pool *pool)
 {
-    struct balancer *balancer = p_malloc(pool, sizeof(*balancer));
+    auto balancer = NewFromPool<struct balancer>(pool);
 
     balancer->pool = pool;
     balancer->cache = cache_new(pool, &balancer_cache_class,
@@ -185,17 +185,17 @@ balancer_free(struct balancer *balancer)
 }
 
 const struct address_envelope *
-balancer_get(struct balancer *balancer, const struct address_list *list,
+balancer_get(struct balancer &balancer, const struct address_list &list,
              unsigned session)
 {
     const char *key;
     struct balancer_item *item;
     struct pool *pool;
 
-    if (address_list_is_single(list))
-        return address_list_first(list);
+    if (address_list_is_single(&list))
+        return address_list_first(&list);
 
-    switch (list->sticky_mode) {
+    switch (list.sticky_mode) {
     case STICKY_NONE:
         break;
 
@@ -211,33 +211,33 @@ balancer_get(struct balancer *balancer, const struct address_list *list,
         break;
     }
 
-    key = address_list_key(list);
-    item = (struct balancer_item *)cache_get(balancer->cache, key);
+    key = address_list_key(&list);
+    item = (struct balancer_item *)cache_get(balancer.cache, key);
 
-    if (item == NULL) {
+    if (item == nullptr) {
         /* create a new cache item */
 
-        pool = pool_new_linear(balancer->pool, "balancer_item", 1024);
-        item = p_malloc(pool, sizeof(*item));
+        pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
+        item = NewFromPool<struct balancer_item>(pool);
         cache_item_init_relative(&item->item, 1800, 1);
         item->pool = pool;
         item->next = 0;
-        address_list_copy(pool, &item->addresses, list);
+        address_list_copy(pool, &item->addresses, &list);
 
-        cache_put(balancer->cache, p_strdup(pool, key), &item->item);
+        cache_put(balancer.cache, p_strdup(pool, key), &item->item);
     }
 
-    return next_address_checked(item, list->sticky_mode == STICKY_NONE);
+    return next_address_checked(item, list.sticky_mode == STICKY_NONE);
 }
 
 void
-balancer_event_add(struct balancer *balancer)
+balancer_event_add(struct balancer &balancer)
 {
-    cache_event_add(balancer->cache);
+    cache_event_add(balancer.cache);
 }
 
 void
-balancer_event_del(struct balancer *balancer)
+balancer_event_del(struct balancer &balancer)
 {
-    cache_event_del(balancer->cache);
+    cache_event_del(balancer.cache);
 }

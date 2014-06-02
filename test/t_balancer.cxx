@@ -1,6 +1,6 @@
 #include "PoolTest.hxx"
 #include "failure.h"
-#include "balancer.h"
+#include "balancer.hxx"
 #include "pool.h"
 #include "address_list.h"
 #include "address_envelope.h"
@@ -49,7 +49,7 @@ public:
 
     const struct address_envelope *Get(const struct address_list &al,
                                        unsigned session=0) {
-        return balancer_get(balancer, &al, session);
+        return balancer_get(*balancer, al, session);
     }
 };
 

@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_BALANCER_H
-#define BENG_BALANCER_H
+#ifndef BENG_PROXY_BALANCER_HXX
+#define BENG_PROXY_BALANCER_HXX
 
 #include <sys/socket.h>
 
@@ -13,10 +13,6 @@ struct pool;
 struct balancer;
 struct address_list;
 struct sockaddr;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct balancer *
 balancer_new(struct pool *pool);
@@ -33,17 +29,13 @@ balancer_free(struct balancer *balancer);
  * address if stickiness is enabled; 0 if there is no session
  */
 const struct address_envelope *
-balancer_get(struct balancer *balancer, const struct address_list *list,
+balancer_get(struct balancer &balancer, const struct address_list &list,
              unsigned session);
 
 void
-balancer_event_add(struct balancer *balancer);
+balancer_event_add(struct balancer &balancer);
 
 void
-balancer_event_del(struct balancer *balancer);
-
-#ifdef __cplusplus
-}
-#endif
+balancer_event_del(struct balancer &balancer);
 
 #endif

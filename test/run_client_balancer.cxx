@@ -2,7 +2,7 @@
 #include "client-socket.h"
 #include "pool.h"
 #include "async.h"
-#include "balancer.h"
+#include "balancer.hxx"
 #include "failure.h"
 #include "address_list.h"
 

@@ -8,7 +8,7 @@
 #include "client-socket.h"
 #include "address_envelope.h"
 #include "address_list.h"
-#include "balancer.h"
+#include "balancer.hxx"
 #include "failure.h"
 #include "async.h"
 #include "pool.h"
@@ -52,7 +52,7 @@ static void
 client_balancer_next(struct client_balancer_request *request)
 {
     const struct address_envelope *envelope =
-        balancer_get(request->balancer, request->address_list,
+        balancer_get(*request->balancer, *request->address_list,
                      request->session_sticky);
     request->current_address = envelope;
 
