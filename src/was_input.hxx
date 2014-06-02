@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WAS_INPUT_HXX
 #define BENG_PROXY_WAS_INPUT_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 #include <stdint.h>
 

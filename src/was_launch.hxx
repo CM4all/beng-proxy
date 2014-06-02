@@ -7,8 +7,8 @@
 #ifndef BENG_PROXY_WAS_LAUNCH_HXX
 #define BENG_PROXY_WAS_LAUNCH_HXX
 
-#include <glib.h>
-#include <stdbool.h>
+#include "glibfwd.hxx"
+
 #include <sys/types.h>
 
 struct child_options;

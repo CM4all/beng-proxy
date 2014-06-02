@@ -7,9 +7,9 @@
 #ifndef BENG_PROXY_WAS_CONTROL_HXX
 #define BENG_PROXY_WAS_CONTROL_HXX
 
-#include <was/protocol.h>
+#include "glibfwd.hxx"
 
-#include <glib.h>
+#include <was/protocol.h>
 
 #include <stddef.h>
 
