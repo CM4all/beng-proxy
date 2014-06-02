@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "address_list.h"
+#include "address_list.hxx"
 #include "address_envelope.h"
 #include "pool.h"
 
@@ -30,14 +30,13 @@ bool
 address_list_add(struct pool *pool, struct address_list *al,
                  const struct sockaddr *address, size_t length)
 {
-    assert(al->size <= MAX_ADDRESSES);
+    assert(al->size <= address_list::MAX_ADDRESSES);
 
-    if (al->size >= MAX_ADDRESSES)
+    if (al->size >= address_list::MAX_ADDRESSES)
         return false;
 
-    struct address_envelope *envelope = p_malloc(pool, sizeof(*envelope) -
-                                                 sizeof(envelope->address) +
-                                                 length);
+    struct address_envelope *envelope = (struct address_envelope *)
+        p_malloc(pool, sizeof(*envelope) - sizeof(envelope->address) + length);
     envelope->length = length;
     memcpy(&envelope->address, address, length);
 
@@ -48,10 +47,10 @@ address_list_add(struct pool *pool, struct address_list *al,
 const struct address_envelope *
 address_list_first(const struct address_list *al)
 {
-    assert(al->size <= MAX_ADDRESSES);
+    assert(al->size <= address_list::MAX_ADDRESSES);
 
     if (al->size < 1)
-        return NULL;
+        return nullptr;
 
     return al->addresses[0];
 }
@@ -59,7 +58,7 @@ address_list_first(const struct address_list *al)
 const char *
 address_list_key(const struct address_list *al)
 {
-    assert(al->size <= MAX_ADDRESSES);
+    assert(al->size <= address_list::MAX_ADDRESSES);
 
     static char buffer[2048];
     size_t length = 0;

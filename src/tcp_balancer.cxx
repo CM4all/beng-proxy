@@ -8,7 +8,7 @@
 #include "tcp_stock.hxx"
 #include "stock.h"
 #include "address_envelope.h"
-#include "address_list.h"
+#include "address_list.hxx"
 #include "balancer.hxx"
 #include "failure.h"
 #include "pool.h"

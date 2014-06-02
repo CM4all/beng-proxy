@@ -9,12 +9,13 @@
 #include "stock.h"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "address_list.h"
+#include "address_list.hxx"
 #include "lease.h"
 #include "pool.h"
 #include "istream.h"
 
 #include <glib.h>
+
 #include <assert.h>
 #include <string.h>
 #include <sys/socket.h>

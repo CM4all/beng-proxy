@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HTTP_ADDRESS_HXX
 #define BENG_PROXY_HTTP_ADDRESS_HXX
 
-#include "address_list.h"
+#include "address_list.hxx"
 
 #include <inline/compiler.h>
 

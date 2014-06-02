@@ -7,7 +7,7 @@
 #ifndef BENG_LB_CONFIG_H
 #define BENG_LB_CONFIG_H
 
-#include "address_list.h"
+#include "address_list.hxx"
 #include "sticky.h"
 #include "ssl_config.hxx"
 

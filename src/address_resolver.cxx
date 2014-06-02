@@ -3,7 +3,7 @@
  */
 
 #include "address_resolver.hxx"
-#include "address_list.h"
+#include "address_list.hxx"
 #include "address_quark.h"
 #include "pool.h"
 

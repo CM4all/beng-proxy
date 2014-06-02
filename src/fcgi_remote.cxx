@@ -12,7 +12,7 @@
 #include "tcp_balancer.hxx"
 #include "stock.h"
 #include "abort-close.h"
-#include "address_list.h"
+#include "address_list.hxx"
 #include "pool.h"
 #include "istream.h"
 

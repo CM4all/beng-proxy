@@ -2,7 +2,7 @@
 #include "failure.h"
 #include "balancer.hxx"
 #include "pool.h"
-#include "address_list.h"
+#include "address_list.hxx"
 #include "address_envelope.h"
 
 #include <inline/compiler.h>

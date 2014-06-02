@@ -385,7 +385,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/failure.c \
 	src/balancer.cxx \
 	src/address.c \
-	src/address_list.c \
+	src/address_list.cxx \
 	src/address_resolver.cxx src/address_resolver.hxx \
 	src/address_string.h \
 	src/address_string.c \
@@ -640,8 +640,7 @@ libraddress_a_SOURCES = \
 	src/nfs_address.cxx src/nfs_address.hxx \
 	src/lhttp_address.cxx src/lhttp_address.hxx \
 	src/http_address.cxx src/http_address.hxx \
-	src/address_list.h \
-	src/address_list.c \
+	src/address_list.cxx src/address_list.hxx \
 	src/resource_address.cxx src/resource_address.hxx
 
 libistream_a_SOURCES = \
@@ -920,7 +919,7 @@ test_t_resource_address_SOURCES = test/t_resource_address.cxx \
 	src/http_address.cxx src/uri-relative.c \
 	src/uri_escape.cxx src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
-	src/address_list.c
+	src/address_list.cxx
 test_t_resource_address_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libraddress.a \
@@ -932,7 +931,7 @@ test_t_http_address_SOURCES = test/t_http_address.cxx \
 	src/uri_escape.cxx src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
 	src/regex.cxx \
-	src/address_list.c
+	src/address_list.cxx
 test_t_http_address_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libutil.a \
@@ -1081,7 +1080,7 @@ test_t_balancer_SOURCES = test/t_balancer.cxx \
 	src/bulldog.c \
 	src/balancer.cxx src/cache.c src/failure.c \
 	src/hashmap.c \
-	src/address_list.c \
+	src/address_list.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/clock.c
 test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
@@ -1559,7 +1558,7 @@ test_t_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_client_balancer_SOURCES = test/run_client_balancer.cxx \
-	src/address_list.c \
+	src/address_list.cxx \
 	src/client_balancer.cxx \
 	src/client-socket.c \
 	src/balancer.cxx \
@@ -1687,7 +1686,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/uri_base.cxx src/uri-relative.c src/uri-extract.c \
 	src/uri_escape.cxx \
 	src/regex.cxx \
-	src/address_list.c \
+	src/address_list.cxx \
 	src/istream-unlock.c \
 	src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
@@ -1735,7 +1734,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
-	src/address_list.c src/address_resolver.cxx \
+	src/address_list.cxx src/address_resolver.cxx \
 	src/failure.c src/bulldog.c src/balancer.cxx \
 	src/tcp_stock.cxx src/tcp_balancer.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \

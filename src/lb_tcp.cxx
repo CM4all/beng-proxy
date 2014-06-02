@@ -6,7 +6,7 @@
 
 #include "lb_tcp.hxx"
 #include "filtered_socket.hxx"
-#include "address_list.h"
+#include "address_list.hxx"
 #include "client_balancer.hxx"
 #include "client-socket.h"
 #include "address_sticky.h"

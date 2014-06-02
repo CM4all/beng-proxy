@@ -4,23 +4,22 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ADDRESS_LIST_H
-#define BENG_PROXY_ADDRESS_LIST_H
+#ifndef BENG_PROXY_ADDRESS_LIST_HXX
+#define BENG_PROXY_ADDRESS_LIST_HXX
 
 #include "sticky.h"
 
 #include <inline/compiler.h>
 
 #include <stddef.h>
-#include <stdbool.h>
 #include <assert.h>
-
-#define MAX_ADDRESSES 16
 
 struct pool;
 struct sockaddr;
 
 struct address_list {
+    static constexpr size_t MAX_ADDRESSES = 16;
+
     enum sticky_mode sticky_mode;
 
     /** the number of addresses */
@@ -42,10 +41,6 @@ address_list_set_sticky_mode(struct address_list *list,
 {
     list->sticky_mode = sticky_mode;
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 address_list_copy(struct pool *pool, struct address_list *dest,
@@ -95,9 +90,5 @@ address_list_is_single(const struct address_list *list)
 gcc_pure
 const char *
 address_list_key(const struct address_list *list);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

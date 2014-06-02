@@ -9,7 +9,7 @@
 #include "stock.h"
 #include "async.h"
 #include "client-socket.h"
-#include "address_list.h"
+#include "address_list.hxx"
 #include "address_envelope.h"
 #include "pevent.h"
 #include "gerrno.h"

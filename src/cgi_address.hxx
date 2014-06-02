@@ -6,7 +6,7 @@
 #define BENG_PROXY_CGI_ADDRESS_HXX
 
 #include "child_options.hxx"
-#include "address_list.h"
+#include "address_list.hxx"
 #include "param_array.hxx"
 #include "glibfwd.hxx"
 

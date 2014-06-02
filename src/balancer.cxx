@@ -6,7 +6,7 @@
 
 #include "balancer.hxx"
 #include "cache.h"
-#include "address_list.h"
+#include "address_list.hxx"
 #include "address_envelope.h"
 #include "failure.h"
 #include "bulldog.h"
