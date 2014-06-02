@@ -38,7 +38,7 @@ http_address_new(struct pool *pool, enum uri_scheme scheme, bool ssl,
     uwa->host_and_port = host_and_port;
     uwa->path = path;
     uwa->expand_path = nullptr;
-    address_list_init(&uwa->addresses);
+    uwa->addresses.Init();
     return uwa;
 }
 
@@ -99,7 +99,7 @@ http_address_with_path(struct pool *pool, const struct http_address *uwa,
         http_address_new(pool, uwa->scheme, uwa->ssl,
                          uwa->host_and_port, path);
     p->expand_path = p_strdup_checked(pool, uwa->expand_path);
-    address_list_copy(pool, &p->addresses, &uwa->addresses);
+    p->addresses.CopyFrom(pool, uwa->addresses);
     return p;
 }
 
@@ -115,7 +115,7 @@ http_address_dup(struct pool *pool, const struct http_address *uwa)
                          p_strdup(pool, uwa->path));
 
     p->expand_path = p_strdup_checked(pool, uwa->expand_path);
-    address_list_copy(pool, &p->addresses, &uwa->addresses);
+    p->addresses.CopyFrom(pool, uwa->addresses);
 
     return p;
 }
@@ -130,7 +130,7 @@ http_address_dup_with_path(struct pool *pool,
                          p_strdup(pool, uwa->host_and_port),
                          path);
     p->expand_path = p_strdup_checked(pool, uwa->expand_path);
-    address_list_copy(pool, &p->addresses, &uwa->addresses);
+    p->addresses.CopyFrom(pool, uwa->addresses);
     return p;
 }
 
@@ -249,7 +249,7 @@ http_address::Apply(struct pool *pool, const char *relative,
                address list, and so this function must fail */
             return nullptr;
 
-        address_list_copy(pool, &other->addresses, &addresses);
+        other->addresses.CopyFrom(pool, addresses);
         return other;
     }
 

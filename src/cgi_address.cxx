@@ -26,7 +26,7 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
     cgi->options.Init();
 
     if (have_address_list)
-        address_list_init(&cgi->address_list);
+        cgi->address_list.Init();
 }
 
 struct cgi_address *
@@ -147,7 +147,7 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
         p_strdup_checked(pool, src->document_root);
 
     if (have_address_list)
-        address_list_copy(pool, &dest->address_list, &src->address_list);
+        dest->address_list.CopyFrom(pool, src->address_list);
 }
 
 struct cgi_address *

@@ -14,25 +14,22 @@
 #include <string.h>
 
 void
-address_list_copy(struct pool *pool, struct address_list *dest,
-                  const struct address_list *src)
+address_list::CopyFrom(struct pool *pool, const struct address_list &src)
 {
-    address_list_init(dest);
-    dest->sticky_mode = src->sticky_mode;
+    Init();
+    sticky_mode = src.sticky_mode;
 
-    for (unsigned i = 0; i < src->size; ++i)
-        address_list_add(pool, dest,
-                         &src->addresses[i]->address,
-                         src->addresses[i]->length);
+    for (unsigned i = 0; i < src.size; ++i)
+        Add(pool, &src.addresses[i]->address, src.addresses[i]->length);
 }
 
 bool
-address_list_add(struct pool *pool, struct address_list *al,
-                 const struct sockaddr *address, size_t length)
+address_list::Add(struct pool *pool,
+                  const struct sockaddr *address, size_t length)
 {
-    assert(al->size <= address_list::MAX_ADDRESSES);
+    assert(size <= MAX_ADDRESSES);
 
-    if (al->size >= address_list::MAX_ADDRESSES)
+    if (size >= MAX_ADDRESSES)
         return false;
 
     struct address_envelope *envelope = (struct address_envelope *)
@@ -40,32 +37,32 @@ address_list_add(struct pool *pool, struct address_list *al,
     envelope->length = length;
     memcpy(&envelope->address, address, length);
 
-    al->addresses[al->size++] = envelope;
+    addresses[size++] = envelope;
     return true;
 }
 
 const struct address_envelope *
-address_list_first(const struct address_list *al)
+address_list::GetFirst() const
 {
-    assert(al->size <= address_list::MAX_ADDRESSES);
+    assert(size <= address_list::MAX_ADDRESSES);
 
-    if (al->size < 1)
+    if (size < 1)
         return nullptr;
 
-    return al->addresses[0];
+    return addresses[0];
 }
 
 const char *
-address_list_key(const struct address_list *al)
+address_list::GetKey() const
 {
-    assert(al->size <= address_list::MAX_ADDRESSES);
+    assert(size <= address_list::MAX_ADDRESSES);
 
     static char buffer[2048];
     size_t length = 0;
     bool success;
 
-    for (unsigned i = 0; i < al->size; ++i) {
-        const struct address_envelope *envelope = al->addresses[i];
+    for (unsigned i = 0; i < size; ++i) {
+        const struct address_envelope *envelope = addresses[i];
         if (length > 0 && length < sizeof(buffer) - 1)
             buffer[length++] = ' ';
 

@@ -120,13 +120,13 @@ widget_resolver_new(G_GNUC_UNUSED struct pool *pool, G_GNUC_UNUSED struct pool *
     };
 
     if (strcmp(widget->class_name, "1") == 0) {
-        address_list_init(&address1.addresses);
+        address1.addresses.Init();
         widget->cls = &class1;
     } else if (strcmp(widget->class_name, "2") == 0) {
-        address_list_init(&address2.addresses);
+        address2.addresses.Init();
         widget->cls = &class2;
     } else if (strcmp(widget->class_name, "3") == 0) {
-        address_list_init(&address3.addresses);
+        address3.addresses.Init();
         widget->cls = &class3;
     }
 

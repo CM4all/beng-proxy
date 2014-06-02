@@ -103,7 +103,7 @@ main(int argc, char **argv)
     ctx.balancer = balancer_new(pool);
 
     struct address_list address_list;
-    address_list_init(&address_list);
+    address_list.Init();
 
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
@@ -121,7 +121,7 @@ main(int argc, char **argv)
         }
 
         for (struct addrinfo *j = ai; j != nullptr; j = j->ai_next)
-            address_list_add(pool, &address_list, ai->ai_addr, ai->ai_addrlen);
+            address_list.Add(pool, ai->ai_addr, ai->ai_addrlen);
 
         freeaddrinfo(ai);
     }

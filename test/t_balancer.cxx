@@ -60,7 +60,7 @@ public:
     AddressListBuilder(struct pool *_pool,
                        enum sticky_mode _sticky=STICKY_NONE)
         :pool(_pool) {
-        address_list_init(this);
+        address_list::Init();
         sticky_mode = _sticky;
     }
 
@@ -70,8 +70,7 @@ public:
         if (result != 0)
             return false;
 
-        bool success = address_list_add(pool, this,
-                                        ai->ai_addr, ai->ai_addrlen);
+        bool success = address_list::Add(pool, ai->ai_addr, ai->ai_addrlen);
         freeaddrinfo(ai);
         return success;
     }

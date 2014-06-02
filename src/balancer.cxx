@@ -83,8 +83,7 @@ next_address(struct balancer_item *item)
     assert(item->addresses.size >= 2);
     assert(item->next < item->addresses.size);
 
-    const struct address_envelope *envelope =
-        address_list_get_n(&item->addresses, item->next);
+    const struct address_envelope *envelope = item->addresses[item->next];
 
     ++item->next;
     if (item->next >= item->addresses.size)
@@ -121,7 +120,7 @@ next_sticky_address_checked(const struct address_list &al, unsigned session)
     unsigned i = session % al.size;
     bool allow_fade = true;
 
-    const struct address_envelope *first = address_list_get_n(&al, i);
+    const struct address_envelope *first = al[i];
     assert(first != nullptr);
     const struct address_envelope *ret = first;
     do {
@@ -136,7 +135,7 @@ next_sticky_address_checked(const struct address_list &al, unsigned session)
         if (i >= al.size)
             i = 0;
 
-        ret = address_list_get_n(&al, i);
+        ret = al[i];
 
     } while (ret != first);
 
@@ -188,12 +187,11 @@ const struct address_envelope *
 balancer_get(struct balancer &balancer, const struct address_list &list,
              unsigned session)
 {
-    const char *key;
     struct balancer_item *item;
     struct pool *pool;
 
-    if (address_list_is_single(&list))
-        return address_list_first(&list);
+    if (list.IsSingle())
+        return list.GetFirst();
 
     switch (list.sticky_mode) {
     case STICKY_NONE:
@@ -211,7 +209,7 @@ balancer_get(struct balancer &balancer, const struct address_list &list,
         break;
     }
 
-    key = address_list_key(&list);
+    const char *key = list.GetKey();
     item = (struct balancer_item *)cache_get(balancer.cache, key);
 
     if (item == nullptr) {
@@ -222,7 +220,7 @@ balancer_get(struct balancer &balancer, const struct address_list &list,
         cache_item_init_relative(&item->item, 1800, 1);
         item->pool = pool;
         item->next = 0;
-        address_list_copy(pool, &item->addresses, &list);
+        item->addresses.CopyFrom(pool, list);
 
         cache_put(balancer.cache, p_strdup(pool, key), &item->item);
     }

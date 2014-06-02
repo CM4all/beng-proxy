@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     ctx.pool = pool_new_linear(root_pool, "test", 8192);
 
     struct address_list address_list;
-    address_list_init(&address_list);
+    address_list.Init();
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
     GError *error = NULL;

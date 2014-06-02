@@ -32,7 +32,7 @@ address_list_resolve(struct pool *pool, struct address_list *address_list,
     }
 
     for (const struct addrinfo *i = ai; i != NULL; i = i->ai_next)
-        address_list_add(pool, address_list, i->ai_addr, i->ai_addrlen);
+        address_list->Add(pool, i->ai_addr, i->ai_addrlen);
 
     freeaddrinfo(ai);
 
@@ -46,7 +46,7 @@ address_list_resolve_new(struct pool *pool,
                          GError **error_r)
 {
     auto address_list = NewFromPool<struct address_list>(pool);
-    address_list_init(address_list);
+    address_list->Init();
     if (!address_list_resolve(pool, address_list,
                               host_and_port, default_port, hints, error_r)) {
         p_free(pool, address_list);

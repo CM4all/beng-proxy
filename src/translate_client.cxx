@@ -512,8 +512,7 @@ parse_address_string(struct pool *pool, struct address_list *list,
             /* abstract socket */
             sun.sun_path[0] = 0;
 
-        address_list_add(pool, list,
-                         (const struct sockaddr *)&sun, size);
+        list->Add(pool, (const struct sockaddr *)&sun, size);
         return true;
     }
 
@@ -529,7 +528,7 @@ parse_address_string(struct pool *pool, struct address_list *list,
         return false;
 
     for (const struct addrinfo *i = ai; i != nullptr; i = i->ai_next)
-        address_list_add(pool, list, i->ai_addr, i->ai_addrlen);
+        list->Add(pool, i->ai_addr, i->ai_addrlen);
 
     freeaddrinfo(ai);
     return true;
@@ -1992,8 +1991,9 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        address_list_add(client->pool, client->address_list,
-                         (const struct sockaddr *)_payload, payload_length);
+        client->address_list->Add(client->pool,
+                                  (const struct sockaddr *)_payload,
+                                  payload_length);
         return true;
 
 
@@ -2522,8 +2522,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        address_list_set_sticky_mode(client->address_list,
-                                     STICKY_SESSION_MODULO);
+        client->address_list->SetStickyMode(STICKY_SESSION_MODULO);
         return true;
 
     case TRANSLATE_DUMP_HEADERS:

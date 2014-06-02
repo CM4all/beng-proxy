@@ -1304,9 +1304,8 @@ static bool
 lb_cluster_config_finish(struct pool *pool, lb_cluster_config &config,
                          GError **error_r)
 {
-    address_list_init(&config.address_list);
-
-    address_list_set_sticky_mode(&config.address_list, config.sticky_mode);
+    config.address_list.Init();
+    config.address_list.SetStickyMode(config.sticky_mode);
 
     for (auto &member : config.members) {
         const struct address_envelope *envelope = member.node->envelope;
@@ -1315,8 +1314,7 @@ lb_cluster_config_finish(struct pool *pool, lb_cluster_config &config,
                                 member.port)
             : &envelope->address;
 
-        if (!address_list_add(pool, &config.address_list,
-                              address, envelope->length))
+        if (!config.address_list.Add(pool, address, envelope->length))
             return _throw(error_r, "Too many members");
     }
 

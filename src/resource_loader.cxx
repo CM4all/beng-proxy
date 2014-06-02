@@ -253,7 +253,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         } else
             stderr_fd = -1;
 
-        if (address_list_is_empty(&cgi->address_list))
+        if (cgi->address_list.IsEmpty())
             fcgi_request(pool, rl->fcgi_stock,
                          &cgi->options,
                          cgi->action,
