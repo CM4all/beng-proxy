@@ -4,10 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CLIENT_BALANCER_H
-#define BENG_PROXY_CLIENT_BALANCER_H
+#ifndef BENG_PROXY_CLIENT_BALANCER_HXX
+#define BENG_PROXY_CLIENT_BALANCER_HXX
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -16,10 +15,6 @@ struct address_list;
 struct client_socket_handler;
 struct async_operation_ref;
 struct sockaddr;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Open a connection to any address in the specified address list.
@@ -38,9 +33,5 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         unsigned timeout,
                         const struct client_socket_handler *handler, void *ctx,
                         struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

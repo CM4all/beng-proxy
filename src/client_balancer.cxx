@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "client-balancer.h"
+#include "client_balancer.hxx"
 #include "client-socket.h"
 #include "address_envelope.h"
 #include "address_list.h"
@@ -46,7 +46,7 @@ struct client_balancer_request {
     struct async_operation_ref *async_ref;
 };
 
-static const struct client_socket_handler client_balancer_socket_handler;
+extern const struct client_socket_handler client_balancer_socket_handler;
 
 static void
 client_balancer_next(struct client_balancer_request *request)
@@ -74,7 +74,8 @@ client_balancer_next(struct client_balancer_request *request)
 static void
 client_balancer_socket_success(int fd, void *ctx)
 {
-    struct client_balancer_request *request = ctx;
+    struct client_balancer_request *request =
+        (struct client_balancer_request *)ctx;
 
     failure_unset(&request->current_address->address,
                   request->current_address->length,
@@ -86,7 +87,8 @@ client_balancer_socket_success(int fd, void *ctx)
 static void
 client_balancer_socket_timeout(void *ctx)
 {
-    struct client_balancer_request *request = ctx;
+    struct client_balancer_request *request =
+        (struct client_balancer_request *)ctx;
 
     failure_add(&request->current_address->address,
                 request->current_address->length);
@@ -102,7 +104,8 @@ client_balancer_socket_timeout(void *ctx)
 static void
 client_balancer_socket_error(GError *error, void *ctx)
 {
-    struct client_balancer_request *request = ctx;
+    struct client_balancer_request *request =
+        (struct client_balancer_request *)ctx;
 
     failure_add(&request->current_address->address,
                 request->current_address->length);
@@ -117,7 +120,7 @@ client_balancer_socket_error(GError *error, void *ctx)
         request->handler->error(error, request->handler_ctx);
 }
 
-static const struct client_socket_handler client_balancer_socket_handler = {
+const struct client_socket_handler client_balancer_socket_handler = {
     .success = client_balancer_socket_success,
     .timeout = client_balancer_socket_timeout,
     .error = client_balancer_socket_error,
@@ -139,13 +142,13 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         const struct client_socket_handler *handler, void *ctx,
                         struct async_operation_ref *async_ref)
 {
-    struct client_balancer_request *request = p_malloc(pool, sizeof(*request));
+    auto request = NewFromPool<struct client_balancer_request>(pool);
     request->pool = pool;
     request->balancer = balancer;
     request->ip_transparent = ip_transparent;
-    request->bind_address = bind_address != NULL
-        ? p_memdup(pool, bind_address, bind_address_size)
-        : NULL;
+    request->bind_address = bind_address != nullptr
+        ? (struct sockaddr *)p_memdup(pool, bind_address, bind_address_size)
+        : nullptr;
     request->bind_address_size = bind_address_size;
     request->session_sticky = session_sticky;
     request->timeout = timeout;

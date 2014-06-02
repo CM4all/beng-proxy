@@ -394,7 +394,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/address_sticky.c src/address_sticky.h \
 	src/listener.c \
 	src/client-socket.c \
-	src/client-balancer.c src/client-balancer.h \
+	src/client_balancer.cxx src/client_balancer.hxx \
 	src/bulldog.c \
 	src/child_manager.c src/child_manager.h \
 	src/hashmap.c \
@@ -718,7 +718,7 @@ noinst_PROGRAMS = \
 	test/run-header-parser \
 	test/run-html-unescape test/run-html-escape \
 	test/run_processor \
-	test/run-client-balancer \
+	test/run_client_balancer \
 	test/run_client \
 	test/run_memcached_client \
 	test/run_http_cache \
@@ -1558,9 +1558,9 @@ test_t_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_run_client_balancer_SOURCES = test/run-client-balancer.c \
+test_run_client_balancer_SOURCES = test/run_client_balancer.cxx \
 	src/address_list.c \
-	src/client-balancer.c \
+	src/client_balancer.cxx \
 	src/client-socket.c \
 	src/balancer.c \
 	src/failure.c \

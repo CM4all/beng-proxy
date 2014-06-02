@@ -1,4 +1,4 @@
-#include "client-balancer.h"
+#include "client_balancer.hxx"
 #include "client-socket.h"
 #include "pool.h"
 #include "async.h"
@@ -40,9 +40,9 @@ my_socket_success(int fd, void *_ctx)
 {
     assert(fd >= 0);
 
-    struct context *ctx = _ctx;
+    struct context *ctx = (struct context *)_ctx;
 
-    ctx->result = SUCCESS;
+    ctx->result = context::SUCCESS;
     ctx->fd = fd;
 
     balancer_free(ctx->balancer);
@@ -51,9 +51,9 @@ my_socket_success(int fd, void *_ctx)
 static void
 my_socket_timeout(void *_ctx)
 {
-    struct context *ctx = _ctx;
+    struct context *ctx = (struct context *)_ctx;
 
-    ctx->result = TIMEOUT;
+    ctx->result = context::TIMEOUT;
 
     balancer_free(ctx->balancer);
 }
@@ -61,9 +61,9 @@ my_socket_timeout(void *_ctx)
 static void
 my_socket_error(GError *error, void *_ctx)
 {
-    struct context *ctx = _ctx;
+    struct context *ctx = (struct context *)_ctx;
 
-    ctx->result = ERROR;
+    ctx->result = context::ERROR;
     ctx->error = error;
 
     balancer_free(ctx->balancer);
@@ -92,13 +92,13 @@ main(int argc, char **argv)
 
     struct event_base *event_base = event_init();
 
-    struct pool *root_pool = pool_new_libc(NULL, "root");
+    struct pool *root_pool = pool_new_libc(nullptr, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
     failure_init(pool);
 
     struct context ctx;
-    ctx.result = TIMEOUT;
+    ctx.result = context::TIMEOUT;
 
     ctx.balancer = balancer_new(pool);
 
@@ -120,7 +120,7 @@ main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        for (struct addrinfo *j = ai; j != NULL; j = j->ai_next)
+        for (struct addrinfo *j = ai; j != nullptr; j = j->ai_next)
             address_list_add(pool, &address_list, ai->ai_addr, ai->ai_addrlen);
 
         freeaddrinfo(ai);
@@ -130,14 +130,14 @@ main(int argc, char **argv)
 
     struct async_operation_ref async_ref;
     client_balancer_connect(pool, ctx.balancer,
-                            false, NULL, 0,
+                            false, nullptr, 0,
                             0, &address_list, 30,
                             &my_socket_handler, &ctx,
                             &async_ref);
 
     event_dispatch();
 
-    assert(ctx.result != NONE);
+    assert(ctx.result != context::NONE);
 
     /* cleanup */
 
@@ -153,18 +153,18 @@ main(int argc, char **argv)
     event_base_free(event_base);
 
     switch (ctx.result) {
-    case NONE:
+    case context::NONE:
         break;
 
-    case SUCCESS:
+    case context::SUCCESS:
         close(ctx.fd);
         return EXIT_SUCCESS;
 
-    case TIMEOUT:
+    case context::TIMEOUT:
         fprintf(stderr, "timeout\n");
         return EXIT_FAILURE;
 
-    case ERROR:
+    case context::ERROR:
         fprintf(stderr, "%s\n", ctx.error->message);
         g_error_free(ctx.error);
         return EXIT_FAILURE;

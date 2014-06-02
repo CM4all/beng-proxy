@@ -2,6 +2,7 @@ run_nfs_client
 /run_delegate
 /run_cookie_client
 /run_cookie_server
+/run_client_balancer
 /request_translation
 /t_tcache
 /t_widget_registry

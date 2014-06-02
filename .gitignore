@@ -46,7 +46,6 @@ test/run-embed
 test/t-shm
 test/t-dpool
 test/run-header-parser
-test/run-client-balancer
 test/run_client
 test/t_ajp_client
 test/t_fcgi_client
