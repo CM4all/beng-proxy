@@ -3,7 +3,7 @@
 #include "balancer.hxx"
 #include "hstock.h"
 #include "address_list.h"
-#include "address_resolver.h"
+#include "address_resolver.hxx"
 #include "memcached_stock.hxx"
 #include "http_cache_choice.hxx"
 #include "lease.h"

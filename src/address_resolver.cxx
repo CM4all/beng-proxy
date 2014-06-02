@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "address_resolver.h"
+#include "address_resolver.hxx"
 #include "address_list.h"
 #include "address_quark.h"
 #include "pool.h"
@@ -45,7 +45,7 @@ address_list_resolve_new(struct pool *pool,
                          const struct addrinfo *hints,
                          GError **error_r)
 {
-    struct address_list *address_list = p_malloc(pool, sizeof(*address_list));
+    auto address_list = NewFromPool<struct address_list>(pool);
     address_list_init(address_list);
     if (!address_list_resolve(pool, address_list,
                               host_and_port, default_port, hints, error_r)) {

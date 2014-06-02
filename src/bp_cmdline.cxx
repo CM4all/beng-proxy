@@ -5,7 +5,7 @@
  */
 
 #include "config.hxx"
-#include "address_resolver.h"
+#include "address_resolver.hxx"
 #include "stopwatch.h"
 #include "pool.h"
 #include "ua_classification.h"

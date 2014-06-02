@@ -317,7 +317,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/istream-gb.c \
 	src/sigutil.h \
 	src/address_quark.h \
-	src/address_resolver.c src/address_resolver.h \
+	src/address_resolver.cxx src/address_resolver.hxx \
 	src/address_string.h \
 	src/address_string.c \
 	src/uri-edit.c \
@@ -386,7 +386,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/balancer.cxx \
 	src/address.c \
 	src/address_list.c \
-	src/address_resolver.c src/address_resolver.h \
+	src/address_resolver.cxx src/address_resolver.hxx \
 	src/address_string.h \
 	src/address_string.c \
 	src/address_edit.h \
@@ -1735,7 +1735,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
-	src/address_list.c src/address_resolver.c \
+	src/address_list.c src/address_resolver.cxx \
 	src/failure.c src/bulldog.c src/balancer.cxx \
 	src/tcp_stock.cxx src/tcp_balancer.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \

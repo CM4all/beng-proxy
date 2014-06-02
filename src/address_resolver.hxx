@@ -2,19 +2,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ADDRESS_RESOLVER_H
-#define BENG_PROXY_ADDRESS_RESOLVER_H
+#ifndef BENG_PROXY_ADDRESS_RESOLVER_HXX
+#define BENG_PROXY_ADDRESS_RESOLVER_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
+
 #include <stdbool.h>
 
 struct pool;
 struct address_list;
 struct addrinfo;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Resolve a "host[:port]" specification, and add all addresses to the
@@ -36,9 +33,5 @@ address_list_resolve_new(struct pool *pool,
                          const char *host_and_port, int default_port,
                          const struct addrinfo *hints,
                          GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
