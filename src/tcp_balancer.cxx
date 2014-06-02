@@ -5,7 +5,7 @@
  */
 
 #include "tcp_balancer.hxx"
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "stock.h"
 #include "address_envelope.h"
 #include "address_list.h"

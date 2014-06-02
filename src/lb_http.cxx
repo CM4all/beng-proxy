@@ -18,7 +18,7 @@
 #include "address_sticky.h"
 #include "http_server.hxx"
 #include "http_client.hxx"
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "lease.h"
 #include "header-writer.h"

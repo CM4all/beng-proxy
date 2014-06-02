@@ -14,7 +14,7 @@
 #include "session_manager.hxx"
 #include "session_save.hxx"
 #include "tstock.hxx"
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "memcached_stock.hxx"
 #include "hstock.h"

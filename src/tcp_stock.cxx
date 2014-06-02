@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "hstock.h"
 #include "stock.h"
 #include "async.h"
@@ -13,6 +13,7 @@
 #include "address_envelope.h"
 #include "pevent.h"
 #include "gerrno.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -56,7 +57,7 @@ struct tcp_stock_connection {
 static struct tcp_stock_connection *
 async_to_tcp_stock_connection(struct async_operation *ao)
 {
-    return (struct tcp_stock_connection*)(((char*)ao) - offsetof(struct tcp_stock_connection, create_operation));
+    return ContainerCast(ao, struct tcp_stock_connection, create_operation);
 }
 
 static void
@@ -64,7 +65,7 @@ tcp_create_abort(struct async_operation *ao)
 {
     struct tcp_stock_connection *connection = async_to_tcp_stock_connection(ao);
 
-    assert(connection != NULL);
+    assert(connection != nullptr);
     assert(async_ref_defined(&connection->client_socket));
 
     async_abort(&connection->client_socket);
@@ -84,7 +85,8 @@ static const struct async_operation_class tcp_create_operation = {
 static void
 tcp_stock_event(int fd, short event, void *ctx)
 {
-    struct tcp_stock_connection *connection = ctx;
+    struct tcp_stock_connection *connection =
+        (struct tcp_stock_connection *)ctx;
 
     assert(fd == connection->fd);
 
@@ -119,7 +121,9 @@ tcp_stock_socket_success(int fd, void *ctx)
 {
     assert(fd >= 0);
 
-    struct tcp_stock_connection *connection = ctx;
+    struct tcp_stock_connection *connection =
+        (struct tcp_stock_connection *)ctx;
+
     async_ref_clear(&connection->client_socket);
     async_operation_finished(&connection->create_operation);
 
@@ -133,7 +137,9 @@ tcp_stock_socket_success(int fd, void *ctx)
 static void
 tcp_stock_socket_timeout(void *ctx)
 {
-    struct tcp_stock_connection *connection = ctx;
+    struct tcp_stock_connection *connection =
+        (struct tcp_stock_connection *)ctx;
+
     async_ref_clear(&connection->client_socket);
     async_operation_finished(&connection->create_operation);
 
@@ -146,7 +152,9 @@ tcp_stock_socket_timeout(void *ctx)
 static void
 tcp_stock_socket_error(GError *error, void *ctx)
 {
-    struct tcp_stock_connection *connection = ctx;
+    struct tcp_stock_connection *connection =
+        (struct tcp_stock_connection *)ctx;
+
     async_ref_clear(&connection->client_socket);
     async_operation_finished(&connection->create_operation);
 
@@ -183,9 +191,9 @@ tcp_stock_create(void *ctx, struct stock_item *item,
 
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
-    struct tcp_stock_request *request = info;
+    struct tcp_stock_request *request = (struct tcp_stock_request *)info;
 
-    assert(uri != NULL);
+    assert(uri != nullptr);
 
     async_ref_clear(&connection->client_socket);
 
@@ -259,7 +267,7 @@ static const struct stock_class tcp_stock_class = {
 struct hstock *
 tcp_stock_new(struct pool *pool, unsigned limit)
 {
-    return hstock_new(pool, &tcp_stock_class, NULL, limit, 16);
+    return hstock_new(pool, &tcp_stock_class, nullptr, limit, 16);
 }
 
 void
@@ -271,10 +279,10 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
-    assert(address != NULL);
+    assert(address != nullptr);
     assert(address_length > 0);
 
-    struct tcp_stock_request *request = p_malloc(pool, sizeof(*request));
+    auto request = NewFromPool<struct tcp_stock_request>(pool);
     request->ip_transparent = ip_transparent;
     request->bind_address = bind_address;
     request->bind_address_size = bind_address_size;
@@ -282,18 +290,18 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
     request->address_length = address_length;
     request->timeout = timeout;
 
-    if (name == NULL) {
+    if (name == nullptr) {
         char buffer[1024];
         if (!socket_address_to_string(buffer, sizeof(buffer),
                                       address, address_length))
             buffer[0] = 0;
 
-        if (bind_address != NULL) {
+        if (bind_address != nullptr) {
             char bind_buffer[1024];
             if (!socket_address_to_string(bind_buffer, sizeof(bind_buffer),
                                           bind_address, bind_address_size))
                 bind_buffer[0] = 0;
-            name = p_strcat(pool, bind_buffer, ">", buffer, NULL);
+            name = p_strcat(pool, bind_buffer, ">", buffer, nullptr);
         } else
             name = p_strdup(pool, buffer);
     }
@@ -317,7 +325,7 @@ tcp_stock_item_get(const struct stock_item *item)
     const struct tcp_stock_connection *connection =
         (const struct tcp_stock_connection *)item;
 
-    assert(item != NULL);
+    assert(item != nullptr);
 
     return connection->fd;
 }
@@ -328,7 +336,7 @@ tcp_stock_item_get_domain(const struct stock_item *item)
     const struct tcp_stock_connection *connection =
         (const struct tcp_stock_connection *)item;
 
-    assert(item != NULL);
+    assert(item != nullptr);
     assert(connection->fd >= 0);
 
     return connection->domain;

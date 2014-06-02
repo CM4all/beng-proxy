@@ -7,7 +7,7 @@
 #include "memcached_stock.hxx"
 #include "memcached_client.hxx"
 #include "stock.h"
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "address_list.h"
 #include "lease.h"

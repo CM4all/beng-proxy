@@ -4,7 +4,7 @@
 #include "translate_response.hxx"
 #include "widget_view.hxx"
 #include "transformation.hxx"
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "async.h"
 #include "fb_pool.h"
 #include "pool.h"

@@ -9,7 +9,7 @@
 #include "fcgi_client.hxx"
 #include "http_response.h"
 #include "lease.h"
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "stock.h"
 #include "child_options.hxx"
 #include "istream.h"

@@ -13,7 +13,7 @@
 #include "ajp_client.hxx"
 #include "strmap.h"
 #include "lease.h"
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "abort-close.h"
 #include "istream.h"

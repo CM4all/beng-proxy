@@ -1,4 +1,4 @@
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "balancer.hxx"
 #include "hstock.h"

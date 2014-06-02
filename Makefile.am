@@ -238,7 +238,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/strref-pool.h \
 	src/suffix_registry.cxx src/suffix_registry.hxx \
 	src/tcache.cxx src/tcache.hxx \
-	src/tcp-stock.c src/tcp-stock.h \
+	src/tcp_stock.cxx src/tcp_stock.hxx \
 	src/tcp_balancer.cxx src/tcp_balancer.hxx \
 	src/tpool.h \
 	src/transformation.cxx src/transformation.hxx \
@@ -379,7 +379,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/tpool.c \
 	src/stock.c \
 	src/hstock.c \
-	src/tcp-stock.c \
+	src/tcp_stock.cxx \
 	src/tcp_balancer.cxx \
 	src/pipe-stock.c \
 	src/failure.c \
@@ -1410,7 +1410,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/translate_client.cxx src/tstock.cxx src/growing-buffer.c src/gb-io.c \
 	src/translate_response.cxx \
 	src/failure.c src/bulldog.c src/balancer.cxx src/cache.c \
-	src/tcp-stock.c src/client-socket.c \
+	src/tcp_stock.cxx src/client-socket.c \
 	src/fd_util.c src/fd-util.c \
 	src/stock.c src/hstock.c src/hashmap.c src/strmap.c \
 	src/strset.c \
@@ -1502,7 +1502,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
 	src/header-writer.c src/args.cxx src/buffered_io.c \
-	src/tcp-stock.c src/stock.c src/hstock.c \
+	src/tcp_stock.cxx src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/header-parser.c \
 	src/widget_request.cxx \
@@ -1536,7 +1536,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
 	src/header-writer.c src/args.cxx src/buffered_io.c \
-	src/tcp-stock.c src/stock.c src/hstock.c \
+	src/tcp_stock.cxx src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/header-parser.c \
 	src/widget_request.cxx \
@@ -1737,7 +1737,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/address_list.c src/address_resolver.c \
 	src/failure.c src/bulldog.c src/balancer.cxx \
-	src/tcp-stock.c src/tcp_balancer.cxx \
+	src/tcp_stock.cxx src/tcp_balancer.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.c \
 	src/cache.c \

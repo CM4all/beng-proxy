@@ -4,10 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_TCP_STOCK_H
-#define __BENG_TCP_STOCK_H
+#ifndef BENG_PROXY_TCP_STOCK_HXX
+#define BENG_PROXY_TCP_STOCK_HXX
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -16,10 +15,6 @@ struct stock_item;
 struct stock_get_handler;
 struct async_operation_ref;
 struct sockaddr;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Creates a new TCP connection stock.
@@ -53,9 +48,5 @@ tcp_stock_item_get(const struct stock_item *item);
 
 int
 tcp_stock_item_get_domain(const struct stock_item *item);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

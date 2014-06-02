@@ -9,7 +9,7 @@
 #include "http_client.hxx"
 #include "http_address.hxx"
 #include "header-writer.h"
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock.h"
 #include "async.h"

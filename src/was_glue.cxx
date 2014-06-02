@@ -10,7 +10,7 @@
 #include "was_client.hxx"
 #include "http_response.h"
 #include "lease.h"
-#include "tcp-stock.h"
+#include "tcp_stock.hxx"
 #include "stock.h"
 #include "abort-close.h"
 #include "child_options.hxx"
