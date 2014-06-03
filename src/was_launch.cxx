@@ -7,7 +7,7 @@
 #include "was_launch.hxx"
 #include "fd_util.h"
 #include "fd-util.h"
-#include "exec.h"
+#include "exec.hxx"
 #include "child_options.hxx"
 #include "sigutil.h"
 #include "gerrno.h"

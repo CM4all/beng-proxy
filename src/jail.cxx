@@ -6,7 +6,7 @@
 
 #include "jail.hxx"
 #include "strutil.h"
-#include "exec.h"
+#include "exec.hxx"
 #include "pool.h"
 
 #include <glib.h>

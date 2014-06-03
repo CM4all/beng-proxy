@@ -12,7 +12,7 @@
 #include "strmap.h"
 #include "sigutil.h"
 #include "product.h"
-#include "exec.h"
+#include "exec.hxx"
 
 #include <daemon/log.h>
 

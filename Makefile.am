@@ -132,6 +132,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/direct.c src/direct.h \
 	src/dpool.c src/dpool.h \
 	src/drop.cxx src/drop.hxx \
+	src/exec.hxx \
 	src/expansible-buffer.c src/expansible-buffer.h \
 	src/expiry.h \
 	src/failure.cxx src/failure.hxx \

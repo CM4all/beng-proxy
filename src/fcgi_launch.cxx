@@ -5,7 +5,7 @@
  */
 
 #include "fcgi_launch.hxx"
-#include "exec.h"
+#include "exec.hxx"
 #include "jail.hxx"
 
 #include <daemon/log.h>

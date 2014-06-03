@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_EXEC_H
-#define BENG_PROXY_EXEC_H
+#ifndef BENG_PROXY_EXEC_HXX
+#define BENG_PROXY_EXEC_HXX
 
 #include <assert.h>
 #include <string.h>
