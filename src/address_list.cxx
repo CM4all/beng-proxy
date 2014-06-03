@@ -27,9 +27,7 @@ bool
 address_list::Add(struct pool *pool,
                   const struct sockaddr *address, size_t length)
 {
-    assert(size <= MAX_ADDRESSES);
-
-    if (size >= MAX_ADDRESSES)
+    if (addresses.full())
         return false;
 
     struct address_envelope *envelope = (struct address_envelope *)
@@ -37,16 +35,14 @@ address_list::Add(struct pool *pool,
     envelope->length = length;
     memcpy(&envelope->address, address, length);
 
-    addresses[size++] = envelope;
+    addresses.append(envelope);
     return true;
 }
 
 const struct address_envelope *
 address_list::GetFirst() const
 {
-    assert(size <= address_list::MAX_ADDRESSES);
-
-    if (size < 1)
+    if (addresses.empty())
         return nullptr;
 
     return addresses[0];
@@ -55,8 +51,6 @@ address_list::GetFirst() const
 const char *
 address_list::GetKey() const
 {
-    assert(size <= address_list::MAX_ADDRESSES);
-
     static char buffer[2048];
     size_t length = 0;
     bool success;

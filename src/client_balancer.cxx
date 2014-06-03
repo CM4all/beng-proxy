@@ -153,11 +153,11 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
     request->session_sticky = session_sticky;
     request->timeout = timeout;
 
-    if (address_list->size <= 1)
+    if (address_list->GetSize() <= 1)
         request->retries = 0;
-    else if (address_list->size == 2)
+    else if (address_list->GetSize() == 2)
         request->retries = 1;
-    else if (address_list->size == 3)
+    else if (address_list->GetSize() == 3)
         request->retries = 2;
     else
         request->retries = 3;

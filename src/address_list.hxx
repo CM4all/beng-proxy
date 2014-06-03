@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_ADDRESS_LIST_HXX
 #define BENG_PROXY_ADDRESS_LIST_HXX
 
+#include "util/TrivialArray.hxx"
+#include "util/DereferenceIterator.hxx"
 #include "sticky.h"
 
 #include <inline/compiler.h>
@@ -20,47 +22,17 @@ struct sockaddr;
 struct address_list {
     static constexpr size_t MAX_ADDRESSES = 16;
 
-    class const_iterator {
-        friend struct address_list;
-
-        const struct address_envelope *const*value;
-
-        constexpr const_iterator(const struct address_envelope *const*_value)
-            :value(_value) {}
-
-    public:
-        constexpr const struct address_envelope &operator*() const {
-            return **value;
-        }
-
-        constexpr const struct address_envelope *operator->() const {
-            return *value;
-        }
-
-        const_iterator &operator++() {
-            ++value;
-            return *this;
-        }
-
-        bool operator==(const_iterator other) const {
-            return value == other.value;
-        }
-
-        bool operator!=(const_iterator other) const {
-            return value != other.value;
-        }
-    };
-
     enum sticky_mode sticky_mode;
 
-    /** the number of addresses */
-    unsigned size;
+    typedef TrivialArray<struct address_envelope *, MAX_ADDRESSES> Array;
+    typedef DereferenceIterator<Array::const_iterator,
+                                struct address_envelope> const_iterator;
 
-    struct address_envelope *addresses[MAX_ADDRESSES];
+    Array addresses;
 
     void Init() {
         sticky_mode = STICKY_NONE;
-        size = 0;
+        addresses.clear();
     }
 
     void CopyFrom(struct pool *pool, const struct address_list &src);
@@ -71,7 +43,11 @@ struct address_list {
 
     constexpr
     bool IsEmpty() const {
-        return size == 0;
+        return addresses.empty();
+    }
+
+    Array::size_type GetSize() const {
+        return addresses.size();
     }
 
     /**
@@ -79,15 +55,15 @@ struct address_list {
      */
     constexpr
     bool IsSingle() const {
-        return size == 1;
+        return addresses.size() == 1;
     }
 
     constexpr const_iterator begin() const {
-        return &addresses[0];
+        return addresses.begin();
     }
 
     constexpr const_iterator end() const {
-        return &addresses[size];
+        return addresses.end();
     }
 
     /**
@@ -96,9 +72,9 @@ struct address_list {
     bool Add(struct pool *pool, const struct sockaddr *address, size_t length);
 
     const struct address_envelope &operator[](unsigned n) const {
-        assert(n < size);
-
-        return *addresses[n];
+        const struct address_envelope *envelope = addresses[n];
+        assert(envelope != nullptr);
+        return *envelope;
     }
 
     gcc_pure

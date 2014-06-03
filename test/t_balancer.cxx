@@ -76,7 +76,7 @@ public:
     }
 
     int Find(const struct address_envelope *a) const {
-        for (unsigned i = 0; i < size; ++i)
+        for (unsigned i = 0; i < GetSize(); ++i)
             if (addresses[i]->length == a->length &&
                 memcmp(&addresses[i]->address, &a->address, a->length) == 0)
                 return i;

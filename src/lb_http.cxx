@@ -144,21 +144,21 @@ send_fallback(struct http_server_request *request,
 static unsigned
 generate_cookie(const struct address_list *list)
 {
-    assert(list->size >= 2);
+    assert(list->GetSize() >= 2);
 
-    const unsigned first = lb_cookie_generate(list->size);
+    const unsigned first = lb_cookie_generate(list->GetSize());
 
     unsigned i = first;
     do {
-        assert(i >= 1 && i <= list->size);
+        assert(i >= 1 && i <= list->GetSize());
         const struct address_envelope *envelope =
-            list->addresses[i % list->size];
+            list->addresses[i % list->GetSize()];
         if (!failure_check(&envelope->address, envelope->length) &&
             bulldog_check(&envelope->address, envelope->length) &&
             !bulldog_is_fading(&envelope->address, envelope->length))
             return i;
 
-        i = lb_cookie_next(list->size, i);
+        i = lb_cookie_next(list->GetSize(), i);
     } while (i != first);
 
     /* all nodes have failed */

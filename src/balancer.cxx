@@ -65,9 +65,9 @@ check_envelope(const struct address_envelope &envelope, bool allow_fade)
 static const struct address_envelope &
 next_failover_address(const struct address_list &list)
 {
-    assert(list.size > 0);
+    assert(list.GetSize() > 0);
 
-    for (unsigned i = 0; i < list.size; ++i) {
+    for (unsigned i = 0; i < list.GetSize(); ++i) {
         const struct address_envelope &envelope = list[i];
         if (check_envelope(envelope, true))
             return envelope;
@@ -80,13 +80,13 @@ next_failover_address(const struct address_list &list)
 static const struct address_envelope &
 next_address(struct balancer_item *item)
 {
-    assert(item->addresses.size >= 2);
-    assert(item->next < item->addresses.size);
+    assert(item->addresses.GetSize() >= 2);
+    assert(item->next < item->addresses.GetSize());
 
     const struct address_envelope &envelope = item->addresses[item->next];
 
     ++item->next;
-    if (item->next >= item->addresses.size)
+    if (item->next >= item->addresses.GetSize())
         item->next = 0;
 
     return envelope;
@@ -111,9 +111,9 @@ next_address_checked(struct balancer_item *item, bool allow_fade)
 static const struct address_envelope &
 next_sticky_address_checked(const struct address_list &al, unsigned session)
 {
-    assert(al.size >= 2);
+    assert(al.GetSize() >= 2);
 
-    unsigned i = session % al.size;
+    unsigned i = session % al.GetSize();
     bool allow_fade = true;
 
     const struct address_envelope &first = al[i];
@@ -127,7 +127,7 @@ next_sticky_address_checked(const struct address_list &al, unsigned session)
         allow_fade = false;
 
         ++i;
-        if (i >= al.size)
+        if (i >= al.GetSize())
             i = 0;
 
         ret = &al[i];
