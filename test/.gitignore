@@ -7,6 +7,7 @@ run_nfs_client
 /t_tcache
 /t_widget_registry
 /dump_memcached_choice
+/dump_control
 /cleanup_memcached_choice
 /run_memcached_client
 /run_processor

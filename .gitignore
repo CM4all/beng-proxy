@@ -63,7 +63,6 @@ test/t-growing-buffer
 test/fake-memcached-server
 test/t-processor
 test/dump-udp
-test/dump-control
 test/send-control
 test/was_mirror
 test/run_was

@@ -190,7 +190,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/http_util.c src/http_util.h \
 	src/http_quark.h \
 	src/http_response.c src/http_response.h \
-	src/control_server.c src/control_server.h \
+	src/control_server.cxx src/control_server.hxx \
 	src/control_local.cxx src/control_local.hxx \
 	src/bp_stats.cxx src/bp_stats.hxx \
 	src/bp_control.cxx src/bp_control.hxx \
@@ -426,7 +426,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/fd-util.c \
 	$(STOPWATCH_SRC) \
 	src/udp-listener.c src/udp-listener.h \
-	src/control_server.c src/control_server.h \
+	src/control_server.cxx src/control_server.hxx \
 	src/direct.c \
 	src/access-log.c \
 	src/cookie_server.cxx \
@@ -725,7 +725,7 @@ noinst_PROGRAMS = \
 	test/cleanup_memcached_choice \
 	test/fake-memcached-server \
 	test/run_delegate \
-	test/dump-udp test/dump-control test/send-control \
+	test/dump-udp test/dump_control test/send-control \
 	test/run_ua_parser \
 	test/run-parser-cdata
 
@@ -1795,11 +1795,11 @@ test_dump_udp_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS)
 
-test_dump_control_SOURCES = test/dump-control.c \
+test_dump_control_SOURCES = test/dump_control.cxx \
 	src/udp-listener.c \
 	src/address_string.c \
 	src/fd_util.c \
-	src/control_server.c
+	src/control_server.cxx
 test_dump_control_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \

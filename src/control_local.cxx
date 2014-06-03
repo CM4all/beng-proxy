@@ -5,7 +5,7 @@
  */
 
 #include "control_local.hxx"
-#include "control_server.h"
+#include "control_server.hxx"
 #include "pool.h"
 
 #include <assert.h>

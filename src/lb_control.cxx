@@ -8,7 +8,7 @@
 #include "lb_instance.hxx"
 #include "lb_config.hxx"
 #include "lb_stats.hxx"
-#include "control_server.h"
+#include "control_server.hxx"
 #include "address_envelope.h"
 #include "address_edit.h"
 #include "failure.hxx"

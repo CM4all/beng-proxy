@@ -6,7 +6,7 @@
 
 #include "bp_control.hxx"
 #include "bp_stats.hxx"
-#include "control_server.h"
+#include "control_server.hxx"
 #include "control_local.hxx"
 #include "udp-distribute.h"
 #include "bp_instance.hxx"

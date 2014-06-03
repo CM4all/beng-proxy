@@ -4,11 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "control_server.h"
+#include "control_server.hxx"
+extern "C" {
 #include "udp-listener.h"
+}
 #include "pool.h"
 
 #include <glib.h>
+
 #include <assert.h>
 #include <string.h>
 
@@ -24,13 +27,13 @@ control_server_decode(const void *data, size_t length,
                       const struct sockaddr *address, size_t address_length,
                       const struct control_handler *handler, void *handler_ctx)
 {
-    assert(handler != NULL);
-    assert(handler->packet != NULL);
-    assert(handler->error != NULL);
+    assert(handler != nullptr);
+    assert(handler->packet != nullptr);
+    assert(handler->error != nullptr);
 
     /* verify the magic number */
 
-    const uint32_t *magic = data;
+    const uint32_t *magic = (const uint32_t *)data;
 
     if (length < sizeof(*magic) || GUINT32_FROM_BE(*magic) != control_magic) {
         GError *error = g_error_new_literal(control_server_quark(), 0,
@@ -52,7 +55,8 @@ control_server_decode(const void *data, size_t length,
     /* now decode all commands */
 
     while (length > 0) {
-        const struct beng_control_header *header = data;
+        const struct beng_control_header *header =
+            (const struct beng_control_header *)data;
         if (length < sizeof(*header)) {
             GError *error = g_error_new(control_server_quark(), 0,
                                         "partial header (length=%zu)", length);
@@ -61,12 +65,13 @@ control_server_decode(const void *data, size_t length,
         }
 
         size_t payload_length = GUINT16_FROM_BE(header->length);
-        enum beng_control_command command = GUINT16_FROM_BE(header->command);
+        beng_control_command command = (beng_control_command)
+            GUINT16_FROM_BE(header->command);
 
         data = header + 1;
         length -= sizeof(*header);
 
-        const char *payload = data;
+        const char *payload = (const char *)data;
         if (length < payload_length) {
             GError *error = g_error_new(control_server_quark(), 0,
                                         "partial payload (length=%zu, expected=%zu)",
@@ -77,7 +82,7 @@ control_server_decode(const void *data, size_t length,
 
         /* this command is ok, pass it to the callback */
 
-        handler->packet(command, payload_length > 0 ? payload : NULL,
+        handler->packet(command, payload_length > 0 ? payload : nullptr,
                         payload_length,
                         address, address_length,
                         handler_ctx);
@@ -96,9 +101,9 @@ control_server_udp_datagram(const void *data, size_t length,
                             int uid,
                             void *ctx)
 {
-    struct control_server *cs = ctx;
+    struct control_server *cs = (struct control_server *)ctx;
 
-    if (cs->handler->raw != NULL &&
+    if (cs->handler->raw != nullptr &&
         !cs->handler->raw(data, length, address, address_length, uid,
                           cs->handler_ctx))
         /* discard datagram if raw() returns false */
@@ -111,7 +116,7 @@ control_server_udp_datagram(const void *data, size_t length,
 static void
 control_server_udp_error(GError *error, void *ctx)
 {
-    struct control_server *cs = ctx;
+    struct control_server *cs = (struct control_server *)ctx;
 
     cs->handler->error(error, cs->handler_ctx);
 }
@@ -128,22 +133,22 @@ control_server_new_port(struct pool *pool,
                         const struct control_handler *handler, void *ctx,
                         GError **error_r)
 {
-    assert(pool != NULL);
-    assert(host_and_port != NULL);
-    assert(handler != NULL);
-    assert(handler->packet != NULL);
-    assert(handler->error != NULL);
+    assert(pool != nullptr);
+    assert(host_and_port != nullptr);
+    assert(handler != nullptr);
+    assert(handler->packet != nullptr);
+    assert(handler->error != nullptr);
 
-    struct control_server *cs = p_malloc(pool, sizeof(*cs));
+    auto cs = NewFromPool<struct control_server>(pool);
     cs->udp = udp_listener_port_new(pool, host_and_port, default_port,
                                     &control_server_udp_handler, cs,
                                     error_r);
-    if (cs->udp == NULL)
-        return NULL;
+    if (cs->udp == nullptr)
+        return nullptr;
 
-    if (group != NULL && !udp_listener_join4(cs->udp, group, error_r)) {
+    if (group != nullptr && !udp_listener_join4(cs->udp, group, error_r)) {
         udp_listener_free(cs->udp);
-        return NULL;
+        return nullptr;
     }
 
     cs->handler = handler;
@@ -158,17 +163,17 @@ control_server_new(struct pool *pool,
                    const struct control_handler *handler, void *ctx,
                    GError **error_r)
 {
-    assert(pool != NULL);
-    assert(handler != NULL);
-    assert(handler->packet != NULL);
-    assert(handler->error != NULL);
+    assert(pool != nullptr);
+    assert(handler != nullptr);
+    assert(handler->packet != nullptr);
+    assert(handler->error != nullptr);
 
-    struct control_server *cs = p_malloc(pool, sizeof(*cs));
+    auto cs = NewFromPool<struct control_server>(pool);
     cs->udp = udp_listener_new(pool, address, address_length,
                                &control_server_udp_handler, cs,
                                error_r);
-    if (cs->udp == NULL)
-        return NULL;
+    if (cs->udp == nullptr)
+        return nullptr;
 
     cs->handler = handler;
     cs->handler_ctx = ctx;
@@ -207,12 +212,12 @@ control_server_reply(struct control_server *cs, struct pool *pool,
                      const void *payload, size_t payload_length,
                      GError **error_r)
 {
-    assert(cs != NULL);
-    assert(cs->udp != NULL);
-    assert(address != NULL);
+    assert(cs != nullptr);
+    assert(cs->udp != nullptr);
+    assert(address != nullptr);
     assert(address_length > 0);
 
-    struct beng_control_header *header =
+    struct beng_control_header *header = (struct beng_control_header *)
         p_malloc(pool, sizeof(*header) + payload_length);
     header->length = GUINT16_TO_BE(payload_length);
     header->command = GUINT16_TO_BE(command);
