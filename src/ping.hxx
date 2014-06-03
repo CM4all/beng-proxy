@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PING_H
-#define BENG_PING_H
+#ifndef BENG_PING_HXX
+#define BENG_PING_HXX
 
 #include <glib.h>
-#include <stdbool.h>
+
 #include <stddef.h>
 
 struct ping_handler {

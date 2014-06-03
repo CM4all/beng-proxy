@@ -451,7 +451,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \
 	src/nop_thread_socket_filter.cxx src/nop_thread_socket_filter.hxx \
-	src/ping.c src/ping.h \
+	src/ping.cxx src/ping.hxx \
 	src/shutdown_listener.c src/shutdown_listener.h \
 	src/lb_global.cxx \
 	src/lb_cmdline.hxx \
@@ -705,7 +705,7 @@ if TEST
 
 noinst_PROGRAMS = \
 	test/run_css_parser \
-	test/run-ping \
+	test/run_ping \
 	test/run_was \
 	test/was_mirror \
 	test/benchmark-gmtime test/format-http-date \
@@ -811,8 +811,8 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 	test/t_widget_resolver \
 	test/t_wembed test/t_widget_http
 
-test_run_ping_SOURCES = test/run-ping.c \
-	src/ping.c \
+test_run_ping_SOURCES = test/run_ping.cxx \
+	src/ping.cxx \
 	src/address_string.c
 test_run_ping_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \

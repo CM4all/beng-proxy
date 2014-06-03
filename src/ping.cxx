@@ -4,10 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ping.h"
+#include "ping.hxx"
 #include "pool.h"
 #include "pevent.h"
 #include "async.h"
+#include "util/Cast.hxx"
 
 #include <event.h>
 
@@ -46,10 +47,10 @@ ping_schedule_read(struct ping *p)
 static u_short
 in_cksum(const u_short *addr, register int len, u_short csum)
 {
-	register int nleft = len;
+	int nleft = len;
 	const u_short *w = addr;
-	register u_short answer;
-	register int sum = csum;
+	u_short answer;
+	int sum = csum;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
@@ -88,7 +89,7 @@ deconst_address(const struct sockaddr *address)
 static bool
 parse_reply(struct msghdr *msg, size_t cc, uint16_t ident)
 {
-    const uint8_t *buf = msg->msg_iov->iov_base;
+    const void *buf = (const void *)msg->msg_iov->iov_base;
     const struct icmphdr *icp = (const struct icmphdr *)buf;
     if (cc < sizeof(*icp))
         return false;
@@ -149,7 +150,7 @@ ping_read(struct ping *p)
 static void
 ping_event_callback(int fd G_GNUC_UNUSED, short event, void *ctx)
 {
-    struct ping *p = ctx;
+    struct ping *p = (struct ping *)ctx;
 
     assert(p->fd >= 0);
 
@@ -174,7 +175,7 @@ ping_event_callback(int fd G_GNUC_UNUSED, short event, void *ctx)
 static struct ping *
 async_to_ping(struct async_operation *ao)
 {
-    return (struct ping *)(((char*)ao) - offsetof(struct ping, async_operation));
+    return ContainerCast(ao, struct ping, async_operation);
 }
 
 static void
@@ -255,10 +256,10 @@ ping(struct pool *pool, const struct sockaddr *address, size_t address_length,
 
     struct msghdr m = {
         .msg_name = deconst_address(address),
-        .msg_namelen = address_length,
+        .msg_namelen = socklen_t(address_length),
         .msg_iov = &iov,
         .msg_iovlen = 1,
-        .msg_control = NULL,
+        .msg_control = nullptr,
         .msg_controllen = 0,
         .msg_flags = 0,
     };
@@ -273,7 +274,7 @@ ping(struct pool *pool, const struct sockaddr *address, size_t address_length,
     }
 
     pool_ref(pool);
-    struct ping *p = p_malloc(pool, sizeof(*p));
+    auto p = NewFromPool<struct ping>(pool);
     p->pool = pool;
     p->fd = fd;
     p->ident = ident;

@@ -12,6 +12,7 @@ run_nfs_client
 /cleanup_memcached_choice
 /run_memcached_client
 /run_processor
+/run_ping
 /t_http_cache
 /t_memcached_client
 /t_sink_header

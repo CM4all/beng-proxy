@@ -6,7 +6,7 @@
 
 #include "lb_ping_monitor.hxx"
 #include "lb_monitor.hxx"
-#include "ping.h"
+#include "ping.hxx"
 #include "pool.h"
 
 static void

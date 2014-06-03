@@ -1,4 +1,4 @@
-#include "ping.h"
+#include "ping.hxx"
 #include "pool.h"
 #include "async.h"
 #include "address_string.h"
@@ -44,13 +44,13 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    struct pool *root_pool = pool_new_libc(NULL, "root");
+    struct pool *root_pool = pool_new_libc(nullptr, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
-    GError *error = NULL;
+    GError *error = nullptr;
     struct address_envelope *envelope =
         address_envelope_parse(pool, argv[1], 0, false, &error);
-    if (envelope == NULL) {
+    if (envelope == nullptr) {
         fprintf(stderr, "%s\n", error->message);
         g_error_free(error);
         pool_unref(pool);
@@ -61,7 +61,7 @@ int main(int argc, char **argv)
     struct event_base *event_base = event_init();
 
     ping(pool, &envelope->address, envelope->length,
-         &my_ping_handler, NULL,
+         &my_ping_handler, nullptr,
          &my_async_ref);
 
     event_dispatch();

@@ -65,7 +65,6 @@ test/t-processor
 test/send-control
 test/was_mirror
 test/run_was
-test/run-ping
 test/t_balancer
 test/t_rubber
 test/t_sink_rubber
