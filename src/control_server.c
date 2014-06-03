@@ -6,6 +6,7 @@
 
 #include "control_server.h"
 #include "udp-listener.h"
+#include "pool.h"
 
 #include <glib.h>
 #include <assert.h>

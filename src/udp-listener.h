@@ -7,12 +7,12 @@
 #ifndef BENG_PROXY_UDP_LISTENER_H
 #define BENG_PROXY_UDP_LISTENER_H
 
-#include "pool.h"
-
 #include <glib.h>
 
+#include <stdbool.h>
 #include <stddef.h>
 
+struct pool;
 struct sockaddr;
 struct in_addr;
 
