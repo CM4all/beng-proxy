@@ -2,19 +2,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ADDRESS_STRING_H
-#define BENG_PROXY_ADDRESS_STRING_H
+#ifndef BENG_PROXY_ADDRESS_STRING_HXX
+#define BENG_PROXY_ADDRESS_STRING_HXX
 
-#include <glib.h>
-
-#include <stdbool.h>
+#include "glibfwd.hxx"
 
 struct pool;
 struct addrinfo;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Parse a numeric socket address for use with stream sockets
@@ -26,9 +20,5 @@ extern "C" {
 struct address_envelope *
 address_envelope_parse(struct pool *pool, const char *p, int default_port,
                        bool passive, GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

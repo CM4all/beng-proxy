@@ -1,7 +1,7 @@
 #include "ping.hxx"
 #include "pool.h"
 #include "async.h"
-#include "address_string.h"
+#include "address_string.hxx"
 #include "address_envelope.h"
 
 #include <event.h>

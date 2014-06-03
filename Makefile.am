@@ -317,8 +317,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/sigutil.h \
 	src/address_quark.h \
 	src/address_resolver.cxx src/address_resolver.hxx \
-	src/address_string.h \
-	src/address_string.c \
+	src/address_string.cxx src/address_string.hxx \
 	src/uri-edit.c \
 	src/uri-extract.c \
 	src/uri-relative.c \
@@ -386,8 +385,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/address.c \
 	src/address_list.cxx \
 	src/address_resolver.cxx src/address_resolver.hxx \
-	src/address_string.h \
-	src/address_string.c \
+	src/address_string.cxx src/address_string.hxx \
 	src/address_edit.h \
 	src/address_edit.c \
 	src/address_sticky.c src/address_sticky.h \
@@ -813,7 +811,7 @@ TESTS = test/t-hashmap test/t-cache test/t_tcache \
 
 test_run_ping_SOURCES = test/run_ping.cxx \
 	src/ping.cxx \
-	src/address_string.c
+	src/address_string.cxx
 test_run_ping_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
@@ -1787,7 +1785,7 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 
 test_dump_udp_SOURCES = test/dump_udp.cxx \
 	src/udp_listener.cxx \
-	src/address_string.c \
+	src/address_string.cxx \
 	src/fd_util.c
 test_dump_udp_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1796,7 +1794,7 @@ test_dump_udp_LDADD = $(AM_LDADD) \
 
 test_dump_control_SOURCES = test/dump_control.cxx \
 	src/udp_listener.cxx \
-	src/address_string.c \
+	src/address_string.cxx \
 	src/fd_util.c \
 	src/control_server.cxx
 test_dump_control_LDADD = $(AM_LDADD) \

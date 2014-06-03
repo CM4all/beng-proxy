@@ -2,7 +2,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "address_string.h"
+#include "address_string.hxx"
 #include "address_envelope.h"
 #include "address_quark.h"
 #include "pool.h"
@@ -21,7 +21,7 @@ address_envelope_sun(struct pool *pool, const char *path)
 
     const size_t path_length = strlen(path);
     size_t length = sizeof(*sun) - sizeof(sun->sun_path) + path_length;
-    struct address_envelope *envelope =
+    struct address_envelope *envelope = (struct address_envelope *)
         p_malloc(pool, sizeof(*envelope) - sizeof(envelope->address) + length + 1);
     envelope->length = length;
 
@@ -44,7 +44,7 @@ address_envelope_parse(struct pool *pool, const char *p, int default_port,
         /* abstract unix domain socket */
 
         struct address_envelope *envelope = address_envelope_sun(pool, p);
-        assert(envelope != NULL);
+        assert(envelope != nullptr);
 
         /* replace the '@' with a null byte to make it "abstract" */
         struct sockaddr_un *sun = (struct sockaddr_un *)&envelope->address;
@@ -55,7 +55,7 @@ address_envelope_parse(struct pool *pool, const char *p, int default_port,
         /* Linux specific feature */
         g_set_error_literal(error_r, resolver_quark(), 0,
                             "Abstract sockets supported only on Linux");
-        return NULL;
+        return nullptr;
 #endif
     }
 
@@ -78,11 +78,11 @@ address_envelope_parse(struct pool *pool, const char *p, int default_port,
         g_set_error(error_r, resolver_quark(), result,
                     "Failed to resolve '%s': %s",
                     p, gai_strerror(result));
-        return NULL;
+        return nullptr;
     }
 
-    struct address_envelope *e = p_malloc(pool, sizeof(*e) -
-                                          sizeof(e->address) + ai->ai_addrlen);
+    struct address_envelope *e = (struct address_envelope *)
+        p_malloc(pool, sizeof(*e) - sizeof(e->address) + ai->ai_addrlen);
     e->length = ai->ai_addrlen;
     memcpy(&e->address, ai->ai_addr, ai->ai_addrlen);
 
