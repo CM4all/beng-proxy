@@ -20,6 +20,37 @@ struct sockaddr;
 struct address_list {
     static constexpr size_t MAX_ADDRESSES = 16;
 
+    class const_iterator {
+        friend struct address_list;
+
+        const struct address_envelope *const*value;
+
+        constexpr const_iterator(const struct address_envelope *const*_value)
+            :value(_value) {}
+
+    public:
+        constexpr const struct address_envelope &operator*() const {
+            return **value;
+        }
+
+        constexpr const struct address_envelope *operator->() const {
+            return *value;
+        }
+
+        const_iterator &operator++() {
+            ++value;
+            return *this;
+        }
+
+        bool operator==(const_iterator other) const {
+            return value == other.value;
+        }
+
+        bool operator!=(const_iterator other) const {
+            return value != other.value;
+        }
+    };
+
     enum sticky_mode sticky_mode;
 
     /** the number of addresses */
@@ -49,6 +80,14 @@ struct address_list {
     constexpr
     bool IsSingle() const {
         return size == 1;
+    }
+
+    constexpr const_iterator begin() const {
+        return &addresses[0];
+    }
+
+    constexpr const_iterator end() const {
+        return &addresses[size];
     }
 
     /**

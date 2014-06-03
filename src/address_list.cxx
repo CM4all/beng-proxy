@@ -19,8 +19,8 @@ address_list::CopyFrom(struct pool *pool, const struct address_list &src)
     Init();
     sticky_mode = src.sticky_mode;
 
-    for (unsigned i = 0; i < src.size; ++i)
-        Add(pool, &src.addresses[i]->address, src.addresses[i]->length);
+    for (const auto &i : src)
+        Add(pool, &i.address, i.length);
 }
 
 bool
@@ -61,15 +61,13 @@ address_list::GetKey() const
     size_t length = 0;
     bool success;
 
-    for (unsigned i = 0; i < size; ++i) {
-        const struct address_envelope *envelope = addresses[i];
+    for (const auto &i : *this) {
         if (length > 0 && length < sizeof(buffer) - 1)
             buffer[length++] = ' ';
 
         success = socket_address_to_string(buffer + length,
                                            sizeof(buffer) - length,
-                                           &envelope->address,
-                                           envelope->length);
+                                           &i.address, i.length);
         if (success)
             length += strlen(buffer + length);
     }
