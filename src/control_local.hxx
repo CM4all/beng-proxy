@@ -4,20 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CONTROL_LOCAL_H
-#define BENG_PROXY_CONTROL_LOCAL_H
+#ifndef BENG_PROXY_CONTROL_LOCAL_HXX
+#define BENG_PROXY_CONTROL_LOCAL_HXX
 
-#include <glib.h>
-
-#include <stdbool.h>
+#include "glibfwd.hxx"
 
 struct pool;
 struct control_local;
 struct control_handler;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct control_local *
 control_local_new(struct pool *pool, const char *prefix,
@@ -31,9 +25,5 @@ control_local_open(struct control_local *cl, GError **error_r);
 
 struct control_server *
 control_local_get(struct control_local *cl);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
