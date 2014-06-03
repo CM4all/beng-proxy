@@ -4,12 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_UDP_LISTENER_H
-#define BENG_PROXY_UDP_LISTENER_H
+#ifndef BENG_PROXY_UDP_LISTENER_HXX
+#define BENG_PROXY_UDP_LISTENER_HXX
 
 #include <glib.h>
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;

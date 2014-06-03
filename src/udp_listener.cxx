@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "udp-listener.h"
+#include "udp_listener.hxx"
 #include "pool.h"
 #include "fd_util.h"
 #include "address_string.h"
@@ -35,7 +35,7 @@ struct udp_listener {
 static void
 udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 {
-    struct udp_listener *udp = ctx;
+    struct udp_listener *udp = (struct udp_listener *)ctx;
 
     char buffer[4096];
     struct iovec iov;
@@ -62,8 +62,13 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 
     int uid = -1;
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-align"
+#endif
+
     struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg);
-    while (cmsg != NULL) {
+    while (cmsg != nullptr) {
         if (cmsg->cmsg_level == SOL_SOCKET &&
             cmsg->cmsg_type == SCM_CREDENTIALS) {
             const struct ucred *cred = (const struct ucred *)CMSG_DATA(cmsg);
@@ -80,6 +85,10 @@ udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
         cmsg = CMSG_NXTHDR(&msg, cmsg);
     }
 
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
+
     udp->handler->datagram(buffer, nbytes,
                            (struct sockaddr *)&sa, msg.msg_namelen,
                            uid,
@@ -92,18 +101,18 @@ udp_listener_new(struct pool *pool,
                  const struct udp_handler *handler, void *ctx,
                  GError **error_r)
 {
-    assert(address != NULL);
+    assert(address != nullptr);
     assert(address_length > 0);
-    assert(handler != NULL);
-    assert(handler->datagram != NULL);
-    assert(handler->error != NULL);
+    assert(handler != nullptr);
+    assert(handler->datagram != nullptr);
+    assert(handler->error != nullptr);
 
-    struct udp_listener *udp = p_malloc(pool, sizeof(*udp));
+    auto udp = NewFromPool<struct udp_listener>(pool);
     udp->fd = socket_cloexec_nonblock(address->sa_family,
                                       SOCK_DGRAM, 0);
     if (udp->fd < 0) {
         set_error_errno_msg(error_r, "Failed to create socket");
-        return NULL;
+        return nullptr;
     }
 
     if (address->sa_family == AF_UNIX) {
@@ -129,12 +138,12 @@ udp_listener_new(struct pool *pool,
                     "Failed to bind to %s: %s",
                     address_string, strerror(errno));
         close(udp->fd);
-        return NULL;
+        return nullptr;
     }
 
     event_set(&udp->event, udp->fd,
               EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
-    event_add(&udp->event, NULL);
+    event_add(&udp->event, nullptr);
 
     udp->handler = handler;
     udp->handler_ctx = ctx;
@@ -148,16 +157,16 @@ udp_listener_port_new(struct pool *pool,
                       const struct udp_handler *handler, void *ctx,
                       GError **error_r)
 {
-    assert(host_and_port != NULL);
-    assert(handler != NULL);
-    assert(handler->datagram != NULL);
-    assert(handler->error != NULL);
+    assert(host_and_port != nullptr);
+    assert(handler != nullptr);
+    assert(handler->datagram != nullptr);
+    assert(handler->error != nullptr);
 
     struct address_envelope *envelope =
         address_envelope_parse(pool, host_and_port, default_port,
                                true, error_r);
-    if (envelope == NULL)
-        return NULL;
+    if (envelope == nullptr)
+        return nullptr;
 
     struct udp_listener *udp =
         udp_listener_new(pool, &envelope->address, envelope->length,
@@ -169,7 +178,7 @@ udp_listener_port_new(struct pool *pool,
 void
 udp_listener_free(struct udp_listener *udp)
 {
-    assert(udp != NULL);
+    assert(udp != nullptr);
     assert(udp->fd >= 0);
 
     event_del(&udp->event);
@@ -179,16 +188,16 @@ udp_listener_free(struct udp_listener *udp)
 void
 udp_listener_enable(struct udp_listener *udp)
 {
-    assert(udp != NULL);
+    assert(udp != nullptr);
     assert(udp->fd >= 0);
 
-    event_add(&udp->event, NULL);
+    event_add(&udp->event, nullptr);
 }
 
 void
 udp_listener_disable(struct udp_listener *udp)
 {
-    assert(udp != NULL);
+    assert(udp != nullptr);
     assert(udp->fd >= 0);
 
     event_del(&udp->event);
@@ -197,7 +206,7 @@ udp_listener_disable(struct udp_listener *udp)
 void
 udp_listener_set_fd(struct udp_listener *udp, int fd)
 {
-    assert(udp != NULL);
+    assert(udp != nullptr);
     assert(udp->fd >= 0);
     assert(fd >= 0);
     assert(udp->fd != fd);
@@ -209,7 +218,7 @@ udp_listener_set_fd(struct udp_listener *udp, int fd)
 
     event_set(&udp->event, udp->fd,
               EV_READ|EV_PERSIST, udp_listener_event_callback, udp);
-    event_add(&udp->event, NULL);
+    event_add(&udp->event, nullptr);
 }
 
 bool
@@ -235,9 +244,9 @@ udp_listener_reply(struct udp_listener *udp,
                    const void *data, size_t data_length,
                    GError **error_r)
 {
-    assert(udp != NULL);
+    assert(udp != nullptr);
     assert(udp->fd >= 0);
-    assert(address != NULL);
+    assert(address != nullptr);
     assert(address_length > 0);
 
     ssize_t nbytes = sendto(udp->fd, data, data_length,

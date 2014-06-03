@@ -5,9 +5,7 @@
  */
 
 #include "control_server.hxx"
-extern "C" {
-#include "udp-listener.h"
-}
+#include "udp_listener.hxx"
 #include "pool.h"
 
 #include <glib.h>

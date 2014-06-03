@@ -243,7 +243,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/tpool.h \
 	src/transformation.cxx src/transformation.hxx \
 	src/tstock.cxx src/tstock.hxx \
-	src/udp-listener.h \
 	src/udp-distribute.h \
 	src/uri-edit.h \
 	src/uri-extract.h \
@@ -310,7 +309,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget_http.cxx src/widget_http.hxx \
 	src/inline_widget.cxx src/inline_widget.hxx \
 	src/frame.cxx src/frame.hxx \
-	src/udp-listener.c \
+	src/udp_listener.cxx src/udp_listener.hxx \
 	src/udp-distribute.c \
 	src/istream-ajp-body.c \
 	src/istream-gb.h \
@@ -425,7 +424,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/fd_util.c \
 	src/fd-util.c \
 	$(STOPWATCH_SRC) \
-	src/udp-listener.c src/udp-listener.h \
+	src/udp_listener.cxx src/udp_listener.hxx \
 	src/control_server.cxx src/control_server.hxx \
 	src/direct.c \
 	src/access-log.c \
@@ -725,7 +724,7 @@ noinst_PROGRAMS = \
 	test/cleanup_memcached_choice \
 	test/fake-memcached-server \
 	test/run_delegate \
-	test/dump-udp test/dump_control test/send-control \
+	test/dump_udp test/dump_control test/send-control \
 	test/run_ua_parser \
 	test/run-parser-cdata
 
@@ -1786,8 +1785,8 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
-test_dump_udp_SOURCES = test/dump-udp.c \
-	src/udp-listener.c \
+test_dump_udp_SOURCES = test/dump_udp.cxx \
+	src/udp_listener.cxx \
 	src/address_string.c \
 	src/fd_util.c
 test_dump_udp_LDADD = $(AM_LDADD) \
@@ -1796,7 +1795,7 @@ test_dump_udp_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS)
 
 test_dump_control_SOURCES = test/dump_control.cxx \
-	src/udp-listener.c \
+	src/udp_listener.cxx \
 	src/address_string.c \
 	src/fd_util.c \
 	src/control_server.cxx

@@ -1,4 +1,4 @@
-#include "udp-listener.h"
+#include "udp_listener.hxx"
 #include "pool.h"
 
 #include <daemon/log.h>
@@ -43,25 +43,25 @@ int main(int argc, char **argv) {
     }
 
     const char *listen_host = argc >= 2 ? argv[1] : "*";
-    const char *mcast_group = argc >= 3 ? argv[2] : NULL;
+    const char *mcast_group = argc >= 3 ? argv[2] : nullptr;
 
     signal(SIGPIPE, SIG_IGN);
 
     struct event_base *event_base = event_init();
 
-    struct pool *pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(nullptr, "root");
 
-    GError *error = NULL;
+    GError *error = nullptr;
     struct udp_listener *udp =
         udp_listener_port_new(pool, listen_host, 1234,
-                              &dump_udp_handler, NULL, &error);
-    if (udp == NULL) {
+                              &dump_udp_handler, nullptr, &error);
+    if (udp == nullptr) {
         g_printerr("%s\n", error->message);
         g_error_free(error);
         return 2;
     }
 
-    if (mcast_group != NULL) {
+    if (mcast_group != nullptr) {
         struct in_addr addr = {
             .s_addr = inet_addr(mcast_group),
         };

@@ -62,7 +62,6 @@ test/t-istream-tee
 test/t-growing-buffer
 test/fake-memcached-server
 test/t-processor
-test/dump-udp
 test/send-control
 test/was_mirror
 test/run_was
