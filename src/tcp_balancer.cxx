@@ -56,20 +56,19 @@ extern const struct stock_get_handler tcp_balancer_stock_handler;
 static void
 tcp_balancer_next(struct tcp_balancer_request *request)
 {
-    const struct address_envelope *envelope =
+    const struct address_envelope &envelope =
         balancer_get(*request->tcp_balancer->balancer,
                      *request->address_list,
                      request->session_sticky);
-    assert(envelope != nullptr);
 
     /* we need to copy this address_envelope because it may come from
        the balancer's cache, and the according cache item may be
        flushed at any time */
     request->current_address = (const struct address_envelope *)
-        p_memdup(request->pool, envelope,
-                 sizeof(*envelope)
-                 - sizeof(envelope->address)
-                 + envelope->length);
+        p_memdup(request->pool, &envelope,
+                 sizeof(envelope)
+                 - sizeof(envelope.address)
+                 + envelope.length);
 
     tcp_stock_get(request->tcp_balancer->tcp_stock, request->pool,
                   nullptr,

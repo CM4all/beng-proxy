@@ -51,16 +51,16 @@ extern const struct client_socket_handler client_balancer_socket_handler;
 static void
 client_balancer_next(struct client_balancer_request *request)
 {
-    const struct address_envelope *envelope =
+    const struct address_envelope &envelope =
         balancer_get(*request->balancer, *request->address_list,
                      request->session_sticky);
-    request->current_address = envelope;
+    request->current_address = &envelope;
 
     client_socket_new(request->pool,
-                      envelope->address.sa_family, SOCK_STREAM, 0,
+                      envelope.address.sa_family, SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address, request->bind_address_size,
-                      &envelope->address, envelope->length,
+                      &envelope.address, envelope.length,
                       request->timeout,
                       &client_balancer_socket_handler, request,
                       request->async_ref);

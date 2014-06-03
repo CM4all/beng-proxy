@@ -56,10 +56,10 @@ struct address_list {
      */
     bool Add(struct pool *pool, const struct sockaddr *address, size_t length);
 
-    const struct address_envelope *operator[](unsigned n) const {
+    const struct address_envelope &operator[](unsigned n) const {
         assert(n < size);
 
-        return addresses[n];
+        return *addresses[n];
     }
 
     gcc_pure

@@ -47,7 +47,7 @@ public:
         return balancer;
     }
 
-    const struct address_envelope *Get(const struct address_list &al,
+    const struct address_envelope &Get(const struct address_list &al,
                                        unsigned session=0) {
         return balancer_get(*balancer, al, session);
     }
@@ -198,37 +198,37 @@ public:
         al.Add("192.168.0.2");
         al.Add("192.168.0.3");
 
-        const struct address_envelope *result = balancer.Get(al);
+        const struct address_envelope *result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
         /* test with session id, which should be ignored here */
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
     }
@@ -243,15 +243,15 @@ public:
 
         FailureAdd("192.168.0.2");
 
-        const struct address_envelope *result = balancer.Get(al);
+        const struct address_envelope *result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
     }
@@ -266,15 +266,15 @@ public:
 
         /* first node is always used */
 
-        const struct address_envelope *result = balancer.Get(al);
+        const struct address_envelope *result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
@@ -282,15 +282,15 @@ public:
 
         FailureAdd("192.168.0.2");
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
@@ -298,15 +298,15 @@ public:
 
         FailureAdd("192.168.0.1");
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
@@ -314,15 +314,15 @@ public:
 
         FailureRemove("192.168.0.2");
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
@@ -330,15 +330,15 @@ public:
 
         FailureRemove("192.168.0.1");
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
     }
@@ -353,57 +353,57 @@ public:
 
         /* without cookie: round-robin */
 
-        const struct address_envelope *result = balancer.Get(al);
+        const struct address_envelope *result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
         /* with cookie */
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
-        result = balancer.Get(al, 1);
+        result = &balancer.Get(al, 1);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
-        result = balancer.Get(al, 2);
+        result = &balancer.Get(al, 2);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al, 2);
+        result = &balancer.Get(al, 2);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al, 3);
+        result = &balancer.Get(al, 3);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al, 3);
+        result = &balancer.Get(al, 3);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al, 4);
+        result = &balancer.Get(al, 4);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
-        result = balancer.Get(al, 4);
+        result = &balancer.Get(al, 4);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 1);
 
@@ -411,15 +411,15 @@ public:
 
         FailureAdd("192.168.0.2");
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
@@ -427,27 +427,27 @@ public:
 
         FailureAdd("192.168.0.1", FAILURE_FADE);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al, 3);
+        result = &balancer.Get(al, 3);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al, 3);
+        result = &balancer.Get(al, 3);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 0);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
 
-        result = balancer.Get(al);
+        result = &balancer.Get(al);
         CPPUNIT_ASSERT(result != NULL);
         CPPUNIT_ASSERT_EQUAL(al.Find(result), 2);
     }

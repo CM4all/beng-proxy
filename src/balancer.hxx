@@ -28,7 +28,7 @@ balancer_free(struct balancer *balancer);
  * @param session a portion of the session id used to select an
  * address if stickiness is enabled; 0 if there is no session
  */
-const struct address_envelope *
+const struct address_envelope &
 balancer_get(struct balancer &balancer, const struct address_list &list,
              unsigned session);
 

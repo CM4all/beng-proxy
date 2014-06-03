@@ -37,10 +37,10 @@ struct balancer {
 };
 
 static bool
-check_failure(const struct address_envelope *envelope, bool allow_fade)
+check_failure(const struct address_envelope &envelope, bool allow_fade)
 {
-    enum failure_status status = failure_get_status(&envelope->address,
-                                                    envelope->length);
+    enum failure_status status = failure_get_status(&envelope.address,
+                                                    envelope.length);
     if (status == FAILURE_FADE && allow_fade)
         status = FAILURE_OK;
     return status == FAILURE_OK;
@@ -48,42 +48,42 @@ check_failure(const struct address_envelope *envelope, bool allow_fade)
 
 gcc_pure
 static bool
-check_bulldog(const struct address_envelope *envelope, bool allow_fade)
+check_bulldog(const struct address_envelope &envelope, bool allow_fade)
 {
-    return bulldog_check(&envelope->address, envelope->length) &&
+    return bulldog_check(&envelope.address, envelope.length) &&
         (allow_fade ||
-         !bulldog_is_fading(&envelope->address, envelope->length));
+         !bulldog_is_fading(&envelope.address, envelope.length));
 }
 
 static bool
-check_envelope(const struct address_envelope *envelope, bool allow_fade)
+check_envelope(const struct address_envelope &envelope, bool allow_fade)
 {
     return check_failure(envelope, allow_fade) &&
         check_bulldog(envelope, allow_fade);
 }
 
-static const struct address_envelope *
+static const struct address_envelope &
 next_failover_address(const struct address_list &list)
 {
     assert(list.size > 0);
 
     for (unsigned i = 0; i < list.size; ++i) {
-        const struct address_envelope *envelope = list.addresses[i];
+        const struct address_envelope &envelope = list[i];
         if (check_envelope(envelope, true))
             return envelope;
     }
 
     /* none available - return first node as last resort */
-    return list.addresses[0];
+    return list[0];
 }
 
-static const struct address_envelope *
+static const struct address_envelope &
 next_address(struct balancer_item *item)
 {
     assert(item->addresses.size >= 2);
     assert(item->next < item->addresses.size);
 
-    const struct address_envelope *envelope = item->addresses[item->next];
+    const struct address_envelope &envelope = item->addresses[item->next];
 
     ++item->next;
     if (item->next >= item->addresses.size)
@@ -92,27 +92,23 @@ next_address(struct balancer_item *item)
     return envelope;
 }
 
-static const struct address_envelope *
+static const struct address_envelope &
 next_address_checked(struct balancer_item *item, bool allow_fade)
 {
-    const struct address_envelope *first = next_address(item);
-    if (first == nullptr)
-        return nullptr;
-
-    const struct address_envelope *ret = first;
+    const struct address_envelope &first = next_address(item);
+    const struct address_envelope *ret = &first;
     do {
-        if (check_envelope(ret, allow_fade))
-            return ret;
+        if (check_envelope(*ret, allow_fade))
+            return *ret;
 
-        ret = next_address(item);
-        assert(ret != nullptr);
-    } while (ret != first);
+        ret = &next_address(item);
+    } while (ret != &first);
 
     /* all addresses failed: */
     return first;
 }
 
-static const struct address_envelope *
+static const struct address_envelope &
 next_sticky_address_checked(const struct address_list &al, unsigned session)
 {
     assert(al.size >= 2);
@@ -120,12 +116,11 @@ next_sticky_address_checked(const struct address_list &al, unsigned session)
     unsigned i = session % al.size;
     bool allow_fade = true;
 
-    const struct address_envelope *first = al[i];
-    assert(first != nullptr);
-    const struct address_envelope *ret = first;
+    const struct address_envelope &first = al[i];
+    const struct address_envelope *ret = &first;
     do {
-        if (check_envelope(ret, allow_fade))
-            return ret;
+        if (check_envelope(*ret, allow_fade))
+            return *ret;
 
         /* only the first iteration is allowed to override
            FAILURE_FADE */
@@ -135,9 +130,9 @@ next_sticky_address_checked(const struct address_list &al, unsigned session)
         if (i >= al.size)
             i = 0;
 
-        ret = al[i];
+        ret = &al[i];
 
-    } while (ret != first);
+    } while (ret != &first);
 
     /* all addresses failed: */
     return first;
@@ -183,7 +178,7 @@ balancer_free(struct balancer *balancer)
     cache_close(balancer->cache);
 }
 
-const struct address_envelope *
+const struct address_envelope &
 balancer_get(struct balancer &balancer, const struct address_list &list,
              unsigned session)
 {
@@ -191,7 +186,7 @@ balancer_get(struct balancer &balancer, const struct address_list &list,
     struct pool *pool;
 
     if (list.IsSingle())
-        return list.GetFirst();
+        return list[0];
 
     switch (list.sticky_mode) {
     case STICKY_NONE:
