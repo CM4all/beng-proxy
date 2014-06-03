@@ -60,6 +60,14 @@ widget_get_original_address(const struct widget *widget)
     return &view->address;
 }
 
+gcc_pure
+static bool
+HasTrailingSlash(const char *p)
+{
+    size_t length = strlen(p);
+    return p > 0 && p[length - 1] == '/';
+}
+
 const struct resource_address *
 widget_determine_address(const struct widget *widget, bool stateful)
 {
@@ -96,8 +104,14 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
         uri = original_address->u.http->path;
 
-        if (*path_info != 0)
+        if (*path_info != 0) {
+            if (*path_info == '/' && HasTrailingSlash(uri))
+                /* avoid generating a double slash when concatenating
+                   URI path and path_info */
+                ++path_info;
+
             uri = p_strcat(pool, uri, path_info, nullptr);
+        }
 
         if (widget->query_string != nullptr)
             uri = uri_insert_query_string(pool, uri,
@@ -121,8 +135,15 @@ widget_determine_address(const struct widget *widget, bool stateful)
 
         uri = original_address->u.lhttp->uri;
 
-        if (*path_info != 0)
+
+        if (*path_info != 0) {
+            if (*path_info == '/' && HasTrailingSlash(uri))
+                /* avoid generating a double slash when concatenating
+                   URI path and path_info */
+                ++path_info;
+
             uri = p_strcat(pool, uri, path_info, nullptr);
+        }
 
         if (widget->query_string != nullptr)
             uri = uri_insert_query_string(pool, uri,

@@ -4,6 +4,13 @@ cm4all-beng-proxy (5.0.1) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (4.2) unstable; urgency=low
+
+  * widget: avoid double slash when concatenating (Local) HTTP URI and
+    path_info
+
+ -- Max Kellermann <mk@cm4all.com>  Tue, 03 Jun 2014 18:08:54 -0000
+
 cm4all-beng-proxy (4.1) unstable; urgency=medium
 
   * feature freeze
