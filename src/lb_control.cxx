@@ -11,7 +11,7 @@
 #include "control_server.h"
 #include "address_envelope.h"
 #include "address_edit.h"
-#include "failure.h"
+#include "failure.hxx"
 #include "tpool.h"
 
 #include <daemon/log.h>

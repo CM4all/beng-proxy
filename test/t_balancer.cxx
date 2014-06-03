@@ -1,5 +1,5 @@
 #include "PoolTest.hxx"
-#include "failure.h"
+#include "failure.hxx"
 #include "balancer.hxx"
 #include "pool.h"
 #include "address_list.hxx"

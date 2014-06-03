@@ -28,7 +28,7 @@
 #include "child_manager.h"
 #include "thread_pool.h"
 #include "global.h"
-#include "failure.h"
+#include "failure.hxx"
 #include "bulldog.h"
 #include "balancer.hxx"
 #include "listener.h"

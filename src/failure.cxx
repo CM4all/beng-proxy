@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "failure.h"
+#include "failure.hxx"
 #include "expiry.h"
 #include "address_envelope.h"
 #include "djbhash.h"
@@ -63,7 +63,7 @@ gcc_pure
 static inline bool
 failure_is_expired(const struct failure *failure)
 {
-    assert(failure != NULL);
+    assert(failure != nullptr);
 
     return failure_status_can_expire(failure->status) &&
         is_expired(failure->expires);
@@ -73,7 +73,7 @@ gcc_pure
 static inline bool
 failure_is_fade(const struct failure *failure)
 {
-    assert(failure != NULL);
+    assert(failure != nullptr);
 
     return failure->fade_expires > 0 &&
         !is_expired(failure->fade_expires);
@@ -108,15 +108,14 @@ void
 failure_set(const struct sockaddr *addr, size_t addrlen,
             enum failure_status status, unsigned duration)
 {
-    unsigned slot = djb_hash(addr, addrlen) % FAILURE_SLOTS;
-    struct failure *failure;
-
-    assert(addr != NULL);
+    assert(addr != nullptr);
     assert(status > FAILURE_OK);
 
     const unsigned now = now_s();
 
-    for (failure = fl.slots[slot]; failure != NULL; failure = failure->next) {
+    const unsigned slot = djb_hash(addr, addrlen) % FAILURE_SLOTS;
+    struct failure *failure;
+    for (failure = fl.slots[slot]; failure != nullptr; failure = failure->next) {
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
             failure_override_status(failure, now, status, duration);
@@ -126,8 +125,9 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
 
     /* insert new failure object into the linked list */
 
-    failure = p_malloc(fl.pool, sizeof(*failure)
-                       - sizeof(failure->envelope.address) + addrlen);
+    failure = (struct failure *)
+        p_malloc(fl.pool, sizeof(*failure)
+                 - sizeof(failure->envelope.address) + addrlen);
     failure->expires = now + duration;
     failure->fade_expires = 0;
     failure->status = status;
@@ -175,10 +175,10 @@ failure_unset(const struct sockaddr *addr, size_t addrlen,
     unsigned slot = djb_hash(addr, addrlen) % FAILURE_SLOTS;
     struct failure **failure_r, *failure;
 
-    assert(addr != NULL);
+    assert(addr != nullptr);
 
     for (failure_r = &fl.slots[slot], failure = *failure_r;
-         failure != NULL;
+         failure != nullptr;
          failure_r = &failure->next, failure = *failure_r) {
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
@@ -207,10 +207,10 @@ failure_get_status(const struct sockaddr *address, size_t length)
     unsigned slot = djb_hash(address, length) % FAILURE_SLOTS;
     struct failure *failure;
 
-    assert(address != NULL);
+    assert(address != nullptr);
     assert(length >= sizeof(failure->envelope.address));
 
-    for (failure = fl.slots[slot]; failure != NULL; failure = failure->next)
+    for (failure = fl.slots[slot]; failure != nullptr; failure = failure->next)
         if (failure->envelope.length == length &&
             memcmp(&failure->envelope.address, address, length) == 0)
             return failure_get_status2(failure);

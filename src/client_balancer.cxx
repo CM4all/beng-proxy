@@ -9,7 +9,7 @@
 #include "address_envelope.h"
 #include "address_list.hxx"
 #include "balancer.hxx"
-#include "failure.h"
+#include "failure.hxx"
 #include "async.h"
 #include "pool.h"
 

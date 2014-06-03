@@ -8,7 +8,7 @@
 #include "lb_config.hxx"
 #include "async.h"
 #include "pool.h"
-#include "failure.h"
+#include "failure.hxx"
 
 #include <daemon/log.h>
 

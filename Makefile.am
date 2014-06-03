@@ -132,7 +132,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/drop.cxx src/drop.hxx \
 	src/expansible-buffer.c src/expansible-buffer.h \
 	src/expiry.h \
-	src/failure.c src/failure.h \
+	src/failure.cxx src/failure.hxx \
 	src/fcache.cxx src/fcache.h \
 	src/fcgi_client.cxx src/fcgi_client.hxx \
 	src/fcgi_launch.cxx src/fcgi_launch.hxx \
@@ -382,7 +382,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/tcp_stock.cxx \
 	src/tcp_balancer.cxx \
 	src/pipe-stock.c \
-	src/failure.c \
+	src/failure.cxx \
 	src/balancer.cxx \
 	src/address.c \
 	src/address_list.cxx \
@@ -1078,7 +1078,7 @@ test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
 test_t_balancer_SOURCES = test/t_balancer.cxx \
 	test/PoolTest.hxx \
 	src/bulldog.c \
-	src/balancer.cxx src/cache.c src/failure.c \
+	src/balancer.cxx src/cache.c src/failure.cxx \
 	src/hashmap.c \
 	src/address_list.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
@@ -1408,7 +1408,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/translate_client.cxx src/tstock.cxx src/growing-buffer.c src/gb-io.c \
 	src/translate_response.cxx \
-	src/failure.c src/bulldog.c src/balancer.cxx src/cache.c \
+	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.c \
 	src/tcp_stock.cxx src/client-socket.c \
 	src/fd_util.c src/fd-util.c \
 	src/stock.c src/hstock.c src/hashmap.c src/strmap.c \
@@ -1507,7 +1507,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \
-	src/failure.c src/bulldog.c \
+	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/http_address.cxx src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
@@ -1541,7 +1541,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
 	src/transformation.cxx \
-	src/failure.c src/bulldog.c \
+	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/uri-extract.c \
@@ -1562,7 +1562,7 @@ test_run_client_balancer_SOURCES = test/run_client_balancer.cxx \
 	src/client_balancer.cxx \
 	src/client-socket.c \
 	src/balancer.cxx \
-	src/failure.c \
+	src/failure.cxx \
 	src/bulldog.c \
 	src/cache.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
@@ -1735,7 +1735,7 @@ test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 
 test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/address_list.cxx src/address_resolver.cxx \
-	src/failure.c src/bulldog.c src/balancer.cxx \
+	src/failure.cxx src/bulldog.c src/balancer.cxx \
 	src/tcp_stock.cxx src/tcp_balancer.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.c \

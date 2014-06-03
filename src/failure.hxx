@@ -4,12 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_FAILURE_H
-#define __BENG_FAILURE_H
+#ifndef BENG_PROXY_FAILURE_HXX
+#define BENG_PROXY_FAILURE_HXX
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -42,10 +41,6 @@ enum failure_status {
      */
     FAILURE_MONITOR,
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 failure_init(struct pool *pool);
@@ -86,9 +81,5 @@ failure_check(const struct sockaddr *address, size_t length)
 {
     return failure_get_status(address, length) != FAILURE_OK;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

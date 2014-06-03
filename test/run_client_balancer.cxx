@@ -3,7 +3,7 @@
 #include "pool.h"
 #include "async.h"
 #include "balancer.hxx"
-#include "failure.h"
+#include "failure.hxx"
 #include "address_list.hxx"
 
 #include <socket/resolver.h>

@@ -27,7 +27,7 @@
 #include "clock.h"
 #include "access-log.h"
 #include "strmap.h"
-#include "failure.h"
+#include "failure.hxx"
 #include "bulldog.h"
 #include "abort-close.h"
 

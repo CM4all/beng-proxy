@@ -8,7 +8,7 @@
 #include "cache.h"
 #include "address_list.hxx"
 #include "address_envelope.h"
-#include "failure.h"
+#include "failure.hxx"
 #include "bulldog.h"
 
 #include <assert.h>

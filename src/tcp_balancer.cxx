@@ -10,7 +10,7 @@
 #include "address_envelope.h"
 #include "address_list.hxx"
 #include "balancer.hxx"
-#include "failure.h"
+#include "failure.hxx"
 #include "pool.h"
 
 struct tcp_balancer {

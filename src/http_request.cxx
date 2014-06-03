@@ -16,7 +16,7 @@
 #include "growing-buffer.h"
 #include "lease.h"
 #include "abort-close.h"
-#include "failure.h"
+#include "failure.hxx"
 #include "address_envelope.h"
 #include "istream.h"
 #include "filtered_socket.hxx"
