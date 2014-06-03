@@ -17,7 +17,7 @@
 #include "lease.h"
 #include "abort-close.h"
 #include "failure.hxx"
-#include "address_envelope.h"
+#include "address_envelope.hxx"
 #include "istream.h"
 #include "filtered_socket.hxx"
 

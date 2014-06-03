@@ -6,7 +6,7 @@
 
 #include "lb_config.hxx"
 #include "address_string.hxx"
-#include "address_envelope.h"
+#include "address_envelope.hxx"
 #include "address_edit.h"
 #include "gerrno.h"
 

@@ -384,6 +384,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/balancer.cxx \
 	src/address.c \
 	src/address_list.cxx \
+	src/address_envelope.hxx \
 	src/address_resolver.cxx src/address_resolver.hxx \
 	src/address_string.cxx src/address_string.hxx \
 	src/address_edit.h \

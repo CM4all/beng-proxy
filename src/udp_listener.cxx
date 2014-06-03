@@ -8,7 +8,7 @@
 #include "pool.h"
 #include "fd_util.h"
 #include "address_string.hxx"
-#include "address_envelope.h"
+#include "address_envelope.hxx"
 #include "gerrno.h"
 
 #include <socket/address.h>

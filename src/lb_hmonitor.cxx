@@ -13,7 +13,7 @@
 #include "pool.h"
 #include "tpool.h"
 #include "hashmap.h"
-#include "address_envelope.h"
+#include "address_envelope.hxx"
 #include "address_edit.h"
 
 static struct pool *hmonitor_pool;

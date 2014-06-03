@@ -6,7 +6,7 @@
 
 #include "failure.hxx"
 #include "expiry.h"
-#include "address_envelope.h"
+#include "address_envelope.hxx"
 #include "djbhash.h"
 #include "pool.h"
 

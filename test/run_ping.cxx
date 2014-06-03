@@ -2,7 +2,7 @@
 #include "pool.h"
 #include "async.h"
 #include "address_string.hxx"
-#include "address_envelope.h"
+#include "address_envelope.hxx"
 
 #include <event.h>
 #include <stdio.h>

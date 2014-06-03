@@ -3,7 +3,7 @@
 #include "balancer.hxx"
 #include "pool.h"
 #include "address_list.hxx"
-#include "address_envelope.h"
+#include "address_envelope.hxx"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>

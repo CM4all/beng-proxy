@@ -6,7 +6,7 @@
 
 #include "client_balancer.hxx"
 #include "client-socket.h"
-#include "address_envelope.h"
+#include "address_envelope.hxx"
 #include "address_list.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"

@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ADDRESS_ENVELOPE_H
-#define BENG_PROXY_ADDRESS_ENVELOPE_H
+#ifndef BENG_PROXY_ADDRESS_ENVELOPE_HXX
+#define BENG_PROXY_ADDRESS_ENVELOPE_HXX
 
 #include <sys/socket.h>
 
