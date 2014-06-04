@@ -23,12 +23,9 @@ public:
 
         /* for whatever reason, execve() wants non-const string
            pointers - this is a hack to work around that limitation */
-        union {
-            const char *in;
-            char *out;
-        } u = { .in = arg };
+        char *deconst = const_cast<char *>(arg);
 
-        args.push_back(u.out);
+        args.push_back(deconst);
     }
 
     const char *GetPath() const {
