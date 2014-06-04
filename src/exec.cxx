@@ -15,16 +15,16 @@
 void
 Exec::DoExec()
 {
-    assert(num_args > 0);
+    assert(!args.empty());
 
-    args[num_args] = nullptr;
+    args.push_back(nullptr);
 
-    const char *path = args[0];
+    const char *path = args.front();
     char *slash = strrchr(path, '/');
     if (slash != nullptr && slash[1] != 0)
-        args[0] = slash + 1;
+        args.front() = slash + 1;
 
-    execv(path, args);
+    execv(path, args.raw());
 
     fprintf(stderr, "failed to execute %s: %s\n", path, strerror(errno));
     _exit(1);

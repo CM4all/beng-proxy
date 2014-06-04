@@ -84,6 +84,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/util/ConstBuffer.hxx \
 	src/util/DereferenceIterator.hxx \
 	src/util/TrivialArray.hxx \
+	src/util/StaticArray.hxx \
 	src/product.h \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/gerrno.h \

@@ -8,17 +8,16 @@
 #ifndef BENG_PROXY_EXEC_HXX
 #define BENG_PROXY_EXEC_HXX
 
+#include "util/StaticArray.hxx"
+
 #include <inline/compiler.h>
 
 #include <assert.h>
 
 class Exec {
-    char *args[32];
-    unsigned num_args;
+    StaticArray<char *, 32> args;
 
 public:
-    Exec():num_args(0) {}
-
     void Append(const char *arg) {
         assert(arg != nullptr);
 
@@ -29,11 +28,11 @@ public:
             char *out;
         } u = { .in = arg };
 
-        args[num_args++] = u.out;
+        args.push_back(u.out);
     }
 
     const char *GetPath() const {
-        return args[0];
+        return args.front();
     }
 
     gcc_noreturn
