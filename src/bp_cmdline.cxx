@@ -448,18 +448,18 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'p':
-            if (config->num_ports >= config::MAX_PORTS)
+            if (config->ports.full())
                 arg_error(argv[0], "too many listener ports");
             ret = (unsigned)strtoul(optarg, &endptr, 10);
             if (*endptr != 0)
                 arg_error(argv[0], "invalid number after --port");
             if (ret <= 0 || ret > 0xffff)
                 arg_error(argv[0], "invalid port after --port");
-            config->ports[config->num_ports++] = ret;
+            config->ports.push_back(ret);
             break;
 
         case 'L':
-            if (config->num_listen >= config::MAX_LISTEN)
+            if (config->listen.full())
                 arg_error(argv[0], "too many listeners");
 
             memset(&hints, 0, sizeof(hints));
@@ -469,10 +469,9 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             ret = socket_resolve_host_port(optarg,
                                            debug_mode ? 8080 : 80,
                                            &hints,
-                                           &config->listen[config->num_listen]);
+                                           &config->listen.append());
             if (ret != 0)
                 arg_error(argv[0], "failed to resolve %s", optarg);
-            ++config->num_listen;
             break;
 
         case 'c':

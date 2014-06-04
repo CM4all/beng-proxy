@@ -307,10 +307,8 @@ int main(int argc, char **argv)
 
     parse_cmdline(&instance.config, instance.pool, argc, argv);
 
-    if (instance.config.num_ports == 0 && instance.config.num_listen == 0) {
-        instance.config.ports[instance.config.num_ports++] =
-            debug_mode ? 8080 : 80;
-    }
+    if (instance.config.ports.empty() && instance.config.listen.empty())
+        instance.config.ports.push_back(debug_mode ? 8080 : 80);
 
     /* initialize */
 
@@ -345,11 +343,11 @@ int main(int argc, char **argv)
 
     session_save_init(instance.config.session_save_path);
 
-    for (unsigned i = 0; i < instance.config.num_ports; ++i)
-        add_tcp_listener(&instance, instance.config.ports[i]);
+    for (auto i : instance.config.ports)
+        add_tcp_listener(&instance, i);
 
-    for (unsigned i = 0; i < instance.config.num_listen; ++i)
-        add_listener(&instance, instance.config.listen[i]);
+    for (auto i : instance.config.listen)
+        add_listener(&instance, i);
 
     if (!global_control_handler_init(instance.pool, &instance))
         exit(2);

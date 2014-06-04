@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_CONFIG_HXX
 #define BENG_PROXY_CONFIG_HXX
 
+#include "util/TrivialArray.hxx"
+
 #include <daemon/user.h>
 
 #include <stddef.h>
@@ -30,11 +32,9 @@ struct config {
      */
     const char *config_path;
 
-    unsigned ports[MAX_PORTS];
-    unsigned num_ports;
+    TrivialArray<unsigned, MAX_PORTS> ports;
 
-    struct addrinfo *listen[MAX_LISTEN];
-    unsigned num_listen;
+    TrivialArray<struct addrinfo *, MAX_LISTEN> listen;
 
     const char *session_cookie;
 
