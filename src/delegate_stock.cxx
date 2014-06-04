@@ -99,10 +99,10 @@ delegate_stock_fn(void *ctx)
     clearenv();
 
     struct exec e;
-    exec_init(&e);
+    e.Init();
     jail_wrapper_insert(&e, &info->options->jail, NULL);
-    exec_append(&e, info->helper);
-    exec_do(&e);
+    e.Append(info->helper);
+    e.DoExec();
 
     _exit(1);
 }

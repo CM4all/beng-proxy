@@ -39,14 +39,14 @@ lhttp_run(const struct lhttp_address *address, int fd)
     }
 
     struct exec e;
-    exec_init(&e);
+    e.Init();
     jail_wrapper_insert(&e, &address->options.jail, nullptr);
-    exec_append(&e, address->path);
+    e.Append(address->path);
 
     for (unsigned i = 0; i < address->args.n; ++i)
-        exec_append(&e, address->args.values[i]);
+        e.Append(address->args.values[i]);
 
-    exec_do(&e);
+    e.DoExec();
 
     daemon_log(1, "failed to execute %s: %s\n",
                address->path, strerror(errno));

@@ -35,12 +35,12 @@ fcgi_run(const struct jail_params *jail,
     clearenv();
 
     struct exec e;
-    exec_init(&e);
+    e.Init();
     jail_wrapper_insert(&e, jail, nullptr);
-    exec_append(&e, executable_path);
+    e.Append(executable_path);
     for (unsigned i = 0; i < n_args; ++i)
-        exec_append(&e, args[i]);
-    exec_do(&e);
+        e.Append(args[i]);
+    e.DoExec();
 
     daemon_log(1, "failed to execute %s: %s\n",
                executable_path, strerror(errno));

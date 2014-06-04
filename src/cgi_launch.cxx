@@ -143,13 +143,13 @@ cgi_run(const struct jail_params *jail,
     }
 
     struct exec e;
-    exec_init(&e);
-    exec_append(&e, path);
+    e.Init();
+    e.Append(path);
     for (unsigned i = 0; i < n_args; ++i)
-        exec_append(&e, args[i]);
+        e.Append(args[i]);
     if (arg != nullptr)
-        exec_append(&e, arg);
-    exec_do(&e);
+        e.Append(arg);
+    e.DoExec();
 
     fprintf(stderr, "exec('%s') failed: %s\n",
             path, strerror(errno));

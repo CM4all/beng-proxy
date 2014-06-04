@@ -53,7 +53,7 @@ was_run(void *ctx)
     /* fd2 is retained */
     dup2(args->control_fd, 3);
 
-    exec_do(&args->exec);
+    args->exec.DoExec();
 
     fprintf(stderr, "failed to execute %s: %s\n",
             args->exec.args[0], strerror(errno));
@@ -97,11 +97,11 @@ was_launch(struct was_process *process,
         .input_fd = output_fds[0],
     };
 
-    exec_init(&run_args.exec);
+    run_args.exec.Init();
     jail_wrapper_insert(&run_args.exec, &options->jail, nullptr);
-    exec_append(&run_args.exec, executable_path);
+    run_args.exec.Append(executable_path);
     for (unsigned i = 0; i < n_args; ++i)
-        exec_append(&run_args.exec, args[i]);
+        run_args.exec.Append(args[i]);
 
     int clone_flags = SIGCHLD;
     clone_flags = namespace_options_clone_flags(&options->ns, clone_flags);

@@ -15,46 +15,36 @@
 struct exec {
     char *args[32];
     unsigned num_args;
+
+    void Init() {
+        num_args = 0;
+    }
+
+    void Append(const char *arg) {
+        assert(arg != nullptr);
+
+        /* for whatever reason, execve() wants non-const string
+           pointers - this is a hack to work around that limitation */
+        union {
+            const char *in;
+            char *out;
+        } u = { .in = arg };
+
+        args[num_args++] = u.out;
+    }
+
+    void DoExec() {
+        assert(num_args > 0);
+
+        args[num_args] = nullptr;
+
+        const char *path = args[0];
+        char *slash = strrchr(path, '/');
+        if (slash != nullptr && slash[1] != 0)
+            args[0] = slash + 1;
+
+        execv(path, args);
+    }
 };
-
-static inline void
-exec_init(struct exec *e)
-{
-    assert(e != NULL);
-
-    e->num_args = 0;
-}
-
-static inline void
-exec_append(struct exec *e, const char *arg)
-{
-    assert(e != NULL);
-    assert(arg != NULL);
-
-    /* for whatever reason, execve() wants non-const string pointers -
-       this is a hack to work around that limitation */
-    union {
-        const char *in;
-        char *out;
-    } u = { .in = arg };
-
-    e->args[e->num_args++] = u.out;
-}
-
-static inline void
-exec_do(struct exec *e)
-{
-    assert(e != NULL);
-    assert(e->num_args > 0);
-
-    e->args[e->num_args] = NULL;
-
-    const char *path = e->args[0];
-    char *slash = strrchr(path, '/');
-    if (slash != NULL && slash[1] != 0)
-        e->args[0] = slash + 1;
-
-    execv(path, e->args);
-}
 
 #endif
