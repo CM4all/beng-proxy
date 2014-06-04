@@ -132,7 +132,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/direct.c src/direct.h \
 	src/dpool.c src/dpool.h \
 	src/drop.cxx src/drop.hxx \
-	src/exec.hxx \
+	src/exec.cxx src/exec.hxx \
 	src/expansible-buffer.c src/expansible-buffer.h \
 	src/expiry.h \
 	src/failure.cxx src/failure.hxx \
@@ -825,6 +825,7 @@ test_run_ping_LDADD = $(AM_LDADD) \
 test_run_was_SOURCES = test/run_was.cxx \
 	src/was_launch.cxx src/was_client.cxx \
 	src/was_control.cxx src/was_input.cxx src/was_output.cxx \
+	src/exec.cxx \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/cleanup_timer.c \
@@ -1098,6 +1099,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/cgi_glue.cxx src/fork.c \
 	src/cgi_client.cxx src/cgi_launch.cxx \
 	src/cgi_parser.cxx \
+	src/exec.cxx \
 	src/uri_base.cxx src/uri_escape.cxx src/uri-relative.c \
 	src/uri-extract.c \
 	src/cleanup_timer.c \
@@ -1778,6 +1780,7 @@ test_t_memcached_client_LDADD = $(AM_LDADD) \
 
 test_run_delegate_SOURCES = test/run_delegate.cxx \
 	src/delegate_stock.cxx src/delegate_client.cxx src/delegate_glue.cxx \
+	src/exec.cxx \
 	src/hashmap.c src/hstock.c src/stock.c \
 	src/defer.c \
 	src/fd_util.c
