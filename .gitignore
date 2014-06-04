@@ -27,7 +27,6 @@ test/t-istream-delayed
 test/t-istream-subst
 test/t-istream-deflate
 test/t-istream-byte
-test/run-parser-cdata
 test/run_css_parser
 test/run_httpd_hello
 test/run_ua_parser

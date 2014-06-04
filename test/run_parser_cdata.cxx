@@ -1,4 +1,4 @@
-#include "xml_parser.h"
+#include "xml_parser.hxx"
 #include "istream.h"
 #include "istream_file.h"
 #include "fb_pool.h"

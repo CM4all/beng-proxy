@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "xml_parser.h"
+#include "xml_parser.hxx"
 #include "pool.h"
 #include "html-chars.h"
 #include "expansible-buffer.h"
@@ -113,9 +113,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
     const char *buffer = start, *end = start + length, *p;
     size_t nbytes;
 
-    assert(parser != NULL);
-    assert(parser->input != NULL);
-    assert(buffer != NULL);
+    assert(parser != nullptr);
+    assert(parser->input != nullptr);
+    assert(buffer != nullptr);
     assert(length > 0);
 
     while (buffer < end) {
@@ -123,14 +123,14 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         case PARSER_NONE:
         case PARSER_SCRIPT:
             /* find first character */
-            p = memchr(buffer, '<', end - buffer);
-            if (p == NULL) {
+            p = (const char *)memchr(buffer, '<', end - buffer);
+            if (p == nullptr) {
                 nbytes = parser->handler->cdata(buffer, end - buffer, 1,
                                                 parser->position + buffer - start,
                                                 parser->handler_ctx);
                 assert(nbytes <= (size_t)(end - buffer));
 
-                if (parser->input == NULL)
+                if (parser->input == nullptr)
                     return 0;
 
                 nbytes += buffer - start;
@@ -144,7 +144,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                 parser->handler_ctx);
                 assert(nbytes <= (size_t)(p - buffer));
 
-                if (parser->input == NULL)
+                if (parser->input == nullptr)
                     return 0;
 
                 if (nbytes < (size_t)(p - buffer)) {
@@ -174,7 +174,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                 parser->handler_ctx);
                 assert(nbytes <= (size_t)(end - buffer));
 
-                if (parser->input == NULL)
+                if (parser->input == nullptr)
                     return 0;
 
                 if (nbytes == 0) {
@@ -216,7 +216,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     interesting = parser->handler->tag_start(&parser->tag,
                                                              parser->handler_ctx);
 
-                    if (parser->input == NULL)
+                    if (parser->input == nullptr)
                         return 0;
 
                     parser->state = interesting ? PARSER_ELEMENT_TAG : PARSER_ELEMENT_BORING;
@@ -254,7 +254,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                   parser->handler_ctx);
                     poison_undefined(&parser->tag, sizeof(parser->tag));
 
-                    if (parser->input == NULL)
+                    if (parser->input == nullptr)
                         return 0;
 
                     break;
@@ -283,8 +283,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         case PARSER_ELEMENT_BORING:
             /* ignore this tag */
 
-            p = memchr(buffer, '>', end - buffer);
-            if (p != NULL) {
+            p = (const char *)memchr(buffer, '>', end - buffer);
+            if (p != nullptr) {
                 /* the "boring" tag has been closed */
                 buffer = p + 1;
                 parser->state = PARSER_NONE;
@@ -354,8 +354,9 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
         case PARSER_ATTR_VALUE:
             /* wait till we find the delimiter */
-            p = memchr(buffer, parser->attr_value_delimiter, end - buffer);
-            if (p == NULL) {
+            p = (const char *)memchr(buffer, parser->attr_value_delimiter,
+                                     end - buffer);
+            if (p == nullptr) {
                 if (!expansible_buffer_write_buffer(parser->attr_value,
                                                     buffer, end - buffer)) {
                     parser->state = PARSER_ELEMENT_TAG;
@@ -413,7 +414,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                   parser->handler_ctx);
                     poison_undefined(&parser->tag, sizeof(parser->tag));
 
-                    if (parser->input == NULL)
+                    if (parser->input == nullptr)
                         return 0;
 
                     break;
@@ -428,7 +429,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     poison_undefined(&parser->tag, sizeof(parser->tag));
                     parser->state = PARSER_NONE;
 
-                    if (parser->input == NULL)
+                    if (parser->input == nullptr)
                         return 0;
 
                     break;
@@ -495,7 +496,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                         parser->handler_ctx);
                         assert(nbytes <= (size_t)(buffer - p));
 
-                        if (parser->input == NULL)
+                        if (parser->input == nullptr)
                             return 0;
 
                         if (nbytes < (size_t)(buffer - p)) {
@@ -522,7 +523,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                         parser->handler_ctx);
                         assert(nbytes <= parser->cdend_match);
 
-                        if (parser->input == NULL)
+                        if (parser->input == nullptr)
                             return 0;
 
                         parser->cdend_match -= nbytes;
@@ -550,7 +551,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                                                 parser->handler_ctx);
                 assert(nbytes <= (size_t)(buffer - p));
 
-                if (parser->input == NULL)
+                if (parser->input == nullptr)
                     return 0;
 
                 if (nbytes < (size_t)(buffer - p)) {
@@ -566,8 +567,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
             switch (parser->minus_count) {
             case 0:
                 /* find a minus which introduces the "-->" sequence */
-                p = memchr(buffer, '-', end - buffer);
-                if (p != NULL) {
+                p = (const char *)memchr(buffer, '-', end - buffer);
+                if (p != nullptr) {
                     /* found one - minus_count=1 and go to char after
                        minus */
                     buffer = p + 1;
@@ -606,7 +607,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         }
     }
 
-    assert(parser->input != NULL);
+    assert(parser->input != nullptr);
 
     parser->position += length;
     return length;
@@ -621,11 +622,10 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 static size_t
 parser_input_data(const void *data, size_t length, void *ctx)
 {
-    struct parser *parser = ctx;
-    size_t nbytes;
+    struct parser *parser = (struct parser *)ctx;
 
     pool_ref(parser->pool);
-    nbytes = parser_feed(parser, data, length);
+    size_t nbytes = parser_feed(parser, (const char *)data, length);
     pool_unref(parser->pool);
 
     return nbytes;
@@ -634,11 +634,11 @@ parser_input_data(const void *data, size_t length, void *ctx)
 static void
 parser_input_eof(void *ctx)
 {
-    struct parser *parser = ctx;
+    struct parser *parser = (struct parser *)ctx;
 
-    assert(parser->input != NULL);
+    assert(parser->input != nullptr);
 
-    parser->input = NULL;
+    parser->input = nullptr;
     parser->handler->eof(parser->handler_ctx, parser->position);
     pool_unref(parser->pool);
 }
@@ -646,11 +646,11 @@ parser_input_eof(void *ctx)
 static void
 parser_input_abort(GError *error, void *ctx)
 {
-    struct parser *parser = ctx;
+    struct parser *parser = (struct parser *)ctx;
 
-    assert(parser->input != NULL);
+    assert(parser->input != nullptr);
 
-    parser->input = NULL;
+    parser->input = nullptr;
     parser->handler->abort(error, parser->handler_ctx);
     pool_unref(parser->pool);
 }
@@ -671,15 +671,15 @@ struct parser * gcc_malloc
 parser_new(struct pool *pool, struct istream *input,
            const struct parser_handler *handler, void *handler_ctx)
 {
-    struct parser *parser = p_malloc(pool, sizeof(*parser));
+    auto parser = NewFromPool<struct parser>(pool);
 
-    assert(handler != NULL);
-    assert(handler->tag_start != NULL);
-    assert(handler->tag_finished != NULL);
-    assert(handler->attr_finished != NULL);
-    assert(handler->cdata != NULL);
-    assert(handler->eof != NULL);
-    assert(handler->abort != NULL);
+    assert(handler != nullptr);
+    assert(handler->tag_start != nullptr);
+    assert(handler->tag_finished != nullptr);
+    assert(handler->attr_finished != nullptr);
+    assert(handler->cdata != nullptr);
+    assert(handler->eof != nullptr);
+    assert(handler->abort != nullptr);
 
     pool_ref(pool);
     parser->pool = pool;
@@ -700,8 +700,8 @@ parser_new(struct pool *pool, struct istream *input,
 void
 parser_close(struct parser *parser)
 {
-    assert(parser != NULL);
-    assert(parser->input != NULL);
+    assert(parser != nullptr);
+    assert(parser->input != nullptr);
 
     istream_free_handler(&parser->input);
     pool_unref(parser->pool);
@@ -710,8 +710,8 @@ parser_close(struct parser *parser)
 void
 parser_read(struct parser *parser)
 {
-    assert(parser != NULL);
-    assert(parser->input != NULL);
+    assert(parser != nullptr);
+    assert(parser->input != nullptr);
 
     istream_read(parser->input);
 }
@@ -719,7 +719,7 @@ parser_read(struct parser *parser)
 void
 parser_script(struct parser *parser)
 {
-    assert(parser != NULL);
+    assert(parser != nullptr);
     assert(parser->state == PARSER_NONE || parser->state == PARSER_INSIDE);
 
     parser->state = PARSER_SCRIPT;

@@ -205,7 +205,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/memcached_protocol.hxx \
 	src/memcached_stock.cxx src/memcached_stock.hxx \
 	src/memcached_packet.cxx \
-	src/xml_parser.c src/xml_parser.h \
+	src/xml_parser.cxx src/xml_parser.hxx \
 	src/pevent.h \
 	src/pipe-stock.c src/pipe-stock.h \
 	src/pipe_filter.cxx src/pipe_filter.hxx \
@@ -729,7 +729,7 @@ noinst_PROGRAMS = \
 	test/run_delegate \
 	test/dump_udp test/dump_control test/send-control \
 	test/run_ua_parser \
-	test/run-parser-cdata
+	test/run_parser_cdata
 
 if HAVE_LIBNFS
 noinst_PROGRAMS += test/run_nfs_client
@@ -1043,7 +1043,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget_request.cxx src/widget_approval.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget-ref.c src/widget_uri.cxx src/args.cxx \
-	src/widget_session.cxx src/xml_parser.c src/widget_class.cxx \
+	src/widget_session.cxx src/xml_parser.cxx src/widget_class.cxx \
 	src/widget_view.cxx \
 	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/uri-extract.c \
@@ -1493,7 +1493,7 @@ test_t_escape_css_SOURCES = \
 test_t_escape_css_LDADD = $(AM_LDADD) libutil.a
 
 test_run_processor_SOURCES = test/run_processor.cxx \
-	src/processor.cxx src/penv.cxx src/xml_parser.c \
+	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
@@ -1527,7 +1527,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_processor_SOURCES = test/t_processor.cxx \
-	src/processor.cxx src/penv.cxx src/xml_parser.c \
+	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
@@ -1817,8 +1817,8 @@ test_run_ua_parser_SOURCES = test/run_ua_parser.c \
 	src/ua_classification.c
 test_run_ua_parser_LDADD = $(AM_LDADD) $(GLIB_LIBS)
 
-test_run_parser_cdata_SOURCES = test/t-parser-cdata.c \
-	src/xml_parser.c \
+test_run_parser_cdata_SOURCES = test/run_parser_cdata.cxx \
+	src/xml_parser.cxx \
 	src/fifo-buffer.c src/buffered_io.c src/expansible-buffer.c \
 	src/cleanup_timer.c \
 	src/fd_util.c

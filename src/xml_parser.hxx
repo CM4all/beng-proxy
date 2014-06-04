@@ -4,15 +4,15 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_XML_PARSER_H
-#define BENG_PROXY_XML_PARSER_H
+#ifndef BENG_PROXY_XML_PARSER_HXX
+#define BENG_PROXY_XML_PARSER_HXX
 
 #include "strref.h"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
 #include <sys/types.h>
-#include <glib.h>
 
 struct pool;
 struct istream;
@@ -56,10 +56,6 @@ struct parser_handler {
 
 struct parser;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct parser * gcc_malloc
 parser_new(struct pool *pool, struct istream *input,
            const struct parser_handler *handler, void *handler_ctx);
@@ -76,9 +72,5 @@ parser_read(struct parser *parser);
 
 void
 parser_script(struct parser *parser);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

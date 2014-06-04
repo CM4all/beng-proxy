@@ -9,7 +9,7 @@
 #include "css_processor.h"
 #include "css_rewrite.hxx"
 #include "penv.hxx"
-#include "xml_parser.h"
+#include "xml_parser.hxx"
 #include "uri_escape.hxx"
 #include "uri-extract.h"
 #include "widget.h"
