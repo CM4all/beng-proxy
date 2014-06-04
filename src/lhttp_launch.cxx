@@ -12,8 +12,6 @@
 #include <inline/compiler.h>
 
 #include <unistd.h>
-#include <string.h>
-#include <errno.h>
 #include <stdlib.h>
 
 gcc_noreturn
@@ -46,8 +44,4 @@ lhttp_run(const struct lhttp_address *address, int fd)
         e.Append(address->args.values[i]);
 
     e.DoExec();
-
-    daemon_log(1, "failed to execute %s: %s\n",
-               address->path, strerror(errno));
-    _exit(1);
 }

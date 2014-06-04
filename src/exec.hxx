@@ -8,6 +8,8 @@
 #ifndef BENG_PROXY_EXEC_HXX
 #define BENG_PROXY_EXEC_HXX
 
+#include <inline/compiler.h>
+
 #include <assert.h>
 
 class Exec {
@@ -34,6 +36,7 @@ public:
         return args[0];
     }
 
+    gcc_noreturn
     void DoExec();
 };
 

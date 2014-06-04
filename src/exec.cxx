@@ -9,6 +9,8 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
+#include <stdio.h>
 
 void
 Exec::DoExec()
@@ -23,4 +25,7 @@ Exec::DoExec()
         args[0] = slash + 1;
 
     execv(path, args);
+
+    fprintf(stderr, "failed to execute %s: %s\n", path, strerror(errno));
+    _exit(1);
 }

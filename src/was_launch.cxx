@@ -17,10 +17,8 @@
 
 #include <sys/socket.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 
 #ifdef __linux
 #include <sched.h>
@@ -54,10 +52,6 @@ was_run(void *ctx)
     dup2(args->control_fd, 3);
 
     args->exec.DoExec();
-
-    fprintf(stderr, "failed to execute %s: %s\n",
-            args->exec.GetPath(), strerror(errno));
-    _exit(1);
 }
 
 bool

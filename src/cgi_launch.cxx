@@ -18,9 +18,7 @@
 
 #include <sys/wait.h>
 #include <assert.h>
-#include <errno.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdlib.h>
 
 static void gcc_noreturn
@@ -149,10 +147,6 @@ cgi_run(const struct jail_params *jail,
     if (arg != nullptr)
         e.Append(arg);
     e.DoExec();
-
-    fprintf(stderr, "exec('%s') failed: %s\n",
-            path, strerror(errno));
-    _exit(2);
 }
 
 struct cgi_ctx {

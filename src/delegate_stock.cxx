@@ -102,8 +102,6 @@ delegate_stock_fn(void *ctx)
     jail_wrapper_insert(e, &info->options->jail, NULL);
     e.Append(info->helper);
     e.DoExec();
-
-    _exit(1);
 }
 
 /*

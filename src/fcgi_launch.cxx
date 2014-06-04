@@ -11,8 +11,6 @@
 #include <daemon/log.h>
 
 #include <unistd.h>
-#include <string.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 
@@ -40,8 +38,4 @@ fcgi_run(const struct jail_params *jail,
     for (unsigned i = 0; i < n_args; ++i)
         e.Append(args[i]);
     e.DoExec();
-
-    daemon_log(1, "failed to execute %s: %s\n",
-               executable_path, strerror(errno));
-    _exit(1);
 }
