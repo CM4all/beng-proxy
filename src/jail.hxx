@@ -66,7 +66,7 @@ jail_translate_path(const struct jail_config *config, const char *path,
                     const char *document_root, struct pool *pool);
 
 void
-jail_wrapper_insert(struct exec *e, const struct jail_params *params,
+jail_wrapper_insert(struct exec &e, const struct jail_params *params,
                     const char *document_root);
 
 #endif

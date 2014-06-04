@@ -100,7 +100,7 @@ delegate_stock_fn(void *ctx)
 
     struct exec e;
     e.Init();
-    jail_wrapper_insert(&e, &info->options->jail, NULL);
+    jail_wrapper_insert(e, &info->options->jail, NULL);
     e.Append(info->helper);
     e.DoExec();
 

@@ -40,7 +40,7 @@ lhttp_run(const struct lhttp_address *address, int fd)
 
     struct exec e;
     e.Init();
-    jail_wrapper_insert(&e, &address->options.jail, nullptr);
+    jail_wrapper_insert(e, &address->options.jail, nullptr);
     e.Append(address->path);
 
     for (unsigned i = 0; i < address->args.n; ++i)

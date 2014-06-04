@@ -36,7 +36,7 @@ fcgi_run(const struct jail_params *jail,
 
     struct exec e;
     e.Init();
-    jail_wrapper_insert(&e, jail, nullptr);
+    jail_wrapper_insert(e, jail, nullptr);
     e.Append(executable_path);
     for (unsigned i = 0; i < n_args; ++i)
         e.Append(args[i]);

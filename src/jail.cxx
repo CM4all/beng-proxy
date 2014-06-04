@@ -162,41 +162,41 @@ jail_translate_path(const struct jail_config *config, const char *path,
 }
 
 void
-jail_wrapper_insert(struct exec *e, const struct jail_params *params,
+jail_wrapper_insert(struct exec &e, const struct jail_params *params,
                     const char *document_root)
 {
     if (params == nullptr || !params->enabled)
         return;
 
-    e->Append("/usr/lib/cm4all/jailcgi/bin/wrapper");
+    e.Append("/usr/lib/cm4all/jailcgi/bin/wrapper");
 
     if (document_root != nullptr) {
-        e->Append("-d");
-        e->Append(document_root);
+        e.Append("-d");
+        e.Append(document_root);
     }
 
     if (params->account_id != nullptr) {
-        e->Append("--account");
-        e->Append(params->account_id);
+        e.Append("--account");
+        e.Append(params->account_id);
     }
 
     if (params->site_id != nullptr) {
-        e->Append("--site");
-        e->Append(params->site_id);
+        e.Append("--site");
+        e.Append(params->site_id);
     }
 
     if (params->user_name != nullptr) {
-        e->Append("--name");
-        e->Append(params->user_name);
+        e.Append("--name");
+        e.Append(params->user_name);
     }
 
     if (params->host_name != nullptr)
         setenv("JAILCGI_SERVERNAME", params->host_name, true);
 
     if (params->home_directory != nullptr) {
-        e->Append("--home");
-        e->Append(params->home_directory);
+        e.Append("--home");
+        e.Append(params->home_directory);
     }
 
-    e->Append("--");
+    e.Append("--");
 }
