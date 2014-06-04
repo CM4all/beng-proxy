@@ -38,7 +38,7 @@ lhttp_run(const struct lhttp_address *address, int fd)
         putenv(u.out);
     }
 
-    struct exec e;
+    Exec e;
     e.Init();
     jail_wrapper_insert(e, &address->options.jail, nullptr);
     e.Append(address->path);

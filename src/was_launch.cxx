@@ -32,7 +32,7 @@ struct was_run_args {
     const struct child_options *options;
 
     int control_fd, input_fd, output_fd;
-    struct exec exec;
+    Exec exec;
 };
 
 gcc_noreturn
@@ -56,7 +56,7 @@ was_run(void *ctx)
     args->exec.DoExec();
 
     fprintf(stderr, "failed to execute %s: %s\n",
-            args->exec.args[0], strerror(errno));
+            args->exec.GetPath(), strerror(errno));
     _exit(1);
 }
 

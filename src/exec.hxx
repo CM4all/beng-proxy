@@ -12,10 +12,11 @@
 #include <string.h>
 #include <unistd.h>
 
-struct exec {
+class Exec {
     char *args[32];
     unsigned num_args;
 
+public:
     void Init() {
         num_args = 0;
     }
@@ -31,6 +32,10 @@ struct exec {
         } u = { .in = arg };
 
         args[num_args++] = u.out;
+    }
+
+    const char *GetPath() const {
+        return args[0];
     }
 
     void DoExec() {

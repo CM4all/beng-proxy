@@ -98,7 +98,7 @@ delegate_stock_fn(void *ctx)
 
     clearenv();
 
-    struct exec e;
+    Exec e;
     e.Init();
     jail_wrapper_insert(e, &info->options->jail, NULL);
     e.Append(info->helper);

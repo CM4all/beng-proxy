@@ -142,7 +142,7 @@ cgi_run(const struct jail_params *jail,
         setenv("CONTENT_LENGTH", value, 1);
     }
 
-    struct exec e;
+    Exec e;
     e.Init();
     e.Append(path);
     for (unsigned i = 0; i < n_args; ++i)
