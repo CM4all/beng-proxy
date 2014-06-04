@@ -97,7 +97,6 @@ was_launch(struct was_process *process,
         .input_fd = output_fds[0],
     };
 
-    run_args.exec.Init();
     jail_wrapper_insert(run_args.exec, &options->jail, nullptr);
     run_args.exec.Append(executable_path);
     for (unsigned i = 0; i < n_args; ++i)

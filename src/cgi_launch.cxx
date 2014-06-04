@@ -143,7 +143,6 @@ cgi_run(const struct jail_params *jail,
     }
 
     Exec e;
-    e.Init();
     e.Append(path);
     for (unsigned i = 0; i < n_args; ++i)
         e.Append(args[i]);

@@ -15,9 +15,7 @@ class Exec {
     unsigned num_args;
 
 public:
-    void Init() {
-        num_args = 0;
-    }
+    Exec():num_args(0) {}
 
     void Append(const char *arg) {
         assert(arg != nullptr);
