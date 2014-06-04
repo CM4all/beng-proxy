@@ -13,6 +13,7 @@
 #include "sigutil.h"
 #include "product.h"
 #include "exec.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -25,7 +26,7 @@ static void gcc_noreturn
 cgi_run(const struct jail_params *jail,
         const char *interpreter, const char *action,
         const char *path,
-        const char *const*args, unsigned n_args,
+        ConstBuffer<const char *> args,
         http_method_t method, const char *uri,
         const char *script_name, const char *path_info,
         const char *query_string,
@@ -33,7 +34,7 @@ cgi_run(const struct jail_params *jail,
         const char *remote_addr,
         struct strmap *headers,
         off_t content_length,
-        const char *const env[], unsigned num_env)
+        ConstBuffer<const char *> env)
 {
     const struct strmap_pair *pair;
     const char *arg = nullptr;
@@ -56,12 +57,12 @@ cgi_run(const struct jail_params *jail,
 
     clearenv();
 
-    for (unsigned j = 0; j < num_env; ++j) {
+    for (auto j : env) {
         union {
             const char *in;
             char *out;
         } u = {
-            .in = env[j],
+            .in = j,
         };
 
         putenv(u.out);
@@ -142,8 +143,8 @@ cgi_run(const struct jail_params *jail,
 
     Exec e;
     e.Append(path);
-    for (unsigned i = 0; i < n_args; ++i)
-        e.Append(args[i]);
+    for (auto i : args)
+        e.Append(i);
     if (arg != nullptr)
         e.Append(arg);
     e.DoExec();
@@ -177,13 +178,13 @@ cgi_fn(void *ctx)
     cgi_run(&address->options.jail,
             address->interpreter, address->action,
             address->path,
-            address->args.values, address->args.n,
+            { address->args.values, address->args.n },
             c->method, c->uri,
             address->script_name, address->path_info,
             address->query_string, address->document_root,
             c->remote_addr,
             c->headers, c->available,
-            address->env.values, address->env.n);
+            { address->env.values, address->env.n });
 }
 
 static void
