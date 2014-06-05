@@ -57,16 +57,8 @@ cgi_run(const struct jail_params *jail,
 
     clearenv();
 
-    for (auto j : env) {
-        union {
-            const char *in;
-            char *out;
-        } u = {
-            .in = j,
-        };
-
-        putenv(u.out);
-    }
+    for (auto i : env)
+        putenv(const_cast<char *>(i));
 
     setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
     setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
