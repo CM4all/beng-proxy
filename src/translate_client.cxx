@@ -785,6 +785,18 @@ translate_client_check_pair(const char *payload, size_t payload_length)
 }
 
 static bool
+translate_client_check_pair(TranslateClient &client, const char *name,
+                            const char *payload, size_t payload_length)
+{
+    if (!translate_client_check_pair(payload, payload_length)) {
+        translate_client_error(&client, "malformed %s packet", name);
+        return false;
+    }
+
+    return true;
+}
+
+static bool
 translate_client_pivot_root(TranslateClient *client,
                             const char *payload)
 {
@@ -2347,11 +2359,9 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (!translate_client_check_pair(payload, payload_length)) {
-                translate_client_error(client,
-                                       "malformed PAIR packet");
+            if (!translate_client_check_pair(*client, "PAIR",
+                                             payload, payload_length))
                 return false;
-            }
 
             p.Append(payload);
         } else if (client->lhttp_address != nullptr) {
@@ -2361,11 +2371,9 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (!translate_client_check_pair(payload, payload_length)) {
-                translate_client_error(client,
-                                       "malformed PAIR packet");
+            if (!translate_client_check_pair(*client, "PAIR",
+                                             payload, payload_length))
                 return false;
-            }
 
             client->lhttp_address->env.Append(payload);
         } else {
@@ -2389,11 +2397,9 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (!translate_client_check_pair(payload, payload_length)) {
-                translate_client_error(client,
-                                       "malformed EXPAND_PAIR packet");
+            if (!translate_client_check_pair(*client, "EXPAND_PAIR",
+                                             payload, payload_length))
                 return false;
-            }
 
             p.SetExpand(payload);
         } else if (client->lhttp_address != nullptr) {
@@ -2403,11 +2409,9 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (!translate_client_check_pair(payload, payload_length)) {
-                translate_client_error(client,
-                                       "malformed EXPAND_PAIR packet");
+            if (!translate_client_check_pair(*client, "EXPAND_PAIR",
+                                             payload, payload_length))
                 return false;
-            }
 
             client->lhttp_address->env.SetExpand(payload);
         } else {
