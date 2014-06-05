@@ -208,6 +208,18 @@ translate_client_error(TranslateClient *client, const char *msg)
     translate_client_abort(client, error);
 }
 
+template<typename... Args>
+static void
+translate_client_error(TranslateClient *client, const char *fmt,
+                       Args&&... args)
+{
+    static_assert(sizeof...(Args) > 0, "empty argument list");
+
+    GError *error = g_error_new(translate_quark(), 0, fmt,
+                                std::forward<Args>(args)...);
+    translate_client_abort(client, error);
+}
+
 
 /*
  * request marshalling
