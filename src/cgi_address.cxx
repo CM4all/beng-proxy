@@ -23,6 +23,7 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
 
     cgi->args.Init();
     cgi->env.Init();
+    cgi->params.Init();
     cgi->options.Init();
 
     if (have_address_list)
@@ -102,6 +103,9 @@ cgi_address::GetId(struct pool *pool) const
     for (auto i : env)
         p = p_strcat(pool, p, "$", i, nullptr);
 
+    for (auto i : params)
+        p = p_strcat(pool, p, "~", i, nullptr);
+
     if (uri != nullptr)
         p = p_strcat(pool, p, ";u=", uri, nullptr);
     else if (script_name != nullptr)
@@ -126,6 +130,7 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
 
     dest->args.CopyFrom(pool, src->args);
     dest->env.CopyFrom(pool, src->env);
+    dest->params.CopyFrom(pool, src->params);
 
     dest->options.CopyFrom(pool, &src->options);
 
@@ -279,5 +284,6 @@ cgi_address::Expand(struct pool *pool, const GMatchInfo *match_info,
     }
 
     return args.Expand(pool, match_info, error_r) &&
-        env.Expand(pool, match_info, error_r);
+        env.Expand(pool, match_info, error_r) &&
+        params.Expand(pool, match_info, error_r);
 }

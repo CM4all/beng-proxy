@@ -26,10 +26,14 @@ struct cgi_address {
     struct param_array args;
 
     /**
-     * Environment variables or other protocol-specific name/value
-     * pairs.
+     * Environment variables (per-process).
      */
     struct param_array env;
+
+    /**
+     * Protocol-specific name/value pairs (per-request).
+     */
+    struct param_array params;
 
     struct child_options options;
 
@@ -105,7 +109,8 @@ struct cgi_address {
             expand_script_name != nullptr ||
             expand_path_info != nullptr ||
             args.IsExpandable() ||
-            env.IsExpandable();
+            env.IsExpandable() ||
+            params.IsExpandable();
     }
 
     bool Expand(struct pool *pool, const GMatchInfo *match_info,
