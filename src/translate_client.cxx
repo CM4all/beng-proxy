@@ -763,6 +763,15 @@ translate_response_finish(TranslateResponse *response,
     return true;
 }
 
+gcc_pure
+static bool
+translate_client_check_pair(const char *payload, size_t payload_length)
+{
+    return payload_length > 0 && *payload != '=' &&
+        !has_null_byte(payload, payload_length) &&
+        strchr(payload + 1, '=') != nullptr;
+}
+
 static bool
 translate_client_pivot_root(TranslateClient *client,
                             const char *payload)
@@ -2326,9 +2335,7 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (payload_length == 0 || *payload == '=' ||
-                has_null_byte(payload, payload_length) ||
-                strchr(payload + 1, '=') == nullptr) {
+            if (!translate_client_check_pair(payload, payload_length)) {
                 translate_client_error(client,
                                        "malformed PAIR packet");
                 return false;
@@ -2342,9 +2349,7 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (payload_length == 0 || *payload == '=' ||
-                has_null_byte(payload, payload_length) ||
-                strchr(payload + 1, '=') == nullptr) {
+            if (!translate_client_check_pair(payload, payload_length)) {
                 translate_client_error(client,
                                        "malformed PAIR packet");
                 return false;
@@ -2372,9 +2377,7 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (payload_length == 0 || *payload == '=' ||
-                has_null_byte(payload, payload_length) ||
-                strchr(payload + 1, '=') == nullptr) {
+            if (!translate_client_check_pair(payload, payload_length)) {
                 translate_client_error(client,
                                        "malformed EXPAND_PAIR packet");
                 return false;
@@ -2388,9 +2391,7 @@ translate_handle_packet(TranslateClient *client,
                 return false;
             }
 
-            if (payload_length == 0 || *payload == '=' ||
-                has_null_byte(payload, payload_length) ||
-                strchr(payload + 1, '=') == nullptr) {
+            if (!translate_client_check_pair(payload, payload_length)) {
                 translate_client_error(client,
                                        "malformed EXPAND_PAIR packet");
                 return false;
