@@ -38,6 +38,7 @@ struct fcgi_child_params {
     const char *executable_path;
 
     ConstBuffer<const char *> args;
+    ConstBuffer<const char *> env;
 
     const struct child_options *options;
 };
@@ -77,6 +78,9 @@ fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
 
     for (auto i : params->args)
         key = p_strcat(pool, key, " ", i, nullptr);
+
+    for (auto i : params->env)
+        key = p_strcat(pool, key, "$", i, nullptr);
 
     char options_buffer[4096];
     *params->options->MakeId(options_buffer) = 0;
@@ -152,7 +156,7 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
     namespace_options_setup(&options->ns);
 
     fcgi_run(&options->jail, params->executable_path,
-             params->args);
+             params->args, params->env);
 }
 
 static const struct child_stock_class fcgi_child_stock_class = {
@@ -329,6 +333,7 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct child_options *options,
                const char *executable_path,
                ConstBuffer<const char *> args,
+               ConstBuffer<const char *> env,
                GError **error_r)
 {
     if (!jail_params_check(&options->jail, error_r))
@@ -337,6 +342,7 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
     auto params = NewFromPool<struct fcgi_child_params>(pool);
     params->executable_path = executable_path;
     params->args = args;
+    params->env = env;
     params->options = options;
 
     return hstock_get_now(fcgi_stock->hstock, pool,

@@ -19,7 +19,8 @@ gcc_noreturn
 void
 fcgi_run(const struct jail_params *jail,
          const char *executable_path,
-         ConstBuffer<const char *> args)
+         ConstBuffer<const char *> args,
+         ConstBuffer<const char *> env)
 
 {
     int fd = open("/dev/null", O_WRONLY);
@@ -32,6 +33,9 @@ fcgi_run(const struct jail_params *jail,
     }
 
     clearenv();
+
+    for (auto i : env)
+        putenv(const_cast<char *>(i));
 
     Exec e;
     jail_wrapper_insert(e, jail, nullptr);

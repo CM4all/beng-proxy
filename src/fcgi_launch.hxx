@@ -16,6 +16,7 @@ gcc_noreturn
 void
 fcgi_run(const struct jail_params *jail,
          const char *executable_path,
-         ConstBuffer<const char *> args);
+         ConstBuffer<const char *> args,
+         ConstBuffer<const char *> env);
 
 #endif
