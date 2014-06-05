@@ -96,11 +96,11 @@ cgi_address::GetId(struct pool *pool) const
     if (action != nullptr)
         p = p_strcat(pool, p, ";a=", action, nullptr);
 
-    for (unsigned i = 0; i < args.n; ++i)
-        p = p_strcat(pool, p, "!", args.values[i], nullptr);
+    for (auto i : args)
+        p = p_strcat(pool, p, "!", i, nullptr);
 
-    for (unsigned i = 0; i < env.n; ++i)
-        p = p_strcat(pool, p, "$", env.values[i], nullptr);
+    for (auto i : env)
+        p = p_strcat(pool, p, "$", i, nullptr);
 
     if (uri != nullptr)
         p = p_strcat(pool, p, ";u=", uri, nullptr);

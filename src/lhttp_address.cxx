@@ -46,11 +46,11 @@ lhttp_address::GetServerId(struct pool *pool) const
                              child_options_buffer,
                              nullptr);
 
-    for (unsigned i = 0; i < args.n; ++i)
-        p = p_strcat(pool, p, "!", args.values[i], nullptr);
+    for (auto i : args)
+        p = p_strcat(pool, p, "!", i, nullptr);
 
-    for (unsigned i = 0; i < env.n; ++i)
-        p = p_strcat(pool, p, "$", env.values[i], nullptr);
+    for (auto i : env)
+        p = p_strcat(pool, p, "$", i, nullptr);
 
     return p;
 }

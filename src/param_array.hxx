@@ -37,6 +37,14 @@ struct param_array {
         return n == CAPACITY;
     }
 
+    const char *const*begin() const {
+        return &values[0];
+    }
+
+    const char *const*end() const {
+        return &values[n];
+    }
+
     void CopyFrom(struct pool *pool, const struct param_array &src);
 
     void Append(const char *value) {
