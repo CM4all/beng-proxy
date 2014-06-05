@@ -28,6 +28,7 @@
 #include "istream.h"
 #include "ssl_client.h"
 #include "gerrno.h"
+#include "util/ConstBuffer.hxx"
 
 #ifdef HAVE_LIBNFS
 #include "nfs_request.h"
@@ -266,7 +267,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                          cgi->document_root,
                          extract_remote_ip(pool, headers),
                          headers, body,
-                         cgi->params.values, cgi->params.n,
+                         { cgi->params.values, cgi->params.n },
                          stderr_fd,
                          handler, handler_ctx, async_ref);
         else
@@ -280,7 +281,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                                 cgi->document_root,
                                 extract_remote_ip(pool, headers),
                                 headers, body,
-                                cgi->params.values, cgi->params.n,
+                                { cgi->params.values, cgi->params.n },
                                 stderr_fd,
                                 handler, handler_ctx, async_ref);
         return;

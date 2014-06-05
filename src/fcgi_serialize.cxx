@@ -9,6 +9,7 @@
 #include "growing-buffer.h"
 #include "strmap.h"
 #include "strutil.h"
+#include "util/ConstBuffer.hxx"
 
 #include <glib.h>
 
@@ -109,9 +110,9 @@ fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...)
 
 void
 fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
-                       const char *const params[], unsigned num_params)
+                       ConstBuffer<const char *> params)
 {
-    assert(num_params > 0);
+    assert(!params.IsEmpty());
 
     struct fcgi_record_header *header = (struct fcgi_record_header *)
         growing_buffer_write(gb, sizeof(*header));
@@ -122,8 +123,8 @@ fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
     header->reserved = 0;
 
     size_t content_length = 0;
-    for (unsigned i = 0; i < num_params; ++i)
-        content_length += fcgi_serialize_pair1(gb, params[i]);
+    for (auto i : params)
+        content_length += fcgi_serialize_pair1(gb, i);
 
     header->content_length = GUINT16_TO_BE(content_length);
 }

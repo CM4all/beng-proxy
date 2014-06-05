@@ -11,6 +11,7 @@
 
 struct growing_buffer;
 struct strmap;
+template<typename T> struct ConstBuffer;
 
 /**
  * @param request_id the FastCGI request id in network byte order
@@ -23,7 +24,7 @@ fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...);
  */
 void
 fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
-                       const char *const params[], unsigned num_params);
+                       ConstBuffer<const char *> params);
 
 void
 fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,

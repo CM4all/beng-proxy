@@ -23,6 +23,7 @@
 #include "strmap.h"
 #include "product.h"
 #include "util/Cast.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <glib.h>
 
@@ -929,7 +930,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
                     const char *document_root,
                     const char *remote_addr,
                     struct strmap *headers, struct istream *body,
-                    const char *const params[], unsigned num_params,
+                    ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
@@ -1030,8 +1031,8 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     if (headers != nullptr)
         fcgi_serialize_headers(buffer, header.request_id, headers);
 
-    if (num_params > 0)
-        fcgi_serialize_vparams(buffer, header.request_id, params, num_params);
+    if (!params.IsEmpty())
+        fcgi_serialize_vparams(buffer, header.request_id, params);
 
     header.type = FCGI_PARAMS;
     header.content_length = htons(0);

@@ -16,6 +16,7 @@ struct address_list;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
+template<typename T> struct ConstBuffer;
 
 void
 fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
@@ -27,7 +28,7 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     const char *document_root,
                     const char *remote_addr,
                     struct strmap *headers, struct istream *body,
-                    const char *const params[], unsigned num_params,
+                    ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,
                     void *handler_ctx,

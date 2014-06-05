@@ -15,6 +15,7 @@
 #include "address_list.hxx"
 #include "pool.h"
 #include "istream.h"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -41,8 +42,7 @@ struct fcgi_remote_request {
     struct strmap *headers;
     struct istream *body;
 
-    const char *const* params;
-    unsigned num_params;
+    ConstBuffer<const char *> params;
 
     int stderr_fd;
 
@@ -92,7 +92,7 @@ fcgi_remote_stock_ready(struct stock_item *item, void *ctx)
                         request->document_root,
                         request->remote_addr,
                         request->headers, request->body,
-                        request->params, request->num_params,
+                        request->params,
                         request->stderr_fd,
                         request->handler.handler, request->handler.ctx,
                         request->async_ref);
@@ -130,7 +130,7 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     const char *document_root,
                     const char *remote_addr,
                     struct strmap *headers, struct istream *body,
-                    const char *const params[], unsigned num_params,
+                    ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
@@ -149,7 +149,6 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
     request->remote_addr = remote_addr;
     request->headers = headers;
     request->params = params;
-    request->num_params = num_params;
 
     request->stderr_fd = stderr_fd;
 

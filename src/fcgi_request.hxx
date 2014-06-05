@@ -16,6 +16,7 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 struct child_options;
+template<typename T> struct ConstBuffer;
 
 /**
  * @param jail run the FastCGI application with JailCGI?
@@ -33,7 +34,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              const char *document_root,
              const char *remote_addr,
              struct strmap *headers, struct istream *body,
-             const char *const env[], unsigned n_env,
+             ConstBuffer<const char *> params,
              int stderr_fd,
              const struct http_response_handler *handler,
              void *handler_ctx,

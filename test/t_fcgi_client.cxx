@@ -17,6 +17,7 @@
 #include "strutil.h"
 #include "tpool.h"
 #include "fb_pool.h"
+#include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
 
@@ -42,7 +43,7 @@ client_request(struct pool *pool, struct connection *connection,
                         method, uri, uri, nullptr, nullptr, nullptr,
                         nullptr, "192.168.1.100",
                         headers, body,
-                        nullptr, 0,
+                        nullptr,
                         -1,
                         handler, ctx, async_ref);
 }

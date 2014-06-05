@@ -17,6 +17,7 @@ struct lease;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
+template<typename T> struct ConstBuffer;
 
 /**
  * Sends a HTTP request on a socket to an FastCGI server, and passes
@@ -53,7 +54,7 @@ fcgi_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                     const char *document_root,
                     const char *remote_addr,
                     struct strmap *headers, struct istream *body,
-                    const char *const params[], unsigned num_params,
+                    ConstBuffer<const char *> params,
                     int stderr_fd,
                     const struct http_response_handler *handler,
                     void *handler_ctx,
