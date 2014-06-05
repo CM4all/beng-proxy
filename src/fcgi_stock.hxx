@@ -14,6 +14,7 @@ struct stock_item;
 struct stock_get_handler;
 struct child_options;
 struct async_operation_ref;
+template<typename T> struct ConstBuffer;
 
 struct fcgi_stock *
 fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
@@ -28,7 +29,7 @@ struct stock_item *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct child_options *options,
                const char *executable_path,
-               const char *const*args, unsigned n_args,
+               ConstBuffer<const char *> args,
                GError **error_r);
 
 /**

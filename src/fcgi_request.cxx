@@ -90,7 +90,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              const struct child_options *options,
              const char *action,
              const char *path,
-             const char *const*args, unsigned n_args,
+             ConstBuffer<const char *> args,
              http_method_t method, const char *uri,
              const char *script_name, const char *path_info,
              const char *query_string,
@@ -125,7 +125,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     struct stock_item *stock_item =
         fcgi_stock_get(fcgi_stock, pool, options,
                        action,
-                       args, n_args,
+                       args,
                        &error);
     if (stock_item == nullptr) {
         if (body != nullptr)

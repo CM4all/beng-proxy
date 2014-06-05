@@ -14,6 +14,7 @@
 #include "child_options.hxx"
 #include "pevent.h"
 #include "gerrno.h"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -36,8 +37,7 @@ struct fcgi_stock {
 struct fcgi_child_params {
     const char *executable_path;
 
-    const char *const*args;
-    unsigned n_args;
+    ConstBuffer<const char *> args;
 
     const struct child_options *options;
 };
@@ -74,8 +74,9 @@ static const char *
 fcgi_stock_key(struct pool *pool, const struct fcgi_child_params *params)
 {
     const char *key = params->executable_path;
-    for (unsigned i = 0, n = params->n_args; i < n; ++i)
-        key = p_strcat(pool, key, " ", params->args[i], nullptr);
+
+    for (auto i : params->args)
+        key = p_strcat(pool, key, " ", i, nullptr);
 
     char options_buffer[4096];
     *params->options->MakeId(options_buffer) = 0;
@@ -151,7 +152,7 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
     namespace_options_setup(&options->ns);
 
     fcgi_run(&options->jail, params->executable_path,
-             params->args, params->n_args);
+             params->args);
 }
 
 static const struct child_stock_class fcgi_child_stock_class = {
@@ -327,7 +328,7 @@ struct stock_item *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct child_options *options,
                const char *executable_path,
-               const char *const*args, unsigned n_args,
+               ConstBuffer<const char *> args,
                GError **error_r)
 {
     if (!jail_params_check(&options->jail, error_r))
@@ -336,7 +337,6 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
     auto params = NewFromPool<struct fcgi_child_params>(pool);
     params->executable_path = executable_path;
     params->args = args;
-    params->n_args = n_args;
     params->options = options;
 
     return hstock_get_now(fcgi_stock->hstock, pool,
