@@ -182,6 +182,7 @@ processable(const struct strmap *headers)
     return content_type != nullptr &&
         (strncmp(content_type, "text/html", 9) == 0 ||
          strncmp(content_type, "text/xml", 8) == 0 ||
+         strncmp(content_type, "application/xml", 15) == 0 ||
          strncmp(content_type, "application/xhtml+xml", 21) == 0);
 }
 

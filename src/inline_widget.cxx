@@ -86,6 +86,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
 
     if (content_type == nullptr ||
         (strncmp(content_type, "text/", 5) != 0 &&
+         strncmp(content_type, "application/xml", 15) != 0 &&
          strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                     "widget '%s' sent non-text response",
