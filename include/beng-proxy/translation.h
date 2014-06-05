@@ -523,6 +523,17 @@ enum beng_translation_command {
      * server.
      */
     TRANSLATE_AUTH = 133,
+
+    /**
+     * Set an evironment variable.  Unlike #TRANSLATE_PAIR, this works
+     * even for FastCGI and WAS.
+     */
+    TRANSLATE_SETENV = 134,
+
+    /**
+     * Expansion for #TRANSLATE_SETENV.
+     */
+    TRANSLATE_EXPAND_SETENV = 135,
 };
 
 struct beng_translation_header {

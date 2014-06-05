@@ -2986,6 +2986,37 @@ translate_handle_packet(TranslateClient *client,
 
         client->response.auth = { payload, payload_length };
         return true;
+
+    case TRANSLATE_SETENV:
+        if (client->cgi_address != nullptr) {
+            return translate_client_pair(client, client->cgi_address->env,
+                                         "SETENV",
+                                         payload, payload_length);
+        } else if (client->lhttp_address != nullptr) {
+            return translate_client_pair(client, client->lhttp_address->env,
+                                         "SETENV", payload, payload_length);
+        } else {
+            translate_client_error(client,
+                                   "misplaced SETENV packet");
+            return false;
+        }
+
+    case TRANSLATE_EXPAND_SETENV:
+        if (client->cgi_address != nullptr) {
+            return translate_client_expand_pair(client,
+                                                client->cgi_address->env,
+                                                "SETENV",
+                                                payload, payload_length);
+        } else if (client->lhttp_address != nullptr) {
+            return translate_client_expand_pair(client,
+                                                client->lhttp_address->env,
+                                                "EXPAND_SETENV",
+                                                payload, payload_length);
+        } else {
+            translate_client_error(client,
+                                   "misplaced SETENV packet");
+            return false;
+        }
     }
 
     error = g_error_new(translate_quark(), 0,

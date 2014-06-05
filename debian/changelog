@@ -4,6 +4,7 @@ cm4all-beng-proxy (5.0.1) unstable; urgency=low
   * was, pipe_filter: don't inherit environment variables
   * pipe_filter: fix command-line argument corruption bug
   * pipe_filter: support custom environment variables
+  * translation: SETENV sets environment vars for FastCGI and WAS
 
  --   
 
