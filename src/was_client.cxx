@@ -20,6 +20,7 @@
 #include "fd-util.h"
 #include "strmap.h"
 #include "util/Cast.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -663,7 +664,7 @@ was_client_request(struct pool *caller_pool, int control_fd,
                    const char *script_name, const char *path_info,
                    const char *query_string,
                    struct strmap *headers, struct istream *body,
-                   const char *const params[], unsigned num_params,
+                   ConstBuffer<const char *> params,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
@@ -724,7 +725,7 @@ was_client_request(struct pool *caller_pool, int control_fd,
          !was_control_send_strmap(client->control, WAS_COMMAND_HEADER,
                                   headers)) ||
         !was_control_send_array(client->control, WAS_COMMAND_PARAMETER,
-                                params, num_params) ||
+                                params) ||
         !was_control_send_empty(client->control,
                                 client->request.body != nullptr
                                 ? WAS_COMMAND_DATA : WAS_COMMAND_NO_DATA)) {

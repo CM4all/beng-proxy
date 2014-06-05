@@ -39,8 +39,7 @@ struct was_request {
     struct strmap *headers;
     struct istream *body;
 
-    const char *const* parameters;
-    unsigned num_parameters;
+    ConstBuffer<const char *> parameters;
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
@@ -86,7 +85,7 @@ was_stock_ready(struct stock_item *item, void *ctx)
                        request->script_name, request->path_info,
                        request->query_string,
                        request->headers, request->body,
-                       request->parameters, request->num_parameters,
+                       request->parameters,
                        request->handler.handler, request->handler.ctx,
                        request->async_ref);
 }
@@ -123,7 +122,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
             const char *script_name, const char *path_info,
             const char *query_string,
             struct strmap *headers, struct istream *body,
-            const char *const parameters[], unsigned num_parameters,
+            ConstBuffer<const char *> parameters,
             const struct http_response_handler *handler,
             void *handler_ctx,
             struct async_operation_ref *async_ref)
@@ -151,7 +150,6 @@ was_request(struct pool *pool, struct hstock *was_stock,
     request->query_string = query_string;
     request->headers = headers;
     request->parameters = parameters;
-    request->num_parameters = num_parameters;
 
     http_response_handler_set(&request->handler, handler, handler_ctx);
     request->async_ref = async_ref;

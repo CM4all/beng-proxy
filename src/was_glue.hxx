@@ -33,7 +33,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
             const char *script_name, const char *path_info,
             const char *query_string,
             struct strmap *headers, struct istream *body,
-            const char *const parameters[], unsigned num_parameters,
+            ConstBuffer<const char *> params,
             const struct http_response_handler *handler,
             void *handler_ctx,
             struct async_operation_ref *async_ref);

@@ -298,7 +298,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                     cgi->path_info,
                     cgi->query_string,
                     headers, body,
-                    cgi->params.values, cgi->params.n,
+                    { cgi->params.values, cgi->params.n },
                     handler, handler_ctx, async_ref);
         return;
 

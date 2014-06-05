@@ -10,6 +10,7 @@
 #include "buffered_io.h"
 #include "pevent.h"
 #include "strmap.h"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -394,13 +395,11 @@ was_control_send_string(struct was_control *control, enum was_command cmd,
 
 bool
 was_control_send_array(struct was_control *control, enum was_command cmd,
-                       const char *const values[], unsigned num_values)
+                       ConstBuffer<const char *> values)
 {
     assert(control != nullptr);
-    assert(values != nullptr || num_values == 0);
 
-    for (unsigned i = 0; i < num_values; ++i) {
-        const char *value = values[i];
+    for (auto value : values) {
         assert(value != nullptr);
 
         if (!was_control_send_string(control, cmd, value))

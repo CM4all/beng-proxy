@@ -203,7 +203,7 @@ int main(int argc, char **argv) {
                        HTTP_METHOD_GET, "/",
                        nullptr, nullptr, nullptr,
                        nullptr, request_body(pool),
-                       (const char *const*)parameters, num_parameters,
+                       { (const char *const*)parameters, num_parameters },
                        &my_response_handler, &context,
                        &context.async_ref);
     pool_unref(pool);
