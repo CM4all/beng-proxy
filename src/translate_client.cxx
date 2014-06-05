@@ -797,6 +797,42 @@ translate_client_check_pair(TranslateClient &client, const char *name,
 }
 
 static bool
+translate_client_pair(TranslateClient *client,
+                      struct param_array &array, const char *name,
+                      const char *payload, size_t payload_length)
+{
+    if (array.IsFull()) {
+        translate_client_error(client, "too many %s packets", name);
+        return false;
+    }
+
+    if (!translate_client_check_pair(*client, name,
+                                     payload, payload_length))
+        return false;
+
+    array.Append(payload);
+    return true;
+}
+
+static bool
+translate_client_expand_pair(TranslateClient *client,
+                             struct param_array &array, const char *name,
+                             const char *payload, size_t payload_length)
+{
+    if (!array.CanSetExpand()) {
+        translate_client_error(client, "misplaced %s packet", name);
+        return false;
+    }
+
+    if (!translate_client_check_pair(*client, name,
+                                     payload, payload_length))
+        return false;
+
+    array.SetExpand(payload);
+    return true;
+}
+
+static bool
 translate_client_pivot_root(TranslateClient *client,
                             const char *payload)
 {
@@ -2353,36 +2389,16 @@ translate_handle_packet(TranslateClient *client,
                 ? client->cgi_address->env
                 : client->cgi_address->params;
 
-            if (p.IsFull()) {
-                translate_client_error(client,
-                                       "too many PAIR packets");
-                return false;
-            }
-
-            if (!translate_client_check_pair(*client, "PAIR",
-                                             payload, payload_length))
-                return false;
-
-            p.Append(payload);
+            return translate_client_pair(client, p, "PAIR",
+                                         payload, payload_length);
         } else if (client->lhttp_address != nullptr) {
-            if (client->lhttp_address->env.IsFull()) {
-                translate_client_error(client,
-                                       "too many PAIR packets");
-                return false;
-            }
-
-            if (!translate_client_check_pair(*client, "PAIR",
-                                             payload, payload_length))
-                return false;
-
-            client->lhttp_address->env.Append(payload);
+            return translate_client_pair(client, client->lhttp_address->env,
+                                         "PAIR", payload, payload_length);
         } else {
             translate_client_error(client,
                                    "misplaced PAIR packet");
             return false;
         }
-
-        return true;
 
     case TRANSLATE_EXPAND_PAIR:
         if (client->cgi_address != nullptr) {
@@ -2391,36 +2407,18 @@ translate_handle_packet(TranslateClient *client,
                 ? client->cgi_address->env
                 : client->cgi_address->params;
 
-            if (!p.CanSetExpand()) {
-                translate_client_error(client,
-                                       "misplaced EXPAND_PAIR packet");
-                return false;
-            }
-
-            if (!translate_client_check_pair(*client, "EXPAND_PAIR",
-                                             payload, payload_length))
-                return false;
-
-            p.SetExpand(payload);
+            return translate_client_expand_pair(client, p, "EXPAND_PAIR",
+                                                payload, payload_length);
         } else if (client->lhttp_address != nullptr) {
-            if (!client->lhttp_address->env.CanSetExpand()) {
-                translate_client_error(client,
-                                       "misplaced EXPAND_PAIR packet");
-                return false;
-            }
-
-            if (!translate_client_check_pair(*client, "EXPAND_PAIR",
-                                             payload, payload_length))
-                return false;
-
-            client->lhttp_address->env.SetExpand(payload);
+            return translate_client_expand_pair(client,
+                                                client->lhttp_address->env,
+                                                "EXPAND_PAIR",
+                                                payload, payload_length);
         } else {
             translate_client_error(client,
                                    "misplaced EXPAND_PAIR packet");
             return false;
         }
-
-        return true;
 
     case TRANSLATE_DISCARD_SESSION:
         client->response.discard_session = true;
