@@ -15,6 +15,7 @@
 #include "sigutil.h"
 #include "child_options.hxx"
 #include "djbhash.h"
+#include "exec.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
@@ -28,10 +29,10 @@
 
 struct pipe_ctx {
     const struct child_options &options;
-    const char *path;
-    char *const*argv;
 
     sigset_t signals;
+
+    Exec exec;
 };
 
 static int
@@ -48,10 +49,7 @@ pipe_fn(void *ctx)
 
     clearenv();
 
-    execv(c->path, c->argv);
-    fprintf(stderr, "exec('%s') failed: %s\n",
-            c->path, strerror(errno));
-    return 2;
+    c->exec.DoExec();
 }
 
 static void
@@ -119,7 +117,6 @@ pipe_filter(struct pool *pool, const char *path,
 {
     struct stopwatch *stopwatch;
     struct istream *response;
-    char *argv[1 + args.size + 1];
     const char *etag;
 
     if (body == nullptr) {
@@ -136,13 +133,11 @@ pipe_filter(struct pool *pool, const char *path,
 
     struct pipe_ctx c = {
         .options = options,
-        .path = path,
-        .argv = argv,
     };
 
-    argv[0] = p_strdup(pool, path);
-    memcpy(argv + 1, args.data, args.size * sizeof(args.data[0]));
-    argv[1 + args.size] = nullptr;
+    c.exec.Append(path);
+    for (auto i : args)
+        c.exec.Append(i);
 
     const int clone_flags =
         namespace_options_clone_flags(&options.ns, SIGCHLD);
