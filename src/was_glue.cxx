@@ -15,6 +15,7 @@
 #include "abort-close.h"
 #include "child_options.hxx"
 #include "istream.h"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -117,7 +118,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
             const struct child_options *options,
             const char *action,
             const char *path,
-            const char *const*args, unsigned n_args,
+            ConstBuffer<const char *> args,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
@@ -163,7 +164,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
 
     was_stock_get(was_stock, pool,
                   options,
-                  action, args, n_args,
+                  action, args,
                   &was_stock_handler, request,
                   async_ref);
 }

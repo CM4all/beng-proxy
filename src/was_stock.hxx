@@ -16,6 +16,7 @@ struct hstock;
 struct stock_item;
 struct stock_get_handler;
 struct async_operation_ref;
+template<typename T> struct ConstBuffer;
 
 struct hstock *
 was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
@@ -27,7 +28,7 @@ void
 was_stock_get(struct hstock *hstock, struct pool *pool,
               const struct child_options *options,
               const char *executable_path,
-              const char *const*args, unsigned n_args,
+              ConstBuffer<const char *> args,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 

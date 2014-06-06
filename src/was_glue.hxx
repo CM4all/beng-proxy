@@ -17,6 +17,7 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 struct child_options;
+template<typename T> struct ConstBuffer;
 
 /**
  * @param jail run the WAS application with JailCGI?
@@ -27,7 +28,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
             const struct child_options *options,
             const char *action,
             const char *path,
-            const char *const*args, unsigned n_args,
+            ConstBuffer<const char *> args,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,

@@ -15,6 +15,7 @@
 #include "client-socket.h"
 #include "child_options.hxx"
 #include "pevent.h"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -33,8 +34,7 @@
 struct was_child_params {
     const char *executable_path;
 
-    const char *const*args;
-    unsigned n_args;
+    ConstBuffer<const char *> args;
 
     const struct child_options *options;
 };
@@ -56,8 +56,8 @@ static const char *
 was_stock_key(struct pool *pool, const struct was_child_params *params)
 {
     const char *key = params->executable_path;
-    for (unsigned i = 0, n = params->n_args; i < n; ++i)
-        key = p_strcat(pool, key, " ", params->args[i], nullptr);
+    for (auto i : params->args)
+        key = p_strcat(pool, key, " ", i, nullptr);
 
     char options_buffer[4096];
     *params->options->MakeId(options_buffer) = 0;
@@ -150,7 +150,7 @@ was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
 
     GError *error = nullptr;
     if (!was_launch(&child->process, params->executable_path,
-                    params->args, params->n_args,
+                    params->args,
                     options,
                     &error)) {
         stock_item_failed(item, error);
@@ -229,7 +229,7 @@ void
 was_stock_get(struct hstock *hstock, struct pool *pool,
               const struct child_options *options,
               const char *executable_path,
-              const char *const*args, unsigned n_args,
+              ConstBuffer<const char *> args,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
@@ -242,7 +242,6 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
     auto params = NewFromPool<struct was_child_params>(pool);
     params->executable_path = executable_path;
     params->args = args;
-    params->n_args = n_args;
     params->options = options;
 
     hstock_get(hstock, pool, was_stock_key(pool, params), params,

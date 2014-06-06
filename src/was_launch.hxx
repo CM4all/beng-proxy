@@ -12,6 +12,7 @@
 #include <sys/types.h>
 
 struct child_options;
+template<typename T> struct ConstBuffer;
 
 struct was_process {
     pid_t pid;
@@ -21,7 +22,7 @@ struct was_process {
 bool
 was_launch(struct was_process *process,
            const char *executable_path,
-           const char *const*args, unsigned n_args,
+           ConstBuffer<const char *> args,
            const struct child_options *options,
            GError **error_r);
 

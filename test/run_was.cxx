@@ -8,6 +8,7 @@
 #include "istream_file.h"
 #include "fb_pool.h"
 #include "child_options.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -181,7 +182,7 @@ int main(int argc, char **argv) {
     child_options.Init();
 
     static struct context context;
-    if (!was_launch(&context.process, argv[1], nullptr, 0,
+    if (!was_launch(&context.process, argv[1], nullptr,
                     &child_options,
                     &error)) {
         g_printerr("%s\n", error->message);

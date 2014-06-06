@@ -11,6 +11,7 @@
 #include "child_options.hxx"
 #include "sigutil.h"
 #include "gerrno.h"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 #include <inline/compiler.h>
@@ -57,7 +58,7 @@ was_run(void *ctx)
 bool
 was_launch(struct was_process *process,
            const char *executable_path,
-           const char *const*args, unsigned n_args,
+           ConstBuffer<const char *> args,
            const struct child_options *options,
            GError **error_r)
 {
@@ -93,8 +94,8 @@ was_launch(struct was_process *process,
 
     jail_wrapper_insert(run_args.exec, &options->jail, nullptr);
     run_args.exec.Append(executable_path);
-    for (unsigned i = 0; i < n_args; ++i)
-        run_args.exec.Append(args[i]);
+    for (auto i : args)
+        run_args.exec.Append(i);
 
     int clone_flags = SIGCHLD;
     clone_flags = namespace_options_clone_flags(&options->ns, clone_flags);
