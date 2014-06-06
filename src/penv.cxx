@@ -19,6 +19,7 @@ processor_env::processor_env(struct pool *_pool,
                              const char *_absolute_uri,
                              const struct parsed_uri *_uri,
                              struct strmap *_args,
+                             const char *_session_cookie,
                              session_id_t _session_id,
                              http_method_t _method,
                              struct strmap *_request_headers)
@@ -31,4 +32,5 @@ processor_env::processor_env(struct pool *_pool,
     view_name(strmap_remove(args, "view")),
     method(_method),
     request_headers(_request_headers),
+    session_cookie(_session_cookie),
     session_id(_session_id) {}

@@ -10,9 +10,11 @@
 #include "strmap.h"
 #include "session.hxx"
 #include "cookie_client.hxx"
+#include "cookie_server.hxx"
 #include "growing-buffer.h"
 #include "pool.h"
 #include "product.h"
+#include "strutil.h"
 
 #ifndef NDEBUG
 #include <daemon/log.h>
@@ -242,6 +244,53 @@ forward_other_headers(struct strmap *dest, struct strmap *src)
             strmap_add(dest, pair->key, pair->value);
 }
 
+/**
+ * Copy cookie request headers, but exclude one cookie name.
+ */
+static void
+header_copy_cookie_except(struct pool *pool,
+                          struct strmap *dest, struct strmap *src,
+                          const char *except)
+{
+    const struct strmap_pair *pair;
+
+    strmap_rewind(src);
+    while ((pair = strmap_next(src)) != nullptr) {
+        if (strcmp(pair->key, "cookie2") == 0)
+            strmap_add(dest, pair->key, pair->value);
+        else if (strcmp(pair->key, "cookie") == 0) {
+            const char *new_value = cookie_exclude(pair->value, except, pool);
+            if (new_value != nullptr)
+                strmap_add(dest, pair->key, new_value);
+        }
+    }
+}
+
+gcc_pure
+static bool
+compare_set_cookie_name(const char *set_cookie, const char *name)
+{
+    const size_t name_length = strlen(name);
+    return memcmp(set_cookie, name, name_length) == 0 &&
+        !char_is_alphanumeric(set_cookie[name_length]);
+}
+
+/**
+ * Copy cookie response headers, but exclude one cookie name.
+ */
+static void
+header_copy_set_cookie_except(struct strmap *dest, struct strmap *src,
+                              const char *except)
+{
+    const struct strmap_pair *pair;
+
+    strmap_rewind(src);
+    while ((pair = strmap_next(src)) != nullptr)
+        if (string_in_array(cookie_response_headers, pair->key) &&
+            !compare_set_cookie_name(pair->value, except))
+            strmap_add(dest, pair->key, pair->value);
+}
+
 struct strmap *
 forward_request_headers(struct pool *pool, struct strmap *src,
                         const char *local_host, const char *remote_host,
@@ -249,6 +298,7 @@ forward_request_headers(struct pool *pool, struct strmap *src,
                         bool with_body, bool forward_charset,
                         bool forward_encoding,
                         const struct header_forward_settings *settings,
+                        const char *session_cookie,
                         const struct session *session,
                         const char *host_and_port, const char *uri)
 {
@@ -304,6 +354,13 @@ forward_request_headers(struct pool *pool, struct strmap *src,
     if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
         if (src != nullptr)
             header_copy_list(src, dest, cookie_request_headers);
+    } else if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
+        if (src != nullptr) {
+            if (session_cookie == nullptr)
+                header_copy_list(src, dest, cookie_request_headers);
+            else
+                header_copy_cookie_except(pool, dest, src, session_cookie);
+        }
     } else if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_MANGLE &&
                session != nullptr && host_and_port != nullptr && uri != nullptr)
         cookie_jar_http_header(session->cookies, host_and_port, uri,
@@ -369,6 +426,7 @@ forward_server(struct strmap *dest, const struct strmap *src,
 struct strmap *
 forward_response_headers(struct pool *pool, struct strmap *src,
                          const char *local_host,
+                         const char *session_cookie,
                          const struct header_forward_settings *settings)
 {
     struct strmap *dest;
@@ -384,6 +442,12 @@ forward_response_headers(struct pool *pool, struct strmap *src,
 
         if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES)
             header_copy_list(src, dest, cookie_response_headers);
+        else if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
+            if (session_cookie == nullptr)
+                header_copy_list(src, dest, cookie_response_headers);
+            else
+                header_copy_set_cookie_except(src, dest, session_cookie);
+        }
 
         if (settings->modes[HEADER_GROUP_CORS] == HEADER_FORWARD_YES)
             header_copy_list(src, dest, cors_response_headers);

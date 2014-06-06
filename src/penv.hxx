@@ -52,6 +52,11 @@ struct processor_env {
 
     struct strmap *request_headers;
 
+    /**
+     * The name of the session cookie.
+     */
+    const char *session_cookie;
+
     session_id_t session_id;
 
     processor_env() = default;
@@ -65,6 +70,7 @@ struct processor_env {
                   const char *absolute_uri,
                   const struct parsed_uri *uri,
                   struct strmap *args,
+                  const char *session_cookie,
                   session_id_t session_id,
                   http_method_t method,
                   struct strmap *request_headers);

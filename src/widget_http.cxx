@@ -102,6 +102,7 @@ widget_request_headers(struct embed *embed, const struct widget_view *view,
                                       exclude_host, with_body,
                                       false, false,
                                       &view->request_header_forward,
+                                      embed->env->session_cookie,
                                       session,
                                       embed->host_and_port,
                                       widget_uri(widget));

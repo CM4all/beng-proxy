@@ -74,7 +74,7 @@ create_test(struct pool *pool, struct istream *input)
                         "http://localhost:8080/beng.html",
                         &parsed_uri,
                         nullptr,
-                        session->id,
+                        "bp_session", session->id,
                         HTTP_METHOD_GET, nullptr);
     session_put(session);
 

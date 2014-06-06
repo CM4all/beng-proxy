@@ -1224,11 +1224,15 @@ Mode is one of:
 \item \texttt{NO}: don't forward the headers
 \item \texttt{YES}: forward the headers
 \item \texttt{MANGLE}: \emph{beng-proxy} processes the headers
+\item \texttt{BOTH}: both \emph{beng-proxy} and the backend server
+  process the headers (special case for cookie headers, which is a
+  combination of \texttt{YES} and \texttt{MANGLE})
 \end{itemize}
 
 \emph{beng-proxy}'s session management is only active when
-\texttt{COOKIE} is \texttt{MANGLE} (which is the default).  The
-behavior of the \texttt{COOKIE} setting on widgets is undefined.
+\texttt{COOKIE} is \texttt{MANGLE} (which is the default) or
+\texttt{BOTH}.  The behavior of the \texttt{COOKIE} setting on widgets
+is undefined.
 
 \\
 

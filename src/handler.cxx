@@ -114,8 +114,10 @@ handle_translated_request2(request &request,
         ? response.views->transformation
         : nullptr;
 
-    if (response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE ||
-        response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE) {
+    if ((response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE &&
+         response.request_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_BOTH) ||
+        (response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_MANGLE &&
+         response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_BOTH)) {
         /* disable session management if cookies are not mangled by
            beng-proxy */
         session_id_clear(&request.session_id);

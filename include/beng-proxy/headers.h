@@ -30,6 +30,12 @@ enum beng_header_forward_mode {
      * by beng-proxy.
      */
     HEADER_FORWARD_MANGLE,
+
+    /**
+     * A special "mixed" mode where both beng-proxy and the backend
+     * server handle certain headers.
+     */
+    HEADER_FORWARD_BOTH,
 };
 
 /**

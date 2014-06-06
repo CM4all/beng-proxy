@@ -158,6 +158,7 @@ int main(int argc, char **argv) {
                              "http://localhost:8080/beng.html",
                              &parsed_uri,
                              nullptr,
+                             nullptr,
                              0xdeadbeef,
                              HTTP_METHOD_GET, nullptr);
 

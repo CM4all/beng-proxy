@@ -48,6 +48,7 @@ request_forward(struct forward_request *dest, struct request *request2,
                                             !request_processor_enabled(request2),
                                             !request_transformation_enabled(request2),
                                             header_forward,
+                                            request2->session_cookie,
                                             session, host_and_port, uri);
     if (session != nullptr)
         session_put(session);

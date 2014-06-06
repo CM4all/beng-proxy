@@ -28,12 +28,14 @@ forward_request_headers(struct pool *pool, struct strmap *src,
                         bool with_body, bool forward_charset,
                         bool forward_encoding,
                         const struct header_forward_settings *settings,
+                        const char *session_cookie,
                         const struct session *session,
                         const char *host_and_port, const char *uri);
 
 struct strmap *
 forward_response_headers(struct pool *pool, struct strmap *src,
                          const char *local_host,
+                         const char *session_cookie,
                          const struct header_forward_settings *settings);
 
 #endif

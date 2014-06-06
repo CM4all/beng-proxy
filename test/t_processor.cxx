@@ -132,7 +132,7 @@ test_proxy_abort(struct pool *pool)
                              "http://localhost:8080/beng.html",
                              &parsed_uri,
                              nullptr,
-                             0xdeadbeef,
+                             "bp_session", 0xdeadbeef,
                              HTTP_METHOD_GET, nullptr);
 
     struct async_operation_ref async_ref;

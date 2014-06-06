@@ -216,6 +216,7 @@ response_invoke_processor(request &request2,
                                                       uri),
                                  &request2.uri,
                                  request2.args,
+                                 request2.session_cookie,
                                  request2.session_id,
                                  method, request->headers);
 
@@ -317,6 +318,7 @@ response_invoke_css_processor(request &request2,
                                                       uri),
                                  &request2.uri,
                                  request2.args,
+                                 request2.session_cookie,
                                  request2.session_id,
                                  HTTP_METHOD_GET, request->headers);
 
@@ -387,6 +389,7 @@ response_invoke_text_processor(request &request2,
                                                       uri),
                                  &request2.uri,
                                  request2.args,
+                                 request2.session_cookie,
                                  request2.session_id,
                                  HTTP_METHOD_GET, request->headers);
 
@@ -765,6 +768,7 @@ response_response(http_status_t status, struct strmap *headers,
 
     headers = forward_response_headers(request->pool, headers,
                                        request->local_host_and_port,
+                                       request2.session_cookie,
                                        &request2.translate.response->response_header_forward);
 
     headers = add_translation_vary_header(request->pool, headers,

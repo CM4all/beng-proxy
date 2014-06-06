@@ -210,7 +210,7 @@ assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
                              nullptr, nullptr,
                              &external_uri,
                              nullptr,
-                             0,
+                             nullptr, 0,
                              HTTP_METHOD_GET,
                              nullptr);
 
