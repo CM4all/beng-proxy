@@ -3,6 +3,7 @@ cm4all-beng-proxy (5.0.1) unstable; urgency=low
   * processor: allow Content-Type application/xml
   * pipe_filter: fix command-line argument corruption bug
   * pipe_filter: don't inherit environment variables
+  * pipe_filter: support custom environment variables
 
  --   
 

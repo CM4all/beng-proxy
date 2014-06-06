@@ -33,6 +33,8 @@ struct pipe_ctx {
     sigset_t signals;
 
     Exec exec;
+
+    ConstBuffer<const char *> env;
 };
 
 static int
@@ -48,6 +50,9 @@ pipe_fn(void *ctx)
     rlimit_options_apply(&c->options.rlimits);
 
     clearenv();
+
+    for (auto i : c->env)
+        putenv(const_cast<char *>(i));
 
     c->exec.DoExec();
 }
@@ -90,7 +95,8 @@ append_etag(struct pool *pool, const char *in, const char *suffix)
 static const char *
 make_pipe_etag(struct pool *pool, const char *in,
                const char *path,
-               ConstBuffer<const char *> args)
+               ConstBuffer<const char *> args,
+               ConstBuffer<const char *> env)
 {
     char suffix[10] = {'-'};
 
@@ -98,6 +104,9 @@ make_pipe_etag(struct pool *pool, const char *in,
     unsigned hash = djb_hash_string(path);
 
     for (auto i : args)
+        hash ^= djb_hash_string(i);
+
+    for (auto i : env)
         hash ^= djb_hash_string(i);
 
     format_uint32_hex_fixed(suffix + 1, hash);
@@ -110,6 +119,7 @@ make_pipe_etag(struct pool *pool, const char *in,
 void
 pipe_filter(struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
+            ConstBuffer<const char *> env,
             const struct child_options &options,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
@@ -133,6 +143,7 @@ pipe_filter(struct pool *pool, const char *path,
 
     struct pipe_ctx c = {
         .options = options,
+        .env = env,
     };
 
     c.exec.Append(path);
@@ -170,7 +181,7 @@ pipe_filter(struct pool *pool, const char *path,
            all about) - append a digest value to the ETag, which is
            built from the program path and its arguments */
 
-        etag = make_pipe_etag(pool, etag, path, args);
+        etag = make_pipe_etag(pool, etag, path, args, env);
         assert(etag != nullptr);
 
         headers = strmap_dup(pool, headers, 17);

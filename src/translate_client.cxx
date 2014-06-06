@@ -2315,7 +2315,8 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_PAIR:
         if (client->cgi_address != nullptr) {
             const auto type = client->resource_address->type;
-            struct param_array &p = type == RESOURCE_ADDRESS_CGI
+            struct param_array &p = type == RESOURCE_ADDRESS_CGI ||
+                type == RESOURCE_ADDRESS_PIPE
                 ? client->cgi_address->env
                 : client->cgi_address->params;
 
