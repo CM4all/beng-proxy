@@ -27,7 +27,7 @@ enum beng_header_forward_mode {
 
     /**
      * Forward it, but mangle it.  Example: cookie headers are handled
-     * by
+     * by beng-proxy.
      */
     HEADER_FORWARD_MANGLE,
 };
