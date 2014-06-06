@@ -136,6 +136,10 @@ pipe_filter(struct pool *pool, const char *path,
         .argv = argv,
     };
 
+    argv[0] = p_strdup(pool, path);
+    memcpy(argv + 1, args, num_args * sizeof(argv[0]));
+    argv[1 + num_args] = nullptr;
+
     const int clone_flags =
         namespace_options_clone_flags(&options.ns, SIGCHLD);
 
@@ -155,10 +159,6 @@ pipe_filter(struct pool *pool, const char *path,
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
-
-    argv[0] = p_strdup(pool, path);
-    memcpy(argv + 1, args, num_args * sizeof(argv[0]));
-    argv[1 + num_args] = nullptr;
 
     leave_signal_section(&c.signals);
 
