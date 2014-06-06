@@ -113,6 +113,10 @@ pipe_filter(struct pool *pool, const char *path,
 
     stopwatch = stopwatch_new(pool, path);
 
+    argv[0] = p_strdup(pool, path);
+    memcpy(argv + 1, args, num_args * sizeof(argv[0]));
+    argv[1 + num_args] = NULL;
+
     GError *error = NULL;
     pid = beng_fork(pool, path, body, &response,
                     pipe_child_callback, NULL, &error);
@@ -121,10 +125,6 @@ pipe_filter(struct pool *pool, const char *path,
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }
-
-    argv[0] = p_strdup(pool, path);
-    memcpy(argv + 1, args, num_args * sizeof(argv[0]));
-    argv[1 + num_args] = NULL;
 
     if (pid == 0) {
         execv(path, argv);
