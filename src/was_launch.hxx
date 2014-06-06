@@ -23,6 +23,7 @@ bool
 was_launch(struct was_process *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
+           ConstBuffer<const char *> env,
            const struct child_options *options,
            GError **error_r);
 

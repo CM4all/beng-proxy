@@ -29,6 +29,7 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
               const struct child_options *options,
               const char *executable_path,
               ConstBuffer<const char *> args,
+              ConstBuffer<const char *> env,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 

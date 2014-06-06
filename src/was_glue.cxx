@@ -118,6 +118,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
             const char *action,
             const char *path,
             ConstBuffer<const char *> args,
+            ConstBuffer<const char *> env,
             http_method_t method, const char *uri,
             const char *script_name, const char *path_info,
             const char *query_string,
@@ -162,7 +163,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
 
     was_stock_get(was_stock, pool,
                   options,
-                  action, args,
+                  action, args, env,
                   &was_stock_handler, request,
                   async_ref);
 }

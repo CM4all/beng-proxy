@@ -31,6 +31,9 @@ struct was_run_args {
     const struct child_options *options;
 
     int control_fd, input_fd, output_fd;
+
+    ConstBuffer<const char *> env;
+
     Exec exec;
 };
 
@@ -54,6 +57,9 @@ was_run(void *ctx)
 
     clearenv();
 
+    for (auto i : args->env)
+        putenv(const_cast<char *>(i));
+
     args->exec.DoExec();
 }
 
@@ -61,6 +67,7 @@ bool
 was_launch(struct was_process *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
+           ConstBuffer<const char *> env,
            const struct child_options *options,
            GError **error_r)
 {
@@ -92,6 +99,7 @@ was_launch(struct was_process *process,
         .control_fd = control_fds[1],
         .output_fd = input_fds[1],
         .input_fd = output_fds[0],
+        .env = env,
     };
 
     jail_wrapper_insert(run_args.exec, &options->jail, nullptr);
