@@ -15,6 +15,7 @@
 #include "sigutil.h"
 #include "child_options.hxx"
 #include "djbhash.h"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -91,15 +92,15 @@ append_etag(struct pool *pool, const char *in, const char *suffix)
 static const char *
 make_pipe_etag(struct pool *pool, const char *in,
                const char *path,
-               const char *const* args, unsigned num_args)
+               ConstBuffer<const char *> args)
 {
     char suffix[10] = {'-'};
 
     /* build hash from path and arguments */
     unsigned hash = djb_hash_string(path);
 
-    for (unsigned i = 0; i < num_args; ++i)
-        hash ^= djb_hash_string(args[i]);
+    for (auto i : args)
+        hash ^= djb_hash_string(i);
 
     format_uint32_hex_fixed(suffix + 1, hash);
     suffix[9] = 0;
@@ -110,7 +111,7 @@ make_pipe_etag(struct pool *pool, const char *in,
 
 void
 pipe_filter(struct pool *pool, const char *path,
-            const char *const* args, unsigned num_args,
+            ConstBuffer<const char *> args,
             const struct child_options &options,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
@@ -118,7 +119,7 @@ pipe_filter(struct pool *pool, const char *path,
 {
     struct stopwatch *stopwatch;
     struct istream *response;
-    char *argv[1 + num_args + 1];
+    char *argv[1 + args.size + 1];
     const char *etag;
 
     if (body == nullptr) {
@@ -140,8 +141,8 @@ pipe_filter(struct pool *pool, const char *path,
     };
 
     argv[0] = p_strdup(pool, path);
-    memcpy(argv + 1, args, num_args * sizeof(argv[0]));
-    argv[1 + num_args] = nullptr;
+    memcpy(argv + 1, args.data, args.size * sizeof(args.data[0]));
+    argv[1 + args.size] = nullptr;
 
     const int clone_flags =
         namespace_options_clone_flags(&options.ns, SIGCHLD);
@@ -174,7 +175,7 @@ pipe_filter(struct pool *pool, const char *path,
            all about) - append a digest value to the ETag, which is
            built from the program path and its arguments */
 
-        etag = make_pipe_etag(pool, etag, path, args, num_args);
+        etag = make_pipe_etag(pool, etag, path, args);
         assert(etag != nullptr);
 
         headers = strmap_dup(pool, headers, 17);
