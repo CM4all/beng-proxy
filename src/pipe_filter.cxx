@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
@@ -43,6 +44,8 @@ pipe_fn(void *ctx)
     c->options.SetupStderr();
     namespace_options_setup(&c->options.ns);
     rlimit_options_apply(&c->options.rlimits);
+
+    clearenv();
 
     execv(c->path, c->argv);
     fprintf(stderr, "exec('%s') failed: %s\n",
