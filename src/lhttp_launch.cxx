@@ -25,16 +25,8 @@ lhttp_run(const struct lhttp_address *address, int fd)
 
     clearenv();
 
-    for (unsigned j = 0; j < address->env.n; ++j) {
-        union {
-            const char *in;
-            char *out;
-        } u = {
-            .in = address->env.values[j],
-        };
-
-        putenv(u.out);
-    }
+    for (auto i : address->env)
+        putenv(const_cast<char *>(i));
 
     Exec e;
     jail_wrapper_insert(e, &address->options.jail, nullptr);
