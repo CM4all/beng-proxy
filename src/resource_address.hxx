@@ -89,11 +89,7 @@ resource_address_get_file(struct resource_address *address)
 {
     assert(address->type == RESOURCE_ADDRESS_LOCAL);
 
-    union {
-        const struct file_address *in;
-        struct file_address *out;
-    } u = { .in = address->u.file };
-    return u.out;
+    return const_cast<struct file_address *>(address->u.file);
 }
 
 gcc_const
@@ -102,11 +98,7 @@ resource_address_get_cgi(struct resource_address *address)
 {
     assert(resource_address_is_cgi_alike(address));
 
-    union {
-        const struct cgi_address *in;
-        struct cgi_address *out;
-    } u = { .in = address->u.cgi };
-    return u.out;
+    return const_cast<struct cgi_address *>(address->u.cgi);
 }
 
 void
