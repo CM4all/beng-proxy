@@ -36,11 +36,11 @@ strmap_to_string(struct strmap *map)
         const struct strmap_pair *pair;
         gpointer data;
     } u;
-    GSList *list = NULL;
+    GSList *list = nullptr;
     static char buffer[4096];
 
     strmap_rewind(map);
-    while ((u.pair = strmap_next(map)) != NULL)
+    while ((u.pair = strmap_next(map)) != nullptr)
         list = g_slist_prepend(list, u.data);
 
     list = g_slist_sort(list, cmp_pair);
@@ -75,7 +75,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
         },
     };
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
     headers = strmap_new(pool, 17);
@@ -95,12 +95,12 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                  "x-cm4all-beng-user=hans;"
                  "x-forwarded-for=10.0.0.2;");
 
-    /* NULL test */
-    out = forward_request_headers(pool, NULL,
+    /* nullptr test */
+    out = forward_request_headers(pool, nullptr,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     assert(strcmp(strmap_remove(out, "user-agent"), PRODUCT_TOKEN) == 0);
     check_strmap(out, "accept-charset=utf-8;"
                  "via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
@@ -111,7 +111,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;user-agent=firesomething;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -124,7 +124,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;user-agent=firesomething;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -135,7 +135,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, true, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=iso-8859-1;"
                  "from=foo;user-agent=firesomething;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -146,7 +146,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, true, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "content-type=image/jpeg;from=foo;"
                  "user-agent=firesomething;"
@@ -160,7 +160,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -173,7 +173,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     assert(strcmp(strmap_remove(out, "user-agent"), PRODUCT_TOKEN) == 0);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;"
@@ -189,7 +189,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;"
                  "via=1.1 192.168.0.1;"
@@ -203,7 +203,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
@@ -215,7 +215,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "cookie=a=b;"
                  "from=foo;");
@@ -228,7 +228,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "cookie=c=d;cookie=a=b;"
                  "from=foo;");
@@ -242,7 +242,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
@@ -255,7 +255,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "from=foo;");
 
@@ -265,7 +265,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "access-control-request-method=POST;"
                  "from=foo;"
@@ -279,14 +279,14 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
                                   &settings,
-                                  NULL, NULL, NULL);
+                                  nullptr, nullptr, nullptr);
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
                  "access-control-request-method=POST;"
                  "from=foo;"
                  "origin=example.com;"
                  "x-cm4all-beng-user=hans;");
 
-    /* response headers: NULL */
+    /* response headers: nullptr */
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
@@ -296,10 +296,10 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
 
-    out = forward_response_headers(pool, NULL,
+    out = forward_response_headers(pool, nullptr,
                                    "192.168.0.2",
                                    &settings);
-    assert(strmap_remove(out, "server") == NULL);
+    assert(strmap_remove(out, "server") == nullptr);
     check_strmap(out, "");
 
     /* response headers: basic test */
@@ -315,7 +315,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     out = forward_response_headers(pool, headers,
                                    "192.168.0.2",
                                    &settings);
-    assert(strmap_get(out, "server") == NULL);
+    assert(strmap_get(out, "server") == nullptr);
     check_strmap(out, "content-type=image/jpeg;");
 
     /* response headers: server */
