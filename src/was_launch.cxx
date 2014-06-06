@@ -52,6 +52,8 @@ was_run(void *ctx)
     /* fd2 is retained */
     dup2(args->control_fd, 3);
 
+    clearenv();
+
     args->exec.DoExec();
 }
 
