@@ -32,9 +32,9 @@ struct was_run_args {
 
     int control_fd, input_fd, output_fd;
 
+    const char *executable_path;
+    ConstBuffer<const char *> args;
     ConstBuffer<const char *> env;
-
-    Exec exec;
 };
 
 gcc_noreturn
@@ -60,7 +60,13 @@ was_run(void *ctx)
     for (auto i : args->env)
         putenv(const_cast<char *>(i));
 
-    args->exec.DoExec();
+    Exec exec;
+    jail_wrapper_insert(exec, &args->options->jail, nullptr);
+    exec.Append(args->executable_path);
+    for (auto i : args->args)
+        exec.Append(i);
+
+    exec.DoExec();
 }
 
 bool
@@ -99,13 +105,10 @@ was_launch(struct was_process *process,
         .control_fd = control_fds[1],
         .output_fd = input_fds[1],
         .input_fd = output_fds[0],
+        .executable_path = executable_path,
+        .args = args,
         .env = env,
     };
-
-    jail_wrapper_insert(run_args.exec, &options->jail, nullptr);
-    run_args.exec.Append(executable_path);
-    for (auto i : args)
-        run_args.exec.Append(i);
 
     int clone_flags = SIGCHLD;
     clone_flags = namespace_options_clone_flags(&options->ns, clone_flags);
