@@ -1,8 +1,9 @@
 cm4all-beng-proxy (4.3) unstable; urgency=low
 
   * merge release 3.1.33
+  * widget_uri, cgi_address: fix potential crash
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 10 Jun 2014 08:47:34 -0000
 
 cm4all-beng-proxy (4.2) unstable; urgency=low
 
