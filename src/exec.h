@@ -50,9 +50,9 @@ exec_do(struct exec *e)
     e->args[e->num_args] = NULL;
 
     const char *path = e->args[0];
-    char *slash = strrchr(path, '/');
+    const char *slash = strrchr(path, '/');
     if (slash != NULL && slash[1] != 0)
-        e->args[0] = slash + 1;
+        e->args[0] = const_cast<char *>(slash + 1);
 
     execv(path, e->args);
 }
