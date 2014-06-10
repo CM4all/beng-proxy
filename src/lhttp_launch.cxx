@@ -12,7 +12,6 @@
 #include <inline/compiler.h>
 
 #include <unistd.h>
-#include <stdlib.h>
 
 gcc_noreturn
 void
@@ -23,12 +22,11 @@ lhttp_run(const struct lhttp_address *address, int fd)
         close(fd);
     }
 
-    clearenv();
+    Exec e;
 
     for (auto i : address->env)
-        putenv(const_cast<char *>(i));
+        e.PutEnv(i);
 
-    Exec e;
     jail_wrapper_insert(e, &address->options.jail, nullptr);
     e.Append(address->path);
 

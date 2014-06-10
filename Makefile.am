@@ -874,6 +874,7 @@ test_t_cache_LDADD = $(AM_LDADD) \
 
 test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.c \
 	src/translate_response.cxx \
+	src/exec.cxx \
 	src/hashmap.c src/strmap.c \
 	src/widget_view.cxx \
 	src/strset.c \
@@ -923,6 +924,7 @@ test_t_resource_address_SOURCES = test/t_resource_address.cxx \
 	src/http_address.cxx src/uri-relative.c \
 	src/uri_escape.cxx src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
+	src/exec.cxx \
 	src/address_list.cxx
 test_t_resource_address_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -947,6 +949,7 @@ test_t_cgi_address_SOURCES = test/t_cgi_address.cxx \
 	src/uri_base.cxx \
 	src/uri_escape.cxx \
 	src/regex.cxx \
+	src/exec.cxx \
 	src/jail.cxx
 test_t_cgi_address_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_cgi_address_LDADD = $(AM_LDADD) \
@@ -1031,6 +1034,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/istream-html-escape.c \
 	src/uri-relative.c src/uri_escape.cxx src/uri-edit.c \
 	src/uri_base.cxx \
+	src/exec.cxx \
 	src/random.c \
 	src/crash.c \
 	src/session.cxx src/session_manager.cxx \
@@ -1209,6 +1213,7 @@ test_t_http_util_LDADD = $(AM_LDADD) \
 test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/tpool.c \
 	src/sink_rubber.cxx \
+	src/exec.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/strmap.c src/hashmap.c \
 	src/fifo-buffer.c src/header-parser.c \
@@ -1305,6 +1310,7 @@ test_t_slice_LDADD = $(AM_LDADD) \
 test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/tpool.c \
 	src/penv.cxx \
+	src/exec.cxx \
 	src/strset.c \
 	src/escape_pool.c \
 	src/istream-escape.c \
@@ -1330,6 +1336,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/tcache.cxx src/cache.c \
 	src/translate_response.cxx \
 	src/widget_view.cxx \
+	src/exec.cxx \
 	src/hashmap.c src/strmap.c src/abort-unref.c \
 	src/strset.c \
 	src/uri-relative.c src/uri_escape.cxx src/uri-edit.c \
@@ -1344,6 +1351,7 @@ test_t_widget_registry_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_widget_resolver_SOURCES = test/t_widget_resolver.cxx \
+	src/exec.cxx \
 	src/widget_resolver.cxx \
 	src/widget_init.cxx
 test_t_widget_resolver_LDADD = $(AM_LDADD) \
@@ -1371,6 +1379,7 @@ test_t_wembed_LDADD = $(AM_LDADD) \
 test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_http.cxx src/widget_uri.cxx src/widget_request.cxx \
 	src/pheaders.cxx \
+	src/exec.cxx \
 	src/crash.c \
 	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.c \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
@@ -1425,6 +1434,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/uri-extract.c \
 	src/widget_view.cxx \
 	src/transformation.cxx \
+	src/exec.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
@@ -1518,6 +1528,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/expansible-buffer.c \
+	src/exec.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_run_processor_LDADD = $(AM_LDADD) \
@@ -1533,6 +1544,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
+	src/exec.cxx \
 	src/uri-relative.c src/uri-edit.c src/uri_base.cxx \
 	src/uri_escape.cxx \
 	src/strmap.c src/hashmap.c \

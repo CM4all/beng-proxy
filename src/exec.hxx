@@ -16,6 +16,7 @@
 
 class Exec {
     StaticArray<char *, 32> args;
+    StaticArray<char *, 32> env;
 
 public:
     void Append(const char *arg) {
@@ -31,6 +32,18 @@ public:
     const char *GetPath() const {
         return args.front();
     }
+
+    void PutEnv(const char *p) {
+        assert(p != nullptr);
+
+        /* for whatever reason, execve() wants non-const string
+           pointers - this is a hack to work around that limitation */
+        char *deconst = const_cast<char *>(p);
+
+        env.push_back(deconst);
+    }
+
+    void SetEnv(const char *name, const char *value);
 
     gcc_noreturn
     void DoExec();

@@ -21,7 +21,6 @@
 #include <unistd.h>
 #include <sched.h>
 #include <sys/un.h>
-#include <stdlib.h>
 #include <sys/socket.h>
 
 struct delegate_info {
@@ -95,8 +94,6 @@ delegate_stock_fn(void *ctx)
     dup2(info->fds[1], STDIN_FILENO);
     close(info->fds[0]);
     close(info->fds[1]);
-
-    clearenv();
 
     Exec e;
     jail_wrapper_insert(e, &info->options->jail, NULL);

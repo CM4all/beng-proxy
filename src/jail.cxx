@@ -191,7 +191,7 @@ jail_wrapper_insert(Exec &e, const struct jail_params *params,
     }
 
     if (params->host_name != nullptr)
-        setenv("JAILCGI_SERVERNAME", params->host_name, true);
+        e.SetEnv("JAILCGI_SERVERNAME", params->host_name);
 
     if (params->home_directory != nullptr) {
         e.Append("--home");

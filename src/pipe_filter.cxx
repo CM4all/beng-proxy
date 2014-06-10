@@ -33,8 +33,6 @@ struct pipe_ctx {
     sigset_t signals;
 
     Exec exec;
-
-    ConstBuffer<const char *> env;
 };
 
 static int
@@ -48,11 +46,6 @@ pipe_fn(void *ctx)
     c->options.SetupStderr();
     namespace_options_setup(&c->options.ns);
     rlimit_options_apply(&c->options.rlimits);
-
-    clearenv();
-
-    for (auto i : c->env)
-        putenv(const_cast<char *>(i));
 
     c->exec.DoExec();
 }
@@ -143,12 +136,13 @@ pipe_filter(struct pool *pool, const char *path,
 
     struct pipe_ctx c = {
         .options = options,
-        .env = env,
     };
 
     c.exec.Append(path);
     for (auto i : args)
         c.exec.Append(i);
+    for (auto i : env)
+        c.exec.PutEnv(i);
 
     const int clone_flags =
         namespace_options_clone_flags(&options.ns, SIGCHLD);

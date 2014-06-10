@@ -13,7 +13,6 @@
 
 #include <unistd.h>
 #include <fcntl.h>
-#include <stdlib.h>
 
 gcc_noreturn
 void
@@ -32,12 +31,11 @@ fcgi_run(const struct jail_params *jail,
         close(2);
     }
 
-    clearenv();
+    Exec e;
 
     for (auto i : env)
-        putenv(const_cast<char *>(i));
+        e.PutEnv(i);
 
-    Exec e;
     jail_wrapper_insert(e, jail, nullptr);
     e.Append(executable_path);
     for (auto i : args)

@@ -20,7 +20,6 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <string.h>
-#include <stdlib.h>
 
 static void gcc_noreturn
 cgi_run(const struct jail_params *jail,
@@ -55,38 +54,38 @@ cgi_run(const struct jail_params *jail,
     if (document_root == nullptr)
         document_root = "/var/www";
 
-    clearenv();
+    Exec e;
 
     for (auto i : env)
-        putenv(const_cast<char *>(i));
+        e.PutEnv(i);
 
-    setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
-    setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
-    setenv("REQUEST_METHOD", http_method_to_string(method), 1);
-    setenv("SCRIPT_FILENAME", path, 1);
-    setenv("PATH_TRANSLATED", path, 1);
-    setenv("REQUEST_URI", uri, 1);
-    setenv("SCRIPT_NAME", script_name, 1);
-    setenv("PATH_INFO", path_info, 1);
-    setenv("QUERY_STRING", query_string, 1);
-    setenv("DOCUMENT_ROOT", document_root, 1);
-    setenv("SERVER_SOFTWARE", PRODUCT_TOKEN, 1);
+    e.SetEnv("GATEWAY_INTERFACE", "CGI/1.1");
+    e.SetEnv("SERVER_PROTOCOL", "HTTP/1.1");
+    e.SetEnv("REQUEST_METHOD", http_method_to_string(method));
+    e.SetEnv("SCRIPT_FILENAME", path);
+    e.SetEnv("PATH_TRANSLATED", path);
+    e.SetEnv("REQUEST_URI", uri);
+    e.SetEnv("SCRIPT_NAME", script_name);
+    e.SetEnv("PATH_INFO", path_info);
+    e.SetEnv("QUERY_STRING", query_string);
+    e.SetEnv("DOCUMENT_ROOT", document_root);
+    e.SetEnv("SERVER_SOFTWARE", PRODUCT_TOKEN);
 
     if (remote_addr != nullptr)
-        setenv("REMOTE_ADDR", remote_addr, 1);
+        e.SetEnv("REMOTE_ADDR", remote_addr);
 
     if (jail != nullptr && jail->enabled) {
-        setenv("JAILCGI_FILENAME", path, 1);
+        e.SetEnv("JAILCGI_FILENAME", path);
         path = "/usr/lib/cm4all/jailcgi/bin/wrapper";
 
         if (jail->home_directory != nullptr)
-            setenv("JETSERV_HOME", jail->home_directory, 1);
+            e.SetEnv("JETSERV_HOME", jail->home_directory);
 
         if (interpreter != nullptr)
-            setenv("JAILCGI_INTERPRETER", interpreter, 1);
+            e.SetEnv("JAILCGI_INTERPRETER", interpreter);
 
         if (action != nullptr)
-            setenv("JAILCGI_ACTION", action, 1);
+            e.SetEnv("JAILCGI_ACTION", action);
     } else {
         if (action != nullptr)
             path = action;
@@ -119,21 +118,20 @@ cgi_run(const struct jail_params *jail,
             }
 
             buffer[5 + i] = 0;
-            setenv(buffer, pair->value, 1);
+            e.SetEnv(buffer, pair->value);
         }
     }
 
     if (content_type != nullptr)
-        setenv("CONTENT_TYPE", content_type, 1);
+        e.SetEnv("CONTENT_TYPE", content_type);
 
     if (content_length >= 0) {
         char value[32];
         snprintf(value, sizeof(value), "%llu",
                  (unsigned long long)content_length);
-        setenv("CONTENT_LENGTH", value, 1);
+        e.SetEnv("CONTENT_LENGTH", value);
     }
 
-    Exec e;
     e.Append(path);
     for (auto i : args)
         e.Append(i);

@@ -55,16 +55,13 @@ was_run(void *ctx)
     /* fd2 is retained */
     dup2(args->control_fd, 3);
 
-    clearenv();
-
-    for (auto i : args->env)
-        putenv(const_cast<char *>(i));
-
     Exec exec;
     jail_wrapper_insert(exec, &args->options->jail, nullptr);
     exec.Append(args->executable_path);
     for (auto i : args->args)
         exec.Append(i);
+    for (auto i : args->env)
+        exec.PutEnv(i);
 
     exec.DoExec();
 }
