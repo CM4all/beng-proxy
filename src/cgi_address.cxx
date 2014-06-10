@@ -43,7 +43,7 @@ static bool
 HasTrailingSlash(const char *p)
 {
     size_t length = strlen(p);
-    return p > 0 && p[length - 1] == '/';
+    return length > 0 && p[length - 1] == '/';
 }
 
 const char *

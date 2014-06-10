@@ -20,9 +20,9 @@ Exec::DoExec()
     args.push_back(nullptr);
 
     const char *path = args.front();
-    char *slash = strrchr(path, '/');
+    const char *slash = strrchr(path, '/');
     if (slash != nullptr && slash[1] != 0)
-        args.front() = slash + 1;
+        args.front() = const_cast<char *>(slash + 1);
 
     execv(path, args.raw());
 
