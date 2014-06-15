@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.5) unstable; urgency=low
 
-  * 
+  * tcache: enable VARY on LOCAL_ADDRESS_STRING
 
  --   
 
