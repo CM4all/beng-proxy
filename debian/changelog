@@ -1,6 +1,6 @@
 cm4all-beng-proxy (5.0.2) unstable; urgency=low
 
-  * merge release 4.4
+  * merge release 4.5
 
  --   
 
@@ -14,6 +14,12 @@ cm4all-beng-proxy (5.0.1) unstable; urgency=low
   * header_forward: add mode COOKIE=BOTH
 
  -- Max Kellermann <mk@cm4all.com>  Fri, 06 Jun 2014 13:41:44 -0000
+
+cm4all-beng-proxy (4.5) unstable; urgency=low
+
+  * tcache: enable VARY on LOCAL_ADDRESS_STRING
+
+ -- Max Kellermann <mk@cm4all.com>  Sun, 15 Jun 2014 21:14:17 -0000
 
 cm4all-beng-proxy (4.4) unstable; urgency=low
 

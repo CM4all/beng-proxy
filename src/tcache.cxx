@@ -519,6 +519,7 @@ tcache_vary_match(const TranslateCacheItem *item,
                                    request->session, strict);
 
     case TRANSLATE_LOCAL_ADDRESS:
+    case TRANSLATE_LOCAL_ADDRESS_STRING:
         return tcache_buffer_match(item->request.local_address,
                                    item->request.local_address_length,
                                    request->local_address,
@@ -757,7 +758,8 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
 
     item->request.local_address =
         tcr->request->local_address != nullptr &&
-        response->VaryContains(TRANSLATE_LOCAL_ADDRESS)
+        (response->VaryContains(TRANSLATE_LOCAL_ADDRESS) ||
+         response->VaryContains(TRANSLATE_LOCAL_ADDRESS_STRING))
         ? (const struct sockaddr *)
         p_memdup(pool, tcr->request->local_address,
                  tcr->request->local_address_length)
