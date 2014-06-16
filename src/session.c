@@ -29,10 +29,8 @@ session_allocate(struct dpool *pool)
     struct session *session;
 
     session = d_malloc(pool, sizeof(*session));
-    if (session == NULL) {
-        dpool_destroy(pool);
+    if (session == NULL)
         return NULL;
-    }
 
     memset(session, 0, sizeof(*session));
 
