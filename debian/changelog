@@ -1,6 +1,7 @@
 cm4all-beng-proxy (5.0.2) unstable; urgency=low
 
   * merge release 4.5
+  * session: fix potential crash on shared memory exhaustion
 
  --   
 
