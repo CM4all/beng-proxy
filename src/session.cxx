@@ -37,6 +37,7 @@ session_allocate(struct dpool *pool)
     lock_init(&session->lock);
     session->expires = expiry_touch(SESSION_TTL_NEW);
     session->counter = 1;
+    session->is_new = true;
     session->translate = nullptr;
     session->widgets = nullptr;
     session->cookies = cookie_jar_new(pool);
