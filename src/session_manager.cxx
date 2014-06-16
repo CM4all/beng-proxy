@@ -35,11 +35,11 @@ struct session_manager {
     /**
      * The idle timeout of sessions [seconds].
      */
-    unsigned idle_timeout;
+    const unsigned idle_timeout;
 
-    unsigned cluster_size, cluster_node;
+    const unsigned cluster_size, cluster_node;
 
-    struct shm *shm;
+    struct shm *const shm;
 
     /** this lock protects the following hash table */
     struct rwlock lock;
@@ -53,6 +53,24 @@ struct session_manager {
 
     struct list_head sessions[SESSION_SLOTS];
     unsigned num_sessions;
+
+    session_manager(unsigned _idle_timeout,
+                    unsigned _cluster_size, unsigned _cluster_node,
+                    struct shm *_shm)
+        :idle_timeout(_idle_timeout),
+         cluster_size(_cluster_size),
+         cluster_node(_cluster_node),
+         shm(_shm),
+         abandoned(false),
+         num_sessions(0) {
+        refcount_init(&ref);
+        rwlock_init(&lock);
+
+        for (unsigned i = 0; i < SESSION_SLOTS; ++i)
+            list_init(&sessions[i]);
+    }
+
+    ~session_manager();
 };
 
 /** clean up expired sessions every 60 seconds */
@@ -144,31 +162,16 @@ static struct session_manager *
 session_manager_new(unsigned idle_timeout,
                     unsigned cluster_size, unsigned cluster_node)
 {
-    unsigned i;
-
     struct shm *shm = shm_new(SHM_PAGE_SIZE, SHM_NUM_PAGES);
     if (shm == nullptr) {
         daemon_log(1, "shm_new() failed\n");
         abort();
     }
 
-    struct session_manager *sm = (struct session_manager *)shm_alloc(shm, SM_PAGES);
-    refcount_init(&sm->ref);
-    sm->idle_timeout = idle_timeout;
-    sm->cluster_size = cluster_size;
-    sm->cluster_node = cluster_node;
-    sm->shm = shm;
-
-    rwlock_init(&sm->lock);
-
-    sm->abandoned = false;
-
-    for (i = 0; i < SESSION_SLOTS; ++i)
-        list_init(&sm->sessions[i]);
-
-    sm->num_sessions = 0;
-
-    return sm;
+    return NewFromShm<struct session_manager>(shm, SM_PAGES,
+                                              idle_timeout,
+                                              cluster_size, cluster_node,
+                                              shm);
 }
 
 bool
@@ -196,26 +199,32 @@ session_manager_init(unsigned idle_timeout,
     return true;
 }
 
-static void
-session_manager_destroy(struct session_manager *sm)
+inline
+session_manager::~session_manager()
 {
-    unsigned i;
-
-    assert(locked_session == nullptr);
-
     crash_unsafe_enter();
-    rwlock_wlock(&sm->lock);
 
-    for (i = 0; i < SESSION_SLOTS; ++i) {
-        while (!list_empty(&sm->sessions[i])) {
-            struct session *session = (struct session *)sm->sessions[i].next;
+    rwlock_wlock(&lock);
+
+    for (unsigned i = 0; i < SESSION_SLOTS; ++i) {
+        while (!list_empty(&sessions[i])) {
+            struct session *session = (struct session *)sessions[i].next;
             session_remove(session);
         }
     }
 
-    rwlock_wunlock(&sm->lock);
-    rwlock_destroy(&sm->lock);
+    rwlock_wunlock(&lock);
+    rwlock_destroy(&lock);
+
     crash_unsafe_leave();
+}
+
+static void
+session_manager_destroy(struct session_manager *sm)
+{
+    assert(locked_session == nullptr);
+
+    sm->~session_manager();
 
     g_rand_free(session_rand);
 }
