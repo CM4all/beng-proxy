@@ -12,6 +12,10 @@
 struct shm;
 
 #ifdef __cplusplus
+
+#include <utility>
+#include <new>
+
 extern "C" {
 #endif
 
@@ -35,6 +39,26 @@ shm_free(struct shm *shm, const void *p);
 
 #ifdef __cplusplus
 }
+
+template<typename T, typename... Args>
+T *
+NewFromShm(struct shm *shm, unsigned num_pages, Args&&... args)
+{
+    void *t = shm_alloc(shm, num_pages);
+    if (t == nullptr)
+        return nullptr;
+
+    return ::new(t) T(std::forward<Args>(args)...);
+}
+
+template<typename T>
+void
+DeleteFromShm(struct shm *shm, T *t)
+{
+    t->~T();
+    shm_free(shm, t);
+}
+
 #endif
 
 #endif
