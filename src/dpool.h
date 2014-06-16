@@ -14,6 +14,10 @@ struct dpool;
 struct shm;
 
 #ifdef __cplusplus
+
+#include <utility>
+#include <new>
+
 extern "C" {
 #endif
 
@@ -70,6 +74,26 @@ d_strndup(struct dpool *pool, const char *src, size_t length);
 
 #ifdef __cplusplus
 }
+
+template<typename T, typename... Args>
+T *
+NewFromPool(struct dpool *pool, Args&&... args)
+{
+    void *t = d_malloc(pool, sizeof(T));
+    if (t == nullptr)
+        return nullptr;
+
+    return ::new(t) T(std::forward<Args>(args)...);
+}
+
+template<typename T>
+void
+DeleteFromPool(struct dpool *pool, T *t)
+{
+    t->~T();
+    d_free(pool, t);
+}
+
 #endif
 
 #endif
