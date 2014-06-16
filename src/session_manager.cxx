@@ -72,6 +72,41 @@ struct session_manager {
     }
 
     ~session_manager();
+
+    void Ref() {
+        refcount_get(&ref);
+        shm_ref(shm);
+    }
+
+    void Unref() {
+        if (refcount_put(&ref))
+            this->~session_manager();
+    }
+
+    void Abandon();
+
+    struct list_head *Slot(session_id_t id) {
+#ifdef SESSION_ID_WORDS
+        return &sessions[id.data[0] % SESSION_SLOTS];
+#else
+        return &sessions[id % SESSION_SLOTS];
+#endif
+    }
+
+    void Insert(struct session *session);
+
+    void EraseAndDispose(struct session *session);
+    void EraseAndDispose(session_id_t id);
+
+    bool Cleanup();
+
+    /**
+     * Forcefully deletes at least one session.
+     */
+    bool Purge();
+
+    bool Visit(bool (*callback)(const struct session *session,
+                                void *ctx), void *ctx);
 };
 
 /** clean up expired sessions every 60 seconds */
@@ -100,25 +135,24 @@ static struct event session_cleanup_event;
 static const struct session *locked_session;
 #endif
 
-static void
-session_remove(struct session *session)
+void
+session_manager::EraseAndDispose(struct session *session)
 {
     assert(crash_in_unsafe());
-    assert(rwlock_is_wlocked(&session_manager->lock));
-    assert(session_manager->num_sessions > 0);
+    assert(rwlock_is_wlocked(&lock));
+    assert(num_sessions > 0);
 
     list_remove(&session->hash_siblings);
-    --session_manager->num_sessions;
+    --num_sessions;
 
-    if (session_manager->num_sessions == 0)
+    if (num_sessions == 0)
         evtimer_del(&session_cleanup_event);
 
     session_destroy(session);
 }
 
-static void
-cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
-                       void *ctx gcc_unused)
+inline bool
+session_manager::Cleanup()
 {
     unsigned i;
     struct session *session, *next;
@@ -130,32 +164,39 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
     const unsigned now = now_s();
 
     crash_unsafe_enter();
-    rwlock_wlock(&session_manager->lock);
+    rwlock_wlock(&lock);
 
-    if (session_manager->abandoned) {
-        rwlock_wunlock(&session_manager->lock);
+    if (abandoned) {
+        rwlock_wunlock(&lock);
         crash_unsafe_leave();
         assert(!crash_in_unsafe());
-        return;
+        return false;
     }
 
     for (i = 0; i < SESSION_SLOTS; ++i) {
-        for (session = (struct session *)session_manager->sessions[i].next;
-             &session->hash_siblings != &session_manager->sessions[i];
+        for (session = (struct session *)sessions[i].next;
+             &session->hash_siblings != &sessions[i];
              session = next) {
             next = (struct session *)session->hash_siblings.next;
             if (now >= (unsigned)session->expires)
-                session_remove(session);
+                EraseAndDispose(session);
         }
     }
 
-    non_empty = session_manager->num_sessions > 0;
+    non_empty = num_sessions > 0;
 
-    rwlock_wunlock(&session_manager->lock);
+    rwlock_wunlock(&lock);
     crash_unsafe_leave();
     assert(!crash_in_unsafe());
 
-    if (non_empty)
+    return non_empty;
+}
+
+static void
+cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
+                       void *ctx gcc_unused)
+{
+    if (session_manager->Cleanup())
         evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
@@ -191,8 +232,7 @@ session_manager_init(unsigned idle_timeout,
         if (session_manager == nullptr)
                 return false;
     } else {
-        refcount_get(&session_manager->ref);
-        shm_ref(session_manager->shm);
+        session_manager->Ref();
     }
 
     evtimer_set(&session_cleanup_event, cleanup_event_callback, nullptr);
@@ -210,7 +250,7 @@ session_manager::~session_manager()
     for (unsigned i = 0; i < SESSION_SLOTS; ++i) {
         while (!list_empty(&sessions[i])) {
             struct session *session = (struct session *)sessions[i].next;
-            session_remove(session);
+            EraseAndDispose(session);
         }
     }
 
@@ -218,16 +258,6 @@ session_manager::~session_manager()
     rwlock_destroy(&lock);
 
     crash_unsafe_leave();
-}
-
-static void
-session_manager_destroy(struct session_manager *sm)
-{
-    assert(locked_session == nullptr);
-
-    sm->~session_manager();
-
-    g_rand_free(session_rand);
 }
 
 void
@@ -239,28 +269,37 @@ session_manager_deinit()
 
     event_del(&session_cleanup_event);
 
-    if (refcount_put(&session_manager->ref))
-        session_manager_destroy(session_manager);
+    struct shm *shm = session_manager->shm;
+
+    session_manager->Unref();
+    session_manager = nullptr;
 
     /* we always destroy the SHM section, because it is not used
        anymore by this process; other processes may still use it */
-    shm_close(session_manager->shm);
+    shm_close(shm);
 
-    session_manager = nullptr;
+    g_rand_free(session_rand);
+}
+
+inline void
+session_manager::Abandon()
+{
+    assert(shm != nullptr);
+
+    abandoned = true;
+
+    /* XXX move the "shm" pointer out of the shared memory */
+    shm_close(shm);
 }
 
 void
 session_manager_abandon()
 {
     assert(session_manager != nullptr);
-    assert(session_manager->shm != nullptr);
-
-    session_manager->abandoned = true;
 
     event_del(&session_cleanup_event);
 
-    /* XXX move the "shm" pointer out of the shared memory */
-    shm_close(session_manager->shm);
+    session_manager->Abandon();
     session_manager = nullptr;
 }
 
@@ -289,11 +328,8 @@ session_manager_new_dpool()
     return dpool_new(session_manager->shm);
 }
 
-/**
- * Forcefully deletes at least one session.
- */
-static bool
-session_manager_purge()
+bool
+session_manager::Purge()
 {
     /* collect at most 256 sessions */
     StaticArray<struct session *, 256> purge_sessions;
@@ -302,11 +338,11 @@ session_manager_purge()
     assert(locked_session == nullptr);
 
     crash_unsafe_enter();
-    rwlock_wlock(&session_manager->lock);
+    rwlock_wlock(&lock);
 
     for (unsigned i = 0; i < SESSION_SLOTS; ++i) {
-        for (struct session *s = (struct session *)session_manager->sessions[i].next;
-             &s->hash_siblings != &session_manager->sessions[i];
+        for (struct session *s = (struct session *)sessions[i].next;
+             &s->hash_siblings != &sessions[i];
              s = (struct session *)s->hash_siblings.next) {
             unsigned score = session_purge_score(s);
             if (score > highest_score) {
@@ -320,7 +356,7 @@ session_manager_purge()
     }
 
     if (purge_sessions.empty()) {
-        rwlock_wunlock(&session_manager->lock);
+        rwlock_wunlock(&lock);
         crash_unsafe_leave();
         return false;
     }
@@ -330,41 +366,37 @@ session_manager_purge()
 
     for (auto session : purge_sessions) {
         lock_lock(&session->lock);
-        session_remove(session);
+        EraseAndDispose(session);
     }
 
-    rwlock_wunlock(&session_manager->lock);
+    rwlock_wunlock(&lock);
     crash_unsafe_leave();
 
     return true;
 }
 
-static struct list_head *
-session_slot(session_id_t id)
+inline void
+session_manager::Insert(struct session *session)
 {
-#ifdef SESSION_ID_WORDS
-    return &session_manager->sessions[id.data[0] % SESSION_SLOTS];
-#else
-    return &session_manager->sessions[id % SESSION_SLOTS];
-#endif
+    assert(session != nullptr);
+
+    rwlock_wlock(&lock);
+
+    list_add(&session->hash_siblings, Slot(session->id));
+    ++num_sessions;
+
+    const bool one_session = num_sessions == 1;
+
+    rwlock_wunlock(&lock);
+
+    if (one_session)
+        evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
 void
 session_manager_add(struct session *session)
 {
-    assert(session != nullptr);
-
-    rwlock_wlock(&session_manager->lock);
-
-    list_add(&session->hash_siblings, session_slot(session->id));
-    ++session_manager->num_sessions;
-
-    const unsigned num_sessions = session_manager->num_sessions;
-
-    rwlock_wunlock(&session_manager->lock);
-
-    if (num_sessions == 1)
-        evtimer_add(&session_cleanup_event, &cleanup_interval);
+    session_manager->Insert(session);
 }
 
 static uint32_t
@@ -411,7 +443,7 @@ session_new_unsafe()
 
     pool = dpool_new(session_manager->shm);
     if (pool == nullptr) {
-        if (!session_manager_purge())
+        if (!session_manager->Purge())
             return nullptr;
 
         /* at least one session has been purged: try again */
@@ -431,7 +463,7 @@ session_new_unsafe()
 
     rwlock_wlock(&session_manager->lock);
 
-    list_add(&session->hash_siblings, session_slot(session->id));
+    list_add(&session->hash_siblings, session_manager->Slot(session->id));
     ++session_manager->num_sessions;
 
     num_sessions = session_manager->num_sessions;
@@ -482,10 +514,10 @@ session_defragment(struct session *src)
         return src;
     }
 
-    list_add(&dest->hash_siblings, session_slot(dest->id));
+    list_add(&dest->hash_siblings, session_manager->Slot(dest->id));
     ++session_manager->num_sessions;
 
-    session_remove(src);
+    session_manager->EraseAndDispose(src);
     return dest;
 }
 
@@ -495,7 +527,7 @@ session_find(session_id_t id)
     if (session_manager->abandoned)
         return nullptr;
 
-    struct list_head *head = session_slot(id);
+    struct list_head *head = session_manager->Slot(id);
     struct session *session;
 
     assert(crash_in_unsafe());
@@ -504,7 +536,7 @@ session_find(session_id_t id)
     for (session = (struct session *)head->next;
          &session->hash_siblings != head;
          session = (struct session *)session->hash_siblings.next) {
-        assert(session_slot(session->id) == head);
+        assert(session_manager->Slot(session->id) == head);
 
         if (session_id_equals(session->id, id)) {
 #ifndef NDEBUG
@@ -562,8 +594,9 @@ session_defragment_id(session_id_t id)
         return;
 
     /* unlock the session, because session_defragment() may call
-       session_remove(), and session_remove() expects the session to
-       be unlocked.  This is ok, because we're holding the session
+       session_manager::EraseAndDispose(), and
+       session_manager::EraseAndDispose() expects the session to be
+       unlocked.  This is ok, because we're holding the session
        manager lock at this point. */
     session_put_internal(session);
 
@@ -597,36 +630,42 @@ session_put(struct session *session)
 }
 
 void
-session_delete(session_id_t id)
+session_manager::EraseAndDispose(session_id_t id)
 {
     struct session *session;
 
     assert(locked_session == nullptr);
 
     crash_unsafe_enter();
-    rwlock_wlock(&session_manager->lock);
+    rwlock_wlock(&lock);
 
     session = session_find(id);
     if (session != nullptr) {
         session_put_internal(session);
-        session_remove(session);
+        EraseAndDispose(session);
     }
 
-    rwlock_wunlock(&session_manager->lock);
+    rwlock_wunlock(&lock);
     crash_unsafe_leave();
 }
 
-bool
-session_manager_visit(bool (*callback)(const struct session *session,
-                                       void *ctx), void *ctx)
+void
+session_delete(session_id_t id)
+{
+    session_manager->EraseAndDispose(id);
+}
+
+inline bool
+session_manager::Visit(bool (*callback)(const struct session *session,
+                                        void *ctx), void *ctx)
 {
     bool result = true;
 
     crash_unsafe_enter();
-    rwlock_rlock(&session_manager->lock);
+    rwlock_rlock(&lock);
 
-    if (session_manager->abandoned) {
-        rwlock_runlock(&session_manager->lock);
+    if (abandoned) {
+        rwlock_runlock(&lock);
         crash_unsafe_leave();
         return false;
     }
@@ -634,7 +673,7 @@ session_manager_visit(bool (*callback)(const struct session *session,
     const unsigned now = now_s();
 
     for (unsigned i = 0; i < SESSION_SLOTS && result; ++i) {
-        struct list_head *slot = &session_manager->sessions[i];
+        struct list_head *slot = &sessions[i];
         for (struct session *session = (struct session *)slot->next;
              &session->hash_siblings != slot && result;
              session = (struct session *)session->hash_siblings.next) {
@@ -647,8 +686,15 @@ session_manager_visit(bool (*callback)(const struct session *session,
         }
     }
 
-    rwlock_runlock(&session_manager->lock);
+    rwlock_runlock(&lock);
     crash_unsafe_leave();
 
     return result;
+}
+
+bool
+session_manager_visit(bool (*callback)(const struct session *session,
+                                       void *ctx), void *ctx)
+{
+    return session_manager->Visit(callback, ctx);
 }
