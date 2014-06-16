@@ -11,8 +11,9 @@
 #include "session_id.h"
 #include "util/ConstBuffer.hxx"
 
-#include <inline/list.h>
 #include <inline/compiler.h>
+
+#include <boost/intrusive/list.hpp>
 
 #include <time.h>
 #include <stdint.h>
@@ -48,7 +49,10 @@ struct widget_session {
  * A session associated with a user.
  */
 struct session {
-    struct list_head hash_siblings;
+    static constexpr auto link_mode = boost::intrusive::normal_link;
+    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+    typedef boost::intrusive::list_member_hook<LinkMode> HashSiblingsHook;
+    HashSiblingsHook hash_siblings;
 
     struct dpool *pool;
 

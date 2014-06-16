@@ -52,7 +52,12 @@ struct session_manager {
      */
     bool abandoned;
 
-    struct list_head sessions[SESSION_SLOTS];
+    typedef boost::intrusive::list<struct session,
+                                   boost::intrusive::member_hook<struct session,
+                                                                 session::HashSiblingsHook,
+                                                                 &session::hash_siblings>,
+                                   boost::intrusive::constant_time_size<false>> List;
+    List sessions[SESSION_SLOTS];
     unsigned num_sessions;
 
     session_manager(unsigned _idle_timeout,
@@ -66,9 +71,6 @@ struct session_manager {
          num_sessions(0) {
         refcount_init(&ref);
         rwlock_init(&lock);
-
-        for (auto &i : sessions)
-            list_init(&i);
     }
 
     ~session_manager();
@@ -85,11 +87,11 @@ struct session_manager {
 
     void Abandon();
 
-    struct list_head *Slot(session_id_t id) {
+    List &Slot(session_id_t id) {
 #ifdef SESSION_ID_WORDS
-        return &sessions[id.data[0] % SESSION_SLOTS];
+        return sessions[id.data[0] % SESSION_SLOTS];
 #else
-        return &sessions[id % SESSION_SLOTS];
+        return sessions[id % SESSION_SLOTS];
 #endif
     }
 
@@ -142,7 +144,8 @@ session_manager::EraseAndDispose(struct session *session)
     assert(rwlock_is_wlocked(&lock));
     assert(num_sessions > 0);
 
-    list_remove(&session->hash_siblings);
+    auto &slot = Slot(session->id);
+    slot.erase(slot.iterator_to(*session));
     --num_sessions;
 
     if (num_sessions == 0)
@@ -154,7 +157,6 @@ session_manager::EraseAndDispose(struct session *session)
 inline bool
 session_manager::Cleanup()
 {
-    struct session *session, *next;
     bool non_empty;
 
     assert(!crash_in_unsafe());
@@ -173,13 +175,18 @@ session_manager::Cleanup()
     }
 
     for (auto &slot : sessions) {
-        for (session = (struct session *)slot.next;
-             &session->hash_siblings != &slot;
-             session = next) {
-            next = (struct session *)session->hash_siblings.next;
-            if (now >= (unsigned)session->expires)
-                EraseAndDispose(session);
-        }
+        slot.remove_and_dispose_if([now](const struct session &session) {
+                return now >= (unsigned)session.expires;
+            },
+            [this](struct session *session) {
+                assert(num_sessions > 0);
+
+                --num_sessions;
+                if (num_sessions == 0)
+                    evtimer_del(&session_cleanup_event);
+
+                session_destroy(session);
+            });
     }
 
     non_empty = num_sessions > 0;
@@ -247,10 +254,15 @@ session_manager::~session_manager()
     rwlock_wlock(&lock);
 
     for (auto &slot : sessions) {
-        while (!list_empty(&slot)) {
-            struct session *session = (struct session *)slot.next;
-            EraseAndDispose(session);
-        }
+        slot.clear_and_dispose([this](struct session *session) {
+                assert(num_sessions > 0);
+
+                --num_sessions;
+                if (num_sessions == 0)
+                    evtimer_del(&session_cleanup_event);
+
+                session_destroy(session);
+            });
     }
 
     rwlock_wunlock(&lock);
@@ -340,17 +352,15 @@ session_manager::Purge()
     rwlock_wlock(&lock);
 
     for (auto &slot : sessions) {
-        for (struct session *s = (struct session *)slot.next;
-             &s->hash_siblings != &slot;
-             s = (struct session *)s->hash_siblings.next) {
-            unsigned score = session_purge_score(s);
+        for (auto &session : slot) {
+            unsigned score = session_purge_score(&session);
             if (score > highest_score) {
                 purge_sessions.clear();
                 highest_score = score;
             }
 
             if (score == highest_score)
-                purge_sessions.checked_append(s);
+                purge_sessions.checked_append(&session);
         }
     }
 
@@ -381,7 +391,7 @@ session_manager::Insert(struct session *session)
 
     rwlock_wlock(&lock);
 
-    list_add(&session->hash_siblings, Slot(session->id));
+    Slot(session->id).push_back(*session);
     ++num_sessions;
 
     const bool one_session = num_sessions == 1;
@@ -462,7 +472,7 @@ session_new_unsafe()
 
     rwlock_wlock(&session_manager->lock);
 
-    list_add(&session->hash_siblings, session_manager->Slot(session->id));
+    session_manager->Slot(session->id).push_back(*session);
     ++session_manager->num_sessions;
 
     num_sessions = session_manager->num_sessions;
@@ -513,7 +523,7 @@ session_defragment(struct session *src)
         return src;
     }
 
-    list_add(&dest->hash_siblings, session_manager->Slot(dest->id));
+    session_manager->Slot(dest->id).push_back(*dest);
     ++session_manager->num_sessions;
 
     session_manager->EraseAndDispose(src);
@@ -526,26 +536,19 @@ session_find(session_id_t id)
     if (session_manager->abandoned)
         return nullptr;
 
-    struct list_head *head = session_manager->Slot(id);
-    struct session *session;
-
     assert(crash_in_unsafe());
     assert(locked_session == nullptr);
 
-    for (session = (struct session *)head->next;
-         &session->hash_siblings != head;
-         session = (struct session *)session->hash_siblings.next) {
-        assert(session_manager->Slot(session->id) == head);
-
-        if (session_id_equals(session->id, id)) {
+    for (auto &session : session_manager->Slot(id)) {
+        if (session_id_equals(session.id, id)) {
 #ifndef NDEBUG
-            locked_session = session;
+            locked_session = &session;
 #endif
-            lock_lock(&session->lock);
+            lock_lock(&session.lock);
 
-            session->expires = expiry_touch(session_manager->idle_timeout);
-            ++session->counter;
-            return session;
+            session.expires = expiry_touch(session_manager->idle_timeout);
+            ++session.counter;
+            return &session;
         }
     }
 
@@ -672,15 +675,16 @@ session_manager::Visit(bool (*callback)(const struct session *session,
     const unsigned now = now_s();
 
     for (auto &slot : sessions) {
-        for (struct session *session = (struct session *)slot.next;
-             &session->hash_siblings != &slot && result;
-             session = (struct session *)session->hash_siblings.next) {
-            if (now >= (unsigned)session->expires)
+        for (auto &session : slot) {
+            if (now >= (unsigned)session.expires)
                 continue;
 
-            lock_lock(&session->lock);
-            result = callback(session, ctx);
-            lock_unlock(&session->lock);
+            lock_lock(&session.lock);
+            result = callback(&session, ctx);
+            lock_unlock(&session.lock);
+
+            if (!result)
+                break;
         }
 
         if (!result)
