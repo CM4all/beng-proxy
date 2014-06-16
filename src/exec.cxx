@@ -21,7 +21,7 @@ Exec::SetEnv(const char *name, const char *value)
     assert(value != nullptr);
 
     const size_t name_length = strlen(name);
-    const size_t value_length = strlen(name);
+    const size_t value_length = strlen(value);
 
     assert(name_length > 0);
 
