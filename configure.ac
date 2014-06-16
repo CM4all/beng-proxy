@@ -2,6 +2,7 @@ AC_PREREQ(2.60)
 AC_INIT(CM4all BENG-Proxy, 5.0.2, mk@cm4all.com, cm4all-beng-proxy)
 AC_COPYRIGHT(Copyright 2007-2014 Content Management AG)
 AC_CONFIG_SRCDIR(src/bp_main.cxx)
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR(build)
 AM_INIT_AUTOMAKE([foreign 1.11 subdir-objects silent-rules])
 
@@ -64,6 +65,8 @@ AM_CONDITIONAL(HAVE_ATTR_XATTR_H, test x$ac_cv_header_attr_xattr_h = xyes)
 AC_CHECK_HEADER([sys/capability.h],, [AC_MSG_ERROR([libcap-dev not found])])
 
 dnl Checks for libraries.
+
+AX_BOOST_BASE([1.42], [], AC_MSG_ERROR([Boost not found]))
 
 PKG_CHECK_MODULES([CPPUNIT], [cppunit],,
 	[AC_MSG_ERROR([cppunit not found])])

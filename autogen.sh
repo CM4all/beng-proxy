@@ -4,7 +4,7 @@ set -e
 
 rm -rf config.cache build
 mkdir build
-aclocal
+aclocal -I m4 $ACLOCAL_FLAGS
 automake --add-missing --foreign
 autoconf
 ./configure \
