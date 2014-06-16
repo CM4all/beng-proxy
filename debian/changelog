@@ -5,6 +5,7 @@ cm4all-beng-proxy (5.0.2) unstable; urgency=low
   * session: really purge new sessions first
   * translate_client: strict HEADER_FORWARD checks
   * translate_client: fix the COOKIE=BOTH parser
+  * header_forward: fix COOKIE=BOTH forwarding
 
  --   
 
