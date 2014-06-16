@@ -67,8 +67,8 @@ struct session_manager {
         refcount_init(&ref);
         rwlock_init(&lock);
 
-        for (unsigned i = 0; i < SESSION_SLOTS; ++i)
-            list_init(&sessions[i]);
+        for (auto &i : sessions)
+            list_init(&i);
     }
 
     ~session_manager();
@@ -154,7 +154,6 @@ session_manager::EraseAndDispose(struct session *session)
 inline bool
 session_manager::Cleanup()
 {
-    unsigned i;
     struct session *session, *next;
     bool non_empty;
 
@@ -173,9 +172,9 @@ session_manager::Cleanup()
         return false;
     }
 
-    for (i = 0; i < SESSION_SLOTS; ++i) {
-        for (session = (struct session *)sessions[i].next;
-             &session->hash_siblings != &sessions[i];
+    for (auto &slot : sessions) {
+        for (session = (struct session *)slot.next;
+             &session->hash_siblings != &slot;
              session = next) {
             next = (struct session *)session->hash_siblings.next;
             if (now >= (unsigned)session->expires)
@@ -247,9 +246,9 @@ session_manager::~session_manager()
 
     rwlock_wlock(&lock);
 
-    for (unsigned i = 0; i < SESSION_SLOTS; ++i) {
-        while (!list_empty(&sessions[i])) {
-            struct session *session = (struct session *)sessions[i].next;
+    for (auto &slot : sessions) {
+        while (!list_empty(&slot)) {
+            struct session *session = (struct session *)slot.next;
             EraseAndDispose(session);
         }
     }
@@ -340,9 +339,9 @@ session_manager::Purge()
     crash_unsafe_enter();
     rwlock_wlock(&lock);
 
-    for (unsigned i = 0; i < SESSION_SLOTS; ++i) {
-        for (struct session *s = (struct session *)sessions[i].next;
-             &s->hash_siblings != &sessions[i];
+    for (auto &slot : sessions) {
+        for (struct session *s = (struct session *)slot.next;
+             &s->hash_siblings != &slot;
              s = (struct session *)s->hash_siblings.next) {
             unsigned score = session_purge_score(s);
             if (score > highest_score) {
@@ -672,10 +671,9 @@ session_manager::Visit(bool (*callback)(const struct session *session,
 
     const unsigned now = now_s();
 
-    for (unsigned i = 0; i < SESSION_SLOTS && result; ++i) {
-        struct list_head *slot = &sessions[i];
-        for (struct session *session = (struct session *)slot->next;
-             &session->hash_siblings != slot && result;
+    for (auto &slot : sessions) {
+        for (struct session *session = (struct session *)slot.next;
+             &session->hash_siblings != &slot && result;
              session = (struct session *)session->hash_siblings.next) {
             if (now >= (unsigned)session->expires)
                 continue;
@@ -684,6 +682,9 @@ session_manager::Visit(bool (*callback)(const struct session *session,
             result = callback(session, ctx);
             lock_unlock(&session->lock);
         }
+
+        if (!result)
+               break;
     }
 
     rwlock_runlock(&lock);
