@@ -24,32 +24,42 @@
 
 #define SESSION_TTL_NEW 120
 
+inline
+session::session(struct dpool *_pool)
+    :pool(_pool),
+     expires(expiry_touch(SESSION_TTL_NEW)),
+     counter(1),
+     is_new(true),
+     cookie_sent(false), cookie_received(false),
+     realm(nullptr),
+     translate(nullptr),
+     user(nullptr),
+     user_expires(0),
+     language(nullptr),
+     widgets(nullptr),
+     cookies(cookie_jar_new(_pool))
+{
+    lock_init(&lock);
+}
+
+inline
+session::~session()
+{
+    lock_destroy(&lock);
+}
+
 struct session *
 session_allocate(struct dpool *pool)
 {
-    struct session *session = (struct session *)d_malloc(pool, sizeof(*session));
-    if (session == nullptr)
-        return nullptr;
-
-    memset(session, 0, sizeof(*session));
-
-    session->pool = pool;
-    lock_init(&session->lock);
-    session->expires = expiry_touch(SESSION_TTL_NEW);
-    session->counter = 1;
-    session->is_new = true;
-    session->translate = nullptr;
-    session->widgets = nullptr;
-    session->cookies = cookie_jar_new(pool);
-
-    return session;
+    return NewFromPool<struct session>(pool, pool);
 }
 
 void
 session_destroy(struct session *session)
 {
-    lock_destroy(&session->lock);
-    dpool_destroy(session->pool);
+    struct dpool *pool = session->pool;
+    DeleteFromPool(pool, session);
+    dpool_destroy(pool);
 }
 
 /**

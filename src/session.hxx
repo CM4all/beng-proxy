@@ -101,6 +101,9 @@ struct session {
 
     /** all cookies received by widget servers */
     struct cookie_jar *cookies;
+
+    session(struct dpool *_pool);
+    ~session();
 };
 
 gcc_malloc
