@@ -14,6 +14,7 @@
 #include "expiry.h"
 #include "crash.h"
 #include "clock.h"
+#include "util/StaticArray.hxx"
 
 #include <daemon/log.h>
 
@@ -295,8 +296,8 @@ static bool
 session_manager_purge()
 {
     /* collect at most 256 sessions */
-    struct session *sessions[256];
-    unsigned num_sessions = 0, highest_score = 0;
+    StaticArray<struct session *, 256> purge_sessions;
+    unsigned highest_score = 0;
 
     assert(locked_session == nullptr);
 
@@ -309,27 +310,27 @@ session_manager_purge()
              s = (struct session *)s->hash_siblings.next) {
             unsigned score = session_purge_score(s);
             if (score > highest_score) {
-                num_sessions = 0;
+                purge_sessions.clear();
                 highest_score = score;
             }
 
-            if (score == highest_score && num_sessions < 256)
-                sessions[num_sessions++] = s;
+            if (score == highest_score)
+                purge_sessions.checked_append(s);
         }
     }
 
-    if (num_sessions == 0) {
+    if (purge_sessions.empty()) {
         rwlock_wunlock(&session_manager->lock);
         crash_unsafe_leave();
         return false;
     }
 
     daemon_log(3, "purging %u sessions (score=%u)\n",
-               num_sessions, highest_score);
+               (unsigned)purge_sessions.size(), highest_score);
 
-    for (unsigned i = 0; i < num_sessions; ++i) {
-        lock_lock(&sessions[i]->lock);
-        session_remove(sessions[i]);
+    for (auto session : purge_sessions) {
+        lock_lock(&session->lock);
+        session_remove(session);
     }
 
     rwlock_wunlock(&session_manager->lock);
