@@ -654,6 +654,7 @@ parse_header_forward(TranslateClient &client,
             packet->group >= HEADER_GROUP_MAX ||
             (packet->mode != HEADER_FORWARD_NO &&
              packet->mode != HEADER_FORWARD_YES &&
+             packet->mode != HEADER_FORWARD_BOTH &&
              packet->mode != HEADER_FORWARD_MANGLE) ||
             packet->reserved != 0) {
             translate_client_error(&client, "malformed header forward packet");
