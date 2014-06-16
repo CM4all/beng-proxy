@@ -637,14 +637,15 @@ add_view(TranslateClient *client, const char *name, GError **error_r)
 }
 
 static bool
-parse_header_forward(struct header_forward_settings *settings,
+parse_header_forward(TranslateClient &client,
+                     struct header_forward_settings *settings,
                      const void *payload, size_t payload_length)
 {
     const beng_header_forward_packet *packet =
         (const beng_header_forward_packet *)payload;
 
     if (payload_length % sizeof(*packet) != 0) {
-        daemon_log(2, "malformed header forward packet\n");
+        translate_client_error(&client, "malformed header forward packet");
         return false;
     }
 
@@ -655,7 +656,7 @@ parse_header_forward(struct header_forward_settings *settings,
              packet->mode != HEADER_FORWARD_YES &&
              packet->mode != HEADER_FORWARD_MANGLE) ||
             packet->reserved != 0) {
-            daemon_log(2, "malformed header forward packet\n");
+            translate_client_error(&client, "malformed header forward packet");
             return false;
         }
 
@@ -2425,22 +2426,22 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_REQUEST_HEADER_FORWARD:
-        if (client->view != nullptr)
-            parse_header_forward(&client->view->request_header_forward,
-                                 payload, payload_length);
-        else
-            parse_header_forward(&client->response.request_header_forward,
-                                 payload, payload_length);
-        return true;
+        return client->view != nullptr
+            ? parse_header_forward(*client,
+                                   &client->view->request_header_forward,
+                                   payload, payload_length)
+            : parse_header_forward(*client,
+                                   &client->response.request_header_forward,
+                                   payload, payload_length);
 
     case TRANSLATE_RESPONSE_HEADER_FORWARD:
-        if (client->view != nullptr)
-            parse_header_forward(&client->view->response_header_forward,
-                                 payload, payload_length);
-        else
-            parse_header_forward(&client->response.response_header_forward,
-                                 payload, payload_length);
-        return true;
+        return client->view != nullptr
+            ? parse_header_forward(*client,
+                                   &client->view->response_header_forward,
+                                   payload, payload_length)
+            : parse_header_forward(*client,
+                                   &client->response.response_header_forward,
+                                   payload, payload_length);
 
     case TRANSLATE_WWW_AUTHENTICATE:
         if (payload_length == 0 || has_null_byte(payload, payload_length)) {
