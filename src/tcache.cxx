@@ -20,9 +20,8 @@
 #include "pbuffer.hxx"
 #include "slice.hxx"
 #include "beng-proxy/translation.h"
-#include "util/Cast.hxx"
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 #include <time.h>
 #include <string.h>
@@ -36,16 +35,23 @@ static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
 static constexpr size_t MAX_FILE_NOT_FOUND = 256;
 static constexpr size_t MAX_DIRECTORY_INDEX = 256;
 
+struct TranslateCachePerHost;
+
 struct TranslateCacheItem {
+    static constexpr auto link_mode = boost::intrusive::normal_link;
+    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+
     struct cache_item item;
 
     /**
      * A double linked list of cache items with the same HOST request
      * string.  Only those that had VARY=HOST in the response are
-     * added to the list.  Check list_empty() on this attribute to
-     * check whether this item lives in such a list.
+     * added to the list.  Check per_host!=nullptr to check whether
+     * this item lives in such a list.
      */
-    struct list_head per_host_siblings;
+    typedef boost::intrusive::list_member_hook<LinkMode> PerHostSiblingsHook;
+    PerHostSiblingsHook per_host_siblings;
+    TranslateCachePerHost *per_host;
 
     struct pool *pool;
 
@@ -72,19 +78,24 @@ struct TranslateCacheItem {
 
     GRegex *regex, *inverse_regex;
 
-    static TranslateCacheItem *FromPerHostSibling(list_head *lh) {
-        return ContainerCast(lh, TranslateCacheItem, per_host_siblings);
-    }
+    TranslateCacheItem()
+        :per_host(nullptr) {}
 };
 
 struct TranslateCachePerHost {
+    typedef boost::intrusive::member_hook<TranslateCacheItem,
+                                          TranslateCacheItem::PerHostSiblingsHook,
+                                          &TranslateCacheItem::per_host_siblings> MemberHook;
+    typedef boost::intrusive::list<TranslateCacheItem, MemberHook,
+                                   boost::intrusive::constant_time_size<false>> ItemList;
+
     /**
      * A double-linked list of #TranslateCacheItems (by its attribute
      * per_host_siblings).
      *
      * This must be the first attribute in the struct.
      */
-    struct list_head items;
+    ItemList items;
 
     struct tcache *const tcache;
 
@@ -95,7 +106,6 @@ struct TranslateCachePerHost {
 
     TranslateCachePerHost(struct tcache *_tcache, const char *_host)
         :tcache(_tcache), host(_host) {
-        list_init(&items);
     }
 };
 
@@ -174,23 +184,20 @@ tcache_add_per_host(struct tcache *tcache, TranslateCacheItem *item)
         hashmap_add(tcache->per_host, per_host->host, per_host);
     }
 
-    list_add(&item->per_host_siblings, &per_host->items);
+    per_host->items.push_back(*item);
+    item->per_host = per_host;
 }
 
 static void
 tcache_remove_per_host(TranslateCacheItem *item)
 {
-    assert(!list_empty(&item->per_host_siblings));
+    assert(item->per_host != nullptr);
     assert(item->response.VaryContains(TRANSLATE_HOST));
 
-    struct list_head *next = item->per_host_siblings.next;
-    list_remove(&item->per_host_siblings);
+    TranslateCachePerHost *const per_host = item->per_host;
+    per_host->items.erase(per_host->items.iterator_to(*item));
 
-    if (list_empty(next)) {
-        /* if the next item is now empty, this can only be the
-           per_host object - delete it */
-        TranslateCachePerHost *per_host = (TranslateCachePerHost *)next;
-
+    if (per_host->items.empty()) {
         const char *host = item->request.host;
         if (host == nullptr)
             host = "";
@@ -700,18 +707,17 @@ translate_cache_invalidate_host(struct tcache *tcache, const char *host)
     unsigned n_removed = 0;
     bool done;
     do {
-        assert(!list_empty(&per_host->items));
+        assert(!per_host->items.empty());
 
-        TranslateCacheItem *item =
-            TranslateCacheItem::FromPerHostSibling(per_host->items.next);
+        TranslateCacheItem &item = per_host->items.front();
 
         /* we're done when we're about to remove the last item - the
            last item will destroy the #TranslateCachePerHost object,
            so we need to check the condition before removing the cache
            item */
-        done = item->per_host_siblings.next == &per_host->items;
+        done = std::next(per_host->items.iterator_to(item)) == per_host->items.end();
 
-        cache_remove_item(tcache->cache, item->item.key, &item->item);
+        cache_remove_item(tcache->cache, item.item.key, &item.item);
         ++n_removed;
     } while (!done);
 
@@ -855,8 +861,6 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
 
     if (response->VaryContains(TRANSLATE_HOST))
         tcache_add_per_host(tcr->tcache, item);
-    else
-        list_init(&item->per_host_siblings);
 
     cache_put_match(tcr->tcache->cache, key, &item->item,
                     tcache_item_match, tcr);
@@ -1021,7 +1025,7 @@ tcache_destroy(struct cache_item *_item)
 {
     TranslateCacheItem *item = (TranslateCacheItem *)_item;
 
-    if (!list_empty(&item->per_host_siblings))
+    if (item->per_host != nullptr)
         tcache_remove_per_host(item);
 
     if (item->regex != nullptr)
