@@ -7,6 +7,7 @@
 
 #include "istream-internal.h"
 #include "cache.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 
@@ -28,7 +29,7 @@ struct istream_unlock {
 static void
 unlock_input_eof(void *ctx)
 {
-    struct istream_unlock *unlock = ctx;
+    struct istream_unlock *unlock = (struct istream_unlock *)ctx;
 
     cache_item_unlock(unlock->cache, unlock->item);
     istream_deinit_eof(&unlock->output);
@@ -37,7 +38,7 @@ unlock_input_eof(void *ctx)
 static void
 unlock_input_abort(GError *error, void *ctx)
 {
-    struct istream_unlock *unlock = ctx;
+    struct istream_unlock *unlock = (struct istream_unlock *)ctx;
 
     cache_item_unlock(unlock->cache, unlock->item);
     istream_deinit_abort(&unlock->output, error);
@@ -59,7 +60,7 @@ static const struct istream_handler unlock_input_handler = {
 static inline struct istream_unlock *
 istream_to_unlock(struct istream *istream)
 {
-    return (struct istream_unlock *)(((char*)istream) - offsetof(struct istream_unlock, output));
+    return ContainerCast(istream, struct istream_unlock, output);
 }
 
 static off_t
@@ -107,10 +108,10 @@ istream_unlock_new(struct pool *pool, struct istream *input,
 {
     struct istream_unlock *unlock = istream_new_macro(pool, unlock);
 
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
-    assert(cache != NULL);
-    assert(item != NULL);
+    assert(cache != nullptr);
+    assert(item != nullptr);
 
     istream_assign_handler(&unlock->input, input,
                            &unlock_input_handler, unlock,

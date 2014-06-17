@@ -331,7 +331,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/uri_escape.cxx src/uri_escape.hxx \
 	src/strset.c src/strset.h \
 	src/dhashmap.c \
-	src/istream-unlock.c \
+	src/istream_unlock.cxx \
 	src/ua_classification.c src/ua_classification.h \
 	src/log-client.c src/log-client.h \
 	src/log-launch.c src/log-launch.h \
@@ -1230,7 +1230,7 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/abort-unref.c src/cache.c \
 	src/header-writer.c src/http_util.c \
 	src/clock.c \
-	src/istream-unlock.c
+	src/istream_unlock.cxx
 test_t_http_cache_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libraddress.a \
@@ -1707,7 +1707,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/uri_escape.cxx \
 	src/regex.cxx \
 	src/address_list.cxx \
-	src/istream-unlock.c \
+	src/istream_unlock.cxx \
 	src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
 	src/cache.c \
