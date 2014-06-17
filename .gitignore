@@ -49,7 +49,6 @@ test/run_client
 test/t_ajp_client
 test/t_fcgi_client
 test/t-http-util
-test/t-cache
 test/t-stock
 test/t-expansible-buffer
 test/t-hashmap

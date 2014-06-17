@@ -17,7 +17,7 @@
 #include "background.h"
 #include "istream-gb.h"
 #include "istream.h"
-#include "cache.h"
+#include "cache.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "istream_rubber.hxx"

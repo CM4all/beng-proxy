@@ -4,14 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_CACHE_H
-#define __BENG_CACHE_H
+#ifndef BENG_PROXY_CACHE_HXX
+#define BENG_PROXY_CACHE_HXX
 
 #include <inline/compiler.h>
 #include <inline/list.h>
 
 #include <sys/time.h>
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -61,10 +60,6 @@ struct cache_stats {
      */
     size_t brutto_size;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 gcc_malloc
 struct cache *
@@ -192,9 +187,5 @@ cache_event_add(struct cache *cache);
 
 void
 cache_event_del(struct cache *cache);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

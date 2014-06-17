@@ -4,11 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cache.h"
+#include "cache.hxx"
 #include "hashmap.h"
 #include "pool.h"
 #include "cleanup_timer.h"
 #include "clock.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <time.h>
@@ -19,7 +20,7 @@
 struct cache {
     struct pool *pool;
 
-    const struct cache_class *class;
+    const struct cache_class *cls;
     size_t max_size, size;
     struct hashmap *items;
 
@@ -36,15 +37,15 @@ static bool
 cache_expire_callback(void *ctx);
 
 struct cache *
-cache_new(struct pool *pool, const struct cache_class *class,
+cache_new(struct pool *pool, const struct cache_class *cls,
           unsigned hashtable_capacity, size_t max_size)
 {
-    struct cache *cache = p_malloc(pool, sizeof(*cache));
 
-    assert(class != NULL);
+    assert(cls != nullptr);
 
+    auto cache = NewFromPool<struct cache>(pool);
     cache->pool = pool;
-    cache->class = class;
+    cache->cls = cls;
     cache->max_size = max_size;
     cache->size = 0;
     cache->items = hashmap_new(pool, hashtable_capacity);
@@ -62,16 +63,16 @@ cache_check(const struct cache *cache);
 void
 cache_close(struct cache *cache)
 {
-    const struct hashmap_pair *pair;
-
     cleanup_timer_deinit(&cache->cleanup_timer);
 
     cache_check(cache);
 
-    if (cache->class->destroy != NULL) {
+    if (cache->cls->destroy != nullptr) {
         hashmap_rewind(cache->items);
-        while ((pair = hashmap_next(cache->items)) != NULL) {
-            struct cache_item *item = pair->value;
+
+        const struct hashmap_pair *pair;
+        while ((pair = hashmap_next(cache->items)) != nullptr) {
+            struct cache_item *item = (struct cache_item *)pair->value;
 
             assert(item->lock == 0);
             assert(cache->size >= item->size);
@@ -81,7 +82,7 @@ cache_close(struct cache *cache)
             list_remove(&item->sorted_siblings);
 #endif
 
-            cache->class->destroy(item);
+            cache->cls->destroy(item);
         }
 
         assert(cache->size == 0);
@@ -99,7 +100,7 @@ cache_get_stats(const struct cache *cache, struct cache_stats *data)
 static inline struct cache_item *
 list_head_to_cache_item(struct list_head *list_head)
 {
-    return (struct cache_item *)(((char*)list_head) - offsetof(struct cache_item, sorted_siblings));
+    return ContainerCast(list_head, struct cache_item, sorted_siblings);
 }
 
 static void
@@ -109,11 +110,11 @@ cache_check(const struct cache *cache)
     const struct hashmap_pair *pair;
     size_t size = 0;
 
-    assert(cache != NULL);
+    assert(cache != nullptr);
     assert(cache->size <= cache->max_size);
 
     hashmap_rewind(cache->items);
-    while ((pair = hashmap_next(cache->items)) != NULL) {
+    while ((pair = hashmap_next(cache->items)) != nullptr) {
         struct cache_item *item = pair->value;
 
         size += item->size;
@@ -129,15 +130,15 @@ cache_check(const struct cache *cache)
 static void
 cache_destroy_item(struct cache *cache, struct cache_item *item)
 {
-    if (cache->class->destroy != NULL)
-        cache->class->destroy(item);
+    if (cache->cls->destroy != nullptr)
+        cache->cls->destroy(item);
 }
 
 static void
 cache_item_removed(struct cache *cache, struct cache_item *item)
 {
-    assert(cache != NULL);
-    assert(item != NULL);
+    assert(cache != nullptr);
+    assert(item != nullptr);
     assert(item->size > 0);
     assert(item->lock > 0 || !item->removed);
     assert(cache->size >= item->size);
@@ -183,7 +184,7 @@ cache_item_validate(const struct cache *cache, struct cache_item *item,
                     unsigned now)
 {
     return now < item->expires &&
-        (cache->class->validate == NULL || cache->class->validate(item));
+        (cache->cls->validate == nullptr || cache->cls->validate(item));
 }
 
 static void
@@ -199,9 +200,10 @@ cache_refresh_item(struct cache *cache, struct cache_item *item, unsigned now)
 struct cache_item *
 cache_get(struct cache *cache, const char *key)
 {
-    struct cache_item *item = hashmap_get(cache->items, key);
-    if (item == NULL)
-        return NULL;
+    struct cache_item *item = (struct cache_item *)
+        hashmap_get(cache->items, key);
+    if (item == nullptr)
+        return nullptr;
 
     const unsigned now = now_s();
 
@@ -213,7 +215,7 @@ cache_get(struct cache *cache, const char *key)
         cache_item_removed(cache, item);
 
         cache_check(cache);
-        return NULL;
+        return nullptr;
     }
 
     cache_refresh_item(cache, item, now);
@@ -226,11 +228,11 @@ cache_get_match(struct cache *cache, const char *key,
                 void *ctx)
 {
     const unsigned now = now_s();
-    const struct hashmap_pair *pair = NULL;
+    const struct hashmap_pair *pair = nullptr;
 
     while (true) {
-        if (pair != NULL) {
-            struct cache_item *item = pair->value;
+        if (pair != nullptr) {
+            struct cache_item *item = (struct cache_item *)pair->value;
 
             if (!cache_item_validate(cache, item, now)) {
                 /* expired cache item: delete it, and re-start the
@@ -243,7 +245,7 @@ cache_get_match(struct cache *cache, const char *key,
                 cache_item_removed(cache, item);
                 cache_check(cache);
 
-                pair = NULL;
+                pair = nullptr;
                 continue;
             }
 
@@ -260,9 +262,9 @@ cache_get_match(struct cache *cache, const char *key,
             pair = hashmap_lookup_first(cache->items, key);
         }
 
-        if (pair == NULL)
+        if (pair == nullptr)
             /* no match */
-            return NULL;
+            return nullptr;
     };
 }
 
@@ -304,8 +306,8 @@ cache_add(struct cache *cache, const char *key,
 {
     /* XXX size constraints */
     if (!cache_need_room(cache, item->size)) {
-        if (cache->class->destroy != NULL)
-            cache->class->destroy(item);
+        if (cache->cls->destroy != nullptr)
+            cache->cls->destroy(item);
         return;
     }
 
@@ -328,16 +330,15 @@ cache_put(struct cache *cache, const char *key,
           struct cache_item *item)
 {
     /* XXX size constraints */
-    struct cache_item *old;
 
-    assert(item != NULL);
+    assert(item != nullptr);
     assert(item->size > 0);
     assert(item->lock == 0);
     assert(!item->removed);
 
     if (!cache_need_room(cache, item->size)) {
-        if (cache->class->destroy != NULL)
-            cache->class->destroy(item);
+        if (cache->cls->destroy != nullptr)
+            cache->cls->destroy(item);
         return;
     }
 
@@ -345,8 +346,9 @@ cache_put(struct cache *cache, const char *key,
 
     item->key = key;
 
-    old = hashmap_set(cache->items, key, item);
-    if (old != NULL)
+    struct cache_item *old = (struct cache_item *)
+        hashmap_set(cache->items, key, item);
+    if (old != nullptr)
         cache_item_removed(cache, old);
 
     cache->size += item->size;
@@ -367,13 +369,13 @@ cache_put_match(struct cache *cache, const char *key,
 {
     struct cache_item *old = cache_get_match(cache, key, match, ctx);
 
-    assert(item != NULL);
+    assert(item != nullptr);
     assert(item->size > 0);
     assert(item->lock == 0);
     assert(!item->removed);
-    assert(old == NULL || !old->removed);
+    assert(old == nullptr || !old->removed);
 
-    if (old != NULL)
+    if (old != nullptr)
         cache_remove_item(cache, key, old);
 
     cache_add(cache, key, item);
@@ -384,7 +386,7 @@ cache_remove(struct cache *cache, const char *key)
 {
     struct cache_item *item;
 
-    while ((item = hashmap_remove(cache->items, key)) != NULL)
+    while ((item = (struct cache_item *)hashmap_remove(cache->items, key)) != nullptr)
         cache_item_removed(cache, item);
 
     cache_check(cache);
@@ -399,8 +401,9 @@ struct cache_remove_match_data {
 static bool
 cache_remove_match_callback(void *value, void *ctx)
 {
-    const struct cache_remove_match_data *data = ctx;
-    struct cache_item *item = value;
+    const struct cache_remove_match_data *data =
+        (const struct cache_remove_match_data *)ctx;
+    struct cache_item *item = (struct cache_item *)value;
 
     if (data->match(item, data->ctx)) {
         cache_item_removed(data->cache, item);
@@ -458,8 +461,9 @@ static bool
 cache_remove_all_match_callback(gcc_unused const char *key, void *value,
                                 void *ctx)
 {
-    const struct cache_remove_all_match_data *data = ctx;
-    struct cache_item *item = value;
+    const struct cache_remove_all_match_data *data =
+        (const struct cache_remove_all_match_data *)ctx;
+    struct cache_item *item = (struct cache_item *)value;
 
     if (data->match(item, data->ctx)) {
         cache_item_removed(data->cache, item);
@@ -491,7 +495,7 @@ cache_remove_all_match(struct cache *cache,
 void
 cache_item_init_absolute(struct cache_item *item, time_t expires, size_t size)
 {
-    time_t now = time(NULL);
+    time_t now = time(nullptr);
     unsigned monotonic_expires = expires > now
         ? now_s() + (expires - now)
         : 1;
@@ -509,7 +513,7 @@ cache_item_init_relative(struct cache_item *item, unsigned max_age,
 void
 cache_item_lock(struct cache_item *item)
 {
-    assert(item != NULL);
+    assert(item != nullptr);
 
     ++item->lock;
 }
@@ -517,7 +521,7 @@ cache_item_lock(struct cache_item *item)
 void
 cache_item_unlock(struct cache *cache, struct cache_item *item)
 {
-    assert(item != NULL);
+    assert(item != nullptr);
     assert(item->lock > 0);
 
     if (--item->lock == 0 && item->removed)
@@ -529,7 +533,7 @@ cache_item_unlock(struct cache *cache, struct cache_item *item)
 static bool
 cache_expire_callback(void *ctx)
 {
-    struct cache *cache = ctx;
+    struct cache *cache = (struct cache *)ctx;
     struct cache_item *item;
     const unsigned now = now_s();
 

@@ -1,6 +1,6 @@
 #include "pool.h"
 #include "tpool.h"
-#include "cache.h"
+#include "cache.hxx"
 #include "http_cache_heap.hxx"
 #include "http_cache_internal.hxx"
 #include "strmap.h"

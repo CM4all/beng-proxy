@@ -8,7 +8,7 @@
 #include "bp_instance.hxx"
 #include "hstock.h"
 #include "stock.h"
-#include "cache.h"
+#include "cache.hxx"
 #include "tcache.hxx"
 #include "http_cache.h"
 #include "fcache.h"

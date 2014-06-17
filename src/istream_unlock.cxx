@@ -6,7 +6,7 @@
  */
 
 #include "istream-internal.h"
-#include "cache.h"
+#include "cache.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>

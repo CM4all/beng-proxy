@@ -5,7 +5,7 @@
  */
 
 #include "fcache.h"
-#include "cache.h"
+#include "cache.hxx"
 #include "http_request.hxx"
 #include "header-writer.h"
 #include "strmap.h"

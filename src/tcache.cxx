@@ -10,7 +10,7 @@
 #include "translate_response.hxx"
 #include "translate_client.hxx"
 #include "http_quark.h"
-#include "cache.h"
+#include "cache.hxx"
 #include "stock.h"
 #include "hashmap.h"
 #include "uri_base.hxx"

@@ -7,7 +7,7 @@
 #include "http_cache_heap.hxx"
 #include "http_cache_internal.hxx"
 #include "http_cache_age.hxx"
-#include "cache.h"
+#include "cache.hxx"
 #include "istream.h"
 #include "rubber.hxx"
 #include "istream_rubber.hxx"

@@ -5,6 +5,7 @@ run_nfs_client
 /run_client_balancer
 /run_parser_cdata
 /request_translation
+/t_cache
 /t_tcache
 /t_widget_registry
 /dump_memcached_choice

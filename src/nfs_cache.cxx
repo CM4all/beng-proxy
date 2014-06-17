@@ -16,7 +16,7 @@
 #include "sink_rubber.hxx"
 #include "istream_rubber.hxx"
 #include "istream_tee.h"
-#include "cache.h"
+#include "cache.hxx"
 #include "async.h"
 
 #include <event.h>
