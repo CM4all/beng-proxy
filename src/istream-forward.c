@@ -14,7 +14,7 @@ istream_forward_data(const void *data, size_t length, void *ctx)
 }
 
 ssize_t
-istream_forward_direct(istream_direct_t type, int fd, size_t max_length,
+istream_forward_direct(enum istream_direct type, int fd, size_t max_length,
                        void *ctx)
 {
     struct istream *istream = ctx;
