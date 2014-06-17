@@ -86,17 +86,22 @@ struct TranslateCachePerHost {
      */
     struct list_head items;
 
-    struct tcache *tcache;
+    struct tcache *const tcache;
 
     /**
      * A pointer to the hashmap key, for use with p_free().
      */
-    char *host;
+    const char *const host;
+
+    TranslateCachePerHost(struct tcache *_tcache, const char *_host)
+        :tcache(_tcache), host(_host) {
+        list_init(&items);
+    }
 };
 
 struct tcache {
-    struct pool *pool;
-    struct slice_pool *slice_pool;
+    struct pool *const pool;
+    struct slice_pool *const slice_pool;
 
     struct cache *cache;
 
@@ -105,9 +110,11 @@ struct tcache {
      * used to optimize the common INVALIDATE=HOST response, to avoid
      * traversing the whole cache.
      */
-    struct hashmap *per_host;
+    struct hashmap *const per_host;
 
-    struct tstock *stock;
+    struct tstock *const stock;
+
+    tcache(struct pool *_pool, struct tstock *_stock, unsigned max_size);
 };
 
 struct TranslateCacheRequest {
@@ -115,15 +122,25 @@ struct TranslateCacheRequest {
 
     struct tcache *tcache;
 
-    const TranslateRequest *request;
+    const TranslateRequest *const request;
 
     /** are we looking for a "BASE" cache entry? */
-    bool find_base;
+    const bool find_base;
 
     const char *key;
 
     const TranslateHandler *handler;
     void *handler_ctx;
+
+    TranslateCacheRequest(struct pool *_pool, struct tcache *_tcache,
+                          const TranslateRequest *_request, const char *_key,
+                          const TranslateHandler *_handler, void *_ctx)
+        :pool(_pool), tcache(_tcache), request(_request),
+         find_base(false), key(_key),
+         handler(_handler), handler_ctx(_ctx) {}
+
+    TranslateCacheRequest(const TranslateRequest *_request, bool _find_base)
+        :request(_request), find_base(_find_base) {}
 };
 
 static const GRegexCompileFlags default_regex_compile_flags =
@@ -150,10 +167,9 @@ tcache_add_per_host(struct tcache *tcache, TranslateCacheItem *item)
     TranslateCachePerHost *per_host = (TranslateCachePerHost *)
         hashmap_get(tcache->per_host, host);
     if (per_host == nullptr) {
-        per_host = NewFromPool<TranslateCachePerHost>(tcache->pool);
-        list_init(&per_host->items);
-        per_host->tcache = tcache;
-        per_host->host = p_strdup(tcache->pool, host);
+        per_host = NewFromPool<TranslateCachePerHost>(tcache->pool,
+                                                      tcache,
+                                                      p_strdup(tcache->pool, host));
 
         hashmap_add(tcache->per_host, per_host->host, per_host);
     }
@@ -599,10 +615,7 @@ static TranslateCacheItem *
 tcache_get(struct tcache *tcache, const TranslateRequest *request,
            const char *key, bool find_base)
 {
-    TranslateCacheRequest match_ctx = {
-        .request = request,
-        .find_base = find_base,
-    };
+    TranslateCacheRequest match_ctx(request, find_base);
 
     return (TranslateCacheItem *)cache_get_match(tcache->cache, key,
                                                  tcache_item_match, &match_ctx);
@@ -943,17 +956,11 @@ tcache_miss(struct pool *pool, struct tcache *tcache,
             const TranslateHandler *handler, void *ctx,
             struct async_operation_ref *async_ref)
 {
-    auto tcr = NewFromPool<TranslateCacheRequest>(pool);
+    auto tcr = NewFromPool<TranslateCacheRequest>(pool, pool, tcache,
+                                                  request, key,
+                                                  handler, ctx);
 
     cache_log(4, "translate_cache: miss %s\n", key);
-
-    tcr->pool = pool;
-    tcr->tcache = tcache;
-    tcr->request = request;
-    tcr->find_base = false;
-    tcr->key = key;
-    tcr->handler = handler;
-    tcr->handler_ctx = ctx;
 
     tstock_translate(tcache->stock, pool,
                      request, &tcache_handler, tcr, async_ref);
@@ -1037,22 +1044,22 @@ static const struct cache_class tcache_class = {
  *
  */
 
+inline
+tcache::tcache(struct pool *_pool, struct tstock *_stock, unsigned max_size)
+    :pool(_pool),
+     slice_pool(slice_pool_new(2048, 65536)),
+     cache(cache_new(_pool, &tcache_class, 65521, max_size)),
+     per_host(hashmap_new(pool, 3779)),
+     stock(_stock) {}
+
 struct tcache *
 translate_cache_new(struct pool *pool, struct tstock *stock,
                     unsigned max_size)
 {
-    pool = pool_new_libc(pool, "translate_cache");
-    tcache *tcache = NewFromPool<struct tcache>(pool);
-
     assert(stock != nullptr);
 
-    tcache->pool = pool;
-    tcache->slice_pool = slice_pool_new(2048, 65536);
-    tcache->cache = cache_new(pool, &tcache_class, 65521, max_size);
-    tcache->per_host = hashmap_new(pool, 3779);
-    tcache->stock = stock;
-
-    return tcache;
+    pool = pool_new_libc(pool, "translate_cache");
+    return NewFromPool<struct tcache>(pool, pool, stock, max_size);
 }
 
 void
