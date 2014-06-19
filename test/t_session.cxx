@@ -13,14 +13,13 @@
 #include <event.h>
 
 struct cookie_jar *
-cookie_jar_new(struct dpool *pool gcc_unused)
+cookie_jar_new(struct dpool &pool gcc_unused)
 {
     return NULL;
 }
 
 struct cookie_jar *
-cookie_jar_dup(struct dpool *pool gcc_unused,
-               const struct cookie_jar *src gcc_unused)
+cookie_jar::Dup(struct dpool &new_pool gcc_unused) const
 {
     return NULL;
 }

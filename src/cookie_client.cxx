@@ -63,7 +63,7 @@ cookie_list_delete_match(struct dpool *dpool, struct list_head *head,
              : path_matches(cookie->path, path)) &&
             strref_cmp2(&cookie->name, name) == 0) {
             list_remove(&cookie->siblings);
-            cookie_free(dpool, cookie);
+            cookie->Free(*dpool);
         }
     }
 }
@@ -135,32 +135,32 @@ apply_next_cookie(struct cookie_jar *jar, struct strref *input,
 {
     assert(domain != nullptr);
 
-    struct cookie *cookie = parse_next_cookie(jar->pool, input);
+    struct cookie *cookie = parse_next_cookie(&jar->pool, input);
     if (cookie == nullptr)
         return false;
 
     if (cookie->domain == nullptr) {
-        cookie->domain = d_strdup(jar->pool, domain);
+        cookie->domain = d_strdup(&jar->pool, domain);
         if (cookie->domain == nullptr) {
             /* out of memory */
-            cookie_free(jar->pool, cookie);
+            cookie->Free(jar->pool);
             return false;
         }
     } else if (!domain_matches(domain, cookie->domain)) {
         /* discard if domain mismatch */
-        cookie_free(jar->pool, cookie);
+        cookie->Free(jar->pool);
         return false;
     }
 
     if (path != nullptr && cookie->path != nullptr &&
         !path_matches(path, cookie->path)) {
         /* discard if path mismatch */
-        cookie_free(jar->pool, cookie);
+        cookie->Free(jar->pool);
         return false;
     }
 
     /* delete the old cookie */
-    cookie_list_delete_match(jar->pool, &jar->cookies, cookie->domain,
+    cookie_list_delete_match(&jar->pool, &jar->cookies, cookie->domain,
                              cookie->path,
                              &cookie->name);
 
@@ -168,9 +168,9 @@ apply_next_cookie(struct cookie_jar *jar, struct strref *input,
 
     if (cookie->expires == (time_t)-1)
         /* discard expired cookie */
-        cookie_free(jar->pool, cookie);
+        cookie->Free(jar->pool);
     else
-        cookie_jar_add(jar, cookie);
+        jar->Add(*cookie);
 
     return true;
 }
@@ -235,7 +235,7 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
          cookie = next) {
         next = (struct cookie *)cookie->siblings.next;
         if (cookie->expires != 0 && (unsigned)cookie->expires < now) {
-            cookie_delete(jar, cookie);
+            jar->EraseAndDispose(*cookie);
             continue;
         }
 

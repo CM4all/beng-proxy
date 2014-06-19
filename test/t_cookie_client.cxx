@@ -25,7 +25,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     shm = shm_new(1024, 512);
     dpool = dpool_new(shm);
 
-    jar = cookie_jar_new(dpool);
+    jar = cookie_jar_new(*dpool);
 
     headers = strmap_new(pool, 4);
 
@@ -63,7 +63,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     assert(strcmp(strmap_get(headers, "cookie"), "a=b") == 0);
 
     /* wrong path */
-    jar = cookie_jar_new(dpool);
+    jar = cookie_jar_new(*dpool);
     headers = strmap_new(pool, 4);
     cookie_jar_set_cookie2(jar, "a=b;path=\"/foo\"", "foo.bar", "/bar/x");
     cookie_jar_http_header(jar, "foo.bar", "/", headers, pool);

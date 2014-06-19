@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     struct shm *shm = shm_new(1024, 512);
     struct dpool *dpool = dpool_new(shm);
 
-    struct cookie_jar *jar = cookie_jar_new(dpool);
+    struct cookie_jar *jar = cookie_jar_new(*dpool);
 
     for (int i = 1; i < argc; ++i)
         cookie_jar_set_cookie2(jar, argv[i], "foo.bar", nullptr);

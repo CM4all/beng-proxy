@@ -297,7 +297,7 @@ read_cookie_jar(FILE *file, struct dpool *pool, struct cookie_jar *jar)
         if (cookie == nullptr)
             return false;
 
-        cookie_jar_add(jar, cookie);
+        jar->Add(*cookie);
     }
 }
 
@@ -306,7 +306,7 @@ do_read_session(FILE *file, struct dpool *pool, struct session *session)
 {
     assert(session != nullptr);
 
-    session->cookies = cookie_jar_new(pool);
+    session->cookies = cookie_jar_new(*pool);
     if (session->cookies == nullptr)
         return false;
 

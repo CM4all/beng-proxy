@@ -37,7 +37,7 @@ session::session(struct dpool *_pool)
      user_expires(0),
      language(nullptr),
      widgets(nullptr),
-     cookies(cookie_jar_new(_pool))
+     cookies(cookie_jar_new(*_pool))
 {
     lock_init(&lock);
 }
@@ -298,7 +298,7 @@ session_dup(struct dpool *pool, const struct session *src)
     } else
         dest->widgets = nullptr;
 
-    dest->cookies = cookie_jar_dup(pool, src->cookies);
+    dest->cookies = src->cookies->Dup(*pool);
 
     return dest;
 }

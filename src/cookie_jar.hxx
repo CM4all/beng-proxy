@@ -25,33 +25,36 @@ struct cookie {
     struct strref value;
     const char *domain, *path;
     time_t expires;
+
+    gcc_malloc
+    struct cookie *Dup(struct dpool &pool) const;
+
+    void Free(struct dpool &pool);
 };
 
 struct cookie_jar {
-    struct dpool *pool;
+    struct dpool &pool;
 
     struct list_head cookies;
+
+    cookie_jar(struct dpool &_pool)
+        :pool(_pool) {
+        list_init(&cookies);
+    }
+
+    gcc_malloc
+    struct cookie_jar *Dup(struct dpool &new_pool) const;
+
+    void Free();
+
+    void Add(struct cookie &cookie) {
+        list_add(&cookie.siblings, &cookies);
+    }
+
+    void EraseAndDispose(struct cookie &cookie);
 };
 
-void
-cookie_free(struct dpool *pool, struct cookie *cookie);
-
 struct cookie_jar * gcc_malloc
-cookie_jar_new(struct dpool *pool);
-
-void
-cookie_jar_free(struct cookie_jar *jar);
-
-struct cookie_jar * gcc_malloc
-cookie_jar_dup(struct dpool *pool, const struct cookie_jar *src);
-
-static inline void
-cookie_jar_add(struct cookie_jar *jar, struct cookie *cookie)
-{
-    list_add(&cookie->siblings, &jar->cookies);
-}
-
-void
-cookie_delete(struct cookie_jar *jar, struct cookie *cookie);
+cookie_jar_new(struct dpool &pool);
 
 #endif
