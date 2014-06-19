@@ -44,28 +44,22 @@ path_matches(const char *path, const char *match)
     return match == nullptr || memcmp(path, match, strlen(match)) == 0;
 }
 
+template<typename L>
 static void
-cookie_list_delete_match(struct dpool *dpool, struct list_head *head,
+cookie_list_delete_match(struct dpool *dpool, L &list,
                          const char *domain, const char *path,
                          const struct strref *name)
 {
-    struct cookie *cookie, *next;
-
     assert(domain != nullptr);
 
-    for (cookie = (struct cookie *)head->next;
-         &cookie->siblings != head; cookie = next) {
-        next = (struct cookie *)cookie->siblings.next;
-
-        if (domain_matches(domain, cookie->domain) &&
-            (cookie->path == nullptr
-             ? path == nullptr
-             : path_matches(cookie->path, path)) &&
-            strref_cmp2(&cookie->name, name) == 0) {
-            list_remove(&cookie->siblings);
-            cookie->Free(*dpool);
-        }
-    }
+    list.remove_and_dispose_if([=](const struct cookie &cookie){
+            return domain_matches(domain, cookie.domain) &&
+                (cookie.path == nullptr
+                 ? path == nullptr
+                 : path_matches(cookie.path, path)) &&
+                strref_cmp2(&cookie.name, name) == 0;
+        },
+        cookie::Disposer(*dpool));
 }
 
 static struct cookie *
@@ -160,7 +154,7 @@ apply_next_cookie(struct cookie_jar *jar, struct strref *input,
     }
 
     /* delete the old cookie */
-    cookie_list_delete_match(&jar->pool, &jar->cookies, cookie->domain,
+    cookie_list_delete_match(&jar->pool, jar->cookies, cookie->domain,
                              cookie->path,
                              &cookie->name);
 
@@ -217,7 +211,7 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
     assert(domain != nullptr);
     assert(path != nullptr);
 
-    if (list_empty(&jar->cookies))
+    if (jar->cookies.empty())
         return nullptr;
 
     struct pool_mark_state mark;
@@ -229,11 +223,12 @@ cookie_jar_http_header_value(struct cookie_jar *jar,
 
     const unsigned now = now_s();
 
-    struct cookie *cookie, *next;
-    for (cookie = (struct cookie *)jar->cookies.next;
-         &cookie->siblings != &jar->cookies;
-         cookie = next) {
-        next = (struct cookie *)cookie->siblings.next;
+    for (auto i = jar->cookies.begin(), end = jar->cookies.end(), next = i;
+         i != end; i = next) {
+        next = std::next(i);
+
+        struct cookie *const cookie = &*i;
+
         if (cookie->expires != 0 && (unsigned)cookie->expires < now) {
             jar->EraseAndDispose(*cookie);
             continue;

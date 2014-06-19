@@ -31,11 +31,8 @@ cookie::Free(struct dpool &pool)
 void
 cookie_jar::EraseAndDispose(struct cookie &cookie)
 {
-    assert(&cookie.siblings != &cookies);
-
-    list_remove(&cookie.siblings);
-
-    cookie.Free(pool);
+    cookies.erase_and_dispose(cookies.iterator_to(cookie),
+                              cookie::Disposer(pool));
 }
 
 struct cookie_jar *
@@ -47,12 +44,7 @@ cookie_jar_new(struct dpool &pool)
 void
 cookie_jar::Free()
 {
-    while (!list_empty(&cookies)) {
-        struct cookie *cookie = (struct cookie *)cookies.next;
-
-        list_remove(&cookie->siblings);
-        cookie->Free(pool);
-    }
+    cookies.clear_and_dispose(cookie::Disposer(pool));
 
     d_free(&pool, this);
 }
@@ -92,11 +84,8 @@ cookie_jar::Dup(struct dpool &new_pool) const
     if (dest == nullptr)
         return nullptr;
 
-    struct cookie *src_cookie;
-    for (src_cookie = (struct cookie *)cookies.next;
-         &src_cookie->siblings != &cookies;
-         src_cookie = (struct cookie *)src_cookie->siblings.next) {
-        struct cookie *dest_cookie = src_cookie->Dup(new_pool);
+    for (const struct cookie &src_cookie : cookies) {
+        struct cookie *dest_cookie = src_cookie.Dup(new_pool);
         if (dest_cookie == nullptr) {
             dest->Free();
             return nullptr;

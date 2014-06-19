@@ -10,7 +10,8 @@
 #include "strref.h"
 
 #include <inline/compiler.h>
-#include <inline/list.h>
+
+#include <boost/intrusive/list.hpp>
 
 #include <sys/types.h>
 
@@ -18,13 +19,22 @@ struct pool;
 struct dpool;
 struct cookie_jar;
 
-struct cookie {
-    struct list_head siblings;
-
+struct cookie
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
     struct strref name;
     struct strref value;
     const char *domain, *path;
     time_t expires;
+
+    struct Disposer {
+        struct dpool &pool;
+
+        explicit Disposer(struct dpool &_pool):pool(_pool) {}
+
+        void operator()(struct cookie *cookie) const {
+            cookie->Free(pool);
+        }
+    };
 
     gcc_malloc
     struct cookie *Dup(struct dpool &pool) const;
@@ -35,11 +45,12 @@ struct cookie {
 struct cookie_jar {
     struct dpool &pool;
 
-    struct list_head cookies;
+    typedef boost::intrusive::list<struct cookie,
+                                   boost::intrusive::constant_time_size<false>> List;
+    List cookies;
 
     cookie_jar(struct dpool &_pool)
         :pool(_pool) {
-        list_init(&cookies);
     }
 
     gcc_malloc
@@ -48,7 +59,7 @@ struct cookie_jar {
     void Free();
 
     void Add(struct cookie &cookie) {
-        list_add(&cookie.siblings, &cookies);
+        cookies.push_front(cookie);
     }
 
     void EraseAndDispose(struct cookie &cookie);
