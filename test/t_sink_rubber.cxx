@@ -13,6 +13,8 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <glib.h>
+
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>

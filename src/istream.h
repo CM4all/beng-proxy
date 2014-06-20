@@ -12,7 +12,11 @@
 
 #include <inline/compiler.h>
 
+#ifdef __cplusplus
+#include "glibfwd.hxx"
+#else
 #include <glib.h>
+#endif
 
 #include <assert.h>
 #include <stdbool.h>

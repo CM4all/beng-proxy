@@ -8,6 +8,8 @@
 #ifndef __BENG_ISTREAM_INVOKE_H
 #define __BENG_ISTREAM_INVOKE_H
 
+#include <glib.h>
+
 static inline size_t
 istream_invoke_data(struct istream *istream, const void *data, size_t length)
 {

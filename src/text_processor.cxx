@@ -32,7 +32,7 @@ text_processor_allowed(const struct strmap *headers)
         text_processor_allowed_content_type(content_type);
 }
 
-G_GNUC_PURE
+gcc_pure
 static const char *
 base_uri(struct pool *pool, const char *absolute_uri)
 {
