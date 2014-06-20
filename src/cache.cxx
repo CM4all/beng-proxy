@@ -9,7 +9,6 @@
 #include "pool.h"
 #include "cleanup_timer.h"
 #include "clock.h"
-#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <time.h>
@@ -27,9 +26,13 @@ struct cache {
 
     /**
      * A linked list of all cache items, sorted by last_accessed,
-     * newest first.
+     * oldest first.
      */
-    struct list_head sorted_items;
+    boost::intrusive::list<struct cache_item,
+                           boost::intrusive::member_hook<struct cache_item,
+                                                         cache_item::SiblingsHook,
+                                                         &cache_item::sorted_siblings>,
+                           boost::intrusive::constant_time_size<false>> sorted_items;
 
     struct cleanup_timer cleanup_timer;
 
@@ -38,7 +41,6 @@ struct cache {
         :pool(_pool), cls(_cls),
          max_size(_max_size), size(0),
          items(hashmap_new(&_pool, hashtable_capacity)) {
-         list_init(&sorted_items);
          cleanup_timer_init(&cleanup_timer, 60,
                             ExpireCallback, this);
     }
@@ -87,14 +89,14 @@ cache::~cache()
             size -= item->size;
 
 #ifndef NDEBUG
-            list_remove(&item->sorted_siblings);
+            sorted_items.erase(sorted_items.iterator_to(*item));
 #endif
 
             cls.destroy(item);
         }
 
         assert(size == 0);
-        assert(list_empty(&sorted_items));
+        assert(sorted_items.empty());
     }
 }
 
@@ -109,12 +111,6 @@ cache_get_stats(const struct cache *cache, struct cache_stats *data)
 {
     data->netto_size = pool_children_netto_size(&cache->pool);
     data->brutto_size = pool_children_brutto_size(&cache->pool);
-}
-
-static inline struct cache_item *
-list_head_to_cache_item(struct list_head *list_head)
-{
-    return ContainerCast(list_head, struct cache_item, sorted_siblings);
 }
 
 inline void
@@ -153,7 +149,7 @@ cache::ItemRemoved(struct cache_item *item)
     assert(item->lock > 0 || !item->removed);
     assert(size >= item->size);
 
-    list_remove(&item->sorted_siblings);
+    sorted_items.erase(sorted_items.iterator_to(*item));
 
     size -= item->size;
 
@@ -201,8 +197,8 @@ cache_refresh_item(struct cache *cache, struct cache_item *item, unsigned now)
     item->last_accessed = now;
 
     /* move to the front of the linked list */
-    list_remove(&item->sorted_siblings);
-    list_add(&item->sorted_siblings, &cache->sorted_items);
+    cache->sorted_items.erase(cache->sorted_items.iterator_to(*item));
+    cache->sorted_items.push_back(*item);
 }
 
 struct cache_item *
@@ -279,18 +275,16 @@ cache_get_match(struct cache *cache, const char *key,
 static void
 cache_destroy_oldest_item(struct cache *cache)
 {
-    struct cache_item *item;
-
-    if (list_empty(&cache->sorted_items))
+    if (cache->sorted_items.empty())
         return;
 
-    item = list_head_to_cache_item(cache->sorted_items.prev);
+    struct cache_item &item = cache->sorted_items.front();
 
     cache->Check();
 
-    hashmap_remove_existing(cache->items, item->key, item);
+    hashmap_remove_existing(cache->items, item.key, &item);
 
-    cache->ItemRemoved(item);
+    cache->ItemRemoved(&item);
     cache->Check();
 }
 
@@ -323,7 +317,7 @@ cache_add(struct cache *cache, const char *key,
 
     item->key = key;
     hashmap_add(cache->items, key, item);
-    list_add(&item->sorted_siblings, &cache->sorted_items);
+    cache->sorted_items.push_back(*item);
 
     cache->size += item->size;
     item->last_accessed = now_s();
@@ -362,7 +356,7 @@ cache_put(struct cache *cache, const char *key,
     cache->size += item->size;
     item->last_accessed = now_s();
 
-    list_add(&item->sorted_siblings, &cache->sorted_items);
+    cache->sorted_items.push_back(*item);
 
     cache->Check();
 
@@ -541,25 +535,19 @@ cache_item_unlock(struct cache *cache, struct cache_item *item)
 bool
 cache::ExpireCallback()
 {
-    struct cache_item *item;
     const unsigned now = now_s();
 
     Check();
 
-    for (item = (struct cache_item *)sorted_items.next;
-         &item->sorted_siblings != &sorted_items;
-         item = (struct cache_item *)item->sorted_siblings.next) {
-        struct cache_item *item2;
+    for (auto i = sorted_items.begin(), end = sorted_items.end(); i != end;) {
+        struct cache_item &item = *i++;
 
-        if (item->expires > now)
+        if (item.expires > now)
             /* not yet expired */
             continue;
 
-        hashmap_remove_existing(items, item->key, item);
-
-        item2 = item;
-        item = (struct cache_item *)item->sorted_siblings.prev;
-        ItemRemoved(item2);
+        hashmap_remove_existing(items, item.key, &item);
+        ItemRemoved(&item);
     }
 
     Check();

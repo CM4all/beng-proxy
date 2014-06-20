@@ -8,7 +8,8 @@
 #define BENG_PROXY_CACHE_HXX
 
 #include <inline/compiler.h>
-#include <inline/list.h>
+
+#include <boost/intrusive/list.hpp>
 
 #include <sys/time.h>
 #include <stddef.h>
@@ -17,10 +18,14 @@ struct pool;
 struct cache;
 
 struct cache_item {
+    static constexpr auto link_mode = boost::intrusive::normal_link;
+    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
+
     /**
      * This item's siblings, sorted by #last_accessed.
      */
-    struct list_head sorted_siblings;
+    SiblingsHook sorted_siblings;
 
     /**
      * The key under which this item is stored in the hash table.
