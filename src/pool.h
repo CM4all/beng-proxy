@@ -380,6 +380,14 @@ NewFromPool(pool *p, Args&&... args)
     return ::new(t) T(std::forward<Args>(args)...);
 }
 
+template<typename T>
+void
+DeleteFromPool(struct pool *pool, T *t)
+{
+    t->~T();
+    p_free(pool, t);
+}
+
 #endif
 
 #endif
