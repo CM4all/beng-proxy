@@ -107,6 +107,9 @@ struct TranslateCachePerHost {
     TranslateCachePerHost(struct tcache *_tcache, const char *_host)
         :tcache(_tcache), host(_host) {
     }
+
+    void Dispose();
+    void Erase(TranslateCacheItem &item);
 };
 
 struct tcache {
@@ -188,29 +191,27 @@ tcache_add_per_host(struct tcache *tcache, TranslateCacheItem *item)
     item->per_host = per_host;
 }
 
-static void
-tcache_remove_per_host(TranslateCacheItem *item)
+void
+TranslateCachePerHost::Dispose()
 {
-    assert(item->per_host != nullptr);
-    assert(item->response.VaryContains(TRANSLATE_HOST));
+    assert(items.empty());
 
-    TranslateCachePerHost *const per_host = item->per_host;
-    per_host->items.erase(per_host->items.iterator_to(*item));
+    hashmap_remove_existing(tcache->per_host, host, this);
 
-    if (per_host->items.empty()) {
-        const char *host = item->request.host;
-        if (host == nullptr)
-            host = "";
+    p_free(tcache->pool, host);
+    DeleteFromPool(tcache->pool, this);
+}
 
-        assert(strcmp(per_host->host, host) == 0);
+void
+TranslateCachePerHost::Erase(TranslateCacheItem &item)
+{
+    assert(item.per_host == this);
+    assert(item.response.VaryContains(TRANSLATE_HOST));
 
-        struct tcache *tcache = per_host->tcache;
+    items.erase(items.iterator_to(item));
 
-        hashmap_remove_existing(tcache->per_host, host, per_host);
-
-        p_free(tcache->pool, per_host->host);
-        p_free(tcache->pool, per_host);
-    }
+    if (items.empty())
+        Dispose();
 }
 
 static const char *
@@ -1026,7 +1027,7 @@ tcache_destroy(struct cache_item *_item)
     TranslateCacheItem *item = (TranslateCacheItem *)_item;
 
     if (item->per_host != nullptr)
-        tcache_remove_per_host(item);
+        item->per_host->Erase(*item);
 
     if (item->regex != nullptr)
         g_regex_unref(item->regex);
