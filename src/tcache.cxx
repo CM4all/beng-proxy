@@ -79,7 +79,16 @@ struct TranslateCacheItem {
     GRegex *regex, *inverse_regex;
 
     TranslateCacheItem()
-        :per_host(nullptr) {}
+        :per_host(nullptr),
+         regex(nullptr), inverse_regex(nullptr) {}
+
+    ~TranslateCacheItem() {
+        if (regex != nullptr)
+            g_regex_unref(regex);
+
+        if (inverse_regex != nullptr)
+            g_regex_unref(inverse_regex);
+    }
 };
 
 struct TranslateCachePerHost {
@@ -128,6 +137,7 @@ struct tcache {
     struct tstock *const stock;
 
     tcache(struct pool *_pool, struct tstock *_stock, unsigned max_size);
+    ~tcache();
 };
 
 struct TranslateCacheRequest {
@@ -846,8 +856,7 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
                            "translate_cache: ");
             return nullptr;
         }
-    } else
-        item->regex = nullptr;
+    }
 
     if (response->inverse_regex != nullptr) {
         item->inverse_regex = g_regex_new(response->inverse_regex,
@@ -860,8 +869,7 @@ tcache_store(TranslateCacheRequest *tcr, const TranslateResponse *response,
                            "translate_cache: ");
             return nullptr;
         }
-    } else
-        item->inverse_regex = nullptr;
+    }
 
     if (response->VaryContains(TRANSLATE_HOST))
         tcache_add_per_host(tcr->tcache, item);
@@ -1032,12 +1040,6 @@ tcache_destroy(struct cache_item *_item)
     if (item->per_host != nullptr)
         item->per_host->Erase(*item);
 
-    if (item->regex != nullptr)
-        g_regex_unref(item->regex);
-
-    if (item->inverse_regex != nullptr)
-        g_regex_unref(item->inverse_regex);
-
     auto pool = item->pool;
     DeleteFromPool(pool, item);
     pool_unref(pool);
@@ -1062,6 +1064,16 @@ tcache::tcache(struct pool *_pool, struct tstock *_stock, unsigned max_size)
      per_host(hashmap_new(pool, 3779)),
      stock(_stock) {}
 
+inline
+tcache::~tcache()
+{
+    assert(cache != nullptr);
+    assert(stock != nullptr);
+
+    cache_close(cache);
+    slice_pool_free(slice_pool);
+}
+
 struct tcache *
 translate_cache_new(struct pool *pool, struct tstock *stock,
                     unsigned max_size)
@@ -1076,11 +1088,6 @@ void
 translate_cache_close(struct tcache *tcache)
 {
     assert(tcache != nullptr);
-    assert(tcache->cache != nullptr);
-    assert(tcache->stock != nullptr);
-
-    cache_close(tcache->cache);
-    slice_pool_free(tcache->slice_pool);
 
     auto pool = tcache->pool;
     DeleteFromPool(pool, tcache);
