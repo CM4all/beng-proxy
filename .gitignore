@@ -44,7 +44,6 @@ test/run-google-gadget
 test/run-embed
 test/t-shm
 test/t-dpool
-test/run-header-parser
 test/run_client
 test/t_ajp_client
 test/t_fcgi_client

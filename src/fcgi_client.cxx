@@ -16,7 +16,7 @@
 #include "istream-gb.h"
 #include "please.h"
 #include "strutil.h"
-#include "header-parser.h"
+#include "header_parser.hxx"
 #include "pevent.h"
 #include "direct.h"
 #include "fd-util.h"

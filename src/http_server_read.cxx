@@ -11,7 +11,7 @@
 #include "strutil.h"
 #include "strmap.h"
 #include "buffered_io.h"
-#include "header-parser.h"
+#include "header_parser.hxx"
 #include "istream-internal.h"
 
 #include <inline/poison.h>

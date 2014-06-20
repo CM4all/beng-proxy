@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "header-parser.h"
+#include "header_parser.hxx"
 #include "strutil.h"
 #include "strmap.h"
 #include "growing-buffer.h"
@@ -18,14 +18,11 @@ void
 header_parse_line(struct pool *pool, struct strmap *headers,
                   const char *line, size_t length)
 {
-    const char *colon, *key_end;
-    char *key, *value;
-
-    colon = memchr(line, ':', length);
-    if (unlikely(colon == NULL || colon == line))
+    const char *colon = (const char *)memchr(line, ':', length);
+    if (unlikely(colon == nullptr || colon == line))
         return;
 
-    key_end = colon;
+    const char *key_end = colon;
 
     ++colon;
     if (likely(colon < line + length && *colon == ' '))
@@ -33,8 +30,8 @@ header_parse_line(struct pool *pool, struct strmap *headers,
     while (colon < line + length && char_is_whitespace(*colon))
         ++colon;
 
-    key = p_strndup(pool, line, key_end - line);
-    value = p_strndup(pool, colon, line + length - colon);
+    char *key = p_strndup(pool, line, key_end - line);
+    char *value = p_strndup(pool, colon, line + length - colon);
 
     str_to_lower(key);
 
@@ -45,9 +42,9 @@ void
 header_parse_buffer(struct pool *pool, struct strmap *headers,
                     const struct growing_buffer *gb)
 {
-    assert(pool != NULL);
-    assert(headers != NULL);
-    assert(gb != NULL);
+    assert(pool != nullptr);
+    assert(headers != nullptr);
+    assert(gb != nullptr);
 
     struct pool_mark_state mark;
     pool_mark(tpool, &mark);
@@ -60,13 +57,14 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
     while (true) {
         /* copy gb to buffer */
 
-        if (gb != NULL) {
+        if (gb != nullptr) {
             size_t max_length;
             void *dest = fifo_buffer_write(buffer, &max_length);
-            if (dest != NULL) {
+            if (dest != nullptr) {
                 size_t length;
-                const char *src = growing_buffer_reader_read(&reader, &length);
-                if (src != NULL) {
+                const char *src = (const char *)
+                    growing_buffer_reader_read(&reader, &length);
+                if (src != nullptr) {
                     if (length > max_length)
                         length = max_length;
 
@@ -74,7 +72,7 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
                     fifo_buffer_append(buffer, length);
                     growing_buffer_reader_consume(&reader, length);
                 } else
-                    gb = NULL;
+                    gb = nullptr;
             }
         }
 
@@ -82,18 +80,17 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
 
         const char *src, *p;
         size_t length;
-        p = src = fifo_buffer_read(buffer, &length);
-        if (src == NULL && gb == NULL)
+        p = src = (const char *)fifo_buffer_read(buffer, &length);
+        if (src == nullptr && gb == nullptr)
             break;
 
         while (true) {
             while (p < src + length && char_is_whitespace(*p))
                 ++p;
 
-            const char *eol;
-            eol = memchr(p, '\n', src + length - p);
-            if (eol == NULL) {
-                if (gb == NULL)
+            const char *eol = (const char *)memchr(p, '\n', src + length - p);
+            if (eol == nullptr) {
+                if (gb == nullptr)
                     eol = src + length;
                 else
                     break;

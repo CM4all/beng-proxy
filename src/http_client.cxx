@@ -8,7 +8,7 @@
 #include "http_response.h"
 #include "fifo-buffer.h"
 #include "strutil.h"
-#include "header-parser.h"
+#include "header_parser.hxx"
 #include "header-writer.h"
 #include "pevent.h"
 #include "http_body.hxx"

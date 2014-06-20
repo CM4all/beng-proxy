@@ -9,7 +9,7 @@
 #include "cgi_parser.hxx"
 #include "istream-buffer.h"
 #include "async.h"
-#include "header-parser.h"
+#include "header_parser.hxx"
 #include "strutil.h"
 #include "stopwatch.h"
 #include "strmap.h"

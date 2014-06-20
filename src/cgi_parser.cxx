@@ -8,7 +8,7 @@
 #include "cgi_quark.h"
 #include "fifo-buffer.h"
 #include "strmap.h"
-#include "header-parser.h"
+#include "header_parser.hxx"
 #include "strutil.h"
 
 #include <string.h>

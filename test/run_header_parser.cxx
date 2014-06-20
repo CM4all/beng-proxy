@@ -1,5 +1,5 @@
 #include "tpool.h"
-#include "header-parser.h"
+#include "header_parser.hxx"
 #include "growing-buffer.h"
 #include "strmap.h"
 
@@ -14,7 +14,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     struct strmap *headers;
     const struct strmap_pair *pair;
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
     gb = growing_buffer_new(pool, sizeof(buffer));
@@ -32,7 +32,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     /* dump headers */
 
     strmap_rewind(headers);
-    while ((pair = strmap_next(headers)) != NULL)
+    while ((pair = strmap_next(headers)) != nullptr)
         printf("%s: %s\n", pair->key, pair->value);
 
     /* cleanup */

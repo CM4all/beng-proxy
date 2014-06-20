@@ -4,7 +4,7 @@
 #include "resource_address.hxx"
 #include "http_address.hxx"
 #include "growing-buffer.h"
-#include "header-parser.h"
+#include "header_parser.hxx"
 #include "strmap.h"
 #include "http_response.h"
 #include "async.h"
