@@ -36,6 +36,26 @@ struct slice_area {
     struct slice_slot slices[1];
 };
 
+constexpr
+static inline size_t
+align_size(size_t size)
+{
+    return ((size - 1) | 0x1f) + 1;
+}
+
+gcc_const
+static inline size_t
+align_page_size(size_t size)
+{
+    return ((size - 1) | (mmap_page_size() - 1)) + 1;
+}
+
+static constexpr unsigned
+divide_round_up(unsigned a, unsigned b)
+{
+    return (a + b - 1) / b;
+}
+
 struct slice_pool {
     size_t slice_size;
 
@@ -58,30 +78,10 @@ struct slice_pool {
     size_t area_size;
 
     struct list_head areas;
+
+    slice_pool(size_t _slice_size, unsigned _slices_per_area);
+    ~slice_pool();
 };
-
-gcc_const
-static inline size_t
-align_size(size_t size)
-{
-    return ((size - 1) | 0x1f) + 1;
-}
-
-gcc_const
-static inline size_t
-align_page_size(size_t size)
-{
-    return ((size - 1) | (mmap_page_size() - 1)) + 1;
-}
-
-gcc_const
-static unsigned
-divide_round_up(unsigned a, unsigned b)
-{
-    assert(b > 0);
-
-    return (a + b - 1) / b;
-}
 
 /*
  * slice_slot methods
@@ -302,64 +302,65 @@ slice_area_compress(struct slice_pool *pool, struct slice_area *area)
  *
  */
 
-struct slice_pool *
-slice_pool_new(size_t slice_size, unsigned slices_per_area)
+inline
+slice_pool::slice_pool(size_t _slice_size, unsigned _slices_per_area)
 {
-    assert(slice_size > 0);
-    assert(slices_per_area > 0);
+    assert(_slice_size > 0);
+    assert(_slices_per_area > 0);
 
-    struct slice_pool *pool = (struct slice_pool *)malloc(sizeof(*pool));
-    if (gcc_unlikely(pool == nullptr)) {
-        fputs("Out of memory\n", stderr);
-        abort();
-    }
+    if (_slice_size <= mmap_page_size() / 2) {
+        slice_size = align_size(_slice_size);
 
-    if (slice_size <= mmap_page_size() / 2) {
-        pool->slice_size = align_size(slice_size);
+        slices_per_page = mmap_page_size() / slice_size;
+        pages_per_slice = 1;
 
-        pool->slices_per_page = mmap_page_size() / pool->slice_size;
-        pool->pages_per_slice = 1;
-
-        pool->pages_per_area = divide_round_up(slices_per_area,
-                                               pool->slices_per_page);
+        pages_per_area = divide_round_up(_slices_per_area,
+                                         slices_per_page);
     } else {
-        pool->slice_size = align_page_size(slice_size);
+        slice_size = align_page_size(_slice_size);
 
-        pool->slices_per_page = 1;
-        pool->pages_per_slice = pool->slice_size / mmap_page_size();
+        slices_per_page = 1;
+        pages_per_slice = slice_size / mmap_page_size();
 
-        pool->pages_per_area = slices_per_area * pool->pages_per_slice;
+        pages_per_area = _slices_per_area * pages_per_slice;
     }
 
-    pool->slices_per_area = (pool->pages_per_area / pool->pages_per_slice)
-        * pool->slices_per_page;
+    slices_per_area = (pages_per_area / pages_per_slice) * slices_per_page;
 
     const struct slice_area *area = nullptr;
     const size_t header_size = sizeof(*area)
-        + sizeof(area->slices[0]) * (pool->slices_per_area - 1);
-    pool->header_pages = divide_round_up(header_size, mmap_page_size());
+        + sizeof(area->slices[0]) * (slices_per_area - 1);
+    header_pages = divide_round_up(header_size, mmap_page_size());
 
-    pool->area_size = mmap_page_size()
-        * (pool->header_pages + pool->pages_per_area);
+    area_size = mmap_page_size() * (header_pages + pages_per_area);
 
-    list_init(&pool->areas);
-    return pool;
+    list_init(&areas);
 }
 
-void
-slice_pool_free(struct slice_pool *pool)
+inline
+slice_pool::~slice_pool()
 {
-    while (!list_empty(&pool->areas)) {
-        struct slice_area *area = (struct slice_area *)pool->areas.next;
+    while (!list_empty(&areas)) {
+        struct slice_area *area = (struct slice_area *)areas.next;
 
         /* must be empty at this point, or it's a memory leak */
         assert(area->allocated_count == 0);
 
         list_remove(&area->siblings);
-        slice_area_free(pool, area);
+        slice_area_free(this, area);
     }
+}
 
-    free(pool);
+struct slice_pool *
+slice_pool_new(size_t slice_size, unsigned slices_per_area)
+{
+    return new slice_pool(slice_size, slices_per_area);
+}
+
+void
+slice_pool_free(struct slice_pool *pool)
+{
+    delete pool;
 }
 
 size_t
