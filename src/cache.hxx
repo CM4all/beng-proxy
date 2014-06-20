@@ -47,6 +47,9 @@ struct cache_item {
      * could not be destroyed yet, because it is locked.
      */
     bool removed;
+
+    cache_item() = default;
+    cache_item(const cache_item &) = delete;
 };
 
 struct cache_class {
