@@ -149,7 +149,7 @@ control_tcache_invalidate(struct instance *instance,
         return;
     }
 
-    translate_cache_invalidate(instance->translate_cache, &request,
+    translate_cache_invalidate(*instance->translate_cache, request,
                                ConstBuffer<uint16_t>(cmds, num_cmds),
                                site);
 }

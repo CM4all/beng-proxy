@@ -54,8 +54,8 @@ translate_cache(struct pool *pool, struct tcache *tcache,
  * the cache item filter
  */
 void
-translate_cache_invalidate(struct tcache *tcache,
-                           const TranslateRequest *request,
+translate_cache_invalidate(struct tcache &tcache,
+                           const TranslateRequest &request,
                            ConstBuffer<uint16_t> vary,
                            const char *site);
 
