@@ -49,6 +49,8 @@ struct cache {
         DeleteFromPool(&pool, this);
     }
 
+    /** clean up expired cache items every 60 seconds */
+    bool ExpireCallback();
     static bool ExpireCallback(void *ctx);
 
     void Check() const;
@@ -537,16 +539,15 @@ cache_item_unlock(struct cache *cache, struct cache_item *item)
 
 /** clean up expired cache items every 60 seconds */
 bool
-cache::ExpireCallback(void *ctx)
+cache::ExpireCallback()
 {
-    struct cache *cache = (struct cache *)ctx;
     struct cache_item *item;
     const unsigned now = now_s();
 
-    cache->Check();
+    Check();
 
-    for (item = (struct cache_item *)cache->sorted_items.next;
-         &item->sorted_siblings != &cache->sorted_items;
+    for (item = (struct cache_item *)sorted_items.next;
+         &item->sorted_siblings != &sorted_items;
          item = (struct cache_item *)item->sorted_siblings.next) {
         struct cache_item *item2;
 
@@ -554,16 +555,24 @@ cache::ExpireCallback(void *ctx)
             /* not yet expired */
             continue;
 
-        hashmap_remove_existing(cache->items, item->key, item);
+        hashmap_remove_existing(items, item->key, item);
 
         item2 = item;
         item = (struct cache_item *)item->sorted_siblings.prev;
-        cache->ItemRemoved(item2);
+        ItemRemoved(item2);
     }
 
-    cache->Check();
+    Check();
 
-    return cache->size > 0;
+    return size > 0;
+}
+
+bool
+cache::ExpireCallback(void *ctx)
+{
+    struct cache *cache = (struct cache *)ctx;
+
+    return cache->ExpireCallback();
 }
 
 void
