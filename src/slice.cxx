@@ -10,20 +10,26 @@
 
 #include <inline/list.h>
 
+#include <new>
+
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-static const unsigned ALLOCATED = -1;
-static const unsigned END_OF_LIST = -2;
+static constexpr unsigned ALLOCATED = -1;
+static constexpr unsigned END_OF_LIST = -2;
 
 #ifndef NDEBUG
-static const unsigned MARK = -3;
+static constexpr unsigned MARK = -3;
 #endif
 
 struct slice_slot {
     unsigned next;
+
+    constexpr bool IsAllocated() const {
+        return next == ALLOCATED;
+    }
 };
 
 struct slice_area {
@@ -34,6 +40,65 @@ struct slice_area {
     unsigned free_head;
 
     struct slice_slot slices[1];
+
+private:
+    slice_area(struct slice_pool &pool);
+
+    ~slice_area() {
+        assert(allocated_count == 0);
+    }
+
+public:
+    static struct slice_area *New(struct slice_pool &pool);
+    void Delete(struct slice_pool &pool);
+
+    bool IsEmpty() const {
+        return allocated_count == 0;
+    }
+
+    bool IsFull(const struct slice_pool &pool) const;
+
+    gcc_pure
+    void *GetPage(const struct slice_pool &pool, unsigned page);
+
+    gcc_pure
+    void *GetSlice(const struct slice_pool &pool, unsigned slice);
+
+    /**
+     * Calculates the allocation slot index from an allocated pointer.
+     * This is used to locate the #slice_slot for a pointer passed to a
+     * public function.
+     */
+    gcc_pure
+    unsigned IndexOf(const struct slice_pool &pool, const void *_p);
+
+    /**
+     * Find the first free slot index, starting at the specified position.
+     */
+    gcc_pure
+    unsigned FindFree(const struct slice_pool &pool, unsigned start) const;
+
+    /**
+     * Find the first allocated slot index, starting at the specified
+     * position.
+     */
+    gcc_pure
+    unsigned FindAllocated(const struct slice_pool &pool,
+                           unsigned start) const;
+
+    /**
+     * Punch a hole in the memory map in the specified slot index range.
+     * This means notifying the kernel that we will no longer need the
+     * contents, which allows the kernel to drop the allocated pages and
+     * reuse it for other processes.
+     */
+    void PunchSliceRange(struct slice_pool &pool,
+                         unsigned start, gcc_unused unsigned end);
+
+    void Compress(struct slice_pool &pool);
+
+    void *Alloc(struct slice_pool &pool);
+    void Free(struct slice_pool &pool, void *p);
 };
 
 constexpr
@@ -81,149 +146,121 @@ struct slice_pool {
 
     slice_pool(size_t _slice_size, unsigned _slices_per_area);
     ~slice_pool();
+
+    void Compress();
+
+    gcc_pure
+    struct slice_area *FindNonFullArea();
+
+    struct slice_area *GetArea();
 };
-
-/*
- * slice_slot methods
- *
- */
-
-static bool
-slice_slot_is_allocated(const struct slice_slot *slot)
-{
-    return slot->next == ALLOCATED;
-}
 
 /*
  * slice_area methods
  *
  */
 
-static bool
-slice_area_is_full(gcc_unused const struct slice_pool *pool,
-                   const struct slice_area *area)
+slice_area::slice_area(struct slice_pool &pool)
+    :allocated_count(0), free_head(0)
 {
-    assert(area->free_head < pool->slices_per_area ||
-           area->free_head == END_OF_LIST);
+    /* build the "free" list */
+    for (unsigned i = 0; i < pool.slices_per_area - 1; ++i)
+        slices[i].next = i + 1;
 
-    return area->free_head == END_OF_LIST;
+    slices[pool.slices_per_area - 1].next = END_OF_LIST;
 }
 
-static bool
-slice_area_is_empty(const struct slice_area *area)
+struct slice_area *
+slice_area::New(struct slice_pool &pool)
 {
-    return area->allocated_count == 0;
-}
-
-static struct slice_area *
-slice_area_new(struct slice_pool *pool)
-{
-    void *p = mmap_alloc_anonymous(pool->area_size);
+    void *p = mmap_alloc_anonymous(pool.area_size);
     if (p == (void *)-1) {
         fputs("Out of adress space\n", stderr);
         abort();
     }
 
-    struct slice_area *area = (struct slice_area *)p;
-    area->allocated_count = 0;
-    area->free_head = 0;
-
-    /* build the "free" list */
-    for (unsigned i = 0; i < pool->slices_per_area - 1; ++i)
-        area->slices[i].next = i + 1;
-    area->slices[pool->slices_per_area - 1].next = END_OF_LIST;
-
-    return area;
+    return ::new(p) slice_area(pool);
 }
 
-static void
-slice_area_free(struct slice_pool *pool, struct slice_area *area)
+inline bool
+slice_area::IsFull(gcc_unused const struct slice_pool &pool) const
 {
-    assert(area->allocated_count == 0);
+    assert(free_head < pool.slices_per_area ||
+           free_head == END_OF_LIST);
+
+    return free_head == END_OF_LIST;
+}
+
+void
+slice_area::Delete(struct slice_pool &pool)
+{
+    assert(allocated_count == 0);
 
 #ifndef NDEBUG
-    for (unsigned i = 0; i < pool->slices_per_area; ++i)
-        assert(area->slices[i].next < pool->slices_per_area ||
-               area->slices[i].next == END_OF_LIST);
+    for (unsigned i = 0; i < pool.slices_per_area; ++i)
+        assert(slices[i].next < pool.slices_per_area ||
+               slices[i].next == END_OF_LIST);
 
-    unsigned i = area->free_head;
+    unsigned i = free_head;
     while (i != END_OF_LIST) {
-        assert(i < pool->slices_per_area);
+        assert(i < pool.slices_per_area);
 
-        unsigned next = area->slices[i].next;
-        area->slices[i].next = MARK;
+        unsigned next = slices[i].next;
+        slices[i].next = MARK;
         i = next;
     }
 #endif
 
-    mmap_free(area, pool->area_size);
+    this->~slice_area();
+    mmap_free(this, pool.area_size);
 }
 
-gcc_pure
-static void *
-slice_area_get_page(const struct slice_pool *pool, struct slice_area *area,
-                    unsigned page)
+inline void *
+slice_area::GetPage(const struct slice_pool &pool, unsigned page)
 {
-    assert(page <= pool->pages_per_area);
+    assert(page <= pool.pages_per_area);
 
-    return (uint8_t *)area + (pool->header_pages + page) * mmap_page_size();
+    return (uint8_t *)this + (pool.header_pages + page) * mmap_page_size();
 }
 
-gcc_pure
-static void *
-slice_area_get_slice(const struct slice_pool *pool, struct slice_area *area,
-                     unsigned slice)
+inline void *
+slice_area::GetSlice(const struct slice_pool &pool, unsigned slice)
 {
-    assert(slice < pool->slices_per_area);
-    assert(slice_slot_is_allocated(&area->slices[slice]));
+    assert(slice < pool.slices_per_area);
+    assert(slices[slice].IsAllocated());
 
-    unsigned page = (slice / pool->slices_per_page) * pool->pages_per_slice;
-    slice %= pool->slices_per_page;
+    unsigned page = (slice / pool.slices_per_page) * pool.pages_per_slice;
+    slice %= pool.slices_per_page;
 
-    return (uint8_t *)slice_area_get_page(pool, area, page)
-        + slice * pool->slice_size;
+    return (uint8_t *)GetPage(pool, page) + slice * pool.slice_size;
 }
 
-/**
- * Calculates the allocation slot index from an allocated pointer.
- * This is used to locate the #slice_slot for a pointer passed to a
- * public function.
- */
-gcc_pure
-static unsigned
-slice_area_index(const struct slice_pool *pool, struct slice_area *area,
-                 const void *_p)
+inline unsigned
+slice_area::IndexOf(const struct slice_pool &pool, const void *_p)
 {
     const uint8_t *p = (const uint8_t *)_p;
-    assert(p >= (uint8_t *)slice_area_get_page(pool, area, 0));
-    assert(p < (uint8_t *)slice_area_get_page(pool, area,
-                                              pool->pages_per_area));
+    assert(p >= (uint8_t *)GetPage(pool, 0));
+    assert(p < (uint8_t *)GetPage(pool, pool.pages_per_area));
 
-    size_t offset = p - (const uint8_t *)area;
-    const unsigned page = offset / mmap_page_size() - pool->header_pages;
+    size_t offset = p - (const uint8_t *)this;
+    const unsigned page = offset / mmap_page_size() - pool.header_pages;
     offset %= mmap_page_size();
-    assert(offset % pool->slice_size == 0);
+    assert(offset % pool.slice_size == 0);
 
-    return page * pool->slices_per_page / pool->pages_per_slice
-        + offset / pool->slice_size;
+    return page * pool.slices_per_page / pool.pages_per_slice
+        + offset / pool.slice_size;
 }
 
-/**
- * Find the first free slot index, starting at the specified position.
- */
-gcc_pure
-static unsigned
-slice_area_find_free(const struct slice_pool *pool,
-                     const struct slice_area *area, unsigned start)
+unsigned
+slice_area::FindFree(const struct slice_pool &pool, unsigned start) const
 {
-    assert(start <= pool->slices_per_page);
+    assert(start <= pool.slices_per_page);
 
-    const unsigned end = pool->slices_per_page;
-    const struct slice_slot *slices = area->slices;
+    const unsigned end = pool.slices_per_page;
 
     unsigned i;
     for (i = start; i != end; ++i)
-        if (!slice_slot_is_allocated(&slices[i]))
+        if (!slices[i].IsAllocated())
             break;
 
     return i;
@@ -234,64 +271,53 @@ slice_area_find_free(const struct slice_pool *pool,
  * position.
  */
 gcc_pure
-static unsigned
-slice_area_find_allocated(const struct slice_pool *pool,
-                          const struct slice_area *area, unsigned start)
+unsigned
+slice_area::FindAllocated(const struct slice_pool &pool, unsigned start) const
 {
-    assert(start <= pool->slices_per_page);
+    assert(start <= pool.slices_per_page);
 
-    const unsigned end = pool->slices_per_page;
-    const struct slice_slot *slices = area->slices;
+    const unsigned end = pool.slices_per_page;
 
     unsigned i;
     for (i = start; i != end; ++i)
-        if (slice_slot_is_allocated(&slices[i]))
+        if (slices[i].IsAllocated())
             break;
 
     return i;
 }
 
-/**
- * Punch a hole in the memory map in the specified slot index range.
- * This means notifying the kernel that we will no longer need the
- * contents, which allows the kernel to drop the allocated pages and
- * reuse it for other processes.
- */
-static void
-slice_area_punch_slice_range(struct slice_pool *pool, struct slice_area *area,
-                             unsigned start, gcc_unused unsigned end)
+void
+slice_area::PunchSliceRange(struct slice_pool &pool,
+                            unsigned start, gcc_unused unsigned end)
 {
     assert(start <= end);
 
-    unsigned start_page = divide_round_up(start, pool->slices_per_page)
-        * pool->pages_per_slice;
-    unsigned end_page = (start / pool->slices_per_page)
-        * pool->pages_per_slice;
+    unsigned start_page = divide_round_up(start, pool.slices_per_page)
+        * pool.pages_per_slice;
+    unsigned end_page = (start / pool.slices_per_page)
+        * pool.pages_per_slice;
     assert(start_page <= end_page);
     if (start_page == end_page)
         return;
 
-    uint8_t *start_pointer = (uint8_t *)
-        slice_area_get_page(pool, area, start_page);
-    uint8_t *end_pointer = (uint8_t *)
-        slice_area_get_page(pool, area, end_page);
+    uint8_t *start_pointer = (uint8_t *)GetPage(pool, start_page);
+    uint8_t *end_pointer = (uint8_t *)GetPage(pool, end_page);
 
     mmap_discard_pages(start_pointer, end_pointer - start_pointer);
 }
 
-static void
-slice_area_compress(struct slice_pool *pool, struct slice_area *area)
+void
+slice_area::Compress(struct slice_pool &pool)
 {
     unsigned position = 0;
 
     while (true) {
-        unsigned first_free = slice_area_find_free(pool, area, position);
-        if (first_free == pool->slices_per_page)
+        unsigned first_free = FindFree(pool, position);
+        if (first_free == pool.slices_per_page)
             break;
 
-        unsigned first_allocated =
-            slice_area_find_allocated(pool, area, first_free + 1);
-        slice_area_punch_slice_range(pool, area, first_free, first_allocated);
+        unsigned first_allocated = FindAllocated(pool, first_free + 1);
+        PunchSliceRange(pool, first_free, first_allocated);
 
         position = first_allocated;
     }
@@ -347,7 +373,7 @@ slice_pool::~slice_pool()
         assert(area->allocated_count == 0);
 
         list_remove(&area->siblings);
-        slice_area_free(this, area);
+        area->Delete(*this);
     }
 }
 
@@ -371,49 +397,71 @@ slice_pool_get_slice_size(const struct slice_pool *pool)
     return pool->slice_size;
 }
 
-void
-slice_pool_compress(struct slice_pool *pool)
+inline void
+slice_pool::Compress()
 {
-    for (struct slice_area *area = (struct slice_area *)pool->areas.next,
+    for (struct slice_area *area = (struct slice_area *)areas.next,
              *next = (struct slice_area *)area->siblings.next;
-         &area->siblings != &pool->areas;
+         &area->siblings != &areas;
          area = next, next = (struct slice_area *)area->siblings.next) {
-        if (slice_area_is_empty(area)) {
+        if (area->IsEmpty()) {
             list_remove(&area->siblings);
-            slice_area_free(pool, area);
+            area->Delete(*this);
         } else
-            slice_area_compress(pool, area);
+            area->Compress(*this);
     }
 }
 
-gcc_pure
-static struct slice_area *
-slice_pool_find_non_full_area(struct slice_pool *pool)
+void
+slice_pool_compress(struct slice_pool *pool)
 {
-    assert(pool != nullptr);
+    pool->Compress();
+}
 
-    for (struct slice_area *area = (struct slice_area *)pool->areas.next;
-         &area->siblings != &pool->areas;
+gcc_pure
+inline struct slice_area *
+slice_pool::FindNonFullArea()
+{
+    for (struct slice_area *area = (struct slice_area *)areas.next;
+         &area->siblings != &areas;
          area = (struct slice_area *)area->siblings.next)
-        if (!slice_area_is_full(pool, area))
+        if (!area->IsFull(*this))
             return area;
 
     return nullptr;
 }
 
-struct slice_area *
-slice_pool_get_area(struct slice_pool *pool)
-
+inline struct slice_area *
+slice_pool::GetArea()
 {
-    assert(pool != nullptr);
-
-    struct slice_area *area = slice_pool_find_non_full_area(pool);
+    struct slice_area *area = FindNonFullArea();
     if (area == nullptr) {
-        area = slice_area_new(pool);
-        list_add(&area->siblings, &pool->areas);
+        area = slice_area::New(*this);
+        list_add(&area->siblings, &areas);
     }
 
     return area;
+}
+
+struct slice_area *
+slice_pool_get_area(struct slice_pool *pool)
+{
+    return pool->GetArea();
+}
+
+inline void *
+slice_area::Alloc(struct slice_pool &pool)
+{
+    assert(!IsFull(pool));
+
+    const unsigned i = free_head;
+    struct slice_slot *const slot = &slices[i];
+
+    ++allocated_count;
+    free_head = slot->next;
+    slot->next = ALLOCATED;
+
+    return GetSlice(pool, i);
 }
 
 void *
@@ -421,27 +469,28 @@ slice_alloc(struct slice_pool *pool, struct slice_area *area)
 {
     assert(pool != nullptr);
     assert(area != nullptr);
-    assert(!slice_area_is_full(pool, area));
 
-    const unsigned i = area->free_head;
-    struct slice_slot *const slot = &area->slices[i];
+    return area->Alloc(*pool);
+}
 
-    ++area->allocated_count;
-    area->free_head = slot->next;
-    slot->next = ALLOCATED;
+void
+slice_area::Free(struct slice_pool &pool, void *p)
+{
+    unsigned i = IndexOf(pool, p);
+    assert(slices[i].IsAllocated());
 
-    return slice_area_get_slice(pool, area, i);
+    slices[i].next = free_head;
+    free_head = i;
+
+    assert(allocated_count > 0);
+    --allocated_count;
 }
 
 void
 slice_free(struct slice_pool *pool, struct slice_area *area, void *p)
 {
-    unsigned i = slice_area_index(pool, area, p);
-    assert(slice_slot_is_allocated(&area->slices[i]));
+    assert(pool != nullptr);
+    assert(area != nullptr);
 
-    area->slices[i].next = area->free_head;
-    area->free_head = i;
-
-    assert(area->allocated_count > 0);
-    --area->allocated_count;
+    area->Free(*pool, p);
 }
