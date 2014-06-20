@@ -165,24 +165,22 @@ cache::ItemRemoved(struct cache_item *item)
         cleanup_timer_disable(&cleanup_timer);
 }
 
+static bool
+cache_flush_callback(gcc_unused const char *key, void *value, void *ctx)
+{
+    struct cache *cache = (struct cache *)ctx;
+    struct cache_item *item = (struct cache_item *)value;
+
+    cache->ItemRemoved(item);
+    return true;
+}
+
 void
 cache_flush(struct cache *cache)
 {
-    struct cache_item *item;
-
     cache->Check();
 
-    for (item = (struct cache_item *)cache->sorted_items.next;
-         &item->sorted_siblings != &cache->sorted_items;
-         item = (struct cache_item *)item->sorted_siblings.next) {
-        struct cache_item *item2;
-
-        hashmap_remove_existing(cache->items, item->key, item);
-
-        item2 = item;
-        item = (struct cache_item *)item->sorted_siblings.prev;
-        cache->ItemRemoved(item2);
-    }
+    hashmap_remove_all_match(cache->items, cache_flush_callback, cache);
 
     cache->Check();
 }
