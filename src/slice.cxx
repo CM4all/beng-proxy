@@ -8,7 +8,7 @@
 #include "slice.hxx"
 #include "mmap.h"
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 #include <new>
 
@@ -33,7 +33,10 @@ struct slice_slot {
 };
 
 struct slice_area {
-    struct list_head siblings;
+    static constexpr auto link_mode = boost::intrusive::normal_link;
+    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
+    SiblingsHook siblings;
 
     unsigned allocated_count;
 
@@ -99,6 +102,14 @@ public:
 
     void *Alloc(struct slice_pool &pool);
     void Free(struct slice_pool &pool, void *p);
+
+    struct Disposer {
+        struct slice_pool &pool;
+
+        void operator()(struct slice_area *area) {
+            area->Delete(pool);
+        }
+    };
 };
 
 constexpr
@@ -142,7 +153,11 @@ struct slice_pool {
 
     size_t area_size;
 
-    struct list_head areas;
+    boost::intrusive::list<struct slice_area,
+                           boost::intrusive::member_hook<struct slice_area,
+                                                         slice_area::SiblingsHook,
+                                                         &slice_area::siblings>,
+                           boost::intrusive::constant_time_size<false>> areas;
 
     slice_pool(size_t _slice_size, unsigned _slices_per_area);
     ~slice_pool();
@@ -359,22 +374,12 @@ slice_pool::slice_pool(size_t _slice_size, unsigned _slices_per_area)
     header_pages = divide_round_up(header_size, mmap_page_size());
 
     area_size = mmap_page_size() * (header_pages + pages_per_area);
-
-    list_init(&areas);
 }
 
 inline
 slice_pool::~slice_pool()
 {
-    while (!list_empty(&areas)) {
-        struct slice_area *area = (struct slice_area *)areas.next;
-
-        /* must be empty at this point, or it's a memory leak */
-        assert(area->allocated_count == 0);
-
-        list_remove(&area->siblings);
-        area->Delete(*this);
-    }
+    areas.clear_and_dispose(slice_area::Disposer{*this});
 }
 
 struct slice_pool *
@@ -400,15 +405,13 @@ slice_pool_get_slice_size(const struct slice_pool *pool)
 inline void
 slice_pool::Compress()
 {
-    for (struct slice_area *area = (struct slice_area *)areas.next,
-             *next = (struct slice_area *)area->siblings.next;
-         &area->siblings != &areas;
-         area = next, next = (struct slice_area *)area->siblings.next) {
-        if (area->IsEmpty()) {
-            list_remove(&area->siblings);
-            area->Delete(*this);
-        } else
-            area->Compress(*this);
+    for (auto i = areas.begin(), end = areas.end(); i != end;) {
+        if (i->IsEmpty()) {
+            i = areas.erase_and_dispose(i, slice_area::Disposer{*this});
+        } else {
+            i->Compress(*this);
+            ++i;
+        }
     }
 }
 
@@ -422,11 +425,9 @@ gcc_pure
 inline struct slice_area *
 slice_pool::FindNonFullArea()
 {
-    for (struct slice_area *area = (struct slice_area *)areas.next;
-         &area->siblings != &areas;
-         area = (struct slice_area *)area->siblings.next)
-        if (!area->IsFull(*this))
-            return area;
+    for (struct slice_area &area : areas)
+        if (!area.IsFull(*this))
+            return &area;
 
     return nullptr;
 }
@@ -437,7 +438,7 @@ slice_pool::GetArea()
     struct slice_area *area = FindNonFullArea();
     if (area == nullptr) {
         area = slice_area::New(*this);
-        list_add(&area->siblings, &areas);
+        areas.push_front(*area);
     }
 
     return area;
