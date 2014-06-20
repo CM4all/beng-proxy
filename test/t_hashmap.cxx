@@ -12,7 +12,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     void *p;
     const struct hashmap_pair *pair;
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     map = hashmap_new(pool, 2);
     hashmap_add(map, key, &a);
@@ -29,7 +29,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     pair = hashmap_lookup_next(pair);
     assert(pair->value == &b);
     pair = hashmap_lookup_next(pair);
-    assert(pair == NULL);
+    assert(pair == nullptr);
 
     hashmap_remove_value(map, key, &a);
     p = hashmap_get(map, key);
@@ -40,7 +40,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     pair = hashmap_lookup_next(pair);
     assert(pair->value == &b);
     pair = hashmap_lookup_next(pair);
-    assert(pair == NULL);
+    assert(pair == nullptr);
 
     map = hashmap_new(pool, 2);
     hashmap_add(map, key, &a);
@@ -56,7 +56,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     pair = hashmap_lookup_next(pair);
     assert(pair->value == &c);
     pair = hashmap_lookup_next(pair);
-    assert(pair == NULL);
+    assert(pair == nullptr);
 
     map = hashmap_new(pool, 2);
     hashmap_add(map, key, &a);
@@ -72,7 +72,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     pair = hashmap_lookup_next(pair);
     assert(pair->value == &b);
     pair = hashmap_lookup_next(pair);
-    assert(pair == NULL);
+    assert(pair == nullptr);
 
     pool_unref(pool);
     pool_commit();

@@ -14,13 +14,13 @@ main(gcc_unused int argc, gcc_unused char **argv)
     const void *p, *q;
     size_t size;
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     eb = expansible_buffer_new(pool, 4, 1024);
     assert(expansible_buffer_is_empty(eb));
 
     p = expansible_buffer_read(eb, &size);
-    assert(p != NULL);
+    assert(p != nullptr);
     assert(size == 0);
 
     expansible_buffer_write_string(eb, "01");
@@ -55,11 +55,11 @@ main(gcc_unused int argc, gcc_unused char **argv)
     assert(memcmp(q, "abcdef", 6) == 0);
 
     p = expansible_buffer_write(eb, 512);
-    assert(p != NULL);
+    assert(p != nullptr);
 
     /* this call hits the hard limit */
     p = expansible_buffer_write(eb, 512);
-    assert(p == NULL);
+    assert(p == nullptr);
 
     pool_commit();
 

@@ -715,7 +715,7 @@ noinst_PROGRAMS = \
 	test/was_mirror \
 	test/benchmark-gmtime test/format-http-date \
 	test/request_translation \
-	test/run-subst \
+	test/run_subst \
 	test/run_cookie_client \
 	test/run_cookie_server \
 	test/run_header_parser \
@@ -737,35 +737,35 @@ if HAVE_LIBNFS
 noinst_PROGRAMS += test/run_nfs_client
 endif
 
-FILTER_TESTS = test/t-istream-cat test/t-istream-chunked test/t-istream-dechunk \
-	test/t-istream-pipe test/t-istream-hold test/t-istream-delayed \
-	test/t-istream-subst test/t-istream-deflate test/t-istream-byte \
-	test/t-istream-iconv test/t-istream-replace test/t-istream-replace2 \
-	test/t-istream-html-escape test/t-istream-fcgi \
+FILTER_TESTS = test/t_istream_cat test/t_istream_chunked test/t_istream_dechunk \
+	test/t_istream_pipe test/t_istream_hold test/t_istream_delayed \
+	test/t_istream_subst test/t_istream_deflate test/t_istream_byte \
+	test/t_istream_iconv test/t_istream_replace test/t_istream_replace2 \
+	test/t_istream_html_escape test/t_istream_fcgi \
 	test/t_sink_header \
 	test/t_sink_header_empty \
 	test/t_istream_processor
 
 check_PROGRAMS = \
-	test/t-hashmap test/t_cache test/t_tcache \
+	test/t_hashmap test/t_cache test/t_tcache \
 	test/t_header_forward \
-	test/t-stock \
+	test/t_stock \
 	test/t_resource_address \
 	test/t_http_address \
 	test/t_cgi_address \
 	test/t-uri-verify \
-	test/t-uri-relative \
+	test/t_uri_relative \
 	test/t-html-escape \
 	test/t-escape-css \
-	test/t-expansible-buffer \
+	test/t_expansible_buffer \
 	$(FILTER_TESTS) \
-	test/t-istream-tee \
-	test/t-growing-buffer \
+	test/t_istream_tee \
+	test/t_growing_buffer \
 	test/t_balancer \
 	test/t_cgi \
 	test/run_http_server \
 	test/t_http_server \
-	test/t_http_client test/t-http-util \
+	test/t_http_client test/t_http_util \
 	test/t_http_cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
@@ -782,24 +782,24 @@ check_PROGRAMS = \
 	test/t_processor \
 	test/t_memcached_client
 
-TESTS = test/t-hashmap test/t_cache test/t_tcache \
+TESTS = test/t_hashmap test/t_cache test/t_tcache \
 	test/t_header_forward \
-	test/t-stock \
+	test/t_stock \
 	test/t_resource_address \
 	test/t_http_address \
 	test/t_cgi_address \
 	test/t-uri-verify \
-	test/t-uri-relative \
+	test/t_uri_relative \
 	test/t-html-escape \
 	test/t-escape-css \
-	test/t-expansible-buffer \
+	test/t_expansible_buffer \
 	$(FILTER_TESTS) \
-	test/t-istream-tee \
-	test/t-growing-buffer \
+	test/t_istream_tee \
+	test/t_growing_buffer \
 	test/t_balancer \
 	test/t_cgi \
 	test/t-http-server.py test/t_http_server \
-	test/t_http_client test/t-http-util \
+	test/t_http_client test/t_http_util \
 	test/t_http_cache \
 	test/t_ajp_client \
 	test/t_fcgi_client \
@@ -859,7 +859,7 @@ test_was_mirror_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
 
-test_t_hashmap_SOURCES = test/t-hashmap.c src/hashmap.c
+test_t_hashmap_SOURCES = test/t_hashmap.cxx src/hashmap.c
 test_t_hashmap_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libutil.a \
@@ -916,7 +916,7 @@ test_t_header_forward_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS)
 
-test_t_stock_SOURCES = test/t-stock.c src/stock.c
+test_t_stock_SOURCES = test/t_stock.cxx src/stock.c
 test_t_stock_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(GLIB_LIBS)
@@ -964,12 +964,12 @@ test_t_cgi_address_LDADD = $(AM_LDADD) \
 test_t_uri_verify_SOURCES = test/t-uri-verify.c
 test_t_uri_verify_LDADD = $(AM_LDADD) libutil.a
 
-test_t_uri_relative_SOURCES = test/t-uri-relative.c \
+test_t_uri_relative_SOURCES = test/t_uri_relative.cxx \
 	src/uri-relative.c \
 	src/uri-extract.c
 test_t_uri_relative_LDADD = $(AM_LDADD) libpool.a libmemory.a $(LIBCM4ALL_DAEMON_LIBS)
 
-test_t_expansible_buffer_SOURCES = test/t-expansible-buffer.c \
+test_t_expansible_buffer_SOURCES = test/t_expansible_buffer.cxx \
 	src/expansible-buffer.c
 test_t_expansible_buffer_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -986,49 +986,49 @@ T_ISTREAM_FILTER_LIB = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) $(LIBZ_LIBS)
 
-test_t_istream_cat_SOURCES = test/t-istream-cat.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_cat_SOURCES = test/t_istream_cat.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_cat_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_chunked_SOURCES = test/t-istream-chunked.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_chunked_SOURCES = test/t_istream_chunked.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_chunked_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_dechunk_SOURCES = test/t-istream-dechunk.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_dechunk_SOURCES = test/t_istream_dechunk.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_dechunk_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_pipe_SOURCES = test/t-istream-pipe.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_pipe_SOURCES = test/t_istream_pipe.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_pipe_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_hold_SOURCES = test/t-istream-hold.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_hold_SOURCES = test/t_istream_hold.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_hold_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_delayed_SOURCES = test/t-istream-delayed.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_delayed_SOURCES = test/t_istream_delayed.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_delayed_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_subst_SOURCES = test/t-istream-subst.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_subst_SOURCES = test/t_istream_subst.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_subst_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_deflate_SOURCES = test/t-istream-deflate.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_deflate_SOURCES = test/t_istream_deflate.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_deflate_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_byte_SOURCES = test/t-istream-byte.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_byte_SOURCES = test/t_istream_byte.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_byte_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_iconv_SOURCES = test/t-istream-iconv.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_iconv_SOURCES = test/t_istream_iconv.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_iconv_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_replace_SOURCES = test/t-istream-replace.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_replace_SOURCES = test/t_istream_replace.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_replace_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_replace2_SOURCES = test/t-istream-replace2.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_replace2_SOURCES = test/t_istream_replace2.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_replace2_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_html_escape_SOURCES = \
 	src/istream-escape.c \
 	src/istream-html-escape.c \
-	test/t-istream-html-escape.c $(T_ISTREAM_FILTER_SRC)
+	test/t_istream_html_escape.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_html_escape_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_fcgi_SOURCES = test/t-istream-cat.c $(T_ISTREAM_FILTER_SRC)
+test_t_istream_fcgi_SOURCES = test/t_istream_cat.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
@@ -1074,13 +1074,13 @@ test_t_sink_header_empty_SOURCES = test/t_sink_header_empty.cxx \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_sink_header_empty_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_istream_tee_SOURCES = test/t_istream_tee.c \
+test_t_istream_tee_SOURCES = test/t_istream_tee.cxx \
 	src/sink-gstring.c \
 	src/sink-close.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_tee_LDADD = $(T_ISTREAM_FILTER_LIB)
 
-test_t_growing_buffer_SOURCES = test/t-growing-buffer.c \
+test_t_growing_buffer_SOURCES = test/t_growing_buffer.cxx \
 	src/istream-gb.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
@@ -1205,7 +1205,7 @@ test_t_http_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_t_http_util_SOURCES = test/t-http-util.c \
+test_t_http_util_SOURCES = test/t_http_util.cxx \
 	src/http_util.c
 test_t_http_util_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1447,7 +1447,7 @@ test_request_translation_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_run_subst_SOURCES = test/run-subst.c \
+test_run_subst_SOURCES = test/run_subst.cxx \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/cleanup_timer.c \
 	src/fd_util.c

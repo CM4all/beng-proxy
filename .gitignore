@@ -17,16 +17,6 @@ src/cm4all-beng-lb
 
 test/benchmark-gmtime
 test/format-http-date
-test/t-istream-dechunk
-test/t-istream-chunked
-test/t-istream-fcgi
-test/t-istream-hold
-test/t-istream-pipe
-test/t-istream-cat
-test/t-istream-delayed
-test/t-istream-subst
-test/t-istream-deflate
-test/t-istream-byte
 test/run_css_parser
 test/run_httpd_hello
 test/run_ua_parser
@@ -35,11 +25,6 @@ test/run-html-escape
 test/t-html-escape
 test/t-escape-css
 test/run_http_server
-test/t-istream-replace
-test/t-istream-replace2
-test/t-istream-iconv
-test/t-istream-html-escape
-test/run-subst
 test/run-google-gadget
 test/run-embed
 test/t-shm
@@ -47,16 +32,9 @@ test/t-dpool
 test/run_client
 test/t_ajp_client
 test/t_fcgi_client
-test/t-http-util
-test/t-stock
-test/t-expansible-buffer
-test/t-hashmap
 test/t-widget-stream
 test/t_http_address
-test/t-uri-relative
 test/t-uri-verify
-test/t-istream-tee
-test/t-growing-buffer
 test/fake-memcached-server
 test/t-processor
 test/send-control

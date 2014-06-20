@@ -11,7 +11,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 {
     struct pool *pool;
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     assert(strcmp(uri_compress(pool, "/foo/bar"), "/foo/bar") == 0);
     assert(strcmp(uri_compress(pool, "/foo/./bar"), "/foo/bar") == 0);
@@ -27,11 +27,11 @@ main(gcc_unused int argc, gcc_unused char **argv)
     assert(strcmp(uri_compress(pool, "foo/.."), "") == 0);
     assert(strcmp(uri_compress(pool, "foo/../."), "") == 0);
 
-    assert(uri_compress(pool, "/1/2/../../../3/") == NULL);
-    assert(uri_compress(pool, "/../") == NULL);
-    assert(uri_compress(pool, "/a/../../") == NULL);
-    assert(uri_compress(pool, "/..") == NULL);
-    assert(uri_compress(pool, "..") == NULL);
+    assert(uri_compress(pool, "/1/2/../../../3/") == nullptr);
+    assert(uri_compress(pool, "/../") == nullptr);
+    assert(uri_compress(pool, "/a/../../") == nullptr);
+    assert(uri_compress(pool, "/..") == nullptr);
+    assert(uri_compress(pool, "..") == nullptr);
     assert(strcmp(uri_compress(pool, "/1/2/.."), "/1/") == 0);
 
     assert(strcmp(uri_absolute(pool, "http://localhost/", "foo", 3),

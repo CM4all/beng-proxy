@@ -104,7 +104,7 @@ my_stock_error(GError *error, G_GNUC_UNUSED void *ctx)
     g_error_free(error);
 
     got_item = true;
-    last_item = NULL;
+    last_item = nullptr;
 }
 
 static const struct stock_get_handler my_stock_handler = {
@@ -121,15 +121,15 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     struct stock_item *item, *second, *third;
 
     event_base = event_init();
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
-    stock = stock_new(pool, &my_stock_class, NULL, NULL, 3, 8, NULL, NULL);
+    stock = stock_new(pool, &my_stock_class, nullptr, nullptr, 3, 8, nullptr, nullptr);
 
     /* create first item */
 
-    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
+    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
     assert(got_item);
-    assert(last_item != NULL);
+    assert(last_item != nullptr);
     assert(num_create == 1 && num_fail == 0);
     assert(num_borrow == 0 && num_release == 0 && num_destroy == 0);
     item = last_item;
@@ -144,8 +144,8 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* reuse first item */
 
     got_item = false;
-    last_item = NULL;
-    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
+    last_item = nullptr;
+    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
     assert(got_item);
     assert(last_item == item);
     assert(num_create == 1 && num_fail == 0);
@@ -154,10 +154,10 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* create second item */
 
     got_item = false;
-    last_item = NULL;
-    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
+    last_item = nullptr;
+    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
     assert(got_item);
-    assert(last_item != NULL);
+    assert(last_item != nullptr);
     assert(last_item != item);
     assert(num_create == 2 && num_fail == 0);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
@@ -167,10 +167,10 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     next_fail = true;
     got_item = false;
-    last_item = NULL;
-    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
+    last_item = nullptr;
+    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
     assert(got_item);
-    assert(last_item == NULL);
+    assert(last_item == nullptr);
     assert(num_create == 2 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
 
@@ -178,10 +178,10 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     next_fail = false;
     got_item = false;
-    last_item = NULL;
-    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
+    last_item = nullptr;
+    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
     assert(got_item);
-    assert(last_item != NULL);
+    assert(last_item != nullptr);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
     third = last_item;
@@ -189,15 +189,15 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* fourth item waiting */
 
     got_item = false;
-    last_item = NULL;
-    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
+    last_item = nullptr;
+    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
 
     /* fifth item waiting */
 
-    stock_get(stock, pool, NULL, &my_stock_handler, NULL, &async_ref);
+    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
@@ -214,13 +214,13 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     /* destroy second item */
 
     got_item = false;
-    last_item = NULL;
+    last_item = nullptr;
     stock_put(second, true);
     event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
     assert(got_item);
-    assert(last_item != NULL);
+    assert(last_item != nullptr);
     second = last_item;
 
     /* destroy first item */

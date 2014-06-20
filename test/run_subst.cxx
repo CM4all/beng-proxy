@@ -72,13 +72,13 @@ int main(int argc, char **argv) {
 
     fb_pool_init(false);
 
-    root_pool = pool_new_libc(NULL, "root");
+    root_pool = pool_new_libc(nullptr, "root");
 
     pool = pool_new_linear(root_pool, "test", 8192);
 
     istream = istream_subst_new(pool,
                                 istream_file_new(pool, "/dev/stdin", (off_t)-1,
-                                                 NULL));
+                                                 nullptr));
 
     for (i = 1; i <= argc - 2; i += 2) {
         istream_subst_add(istream, argv[i], argv[i + 1]);
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    istream_handler_set(istream, &my_istream_handler, NULL, 0);
+    istream_handler_set(istream, &my_istream_handler, nullptr, 0);
 
     pool_unref(pool);
     pool_commit();

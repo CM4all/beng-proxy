@@ -5,6 +5,8 @@
 
 #include <event.h>
 
+#include <glib.h>
+
 #include <stdio.h>
 
 struct ctx {
@@ -21,13 +23,13 @@ struct ctx {
 static size_t
 my_istream_data(const void *data, size_t length, void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
     (void)data;
 
     ctx->got_data = true;
 
-    if (ctx->abort_istream != NULL) {
+    if (ctx->abort_istream != nullptr) {
         ctx->closed = true;
         istream_free_handler(&ctx->abort_istream);
         pool_unref(ctx->pool);
@@ -40,7 +42,7 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 static void
 my_istream_eof(void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
     ctx->eof = true;
 
@@ -50,7 +52,7 @@ my_istream_eof(void *_ctx)
 static void
 my_istream_abort(GError *error, void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
     g_error_free(error);
 
@@ -125,7 +127,7 @@ run_istream(struct pool *pool, struct istream *istream)
 {
     struct ctx ctx = {
         .pool = pool,
-        .abort_istream = NULL,
+        .abort_istream = nullptr,
     };
 
     run_istream_ctx(&ctx, pool, istream);
@@ -189,7 +191,7 @@ test_first_empty(struct pool *pool)
 
     size_t length;
     const void *data = growing_buffer_reader_read(&reader, &length);
-    assert(data != NULL);
+    assert(data != nullptr);
     assert(length == 17);
 
     growing_buffer_reader_consume(&reader, length);
@@ -217,19 +219,19 @@ test_skip(struct pool *pool)
 
     size_t length;
     const void *data = growing_buffer_reader_read(&reader, &length);
-    assert(data != NULL);
+    assert(data != nullptr);
     assert(length == 2);
     growing_buffer_reader_consume(&reader, 1);
 
     growing_buffer_reader_skip(&reader, 5);
 
     data = growing_buffer_reader_read(&reader, &length);
-    assert(data != NULL);
+    assert(data != nullptr);
     assert(length == 4);
     growing_buffer_reader_consume(&reader, 4);
 
     data = growing_buffer_reader_read(&reader, &length);
-    assert(data == NULL);
+    assert(data == nullptr);
 
     pool_trash(pool);
     pool_unref(pool);
@@ -262,7 +264,7 @@ test_concurrent_rw(struct pool *pool)
 
     size_t length;
     const void *p = growing_buffer_reader_read(&reader, &length);
-    assert(p != NULL);
+    assert(p != nullptr);
     assert(length == 4);
 
     pool_trash(pool);
@@ -291,7 +293,7 @@ static void
 test_abort_with_handler(struct pool *pool)
 {
     struct ctx ctx = {
-        .abort_istream = NULL,
+        .abort_istream = nullptr,
         .eof = false,
     };
     struct istream *istream;
@@ -327,7 +329,7 @@ test_abort_in_handler(struct pool *pool)
         event_loop(EVLOOP_ONCE|EVLOOP_NONBLOCK);
     }
 
-    assert(ctx.abort_istream == NULL);
+    assert(ctx.abort_istream == nullptr);
     assert(!ctx.abort);
     assert(ctx.closed);
 
@@ -350,7 +352,7 @@ int main(int argc, char **argv) {
     direct_global_init();
     event_base = event_init();
 
-    root_pool = pool_new_libc(NULL, "root");
+    root_pool = pool_new_libc(nullptr, "root");
 
     /* run test suite */
 
