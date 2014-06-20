@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CSS_UTIL_H
-#define BENG_PROXY_CSS_UTIL_H
+#ifndef BENG_PROXY_CSS_UTIL_HXX
+#define BENG_PROXY_CSS_UTIL_HXX
 
-#include "css_syntax.h"
+#include "css_syntax.hxx"
 
 /**
  * Count the number of leading underscores.  Returns 0 if the

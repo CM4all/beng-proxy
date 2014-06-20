@@ -4,12 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CSS_PARSER_H
-#define BENG_PROXY_CSS_PARSER_H
+#ifndef BENG_PROXY_CSS_PARSER_HXX
+#define BENG_PROXY_CSS_PARSER_HXX
 
 #include "strref.h"
-
-#include <glib.h>
+#include "glibfwd.hxx"
 
 #include <sys/types.h>
 
@@ -64,10 +63,6 @@ struct css_parser_handler {
     void (*error)(GError *error, void *ctx);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * @param block true when the input consists of only one block
  */
@@ -87,9 +82,5 @@ css_parser_close(struct css_parser *parser);
  */
 void
 css_parser_read(struct css_parser *parser);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

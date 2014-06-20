@@ -5,13 +5,15 @@
  */
 
 #include "css_rewrite.hxx"
-#include "css_parser.h"
+#include "css_parser.hxx"
 #include "rewrite_uri.hxx"
 #include "pool.h"
 #include "tpool.h"
 #include "istream.h"
 #include "istream-replace.h"
 #include "strutil.h"
+
+#include <glib.h>
 
 struct css_url {
     size_t start, end;

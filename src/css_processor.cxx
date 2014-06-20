@@ -5,8 +5,8 @@
  */
 
 #include "css_processor.h"
-#include "css_parser.h"
-#include "css_util.h"
+#include "css_parser.hxx"
+#include "css_util.hxx"
 #include "penv.hxx"
 #include "strmap.h"
 #include "widget.h"

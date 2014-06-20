@@ -305,9 +305,9 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/istream-escape.c src/istream-escape.h \
 	src/istream-html-escape.c \
 	src/pheaders.cxx src/pheaders.hxx \
-	src/css_syntax.h \
-	src/css_util.h \
-	src/css_parser.c src/css_parser.h \
+	src/css_syntax.hxx \
+	src/css_util.hxx \
+	src/css_parser.cxx src/css_parser.hxx \
 	src/css_processor.cxx src/css_processor.h \
 	src/css_rewrite.cxx src/css_rewrite.hxx \
 	src/text_processor.cxx src/text_processor.hxx \
@@ -1047,7 +1047,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/strset.c \
 	src/penv.cxx src/processor.cxx \
 	src/text_processor.cxx \
-	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
+	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget_request.cxx src/widget_approval.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget-ref.c src/widget_uri.cxx src/args.cxx \
 	src/widget_session.cxx src/xml_parser.cxx src/widget_class.cxx \
@@ -1509,7 +1509,7 @@ test_t_escape_css_LDADD = $(AM_LDADD) libutil.a
 test_run_processor_SOURCES = test/run_processor.cxx \
 	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \
-	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
+	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/uri_escape.cxx \
@@ -1544,7 +1544,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 test_t_processor_SOURCES = test/t_processor.cxx \
 	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \
-	src/css_processor.cxx src/css_parser.c src/css_rewrite.cxx \
+	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
 	src/exec.cxx \
 	src/uri-relative.c src/uri-edit.c src/uri_base.cxx \
@@ -1842,8 +1842,8 @@ test_run_parser_cdata_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
-test_run_css_parser_SOURCES = test/run_css_parser.c \
-	src/css_parser.c \
+test_run_css_parser_SOURCES = test/run_css_parser.cxx \
+	src/css_parser.cxx \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/cleanup_timer.c \
 	src/fd_util.c

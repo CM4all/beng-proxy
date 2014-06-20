@@ -1,4 +1,4 @@
-#include "css_parser.h"
+#include "css_parser.hxx"
 #include "istream.h"
 #include "istream_file.h"
 #include "fb_pool.h"

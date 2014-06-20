@@ -4,11 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "css_parser.h"
-#include "css_syntax.h"
+#include "css_parser.hxx"
+#include "css_syntax.hxx"
 #include "pool.h"
 #include "istream.h"
 #include "strutil.h"
+
+#include <glib.h>
 
 enum css_parser_state {
     CSS_PARSER_NONE,
@@ -57,6 +59,9 @@ struct css_parser {
     off_t url_start;
     size_t url_length;
     char url[1024];
+
+    css_parser(struct pool *pool, struct istream *input, bool block,
+               const struct css_parser_handler *handler, void *handler_ctx);
 };
 
 static const char *
@@ -81,9 +86,9 @@ at_url_start(const char *p, size_t length)
 static size_t
 css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 {
-    assert(parser != NULL);
-    assert(parser->input != NULL);
-    assert(start != NULL);
+    assert(parser != nullptr);
+    assert(parser->input != nullptr);
+    assert(start != nullptr);
     assert(length > 0);
 
     const char *buffer = start, *end = start + length, *p;
@@ -99,12 +104,12 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                     /* start of block */
                     parser->state = CSS_PARSER_BLOCK;
 
-                    if (parser->handler->block != NULL)
+                    if (parser->handler->block != nullptr)
                         parser->handler->block(parser->handler_ctx);
                     break;
 
                 case '.':
-                    if (parser->handler->class_name != NULL) {
+                    if (parser->handler->class_name != nullptr) {
                         parser->state = CSS_PARSER_CLASS_NAME;
                         parser->name_start = parser->position + (off_t)(buffer - start) + 1;
                         parser->name_length = 0;
@@ -113,7 +118,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                     break;
 
                 case '#':
-                    if (parser->handler->xml_id != NULL) {
+                    if (parser->handler->xml_id != nullptr) {
                         parser->state = CSS_PARSER_XML_ID;
                         parser->name_start = parser->position + (off_t)(buffer - start) + 1;
                         parser->name_length = 0;
@@ -122,7 +127,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                     break;
 
                 case '@':
-                    if (parser->handler->import != NULL) {
+                    if (parser->handler->import != nullptr) {
                         parser->state = CSS_PARSER_AT;
                         parser->name_length = 0;
                     }
@@ -213,7 +218,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 
                 default:
                     if (is_css_ident_start(*buffer) &&
-                        parser->handler->property_keyword != NULL) {
+                        parser->handler->property_keyword != nullptr) {
                         parser->state = CSS_PARSER_PROPERTY;
                         parser->name_start = parser->position + (off_t)(buffer - start);
                         parser->name[0] = *buffer;
@@ -226,8 +231,8 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
             break;
 
         case CSS_PARSER_DISCARD_QUOTED:
-            p = memchr(buffer, parser->quote, end - buffer);
-            if (p == NULL) {
+            p = (const char *)memchr(buffer, parser->quote, end - buffer);
+            if (p == nullptr) {
                 nbytes = end - start;
                 parser->position += (off_t)nbytes;
                 return nbytes;
@@ -318,7 +323,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 
                 case ';':
                     if (parser->name_length > 0) {
-                        assert(parser->handler->property_keyword != NULL);
+                        assert(parser->handler->property_keyword != nullptr);
 
                         parser->name[parser->name_length] = 0;
                         parser->value[parser->value_length] = 0;
@@ -344,7 +349,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
                         break;
 
                     parser->value[parser->value_length++] = *buffer;
-                    if (parser->handler->url != NULL &&
+                    if (parser->handler->url != nullptr &&
                         at_url_start(parser->value, parser->value_length))
                         parser->state = CSS_PARSER_PRE_URL;
                 }
@@ -382,8 +387,8 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
             break;
 
         case CSS_PARSER_URL:
-            p = memchr(buffer, parser->quote, end - buffer);
-            if (p == NULL) {
+            p = (const char *)memchr(buffer, parser->quote, end - buffer);
+            if (p == nullptr) {
                 size_t copy = end - buffer;
                 if (copy > sizeof(parser->url) - parser->url_length)
                     copy = sizeof(parser->url) - parser->url_length;
@@ -410,7 +415,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
             url.end = parser->position + (off_t)(p - start);
             strref_set(&url.value, parser->url, parser->url_length);
             parser->handler->url(&url, parser->handler_ctx);
-            if (parser->input == NULL)
+            if (parser->input == nullptr)
                 return 0;
 
             break;
@@ -453,8 +458,8 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
             break;
 
         case CSS_PARSER_IMPORT:
-            p = memchr(buffer, '"', end - buffer);
-            if (p == NULL) {
+            p = (const char *)memchr(buffer, '"', end - buffer);
+            if (p == nullptr) {
                 size_t copy = end - buffer;
                 if (copy > sizeof(parser->url) - parser->url_length)
                     copy = sizeof(parser->url) - parser->url_length;
@@ -481,14 +486,14 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
             url.end = parser->position + (off_t)(p - start);
             strref_set(&url.value, parser->url, parser->url_length);
             parser->handler->import(&url, parser->handler_ctx);
-            if (parser->input == NULL)
+            if (parser->input == nullptr)
                 return 0;
 
             break;
         }
     }
 
-    assert(parser->input != NULL);
+    assert(parser->input != nullptr);
 
     parser->position += length;
     return length;
@@ -502,10 +507,10 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 static size_t
 css_parser_input_data(const void *data, size_t length, void *ctx)
 {
-    struct css_parser *parser = ctx;
+    struct css_parser *parser = (struct css_parser *)ctx;
 
     pool_ref(parser->pool);
-    size_t nbytes = css_parser_feed(parser, data, length);
+    size_t nbytes = css_parser_feed(parser, (const char *)data, length);
     pool_unref(parser->pool);
 
     return nbytes;
@@ -514,11 +519,11 @@ css_parser_input_data(const void *data, size_t length, void *ctx)
 static void
 css_parser_input_eof(void *ctx)
 {
-    struct css_parser *parser = ctx;
+    struct css_parser *parser = (struct css_parser *)ctx;
 
-    assert(parser->input != NULL);
+    assert(parser->input != nullptr);
 
-    parser->input = NULL;
+    parser->input = nullptr;
     parser->handler->eof(parser->handler_ctx, parser->position);
     pool_unref(parser->pool);
 }
@@ -526,11 +531,11 @@ css_parser_input_eof(void *ctx)
 static void
 css_parser_input_abort(GError *error, void *ctx)
 {
-    struct css_parser *parser = ctx;
+    struct css_parser *parser = (struct css_parser *)ctx;
 
-    assert(parser->input != NULL);
+    assert(parser->input != nullptr);
 
-    parser->input = NULL;
+    parser->input = nullptr;
     parser->handler->error(error, parser->handler_ctx);
     pool_unref(parser->pool);
 }
@@ -546,40 +551,39 @@ static const struct istream_handler css_parser_input_handler = {
  *
  */
 
+css_parser::css_parser(struct pool *_pool, struct istream *_input, bool _block,
+                       const struct css_parser_handler *_handler,
+                       void *_handler_ctx)
+    :pool(_pool), block(_block), position(0),
+     handler(_handler), handler_ctx(_handler_ctx),
+     state(block ? CSS_PARSER_BLOCK : CSS_PARSER_NONE)
+{
+    istream_assign_handler(&input, _input,
+                           &css_parser_input_handler, this,
+                           0);
+}
+
 struct css_parser *
 css_parser_new(struct pool *pool, struct istream *input, bool block,
                const struct css_parser_handler *handler, void *handler_ctx)
 {
-    assert(pool != NULL);
-    assert(input != NULL);
-    assert(handler != NULL);
-    assert(handler->eof != NULL);
-    assert(handler->error != NULL);
+    assert(pool != nullptr);
+    assert(input != nullptr);
+    assert(handler != nullptr);
+    assert(handler->eof != nullptr);
+    assert(handler->error != nullptr);
 
     pool_ref(pool);
 
-    struct css_parser *parser = p_malloc(pool, sizeof(*parser));
-    parser->pool = pool;
-    parser->block = block;
-
-    istream_assign_handler(&parser->input, input,
-                           &css_parser_input_handler, parser,
-                           0);
-    parser->position = 0;
-
-    parser->handler = handler;
-    parser->handler_ctx = handler_ctx;
-
-    parser->state = block ? CSS_PARSER_BLOCK : CSS_PARSER_NONE;
-
-    return parser;
+    return NewFromPool<struct css_parser>(pool, pool, input, block,
+                                          handler, handler_ctx);
 }
 
 void
 css_parser_close(struct css_parser *parser)
 {
-    assert(parser != NULL);
-    assert(parser->input != NULL);
+    assert(parser != nullptr);
+    assert(parser->input != nullptr);
 
     istream_close(parser->input);
     pool_unref(parser->pool);
@@ -588,8 +592,8 @@ css_parser_close(struct css_parser *parser)
 void
 css_parser_read(struct css_parser *parser)
 {
-    assert(parser != NULL);
-    assert(parser->input != NULL);
+    assert(parser != nullptr);
+    assert(parser->input != nullptr);
 
     istream_read(parser->input);
 }

@@ -4,12 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CSS_SYNTAX_H
-#define BENG_PROXY_CSS_SYNTAX_H
+#ifndef BENG_PROXY_CSS_SYNTAX_HXX
+#define BENG_PROXY_CSS_SYNTAX_HXX
 
 #include "strutil.h"
 
-static inline bool
+static inline constexpr bool
 is_css_nonascii(char ch)
 {
     return (ch & 0x80) != 0;
