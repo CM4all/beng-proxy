@@ -739,21 +739,16 @@ translate_cache_invalidate_host(struct tcache &tcache, const char *host)
     assert(strcmp(per_host->host, host) == 0);
 
     unsigned n_removed = 0;
-    bool done;
-    do {
-        assert(!per_host->items.empty());
 
-        TranslateCacheItem &item = per_host->items.front();
+    per_host->items.clear_and_dispose([&n_removed, &tcache, per_host](TranslateCacheItem *item){
+            assert(item->per_host == per_host);
+            item->per_host = nullptr;
 
-        /* we're done when we're about to remove the last item - the
-           last item will destroy the #TranslateCachePerHost object,
-           so we need to check the condition before removing the cache
-           item */
-        done = std::next(per_host->items.iterator_to(item)) == per_host->items.end();
+            cache_remove_item(&tcache.cache, item->item.key, &item->item);
+            ++n_removed;
+        });
 
-        cache_remove_item(&tcache.cache, item.item.key, &item.item);
-        ++n_removed;
-    } while (!done);
+    per_host->Dispose();
 
     return n_removed;
 }
