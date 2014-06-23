@@ -160,6 +160,8 @@ struct TranslateCachePerHost {
 
     void Dispose();
     void Erase(TranslateCacheItem &item);
+
+    unsigned Invalidate();
 };
 
 struct tcache {
@@ -743,17 +745,23 @@ translate_cache_invalidate_host(struct tcache &tcache, const char *host)
     assert(&per_host->tcache == &tcache);
     assert(strcmp(per_host->host, host) == 0);
 
+    return per_host->Invalidate();
+}
+
+inline unsigned
+TranslateCachePerHost::Invalidate()
+{
     unsigned n_removed = 0;
 
-    per_host->items.clear_and_dispose([&n_removed, &tcache, per_host](TranslateCacheItem *item){
-            assert(item->per_host == per_host);
+    items.clear_and_dispose([&n_removed, this](TranslateCacheItem *item){
+            assert(item->per_host == this);
             item->per_host = nullptr;
 
             cache_remove_item(&tcache.cache, item->item.key, &item->item);
             ++n_removed;
         });
 
-    per_host->Dispose();
+    Dispose();
 
     return n_removed;
 }
