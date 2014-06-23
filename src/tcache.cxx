@@ -120,6 +120,14 @@ struct TranslateCacheItem {
     bool VaryMatch(const TranslateRequest &other_request, bool strict) const {
         return VaryMatch(response.vary, other_request, strict);
     }
+
+    gcc_pure
+    bool InvalidateMatch(ConstBuffer<uint16_t> vary,
+                         const TranslateRequest &other_request,
+                         const char *other_site) const {
+        return (other_site == nullptr || MatchSite(other_site)) &&
+            VaryMatch(vary, other_request, true);
+    }
 };
 
 struct TranslateCachePerHost {
@@ -718,10 +726,7 @@ tcache_invalidate_match(const struct cache_item *_item, void *ctx)
     const TranslateCacheItem &item = *(const TranslateCacheItem *)_item;
     const tcache_invalidate_data &data = *(const tcache_invalidate_data *)ctx;
 
-    if (data.site != nullptr && !item.MatchSite(data.site))
-        return false;
-
-    return item.VaryMatch(data.vary, *data.request, true);
+    return item.InvalidateMatch(data.vary, *data.request, data.site);
 }
 
 static unsigned
