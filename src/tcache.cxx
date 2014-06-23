@@ -50,8 +50,8 @@ struct TranslateCacheItem {
      * added to the list.  Check per_host!=nullptr to check whether
      * this item lives in such a list.
      */
-    typedef boost::intrusive::list_member_hook<LinkMode> PerHostSiblingsHook;
-    PerHostSiblingsHook per_host_siblings;
+    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
+    SiblingsHook per_host_siblings;
     TranslateCachePerHost *per_host;
 
     struct pool &pool;
@@ -134,7 +134,7 @@ struct TranslateCacheItem {
 struct TranslateCachePerHost
     : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
     typedef boost::intrusive::member_hook<TranslateCacheItem,
-                                          TranslateCacheItem::PerHostSiblingsHook,
+                                          TranslateCacheItem::SiblingsHook,
                                           &TranslateCacheItem::per_host_siblings> MemberHook;
     typedef boost::intrusive::list<TranslateCacheItem, MemberHook,
                                    boost::intrusive::constant_time_size<false>> ItemList;
