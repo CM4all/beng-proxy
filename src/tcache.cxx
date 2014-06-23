@@ -183,6 +183,8 @@ struct tcache {
     tcache(struct tcache &) = delete;
 
     ~tcache();
+
+    unsigned InvalidateHost(const char *host);
 };
 
 struct TranslateCacheRequest {
@@ -731,21 +733,21 @@ tcache_invalidate_match(const struct cache_item *_item, void *ctx)
     return item.InvalidateMatch(data.vary, *data.request, data.site);
 }
 
-static unsigned
-translate_cache_invalidate_host(struct tcache &tcache, const char *host)
+inline unsigned
+tcache::InvalidateHost(const char *host)
 {
     if (host == nullptr)
         host = "";
 
-    TranslateCachePerHost *per_host = (TranslateCachePerHost *)
-        hashmap_get(&tcache.per_host, host);
-    if (per_host == nullptr)
+    TranslateCachePerHost *ph = (TranslateCachePerHost *)
+        hashmap_get(&per_host, host);
+    if (ph == nullptr)
         return 0;
 
-    assert(&per_host->tcache == &tcache);
-    assert(strcmp(per_host->host, host) == 0);
+    assert(&ph->tcache == this);
+    assert(strcmp(ph->host, host) == 0);
 
-    return per_host->Invalidate();
+    return ph->Invalidate();
 }
 
 inline unsigned
@@ -782,7 +784,7 @@ translate_cache_invalidate(struct tcache &tcache,
        TRANSLATE_HOST */
     gcc_unused
     unsigned removed = vary.size == 1 && vary.data[0] == TRANSLATE_HOST
-        ? translate_cache_invalidate_host(tcache, request.host)
+        ? tcache.InvalidateHost(request.host)
         : cache_remove_all_match(&tcache.cache,
                                  tcache_invalidate_match, &data);
     cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
