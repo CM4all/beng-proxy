@@ -98,6 +98,26 @@ struct TranslateCacheItem {
         return response.site != nullptr &&
             strcmp(_site, response.site) == 0;
     }
+
+    gcc_pure
+    bool VaryMatch(const TranslateRequest &request,
+                   enum beng_translation_command command,
+                   bool strict) const;
+
+    gcc_pure
+    bool VaryMatch(ConstBuffer<uint16_t> vary,
+                   const TranslateRequest &other_request, bool strict) const {
+        for (auto i : vary)
+            if (!VaryMatch(other_request, beng_translation_command(i), strict))
+                return false;
+
+        return true;
+    }
+
+    gcc_pure
+    bool VaryMatch(const TranslateRequest &other_request, bool strict) const {
+        return VaryMatch(response.vary, other_request, strict);
+    }
 };
 
 struct TranslateCachePerHost {
@@ -542,59 +562,58 @@ tcache_uri_match(const char *a, const char *b, bool strict)
  * @param strict in strict mode, unknown commands and nullptr values are
  * a mismatch
  */
-static bool
-tcache_vary_match(const TranslateCacheItem &item,
-                  const TranslateRequest &request,
-                  enum beng_translation_command command,
-                  bool strict)
+bool
+TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
+                              enum beng_translation_command command,
+                              bool strict) const
 {
     switch (command) {
     case TRANSLATE_URI:
-        return tcache_uri_match(item.item.key,
-                                request.uri, strict);
+        return tcache_uri_match(item.key,
+                                other_request.uri, strict);
 
     case TRANSLATE_PARAM:
-        return tcache_string_match(item.request.param,
-                                   request.param, strict);
+        return tcache_string_match(request.param,
+                                   other_request.param, strict);
 
     case TRANSLATE_SESSION:
-        return tcache_buffer_match(item.request.session,
-                                   request.session, strict);
+        return tcache_buffer_match(request.session,
+                                   other_request.session, strict);
 
     case TRANSLATE_LOCAL_ADDRESS:
     case TRANSLATE_LOCAL_ADDRESS_STRING:
-        return tcache_buffer_match(item.request.local_address,
-                                   item.request.local_address_length,
-                                   request.local_address,
+        return tcache_buffer_match(request.local_address,
                                    request.local_address_length,
+                                   other_request.local_address,
+                                   other_request.local_address_length,
                                    strict);
 
     case TRANSLATE_REMOTE_HOST:
-        return tcache_string_match(item.request.remote_host,
-                                   request.remote_host, strict);
+        return tcache_string_match(request.remote_host,
+                                   other_request.remote_host, strict);
 
     case TRANSLATE_HOST:
-        return tcache_string_match(item.request.host, request.host, strict);
+        return tcache_string_match(request.host, other_request.host, strict);
 
     case TRANSLATE_LANGUAGE:
-        return tcache_string_match(item.request.accept_language,
-                                   request.accept_language, strict);
+        return tcache_string_match(request.accept_language,
+                                   other_request.accept_language, strict);
 
     case TRANSLATE_USER_AGENT:
-        return tcache_string_match(item.request.user_agent,
-                                   request.user_agent, strict);
+        return tcache_string_match(request.user_agent,
+                                   other_request.user_agent, strict);
 
     case TRANSLATE_UA_CLASS:
-        return tcache_string_match(item.request.ua_class,
-                                   request.ua_class, strict);
+        return tcache_string_match(request.ua_class,
+                                   other_request.ua_class, strict);
 
     case TRANSLATE_QUERY_STRING:
-        return tcache_string_match(item.request.query_string,
-                                   request.query_string, strict);
+        return tcache_string_match(request.query_string,
+                                   other_request.query_string, strict);
 
     case TRANSLATE_ENOTDIR:
-        return tcache_buffer_match(item.request.enotdir,
-                                   request.enotdir, strict);
+        return tcache_buffer_match(request.enotdir,
+                                   other_request.enotdir, strict);
 
     default:
         return !strict;
@@ -629,13 +648,7 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
         /* the URI did not match the regular expression */
         return false;
 
-    for (auto i : item.response.vary)
-        if (!tcache_vary_match(item, request,
-                               beng_translation_command(i),
-                               false))
-            return false;
-
-    return true;
+    return item.VaryMatch(request, false);
 }
 
 static TranslateCacheItem *
@@ -700,13 +713,7 @@ tcache_invalidate_match(const struct cache_item *_item, void *ctx)
     if (data.site != nullptr && !item.MatchSite(data.site))
         return false;
 
-    for (auto i : data.vary)
-        if (!tcache_vary_match(item, *data.request,
-                               beng_translation_command(i),
-                               true))
-            return false;
-
-    return true;
+    return item.VaryMatch(data.vary, *data.request, true);
 }
 
 static unsigned
