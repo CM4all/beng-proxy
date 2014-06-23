@@ -83,6 +83,8 @@ struct TranslateCacheItem {
          pool(_pool),
          regex(nullptr), inverse_regex(nullptr) {}
 
+    TranslateCacheItem(const TranslateCacheItem &) = delete;
+
     ~TranslateCacheItem() {
         if (regex != nullptr)
             g_regex_unref(regex);
@@ -146,6 +148,8 @@ struct TranslateCachePerHost {
         :tcache(_tcache), host(_host) {
     }
 
+    TranslateCachePerHost(const TranslateCachePerHost &) = delete;
+
     void Dispose();
     void Erase(TranslateCacheItem &item);
 };
@@ -166,6 +170,8 @@ struct tcache {
     struct tstock &stock;
 
     tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size);
+    tcache(struct tcache &) = delete;
+
     ~tcache();
 };
 
@@ -193,6 +199,8 @@ struct TranslateCacheRequest {
 
     TranslateCacheRequest(const TranslateRequest &_request, bool _find_base)
         :request(_request), find_base(_find_base) {}
+
+    TranslateCacheRequest(TranslateCacheRequest &) = delete;
 };
 
 static const GRegexCompileFlags default_regex_compile_flags =
