@@ -194,20 +194,12 @@ struct TranslateResponse {
     bool Wants(uint16_t cmd) const {
         assert(protocol_version >= 1);
 
-        for (auto i : want)
-            if (i == cmd)
-                return true;
-
-        return false;
+        return want.Contains(cmd);
     }
 
     gcc_pure
     bool VaryContains(uint16_t cmd) const {
-        for (auto i : vary)
-            if (i == cmd)
-                return true;
-
-        return false;
+        return vary.Contains(cmd);
     }
 
     void CopyFrom(struct pool *pool, const TranslateResponse &src);
