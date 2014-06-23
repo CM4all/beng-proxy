@@ -90,6 +90,14 @@ struct TranslateCacheItem {
         if (inverse_regex != nullptr)
             g_regex_unref(inverse_regex);
     }
+
+    gcc_pure
+    bool MatchSite(const char *_site) const {
+        assert(_site != nullptr);
+
+        return response.site != nullptr &&
+            strcmp(_site, response.site) == 0;
+    }
 };
 
 struct TranslateCachePerHost {
@@ -689,9 +697,7 @@ tcache_invalidate_match(const struct cache_item *_item, void *ctx)
     const TranslateCacheItem &item = *(const TranslateCacheItem *)_item;
     const tcache_invalidate_data &data = *(const tcache_invalidate_data *)ctx;
 
-    if (data.site != nullptr &&
-        (item.response.site == nullptr ||
-         strcmp(data.site, item.response.site) != 0))
+    if (data.site != nullptr && !item.MatchSite(data.site))
         return false;
 
     for (auto i : data.vary)
