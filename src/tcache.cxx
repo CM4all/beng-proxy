@@ -91,6 +91,7 @@ struct TranslateCacheItem {
 
     TranslateCacheItem(struct pool &_pool)
         :per_host(nullptr),
+         per_site(nullptr),
          pool(_pool),
          regex(nullptr), inverse_regex(nullptr) {}
 
