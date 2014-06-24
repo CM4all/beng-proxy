@@ -37,6 +37,7 @@ static constexpr size_t MAX_FILE_NOT_FOUND = 256;
 static constexpr size_t MAX_DIRECTORY_INDEX = 256;
 
 struct TranslateCachePerHost;
+struct TranslateCachePerSite;
 
 struct TranslateCacheItem {
     static constexpr auto link_mode = boost::intrusive::normal_link;
@@ -53,6 +54,15 @@ struct TranslateCacheItem {
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
     SiblingsHook per_host_siblings;
     TranslateCachePerHost *per_host;
+
+    /**
+     * A doubly linked list of cache items with the same SITE response
+     * string.  Only those that had a #TRANSLATE_SITE packet in the
+     * response are added to the list.  Check per_site!=nullptr to
+     * check whether this item lives in such a list.
+     */
+    SiblingsHook per_site_siblings;
+    TranslateCachePerSite *per_site;
 
     struct pool &pool;
 
@@ -124,10 +134,16 @@ struct TranslateCacheItem {
 
     gcc_pure
     bool InvalidateMatch(ConstBuffer<uint16_t> vary,
+                         const TranslateRequest &other_request) const {
+        return VaryMatch(vary, other_request, true);
+    }
+
+    gcc_pure
+    bool InvalidateMatch(ConstBuffer<uint16_t> vary,
                          const TranslateRequest &other_request,
                          const char *other_site) const {
         return (other_site == nullptr || MatchSite(other_site)) &&
-            VaryMatch(vary, other_request, true);
+            InvalidateMatch(vary, other_request);
     }
 };
 
@@ -164,8 +180,7 @@ struct TranslateCachePerHost
     void Erase(TranslateCacheItem &item);
 
     unsigned Invalidate(const TranslateRequest &request,
-                        ConstBuffer<uint16_t> vary,
-                        const char *site);
+                        ConstBuffer<uint16_t> vary);
 
     gcc_pure
     static size_t KeyHasher(const char *key) {
@@ -202,6 +217,76 @@ struct TranslateCachePerHost
     };
 };
 
+struct TranslateCachePerSite
+    : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+    typedef boost::intrusive::member_hook<TranslateCacheItem,
+                                          TranslateCacheItem::SiblingsHook,
+                                          &TranslateCacheItem::per_site_siblings> MemberHook;
+    typedef boost::intrusive::list<TranslateCacheItem, MemberHook,
+                                   boost::intrusive::constant_time_size<false>> ItemList;
+
+    /**
+     * A double-linked list of #TranslateCacheItems (by its attribute
+     * per_site_siblings).
+     *
+     * This must be the first attribute in the struct.
+     */
+    ItemList items;
+
+    struct tcache &tcache;
+
+    /**
+     * A pointer to the hashmap key, for use with p_free().
+     */
+    const char *const site;
+
+    TranslateCachePerSite(struct tcache &_tcache, const char *_site)
+        :tcache(_tcache), site(_site) {
+    }
+
+    TranslateCachePerSite(const TranslateCachePerSite &) = delete;
+
+    void Dispose();
+    void Erase(TranslateCacheItem &item);
+
+    unsigned Invalidate(const TranslateRequest &request,
+                        ConstBuffer<uint16_t> vary);
+
+    gcc_pure
+    static size_t KeyHasher(const char *key) {
+        assert(key != nullptr);
+
+        return djb_hash_string(key);
+    }
+
+    gcc_pure
+    static size_t ValueHasher(const TranslateCachePerSite &value) {
+        return KeyHasher(value.site);
+    }
+
+    gcc_pure
+    static bool KeyValueEqual(const char *a, const TranslateCachePerSite &b) {
+        assert(a != nullptr);
+
+        return strcmp(a, b.site) == 0;
+    }
+
+    struct Hash {
+        gcc_pure
+        size_t operator()(const TranslateCachePerSite &value) const {
+            return ValueHasher(value);
+        }
+    };
+
+    struct Equal {
+        gcc_pure
+        bool operator()(const TranslateCachePerSite &a,
+                        const TranslateCachePerSite &b) const {
+            return KeyValueEqual(a.site, b);
+        }
+    };
+};
+
 struct tcache {
     struct pool &pool;
     struct slice_pool &slice_pool;
@@ -219,6 +304,17 @@ struct tcache {
                                             boost::intrusive::constant_time_size<false>> PerHostSet;
     PerHostSet per_host;
 
+    /**
+     * This hash table maps each site name to a
+     * #TranslateCachePerSite.  This is used to optimize the common
+     * INVALIDATE=SITE response, to avoid traversing the whole cache.
+     */
+    typedef boost::intrusive::unordered_set<TranslateCachePerSite,
+                                            boost::intrusive::hash<TranslateCachePerSite::Hash>,
+                                            boost::intrusive::equal<TranslateCachePerSite::Equal>,
+                                            boost::intrusive::constant_time_size<false>> PerSiteSet;
+    PerSiteSet per_site;
+
     struct tstock &stock;
 
     tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size);
@@ -227,8 +323,12 @@ struct tcache {
     ~tcache();
 
     TranslateCachePerHost &MakePerHost(const char *host);
+    TranslateCachePerSite &MakePerSite(const char *site);
 
     unsigned InvalidateHost(const TranslateRequest &request,
+                            ConstBuffer<uint16_t> vary);
+
+    unsigned InvalidateSite(const TranslateRequest &request,
                             ConstBuffer<uint16_t> vary,
                             const char *site);
 };
@@ -322,6 +422,59 @@ TranslateCachePerHost::Erase(TranslateCacheItem &item)
 {
     assert(item.per_host == this);
     assert(item.response.VaryContains(TRANSLATE_HOST));
+
+    items.erase(items.iterator_to(item));
+
+    if (items.empty())
+        Dispose();
+}
+
+inline TranslateCachePerSite &
+tcache::MakePerSite(const char *site)
+{
+    assert(site != nullptr);
+
+    PerSiteSet::insert_commit_data commit_data;
+    auto result = per_site.insert_check(site, TranslateCachePerSite::KeyHasher,
+                                        TranslateCachePerSite::KeyValueEqual,
+                                        commit_data);
+    if (!result.second)
+        return *result.first;
+
+    auto ph = NewFromPool<TranslateCachePerSite>(&pool, *this,
+                                                 p_strdup(&pool, site));
+    per_site.insert_commit(*ph, commit_data);
+
+    return *ph;
+}
+
+static void
+tcache_add_per_site(struct tcache &tcache, TranslateCacheItem *item)
+{
+    const char *site = item->response.site;
+    assert(site != nullptr);
+
+    TranslateCachePerSite &per_site = tcache.MakePerSite(site);
+    per_site.items.push_back(*item);
+    item->per_site = &per_site;
+}
+
+void
+TranslateCachePerSite::Dispose()
+{
+    assert(items.empty());
+
+    tcache.per_site.erase(tcache.per_site.iterator_to(*this));
+
+    p_free(&tcache.pool, site);
+    DeleteFromPool(&tcache.pool, this);
+}
+
+void
+TranslateCachePerSite::Erase(TranslateCacheItem &item)
+{
+    assert(item.per_site == this);
+    assert(item.response.site != nullptr);
 
     items.erase(items.iterator_to(item));
 
@@ -791,8 +944,7 @@ tcache_invalidate_match(const struct cache_item *_item, void *ctx)
 
 inline unsigned
 tcache::InvalidateHost(const TranslateRequest &request,
-                       ConstBuffer<uint16_t> vary,
-                       const char *site)
+                       ConstBuffer<uint16_t> vary)
 {
     const char *host = request.host;
     if (host == nullptr)
@@ -806,22 +958,62 @@ tcache::InvalidateHost(const TranslateRequest &request,
     assert(&ph->tcache == this);
     assert(strcmp(ph->host, host) == 0);
 
-    return ph->Invalidate(request, vary, site);
+    return ph->Invalidate(request, vary);
 }
 
 inline unsigned
 TranslateCachePerHost::Invalidate(const TranslateRequest &request,
-                                  ConstBuffer<uint16_t> vary,
-                                  const char *site)
+                                  ConstBuffer<uint16_t> vary)
 {
     unsigned n_removed = 0;
 
-    items.remove_and_dispose_if([&request, vary, site](const TranslateCacheItem &item){
-            return item.InvalidateMatch(vary, request, site);
+    items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
+            return item.InvalidateMatch(vary, request);
         },
         [&n_removed, this](TranslateCacheItem *item){
             assert(item->per_host == this);
             item->per_host = nullptr;
+
+            cache_remove_item(&tcache.cache, item->item.key, &item->item);
+            ++n_removed;
+        });
+
+    if (items.empty())
+        Dispose();
+
+    return n_removed;
+}
+
+inline unsigned
+tcache::InvalidateSite(const TranslateRequest &request,
+                       ConstBuffer<uint16_t> vary,
+                       const char *site)
+{
+    assert(site != nullptr);
+
+    auto ph = per_site.find(site, TranslateCachePerSite::KeyHasher,
+                            TranslateCachePerSite::KeyValueEqual);
+    if (ph == per_site.end())
+        return 0;
+
+    assert(&ph->tcache == this);
+    assert(strcmp(ph->site, site) == 0);
+
+    return ph->Invalidate(request, vary);
+}
+
+inline unsigned
+TranslateCachePerSite::Invalidate(const TranslateRequest &request,
+                                  ConstBuffer<uint16_t> vary)
+{
+    unsigned n_removed = 0;
+
+    items.remove_and_dispose_if([&request, vary](const TranslateCacheItem &item){
+            return item.InvalidateMatch(vary, request);
+        },
+        [&n_removed, this](TranslateCacheItem *item){
+            assert(item->per_site == this);
+            item->per_site = nullptr;
 
             cache_remove_item(&tcache.cache, item->item.key, &item->item);
             ++n_removed;
@@ -846,10 +1038,12 @@ translate_cache_invalidate(struct tcache &tcache,
     };
 
     gcc_unused
-    unsigned removed = vary.Contains(uint16_t(TRANSLATE_HOST))
-        ? tcache.InvalidateHost(request, vary, site)
-        : cache_remove_all_match(&tcache.cache,
-                                 tcache_invalidate_match, &data);
+    unsigned removed = site != nullptr
+        ? tcache.InvalidateSite(request, vary, site)
+        : (vary.Contains(uint16_t(TRANSLATE_HOST))
+           ? tcache.InvalidateHost(request, vary)
+           : cache_remove_all_match(&tcache.cache,
+                                    tcache_invalidate_match, &data));
     cache_log(4, "translate_cache: invalidated %u cache items\n", removed);
 }
 
@@ -968,6 +1162,9 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
 
     if (response.VaryContains(TRANSLATE_HOST))
         tcache_add_per_host(*tcr.tcache, item);
+
+    if (response.site != nullptr)
+        tcache_add_per_site(*tcr.tcache, item);
 
     cache_put_match(&tcr.tcache->cache, key, &item->item,
                     tcache_item_match, &tcr);
@@ -1135,6 +1332,9 @@ tcache_destroy(struct cache_item *_item)
     if (item.per_host != nullptr)
         item.per_host->Erase(item);
 
+    if (item.per_site != nullptr)
+        item.per_site->Erase(item);
+
     auto &pool = item.pool;
     DeleteFromPool(&pool, &item);
     pool_unref(&pool);
@@ -1157,6 +1357,9 @@ tcache::tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size)
      slice_pool(*slice_pool_new(2048, 65536)),
      cache(*cache_new(&_pool, &tcache_class, 65521, max_size)),
      per_host(PerHostSet::bucket_traits(PoolAlloc<PerHostSet::bucket_type>(&_pool,
+                                                                           3779),
+                                        3779)),
+     per_site(PerSiteSet::bucket_traits(PoolAlloc<PerSiteSet::bucket_type>(&_pool,
                                                                            3779),
                                         3779)),
      stock(_stock) {}
