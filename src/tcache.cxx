@@ -12,16 +12,17 @@
 #include "http_quark.h"
 #include "cache.hxx"
 #include "stock.h"
-#include "hashmap.h"
 #include "uri_base.hxx"
 #include "uri-verify.h"
 #include "uri_escape.hxx"
 #include "tpool.h"
 #include "pbuffer.hxx"
 #include "slice.hxx"
+#include "djbhash.h"
 #include "beng-proxy/translation.h"
 
 #include <boost/intrusive/list.hpp>
+#include <boost/intrusive/unordered_set.hpp>
 
 #include <time.h>
 #include <string.h>
@@ -130,7 +131,8 @@ struct TranslateCacheItem {
     }
 };
 
-struct TranslateCachePerHost {
+struct TranslateCachePerHost
+    : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
     typedef boost::intrusive::member_hook<TranslateCacheItem,
                                           TranslateCacheItem::PerHostSiblingsHook,
                                           &TranslateCacheItem::per_host_siblings> MemberHook;
@@ -164,6 +166,40 @@ struct TranslateCachePerHost {
     unsigned Invalidate(const TranslateRequest &request,
                         ConstBuffer<uint16_t> vary,
                         const char *site);
+
+    gcc_pure
+    static size_t KeyHasher(const char *key) {
+        assert(key != nullptr);
+
+        return djb_hash_string(key);
+    }
+
+    gcc_pure
+    static size_t ValueHasher(const TranslateCachePerHost &value) {
+        return KeyHasher(value.host);
+    }
+
+    gcc_pure
+    static bool KeyValueEqual(const char *a, const TranslateCachePerHost &b) {
+        assert(a != nullptr);
+
+        return strcmp(a, b.host) == 0;
+    }
+
+    struct Hash {
+        gcc_pure
+        size_t operator()(const TranslateCachePerHost &value) const {
+            return ValueHasher(value);
+        }
+    };
+
+    struct Equal {
+        gcc_pure
+        bool operator()(const TranslateCachePerHost &a,
+                        const TranslateCachePerHost &b) const {
+            return KeyValueEqual(a.host, b);
+        }
+    };
 };
 
 struct tcache {
@@ -177,7 +213,11 @@ struct tcache {
      * used to optimize the common INVALIDATE=HOST response, to avoid
      * traversing the whole cache.
      */
-    struct hashmap &per_host;
+    typedef boost::intrusive::unordered_set<TranslateCachePerHost,
+                                            boost::intrusive::hash<TranslateCachePerHost::Hash>,
+                                            boost::intrusive::equal<TranslateCachePerHost::Equal>,
+                                            boost::intrusive::constant_time_size<false>> PerHostSet;
+    PerHostSet per_host;
 
     struct tstock &stock;
 
@@ -238,14 +278,16 @@ tcache::MakePerHost(const char *host)
 {
     assert(host != nullptr);
 
-    TranslateCachePerHost *ph = (TranslateCachePerHost *)
-        hashmap_get(&per_host, host);
-    if (ph == nullptr) {
-        ph = NewFromPool<TranslateCachePerHost>(&pool, *this,
-                                                p_strdup(&pool, host));
+    PerHostSet::insert_commit_data commit_data;
+    auto result = per_host.insert_check(host, TranslateCachePerHost::KeyHasher,
+                                        TranslateCachePerHost::KeyValueEqual,
+                                        commit_data);
+    if (!result.second)
+        return *result.first;
 
-        hashmap_add(&per_host, ph->host, ph);
-    }
+    auto ph = NewFromPool<TranslateCachePerHost>(&pool, *this,
+                                                 p_strdup(&pool, host));
+    per_host.insert_commit(*ph, commit_data);
 
     return *ph;
 }
@@ -269,7 +311,7 @@ TranslateCachePerHost::Dispose()
 {
     assert(items.empty());
 
-    hashmap_remove_existing(&tcache.per_host, host, this);
+    tcache.per_host.erase(tcache.per_host.iterator_to(*this));
 
     p_free(&tcache.pool, host);
     DeleteFromPool(&tcache.pool, this);
@@ -756,9 +798,9 @@ tcache::InvalidateHost(const TranslateRequest &request,
     if (host == nullptr)
         host = "";
 
-    TranslateCachePerHost *ph = (TranslateCachePerHost *)
-        hashmap_get(&per_host, host);
-    if (ph == nullptr)
+    auto ph = per_host.find(host, TranslateCachePerHost::KeyHasher,
+                            TranslateCachePerHost::KeyValueEqual);
+    if (ph == per_host.end())
         return 0;
 
     assert(&ph->tcache == this);
@@ -1114,7 +1156,9 @@ tcache::tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size)
     :pool(_pool),
      slice_pool(*slice_pool_new(2048, 65536)),
      cache(*cache_new(&_pool, &tcache_class, 65521, max_size)),
-     per_host(*hashmap_new(&_pool, 3779)),
+     per_host(PerHostSet::bucket_traits(PoolAlloc<PerHostSet::bucket_type>(&_pool,
+                                                                           3779),
+                                        3779)),
      stock(_stock) {}
 
 inline
