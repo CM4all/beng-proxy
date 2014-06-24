@@ -45,7 +45,7 @@ struct TranslateCacheItem {
     struct cache_item item;
 
     /**
-     * A double linked list of cache items with the same HOST request
+     * A doubly linked list of cache items with the same HOST request
      * string.  Only those that had VARY=HOST in the response are
      * added to the list.  Check per_host!=nullptr to check whether
      * this item lives in such a list.
@@ -209,9 +209,9 @@ struct tcache {
     struct cache &cache;
 
     /**
-     * This hash table maps each host name to a #tcache_per.  This is
-     * used to optimize the common INVALIDATE=HOST response, to avoid
-     * traversing the whole cache.
+     * This hash table maps each host name to a
+     * #TranslateCachePerHost.  This is used to optimize the common
+     * INVALIDATE=HOST response, to avoid traversing the whole cache.
      */
     typedef boost::intrusive::unordered_set<TranslateCachePerHost,
                                             boost::intrusive::hash<TranslateCachePerHost::Hash>,
