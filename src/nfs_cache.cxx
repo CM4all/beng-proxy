@@ -19,6 +19,8 @@
 #include "cache.hxx"
 #include "async.h"
 
+#include <inline/list.h>
+
 #include <event.h>
 
 #include <sys/stat.h>

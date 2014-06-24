@@ -26,6 +26,8 @@
 #include "async.h"
 #include "util/Cast.hxx"
 
+#include <inline/list.h>
+
 #include <event.h>
 
 #include <string.h>
