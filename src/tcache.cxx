@@ -186,6 +186,8 @@ struct tcache {
 
     ~tcache();
 
+    TranslateCachePerHost &MakePerHost(const char *host);
+
     unsigned InvalidateHost(const TranslateRequest &request,
                             ConstBuffer<uint16_t> vary,
                             const char *site);
@@ -231,6 +233,23 @@ static const GRegexCompileFlags default_regex_compile_flags =
 #define cache_log(...) do {} while (0)
 #endif
 
+inline TranslateCachePerHost &
+tcache::MakePerHost(const char *host)
+{
+    assert(host != nullptr);
+
+    TranslateCachePerHost *ph = (TranslateCachePerHost *)
+        hashmap_get(&per_host, host);
+    if (ph == nullptr) {
+        ph = NewFromPool<TranslateCachePerHost>(&pool, *this,
+                                                p_strdup(&pool, host));
+
+        hashmap_add(&per_host, ph->host, ph);
+    }
+
+    return *ph;
+}
+
 static void
 tcache_add_per_host(struct tcache &tcache, TranslateCacheItem *item)
 {
@@ -240,18 +259,9 @@ tcache_add_per_host(struct tcache &tcache, TranslateCacheItem *item)
     if (host == nullptr)
         host = "";
 
-    TranslateCachePerHost *per_host = (TranslateCachePerHost *)
-        hashmap_get(&tcache.per_host, host);
-    if (per_host == nullptr) {
-        per_host = NewFromPool<TranslateCachePerHost>(&tcache.pool,
-                                                      tcache,
-                                                      p_strdup(&tcache.pool, host));
-
-        hashmap_add(&tcache.per_host, per_host->host, per_host);
-    }
-
-    per_host->items.push_back(*item);
-    item->per_host = per_host;
+    TranslateCachePerHost &per_host = tcache.MakePerHost(host);
+    per_host.items.push_back(*item);
+    item->per_host = &per_host;
 }
 
 void
