@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.6) unstable; urgency=low
 
-  * 
+  * merge release 3.1.34
 
  --   
 
@@ -427,6 +427,14 @@ cm4all-beng-proxy (4.0) unstable; urgency=low
   * translate-client, resource-loader: support https://
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 23 Oct 2013 19:29:38 -0000
+
+cm4all-beng-proxy (3.1.34) unstable; urgency=low
+
+  * session: fix potential crash on shared memory exhaustion
+  * session: really purge new sessions first
+  * istream-iconv: fix endless loop with unknown charset
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 25 Jun 2014 12:58:03 -0000
 
 cm4all-beng-proxy (3.1.33) unstable; urgency=low
 
