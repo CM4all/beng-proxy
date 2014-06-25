@@ -14,6 +14,8 @@
 
 #include <daemon/log.h>
 
+#include <boost/intrusive/list.hpp>
+
 #include <map>
 #include <list>
 #include <string>
@@ -31,7 +33,17 @@ class MultiStock : public mstock {
         typedef std::list<Item> ItemList;
 
         class Item {
-            struct Lease : list_head {
+            struct Lease {
+                static constexpr auto link_mode = boost::intrusive::normal_link;
+                typedef boost::intrusive::link_mode<link_mode> LinkMode;
+                typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
+
+                SiblingsListHook siblings;
+
+                typedef boost::intrusive::member_hook<Lease,
+                                                      Lease::SiblingsListHook,
+                                                      &Lease::siblings> SiblingsListMemberHook;
+
                 static const struct lease lease;
 
                 const ItemList::iterator item;
@@ -45,6 +57,10 @@ class MultiStock : public mstock {
                 static void Release(bool reuse, void *ctx) {
                     ((Lease *)ctx)->Release(reuse);
                 }
+
+                static void Dispose(Lease *l) {
+                    delete l;
+                }
             };
 
             const DomainMap::iterator domain;
@@ -53,8 +69,8 @@ class MultiStock : public mstock {
 
             stock_item &item;
 
-            unsigned n_leases;
-            list_head leases;
+            boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
+                                   boost::intrusive::constant_time_size<true>> leases;
 
             bool reuse;
 
@@ -62,21 +78,19 @@ class MultiStock : public mstock {
             Item(DomainMap::iterator _domain, unsigned _max_leases,
                  stock_item &_item)
                 :domain(_domain), max_leases(_max_leases), item(_item),
-                 n_leases(0), reuse(true) {
-                list_init(&leases);
+                 reuse(true) {
             }
 
             Item(const Item &) = delete;
 
             ~Item() {
-                assert(n_leases == 0);
-                assert(list_empty(&leases));
+                assert(leases.empty());
 
                 domain->second.Put(domain->first.c_str(), item, reuse);
             }
 
             bool IsFull() const {
-                return n_leases >= max_leases;
+                return leases.size() >= max_leases;
             }
 
             bool CanUse() const {
@@ -87,10 +101,8 @@ class MultiStock : public mstock {
             Lease &AddLease(ItemList::iterator i) {
                 assert(&*i == this);
 
-                ++n_leases;
-
                 Lease *lease = new Lease(i);
-                list_add(lease, &leases);
+                leases.push_front(*lease);
                 return *lease;
             }
 
@@ -120,13 +132,11 @@ class MultiStock : public mstock {
 
                 auto ii = lease->item;
 
-                assert(n_leases > 0);
-                list_remove(lease);
-                delete lease;
+                assert(!leases.empty());
+                leases.erase_and_dispose(leases.iterator_to(*lease),
+                                         Lease::Dispose);
 
-                --n_leases;
-
-                if (n_leases == 0)
+                if (leases.empty())
                     domain->second.DeleteItem(ii);
             }
         };
