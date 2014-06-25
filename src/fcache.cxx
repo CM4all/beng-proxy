@@ -24,9 +24,8 @@
 #include "sink_rubber.hxx"
 #include "istream_tee.h"
 #include "async.h"
-#include "util/Cast.hxx"
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 #include <event.h>
 
@@ -47,29 +46,6 @@
 static constexpr off_t cacheable_size_limit = 256 * 1024;
 
 static constexpr struct timeval fcache_timeout = { 60, 0 };
-
-struct filter_cache {
-    struct pool &pool;
-    struct cache *const cache;
-    Rubber *rubber;
-    struct slice_pool *slice_pool;
-
-    struct resource_loader &resource_loader;
-
-    /**
-     * A list of requests that are currently copying the response body
-     * to a #Rubber allocation.  We keep track of them so we can
-     * cancel them on shutdown.
-     */
-    struct list_head requests;
-
-    filter_cache(struct pool &_pool, struct resource_loader &_resource_loader)
-        :pool(_pool), cache(nullptr),
-         resource_loader(_resource_loader) {}
-
-    filter_cache(struct pool &_pool, size_t max_size,
-                 struct resource_loader &_resource_loader);
-};
 
 struct filter_cache_info {
     /** when will the cached resource expire? (beng-proxy time) */
@@ -115,7 +91,10 @@ struct FilterCacheItem {
 };
 
 struct FilterCacheRequest {
-    struct list_head siblings;
+    static constexpr auto link_mode = boost::intrusive::auto_unlink;
+    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
+    SiblingsHook siblings;
 
     struct pool *const pool, *const caller_pool;
     struct filter_cache *const cache;
@@ -148,6 +127,33 @@ struct FilterCacheRequest {
          info(&_info) {}
 };
 
+struct filter_cache {
+    struct pool &pool;
+    struct cache *const cache;
+    Rubber *rubber;
+    struct slice_pool *slice_pool;
+
+    struct resource_loader &resource_loader;
+
+    /**
+     * A list of requests that are currently copying the response body
+     * to a #Rubber allocation.  We keep track of them so we can
+     * cancel them on shutdown.
+     */
+    boost::intrusive::list<FilterCacheRequest,
+                           boost::intrusive::member_hook<FilterCacheRequest,
+                                                         FilterCacheRequest::SiblingsHook,
+                                                         &FilterCacheRequest::siblings>,
+                           boost::intrusive::constant_time_size<false>> requests;
+
+    filter_cache(struct pool &_pool, struct resource_loader &_resource_loader)
+        :pool(_pool), cache(nullptr),
+         resource_loader(_resource_loader) {}
+
+    filter_cache(struct pool &_pool, size_t max_size,
+                 struct resource_loader &_resource_loader);
+};
+
 /**
  * Release resources held by this request.
  */
@@ -158,8 +164,6 @@ filter_cache_request_release(struct FilterCacheRequest *request)
     assert(!async_ref_defined(&request->response.async_ref));
 
     evtimer_del(&request->timeout);
-
-    list_remove(&request->siblings);
 
     DeleteUnrefTrashPool(*request->pool, request);
 }
@@ -407,7 +411,8 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         request->response.headers = strmap_dup(request->pool, headers, 17);
 
         pool_ref(request->pool);
-        list_add(&request->siblings, &request->cache->requests);
+
+        request->cache->requests.push_front(*request);
 
         evtimer_set(&request->timeout, fcache_timeout_callback, request);
         evtimer_add(&request->timeout, &fcache_timeout);
@@ -500,8 +505,6 @@ filter_cache::filter_cache(struct pool &_pool, size_t max_size,
         fprintf(stderr, "Failed to allocate filter cache\n");
         _exit(2);
     }
-
-    list_init(&requests);
 }
 
 struct filter_cache *
@@ -518,12 +521,6 @@ filter_cache_new(struct pool *pool, size_t max_size,
                                      *resource_loader);
 }
 
-static inline FilterCacheRequest *
-list_head_to_request(struct list_head *head)
-{
-    return ContainerCast(head, FilterCacheRequest, siblings);
-}
-
 void
 filter_cache_close(struct filter_cache *cache)
 {
@@ -535,12 +532,7 @@ filter_cache_close(struct filter_cache *cache)
         return;
     }
 
-    while (!list_empty(&cache->requests)) {
-        FilterCacheRequest *request =
-            list_head_to_request(cache->requests.next);
-
-        filter_cache_request_abort(request);
-    }
+    cache->requests.clear_and_dispose(filter_cache_request_abort);
 
     cache_close(cache->cache);
     slice_pool_free(cache->slice_pool);
