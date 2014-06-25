@@ -155,7 +155,8 @@ filter_cache_request_release(struct FilterCacheRequest *request)
     evtimer_del(&request->timeout);
 
     list_remove(&request->siblings);
-    pool_unref(request->pool);
+
+    DeleteUnrefTrashPool(*request->pool, request);
 }
 
 /**
@@ -465,7 +466,7 @@ filter_cache_item_destroy(struct cache_item *_item)
     if (item->rubber_id != 0)
         rubber_remove(&item->rubber, item->rubber_id);
 
-    pool_unref(&item->pool);
+    DeleteUnrefTrashPool(item->pool, item);
 }
 
 static const struct cache_class filter_cache_class = {
@@ -521,9 +522,11 @@ list_head_to_request(struct list_head *head)
 void
 filter_cache_close(struct filter_cache *cache)
 {
+    struct pool &pool = cache->pool;
+
     if (cache->cache == nullptr) {
         /* filter cache is disabled */
-        p_free(&cache->pool, cache);
+        DeleteFromPool(&pool, cache);
         return;
     }
 
@@ -538,7 +541,7 @@ filter_cache_close(struct filter_cache *cache)
     slice_pool_free(cache->slice_pool);
     rubber_free(cache->rubber);
 
-    pool_unref(&cache->pool);
+    DeleteUnrefTrashPool(pool, cache);
 }
 
 void
