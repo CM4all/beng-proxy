@@ -238,7 +238,7 @@ istream_iconv_new(struct pool *pool, struct istream *input,
     assert(!istream_has_handler(input));
 
     ic->iconv = iconv_open(tocode, fromcode);
-    if (ic->iconv == NULL) {
+    if (ic->iconv == (iconv_t)-1) {
         istream_deinit(&ic->output);
         return NULL;
     }
