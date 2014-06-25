@@ -17,7 +17,6 @@
 #include <boost/intrusive/list.hpp>
 
 #include <map>
-#include <list>
 #include <string>
 
 #include <assert.h>
@@ -29,10 +28,9 @@ class MultiStock : public mstock {
     typedef std::map<std::string, Domain> DomainMap;
 
     class Domain {
-        class Item;
-        typedef std::list<Item> ItemList;
+        class Item
+            : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
-        class Item {
             struct Lease {
                 static constexpr auto link_mode = boost::intrusive::normal_link;
                 typedef boost::intrusive::link_mode<link_mode> LinkMode;
@@ -46,12 +44,12 @@ class MultiStock : public mstock {
 
                 static const struct lease lease;
 
-                const ItemList::iterator item;
+                Item &item;
 
-                Lease(ItemList::iterator _item):item(_item) {}
+                Lease(Item &_item):item(_item) {}
 
                 void Release(bool _reuse) {
-                    item->DeleteLease(this, _reuse);
+                    item.DeleteLease(this, _reuse);
                 }
 
                 static void Release(bool reuse, void *ctx) {
@@ -98,31 +96,23 @@ class MultiStock : public mstock {
             }
 
         private:
-            Lease &AddLease(ItemList::iterator i) {
-                assert(&*i == this);
-
-                Lease *lease = new Lease(i);
+            Lease &AddLease() {
+                Lease *lease = new Lease(*this);
                 leases.push_front(*lease);
                 return *lease;
             }
 
         public:
-            void AddLease(ItemList::iterator i,
-                          const stock_get_handler &handler, void *ctx,
+            void AddLease(const stock_get_handler &handler, void *ctx,
                           struct lease_ref &lease_ref) {
-                assert(&*i == this);
-
-                Lease &lease = AddLease(i);
+                Lease &lease = AddLease();
                 lease_ref_set(&lease_ref, &Lease::lease, &lease);
 
                 handler.ready(&item, ctx);
             }
 
-            stock_item *AddLease(ItemList::iterator i,
-                                 struct lease_ref &lease_ref) {
-                assert(&*i == this);
-
-                Lease &lease = AddLease(i);
+            stock_item *AddLease(struct lease_ref &lease_ref) {
+                Lease &lease = AddLease();
                 lease_ref_set(&lease_ref, &Lease::lease, &lease);
                 return &item;
             }
@@ -130,14 +120,16 @@ class MultiStock : public mstock {
             void DeleteLease(Lease *lease, bool _reuse) {
                 reuse &= _reuse;
 
-                auto ii = lease->item;
-
                 assert(!leases.empty());
                 leases.erase_and_dispose(leases.iterator_to(*lease),
                                          Lease::Dispose);
 
                 if (leases.empty())
-                    domain->second.DeleteItem(ii);
+                    domain->second.DeleteItem(*this);
+            }
+
+            static void Dispose(Item *i) {
+                delete i;
             }
         };
 
@@ -145,6 +137,8 @@ class MultiStock : public mstock {
 
         struct pool *pool;
 
+        typedef boost::intrusive::list<Item,
+                                       boost::intrusive::constant_time_size<false>> ItemList;
         ItemList items;
 
     public:
@@ -168,21 +162,22 @@ class MultiStock : public mstock {
                 pool_unref(pool);
         }
 
-        ItemList::iterator FindUsableItem() {
-            for (auto i = items.begin(), end = items.end(); i != end; ++i)
-                if (i->CanUse())
-                    return i;
+        Item *FindUsableItem() {
+            for (auto &i : items)
+                if (i.CanUse())
+                    return &i;
 
-            return items.end();
+            return nullptr;
         }
 
-        ItemList::iterator AddItem(DomainMap::iterator di,
-                                   unsigned max_leases,
-                                   stock_item &si) {
+        Item &AddItem(DomainMap::iterator di,
+                      unsigned max_leases,
+                      stock_item &si) {
             assert(&di->second == this);
 
-            items.emplace_front(di, max_leases, si);
-            return items.begin();
+            Item *item = new Item(di, max_leases, si);
+            items.push_front(*item);
+            return *item;
         }
 
         stock_item *GetNow(DomainMap::iterator di,
@@ -192,8 +187,8 @@ class MultiStock : public mstock {
                            struct lease_ref &lease_ref,
                            GError **error_r);
 
-        void DeleteItem(ItemList::iterator &ii) {
-            ii = items.erase(ii);
+        void DeleteItem(Item &i) {
+            items.erase_and_dispose(items.iterator_to(i), Item::Dispose);
         }
 
         void Put(const char *uri, stock_item &item, bool reuse) {
@@ -246,15 +241,15 @@ MultiStock::Domain::GetNow(DomainMap::iterator di,
                            GError **error_r)
 {
     auto i = FindUsableItem();
-    if (i == items.end()) {
+    if (i == nullptr) {
         stock_item *item =
             hstock_get_now(stock.hstock, caller_pool, uri, info,
                            error_r);
-        items.emplace_front(di, max_leases, *item);
-        i = items.begin();
+        i = new Item(di, max_leases, *item);
+        items.push_front(*i);
     }
 
-    return i->AddLease(i, lease_ref);
+    return i->AddLease(lease_ref);
 }
 
 inline stock_item *
