@@ -49,14 +49,21 @@ static constexpr off_t cacheable_size_limit = 256 * 1024;
 static constexpr struct timeval fcache_timeout = { 60, 0 };
 
 struct filter_cache {
-    struct pool *pool;
-    struct cache *cache;
+    struct pool &pool;
+    struct cache *const cache;
     Rubber *rubber;
     struct slice_pool *slice_pool;
 
-    struct resource_loader *resource_loader;
+    struct resource_loader &resource_loader;
 
     struct list_head requests;
+
+    filter_cache(struct pool &_pool, struct resource_loader &_resource_loader)
+        :pool(_pool), cache(nullptr),
+         resource_loader(_resource_loader) {}
+
+    filter_cache(struct pool &_pool, size_t max_size,
+                 struct resource_loader &_resource_loader);
 };
 
 struct filter_cache_info {
@@ -65,31 +72,51 @@ struct filter_cache_info {
 
     /** the final resource id */
     const char *key;
+
+    filter_cache_info(const char *_key)
+        :expires(-1), key(_key) {}
+
+    filter_cache_info(struct pool &pool, const struct filter_cache_info &src)
+        :expires(src.expires),
+         key(p_strdup(&pool, src.key)) {}
+
+    filter_cache_info(const filter_cache_info &) = delete;
 };
 
 struct FilterCacheItem {
     struct cache_item item;
 
-    struct pool *pool;
+    struct pool &pool;
 
-    filter_cache_info info;
+    const filter_cache_info info;
 
-    http_status_t status;
-    struct strmap *headers;
+    const http_status_t status;
+    struct strmap *const headers;
 
-    size_t size;
-    Rubber *rubber;
-    unsigned rubber_id;
+    const size_t size;
+    Rubber &rubber;
+    const unsigned rubber_id;
+
+    FilterCacheItem(struct pool &_pool, const filter_cache_info &_info,
+                    http_status_t _status, struct strmap *_headers,
+                    size_t _size, Rubber &_rubber, unsigned _rubber_id,
+                    unsigned _expires)
+        :pool(_pool), info(pool, _info),
+         status(_status), headers(_headers),
+         size(_size), rubber(_rubber), rubber_id(_rubber_id) {
+        cache_item_init_absolute(&item, _expires,
+                                 pool_netto_size(&pool) + size);
+    }
 };
 
 struct FilterCacheRequest {
     struct list_head siblings;
 
-    struct pool *pool, *caller_pool;
-    struct filter_cache *cache;
+    struct pool *const pool, *const caller_pool;
+    struct filter_cache *const cache;
     struct http_response_handler_ref handler;
 
-    filter_cache_info *info;
+    filter_cache_info *const info;
 
     struct {
         http_status_t status;
@@ -107,17 +134,14 @@ struct FilterCacheRequest {
      * the duration for receiving the response body.
      */
     struct event timeout;
+
+    FilterCacheRequest(struct pool &_pool, struct pool &_caller_pool,
+                       struct filter_cache &_cache,
+                       filter_cache_info &_info)
+        :pool(&_pool), caller_pool(&_caller_pool),
+         cache(&_cache),
+         info(&_info) {}
 };
-
-
-static filter_cache_info *
-filter_cache_info_new(struct pool *pool)
-{
-    filter_cache_info *info = NewFromPool<filter_cache_info>(pool);
-
-    info->expires = (time_t)-1;
-    return info;
-}
 
 /**
  * Release resources held by this request.
@@ -157,41 +181,24 @@ filter_cache_request_evaluate(struct pool *pool,
     if (source_id == nullptr)
         return nullptr;
 
-    filter_cache_info *info = filter_cache_info_new(pool);
-    info->key = p_strcat(pool, source_id, "|",
-                         resource_address_id(address, pool), nullptr);
-
-    return info;
-}
-
-static void
-filter_cache_info_copy(struct pool *pool, filter_cache_info *dest,
-                       const filter_cache_info *src)
-{
-    dest->expires = src->expires;
-    dest->key = p_strdup(pool, src->key);
+    return NewFromPool<struct filter_cache_info>(pool,
+                                                 p_strcat(pool, source_id, "|",
+                                                          resource_address_id(address, pool), nullptr));
 }
 
 static filter_cache_info *
 filter_cache_info_dup(struct pool *pool, const filter_cache_info *src)
 {
-    filter_cache_info *dest = NewFromPool<filter_cache_info>(pool);
-
-    filter_cache_info_copy(pool, dest, src);
-    return dest;
+    return NewFromPool<filter_cache_info>(pool, *pool, *src);
 }
 
 static FilterCacheRequest *
-filter_cache_request_dup(struct pool *pool,
-                         const struct FilterCacheRequest *src)
+filter_cache_request_dup(struct pool &pool, const FilterCacheRequest &src)
 {
-    FilterCacheRequest *dest = NewFromPool<FilterCacheRequest>(pool);
-
-    dest->pool = pool;
-    dest->caller_pool = src->caller_pool;
-    dest->cache = src->cache;
-    dest->handler = src->handler;
-    dest->info = filter_cache_info_dup(pool, src->info);
+    auto dest = NewFromPool<FilterCacheRequest>(&pool, pool, *src.caller_pool,
+                                                *src.cache,
+                                                *filter_cache_info_dup(&pool, src.info));
+    dest->handler = src.handler;
     return dest;
 }
 
@@ -200,7 +207,6 @@ filter_cache_put(FilterCacheRequest *request,
                  unsigned rubber_id, size_t size)
 {
     assert(request != nullptr);
-    assert(request->info != nullptr);
 
     cache_log(4, "filter_cache: put %s\n", request->info->key);
 
@@ -210,21 +216,18 @@ filter_cache_put(FilterCacheRequest *request,
     else
         expires = request->info->expires;
 
-    struct pool *pool = pool_new_slice(request->cache->pool, "FilterCacheItem",
+    struct pool *pool = pool_new_slice(&request->cache->pool, "FilterCacheItem",
                                        request->cache->slice_pool);
-    FilterCacheItem *item = NewFromPool<FilterCacheItem>(pool);
-    item->pool = pool;
-    filter_cache_info_copy(pool, &item->info, request->info);
-
-    item->status = request->response.status;
-    item->headers = strmap_dup(pool, request->response.headers, 7);
-
-    item->size = size;
-    item->rubber = request->cache->rubber;
-    item->rubber_id = rubber_id;
-
-    cache_item_init_absolute(&item->item, expires,
-                             pool_netto_size(pool) + item->size);
+    auto item = NewFromPool<FilterCacheItem>(pool, *pool,
+                                             *request->info,
+                                             request->response.status,
+                                             strmap_dup(pool,
+                                                        request->response.headers,
+                                                        7),
+                                             size,
+                                             *request->cache->rubber,
+                                             rubber_id,
+                                             expires);
 
     cache_put(request->cache->cache,
               item->info.key, &item->item);
@@ -364,7 +367,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
     available = body == nullptr ? 0 : istream_available(body, true);
 
     if (!filter_cache_response_evaluate(request->info,
-                                      status, headers, available)) {
+                                        status, headers, available)) {
         /* don't cache response */
         cache_log(4, "filter_cache: nocache %s\n", request->info->key);
 
@@ -387,8 +390,8 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         /* move all this stuff to a new pool, so istream_tee's second
            head can continue to fill the cache even if our caller gave
            up on it */
-        pool = pool_new_linear(request->cache->pool, "filter_cache_tee", 1024);
-        request = filter_cache_request_dup(pool, request);
+        pool = pool_new_linear(&request->cache->pool, "filter_cache_tee", 1024);
+        request = filter_cache_request_dup(*pool, *request);
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
@@ -460,9 +463,9 @@ filter_cache_item_destroy(struct cache_item *_item)
     FilterCacheItem *item = (FilterCacheItem *)_item;
 
     if (item->rubber_id != 0)
-        rubber_remove(item->rubber, item->rubber_id);
+        rubber_remove(&item->rubber, item->rubber_id);
 
-    pool_unref(item->pool);
+    pool_unref(&item->pool);
 }
 
 static const struct cache_class filter_cache_class = {
@@ -476,49 +479,37 @@ static const struct cache_class filter_cache_class = {
  *
  */
 
+filter_cache::filter_cache(struct pool &_pool, size_t max_size,
+                           struct resource_loader &_resource_loader)
+    :pool(_pool),
+     /* leave 12.5% of the rubber allocator empty, to increase the
+        chances that a hole can be found for a new allocation, to
+        reduce the pressure that rubber_compress() creates */
+     cache(cache_new(&_pool, &filter_cache_class, 65521,
+                     max_size * 7 / 8)),
+     rubber(rubber_new(max_size)),
+     slice_pool(slice_pool_new(1024, 65536)),
+     resource_loader(_resource_loader) {
+    if (rubber == nullptr) {
+        fprintf(stderr, "Failed to allocate filter cache\n");
+        _exit(2);
+    }
+
+    list_init(&requests);
+}
+
 struct filter_cache *
 filter_cache_new(struct pool *pool, size_t max_size,
                  struct resource_loader *resource_loader)
 {
-    if (max_size == 0) {
-        /* the filter cache is disabled, return a nullptred object */
-        filter_cache *cache = NewFromPool<filter_cache>(pool);
-        cache->pool = pool;
-        cache->cache = nullptr;
-        cache->resource_loader = resource_loader;
-        return cache;
-    }
+    if (max_size == 0)
+        /* the filter cache is disabled, return a disabled object */
+        return NewFromPool<filter_cache>(pool, *pool, *resource_loader);
 
     pool = pool_new_libc(pool, "filter_cache");
 
-    filter_cache *cache = NewFromPool<filter_cache>(pool);
-    cache->pool = pool;
-
-    if (max_size == 0) {
-        /* the filter cache is disabled, return a nullptred object */
-
-        cache->cache = nullptr;
-        return cache;
-    }
-
-    /* leave 12.5% of the rubber allocator empty, to increase the
-       chances that a hole can be found for a new allocation, to
-       reduce the pressure that rubber_compress() creates */
-    cache->cache = cache_new(pool, &filter_cache_class, 65521,
-                             max_size * 7 / 8);
-
-    cache->rubber = rubber_new(max_size);
-    if (cache->rubber == nullptr) {
-        fprintf(stderr, "Failed to allocate filter cache: %s\n",
-                strerror(errno));
-        _exit(2);
-    }
-
-    cache->slice_pool = slice_pool_new(1024, 65536);
-
-    cache->resource_loader = resource_loader;
-    list_init(&cache->requests);
-    return cache;
+    return NewFromPool<filter_cache>(pool, *pool, max_size,
+                                     *resource_loader);
 }
 
 static inline FilterCacheRequest *
@@ -532,7 +523,7 @@ filter_cache_close(struct filter_cache *cache)
 {
     if (cache->cache == nullptr) {
         /* filter cache is disabled */
-        p_free(cache->pool, cache);
+        p_free(&cache->pool, cache);
         return;
     }
 
@@ -547,7 +538,7 @@ filter_cache_close(struct filter_cache *cache)
     slice_pool_free(cache->slice_pool);
     rubber_free(cache->rubber);
 
-    pool_unref(cache->pool);
+    pool_unref(&cache->pool);
 }
 
 void
@@ -583,8 +574,8 @@ filter_cache_flush(struct filter_cache *cache)
 }
 
 static void
-filter_cache_miss(struct filter_cache *cache, struct pool *caller_pool,
-                  filter_cache_info *info,
+filter_cache_miss(struct filter_cache &cache, struct pool &caller_pool,
+                  filter_cache_info &info,
                   const struct resource_address *address,
                   http_status_t status, struct strmap *headers,
                   struct istream *body,
@@ -596,23 +587,19 @@ filter_cache_miss(struct filter_cache *cache, struct pool *caller_pool,
 
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    pool = pool_new_linear(cache->pool, "filter_cache_request", 8192);
+    pool = pool_new_linear(&cache.pool, "filter_cache_request", 8192);
 
-    FilterCacheRequest *request = NewFromPool<FilterCacheRequest>(pool);
-    request->pool = pool;
-    request->caller_pool = caller_pool;
-    request->cache = cache;
+    auto request = NewFromPool<FilterCacheRequest>(pool, *pool, caller_pool,
+                                                   cache, info);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
-    request->info = info;
+    cache_log(4, "filter_cache: miss %s\n", info.key);
 
-    cache_log(4, "filter_cache: miss %s\n", info->key);
-
-    pool_ref(caller_pool);
-    resource_loader_request(cache->resource_loader, pool, 0,
+    pool_ref(&caller_pool);
+    resource_loader_request(&cache.resource_loader, pool, 0,
                             HTTP_METHOD_POST, address, status, headers, body,
                             &filter_cache_response_handler, request,
-                            async_unref_on_abort(caller_pool, async_ref));
+                            async_unref_on_abort(&caller_pool, async_ref));
     pool_unref(pool);
 }
 
@@ -677,14 +664,14 @@ filter_cache_request(struct filter_cache *cache,
             = (FilterCacheItem *)cache_get(cache->cache, info->key);
 
         if (item == nullptr)
-            filter_cache_miss(cache, pool, info,
+            filter_cache_miss(*cache, *pool, *info,
                               address, status, headers, body,
                               handler, handler_ctx, async_ref);
         else
             filter_cache_found(cache, item, pool, body,
                                handler, handler_ctx);
     } else {
-        resource_loader_request(cache->resource_loader, pool, 0,
+        resource_loader_request(&cache->resource_loader, pool, 0,
                                 HTTP_METHOD_POST, address,
                                 status, headers, body,
                                 handler, handler_ctx, async_ref);
