@@ -57,9 +57,7 @@ session_allocate(struct dpool *pool)
 void
 session_destroy(struct session *session)
 {
-    struct dpool *pool = session->pool;
-    DeleteFromPool(pool, session);
-    dpool_destroy(pool);
+    DeleteDestroyPool(*session->pool, session);
 }
 
 /**

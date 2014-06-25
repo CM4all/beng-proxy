@@ -388,6 +388,22 @@ DeleteFromPool(struct pool *pool, T *t)
     p_free(pool, t);
 }
 
+template<typename T>
+void
+DeleteUnrefPool(struct pool &pool, T *t)
+{
+    DeleteFromPool(&pool, t);
+    pool_unref(&pool);
+}
+
+template<typename T>
+void
+DeleteUnrefTrashPool(struct pool &pool, T *t)
+{
+    pool_trash(&pool);
+    DeleteUnrefPool(pool, t);
+}
+
 #endif
 
 #endif

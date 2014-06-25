@@ -1114,8 +1114,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
                                             tcr.request);
     if (item->response.base == nullptr && response.base != nullptr) {
         /* base mismatch - refuse to use this response */
-        DeleteFromPool(pool, item);
-        pool_unref(pool);
+        DeleteUnrefTrashPool(*pool, item);
         g_set_error(error_r, http_response_quark(),
                     HTTP_STATUS_BAD_REQUEST, "Base mismatch");
         return nullptr;
@@ -1140,8 +1139,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
                                   compile_flags,
                                   GRegexMatchFlags(0), error_r);
         if (item->regex == nullptr) {
-            DeleteFromPool(pool, item);
-            pool_unref(pool);
+            DeleteUnrefTrashPool(*pool, item);
             g_prefix_error(error_r,
                            "translate_cache: ");
             return nullptr;
@@ -1153,8 +1151,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
                                           default_regex_compile_flags,
                                           GRegexMatchFlags(0), error_r);
         if (item->inverse_regex == nullptr) {
-            DeleteFromPool(pool, item);
-            pool_unref(pool);
+            DeleteUnrefTrashPool(*pool, item);
             g_prefix_error(error_r,
                            "translate_cache: ");
             return nullptr;
@@ -1336,9 +1333,7 @@ tcache_destroy(struct cache_item *_item)
     if (item.per_site != nullptr)
         item.per_site->Erase(item);
 
-    auto &pool = item.pool;
-    DeleteFromPool(&pool, &item);
-    pool_unref(&pool);
+    DeleteUnrefTrashPool(item.pool, &item);
 }
 
 static const struct cache_class tcache_class = {
@@ -1387,9 +1382,7 @@ translate_cache_close(struct tcache *tcache)
 {
     assert(tcache != nullptr);
 
-    auto &pool = tcache->pool;
-    DeleteFromPool(&pool, tcache);
-    pool_unref(&pool);
+    DeleteUnrefPool(tcache->pool, tcache);
 }
 
 void

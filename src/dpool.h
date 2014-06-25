@@ -94,6 +94,14 @@ DeleteFromPool(struct dpool *pool, T *t)
     d_free(pool, t);
 }
 
+template<typename T>
+void
+DeleteDestroyPool(struct dpool &pool, T *t)
+{
+    t->~T();
+    dpool_destroy(&pool);
+}
+
 #endif
 
 #endif
