@@ -56,6 +56,11 @@ struct filter_cache {
 
     struct resource_loader &resource_loader;
 
+    /**
+     * A list of requests that are currently copying the response body
+     * to a #Rubber allocation.  We keep track of them so we can
+     * cancel them on shutdown.
+     */
     struct list_head requests;
 
     filter_cache(struct pool &_pool, struct resource_loader &_resource_loader)
