@@ -7,7 +7,7 @@
  */
 
 #include "http_server_internal.hxx"
-#include "http_util.h"
+#include "http_util.hxx"
 #include "strutil.h"
 #include "strmap.h"
 #include "buffered_io.h"

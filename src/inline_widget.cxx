@@ -15,7 +15,7 @@
 #include "widget_request.hxx"
 #include "async.h"
 #include "global.h"
-#include "http_util.h"
+#include "http_util.hxx"
 #include "http_response.hxx"
 #include "strref-pool.h"
 #include "strref2.h"

@@ -14,7 +14,7 @@
 #include "header_writer.hxx"
 #include "header_forward.hxx"
 #include "http_server.hxx"
-#include "http_util.h"
+#include "http_util.hxx"
 #include "http_response.hxx"
 #include "processor.h"
 #include "global.h"

@@ -13,7 +13,7 @@
 #include "header_writer.hxx"
 #include "date.h"
 #include "format.h"
-#include "http_util.h"
+#include "http_util.hxx"
 #include "growing-buffer.h"
 #include "http_server.hxx"
 #include "global.h"

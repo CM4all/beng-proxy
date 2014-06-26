@@ -6,7 +6,7 @@
 
 #include "resource_tag.hxx"
 #include "strmap.h"
-#include "http_util.h"
+#include "http_util.hxx"
 #include "pool.h"
 
 const char *

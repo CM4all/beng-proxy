@@ -193,7 +193,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/http_server_read.cxx \
 	src/http_server_response.cxx \
 	src/http_string.cxx src/http_string.hxx \
-	src/http_util.c src/http_util.h \
+	src/http_util.cxx src/http_util.hxx \
 	src/http_quark.h \
 	src/http_response.cxx src/http_response.hxx \
 	src/control_server.cxx src/control_server.hxx \
@@ -412,7 +412,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/http_server_response.cxx \
 	src/http_client.cxx \
 	src/http_string.cxx \
-	src/http_util.c src/http_util.h \
+	src/http_util.cxx src/http_util.hxx \
 	src/header_writer.cxx \
 	src/header_parser.cxx \
 	src/uri_base.cxx src/uri_base.hxx \
@@ -1128,7 +1128,7 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_SOURCES = test/t_http_server.cxx \
-	src/http_util.c \
+	src/http_util.cxx \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
@@ -1155,7 +1155,7 @@ test_t_http_server_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_http_server_SOURCES = test/run_http_server.cxx \
-	src/http_util.c \
+	src/http_util.cxx \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
@@ -1206,7 +1206,7 @@ test_t_http_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_util_SOURCES = test/t_http_util.cxx \
-	src/http_util.c
+	src/http_util.cxx
 test_t_http_util_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libutil.a \
@@ -1228,7 +1228,7 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/uri-edit.c src/uri-relative.c src/uri_escape.cxx \
 	src/uri-extract.c src/uri_base.cxx \
 	src/abort-unref.c src/cache.cxx \
-	src/header_writer.cxx src/http_util.c \
+	src/header_writer.cxx src/http_util.cxx \
 	src/clock.c \
 	src/istream_unlock.cxx
 test_t_http_cache_LDADD = $(AM_LDADD) \
@@ -1369,7 +1369,7 @@ test_t_wembed_SOURCES = test/t_wembed.cxx \
 	src/istream-escape.c src/istream-html-escape.c \
 	src/fifo-buffer.c \
 	src/hashmap.c src/strmap.c src/strset.c \
-	src/http_util.c \
+	src/http_util.cxx \
 	src/uri_escape.cxx \
 	src/global.c
 test_t_wembed_LDADD = $(AM_LDADD) \
@@ -1398,7 +1398,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
 	src/growing-buffer.c src/fifo-buffer.c \
-	src/http_string.cxx src/http_util.c \
+	src/http_string.cxx src/http_util.cxx \
 	src/istream-escape.c \
 	src/transformation.cxx \
 	src/dpool.c src/dstring.c src/dhashmap.c src/shm.c \
@@ -1701,7 +1701,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/http_cache_rfc.cxx \
 	src/http_cache_document.cxx \
 	src/http_cache_age.cxx \
-	src/http_util.c \
+	src/http_util.cxx \
 	src/http_address.cxx src/uri-edit.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-extract.c \
 	src/uri_escape.cxx \
@@ -1766,7 +1766,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/memcached_stock.cxx \
 	src/http_cache_choice.cxx src/http_cache_rfc.cxx \
-	src/http_util.c \
+	src/http_util.cxx \
 	src/serialize.cxx \
 	src/sink_buffer.cxx \
 	src/growing-buffer.c \

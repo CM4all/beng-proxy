@@ -7,7 +7,7 @@
 
 #include "http_cache_internal.hxx"
 #include "http_address.hxx"
-#include "http_util.h"
+#include "http_util.hxx"
 #include "strref2.h"
 #include "strmap.h"
 #include "date.h"

@@ -12,7 +12,7 @@
 #include "http_response.hxx"
 #include "resource_address.hxx"
 #include "strref2.h"
-#include "http_util.h"
+#include "http_util.hxx"
 #include "async.h"
 #include "background.h"
 #include "istream-gb.h"

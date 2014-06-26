@@ -12,7 +12,7 @@
 #include "date.h"
 #include "request.hxx"
 #include "http_server.hxx"
-#include "http_util.h"
+#include "http_util.hxx"
 #include "tvary.hxx"
 
 #include <assert.h>

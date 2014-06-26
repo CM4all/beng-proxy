@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_util.h"
+#include "http_util.hxx"
 #include "strutil.h"
 #include "strref.h"
 #include "pool.h"
@@ -30,7 +30,7 @@ http_list_split(struct pool *pool, const char *p)
 
         /* find the next delimiter */
         end = comma = strchr(p, ',');
-        if (end == NULL)
+        if (end == nullptr)
             /* last element */
             end = p + strlen(p);
 
@@ -42,7 +42,7 @@ http_list_split(struct pool *pool, const char *p)
         tmp[num] = p_strndup(pool, p, end - p);
         str_to_lower(tmp[num++]);
 
-        if (comma == NULL)
+        if (comma == nullptr)
             /* this was the last element */
             break;
 
@@ -50,7 +50,7 @@ http_list_split(struct pool *pool, const char *p)
         p = comma + 1;
     } while (num < MAX_ITEMS);
 
-    tmp[num++] = NULL;
+    tmp[num++] = nullptr;
 
     return (char**)p_memdup(pool, tmp, num * sizeof(tmp[0]));
 }
@@ -102,7 +102,7 @@ http_list_contains(const char *list, const char *item)
     while (*list != 0) {
         /* XXX what if the comma is within an quoted-string? */
         comma = strchr(list, ',');
-        if (comma == NULL)
+        if (comma == nullptr)
             return http_equals(list, strlen(list), item, item_length);
 
         if (http_equals(list, comma - list, item, item_length))
@@ -148,7 +148,7 @@ http_list_contains_i(const char *list, const char *item)
     while (*list != 0) {
         /* XXX what if the comma is within an quoted-string? */
         comma = strchr(list, ',');
-        if (comma == NULL)
+        if (comma == nullptr)
             return http_equals(list, strlen(list), item, item_length);
 
         if (http_equals_i(list, comma - list, item, item_length))
@@ -166,8 +166,8 @@ http_header_param(struct strref *dest, const char *value, const char *name)
     /* XXX this implementation only supports one param */
     const char *p = strchr(value, ';'), *q;
 
-    if (p == NULL)
-        return NULL;
+    if (p == nullptr)
+        return nullptr;
 
     ++p;
 
@@ -175,15 +175,15 @@ http_header_param(struct strref *dest, const char *value, const char *name)
         ++p;
 
     q = strchr(p, '=');
-    if (q == NULL || (size_t)(q - p) != strlen(name) ||
+    if (q == nullptr || (size_t)(q - p) != strlen(name) ||
         memcmp(p, name, q - p) != 0)
-        return NULL;
+        return nullptr;
 
     p = q + 1;
     if (*p == '"') {
         ++p;
         q = strchr(p, '"');
-        if (q == NULL)
+        if (q == nullptr)
             strref_set_c(dest, p);
         else
             strref_set(dest, p, q - p);
