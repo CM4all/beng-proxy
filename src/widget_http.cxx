@@ -22,7 +22,7 @@
 #include "dpool.h"
 #include "get.hxx"
 #include "fcache.h"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "header_forward.hxx"
 #include "transformation.hxx"
 #include "global.h"

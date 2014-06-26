@@ -4,7 +4,7 @@
 #include "async.h"
 #include "fd-util.h"
 #include "growing-buffer.h"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "lease.h"
 #include "direct.h"
 #include "istream-internal.h"

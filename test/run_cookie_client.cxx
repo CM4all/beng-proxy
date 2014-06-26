@@ -1,6 +1,6 @@
 #include "cookie_client.hxx"
 #include "cookie_jar.hxx"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "tpool.h"
 #include "shm.h"
 #include "dpool.h"

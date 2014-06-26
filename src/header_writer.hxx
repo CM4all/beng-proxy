@@ -1,19 +1,15 @@
 /*
- * Write HTTP headers into a fifo_buffer_t.
+ * Write HTTP headers into a buffer.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_HEADER_WRITER_H
-#define __BENG_HEADER_WRITER_H
+#ifndef BENG_PROXY_HEADER_WRITER_HXX
+#define BENG_PROXY_HEADER_WRITER_HXX
 
 struct pool;
 struct strmap;
 struct growing_buffer;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Begin writing a header line.  After this, you may write the value.
@@ -46,9 +42,5 @@ headers_copy_all(struct strmap *in, struct growing_buffer *out);
 
 struct growing_buffer *
 headers_dup(struct pool *pool, struct strmap *in);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

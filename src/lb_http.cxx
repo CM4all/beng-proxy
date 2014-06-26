@@ -21,7 +21,7 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "lease.h"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "http_response.hxx"
 #include "stock.h"
 #include "clock.h"

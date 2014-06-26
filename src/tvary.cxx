@@ -6,7 +6,7 @@
 #include "translate_response.hxx"
 #include "strmap.h"
 #include "growing-buffer.h"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "pool.h"
 
 #include <beng-proxy/translation.h>

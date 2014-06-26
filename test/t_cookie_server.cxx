@@ -1,5 +1,5 @@
 #include "cookie_server.hxx"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "strmap.h"
 #include "pool.h"
 

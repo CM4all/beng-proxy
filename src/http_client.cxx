@@ -9,7 +9,7 @@
 #include "fifo-buffer.h"
 #include "strutil.h"
 #include "header_parser.hxx"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "pevent.h"
 #include "http_body.hxx"
 #include "istream-internal.h"

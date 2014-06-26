@@ -11,7 +11,7 @@
 #include "widget.h"
 #include "frame.hxx"
 #include "request.hxx"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "header_forward.hxx"
 #include "http_server.hxx"
 #include "http_util.h"

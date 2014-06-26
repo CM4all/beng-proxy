@@ -20,7 +20,7 @@
 #include "nfs_address.hxx"
 #include "was_glue.hxx"
 #include "ajp_request.hxx"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "pipe_filter.hxx"
 #include "delegate_request.hxx"
 #include "strutil.h"

@@ -171,7 +171,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/hashmap.c src/hashmap.h \
 	src/header_forward.cxx src/header_forward.hxx \
 	src/header_parser.cxx src/header_parser.hxx \
-	src/header-writer.c src/header-writer.h \
+	src/header_writer.cxx src/header_writer.hxx \
 	src/header_copy.cxx src/header_copy.hxx \
 	src/hostname.c src/hostname.h \
 	src/http_body.cxx src/http_body.hxx \
@@ -413,7 +413,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/http_client.cxx \
 	src/http_string.cxx \
 	src/http_util.c src/http_util.h \
-	src/header-writer.c \
+	src/header_writer.cxx \
 	src/header_parser.cxx \
 	src/uri_base.cxx src/uri_base.hxx \
 	src/regex.cxx src/regex.hxx \
@@ -895,7 +895,7 @@ test_t_tcache_LDADD = $(AM_LDADD) \
 	$(LIBEVENT_LIBS) $(GLIB_LIBS) -lrt
 
 test_t_header_forward_SOURCES = test/t_header_forward.cxx \
-	src/header_forward.cxx src/header-writer.c \
+	src/header_forward.cxx src/header_writer.cxx \
 	src/header_copy.cxx \
 	src/http_string.cxx \
 	src/hashmap.c src/strmap.c \
@@ -1137,7 +1137,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/fifo-buffer.c \
 	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
-	src/header-writer.c \
+	src/header_writer.cxx \
 	src/istream-gb.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
@@ -1164,7 +1164,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/duplex.c \
 	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
-	src/header-writer.c \
+	src/header_writer.cxx \
 	src/istream-gb.c \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
@@ -1191,7 +1191,7 @@ test_t_http_client_SOURCES = test/t_http_client.cxx \
 	$(STOPWATCH_SRC) \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
-	src/header-writer.c \
+	src/header_writer.cxx \
 	src/istream-gb.c \
 	src/direct.c \
 	src/http_body.cxx src/header_parser.cxx \
@@ -1228,7 +1228,7 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/uri-edit.c src/uri-relative.c src/uri_escape.cxx \
 	src/uri-extract.c src/uri_base.cxx \
 	src/abort-unref.c src/cache.cxx \
-	src/header-writer.c src/http_util.c \
+	src/header_writer.cxx src/http_util.c \
 	src/clock.c \
 	src/istream_unlock.cxx
 test_t_http_cache_LDADD = $(AM_LDADD) \
@@ -1246,7 +1246,7 @@ test_t_cookie_client_SOURCES = test/t_cookie_client.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_string.cxx \
 	src/http_string.cxx \
-	src/header-writer.c src/growing-buffer.c \
+	src/header_writer.cxx src/growing-buffer.c \
 	src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c
 test_t_cookie_client_LDADD = $(AM_LDADD) \
@@ -1393,7 +1393,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_server.cxx \
 	src/cookie_string.cxx \
-	src/header_parser.cxx src/header_forward.cxx src/header-writer.c \
+	src/header_parser.cxx src/header_forward.cxx src/header_writer.cxx \
 	src/header_copy.cxx \
 	src/strmap.c src/hashmap.c \
 	src/strset.c \
@@ -1458,7 +1458,7 @@ test_run_subst_LDADD = $(AM_LDADD) \
 test_run_cookie_client_SOURCES = test/run_cookie_client.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx src/http_string.cxx \
 	src/cookie_string.cxx \
-	src/header-writer.c src/growing-buffer.c \
+	src/header_writer.cxx src/growing-buffer.c \
 	src/tpool.c src/strmap.c src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c \
 	src/clock.c
@@ -1518,7 +1518,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
-	src/header-writer.c src/args.cxx src/buffered_io.c \
+	src/header_writer.cxx src/args.cxx src/buffered_io.c \
 	src/tcp_stock.cxx src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/header_parser.cxx \
@@ -1554,7 +1554,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
-	src/header-writer.c src/args.cxx src/buffered_io.c \
+	src/header_writer.cxx src/args.cxx src/buffered_io.c \
 	src/tcp_stock.cxx src/stock.c src/hstock.c \
 	src/client-socket.c src/fd_util.c \
 	src/header_parser.cxx \
@@ -1670,7 +1670,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/notify.c \
 	src/client-socket.c \
 	src/http_client.cxx src/http_body.cxx \
-	src/header-writer.c src/header_parser.cxx \
+	src/header_writer.cxx src/header_parser.cxx \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
 	src/ajp_headers.cxx src/ajp-protocol.c \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \

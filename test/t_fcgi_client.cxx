@@ -8,7 +8,7 @@
 #include "http_response.hxx"
 #include "async.h"
 #include "fd-util.h"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "lease.h"
 #include "direct.h"
 #include "fd_util.h"

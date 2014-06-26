@@ -6,7 +6,7 @@
 
 #include "http_server_internal.hxx"
 #include "direct.h"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "format.h"
 #include "date.h"
 #include "growing-buffer.h"

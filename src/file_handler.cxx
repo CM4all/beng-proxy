@@ -10,7 +10,7 @@
 #include "request.hxx"
 #include "generate_response.hxx"
 #include "static-headers.h"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "date.h"
 #include "format.h"
 #include "http_util.h"

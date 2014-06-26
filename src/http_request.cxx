@@ -8,7 +8,7 @@
 #include "http_response.hxx"
 #include "http_client.hxx"
 #include "http_address.hxx"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock.h"

@@ -11,7 +11,7 @@
 #include "http_client.hxx"
 #include "lease.h"
 #include "istream.h"
-#include "header-writer.h"
+#include "header_writer.hxx"
 
 struct lhttp_request {
     struct pool *pool;

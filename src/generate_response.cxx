@@ -7,7 +7,7 @@
 #include "generate_response.hxx"
 #include "request.hxx"
 #include "http_server.hxx"
-#include "header-writer.h"
+#include "header_writer.hxx"
 #include "growing-buffer.h"
 #include "istream.h"
 
