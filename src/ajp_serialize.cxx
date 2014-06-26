@@ -5,7 +5,7 @@
  */
 
 #include "ajp_serialize.hxx"
-#include "serialize.h"
+#include "serialize.hxx"
 #include "growing-buffer.h"
 #include "strref.h"
 

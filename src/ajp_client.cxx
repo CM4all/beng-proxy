@@ -16,7 +16,7 @@
 #include "istream-internal.h"
 #include "istream-gb.h"
 #include "ajp-protocol.h"
-#include "serialize.h"
+#include "serialize.hxx"
 #include "strref.h"
 #include "please.h"
 #include "uri-verify.h"

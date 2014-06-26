@@ -10,7 +10,7 @@
 #include "memcached_stock.hxx"
 #include "memcached_client.hxx"
 #include "growing-buffer.h"
-#include "serialize.h"
+#include "serialize.hxx"
 #include "sink_header.hxx"
 #include "strref.h"
 #include "strmap.h"

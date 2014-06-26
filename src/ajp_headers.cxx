@@ -7,7 +7,7 @@
 #include "ajp_headers.hxx"
 #include "ajp-protocol.h"
 #include "ajp_serialize.hxx"
-#include "serialize.h"
+#include "serialize.hxx"
 #include "growing-buffer.h"
 #include "strmap.h"
 #include "strref.h"

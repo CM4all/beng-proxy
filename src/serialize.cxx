@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "serialize.h"
+#include "serialize.hxx"
 #include "strmap.h"
 #include "growing-buffer.h"
 #include "strref.h"
@@ -17,27 +17,21 @@
 void
 serialize_uint16(struct growing_buffer *gb, uint16_t value)
 {
-    uint16_t *dest;
-
-    dest = growing_buffer_write(gb, sizeof(*dest));
+    uint16_t *dest = (uint16_t *)growing_buffer_write(gb, sizeof(*dest));
     *dest = g_htons(value);
 }
 
 void
 serialize_uint32(struct growing_buffer *gb, uint32_t value)
 {
-    uint32_t *dest;
-
-    dest = growing_buffer_write(gb, sizeof(*dest));
+    uint32_t *dest = (uint32_t *)growing_buffer_write(gb, sizeof(*dest));
     *dest = g_htonl(value);
 }
 
 void
 serialize_uint64(struct growing_buffer *gb, uint64_t value)
 {
-    uint64_t *dest;
-
-    dest = growing_buffer_write(gb, sizeof(*dest));
+    uint64_t *dest = (uint64_t *)growing_buffer_write(gb, sizeof(*dest));
     *dest = GUINT64_TO_BE(value);
 }
 
@@ -52,7 +46,7 @@ serialize_size_t(struct growing_buffer *gb, size_t value)
 void
 serialize_string(struct growing_buffer *gb, const char *value)
 {
-    assert(value != NULL);
+    assert(value != nullptr);
 
     /* write the string including the null terminator */
     growing_buffer_write_buffer(gb, value, strlen(value) + 1);
@@ -61,7 +55,7 @@ serialize_string(struct growing_buffer *gb, const char *value)
 void
 serialize_string_null(struct growing_buffer *gb, const char *value)
 {
-    serialize_string(gb, value != NULL ? value : "");
+    serialize_string(gb, value != nullptr ? value : "");
 }
 
 void
@@ -69,7 +63,7 @@ serialize_strmap(struct growing_buffer *gb, struct strmap *map)
 {
     const struct strmap_pair *pair;
 
-    if (map == NULL) {
+    if (map == nullptr) {
         /* same as empty map */
         serialize_string(gb, "");
         return;
@@ -77,7 +71,7 @@ serialize_strmap(struct growing_buffer *gb, struct strmap *map)
 
     strmap_rewind(map);
 
-    while ((pair = strmap_next(map)) != NULL) {
+    while ((pair = strmap_next(map)) != nullptr) {
         if (*pair->key == 0)
             /* this shouldn't happen; ignore this invalid entry  */
             continue;
@@ -100,7 +94,8 @@ deserialize_uint16(struct strref *input)
         return 0;
     }
 
-    value = g_ntohs(*(const uint16_t *)input->data);
+    const void *data = input->data;
+    value = g_ntohs(*(const uint16_t *)data);
     strref_skip(input, sizeof(value));
 
     return value;
@@ -116,7 +111,8 @@ deserialize_uint32(struct strref *input)
         return 0;
     }
 
-    value = g_ntohl(*(const uint32_t *)input->data);
+    const void *data = input->data;
+    value = g_ntohl(*(const uint32_t *)data);
     strref_skip(input, sizeof(value));
 
     return value;
@@ -132,7 +128,8 @@ deserialize_uint64(struct strref *input)
         return 0;
     }
 
-    value = GUINT64_FROM_BE(*(const uint64_t *)input->data);
+    const void *data = input->data;
+    value = GUINT64_FROM_BE(*(const uint64_t *)data);
     strref_skip(input, sizeof(value));
 
     return value;
@@ -143,9 +140,9 @@ deserialize_string(struct strref *input)
 {
     const char *value, *end = strref_chr(input, 0);
 
-    if (end == NULL) {
+    if (end == nullptr) {
         strref_null(input);
-        return NULL;
+        return nullptr;
     }
 
     value = input->data;
@@ -158,8 +155,8 @@ const char *
 deserialize_string_null(struct strref *input)
 {
     const char *value = deserialize_string(input);
-    if (value != NULL && *value == 0)
-        value = NULL;
+    if (value != nullptr && *value == 0)
+        value = nullptr;
     return value;
 }
 
@@ -170,20 +167,20 @@ deserialize_strmap(struct strref *input, struct pool *pool)
     struct strmap *map;
 
     key = deserialize_string(input);
-    if (key == NULL || *key == 0)
-        return NULL;
+    if (key == nullptr || *key == 0)
+        return nullptr;
 
     map = strmap_new(pool, 17);
 
     do {
         value = deserialize_string(input);
-        if (value == NULL)
-            return NULL;
+        if (value == nullptr)
+            return nullptr;
 
         strmap_add(map, key, value);
         key = deserialize_string(input);
-        if (key == NULL)
-            return NULL;
+        if (key == nullptr)
+            return nullptr;
     } while (*key != 0);
 
     return map;

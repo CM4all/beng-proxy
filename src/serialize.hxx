@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SERIALIZE_H
-#define BENG_PROXY_SERIALIZE_H
+#ifndef BENG_PROXY_SERIALIZE_HXX
+#define BENG_PROXY_SERIALIZE_HXX
 
 #include <stdint.h>
 
@@ -13,10 +13,6 @@ struct pool;
 struct growing_buffer;
 struct strmap;
 struct strref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 serialize_uint16(struct growing_buffer *gb, uint16_t value);
@@ -53,9 +49,5 @@ deserialize_string_null(struct strref *input);
 
 struct strmap *
 deserialize_strmap(struct strref *input, struct pool *pool);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

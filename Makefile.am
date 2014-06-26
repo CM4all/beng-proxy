@@ -226,7 +226,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/resource_tag.cxx src/resource_tag.hxx \
 	src/rewrite_uri.cxx src/rewrite_uri.hxx \
 	src/rwlock.h \
-	src/serialize.c src/serialize.h \
+	src/serialize.cxx src/serialize.hxx \
 	src/shm.c src/shm.h \
 	src/sink-gstring.h \
 	src/sink-impl.h \
@@ -1645,7 +1645,7 @@ test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	src/ajp_headers.cxx src/ajp-protocol.c \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/cleanup_timer.c \
-	src/serialize.c \
+	src/serialize.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/fd-util.c src/fd_util.c \
 	src/strmap.c src/hashmap.c \
@@ -1674,7 +1674,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
 	src/ajp_headers.cxx src/ajp-protocol.c \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
-	src/serialize.c \
+	src/serialize.cxx \
 	src/cleanup_timer.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/fd-util.c src/fd_util.c \
@@ -1743,7 +1743,7 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/cleanup_timer.c \
 	src/direct.c \
-	src/serialize.c \
+	src/serialize.cxx \
 	src/growing-buffer.c src/sink_buffer.cxx \
 	src/strmap.c src/hashmap.c \
 	src/tpool.c
@@ -1767,7 +1767,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/memcached_stock.cxx \
 	src/http_cache_choice.cxx src/http_cache_rfc.cxx \
 	src/http_util.c \
-	src/serialize.c \
+	src/serialize.cxx \
 	src/sink_buffer.cxx \
 	src/growing-buffer.c \
 	src/buffered_io.c src/fifo-buffer.c \

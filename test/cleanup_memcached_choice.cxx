@@ -11,7 +11,6 @@
 #include "strref.h"
 #include "strmap.h"
 #include "tpool.h"
-#include "serialize.h"
 #include "sink-impl.h"
 #include "direct.h"
 #include "fb_pool.h"

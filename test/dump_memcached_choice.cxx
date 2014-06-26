@@ -6,7 +6,7 @@
 #include "strref.h"
 #include "strmap.h"
 #include "tpool.h"
-#include "serialize.h"
+#include "serialize.hxx"
 #include "sink_buffer.hxx"
 #include "istream.h"
 #include "direct.h"
