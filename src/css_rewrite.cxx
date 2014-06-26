@@ -10,7 +10,7 @@
 #include "pool.h"
 #include "tpool.h"
 #include "istream.h"
-#include "istream-replace.h"
+#include "istream_replace.hxx"
 #include "strutil.h"
 
 #include <glib.h>

@@ -4,17 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ISTREAM_REPLACE_H
-#define BENG_PROXY_ISTREAM_REPLACE_H
+#ifndef BENG_PROXY_ISTREAM_REPLACE_HXX
+#define BENG_PROXY_ISTREAM_REPLACE_HXX
 
 #include <sys/types.h>
 
 struct pool;
 struct istream;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct istream *
 istream_replace_new(struct pool *pool, struct istream *input);
@@ -45,9 +41,5 @@ istream_replace_settle(struct istream *istream, off_t offset);
 
 void
 istream_replace_finish(struct istream *istream);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

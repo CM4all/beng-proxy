@@ -34,7 +34,7 @@
 #include "css_util.hxx"
 #include "istream.h"
 #include "istream-internal.h"
-#include "istream-replace.h"
+#include "istream_replace.hxx"
 #include "istream-catch.h"
 #include "istream_tee.h"
 #include "util/Cast.hxx"
