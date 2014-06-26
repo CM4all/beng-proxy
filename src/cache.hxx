@@ -7,9 +7,10 @@
 #ifndef BENG_PROXY_CACHE_HXX
 #define BENG_PROXY_CACHE_HXX
 
-#include <inline/compiler.h>
 
+#include <inline/compiler.h>
 #include <boost/intrusive/list.hpp>
+#include <boost/intrusive/unordered_set.hpp>
 
 #include <sys/time.h>
 #include <stddef.h>
@@ -22,11 +23,14 @@ struct cache_item {
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
     typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
+    typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
 
     /**
      * This item's siblings, sorted by #last_accessed.
      */
     SiblingsHook sorted_siblings;
+
+    SetHook set_hook;
 
     /**
      * The key under which this item is stored in the hash table.
@@ -51,6 +55,36 @@ struct cache_item {
 
     cache_item() = default;
     cache_item(const cache_item &) = delete;
+
+    gcc_pure
+    static size_t KeyHasher(const char *key);
+
+    gcc_pure
+    static size_t ValueHasher(const struct cache_item &value) {
+        return KeyHasher(value.key);
+    }
+
+    gcc_pure
+    static bool KeyValueEqual(const char *a, const struct cache_item &b) {
+        assert(a != nullptr);
+
+        return strcmp(a, b.key) == 0;
+    }
+
+    struct Hash {
+        gcc_pure
+        size_t operator()(const struct cache_item &value) const {
+            return ValueHasher(value);
+        }
+    };
+
+    struct Equal {
+        gcc_pure
+        bool operator()(const struct cache_item &a,
+                        const struct cache_item &b) const {
+            return KeyValueEqual(a.key, b);
+        }
+    };
 };
 
 struct cache_class {

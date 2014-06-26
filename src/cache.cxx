@@ -5,11 +5,11 @@
  */
 
 #include "cache.hxx"
-#include "hashmap.hxx"
 #include "AllocatorStats.hxx"
 #include "pool.hxx"
 #include "event/CleanupTimer.hxx"
 #include "system/clock.h"
+#include "util/djbhash.h"
 
 #include <assert.h>
 #include <time.h>
@@ -23,7 +23,16 @@ struct cache {
     const struct cache_class &cls;
     const size_t max_size;
     size_t size;
-    struct hashmap *const items;
+
+    typedef boost::intrusive::unordered_multiset<struct cache_item,
+                                                 boost::intrusive::member_hook<struct cache_item,
+                                                                               cache_item::SetHook,
+                                                                               &cache_item::set_hook>,
+                                                 boost::intrusive::hash<cache_item::Hash>,
+                                                 boost::intrusive::equal<cache_item::Equal>,
+                                                 boost::intrusive::constant_time_size<false>> ItemSet;
+
+    ItemSet items;
 
     /**
      * A linked list of all cache items, sorted by last_accessed,
@@ -41,7 +50,9 @@ struct cache {
           unsigned hashtable_capacity, size_t _max_size)
         :pool(_pool), cls(_cls),
          max_size(_max_size), size(0),
-         items(hashmap_new(&_pool, hashtable_capacity)) {
+         items(ItemSet::bucket_traits(PoolAlloc<ItemSet::bucket_type>(_pool,
+                                                                      hashtable_capacity),
+                                      hashtable_capacity)) {
         cleanup_timer.Init(60, ExpireCallback, this);
     }
 
@@ -55,13 +66,32 @@ struct cache {
 
     void ItemRemoved(struct cache_item *item);
 
+    class ItemRemover {
+        struct cache &cache;
+
+    public:
+        explicit ItemRemover(struct cache &_cache):cache(_cache) {}
+
+        void operator()(struct cache_item *item) {
+            cache.ItemRemoved(item);
+        }
+    };
+
     void RemoveItem(struct cache_item &item) {
         assert(!item.removed);
 
-        hashmap_remove_existing(items, item.key, &item);
-        ItemRemoved(&item);
+        items.erase_and_dispose(items.iterator_to(item),
+                                cache::ItemRemover(*this));
     }
 };
+
+inline size_t
+cache_item::KeyHasher(const char *key)
+{
+    assert(key != nullptr);
+
+    return djb_hash_string(key);
+}
 
 struct cache *
 cache_new(struct pool &pool, const struct cache_class *cls,
@@ -80,22 +110,17 @@ cache::~cache()
     Check();
 
     if (cls.destroy != nullptr) {
-        hashmap_rewind(items);
-
-        const struct hashmap_pair *pair;
-        while ((pair = hashmap_next(items)) != nullptr) {
-            struct cache_item *item = (struct cache_item *)pair->value;
-
-            assert(item->lock == 0);
-            assert(size >= item->size);
-            size -= item->size;
+        items.clear_and_dispose([this](struct cache_item *item){
+                assert(item->lock == 0);
+                assert(size >= item->size);
+                size -= item->size;
 
 #ifndef NDEBUG
-            sorted_items.erase(sorted_items.iterator_to(*item));
+                sorted_items.erase(sorted_items.iterator_to(*item));
 #endif
 
-            cls.destroy(item);
-        }
+                cls.destroy(item);
+            });
 
         assert(size == 0);
         assert(sorted_items.empty());
@@ -167,23 +192,11 @@ cache::ItemRemoved(struct cache_item *item)
         cleanup_timer.Disable();
 }
 
-static bool
-cache_flush_callback(gcc_unused const char *key, void *value, void *ctx)
-{
-    struct cache *cache = (struct cache *)ctx;
-    struct cache_item *item = (struct cache_item *)value;
-
-    cache->ItemRemoved(item);
-    return true;
-}
-
 void
 cache_flush(struct cache *cache)
 {
     cache->Check();
-
-    hashmap_remove_all_match(cache->items, cache_flush_callback, cache);
-
+    cache->items.clear_and_dispose(cache::ItemRemover(*cache));
     cache->Check();
 }
 
@@ -208,10 +221,12 @@ cache_refresh_item(struct cache *cache, struct cache_item *item, unsigned now)
 struct cache_item *
 cache_get(struct cache *cache, const char *key)
 {
-    struct cache_item *item = (struct cache_item *)
-        hashmap_get(cache->items, key);
-    if (item == nullptr)
+    auto i = cache->items.find(key, cache_item::KeyHasher,
+                               cache_item::KeyValueEqual);
+    if (i == cache->items.end())
         return nullptr;
+
+    struct cache_item *item = &*i;
 
     const unsigned now = now_s();
 
@@ -232,41 +247,27 @@ cache_get_match(struct cache *cache, const char *key,
                 void *ctx)
 {
     const unsigned now = now_s();
-    const struct hashmap_pair *pair = nullptr;
 
-    while (true) {
-        if (pair != nullptr) {
-            struct cache_item *item = (struct cache_item *)pair->value;
+    const auto r = cache->items.equal_range(key, cache_item::KeyHasher,
+                                            cache_item::KeyValueEqual);
+    for (auto i = r.first, end = r.second; i != end;) {
+        struct cache_item *item = &*i++;
 
-            if (!cache_item_validate(cache, item, now)) {
-                /* expired cache item: delete it, and re-start the
-                   search */
+        if (!cache_item_validate(cache, item, now)) {
+            /* expired cache item: delete it, and re-start the
+               search */
 
-                cache->Check();
-                cache->RemoveItem(*item);
-                cache->Check();
-
-                pair = nullptr;
-                continue;
-            }
-
-            if (match(item, ctx)) {
-                /* this one matches: return it to the caller */
-                cache_refresh_item(cache, item, now);
-                return item;
-            }
-
-            /* find the next cache_item for this key */
-            pair = hashmap_lookup_next(pair);
-        } else {
-            /* find the first cache_item for this key */
-            pair = hashmap_lookup_first(cache->items, key);
+            cache->Check();
+            cache->RemoveItem(*item);
+            cache->Check();
+        } else if (match(item, ctx)) {
+            /* this one matches: return it to the caller */
+            cache_refresh_item(cache, item, now);
+            return item;
         }
-
-        if (pair == nullptr)
-            /* no match */
-            return nullptr;
     };
+
+    return nullptr;
 }
 
 static void
@@ -310,7 +311,7 @@ cache_add(struct cache *cache, const char *key,
     cache->Check();
 
     item->key = key;
-    hashmap_add(cache->items, key, item);
+    cache->items.insert(*item);
     cache->sorted_items.push_back(*item);
 
     cache->size += item->size;
@@ -343,14 +344,15 @@ cache_put(struct cache *cache, const char *key,
 
     item->key = key;
 
-    struct cache_item *old = (struct cache_item *)
-        hashmap_set(cache->items, key, item);
-    if (old != nullptr)
-        cache->ItemRemoved(old);
+    auto i = cache->items.find(key, cache_item::KeyHasher,
+                               cache_item::KeyValueEqual);
+    if (i != cache->items.end())
+        cache->RemoveItem(*i);
 
     cache->size += item->size;
     item->last_accessed = now_s();
 
+    cache->items.insert(*item);
     cache->sorted_items.push_back(*item);
 
     cache->Check();
@@ -381,32 +383,13 @@ cache_put_match(struct cache *cache, const char *key,
 void
 cache_remove(struct cache *cache, const char *key)
 {
-    struct cache_item *item;
-
-    while ((item = (struct cache_item *)hashmap_remove(cache->items, key)) != nullptr)
-        cache->ItemRemoved(item);
+    cache->items.erase_and_dispose(key, cache_item::KeyHasher,
+                                   cache_item::KeyValueEqual,
+                                   [cache](struct cache_item *item){
+                                       cache->ItemRemoved(item);
+                                   });
 
     cache->Check();
-}
-
-struct cache_remove_match_data {
-    struct cache *cache;
-    bool (*match)(const struct cache_item *, void *);
-    void *ctx;
-};
-
-static bool
-cache_remove_match_callback(void *value, void *ctx)
-{
-    const struct cache_remove_match_data *data =
-        (const struct cache_remove_match_data *)ctx;
-    struct cache_item *item = (struct cache_item *)value;
-
-    if (data->match(item, data->ctx)) {
-        data->cache->ItemRemoved(item);
-        return true;
-    } else
-        return false;
 }
 
 void
@@ -414,15 +397,18 @@ cache_remove_match(struct cache *cache, const char *key,
                    bool (*match)(const struct cache_item *, void *),
                    void *ctx)
 {
-    struct cache_remove_match_data data = {
-        .cache = cache,
-        .match = match,
-        .ctx = ctx,
-    };
-
     cache->Check();
-    hashmap_remove_match(cache->items, key,
-                         cache_remove_match_callback, &data);
+
+    const auto r = cache->items.equal_range(key, cache_item::KeyHasher,
+                                            cache_item::KeyValueEqual);
+    for (auto i = r.first, end = r.second; i != end;) {
+        const struct cache_item &item = *i++;
+
+        if (match(&item, ctx))
+            cache->items.erase_and_dispose(cache->items.iterator_to(item),
+                                           cache::ItemRemover(*cache));
+    }
+
     cache->Check();
 }
 
@@ -435,37 +421,8 @@ cache_remove_item(struct cache *cache, struct cache_item *item)
         return;
     }
 
-    bool found = hashmap_remove_value(cache->items, item->key, item);
-    if (!found) {
-        /* the specified item has been removed before */
-        cache->Check();
-        return;
-    }
-
-    cache->ItemRemoved(item);
-
+    cache->RemoveItem(*item);
     cache->Check();
-}
-
-struct cache_remove_all_match_data {
-    struct cache *cache;
-    bool (*match)(const struct cache_item *, void *);
-    void *ctx;
-};
-
-static bool
-cache_remove_all_match_callback(gcc_unused const char *key, void *value,
-                                void *ctx)
-{
-    const struct cache_remove_all_match_data *data =
-        (const struct cache_remove_all_match_data *)ctx;
-    struct cache_item *item = (struct cache_item *)value;
-
-    if (data->match(item, data->ctx)) {
-        data->cache->ItemRemoved(item);
-        return true;
-    } else
-        return false;
 }
 
 unsigned
@@ -473,16 +430,22 @@ cache_remove_all_match(struct cache *cache,
                        bool (*match)(const struct cache_item *, void *),
                        void *ctx)
 {
-    struct cache_remove_all_match_data data = {
-        .cache = cache,
-        .match = match,
-        .ctx = ctx,
-    };
-    unsigned removed;
-
     cache->Check();
-    removed = hashmap_remove_all_match(cache->items,
-                                       cache_remove_all_match_callback, &data);
+
+    unsigned removed = 0;
+
+    for (auto i = cache->sorted_items.begin(), end = cache->sorted_items.end();
+         i != end;) {
+        struct cache_item &item = *i++;
+
+        if (!match(&item, ctx))
+            continue;
+
+        cache->items.erase(cache->items.iterator_to(item));
+        cache->ItemRemoved(&item);
+        ++removed;
+    }
+
     cache->Check();
 
     return removed;
