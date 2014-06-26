@@ -31,7 +31,7 @@
 #include "util/ConstBuffer.hxx"
 
 #ifdef HAVE_LIBNFS
-#include "nfs_request.h"
+#include "nfs_request.hxx"
 #endif
 
 #include <socket/parser.h>
@@ -208,7 +208,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             /* NFS files cannot receive a request body, close it */
             istream_close_unused(body);
 
-        nfs_request(pool, rl->nfs_cache,
+        nfs_request(*pool, rl->nfs_cache,
                     address->u.nfs->server, address->u.nfs->export_name,
                     address->u.nfs->path,
                     address->u.nfs->content_type,

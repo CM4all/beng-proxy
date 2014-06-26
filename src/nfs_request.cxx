@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nfs_request.h"
+#include "nfs_request.hxx"
 #include "nfs_cache.h"
 #include "http_response.h"
 #include "static-headers.h"
@@ -14,20 +14,29 @@
 #include <sys/stat.h>
 
 struct nfs_request {
-    struct pool *pool;
+    struct pool &pool;
 
-    const char *path;
-    const char *content_type;
+    const char *const path;
+    const char *const content_type;
 
     struct http_response_handler_ref handler;
 
-    struct async_operation_ref *async_ref;
+    struct async_operation_ref *const async_ref;
+
+    nfs_request(struct pool &_pool, const char *_path,
+                const char *_content_type,
+                const struct http_response_handler *_handler, void *ctx,
+                struct async_operation_ref *_async_ref)
+        :pool(_pool), path(_path), content_type(_content_type),
+         async_ref(_async_ref) {
+        http_response_handler_set(&handler, _handler, ctx);
+    }
 };
 
 static void
 nfs_request_error(GError *error, void *ctx)
 {
-    struct nfs_request *r = ctx;
+    struct nfs_request *r = (struct nfs_request *)ctx;
 
     http_response_handler_invoke_abort(&r->handler, error);
 }
@@ -41,14 +50,14 @@ static void
 nfs_request_response(struct nfs_cache_handle *handle,
                      const struct stat *st, void *ctx)
 {
-    struct nfs_request *r = ctx;
+    struct nfs_request *r = (struct nfs_request *)ctx;
 
-    struct strmap *headers = strmap_new(r->pool, 16);
-    static_response_headers(r->pool, headers, -1, st,
+    struct strmap *headers = strmap_new(&r->pool, 16);
+    static_response_headers(&r->pool, headers, -1, st,
                             r->content_type);
     strmap_add(headers, "cache-control", "max-age=60");
 
-    struct istream *body = nfs_cache_handle_open(r->pool, handle,
+    struct istream *body = nfs_cache_handle_open(&r->pool, handle,
                                                  0, st->st_size);
 
     http_response_handler_invoke_response(&r->handler,
@@ -69,21 +78,16 @@ static const struct nfs_cache_handler nfs_request_cache_handler = {
  */
 
 void
-nfs_request(struct pool *pool, struct nfs_cache *nfs_cache,
-            const char *server, const char *export, const char *path,
+nfs_request(struct pool &pool, struct nfs_cache *nfs_cache,
+            const char *server, const char *export_name, const char *path,
             const char *content_type,
             const struct http_response_handler *handler, void *handler_ctx,
             struct async_operation_ref *async_ref)
 {
-    struct nfs_request *r = p_malloc(pool, sizeof(*r));
+    auto r = NewFromPool<struct nfs_request>(&pool, pool, path, content_type,
+                                             handler, handler_ctx, async_ref);
 
-    r->pool = pool;
-    r->path = path;
-    r->content_type = content_type;
-    http_response_handler_set(&r->handler, handler, handler_ctx);
-    r->async_ref = async_ref;
-
-    nfs_cache_request(pool, nfs_cache, server, export, path,
+    nfs_cache_request(&pool, nfs_cache, server, export_name, path,
                       &nfs_request_cache_handler, r,
                       async_ref);
 }
