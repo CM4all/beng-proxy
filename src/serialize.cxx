@@ -7,7 +7,7 @@
 #include "serialize.hxx"
 #include "strmap.h"
 #include "growing-buffer.h"
-#include "strref.h"
+#include "util/ConstBuffer.hxx"
 
 #include <glib.h>
 
@@ -84,75 +84,80 @@ serialize_strmap(struct growing_buffer *gb, struct strmap *map)
     serialize_string(gb, "");
 }
 
+static void
+SkipFront(ConstBuffer<void> &input, size_t n)
+{
+    assert(input.size >= n);
+
+    input.data = (const uint8_t *)input.data + n;
+    input.size -= n;
+}
+
 uint16_t
-deserialize_uint16(struct strref *input)
+deserialize_uint16(ConstBuffer<void> &input)
 {
     uint16_t value;
 
-    if (input->length < sizeof(value)) {
-        strref_null(input);
+    if (input.size < sizeof(value)) {
+        input = nullptr;
         return 0;
     }
 
-    const void *data = input->data;
-    value = g_ntohs(*(const uint16_t *)data);
-    strref_skip(input, sizeof(value));
+    value = g_ntohs(*(const uint16_t *)input.data);
+    SkipFront(input, sizeof(value));
 
     return value;
 }
 
 uint32_t
-deserialize_uint32(struct strref *input)
+deserialize_uint32(ConstBuffer<void> &input)
 {
     uint32_t value;
 
-    if (input->length < sizeof(value)) {
-        strref_null(input);
+    if (input.size < sizeof(value)) {
+        input = nullptr;
         return 0;
     }
 
-    const void *data = input->data;
-    value = g_ntohl(*(const uint32_t *)data);
-    strref_skip(input, sizeof(value));
+    value = g_ntohl(*(const uint32_t *)input.data);
+    SkipFront(input, sizeof(value));
 
     return value;
 }
 
 uint64_t
-deserialize_uint64(struct strref *input)
+deserialize_uint64(ConstBuffer<void> &input)
 {
     uint64_t value;
 
-    if (input->length < sizeof(value)) {
-        strref_null(input);
+    if (input.size < sizeof(value)) {
+        input = nullptr;
         return 0;
     }
 
-    const void *data = input->data;
-    value = GUINT64_FROM_BE(*(const uint64_t *)data);
-    strref_skip(input, sizeof(value));
+    value = GUINT64_FROM_BE(*(const uint64_t *)input.data);
+    SkipFront(input, sizeof(value));
 
     return value;
 }
 
 const char *
-deserialize_string(struct strref *input)
+deserialize_string(ConstBuffer<void> &input)
 {
-    const char *value, *end = strref_chr(input, 0);
-
+    const char *end = (const char *)memchr(input.data, 0, input.size);
     if (end == nullptr) {
-        strref_null(input);
+        input = nullptr;
         return nullptr;
     }
 
-    value = input->data;
+    const char *value = (const char *)input.data;
 
-    strref_skip(input, end + 1 - value);
+    SkipFront(input, end + 1 - value);
     return value;
 }
 
 const char *
-deserialize_string_null(struct strref *input)
+deserialize_string_null(ConstBuffer<void> &input)
 {
     const char *value = deserialize_string(input);
     if (value != nullptr && *value == 0)
@@ -161,7 +166,7 @@ deserialize_string_null(struct strref *input)
 }
 
 struct strmap *
-deserialize_strmap(struct strref *input, struct pool *pool)
+deserialize_strmap(ConstBuffer<void> &input, struct pool *pool)
 {
     const char *key, *value;
     struct strmap *map;

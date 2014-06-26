@@ -11,13 +11,13 @@
 #include "tpool.h"
 #include "format.h"
 #include "strmap.h"
-#include "strref.h"
 #include "serialize.hxx"
 #include "growing-buffer.h"
 #include "sink_buffer.hxx"
 #include "uset.h"
 #include "istream.h"
 #include "djbhash.h"
+#include "util/ConstBuffer.hxx"
 
 #include <glib.h>
 #include <stdio.h>
@@ -36,7 +36,7 @@ struct http_cache_choice {
 
     const struct strmap *request_headers;
 
-    struct strref data;
+    ConstBuffer<void> data;
 
     struct memcached_set_extras extras;
 
@@ -115,7 +115,6 @@ static void
 http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 {
     http_cache_choice *choice = (http_cache_choice *)ctx;
-    struct strref data;
     time_t now = time(nullptr);
     uint32_t magic;
     struct http_cache_document document;
@@ -124,21 +123,21 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
     struct uset uset;
     unsigned hash;
 
-    strref_set(&data, (const char *)data0, length);
+    ConstBuffer<void> data(data0, length);
     uset_init(&uset);
 
-    while (!strref_is_empty(&data)) {
-        magic = deserialize_uint32(&data);
+    while (!data.IsEmpty()) {
+        magic = deserialize_uint32(data);
         if (magic != CHOICE_MAGIC)
             break;
 
-        document.info.expires = deserialize_uint64(&data);
+        document.info.expires = deserialize_uint64(data);
 
         const AutoRewindPool auto_rewind(tpool);
 
-        document.vary = deserialize_strmap(&data, tpool);
+        document.vary = deserialize_strmap(data, tpool);
 
-        if (strref_is_null(&data)) {
+        if (data.IsNull()) {
             /* deserialization failure */
             unclean = true;
             break;
@@ -261,8 +260,7 @@ http_cache_choice_prepare(struct pool *pool, const char *uri,
     serialize_uint64(gb, info->expires);
     serialize_strmap(gb, vary);
 
-    choice->data.data = (const char *)
-        growing_buffer_dup(gb, pool, &choice->data.length);
+    choice->data.data = growing_buffer_dup(gb, pool, &choice->data.size);
 
     return choice;
 }
@@ -319,7 +317,7 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
         choice->extras.expiration = g_htonl(600); /* XXX */
 
         value = istream_memory_new(choice->pool,
-                                   choice->data.data, choice->data.length);
+                                   choice->data.data, choice->data.size);
         memcached_stock_invoke(choice->pool, choice->stock,
                                MEMCACHED_OPCODE_ADD,
                                &choice->extras, sizeof(choice->extras),
@@ -367,7 +365,7 @@ http_cache_choice_commit(struct http_cache_choice *choice,
     cache_log(5, "prepend '%s'\n", choice->key);
 
     value = istream_memory_new(choice->pool,
-                               choice->data.data, choice->data.length);
+                               choice->data.data, choice->data.size);
     memcached_stock_invoke(choice->pool, stock,
                            MEMCACHED_OPCODE_PREPEND,
                            nullptr, 0,
@@ -409,33 +407,32 @@ static void
 http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 {
     http_cache_choice *choice = (http_cache_choice *)ctx;
-    struct strref data;
-    const char *current;
+    const void *current;
     uint32_t magic;
     struct http_cache_document document;
 
-    strref_set(&data, (const char *)data0, length);
+    ConstBuffer<void> data(data0, length);
     char *dest = (char *)data0;
 
-    while (!strref_is_empty(&data)) {
+    while (!data.IsEmpty()) {
         current = data.data;
 
-        magic = deserialize_uint32(&data);
+        magic = deserialize_uint32(data);
         if (magic != CHOICE_MAGIC)
             break;
 
-        document.info.expires = deserialize_uint64(&data);
+        document.info.expires = deserialize_uint64(data);
 
         const AutoRewindPool auto_rewind(tpool);
-        document.vary = deserialize_strmap(&data, tpool);
+        document.vary = deserialize_strmap(data, tpool);
 
-        if (strref_is_null(&data))
+        if (data.IsNull())
             /* deserialization failure */
             break;
 
         if (choice->callback.filter(&document, nullptr, choice->callback_ctx)) {
-            memmove(dest, current, strref_end(&data) - current);
-            dest += data.data - current;
+            memmove(dest, current, (const uint8_t *)data.data + data.size - (const uint8_t *)current);
+            dest += (const uint8_t *)data.data - (const uint8_t *)current;
         }
     }
 

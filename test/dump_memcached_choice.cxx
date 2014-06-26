@@ -3,7 +3,6 @@
 #include "lease.h"
 #include "async.h"
 #include "fd-util.h"
-#include "strref.h"
 #include "strmap.h"
 #include "tpool.h"
 #include "serialize.hxx"
@@ -11,6 +10,7 @@
 #include "istream.h"
 #include "direct.h"
 #include "fb_pool.h"
+#include "util/ConstBuffer.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -83,25 +83,24 @@ static const struct lease memcached_socket_lease = {
 static void
 my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
 {
-    struct strref data;
     struct http_cache_document document;
     /*uint32_t magic;*/
 
-    strref_set(&data, (const char *)data0, length);
+    ConstBuffer<void> data(data0, length);
 
-    while (!strref_is_empty(&data)) {
+    while (!data.IsEmpty()) {
         const AutoRewindPool auto_rewind(tpool);
 
-        /*magic = */deserialize_uint32(&data);
+        /*magic = */deserialize_uint32(data);
         /*
         if (magic != CHOICE_MAGIC)
             break;
         */
 
-        document.info.expires = deserialize_uint64(&data);
-        document.vary = deserialize_strmap(&data, tpool);
+        document.info.expires = deserialize_uint64(data);
+        document.vary = deserialize_strmap(data, tpool);
 
-        if (strref_is_null(&data))
+        if (data.IsNull())
             /* deserialization failure */
             break;
 

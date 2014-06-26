@@ -10,7 +10,7 @@
 #include <stddef.h>
 
 struct growing_buffer;
-struct strref;
+template<typename T> struct ConstBuffer;
 
 void
 serialize_ajp_string_n(struct growing_buffer *gb, const char *s, size_t length);
@@ -25,6 +25,6 @@ void
 serialize_ajp_bool(struct growing_buffer *gb, bool b);
 
 const char *
-deserialize_ajp_string(struct strref *input);
+deserialize_ajp_string(ConstBuffer<void> &input);
 
 #endif

@@ -7,7 +7,7 @@
 #include "ajp_serialize.hxx"
 #include "serialize.hxx"
 #include "growing-buffer.h"
-#include "strref.h"
+#include "util/ConstBuffer.hxx"
 
 #include <netinet/in.h>
 #include <string.h>
@@ -56,8 +56,17 @@ serialize_ajp_bool(struct growing_buffer *gb, bool b)
     *p = b ? 1 : 0;
 }
 
+static void
+SkipFront(ConstBuffer<void> &input, size_t n)
+{
+    assert(input.size >= n);
+
+    input.data = (const uint8_t *)input.data + n;
+    input.size -= n;
+}
+
 const char *
-deserialize_ajp_string(struct strref *input)
+deserialize_ajp_string(ConstBuffer<void> &input)
 {
     size_t length = deserialize_uint16(input);
     if (length == 0xffff)
@@ -65,14 +74,13 @@ deserialize_ajp_string(struct strref *input)
            determined it from a wireshark dump */
         return nullptr;
 
-    const char *value;
+    const char *value = (const char *)input.data;
 
-    if (input->length <= length || input->data[length] != 0) {
-        strref_null(input);
+    if (input.size <= length || value[length] != 0) {
+        input = nullptr;
         return nullptr;
     }
 
-    value = input->data;
-    strref_skip(input, length + 1);
+    SkipFront(input, length + 1);
     return value;
 }

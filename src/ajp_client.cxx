@@ -24,6 +24,7 @@
 #include "fd-util.h"
 #include "strmap.h"
 #include "util/Cast.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 #include <socket/util.h>
@@ -302,7 +303,6 @@ ajp_consume_send_headers(struct ajp_client *client,
 {
     unsigned num_headers;
     struct istream *body;
-    struct strref packet;
     struct strmap *headers;
 
     if (client->response.read_state != ajp_client::Response::READ_BEGIN) {
@@ -313,19 +313,19 @@ ajp_consume_send_headers(struct ajp_client *client,
         return false;
     }
 
-    strref_set(&packet, (const char *)data, length);
-    http_status_t status = (http_status_t)deserialize_uint16(&packet);
-    deserialize_ajp_string(&packet);
-    num_headers = deserialize_uint16(&packet);
+    ConstBuffer<void> packet(data, length);
+    http_status_t status = (http_status_t)deserialize_uint16(packet);
+    deserialize_ajp_string(packet);
+    num_headers = deserialize_uint16(packet);
 
     if (num_headers > 0) {
         headers = strmap_new(client->pool, 17);
         deserialize_ajp_response_headers(client->pool, headers,
-                                         &packet, num_headers);
+                                         packet, num_headers);
     } else
         headers = nullptr;
 
-    if (strref_is_null(&packet)) {
+    if (packet.IsNull()) {
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "malformed SEND_HEADERS packet from AJP server");

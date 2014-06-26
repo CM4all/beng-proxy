@@ -12,12 +12,12 @@
 #include "growing-buffer.h"
 #include "serialize.hxx"
 #include "sink_header.hxx"
-#include "strref.h"
 #include "strmap.h"
 #include "tpool.h"
 #include "background.h"
 #include "istream-gb.h"
 #include "istream.h"
+#include "util/ConstBuffer.hxx"
 
 #include <glib.h>
 
@@ -115,7 +115,7 @@ http_cache_memcached_flush(struct pool *pool, struct memcached_stock *stock,
 }
 
 static struct http_cache_document *
-mcd_deserialize_document(struct pool *pool, struct strref *header,
+mcd_deserialize_document(struct pool *pool, ConstBuffer<void> &header,
                          const struct strmap *request_headers)
 {
     auto document = PoolAlloc<http_cache_document>(pool);
@@ -127,7 +127,7 @@ mcd_deserialize_document(struct pool *pool, struct strref *header,
     document->status = (http_status_t)deserialize_uint16(header);
     document->headers = deserialize_strmap(header, pool);
 
-    if (strref_is_null(header) || !http_status_is_valid(document->status))
+    if (header.IsNull() || !http_status_is_valid(document->status))
         return nullptr;
 
     document->info.last_modified =
@@ -213,15 +213,14 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
                                  struct istream *tail, void *ctx)
 {
     auto request = (http_cache_memcached_request *)ctx;
-    struct strref header;
     struct http_cache_document *document;
 
-    strref_set(&header, (const char *)header_ptr, length);
+    ConstBuffer<void> header(header_ptr, length);
 
-    auto type = (http_cache_memcached_type)deserialize_uint32(&header);
+    auto type = (http_cache_memcached_type)deserialize_uint32(header);
     switch (type) {
     case TYPE_DOCUMENT:
-        document = mcd_deserialize_document(request->pool, &header,
+        document = mcd_deserialize_document(request->pool, header,
                                             request->request_headers);
         if (document == nullptr) {
             if (request->in_choice)

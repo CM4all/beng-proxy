@@ -10,7 +10,7 @@
 struct pool;
 struct growing_buffer;
 struct strmap;
-struct strref;
+template<typename T> struct ConstBuffer;
 
 /**
  * Serialize the specified headers to the buffer, but ignore "Content-Length".
@@ -22,10 +22,10 @@ serialize_ajp_headers(struct growing_buffer *gb, struct strmap *headers);
 
 void
 deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
-                        struct strref *input, unsigned num_headers);
+                        ConstBuffer<void> &input, unsigned num_headers);
 
 void
 deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
-                                 struct strref *input, unsigned num_headers);
+                                 ConstBuffer<void> &input, unsigned num_headers);
 
 #endif
