@@ -21,14 +21,10 @@ struct nfs_request {
 
     struct http_response_handler_ref handler;
 
-    struct async_operation_ref *const async_ref;
-
     nfs_request(struct pool &_pool, const char *_path,
                 const char *_content_type,
-                const struct http_response_handler *_handler, void *ctx,
-                struct async_operation_ref *_async_ref)
-        :pool(_pool), path(_path), content_type(_content_type),
-         async_ref(_async_ref) {
+                const struct http_response_handler *_handler, void *ctx)
+        :pool(_pool), path(_path), content_type(_content_type) {
         http_response_handler_set(&handler, _handler, ctx);
     }
 };
@@ -85,7 +81,7 @@ nfs_request(struct pool &pool, struct nfs_cache *nfs_cache,
             struct async_operation_ref *async_ref)
 {
     auto r = NewFromPool<struct nfs_request>(&pool, pool, path, content_type,
-                                             handler, handler_ctx, async_ref);
+                                             handler, handler_ctx);
 
     nfs_cache_request(&pool, nfs_cache, server, export_name, path,
                       &nfs_request_cache_handler, r,
