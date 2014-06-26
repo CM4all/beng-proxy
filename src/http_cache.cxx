@@ -15,7 +15,6 @@
 #include "http_util.hxx"
 #include "async.h"
 #include "background.h"
-#include "istream-gb.h"
 #include "istream.h"
 #include "cache.hxx"
 #include "rubber.hxx"

@@ -13,7 +13,7 @@
 #include "pevent.h"
 #include "http_body.hxx"
 #include "istream-internal.h"
-#include "istream-gb.h"
+#include "istream_gb.hxx"
 #include "async.h"
 #include "growing-buffer.h"
 #include "please.h"

@@ -317,8 +317,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/udp_listener.cxx src/udp_listener.hxx \
 	src/udp-distribute.c \
 	src/istream-ajp-body.c \
-	src/istream-gb.h \
-	src/istream-gb.c \
+	src/istream_gb.cxx src/istream_gb.hxx \
 	src/sigutil.h \
 	src/address_quark.h \
 	src/address_resolver.cxx src/address_resolver.hxx \
@@ -423,7 +422,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/uri_escape.cxx \
 	src/fifo-buffer.c \
 	src/growing-buffer.c \
-	src/istream-gb.c \
+	src/istream_gb.cxx \
 	src/buffered_io.c \
 	src/fd_util.c \
 	src/fd-util.c \
@@ -1080,7 +1079,7 @@ test_t_istream_tee_SOURCES = test/t_istream_tee.cxx \
 test_t_istream_tee_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_growing_buffer_SOURCES = test/t_growing_buffer.cxx \
-	src/istream-gb.c \
+	src/istream_gb.cxx \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_growing_buffer_LDADD = $(T_ISTREAM_FILTER_LIB)
 
@@ -1137,7 +1136,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/header_writer.cxx \
-	src/istream-gb.c \
+	src/istream_gb.cxx \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
 	src/http_body.cxx \
@@ -1164,7 +1163,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/buffered_io.c \
 	src/strmap.c src/hashmap.c \
 	src/header_writer.cxx \
-	src/istream-gb.c \
+	src/istream_gb.cxx \
 	src/pipe-stock.c src/stock.c \
 	src/direct.c \
 	src/http_body.cxx \
@@ -1191,7 +1190,7 @@ test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/strmap.c src/hashmap.c \
 	src/growing-buffer.c src/fifo-buffer.c \
 	src/header_writer.cxx \
-	src/istream-gb.c \
+	src/istream_gb.cxx \
 	src/direct.c \
 	src/http_body.cxx src/header_parser.cxx \
 	src/buffered_io.c src/fd_util.c src/fd-util.c \
@@ -1220,7 +1219,7 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/fifo-buffer.c src/header_parser.cxx \
 	src/growing-buffer.c \
 	src/istream_rubber.cxx \
-	src/istream-gb.c \
+	src/istream_gb.cxx \
 	src/http_cache.cxx src/http_cache_rfc.cxx \
 	src/http_cache_info.cxx src/http_cache_document.cxx \
 	src/http_cache_heap.cxx src/http_cache_age.cxx \
@@ -1626,7 +1625,7 @@ test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/cleanup_timer.c \
 	src/strmap.c src/hashmap.c \
 	src/header_parser.cxx \
-	src/growing-buffer.c src/istream-gb.c \
+	src/growing-buffer.c src/istream_gb.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/tpool.c \
 	src/direct.c
@@ -1648,7 +1647,7 @@ test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/fd-util.c src/fd_util.c \
 	src/strmap.c src/hashmap.c \
-	src/istream-gb.c \
+	src/istream_gb.cxx \
 	src/istream-ajp-body.c \
 	src/direct.c 
 test_t_ajp_client_LDADD = $(AM_LDADD) \
@@ -1678,7 +1677,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/growing-buffer.c src/fd-util.c src/fd_util.c \
 	src/strmap.c src/hashmap.c \
-	src/istream-gb.c \
+	src/istream_gb.cxx \
 	src/istream-ajp-body.c \
 	src/stock.c src/pipe-stock.c \
 	src/shutdown_listener.c \

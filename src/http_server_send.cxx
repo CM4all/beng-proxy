@@ -10,7 +10,7 @@
 #include "format.h"
 #include "date.h"
 #include "growing-buffer.h"
-#include "istream-gb.h"
+#include "istream_gb.hxx"
 
 #include <string.h>
 

@@ -14,7 +14,7 @@
 #include "pevent.h"
 #include "format.h"
 #include "istream-internal.h"
-#include "istream-gb.h"
+#include "istream_gb.hxx"
 #include "ajp-protocol.h"
 #include "serialize.hxx"
 #include "strref.h"

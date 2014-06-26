@@ -1,6 +1,6 @@
 #include "growing-buffer.h"
 #include "direct.h"
-#include "istream-gb.h"
+#include "istream_gb.hxx"
 #include "istream.h"
 
 #include <event.h>

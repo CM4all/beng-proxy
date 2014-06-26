@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream-gb.h"
+#include "istream_gb.hxx"
 #include "istream-internal.h"
 #include "growing-buffer.h"
 
@@ -34,7 +34,7 @@ istream_gb_read(struct istream *istream)
     while (1) {
         size_t length;
         const void *data = growing_buffer_reader_read(&igb->reader, &length);
-        if (data == NULL) {
+        if (data == nullptr) {
             assert(growing_buffer_reader_eof(&igb->reader));
             istream_deinit_eof(&igb->output);
             return;
@@ -70,7 +70,7 @@ static const struct istream_class istream_gb = {
 struct istream *
 istream_gb_new(struct pool *pool, const struct growing_buffer *gb)
 {
-    assert(gb != NULL);
+    assert(gb != nullptr);
 
     struct istream_gb *igb = istream_new_macro(pool, gb);
     growing_buffer_reader_init(&igb->reader, gb);

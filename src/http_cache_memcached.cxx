@@ -15,7 +15,7 @@
 #include "strmap.h"
 #include "tpool.h"
 #include "background.h"
-#include "istream-gb.h"
+#include "istream_gb.hxx"
 #include "istream.h"
 #include "util/ConstBuffer.hxx"
 
