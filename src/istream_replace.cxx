@@ -6,7 +6,7 @@
 
 #include "istream_replace.hxx"
 #include "istream-internal.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "util/Cast.hxx"
 
 #include <inline/poison.h>

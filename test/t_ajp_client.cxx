@@ -9,7 +9,7 @@
 #include "duplex.h"
 #include "async.h"
 #include "fd-util.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "header_writer.hxx"
 #include "lease.h"
 #include "direct.h"

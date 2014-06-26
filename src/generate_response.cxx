@@ -8,7 +8,7 @@
 #include "request.hxx"
 #include "http_server.hxx"
 #include "header_writer.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "istream.h"
 
 #include <assert.h>

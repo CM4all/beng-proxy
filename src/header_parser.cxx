@@ -7,7 +7,7 @@
 #include "header_parser.hxx"
 #include "strutil.h"
 #include "strmap.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "fifo-buffer.h"
 #include "tpool.h"
 

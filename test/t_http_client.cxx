@@ -5,7 +5,7 @@
 #include "t_client.hxx"
 #include "http_client.hxx"
 #include "header_writer.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "fd-util.h"
 #include "direct.h"
 #include "fd_util.h"

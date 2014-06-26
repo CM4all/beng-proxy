@@ -5,7 +5,7 @@
 #include "shm.h"
 #include "dpool.h"
 #include "strmap.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 
 #include <stdio.h>
 #include <unistd.h>

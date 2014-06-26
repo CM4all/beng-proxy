@@ -11,7 +11,7 @@
 #include "strmap.h"
 #include "widget.h"
 #include "widget-lookup.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "tpool.h"
 #include "async.h"
 #include "rewrite_uri.hxx"

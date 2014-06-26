@@ -9,7 +9,7 @@
 #include "http_cache_internal.hxx"
 #include "memcached_stock.hxx"
 #include "memcached_client.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "serialize.hxx"
 #include "sink_header.hxx"
 #include "strmap.h"

@@ -12,7 +12,7 @@
 #include "static-headers.h"
 #include "header_writer.hxx"
 #include "generate_response.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "request.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"

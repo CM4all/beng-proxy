@@ -18,7 +18,7 @@
 #include "widget-lookup.h"
 #include "widget_class.hxx"
 #include "widget-quark.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "tpool.h"
 #include "inline_widget.hxx"
 #include "async.h"

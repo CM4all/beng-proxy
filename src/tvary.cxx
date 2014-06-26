@@ -5,7 +5,7 @@
 #include "tvary.hxx"
 #include "translate_response.hxx"
 #include "strmap.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "header_writer.hxx"
 #include "pool.h"
 

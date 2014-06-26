@@ -4,12 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_GROWING_BUFFER_H
-#define __BENG_GROWING_BUFFER_H
+#ifndef BENG_PROXY_GROWING_BUFFER_HXX
+#define BENG_PROXY_GROWING_BUFFER_HXX
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -22,10 +21,6 @@ struct growing_buffer_reader {
     const struct buffer *buffer;
     size_t position;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct growing_buffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size);
@@ -100,9 +95,5 @@ void *
 growing_buffer_dup2(const struct growing_buffer *a,
                     const struct growing_buffer *b,
                     struct pool *pool, size_t *length_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

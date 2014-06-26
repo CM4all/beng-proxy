@@ -6,7 +6,7 @@
 
 #include "serialize.hxx"
 #include "strmap.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <glib.h>

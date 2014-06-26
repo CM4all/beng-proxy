@@ -13,7 +13,7 @@
 #include "tcp_balancer.hxx"
 #include "stock.h"
 #include "async.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "lease.h"
 #include "abort-close.h"
 #include "failure.hxx"

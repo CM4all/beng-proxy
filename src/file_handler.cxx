@@ -14,7 +14,7 @@
 #include "date.h"
 #include "format.h"
 #include "http_util.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "http_server.hxx"
 #include "global.h"
 #include "istream_file.h"

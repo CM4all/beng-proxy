@@ -15,7 +15,7 @@
 #include "istream-internal.h"
 #include "istream_gb.hxx"
 #include "async.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "please.h"
 #include "uri-verify.h"
 #include "direct.h"

@@ -12,7 +12,7 @@
 #include "format.h"
 #include "strmap.h"
 #include "serialize.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "sink_buffer.hxx"
 #include "uset.h"
 #include "istream.h"

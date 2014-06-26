@@ -6,7 +6,7 @@
 
 #include "ajp_serialize.hxx"
 #include "serialize.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <netinet/in.h>

@@ -4,7 +4,7 @@
 #include "widget-lookup.h"
 #include "http_address.hxx"
 #include "strmap.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "header_parser.hxx"
 #include "tpool.h"
 #include "get.hxx"

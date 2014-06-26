@@ -20,7 +20,7 @@
 #include "session.hxx"
 #include "tcache.hxx"
 #include "suffix_registry.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "header_writer.hxx"
 #include "strref-pool.h"
 #include "dpool.h"

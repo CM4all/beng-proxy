@@ -6,7 +6,7 @@
 
 #include "header_writer.hxx"
 #include "strmap.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 
 #include <http/header.h>
 

@@ -11,7 +11,7 @@
 #include "session.hxx"
 #include "cookie_client.hxx"
 #include "cookie_server.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "pool.h"
 #include "product.h"
 #include "strutil.h"

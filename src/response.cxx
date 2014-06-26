@@ -18,7 +18,7 @@
 #include "session.hxx"
 #include "fcache.h"
 #include "strref-pool.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "global.h"
 #include "resource_tag.hxx"
 #include "hostname.h"

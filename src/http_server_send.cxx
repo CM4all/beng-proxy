@@ -9,7 +9,7 @@
 #include "header_writer.hxx"
 #include "format.h"
 #include "date.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "istream_gb.hxx"
 
 #include <string.h>

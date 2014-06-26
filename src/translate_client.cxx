@@ -11,7 +11,7 @@
 #include "transformation.hxx"
 #include "widget_class.hxx"
 #include "please.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "processor.h"
 #include "css_processor.h"
 #include "async.h"

@@ -10,7 +10,7 @@
 #include "buffered_socket.hxx"
 #include "http_response.hxx"
 #include "async.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "pevent.h"
 #include "format.h"
 #include "istream-internal.h"

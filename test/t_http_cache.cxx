@@ -3,7 +3,7 @@
 #include "resource_loader.hxx"
 #include "resource_address.hxx"
 #include "http_address.hxx"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "header_parser.hxx"
 #include "strmap.h"
 #include "http_response.hxx"

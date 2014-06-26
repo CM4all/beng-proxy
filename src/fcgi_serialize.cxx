@@ -6,7 +6,7 @@
 
 #include "fcgi_serialize.hxx"
 #include "fcgi_protocol.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "strmap.h"
 #include "strutil.h"
 #include "util/ConstBuffer.hxx"

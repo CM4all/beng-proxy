@@ -1,4 +1,4 @@
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "direct.h"
 #include "istream_gb.hxx"
 #include "istream.h"

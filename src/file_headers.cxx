@@ -6,7 +6,7 @@
 
 #include "file_headers.hxx"
 #include "static-headers.h"
-#include "growing-buffer.h"
+#include "growing_buffer.hxx"
 #include "header_writer.hxx"
 #include "format.h"
 #include "date.h"
