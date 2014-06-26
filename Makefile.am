@@ -159,7 +159,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/file_headers.cxx src/file_headers.hxx \
 	src/file_handler.cxx src/file_handler.hxx \
 	src/fork.c src/fork.h \
-	src/gb-io.c src/gb-io.h \
 	src/get.cxx src/get.hxx \
 	src/global.c src/global.h \
 	src/growing-buffer.c src/growing-buffer.h \
@@ -1423,7 +1422,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/fifo-buffer.c src/buffered_io.c src/direct.c \
 	src/cleanup_timer.c src/cleanup_timer.h \
-	src/translate_client.cxx src/tstock.cxx src/growing-buffer.c src/gb-io.c \
+	src/translate_client.cxx src/tstock.cxx src/growing-buffer.c \
 	src/translate_response.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
 	src/tcp_stock.cxx src/client-socket.c \
