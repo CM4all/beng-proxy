@@ -1,7 +1,7 @@
 #include "cgi_glue.hxx"
 #include "cgi_address.hxx"
 #include "async.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "child_manager.h"
 #include "direct.h"
 #include "crash.h"

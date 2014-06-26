@@ -9,10 +9,10 @@
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_server.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "tcache.hxx"
 #include "get.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "istream.h"
 #include "translate_client.hxx"
 

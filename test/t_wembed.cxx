@@ -7,8 +7,10 @@
 #include "processor.h"
 #include "penv.hxx"
 #include "async.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "istream.h"
+
+#include <glib.h>
 
 #include <stdlib.h>
 #include <stdio.h>

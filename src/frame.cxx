@@ -15,7 +15,7 @@
 #include "widget-lookup.h"
 #include "widget_request.hxx"
 #include "global.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "istream.h"
 #include "session.hxx"
 

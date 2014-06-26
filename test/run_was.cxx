@@ -1,7 +1,7 @@
 #include "was_client.hxx"
 #include "was_launch.hxx"
 #include "lease.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "direct.h"
 #include "async.h"
 #include "istream.h"

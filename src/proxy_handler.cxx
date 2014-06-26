@@ -9,7 +9,7 @@
 #include "request_forward.hxx"
 #include "http_server.hxx"
 #include "http_cache.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
 #include "global.h"
@@ -17,7 +17,7 @@
 #include "uri-extract.h"
 #include "strref-pool.h"
 #include "strmap.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "istream-impl.h"
 #include "lhttp_address.hxx"
 

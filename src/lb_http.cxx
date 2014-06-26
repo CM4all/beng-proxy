@@ -22,7 +22,7 @@
 #include "tcp_balancer.hxx"
 #include "lease.h"
 #include "header-writer.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "stock.h"
 #include "clock.h"
 #include "access-log.h"

@@ -14,7 +14,7 @@
 #include "generate_response.hxx"
 #include "request.hxx"
 #include "http_server.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "global.h"
 #include "istream_file.h"
 

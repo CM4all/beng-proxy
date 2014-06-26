@@ -9,7 +9,7 @@
 #include "was_control.hxx"
 #include "was_output.hxx"
 #include "was_input.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "async.h"
 #include "please.h"
 #include "pevent.h"

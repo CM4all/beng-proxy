@@ -9,7 +9,7 @@
 #include "http_cache_memcached.hxx"
 #include "resource_loader.hxx"
 #include "strmap.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "resource_address.hxx"
 #include "strref2.h"
 #include "http_util.h"

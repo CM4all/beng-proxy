@@ -2,7 +2,7 @@
 #include "strmap.h"
 #include "header-writer.h"
 #include "http_client.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "async.h"
 #include "fd_util.h"
 #include "lease.h"

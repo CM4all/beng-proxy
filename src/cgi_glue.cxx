@@ -10,8 +10,10 @@
 #include "cgi_launch.hxx"
 #include "abort-flag.h"
 #include "stopwatch.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "istream.h"
+
+#include <glib.h>
 
 void
 cgi_new(struct pool *pool, http_method_t method,

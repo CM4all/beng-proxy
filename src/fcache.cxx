@@ -9,7 +9,7 @@
 #include "http_request.hxx"
 #include "header-writer.h"
 #include "strmap.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "date.h"
 #include "strref.h"
 #include "abort-unref.h"
@@ -26,6 +26,8 @@
 #include "async.h"
 
 #include <boost/intrusive/list.hpp>
+
+#include <glib.h>
 
 #include <event.h>
 

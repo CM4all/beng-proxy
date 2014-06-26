@@ -8,7 +8,7 @@
 #include "resource_loader.hxx"
 #include "resource_address.hxx"
 #include "http_request.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "file_request.hxx"
 #include "file_address.hxx"
 #include "lhttp_request.hxx"

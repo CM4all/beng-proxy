@@ -6,7 +6,7 @@
 #include "growing-buffer.h"
 #include "header_parser.hxx"
 #include "strmap.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "async.h"
 #include "tpool.h"
 #include "istream.h"

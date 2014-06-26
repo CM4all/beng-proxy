@@ -6,7 +6,7 @@
 
 #include "nfs_request.hxx"
 #include "nfs_cache.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "static-headers.h"
 #include "strmap.h"
 #include "pool.h"

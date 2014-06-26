@@ -8,7 +8,7 @@
 #include "header_parser.hxx"
 #include "tpool.h"
 #include "get.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "processor.h"
 #include "css_processor.h"
 #include "text_processor.hxx"

@@ -5,7 +5,7 @@
  */
 
 #include "widget_http.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "pheaders.hxx"
 #include "processor.h"
 #include "css_processor.h"

@@ -4,15 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_HTTP_RESPONSE_H
-#define __BENG_HTTP_RESPONSE_H
+#ifndef BENG_PROXY_HTTP_RESPONSE_HXX
+#define BENG_PROXY_HTTP_RESPONSE_HXX
+
+#include "glibfwd.hxx"
 
 #include <http/status.h>
 
-#include <glib.h>
-
 #include <assert.h>
-#include <stddef.h>
 
 struct pool;
 struct strmap;
@@ -38,7 +37,7 @@ struct http_response_handler_ref {
 static inline int
 http_response_handler_used(const struct http_response_handler_ref *ref)
 {
-    assert(ref != NULL);
+    assert(ref != nullptr);
 
     return ref->used;
 }
@@ -48,17 +47,17 @@ http_response_handler_used(const struct http_response_handler_ref *ref)
 static inline int
 http_response_handler_defined(const struct http_response_handler_ref *ref)
 {
-    assert(ref != NULL);
+    assert(ref != nullptr);
 
-    return ref->handler != NULL;
+    return ref->handler != nullptr;
 }
 
 static inline void
 http_response_handler_clear(struct http_response_handler_ref *ref)
 {
-    assert(ref != NULL);
+    assert(ref != nullptr);
 
-    ref->handler = NULL;
+    ref->handler = nullptr;
 }
 
 static inline void
@@ -66,10 +65,10 @@ http_response_handler_set(struct http_response_handler_ref *ref,
                           const struct http_response_handler *handler,
                           void *ctx)
 {
-    assert(ref != NULL);
-    assert(handler != NULL);
-    assert(handler->response != NULL);
-    assert(handler->abort != NULL);
+    assert(ref != nullptr);
+    assert(handler != nullptr);
+    assert(handler->response != nullptr);
+    assert(handler->abort != nullptr);
 
     ref->handler = handler;
     ref->ctx = ctx;
@@ -86,10 +85,10 @@ http_response_handler_direct_response(const struct http_response_handler *handle
                                       struct strmap *headers,
                                       struct istream *body)
 {
-    assert(handler != NULL);
-    assert(handler->response != NULL);
+    assert(handler != nullptr);
+    assert(handler->response != nullptr);
     assert(http_status_is_valid(status));
-    assert(!http_status_is_empty(status) || body == NULL);
+    assert(!http_status_is_empty(status) || body == nullptr);
 
     handler->response(status, headers, body, ctx);
 }
@@ -99,16 +98,12 @@ http_response_handler_direct_abort(const struct http_response_handler *handler,
                                    void *ctx,
                                    GError *error)
 {
-    assert(handler != NULL);
-    assert(handler->abort != NULL);
-    assert(error != NULL);
+    assert(handler != nullptr);
+    assert(handler->abort != nullptr);
+    assert(error != nullptr);
 
     handler->abort(error, ctx);
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Sends a plain-text message.
@@ -127,12 +122,12 @@ http_response_handler_invoke_response(struct http_response_handler_ref *ref,
 {
     const struct http_response_handler *handler;
 
-    assert(ref != NULL);
-    assert(ref->handler != NULL);
-    assert(ref->handler->response != NULL);
+    assert(ref != nullptr);
+    assert(ref->handler != nullptr);
+    assert(ref->handler->response != nullptr);
     assert(!http_response_handler_used(ref));
     assert(http_status_is_valid(status));
-    assert(!http_status_is_empty(status) || body == NULL);
+    assert(!http_status_is_empty(status) || body == nullptr);
 
     handler = ref->handler;
 #ifndef NDEBUG
@@ -148,10 +143,10 @@ http_response_handler_invoke_abort(struct http_response_handler_ref *ref,
 {
     const struct http_response_handler *handler;
 
-    assert(ref != NULL);
-    assert(ref->handler != NULL);
-    assert(ref->handler->abort != NULL);
-    assert(error != NULL);
+    assert(ref != nullptr);
+    assert(ref->handler != nullptr);
+    assert(ref->handler->abort != nullptr);
+    assert(error != nullptr);
     assert(!http_response_handler_used(ref));
 
     handler = ref->handler;
@@ -169,9 +164,5 @@ void
 http_response_handler_invoke_message(struct http_response_handler_ref *ref,
                                      struct pool *pool,
                                      http_status_t status, const char *msg);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

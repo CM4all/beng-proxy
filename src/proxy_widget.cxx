@@ -15,7 +15,7 @@
 #include "header_forward.hxx"
 #include "http_server.hxx"
 #include "http_util.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "processor.h"
 #include "global.h"
 #include "istream-impl.h"

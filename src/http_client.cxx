@@ -5,7 +5,7 @@
  */
 
 #include "http_client.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "fifo-buffer.h"
 #include "strutil.h"
 #include "header_parser.hxx"

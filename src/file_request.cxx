@@ -6,7 +6,7 @@
 
 #include "file_request.hxx"
 #include "static-headers.h"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "gerrno.h"
 #include "strmap.h"
 #include "istream.h"

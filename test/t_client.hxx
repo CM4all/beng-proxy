@@ -1,4 +1,4 @@
-#include "http_response.h"
+#include "http_response.hxx"
 #include "async.h"
 #include "lease.h"
 #include "istream.h"
@@ -12,6 +12,8 @@
 
 #include <inline/compiler.h>
 #include <http/method.h>
+
+#include <glib.h>
 
 #include <stdlib.h>
 #include <unistd.h>

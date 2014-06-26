@@ -5,7 +5,7 @@
  */
 
 #include "pipe_filter.hxx"
-#include "http_response.h"
+#include "http_response.hxx"
 #include "fork.h"
 #include "format.h"
 #include "stopwatch.h"
