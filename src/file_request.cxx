@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "static-file.h"
+#include "file_request.hxx"
 #include "static-headers.h"
 #include "http_response.h"
 #include "gerrno.h"
@@ -23,7 +23,7 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
                 const struct http_response_handler *handler,
                 void *handler_ctx)
 {
-    assert(path != NULL);
+    assert(path != nullptr);
 
     struct stat st;
     if (lstat(path, &st) != 0) {
@@ -45,9 +45,9 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
     const off_t size = S_ISCHR(st.st_mode)
         ? -1 : st.st_size;
 
-    GError *error = NULL;
+    GError *error = nullptr;
     struct istream *body = istream_file_new(pool, path, size, &error);
-    if (body == NULL) {
+    if (body == nullptr) {
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }

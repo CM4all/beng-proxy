@@ -9,7 +9,7 @@
 #include "resource_address.hxx"
 #include "http_request.hxx"
 #include "http_response.h"
-#include "static-file.h"
+#include "file_request.hxx"
 #include "file_address.hxx"
 #include "lhttp_request.hxx"
 #include "http_address.hxx"

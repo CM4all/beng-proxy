@@ -234,7 +234,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/buffered_socket.cxx src/buffered_socket.hxx \
 	src/filtered_socket.cxx src/filtered_socket.hxx \
 	src/nop_socket_filter.cxx src/nop_socket_filter.hxx \
-	src/static-file.c src/static-file.h \
+	src/file_request.cxx src/file_request.hxx \
 	src/static-headers.c src/static-headers.h \
 	src/stock.c src/stock.h \
 	src/hstock.c src/hstock.h \
