@@ -125,6 +125,11 @@ struct istream {
 
     off_t available_partial, available_full;
 #endif
+
+#ifdef __cplusplus
+    istream() = default;
+    istream(const struct istream &) = delete;
+#endif
 };
 
 struct istream_class {
