@@ -128,6 +128,9 @@ struct istream {
 
 #ifdef __cplusplus
     istream() = default;
+
+    istream(const struct istream_class &cls, struct pool &pool);
+
     istream(const struct istream &) = delete;
 #endif
 };

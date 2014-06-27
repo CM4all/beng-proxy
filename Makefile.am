@@ -653,7 +653,7 @@ libistream_a_SOURCES = \
 	src/istream-invoke.h \
 	src/istream-new.h \
 	src/istream-direct.h \
-	src/istream.h \
+	src/istream.cxx src/istream.h \
 	src/istream-forward.c src/istream-forward.h \
 	src/istream-memory.c \
 	src/istream-null.c \
