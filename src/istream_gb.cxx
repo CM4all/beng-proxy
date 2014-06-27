@@ -7,6 +7,7 @@
 #include "istream_gb.hxx"
 #include "istream-internal.h"
 #include "growing_buffer.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -34,9 +35,8 @@ istream_gb_read(struct istream *istream)
 
     /* this loop is required to cross the buffer borders */
     while (1) {
-        size_t length;
-        const void *data = igb->reader.Read(&length);
-        if (data == nullptr) {
+        auto src = igb->reader.Read();
+        if (src.IsNull()) {
             assert(igb->reader.IsEOF());
             istream_deinit_eof(&igb->output);
             return;
@@ -44,13 +44,13 @@ istream_gb_read(struct istream *istream)
 
         assert(!igb->reader.IsEOF());
 
-        size_t nbytes = istream_invoke_data(&igb->output, data, length);
+        size_t nbytes = istream_invoke_data(&igb->output, src.data, src.size);
         if (nbytes == 0)
             /* growing_buffer has been closed */
             return;
 
         igb->reader.Consume(nbytes);
-        if (nbytes < length)
+        if (nbytes < src.size)
             return;
     }
 }

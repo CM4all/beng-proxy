@@ -3068,11 +3068,10 @@ translate_client_feed(TranslateClient *client,
 static bool
 translate_try_write(TranslateClient *client)
 {
-    size_t length;
-    const void *data = client->request.Read(&length);
-    assert(data != nullptr);
+    auto src = client->request.Read();
+    assert(!src.IsNull());
 
-    ssize_t nbytes = client->socket.Write(data, length);
+    ssize_t nbytes = client->socket.Write(src.data, src.size);
     if (gcc_unlikely(nbytes < 0)) {
         if (gcc_likely(nbytes == WRITE_BLOCKING))
             return true;

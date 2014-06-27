@@ -2,6 +2,7 @@
 #include "direct.h"
 #include "istream_gb.hxx"
 #include "istream.h"
+#include "util/ConstBuffer.hxx"
 
 #include <event.h>
 
@@ -188,12 +189,11 @@ test_first_empty(struct pool *pool)
 
     growing_buffer_write_string(buffer, "0123456789abcdefg");
 
-    size_t length;
-    const void *data = reader.Read(&length);
-    assert(data != nullptr);
-    assert(length == 17);
+    auto x = reader.Read();
+    assert(!x.IsNull());
+    assert(x.size == 17);
 
-    reader.Consume(length);
+    reader.Consume(x.size);
 
     pool_trash(pool);
     pool_unref(pool);
@@ -215,21 +215,20 @@ test_skip(struct pool *pool)
 
     reader.Skip(6);
 
-    size_t length;
-    const void *data = reader.Read(&length);
-    assert(data != nullptr);
-    assert(length == 2);
+    auto x = reader.Read();
+    assert(!x.IsNull());
+    assert(x.size == 2);
     reader.Consume(1);
 
     reader.Skip(5);
 
-    data = reader.Read(&length);
-    assert(data != nullptr);
-    assert(length == 4);
+    x = reader.Read();
+    assert(!x.IsNull());
+    assert(x.size == 4);
     reader.Consume(4);
 
-    data = reader.Read(&length);
-    assert(data == nullptr);
+    x = reader.Read();
+    assert(x.IsNull());
 
     pool_trash(pool);
     pool_unref(pool);
@@ -259,10 +258,9 @@ test_concurrent_rw(struct pool *pool)
     assert(!reader.IsEOF());
     assert(reader.Available() == 4);
 
-    size_t length;
-    const void *p = reader.Read(&length);
-    assert(p != nullptr);
-    assert(length == 4);
+    auto x = reader.Read();
+    assert(!x.IsNull());
+    assert(x.size == 4);
 
     pool_trash(pool);
     pool_unref(pool);

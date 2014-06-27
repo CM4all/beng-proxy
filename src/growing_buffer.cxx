@@ -6,6 +6,7 @@
 
 #include "growing_buffer.hxx"
 #include "pool.h"
+#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -176,8 +177,8 @@ growing_buffer_reader::Available() const
     return available;
 }
 
-const void *
-growing_buffer_reader::Read(size_t *length_r) const
+ConstBuffer<void>
+growing_buffer_reader::Read() const
 {
     assert(buffer != nullptr);
 
@@ -197,8 +198,7 @@ growing_buffer_reader::Read(size_t *length_r) const
         return nullptr;
     }
 
-    *length_r = b->length - position;
-    return b->data + position;
+    return { b->data + position, b->length - position };
 }
 
 void

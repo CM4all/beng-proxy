@@ -8,6 +8,7 @@
 #include "istream-internal.h"
 #include "growing_buffer.hxx"
 #include "util/Cast.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <inline/poison.h>
 #include <daemon/log.h>
@@ -255,33 +256,30 @@ replace_read_substitution(struct istream_replace *replace)
 static size_t
 replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
 {
-    const void *data;
-    size_t length, nbytes;
-
     assert(replace != nullptr);
     assert(max_length > 0);
 
-    data = replace->reader.Read(&length);
-    assert(data != nullptr);
-    assert(length > 0);
+    auto src = replace->reader.Read();
+    assert(!src.IsNull());
+    assert(!src.IsEmpty());
 
-    if (length > max_length)
-        length = max_length;
+    if (src.size > max_length)
+        src.size = max_length;
 
     replace->had_output = true;
-    nbytes = istream_invoke_data(&replace->output, data, length);
-    assert(nbytes <= length);
+    size_t nbytes = istream_invoke_data(&replace->output, src.data, src.size);
+    assert(nbytes <= src.size);
 
     if (nbytes == 0)
         /* istream_replace has been closed */
-        return length;
+        return src.size;
 
     replace->reader.Consume(nbytes);
     replace->position += nbytes;
 
     assert(replace->position <= replace->source_length);
 
-    return length - nbytes;
+    return src.size - nbytes;
 }
 
 static size_t

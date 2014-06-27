@@ -10,6 +10,9 @@
 #include "growing_buffer.hxx"
 #include "fifo-buffer.h"
 #include "tpool.h"
+#include "util/ConstBuffer.hxx"
+
+#include <algorithm>
 
 #include <assert.h>
 #include <string.h>
@@ -60,15 +63,12 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
             size_t max_length;
             void *dest = fifo_buffer_write(buffer, &max_length);
             if (dest != nullptr) {
-                size_t length;
-                const char *src = (const char *)reader.Read(&length);
-                if (src != nullptr) {
-                    if (length > max_length)
-                        length = max_length;
-
-                    memcpy(dest, src, length);
-                    fifo_buffer_append(buffer, length);
-                    reader.Consume(length);
+                auto src = reader.Read();
+                if (!src.IsNull()) {
+                    size_t nbytes = std::min(src.size, max_length);
+                    memcpy(dest, src.data, nbytes);
+                    fifo_buffer_append(buffer, nbytes);
+                    reader.Consume(nbytes);
                 } else
                     gb = nullptr;
             }

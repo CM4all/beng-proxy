@@ -12,6 +12,7 @@
 #include <stddef.h>
 
 struct pool;
+template<typename T> struct ConstBuffer;
 
 struct growing_buffer_reader {
 #ifndef NDEBUG
@@ -35,7 +36,8 @@ struct growing_buffer_reader {
     gcc_pure
     size_t Available() const;
 
-    const void *Read(size_t *length_r) const;
+    gcc_pure
+    ConstBuffer<void> Read() const;
 
     /**
      * Consume data returned by growing_buffer_reader_read().

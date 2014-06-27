@@ -6,6 +6,7 @@
 #include "dpool.h"
 #include "strmap.h"
 #include "growing_buffer.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -30,10 +31,9 @@ int main(int argc, char **argv) {
     const struct growing_buffer *gb = headers_dup(pool, headers);
     struct growing_buffer_reader reader(*gb);
 
-    const void *data;
-    size_t length;
-    while ((data = reader.Read(&length)) != nullptr) {
-        ssize_t nbytes = write(1, data, length);
+    ConstBuffer<void> src;
+    while (!(src = reader.Read()).IsNull()) {
+        ssize_t nbytes = write(1, src.data, src.size);
         if (nbytes < 0) {
             perror("write() failed");
             return 1;
