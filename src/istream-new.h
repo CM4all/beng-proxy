@@ -45,16 +45,8 @@ istream_new_impl(struct pool *pool,
 
     assert(size >= sizeof(*istream));
 
-#ifdef ISTREAM_POOL
-    pool = pool_new_libc(pool, "istream");
-#endif
-
     istream = (struct istream *)p_malloc_fwd(pool, size);
     istream_init_impl(istream, cls, pool TRACE_ARGS_FWD);
-
-#ifdef ISTREAM_POOL
-    pool_unref(pool);
-#endif
 
     return istream;
 }
