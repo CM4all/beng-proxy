@@ -15,6 +15,8 @@ struct istream_gb {
     struct istream output;
 
     struct growing_buffer_reader reader;
+
+    istream_gb(struct pool &pool, const struct growing_buffer &gb);
 };
 
 static off_t
@@ -67,13 +69,17 @@ static const struct istream_class istream_gb = {
     .close = istream_gb_close,
 };
 
+inline
+istream_gb::istream_gb(struct pool &pool, const struct growing_buffer &gb)
+    :output(::istream_gb, pool)
+{
+    growing_buffer_reader_init(&reader, &gb);
+}
+
 struct istream *
 istream_gb_new(struct pool *pool, const struct growing_buffer *gb)
 {
     assert(gb != nullptr);
 
-    struct istream_gb *igb = istream_new_macro(pool, gb);
-    growing_buffer_reader_init(&igb->reader, gb);
-
-    return istream_struct_cast(&igb->output);
+    return &NewFromPool<struct istream_gb>(pool, *pool, *gb)->output;
 }
