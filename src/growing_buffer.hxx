@@ -20,6 +20,33 @@ struct growing_buffer_reader {
 
     const struct buffer *buffer;
     size_t position;
+
+    explicit growing_buffer_reader(const struct growing_buffer &gb);
+
+    /**
+     * Update the reader object after data has been appended to the
+     * underlying buffer.
+     */
+    void Update();
+
+    gcc_pure
+    bool IsEOF() const;
+
+    gcc_pure
+    size_t Available() const;
+
+    const void *Read(size_t *length_r) const;
+
+    /**
+     * Consume data returned by growing_buffer_reader_read().
+     */
+    void Consume(size_t length);
+
+    /**
+     * Skip an arbitrary number of data bytes, which may span over
+     * multiple internal buffers.
+     */
+    void Skip(size_t length);
 };
 
 struct growing_buffer *gcc_malloc
@@ -42,42 +69,6 @@ growing_buffer_cat(struct growing_buffer *dest, struct growing_buffer *src);
  */
 size_t
 growing_buffer_size(const struct growing_buffer *gb);
-
-void
-growing_buffer_reader_init(struct growing_buffer_reader *reader,
-                           const struct growing_buffer *gb);
-
-/**
- * Update the reader object after data has been appended to the
- * underlying buffer.
- */
-void
-growing_buffer_reader_update(struct growing_buffer_reader *reader);
-
-bool
-growing_buffer_reader_eof(const struct growing_buffer_reader *reader);
-
-size_t
-growing_buffer_reader_available(const struct growing_buffer_reader *reader);
-
-const void *
-growing_buffer_reader_read(const struct growing_buffer_reader *reader,
-                           size_t *length_r);
-
-/**
- * Consume data returned by growing_buffer_reader_read().
- */
-void
-growing_buffer_reader_consume(struct growing_buffer_reader *reader,
-                              size_t length);
-
-/**
- * Skip an arbitrary number of data bytes, which may span over
- * multiple internal buffers.
- */
-void
-growing_buffer_reader_skip(struct growing_buffer_reader *reader,
-                           size_t length);
 
 /**
  * Duplicates the whole buffer (including all chunks) to one

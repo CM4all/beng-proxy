@@ -150,6 +150,9 @@ struct TranslateClient {
     static TranslateClient *FromAsync(async_operation *ao) {
         return ContainerCast(ao, TranslateClient, async);
     }
+
+    explicit TranslateClient(const struct growing_buffer &_request)
+        :request(_request) {}
 };
 
 static const struct timeval translate_read_timeout = {
@@ -3066,7 +3069,7 @@ static bool
 translate_try_write(TranslateClient *client)
 {
     size_t length;
-    const void *data = growing_buffer_reader_read(&client->request, &length);
+    const void *data = client->request.Read(&length);
     assert(data != nullptr);
 
     ssize_t nbytes = client->socket.Write(data, length);
@@ -3080,8 +3083,8 @@ translate_try_write(TranslateClient *client)
         return false;
     }
 
-    growing_buffer_reader_consume(&client->request, nbytes);
-    if (growing_buffer_reader_eof(&client->request)) {
+    client->request.Consume(nbytes);
+    if (client->request.IsEOF()) {
         /* the buffer is empty, i.e. the request has been sent */
 
         stopwatch_event(client->stopwatch, "request");
@@ -3195,7 +3198,7 @@ translate(struct pool *pool, int fd,
         return;
     }
 
-    TranslateClient *client = NewFromPool<TranslateClient>(pool);
+    TranslateClient *client = NewFromPool<TranslateClient>(pool, *gb);
     client->pool = pool;
     client->stopwatch = stopwatch_fd_new(pool, fd,
                                          request->uri != nullptr ? request->uri
@@ -3213,7 +3216,6 @@ translate(struct pool *pool, int fd,
     client->from_request.content_type_lookup =
         !request->content_type_lookup.IsNull();
 
-    growing_buffer_reader_init(&client->request, gb);
     client->handler = handler;
     client->handler_ctx = ctx;
     client->response.status = (http_status_t)-1;

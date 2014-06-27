@@ -24,7 +24,7 @@ istream_gb_available(struct istream *istream, bool partial gcc_unused)
 {
     struct istream_gb *igb = (struct istream_gb *)istream;
 
-    return growing_buffer_reader_available(&igb->reader);
+    return igb->reader.Available();
 }
 
 static void
@@ -35,21 +35,21 @@ istream_gb_read(struct istream *istream)
     /* this loop is required to cross the buffer borders */
     while (1) {
         size_t length;
-        const void *data = growing_buffer_reader_read(&igb->reader, &length);
+        const void *data = igb->reader.Read(&length);
         if (data == nullptr) {
-            assert(growing_buffer_reader_eof(&igb->reader));
+            assert(igb->reader.IsEOF());
             istream_deinit_eof(&igb->output);
             return;
         }
 
-        assert(!growing_buffer_reader_eof(&igb->reader));
+        assert(!igb->reader.IsEOF());
 
         size_t nbytes = istream_invoke_data(&igb->output, data, length);
         if (nbytes == 0)
             /* growing_buffer has been closed */
             return;
 
-        growing_buffer_reader_consume(&igb->reader, nbytes);
+        igb->reader.Consume(nbytes);
         if (nbytes < length)
             return;
     }
@@ -71,9 +71,8 @@ static const struct istream_class istream_gb = {
 
 inline
 istream_gb::istream_gb(struct pool &pool, const struct growing_buffer &gb)
-    :output(::istream_gb, pool)
+    :output(::istream_gb, pool), reader(gb)
 {
-    growing_buffer_reader_init(&reader, &gb);
 }
 
 struct istream *

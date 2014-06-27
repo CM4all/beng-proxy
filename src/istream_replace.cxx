@@ -104,7 +104,7 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
     assert(s->istream == nullptr);
     assert(s->start <= s->end);
 
-    growing_buffer_reader_skip(&replace->reader, s->end - s->start);
+    replace->reader.Skip(s->end - s->start);
     replace->position = s->end;
 
     replace->first_substitution = s->next;
@@ -261,7 +261,7 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
     assert(replace != nullptr);
     assert(max_length > 0);
 
-    data = growing_buffer_reader_read(&replace->reader, &length);
+    data = replace->reader.Read(&length);
     assert(data != nullptr);
     assert(length > 0);
 
@@ -276,7 +276,7 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
         /* istream_replace has been closed */
         return length;
 
-    growing_buffer_reader_consume(&replace->reader, nbytes);
+    replace->reader.Consume(nbytes);
     replace->position += nbytes;
 
     assert(replace->position <= replace->source_length);
@@ -423,7 +423,7 @@ replace_input_data(const void *data, size_t length, void *ctx)
     growing_buffer_write_buffer(replace->buffer, data, length);
     replace->source_length += (off_t)length;
 
-    growing_buffer_reader_update(&replace->reader);
+    replace->reader.Update();
 
     pool_ref(replace->output.pool);
 
@@ -600,7 +600,7 @@ istream_replace_new(struct pool *pool, struct istream *input)
     replace->position = 0;
     replace->settled_position = 0;
 
-    growing_buffer_reader_init(&replace->reader, replace->buffer);
+    ::new(&replace->reader) growing_buffer_reader(*replace->buffer);
 
     replace->first_substitution = nullptr;
     replace->append_substitution_p = &replace->first_substitution;

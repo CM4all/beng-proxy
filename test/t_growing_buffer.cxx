@@ -184,17 +184,16 @@ test_first_empty(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     struct growing_buffer *buffer = growing_buffer_new(pool, 16);
-    struct growing_buffer_reader reader;
-    growing_buffer_reader_init(&reader, buffer);
+    struct growing_buffer_reader reader(*buffer);
 
     growing_buffer_write_string(buffer, "0123456789abcdefg");
 
     size_t length;
-    const void *data = growing_buffer_reader_read(&reader, &length);
+    const void *data = reader.Read(&length);
     assert(data != nullptr);
     assert(length == 17);
 
-    growing_buffer_reader_consume(&reader, length);
+    reader.Consume(length);
 
     pool_trash(pool);
     pool_unref(pool);
@@ -207,30 +206,29 @@ test_skip(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     struct growing_buffer *buffer = growing_buffer_new(pool, 3);
-    struct growing_buffer_reader reader;
-    growing_buffer_reader_init(&reader, buffer);
+    struct growing_buffer_reader reader(*buffer);
 
     growing_buffer_write_string(buffer, "0123");
     growing_buffer_write_string(buffer, "4567");
     growing_buffer_write_string(buffer, "89ab");
     growing_buffer_write_string(buffer, "cdef");
 
-    growing_buffer_reader_skip(&reader, 6);
+    reader.Skip(6);
 
     size_t length;
-    const void *data = growing_buffer_reader_read(&reader, &length);
+    const void *data = reader.Read(&length);
     assert(data != nullptr);
     assert(length == 2);
-    growing_buffer_reader_consume(&reader, 1);
+    reader.Consume(1);
 
-    growing_buffer_reader_skip(&reader, 5);
+    reader.Skip(5);
 
-    data = growing_buffer_reader_read(&reader, &length);
+    data = reader.Read(&length);
     assert(data != nullptr);
     assert(length == 4);
-    growing_buffer_reader_consume(&reader, 4);
+    reader.Consume(4);
 
-    data = growing_buffer_reader_read(&reader, &length);
+    data = reader.Read(&length);
     assert(data == nullptr);
 
     pool_trash(pool);
@@ -244,26 +242,25 @@ test_concurrent_rw(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     struct growing_buffer *buffer = growing_buffer_new(pool, 3);
-    struct growing_buffer_reader reader;
-    growing_buffer_reader_init(&reader, buffer);
+    struct growing_buffer_reader reader(*buffer);
 
     growing_buffer_write_string(buffer, "0123");
     growing_buffer_write_string(buffer, "4567");
     growing_buffer_write_string(buffer, "89ab");
-    assert(growing_buffer_reader_available(&reader) == 12);
+    assert(reader.Available() == 12);
 
-    growing_buffer_reader_skip(&reader, 12);
-    assert(growing_buffer_reader_eof(&reader));
-    assert(growing_buffer_reader_available(&reader) == 0);
+    reader.Skip(12);
+    assert(reader.IsEOF());
+    assert(reader.Available() == 0);
 
     growing_buffer_write_string(buffer, "cdef");
-    growing_buffer_reader_update(&reader);
+    reader.Update();
 
-    assert(!growing_buffer_reader_eof(&reader));
-    assert(growing_buffer_reader_available(&reader) == 4);
+    assert(!reader.IsEOF());
+    assert(reader.Available() == 4);
 
     size_t length;
-    const void *p = growing_buffer_reader_read(&reader, &length);
+    const void *p = reader.Read(&length);
     assert(p != nullptr);
     assert(length == 4);
 
