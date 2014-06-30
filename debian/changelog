@@ -3,7 +3,7 @@ cm4all-beng-proxy (5.0.5) unstable; urgency=low
   * translation: add packet EXPAND_URI
   * tcache: VALIDATE_MTIME=0 matches when the file does not exist
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 30 Jun 2014 14:15:02 -0000
 
 cm4all-beng-proxy (5.0.4) unstable; urgency=low
 
