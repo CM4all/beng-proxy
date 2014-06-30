@@ -61,6 +61,7 @@ struct TranslateResponse {
     const char *scheme;
     const char *host;
     const char *uri;
+    const char *expand_uri;
 
     const char *local_uri;
 

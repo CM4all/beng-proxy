@@ -3022,6 +3022,21 @@ translate_handle_packet(TranslateClient *client,
                                    "misplaced SETENV packet");
             return false;
         }
+
+    case TRANSLATE_EXPAND_URI:
+        if (client->response.uri == nullptr ||
+            client->response.expand_uri != nullptr) {
+            translate_client_error(client, "misplaced EXPAND_URI packet");
+            return false;
+        }
+
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+            translate_client_error(client, "malformed EXPAND_URI packet");
+            return false;
+        }
+
+        client->response.expand_uri = payload;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,
