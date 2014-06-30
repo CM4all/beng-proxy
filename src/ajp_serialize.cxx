@@ -11,6 +11,7 @@
 
 #include <netinet/in.h>
 #include <string.h>
+#include <assert.h>
 
 void
 serialize_ajp_string_n(struct growing_buffer *gb, const char *s, size_t length)
