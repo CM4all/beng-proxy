@@ -1286,6 +1286,14 @@ tcache_validate_mtime(const TranslateResponse &response,
 
     struct stat st;
     if (lstat(response.validate_mtime.path, &st) < 0) {
+        if (errno == ENOENT && response.validate_mtime.mtime == 0) {
+            /* the special value 0 matches when the file does not
+               exist */
+            cache_log(6, "translate_cache: [%s] validate_mtime enoent %s\n",
+                      key, response.validate_mtime.path);
+            return true;
+        }
+
         cache_log(3, "translate_cache: [%s] failed to stat '%s': %s\n",
                   key, response.validate_mtime.path, g_strerror(errno));
         return false;

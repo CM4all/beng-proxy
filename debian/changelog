@@ -1,6 +1,6 @@
 cm4all-beng-proxy (5.0.5) unstable; urgency=low
 
-  * 
+  * tcache: VALIDATE_MTIME=0 matches when the file does not exist
 
  --   
 

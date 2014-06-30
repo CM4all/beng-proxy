@@ -1335,7 +1335,9 @@ conflicting cookies. \\
 specified in this packet is not modified.
 The first 8 bytes is the mtime (seconds since UNIX epoch), the rest is
 the absolute path to a regular file (symlinks not supported).  The
-translation fails when the file does not exist or is inaccessible.  \\
+translation fails when the file does not exist or is inaccessible.
+The special value 0 matches only when the file does not exist; as soon
+as the file appears, the cached response will be discarded. \\
 
 \hline
 
