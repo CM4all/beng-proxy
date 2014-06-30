@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_CONNECTION_H
 #define BENG_PROXY_LB_CONNECTION_H
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 #include <stdint.h>
 #include <stddef.h>
@@ -16,8 +16,8 @@ struct pool;
 struct ssl_factory;
 struct sockaddr;
 
-struct lb_connection {
-    struct list_head siblings;
+struct lb_connection
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     struct pool *pool;
 

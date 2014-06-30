@@ -166,8 +166,8 @@ shutdown_callback(void *ctx)
 
     deinit_all_controls(instance);
 
-    while (!list_empty(&instance->connections))
-        lb_connection_close((struct lb_connection*)instance->connections.next);
+    while (!instance->connections.empty())
+        lb_connection_close(&instance->connections.front());
 
     deinit_all_listeners(instance);
 
@@ -268,7 +268,6 @@ int main(int argc, char **argv)
 
     list_init(&instance.controls);
     list_init(&instance.listeners);
-    list_init(&instance.connections);
 
     init_signals(&instance);
 

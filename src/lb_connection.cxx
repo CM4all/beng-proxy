@@ -122,8 +122,7 @@ lb_connection_new(struct lb_instance *instance,
     } else
         connection->ssl_filter = nullptr;
 
-    list_add(&connection->siblings, &instance->connections);
-    ++connection->instance->num_connections;
+    instance->connections.push_back(*connection);
 
     switch (listener->destination.GetProtocol()) {
     case LB_PROTOCOL_HTTP:
@@ -158,10 +157,10 @@ lb_connection_remove(struct lb_connection *connection)
 {
     assert(connection != nullptr);
     assert(connection->instance != nullptr);
-    assert(connection->instance->num_connections > 0);
+    assert(!connection->instance->connections.empty());
 
-    list_remove(&connection->siblings);
-    --connection->instance->num_connections;
+    auto &connections = connection->instance->connections;
+    connections.erase(connections.iterator_to(*connection));
 
     struct pool *pool = connection->pool;
     pool_trash(pool);

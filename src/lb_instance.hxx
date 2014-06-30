@@ -9,6 +9,7 @@
 
 #include "config.hxx"
 #include "shutdown_listener.h"
+#include "lb_connection.hxx"
 
 #include <inline/list.h>
 
@@ -27,8 +28,9 @@ struct lb_instance {
 
     struct list_head controls;
     struct list_head listeners;
-    struct list_head connections;
-    unsigned num_connections;
+
+    boost::intrusive::list<struct lb_connection,
+                           boost::intrusive::constant_time_size<true>> connections;
 
     bool should_exit;
     struct shutdown_listener shutdown_listener;
