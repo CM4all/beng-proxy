@@ -19,12 +19,6 @@
 #include <errno.h>
 
 static void
-thread_socket_filter_run(ThreadJob *job);
-
-static void
-thread_socket_filter_done(ThreadJob *job);
-
-static void
 thread_socket_filter_defer_callback(int fd, short event, void *ctx);
 
 inline
@@ -32,8 +26,7 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
                                        ThreadQueue &_queue,
                                        const ThreadSocketFilterHandler &_handler,
                                        void *_ctx)
-    :job(thread_socket_filter_run, thread_socket_filter_done),
-     pool(_pool), queue(_queue),
+    :pool(_pool), queue(_queue),
      handler(_handler), handler_ctx(_ctx),
      encrypted_input(fb_pool_alloc()),
      decrypted_input(fb_pool_alloc()),
@@ -82,7 +75,7 @@ thread_socket_filter_schedule(ThreadSocketFilter *f)
 {
     assert(!f->postponed_destroy);
 
-    thread_queue_add(&f->queue, &f->job);
+    thread_queue_add(&f->queue, f);
 }
 
 /**
@@ -187,130 +180,126 @@ thread_socket_filter_defer_callback(gcc_unused int fd, gcc_unused short event,
  *
  */
 
-static void
-thread_socket_filter_run(ThreadJob *job)
+void
+ThreadSocketFilter::Run()
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)job;
-
-    pthread_mutex_lock(&f->mutex);
-    if (f->error != nullptr) {
-        pthread_mutex_unlock(&f->mutex);
+    pthread_mutex_lock(&mutex);
+    if (error != nullptr) {
+        pthread_mutex_unlock(&mutex);
         return;
     }
 
-    f->busy = true;
-    pthread_mutex_unlock(&f->mutex);
+    busy = true;
+    pthread_mutex_unlock(&mutex);
 
-    GError *error = nullptr;
-    bool success = f->handler.run(*f, &error, f->handler_ctx);
+    GError *new_error = nullptr;
+    bool success = handler.run(*this, &new_error, handler_ctx);
 
-    pthread_mutex_lock(&f->mutex);
-    f->busy = false;
-    f->done_pending = true;
+    pthread_mutex_lock(&mutex);
+    busy = false;
+    done_pending = true;
 
-    assert(f->error == nullptr);
+    assert(error == nullptr);
     if (!success)
-        f->error = error;
-    pthread_mutex_unlock(&f->mutex);
+        error = new_error;
+    pthread_mutex_unlock(&mutex);
 }
 
-static void
-thread_socket_filter_done(ThreadJob *job)
+void
+ThreadSocketFilter::Done()
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)job;
-
-    if (f->postponed_destroy) {
+    if (postponed_destroy) {
         /* the object has been closed, and now that the thread has
            finished, we can finally destroy it */
-        thread_socket_filter_destroy(f);
+        thread_socket_filter_destroy(this);
         return;
     }
 
-    pthread_mutex_lock(&f->mutex);
+    pthread_mutex_lock(&mutex);
 
-    f->done_pending = false;
+    done_pending = false;
 
-    if (f->error != nullptr) {
+    if (error != nullptr) {
         /* an error has occurred inside the worker thread: forward it
            to the filtered_socket */
-        GError *error = f->error;
-        f->error = nullptr;
-        pthread_mutex_unlock(&f->mutex);
-        filtered_socket_invoke_error(f->socket, error);
+        GError *error2 = error;
+        error = nullptr;
+        pthread_mutex_unlock(&mutex);
+        filtered_socket_invoke_error(socket, error2);
         return;
     }
 
-    if (f->postponed_end && fifo_buffer_empty(f->encrypted_input)) {
-        if (f->postponed_remaining) {
-            if (!fifo_buffer_empty(f->decrypted_input)) {
+    if (postponed_end && fifo_buffer_empty(encrypted_input)) {
+        if (postponed_remaining) {
+            if (!fifo_buffer_empty(decrypted_input)) {
                 /* before we actually deliver the "remaining" event,
                    we should give the handler a chance to process the
                    data */
 
-                pthread_mutex_unlock(&f->mutex);
+                pthread_mutex_unlock(&mutex);
 
-                if (!thread_socket_filter_submit_decrypted_input(f))
+                if (!thread_socket_filter_submit_decrypted_input(this))
                     return;
 
-                pthread_mutex_lock(&f->mutex);
+                pthread_mutex_lock(&mutex);
             }
 
-            const size_t available = fifo_buffer_available(f->decrypted_input);
-            pthread_mutex_unlock(&f->mutex);
+            const size_t available = fifo_buffer_available(decrypted_input);
+            pthread_mutex_unlock(&mutex);
 
-            if (available == 0 && f->expect_more) {
-                thread_socket_filter_closed_prematurely(f);
+            if (available == 0 && expect_more) {
+                thread_socket_filter_closed_prematurely(this);
                 return;
             }
 
-            f->postponed_remaining = false;
+            postponed_remaining = false;
 
-            if (!filtered_socket_invoke_remaining(f->socket, available))
+            if (!filtered_socket_invoke_remaining(socket, available))
                 return;
 
-            pthread_mutex_lock(&f->mutex);
+            pthread_mutex_lock(&mutex);
         }
 
-        if (fifo_buffer_empty(f->decrypted_input)) {
-            pthread_mutex_unlock(&f->mutex);
+        if (fifo_buffer_empty(decrypted_input)) {
+            pthread_mutex_unlock(&mutex);
 
-            if (f->expect_more) {
-                thread_socket_filter_closed_prematurely(f);
+            if (expect_more) {
+                thread_socket_filter_closed_prematurely(this);
                 return;
             }
 
-            filtered_socket_invoke_end(f->socket);
+            filtered_socket_invoke_end(socket);
             return;
         }
 
-        pthread_mutex_unlock(&f->mutex);
+        pthread_mutex_unlock(&mutex);
         return;
     }
 
-    if (f->connected) {
+    if (connected) {
         // TODO: timeouts?
 
-        if (!fifo_buffer_full(f->encrypted_input))
-            filtered_socket_schedule_read_no_timeout(f->socket,
-                                                     f->expect_more);
+        if (!fifo_buffer_full(encrypted_input))
+            filtered_socket_schedule_read_no_timeout(socket,
+                                                     expect_more);
 
-        if (!fifo_buffer_empty(f->encrypted_output))
-            filtered_socket_internal_schedule_write(f->socket);
+        if (!fifo_buffer_empty(encrypted_output))
+            filtered_socket_internal_schedule_write(socket);
     }
 
-    if (!thread_socket_filter_check_write(f))
+    if (!thread_socket_filter_check_write(this))
         return;
 
-    const bool drained = f->connected && f->drained &&
-        fifo_buffer_empty(f->plain_output) &&
-        fifo_buffer_empty(f->encrypted_output);
+    const bool drained2 = connected && drained &&
+        fifo_buffer_empty(plain_output) &&
+        fifo_buffer_empty(encrypted_output);
 
-    pthread_mutex_unlock(&f->mutex);
+    pthread_mutex_unlock(&mutex);
 
-    if (drained && !filtered_socket_internal_drained(f->socket))
+    if (drained2 && !filtered_socket_internal_drained(socket))
         return;
 
-    thread_socket_filter_submit_decrypted_input(f);
+    thread_socket_filter_submit_decrypted_input(this);
 }
 
 /*
@@ -643,7 +632,7 @@ thread_socket_filter_close(void *ctx)
 
     defer_event_cancel(&f->defer_event);
 
-    if (!thread_queue_cancel(&f->queue, &f->job)) {
+    if (!thread_queue_cancel(&f->queue, f)) {
         /* detach the pool, postpone the destruction */
         pool_set_persistent(&f->pool);
         f->postponed_destroy = true;

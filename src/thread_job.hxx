@@ -44,12 +44,8 @@ public:
      */
     bool again = false;
 
-    void (*run)(ThreadJob *job);
-    void (*done)(ThreadJob *job);
-
-    ThreadJob(void (*_run)(ThreadJob *job),
-              void (*_done)(ThreadJob *job))
-        :run(_run), done(_done) {}
+    virtual void Run() = 0;
+    virtual void Done() = 0;
 };
 
 #endif

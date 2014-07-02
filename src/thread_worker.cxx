@@ -16,7 +16,7 @@ thread_worker_run(void *ctx)
 
     ThreadJob *job;
     while ((job = thread_queue_wait(q)) != nullptr) {
-        job->run(job);
+        job->Run();
         thread_queue_done(q, job);
     }
 

@@ -34,9 +34,7 @@ struct ThreadSocketFilterHandler {
  * A module for #filtered_socket that moves the filter to a thread
  * pool (see #thread_job).
  */
-struct ThreadSocketFilter {
-    ThreadJob job;
-
+struct ThreadSocketFilter : ThreadJob {
     struct pool &pool;
 
     ThreadQueue &queue;
@@ -152,6 +150,10 @@ struct ThreadSocketFilter {
     ThreadSocketFilter(const ThreadSocketFilter &) = delete;
 
     ~ThreadSocketFilter();
+
+    /* virtual methods from class ThreadJob */
+    void Run() final;
+    void Done() final;
 };
 
 ThreadSocketFilter *

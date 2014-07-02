@@ -59,7 +59,7 @@ thread_queue_wakeup_callback(void *ctx)
         } else {
             job->state = ThreadJob::State::INITIAL;
             q->mutex.unlock();
-            job->done(job);
+            job->Done();
             q->mutex.lock();
         }
     }
