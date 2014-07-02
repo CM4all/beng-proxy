@@ -4,14 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "notify.h"
+#include "notify.hxx"
 #include "fd_util.h"
 #include "pool.h"
 #include "gerrno.h"
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
 #include <assert.h>
 #include <unistd.h>
 #include <glib.h>
@@ -31,7 +30,7 @@ struct notify {
 static void
 notify_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
 {
-    struct notify *notify = ctx;
+    struct notify *notify = (struct notify *)ctx;
 
     char buffer[32];
     (void)read(fd, buffer, sizeof(buffer));
@@ -51,19 +50,19 @@ struct notify *
 notify_new(struct pool *pool, notify_callback_t callback, void *ctx,
            GError **error_r)
 {
-    struct notify *notify = p_malloc(pool, sizeof(*notify));
+    auto notify = NewFromPool<struct notify>(pool);
 
     notify->callback = callback;
     notify->callback_ctx = ctx;
 
     if (pipe_cloexec_nonblock(notify->fds)) {
         set_error_errno_msg(error_r, "pipe() failed");
-        return NULL;
+        return nullptr;
     }
 
     event_set(&notify->event, notify->fds[0], EV_READ|EV_PERSIST,
               notify_event_callback, notify);
-    event_add(&notify->event, NULL);
+    event_add(&notify->event, nullptr);
 
     notify->value = 0;
     return notify;
@@ -94,7 +93,7 @@ notify_signal(struct notify *notify)
 void
 notify_enable(struct notify *notify)
 {
-    event_add(&notify->event, NULL);
+    event_add(&notify->event, nullptr);
 }
 
 void

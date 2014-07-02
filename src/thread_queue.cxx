@@ -7,7 +7,9 @@
 #include "thread_queue.hxx"
 #include "thread_job.hxx"
 #include "pool.h"
-#include "notify.h"
+#include "notify.hxx"
+
+#include <glib.h>
 
 #include <pthread.h>
 #include <assert.h>

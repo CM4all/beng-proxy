@@ -4,19 +4,15 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_NOTIFY_H
-#define BENG_PROXY_NOTIFY_H
+#ifndef BENG_PROXY_NOTIFY_HXX
+#define BENG_PROXY_NOTIFY_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 struct pool;
 struct notify;
 
 typedef void (*notify_callback_t)(void *ctx);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct notify *
 notify_new(struct pool *pool, notify_callback_t callback, void *ctx,
@@ -33,9 +29,5 @@ notify_enable(struct notify *notify);
 
 void
 notify_disable(struct notify *notify);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
