@@ -37,27 +37,20 @@ public:
         DONE,
     };
 
-    State state;
+    State state = State::INITIAL;
 
     /**
      * Shall this job be enqueued again instead of invoking its done()
      * method?
      */
-    bool again;
+    bool again = false;
 
     void (*run)(ThreadJob *job);
     void (*done)(ThreadJob *job);
-};
 
-static inline void
-thread_job_init(ThreadJob *job,
-                void (*run)(ThreadJob *job),
-                void (*done)(ThreadJob *job))
-{
-    job->state = ThreadJob::State::INITIAL;
-    job->again = false;
-    job->run = run;
-    job->done = done;
-}
+    ThreadJob(void (*_run)(ThreadJob *job),
+              void (*_done)(ThreadJob *job))
+        :run(_run), done(_done) {}
+};
 
 #endif

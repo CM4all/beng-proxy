@@ -32,7 +32,8 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
                                        ThreadQueue &_queue,
                                        const ThreadSocketFilterHandler &_handler,
                                        void *_ctx)
-    :pool(_pool), queue(_queue),
+    :job(thread_socket_filter_run, thread_socket_filter_done),
+     pool(_pool), queue(_queue),
      handler(_handler), handler_ctx(_ctx),
      encrypted_input(fb_pool_alloc()),
      decrypted_input(fb_pool_alloc()),
@@ -40,10 +41,6 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
      encrypted_output(fb_pool_alloc())
 {
     pool_ref(&pool);
-
-    thread_job_init(&job,
-                    thread_socket_filter_run,
-                    thread_socket_filter_done);
 
     defer_event_init(&defer_event, thread_socket_filter_defer_callback, this);
 
