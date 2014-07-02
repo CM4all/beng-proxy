@@ -42,7 +42,7 @@ thread_queue_wakeup_callback(void *ctx)
     q->pending = false;
 
     while (!list_empty(&q->done)) {
-        struct thread_job *job = (struct thread_job *)q->done.next;
+        ThreadJob *job = (ThreadJob *)q->done.next;
         assert(job->state == THREAD_JOB_DONE);
 
         list_remove(&job->siblings);
@@ -107,7 +107,7 @@ thread_queue_free(ThreadQueue *q)
 }
 
 void
-thread_queue_add(ThreadQueue *q, struct thread_job *job)
+thread_queue_add(ThreadQueue *q, ThreadJob *job)
 {
     q->mutex.lock();
     assert(q->alive);
@@ -126,7 +126,7 @@ thread_queue_add(ThreadQueue *q, struct thread_job *job)
     notify_enable(q->notify);
 }
 
-struct thread_job *
+ThreadJob *
 thread_queue_wait(ThreadQueue *q)
 {
     std::unique_lock<std::mutex> lock(q->mutex);
@@ -134,9 +134,9 @@ thread_queue_wait(ThreadQueue *q)
     /* queue is empty, wait for a new job to be added */
     q->cond.wait(lock, [q](){ return !q->alive || !list_empty(&q->waiting); });
 
-    struct thread_job *job = nullptr;
+    ThreadJob *job = nullptr;
     if (q->alive && !list_empty(&q->waiting)) {
-        job = (struct thread_job *)q->waiting.next;
+        job = (ThreadJob *)q->waiting.next;
         assert(job->state == THREAD_JOB_WAITING);
 
         job->state = THREAD_JOB_BUSY;
@@ -148,7 +148,7 @@ thread_queue_wait(ThreadQueue *q)
 }
 
 void
-thread_queue_done(ThreadQueue *q, struct thread_job *job)
+thread_queue_done(ThreadQueue *q, ThreadJob *job)
 {
     assert(job->state == THREAD_JOB_BUSY);
 
@@ -166,7 +166,7 @@ thread_queue_done(ThreadQueue *q, struct thread_job *job)
 }
 
 bool
-thread_queue_cancel(ThreadQueue *q, struct thread_job *job)
+thread_queue_cancel(ThreadQueue *q, ThreadJob *job)
 {
     std::unique_lock<std::mutex> lock(q->mutex);
 

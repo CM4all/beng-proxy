@@ -35,7 +35,7 @@ struct ThreadSocketFilterHandler {
  * pool (see #thread_job).
  */
 struct ThreadSocketFilter {
-    struct thread_job job;
+    ThreadJob job;
 
     struct pool &pool;
 

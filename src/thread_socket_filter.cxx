@@ -19,10 +19,10 @@
 #include <errno.h>
 
 static void
-thread_socket_filter_run(struct thread_job *job);
+thread_socket_filter_run(ThreadJob *job);
 
 static void
-thread_socket_filter_done(struct thread_job *job);
+thread_socket_filter_done(ThreadJob *job);
 
 static void
 thread_socket_filter_defer_callback(int fd, short event, void *ctx);
@@ -191,7 +191,7 @@ thread_socket_filter_defer_callback(gcc_unused int fd, gcc_unused short event,
  */
 
 static void
-thread_socket_filter_run(struct thread_job *job)
+thread_socket_filter_run(ThreadJob *job)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)job;
 
@@ -218,7 +218,7 @@ thread_socket_filter_run(struct thread_job *job)
 }
 
 static void
-thread_socket_filter_done(struct thread_job *job)
+thread_socket_filter_done(ThreadJob *job)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)job;
 

@@ -33,7 +33,8 @@ enum thread_job_state {
     THREAD_JOB_DONE,
 };
 
-struct thread_job {
+class ThreadJob {
+public:
     struct list_head siblings;
 
     enum thread_job_state state;
@@ -44,14 +45,14 @@ struct thread_job {
      */
     bool again;
 
-    void (*run)(struct thread_job *job);
-    void (*done)(struct thread_job *job);
+    void (*run)(ThreadJob *job);
+    void (*done)(ThreadJob *job);
 };
 
 static inline void
-thread_job_init(struct thread_job *job,
-                void (*run)(struct thread_job *job),
-                void (*done)(struct thread_job *job))
+thread_job_init(ThreadJob *job,
+                void (*run)(ThreadJob *job),
+                void (*done)(ThreadJob *job))
 {
     job->state = THREAD_JOB_NULL;
     job->again = false;
