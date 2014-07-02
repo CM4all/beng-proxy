@@ -20,16 +20,16 @@ struct thread_worker {
 };
 
 bool
-thread_worker_create(struct thread_worker *w, ThreadQueue *q);
+thread_worker_create(struct thread_worker &w, ThreadQueue &q);
 
 /**
  * Wait for the thread to exit.  You must call thread_queue_stop()
  * prior to this function.
  */
 static inline void
-thread_worker_join(struct thread_worker *w)
+thread_worker_join(struct thread_worker &w)
 {
-    pthread_join(w->thread, nullptr);
+    pthread_join(w.thread, nullptr);
 }
 
 #endif

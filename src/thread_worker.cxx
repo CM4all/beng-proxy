@@ -11,22 +11,22 @@
 static void *
 thread_worker_run(void *ctx)
 {
-    struct thread_worker *w = (struct thread_worker *)ctx;
-    ThreadQueue *q = w->queue;
+    struct thread_worker &w = *(struct thread_worker *)ctx;
+    ThreadQueue &q = *w.queue;
 
     ThreadJob *job;
-    while ((job = thread_queue_wait(*q)) != nullptr) {
+    while ((job = thread_queue_wait(q)) != nullptr) {
         job->Run();
-        thread_queue_done(*q, *job);
+        thread_queue_done(q, *job);
     }
 
     return nullptr;
 }
 
 bool
-thread_worker_create(struct thread_worker *w, ThreadQueue *q)
+thread_worker_create(struct thread_worker &w, ThreadQueue &q)
 {
-    w->queue = q;
+    w.queue = &q;
 
-    return pthread_create(&w->thread, nullptr, thread_worker_run, w) == 0;
+    return pthread_create(&w.thread, nullptr, thread_worker_run, &w) == 0;
 }

@@ -30,7 +30,7 @@ thread_pool_start(void)
     assert(global_thread_queue != nullptr);
 
     for (auto &i : worker_threads) {
-        if (!thread_worker_create(&i, global_thread_queue)) {
+        if (!thread_worker_create(i, *global_thread_queue)) {
             daemon_log(1, "Failed to launch worker thread\n");
             exit(EXIT_FAILURE);
         }
@@ -66,7 +66,7 @@ thread_pool_join(void)
         return;
 
     for (auto &i : worker_threads)
-        thread_worker_join(&i);
+        thread_worker_join(i);
 }
 
 void
