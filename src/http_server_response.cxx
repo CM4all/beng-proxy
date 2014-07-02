@@ -89,6 +89,7 @@ http_server_response_stream_eof(void *ctx)
            connection->request.read_state != http_server_connection::Request::HEADERS);
     assert(connection->request.request != nullptr);
     assert(connection->response.istream != nullptr);
+    assert(!connection->response.pending_drained);
 
     connection->response.istream = nullptr;
 
@@ -136,7 +137,17 @@ http_server_response_stream_eof(void *ctx)
     } else {
         /* keepalive disabled and response is finished: we must close
            the connection */
-        http_server_done(connection);
+
+        if (filtered_socket_is_drained(&connection->socket)) {
+            http_server_done(connection);
+        } else {
+            /* there is still data in the filter's output buffer; wait for
+               that to drain, which will trigger
+               http_server_socket_drained() */
+            assert(!connection->response.pending_drained);
+
+            connection->response.pending_drained = true;
+        }
     }
 }
 
