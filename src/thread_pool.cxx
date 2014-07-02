@@ -5,7 +5,7 @@
  */
 
 #include "thread_pool.hxx"
-#include "thread_queue.h"
+#include "thread_queue.hxx"
 #include "thread_worker.hxx"
 
 #include <daemon/log.h>

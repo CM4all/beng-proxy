@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "thread_queue.h"
+#include "thread_queue.hxx"
 #include "thread_job.h"
 #include "pool.h"
 #include "notify.h"
@@ -31,7 +31,7 @@ struct thread_queue {
 static void
 thread_queue_wakeup_callback(void *ctx)
 {
-    struct thread_queue *q = ctx;
+    struct thread_queue *q = (struct thread_queue *)ctx;
     pthread_mutex_lock(&q->mutex);
 
     q->pending = false;
@@ -66,10 +66,10 @@ thread_queue_wakeup_callback(void *ctx)
 struct thread_queue *
 thread_queue_new(struct pool *pool)
 {
-    struct thread_queue *q = p_malloc(pool, sizeof(*q));
+    auto q = NewFromPool<struct thread_queue>(pool);
 
-    pthread_mutex_init(&q->mutex, NULL);
-    pthread_cond_init(&q->cond, NULL);
+    pthread_mutex_init(&q->mutex, nullptr);
+    pthread_cond_init(&q->cond, nullptr);
 
     q->alive = true;
     q->pending = false;
@@ -78,9 +78,9 @@ thread_queue_new(struct pool *pool)
     list_init(&q->busy);
     list_init(&q->done);
 
-    GError *error = NULL;
+    GError *error = nullptr;
     q->notify = notify_new(pool, thread_queue_wakeup_callback, q, &error);
-    if (q->notify == NULL)
+    if (q->notify == nullptr)
         g_printerr("%s\n", error->message);
 
     return q;
@@ -135,7 +135,7 @@ thread_queue_wait(struct thread_queue *q)
         /* queue is empty, wait for a new job to be added */
         pthread_cond_wait(&q->cond, &q->mutex);
 
-    struct thread_job *job = NULL;
+    struct thread_job *job = nullptr;
     if (q->alive && !list_empty(&q->waiting)) {
         job = (struct thread_job *)q->waiting.next;
         assert(job->state == THREAD_JOB_WAITING);

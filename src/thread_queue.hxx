@@ -4,17 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_THREAD_QUEUE_H
-#define BENG_PROXY_THREAD_QUEUE_H
-
-#include <stdbool.h>
+#ifndef BENG_PROXY_THREAD_QUEUE_HXX
+#define BENG_PROXY_THREAD_QUEUE_HXX
 
 struct thread_job;
 struct pool;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct thread_queue *
 thread_queue_new(struct pool *pool);
@@ -58,9 +52,5 @@ thread_queue_done(struct thread_queue *q, struct thread_job *job);
  */
 bool
 thread_queue_cancel(struct thread_queue *q, struct thread_job *job);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

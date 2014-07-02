@@ -9,10 +9,7 @@
 #include "filtered_socket.hxx"
 #include "fifo-buffer.h"
 #include "fb_pool.h"
-
-extern "C" {
-#include "thread_queue.h"
-}
+#include "thread_queue.hxx"
 
 #include "gerrno.h"
 

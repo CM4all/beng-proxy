@@ -336,7 +336,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/log-glue.c src/log-glue.h \
 	src/notify.c src/notify.h \
 	src/thread_job.h \
-	src/thread_queue.c src/thread_queue.h \
+	src/thread_queue.cxx src/thread_queue.hxx \
 	src/thread_worker.cxx src/thread_worker.hxx \
 	src/thread_pool.cxx src/thread_pool.hxx \
 	src/ssl_init.cxx src/ssl_init.hxx \
@@ -440,7 +440,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/notify.h \
 	src/notify.c \
 	src/thread_job.h \
-	src/thread_queue.c src/thread_queue.h \
+	src/thread_queue.cxx src/thread_queue.hxx \
 	src/thread_worker.cxx src/thread_worker.hxx \
 	src/thread_pool.cxx src/thread_pool.hxx \
 	src/ssl_quark.hxx \
@@ -1664,7 +1664,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/ssl_factory.cxx \
 	src/ssl_filter.cxx \
 	src/thread_socket_filter.cxx \
-	src/thread_pool.cxx src/thread_queue.c src/thread_worker.cxx \
+	src/thread_pool.cxx src/thread_queue.cxx src/thread_worker.cxx \
 	src/notify.c \
 	src/client-socket.c \
 	src/http_client.cxx src/http_body.cxx \
