@@ -28,7 +28,7 @@ struct notify {
 };
 
 static void
-notify_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
+notify_event_callback(int fd, gcc_unused short event, void *ctx)
 {
     struct notify *notify = (struct notify *)ctx;
 
