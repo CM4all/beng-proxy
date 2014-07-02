@@ -122,6 +122,20 @@ http_server_socket_write(void *ctx)
 }
 
 static bool
+http_server_socket_drained(void *ctx)
+{
+    struct http_server_connection *connection =
+        (struct http_server_connection *)ctx;
+
+    if (connection->response.pending_drained) {
+        http_server_done(connection);
+        return false;
+    }
+
+    return true;
+}
+
+static bool
 http_server_socket_timeout(void *ctx)
 {
     struct http_server_connection *connection =
@@ -158,6 +172,7 @@ static constexpr BufferedSocketHandler http_server_socket_handler = {
     .closed = http_server_socket_closed,
     .timeout = http_server_socket_timeout,
     .write = http_server_socket_write,
+    .drained = http_server_socket_drained,
     .error = http_server_socket_error,
 };
 

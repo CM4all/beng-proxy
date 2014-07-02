@@ -93,6 +93,15 @@ struct http_server_connection {
     struct {
         bool want_write;
 
+        /**
+         * Are we currently waiting for all output buffers to be
+         * drained, before we can close the socket?
+         *
+         * @see BufferedSocketHandler::drained
+         * @see http_server_socket_drained()
+         */
+        bool pending_drained;
+
         http_status_t status;
         char status_buffer[64];
         char content_length_buffer[32];
