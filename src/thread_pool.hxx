@@ -8,6 +8,7 @@
 #define BENG_PROXY_THREAD_POOL_HXX
 
 struct pool;
+class ThreadQueue;
 
 /**
  * Returns the global #thread_queue instance.  The first call to this
@@ -18,7 +19,7 @@ struct pool;
  * @param pool a global pool that will be destructed after the
  * thread_pool_deinit() call
  */
-struct thread_queue *
+ThreadQueue *
 thread_pool_get_queue(struct pool *pool);
 
 void

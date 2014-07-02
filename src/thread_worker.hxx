@@ -11,14 +11,16 @@
 
 #include <pthread.h>
 
+class ThreadQueue;
+
 struct thread_worker {
     pthread_t thread;
 
-    struct thread_queue *queue;
+    ThreadQueue *queue;
 };
 
 bool
-thread_worker_create(struct thread_worker *w, struct thread_queue *q);
+thread_worker_create(struct thread_worker *w, ThreadQueue *q);
 
 /**
  * Wait for the thread to exit.  You must call thread_queue_stop()

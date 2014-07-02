@@ -661,7 +661,7 @@ const struct socket_filter thread_socket_filter = {
 
 ThreadSocketFilter *
 thread_socket_filter_new(struct pool *pool,
-                         struct thread_queue *queue,
+                         ThreadQueue *queue,
                          const ThreadSocketFilterHandler *handler,
                          void *ctx)
 {

@@ -14,7 +14,8 @@
 #include <pthread.h>
 #include <assert.h>
 
-struct thread_queue {
+class ThreadQueue {
+public:
     pthread_mutex_t mutex;
     pthread_cond_t cond;
 
@@ -33,7 +34,7 @@ struct thread_queue {
 static void
 thread_queue_wakeup_callback(void *ctx)
 {
-    struct thread_queue *q = (struct thread_queue *)ctx;
+    ThreadQueue *q = (ThreadQueue *)ctx;
     pthread_mutex_lock(&q->mutex);
 
     q->pending = false;
@@ -65,10 +66,10 @@ thread_queue_wakeup_callback(void *ctx)
         notify_disable(q->notify);
 }
 
-struct thread_queue *
+ThreadQueue *
 thread_queue_new(struct pool *pool)
 {
-    auto q = NewFromPool<struct thread_queue>(pool);
+    auto q = NewFromPool<ThreadQueue>(pool);
 
     pthread_mutex_init(&q->mutex, nullptr);
     pthread_cond_init(&q->cond, nullptr);
@@ -89,7 +90,7 @@ thread_queue_new(struct pool *pool)
 }
 
 void
-thread_queue_stop(struct thread_queue *q)
+thread_queue_stop(ThreadQueue *q)
 {
     pthread_mutex_lock(&q->mutex);
     q->alive = false;
@@ -98,7 +99,7 @@ thread_queue_stop(struct thread_queue *q)
 }
 
 void
-thread_queue_free(struct thread_queue *q)
+thread_queue_free(ThreadQueue *q)
 {
     assert(!q->alive);
 
@@ -109,7 +110,7 @@ thread_queue_free(struct thread_queue *q)
 }
 
 void
-thread_queue_add(struct thread_queue *q, struct thread_job *job)
+thread_queue_add(ThreadQueue *q, struct thread_job *job)
 {
     pthread_mutex_lock(&q->mutex);
     assert(q->alive);
@@ -129,7 +130,7 @@ thread_queue_add(struct thread_queue *q, struct thread_job *job)
 }
 
 struct thread_job *
-thread_queue_wait(struct thread_queue *q)
+thread_queue_wait(ThreadQueue *q)
 {
     pthread_mutex_lock(&q->mutex);
 
@@ -153,7 +154,7 @@ thread_queue_wait(struct thread_queue *q)
 }
 
 void
-thread_queue_done(struct thread_queue *q, struct thread_job *job)
+thread_queue_done(ThreadQueue *q, struct thread_job *job)
 {
     assert(job->state == THREAD_JOB_BUSY);
 
@@ -171,7 +172,7 @@ thread_queue_done(struct thread_queue *q, struct thread_job *job)
 }
 
 bool
-thread_queue_cancel(struct thread_queue *q, struct thread_job *job)
+thread_queue_cancel(ThreadQueue *q, struct thread_job *job)
 {
     pthread_mutex_lock(&q->mutex);
 

@@ -12,7 +12,7 @@ static void *
 thread_worker_run(void *ctx)
 {
     struct thread_worker *w = (struct thread_worker *)ctx;
-    struct thread_queue *q = w->queue;
+    ThreadQueue *q = w->queue;
 
     struct thread_job *job;
     while ((job = thread_queue_wait(q)) != nullptr) {
@@ -24,7 +24,7 @@ thread_worker_run(void *ctx)
 }
 
 bool
-thread_worker_create(struct thread_worker *w, struct thread_queue *q)
+thread_worker_create(struct thread_worker *w, ThreadQueue *q)
 {
     w->queue = q;
 

@@ -15,6 +15,7 @@
 
 typedef struct _GError GError;
 struct ThreadSocketFilter;
+class ThreadQueue;
 
 struct ThreadSocketFilterHandler {
     /**
@@ -38,7 +39,7 @@ struct ThreadSocketFilter {
 
     struct pool *pool;
 
-    struct thread_queue *queue;
+    ThreadQueue *queue;
 
     struct filtered_socket *socket;
 
@@ -146,7 +147,7 @@ struct ThreadSocketFilter {
 
 ThreadSocketFilter *
 thread_socket_filter_new(struct pool *pool,
-                         struct thread_queue *queue,
+                         ThreadQueue *queue,
                          const ThreadSocketFilterHandler *handler,
                          void *ctx);
 

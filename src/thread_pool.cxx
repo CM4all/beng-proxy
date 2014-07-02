@@ -15,7 +15,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-static struct thread_queue *global_thread_queue;
+static ThreadQueue *global_thread_queue;
 static struct thread_worker worker_threads[8];
 
 static void
@@ -37,7 +37,7 @@ thread_pool_start(void)
     }
 }
 
-struct thread_queue *
+ThreadQueue *
 thread_pool_get_queue(struct pool *pool)
 {
     if (global_thread_queue == nullptr) {
