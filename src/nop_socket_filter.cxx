@@ -4,14 +4,6 @@
 
 #include "nop_socket_filter.hxx"
 #include "filtered_socket.hxx"
-#include "fifo-buffer.h"
-#include "fb_pool.h"
-#include "thread_queue.h"
-#include "thread_pool.h"
-#include "gerrno.h"
-
-#include <string.h>
-#include <errno.h>
 
 struct nop_socket_filter {
     struct filtered_socket *socket;
