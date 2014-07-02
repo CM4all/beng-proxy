@@ -9,35 +9,35 @@
 
 #include <inline/list.h>
 
-enum thread_job_state {
-    /**
-     * The job is not in any queue.
-     */
-    THREAD_JOB_NULL,
-
-    /**
-     * The job has been added to the queue, but is not being worked on
-     * yet.
-     */
-    THREAD_JOB_WAITING,
-
-    /**
-     * The job is being performed via run().
-     */
-    THREAD_JOB_BUSY,
-
-    /**
-     * The job has finished, but the done() method has not been
-     * invoked yet.
-     */
-    THREAD_JOB_DONE,
-};
-
 class ThreadJob {
 public:
     struct list_head siblings;
 
-    enum thread_job_state state;
+    enum class State {
+        /**
+         * The job is not in any queue.
+         */
+        INITIAL,
+
+        /**
+         * The job has been added to the queue, but is not being worked on
+         * yet.
+         */
+        WAITING,
+
+        /**
+         * The job is being performed via run().
+         */
+        BUSY,
+
+        /**
+         * The job has finished, but the done() method has not been
+         * invoked yet.
+         */
+        DONE,
+    };
+
+    State state;
 
     /**
      * Shall this job be enqueued again instead of invoking its done()
@@ -54,7 +54,7 @@ thread_job_init(ThreadJob *job,
                 void (*run)(ThreadJob *job),
                 void (*done)(ThreadJob *job))
 {
-    job->state = THREAD_JOB_NULL;
+    job->state = ThreadJob::State::INITIAL;
     job->again = false;
     job->run = run;
     job->done = done;

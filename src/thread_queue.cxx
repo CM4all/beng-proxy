@@ -43,18 +43,18 @@ thread_queue_wakeup_callback(void *ctx)
 
     while (!list_empty(&q->done)) {
         ThreadJob *job = (ThreadJob *)q->done.next;
-        assert(job->state == THREAD_JOB_DONE);
+        assert(job->state == ThreadJob::State::DONE);
 
         list_remove(&job->siblings);
 
         if (job->again) {
             /* schedule this job again */
-            job->state = THREAD_JOB_WAITING;
+            job->state = ThreadJob::State::WAITING;
             job->again = false;
             list_add(&job->siblings, &q->waiting);
             q->cond.notify_one();
         } else {
-            job->state = THREAD_JOB_NULL;
+            job->state = ThreadJob::State::INITIAL;
             q->mutex.unlock();
             job->done(job);
             q->mutex.lock();
@@ -112,12 +112,12 @@ thread_queue_add(ThreadQueue *q, ThreadJob *job)
     q->mutex.lock();
     assert(q->alive);
 
-    if (job->state == THREAD_JOB_NULL) {
-        job->state = THREAD_JOB_WAITING;
+    if (job->state == ThreadJob::State::INITIAL) {
+        job->state = ThreadJob::State::WAITING;
         job->again = false;
         list_add(&job->siblings, &q->waiting);
         q->cond.notify_one();
-    } else if (job->state != THREAD_JOB_WAITING) {
+    } else if (job->state != ThreadJob::State::WAITING) {
         job->again = true;
     }
 
@@ -137,9 +137,9 @@ thread_queue_wait(ThreadQueue *q)
     ThreadJob *job = nullptr;
     if (q->alive && !list_empty(&q->waiting)) {
         job = (ThreadJob *)q->waiting.next;
-        assert(job->state == THREAD_JOB_WAITING);
+        assert(job->state == ThreadJob::State::WAITING);
 
-        job->state = THREAD_JOB_BUSY;
+        job->state = ThreadJob::State::BUSY;
         list_remove(&job->siblings);
         list_add(&job->siblings, &q->busy);
     }
@@ -150,11 +150,11 @@ thread_queue_wait(ThreadQueue *q)
 void
 thread_queue_done(ThreadQueue *q, ThreadJob *job)
 {
-    assert(job->state == THREAD_JOB_BUSY);
+    assert(job->state == ThreadJob::State::BUSY);
 
     q->mutex.lock();
 
-    job->state = THREAD_JOB_DONE;
+    job->state = ThreadJob::State::DONE;
     list_remove(&job->siblings);
     list_add(&job->siblings, &q->done);
 
@@ -171,21 +171,21 @@ thread_queue_cancel(ThreadQueue *q, ThreadJob *job)
     std::unique_lock<std::mutex> lock(q->mutex);
 
     switch (job->state) {
-    case THREAD_JOB_NULL:
+    case ThreadJob::State::INITIAL:
         /* already idle */
         return true;
 
-    case THREAD_JOB_WAITING:
+    case ThreadJob::State::WAITING:
         /* cancel it */
         list_remove(&job->siblings);
-        job->state = THREAD_JOB_NULL;
+        job->state = ThreadJob::State::INITIAL;
         return true;
 
-    case THREAD_JOB_BUSY:
+    case ThreadJob::State::BUSY:
         /* no chance */
         return false;
 
-    case THREAD_JOB_DONE:
+    case ThreadJob::State::DONE:
         /* TODO: the callback hasn't been invoked yet - do that now?
            anyway, with this pending state, we can't return success */
         return false;
