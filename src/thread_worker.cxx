@@ -6,7 +6,7 @@
 
 #include "thread_worker.hxx"
 #include "thread_queue.hxx"
-#include "thread_job.h"
+#include "thread_job.hxx"
 
 static void *
 thread_worker_run(void *ctx)

@@ -5,7 +5,7 @@
  */
 
 #include "thread_queue.hxx"
-#include "thread_job.h"
+#include "thread_job.hxx"
 #include "pool.h"
 #include "notify.h"
 

@@ -4,12 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_THREAD_JOB_H
-#define BENG_PROXY_THREAD_JOB_H
+#ifndef BENG_PROXY_THREAD_JOB_HXX
+#define BENG_PROXY_THREAD_JOB_HXX
 
 #include <inline/list.h>
-
-#include <stdbool.h>
 
 enum thread_job_state {
     /**

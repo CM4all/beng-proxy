@@ -8,7 +8,7 @@
 #ifndef BENG_PROXY_THREAD_SOCKET_FILTER_HXX
 #define BENG_PROXY_THREAD_SOCKET_FILTER_HXX
 
-#include "thread_job.h"
+#include "thread_job.hxx"
 #include "defer_event.h"
 
 #include <pthread.h>
