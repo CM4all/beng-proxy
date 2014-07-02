@@ -12,6 +12,7 @@
 
 #include <pthread.h>
 #include <assert.h>
+#include <stdio.h>
 
 class ThreadQueue {
 public:
@@ -83,7 +84,7 @@ thread_queue_new()
     GError *error = nullptr;
     q->notify = notify_new(thread_queue_wakeup_callback, q, &error);
     if (q->notify == nullptr)
-        g_printerr("%s\n", error->message);
+        fprintf(stderr, "%s\n", error->message);
 
     return q;
 }
