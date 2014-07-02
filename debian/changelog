@@ -3,7 +3,7 @@ cm4all-beng-proxy (5.0.6) unstable; urgency=low
   * merge release 4.7
   * translation: add packet EXPAND_SITE
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 02 Jul 2014 12:58:55 +0200
 
 cm4all-beng-proxy (5.0.5) unstable; urgency=low
 
