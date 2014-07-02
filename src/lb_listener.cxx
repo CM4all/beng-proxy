@@ -8,21 +8,12 @@
 #include "lb_instance.hxx"
 #include "lb_connection.hxx"
 #include "lb_config.hxx"
-#include "notify.h"
 #include "ssl_factory.hxx"
 #include "listener.h"
 #include "address_envelope.hxx"
 #include "pool.h"
 
 #include <daemon/log.h>
-
-static void
-lb_listener_notify_callback(void *ctx)
-{
-    struct lb_listener *listener = (struct lb_listener *)ctx;
-    (void)listener;
-    /* XXX check SSL events */
-}
 
 /*
  * listener_handler
@@ -73,22 +64,13 @@ lb_listener_new(struct lb_instance *instance,
     if (config->ssl) {
         /* prepare SSL support */
 
-        listener->notify = notify_new(pool, lb_listener_notify_callback,
-                                      listener, error_r);
-        if (listener->notify == NULL) {
-            pool_unref(pool);
-            return NULL;
-        }
-
         listener->ssl_factory = ssl_factory_new(config->ssl_config, true,
                                                 error_r);
         if (listener->ssl_factory == NULL) {
-            notify_free(listener->notify);
             pool_unref(pool);
             return NULL;
         }
     } else {
-        listener->notify = NULL;
         listener->ssl_factory = NULL;
     }
 
@@ -115,9 +97,6 @@ lb_listener_free(struct lb_listener *listener)
 
     if (listener->ssl_factory != NULL)
         ssl_factory_free(listener->ssl_factory);
-
-    if (listener->notify != NULL)
-        notify_free(listener->notify);
 
     pool_unref(listener->pool);
 }

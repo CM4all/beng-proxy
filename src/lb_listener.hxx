@@ -24,8 +24,6 @@ struct lb_listener {
 
     struct ssl_factory *ssl_factory;
 
-    struct notify *notify;
-
     struct listener *listener;
 };
 
