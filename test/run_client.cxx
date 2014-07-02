@@ -268,7 +268,7 @@ my_client_socket_success(int fd, void *ctx)
 
     case parsed_url::HTTPS: {
         GError *error = nullptr;
-        void *filter_ctx = ssl_client_create(c->pool, c->pool,
+        void *filter_ctx = ssl_client_create(c->pool,
                                              c->url.host,
                                              &error);
         if (filter_ctx == nullptr) {

@@ -9,10 +9,9 @@
 
 class ThreadQueue;
 struct thread_job;
-struct pool;
 
 ThreadQueue *
-thread_queue_new(struct pool *pool);
+thread_queue_new();
 
 /**
  * Cancel all thread_queue_wait() calls and refuse all further calls.

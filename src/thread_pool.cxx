@@ -19,9 +19,9 @@ static ThreadQueue *global_thread_queue;
 static struct thread_worker worker_threads[8];
 
 static void
-thread_pool_init(struct pool *pool)
+thread_pool_init()
 {
-    global_thread_queue = thread_queue_new(pool);
+    global_thread_queue = thread_queue_new();
 }
 
 static void
@@ -38,12 +38,12 @@ thread_pool_start(void)
 }
 
 ThreadQueue *
-thread_pool_get_queue(struct pool *pool)
+thread_pool_get_queue()
 {
     if (global_thread_queue == nullptr) {
         /* initial call - create the queue and launch worker
            threads */
-        thread_pool_init(pool);
+        thread_pool_init();
         thread_pool_start();
     }
 

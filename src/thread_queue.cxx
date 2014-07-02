@@ -6,7 +6,6 @@
 
 #include "thread_queue.hxx"
 #include "thread_job.hxx"
-#include "pool.h"
 #include "notify.hxx"
 
 #include <glib.h>
@@ -67,9 +66,9 @@ thread_queue_wakeup_callback(void *ctx)
 }
 
 ThreadQueue *
-thread_queue_new(struct pool *pool)
+thread_queue_new()
 {
-    auto q = NewFromPool<ThreadQueue>(pool);
+    auto q = new ThreadQueue();
 
     pthread_mutex_init(&q->mutex, nullptr);
     pthread_cond_init(&q->cond, nullptr);
@@ -107,6 +106,7 @@ thread_queue_free(ThreadQueue *q)
 
     pthread_mutex_destroy(&q->mutex);
     pthread_cond_destroy(&q->cond);
+    delete q;
 }
 
 void

@@ -25,8 +25,7 @@ const struct socket_filter *
 ssl_client_get_filter(void);
 
 void *
-ssl_client_create(struct pool *global_pool,
-                  struct pool *pool,
+ssl_client_create(struct pool *pool,
                   const char *hostname,
                   GError **error_r);
 

@@ -7,7 +7,6 @@
 #ifndef BENG_PROXY_THREAD_POOL_HXX
 #define BENG_PROXY_THREAD_POOL_HXX
 
-struct pool;
 class ThreadQueue;
 
 /**
@@ -20,7 +19,7 @@ class ThreadQueue;
  * thread_pool_deinit() call
  */
 ThreadQueue *
-thread_pool_get_queue(struct pool *pool);
+thread_pool_get_queue();
 
 void
 thread_pool_stop();

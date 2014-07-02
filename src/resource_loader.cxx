@@ -40,8 +40,6 @@
 #include <stdlib.h>
 
 struct resource_loader {
-    struct pool *pool;
-
     struct tcp_balancer *tcp_balancer;
     struct lhttp_stock *lhttp_stock;
     struct fcgi_stock *fcgi_stock;
@@ -70,7 +68,6 @@ resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
 
     auto rl = NewFromPool<struct resource_loader>(pool);
 
-    rl->pool = pool;
     rl->tcp_balancer = tcp_balancer;
     rl->lhttp_stock = lhttp_stock;
     rl->fcgi_stock = fcgi_stock;
@@ -307,7 +304,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
     case RESOURCE_ADDRESS_HTTP:
         if (address->u.http->ssl) {
             GError *error = nullptr;
-            filter_ctx = ssl_client_create(rl->pool, pool,
+            filter_ctx = ssl_client_create(pool,
                                            /* TODO: only host */
                                            address->u.http->host_and_port,
                                            &error);
