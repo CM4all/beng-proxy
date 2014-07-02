@@ -7,12 +7,11 @@
 #ifndef BENG_PROXY_THREAD_JOB_HXX
 #define BENG_PROXY_THREAD_JOB_HXX
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
-class ThreadJob {
+class ThreadJob
+    : public boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 public:
-    struct list_head siblings;
-
     enum class State {
         /**
          * The job is not in any queue.

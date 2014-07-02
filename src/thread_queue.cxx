@@ -28,7 +28,10 @@ public:
      */
     bool pending;
 
-    struct list_head waiting, busy, done;
+    typedef boost::intrusive::list<ThreadJob,
+                                   boost::intrusive::constant_time_size<false>> JobList;
+
+    JobList waiting, busy, done;
 
     Notify *notify;
 };
@@ -41,17 +44,17 @@ thread_queue_wakeup_callback(void *ctx)
 
     q->pending = false;
 
-    while (!list_empty(&q->done)) {
-        ThreadJob *job = (ThreadJob *)q->done.next;
+    for (auto i = q->done.begin(), end = q->done.end(); i != end;) {
+        ThreadJob *job = &*i;
         assert(job->state == ThreadJob::State::DONE);
 
-        list_remove(&job->siblings);
+        i = q->done.erase(i);
 
         if (job->again) {
             /* schedule this job again */
             job->state = ThreadJob::State::WAITING;
             job->again = false;
-            list_add(&job->siblings, &q->waiting);
+            q->waiting.push_back(*job);
             q->cond.notify_one();
         } else {
             job->state = ThreadJob::State::INITIAL;
@@ -63,8 +66,7 @@ thread_queue_wakeup_callback(void *ctx)
 
     q->mutex.unlock();
 
-    if (list_empty(&q->waiting) && list_empty(&q->busy) &&
-        list_empty(&q->done))
+    if (q->waiting.empty() && q->busy.empty() && q->done.empty())
         notify_disable(q->notify);
 }
 
@@ -75,10 +77,6 @@ thread_queue_new()
 
     q->alive = true;
     q->pending = false;
-
-    list_init(&q->waiting);
-    list_init(&q->busy);
-    list_init(&q->done);
 
     GError *error = nullptr;
     q->notify = notify_new(thread_queue_wakeup_callback, q, &error);
@@ -115,7 +113,7 @@ thread_queue_add(ThreadQueue *q, ThreadJob *job)
     if (job->state == ThreadJob::State::INITIAL) {
         job->state = ThreadJob::State::WAITING;
         job->again = false;
-        list_add(&job->siblings, &q->waiting);
+        q->waiting.push_back(*job);
         q->cond.notify_one();
     } else if (job->state != ThreadJob::State::WAITING) {
         job->again = true;
@@ -131,20 +129,24 @@ thread_queue_wait(ThreadQueue *q)
 {
     std::unique_lock<std::mutex> lock(q->mutex);
 
-    /* queue is empty, wait for a new job to be added */
-    q->cond.wait(lock, [q](){ return !q->alive || !list_empty(&q->waiting); });
+    while (true) {
+        if (!q->alive)
+            return nullptr;
 
-    ThreadJob *job = nullptr;
-    if (q->alive && !list_empty(&q->waiting)) {
-        job = (ThreadJob *)q->waiting.next;
-        assert(job->state == ThreadJob::State::WAITING);
+        auto i = q->waiting.begin();
+        if (i != q->waiting.end()) {
+            auto &job = *i;
+            assert(job.state == ThreadJob::State::WAITING);
 
-        job->state = ThreadJob::State::BUSY;
-        list_remove(&job->siblings);
-        list_add(&job->siblings, &q->busy);
+            job.state = ThreadJob::State::BUSY;
+            q->waiting.erase(i);
+            q->busy.push_back(job);
+            return &job;
+        }
+
+        /* queue is empty, wait for a new job to be added */
+        q->cond.wait(lock);
     }
-
-    return job;
 }
 
 void
@@ -155,8 +157,8 @@ thread_queue_done(ThreadQueue *q, ThreadJob *job)
     q->mutex.lock();
 
     job->state = ThreadJob::State::DONE;
-    list_remove(&job->siblings);
-    list_add(&job->siblings, &q->done);
+    q->busy.erase(q->busy.iterator_to(*job));
+    q->done.push_back(*job);
 
     q->pending = true;
 
@@ -177,7 +179,7 @@ thread_queue_cancel(ThreadQueue *q, ThreadJob *job)
 
     case ThreadJob::State::WAITING:
         /* cancel it */
-        list_remove(&job->siblings);
+        q->waiting.erase(q->waiting.iterator_to(*job));
         job->state = ThreadJob::State::INITIAL;
         return true;
 
