@@ -9,13 +9,12 @@
 
 #include "glibfwd.hxx"
 
-struct pool;
 class Notify;
 
 typedef void (*notify_callback_t)(void *ctx);
 
 Notify *
-notify_new(struct pool *pool, notify_callback_t callback, void *ctx,
+notify_new(notify_callback_t callback, void *ctx,
            GError **error_r);
 
 void

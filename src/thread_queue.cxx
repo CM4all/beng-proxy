@@ -81,7 +81,7 @@ thread_queue_new(struct pool *pool)
     list_init(&q->done);
 
     GError *error = nullptr;
-    q->notify = notify_new(pool, thread_queue_wakeup_callback, q, &error);
+    q->notify = notify_new(thread_queue_wakeup_callback, q, &error);
     if (q->notify == nullptr)
         g_printerr("%s\n", error->message);
 

@@ -6,7 +6,6 @@
 
 #include "notify.hxx"
 #include "fd_util.h"
-#include "pool.h"
 #include "gerrno.h"
 
 #include <inline/compiler.h>
@@ -46,10 +45,9 @@ notify_event_callback(int fd, gcc_unused short event, void *ctx)
 }
 
 Notify *
-notify_new(struct pool *pool, notify_callback_t callback, void *ctx,
-           GError **error_r)
+notify_new(notify_callback_t callback, void *ctx, GError **error_r)
 {
-    auto notify = NewFromPool<Notify>(pool);
+    auto notify = new Notify();
 
     notify->callback = callback;
     notify->callback_ctx = ctx;
@@ -72,6 +70,8 @@ notify_free(Notify *notify)
     event_del(&notify->event);
     close(notify->fds[0]);
     close(notify->fds[1]);
+
+    delete notify;
 }
 
 void
