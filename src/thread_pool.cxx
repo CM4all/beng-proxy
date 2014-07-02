@@ -56,7 +56,7 @@ thread_pool_stop(void)
     if (global_thread_queue == nullptr)
         return;
 
-    thread_queue_stop(global_thread_queue);
+    thread_queue_stop(*global_thread_queue);
 }
 
 void

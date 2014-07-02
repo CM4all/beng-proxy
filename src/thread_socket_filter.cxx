@@ -71,11 +71,11 @@ thread_socket_filter_destroy(ThreadSocketFilter *f)
 }
 
 static void
-thread_socket_filter_schedule(ThreadSocketFilter *f)
+thread_socket_filter_schedule(ThreadSocketFilter &f)
 {
-    assert(!f->postponed_destroy);
+    assert(!f.postponed_destroy);
 
-    thread_queue_add(&f->queue, f);
+    thread_queue_add(f.queue, f);
 }
 
 /**
@@ -343,7 +343,7 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
 
     filtered_socket_internal_consumed(f->socket, length);
 
-    thread_socket_filter_schedule(f);
+    thread_socket_filter_schedule(*f);
 
     return result;
 }
@@ -398,7 +398,7 @@ thread_socket_filter_consumed(size_t nbytes, void *ctx)
     pthread_mutex_unlock(&f->mutex);
 
     if (schedule)
-        thread_socket_filter_schedule(f);
+        thread_socket_filter_schedule(*f);
 }
 
 static bool
@@ -435,7 +435,7 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
     if (nbytes > 0)
         filtered_socket_internal_undrained(f->socket);
 
-    thread_socket_filter_schedule(f);
+    thread_socket_filter_schedule(*f);
 
     return nbytes;
 }
@@ -526,7 +526,7 @@ thread_socket_filter_internal_write(void *ctx)
         if (add)
             /* the filter job may be stalled because the output buffer
                was full; try again, now that it's not full anymore */
-            thread_socket_filter_schedule(f);
+            thread_socket_filter_schedule(*f);
 
         if (empty)
             filtered_socket_internal_unschedule_write(f->socket);
@@ -628,18 +628,18 @@ thread_socket_filter_end(void *ctx)
 static void
 thread_socket_filter_close(void *ctx)
 {
-    ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
+    auto &f = *(ThreadSocketFilter *)ctx;
 
-    defer_event_cancel(&f->defer_event);
+    defer_event_cancel(&f.defer_event);
 
-    if (!thread_queue_cancel(&f->queue, f)) {
+    if (!thread_queue_cancel(f.queue, f)) {
         /* detach the pool, postpone the destruction */
-        pool_set_persistent(&f->pool);
-        f->postponed_destroy = true;
+        pool_set_persistent(&f.pool);
+        f.postponed_destroy = true;
         return;
     }
 
-    thread_socket_filter_destroy(f);
+    thread_socket_filter_destroy(&f);
 }
 
 const struct socket_filter thread_socket_filter = {

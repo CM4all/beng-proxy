@@ -87,11 +87,11 @@ thread_queue_new()
 }
 
 void
-thread_queue_stop(ThreadQueue *q)
+thread_queue_stop(ThreadQueue &q)
 {
-    std::unique_lock<std::mutex> lock(q->mutex);
-    q->alive = false;
-    q->cond.notify_all();
+    std::unique_lock<std::mutex> lock(q.mutex);
+    q.alive = false;
+    q.cond.notify_all();
 }
 
 void
@@ -105,82 +105,82 @@ thread_queue_free(ThreadQueue *q)
 }
 
 void
-thread_queue_add(ThreadQueue *q, ThreadJob *job)
+thread_queue_add(ThreadQueue &q, ThreadJob &job)
 {
-    q->mutex.lock();
-    assert(q->alive);
+    q.mutex.lock();
+    assert(q.alive);
 
-    if (job->state == ThreadJob::State::INITIAL) {
-        job->state = ThreadJob::State::WAITING;
-        job->again = false;
-        q->waiting.push_back(*job);
-        q->cond.notify_one();
-    } else if (job->state != ThreadJob::State::WAITING) {
-        job->again = true;
+    if (job.state == ThreadJob::State::INITIAL) {
+        job.state = ThreadJob::State::WAITING;
+        job.again = false;
+        q.waiting.push_back(job);
+        q.cond.notify_one();
+    } else if (job.state != ThreadJob::State::WAITING) {
+        job.again = true;
     }
 
-    q->mutex.unlock();
+    q.mutex.unlock();
 
-    notify_enable(q->notify);
+    notify_enable(q.notify);
 }
 
 ThreadJob *
-thread_queue_wait(ThreadQueue *q)
+thread_queue_wait(ThreadQueue &q)
 {
-    std::unique_lock<std::mutex> lock(q->mutex);
+    std::unique_lock<std::mutex> lock(q.mutex);
 
     while (true) {
-        if (!q->alive)
+        if (!q.alive)
             return nullptr;
 
-        auto i = q->waiting.begin();
-        if (i != q->waiting.end()) {
+        auto i = q.waiting.begin();
+        if (i != q.waiting.end()) {
             auto &job = *i;
             assert(job.state == ThreadJob::State::WAITING);
 
             job.state = ThreadJob::State::BUSY;
-            q->waiting.erase(i);
-            q->busy.push_back(job);
+            q.waiting.erase(i);
+            q.busy.push_back(job);
             return &job;
         }
 
         /* queue is empty, wait for a new job to be added */
-        q->cond.wait(lock);
+        q.cond.wait(lock);
     }
 }
 
 void
-thread_queue_done(ThreadQueue *q, ThreadJob *job)
+thread_queue_done(ThreadQueue &q, ThreadJob &job)
 {
-    assert(job->state == ThreadJob::State::BUSY);
+    assert(job.state == ThreadJob::State::BUSY);
 
-    q->mutex.lock();
+    q.mutex.lock();
 
-    job->state = ThreadJob::State::DONE;
-    q->busy.erase(q->busy.iterator_to(*job));
-    q->done.push_back(*job);
+    job.state = ThreadJob::State::DONE;
+    q.busy.erase(q.busy.iterator_to(job));
+    q.done.push_back(job);
 
-    q->pending = true;
+    q.pending = true;
 
-    q->mutex.unlock();
+    q.mutex.unlock();
 
-    notify_signal(q->notify);
+    notify_signal(q.notify);
 }
 
 bool
-thread_queue_cancel(ThreadQueue *q, ThreadJob *job)
+thread_queue_cancel(ThreadQueue &q, ThreadJob &job)
 {
-    std::unique_lock<std::mutex> lock(q->mutex);
+    std::unique_lock<std::mutex> lock(q.mutex);
 
-    switch (job->state) {
+    switch (job.state) {
     case ThreadJob::State::INITIAL:
         /* already idle */
         return true;
 
     case ThreadJob::State::WAITING:
         /* cancel it */
-        q->waiting.erase(q->waiting.iterator_to(*job));
-        job->state = ThreadJob::State::INITIAL;
+        q.waiting.erase(q.waiting.iterator_to(job));
+        job.state = ThreadJob::State::INITIAL;
         return true;
 
     case ThreadJob::State::BUSY:

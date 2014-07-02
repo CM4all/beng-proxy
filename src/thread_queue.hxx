@@ -19,7 +19,7 @@ thread_queue_new();
  * queue.
  */
 void
-thread_queue_stop(ThreadQueue *q);
+thread_queue_stop(ThreadQueue &q);
 
 void
 thread_queue_free(ThreadQueue *q);
@@ -28,7 +28,7 @@ thread_queue_free(ThreadQueue *q);
  * Enqueue a job, and wake up an idle thread (if there is any).
  */
 void
-thread_queue_add(ThreadQueue *q, ThreadJob *job);
+thread_queue_add(ThreadQueue &q, ThreadJob &job);
 
 /**
  * Dequeue an existing job or wait for a new job, and reserve it.
@@ -36,13 +36,13 @@ thread_queue_add(ThreadQueue *q, ThreadJob *job);
  * @return NULL if thread_queue_stop() has been called
  */
 ThreadJob *
-thread_queue_wait(ThreadQueue *q);
+thread_queue_wait(ThreadQueue &q);
 
 /**
  * Mark the specified job (returned by thread_queue_wait()) as "done".
  */
 void
-thread_queue_done(ThreadQueue *q, ThreadJob *job);
+thread_queue_done(ThreadQueue &q, ThreadJob &job);
 
 /**
  * Cancel a job that has been queued.
@@ -51,6 +51,6 @@ thread_queue_done(ThreadQueue *q, ThreadJob *job);
  * currently being processed
  */
 bool
-thread_queue_cancel(ThreadQueue *q, ThreadJob *job);
+thread_queue_cancel(ThreadQueue &q, ThreadJob &job);
 
 #endif
