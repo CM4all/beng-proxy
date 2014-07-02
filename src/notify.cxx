@@ -11,10 +11,12 @@
 
 #include <inline/compiler.h>
 
+#include <event.h>
+
+#include <atomic>
+
 #include <assert.h>
 #include <unistd.h>
-#include <glib.h>
-#include <event.h>
 
 struct notify {
     notify_callback_t callback;
@@ -24,7 +26,10 @@ struct notify {
 
     struct event event;
 
-    volatile gint value;
+    std::atomic_bool pending;
+
+    notify()
+        :pending(false) {}
 };
 
 static void
@@ -35,14 +40,7 @@ notify_event_callback(int fd, gcc_unused short event, void *ctx)
     char buffer[32];
     (void)read(fd, buffer, sizeof(buffer));
 
-#if GCC_CHECK_VERSION(4,6) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wbad-function-cast"
-#endif
-    if (g_atomic_int_compare_and_exchange(&notify->value, 1, 0))
-#if GCC_CHECK_VERSION(4,6) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+    if (notify->pending.exchange(false))
         notify->callback(notify->callback_ctx);
 }
 
@@ -64,7 +62,6 @@ notify_new(struct pool *pool, notify_callback_t callback, void *ctx,
               notify_event_callback, notify);
     event_add(&notify->event, nullptr);
 
-    notify->value = 0;
     return notify;
 }
 
@@ -79,14 +76,7 @@ notify_free(struct notify *notify)
 void
 notify_signal(struct notify *notify)
 {
-#if GCC_CHECK_VERSION(4,6) || defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wbad-function-cast"
-#endif
-    if (g_atomic_int_compare_and_exchange(&notify->value, 0, 1))
-#if GCC_CHECK_VERSION(4,6) || defined(__clang__)
-#pragma GCC diagnostic pop
-#endif
+    if (!notify->pending.exchange(true))
         (void)write(notify->fds[1], notify, 1);
 }
 
