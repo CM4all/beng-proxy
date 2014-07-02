@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_THREAD_POOL_HXX
 #define BENG_PROXY_THREAD_POOL_HXX
 
+#include <inline/compiler.h>
+
 class ThreadQueue;
 
 /**
@@ -18,6 +20,7 @@ class ThreadQueue;
  * @param pool a global pool that will be destructed after the
  * thread_pool_deinit() call
  */
+gcc_const
 ThreadQueue &
 thread_pool_get_queue();
 
