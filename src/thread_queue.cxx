@@ -10,14 +10,16 @@
 
 #include <glib.h>
 
-#include <pthread.h>
+#include <mutex>
+#include <condition_variable>
+
 #include <assert.h>
 #include <stdio.h>
 
 class ThreadQueue {
 public:
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
+    std::mutex mutex;
+    std::condition_variable cond;
 
     bool alive;
 
@@ -35,7 +37,7 @@ static void
 thread_queue_wakeup_callback(void *ctx)
 {
     ThreadQueue *q = (ThreadQueue *)ctx;
-    pthread_mutex_lock(&q->mutex);
+    q->mutex.lock();
 
     q->pending = false;
 
@@ -50,16 +52,16 @@ thread_queue_wakeup_callback(void *ctx)
             job->state = THREAD_JOB_WAITING;
             job->again = false;
             list_add(&job->siblings, &q->waiting);
-            pthread_cond_signal(&q->cond);
+            q->cond.notify_one();
         } else {
             job->state = THREAD_JOB_NULL;
-            pthread_mutex_unlock(&q->mutex);
+            q->mutex.unlock();
             job->done(job);
-            pthread_mutex_lock(&q->mutex);
+            q->mutex.lock();
         }
     }
 
-    pthread_mutex_unlock(&q->mutex);
+    q->mutex.unlock();
 
     if (list_empty(&q->waiting) && list_empty(&q->busy) &&
         list_empty(&q->done))
@@ -70,9 +72,6 @@ ThreadQueue *
 thread_queue_new()
 {
     auto q = new ThreadQueue();
-
-    pthread_mutex_init(&q->mutex, nullptr);
-    pthread_cond_init(&q->cond, nullptr);
 
     q->alive = true;
     q->pending = false;
@@ -92,10 +91,9 @@ thread_queue_new()
 void
 thread_queue_stop(ThreadQueue *q)
 {
-    pthread_mutex_lock(&q->mutex);
+    std::unique_lock<std::mutex> lock(q->mutex);
     q->alive = false;
-    pthread_cond_broadcast(&q->cond);
-    pthread_mutex_unlock(&q->mutex);
+    q->cond.notify_all();
 }
 
 void
@@ -105,27 +103,25 @@ thread_queue_free(ThreadQueue *q)
 
     notify_free(q->notify);
 
-    pthread_mutex_destroy(&q->mutex);
-    pthread_cond_destroy(&q->cond);
     delete q;
 }
 
 void
 thread_queue_add(ThreadQueue *q, struct thread_job *job)
 {
-    pthread_mutex_lock(&q->mutex);
+    q->mutex.lock();
     assert(q->alive);
 
     if (job->state == THREAD_JOB_NULL) {
         job->state = THREAD_JOB_WAITING;
         job->again = false;
         list_add(&job->siblings, &q->waiting);
-        pthread_cond_signal(&q->cond);
+        q->cond.notify_one();
     } else if (job->state != THREAD_JOB_WAITING) {
         job->again = true;
     }
 
-    pthread_mutex_unlock(&q->mutex);
+    q->mutex.unlock();
 
     notify_enable(q->notify);
 }
@@ -133,11 +129,10 @@ thread_queue_add(ThreadQueue *q, struct thread_job *job)
 struct thread_job *
 thread_queue_wait(ThreadQueue *q)
 {
-    pthread_mutex_lock(&q->mutex);
+    std::unique_lock<std::mutex> lock(q->mutex);
 
-    while (q->alive && list_empty(&q->waiting))
-        /* queue is empty, wait for a new job to be added */
-        pthread_cond_wait(&q->cond, &q->mutex);
+    /* queue is empty, wait for a new job to be added */
+    q->cond.wait(lock, [q](){ return !q->alive || !list_empty(&q->waiting); });
 
     struct thread_job *job = nullptr;
     if (q->alive && !list_empty(&q->waiting)) {
@@ -149,8 +144,6 @@ thread_queue_wait(ThreadQueue *q)
         list_add(&job->siblings, &q->busy);
     }
 
-    pthread_mutex_unlock(&q->mutex);
-
     return job;
 }
 
@@ -159,7 +152,7 @@ thread_queue_done(ThreadQueue *q, struct thread_job *job)
 {
     assert(job->state == THREAD_JOB_BUSY);
 
-    pthread_mutex_lock(&q->mutex);
+    q->mutex.lock();
 
     job->state = THREAD_JOB_DONE;
     list_remove(&job->siblings);
@@ -167,7 +160,7 @@ thread_queue_done(ThreadQueue *q, struct thread_job *job)
 
     q->pending = true;
 
-    pthread_mutex_unlock(&q->mutex);
+    q->mutex.unlock();
 
     notify_signal(q->notify);
 }
@@ -175,32 +168,26 @@ thread_queue_done(ThreadQueue *q, struct thread_job *job)
 bool
 thread_queue_cancel(ThreadQueue *q, struct thread_job *job)
 {
-    pthread_mutex_lock(&q->mutex);
+    std::unique_lock<std::mutex> lock(q->mutex);
 
-    bool result = false;
     switch (job->state) {
     case THREAD_JOB_NULL:
         /* already idle */
-        result = true;
-        break;
+        return true;
 
     case THREAD_JOB_WAITING:
         /* cancel it */
         list_remove(&job->siblings);
         job->state = THREAD_JOB_NULL;
-        result = true;
-        break;
+        return true;
 
     case THREAD_JOB_BUSY:
         /* no chance */
-        break;
+        return false;
 
     case THREAD_JOB_DONE:
         /* TODO: the callback hasn't been invoked yet - do that now?
            anyway, with this pending state, we can't return success */
-        break;
+        return false;
     }
-
-    pthread_mutex_unlock(&q->mutex);
-    return result;
 }
