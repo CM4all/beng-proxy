@@ -12,6 +12,10 @@
 struct thread_job;
 struct pool;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct thread_queue *
 thread_queue_new(struct pool *pool);
 
@@ -54,5 +58,9 @@ thread_queue_done(struct thread_queue *q, struct thread_job *job);
  */
 bool
 thread_queue_cancel(struct thread_queue *q, struct thread_job *job);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

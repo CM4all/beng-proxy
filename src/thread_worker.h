@@ -18,6 +18,10 @@ struct thread_worker {
     struct thread_queue *queue;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool
 thread_worker_create(struct thread_worker *w, struct thread_queue *q);
 
@@ -30,5 +34,9 @@ thread_worker_join(struct thread_worker *w)
 {
     pthread_join(w->thread, NULL);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

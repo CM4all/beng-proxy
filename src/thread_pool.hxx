@@ -4,14 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_THREAD_POOL_H
-#define BENG_PROXY_THREAD_POOL_H
+#ifndef BENG_PROXY_THREAD_POOL_HXX
+#define BENG_PROXY_THREAD_POOL_HXX
 
 struct pool;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Returns the global #thread_queue instance.  The first call to this
@@ -26,16 +22,12 @@ struct thread_queue *
 thread_pool_get_queue(struct pool *pool);
 
 void
-thread_pool_stop(void);
+thread_pool_stop();
 
 void
-thread_pool_join(void);
+thread_pool_join();
 
 void
-thread_pool_deinit(void);
-
-#ifdef __cplusplus
-}
-#endif
+thread_pool_deinit();
 
 #endif

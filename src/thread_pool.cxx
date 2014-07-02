@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "thread_pool.h"
+#include "thread_pool.hxx"
 #include "thread_queue.h"
 #include "thread_worker.h"
 
@@ -27,7 +27,7 @@ thread_pool_init(struct pool *pool)
 static void
 thread_pool_start(void)
 {
-    assert(global_thread_queue != NULL);
+    assert(global_thread_queue != nullptr);
 
     for (unsigned i = 0; i < G_N_ELEMENTS(worker_threads); ++i) {
         if (!thread_worker_create(&worker_threads[i], global_thread_queue)) {
@@ -40,7 +40,7 @@ thread_pool_start(void)
 struct thread_queue *
 thread_pool_get_queue(struct pool *pool)
 {
-    if (global_thread_queue == NULL) {
+    if (global_thread_queue == nullptr) {
         /* initial call - create the queue and launch worker
            threads */
         thread_pool_init(pool);
@@ -53,7 +53,7 @@ thread_pool_get_queue(struct pool *pool)
 void
 thread_pool_stop(void)
 {
-    if (global_thread_queue == NULL)
+    if (global_thread_queue == nullptr)
         return;
 
     thread_queue_stop(global_thread_queue);
@@ -62,7 +62,7 @@ thread_pool_stop(void)
 void
 thread_pool_join(void)
 {
-    if (global_thread_queue == NULL)
+    if (global_thread_queue == nullptr)
         return;
 
     for (unsigned i = 0; i < G_N_ELEMENTS(worker_threads); ++i)
@@ -72,9 +72,9 @@ thread_pool_join(void)
 void
 thread_pool_deinit(void)
 {
-    if (global_thread_queue == NULL)
+    if (global_thread_queue == nullptr)
         return;
 
     thread_queue_free(global_thread_queue);
-    global_thread_queue = NULL;
+    global_thread_queue = nullptr;
 }

@@ -16,7 +16,7 @@
 #include "ssl_filter.hxx"
 #include "pool.h"
 #include "thread_socket_filter.hxx"
-#include "thread_pool.h"
+#include "thread_pool.hxx"
 
 #include <assert.h>
 #include <unistd.h>

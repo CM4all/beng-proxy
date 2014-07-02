@@ -9,7 +9,7 @@
 #include "ssl_factory.hxx"
 #include "ssl_filter.hxx"
 #include "thread_socket_filter.hxx"
-#include "thread_pool.h"
+#include "thread_pool.hxx"
 
 #include <daemon/log.h>
 
