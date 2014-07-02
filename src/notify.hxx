@@ -10,24 +10,24 @@
 #include "glibfwd.hxx"
 
 struct pool;
-struct notify;
+class Notify;
 
 typedef void (*notify_callback_t)(void *ctx);
 
-struct notify *
+Notify *
 notify_new(struct pool *pool, notify_callback_t callback, void *ctx,
            GError **error_r);
 
 void
-notify_free(struct notify *notify);
+notify_free(Notify *notify);
 
 void
-notify_signal(struct notify *notify);
+notify_signal(Notify *notify);
 
 void
-notify_enable(struct notify *notify);
+notify_enable(Notify *notify);
 
 void
-notify_disable(struct notify *notify);
+notify_disable(Notify *notify);
 
 #endif

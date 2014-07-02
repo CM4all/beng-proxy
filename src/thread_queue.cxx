@@ -27,7 +27,7 @@ struct thread_queue {
 
     struct list_head waiting, busy, done;
 
-    struct notify *notify;
+    Notify *notify;
 };
 
 static void
