@@ -4,23 +4,18 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_THREAD_WORKER_H
-#define BENG_PROXY_THREAD_WORKER_H
+#ifndef BENG_PROXY_THREAD_WORKER_HXX
+#define BENG_PROXY_THREAD_WORKER_HXX
 
 #include <inline/list.h>
 
 #include <pthread.h>
-#include <stdbool.h>
 
 struct thread_worker {
     pthread_t thread;
 
     struct thread_queue *queue;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 bool
 thread_worker_create(struct thread_worker *w, struct thread_queue *q);
@@ -32,11 +27,7 @@ thread_worker_create(struct thread_worker *w, struct thread_queue *q);
 static inline void
 thread_worker_join(struct thread_worker *w)
 {
-    pthread_join(w->thread, NULL);
+    pthread_join(w->thread, nullptr);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

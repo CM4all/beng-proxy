@@ -4,23 +4,23 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "thread_worker.h"
+#include "thread_worker.hxx"
 #include "thread_queue.h"
 #include "thread_job.h"
 
 static void *
 thread_worker_run(void *ctx)
 {
-    struct thread_worker *w = ctx;
+    struct thread_worker *w = (struct thread_worker *)ctx;
     struct thread_queue *q = w->queue;
 
     struct thread_job *job;
-    while ((job = thread_queue_wait(q)) != NULL) {
+    while ((job = thread_queue_wait(q)) != nullptr) {
         job->run(job);
         thread_queue_done(q, job);
     }
 
-    return NULL;
+    return nullptr;
 }
 
 bool
@@ -28,5 +28,5 @@ thread_worker_create(struct thread_worker *w, struct thread_queue *q)
 {
     w->queue = q;
 
-    return pthread_create(&w->thread, NULL, thread_worker_run, w) == 0;
+    return pthread_create(&w->thread, nullptr, thread_worker_run, w) == 0;
 }
