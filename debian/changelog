@@ -2,7 +2,7 @@ cm4all-beng-proxy (4.7) unstable; urgency=low
 
   * lb: flush all output buffers before closing HTTPS connection
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 02 Jul 2014 10:46:07 -0000
 
 cm4all-beng-proxy (4.6) unstable; urgency=low
 
