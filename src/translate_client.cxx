@@ -3037,6 +3037,21 @@ translate_handle_packet(TranslateClient *client,
 
         client->response.expand_uri = payload;
         return true;
+
+    case TRANSLATE_EXPAND_SITE:
+        if (client->response.site == nullptr ||
+            client->response.expand_site != nullptr) {
+            translate_client_error(client, "misplaced EXPAND_SITE packet");
+            return false;
+        }
+
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+            translate_client_error(client, "malformed EXPAND_SITE packet");
+            return false;
+        }
+
+        client->response.expand_site = payload;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

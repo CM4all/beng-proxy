@@ -53,6 +53,7 @@ struct TranslateResponse {
     const char *inverse_regex;
 
     const char *site;
+    const char *expand_site;
     const char *document_root;
     const char *redirect;
     const char *expand_redirect;

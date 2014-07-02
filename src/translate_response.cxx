@@ -40,6 +40,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     regex = p_strdup_checked(pool, src.regex);
     inverse_regex = p_strdup_checked(pool, src.inverse_regex);
     site = p_strdup_checked(pool, src.site);
+    expand_site = p_strdup_checked(pool, src.expand_site);
     document_root = p_strdup_checked(pool, src.document_root);
     redirect = p_strdup_checked(pool, src.redirect);
     expand_redirect = p_strdup_checked(pool, src.expand_redirect);
@@ -201,6 +202,7 @@ TranslateResponse::IsExpandable() const
 {
     return regex != nullptr &&
         (expand_redirect != nullptr ||
+         expand_site != nullptr ||
          expand_uri != nullptr ||
          expand_test_path != nullptr ||
          resource_address_is_expandable(&address) ||
@@ -219,6 +221,12 @@ TranslateResponse::Expand(struct pool *pool,
         redirect = expand_string_unescaped(pool, expand_redirect,
                                            match_info, error_r);
         if (redirect == nullptr)
+            return false;
+    }
+
+    if (expand_site != nullptr) {
+        site = expand_string_unescaped(pool, expand_site, match_info, error_r);
+        if (site == nullptr)
             return false;
     }
 

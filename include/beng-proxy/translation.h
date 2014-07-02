@@ -539,6 +539,11 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_URI.
      */
     TRANSLATE_EXPAND_URI = 136,
+
+    /**
+     * Expansion for #TRANSLATE_SITE.
+     */
+    TRANSLATE_EXPAND_SITE = 137,
 };
 
 struct beng_translation_header {
