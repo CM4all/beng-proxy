@@ -57,43 +57,43 @@ struct ThreadSocketFilter {
      */
     struct defer_event defer_event;
 
-    bool busy, done_pending;
+    bool busy = false, done_pending = false;
 
-    bool connected;
+    bool connected = true;
 
     /**
      * Does the handler expect more data?  It announced this by
      * returning BUFFERED_MORE.
      */
-    bool expect_more;
+    bool expect_more = false;
 
-    bool postponed_remaining;
+    bool postponed_remaining = false;
 
-    bool postponed_end;
+    bool postponed_end = false;
 
     /**
      * Set to true when the thread queue hasn't yet released the
      * #thread_job.  The object will be destroyed in the "done"
      * callback.
      */
-    bool postponed_destroy;
+    bool postponed_destroy = false;
 
     /**
      * True when the client has called
      * filtered_socket_schedule_read().
      */
-    bool want_read;
+    bool want_read = false;
 
     /**
      * Was _schedule_read() forwarded?
      */
-    bool read_scheduled;
+    bool read_scheduled = false;
 
     /**
      * True when the client has called
      * filtered_socket_schedule_write().
      */
-    bool want_write;
+    bool want_write = false;
 
     /**
      * True when #ThreadSocketFilterHandler's internal output buffers
@@ -102,10 +102,10 @@ struct ThreadSocketFilter {
      *
      * Protected by #mutex.
      */
-    bool drained;
+    bool drained = true;
 
     struct timeval read_timeout_buffer;
-    const struct timeval *read_timeout;
+    const struct timeval *read_timeout = nullptr;
 
     pthread_mutex_t mutex;
 
@@ -113,7 +113,7 @@ struct ThreadSocketFilter {
      * If this is set, an error was caught inside the thread, and
      * shall be forwarded to the main thread.
      */
-    GError *error;
+    GError *error = nullptr;
 
     /**
      * A buffer of input data that was not yet handled by the filter.
@@ -143,6 +143,15 @@ struct ThreadSocketFilter {
      * will be written to the socket.
      */
     struct fifo_buffer *encrypted_output;
+
+    ThreadSocketFilter(struct pool &pool,
+                       ThreadQueue &queue,
+                       const ThreadSocketFilterHandler &handler,
+                       void *ctx);
+
+    ThreadSocketFilter(const ThreadSocketFilter &) = delete;
+
+    ~ThreadSocketFilter();
 };
 
 ThreadSocketFilter *

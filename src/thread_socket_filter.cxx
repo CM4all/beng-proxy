@@ -19,6 +19,53 @@
 #include <errno.h>
 
 static void
+thread_socket_filter_run(struct thread_job *job);
+
+static void
+thread_socket_filter_done(struct thread_job *job);
+
+static void
+thread_socket_filter_defer_callback(int fd, short event, void *ctx);
+
+inline
+ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
+                                       ThreadQueue &_queue,
+                                       const ThreadSocketFilterHandler &_handler,
+                                       void *_ctx)
+    :pool(&_pool), queue(&_queue),
+     handler(&_handler), handler_ctx(_ctx),
+     encrypted_input(fb_pool_alloc()),
+     decrypted_input(fb_pool_alloc()),
+     plain_output(fb_pool_alloc()),
+     encrypted_output(fb_pool_alloc())
+{
+    pool_ref(pool);
+
+    thread_job_init(&job,
+                    thread_socket_filter_run,
+                    thread_socket_filter_done);
+
+    defer_event_init(&defer_event, thread_socket_filter_defer_callback, this);
+
+    pthread_mutex_init(&mutex, nullptr);
+}
+
+ThreadSocketFilter::~ThreadSocketFilter()
+{
+    handler->destroy(*this, handler_ctx);
+
+    defer_event_deinit(&defer_event);
+
+    fb_pool_free(encrypted_input);
+    fb_pool_free(decrypted_input);
+    fb_pool_free(plain_output);
+    fb_pool_free(encrypted_output);
+
+    if (error != nullptr)
+        g_error_free(error);
+}
+
+static void
 thread_socket_filter_closed_prematurely(ThreadSocketFilter *f)
 {
     GError *error =
@@ -28,35 +75,9 @@ thread_socket_filter_closed_prematurely(ThreadSocketFilter *f)
 }
 
 static void
-thread_socket_filter_free_buffers(ThreadSocketFilter *f)
-{
-    if (f->encrypted_input != nullptr)
-        fb_pool_free(f->encrypted_input);
-
-    if (f->decrypted_input != nullptr)
-        fb_pool_free(f->decrypted_input);
-
-    if (f->plain_output != nullptr)
-        fb_pool_free(f->plain_output);
-
-    if (f->encrypted_output != nullptr)
-        fb_pool_free(f->encrypted_output);
-
-}
-
-static void
 thread_socket_filter_destroy(ThreadSocketFilter *f)
 {
-    f->handler->destroy(*f, f->handler_ctx);
-
-    defer_event_deinit(&f->defer_event);
-
-    thread_socket_filter_free_buffers(f);
-
-    if (f->error != nullptr)
-        g_error_free(f->error);
-
-    pool_unref(f->pool);
+    DeleteUnrefPool(*f->pool, f);
 }
 
 static void
@@ -665,41 +686,7 @@ thread_socket_filter_new(struct pool *pool,
                          const ThreadSocketFilterHandler *handler,
                          void *ctx)
 {
-    pool_ref(pool);
-
-    ThreadSocketFilter *f = (ThreadSocketFilter *)p_malloc(pool, sizeof(*f));
-    thread_job_init(&f->job,
-                    thread_socket_filter_run,
-                    thread_socket_filter_done);
-    f->pool = pool;
-    f->queue = queue;
-    f->handler = handler;
-    f->handler_ctx = ctx;
-
-    defer_event_init(&f->defer_event, thread_socket_filter_defer_callback, f);
-
-    f->busy = false;
-    f->done_pending = false;
-    f->connected = true;
-    f->expect_more = false;
-    f->postponed_remaining = false;
-    f->postponed_end = false;
-    f->postponed_destroy = false;
-    f->want_read = false;
-    f->read_scheduled = false;
-    f->want_write = false;
-    f->drained = true;
-
-    f->read_timeout = nullptr;
-
-    pthread_mutex_init(&f->mutex, nullptr);
-
-    f->error = nullptr;
-
-    f->encrypted_input = fb_pool_alloc();
-    f->decrypted_input = fb_pool_alloc();
-    f->plain_output = fb_pool_alloc();
-    f->encrypted_output = fb_pool_alloc();
-
-    return f;
+    return NewFromPool<ThreadSocketFilter>(pool,
+                                           *pool, *queue,
+                                           *handler, ctx);
 }
