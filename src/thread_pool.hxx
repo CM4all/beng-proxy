@@ -18,7 +18,7 @@ class ThreadQueue;
  * @param pool a global pool that will be destructed after the
  * thread_pool_deinit() call
  */
-ThreadQueue *
+ThreadQueue &
 thread_pool_get_queue();
 
 void

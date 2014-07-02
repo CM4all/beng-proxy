@@ -37,7 +37,7 @@ thread_pool_start(void)
     }
 }
 
-ThreadQueue *
+ThreadQueue &
 thread_pool_get_queue()
 {
     if (global_thread_queue == nullptr) {
@@ -47,7 +47,7 @@ thread_pool_get_queue()
         thread_pool_start();
     }
 
-    return global_thread_queue;
+    return *global_thread_queue;
 }
 
 void

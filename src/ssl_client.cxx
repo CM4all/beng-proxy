@@ -55,7 +55,7 @@ ssl_client_create(struct pool *pool,
     if (ssl == nullptr)
         return nullptr;
 
-    auto queue = thread_pool_get_queue();
-    return thread_socket_filter_new(*pool, *queue,
+    auto &queue = thread_pool_get_queue();
+    return thread_socket_filter_new(*pool, queue,
                                     ssl_thread_socket_filter, ssl);
 }
