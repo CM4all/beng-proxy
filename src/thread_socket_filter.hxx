@@ -37,9 +37,9 @@ struct ThreadSocketFilterHandler {
 struct ThreadSocketFilter {
     struct thread_job job;
 
-    struct pool *pool;
+    struct pool &pool;
 
-    ThreadQueue *queue;
+    ThreadQueue &queue;
 
     struct filtered_socket *socket;
 
@@ -47,7 +47,7 @@ struct ThreadSocketFilter {
      * The actual filter.  If this is NULL, then this object behaves
      * just like #buffered_socket.
      */
-    const ThreadSocketFilterHandler *handler;
+    const ThreadSocketFilterHandler &handler;
     void *handler_ctx;
 
     /**
@@ -155,9 +155,9 @@ struct ThreadSocketFilter {
 };
 
 ThreadSocketFilter *
-thread_socket_filter_new(struct pool *pool,
-                         ThreadQueue *queue,
-                         const ThreadSocketFilterHandler *handler,
+thread_socket_filter_new(struct pool &pool,
+                         ThreadQueue &queue,
+                         const ThreadSocketFilterHandler &handler,
                          void *ctx);
 
 extern const struct socket_filter thread_socket_filter;

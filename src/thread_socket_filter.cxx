@@ -32,14 +32,14 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
                                        ThreadQueue &_queue,
                                        const ThreadSocketFilterHandler &_handler,
                                        void *_ctx)
-    :pool(&_pool), queue(&_queue),
-     handler(&_handler), handler_ctx(_ctx),
+    :pool(_pool), queue(_queue),
+     handler(_handler), handler_ctx(_ctx),
      encrypted_input(fb_pool_alloc()),
      decrypted_input(fb_pool_alloc()),
      plain_output(fb_pool_alloc()),
      encrypted_output(fb_pool_alloc())
 {
-    pool_ref(pool);
+    pool_ref(&pool);
 
     thread_job_init(&job,
                     thread_socket_filter_run,
@@ -52,7 +52,7 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
 
 ThreadSocketFilter::~ThreadSocketFilter()
 {
-    handler->destroy(*this, handler_ctx);
+    handler.destroy(*this, handler_ctx);
 
     defer_event_deinit(&defer_event);
 
@@ -77,7 +77,7 @@ thread_socket_filter_closed_prematurely(ThreadSocketFilter *f)
 static void
 thread_socket_filter_destroy(ThreadSocketFilter *f)
 {
-    DeleteUnrefPool(*f->pool, f);
+    DeleteUnrefPool(f->pool, f);
 }
 
 static void
@@ -85,7 +85,7 @@ thread_socket_filter_schedule(ThreadSocketFilter *f)
 {
     assert(!f->postponed_destroy);
 
-    thread_queue_add(f->queue, &f->job);
+    thread_queue_add(&f->queue, &f->job);
 }
 
 /**
@@ -205,7 +205,7 @@ thread_socket_filter_run(struct thread_job *job)
     pthread_mutex_unlock(&f->mutex);
 
     GError *error = nullptr;
-    bool success = f->handler->run(*f, &error, f->handler_ctx);
+    bool success = f->handler.run(*f, &error, f->handler_ctx);
 
     pthread_mutex_lock(&f->mutex);
     f->busy = false;
@@ -646,9 +646,9 @@ thread_socket_filter_close(void *ctx)
 
     defer_event_cancel(&f->defer_event);
 
-    if (!thread_queue_cancel(f->queue, &f->job)) {
+    if (!thread_queue_cancel(&f->queue, &f->job)) {
         /* detach the pool, postpone the destruction */
-        pool_set_persistent(f->pool);
+        pool_set_persistent(&f->pool);
         f->postponed_destroy = true;
         return;
     }
@@ -681,12 +681,12 @@ const struct socket_filter thread_socket_filter = {
  */
 
 ThreadSocketFilter *
-thread_socket_filter_new(struct pool *pool,
-                         ThreadQueue *queue,
-                         const ThreadSocketFilterHandler *handler,
+thread_socket_filter_new(struct pool &pool,
+                         ThreadQueue &queue,
+                         const ThreadSocketFilterHandler &handler,
                          void *ctx)
 {
-    return NewFromPool<ThreadSocketFilter>(pool,
-                                           *pool, *queue,
-                                           *handler, ctx);
+    return NewFromPool<ThreadSocketFilter>(&pool,
+                                           pool, queue,
+                                           handler, ctx);
 }
