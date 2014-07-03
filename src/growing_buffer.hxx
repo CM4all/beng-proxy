@@ -40,7 +40,7 @@ struct growing_buffer_reader {
     ConstBuffer<void> Read() const;
 
     /**
-     * Consume data returned by growing_buffer_reader_read().
+     * Consume data returned by Read().
      */
     void Consume(size_t length);
 
