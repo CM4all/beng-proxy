@@ -114,6 +114,20 @@ struct http_cache_request {
     struct async_operation operation;
     struct async_operation_ref async_ref;
 
+    http_cache_request(struct pool &_pool, struct pool &_caller_pool,
+                       unsigned _session_sticky,
+                       struct http_cache &_cache,
+                       http_method_t _method,
+                       const struct resource_address &_address,
+                       const char *_key,
+                       struct strmap *_headers,
+                       const struct http_response_handler &_handler,
+                       void *_handler_ctx,
+                       struct http_cache_info &_info,
+                       struct async_operation_ref &_async_ref);
+
+    http_cache_request(const struct http_cache_request &) = delete;
+
     static http_cache_request *FromSiblings(list_head *lh) {
         return ContainerCast(lh, http_cache_request, siblings);
     }
@@ -508,6 +522,32 @@ static const struct async_operation_class http_cache_async_operation = {
  *
  */
 
+http_cache_request::http_cache_request(struct pool &_pool,
+                                       struct pool &_caller_pool,
+                                       unsigned _session_sticky,
+                                       struct http_cache &_cache,
+                                       http_method_t _method,
+                                       const struct resource_address &_address,
+                                       const char *_key,
+                                       struct strmap *_headers,
+                                       const struct http_response_handler &_handler,
+                                       void *_handler_ctx,
+                                       struct http_cache_info &_info,
+                                       struct async_operation_ref &_async_ref)
+    :pool(&_pool), caller_pool(&_caller_pool),
+    session_sticky(_session_sticky),
+    cache(&_cache),
+    method(_method),
+    address(resource_address_dup(&_pool, &_address)),
+    key(_key),
+    headers(_headers),
+    info(&_info), document(nullptr) {
+    http_response_handler_set(&handler, &_handler, _handler_ctx);
+    async_init(&operation, &http_cache_async_operation);
+    async_ref_set(&_async_ref, &operation);
+    pool_ref_notify(caller_pool, &caller_pool_notify);
+}
+
 struct http_cache *
 http_cache_new(struct pool *pool, size_t max_size,
                struct memcached_stock *memcached_stock,
@@ -661,24 +701,17 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
        allocate a new pool for it from cache->pool */
     pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
 
-    auto request = PoolAlloc<struct http_cache_request>(pool);
-    request->pool = pool;
-    request->caller_pool = caller_pool;
-    request->session_sticky = session_sticky;
-    request->cache = cache;
-    request->key = http_cache_key(pool, address);
-    request->headers = headers == nullptr ? nullptr : strmap_dup(pool, headers, 17);
-    http_response_handler_set(&request->handler, handler, handler_ctx);
-
-    request->document = nullptr;
-    request->info = info;
+    auto request =
+        NewFromPool<struct http_cache_request>(pool, *pool, *caller_pool,
+                                               session_sticky, *cache,
+                                               method, *address,
+                                               http_cache_key(pool, address),
+                                               headers == nullptr ? nullptr : strmap_dup(pool, headers, 17),
+                                               *handler, handler_ctx,
+                                               *info, *async_ref);
 
     cache_log(4, "http_cache: miss %s\n", request->key);
 
-    async_init(&request->operation, &http_cache_async_operation);
-    async_ref_set(async_ref, &request->operation);
-
-    pool_ref_notify(caller_pool, &request->caller_pool_notify);
     resource_loader_request(cache->resource_loader, pool, session_sticky,
                             method, address,
                             HTTP_STATUS_OK, headers, nullptr,
@@ -800,23 +833,19 @@ http_cache_heap_test(struct http_cache *cache, struct pool *caller_pool,
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
     struct pool *pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
-    auto request = PoolAlloc<struct http_cache_request>(pool);
-    request->pool = pool;
-    request->caller_pool = caller_pool;
-    request->session_sticky = session_sticky;
-    request->cache = cache;
-    request->key = http_cache_key(pool, address);
-    request->headers = headers == nullptr ? nullptr : strmap_dup(pool, headers, 17);
-    http_response_handler_set(&request->handler, handler, handler_ctx);
+
+    auto request =
+        NewFromPool<struct http_cache_request>(pool, *pool, *caller_pool,
+                                               session_sticky, *cache,
+                                               method, *address,
+                                               http_cache_key(pool, address),
+                                               headers == nullptr ? nullptr : strmap_dup(pool, headers, 17),
+                                               *handler, handler_ctx,
+                                               *info, *async_ref);
 
     http_cache_lock(document);
     request->document = document;
-    request->info = info;
 
-    async_init(&request->operation, &http_cache_async_operation);
-    async_ref_set(async_ref, &request->operation);
-
-    pool_ref_notify(caller_pool, &request->caller_pool_notify);
     http_cache_test(request, method, address, headers);
     pool_unref(pool);
 }
@@ -1012,24 +1041,15 @@ http_cache_memcached_use(struct http_cache *cache,
        allocate a new pool for it from cache->pool */
     pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
 
-    auto request = PoolAlloc<struct http_cache_request>(pool);
-    request->pool = pool;
-    request->caller_pool = caller_pool;
-    request->session_sticky = session_sticky;
-    request->cache = cache;
-    request->method = method;
-    request->address = resource_address_dup(pool, address);
-    request->key = http_cache_key(pool, request->address);
-    request->headers = headers == nullptr ? nullptr : strmap_dup(pool, headers, 17);
-    http_response_handler_set(&request->handler, handler, handler_ctx);
+    auto request =
+        NewFromPool<struct http_cache_request>(pool, *pool, *caller_pool,
+                                               session_sticky, *cache,
+                                               method, *address,
+                                               http_cache_key(pool, address),
+                                               headers == nullptr ? nullptr : strmap_dup(pool, headers, 17),
+                                               *handler, handler_ctx,
+                                               *info, *async_ref);
 
-    request->info = info;
-    request->document = nullptr;
-
-    async_init(&request->operation, &http_cache_async_operation);
-    async_ref_set(async_ref, &request->operation);
-
-    pool_ref_notify(caller_pool, &request->caller_pool_notify);
     http_cache_memcached_get(pool, cache->memcached_stock,
                              request->cache->pool,
                              &cache->background,
