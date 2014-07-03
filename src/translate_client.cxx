@@ -613,7 +613,7 @@ add_view(TranslateClient *client, const char *name, GError **error_r)
     if (!finish_view(client, error_r))
         return false;
 
-    widget_view *view = (widget_view *)p_malloc(client->pool, sizeof(*view));
+    auto view = NewFromPool<widget_view>(client->pool);
     widget_view_init(view);
     view->name = name;
     view->request_header_forward = client->response.request_header_forward;
