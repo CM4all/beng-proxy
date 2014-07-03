@@ -12,7 +12,8 @@ http_cache_document::http_cache_document(struct pool &pool,
                                          struct strmap *request_headers,
                                          http_status_t _status,
                                          struct strmap *response_headers)
-    :vary(_info.vary != nullptr
+    :info(pool, _info),
+     vary(_info.vary != nullptr
           ? http_cache_copy_vary(&pool, _info.vary, request_headers)
           : nullptr),
      status(_status),
@@ -21,6 +22,4 @@ http_cache_document::http_cache_document(struct pool &pool,
              : nullptr)
 {
     assert(http_status_is_valid(_status));
-
-    http_cache_copy_info(&pool, &info, &_info);
 }

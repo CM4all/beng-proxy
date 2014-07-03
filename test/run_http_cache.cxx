@@ -25,10 +25,9 @@ put_random(struct http_cache_heap *cache, Rubber *rubber)
     uri[4] = '0' + random() % 10;
     uri[5] = 0;
 
-    static const struct http_cache_info info = {
-        .expires = 1350000000,
-        .vary = "x-foo",
-    };
+    struct http_cache_info info;
+    info.expires = 1350000000;
+    info.vary = "x-foo";
 
     size_t length = random() % (random() % (random() % (64 * 1024) + 1) + 1);
     unsigned rubber_id = 0;

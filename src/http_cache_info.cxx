@@ -7,33 +7,17 @@
 #include "http_cache_internal.hxx"
 #include "pool.h"
 
-void
-http_cache_copy_info(struct pool *pool, struct http_cache_info *dest,
-                     const struct http_cache_info *src)
+http_cache_info::http_cache_info(struct pool &pool,
+                                 const http_cache_info &src)
+    :expires(src.expires),
+     last_modified(p_strdup_checked(&pool, src.last_modified)),
+     etag(p_strdup_checked(&pool, src.etag)),
+     vary(p_strdup_checked(&pool, src.vary))
 {
-    dest->expires = src->expires;
-
-    if (src->last_modified != nullptr)
-        dest->last_modified = p_strdup(pool, src->last_modified);
-    else
-        dest->last_modified = nullptr;
-
-    if (src->etag != nullptr)
-        dest->etag = p_strdup(pool, src->etag);
-    else
-        dest->etag = nullptr;
-
-    if (src->vary != nullptr)
-        dest->vary = p_strdup(pool, src->vary);
-    else
-        dest->vary = nullptr;
 }
 
 struct http_cache_info *
 http_cache_info_dup(struct pool *pool, const struct http_cache_info *src)
 {
-    auto dest = PoolAlloc<http_cache_info>(pool);
-
-    http_cache_copy_info(pool, dest, src);
-    return dest;
+    return NewFromPool<http_cache_info>(pool, *pool, *src);
 }

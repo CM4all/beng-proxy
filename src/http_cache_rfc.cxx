@@ -44,10 +44,7 @@ next_item(struct strref *s, struct strref *p)
 static struct http_cache_info *
 http_cache_info_new(struct pool *pool)
 {
-    auto info = PoolAlloc<http_cache_info>(pool);
-
-    http_cache_info_init(info);
-    return info;
+    return NewFromPool<http_cache_info>(pool);
 }
 
 static bool

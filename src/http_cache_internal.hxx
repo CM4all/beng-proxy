@@ -44,6 +44,14 @@ struct http_cache_info {
     const char *etag;
 
     const char *vary;
+
+    http_cache_info()
+        :only_if_cached(false),
+         expires((time_t)-1),
+         last_modified(nullptr),
+         etag(nullptr) {}
+
+    http_cache_info(struct pool &pool, const http_cache_info &src);
 };
 
 struct http_cache_document {
@@ -72,10 +80,6 @@ http_cache_info_init(struct http_cache_info *info)
     info->last_modified = nullptr;
     info->etag = nullptr;
 }
-
-void
-http_cache_copy_info(struct pool *pool, struct http_cache_info *dest,
-                     const struct http_cache_info *src);
 
 struct http_cache_info *
 http_cache_info_dup(struct pool *pool, const struct http_cache_info *src);
