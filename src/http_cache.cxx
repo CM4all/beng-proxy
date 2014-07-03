@@ -49,6 +49,14 @@ struct http_cache {
     struct list_head requests;
 
     struct background_manager background;
+
+    http_cache(struct pool &_pool, size_t max_size,
+               struct memcached_stock *_memcached_stock,
+               struct resource_loader &_resource_loader);
+
+    http_cache(const struct http_cache &) = delete;
+
+    ~http_cache();
 };
 
 struct http_cache_flush {
@@ -548,15 +556,13 @@ http_cache_request::http_cache_request(struct pool &_pool,
     pool_ref_notify(caller_pool, &caller_pool_notify);
 }
 
-struct http_cache *
-http_cache_new(struct pool *pool, size_t max_size,
-               struct memcached_stock *memcached_stock,
-               struct resource_loader *resource_loader)
-{
-    pool = pool_new_libc(pool, "http_cache");
-
-    http_cache *cache = PoolAlloc<http_cache>(pool);
-    cache->pool = pool;
+inline
+http_cache::http_cache(struct pool &_pool, size_t max_size,
+                       struct memcached_stock *_memcached_stock,
+                       struct resource_loader &_resource_loader)
+    :pool(&_pool),
+     memcached_stock(_memcached_stock),
+     resource_loader(&_resource_loader) {
 
     if (memcached_stock != nullptr || max_size > 0) {
         static const size_t max_memcached_rubber = 64 * 1024 * 1024;
@@ -564,8 +570,8 @@ http_cache_new(struct pool *pool, size_t max_size,
         if (memcached_stock != nullptr && rubber_size > max_memcached_rubber)
             rubber_size = max_memcached_rubber;
 
-        cache->rubber = rubber_new(rubber_size);
-        if (cache->rubber == nullptr) {
+        rubber = rubber_new(rubber_size);
+        if (rubber == nullptr) {
             fprintf(stderr, "Failed to allocate HTTP cache: %s\n",
                     strerror(errno));
             exit(2);
@@ -576,15 +582,24 @@ http_cache_new(struct pool *pool, size_t max_size,
         /* leave 12.5% of the rubber allocator empty, to increase the
            chances that a hole can be found for a new allocation, to
            reduce the pressure that rubber_compress() creates */
-        http_cache_heap_init(&cache->heap, pool, max_size * 7 / 8);
+        http_cache_heap_init(&heap, pool, max_size * 7 / 8);
     else
-        http_cache_heap_clear(&cache->heap);
+        http_cache_heap_clear(&heap);
 
-    cache->memcached_stock = memcached_stock;
-    cache->resource_loader = resource_loader;
+    list_init(&requests);
+    background_manager_init(&background);
+}
 
-    list_init(&cache->requests);
-    background_manager_init(&cache->background);
+struct http_cache *
+http_cache_new(struct pool *pool, size_t max_size,
+               struct memcached_stock *memcached_stock,
+               struct resource_loader *resource_loader)
+{
+    pool = pool_new_libc(pool, "http_cache");
+
+    auto cache =
+        NewFromPool<struct http_cache>(pool, *pool, max_size,
+                                       memcached_stock, *resource_loader);
 
     return cache;
 }
@@ -598,23 +613,28 @@ http_cache_request_close(struct http_cache_request *request)
     async_abort(&request->async_ref);
 }
 
-void
-http_cache_close(struct http_cache *cache)
+inline
+http_cache::~http_cache()
 {
-
-    while (!list_empty(&cache->requests)) {
-        auto request = http_cache_request::FromSiblings(cache->requests.next);
+    while (!list_empty(&requests)) {
+        auto request = http_cache_request::FromSiblings(requests.next);
 
         http_cache_request_close(request);
     }
 
-    background_manager_abort_all(&cache->background);
+    background_manager_abort_all(&background);
 
-    if (http_cache_heap_is_defined(&cache->heap))
-        http_cache_heap_deinit(&cache->heap);
+    if (http_cache_heap_is_defined(&heap))
+        http_cache_heap_deinit(&heap);
 
-    rubber_free(cache->rubber);
-    pool_unref(cache->pool);
+    rubber_free(rubber);
+    pool_unref(pool);
+}
+
+void
+http_cache_close(struct http_cache *cache)
+{
+    DeleteFromPool(cache->pool, cache);
 }
 
 void
