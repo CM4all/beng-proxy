@@ -1033,7 +1033,7 @@ http_cache_memcached_use(struct http_cache *cache,
     http_cache_memcached_get(pool, cache->memcached_stock,
                              request->cache->pool,
                              &cache->background,
-                             request->key, headers,
+                             request->key, request->headers,
                              http_cache_memcached_get_callback, request,
                              &request->async_ref);
     pool_unref(pool);
