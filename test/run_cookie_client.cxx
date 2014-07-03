@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
 
     const struct growing_buffer *gb = headers_dup(pool, headers);
-    struct growing_buffer_reader reader(*gb);
+    GrowingBufferReader reader(*gb);
 
     ConstBuffer<void> src;
     while (!(src = reader.Read()).IsNull()) {

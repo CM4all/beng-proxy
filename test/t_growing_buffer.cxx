@@ -185,7 +185,7 @@ test_first_empty(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     struct growing_buffer *buffer = growing_buffer_new(pool, 16);
-    struct growing_buffer_reader reader(*buffer);
+    GrowingBufferReader reader(*buffer);
 
     growing_buffer_write_string(buffer, "0123456789abcdefg");
 
@@ -206,7 +206,7 @@ test_skip(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     struct growing_buffer *buffer = growing_buffer_new(pool, 3);
-    struct growing_buffer_reader reader(*buffer);
+    GrowingBufferReader reader(*buffer);
 
     growing_buffer_write_string(buffer, "0123");
     growing_buffer_write_string(buffer, "4567");
@@ -241,7 +241,7 @@ test_concurrent_rw(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
     struct growing_buffer *buffer = growing_buffer_new(pool, 3);
-    struct growing_buffer_reader reader(*buffer);
+    GrowingBufferReader reader(*buffer);
 
     growing_buffer_write_string(buffer, "0123");
     growing_buffer_write_string(buffer, "4567");

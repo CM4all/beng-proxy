@@ -15,7 +15,7 @@
 struct istream_gb {
     struct istream output;
 
-    struct growing_buffer_reader reader;
+    GrowingBufferReader reader;
 
     istream_gb(struct pool &pool, const struct growing_buffer &gb);
 };

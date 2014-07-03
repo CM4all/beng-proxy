@@ -52,7 +52,7 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
     struct pool_mark_state mark;
     pool_mark(tpool, &mark);
 
-    struct growing_buffer_reader reader(*gb);
+    GrowingBufferReader reader(*gb);
 
     struct fifo_buffer *buffer = fifo_buffer_new(tpool, 4096);
 

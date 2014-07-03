@@ -120,7 +120,7 @@ growing_buffer_size(const struct growing_buffer *gb)
     return size;
 }
 
-growing_buffer_reader::growing_buffer_reader(const struct growing_buffer &gb)
+GrowingBufferReader::GrowingBufferReader(const struct growing_buffer &gb)
 #ifndef NDEBUG
     :growing_buffer(&gb)
 #endif
@@ -138,7 +138,7 @@ growing_buffer_reader::growing_buffer_reader(const struct growing_buffer &gb)
 }
 
 void
-growing_buffer_reader::Update()
+GrowingBufferReader::Update()
 {
     assert(buffer != nullptr);
     assert(position <= buffer->length);
@@ -153,7 +153,7 @@ growing_buffer_reader::Update()
 }
 
 bool
-growing_buffer_reader::IsEOF() const
+GrowingBufferReader::IsEOF() const
 {
     assert(buffer != nullptr);
     assert(position <= buffer->length);
@@ -162,7 +162,7 @@ growing_buffer_reader::IsEOF() const
 }
 
 size_t
-growing_buffer_reader::Available() const
+GrowingBufferReader::Available() const
 {
     assert(buffer != nullptr);
     assert(position <= buffer->length);
@@ -178,7 +178,7 @@ growing_buffer_reader::Available() const
 }
 
 ConstBuffer<void>
-growing_buffer_reader::Read() const
+GrowingBufferReader::Read() const
 {
     assert(buffer != nullptr);
 
@@ -202,7 +202,7 @@ growing_buffer_reader::Read() const
 }
 
 void
-growing_buffer_reader::Consume(size_t length)
+GrowingBufferReader::Consume(size_t length)
 {
     assert(buffer != nullptr);
 
@@ -231,7 +231,7 @@ growing_buffer_reader::Consume(size_t length)
 }
 
 void
-growing_buffer_reader::Skip(size_t length)
+GrowingBufferReader::Skip(size_t length)
 {
     assert(buffer != nullptr);
 

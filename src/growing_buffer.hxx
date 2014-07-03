@@ -14,7 +14,7 @@
 struct pool;
 template<typename T> struct ConstBuffer;
 
-struct growing_buffer_reader {
+class GrowingBufferReader {
 #ifndef NDEBUG
     const struct growing_buffer *growing_buffer;
 #endif
@@ -22,7 +22,8 @@ struct growing_buffer_reader {
     const struct buffer *buffer;
     size_t position;
 
-    explicit growing_buffer_reader(const struct growing_buffer &gb);
+public:
+    explicit GrowingBufferReader(const struct growing_buffer &gb);
 
     /**
      * Update the reader object after data has been appended to the

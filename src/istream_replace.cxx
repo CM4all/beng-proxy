@@ -38,7 +38,7 @@ struct istream_replace {
      */
     off_t settled_position;
 
-    struct growing_buffer_reader reader;
+    GrowingBufferReader reader;
 
     struct substitution *first_substitution, **append_substitution_p;
 
@@ -598,7 +598,7 @@ istream_replace_new(struct pool *pool, struct istream *input)
     replace->position = 0;
     replace->settled_position = 0;
 
-    ::new(&replace->reader) growing_buffer_reader(*replace->buffer);
+    ::new(&replace->reader) GrowingBufferReader(*replace->buffer);
 
     replace->first_substitution = nullptr;
     replace->append_substitution_p = &replace->first_substitution;

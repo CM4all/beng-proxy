@@ -83,7 +83,7 @@ struct TranslateClient {
     } from_request;
 
     /** the marshalled translate request */
-    struct growing_buffer_reader request;
+    GrowingBufferReader request;
 
     const TranslateHandler *handler;
     void *handler_ctx;
