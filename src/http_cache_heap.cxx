@@ -40,6 +40,7 @@ struct http_cache_item {
                     size_t _size,
                     Rubber &_rubber, unsigned _rubber_id)
         :pool(&_pool),
+         document(_pool, info, request_headers, status, response_headers),
          size(_size),
          rubber(&_rubber), rubber_id(_rubber_id) {
 
@@ -47,9 +48,6 @@ struct http_cache_item {
                                  http_cache_calc_expires(&info,
                                                          request_headers),
                                  pool_netto_size(pool) + size);
-
-        http_cache_document_init(&document, pool, &info,
-                                 request_headers, status, response_headers);
     }
 
     http_cache_item(const http_cache_item &) = delete;

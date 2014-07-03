@@ -53,6 +53,15 @@ struct http_cache_document {
 
     http_status_t status;
     struct strmap *headers;
+
+    http_cache_document() = default;
+    http_cache_document(const http_cache_document &) = delete;
+
+    http_cache_document(struct pool &pool,
+                        const struct http_cache_info &_info,
+                        struct strmap *request_headers,
+                        http_status_t _status,
+                        struct strmap *response_headers);
 };
 
 static inline void
@@ -77,13 +86,6 @@ http_cache_request_evaluate(struct pool *pool,
                             const struct resource_address *address,
                             const struct strmap *headers,
                             struct istream *body);
-
-void
-http_cache_document_init(struct http_cache_document *document, struct pool *pool,
-                         const struct http_cache_info *info,
-                         struct strmap *request_headers,
-                         http_status_t status,
-                         struct strmap *response_headers);
 
 /**
  * Checks whether the specified cache item fits the current request.
