@@ -32,6 +32,28 @@ struct http_cache_item {
     Rubber *rubber;
     unsigned rubber_id;
 
+    http_cache_item(struct pool &_pool,
+                    const struct http_cache_info &info,
+                    struct strmap *request_headers,
+                    http_status_t status,
+                    struct strmap *response_headers,
+                    size_t _size,
+                    Rubber &_rubber, unsigned _rubber_id)
+        :pool(&_pool),
+         size(_size),
+         rubber(&_rubber), rubber_id(_rubber_id) {
+
+        cache_item_init_absolute(&item,
+                                 http_cache_calc_expires(&info,
+                                                         request_headers),
+                                 pool_netto_size(pool) + size);
+
+        http_cache_document_init(&document, pool, &info,
+                                 request_headers, status, response_headers);
+    }
+
+    http_cache_item(const http_cache_item &) = delete;
+
     static http_cache_item *FromDocument(http_cache_document *document) {
         return ContainerCast(document, http_cache_item, document);
     }
@@ -73,19 +95,10 @@ http_cache_heap_put(struct http_cache_heap *cache,
 
     struct pool *pool = pool_new_slice(cache->pool, "http_cache_item",
                                        cache->slice_pool);
-    auto item = PoolAlloc<http_cache_item>(pool);
-
-    item->pool = pool;
-
-    http_cache_document_init(&item->document, pool, info,
-                             request_headers, status, response_headers);
-    item->size = size;
-    item->rubber = rubber;
-    item->rubber_id = rubber_id;
-
-    cache_item_init_absolute(&item->item,
-                             http_cache_calc_expires(info, request_headers),
-                             pool_netto_size(pool) + item->size);
+    auto item = NewFromPool<http_cache_item>(pool, *pool,
+                                             *info, request_headers,
+                                             status, response_headers,
+                                             size, *rubber, rubber_id);
 
     cache_put_match(cache->cache, p_strdup(pool, url),
                     &item->item,
