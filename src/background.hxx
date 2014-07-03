@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_BACKGROUND_H
-#define BENG_PROXY_BACKGROUND_H
+#ifndef BENG_PROXY_BACKGROUND_HXX
+#define BENG_PROXY_BACKGROUND_HXX
 
 #include "async.h"
 

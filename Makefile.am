@@ -104,7 +104,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/ajp_serialize.cxx src/ajp_serialize.hxx \
 	src/ajp-util.h \
 	src/args.cxx src/args.hxx \
-	src/background.h \
+	src/background.hxx \
 	src/balancer.cxx src/balancer.hxx \
 	src/bot.c src/bot.h \
 	src/buffered_io.c src/buffered_io.h \

@@ -14,7 +14,7 @@
 #include "sink_header.hxx"
 #include "strmap.h"
 #include "tpool.h"
-#include "background.h"
+#include "background.hxx"
 #include "istream_gb.hxx"
 #include "istream.h"
 #include "util/ConstBuffer.hxx"

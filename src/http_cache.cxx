@@ -14,7 +14,7 @@
 #include "strref2.h"
 #include "http_util.hxx"
 #include "async.h"
-#include "background.h"
+#include "background.hxx"
 #include "istream.h"
 #include "cache.hxx"
 #include "rubber.hxx"
