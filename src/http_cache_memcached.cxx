@@ -57,6 +57,40 @@ struct http_cache_memcached_request {
     void *callback_ctx;
 
     struct async_operation_ref *async_ref;
+
+    http_cache_memcached_request(struct pool &_pool)
+        :pool(&_pool) {}
+
+    http_cache_memcached_request(struct pool &_pool,
+                                 struct memcached_stock &_stock,
+                                 struct pool &_background_pool,
+                                 struct background_manager &_background,
+                                 const char *_uri,
+                                 struct async_operation_ref &_async_ref)
+        :pool(&_pool), stock(&_stock),
+         background_pool(&_background_pool), background(&_background),
+         uri(_uri),
+         async_ref(&_async_ref) {}
+
+    http_cache_memcached_request(struct pool &_pool,
+                                 struct memcached_stock &_stock,
+                                 struct pool &_background_pool,
+                                 struct background_manager &_background,
+                                 const char *_uri,
+                                 struct strmap *_request_headers,
+                                 http_cache_memcached_get_t _callback,
+                                 void *_callback_ctx,
+                                 struct async_operation_ref &_async_ref)
+        :pool(&_pool), stock(&_stock),
+         background_pool(&_background_pool), background(&_background),
+         uri(_uri), request_headers(_request_headers),
+         in_choice(false),
+         callback_ctx(_callback_ctx),
+         async_ref(&_async_ref) {
+        callback.get = _callback;
+    }
+
+    http_cache_memcached_request(const struct http_cache_memcached_request &) = delete;
 };
 
 /*
@@ -100,9 +134,9 @@ http_cache_memcached_flush(struct pool *pool, struct memcached_stock *stock,
                            void *callback_ctx,
                            struct async_operation_ref *async_ref)
 {
-    auto request = PoolAlloc<http_cache_memcached_request>(pool);
+    auto request =
+        NewFromPool<http_cache_memcached_request>(pool, *pool);
 
-    request->pool = pool;
     request->callback.flush = callback;
     request->callback_ctx = callback_ctx;
 
@@ -299,20 +333,16 @@ http_cache_memcached_get(struct pool *pool, struct memcached_stock *stock,
                          void *callback_ctx,
                          struct async_operation_ref *async_ref)
 {
-    auto request = PoolAlloc<http_cache_memcached_request>(pool);
+    auto request =
+        NewFromPool<http_cache_memcached_request>(pool, *pool,
+                                                  *stock,
+                                                  *background_pool,
+                                                  *background,
+                                                  uri, request_headers,
+                                                  callback, callback_ctx,
+                                                  *async_ref);
+
     const char *key;
-
-    request->pool = pool;
-    request->stock = stock;
-    request->background_pool = background_pool;
-    request->background = background;
-    request->uri = uri;
-    request->request_headers = request_headers;
-    request->in_choice = false;
-    request->callback.get = callback;
-    request->callback_ctx = callback_ctx;
-    request->async_ref = async_ref;
-
     key = http_cache_choice_vary_key(pool, uri, nullptr);
 
     memcached_stock_invoke(pool, stock, MEMCACHED_OPCODE_GET,
@@ -380,17 +410,15 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
                          http_cache_memcached_put_t callback, void *callback_ctx,
                          struct async_operation_ref *async_ref)
 {
-    auto request = PoolAlloc<http_cache_memcached_request>(pool);
+    auto request =
+        NewFromPool<http_cache_memcached_request>(pool, *pool, *stock,
+                                                  *background_pool,
+                                                  *background,
+                                                  uri, *async_ref);
+
     struct strmap *vary;
     struct growing_buffer *gb;
     const char *key;
-
-    request->pool = pool;
-    request->stock = stock;
-    request->background_pool = background_pool;
-    request->background = background;
-    request->uri = uri;
-    request->async_ref = async_ref;
 
     const AutoRewindPool auto_rewind(tpool);
 
