@@ -597,8 +597,8 @@ finish_view(TranslateClient *client, GError **error_r)
         if (client->view->address.type == RESOURCE_ADDRESS_NONE &&
             client->view != client->response.views)
             /* no address yet: inherits settings from the default view */
-            widget_view_inherit_from(client->pool, client->view,
-                                     client->response.views);
+            client->view->InheritFrom(*client->pool,
+                                      *client->response.views);
     }
 
     if (!view->address.Check(error_r))
@@ -614,7 +614,7 @@ add_view(TranslateClient *client, const char *name, GError **error_r)
         return false;
 
     auto view = NewFromPool<widget_view>(client->pool);
-    widget_view_init(view);
+    view->Init();
     view->name = name;
     view->request_header_forward = client->response.request_header_forward;
     view->response_header_forward = client->response.response_header_forward;
@@ -1356,7 +1356,7 @@ translate_handle_packet(TranslateClient *client,
         client->response.max_age = -1;
         client->response.user_max_age = -1;
         client->response.views = NewFromPool<widget_view>(client->pool);
-        widget_view_init(client->response.views);
+        client->response.views->Init();
         client->view = nullptr;
         client->widget_view_tail = &client->response.views->next;
         client->transformation = nullptr;

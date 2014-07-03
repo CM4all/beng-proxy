@@ -11,16 +11,16 @@
 #include <string.h>
 
 void
-widget_view_init(struct widget_view *view)
+widget_view::Init()
 {
-    view->next = nullptr;
-    view->name = nullptr;
-    view->address.type = RESOURCE_ADDRESS_NONE;
-    view->filter_4xx = false;
-    view->inherited = false;
-    view->transformation = nullptr;
+    next = nullptr;
+    name = nullptr;
+    address.type = RESOURCE_ADDRESS_NONE;
+    filter_4xx = false;
+    inherited = false;
+    transformation = nullptr;
 
-    view->request_header_forward = (struct header_forward_settings){
+    request_header_forward = (struct header_forward_settings){
         .modes = {
             [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
             [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
@@ -30,7 +30,7 @@ widget_view_init(struct widget_view *view)
         },
     };
 
-    view->response_header_forward = (struct header_forward_settings){
+    response_header_forward = (struct header_forward_settings){
         .modes = {
             [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO,
             [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
@@ -42,30 +42,26 @@ widget_view_init(struct widget_view *view)
 }
 
 bool
-widget_view_inherit_address(struct pool *pool, struct widget_view *view,
-                            const struct resource_address *address)
+widget_view::InheritAddress(struct pool &pool,
+                            const struct resource_address &src)
 {
-    assert(view != nullptr);
-    assert(address != nullptr);
-
-    if (view->address.type != RESOURCE_ADDRESS_NONE ||
-        address->type == RESOURCE_ADDRESS_NONE)
+    if (address.type != RESOURCE_ADDRESS_NONE ||
+        src.type == RESOURCE_ADDRESS_NONE)
         return false;
 
-    resource_address_copy(pool, &view->address, address);
-    view->inherited = true;
+    resource_address_copy(&pool, &address, &src);
+    inherited = true;
     return true;
 }
 
 bool
-widget_view_inherit_from(struct pool *pool, struct widget_view *dest,
-                         const struct widget_view *src)
+widget_view::InheritFrom(struct pool &pool, const struct widget_view &src)
 {
-    if (widget_view_inherit_address(pool, dest, &src->address)) {
-        dest->filter_4xx = src->filter_4xx;
+    if (InheritAddress(pool, src.address)) {
+        filter_4xx = src.filter_4xx;
 
-        dest->request_header_forward = src->request_header_forward;
-        dest->response_header_forward = src->response_header_forward;
+        request_header_forward = src.request_header_forward;
+        response_header_forward = src.response_header_forward;
 
         return true;
     } else
@@ -93,22 +89,22 @@ widget_view_lookup(const struct widget_view *view, const char *name)
 }
 
 bool
-widget_view_has_processor(const struct widget_view *view)
+widget_view::HasProcessor() const
 {
-    return view->transformation->HasProcessor();
+    return transformation->HasProcessor();
 }
 
 bool
-widget_view_is_container(const struct widget_view *view)
+widget_view::IsContainer() const
 {
-    return view->transformation->IsContainer();
+    return transformation->IsContainer();
 }
 
 static struct widget_view *
 widget_view_dup(struct pool *pool, const struct widget_view *src)
 {
     auto dest = NewFromPool<struct widget_view>(pool);
-    widget_view_init(dest);
+    dest->Init();
 
     dest->name = src->name != nullptr ? p_strdup(pool, src->name) : nullptr;
     resource_address_copy(pool, &dest->address, &src->address);
@@ -139,17 +135,17 @@ widget_view_dup_chain(struct pool *pool, const struct widget_view *src)
 }
 
 bool
-widget_view_is_expandable(const struct widget_view *view)
+widget_view::IsExpandable() const
 {
-    return resource_address_is_expandable(&view->address) ||
-        view->transformation->IsChainExpandable();
+    return resource_address_is_expandable(&address) ||
+        transformation->IsChainExpandable();
 }
 
 bool
 widget_view_any_is_expandable(const struct widget_view *view)
 {
     while (view != nullptr) {
-        if (widget_view_is_expandable(view))
+        if (view->IsExpandable())
             return true;
 
         view = view->next;
@@ -159,16 +155,12 @@ widget_view_any_is_expandable(const struct widget_view *view)
 }
 
 bool
-widget_view_expand(struct pool *pool, struct widget_view *view,
-                   const GMatchInfo *match_info, GError **error_r)
+widget_view::Expand(struct pool &pool, const GMatchInfo &match_info,
+                    GError **error_r)
 {
-    assert(pool != nullptr);
-    assert(view != nullptr);
-    assert(match_info != nullptr);
-
-    return resource_address_expand(pool, &view->address,
-                                   match_info, error_r) &&
-        view->transformation->ExpandChain(pool, match_info, error_r);
+    return resource_address_expand(&pool, &address,
+                                   &match_info, error_r) &&
+        transformation->ExpandChain(&pool, &match_info, error_r);
 }
 
 bool
@@ -179,7 +171,7 @@ widget_view_expand_all(struct pool *pool, struct widget_view *view,
     assert(match_info != nullptr);
 
     while (view != nullptr) {
-        if (!widget_view_expand(pool, view, match_info, error_r))
+        if (!view->Expand(*pool, *match_info, error_r))
             return false;
 
         view = view->next;

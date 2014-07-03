@@ -14,7 +14,7 @@
 bool
 request_processor_enabled(const struct request *request)
 {
-    return widget_view_has_processor(request->translate.response->views);
+    return request->translate.response->views->HasProcessor();
 }
 
 void

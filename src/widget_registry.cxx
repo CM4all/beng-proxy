@@ -72,7 +72,7 @@ widget_translate_response(TranslateResponse *response, void *ctx)
     if (response->views != nullptr)
         cls->views = *widget_view_dup_chain(lookup->pool, response->views);
     else
-        widget_view_init(&cls->views);
+        cls->views.Init();
 
     lookup->callback(cls, lookup->callback_ctx);
 }
