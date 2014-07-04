@@ -597,11 +597,8 @@ http_cache_new(struct pool *pool, size_t max_size,
 {
     pool = pool_new_libc(pool, "http_cache");
 
-    auto cache =
-        NewFromPool<struct http_cache>(pool, *pool, max_size,
-                                       memcached_stock, *resource_loader);
-
-    return cache;
+    return NewFromPool<http_cache>(pool, *pool, max_size,
+                                   memcached_stock, *resource_loader);
 }
 
 static void
@@ -628,13 +625,12 @@ http_cache::~http_cache()
         http_cache_heap_deinit(&heap);
 
     rubber_free(rubber);
-    pool_unref(pool);
 }
 
 void
 http_cache_close(struct http_cache *cache)
 {
-    DeleteFromPool(cache->pool, cache);
+    DeleteUnrefTrashPool(*cache->pool, cache);
 }
 
 void
