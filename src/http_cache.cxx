@@ -144,6 +144,17 @@ public:
     static HttpCacheRequest *FromAsync(async_operation *ao) {
         return ContainerCast(ao, HttpCacheRequest, operation);
     }
+
+    /**
+     * Storing the response body in the rubber allocator has finished
+     * (but may have failed).
+     */
+    void RubberStoreFinished();
+
+    /**
+     * Abort storing the response body in the rubber allocator.
+     */
+    void AbortRubberStore();
 };
 
 static const char *
@@ -266,8 +277,7 @@ http_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
 {
     HttpCacheRequest *request = (HttpCacheRequest *)ctx;
 
-    async_ref_clear(&request->async_ref);
-    list_remove(&request->siblings);
+    request->RubberStoreFinished();
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
@@ -281,8 +291,7 @@ http_cache_rubber_oom(void *ctx)
 
     cache_log(4, "http_cache: oom %s\n", request->key);
 
-    async_ref_clear(&request->async_ref);
-    list_remove(&request->siblings);
+    request->RubberStoreFinished();
 }
 
 static void
@@ -292,8 +301,7 @@ http_cache_rubber_too_large(void *ctx)
 
     cache_log(4, "http_cache: too large %s\n", request->key);
 
-    async_ref_clear(&request->async_ref);
-    list_remove(&request->siblings);
+    request->RubberStoreFinished();
 }
 
 static void
@@ -305,8 +313,7 @@ http_cache_rubber_error(GError *error, void *ctx)
               request->key, error->message);
     g_error_free(error);
 
-    async_ref_clear(&request->async_ref);
-    list_remove(&request->siblings);
+    request->RubberStoreFinished();
 }
 
 static const struct sink_rubber_handler http_cache_rubber_handler = {
@@ -563,13 +570,20 @@ http_cache_new(struct pool *pool, size_t max_size,
                                    memcached_stock, *resource_loader);
 }
 
-static void
-http_cache_request_close(HttpCacheRequest *request)
+void
+HttpCacheRequest::RubberStoreFinished()
 {
-    assert(request != nullptr);
+    assert(async_ref_defined(&async_ref));
 
-    list_remove(&request->siblings);
-    async_abort(&request->async_ref);
+    async_ref_clear(&async_ref);
+    list_remove(&siblings);
+}
+
+void
+HttpCacheRequest::AbortRubberStore()
+{
+    list_remove(&siblings);
+    async_abort(&async_ref);
 }
 
 inline
@@ -577,8 +591,7 @@ http_cache::~http_cache()
 {
     while (!list_empty(&requests)) {
         auto request = HttpCacheRequest::FromSiblings(requests.next);
-
-        http_cache_request_close(request);
+        request->AbortRubberStore();
     }
 
     background_manager_abort_all(&background);
