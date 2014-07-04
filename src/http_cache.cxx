@@ -335,16 +335,10 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     if (request->document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == nullptr);
 
-        struct pool *caller_pool = request->caller_pool;
-#ifndef NDEBUG
-        struct pool_notify_state notify;
-        pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
-#endif
-
         cache_log(5, "http_cache: not_modified %s\n", request->key);
         http_cache_serve(request);
-
-        pool_unref_denotify(caller_pool, &notify);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
 
         if (locked_document != nullptr)
             http_cache_unlock(cache, locked_document);
@@ -360,15 +354,9 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         if (body != nullptr)
             istream_close_unused(body);
 
-        struct pool *caller_pool = request->caller_pool;
-#ifndef NDEBUG
-        struct pool_notify_state notify;
-        pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
-#endif
-
         http_cache_serve(request);
-
-        pool_unref_denotify(caller_pool, &notify);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
 
         if (locked_document != nullptr)
             http_cache_unlock(cache, locked_document);
@@ -394,16 +382,10 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         /* don't cache response */
         cache_log(4, "http_cache: nocache %s\n", request->key);
 
-        struct pool *caller_pool = request->caller_pool;
-#ifndef NDEBUG
-        struct pool_notify_state notify;
-        pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
-#endif
-
         http_response_handler_invoke_response(&request->handler, status,
                                               headers, body);
-
-        pool_unref_denotify(caller_pool, &notify);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
         return;
     }
 
@@ -439,16 +421,10 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
                         &request->async_ref);
     }
 
-    struct pool *caller_pool = request->caller_pool;
-#ifndef NDEBUG
-    struct pool_notify_state notify;
-    pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
-#endif
-
     http_response_handler_invoke_response(&request->handler, status,
                                           headers, body);
-
-    pool_unref_denotify(caller_pool, &notify);
+    pool_unref_denotify(request->caller_pool,
+                        &request->caller_pool_notify);
 
     if (input != nullptr) {
         if (async_ref_defined(&request->async_ref))
@@ -477,16 +453,10 @@ http_cache_response_abort(GError *error, void *ctx)
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
 
-    struct pool *caller_pool = request->caller_pool;
-#ifndef NDEBUG
-    struct pool_notify_state notify;
-    pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
-#endif
-
     async_operation_finished(&request->operation);
     http_response_handler_invoke_abort(&request->handler, error);
-
-    pool_unref_denotify(caller_pool, &notify);
+    pool_unref_denotify(request->caller_pool,
+                        &request->caller_pool_notify);
 }
 
 static const struct http_response_handler http_cache_response_handler = {
@@ -965,18 +935,13 @@ http_cache_memcached_miss(HttpCacheRequest *request)
     struct http_cache_info *info = request->info;
 
     if (info->only_if_cached) {
-        struct pool *caller_pool = request->caller_pool;
-#ifndef NDEBUG
-        struct pool_notify_state notify;
-        pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
-#endif
-
         async_operation_finished(&request->operation);
         http_response_handler_invoke_response(&request->handler,
                                               HTTP_STATUS_GATEWAY_TIMEOUT,
                                               nullptr, nullptr);
 
-        pool_unref_denotify(caller_pool, &notify);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
         return;
     }
 
@@ -1012,19 +977,13 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
     if (http_cache_may_serve(request->info, document)) {
         cache_log(4, "http_cache: serve %s\n", request->key);
 
-        struct pool *caller_pool = request->caller_pool;
-#ifndef NDEBUG
-        struct pool_notify_state notify;
-        pool_notify_move(caller_pool, &request->caller_pool_notify, &notify);
-#endif
-
         async_operation_finished(&request->operation);
         http_response_handler_invoke_response(&request->handler,
                                               document->status,
                                               document->headers,
                                               body);
-
-        pool_unref_denotify(caller_pool, &notify);
+        pool_unref_denotify(request->caller_pool,
+                            &request->caller_pool_notify);
     } else {
         request->document = document;
         request->document_body = istream_hold_new(request->pool, body);
