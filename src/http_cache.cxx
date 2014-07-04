@@ -33,10 +33,6 @@
 #include <stdio.h>
 #include <errno.h>
 
-struct http_cache_flush {
-    struct background_job background;
-};
-
 class HttpCacheRequest {
 public:
     static constexpr auto link_mode = boost::intrusive::normal_link;
@@ -151,7 +147,7 @@ struct http_cache {
                                                          &HttpCacheRequest::siblings>,
                            boost::intrusive::constant_time_size<false>> requests;
 
-    struct background_manager background;
+    BackgroundManager background;
 
     http_cache(struct pool &_pool, size_t max_size,
                struct memcached_stock *_memcached_stock,
@@ -190,14 +186,14 @@ http_cache_key(struct pool *pool, const struct resource_address *address)
 static void
 http_cache_memcached_put_callback(GError *error, void *ctx)
 {
-    background_job *job = (background_job *)ctx;
+    LinkedBackgroundJob *job = (LinkedBackgroundJob *)ctx;
 
     if (error != nullptr) {
         cache_log(2, "http-cache: put failed: %s\n", error->message);
         g_error_free(error);
     }
 
-    background_manager_remove(job);
+    job->Remove();
 }
 
 static void
@@ -215,7 +211,8 @@ http_cache_put(HttpCacheRequest *request,
                             request->response.headers,
                             request->cache->rubber, rubber_id, size);
     else if (request->cache->memcached_stock != nullptr) {
-        auto job = PoolAlloc<background_job>(request->pool);
+        auto job = NewFromPool<LinkedBackgroundJob>(request->pool,
+                                                    request->cache->background);
 
         struct istream *value = rubber_id != 0
             ? istream_rubber_new(request->pool, request->cache->rubber,
@@ -224,15 +221,14 @@ http_cache_put(HttpCacheRequest *request,
 
         http_cache_memcached_put(request->pool, request->cache->memcached_stock,
                                  &request->cache->pool,
-                                 &request->cache->background,
+                                 request->cache->background,
                                  request->key,
                                  request->info,
                                  request->headers,
                                  request->response.status, request->response.headers,
                                  value,
                                  http_cache_memcached_put_callback, job,
-                                 background_job_add(&request->cache->background,
-                                                    job));
+                                 request->cache->background.Add2(*job));
     }
 }
 
@@ -252,7 +248,7 @@ http_cache_remove_url(struct http_cache *cache, const char *url,
         http_cache_heap_remove_url(&cache->heap, url, headers);
     else if (cache->memcached_stock != nullptr)
         http_cache_memcached_remove_uri_match(cache->memcached_stock,
-                                              &cache->pool, &cache->background,
+                                              &cache->pool, cache->background,
                                               url, headers);
 }
 
@@ -559,8 +555,6 @@ http_cache::http_cache(struct pool &_pool, size_t max_size,
         http_cache_heap_init(&heap, &pool, max_size * 7 / 8);
     else
         http_cache_heap_clear(&heap);
-
-    background_manager_init(&background);
 }
 
 struct http_cache *
@@ -595,7 +589,7 @@ http_cache::~http_cache()
 {
     requests.clear_and_dispose(std::mem_fn(&HttpCacheRequest::AbortRubberStore));
 
-    background_manager_abort_all(&background);
+    background.AbortAll();
 
     if (http_cache_heap_is_defined(&heap))
         http_cache_heap_deinit(&heap);
@@ -629,9 +623,9 @@ http_cache_get_stats(const struct http_cache *cache, struct cache_stats *data)
 static void
 http_cache_flush_callback(bool success, GError *error, void *ctx)
 {
-    struct http_cache_flush *flush = (struct http_cache_flush *)ctx;
+    LinkedBackgroundJob *flush = (LinkedBackgroundJob *)ctx;
 
-    background_manager_remove(&flush->background);
+    flush->Remove();
 
     if (success)
         cache_log(5, "http_cache_memcached: flushed\n");
@@ -651,12 +645,11 @@ http_cache_flush(struct http_cache *cache)
     else if (cache->memcached_stock != nullptr) {
         struct pool *pool = pool_new_linear(&cache->pool,
                                             "http_cache_memcached_flush", 1024);
-        auto flush = PoolAlloc<struct http_cache_flush>(pool);
+        auto flush = NewFromPool<LinkedBackgroundJob>(pool, cache->background);
 
         http_cache_memcached_flush(pool, cache->memcached_stock,
                                    http_cache_flush_callback, flush,
-                                   background_job_add(&cache->background,
-                                                      &flush->background));
+                                   cache->background.Add2(*flush));
         pool_unref(pool);
     }
 
@@ -1033,7 +1026,7 @@ http_cache_memcached_use(struct http_cache *cache,
 
     http_cache_memcached_get(pool, cache->memcached_stock,
                              &request->cache->pool,
-                             &cache->background,
+                             cache->background,
                              request->key, request->headers,
                              http_cache_memcached_get_callback, request,
                              &request->async_ref);

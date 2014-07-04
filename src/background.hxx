@@ -22,53 +22,6 @@ struct background_job {
     struct async_operation_ref async_ref;
 };
 
-/**
- * A container for background jobs.
- */
-struct background_manager {
-    struct list_head jobs;
-};
-
-/**
- * Initializer for the background manager.  The object is allocated by
- * the caller, and may be embeded in another struct.
- */
-static inline void
-background_manager_init(struct background_manager *mgr)
-{
-    list_init(&mgr->jobs);
-}
-
-/**
- * Register a job to the manager.
- */
-static inline void
-background_manager_add(struct background_manager *mgr,
-                       struct background_job *job)
-{
-    list_add(&job->siblings, &mgr->jobs);
-}
-
-/**
- * Unregister a job from the manager.
- */
-static inline void
-background_manager_remove(struct background_job *job)
-{
-    list_remove(&job->siblings);
-}
-
-/**
- * Abort the job and unregister it from the manager.  This function
- * should not be called, it is used internally.
- */
-static inline void
-background_job_abort_internal(struct background_job *job)
-{
-    background_manager_remove(job);
-    async_abort(&job->async_ref);
-}
-
 static inline struct background_job *
 list_head_to_background_job(struct list_head *head)
 {
@@ -77,40 +30,79 @@ list_head_to_background_job(struct list_head *head)
 }
 
 /**
- * Abort all background jobs in the manager.  This is called on
- * shutdown.
+ * A container for background jobs.
  */
-static inline void
-background_manager_abort_all(struct background_manager *mgr)
-{
-    while (!list_empty(&mgr->jobs)) {
-        struct background_job *job =
-            list_head_to_background_job(mgr->jobs.next);
+class BackgroundManager {
+    struct list_head jobs;
 
-        background_job_abort_internal(job);
+public:
+    BackgroundManager() {
+        list_init(&jobs);
     }
-}
 
-/**
- * Add a background job to the manager, and return its
- * #async_operation_ref.  This is a convenience function.
- */
-static inline struct async_operation_ref *
-background_job_add(struct background_manager *mgr,
-                   struct background_job *job)
-{
-    background_manager_add(mgr, job);
-    return &job->async_ref;
-}
+    /**
+     * Register a job to the manager.
+     */
+    void Add(struct background_job &job) {
+        list_add(&job.siblings, &jobs);
+    }
 
-/**
- * Leave the job registered in the manager, and reuse its
- * #async_operation_ref for another job iteration.
- */
-static inline struct async_operation_ref *
-background_job_reuse(struct background_job *job)
-{
-    return &job->async_ref;
-}
+    /**
+     * Add a background job to the manager, and return its
+     * #async_operation_ref.  This is a convenience function.
+     */
+    struct async_operation_ref *Add2(struct background_job &job) {
+        Add(job);
+        return &job.async_ref;
+    }
+
+    /**
+     * Leave the job registered in the manager, and reuse its
+     * #async_operation_ref for another job iteration.
+     */
+    struct async_operation_ref *Reuse(struct background_job &job) {
+        return &job.async_ref;
+    }
+
+    /**
+     * Unregister a job from the manager.
+     */
+    void Remove(struct background_job &job) {
+        list_remove(&job.siblings);
+    }
+
+    /**
+     * Abort the job and unregister it from the manager.  This function
+     * should not be called, it is used internally.
+     */
+    void AbortInternal(struct background_job &job) {
+        Remove(job);
+        async_abort(&job.async_ref);
+    }
+
+    /**
+     * Abort all background jobs in the manager.  This is called on
+     * shutdown.
+     */
+    void AbortAll() {
+        while (!list_empty(&jobs)) {
+            struct background_job *job =
+                list_head_to_background_job(jobs.next);
+
+            AbortInternal(*job);
+        }
+    }
+};
+
+class LinkedBackgroundJob : public background_job {
+    BackgroundManager &manager;
+
+public:
+    LinkedBackgroundJob(BackgroundManager &_manager):manager(_manager) {}
+
+    void Remove() {
+        manager.Remove(*this);
+    }
+};
 
 #endif

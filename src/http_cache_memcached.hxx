@@ -16,7 +16,7 @@ struct pool;
 struct strmap;
 struct istream;
 struct memcached_stock;
-struct background_manager;
+class BackgroundManager;
 struct http_cache_info;
 struct http_cache_document;
 
@@ -38,7 +38,7 @@ http_cache_memcached_flush(struct pool *pool, struct memcached_stock *stock,
 void
 http_cache_memcached_get(struct pool *pool, struct memcached_stock *stock,
                          struct pool *background_pool,
-                         struct background_manager *background,
+                         BackgroundManager &background,
                          const char *uri, struct strmap *request_headers,
                          http_cache_memcached_get_t callback,
                          void *callback_ctx,
@@ -47,7 +47,7 @@ http_cache_memcached_get(struct pool *pool, struct memcached_stock *stock,
 void
 http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
                          struct pool *background_pool,
-                         struct background_manager *background,
+                         BackgroundManager &background,
                          const char *uri,
                          const struct http_cache_info *info,
                          struct strmap *request_headers,
@@ -59,13 +59,13 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
 void
 http_cache_memcached_remove_uri(struct memcached_stock *stock,
                                 struct pool *background_pool,
-                                struct background_manager *background,
+                                BackgroundManager &background,
                                 const char *uri);
 
 void
 http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
                                       struct pool *background_pool,
-                                      struct background_manager *background,
+                                      BackgroundManager &background,
                                       const char *uri, struct strmap *headers);
 
 #endif

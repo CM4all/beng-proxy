@@ -104,7 +104,7 @@ void
 http_cache_memcached_get(gcc_unused struct pool *pool,
                          gcc_unused struct memcached_stock *stock,
                          gcc_unused struct pool *background_pool,
-                         gcc_unused struct background_manager *background,
+                         gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
                          gcc_unused struct strmap *request_headers,
                          gcc_unused http_cache_memcached_get_t callback,
@@ -117,7 +117,7 @@ void
 http_cache_memcached_put(gcc_unused struct pool *pool,
                          gcc_unused struct memcached_stock *stock,
                          gcc_unused struct pool *background_pool,
-                         gcc_unused struct background_manager *background,
+                         gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
                          gcc_unused const struct http_cache_info *info,
                          gcc_unused struct strmap *request_headers,
@@ -133,7 +133,7 @@ http_cache_memcached_put(gcc_unused struct pool *pool,
 void
 http_cache_memcached_remove_uri(gcc_unused struct memcached_stock *stock,
                                 gcc_unused struct pool *background_pool,
-                                gcc_unused struct background_manager *background,
+                                gcc_unused BackgroundManager &background,
                                 gcc_unused const char *uri)
 {
 }
@@ -141,7 +141,7 @@ http_cache_memcached_remove_uri(gcc_unused struct memcached_stock *stock,
 void
 http_cache_memcached_remove_uri_match(gcc_unused struct memcached_stock *stock,
                                       gcc_unused struct pool *background_pool,
-                                      gcc_unused struct background_manager *background,
+                                      gcc_unused BackgroundManager &background,
                                       gcc_unused const char *uri,
                                       gcc_unused struct strmap *headers)
 {

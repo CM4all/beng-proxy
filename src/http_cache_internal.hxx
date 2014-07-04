@@ -17,7 +17,6 @@
 
 struct pool;
 struct growing_buffer;
-struct background_manager;
 
 static const off_t cacheable_size_limit = 256 * 1024;
 
