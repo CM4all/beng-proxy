@@ -32,7 +32,7 @@
 #include <errno.h>
 
 struct http_cache {
-    struct pool *pool;
+    struct pool &pool;
 
     Rubber *rubber;
 
@@ -40,7 +40,7 @@ struct http_cache {
 
     struct memcached_stock *memcached_stock;
 
-    struct resource_loader *resource_loader;
+    struct resource_loader &resource_loader;
 
     /**
      * A list of requests that are currently saving their contents to
@@ -206,7 +206,7 @@ http_cache_put(struct http_cache_request *request,
             : nullptr;
 
         http_cache_memcached_put(request->pool, request->cache->memcached_stock,
-                                 request->cache->pool,
+                                 &request->cache->pool,
                                  &request->cache->background,
                                  request->key,
                                  request->info,
@@ -235,7 +235,7 @@ http_cache_remove_url(struct http_cache *cache, const char *url,
         http_cache_heap_remove_url(&cache->heap, url, headers);
     else if (cache->memcached_stock != nullptr)
         http_cache_memcached_remove_uri_match(cache->memcached_stock,
-                                              cache->pool, &cache->background,
+                                              &cache->pool, &cache->background,
                                               url, headers);
 }
 
@@ -560,10 +560,10 @@ inline
 http_cache::http_cache(struct pool &_pool, size_t max_size,
                        struct memcached_stock *_memcached_stock,
                        struct resource_loader &_resource_loader)
-    :pool(&_pool),
+    :pool(_pool),
      memcached_stock(_memcached_stock),
-     resource_loader(&_resource_loader) {
-
+     resource_loader(_resource_loader)
+{
     if (memcached_stock != nullptr || max_size > 0) {
         static const size_t max_memcached_rubber = 64 * 1024 * 1024;
         size_t rubber_size = max_size;
@@ -582,7 +582,7 @@ http_cache::http_cache(struct pool &_pool, size_t max_size,
         /* leave 12.5% of the rubber allocator empty, to increase the
            chances that a hole can be found for a new allocation, to
            reduce the pressure that rubber_compress() creates */
-        http_cache_heap_init(&heap, pool, max_size * 7 / 8);
+        http_cache_heap_init(&heap, &pool, max_size * 7 / 8);
     else
         http_cache_heap_clear(&heap);
 
@@ -630,7 +630,7 @@ http_cache::~http_cache()
 void
 http_cache_close(struct http_cache *cache)
 {
-    DeleteUnrefTrashPool(*cache->pool, cache);
+    DeleteUnrefTrashPool(cache->pool, cache);
 }
 
 void
@@ -673,7 +673,7 @@ http_cache_flush(struct http_cache *cache)
     if (http_cache_heap_is_defined(&cache->heap))
         http_cache_heap_flush(&cache->heap);
     else if (cache->memcached_stock != nullptr) {
-        struct pool *pool = pool_new_linear(cache->pool,
+        struct pool *pool = pool_new_linear(&cache->pool,
                                             "http_cache_memcached_flush", 1024);
         auto flush = PoolAlloc<struct http_cache_flush>(pool);
 
@@ -715,7 +715,7 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
 
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
+    pool = pool_new_linear(&cache->pool, "http_cache_request", 8192);
 
     auto request =
         NewFromPool<struct http_cache_request>(pool, *pool, *caller_pool,
@@ -728,7 +728,7 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
 
     cache_log(4, "http_cache: miss %s\n", request->key);
 
-    resource_loader_request(cache->resource_loader, pool, session_sticky,
+    resource_loader_request(&cache->resource_loader, pool, session_sticky,
                             method, address,
                             HTTP_STATUS_OK, headers, nullptr,
                             &http_cache_response_handler, request,
@@ -821,7 +821,7 @@ http_cache_test(struct http_cache_request *request,
     if (document->info.etag != nullptr)
         strmap_set(headers, "if-none-match", document->info.etag);
 
-    resource_loader_request(cache->resource_loader, request->pool,
+    resource_loader_request(&cache->resource_loader, request->pool,
                             request->session_sticky,
                             method, address,
                             HTTP_STATUS_OK, headers, nullptr,
@@ -848,7 +848,7 @@ http_cache_heap_test(struct http_cache *cache, struct pool *caller_pool,
 {
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    struct pool *pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
+    struct pool *pool = pool_new_linear(&cache->pool, "http_cache_request", 8192);
 
     auto request =
         NewFromPool<struct http_cache_request>(pool, *pool, *caller_pool,
@@ -946,7 +946,7 @@ http_cache_memcached_forward(struct http_cache_request *request,
                              const struct http_response_handler *handler,
                              void *handler_ctx)
 {
-    resource_loader_request(request->cache->resource_loader, request->pool,
+    resource_loader_request(&request->cache->resource_loader, request->pool,
                             request->session_sticky,
                             request->method, request->address,
                             HTTP_STATUS_OK, request->headers, nullptr,
@@ -1055,7 +1055,7 @@ http_cache_memcached_use(struct http_cache *cache,
 
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    pool = pool_new_linear(cache->pool, "http_cache_request", 8192);
+    pool = pool_new_linear(&cache->pool, "http_cache_request", 8192);
 
     auto request =
         NewFromPool<struct http_cache_request>(pool, *pool, *caller_pool,
@@ -1067,7 +1067,7 @@ http_cache_memcached_use(struct http_cache *cache,
                                                *info, *async_ref);
 
     http_cache_memcached_get(pool, cache->memcached_stock,
-                             request->cache->pool,
+                             &request->cache->pool,
                              &cache->background,
                              request->key, request->headers,
                              http_cache_memcached_get_callback, request,
@@ -1096,7 +1096,7 @@ http_cache_request(struct http_cache *cache,
            and lots of unique parameters, and that's not worth the
            cache space anyway */
         strlen(key) > 8192) {
-        resource_loader_request(cache->resource_loader, pool, session_sticky,
+        resource_loader_request(&cache->resource_loader, pool, session_sticky,
                                 method, address,
                                 HTTP_STATUS_OK, headers, body,
                                 handler, handler_ctx,
@@ -1123,7 +1123,7 @@ http_cache_request(struct http_cache *cache,
 
         cache_log(4, "http_cache: ignore %s\n", key);
 
-        resource_loader_request(cache->resource_loader, pool, session_sticky,
+        resource_loader_request(&cache->resource_loader, pool, session_sticky,
                                 method, address,
                                 HTTP_STATUS_OK, headers, body,
                                 handler, handler_ctx,
