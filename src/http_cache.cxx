@@ -410,11 +410,6 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
         list_add(&request->siblings, &request->cache->requests);
 
-        /* we need this pool reference because the http-client will
-           release our pool when our response handler closes the "tee"
-           body stream within the callback */
-        pool_ref(request->pool);
-
         sink_rubber_new(request->pool, istream_tee_second(body),
                         cache->rubber, cacheable_size_limit,
                         &http_cache_rubber_handler, request,
@@ -426,14 +421,10 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     pool_unref_denotify(request->caller_pool,
                         &request->caller_pool_notify);
 
-    if (input != nullptr) {
-        if (async_ref_defined(&request->async_ref))
+    if (input != nullptr && async_ref_defined(&request->async_ref))
             /* just in case our handler has closed the body without
                looking at it: call istream_read() to start reading */
             istream_read(input);
-
-        pool_unref(request->pool);
-    }
 }
 
 static void
