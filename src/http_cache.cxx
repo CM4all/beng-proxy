@@ -25,39 +25,13 @@
 
 #include <glib.h>
 
+#include <boost/intrusive/list.hpp>
+
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-
-struct http_cache {
-    struct pool &pool;
-
-    Rubber *rubber;
-
-    struct http_cache_heap heap;
-
-    struct memcached_stock *memcached_stock;
-
-    struct resource_loader &resource_loader;
-
-    /**
-     * A list of requests that are currently saving their contents to
-     * the cache.
-     */
-    struct list_head requests;
-
-    struct background_manager background;
-
-    http_cache(struct pool &_pool, size_t max_size,
-               struct memcached_stock *_memcached_stock,
-               struct resource_loader &_resource_loader);
-
-    http_cache(const struct http_cache &) = delete;
-
-    ~http_cache();
-};
 
 struct http_cache_flush {
     struct background_job background;
@@ -65,7 +39,10 @@ struct http_cache_flush {
 
 class HttpCacheRequest {
 public:
-    struct list_head siblings;
+    static constexpr auto link_mode = boost::intrusive::normal_link;
+    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
+    SiblingsHook siblings;
 
     struct pool *pool, *caller_pool;
 
@@ -137,10 +114,6 @@ public:
 
     HttpCacheRequest(const HttpCacheRequest &) = delete;
 
-    static HttpCacheRequest *FromSiblings(list_head *lh) {
-        return ContainerCast(lh, HttpCacheRequest, siblings);
-    }
-
     static HttpCacheRequest *FromAsync(async_operation *ao) {
         return ContainerCast(ao, HttpCacheRequest, operation);
     }
@@ -155,6 +128,38 @@ public:
      * Abort storing the response body in the rubber allocator.
      */
     void AbortRubberStore();
+};
+
+struct http_cache {
+    struct pool &pool;
+
+    Rubber *rubber;
+
+    struct http_cache_heap heap;
+
+    struct memcached_stock *memcached_stock;
+
+    struct resource_loader &resource_loader;
+
+    /**
+     * A list of requests that are currently saving their contents to
+     * the cache.
+     */
+    boost::intrusive::list<HttpCacheRequest,
+                           boost::intrusive::member_hook<HttpCacheRequest,
+                                                         HttpCacheRequest::SiblingsHook,
+                                                         &HttpCacheRequest::siblings>,
+                           boost::intrusive::constant_time_size<false>> requests;
+
+    struct background_manager background;
+
+    http_cache(struct pool &_pool, size_t max_size,
+               struct memcached_stock *_memcached_stock,
+               struct resource_loader &_resource_loader);
+
+    http_cache(const struct http_cache &) = delete;
+
+    ~http_cache();
 };
 
 static const char *
@@ -415,7 +420,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
            cache */
         body = istream_tee_new(request->pool, body, false, false);
 
-        list_add(&request->siblings, &request->cache->requests);
+        request->cache->requests.push_front(*request);
 
         sink_rubber_new(request->pool, istream_tee_second(body),
                         cache->rubber, cacheable_size_limit,
@@ -555,7 +560,6 @@ http_cache::http_cache(struct pool &_pool, size_t max_size,
     else
         http_cache_heap_clear(&heap);
 
-    list_init(&requests);
     background_manager_init(&background);
 }
 
@@ -576,23 +580,20 @@ HttpCacheRequest::RubberStoreFinished()
     assert(async_ref_defined(&async_ref));
 
     async_ref_clear(&async_ref);
-    list_remove(&siblings);
+    cache->requests.erase(cache->requests.iterator_to(*this));
 }
 
 void
 HttpCacheRequest::AbortRubberStore()
 {
-    list_remove(&siblings);
+    cache->requests.erase(cache->requests.iterator_to(*this));
     async_abort(&async_ref);
 }
 
 inline
 http_cache::~http_cache()
 {
-    while (!list_empty(&requests)) {
-        auto request = HttpCacheRequest::FromSiblings(requests.next);
-        request->AbortRubberStore();
-    }
+    requests.clear_and_dispose(std::mem_fn(&HttpCacheRequest::AbortRubberStore));
 
     background_manager_abort_all(&background);
 
