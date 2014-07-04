@@ -19,6 +19,8 @@
 #include "istream.h"
 #include "util/ConstBuffer.hxx"
 
+#include <inline/compiler.h>
+
 #include <glib.h>
 
 #include <string.h>
@@ -100,10 +102,10 @@ struct http_cache_memcached_request {
 
 static void
 http_cache_memcached_flush_response(enum memcached_response_status status,
-                                    G_GNUC_UNUSED const void *extras,
-                                    G_GNUC_UNUSED size_t extras_length,
-                                    G_GNUC_UNUSED const void *key,
-                                    G_GNUC_UNUSED size_t key_length,
+                                    gcc_unused const void *extras,
+                                    gcc_unused size_t extras_length,
+                                    gcc_unused const void *key,
+                                    gcc_unused size_t key_length,
                                     struct istream *value, void *ctx)
 {
     auto request = (http_cache_memcached_request *)ctx;
@@ -292,10 +294,10 @@ static const struct sink_header_handler http_cache_memcached_header_handler = {
 
 static void
 http_cache_memcached_get_response(enum memcached_response_status status,
-                                  G_GNUC_UNUSED const void *extras,
-                                  G_GNUC_UNUSED size_t extras_length,
-                                  G_GNUC_UNUSED const void *key,
-                                  G_GNUC_UNUSED size_t key_length,
+                                  gcc_unused const void *extras,
+                                  gcc_unused size_t extras_length,
+                                  gcc_unused const void *key,
+                                  gcc_unused size_t key_length,
                                   struct istream *value, void *ctx)
 {
     auto request = (http_cache_memcached_request *)ctx;
@@ -363,10 +365,10 @@ mcd_choice_commit_callback(GError *error, void *ctx)
 
 static void
 http_cache_memcached_put_response(enum memcached_response_status status,
-                                  G_GNUC_UNUSED const void *extras,
-                                  G_GNUC_UNUSED size_t extras_length,
-                                  G_GNUC_UNUSED const void *key,
-                                  G_GNUC_UNUSED size_t key_length,
+                                  gcc_unused const void *extras,
+                                  gcc_unused size_t extras_length,
+                                  gcc_unused const void *key,
+                                  gcc_unused size_t key_length,
                                   struct istream *value, void *ctx)
 {
     auto request = (http_cache_memcached_request *)ctx;
@@ -469,11 +471,11 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
 }
 
 static void
-mcd_background_response(G_GNUC_UNUSED enum memcached_response_status status,
-                        G_GNUC_UNUSED const void *extras,
-                        G_GNUC_UNUSED size_t extras_length,
-                        G_GNUC_UNUSED const void *key,
-                        G_GNUC_UNUSED size_t key_length,
+mcd_background_response(gcc_unused enum memcached_response_status status,
+                        gcc_unused const void *extras,
+                        gcc_unused size_t extras_length,
+                        gcc_unused const void *key,
+                        gcc_unused size_t key_length,
                         struct istream *value, void *ctx)
 {
     background_job *job = (background_job *)ctx;

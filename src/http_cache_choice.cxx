@@ -19,7 +19,8 @@
 #include "djbhash.h"
 #include "util/ConstBuffer.hxx"
 
-#include <glib.h>
+#include <inline/compiler.h>
+
 #include <stdio.h>
 
 enum {
@@ -184,10 +185,10 @@ static const struct sink_buffer_handler http_cache_choice_buffer_handler = {
 
 static void
 http_cache_choice_get_response(enum memcached_response_status status,
-                               G_GNUC_UNUSED const void *extras,
-                               G_GNUC_UNUSED size_t extras_length,
-                               G_GNUC_UNUSED const void *key,
-                               G_GNUC_UNUSED size_t key_length,
+                               gcc_unused const void *extras,
+                               gcc_unused size_t extras_length,
+                               gcc_unused const void *key,
+                               gcc_unused size_t key_length,
                                struct istream *value, void *ctx)
 {
     http_cache_choice *choice = (http_cache_choice *)ctx;
@@ -266,11 +267,11 @@ http_cache_choice_prepare(struct pool *pool, const char *uri,
 }
 
 static void
-http_cache_choice_add_response(G_GNUC_UNUSED enum memcached_response_status status,
-                               G_GNUC_UNUSED const void *extras,
-                               G_GNUC_UNUSED size_t extras_length,
-                               G_GNUC_UNUSED const void *key,
-                               G_GNUC_UNUSED size_t key_length,
+http_cache_choice_add_response(gcc_unused enum memcached_response_status status,
+                               gcc_unused const void *extras,
+                               gcc_unused size_t extras_length,
+                               gcc_unused const void *key,
+                               gcc_unused size_t key_length,
                                struct istream *value, void *ctx)
 {
     http_cache_choice *choice = (http_cache_choice *)ctx;
@@ -296,10 +297,10 @@ static const struct memcached_client_handler http_cache_choice_add_handler = {
 
 static void
 http_cache_choice_prepend_response(enum memcached_response_status status,
-                                   G_GNUC_UNUSED const void *extras,
-                                   G_GNUC_UNUSED size_t extras_length,
-                                   G_GNUC_UNUSED const void *key,
-                                   G_GNUC_UNUSED size_t key_length,
+                                   gcc_unused const void *extras,
+                                   gcc_unused size_t extras_length,
+                                   gcc_unused const void *key,
+                                   gcc_unused size_t key_length,
                                    struct istream *value, void *ctx)
 {
     http_cache_choice *choice = (http_cache_choice *)ctx;
@@ -375,12 +376,12 @@ http_cache_choice_commit(struct http_cache_choice *choice,
 }
 
 static void
-http_cache_choice_filter_set_response(G_GNUC_UNUSED enum memcached_response_status status,
-                                       G_GNUC_UNUSED const void *extras,
-                                       G_GNUC_UNUSED size_t extras_length,
-                                       G_GNUC_UNUSED const void *key,
-                                       G_GNUC_UNUSED size_t key_length,
-                                       G_GNUC_UNUSED struct istream *value, void *ctx)
+http_cache_choice_filter_set_response(gcc_unused enum memcached_response_status status,
+                                       gcc_unused const void *extras,
+                                       gcc_unused size_t extras_length,
+                                       gcc_unused const void *key,
+                                       gcc_unused size_t key_length,
+                                       gcc_unused struct istream *value, void *ctx)
 {
     http_cache_choice *choice = (http_cache_choice *)ctx;
 
@@ -482,10 +483,10 @@ static const struct sink_buffer_handler http_cache_choice_filter_buffer_handler 
 
 static void
 http_cache_choice_filter_get_response(enum memcached_response_status status,
-                                      G_GNUC_UNUSED const void *extras,
-                                      G_GNUC_UNUSED size_t extras_length,
-                                      G_GNUC_UNUSED const void *key,
-                                      G_GNUC_UNUSED size_t key_length,
+                                      gcc_unused const void *extras,
+                                      gcc_unused size_t extras_length,
+                                      gcc_unused const void *key,
+                                      gcc_unused size_t key_length,
                                       struct istream *value, void *ctx)
 {
     http_cache_choice *choice = (http_cache_choice *)ctx;
@@ -588,11 +589,11 @@ http_cache_choice_cleanup(struct pool *pool, struct memcached_stock *stock,
 }
 
 static void
-http_cache_choice_delete_response(G_GNUC_UNUSED enum memcached_response_status status,
-                                  G_GNUC_UNUSED const void *extras,
-                                  G_GNUC_UNUSED size_t extras_length,
-                                  G_GNUC_UNUSED const void *key,
-                                  G_GNUC_UNUSED size_t key_length,
+http_cache_choice_delete_response(gcc_unused enum memcached_response_status status,
+                                  gcc_unused const void *extras,
+                                  gcc_unused size_t extras_length,
+                                  gcc_unused const void *key,
+                                  gcc_unused size_t key_length,
                                   struct istream *value, void *ctx)
 {
     http_cache_choice *choice = (http_cache_choice *)ctx;
