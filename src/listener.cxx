@@ -7,7 +7,7 @@
 #include "listener.hxx"
 #include "fd_util.h"
 #include "pool.h"
-#include "gerrno.h"
+#include "util/Error.hxx"
 
 #include <socket/util.h>
 #include <socket/address.h>
@@ -54,18 +54,20 @@ listener_event_callback(int fd, short event gcc_unused, void *ctx)
     remote_fd = accept_cloexec_nonblock(fd, (struct sockaddr*)&sa, &sa_len);
     if (remote_fd < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            GError *error = new_error_errno_msg("accept() failed");
-            listener->handler.error(error, listener->handler_ctx);
+            Error error;
+            error.SetErrno("accept() failed");
+            listener->handler.error(std::move(error), listener->handler_ctx);
         }
 
         return;
     }
 
     if (!socket_set_nodelay(remote_fd, true)) {
-        GError *error = new_error_errno_msg("setsockopt(TCP_NODELAY) failed");
+        Error error;
+        error.SetErrno("setsockopt(TCP_NODELAY) failed");
 
         close(remote_fd);
-        listener->handler.error(error, listener->handler_ctx);
+        listener->handler.error(std::move(error), listener->handler_ctx);
         return;
     }
 
@@ -95,7 +97,7 @@ struct listener *
 listener_new(int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
              const struct listener_handler *handler, void *ctx,
-             GError **error_r)
+             Error &error)
 {
     int ret, param;
 
@@ -107,7 +109,7 @@ listener_new(int family, int socktype, int protocol,
 
     int fd = socket_cloexec_nonblock(family, socktype, protocol);
     if (fd < 0) {
-        set_error_errno_msg(error_r, "Failed to create socket");
+        error.SetErrno("Failed to create socket");
         return nullptr;
     }
 
@@ -116,7 +118,7 @@ listener_new(int family, int socktype, int protocol,
     param = 1;
     ret = setsockopt(listener->fd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
     if (ret < 0) {
-        set_error_errno_msg(error_r, "Failed to configure SO_REUSEADDR");
+        error.SetErrno("Failed to configure SO_REUSEADDR");
         delete listener;
         return nullptr;
     }
@@ -133,8 +135,7 @@ listener_new(int family, int socktype, int protocol,
         char buffer[64];
         socket_address_to_string(buffer, sizeof(buffer),
                                  address, address_length);
-        g_set_error(error_r, errno_quark(), errno,
-                    "Failed to bind to '%s': %s", buffer, strerror(errno));
+        error.FormatErrno("Failed to bind to '%s'", buffer);
         delete listener;
         return nullptr;
     }
@@ -156,7 +157,7 @@ listener_new(int family, int socktype, int protocol,
 
     ret = listen(listener->fd, 64);
     if (ret < 0) {
-        set_error_errno_msg(error_r, "Failed to listen");
+        error.SetErrno("Failed to listen");
         delete listener;
         return nullptr;
     }
@@ -172,7 +173,7 @@ listener_new(int family, int socktype, int protocol,
 struct listener *
 listener_tcp_port_new(int port,
                       const struct listener_handler *handler, void *ctx,
-                      GError **error_r)
+                      Error &error)
 {
     struct listener *listener;
     struct sockaddr_in6 sa6;
@@ -190,7 +191,7 @@ listener_tcp_port_new(int port,
 
     listener = listener_new(PF_INET6, SOCK_STREAM, 0,
                             (const struct sockaddr *)&sa6, sizeof(sa6),
-                            handler, ctx, nullptr);
+                            handler, ctx, IgnoreError());
     if (listener != nullptr)
         return listener;
 
@@ -201,7 +202,7 @@ listener_tcp_port_new(int port,
 
     return listener_new(PF_INET, SOCK_STREAM, 0,
                         (const struct sockaddr *)&sa4, sizeof(sa4),
-                        handler, ctx, error_r);
+                        handler, ctx, error);
 }
 
 void

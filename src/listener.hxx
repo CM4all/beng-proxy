@@ -7,29 +7,28 @@
 #ifndef BENG_PROXY_LISTENER_HXX
 #define BENG_PROXY_LISTENER_HXX
 
-#include "glibfwd.hxx"
-
 #include <stddef.h>
 
 struct sockaddr;
 struct listener;
+class Error;
 
 struct listener_handler {
     void (*connected)(int fd, const struct sockaddr *address,
                       size_t length, void *ctx);
-    void (*error)(GError *error, void *ctx);
+    void (*error)(Error &&error, void *ctx);
 };
 
 struct listener *
 listener_new(int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
              const struct listener_handler *handler, void *ctx,
-             GError **error_r);
+             Error &error);
 
 struct listener *
 listener_tcp_port_new(int port,
                       const struct listener_handler *handler, void *ctx,
-                      GError **error_r);
+                      Error &error);
 
 void
 listener_free(struct listener **listener_r);

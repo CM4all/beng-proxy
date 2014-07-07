@@ -41,6 +41,7 @@
 #include "ssl_client.h"
 #include "capabilities.hxx"
 #include "namespace_options.hxx"
+#include "util/Error.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -231,7 +232,7 @@ deinit_signals(struct instance *instance)
 static void
 add_listener(struct instance *instance, struct addrinfo *ai)
 {
-    GError *error = NULL;
+    Error error;
 
     assert(ai != NULL);
 
@@ -242,10 +243,9 @@ add_listener(struct instance *instance, struct addrinfo *ai)
                                       ai->ai_protocol, ai->ai_addr,
                                       ai->ai_addrlen,
                                       &http_listener_handler, instance,
-                                      &error);
+                                      error);
         if (node->listener == NULL) {
-            fprintf(stderr, "%s\n", error->message);
-            g_error_free(error);
+            fprintf(stderr, "%s\n", error.GetMessage());
             exit(2);
         }
 
@@ -259,14 +259,13 @@ static void
 add_tcp_listener(struct instance *instance, int port)
 {
     listener_node *node = NewFromPool<listener_node>(instance->pool);
-    GError *error = NULL;
 
+    Error error;
     node->listener = listener_tcp_port_new(port,
                                            &http_listener_handler, instance,
-                                           &error);
+                                           error);
     if (node->listener == NULL) {
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
+        fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }
 

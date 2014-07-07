@@ -14,6 +14,7 @@
 #include "clock.h"
 #include "listener.hxx"
 #include "gerrno.h"
+#include "util/Error.hxx"
 
 #include <daemon/log.h>
 
@@ -176,10 +177,9 @@ http_listener_connected(int fd,
 }
 
 static void
-http_listener_error(GError *error, G_GNUC_UNUSED void *ctx)
+http_listener_error(Error &&error, G_GNUC_UNUSED void *ctx)
 {
-    daemon_log(2, "%s\n", error->message);
-    g_error_free(error);
+    daemon_log(2, "%s\n", error.GetMessage());
 }
 
 const struct listener_handler http_listener_handler = {

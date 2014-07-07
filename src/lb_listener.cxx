@@ -12,6 +12,8 @@
 #include "listener.hxx"
 #include "address_envelope.hxx"
 #include "pool.h"
+#include "util/Error.hxx"
+#include "gerrno.h"
 
 #include <daemon/log.h>
 
@@ -33,10 +35,9 @@ lb_listener_connected(int fd,
 }
 
 static void
-lb_listener_error(GError *error, G_GNUC_UNUSED void *ctx)
+lb_listener_error(Error &&error, G_GNUC_UNUSED void *ctx)
 {
-    daemon_log(2, "%s\n", error->message);
-    g_error_free(error);
+    daemon_log(2, "%s\n", error.GetMessage());
 }
 
 const struct listener_handler lb_listener_handler = {
@@ -68,12 +69,15 @@ lb_listener_new(struct lb_instance &instance,
     }
 
     const struct address_envelope *envelope = config.envelope;
+
+    Error error;
     listener->listener = listener_new(envelope->address.sa_family,
                                       SOCK_STREAM, 0, &envelope->address,
                                       envelope->length,
                                       &lb_listener_handler, listener,
-                                      error_r);
+                                      error);
     if (listener->listener == NULL) {
+        g_set_error_literal(error_r, errno_quark(), 0, error.GetMessage());
         if (listener->ssl_factory != NULL)
             ssl_factory_free(listener->ssl_factory);
         delete listener;
