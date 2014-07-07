@@ -76,21 +76,6 @@ listener_event_callback(int fd, short event gcc_unused, void *ctx)
     pool_commit();
 }
 
-static gcc_always_inline uint16_t
-my_htons(uint16_t x)
-{
-#ifdef __ICC
-#ifdef __LITTLE_ENDIAN
-    /* icc seriously doesn't like the htons() macro */
-    return (uint16_t)((x >> 8) | (x << 8));
-#else
-    return x;
-#endif
-#else
-    return (uint16_t)htons((uint16_t)x);
-#endif
-}
-
 struct listener *
 listener_new(int family, int socktype, int protocol,
              SocketAddress address,
@@ -140,7 +125,7 @@ listener_tcp_port_new(int port,
     memset(&sa6, 0, sizeof(sa6));
     sa6.sin6_family = AF_INET6;
     sa6.sin6_addr = in6addr_any;
-    sa6.sin6_port = my_htons((uint16_t)port);
+    sa6.sin6_port = htons(port);
 
     listener = listener_new(PF_INET6, SOCK_STREAM, 0,
                             SocketAddress((const struct sockaddr *)&sa6, sizeof(sa6)),
@@ -151,7 +136,7 @@ listener_tcp_port_new(int port,
     memset(&sa4, 0, sizeof(sa4));
     sa4.sin_family = AF_INET;
     sa4.sin_addr.s_addr = INADDR_ANY;
-    sa4.sin_port = my_htons((uint16_t)port);
+    sa4.sin_port = htons(port);
 
     return listener_new(PF_INET, SOCK_STREAM, 0,
                         SocketAddress((const struct sockaddr *)&sa4,
