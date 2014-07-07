@@ -5,6 +5,8 @@
 #ifndef SOCKET_DESCRIPTOR_SOCKET_HXX
 #define SOCKET_DESCRIPTOR_SOCKET_HXX
 
+#include <inline/compiler.h>
+
 #include <assert.h>
 #include <stddef.h>
 
@@ -61,6 +63,9 @@ public:
                       const SocketAddress &address, Error &error);
 
     SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
+
+    gcc_pure
+    StaticSocketAddress GetLocalAddress() const;
 };
 
 #endif

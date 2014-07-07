@@ -105,3 +105,15 @@ SocketDescriptor::Accept(StaticSocketAddress &address, Error &error) const
     return SocketDescriptor(result);
 }
 
+StaticSocketAddress
+SocketDescriptor::GetLocalAddress() const
+{
+    assert(IsDefined());
+
+    StaticSocketAddress result;
+    if (getsockname(fd, result, &result.size) < 0)
+        result.Clear();
+
+    return result;
+}
+
