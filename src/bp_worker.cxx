@@ -11,7 +11,7 @@
 #include "bp_connection.hxx"
 #include "session_manager.hxx"
 #include "child_manager.h"
-#include "listener.h"
+#include "listener.hxx"
 #include "bp_control.hxx"
 
 #include <daemon/log.h>

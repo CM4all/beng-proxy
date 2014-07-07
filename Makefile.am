@@ -199,7 +199,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/control_local.cxx src/control_local.hxx \
 	src/bp_stats.cxx src/bp_stats.hxx \
 	src/bp_control.cxx src/bp_control.hxx \
-	src/listener.c src/listener.h \
+	src/listener.cxx src/listener.hxx \
 	src/lock.h \
 	src/memcached_client.cxx src/memcached_client.hxx \
 	src/memcached_packet.hxx \
@@ -394,7 +394,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/address_edit.h \
 	src/address_edit.c \
 	src/address_sticky.c src/address_sticky.h \
-	src/listener.c \
+	src/listener.cxx src/listener.hxx \
 	src/client-socket.c \
 	src/client_balancer.cxx src/client_balancer.hxx \
 	src/bulldog.c \

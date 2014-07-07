@@ -12,7 +12,7 @@
 #include "access-log.h"
 #include "drop.hxx"
 #include "clock.h"
-#include "listener.h"
+#include "listener.hxx"
 #include "gerrno.h"
 
 #include <daemon/log.h>

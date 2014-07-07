@@ -4,10 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_LISTENER_H
-#define __BENG_LISTENER_H
+#ifndef BENG_PROXY_LISTENER_HXX
+#define BENG_PROXY_LISTENER_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
+
 #include <stddef.h>
 
 struct pool;
@@ -19,10 +20,6 @@ struct listener_handler {
                       size_t length, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct listener *
 listener_new(struct pool *pool, int family, int socktype, int protocol,
@@ -43,9 +40,5 @@ listener_event_add(struct listener *listener);
 
 void
 listener_event_del(struct listener *listener);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

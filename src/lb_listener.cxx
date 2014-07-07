@@ -9,7 +9,7 @@
 #include "lb_connection.hxx"
 #include "lb_config.hxx"
 #include "ssl_factory.hxx"
-#include "listener.h"
+#include "listener.hxx"
 #include "address_envelope.hxx"
 #include "pool.h"
 

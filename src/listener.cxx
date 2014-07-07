@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "listener.h"
+#include "listener.hxx"
 #include "fd_util.h"
 #include "pool.h"
 #include "gerrno.h"
@@ -37,7 +37,7 @@ struct listener {
 static void
 listener_event_callback(int fd, short event gcc_unused, void *ctx)
 {
-    struct listener *listener = ctx;
+    struct listener *listener = (struct listener *)ctx;
     struct sockaddr_storage sa;
     size_t sa_len;
     int remote_fd;
@@ -89,20 +89,19 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
              const struct listener_handler *handler, void *ctx,
              GError **error_r)
 {
-    struct listener *listener;
     int ret, param;
 
-    assert(address != NULL);
+    assert(address != nullptr);
     assert(address_length > 0);
-    assert(handler != NULL);
-    assert(handler->connected != NULL);
-    assert(handler->error != NULL);
+    assert(handler != nullptr);
+    assert(handler->connected != nullptr);
+    assert(handler->error != nullptr);
 
-    listener = p_calloc(pool, sizeof(*listener));
+    auto listener = NewFromPool<struct listener>(pool);
     listener->fd = socket_cloexec_nonblock(family, socktype, protocol);
     if (listener->fd < 0) {
         set_error_errno_msg(error_r, "Failed to create socket");
-        return NULL;
+        return nullptr;
     }
 
     param = 1;
@@ -110,7 +109,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
     if (ret < 0) {
         set_error_errno_msg(error_r, "Failed to configure SO_REUSEADDR");
         close(listener->fd);
-        return NULL;
+        return nullptr;
     }
 
     if (address->sa_family == AF_UNIX) {
@@ -128,7 +127,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
         g_set_error(error_r, errno_quark(), errno,
                     "Failed to bind to '%s': %s", buffer, strerror(errno));
         close(listener->fd);
-        return NULL;
+        return nullptr;
     }
 
 #ifdef __linux
@@ -150,7 +149,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
     if (ret < 0) {
         set_error_errno_msg(error_r, "Failed to listen");
         close(listener->fd);
-        return NULL;
+        return nullptr;
     }
 
     listener->handler = handler;
@@ -174,9 +173,9 @@ listener_tcp_port_new(struct pool *pool, int port,
     struct sockaddr_in sa4;
 
     assert(port > 0);
-    assert(handler != NULL);
-    assert(handler->connected != NULL);
-    assert(handler->error != NULL);
+    assert(handler != nullptr);
+    assert(handler->connected != nullptr);
+    assert(handler->error != nullptr);
 
     memset(&sa6, 0, sizeof(sa6));
     sa6.sin6_family = AF_INET6;
@@ -185,8 +184,8 @@ listener_tcp_port_new(struct pool *pool, int port,
 
     listener = listener_new(pool, PF_INET6, SOCK_STREAM, 0,
                             (const struct sockaddr *)&sa6, sizeof(sa6),
-                            handler, ctx, NULL);
-    if (listener != NULL)
+                            handler, ctx, nullptr);
+    if (listener != nullptr)
         return listener;
 
     memset(&sa4, 0, sizeof(sa4));
@@ -203,9 +202,9 @@ void
 listener_free(struct listener **listener_r)
 {
     struct listener *listener = *listener_r;
-    *listener_r = NULL;
+    *listener_r = nullptr;
 
-    assert(listener != NULL);
+    assert(listener != nullptr);
     assert(listener->fd >= 0);
 
     listener_event_del(listener);
@@ -215,7 +214,7 @@ listener_free(struct listener **listener_r)
 void
 listener_event_add(struct listener *listener)
 {
-    event_add(&listener->event, NULL);
+    event_add(&listener->event, nullptr);
 }
 
 void
