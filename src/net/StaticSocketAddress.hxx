@@ -1,11 +1,9 @@
 /*
- * OO representation of a struct sockaddr.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef SOCKET_ADDRESS_HXX
-#define SOCKET_ADDRESS_HXX
+#ifndef STATIC_SOCKET_ADDRESS_HXX
+#define STATIC_SOCKET_ADDRESS_HXX
 
 #include <sys/socket.h>
 #include <stddef.h>
@@ -13,14 +11,14 @@
 struct sockaddr;
 class Error;
 
-class SocketAddress {
+class StaticSocketAddress {
     friend class SocketDescriptor;
 
     socklen_t size;
     struct sockaddr_storage address;
 
 public:
-    SocketAddress() = default;
+    StaticSocketAddress() = default;
 
     constexpr size_t GetCapacity() const {
         return sizeof(address);

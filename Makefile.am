@@ -636,7 +636,7 @@ libpool_a_SOURCES = \
 
 libnet_a_SOURCES = \
 	src/net/Error.cxx src/net/Error.hxx \
-	src/net/SocketAddress.cxx src/net/SocketAddress.hxx \
+	src/net/StaticSocketAddress.cxx src/net/StaticSocketAddress.hxx \
 	src/net/SocketDescriptor.cxx src/net/SocketDescriptor.hxx
 
 libraddress_a_SOURCES = \

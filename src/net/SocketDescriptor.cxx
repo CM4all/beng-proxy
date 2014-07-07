@@ -3,7 +3,7 @@
  */
 
 #include "SocketDescriptor.hxx"
-#include "SocketAddress.hxx"
+#include "StaticSocketAddress.hxx"
 #include "util/Error.hxx"
 
 #include <unistd.h>
@@ -90,7 +90,7 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
 }
 
 bool
-SocketDescriptor::CreateListen(const SocketAddress &address, Error &error)
+SocketDescriptor::CreateListen(const StaticSocketAddress &address, Error &error)
 {
     if (!Create(address.GetFamily(), SOCK_STREAM, 0, error))
         return false;
@@ -122,7 +122,7 @@ SocketDescriptor::CreateListen(const SocketAddress &address, Error &error)
 }
 
 SocketDescriptor
-SocketDescriptor::Accept(SocketAddress &address, Error &error) const
+SocketDescriptor::Accept(StaticSocketAddress &address, Error &error) const
 {
     assert(IsDefined());
 

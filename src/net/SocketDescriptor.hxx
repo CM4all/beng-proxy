@@ -10,7 +10,7 @@
 
 struct sockaddr;
 class Error;
-class SocketAddress;
+class StaticSocketAddress;
 
 /**
  * Wrapper for a socket file descriptor.
@@ -51,9 +51,9 @@ public:
     bool CreateListen(int family, int socktype, int protocol,
                       const struct sockaddr *address, size_t size,
                       Error &error);
-    bool CreateListen(const SocketAddress &address, Error &error);
+    bool CreateListen(const StaticSocketAddress &address, Error &error);
 
-    SocketDescriptor Accept(SocketAddress &address, Error &error) const;
+    SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
 };
 
 #endif

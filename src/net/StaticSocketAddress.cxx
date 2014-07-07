@@ -1,10 +1,8 @@
 /*
- * OO representation of a struct sockaddr.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "SocketAddress.hxx"
+#include "StaticSocketAddress.hxx"
 #include "Error.hxx"
 #include "util/Error.hxx"
 
@@ -16,7 +14,7 @@
 #include <netdb.h>
 
 void
-SocketAddress::SetLocal(const char *path)
+StaticSocketAddress::SetLocal(const char *path)
 {
     auto &sun = reinterpret_cast<struct sockaddr_un &>(address);
 
@@ -31,7 +29,7 @@ SocketAddress::SetLocal(const char *path)
 }
 
 bool
-SocketAddress::Lookup(const char *host, int default_port, int socktype,
+StaticSocketAddress::Lookup(const char *host, int default_port, int socktype,
                       Error &error)
 {
     struct addrinfo hints;
