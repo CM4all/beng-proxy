@@ -36,6 +36,10 @@ struct listener {
     listener(int _fd,
              const struct listener_handler &_handler, void *_handler_ctx)
         :fd(_fd), handler(_handler), handler_ctx(_handler_ctx) {}
+
+    ~listener() {
+        close(fd);
+    }
 };
 
 static void
@@ -88,7 +92,7 @@ my_htons(uint16_t x)
 }
 
 struct listener *
-listener_new(struct pool *pool, int family, int socktype, int protocol,
+listener_new(int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
              const struct listener_handler *handler, void *ctx,
              GError **error_r)
@@ -107,13 +111,13 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
         return nullptr;
     }
 
-    auto listener = NewFromPool<struct listener>(pool, fd, *handler, ctx);
+    auto listener = new struct listener(fd, *handler, ctx);
 
     param = 1;
     ret = setsockopt(listener->fd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
     if (ret < 0) {
         set_error_errno_msg(error_r, "Failed to configure SO_REUSEADDR");
-        close(listener->fd);
+        delete listener;
         return nullptr;
     }
 
@@ -131,7 +135,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
                                  address, address_length);
         g_set_error(error_r, errno_quark(), errno,
                     "Failed to bind to '%s': %s", buffer, strerror(errno));
-        close(listener->fd);
+        delete listener;
         return nullptr;
     }
 
@@ -153,7 +157,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
     ret = listen(listener->fd, 64);
     if (ret < 0) {
         set_error_errno_msg(error_r, "Failed to listen");
-        close(listener->fd);
+        delete listener;
         return nullptr;
     }
 
@@ -166,7 +170,7 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
 }
 
 struct listener *
-listener_tcp_port_new(struct pool *pool, int port,
+listener_tcp_port_new(int port,
                       const struct listener_handler *handler, void *ctx,
                       GError **error_r)
 {
@@ -184,7 +188,7 @@ listener_tcp_port_new(struct pool *pool, int port,
     sa6.sin6_addr = in6addr_any;
     sa6.sin6_port = my_htons((uint16_t)port);
 
-    listener = listener_new(pool, PF_INET6, SOCK_STREAM, 0,
+    listener = listener_new(PF_INET6, SOCK_STREAM, 0,
                             (const struct sockaddr *)&sa6, sizeof(sa6),
                             handler, ctx, nullptr);
     if (listener != nullptr)
@@ -195,7 +199,7 @@ listener_tcp_port_new(struct pool *pool, int port,
     sa4.sin_addr.s_addr = INADDR_ANY;
     sa4.sin_port = my_htons((uint16_t)port);
 
-    return listener_new(pool, PF_INET, SOCK_STREAM, 0,
+    return listener_new(PF_INET, SOCK_STREAM, 0,
                         (const struct sockaddr *)&sa4, sizeof(sa4),
                         handler, ctx, error_r);
 }
@@ -210,7 +214,7 @@ listener_free(struct listener **listener_r)
     assert(listener->fd >= 0);
 
     listener_event_del(listener);
-    close(listener->fd);
+    delete listener;
 }
 
 void

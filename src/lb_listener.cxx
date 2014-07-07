@@ -75,7 +75,7 @@ lb_listener_new(struct lb_instance *instance,
     }
 
     const struct address_envelope *envelope = config->envelope;
-    listener->listener = listener_new(pool, envelope->address.sa_family,
+    listener->listener = listener_new(envelope->address.sa_family,
                                       SOCK_STREAM, 0, &envelope->address,
                                       envelope->length,
                                       &lb_listener_handler, listener,

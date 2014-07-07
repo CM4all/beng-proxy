@@ -11,7 +11,6 @@
 
 #include <stddef.h>
 
-struct pool;
 struct sockaddr;
 struct listener;
 
@@ -22,13 +21,13 @@ struct listener_handler {
 };
 
 struct listener *
-listener_new(struct pool *pool, int family, int socktype, int protocol,
+listener_new(int family, int socktype, int protocol,
              const struct sockaddr *address, size_t address_length,
              const struct listener_handler *handler, void *ctx,
              GError **error_r);
 
 struct listener *
-listener_tcp_port_new(struct pool *pool, int port,
+listener_tcp_port_new(int port,
                       const struct listener_handler *handler, void *ctx,
                       GError **error_r);
 

@@ -238,7 +238,7 @@ add_listener(struct instance *instance, struct addrinfo *ai)
     do {
         listener_node *node = NewFromPool<listener_node>(instance->pool);
 
-        node->listener = listener_new(instance->pool, ai->ai_family, ai->ai_socktype,
+        node->listener = listener_new(ai->ai_family, ai->ai_socktype,
                                       ai->ai_protocol, ai->ai_addr,
                                       ai->ai_addrlen,
                                       &http_listener_handler, instance,
@@ -261,7 +261,7 @@ add_tcp_listener(struct instance *instance, int port)
     listener_node *node = NewFromPool<listener_node>(instance->pool);
     GError *error = NULL;
 
-    node->listener = listener_tcp_port_new(instance->pool, port,
+    node->listener = listener_tcp_port_new(port,
                                            &http_listener_handler, instance,
                                            &error);
     if (node->listener == NULL) {
