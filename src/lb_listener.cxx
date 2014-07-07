@@ -23,15 +23,14 @@
  */
 
 static void
-lb_listener_connected(int fd,
-                      const struct sockaddr *address, size_t address_length,
+lb_listener_connected(int fd, SocketAddress address,
                       void *ctx)
 {
     struct lb_listener *listener = (struct lb_listener *)ctx;
 
     lb_connection_new(&listener->instance, &listener->config,
                       listener->ssl_factory,
-                      fd, address, address_length);
+                      fd, address, address.GetSize());
 }
 
 static void

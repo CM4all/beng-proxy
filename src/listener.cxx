@@ -70,7 +70,8 @@ listener_event_callback(int fd, short event gcc_unused, void *ctx)
     }
 
     listener->handler.connected(remote_fd,
-                                (const struct sockaddr*)&sa, sa_len,
+                                SocketAddress((const struct sockaddr*)&sa,
+                                              sa_len),
                                 listener->handler_ctx);
 
     pool_commit();

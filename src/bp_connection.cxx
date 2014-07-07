@@ -15,12 +15,12 @@
 #include "listener.hxx"
 #include "gerrno.h"
 #include "util/Error.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <daemon/log.h>
 
 #include <assert.h>
 #include <unistd.h>
-#include <sys/socket.h>
 
 static void
 remove_connection(client_connection &connection)
@@ -124,8 +124,7 @@ static const struct http_server_connection_handler my_http_server_connection_han
  */
 
 static void
-http_listener_connected(int fd,
-                        const struct sockaddr *addr, size_t addrlen,
+http_listener_connected(int fd, SocketAddress address,
                         void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
@@ -169,7 +168,7 @@ http_listener_connected(int fd,
                                ? (const struct sockaddr *)&local_address
                                : NULL,
                                local_address_length,
-                               addr, addrlen,
+                               address, address.GetSize(),
                                true,
                                &my_http_server_connection_handler,
                                connection,
