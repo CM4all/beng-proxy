@@ -3,6 +3,7 @@
  */
 
 #include "SocketDescriptor.hxx"
+#include "SocketAddress.hxx"
 #include "StaticSocketAddress.hxx"
 #include "util/Error.hxx"
 
@@ -43,8 +44,7 @@ SocketDescriptor::Create(int domain, int type, int protocol, Error &error)
 
 bool
 SocketDescriptor::CreateListen(int family, int socktype, int protocol,
-                               const struct sockaddr *address, size_t size,
-                               Error &error)
+                               const SocketAddress &address, Error &error)
 {
     if (!Create(family, socktype, protocol, error))
         return false;
@@ -57,7 +57,7 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
         return -1;
     }
 
-    if (bind(fd, address, size) < 0) {
+    if (bind(fd, address, address.GetSize()) < 0) {
         error.SetErrno("Failed to bind");
         Close();
         return -1;
@@ -76,38 +76,6 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
         setsockopt(fd, SOL_TCP, TCP_FASTOPEN, &qlen, sizeof(qlen));
     }
 #endif
-
-    if (listen(fd, 64) < 0) {
-        error.SetErrno("Failed to listen");
-        Close();
-        return -1;
-    }
-
-    setsockopt(fd, SOL_SOCKET, SO_PASSCRED,
-               (const char *)&reuse, sizeof(reuse));
-
-    return fd;
-}
-
-bool
-SocketDescriptor::CreateListen(const StaticSocketAddress &address, Error &error)
-{
-    if (!Create(address.GetFamily(), SOCK_STREAM, 0, error))
-        return false;
-
-    const int reuse = 1;
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-                   (const char *)&reuse, sizeof(reuse)) < 0) {
-        error.SetErrno("Failed to set SO_REUSEADDR");
-        Close();
-        return -1;
-    }
-
-    if (bind(fd, address, address.GetSize()) < 0) {
-        error.SetErrno("Failed to bind");
-        Close();
-        return -1;
-    }
 
     if (listen(fd, 64) < 0) {
         error.SetErrno("Failed to listen");

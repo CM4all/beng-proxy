@@ -10,7 +10,7 @@
 #include <stddef.h>
 
 struct sockaddr;
-struct listener;
+class SocketAddress;
 class Error;
 
 struct listener_handler {
@@ -21,7 +21,7 @@ struct listener_handler {
 
 struct listener *
 listener_new(int family, int socktype, int protocol,
-             const struct sockaddr *address, size_t address_length,
+             SocketAddress address,
              const struct listener_handler *handler, void *ctx,
              Error &error);
 

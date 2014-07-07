@@ -10,6 +10,7 @@
 
 struct sockaddr;
 class Error;
+class SocketAddress;
 class StaticSocketAddress;
 
 /**
@@ -49,9 +50,7 @@ public:
 
     bool Create(int domain, int type, int protocol, Error &error);
     bool CreateListen(int family, int socktype, int protocol,
-                      const struct sockaddr *address, size_t size,
-                      Error &error);
-    bool CreateListen(const StaticSocketAddress &address, Error &error);
+                      const SocketAddress &address, Error &error);
 
     SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
 };

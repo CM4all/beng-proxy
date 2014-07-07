@@ -42,6 +42,7 @@
 #include "capabilities.hxx"
 #include "namespace_options.hxx"
 #include "util/Error.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>
@@ -240,8 +241,9 @@ add_listener(struct instance *instance, struct addrinfo *ai)
         listener_node *node = NewFromPool<listener_node>(instance->pool);
 
         node->listener = listener_new(ai->ai_family, ai->ai_socktype,
-                                      ai->ai_protocol, ai->ai_addr,
-                                      ai->ai_addrlen,
+                                      ai->ai_protocol,
+                                      SocketAddress(ai->ai_addr,
+                                                    ai->ai_addrlen),
                                       &http_listener_handler, instance,
                                       error);
         if (node->listener == NULL) {

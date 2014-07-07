@@ -13,6 +13,7 @@
 #include "address_envelope.hxx"
 #include "pool.h"
 #include "util/Error.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <daemon/log.h>
 
@@ -70,8 +71,9 @@ lb_listener_new(struct lb_instance &instance,
     const struct address_envelope *envelope = config.envelope;
 
     listener->listener = listener_new(envelope->address.sa_family,
-                                      SOCK_STREAM, 0, &envelope->address,
-                                      envelope->length,
+                                      SOCK_STREAM, 0,
+                                      SocketAddress(&envelope->address,
+                                                    envelope->length),
                                       &lb_listener_handler, listener,
                                       error);
     if (listener->listener == NULL) {

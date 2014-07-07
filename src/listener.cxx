@@ -9,6 +9,7 @@
 #include "pool.h"
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <socket/util.h>
 #include <socket/address.h>
@@ -92,18 +93,16 @@ my_htons(uint16_t x)
 
 struct listener *
 listener_new(int family, int socktype, int protocol,
-             const struct sockaddr *address, size_t address_length,
+             SocketAddress address,
              const struct listener_handler *handler, void *ctx,
              Error &error)
 {
-    assert(address != nullptr);
-    assert(address_length > 0);
     assert(handler != nullptr);
     assert(handler->connected != nullptr);
     assert(handler->error != nullptr);
 
-    if (address->sa_family == AF_UNIX) {
-        const struct sockaddr_un *sun = (const struct sockaddr_un *)address;
+    if (address.GetFamily() == AF_UNIX) {
+        const struct sockaddr_un *sun = (const struct sockaddr_un *)(const struct sockaddr *)address;
         if (sun->sun_path[0] != '\0')
             /* delete non-abstract socket files before reusing them */
             unlink(sun->sun_path);
@@ -111,7 +110,7 @@ listener_new(int family, int socktype, int protocol,
 
     SocketDescriptor fd;
     if (!fd.CreateListen(family, socktype, protocol,
-                         address, address_length, error))
+                         address, error))
         return nullptr;
 
     auto listener = new struct listener(std::move(fd), *handler, ctx);
@@ -144,7 +143,7 @@ listener_tcp_port_new(int port,
     sa6.sin6_port = my_htons((uint16_t)port);
 
     listener = listener_new(PF_INET6, SOCK_STREAM, 0,
-                            (const struct sockaddr *)&sa6, sizeof(sa6),
+                            SocketAddress((const struct sockaddr *)&sa6, sizeof(sa6)),
                             handler, ctx, IgnoreError());
     if (listener != nullptr)
         return listener;
@@ -155,7 +154,8 @@ listener_tcp_port_new(int port,
     sa4.sin_port = my_htons((uint16_t)port);
 
     return listener_new(PF_INET, SOCK_STREAM, 0,
-                        (const struct sockaddr *)&sa4, sizeof(sa4),
+                        SocketAddress((const struct sockaddr *)&sa4,
+                                      sizeof(sa4)),
                         handler, ctx, error);
 }
 
