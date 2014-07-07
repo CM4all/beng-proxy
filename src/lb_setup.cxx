@@ -74,7 +74,7 @@ deinit_all_listeners(struct lb_instance *instance)
         struct lb_listener *listener =
             (struct lb_listener *)instance->listeners.next;
         list_remove(&listener->siblings);
-        lb_listener_free(listener);
+        delete listener;
     }
 }
 

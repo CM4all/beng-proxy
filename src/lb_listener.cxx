@@ -54,9 +54,7 @@ lb_listener_new(struct lb_instance *instance,
                 const struct lb_listener_config *config,
                 GError **error_r)
 {
-    lb_listener *listener = new lb_listener();
-    listener->instance = instance;
-    listener->config = config;
+    lb_listener *listener = new lb_listener(*instance, *config);
 
     if (config->ssl) {
         /* prepare SSL support */
@@ -67,8 +65,6 @@ lb_listener_new(struct lb_instance *instance,
             delete listener;
             return NULL;
         }
-    } else {
-        listener->ssl_factory = NULL;
     }
 
     const struct address_envelope *envelope = config->envelope;
@@ -87,15 +83,13 @@ lb_listener_new(struct lb_instance *instance,
     return listener;
 }
 
-void
-lb_listener_free(struct lb_listener *listener)
+lb_listener::~lb_listener()
 {
-    listener_free(&listener->listener);
+    if (listener != nullptr)
+        listener_free(&listener);
 
-    if (listener->ssl_factory != NULL)
-        ssl_factory_free(listener->ssl_factory);
-
-    delete listener;
+    if (ssl_factory != nullptr)
+        ssl_factory_free(ssl_factory);
 }
 
 void
