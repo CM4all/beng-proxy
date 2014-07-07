@@ -48,6 +48,14 @@ public:
 
     void Close();
 
+    int Steal() {
+        assert(IsDefined());
+
+        int result = fd;
+        fd = -1;
+        return result;
+    }
+
     bool Create(int domain, int type, int protocol, Error &error);
     bool CreateListen(int family, int socktype, int protocol,
                       const SocketAddress &address, Error &error);
