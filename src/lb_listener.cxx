@@ -13,7 +13,6 @@
 #include "address_envelope.hxx"
 #include "pool.h"
 #include "util/Error.hxx"
-#include "gerrno.h"
 
 #include <daemon/log.h>
 
@@ -53,7 +52,7 @@ const struct listener_handler lb_listener_handler = {
 struct lb_listener *
 lb_listener_new(struct lb_instance &instance,
                 const struct lb_listener_config &config,
-                GError **error_r)
+                Error &error)
 {
     lb_listener *listener = new lb_listener(instance, config);
 
@@ -61,7 +60,7 @@ lb_listener_new(struct lb_instance &instance,
         /* prepare SSL support */
 
         listener->ssl_factory = ssl_factory_new(config.ssl_config, true,
-                                                error_r);
+                                                error);
         if (listener->ssl_factory == NULL) {
             delete listener;
             return NULL;
@@ -70,14 +69,12 @@ lb_listener_new(struct lb_instance &instance,
 
     const struct address_envelope *envelope = config.envelope;
 
-    Error error;
     listener->listener = listener_new(envelope->address.sa_family,
                                       SOCK_STREAM, 0, &envelope->address,
                                       envelope->length,
                                       &lb_listener_handler, listener,
                                       error);
     if (listener->listener == NULL) {
-        g_set_error_literal(error_r, errno_quark(), 0, error.GetMessage());
         if (listener->ssl_factory != NULL)
             ssl_factory_free(listener->ssl_factory);
         delete listener;

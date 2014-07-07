@@ -28,6 +28,7 @@
 #include "fb_pool.h"
 #include "capabilities.hxx"
 #include "isolate.hxx"
+#include "util/Error.hxx"
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
@@ -223,6 +224,7 @@ deinit_signals(struct lb_instance *instance)
 
 int main(int argc, char **argv)
 {
+    Error error2;
     int ret;
     int gcc_unused ref;
     static struct lb_instance instance;
@@ -293,10 +295,9 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (!init_all_listeners(instance, &error)) {
+    if (!init_all_listeners(instance, error2)) {
         deinit_all_controls(&instance);
-        fprintf(stderr, "%s\n", error->message);
-        g_error_free(error);
+        fprintf(stderr, "%s\n", error2.GetMessage());
         return EXIT_FAILURE;
     }
 

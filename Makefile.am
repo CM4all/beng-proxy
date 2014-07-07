@@ -339,6 +339,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/thread_queue.cxx src/thread_queue.hxx \
 	src/thread_worker.cxx src/thread_worker.hxx \
 	src/thread_pool.cxx src/thread_pool.hxx \
+	src/ssl_domain.cxx src/ssl_domain.hxx \
 	src/ssl_init.cxx src/ssl_init.hxx \
 	src/ssl_client.cxx src/ssl_client.h \
 	src/ssl_factory.cxx src/ssl_factory.hxx \
@@ -443,6 +444,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/thread_worker.cxx src/thread_worker.hxx \
 	src/thread_pool.cxx src/thread_pool.hxx \
 	src/ssl_quark.hxx \
+	src/ssl_domain.cxx src/ssl_domain.hxx \
 	src/ssl_init.hxx \
 	src/ssl_init.cxx \
 	src/ssl_config.hxx \
@@ -1660,6 +1662,7 @@ test_t_ajp_client_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_client_SOURCES = test/run_client.cxx \
+	src/ssl_domain.cxx src/ssl_domain.hxx \
 	src/ssl_init.cxx \
 	src/ssl_client.cxx \
 	src/ssl_factory.cxx \

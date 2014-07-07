@@ -10,22 +10,23 @@
 #include "ssl_filter.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
+#include "util/Error.hxx"
 
 #include <daemon/log.h>
 
 #include <glib.h>
 
 static ssl_factory *factory;
-static GError *error;
 
 void
 ssl_client_init(void)
 {
     ssl_config config;
 
-    factory = ssl_factory_new(config, false, &error);
+    Error error;
+    factory = ssl_factory_new(config, false, error);
     if (factory == nullptr)
-        daemon_log(1, "ssl_factory_new() failed: %s\n", error->message);
+        daemon_log(1, "ssl_factory_new() failed: %s\n", error.GetMessage());
 }
 
 void
@@ -33,9 +34,6 @@ ssl_client_deinit(void)
 {
     if (factory != nullptr)
         ssl_factory_free(factory);
-
-    if (error != nullptr)
-        g_error_free(error);
 }
 
 const struct socket_filter *

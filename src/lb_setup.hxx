@@ -10,9 +10,10 @@
 #include "glibfwd.hxx"
 
 struct lb_instance;
+class Error;
 
 bool
-init_all_listeners(struct lb_instance &instance, GError **error_r);
+init_all_listeners(struct lb_instance &instance, Error &error_r);
 
 void
 deinit_all_listeners(struct lb_instance *instance);

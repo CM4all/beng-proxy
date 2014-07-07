@@ -6,8 +6,8 @@
 
 #include "ssl_factory.hxx"
 #include "ssl_config.hxx"
-#include "ssl_quark.hxx"
-#include "pool.h"
+#include "ssl_domain.hxx"
+#include "util/Error.hxx"
 
 #include <inline/compiler.h>
 
@@ -43,7 +43,7 @@ struct ssl_cert_key {
         return *this;
     }
 
-    bool Load(const ssl_cert_key_config &config, GError **error_r);
+    bool Load(const ssl_cert_key_config &config, Error &error);
 };
 
 struct ssl_factory {
@@ -60,7 +60,7 @@ struct ssl_factory {
         SSL_CTX_free(ssl_ctx);
     }
 
-    bool EnableSNI(GError **error_r);
+    bool EnableSNI(Error &error);
 
     SSL *Make();
 };
@@ -72,44 +72,41 @@ verify_callback(int ok, gcc_unused X509_STORE_CTX *ctx)
 }
 
 static BIO *
-bio_open_file(const char *path, GError **error_r)
+bio_open_file(const char *path, Error &error)
 {
     BIO *bio = BIO_new_file(path, "r");
     if (bio == NULL)
-        g_set_error(error_r, ssl_quark(), 0,
-                    "Failed to open file %s", path);
+        error.Format(ssl_domain, "Failed to open file %s", path);
 
     return bio;
 }
 
 static EVP_PKEY *
-read_key_file(const char *path, GError **error_r)
+read_key_file(const char *path, Error &error)
 {
-    BIO *bio = bio_open_file(path, error_r);
+    BIO *bio = bio_open_file(path, error);
     if (bio == NULL)
         return NULL;
 
     EVP_PKEY *key = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
     BIO_free(bio);
     if (key == NULL)
-        g_set_error(error_r, ssl_quark(), 0,
-                    "Failed to load key file %s", path);
+        error.Format(ssl_domain, "Failed to load key file %s", path);
 
     return key;
 }
 
 static X509 *
-read_cert_file(const char *path, GError **error_r)
+read_cert_file(const char *path, Error &error)
 {
-    BIO *bio = bio_open_file(path, error_r);
+    BIO *bio = bio_open_file(path, error);
     if (bio == NULL)
         return NULL;
 
     X509 *cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
     BIO_free(bio);
     if (cert == NULL)
-        g_set_error(error_r, ssl_quark(), 0,
-                    "Failed to load certificate file %s", path);
+        error.Format(ssl_domain, "Failed to load certificate file %s", path);
 
     return cert;
 }
@@ -159,22 +156,21 @@ MatchModulus(X509 *cert, EVP_PKEY *key)
 }
 
 bool
-ssl_cert_key::Load(const ssl_cert_key_config &config, GError **error_r)
+ssl_cert_key::Load(const ssl_cert_key_config &config, Error &error)
 {
     assert(key == nullptr);
     assert(cert == nullptr);
 
-    key = read_key_file(config.key_file.c_str(), error_r);
+    key = read_key_file(config.key_file.c_str(), error);
     if (key == nullptr)
         return false;
 
-    cert = read_cert_file(config.cert_file.c_str(), error_r);
+    cert = read_cert_file(config.cert_file.c_str(), error);
     if (cert == nullptr)
         return false;
 
     if (!MatchModulus(cert, key)) {
-        g_set_error(error_r, ssl_quark(), 0,
-                    "Key '%s' does not match certificate '%s'",
+        error.Format(ssl_domain, "Key '%s' does not match certificate '%s'",
                     config.key_file.c_str(), config.cert_file.c_str());
         return false;
     }
@@ -184,13 +180,13 @@ ssl_cert_key::Load(const ssl_cert_key_config &config, GError **error_r)
 
 static bool
 load_certs_keys(ssl_factory &factory, const ssl_config &config,
-                GError **error_r)
+                Error &error)
 {
     factory.cert_key.reserve(config.cert_key.size());
 
     for (const auto &c : config.cert_key) {
         ssl_cert_key ck;
-        if (!ck.Load(c, error_r))
+        if (!ck.Load(c, error))
             return false;
 
         factory.cert_key.emplace_back(std::move(ck));
@@ -201,7 +197,7 @@ load_certs_keys(ssl_factory &factory, const ssl_config &config,
 
 static bool
 apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
-                    GError **error_r)
+                    Error &error)
 {
     assert(!config.cert_key.empty());
 
@@ -211,18 +207,16 @@ apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
                                        config.cert_key[0].key_file.c_str(),
                                        SSL_FILETYPE_PEM) != 1) {
         ERR_print_errors_fp(stderr);
-        g_set_error(error_r, ssl_quark(), 0,
-                    "Failed to load key file %s",
-                    config.cert_key[0].key_file.c_str());
+        error.Format(ssl_domain, "Failed to load key file %s",
+                     config.cert_key[0].key_file.c_str());
         return false;
     }
 
     if (SSL_CTX_use_certificate_chain_file(ssl_ctx,
                                            config.cert_key[0].cert_file.c_str()) != 1) {
         ERR_print_errors_fp(stderr);
-        g_set_error(error_r, ssl_quark(), 0,
-                    "Failed to load certificate file %s",
-                    config.cert_key[0].cert_file.c_str());
+        error.Format(ssl_domain, "Failed to load certificate file %s",
+                     config.cert_key[0].cert_file.c_str());
         return false;
     }
 
@@ -230,9 +224,8 @@ apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
         if (SSL_CTX_load_verify_locations(ssl_ctx,
                                           config.ca_cert_file.c_str(),
                                           NULL) != 1) {
-            g_set_error(error_r, ssl_quark(), 0,
-                        "Failed to load CA certificate file %s",
-                        config.ca_cert_file.c_str());
+            error.Format(ssl_domain, "Failed to load CA certificate file %s",
+                         config.ca_cert_file.c_str());
             return false;
         }
 
@@ -242,9 +235,9 @@ apply_server_config(SSL_CTX *ssl_ctx, const ssl_config &config,
         STACK_OF(X509_NAME) *list =
             SSL_load_client_CA_file(config.ca_cert_file.c_str());
         if (list == NULL) {
-            g_set_error(error_r, ssl_quark(), 0,
-                        "Failed to load CA certificate list from file %s",
-                        config.ca_cert_file.c_str());
+            error.Format(ssl_domain,
+                         "Failed to load CA certificate list from file %s",
+                         config.ca_cert_file.c_str());
             return false;
         }
 
@@ -321,13 +314,13 @@ ssl_servername_callback(SSL *ssl, gcc_unused int *al,
 }
 
 inline bool
-ssl_factory::EnableSNI(GError **error_r)
+ssl_factory::EnableSNI(Error &error)
 {
     if (!SSL_CTX_set_tlsext_servername_callback(ssl_ctx,
                                                 ssl_servername_callback) ||
         !SSL_CTX_set_tlsext_servername_arg(ssl_ctx, this)) {
-        g_set_error(error_r, ssl_quark(), 0,
-                    "SSL_CTX_set_tlsext_servername_callback() failed");
+        error.Format(ssl_domain,
+                     "SSL_CTX_set_tlsext_servername_callback() failed");
         return false;
     }
 
@@ -352,7 +345,7 @@ ssl_factory::Make()
 struct ssl_factory *
 ssl_factory_new(const ssl_config &config,
                 bool server,
-                GError **error_r)
+                Error &error)
 {
     assert(!config.cert_key.empty() || !server);
 
@@ -362,15 +355,15 @@ ssl_factory_new(const ssl_config &config,
 
     SSL_CTX *ssl_ctx = SSL_CTX_new(method);
     if (ssl_ctx == NULL) {
-        g_set_error(error_r, ssl_quark(), 0, "SSL_CTX_new() failed");
+        error.Format(ssl_domain, "SSL_CTX_new() failed");
         return NULL;
     }
 
     ssl_factory *factory = new ssl_factory(ssl_ctx, server);
 
     if (server) {
-        if (!apply_server_config(ssl_ctx, config, error_r) ||
-            !load_certs_keys(*factory, config, error_r)) {
+        if (!apply_server_config(ssl_ctx, config, error) ||
+            !load_certs_keys(*factory, config, error)) {
             delete factory;
             return NULL;
         }
@@ -380,7 +373,7 @@ ssl_factory_new(const ssl_config &config,
         assert(config.verify == ssl_verify::NO);
     }
 
-    if (factory->cert_key.size() > 1 && !factory->EnableSNI(error_r)) {
+    if (factory->cert_key.size() > 1 && !factory->EnableSNI(error)) {
         delete factory;
         return NULL;
     }

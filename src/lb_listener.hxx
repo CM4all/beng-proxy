@@ -7,9 +7,9 @@
 #ifndef BENG_PROXY_LB_LISTENER_H
 #define BENG_PROXY_LB_LISTENER_H
 
-#include "glibfwd.hxx"
-
 #include <inline/list.h>
+
+class Error;
 
 struct lb_listener {
     struct list_head siblings;
@@ -31,7 +31,7 @@ struct lb_listener {
 struct lb_listener *
 lb_listener_new(struct lb_instance &instance,
                 const struct lb_listener_config &config,
-                GError **error_r);
+                Error &error);
 
 void
 lb_listener_event_add(struct lb_listener *listener);
