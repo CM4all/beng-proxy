@@ -7,11 +7,12 @@
 #ifndef BENG_PROXY_LISTENER_HXX
 #define BENG_PROXY_LISTENER_HXX
 
+class SocketDescriptor;
 class SocketAddress;
 class Error;
 
 struct listener_handler {
-    void (*connected)(int fd, SocketAddress address, void *ctx);
+    void (*connected)(SocketDescriptor &&fd, SocketAddress address, void *ctx);
     void (*error)(Error &&error, void *ctx);
 };
 

@@ -15,7 +15,9 @@
 #include "listener.hxx"
 #include "gerrno.h"
 #include "util/Error.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/StaticSocketAddress.hxx"
 
 #include <daemon/log.h>
 
@@ -124,14 +126,11 @@ static const struct http_server_connection_handler my_http_server_connection_han
  */
 
 static void
-http_listener_connected(int fd, SocketAddress address,
+http_listener_connected(SocketDescriptor &&fd, SocketAddress address,
                         void *ctx)
 {
     struct instance *instance = (struct instance*)ctx;
     struct pool *pool;
-    struct sockaddr_storage local_address;
-    socklen_t local_address_length;
-    int ret;
 
     if (instance->num_connections >= instance->config.max_connections) {
         unsigned num_dropped = drop_some_connections(instance);
@@ -139,17 +138,12 @@ http_listener_connected(int fd, SocketAddress address,
         if (num_dropped == 0) {
             daemon_log(1, "too many connections (%u), dropping\n",
                        instance->num_connections);
-            close(fd);
             return;
         }
     }
 
     /* determine the local socket address */
-    local_address_length = sizeof(local_address);
-    ret = getsockname(fd, (struct sockaddr *)&local_address,
-                      &local_address_length);
-    if (ret < 0)
-        local_address_length = 0;
+    const StaticSocketAddress local_address = fd.GetLocalAddress();
 
     pool = pool_new_linear(instance->pool, "client_connection", 2048);
     pool_set_major(pool);
@@ -163,11 +157,11 @@ http_listener_connected(int fd, SocketAddress address,
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;
 
-    http_server_connection_new(pool, fd, ISTREAM_TCP, NULL, NULL,
-                               local_address_length > 0
-                               ? (const struct sockaddr *)&local_address
+    http_server_connection_new(pool, fd.Steal(), ISTREAM_TCP, NULL, NULL,
+                               local_address.IsDefined()
+                               ? local_address
                                : NULL,
-                               local_address_length,
+                               local_address.GetSize(),
                                address, address.GetSize(),
                                true,
                                &my_http_server_connection_handler,

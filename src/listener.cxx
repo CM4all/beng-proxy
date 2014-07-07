@@ -10,6 +10,7 @@
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/StaticSocketAddress.hxx"
 
 #include <socket/util.h>
 #include <socket/address.h>
@@ -41,37 +42,28 @@ struct listener {
 };
 
 static void
-listener_event_callback(int fd, short event gcc_unused, void *ctx)
+listener_event_callback(gcc_unused int fd, short event gcc_unused, void *ctx)
 {
     struct listener *listener = (struct listener *)ctx;
-    struct sockaddr_storage sa;
-    size_t sa_len;
-    int remote_fd;
 
-    sa_len = sizeof(sa);
-    remote_fd = accept_cloexec_nonblock(fd, (struct sockaddr*)&sa, &sa_len);
-    if (remote_fd < 0) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            Error error;
-            error.SetErrno("accept() failed");
+    StaticSocketAddress remote_address;
+    Error error;
+    auto remote_fd = listener->fd.Accept(remote_address, error);
+    if (!remote_fd.IsDefined()) {
+        if (!error.IsDomain(errno_domain) ||
+            (error.GetCode() != EAGAIN && error.GetCode() != EWOULDBLOCK))
             listener->handler.error(std::move(error), listener->handler_ctx);
-        }
 
         return;
     }
 
-    if (!socket_set_nodelay(remote_fd, true)) {
-        Error error;
+    if (!socket_set_nodelay(remote_fd.Get(), true)) {
         error.SetErrno("setsockopt(TCP_NODELAY) failed");
-
-        close(remote_fd);
         listener->handler.error(std::move(error), listener->handler_ctx);
         return;
     }
 
-    listener->handler.connected(remote_fd,
-                                SocketAddress((const struct sockaddr*)&sa,
-                                              sa_len),
+    listener->handler.connected(std::move(remote_fd), remote_address,
                                 listener->handler_ctx);
 
     pool_commit();

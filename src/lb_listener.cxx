@@ -12,6 +12,7 @@
 #include "listener.hxx"
 #include "address_envelope.hxx"
 #include "util/Error.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <daemon/log.h>
@@ -22,14 +23,14 @@
  */
 
 static void
-lb_listener_connected(int fd, SocketAddress address,
+lb_listener_connected(SocketDescriptor &&fd, SocketAddress address,
                       void *ctx)
 {
     struct lb_listener *listener = (struct lb_listener *)ctx;
 
     lb_connection_new(&listener->instance, &listener->config,
                       listener->ssl_factory,
-                      fd, address, address.GetSize());
+                      fd.Steal(), address, address.GetSize());
 }
 
 static void
