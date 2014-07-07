@@ -8,6 +8,7 @@
 #include "fd_util.h"
 #include "pool.h"
 #include "util/Error.hxx"
+#include "net/SocketDescriptor.hxx"
 
 #include <socket/util.h>
 #include <socket/address.h>
@@ -27,19 +28,15 @@
 #include <event.h>
 
 struct listener {
-    const int fd;
+    const SocketDescriptor fd;
     struct event event;
 
     const struct listener_handler &handler;
     void *handler_ctx;
 
-    listener(int _fd,
+    listener(SocketDescriptor &&_fd,
              const struct listener_handler &_handler, void *_handler_ctx)
-        :fd(_fd), handler(_handler), handler_ctx(_handler_ctx) {}
-
-    ~listener() {
-        close(fd);
-    }
+        :fd(std::move(_fd)), handler(_handler), handler_ctx(_handler_ctx) {}
 };
 
 static void
@@ -99,29 +96,11 @@ listener_new(int family, int socktype, int protocol,
              const struct listener_handler *handler, void *ctx,
              Error &error)
 {
-    int ret, param;
-
     assert(address != nullptr);
     assert(address_length > 0);
     assert(handler != nullptr);
     assert(handler->connected != nullptr);
     assert(handler->error != nullptr);
-
-    int fd = socket_cloexec_nonblock(family, socktype, protocol);
-    if (fd < 0) {
-        error.SetErrno("Failed to create socket");
-        return nullptr;
-    }
-
-    auto listener = new struct listener(fd, *handler, ctx);
-
-    param = 1;
-    ret = setsockopt(listener->fd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
-    if (ret < 0) {
-        error.SetErrno("Failed to configure SO_REUSEADDR");
-        delete listener;
-        return nullptr;
-    }
 
     if (address->sa_family == AF_UNIX) {
         const struct sockaddr_un *sun = (const struct sockaddr_un *)address;
@@ -130,39 +109,14 @@ listener_new(int family, int socktype, int protocol,
             unlink(sun->sun_path);
     }
 
-    ret = bind(listener->fd, address, address_length);
-    if (ret < 0) {
-        char buffer[64];
-        socket_address_to_string(buffer, sizeof(buffer),
-                                 address, address_length);
-        error.FormatErrno("Failed to bind to '%s'", buffer);
-        delete listener;
+    SocketDescriptor fd;
+    if (!fd.CreateListen(family, socktype, protocol,
+                         address, address_length, error))
         return nullptr;
-    }
 
-#ifdef __linux
-    /* enable TCP Fast Open (requires Linux 3.7) */
+    auto listener = new struct listener(std::move(fd), *handler, ctx);
 
-#ifndef TCP_FASTOPEN
-#define TCP_FASTOPEN 23
-#endif
-
-    if ((family == AF_INET || family == AF_INET6) &&
-        socktype == SOCK_STREAM) {
-        int qlen = 16;
-        setsockopt(listener->fd, SOL_TCP, TCP_FASTOPEN,
-                   &qlen, sizeof(qlen));
-    }
-#endif
-
-    ret = listen(listener->fd, 64);
-    if (ret < 0) {
-        error.SetErrno("Failed to listen");
-        delete listener;
-        return nullptr;
-    }
-
-    event_set(&listener->event, listener->fd,
+    event_set(&listener->event, listener->fd.Get(),
               EV_READ|EV_PERSIST, listener_event_callback, listener);
 
     listener_event_add(listener);
@@ -212,7 +166,7 @@ listener_free(struct listener **listener_r)
     *listener_r = nullptr;
 
     assert(listener != nullptr);
-    assert(listener->fd >= 0);
+    assert(listener->fd.IsDefined());
 
     listener_event_del(listener);
     delete listener;

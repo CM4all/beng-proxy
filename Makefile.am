@@ -351,6 +351,7 @@ src_cm4all_beng_proxy_SOURCES = \
 src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	-lcap \
 	libistream.a libpool.a libmemory.a \
+	libnet.a \
 	libraddress.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -496,6 +497,7 @@ src_cm4all_beng_lb_SOURCES = \
 src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	-lcap \
 	libistream.a libpool.a libmemory.a \
+	libnet.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_INLINE_LIBS) \
@@ -594,6 +596,7 @@ endif
 #
 
 noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
+	libnet.a \
 	libraddress.a \
 	libistream.a
 
@@ -630,6 +633,11 @@ libpool_a_SOURCES = \
 	src/pbuffer.hxx \
 	src/pstring.c \
 	src/pool.cxx src/pool.h
+
+libnet_a_SOURCES = \
+	src/net/Error.cxx src/net/Error.hxx \
+	src/net/SocketAddress.cxx src/net/SocketAddress.hxx \
+	src/net/SocketDescriptor.cxx src/net/SocketDescriptor.hxx
 
 libraddress_a_SOURCES = \
 	src/regex.cxx src/regex.hxx \
