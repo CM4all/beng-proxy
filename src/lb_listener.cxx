@@ -54,10 +54,7 @@ lb_listener_new(struct lb_instance *instance,
                 const struct lb_listener_config *config,
                 GError **error_r)
 {
-    struct pool *pool = pool_new_linear(instance->pool, "lb_listener", 8192);
-
-    lb_listener *listener = NewFromPool<lb_listener>(pool);
-    listener->pool = pool;
+    lb_listener *listener = new lb_listener();
     listener->instance = instance;
     listener->config = config;
 
@@ -67,7 +64,7 @@ lb_listener_new(struct lb_instance *instance,
         listener->ssl_factory = ssl_factory_new(config->ssl_config, true,
                                                 error_r);
         if (listener->ssl_factory == NULL) {
-            pool_unref(pool);
+            delete listener;
             return NULL;
         }
     } else {
@@ -83,7 +80,7 @@ lb_listener_new(struct lb_instance *instance,
     if (listener->listener == NULL) {
         if (listener->ssl_factory != NULL)
             ssl_factory_free(listener->ssl_factory);
-        pool_unref(pool);
+        delete listener;
         return NULL;
     }
 
@@ -98,7 +95,7 @@ lb_listener_free(struct lb_listener *listener)
     if (listener->ssl_factory != NULL)
         ssl_factory_free(listener->ssl_factory);
 
-    pool_unref(listener->pool);
+    delete listener;
 }
 
 void

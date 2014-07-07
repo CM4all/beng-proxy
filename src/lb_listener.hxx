@@ -11,12 +11,8 @@
 
 #include <inline/list.h>
 
-struct pool;
-
 struct lb_listener {
     struct list_head siblings;
-
-    struct pool *pool;
 
     struct lb_instance *instance;
 
