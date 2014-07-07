@@ -11,7 +11,6 @@
 #include "ssl_factory.hxx"
 #include "listener.hxx"
 #include "address_envelope.hxx"
-#include "pool.h"
 #include "util/Error.hxx"
 #include "net/SocketAddress.hxx"
 
