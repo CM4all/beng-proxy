@@ -27,11 +27,15 @@
 #include <event.h>
 
 struct listener {
-    int fd;
+    const int fd;
     struct event event;
 
-    const struct listener_handler *handler;
+    const struct listener_handler &handler;
     void *handler_ctx;
+
+    listener(int _fd,
+             const struct listener_handler &_handler, void *_handler_ctx)
+        :fd(_fd), handler(_handler), handler_ctx(_handler_ctx) {}
 };
 
 static void
@@ -47,7 +51,7 @@ listener_event_callback(int fd, short event gcc_unused, void *ctx)
     if (remote_fd < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             GError *error = new_error_errno_msg("accept() failed");
-            listener->handler->error(error, listener->handler_ctx);
+            listener->handler.error(error, listener->handler_ctx);
         }
 
         return;
@@ -57,13 +61,13 @@ listener_event_callback(int fd, short event gcc_unused, void *ctx)
         GError *error = new_error_errno_msg("setsockopt(TCP_NODELAY) failed");
 
         close(remote_fd);
-        listener->handler->error(error, listener->handler_ctx);
+        listener->handler.error(error, listener->handler_ctx);
         return;
     }
 
-    listener->handler->connected(remote_fd,
-                                 (const struct sockaddr*)&sa, sa_len,
-                                 listener->handler_ctx);
+    listener->handler.connected(remote_fd,
+                                (const struct sockaddr*)&sa, sa_len,
+                                listener->handler_ctx);
 
     pool_commit();
 }
@@ -97,12 +101,13 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
     assert(handler->connected != nullptr);
     assert(handler->error != nullptr);
 
-    auto listener = NewFromPool<struct listener>(pool);
-    listener->fd = socket_cloexec_nonblock(family, socktype, protocol);
-    if (listener->fd < 0) {
+    int fd = socket_cloexec_nonblock(family, socktype, protocol);
+    if (fd < 0) {
         set_error_errno_msg(error_r, "Failed to create socket");
         return nullptr;
     }
+
+    auto listener = NewFromPool<struct listener>(pool, fd, *handler, ctx);
 
     param = 1;
     ret = setsockopt(listener->fd, SOL_SOCKET, SO_REUSEADDR, &param, sizeof(param));
@@ -151,9 +156,6 @@ listener_new(struct pool *pool, int family, int socktype, int protocol,
         close(listener->fd);
         return nullptr;
     }
-
-    listener->handler = handler;
-    listener->handler_ctx = ctx;
 
     event_set(&listener->event, listener->fd,
               EV_READ|EV_PERSIST, listener_event_callback, listener);
