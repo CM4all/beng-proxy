@@ -14,9 +14,9 @@
 struct lb_listener {
     struct list_head siblings;
 
-    struct lb_instance *instance;
+    struct lb_instance &instance;
 
-    const struct lb_listener_config *config;
+    const struct lb_listener_config &config;
 
     struct ssl_factory *ssl_factory = nullptr;
 
@@ -24,13 +24,13 @@ struct lb_listener {
 
     lb_listener(struct lb_instance &_instance,
                 const struct lb_listener_config &_config)
-        :instance(&_instance), config(&_config) {}
+        :instance(_instance), config(_config) {}
     ~lb_listener();
 };
 
 struct lb_listener *
-lb_listener_new(struct lb_instance *instance,
-                const struct lb_listener_config *config,
+lb_listener_new(struct lb_instance &instance,
+                const struct lb_listener_config &config,
                 GError **error_r);
 
 void

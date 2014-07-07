@@ -49,17 +49,17 @@ init_monitors(const lb_branch_config &cluster)
 }
 
 bool
-init_all_listeners(struct lb_instance *instance, GError **error_r)
+init_all_listeners(struct lb_instance &instance, GError **error_r)
 {
     bool success = true;
 
-    for (const auto &config : instance->config->listeners) {
-        struct lb_listener *listener = lb_listener_new(instance, &config,
+    for (const auto &config : instance.config->listeners) {
+        struct lb_listener *listener = lb_listener_new(instance, config,
                                                        error_r);
         if (listener == NULL)
             return false;
 
-        list_add(&listener->siblings, &instance->listeners);
+        list_add(&listener->siblings, &instance.listeners);
 
         init_monitors(config.destination);
     }

@@ -27,7 +27,7 @@ lb_listener_connected(int fd,
 {
     struct lb_listener *listener = (struct lb_listener *)ctx;
 
-    lb_connection_new(listener->instance, listener->config,
+    lb_connection_new(&listener->instance, &listener->config,
                       listener->ssl_factory,
                       fd, address, address_length);
 }
@@ -50,16 +50,16 @@ const struct listener_handler lb_listener_handler = {
  */
 
 struct lb_listener *
-lb_listener_new(struct lb_instance *instance,
-                const struct lb_listener_config *config,
+lb_listener_new(struct lb_instance &instance,
+                const struct lb_listener_config &config,
                 GError **error_r)
 {
-    lb_listener *listener = new lb_listener(*instance, *config);
+    lb_listener *listener = new lb_listener(instance, config);
 
-    if (config->ssl) {
+    if (config.ssl) {
         /* prepare SSL support */
 
-        listener->ssl_factory = ssl_factory_new(config->ssl_config, true,
+        listener->ssl_factory = ssl_factory_new(config.ssl_config, true,
                                                 error_r);
         if (listener->ssl_factory == NULL) {
             delete listener;
@@ -67,7 +67,7 @@ lb_listener_new(struct lb_instance *instance,
         }
     }
 
-    const struct address_envelope *envelope = config->envelope;
+    const struct address_envelope *envelope = config.envelope;
     listener->listener = listener_new(envelope->address.sa_family,
                                       SOCK_STREAM, 0, &envelope->address,
                                       envelope->length,

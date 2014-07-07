@@ -12,7 +12,7 @@
 struct lb_instance;
 
 bool
-init_all_listeners(struct lb_instance *instance, GError **error_r);
+init_all_listeners(struct lb_instance &instance, GError **error_r);
 
 void
 deinit_all_listeners(struct lb_instance *instance);

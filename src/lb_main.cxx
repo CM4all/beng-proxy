@@ -293,7 +293,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (!init_all_listeners(&instance, &error)) {
+    if (!init_all_listeners(instance, &error)) {
         deinit_all_controls(&instance);
         fprintf(stderr, "%s\n", error->message);
         g_error_free(error);
