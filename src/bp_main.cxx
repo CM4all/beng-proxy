@@ -57,7 +57,7 @@
 #include <event.h>
 
 #ifdef HAVE_LIBNFS
-#include "nfs_stock.h"
+#include "nfs_stock.hxx"
 #include "nfs_cache.hxx"
 #endif
 

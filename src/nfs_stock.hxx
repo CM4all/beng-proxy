@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_NFS_STOCK_H
-#define BENG_PROXY_NFS_STOCK_H
+#ifndef BENG_PROXY_NFS_STOCK_HXX
+#define BENG_PROXY_NFS_STOCK_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 struct pool;
 struct nfs_stock;
@@ -20,10 +20,6 @@ struct nfs_stock_get_handler {
     void (*error)(GError *error, void *ctx);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct nfs_stock *
 nfs_stock_new(struct pool *pool);
 
@@ -35,9 +31,5 @@ nfs_stock_get(struct nfs_stock *stock, struct pool *pool,
               const char *server, const char *export_name,
               const struct nfs_stock_get_handler *handler, void *ctx,
               struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

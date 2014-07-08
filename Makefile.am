@@ -367,7 +367,7 @@ if HAVE_LIBNFS
 src_cm4all_beng_proxy_SOURCES += \
 	src/nfs_handler.cxx src/nfs_handler.hxx \
 	src/istream_nfs.cxx src/istream_nfs.hxx \
-	src/nfs_stock.c src/nfs_stock.h \
+	src/nfs_stock.cxx src/nfs_stock.hxx \
 	src/nfs_client.c src/nfs_client.h \
 	src/nfs_cache.cxx src/nfs_cache.hxx \
 	src/nfs_request.cxx src/nfs_request.hxx
