@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "nfs_cache.h"
+#include "nfs_cache.hxx"
 #include "nfs_stock.h"
 #include "nfs_client.h"
 #include "istream_nfs.hxx"

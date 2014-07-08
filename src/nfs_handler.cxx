@@ -5,7 +5,7 @@
  */
 
 #include "nfs_handler.hxx"
-#include "nfs_cache.h"
+#include "nfs_cache.hxx"
 #include "nfs_address.hxx"
 #include "file_headers.hxx"
 #include "tvary.hxx"

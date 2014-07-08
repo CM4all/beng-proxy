@@ -58,7 +58,7 @@
 
 #ifdef HAVE_LIBNFS
 #include "nfs_stock.h"
-#include "nfs_cache.h"
+#include "nfs_cache.hxx"
 #endif
 
 #ifndef NDEBUG

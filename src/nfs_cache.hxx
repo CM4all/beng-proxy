@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_NFS_CACHE_H
-#define BENG_PROXY_NFS_CACHE_H
+#ifndef BENG_PROXY_NFS_CACHE_HXX
+#define BENG_PROXY_NFS_CACHE_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -27,10 +27,6 @@ struct nfs_cache_handler {
     void (*error)(GError *error, void *ctx);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct nfs_cache *
 nfs_cache_new(struct pool *pool, size_t max_size, struct nfs_stock *stock);
 
@@ -47,9 +43,5 @@ nfs_cache_request(struct pool *pool, struct nfs_cache *cache,
 struct istream *
 nfs_cache_handle_open(struct pool *pool, struct nfs_cache_handle *handle,
                       uint64_t start, uint64_t end);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

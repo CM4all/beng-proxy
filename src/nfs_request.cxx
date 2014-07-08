@@ -5,7 +5,7 @@
  */
 
 #include "nfs_request.hxx"
-#include "nfs_cache.h"
+#include "nfs_cache.hxx"
 #include "http_response.hxx"
 #include "static-headers.h"
 #include "strmap.h"
