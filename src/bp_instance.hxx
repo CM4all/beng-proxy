@@ -9,18 +9,13 @@
 
 #include "config.hxx"
 #include "shutdown_listener.h"
+#include "net/ServerSocket.hxx"
 
 #include <inline/list.h>
 
+#include <forward_list>
+
 #include <event.h>
-
-class ServerSocket;
-
-struct listener_node {
-    struct list_head siblings;
-
-    ServerSocket *listener;
-};
 
 struct instance {
     struct pool *pool;
@@ -31,7 +26,8 @@ struct instance {
 
     uint64_t http_request_counter;
 
-    struct list_head listeners;
+    std::forward_list<ServerSocket> listeners;
+
     struct list_head connections;
     unsigned num_connections;
 

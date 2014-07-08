@@ -80,29 +80,21 @@ static constexpr cap_value_t cap_keep_list[] = {
 static void
 free_all_listeners(struct instance *instance)
 {
-    for (struct listener_node *node = (struct listener_node *)instance->listeners.next;
-         &node->siblings != &instance->listeners;
-         node = (struct listener_node *)node->siblings.next)
-        delete node->listener;
-    list_init(&instance->listeners);
+    instance->listeners.clear();
 }
 
 void
 all_listeners_event_add(struct instance *instance)
 {
-    for (struct listener_node *node = (struct listener_node *)instance->listeners.next;
-         &node->siblings != &instance->listeners;
-         node = (struct listener_node *)node->siblings.next)
-        node->listener->AddEvent();
+    for (auto &listener : instance->listeners)
+        listener.AddEvent();
 }
 
 void
 all_listeners_event_del(struct instance *instance)
 {
-    for (struct listener_node *node = (struct listener_node *)instance->listeners.next;
-         &node->siblings != &instance->listeners;
-         node = (struct listener_node *)node->siblings.next)
-        node->listener->RemoveEvent();
+    for (auto &listener : instance->listeners)
+        listener.RemoveEvent();
 }
 
 static void
@@ -238,19 +230,16 @@ add_listener(struct instance *instance, struct addrinfo *ai)
     assert(ai != NULL);
 
     do {
-        listener_node *node = NewFromPool<listener_node>(instance->pool);
+        instance->listeners.emplace_front(http_listener_handler, instance);
+        auto &listener = instance->listeners.front();
 
-        node->listener = new ServerSocket(http_listener_handler, instance);
-        if (!node->listener->Listen(ai->ai_family, ai->ai_socktype,
-                                    ai->ai_protocol,
-                                    SocketAddress(ai->ai_addr,
-                                                  ai->ai_addrlen),
-                                    error)) {
+        if (!listener.Listen(ai->ai_family, ai->ai_socktype,
+                             ai->ai_protocol,
+                             SocketAddress(ai->ai_addr, ai->ai_addrlen),
+                             error)) {
             fprintf(stderr, "%s\n", error.GetMessage());
             exit(2);
         }
-
-        list_add(&node->siblings, &instance->listeners);
 
         ai = ai->ai_next;
     } while (ai != NULL);
@@ -259,16 +248,14 @@ add_listener(struct instance *instance, struct addrinfo *ai)
 static void
 add_tcp_listener(struct instance *instance, int port)
 {
-    listener_node *node = NewFromPool<listener_node>(instance->pool);
-
     Error error;
-    node->listener = new ServerSocket(http_listener_handler, instance);
-    if (!node->listener->ListenTCP(port, error)) {
+
+    instance->listeners.emplace_front(http_listener_handler, instance);
+    auto &listener = instance->listeners.front();
+    if (!listener.ListenTCP(port, error)) {
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }
-
-    list_add(&node->siblings, &instance->listeners);
 }
 
 int main(int argc, char **argv)
@@ -318,7 +305,6 @@ int main(int argc, char **argv)
     instance.event_base = event_init();
     fb_pool_init(true);
 
-    list_init(&instance.listeners);
     list_init(&instance.connections);
     list_init(&instance.workers);
 
@@ -457,10 +443,7 @@ int main(int argc, char **argv)
         pid_t pid;
 
         /* the master process shouldn't work */
-        for (struct listener_node *node = (struct listener_node *)instance.listeners.next;
-             &node->siblings != &instance.listeners;
-             node = (struct listener_node *)node->siblings.next)
-            node->listener->RemoveEvent();
+        all_listeners_event_del(&instance);
 
         while (instance.num_workers < instance.config.num_workers) {
             pid = worker_new(&instance);
