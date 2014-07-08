@@ -35,6 +35,14 @@ public:
         :fd(std::move(_fd)), handler(_handler), handler_ctx(_handler_ctx) {}
 
     ~ServerSocket();
+
+    void AddEvent() {
+        event_add(&event, nullptr);
+    }
+
+    void RemoveEvent() {
+        event_del(&event);
+    }
 };
 
 ServerSocket *
@@ -47,11 +55,5 @@ ServerSocket *
 listener_tcp_port_new(int port,
                       const struct listener_handler *handler, void *ctx,
                       Error &error);
-
-void
-listener_event_add(ServerSocket *listener);
-
-void
-listener_event_del(ServerSocket *listener);
 
 #endif

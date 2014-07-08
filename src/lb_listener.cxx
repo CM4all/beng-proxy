@@ -96,11 +96,11 @@ lb_listener::~lb_listener()
 void
 lb_listener_event_add(struct lb_listener *listener)
 {
-    listener_event_add(listener->listener);
+    listener->listener->AddEvent();
 }
 
 void
 lb_listener_event_del(struct lb_listener *listener)
 {
-    listener_event_del(listener->listener);
+    listener->listener->RemoveEvent();
 }

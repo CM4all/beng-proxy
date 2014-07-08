@@ -93,7 +93,7 @@ all_listeners_event_add(struct instance *instance)
     for (struct listener_node *node = (struct listener_node *)instance->listeners.next;
          &node->siblings != &instance->listeners;
          node = (struct listener_node *)node->siblings.next)
-        listener_event_add(node->listener);
+        node->listener->AddEvent();
 }
 
 void
@@ -102,7 +102,7 @@ all_listeners_event_del(struct instance *instance)
     for (struct listener_node *node = (struct listener_node *)instance->listeners.next;
          &node->siblings != &instance->listeners;
          node = (struct listener_node *)node->siblings.next)
-        listener_event_del(node->listener);
+        node->listener->RemoveEvent();
 }
 
 static void
@@ -463,7 +463,7 @@ int main(int argc, char **argv)
         for (struct listener_node *node = (struct listener_node *)instance.listeners.next;
              &node->siblings != &instance.listeners;
              node = (struct listener_node *)node->siblings.next)
-            listener_event_del(node->listener);
+            node->listener->RemoveEvent();
 
         while (instance.num_workers < instance.config.num_workers) {
             pid = worker_new(&instance);

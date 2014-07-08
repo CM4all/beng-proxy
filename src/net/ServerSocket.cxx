@@ -82,7 +82,7 @@ listener_new(int family, int socktype, int protocol,
     event_set(&listener->event, listener->fd.Get(),
               EV_READ|EV_PERSIST, listener_event_callback, listener);
 
-    listener_event_add(listener);
+    listener->AddEvent();
 
     return listener;
 }
@@ -126,16 +126,4 @@ listener_tcp_port_new(int port,
 ServerSocket::~ServerSocket()
 {
     event_del(&event);
-}
-
-void
-listener_event_add(ServerSocket *listener)
-{
-    event_add(&listener->event, nullptr);
-}
-
-void
-listener_event_del(ServerSocket *listener)
-{
-    event_del(&listener->event);
 }
