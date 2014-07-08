@@ -9,11 +9,11 @@
 #include "lb_connection.hxx"
 #include "lb_config.hxx"
 #include "ssl_factory.hxx"
-#include "listener.hxx"
 #include "address_envelope.hxx"
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/ServerSocket.hxx"
 
 #include <daemon/log.h>
 

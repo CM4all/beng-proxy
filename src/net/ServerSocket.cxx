@@ -4,13 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "listener.hxx"
+#include "ServerSocket.hxx"
+#include "SocketDescriptor.hxx"
+#include "SocketAddress.hxx"
+#include "StaticSocketAddress.hxx"
 #include "fd_util.h"
 #include "pool.h"
 #include "util/Error.hxx"
-#include "net/SocketDescriptor.hxx"
-#include "net/SocketAddress.hxx"
-#include "net/StaticSocketAddress.hxx"
 
 #include <socket/util.h>
 #include <socket/address.h>
@@ -29,24 +29,25 @@
 
 #include <event.h>
 
-struct listener {
+class ServerSocket {
+public:
     const SocketDescriptor fd;
     struct event event;
 
     const struct listener_handler &handler;
     void *handler_ctx;
 
-    listener(SocketDescriptor &&_fd,
-             const struct listener_handler &_handler, void *_handler_ctx)
+    ServerSocket(SocketDescriptor &&_fd,
+                 const struct listener_handler &_handler, void *_handler_ctx)
         :fd(std::move(_fd)), handler(_handler), handler_ctx(_handler_ctx) {}
 
-    ~listener();
+    ~ServerSocket();
 };
 
 static void
 listener_event_callback(gcc_unused int fd, short event gcc_unused, void *ctx)
 {
-    struct listener *listener = (struct listener *)ctx;
+    ServerSocket *listener = (ServerSocket *)ctx;
 
     StaticSocketAddress remote_address;
     Error error;
@@ -71,7 +72,7 @@ listener_event_callback(gcc_unused int fd, short event gcc_unused, void *ctx)
     pool_commit();
 }
 
-struct listener *
+ServerSocket *
 listener_new(int family, int socktype, int protocol,
              SocketAddress address,
              const struct listener_handler *handler, void *ctx,
@@ -93,7 +94,7 @@ listener_new(int family, int socktype, int protocol,
                          address, error))
         return nullptr;
 
-    auto listener = new struct listener(std::move(fd), *handler, ctx);
+    auto listener = new ServerSocket(std::move(fd), *handler, ctx);
 
     event_set(&listener->event, listener->fd.Get(),
               EV_READ|EV_PERSIST, listener_event_callback, listener);
@@ -103,12 +104,12 @@ listener_new(int family, int socktype, int protocol,
     return listener;
 }
 
-struct listener *
+ServerSocket *
 listener_tcp_port_new(int port,
                       const struct listener_handler *handler, void *ctx,
                       Error &error)
 {
-    struct listener *listener;
+    ServerSocket *listener;
     struct sockaddr_in6 sa6;
     struct sockaddr_in sa4;
 
@@ -139,15 +140,15 @@ listener_tcp_port_new(int port,
                         handler, ctx, error);
 }
 
-listener::~listener()
+ServerSocket::~ServerSocket()
 {
     event_del(&event);
 }
 
 void
-listener_free(struct listener **listener_r)
+listener_free(ServerSocket **listener_r)
 {
-    struct listener *listener = *listener_r;
+    ServerSocket *listener = *listener_r;
     *listener_r = nullptr;
 
     assert(listener != nullptr);
@@ -157,13 +158,13 @@ listener_free(struct listener **listener_r)
 }
 
 void
-listener_event_add(struct listener *listener)
+listener_event_add(ServerSocket *listener)
 {
     event_add(&listener->event, nullptr);
 }
 
 void
-listener_event_del(struct listener *listener)
+listener_event_del(ServerSocket *listener)
 {
     event_del(&listener->event);
 }

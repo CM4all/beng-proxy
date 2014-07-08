@@ -31,7 +31,6 @@
 #include "failure.hxx"
 #include "bulldog.h"
 #include "balancer.hxx"
-#include "listener.hxx"
 #include "pipe-stock.h"
 #include "resource_loader.hxx"
 #include "bp_control.hxx"
@@ -43,6 +42,7 @@
 #include "namespace_options.hxx"
 #include "util/Error.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/ServerSocket.hxx"
 
 #include <daemon/daemonize.h>
 #include <daemon/log.h>

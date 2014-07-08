@@ -10,6 +10,7 @@
 #include <inline/list.h>
 
 class Error;
+class ServerSocket;
 
 struct lb_listener {
     struct list_head siblings;
@@ -20,7 +21,7 @@ struct lb_listener {
 
     struct ssl_factory *ssl_factory = nullptr;
 
-    struct listener *listener = nullptr;
+    ServerSocket *listener = nullptr;
 
     lb_listener(struct lb_instance &_instance,
                 const struct lb_listener_config &_config)

@@ -4,9 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_LISTENER_HXX
-#define BENG_PROXY_LISTENER_HXX
+#ifndef SERVER_SOCKET_HXX
+#define SERVER_SOCKET_HXX
 
+class ServerSocket;
 class SocketDescriptor;
 class SocketAddress;
 class Error;
@@ -16,24 +17,24 @@ struct listener_handler {
     void (*error)(Error &&error, void *ctx);
 };
 
-struct listener *
+ServerSocket *
 listener_new(int family, int socktype, int protocol,
              SocketAddress address,
              const struct listener_handler *handler, void *ctx,
              Error &error);
 
-struct listener *
+ServerSocket *
 listener_tcp_port_new(int port,
                       const struct listener_handler *handler, void *ctx,
                       Error &error);
 
 void
-listener_free(struct listener **listener_r);
+listener_free(ServerSocket **listener_r);
 
 void
-listener_event_add(struct listener *listener);
+listener_event_add(ServerSocket *listener);
 
 void
-listener_event_del(struct listener *listener);
+listener_event_del(ServerSocket *listener);
 
 #endif

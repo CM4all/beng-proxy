@@ -14,10 +14,12 @@
 
 #include <event.h>
 
+class ServerSocket;
+
 struct listener_node {
     struct list_head siblings;
 
-    struct listener *listener;
+    ServerSocket *listener;
 };
 
 struct instance {

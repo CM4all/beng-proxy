@@ -17,7 +17,6 @@
 #include "failure.hxx"
 #include "bulldog.h"
 #include "balancer.hxx"
-#include "listener.hxx"
 #include "pipe-stock.h"
 #include "log-glue.h"
 #include "lb_config.hxx"
