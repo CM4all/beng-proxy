@@ -51,13 +51,13 @@ init_monitors(const lb_branch_config &cluster)
 bool
 init_all_listeners(struct lb_instance &instance, Error &error)
 {
-    for (const auto &config : instance.config->listeners) {
-        struct lb_listener *listener = lb_listener_new(instance, config,
-                                                       error);
-        if (listener == NULL)
-            return false;
+    auto &listeners = instance.listeners;
 
-        list_add(&listener->siblings, &instance.listeners);
+    for (const auto &config : instance.config->listeners) {
+        listeners.emplace_front(instance, config);
+        auto &listener = listeners.front();
+        if (!listener.Setup(error))
+            return false;
 
         init_monitors(config.destination);
     }
@@ -68,30 +68,21 @@ init_all_listeners(struct lb_instance &instance, Error &error)
 void
 deinit_all_listeners(struct lb_instance *instance)
 {
-    while (!list_empty(&instance->listeners)) {
-        struct lb_listener *listener =
-            (struct lb_listener *)instance->listeners.next;
-        list_remove(&listener->siblings);
-        delete listener;
-    }
+    instance->listeners.clear();
 }
 
 void
 all_listeners_event_add(struct lb_instance *instance)
 {
-    for (struct lb_listener *l = (struct lb_listener *)instance->listeners.next;
-         &l->siblings != &instance->listeners;
-         l = (struct lb_listener *)l->siblings.next)
-        lb_listener_event_add(l);
+    for (auto &listener : instance->listeners)
+        lb_listener_event_add(&listener);
 }
 
 void
 all_listeners_event_del(struct lb_instance *instance)
 {
-    for (struct lb_listener *l = (struct lb_listener *)instance->listeners.next;
-         &l->siblings != &instance->listeners;
-         l = (struct lb_listener *)l->siblings.next)
-        lb_listener_event_del(l);
+    for (auto &listener : instance->listeners)
+        lb_listener_event_del(&listener);
 }
 
 bool

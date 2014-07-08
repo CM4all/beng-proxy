@@ -268,7 +268,6 @@ int main(int argc, char **argv)
     fb_pool_init(true);
 
     list_init(&instance.controls);
-    list_init(&instance.listeners);
 
     init_signals(&instance);
 

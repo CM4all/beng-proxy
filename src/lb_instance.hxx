@@ -10,10 +10,13 @@
 #include "config.hxx"
 #include "shutdown_listener.h"
 #include "lb_connection.hxx"
+#include "lb_listener.hxx"
 
 #include <inline/list.h>
 
 #include <event.h>
+
+#include <forward_list>
 
 struct lb_instance {
     struct pool *pool;
@@ -27,7 +30,8 @@ struct lb_instance {
     uint64_t http_request_counter;
 
     struct list_head controls;
-    struct list_head listeners;
+
+    std::forward_list<lb_listener> listeners;
 
     boost::intrusive::list<struct lb_connection,
                            boost::intrusive::constant_time_size<true>> connections;

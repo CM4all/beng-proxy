@@ -7,14 +7,10 @@
 #ifndef BENG_PROXY_LB_LISTENER_H
 #define BENG_PROXY_LB_LISTENER_H
 
-#include <inline/list.h>
-
 class Error;
 class ServerSocket;
 
 struct lb_listener {
-    struct list_head siblings;
-
     struct lb_instance &instance;
 
     const struct lb_listener_config &config;
@@ -27,12 +23,9 @@ struct lb_listener {
                 const struct lb_listener_config &_config)
         :instance(_instance), config(_config) {}
     ~lb_listener();
-};
 
-struct lb_listener *
-lb_listener_new(struct lb_instance &instance,
-                const struct lb_listener_config &config,
-                Error &error);
+    bool Setup(Error &error);
+};
 
 void
 lb_listener_event_add(struct lb_listener *listener);

@@ -49,38 +49,26 @@ const struct listener_handler lb_listener_handler = {
  *
  */
 
-struct lb_listener *
-lb_listener_new(struct lb_instance &instance,
-                const struct lb_listener_config &config,
-                Error &error)
+bool
+lb_listener::Setup(Error &error)
 {
-    lb_listener *listener = new lb_listener(instance, config);
+    assert(ssl_factory == nullptr);
 
     if (config.ssl) {
         /* prepare SSL support */
 
-        listener->ssl_factory = ssl_factory_new(config.ssl_config, true,
-                                                error);
-        if (listener->ssl_factory == NULL) {
-            delete listener;
-            return NULL;
-        }
+        ssl_factory = ssl_factory_new(config.ssl_config, true, error);
+        if (ssl_factory == nullptr)
+            return false;
     }
 
     const struct address_envelope *envelope = config.envelope;
 
-    listener->listener = new ServerSocket(lb_listener_handler, listener);
-
-    if (!listener->listener->Listen(envelope->address.sa_family,
-                                    SOCK_STREAM, 0,
-                                    SocketAddress(&envelope->address,
-                                                  envelope->length),
-                                    error)) {
-        delete listener;
-        return NULL;
-    }
-
-    return listener;
+    listener = new ServerSocket(lb_listener_handler, this);
+    return listener->Listen(envelope->address.sa_family, SOCK_STREAM, 0,
+                            SocketAddress(&envelope->address,
+                                          envelope->length),
+                            error);
 }
 
 lb_listener::~lb_listener()
