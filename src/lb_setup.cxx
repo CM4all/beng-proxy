@@ -51,8 +51,6 @@ init_monitors(const lb_branch_config &cluster)
 bool
 init_all_listeners(struct lb_instance &instance, Error &error)
 {
-    bool success = true;
-
     for (const auto &config : instance.config->listeners) {
         struct lb_listener *listener = lb_listener_new(instance, config,
                                                        error);
@@ -64,7 +62,7 @@ init_all_listeners(struct lb_instance &instance, Error &error)
         init_monitors(config.destination);
     }
 
-    return success;
+    return true;
 }
 
 void
