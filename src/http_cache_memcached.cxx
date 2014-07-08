@@ -544,7 +544,7 @@ http_cache_memcached_remove_uri(struct memcached_stock *stock,
 }
 
 struct match_data {
-    struct background_job job;
+    BackgroundJob job;
 
     struct memcached_stock *stock;
     struct pool *background_pool;

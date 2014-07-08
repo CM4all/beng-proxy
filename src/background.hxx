@@ -16,17 +16,17 @@
  * beng-proxy is shut down.  The job holds a reference to an
  * #async_operation object, which may be used to stop it.
  */
-struct background_job {
+struct BackgroundJob {
     struct list_head siblings;
 
     struct async_operation_ref async_ref;
 };
 
-static inline struct background_job *
+static inline BackgroundJob *
 list_head_to_background_job(struct list_head *head)
 {
-    const void *p = ((char *)head) - offsetof(struct background_job, siblings);
-    return (struct background_job *)p;
+    const void *p = ((char *)head) - offsetof(BackgroundJob, siblings);
+    return (BackgroundJob *)p;
 }
 
 /**
@@ -43,7 +43,7 @@ public:
     /**
      * Register a job to the manager.
      */
-    void Add(struct background_job &job) {
+    void Add(BackgroundJob &job) {
         list_add(&job.siblings, &jobs);
     }
 
@@ -51,7 +51,7 @@ public:
      * Add a background job to the manager, and return its
      * #async_operation_ref.  This is a convenience function.
      */
-    struct async_operation_ref *Add2(struct background_job &job) {
+    struct async_operation_ref *Add2(BackgroundJob &job) {
         Add(job);
         return &job.async_ref;
     }
@@ -60,14 +60,14 @@ public:
      * Leave the job registered in the manager, and reuse its
      * #async_operation_ref for another job iteration.
      */
-    struct async_operation_ref *Reuse(struct background_job &job) {
+    struct async_operation_ref *Reuse(BackgroundJob &job) {
         return &job.async_ref;
     }
 
     /**
      * Unregister a job from the manager.
      */
-    void Remove(struct background_job &job) {
+    void Remove(BackgroundJob &job) {
         list_remove(&job.siblings);
     }
 
@@ -75,7 +75,7 @@ public:
      * Abort the job and unregister it from the manager.  This function
      * should not be called, it is used internally.
      */
-    void AbortInternal(struct background_job &job) {
+    void AbortInternal(BackgroundJob &job) {
         Remove(job);
         async_abort(&job.async_ref);
     }
@@ -86,7 +86,7 @@ public:
      */
     void AbortAll() {
         while (!list_empty(&jobs)) {
-            struct background_job *job =
+            BackgroundJob *job =
                 list_head_to_background_job(jobs.next);
 
             AbortInternal(*job);
@@ -94,7 +94,7 @@ public:
     }
 };
 
-class LinkedBackgroundJob : public background_job {
+class LinkedBackgroundJob : public BackgroundJob {
     BackgroundManager &manager;
 
 public:
