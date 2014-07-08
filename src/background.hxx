@@ -9,7 +9,7 @@
 
 #include "async.h"
 
-#include <inline/list.h>
+#include <boost/intrusive/list.hpp>
 
 /**
  * A job running in the background, which shall be aborted when
@@ -17,34 +17,30 @@
  * #async_operation object, which may be used to stop it.
  */
 struct BackgroundJob {
-    struct list_head siblings;
+    static constexpr auto link_mode = boost::intrusive::normal_link;
+    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsListHook;
+    SiblingsListHook siblings;
 
     struct async_operation_ref async_ref;
 };
-
-static inline BackgroundJob *
-list_head_to_background_job(struct list_head *head)
-{
-    const void *p = ((char *)head) - offsetof(BackgroundJob, siblings);
-    return (BackgroundJob *)p;
-}
 
 /**
  * A container for background jobs.
  */
 class BackgroundManager {
-    struct list_head jobs;
+    boost::intrusive::list<BackgroundJob,
+                           boost::intrusive::member_hook<BackgroundJob,
+                                                         BackgroundJob::SiblingsListHook,
+                                                         &BackgroundJob::siblings>,
+                           boost::intrusive::constant_time_size<false>> jobs;
 
 public:
-    BackgroundManager() {
-        list_init(&jobs);
-    }
-
     /**
      * Register a job to the manager.
      */
     void Add(BackgroundJob &job) {
-        list_add(&job.siblings, &jobs);
+        jobs.push_front(job);
     }
 
     /**
@@ -68,16 +64,7 @@ public:
      * Unregister a job from the manager.
      */
     void Remove(BackgroundJob &job) {
-        list_remove(&job.siblings);
-    }
-
-    /**
-     * Abort the job and unregister it from the manager.  This function
-     * should not be called, it is used internally.
-     */
-    void AbortInternal(BackgroundJob &job) {
-        Remove(job);
-        async_abort(&job.async_ref);
+        jobs.erase(jobs.iterator_to(job));
     }
 
     /**
@@ -85,12 +72,9 @@ public:
      * shutdown.
      */
     void AbortAll() {
-        while (!list_empty(&jobs)) {
-            BackgroundJob *job =
-                list_head_to_background_job(jobs.next);
-
-            AbortInternal(*job);
-        }
+        jobs.clear_and_dispose([this](BackgroundJob *job){
+                async_abort(&job->async_ref);
+            });
     }
 };
 
