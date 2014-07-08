@@ -27,23 +27,6 @@
 #include <string.h>
 #include <fcntl.h>
 
-#include <event.h>
-
-class ServerSocket {
-public:
-    const SocketDescriptor fd;
-    struct event event;
-
-    const struct listener_handler &handler;
-    void *handler_ctx;
-
-    ServerSocket(SocketDescriptor &&_fd,
-                 const struct listener_handler &_handler, void *_handler_ctx)
-        :fd(std::move(_fd)), handler(_handler), handler_ctx(_handler_ctx) {}
-
-    ~ServerSocket();
-};
-
 static void
 listener_event_callback(gcc_unused int fd, short event gcc_unused, void *ctx)
 {
