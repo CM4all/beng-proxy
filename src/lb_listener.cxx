@@ -76,8 +76,6 @@ lb_listener_new(struct lb_instance &instance,
                                     SocketAddress(&envelope->address,
                                                   envelope->length),
                                     error)) {
-        if (listener->ssl_factory != NULL)
-            ssl_factory_free(listener->ssl_factory);
         delete listener;
         return NULL;
     }
