@@ -23,16 +23,19 @@ struct listener_handler {
 };
 
 class ServerSocket {
-public:
     const SocketDescriptor fd;
     struct event event;
 
     const struct listener_handler &handler;
     void *handler_ctx;
 
+public:
     ServerSocket(SocketDescriptor &&_fd,
                  const struct listener_handler &_handler, void *_handler_ctx)
-        :fd(std::move(_fd)), handler(_handler), handler_ctx(_handler_ctx) {}
+        :fd(std::move(_fd)), handler(_handler), handler_ctx(_handler_ctx) {
+        event_set(&event, fd.Get(), EV_READ|EV_PERSIST, Callback, this);
+        AddEvent();
+    }
 
     ~ServerSocket();
 
@@ -43,6 +46,10 @@ public:
     void RemoveEvent() {
         event_del(&event);
     }
+
+private:
+    void Callback();
+    static void Callback(int fd, short event, void *ctx);
 };
 
 ServerSocket *

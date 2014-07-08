@@ -27,30 +27,35 @@
 #include <string.h>
 #include <fcntl.h>
 
-static void
-listener_event_callback(gcc_unused int fd, short event gcc_unused, void *ctx)
+inline void
+ServerSocket::Callback()
 {
-    ServerSocket *listener = (ServerSocket *)ctx;
-
     StaticSocketAddress remote_address;
     Error error;
-    auto remote_fd = listener->fd.Accept(remote_address, error);
+    auto remote_fd = fd.Accept(remote_address, error);
     if (!remote_fd.IsDefined()) {
         if (!error.IsDomain(errno_domain) ||
             (error.GetCode() != EAGAIN && error.GetCode() != EWOULDBLOCK))
-            listener->handler.error(std::move(error), listener->handler_ctx);
+            handler.error(std::move(error), handler_ctx);
 
         return;
     }
 
     if (!socket_set_nodelay(remote_fd.Get(), true)) {
         error.SetErrno("setsockopt(TCP_NODELAY) failed");
-        listener->handler.error(std::move(error), listener->handler_ctx);
+        handler.error(std::move(error), handler_ctx);
         return;
     }
 
-    listener->handler.connected(std::move(remote_fd), remote_address,
-                                listener->handler_ctx);
+    handler.connected(std::move(remote_fd), remote_address, handler_ctx);
+}
+
+void
+ServerSocket::Callback(gcc_unused int fd, gcc_unused short event, void *ctx)
+{
+    ServerSocket &ss = *(ServerSocket *)ctx;
+
+    ss.Callback();
 
     pool_commit();
 }
@@ -77,14 +82,7 @@ listener_new(int family, int socktype, int protocol,
                          address, error))
         return nullptr;
 
-    auto listener = new ServerSocket(std::move(fd), *handler, ctx);
-
-    event_set(&listener->event, listener->fd.Get(),
-              EV_READ|EV_PERSIST, listener_event_callback, listener);
-
-    listener->AddEvent();
-
-    return listener;
+    return new ServerSocket(std::move(fd), *handler, ctx);
 }
 
 ServerSocket *
