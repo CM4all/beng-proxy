@@ -69,13 +69,13 @@ lb_listener_new(struct lb_instance &instance,
 
     const struct address_envelope *envelope = config.envelope;
 
-    listener->listener = listener_new(envelope->address.sa_family,
-                                      SOCK_STREAM, 0,
-                                      SocketAddress(&envelope->address,
-                                                    envelope->length),
-                                      &lb_listener_handler, listener,
-                                      error);
-    if (listener->listener == NULL) {
+    listener->listener = new ServerSocket(lb_listener_handler, listener);
+
+    if (!listener->listener->Listen(envelope->address.sa_family,
+                                    SOCK_STREAM, 0,
+                                    SocketAddress(&envelope->address,
+                                                  envelope->length),
+                                    error)) {
         if (listener->ssl_factory != NULL)
             ssl_factory_free(listener->ssl_factory);
         delete listener;

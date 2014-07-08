@@ -60,16 +60,11 @@ ServerSocket::Callback(gcc_unused int fd, gcc_unused short event, void *ctx)
     pool_commit();
 }
 
-ServerSocket *
-listener_new(int family, int socktype, int protocol,
-             SocketAddress address,
-             const struct listener_handler *handler, void *ctx,
-             Error &error)
+bool
+ServerSocket::Listen(int family, int socktype, int protocol,
+                     SocketAddress address,
+                     Error &error)
 {
-    assert(handler != nullptr);
-    assert(handler->connected != nullptr);
-    assert(handler->error != nullptr);
-
     if (address.GetFamily() == AF_UNIX) {
         const struct sockaddr_un *sun = (const struct sockaddr_un *)(const struct sockaddr *)address;
         if (sun->sun_path[0] != '\0')
@@ -77,48 +72,38 @@ listener_new(int family, int socktype, int protocol,
             unlink(sun->sun_path);
     }
 
-    SocketDescriptor fd;
-    if (!fd.CreateListen(family, socktype, protocol,
-                         address, error))
+    if (!fd.CreateListen(family, socktype, protocol, address, error))
         return nullptr;
 
-    return new ServerSocket(std::move(fd), *handler, ctx);
+    event_set(&event, fd.Get(), EV_READ|EV_PERSIST, Callback, this);
+    AddEvent();
+    return true;
 }
 
-ServerSocket *
-listener_tcp_port_new(int port,
-                      const struct listener_handler *handler, void *ctx,
-                      Error &error)
+bool
+ServerSocket::ListenTCP(unsigned port, Error &error)
 {
-    ServerSocket *listener;
+    assert(port > 0);
+
     struct sockaddr_in6 sa6;
     struct sockaddr_in sa4;
-
-    assert(port > 0);
-    assert(handler != nullptr);
-    assert(handler->connected != nullptr);
-    assert(handler->error != nullptr);
 
     memset(&sa6, 0, sizeof(sa6));
     sa6.sin6_family = AF_INET6;
     sa6.sin6_addr = in6addr_any;
     sa6.sin6_port = htons(port);
 
-    listener = listener_new(PF_INET6, SOCK_STREAM, 0,
-                            SocketAddress((const struct sockaddr *)&sa6, sizeof(sa6)),
-                            handler, ctx, IgnoreError());
-    if (listener != nullptr)
-        return listener;
-
     memset(&sa4, 0, sizeof(sa4));
     sa4.sin_family = AF_INET;
     sa4.sin_addr.s_addr = INADDR_ANY;
     sa4.sin_port = htons(port);
 
-    return listener_new(PF_INET, SOCK_STREAM, 0,
-                        SocketAddress((const struct sockaddr *)&sa4,
-                                      sizeof(sa4)),
-                        handler, ctx, error);
+    return Listen(PF_INET6, SOCK_STREAM, 0,
+                  SocketAddress((const struct sockaddr *)&sa6, sizeof(sa6)),
+                  IgnoreError()) ||
+        Listen(PF_INET, SOCK_STREAM, 0,
+               SocketAddress((const struct sockaddr *)&sa4, sizeof(sa4)),
+               error);
 }
 
 ServerSocket::~ServerSocket()

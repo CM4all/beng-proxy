@@ -240,13 +240,12 @@ add_listener(struct instance *instance, struct addrinfo *ai)
     do {
         listener_node *node = NewFromPool<listener_node>(instance->pool);
 
-        node->listener = listener_new(ai->ai_family, ai->ai_socktype,
-                                      ai->ai_protocol,
-                                      SocketAddress(ai->ai_addr,
-                                                    ai->ai_addrlen),
-                                      &http_listener_handler, instance,
-                                      error);
-        if (node->listener == NULL) {
+        node->listener = new ServerSocket(http_listener_handler, instance);
+        if (!node->listener->Listen(ai->ai_family, ai->ai_socktype,
+                                    ai->ai_protocol,
+                                    SocketAddress(ai->ai_addr,
+                                                  ai->ai_addrlen),
+                                    error)) {
             fprintf(stderr, "%s\n", error.GetMessage());
             exit(2);
         }
@@ -263,10 +262,8 @@ add_tcp_listener(struct instance *instance, int port)
     listener_node *node = NewFromPool<listener_node>(instance->pool);
 
     Error error;
-    node->listener = listener_tcp_port_new(port,
-                                           &http_listener_handler, instance,
-                                           error);
-    if (node->listener == NULL) {
+    node->listener = new ServerSocket(http_listener_handler, instance);
+    if (!node->listener->ListenTCP(port, error)) {
         fprintf(stderr, "%s\n", error.GetMessage());
         exit(2);
     }
