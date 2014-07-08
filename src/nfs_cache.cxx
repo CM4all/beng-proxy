@@ -6,7 +6,7 @@
 
 #include "nfs_cache.hxx"
 #include "nfs_stock.hxx"
-#include "nfs_client.h"
+#include "nfs_client.hxx"
 #include "istream_nfs.hxx"
 #include "istream.h"
 #include "static-headers.h"

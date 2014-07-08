@@ -5,7 +5,7 @@
  */
 
 #include "nfs_stock.hxx"
-#include "nfs_client.h"
+#include "nfs_client.hxx"
 #include "hashmap.h"
 #include "pool.h"
 #include "async.h"

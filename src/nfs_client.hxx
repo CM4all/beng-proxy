@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_NFS_CLIENT_H
-#define BENG_PROXY_NFS_CLIENT_H
+#ifndef BENG_PROXY_NFS_CLIENT_HXX
+#define BENG_PROXY_NFS_CLIENT_HXX
 
 #include <stdint.h>
 
@@ -82,10 +82,6 @@ struct nfs_client_read_file_handler {
     void (*error)(GError *error, void *ctx);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 G_GNUC_CONST
 static inline GQuark
 nfs_client_quark(void)
@@ -116,9 +112,5 @@ nfs_client_read_file(struct nfs_file_handle *handle,
                      uint64_t offset, size_t length,
                      const struct nfs_client_read_file_handler *handler,
                      void *ctx);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

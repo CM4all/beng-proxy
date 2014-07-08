@@ -368,7 +368,7 @@ src_cm4all_beng_proxy_SOURCES += \
 	src/nfs_handler.cxx src/nfs_handler.hxx \
 	src/istream_nfs.cxx src/istream_nfs.hxx \
 	src/nfs_stock.cxx src/nfs_stock.hxx \
-	src/nfs_client.c src/nfs_client.h \
+	src/nfs_client.cxx src/nfs_client.hxx \
 	src/nfs_cache.cxx src/nfs_cache.hxx \
 	src/nfs_request.cxx src/nfs_request.hxx
 endif
@@ -1610,7 +1610,7 @@ test_run_client_balancer_LDADD = $(AM_LDADD) \
 if HAVE_LIBNFS
 
 test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
-	src/nfs_client.c src/istream_nfs.cxx \
+	src/nfs_client.cxx src/istream_nfs.cxx \
 	src/hashmap.c src/strmap.c \
 	src/sink_fd.c \
 	src/direct.c \

@@ -1,4 +1,4 @@
-#include "nfs_client.h"
+#include "nfs_client.hxx"
 #include "istream_nfs.hxx"
 #include "shutdown_listener.h"
 #include "async.h"

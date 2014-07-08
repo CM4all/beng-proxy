@@ -22,7 +22,7 @@
 #include "pool.h"
 
 #ifdef HAVE_LIBNFS
-#include "nfs_client.h"
+#include "nfs_client.hxx"
 #include <nfsc/libnfs-raw-nfs.h>
 #endif
 
