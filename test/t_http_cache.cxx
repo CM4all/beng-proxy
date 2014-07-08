@@ -92,58 +92,58 @@ static bool eof;
 static size_t body_read;
 
 void
-http_cache_memcached_flush(G_GNUC_UNUSED struct pool *pool,
-                           G_GNUC_UNUSED struct memcached_stock *stock,
-                           G_GNUC_UNUSED http_cache_memcached_flush_t callback,
-                           G_GNUC_UNUSED void *callback_ctx,
-                           G_GNUC_UNUSED struct async_operation_ref *async_ref)
+http_cache_memcached_flush(gcc_unused struct pool *pool,
+                           gcc_unused struct memcached_stock *stock,
+                           gcc_unused http_cache_memcached_flush_t callback,
+                           gcc_unused void *callback_ctx,
+                           gcc_unused struct async_operation_ref *async_ref)
 {
 }
 
 void
-http_cache_memcached_get(G_GNUC_UNUSED struct pool *pool,
-                         G_GNUC_UNUSED struct memcached_stock *stock,
-                         G_GNUC_UNUSED struct pool *background_pool,
-                         G_GNUC_UNUSED struct background_manager *background,
-                         G_GNUC_UNUSED const char *uri,
-                         G_GNUC_UNUSED struct strmap *request_headers,
-                         G_GNUC_UNUSED http_cache_memcached_get_t callback,
-                         G_GNUC_UNUSED void *callback_ctx,
-                         G_GNUC_UNUSED struct async_operation_ref *async_ref)
+http_cache_memcached_get(gcc_unused struct pool *pool,
+                         gcc_unused struct memcached_stock *stock,
+                         gcc_unused struct pool *background_pool,
+                         gcc_unused struct background_manager *background,
+                         gcc_unused const char *uri,
+                         gcc_unused struct strmap *request_headers,
+                         gcc_unused http_cache_memcached_get_t callback,
+                         gcc_unused void *callback_ctx,
+                         gcc_unused struct async_operation_ref *async_ref)
 {
 }
 
 void
-http_cache_memcached_put(G_GNUC_UNUSED struct pool *pool,
-                         G_GNUC_UNUSED struct memcached_stock *stock,
-                         G_GNUC_UNUSED struct pool *background_pool,
-                         G_GNUC_UNUSED struct background_manager *background,
-                         G_GNUC_UNUSED const char *uri,
-                         G_GNUC_UNUSED const struct http_cache_info *info,
-                         G_GNUC_UNUSED struct strmap *request_headers,
-                         G_GNUC_UNUSED http_status_t status,
-                         G_GNUC_UNUSED struct strmap *response_headers,
-                         G_GNUC_UNUSED struct istream *value,
-                         G_GNUC_UNUSED http_cache_memcached_put_t put,
-                         G_GNUC_UNUSED void *callback_ctx,
-                         G_GNUC_UNUSED struct async_operation_ref *async_ref)
+http_cache_memcached_put(gcc_unused struct pool *pool,
+                         gcc_unused struct memcached_stock *stock,
+                         gcc_unused struct pool *background_pool,
+                         gcc_unused struct background_manager *background,
+                         gcc_unused const char *uri,
+                         gcc_unused const struct http_cache_info *info,
+                         gcc_unused struct strmap *request_headers,
+                         gcc_unused http_status_t status,
+                         gcc_unused struct strmap *response_headers,
+                         gcc_unused struct istream *value,
+                         gcc_unused http_cache_memcached_put_t put,
+                         gcc_unused void *callback_ctx,
+                         gcc_unused struct async_operation_ref *async_ref)
 {
 }
 
 void
-http_cache_memcached_remove_uri(G_GNUC_UNUSED struct memcached_stock *stock,
-                                G_GNUC_UNUSED struct pool *background_pool,
-                                G_GNUC_UNUSED struct background_manager *background,
-                                G_GNUC_UNUSED const char *uri)
+http_cache_memcached_remove_uri(gcc_unused struct memcached_stock *stock,
+                                gcc_unused struct pool *background_pool,
+                                gcc_unused struct background_manager *background,
+                                gcc_unused const char *uri)
 {
 }
 
 void
-http_cache_memcached_remove_uri_match(G_GNUC_UNUSED struct memcached_stock *stock,
-                                      G_GNUC_UNUSED struct pool *background_pool,
-                                      G_GNUC_UNUSED struct background_manager *background,
-                                      G_GNUC_UNUSED const char *uri,
-                                      G_GNUC_UNUSED struct strmap *headers)
+http_cache_memcached_remove_uri_match(gcc_unused struct memcached_stock *stock,
+                                      gcc_unused struct pool *background_pool,
+                                      gcc_unused struct background_manager *background,
+                                      gcc_unused const char *uri,
+                                      gcc_unused struct strmap *headers)
 {
 }
 
