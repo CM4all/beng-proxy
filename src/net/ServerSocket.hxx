@@ -49,9 +49,6 @@ listener_tcp_port_new(int port,
                       Error &error);
 
 void
-listener_free(ServerSocket **listener_r);
-
-void
 listener_event_add(ServerSocket *listener);
 
 void

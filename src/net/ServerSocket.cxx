@@ -129,18 +129,6 @@ ServerSocket::~ServerSocket()
 }
 
 void
-listener_free(ServerSocket **listener_r)
-{
-    ServerSocket *listener = *listener_r;
-    *listener_r = nullptr;
-
-    assert(listener != nullptr);
-    assert(listener->fd.IsDefined());
-
-    delete listener;
-}
-
-void
 listener_event_add(ServerSocket *listener)
 {
     event_add(&listener->event, nullptr);

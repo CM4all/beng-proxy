@@ -87,8 +87,7 @@ lb_listener_new(struct lb_instance &instance,
 
 lb_listener::~lb_listener()
 {
-    if (listener != nullptr)
-        listener_free(&listener);
+    delete listener;
 
     if (ssl_factory != nullptr)
         ssl_factory_free(ssl_factory);

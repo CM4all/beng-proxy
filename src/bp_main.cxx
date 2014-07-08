@@ -83,7 +83,7 @@ free_all_listeners(struct instance *instance)
     for (struct listener_node *node = (struct listener_node *)instance->listeners.next;
          &node->siblings != &instance->listeners;
          node = (struct listener_node *)node->siblings.next)
-        listener_free(&node->listener);
+        delete node->listener;
     list_init(&instance->listeners);
 }
 
