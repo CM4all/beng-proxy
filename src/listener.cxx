@@ -39,6 +39,8 @@ struct listener {
     listener(SocketDescriptor &&_fd,
              const struct listener_handler &_handler, void *_handler_ctx)
         :fd(std::move(_fd)), handler(_handler), handler_ctx(_handler_ctx) {}
+
+    ~listener();
 };
 
 static void
@@ -137,6 +139,11 @@ listener_tcp_port_new(int port,
                         handler, ctx, error);
 }
 
+listener::~listener()
+{
+    event_del(&event);
+}
+
 void
 listener_free(struct listener **listener_r)
 {
@@ -146,7 +153,6 @@ listener_free(struct listener **listener_r)
     assert(listener != nullptr);
     assert(listener->fd.IsDefined());
 
-    listener_event_del(listener);
     delete listener;
 }
 
