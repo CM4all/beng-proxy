@@ -13,7 +13,6 @@
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
-#include "net/ServerSocket.hxx"
 
 #include <daemon/log.h>
 
@@ -49,6 +48,11 @@ const struct listener_handler lb_listener_handler = {
  *
  */
 
+lb_listener::lb_listener(struct lb_instance &_instance,
+                         const struct lb_listener_config &_config)
+    :ServerSocket(lb_listener_handler, this),
+     instance(_instance), config(_config) {}
+
 bool
 lb_listener::Setup(Error &error)
 {
@@ -64,29 +68,13 @@ lb_listener::Setup(Error &error)
 
     const struct address_envelope *envelope = config.envelope;
 
-    listener = new ServerSocket(lb_listener_handler, this);
-    return listener->Listen(envelope->address.sa_family, SOCK_STREAM, 0,
-                            SocketAddress(&envelope->address,
-                                          envelope->length),
-                            error);
+    return Listen(envelope->address.sa_family, SOCK_STREAM, 0,
+                  SocketAddress(&envelope->address, envelope->length),
+                  error);
 }
 
 lb_listener::~lb_listener()
 {
-    delete listener;
-
     if (ssl_factory != nullptr)
         ssl_factory_free(ssl_factory);
-}
-
-void
-lb_listener_event_add(struct lb_listener *listener)
-{
-    listener->listener->AddEvent();
-}
-
-void
-lb_listener_event_del(struct lb_listener *listener)
-{
-    listener->listener->RemoveEvent();
 }

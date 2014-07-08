@@ -75,14 +75,14 @@ void
 all_listeners_event_add(struct lb_instance *instance)
 {
     for (auto &listener : instance->listeners)
-        lb_listener_event_add(&listener);
+        listener.AddEvent();
 }
 
 void
 all_listeners_event_del(struct lb_instance *instance)
 {
     for (auto &listener : instance->listeners)
-        lb_listener_event_del(&listener);
+        listener.RemoveEvent();
 }
 
 bool
