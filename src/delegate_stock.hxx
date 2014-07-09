@@ -7,7 +7,7 @@
 #ifndef BENG_DELEGATE_STOCK_HXX
 #define BENG_DELEGATE_STOCK_HXX
 
-#include "stock.h"
+#include "stock.hxx"
 
 struct pool;
 struct child_options;

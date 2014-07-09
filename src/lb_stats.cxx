@@ -7,7 +7,7 @@
 #include "lb_stats.hxx"
 #include "lb_instance.hxx"
 #include "hstock.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "beng-proxy/control.h"
 
 void

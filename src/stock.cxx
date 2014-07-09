@@ -4,10 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "stock.h"
+#include "stock.hxx"
 #include "async.h"
 #include "pool.h"
 #include "defer_event.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -15,7 +16,7 @@
 
 struct stock {
     struct pool *pool;
-    const struct stock_class *class;
+    const struct stock_class *cls;
     void *class_ctx;
     const char *uri;
 
@@ -94,8 +95,8 @@ destroy_item(struct stock *stock, struct stock_item *item);
 static void
 stock_check_empty(struct stock *stock)
 {
-    if (stock_is_empty(stock) && stock->handler != NULL &&
-        stock->handler->empty != NULL)
+    if (stock_is_empty(stock) && stock->handler != nullptr &&
+        stock->handler->empty != nullptr)
         stock->handler->empty(stock, stock->uri, stock->handler_ctx);
 }
 
@@ -103,7 +104,7 @@ static void
 stock_empty_event_callback(gcc_unused int fd, short event gcc_unused,
                            void *ctx)
 {
-    struct stock *stock = ctx;
+    struct stock *stock = (struct stock *)ctx;
 
     stock_check_empty(stock);
 }
@@ -111,8 +112,8 @@ stock_empty_event_callback(gcc_unused int fd, short event gcc_unused,
 static void
 stock_schedule_check_empty(struct stock *stock)
 {
-    if (stock_is_empty(stock) && stock->handler != NULL &&
-        stock->handler->empty != NULL)
+    if (stock_is_empty(stock) && stock->handler != nullptr &&
+        stock->handler->empty != nullptr)
         defer_event_add(&stock->empty_event);
 }
 
@@ -140,7 +141,7 @@ static void
 stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
                              void *ctx)
 {
-    struct stock *stock = ctx;
+    struct stock *stock = (struct stock *)ctx;
 
     assert(stock->num_idle > stock->max_idle);
 
@@ -174,7 +175,7 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 static struct stock_waiting *
 async_to_waiting(struct async_operation *ao)
 {
-    return (struct stock_waiting*)(((char*)ao) - offsetof(struct stock_waiting, operation));
+    return ContainerCast(ao, struct stock_waiting, operation);
 }
 
 static void
@@ -253,7 +254,7 @@ static void
 stock_retry_event_callback(gcc_unused int fd, gcc_unused short event,
                            void *ctx)
 {
-    struct stock *stock = ctx;
+    struct stock *stock = (struct stock *)ctx;
 
     stock_retry_waiting(stock);
 }
@@ -308,7 +309,7 @@ static void
 stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
                            void *ctx)
 {
-    struct stock *stock = ctx;
+    struct stock *stock = (struct stock *)ctx;
 
     daemon_log(6, "stock_clear_event_callback(%p, '%s') may_clear=%d\n",
                (const void *)stock, stock->uri, stock->may_clear);
@@ -328,28 +329,27 @@ stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
  */
 
 struct stock *
-stock_new(struct pool *pool, const struct stock_class *class,
+stock_new(struct pool *pool, const struct stock_class *cls,
           void *class_ctx, const char *uri, unsigned limit, unsigned max_idle,
           const struct stock_handler *handler, void *handler_ctx)
 {
-    struct stock *stock;
-
-    assert(pool != NULL);
-    assert(class != NULL);
-    assert(class->item_size > sizeof(struct stock_item));
-    assert(class->pool != NULL);
-    assert(class->create != NULL);
-    assert(class->borrow != NULL);
-    assert(class->release != NULL);
-    assert(class->destroy != NULL);
+    assert(pool != nullptr);
+    assert(cls != nullptr);
+    assert(cls->item_size > sizeof(struct stock_item));
+    assert(cls->pool != nullptr);
+    assert(cls->create != nullptr);
+    assert(cls->borrow != nullptr);
+    assert(cls->release != nullptr);
+    assert(cls->destroy != nullptr);
     assert(max_idle > 0);
 
     pool = pool_new_linear(pool, "stock", 1024);
-    stock = p_malloc(pool, sizeof(*stock));
+
+    auto stock = NewFromPool<struct stock>(pool);
     stock->pool = pool;
-    stock->class = class;
+    stock->cls = cls;
     stock->class_ctx = class_ctx;
-    stock->uri = uri == NULL ? NULL : p_strdup(pool, uri);
+    stock->uri = uri == nullptr ? nullptr : p_strdup(pool, uri);
     stock->limit = limit;
     stock->max_idle = max_idle;
     stock->handler = handler;
@@ -383,7 +383,7 @@ stock_new(struct pool *pool, const struct stock_class *class,
 static void
 stock_item_free(struct stock *stock, struct stock_item *item)
 {
-    assert(pool_contains(item->pool, item, stock->class->item_size));
+    assert(pool_contains(item->pool, item, stock->cls->item_size));
 
     if (item->pool == stock->pool)
         p_free(stock->pool, item);
@@ -396,16 +396,16 @@ stock_item_free(struct stock *stock, struct stock_item *item)
 static void
 destroy_item(struct stock *stock, struct stock_item *item)
 {
-    assert(pool_contains(item->pool, item, stock->class->item_size));
+    assert(pool_contains(item->pool, item, stock->cls->item_size));
 
-    stock->class->destroy(stock->class_ctx, item);
+    stock->cls->destroy(stock->class_ctx, item);
     stock_item_free(stock, item);
 }
 
 void
 stock_free(struct stock *stock)
 {
-    assert(stock != NULL);
+    assert(stock != nullptr);
     assert(stock->num_busy == 0);
     assert(stock->num_create == 0);
 
@@ -425,7 +425,7 @@ stock_free(struct stock *stock)
 const char *
 stock_get_uri(struct stock *stock)
 {
-    assert(stock != NULL);
+    assert(stock != nullptr);
 
     return stock->uri;
 }
@@ -460,7 +460,7 @@ stock_get_idle(struct stock *stock,
         if (stock->num_idle == stock->max_idle)
             stock_unschedule_cleanup(stock);
 
-        if (stock->class->borrow(stock->class_ctx, item)) {
+        if (stock->cls->borrow(stock->class_ctx, item)) {
 #ifndef NDEBUG
             item->is_idle = false;
             list_add(&item->siblings, &stock->busy);
@@ -484,11 +484,10 @@ stock_get_create(struct stock *stock, struct pool *caller_pool, void *info,
                  struct async_operation_ref *async_ref)
 {
     struct pool *pool;
-    struct stock_item *item;
 
-    pool = stock->class->pool(stock->class_ctx, stock->pool, stock->uri);
+    pool = stock->cls->pool(stock->class_ctx, stock->pool, stock->uri);
 
-    item = p_malloc(pool, stock->class->item_size);
+    auto item = (struct stock_item *)p_malloc(pool, stock->cls->item_size);
     item->stock = stock;
     item->pool = pool;
 #ifndef NDEBUG
@@ -499,7 +498,7 @@ stock_get_create(struct stock *stock, struct pool *caller_pool, void *info,
 
     ++stock->num_create;
 
-    stock->class->create(stock->class_ctx, item, stock->uri, info,
+    stock->cls->create(stock->class_ctx, item, stock->uri, info,
                          caller_pool, async_ref);
 }
 
@@ -508,7 +507,7 @@ stock_get(struct stock *stock, struct pool *caller_pool, void *info,
           const struct stock_get_handler *handler, void *handler_ctx,
           struct async_operation_ref *async_ref)
 {
-    assert(stock != NULL);
+    assert(stock != nullptr);
 
     stock->may_clear = false;
 
@@ -518,8 +517,7 @@ stock_get(struct stock *stock, struct pool *caller_pool, void *info,
     if (stock->limit > 0 &&
         stock->num_busy + stock->num_create >= stock->limit) {
         /* item limit reached: wait for an item to return */
-        struct stock_waiting *waiting =
-            p_malloc(caller_pool, sizeof(*waiting));
+        auto waiting = NewFromPool<struct stock_waiting>(caller_pool);
 
         pool_ref(caller_pool);
         waiting->pool = caller_pool;
@@ -550,7 +548,7 @@ struct now_data {
 static void
 stock_now_ready(struct stock_item *item, void *ctx)
 {
-    struct now_data *data = ctx;
+    struct now_data *data = (struct now_data *)ctx;
 
 #ifndef NDEBUG
     data->created = true;
@@ -562,13 +560,13 @@ stock_now_ready(struct stock_item *item, void *ctx)
 static void
 stock_now_error(GError *error, void *ctx)
 {
-    struct now_data *data = ctx;
+    struct now_data *data = (struct now_data *)ctx;
 
 #ifndef NDEBUG
     data->created = true;
 #endif
 
-    data->item = NULL;
+    data->item = nullptr;
     data->error = error;
 }
 
@@ -594,7 +592,7 @@ stock_get_now(struct stock *stock, struct pool *pool, void *info,
     stock_get(stock, pool, info, &stock_now_handler, &data, &async_ref);
     assert(data.created);
 
-    if (data.item == NULL)
+    if (data.item == nullptr)
         g_propagate_error(error_r, data.error);
 
     return data.item;
@@ -621,7 +619,7 @@ stock_item_failed(struct stock_item *item, GError *error)
 {
     struct stock *stock = item->stock;
 
-    assert(error != NULL);
+    assert(error != nullptr);
     assert(stock->num_create > 0);
     --stock->num_create;
 
@@ -649,18 +647,16 @@ stock_item_aborted(struct stock_item *item)
 void
 stock_put(struct stock_item *item, bool destroy)
 {
-    struct stock *stock;
-
-    assert(item != NULL);
+    assert(item != nullptr);
     assert(!item->is_idle);
 
-    stock = item->stock;
+    struct stock *stock = item->stock;
     stock->may_clear = false;
 
     assert(stock->num_busy > 0);
 
-    assert(stock != NULL);
-    assert(pool_contains(item->pool, item, stock->class->item_size));
+    assert(stock != nullptr);
+    assert(pool_contains(item->pool, item, stock->cls->item_size));
 
 #ifndef NDEBUG
     list_remove(&item->siblings);
@@ -681,7 +677,7 @@ stock_put(struct stock_item *item, bool destroy)
         list_add(&item->siblings, &stock->idle);
         ++stock->num_idle;
 
-        stock->class->release(stock->class_ctx, item);
+        stock->cls->release(stock->class_ctx, item);
     }
 
     stock_schedule_retry_waiting(stock);
@@ -690,17 +686,15 @@ stock_put(struct stock_item *item, bool destroy)
 void
 stock_del(struct stock_item *item)
 {
-    struct stock *stock;
-
-    assert(item != NULL);
+    assert(item != nullptr);
     assert(item->is_idle);
 
-    stock = item->stock;
+    struct stock *stock = item->stock;
 
-    assert(stock != NULL);
+    assert(stock != nullptr);
     assert(stock->num_idle > 0);
     assert(!list_empty(&stock->idle));
-    assert(pool_contains(item->pool, item, stock->class->item_size));
+    assert(pool_contains(item->pool, item, stock->cls->item_size));
     assert(item->siblings.next->prev == &item->siblings);
     assert(item->siblings.prev->next == &item->siblings);
 

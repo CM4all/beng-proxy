@@ -6,7 +6,7 @@
 
 #include "tstock.hxx"
 #include "translate_client.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "tcp_stock.hxx"
 #include "lease.h"
 #include "pool.h"

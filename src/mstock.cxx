@@ -7,7 +7,7 @@
 
 #include "mstock.h"
 #include "hstock.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "hashmap.hxx"
 #include "pool.h"
 #include "lease.h"

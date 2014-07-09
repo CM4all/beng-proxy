@@ -8,8 +8,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_STOCK_H
-#define __BENG_STOCK_H
+#ifndef BENG_PROXY_STOCK_HXX
+#define BENG_PROXY_STOCK_HXX
 
 #include <inline/compiler.h>
 #include <inline/list.h>
@@ -64,10 +64,6 @@ struct stock_class {
 struct stock_stats {
     unsigned busy, idle;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct stock;
 
@@ -129,9 +125,5 @@ stock_put(struct stock_item *item, bool destroy);
 
 void
 stock_del(struct stock_item *item);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

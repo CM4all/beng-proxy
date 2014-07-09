@@ -10,7 +10,7 @@
 #include "fd_util.h"
 #include "direct.h"
 #include "pipe_stock.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "gerrno.h"
 #include "util/Cast.hxx"
 

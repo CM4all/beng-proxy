@@ -11,7 +11,7 @@
 #include "header_writer.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "async.h"
 #include "growing_buffer.hxx"
 #include "lease.h"

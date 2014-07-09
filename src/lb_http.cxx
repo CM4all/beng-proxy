@@ -23,7 +23,7 @@
 #include "lease.h"
 #include "header_writer.hxx"
 #include "http_response.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "clock.h"
 #include "access-log.h"
 #include "strmap.hxx"

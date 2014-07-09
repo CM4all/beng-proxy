@@ -10,7 +10,7 @@
 #include "lease.h"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "abort-close.h"
 #include "address_list.hxx"
 #include "pool.h"

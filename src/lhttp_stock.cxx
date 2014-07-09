@@ -10,7 +10,7 @@
 #include "lhttp_address.hxx"
 #include "hstock.hxx"
 #include "mstock.h"
-#include "stock.h"
+#include "stock.hxx"
 #include "lease.h"
 #include "child_stock.hxx"
 #include "child_manager.h"

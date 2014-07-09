@@ -12,7 +12,7 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "hstock.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "global.h"
 #include "failure.hxx"
 #include "bulldog.h"

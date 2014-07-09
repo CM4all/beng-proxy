@@ -9,7 +9,7 @@
 #include "was_quark.h"
 #include "was_launch.hxx"
 #include "hstock.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "child_manager.h"
 #include "async.h"
 #include "client-socket.h"

@@ -11,7 +11,7 @@
 #include "http_response.hxx"
 #include "lease.h"
 #include "tcp_stock.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "abort-close.h"
 #include "child_options.hxx"
 #include "istream.h"

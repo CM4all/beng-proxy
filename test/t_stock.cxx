@@ -1,4 +1,4 @@
-#include "stock.h"
+#include "stock.hxx"
 #include "async.h"
 #include "pool.h"
 

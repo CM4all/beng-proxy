@@ -5,7 +5,7 @@
  */
 
 #include "pipe_stock.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "fd_util.h"
 #include "pool.h"
 #include "gerrno.h"

@@ -8,7 +8,7 @@
 #include "delegate_glue.hxx"
 #include "delegate_client.hxx"
 #include "delegate_stock.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "lease.h"
 #include "pool.h"
 

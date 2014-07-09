@@ -7,7 +7,7 @@
 #include "bp_stats.hxx"
 #include "bp_instance.hxx"
 #include "hstock.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "cache.hxx"
 #include "tcache.hxx"
 #include "http_cache.h"

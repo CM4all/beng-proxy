@@ -8,7 +8,7 @@
 #include "http_response.hxx"
 #include "http_address.hxx"
 #include "header_writer.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "async.h"
 #include "ajp_client.hxx"
 #include "strmap.hxx"

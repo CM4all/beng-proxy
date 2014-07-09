@@ -11,7 +11,7 @@
 #include "translate_client.hxx"
 #include "http_quark.h"
 #include "cache.hxx"
-#include "stock.h"
+#include "stock.hxx"
 #include "uri_base.hxx"
 #include "uri-verify.h"
 #include "uri_escape.hxx"
