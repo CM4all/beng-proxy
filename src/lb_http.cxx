@@ -26,7 +26,7 @@
 #include "stock.h"
 #include "clock.h"
 #include "access-log.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
 #include "abort-close.h"

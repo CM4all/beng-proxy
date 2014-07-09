@@ -12,7 +12,7 @@
 #include "growing_buffer.hxx"
 #include "serialize.hxx"
 #include "sink_header.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "tpool.h"
 #include "background.hxx"
 #include "istream_gb.hxx"

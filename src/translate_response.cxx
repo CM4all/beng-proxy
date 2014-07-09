@@ -7,7 +7,7 @@
 #include "translate_response.hxx"
 #include "pool.h"
 #include "pbuffer.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "widget_view.hxx"
 #include "uri_base.hxx"
 #include "uri_escape.hxx"

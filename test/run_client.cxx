@@ -1,5 +1,5 @@
 #include "ajp_client.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "header_writer.hxx"
 #include "http_client.hxx"
 #include "http_response.hxx"

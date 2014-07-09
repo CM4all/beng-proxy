@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_HTTP_UTIL_HXX
 #define BENG_PROXY_HTTP_UTIL_HXX
 
-#include "strmap.h"
+#include "strmap.hxx"
 
 struct pool;
 struct strref;

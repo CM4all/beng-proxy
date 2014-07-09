@@ -8,7 +8,7 @@
 #include "nfs_cache.hxx"
 #include "http_response.hxx"
 #include "static_headers.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "pool.h"
 
 #include <sys/stat.h>

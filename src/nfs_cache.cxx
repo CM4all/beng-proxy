@@ -9,7 +9,7 @@
 #include "nfs_client.hxx"
 #include "istream_nfs.hxx"
 #include "istream.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "pool.h"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"

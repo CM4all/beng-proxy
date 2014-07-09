@@ -8,7 +8,7 @@
 #include "css_parser.hxx"
 #include "css_util.hxx"
 #include "penv.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "widget.h"
 #include "widget-lookup.h"
 #include "growing_buffer.hxx"

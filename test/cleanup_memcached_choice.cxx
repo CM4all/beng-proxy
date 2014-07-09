@@ -9,7 +9,7 @@
 #include "lease.h"
 #include "async.h"
 #include "strref.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "tpool.h"
 #include "sink-impl.h"
 #include "direct.h"

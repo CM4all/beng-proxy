@@ -10,7 +10,7 @@
 #include "delegate_glue.hxx"
 #include "static_headers.hxx"
 #include "http_response.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "istream.h"
 #include "istream_file.h"
 #include "gerrno.h"

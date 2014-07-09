@@ -1,6 +1,6 @@
 #include "header_forward.hxx"
 #include "tpool.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "product.h"
 
 #include <glib.h>

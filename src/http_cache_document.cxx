@@ -5,7 +5,7 @@
  */
 
 #include "http_cache_internal.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 
 http_cache_document::http_cache_document(struct pool &pool,
                                          const struct http_cache_info &_info,

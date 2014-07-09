@@ -8,7 +8,7 @@
 #include "cache.hxx"
 #include "http_request.hxx"
 #include "header_writer.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "http_response.hxx"
 #include "date.h"
 #include "strref.h"

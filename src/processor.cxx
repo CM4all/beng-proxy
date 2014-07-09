@@ -29,7 +29,7 @@
 #include "expansible-buffer.h"
 #include "escape_class.h"
 #include "escape_html.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "css_syntax.hxx"
 #include "css_util.hxx"
 #include "istream.h"

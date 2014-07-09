@@ -19,7 +19,7 @@
 #include "http_response.hxx"
 #include "strref-pool.h"
 #include "strref2.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "http_response.hxx"
 #include "istream.h"
 #include "istream_pause.h"

@@ -4,22 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_STRMAP_H
-#define __BENG_STRMAP_H
+#ifndef BENG_PROXY_STRMAP_HXX
+#define BENG_PROXY_STRMAP_HXX
 
 #include <inline/compiler.h>
-
-#include <stddef.h>
 
 struct pool;
 
 struct strmap_pair {
     const char *key, *value;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct strmap *gcc_malloc
 strmap_new(struct pool *pool, unsigned capacity);
@@ -61,30 +55,26 @@ const struct strmap_pair *
 strmap_next(struct strmap *map);
 
 /**
- * This variation of strmap_remove() allows the caller to pass map=NULL.
+ * This variation of strmap_remove() allows the caller to pass map=nullptr.
  */
 static inline const char *
 strmap_remove_checked(struct strmap *map, const char *key)
 {
-    return map != NULL
+    return map != nullptr
         ? strmap_remove(map, key)
-        : NULL;
+        : nullptr;
 }
 
 /**
- * This variation of strmap_get() allows the caller to pass map=NULL.
+ * This variation of strmap_get() allows the caller to pass map=nullptr.
  */
 gcc_pure
 static inline const char *
 strmap_get_checked(const struct strmap *map, const char *key)
 {
-    return map != NULL
+    return map != nullptr
         ? strmap_get(map, key)
-        : NULL;
+        : nullptr;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

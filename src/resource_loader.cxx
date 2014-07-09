@@ -24,7 +24,7 @@
 #include "pipe_filter.hxx"
 #include "delegate_request.hxx"
 #include "strutil.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "istream.h"
 #include "ssl_client.h"
 #include "gerrno.h"

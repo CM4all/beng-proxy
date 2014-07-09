@@ -8,7 +8,7 @@
 #include "cookie_string.hxx"
 #include "strref2.h"
 #include "strref-pool.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "pool.h"
 
 #include <inline/list.h>

@@ -16,7 +16,7 @@
 #include "tpool.h"
 #include "escape_class.h"
 #include "istream-escape.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "istream.h"
 #include "session.hxx"
 #include "inline_widget.hxx"

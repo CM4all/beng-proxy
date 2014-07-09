@@ -32,7 +32,7 @@
 #include "uri_escape.hxx"
 #include "uri-verify.h"
 #include "strutil.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "istream.h"
 #include "translate_client.hxx"
 #include "ua_classification.h"

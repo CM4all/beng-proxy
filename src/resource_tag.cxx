@@ -5,7 +5,7 @@
  */
 
 #include "resource_tag.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "http_util.hxx"
 #include "pool.h"
 

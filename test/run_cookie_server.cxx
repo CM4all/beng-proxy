@@ -1,5 +1,5 @@
 #include "cookie_server.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "pool.h"
 
 #include <stdio.h>

@@ -15,7 +15,7 @@
 #include "direct.h"
 #include "fd_util.h"
 #include "istream.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "strutil.h"
 #include "fb_pool.h"
 

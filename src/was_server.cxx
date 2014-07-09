@@ -16,7 +16,7 @@
 #include "istream-internal.h"
 #include "fifo-buffer.h"
 #include "fd-util.h"
-#include "strmap.h"
+#include "strmap.hxx"
 
 #include <was/protocol.h>
 #include <daemon/log.h>

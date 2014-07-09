@@ -10,7 +10,7 @@
 #include "lb_instance.hxx"
 #include "lb_http.hxx"
 #include "lb_tcp.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "http_server.hxx"
 #include "drop.hxx"
 #include "ssl_filter.hxx"

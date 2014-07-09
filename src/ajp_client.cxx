@@ -22,7 +22,7 @@
 #include "uri-verify.h"
 #include "direct.h"
 #include "fd-util.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 

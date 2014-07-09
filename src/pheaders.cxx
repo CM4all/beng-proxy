@@ -6,7 +6,7 @@
 
 #include "pheaders.hxx"
 #include "header_copy.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 
 struct strmap *
 processor_header_forward(struct pool *pool, struct strmap *headers)

@@ -9,7 +9,7 @@
 #include "http_address.hxx"
 #include "http_util.hxx"
 #include "strref2.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "date.h"
 #include "tpool.h"
 #include "resource_address.hxx"

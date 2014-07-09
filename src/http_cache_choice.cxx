@@ -10,7 +10,7 @@
 #include "memcached_client.hxx"
 #include "tpool.h"
 #include "format.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "serialize.hxx"
 #include "growing_buffer.hxx"
 #include "sink_buffer.hxx"

@@ -9,7 +9,7 @@
 #include "ajp_serialize.hxx"
 #include "serialize.hxx"
 #include "growing_buffer.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "strutil.h"
 #include "pool.h"
 #include "util/ConstBuffer.hxx"

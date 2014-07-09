@@ -9,7 +9,7 @@
 #include "fork.h"
 #include "format.h"
 #include "stopwatch.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "pool.h"
 #include "istream.h"
 #include "sigutil.h"

@@ -12,7 +12,7 @@
 #include "header_parser.hxx"
 #include "strutil.h"
 #include "stopwatch.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "http_response.hxx"
 #include "fb_pool.h"
 #include "util/Cast.hxx"

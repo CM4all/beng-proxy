@@ -1,6 +1,6 @@
 #include "cookie_server.hxx"
 #include "header_writer.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "pool.h"
 
 #include <assert.h>

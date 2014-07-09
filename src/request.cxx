@@ -8,7 +8,7 @@
 #include "request.hxx"
 #include "http_server.hxx"
 #include "args.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "istream.h"
 
 bool

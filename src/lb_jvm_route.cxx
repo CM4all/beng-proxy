@@ -6,7 +6,7 @@
 
 #include "lb_jvm_route.hxx"
 #include "lb_config.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "tpool.h"
 #include "cookie_server.hxx"
 

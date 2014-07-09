@@ -18,7 +18,7 @@
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "fd-util.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 

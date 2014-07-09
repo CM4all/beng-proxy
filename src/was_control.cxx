@@ -9,7 +9,7 @@
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "pevent.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

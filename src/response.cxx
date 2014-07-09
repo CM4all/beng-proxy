@@ -26,7 +26,7 @@
 #include "errdoc.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "pheaders.hxx"
 #include "processor.h"
 #include "css_processor.h"

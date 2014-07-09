@@ -1,7 +1,7 @@
 #include "tpool.h"
 #include "header_parser.hxx"
 #include "growing_buffer.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 
 #include <unistd.h>
 #include <stdio.h>

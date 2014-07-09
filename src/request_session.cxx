@@ -15,7 +15,7 @@
 #include "bot.h"
 #include "dpool.h"
 #include "pbuffer.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "crc.h"
 #include "format.h"
 #include "expiry.h"

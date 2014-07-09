@@ -28,7 +28,7 @@
 #include "global.h"
 #include "resource_tag.hxx"
 #include "uri-extract.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "istream.h"
 #include "util/Cast.hxx"
 

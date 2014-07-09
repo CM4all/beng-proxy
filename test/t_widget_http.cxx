@@ -3,7 +3,7 @@
 #include "widget_http.hxx"
 #include "widget-lookup.h"
 #include "http_address.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "header_parser.hxx"
 #include "tpool.h"

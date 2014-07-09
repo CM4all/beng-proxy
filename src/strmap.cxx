@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "strmap.h"
+#include "strmap.hxx"
 #include "hashmap.h"
 #include "pool.h"
 
@@ -22,7 +22,7 @@ struct strmap {
 struct strmap *
 strmap_new(struct pool *pool, unsigned capacity)
 {
-    struct strmap *map = p_malloc(pool, sizeof(*map));
+    auto map = NewFromPool<struct strmap>(pool);
     assert(capacity > 1);
 
     map->hashmap = hashmap_new(pool, capacity);
@@ -37,7 +37,7 @@ strmap_dup(struct pool *pool, struct strmap *src, unsigned capacity)
     const struct strmap_pair *pair;
 
     strmap_rewind(src);
-    while ((pair = strmap_next(src)) != NULL)
+    while ((pair = strmap_next(src)) != nullptr)
         strmap_add(dest, p_strdup(pool, pair->key),
                    p_strdup(pool, pair->value));
 
@@ -94,7 +94,7 @@ strmap_lookup_next(const struct strmap_pair *pair)
 void
 strmap_rewind(struct strmap *map)
 {
-    assert(map != NULL);
+    assert(map != nullptr);
 
     hashmap_rewind(map->hashmap);
 }
@@ -102,7 +102,7 @@ strmap_rewind(struct strmap *map)
 const struct strmap_pair *
 strmap_next(struct strmap *map)
 {
-    assert(map != NULL);
+    assert(map != nullptr);
 
     return (const struct strmap_pair*)hashmap_next(map->hashmap);
 }

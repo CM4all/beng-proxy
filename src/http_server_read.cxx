@@ -9,7 +9,7 @@
 #include "http_server_internal.hxx"
 #include "http_util.hxx"
 #include "strutil.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "buffered_io.h"
 #include "header_parser.hxx"
 #include "istream-internal.h"

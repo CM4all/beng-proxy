@@ -7,7 +7,7 @@
 #include "header_forward.hxx"
 #include "header_copy.hxx"
 #include "header_writer.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "session.hxx"
 #include "cookie_client.hxx"
 #include "cookie_server.hxx"

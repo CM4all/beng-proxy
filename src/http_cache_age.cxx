@@ -6,7 +6,7 @@
 
 #include "http_cache_age.hxx"
 #include "http_cache_internal.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 
 #include <string.h>
 

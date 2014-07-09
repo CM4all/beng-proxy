@@ -5,7 +5,7 @@
  */
 
 #include "static_headers.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "format.h"
 #include "date.h"
 #include "pool.h"

@@ -3,7 +3,7 @@
 #include "cache.hxx"
 #include "http_cache_heap.hxx"
 #include "http_cache_internal.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "rubber.hxx"
 
 #include <inline/compiler.h>

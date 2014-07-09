@@ -22,7 +22,7 @@
 #include "fd-util.h"
 #include "fd_util.h"
 #include "stopwatch.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "completion.h"
 #include "filtered_socket.hxx"
 #include "util/Cast.hxx"

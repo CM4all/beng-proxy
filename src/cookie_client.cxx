@@ -10,7 +10,7 @@
 #include "strref2.h"
 #include "strref-pool.h"
 #include "strref-dpool.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "http_string.hxx"
 #include "tpool.h"
 #include "dpool.h"

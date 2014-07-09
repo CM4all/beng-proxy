@@ -5,7 +5,7 @@
  */
 
 #include "header_copy.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 
 #include <assert.h>
 #include <string.h>

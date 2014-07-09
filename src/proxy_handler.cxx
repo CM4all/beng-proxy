@@ -16,7 +16,7 @@
 #include "cookie_client.hxx"
 #include "uri-extract.h"
 #include "strref-pool.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "http_response.hxx"
 #include "istream-impl.h"
 #include "lhttp_address.hxx"

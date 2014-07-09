@@ -7,7 +7,7 @@
 #include "penv.hxx"
 #include "session.hxx"
 #include "istream.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "istream.h"
 
 processor_env::processor_env(struct pool *_pool,

@@ -11,7 +11,7 @@
 #include "stock.h"
 #include "async.h"
 #include "ajp_client.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "lease.h"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"

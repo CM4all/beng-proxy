@@ -8,7 +8,7 @@
 #include "static_headers.hxx"
 #include "http_response.hxx"
 #include "gerrno.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "istream.h"
 #include "istream_file.h"
 #include "pool.h"

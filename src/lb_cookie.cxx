@@ -5,7 +5,7 @@
  */
 
 #include "lb_cookie.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "tpool.h"
 #include "cookie_server.hxx"
 

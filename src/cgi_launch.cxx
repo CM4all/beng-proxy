@@ -9,7 +9,7 @@
 #include "istream.h"
 #include "fork.h"
 #include "strutil.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "sigutil.h"
 #include "product.h"
 #include "exec.hxx"

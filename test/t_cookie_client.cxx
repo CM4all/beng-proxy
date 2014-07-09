@@ -4,7 +4,7 @@
 #include "tpool.h"
 #include "shm.h"
 #include "dpool.h"
-#include "strmap.h"
+#include "strmap.hxx"
 
 #include <assert.h>
 #include <stdio.h>

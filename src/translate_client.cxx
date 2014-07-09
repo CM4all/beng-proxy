@@ -22,7 +22,7 @@
 #include "nfs_address.hxx"
 #include "mount_list.h"
 #include "strutil.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "stopwatch.h"
 #include "beng-proxy/translation.h"
 #include "gerrno.h"

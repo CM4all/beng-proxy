@@ -3,7 +3,7 @@
 #include "lease.h"
 #include "async.h"
 #include "fd-util.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "tpool.h"
 #include "serialize.hxx"
 #include "sink_buffer.hxx"

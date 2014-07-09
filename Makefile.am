@@ -237,7 +237,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/stock.c src/stock.h \
 	src/hstock.c src/hstock.h \
 	src/mstock.cxx src/hstock.h \
-	src/strmap.c src/strmap.h \
+	src/strmap.cxx src/strmap.hxx \
 	src/strref-dpool.h \
 	src/strref-pool.h \
 	src/suffix_registry.cxx src/suffix_registry.hxx \
@@ -400,7 +400,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/bulldog.c \
 	src/child_manager.c src/child_manager.h \
 	src/hashmap.c \
-	src/strmap.c \
+	src/strmap.cxx \
 	src/cache.cxx \
 	src/http_body.cxx \
 	src/http_server.cxx \
@@ -837,7 +837,7 @@ test_run_was_SOURCES = test/run_was.cxx \
 	src/was_launch.cxx src/was_client.cxx \
 	src/was_control.cxx src/was_input.cxx src/was_output.cxx \
 	src/exec.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/fifo-buffer.c src/buffered_io.c \
 	src/cleanup_timer.c \
 	src/direct.c \
@@ -856,7 +856,7 @@ test_was_mirror_SOURCES = test/was_mirror.cxx \
 	src/was_control.cxx src/was_input.cxx src/was_output.cxx \
 	src/fifo-buffer.c \
 	src/buffered_io.c \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c
 test_was_mirror_LDADD = $(AM_LDADD) \
@@ -885,7 +885,7 @@ test_t_cache_LDADD = $(AM_LDADD) \
 test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.cxx \
 	src/translate_response.cxx \
 	src/exec.cxx \
-	src/hashmap.c src/strmap.c \
+	src/hashmap.c src/strmap.cxx \
 	src/widget_view.cxx \
 	src/strset.c \
 	src/uri-relative.c src/uri-edit.c src/uri_escape.cxx \
@@ -906,7 +906,7 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/header_forward.cxx src/header_writer.cxx \
 	src/header_copy.cxx \
 	src/http_string.cxx \
-	src/hashmap.c src/strmap.c \
+	src/hashmap.c src/strmap.cxx \
 	src/growing_buffer.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_server.cxx \
@@ -1051,7 +1051,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_string.cxx \
 	src/http_string.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/strset.c \
 	src/penv.cxx src/processor.cxx \
 	src/text_processor.cxx \
@@ -1123,7 +1123,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/tpool.c \
 	src/fifo-buffer.c src/buffered_io.c src/growing_buffer.cxx \
 	src/header_parser.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/fd_util.c src/fd-util.c \
 	src/child_manager.c src/child_manager.h \
 	src/crash.c \
@@ -1144,7 +1144,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/address.c \
 	src/fifo-buffer.c \
 	src/buffered_io.c \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
 	src/pipe-stock.c src/stock.c \
@@ -1171,7 +1171,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/fifo-buffer.c \
 	src/duplex.c \
 	src/buffered_io.c \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
 	src/pipe-stock.c src/stock.c \
@@ -1197,7 +1197,7 @@ test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/cleanup_timer.c \
 	$(STOPWATCH_SRC) \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/growing_buffer.cxx src/fifo-buffer.c \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
@@ -1225,7 +1225,7 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/sink_rubber.cxx \
 	src/exec.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/fifo-buffer.c src/header_parser.cxx \
 	src/growing_buffer.cxx \
 	src/istream_rubber.cxx \
@@ -1255,7 +1255,7 @@ test_t_cookie_client_SOURCES = test/t_cookie_client.cxx \
 	src/cookie_string.cxx \
 	src/http_string.cxx \
 	src/header_writer.cxx src/growing_buffer.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c
 test_t_cookie_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1267,7 +1267,7 @@ test_t_cookie_server_SOURCES = test/t_cookie_server.cxx \
 	src/cookie_server.cxx \
 	src/cookie_string.cxx \
 	src/http_string.cxx \
-	src/strmap.c src/hashmap.c
+	src/strmap.cxx src/hashmap.c
 test_t_cookie_server_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libutil.a \
@@ -1329,7 +1329,7 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/widget_init.cxx src/widget_view.cxx src/transformation.cxx \
 	src/sink-gstring.c \
 	src/args.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/uri-relative.c src/uri-edit.c src/uri_escape.cxx \
 	src/uri-extract.c src/uri_base.cxx
 test_t_rewrite_uri_LDADD = $(AM_LDADD) \
@@ -1347,7 +1347,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/translate_response.cxx \
 	src/widget_view.cxx \
 	src/exec.cxx \
-	src/hashmap.c src/strmap.c src/abort-unref.c \
+	src/hashmap.c src/strmap.cxx src/abort-unref.c \
 	src/strset.c \
 	src/uri-relative.c src/uri_escape.cxx src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
@@ -1376,7 +1376,7 @@ test_t_wembed_SOURCES = test/t_wembed.cxx \
 	src/inline_widget.cxx \
 	src/istream-escape.c src/istream-html-escape.c \
 	src/fifo-buffer.c \
-	src/hashmap.c src/strmap.c src/strset.c \
+	src/hashmap.c src/strmap.cxx src/strset.c \
 	src/http_util.cxx \
 	src/uri_escape.cxx \
 	src/global.c
@@ -1403,7 +1403,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/cookie_string.cxx \
 	src/header_parser.cxx src/header_forward.cxx src/header_writer.cxx \
 	src/header_copy.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/strset.c \
 	src/growing_buffer.cxx src/fifo-buffer.c \
 	src/http_string.cxx src/http_util.cxx \
@@ -1436,7 +1436,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
 	src/tcp_stock.cxx src/client-socket.c \
 	src/fd_util.c src/fd-util.c \
-	src/stock.c src/hstock.c src/hashmap.c src/strmap.c \
+	src/stock.c src/hstock.c src/hashmap.c src/strmap.cxx \
 	src/strset.c \
 	src/abort-unref.c \
 	src/uri-edit.c src/uri_base.cxx \
@@ -1467,7 +1467,7 @@ test_run_cookie_client_SOURCES = test/run_cookie_client.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx src/http_string.cxx \
 	src/cookie_string.cxx \
 	src/header_writer.cxx src/growing_buffer.cxx \
-	src/tpool.c src/strmap.c src/hashmap.c \
+	src/tpool.c src/strmap.cxx src/hashmap.c \
 	src/shm.c src/dpool.c src/dstring.c \
 	src/clock.c
 test_run_cookie_client_LDADD = $(AM_LDADD) \
@@ -1479,7 +1479,7 @@ test_run_cookie_client_LDADD = $(AM_LDADD) \
 test_run_cookie_server_SOURCES = test/run_cookie_server.cxx \
 	src/cookie_server.cxx src/http_string.cxx \
 	src/cookie_string.cxx \
-	src/strmap.c src/hashmap.c
+	src/strmap.cxx src/hashmap.c
 test_run_cookie_server_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libutil.a \
@@ -1487,7 +1487,7 @@ test_run_cookie_server_LDADD = $(AM_LDADD) \
 
 test_run_header_parser_SOURCES = test/run_header_parser.cxx \
 	src/header_parser.cxx src/growing_buffer.cxx src/fifo-buffer.c \
-	src/tpool.c src/strmap.c \
+	src/tpool.c src/strmap.cxx \
 	src/hashmap.c
 test_run_header_parser_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1521,7 +1521,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
 	src/uri_base.cxx src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/uri_escape.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/strset.c \
 	src/growing_buffer.cxx src/fifo-buffer.c \
 	src/tpool.c \
@@ -1557,7 +1557,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/exec.cxx \
 	src/uri-relative.c src/uri-edit.c src/uri_base.cxx \
 	src/uri_escape.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/strset.c \
 	src/growing_buffer.cxx src/fifo-buffer.c \
 	src/tpool.c \
@@ -1611,7 +1611,7 @@ if HAVE_LIBNFS
 
 test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/nfs_client.cxx src/istream_nfs.cxx \
-	src/hashmap.c src/strmap.c \
+	src/hashmap.c src/strmap.cxx \
 	src/sink_fd.c \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c \
@@ -1633,7 +1633,7 @@ test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/cleanup_timer.c \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/header_parser.cxx \
 	src/growing_buffer.cxx src/istream_gb.cxx \
 	src/fd-util.c src/fd_util.c \
@@ -1656,7 +1656,7 @@ test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	src/serialize.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/growing_buffer.cxx src/fd-util.c src/fd_util.c \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/istream_gb.cxx \
 	src/istream-ajp-body.c \
 	src/direct.c 
@@ -1687,7 +1687,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/cleanup_timer.c \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/growing_buffer.cxx src/fd-util.c src/fd_util.c \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/istream_gb.cxx \
 	src/istream-ajp-body.c \
 	src/stock.c src/pipe-stock.c \
@@ -1718,7 +1718,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/address_list.cxx \
 	src/istream_unlock.cxx \
 	src/growing_buffer.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/cache.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/tpool.c \
@@ -1754,7 +1754,7 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 	src/direct.c \
 	src/serialize.cxx \
 	src/growing_buffer.cxx src/sink_buffer.cxx \
-	src/strmap.c src/hashmap.c \
+	src/strmap.cxx src/hashmap.c \
 	src/tpool.c
 test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a \
@@ -1780,7 +1780,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/sink_buffer.cxx \
 	src/growing_buffer.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
-	src/hashmap.c src/strmap.c \
+	src/hashmap.c src/strmap.cxx \
 	src/tpool.c \
 	src/clock.c \
 	$(STOPWATCH_SRC)

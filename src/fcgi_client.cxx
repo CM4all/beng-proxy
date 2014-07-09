@@ -20,7 +20,7 @@
 #include "pevent.h"
 #include "direct.h"
 #include "fd-util.h"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "product.h"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"

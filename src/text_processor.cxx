@@ -5,7 +5,7 @@
  */
 
 #include "text_processor.hxx"
-#include "strmap.h"
+#include "strmap.hxx"
 #include "istream.h"
 #include "widget.h"
 #include "widget_class.hxx"
