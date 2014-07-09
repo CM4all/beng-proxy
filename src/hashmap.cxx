@@ -4,9 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "hashmap.h"
+#include "hashmap.hxx"
 #include "pool.h"
 #include "util/djbhash.h"
+#include "util/Cast.hxx"
 
 #include <inline/compiler.h>
 
@@ -29,7 +30,8 @@ struct hashmap {
 struct hashmap *
 hashmap_new(struct pool *pool, unsigned capacity)
 {
-    struct hashmap *map = p_calloc(pool, sizeof(*map) + sizeof(map->slots) * (capacity - 1));
+    struct hashmap *map = (struct hashmap *)
+        p_calloc(pool, sizeof(*map) + sizeof(map->slots) * (capacity - 1));
     assert(capacity > 1);
     map->pool = pool;
     map->capacity = capacity;
@@ -40,7 +42,7 @@ bool
 hashmap_is_empty(const struct hashmap *map)
 {
     for (unsigned i = 0; i < map->capacity; ++i)
-        if (map->slots[i].pair.key != NULL)
+        if (map->slots[i].pair.key != nullptr)
             return false;
 
     return true;
@@ -50,8 +52,8 @@ gcc_pure
 static struct slot *
 hashmap_get_slot(struct hashmap *map, const char *key)
 {
-    assert(map != NULL);
-    assert(key != NULL);
+    assert(map != nullptr);
+    assert(key != nullptr);
 
     return &map->slots[djb_hash_string(key) % map->capacity];
 }
@@ -60,8 +62,8 @@ gcc_pure
 static const struct slot *
 hashmap_get_slot_c(const struct hashmap *map, const char *key)
 {
-    assert(map != NULL);
-    assert(key != NULL);
+    assert(map != nullptr);
+    assert(key != nullptr);
 
     return &map->slots[djb_hash_string(key) % map->capacity];
 }
@@ -69,12 +71,12 @@ hashmap_get_slot_c(const struct hashmap *map, const char *key)
 void
 hashmap_add(struct hashmap *map, const char *key, void *value)
 {
-    assert(value != NULL);
+    assert(value != nullptr);
 
     struct slot *slot = hashmap_get_slot(map, key);
-    if (slot->pair.key != NULL) {
+    if (slot->pair.key != nullptr) {
         struct slot *prev = slot;
-        slot = p_malloc(map->pool, sizeof(*slot));
+        slot = NewFromPool<struct slot>(map->pool);
         slot->next = prev->next;
         prev->next = slot;
     }
@@ -87,7 +89,7 @@ static inline void *
 hashmap_overwrite(struct slot *slot, const char *key, void *value)
 {
     void *old = slot->pair.value;
-    assert(old != NULL);
+    assert(old != nullptr);
 
     slot->pair.key = key;
     slot->pair.value = value;
@@ -98,45 +100,45 @@ hashmap_overwrite(struct slot *slot, const char *key, void *value)
 void *
 hashmap_set(struct hashmap *map, const char *key, void *value)
 {
-    assert(key != NULL);
-    assert(value != NULL);
+    assert(key != nullptr);
+    assert(value != nullptr);
 
     struct slot *prev = hashmap_get_slot(map, key);
-    if (prev->pair.key == NULL) {
+    if (prev->pair.key == nullptr) {
         prev->pair.key = key;
         prev->pair.value = value;
-        return NULL;
+        return nullptr;
     } else if (strcmp(prev->pair.key, key) == 0)
         return hashmap_overwrite(prev, key, value);
 
-    for (struct slot *slot = prev->next; slot != NULL; slot = slot->next) {
-        assert(slot->pair.key != NULL);
-        assert(slot->pair.value != NULL);
+    for (struct slot *slot = prev->next; slot != nullptr; slot = slot->next) {
+        assert(slot->pair.key != nullptr);
+        assert(slot->pair.value != nullptr);
 
         if (strcmp(slot->pair.key, key) == 0)
             return hashmap_overwrite(slot, key, value);
     }
 
-    struct slot *slot = p_malloc(map->pool, sizeof(*slot));
+    auto slot = NewFromPool<struct slot>(map->pool);
     slot->next = prev->next;
     slot->pair.key = key;
     slot->pair.value = value;
     prev->next = slot;
-    return NULL;
+    return nullptr;
 }
 
 void *
 hashmap_remove(struct hashmap *map, const char *key)
 {
     struct slot *prev = hashmap_get_slot(map, key);
-    if (prev->pair.key == NULL)
-        return NULL;
+    if (prev->pair.key == nullptr)
+        return nullptr;
 
     if (strcmp(prev->pair.key, key) == 0) {
         void *value = prev->pair.value;
-        if (prev->next == NULL) {
-            prev->pair.key = NULL;
-            prev->pair.value = NULL;
+        if (prev->next == nullptr) {
+            prev->pair.key = nullptr;
+            prev->pair.value = nullptr;
         } else {
             struct slot *slot = prev->next;
             *prev = *slot;
@@ -145,10 +147,10 @@ hashmap_remove(struct hashmap *map, const char *key)
         return value;
     }
 
-    for (struct slot *slot = prev->next; slot != NULL;
+    for (struct slot *slot = prev->next; slot != nullptr;
          prev = slot, slot = prev->next) {
-        assert(slot->pair.key != NULL);
-        assert(slot->pair.value != NULL);
+        assert(slot->pair.key != nullptr);
+        assert(slot->pair.value != nullptr);
 
         if (strcmp(slot->pair.key, key) == 0) {
             void *value = slot->pair.value;
@@ -158,20 +160,20 @@ hashmap_remove(struct hashmap *map, const char *key)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 bool
 hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
 {
     struct slot *prev = hashmap_get_slot(map, key);
-    if (prev->pair.key == NULL)
+    if (prev->pair.key == nullptr)
         return false;
 
     if (prev->pair.value == value) {
-        if (prev->next == NULL) {
-            prev->pair.key = NULL;
-            prev->pair.value = NULL;
+        if (prev->next == nullptr) {
+            prev->pair.key = nullptr;
+            prev->pair.value = nullptr;
         } else {
             struct slot *slot = prev->next;
             *prev = *slot;
@@ -180,10 +182,10 @@ hashmap_remove_value(struct hashmap *map, const char *key, const void *value)
         return true;
     }
 
-    for (struct slot *slot = prev->next; slot != NULL;
+    for (struct slot *slot = prev->next; slot != nullptr;
          prev = slot, slot = prev->next) {
-        assert(slot->pair.key != NULL);
-        assert(slot->pair.value != NULL);
+        assert(slot->pair.key != nullptr);
+        assert(slot->pair.value != nullptr);
 
         if (slot->pair.value == value) {
             prev->next = slot->next;
@@ -214,12 +216,12 @@ hashmap_remove_match(struct hashmap *map, const char *key,
     struct slot *const base_slot = hashmap_get_slot(map, key);
 
     struct slot *prev = base_slot;
-    if (prev->pair.key == NULL)
+    if (prev->pair.key == nullptr)
         return;
 
-    for (struct slot *slot = prev->next; slot != NULL; slot = prev->next) {
-        assert(slot->pair.key != NULL);
-        assert(slot->pair.value != NULL);
+    for (struct slot *slot = prev->next; slot != nullptr; slot = prev->next) {
+        assert(slot->pair.key != nullptr);
+        assert(slot->pair.value != nullptr);
 
         if (strcmp(slot->pair.key, key) == 0 && match(slot->pair.value, ctx)) {
             prev->next = slot->next;
@@ -230,9 +232,9 @@ hashmap_remove_match(struct hashmap *map, const char *key,
 
     prev = base_slot;
     if (strcmp(prev->pair.key, key) == 0 && match(prev->pair.value, ctx)) {
-        if (prev->next == NULL) {
-            prev->pair.key = NULL;
-            prev->pair.value = NULL;
+        if (prev->next == nullptr) {
+            prev->pair.key = nullptr;
+            prev->pair.value = nullptr;
         } else {
             struct slot *slot = prev->next;
             *prev = *slot;
@@ -254,8 +256,8 @@ hashmap_remove_all_match(struct hashmap *map,
 
         /* check the slot chain */
 
-        while ((slot = *slot_r) != NULL) {
-            assert(slot->pair.key != NULL);
+        while ((slot = *slot_r) != nullptr) {
+            assert(slot->pair.key != nullptr);
 
             if (match(slot->pair.key, slot->pair.value, ctx)) {
                 *slot_r = slot->next;
@@ -268,14 +270,14 @@ hashmap_remove_all_match(struct hashmap *map,
         /* check the base slot */
 
         slot = &map->slots[i];
-        if (slot->pair.key != NULL &&
+        if (slot->pair.key != nullptr &&
             match(slot->pair.key, slot->pair.value, ctx)) {
             struct slot *next = slot->next;
 
-            if (next == NULL) {
+            if (next == nullptr) {
                 /* clear the base slot */
-                slot->pair.key = NULL;
-                slot->pair.value = NULL;
+                slot->pair.key = nullptr;
+                slot->pair.value = nullptr;
             } else {
                 /* overwrite the base slot with the first chained
                    item */
@@ -294,93 +296,93 @@ void *
 hashmap_get(const struct hashmap *map, const char *key)
 {
     const struct slot *slot = hashmap_get_slot_c(map, key);
-    if (slot->pair.key != NULL && strcmp(slot->pair.key, key) == 0) {
-        assert(slot->pair.value != NULL);
+    if (slot->pair.key != nullptr && strcmp(slot->pair.key, key) == 0) {
+        assert(slot->pair.value != nullptr);
         return slot->pair.value;
     }
 
-    while (slot->next != NULL) {
+    while (slot->next != nullptr) {
         slot = slot->next;
-        assert(slot->pair.key != NULL);
-        assert(slot->pair.value != NULL);
+        assert(slot->pair.key != nullptr);
+        assert(slot->pair.value != nullptr);
 
         if (strcmp(slot->pair.key, key) == 0)
             return slot->pair.value;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 const struct hashmap_pair *
 hashmap_lookup_first(const struct hashmap *map, const char *key)
 {
-    assert(key != NULL);
+    assert(key != nullptr);
 
     const struct slot *slot = hashmap_get_slot_c(map, key);
-    if (slot->pair.key == NULL)
-        return NULL;
+    if (slot->pair.key == nullptr)
+        return nullptr;
 
     do {
-        assert(slot->pair.key != NULL);
-        assert(slot->pair.value != NULL);
+        assert(slot->pair.key != nullptr);
+        assert(slot->pair.value != nullptr);
 
         if (strcmp(slot->pair.key, key) == 0)
             return &slot->pair;
 
         slot = slot->next;
-    } while (slot != NULL);
+    } while (slot != nullptr);
 
-    return NULL;
+    return nullptr;
 }
 
 static const struct slot *
 pair_to_slot(const struct hashmap_pair *pair)
 {
-    return (const struct slot*)(((const char*)pair) - offsetof(struct slot, pair));
+    return ContainerCast(pair, const struct slot, pair);
 }
 
 const struct hashmap_pair *
 hashmap_lookup_next(const struct hashmap_pair *prev)
 {
-    assert(prev != NULL);
-    assert(prev->key != NULL);
-    assert(prev->value != NULL);
+    assert(prev != nullptr);
+    assert(prev->key != nullptr);
+    assert(prev->value != nullptr);
 
     const char *key = prev->key;
 
     for (const struct slot *slot = pair_to_slot(prev)->next;
-         slot != NULL; slot = slot->next) {
-        assert(slot->pair.key != NULL);
-        assert(slot->pair.value != NULL);
+         slot != nullptr; slot = slot->next) {
+        assert(slot->pair.key != nullptr);
+        assert(slot->pair.value != nullptr);
 
         if (strcmp(slot->pair.key, key) == 0)
             return &slot->pair;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 void
 hashmap_rewind(struct hashmap *map)
 {
-    map->current_slot = NULL;
+    map->current_slot = nullptr;
     map->next_slot = 0;
 }
 
 const struct hashmap_pair *
 hashmap_next(struct hashmap *map)
 {
-    if (map->current_slot != NULL && map->current_slot->next != NULL) {
+    if (map->current_slot != nullptr && map->current_slot->next != nullptr) {
         map->current_slot = map->current_slot->next;
         return &map->current_slot->pair;
     }
 
     while (map->next_slot < map->capacity &&
-           map->slots[map->next_slot].pair.key == NULL)
+           map->slots[map->next_slot].pair.key == nullptr)
         ++map->next_slot;
 
     if (map->next_slot >= map->capacity)
-        return NULL;
+        return nullptr;
 
     map->current_slot = &map->slots[map->next_slot++];
     return &map->current_slot->pair;

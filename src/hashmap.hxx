@@ -4,12 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_HASHMAP_H
-#define __BENG_HASHMAP_H
+#ifndef BENG_PROXY_HASHMAP_HXX
+#define BENG_PROXY_HASHMAP_HXX
 
 #include <inline/compiler.h>
-
-#include <stdbool.h>
 
 struct pool;
 
@@ -17,10 +15,6 @@ struct hashmap_pair {
     const char *key;
     void *value;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct hashmap *gcc_malloc
 hashmap_new(struct pool *pool, unsigned capacity);
@@ -101,9 +95,5 @@ hashmap_rewind(struct hashmap *map);
 
 const struct hashmap_pair *
 hashmap_next(struct hashmap *map);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

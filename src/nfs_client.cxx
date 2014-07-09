@@ -7,7 +7,7 @@
 #include "nfs_client.hxx"
 #include "pool.h"
 #include "async.h"
-#include "hashmap.h"
+#include "hashmap.hxx"
 #include "gerrno.h"
 #include "fd_util.h"
 #include "util/Cast.hxx"

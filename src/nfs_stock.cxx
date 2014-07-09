@@ -6,7 +6,7 @@
 
 #include "nfs_stock.hxx"
 #include "nfs_client.hxx"
-#include "hashmap.h"
+#include "hashmap.hxx"
 #include "pool.h"
 #include "async.h"
 #include "util/Cast.hxx"

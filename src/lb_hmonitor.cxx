@@ -12,7 +12,7 @@
 #include "lb_config.hxx"
 #include "pool.h"
 #include "tpool.h"
-#include "hashmap.h"
+#include "hashmap.hxx"
 #include "address_envelope.hxx"
 #include "address_edit.h"
 

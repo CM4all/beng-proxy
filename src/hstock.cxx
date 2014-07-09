@@ -7,7 +7,7 @@
 
 #include "hstock.hxx"
 #include "stock.h"
-#include "hashmap.h"
+#include "hashmap.hxx"
 #include "pool.h"
 
 #include <daemon/log.h>

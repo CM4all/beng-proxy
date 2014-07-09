@@ -1,4 +1,4 @@
-#include "hashmap.h"
+#include "hashmap.hxx"
 #include "pool.h"
 
 #include <assert.h>
