@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CHILD_SOCKET_H
-#define BENG_PROXY_CHILD_SOCKET_H
+#ifndef BENG_PROXY_CHILD_SOCKET_HXX
+#define BENG_PROXY_CHILD_SOCKET_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -15,10 +15,6 @@
 struct child_socket {
     struct sockaddr_un address;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @return the listener socket descriptor or -1 on error
@@ -43,9 +39,5 @@ child_socket_address_length(const struct child_socket *cs)
 
 int
 child_socket_connect(const struct child_socket *cs, GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

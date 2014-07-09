@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "child_socket.h"
+#include "child_socket.hxx"
 #include "fd_util.h"
 #include "gerrno.h"
 

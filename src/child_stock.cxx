@@ -5,7 +5,7 @@
  */
 
 #include "child_stock.hxx"
-#include "child_socket.h"
+#include "child_socket.hxx"
 #include "hstock.h"
 #include "stock.h"
 #include "child_manager.h"
