@@ -1,4 +1,3 @@
-
 /*
  * Launch and manage WAS child processes.
  *
@@ -12,7 +11,7 @@
 #include "stock.hxx"
 #include "child_manager.h"
 #include "async.h"
-#include "client-socket.h"
+#include "net/ConnectSocket.hxx"
 #include "child_options.hxx"
 #include "pevent.h"
 #include "util/ConstBuffer.hxx"

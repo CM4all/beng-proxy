@@ -8,11 +8,11 @@
 #include "hstock.hxx"
 #include "stock.hxx"
 #include "async.h"
-#include "client-socket.h"
 #include "address_list.hxx"
 #include "address_envelope.hxx"
 #include "pevent.h"
 #include "gerrno.h"
+#include "net/ConnectSocket.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -162,7 +162,7 @@ tcp_stock_socket_error(GError *error, void *ctx)
     stock_item_failed(&connection->stock_item, error);
 }
 
-static const struct client_socket_handler tcp_stock_socket_handler = {
+static constexpr ConnectSocketHandler tcp_stock_socket_handler = {
     .success = tcp_stock_socket_success,
     .timeout = tcp_stock_socket_timeout,
     .error = tcp_stock_socket_error,
@@ -203,13 +203,13 @@ tcp_stock_create(void *ctx, struct stock_item *item,
     connection->uri = uri;
 
     connection->domain = request->address->sa_family;
-    client_socket_new(caller_pool, connection->domain, SOCK_STREAM, 0,
+    client_socket_new(*caller_pool, connection->domain, SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address, request->bind_address_size,
                       request->address, request->address_length,
                       request->timeout,
-                      &tcp_stock_socket_handler, connection,
-                      &connection->client_socket);
+                      tcp_stock_socket_handler, connection,
+                      connection->client_socket);
 }
 
 static bool

@@ -1,5 +1,5 @@
 #include "client_balancer.hxx"
-#include "client-socket.h"
+#include "net/ConnectSocket.hxx"
 #include "pool.h"
 #include "async.h"
 #include "balancer.hxx"
@@ -69,7 +69,7 @@ my_socket_error(GError *error, void *_ctx)
     balancer_free(ctx->balancer);
 }
 
-static const struct client_socket_handler my_socket_handler = {
+static constexpr ConnectSocketHandler my_socket_handler = {
     .success = my_socket_success,
     .timeout = my_socket_timeout,
     .error = my_socket_error,

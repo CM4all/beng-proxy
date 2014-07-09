@@ -5,13 +5,15 @@
  */
 
 #include "client_balancer.hxx"
-#include "client-socket.h"
+#include "net/ConnectSocket.hxx"
 #include "address_envelope.hxx"
 #include "address_list.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
 #include "async.h"
 #include "pool.h"
+
+#include <glib.h>
 
 struct client_balancer_request {
     struct pool *pool;
@@ -40,13 +42,13 @@ struct client_balancer_request {
     const struct address_list *address_list;
     const struct address_envelope *current_address;
 
-    const struct client_socket_handler *handler;
+    const ConnectSocketHandler *handler;
     void *handler_ctx;
 
     struct async_operation_ref *async_ref;
 };
 
-extern const struct client_socket_handler client_balancer_socket_handler;
+extern const ConnectSocketHandler client_balancer_socket_handler;
 
 static void
 client_balancer_next(struct client_balancer_request *request)
@@ -56,14 +58,14 @@ client_balancer_next(struct client_balancer_request *request)
                      request->session_sticky);
     request->current_address = &envelope;
 
-    client_socket_new(request->pool,
+    client_socket_new(*request->pool,
                       envelope.address.sa_family, SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address, request->bind_address_size,
                       &envelope.address, envelope.length,
                       request->timeout,
-                      &client_balancer_socket_handler, request,
-                      request->async_ref);
+                      client_balancer_socket_handler, request,
+                      *request->async_ref);
 }
 
 /*
@@ -120,7 +122,7 @@ client_balancer_socket_error(GError *error, void *ctx)
         request->handler->error(error, request->handler_ctx);
 }
 
-const struct client_socket_handler client_balancer_socket_handler = {
+const ConnectSocketHandler client_balancer_socket_handler = {
     .success = client_balancer_socket_success,
     .timeout = client_balancer_socket_timeout,
     .error = client_balancer_socket_error,
@@ -139,7 +141,7 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         unsigned session_sticky,
                         const struct address_list *address_list,
                         unsigned timeout,
-                        const struct client_socket_handler *handler, void *ctx,
+                        const ConnectSocketHandler *handler, void *ctx,
                         struct async_operation_ref *async_ref)
 {
     auto request = NewFromPool<struct client_balancer_request>(pool);

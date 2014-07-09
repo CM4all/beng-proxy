@@ -4,14 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "client-socket.h"
+#include "ConnectSocket.hxx"
 #include "async.h"
 #include "fd_util.h"
 #include "stopwatch.h"
 #include "pevent.h"
 #include "gerrno.h"
+#include "util/Cast.hxx"
 
-#include <inline/poison.h>
 #include <socket/util.h>
 
 #ifdef ENABLE_STOPWATCH
@@ -32,18 +32,22 @@
 #define IP_TRANSPARENT 19
 #endif
 
-struct client_socket {
+struct ConnectSocket {
     struct async_operation operation;
-    struct pool *pool;
+    struct pool *const pool;
     int fd;
     struct event event;
 
-    const struct client_socket_handler *handler;
-    void *handler_ctx;
+    const ConnectSocketHandler *const handler;
+    void *const handler_ctx;
 
 #ifdef ENABLE_STOPWATCH
     struct stopwatch *stopwatch;
 #endif
+
+    ConnectSocket(struct pool &_pool, int _fd,
+                  const ConnectSocketHandler &_handler, void *ctx)
+        :pool(&_pool), fd(_fd), handler(&_handler), handler_ctx(ctx) {}
 };
 
 
@@ -52,18 +56,18 @@ struct client_socket {
  *
  */
 
-static struct client_socket *
+static ConnectSocket *
 async_to_client_socket(struct async_operation *ao)
 {
-    return (struct client_socket*)(((char*)ao) - offsetof(struct client_socket, operation));
+    return ContainerCast(ao, ConnectSocket, operation);
 }
 
 static void
 client_socket_abort(struct async_operation *ao)
 {
-    struct client_socket *client_socket = async_to_client_socket(ao);
+    ConnectSocket *client_socket = async_to_client_socket(ao);
 
-    assert(client_socket != NULL);
+    assert(client_socket != nullptr);
     assert(client_socket->fd >= 0);
 
     p_event_del(&client_socket->event, client_socket->pool);
@@ -84,7 +88,7 @@ static const struct async_operation_class client_socket_operation = {
 static void
 client_socket_event_callback(int fd, short event gcc_unused, void *ctx)
 {
-    struct client_socket *client_socket = ctx;
+    ConnectSocket *client_socket = (ConnectSocket *)ctx;
     int ret;
     int s_err = 0;
     socklen_t s_err_size = sizeof(s_err);
@@ -132,28 +136,27 @@ client_socket_event_callback(int fd, short event gcc_unused, void *ctx)
  */
 
 void
-client_socket_new(struct pool *pool,
+client_socket_new(struct pool &pool,
                   int domain, int type, int protocol,
                   bool ip_transparent,
                   const struct sockaddr *bind_addr, size_t bind_addrlen,
                   const struct sockaddr *addr, size_t addrlen,
                   unsigned timeout,
-                  const struct client_socket_handler *handler, void *ctx,
-                  struct async_operation_ref *async_ref)
+                  const ConnectSocketHandler &handler, void *ctx,
+                  struct async_operation_ref &async_ref)
 {
     int fd, ret;
 #ifdef ENABLE_STOPWATCH
     struct stopwatch *stopwatch;
 #endif
 
-    assert(addr != NULL);
+    assert(addr != nullptr);
     assert(addrlen > 0);
-    assert(handler != NULL);
 
     fd = socket_cloexec_nonblock(domain, type, protocol);
     if (fd < 0) {
         GError *error = new_error_errno();
-        handler->error(error, ctx);
+        handler.error(error, ctx);
         return;
     }
 
@@ -161,7 +164,7 @@ client_socket_new(struct pool *pool,
         !socket_set_nodelay(fd, true)) {
         GError *error = new_error_errno();
         close(fd);
-        handler->error(error, ctx);
+        handler.error(error, ctx);
         return;
     }
 
@@ -170,20 +173,20 @@ client_socket_new(struct pool *pool,
         if (setsockopt(fd, SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
             GError *error = new_error_errno_msg("Failed to set IP_TRANSPARENT");
             close(fd);
-            handler->error(error, ctx);
+            handler.error(error, ctx);
             return;
         }
     }
 
-    if (bind_addr != NULL && bind(fd, bind_addr, bind_addrlen) < 0) {
+    if (bind_addr != nullptr && bind(fd, bind_addr, bind_addrlen) < 0) {
         GError *error = new_error_errno();
         close(fd);
-        handler->error(error, ctx);
+        handler.error(error, ctx);
         return;
     }
 
 #ifdef ENABLE_STOPWATCH
-    stopwatch = stopwatch_sockaddr_new(pool, addr, addrlen, NULL);
+    stopwatch = stopwatch_sockaddr_new(&pool, addr, addrlen, nullptr);
 #endif
 
     ret = connect(fd, addr, addrlen);
@@ -193,27 +196,24 @@ client_socket_new(struct pool *pool,
         stopwatch_dump(stopwatch);
 #endif
 
-        handler->success(fd, ctx);
+        handler.success(fd, ctx);
     } else if (errno == EINPROGRESS) {
-        struct client_socket *client_socket;
         const struct timeval tv = {
             .tv_sec = timeout,
             .tv_usec = 0,
         };
 
-        pool_ref(pool);
-        client_socket = p_malloc(pool, sizeof(*client_socket));
-        client_socket->pool = pool;
-        client_socket->fd = fd;
-        client_socket->handler = handler;
-        client_socket->handler_ctx = ctx;
+        pool_ref(&pool);
+        auto client_socket =
+            NewFromPool<ConnectSocket>(&pool, pool, fd,
+                                       handler, ctx);
 
 #ifdef ENABLE_STOPWATCH
         client_socket->stopwatch = stopwatch;
 #endif
 
         async_init(&client_socket->operation, &client_socket_operation);
-        async_ref_set(async_ref, &client_socket->operation);
+        async_ref_set(&async_ref, &client_socket->operation);
 
         event_set(&client_socket->event, client_socket->fd,
                   EV_WRITE|EV_TIMEOUT, client_socket_event_callback,
@@ -223,6 +223,6 @@ client_socket_new(struct pool *pool,
     } else {
         GError *error = new_error_errno();
         close(fd);
-        handler->error(error, ctx);
+        handler.error(error, ctx);
     }
 }

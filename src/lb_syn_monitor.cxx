@@ -7,8 +7,8 @@
 #include "lb_syn_monitor.hxx"
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
-#include "client-socket.h"
 #include "pool.h"
+#include "net/ConnectSocket.hxx"
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -42,7 +42,7 @@ syn_monitor_error(GError *error, void *ctx)
     handler.Error(error);
 }
 
-static const struct client_socket_handler syn_monitor_handler = {
+static constexpr ConnectSocketHandler syn_monitor_handler = {
     .success = syn_monitor_success,
     .timeout = syn_monitor_timeout,
     .error = syn_monitor_error,
@@ -64,13 +64,13 @@ syn_monitor_run(struct pool *pool,
         ? config->timeout
         : 30;
 
-    client_socket_new(pool, address->sa_family, SOCK_STREAM, 0,
+    client_socket_new(*pool, address->sa_family, SOCK_STREAM, 0,
                       false,
                       nullptr, 0,
                       address, address_length,
                       timeout,
-                      &syn_monitor_handler, &handler,
-                      async_ref);
+                      syn_monitor_handler, &handler,
+                      *async_ref);
 }
 
 const struct lb_monitor_class syn_monitor_class = {

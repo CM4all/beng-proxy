@@ -119,7 +119,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/child_manager.c src/child_manager.h \
 	src/child_socket.cxx src/child_socket.hxx \
 	src/child_stock.cxx src/child_stock.hxx \
-	src/client-socket.c src/client-socket.h \
 	src/config.hxx \
 	src/bp_listener.cxx src/bp_listener.hxx \
 	src/bp_connection.cxx src/bp_connection.hxx \
@@ -396,7 +395,6 @@ src_cm4all_beng_lb_SOURCES = \
 	src/address_edit.h \
 	src/address_edit.c \
 	src/address_sticky.c src/address_sticky.h \
-	src/client-socket.c \
 	src/client_balancer.cxx src/client_balancer.hxx \
 	src/bulldog.c \
 	src/child_manager.c src/child_manager.h \
@@ -635,6 +633,7 @@ libpool_a_SOURCES = \
 
 libnet_a_SOURCES = \
 	src/net/Error.cxx src/net/Error.hxx \
+	src/net/ConnectSocket.cxx src/net/ConnectSocket.hxx \
 	src/net/ServerSocket.cxx src/net/ServerSocket.hxx \
 	src/net/StaticSocketAddress.cxx src/net/StaticSocketAddress.hxx \
 	src/net/SocketDescriptor.cxx src/net/SocketDescriptor.hxx
@@ -1435,7 +1434,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/translate_client.cxx src/tstock.cxx src/growing_buffer.cxx \
 	src/translate_response.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
-	src/tcp_stock.cxx src/client-socket.c \
+	src/tcp_stock.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/stock.cxx src/hstock.cxx src/hashmap.cxx src/strmap.cxx \
 	src/strset.c \
@@ -1450,6 +1449,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	$(STOPWATCH_SRC)
 test_request_translation_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libnet.a \
 	libraddress.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1527,8 +1527,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
 	src/header_writer.cxx src/args.cxx src/buffered_io.c \
-	src/tcp_stock.cxx src/stock.cxx src/hstock.cxx \
-	src/client-socket.c src/fd_util.c \
+	src/fd_util.c \
 	src/header_parser.cxx \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
@@ -1563,8 +1562,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
 	src/header_writer.cxx src/args.cxx src/buffered_io.c \
-	src/tcp_stock.cxx src/stock.cxx src/hstock.cxx \
-	src/client-socket.c src/fd_util.c \
+	src/fd_util.c \
 	src/header_parser.cxx \
 	src/widget_request.cxx \
 	src/widget_view.cxx \
@@ -1588,7 +1586,6 @@ test_t_processor_LDADD = $(AM_LDADD) \
 test_run_client_balancer_SOURCES = test/run_client_balancer.cxx \
 	src/address_list.cxx \
 	src/client_balancer.cxx \
-	src/client-socket.c \
 	src/balancer.cxx \
 	src/failure.cxx \
 	src/bulldog.c \
@@ -1600,6 +1597,7 @@ test_run_client_balancer_SOURCES = test/run_client_balancer.cxx \
 	$(STOPWATCH_SRC)
 test_run_client_balancer_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libnet.a \
 	libutil.a \
 	$(LIBEVENT_LIBS) \
 	-lrt \
@@ -1677,7 +1675,6 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/thread_socket_filter.cxx \
 	src/thread_pool.cxx src/thread_queue.cxx src/thread_worker.cxx \
 	src/notify.cxx \
-	src/client-socket.c \
 	src/http_client.cxx src/http_body.cxx \
 	src/header_writer.cxx src/header_parser.cxx \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
@@ -1697,6 +1694,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/direct.c 
 test_run_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libnet.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBEVENT_LIBS) \
 	$(LIBSSL_LIBS) \
@@ -1770,7 +1768,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/direct.c \
 	src/cache.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
-	src/client-socket.c src/fd_util.c src/fd-util.c \
+	src/fd_util.c src/fd-util.c \
 	src/stock.cxx src/hstock.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/memcached_stock.cxx \
@@ -1786,6 +1784,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	$(STOPWATCH_SRC)
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
+	libnet.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)

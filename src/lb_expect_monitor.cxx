@@ -7,10 +7,10 @@
 #include "lb_expect_monitor.hxx"
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
-#include "client-socket.h"
 #include "pool.h"
 #include "async.h"
 #include "gerrno.h"
+#include "net/ConnectSocket.hxx"
 #include "util/Cast.hxx"
 
 #include <event.h>
@@ -174,7 +174,7 @@ expect_monitor_error(GError *error, void *ctx)
     delete expect;
 }
 
-static const struct client_socket_handler expect_monitor_handler = {
+static constexpr ConnectSocketHandler expect_monitor_handler = {
     .success = expect_monitor_success,
     .timeout = expect_monitor_timeout,
     .error = expect_monitor_error,
@@ -201,13 +201,13 @@ expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
            ? config->timeout
            : 30);
 
-    client_socket_new(pool, address->sa_family, SOCK_STREAM, 0,
+    client_socket_new(*pool, address->sa_family, SOCK_STREAM, 0,
                       false,
                       NULL, 0,
                       address, address_length,
                       connect_timeout,
-                      &expect_monitor_handler, expect,
-                      async_ref);
+                      expect_monitor_handler, expect,
+                      *async_ref);
 }
 
 const struct lb_monitor_class expect_monitor_class = {

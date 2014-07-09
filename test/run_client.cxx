@@ -12,11 +12,11 @@
 #include "sink_fd.h"
 #include "direct.h"
 #include "shutdown_listener.h"
-#include "client-socket.h"
 #include "tpool.h"
 #include "fb_pool.h"
 #include "ssl_init.hxx"
 #include "ssl_client.h"
+#include "net/ConnectSocket.hxx"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -328,7 +328,7 @@ my_client_socket_error(GError *error, void *ctx)
     shutdown_listener_deinit(&c->shutdown_listener);
 }
 
-static const struct client_socket_handler my_client_socket_handler = {
+static constexpr ConnectSocketHandler my_client_socket_handler = {
     .success = my_client_socket_success,
     .timeout = my_client_socket_timeout,
     .error = my_client_socket_error,
@@ -415,14 +415,14 @@ main(int argc, char **argv)
 
     /* connect */
 
-    client_socket_new(pool,
+    client_socket_new(*pool,
                       ai->ai_family, ai->ai_socktype, ai->ai_protocol,
                       false,
                       nullptr, 0,
                       ai->ai_addr, ai->ai_addrlen,
                       30,
-                      &my_client_socket_handler, &ctx,
-                      &ctx.async_ref);
+                      my_client_socket_handler, &ctx,
+                      ctx.async_ref);
     freeaddrinfo(ai);
 
     /* run test */

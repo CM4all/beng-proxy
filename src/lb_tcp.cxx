@@ -8,10 +8,10 @@
 #include "filtered_socket.hxx"
 #include "address_list.hxx"
 #include "client_balancer.hxx"
-#include "client-socket.h"
 #include "address_sticky.h"
 #include "async.h"
 #include "direct.h"
+#include "net/ConnectSocket.hxx"
 
 #include <unistd.h>
 #include <errno.h>
@@ -348,7 +348,7 @@ lb_tcp_client_socket_error(GError *error, void *ctx)
     tcp->handler->gerror("Connect error", error, tcp->handler_ctx);
 }
 
-static const struct client_socket_handler lb_tcp_client_socket_handler = {
+static constexpr ConnectSocketHandler lb_tcp_client_socket_handler = {
     .success = lb_tcp_client_socket_success,
     .timeout = lb_tcp_client_socket_timeout,
     .error = lb_tcp_client_socket_error,
