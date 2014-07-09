@@ -12,6 +12,7 @@
 #include "pipe-stock.h"
 #include "stock.h"
 #include "gerrno.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -33,8 +34,8 @@ struct istream_pipe {
 static void
 pipe_close(struct istream_pipe *p)
 {
-    if (p->stock != NULL) {
-        if (p->stock_item != NULL)
+    if (p->stock != nullptr) {
+        if (p->stock_item != nullptr)
             /* reuse the pipe only if it's empty */
             stock_put(p->stock_item, p->piped > 0);
     } else {
@@ -55,7 +56,7 @@ pipe_abort(struct istream_pipe *p, GError *error)
 {
     pipe_close(p);
 
-    if (p->input != NULL)
+    if (p->input != nullptr)
         istream_close_handler(p->input);
 
     istream_deinit_abort(&p->output, error);
@@ -68,7 +69,7 @@ pipe_consume(struct istream_pipe *p)
 
     assert(p->fds[0] >= 0);
     assert(p->piped > 0);
-    assert(p->stock_item != NULL || p->stock == NULL);
+    assert(p->stock_item != nullptr || p->stock == nullptr);
 
     nbytes = istream_invoke_direct(&p->output, ISTREAM_PIPE, p->fds[0], p->piped);
     if (unlikely(nbytes == ISTREAM_RESULT_BLOCKING ||
@@ -86,17 +87,17 @@ pipe_consume(struct istream_pipe *p)
         assert((size_t)nbytes <= p->piped);
         p->piped -= (size_t)nbytes;
 
-        if (p->piped == 0 && p->stock != NULL) {
+        if (p->piped == 0 && p->stock != nullptr) {
             /* if the pipe was drained, return it to the stock, to
                make it available to other streams */
 
             stock_put(p->stock_item, false);
-            p->stock_item = NULL;
+            p->stock_item = nullptr;
             p->fds[0] = -1;
             p->fds[1] = -1;
         }
 
-        if (p->piped == 0 && p->input == NULL) {
+        if (p->piped == 0 && p->input == nullptr) {
             /* p->input has already reported EOF, and we have been
                waiting for the pipe buffer to become empty */
             pipe_close(p);
@@ -117,16 +118,16 @@ pipe_consume(struct istream_pipe *p)
 static size_t
 pipe_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_pipe *p = ctx;
+    struct istream_pipe *p = (struct istream_pipe *)ctx;
 
-    assert(p->output.handler != NULL);
+    assert(p->output.handler != nullptr);
 
     if (p->piped > 0) {
         ssize_t nbytes = pipe_consume(p);
         if (nbytes == ISTREAM_RESULT_CLOSED)
             return 0;
 
-        if (p->piped > 0 || p->output.handler == NULL)
+        if (p->piped > 0 || p->output.handler == nullptr)
             return 0;
     }
 
@@ -143,12 +144,12 @@ pipe_create(struct istream_pipe *p)
     assert(p->fds[0] < 0);
     assert(p->fds[1] < 0);
 
-    if (p->stock != NULL) {
-        assert(p->stock_item == NULL);
+    if (p->stock != nullptr) {
+        assert(p->stock_item == nullptr);
 
-        GError *error = NULL;
-        p->stock_item = stock_get_now(p->stock, p->output.pool, NULL, &error);
-        if (p->stock_item == NULL) {
+        GError *error = nullptr;
+        p->stock_item = stock_get_now(p->stock, p->output.pool, nullptr, &error);
+        if (p->stock_item == nullptr) {
             daemon_log(1, "%s\n", error->message);
             g_error_free(error);
             return false;
@@ -167,13 +168,13 @@ pipe_create(struct istream_pipe *p)
 }
 
 static ssize_t
-pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+pipe_input_direct(istream_direct type, int fd, size_t max_length, void *ctx)
 {
-    struct istream_pipe *p = ctx;
+    struct istream_pipe *p = (struct istream_pipe *)ctx;
     ssize_t nbytes;
 
-    assert(p->output.handler != NULL);
-    assert(p->output.handler->direct != NULL);
+    assert(p->output.handler != nullptr);
+    assert(p->output.handler->direct != nullptr);
     assert(istream_check_direct(&p->output, ISTREAM_PIPE));
 
     if (p->piped > 0) {
@@ -197,7 +198,7 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
     if (p->fds[1] < 0 && !pipe_create(p))
         return ISTREAM_RESULT_CLOSED;
 
-    nbytes = splice(fd, NULL, p->fds[1], NULL, max_length,
+    nbytes = splice(fd, nullptr, p->fds[1], nullptr, max_length,
                     SPLICE_F_NONBLOCK | SPLICE_F_MOVE);
     /* don't check EAGAIN here (and don't return -2).  We assume that
        splicing to the pipe cannot possibly block, since we flushed
@@ -218,11 +219,11 @@ pipe_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 static void
 pipe_input_eof(void *ctx)
 {
-    struct istream_pipe *p = ctx;
+    struct istream_pipe *p = (struct istream_pipe *)ctx;
 
-    p->input = NULL;
+    p->input = nullptr;
 
-    if (p->stock == NULL && p->fds[1] >= 0) {
+    if (p->stock == nullptr && p->fds[1] >= 0) {
         close(p->fds[1]);
         p->fds[1] = -1;
     }
@@ -236,11 +237,11 @@ pipe_input_eof(void *ctx)
 static void
 pipe_input_abort(GError *error, void *ctx)
 {
-    struct istream_pipe *p = ctx;
+    struct istream_pipe *p = (struct istream_pipe *)ctx;
 
     pipe_close(p);
 
-    p->input = NULL;
+    p->input = nullptr;
     istream_deinit_abort(&p->output, error);
 }
 
@@ -260,7 +261,7 @@ static const struct istream_handler pipe_input_handler = {
 static inline struct istream_pipe *
 istream_to_pipe(struct istream *istream)
 {
-    return (struct istream_pipe *)(((char*)istream) - offsetof(struct istream_pipe, output));
+    return ContainerCast(istream, struct istream_pipe, output);
 }
 
 static off_t
@@ -268,7 +269,7 @@ istream_pipe_available(struct istream *istream, bool partial)
 {
     struct istream_pipe *p = istream_to_pipe(istream);
 
-    if (likely(p->input != NULL)) {
+    if (likely(p->input != nullptr)) {
         off_t available = istream_available(p->input, partial);
         if (p->piped > 0) {
             if (available != -1)
@@ -297,7 +298,7 @@ istream_pipe_read(struct istream *istream)
     /* at this point, the pipe must be flushed - if the pipe is
        flushed, this stream is either closed or there must be an input
        stream */
-    assert(p->input != NULL);
+    assert(p->input != nullptr);
 
     mask = p->output.handler_direct;
     if (mask & ISTREAM_PIPE)
@@ -333,7 +334,7 @@ istream_pipe_close(struct istream *istream)
 
     pipe_close(p);
 
-    if (p->input != NULL)
+    if (p->input != nullptr)
         istream_close_handler(p->input);
 
     istream_deinit(&p->output);
@@ -358,11 +359,11 @@ istream_pipe_new(struct pool *pool, struct istream *input,
 {
     struct istream_pipe *p = istream_new_macro(pool, pipe);
 
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
     p->stock = pipe_stock;
-    p->stock_item = NULL;
+    p->stock_item = nullptr;
     p->fds[0] = -1;
     p->fds[1] = -1;
     p->piped = 0;
