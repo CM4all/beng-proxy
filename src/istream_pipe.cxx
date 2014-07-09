@@ -9,7 +9,7 @@
 #include "istream-internal.h"
 #include "fd_util.h"
 #include "direct.h"
-#include "pipe-stock.h"
+#include "pipe_stock.hxx"
 #include "stock.h"
 #include "gerrno.h"
 #include "util/Cast.hxx"

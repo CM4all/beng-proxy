@@ -31,7 +31,7 @@
 #include "failure.hxx"
 #include "bulldog.h"
 #include "balancer.hxx"
-#include "pipe-stock.h"
+#include "pipe_stock.hxx"
 #include "resource_loader.hxx"
 #include "bp_control.hxx"
 #include "log-glue.h"

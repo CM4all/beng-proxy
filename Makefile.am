@@ -207,7 +207,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/memcached_packet.cxx \
 	src/xml_parser.cxx src/xml_parser.hxx \
 	src/pevent.h \
-	src/pipe-stock.c src/pipe-stock.h \
+	src/pipe_stock.cxx src/pipe_stock.hxx \
 	src/pipe_filter.cxx src/pipe_filter.hxx \
 	src/tpool.c \
 	src/processor.cxx src/processor.h \
@@ -384,7 +384,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/hstock.cxx \
 	src/tcp_stock.cxx \
 	src/tcp_balancer.cxx \
-	src/pipe-stock.c \
+	src/pipe_stock.cxx \
 	src/failure.cxx \
 	src/balancer.cxx \
 	src/address.c \
@@ -986,7 +986,7 @@ test_t_expansible_buffer_LDADD = $(AM_LDADD) \
 T_ISTREAM_FILTER_SRC = \
 	src/direct.c \
 	src/buffered_io.c \
-	src/pipe-stock.c src/stock.c \
+	src/pipe_stock.cxx src/stock.c \
 	src/fd_util.c \
 	src/growing_buffer.cxx src/fd-util.c
 T_ISTREAM_FILTER_LIB = $(AM_LDADD) \
@@ -1147,7 +1147,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/strmap.cxx \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
-	src/pipe-stock.c src/stock.c \
+	src/pipe_stock.cxx src/stock.c \
 	src/direct.c \
 	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
@@ -1174,7 +1174,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/strmap.cxx \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
-	src/pipe-stock.c src/stock.c \
+	src/pipe_stock.cxx src/stock.c \
 	src/direct.c \
 	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
@@ -1614,7 +1614,7 @@ test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/sink_fd.c \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c \
-	src/stock.c src/pipe-stock.c \
+	src/stock.c src/pipe_stock.cxx \
 	src/static_headers.cxx \
 	src/shutdown_listener.c
 test_run_nfs_client_LDADD = $(AM_LDADD) \
@@ -1689,7 +1689,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/strmap.cxx src/hashmap.cxx \
 	src/istream_gb.cxx \
 	src/istream-ajp-body.c \
-	src/stock.c src/pipe-stock.c \
+	src/stock.c src/pipe_stock.cxx \
 	src/shutdown_listener.c \
 	$(STOPWATCH_SRC) \
 	src/tpool.c \
@@ -1734,7 +1734,7 @@ test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/buffered_io.c src/fifo-buffer.c \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
-	src/stock.c src/pipe-stock.c \
+	src/stock.c src/pipe_stock.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/cleanup_timer.c \
 	src/shutdown_listener.c \

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "pipe-stock.h"
+#include "pipe_stock.hxx"
 #include "stock.h"
 #include "fd_util.h"
 #include "pool.h"
@@ -117,7 +117,7 @@ static const struct stock_class pipe_stock_class = {
 struct stock *
 pipe_stock_new(struct pool *pool)
 {
-    return stock_new(pool, &pipe_stock_class, NULL, NULL, 0, 64, NULL, NULL);
+    return stock_new(pool, &pipe_stock_class, nullptr, nullptr, 0, 64, nullptr, nullptr);
 }
 
 void
@@ -125,7 +125,7 @@ pipe_stock_item_get(struct stock_item *_item, int fds[2])
 {
     struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
 
-    assert(item != NULL);
+    assert(item != nullptr);
 
     fds[0] = item->fds[0];
     fds[1] = item->fds[1];
