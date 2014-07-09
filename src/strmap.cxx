@@ -10,11 +10,6 @@
 
 #include <assert.h>
 
-struct slot {
-    struct slot *next;
-    struct strmap_pair pair;
-};
-
 struct strmap {
     struct hashmap *hashmap;
 };
