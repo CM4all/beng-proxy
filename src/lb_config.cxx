@@ -1102,6 +1102,16 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
             return _throw(error_r, "No such pool");
 
         return true;
+    } else if (strcmp(word, "verbose_response") == 0) {
+        bool value = false;
+        if (!next_bool(&p, &value, error_r))
+            return false;
+
+        if (!expect_eol(p))
+            return syntax_error(error_r);
+
+        listener->verbose_response = value;
+        return true;
     } else if (strcmp(word, "ssl") == 0) {
         bool value = false;
         if (!next_bool(&p, &value, error_r))

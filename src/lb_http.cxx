@@ -238,12 +238,18 @@ my_response_abort(GError *error, void *ctx)
 
 
     lb_connection_log_gerror(2, connection, "Error", error);
-    g_error_free(error);
 
     if (!send_fallback(request2->request,
-                       &request2->cluster->fallback))
+                       &request2->cluster->fallback)) {
+        const char *msg = connection->listener->verbose_response
+            ? error->message
+            : "Server failure";
+
         http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
-                                 "Server failure");
+                                 msg);
+    }
+
+    g_error_free(error);
 }
 
 static const struct http_response_handler my_response_handler = {
@@ -300,14 +306,20 @@ my_stock_error(GError *error, void *ctx)
     const struct lb_connection *connection = request2->connection;
 
     lb_connection_log_gerror(2, connection, "Connect error", error);
-    g_error_free(error);
 
     if (request2->body != nullptr)
         istream_close_unused(request2->body);
 
-    if (!send_fallback(request2->request, &request2->cluster->fallback))
+    if (!send_fallback(request2->request, &request2->cluster->fallback)) {
+        const char *msg = connection->listener->verbose_response
+            ? error->message
+            : "Connection failure";
+
         http_server_send_message(request2->request, HTTP_STATUS_BAD_GATEWAY,
-                                 "Connection failure");
+                                 msg);
+    }
+
+    g_error_free(error);
 }
 
 static const struct stock_get_handler my_stock_handler = {

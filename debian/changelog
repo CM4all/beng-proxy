@@ -1,6 +1,6 @@
 cm4all-beng-proxy (5.0.7) unstable; urgency=low
 
-  * 
+  * lb: add per-listener option "verbose_response"
 
  --   
 

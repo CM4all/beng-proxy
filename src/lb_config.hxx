@@ -338,6 +338,8 @@ struct lb_listener_config {
 
     lb_goto destination;
 
+    bool verbose_response = false;
+
     bool ssl;
 
     struct ssl_config ssl_config;

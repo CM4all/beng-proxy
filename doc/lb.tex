@@ -220,6 +220,9 @@ listener port80 {
 A listener has a name, an socket address to bind to (including the
 port).  To handle requests, it is associated with exactly one pool.
 
+The option \verb|verbose_response| can be set to \texttt{yes} to
+expose internal error messages in HTTP responses.
+
 \subsection{Sticky}
 \label{sticky}
 
