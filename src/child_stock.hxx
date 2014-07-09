@@ -4,16 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CHILD_STOCK_H
-#define BENG_PROXY_CHILD_STOCK_H
+#ifndef BENG_PROXY_CHILD_STOCK_HXX
+#define BENG_PROXY_CHILD_STOCK_HXX
 
 #include "istream-direct.h"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
-#include <glib.h>
-
-#include <stdbool.h>
 #include <sys/socket.h>
 
 struct pool;
@@ -35,10 +33,6 @@ struct child_stock_class {
     int (*run)(struct pool *pool, const char *key, void *info, void *ctx);
     void (*free)(void *ctx);
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct hstock *
 child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
@@ -70,9 +64,5 @@ child_stock_item_get_type(gcc_unused const struct stock_item *item)
 void
 child_stock_put(struct hstock *hstock, struct stock_item *item,
                 bool destroy);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

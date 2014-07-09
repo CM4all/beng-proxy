@@ -16,6 +16,10 @@ struct child_socket {
     struct sockaddr_un address;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @return the listener socket descriptor or -1 on error
  */
@@ -39,5 +43,9 @@ child_socket_address_length(const struct child_socket *cs)
 
 int
 child_socket_connect(const struct child_socket *cs, GError **error_r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

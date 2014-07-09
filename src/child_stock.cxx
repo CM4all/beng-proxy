@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "child_stock.h"
+#include "child_stock.hxx"
 #include "child_socket.h"
 #include "hstock.h"
 #include "stock.h"
@@ -36,7 +36,7 @@ struct child_stock_item {
 static void
 child_stock_child_callback(int status gcc_unused, void *ctx)
 {
-    struct child_stock_item *item = ctx;
+    struct child_stock_item *item = (struct child_stock_item *)ctx;
 
     item->pid = -1;
 
@@ -58,7 +58,7 @@ gcc_noreturn
 static int
 child_stock_fn(void *ctx)
 {
-    const struct child_stock_args *args = ctx;
+    const struct child_stock_args *args = (const struct child_stock_args *)ctx;
     const int fd = args->fd;
 
     install_default_signal_handlers();
@@ -125,7 +125,8 @@ child_stock_create(void *stock_ctx, struct stock_item *_item,
                    gcc_unused struct pool *caller_pool,
                    gcc_unused struct async_operation_ref *async_ref)
 {
-    const struct child_stock_class *cls = stock_ctx;
+    const struct child_stock_class *cls =
+        (const struct child_stock_class *)stock_ctx;
     struct pool *pool = _item->pool;
     struct child_stock_item *item = (struct child_stock_item *)_item;
 

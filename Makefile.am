@@ -118,7 +118,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/pivot_root.h \
 	src/child_manager.c src/child_manager.h \
 	src/child_socket.c src/child_socket.h \
-	src/child_stock.c src/child_stock.h \
+	src/child_stock.cxx src/child_stock.hxx \
 	src/client-socket.c src/client-socket.h \
 	src/config.hxx \
 	src/bp_connection.cxx src/bp_connection.hxx \
