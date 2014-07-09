@@ -28,6 +28,8 @@ public:
 
     bool ListenTCP(unsigned port, Error &error);
 
+    bool ListenPath(const char *path, Error &error);
+
     void AddEvent() {
         event_add(&event, nullptr);
     }

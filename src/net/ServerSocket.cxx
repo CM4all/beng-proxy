@@ -106,6 +106,17 @@ ServerSocket::ListenTCP(unsigned port, Error &error)
                error);
 }
 
+bool
+ServerSocket::ListenPath(const char *path, Error &error)
+{
+    unlink(path);
+
+    StaticSocketAddress address;
+    address.SetLocal(path);
+
+    return Listen(AF_LOCAL, SOCK_STREAM, 0, address, error);
+}
+
 ServerSocket::~ServerSocket()
 {
     event_del(&event);
