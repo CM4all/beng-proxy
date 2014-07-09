@@ -5,7 +5,7 @@
  */
 
 #include "tcp_stock.hxx"
-#include "hstock.h"
+#include "hstock.hxx"
 #include "stock.h"
 #include "async.h"
 #include "client-socket.h"

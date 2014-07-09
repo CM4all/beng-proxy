@@ -17,7 +17,7 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "memcached_stock.hxx"
-#include "hstock.h"
+#include "hstock.hxx"
 #include "tcache.hxx"
 #include "http_cache.h"
 #include "lhttp_stock.hxx"

@@ -235,8 +235,8 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/file_request.cxx src/file_request.hxx \
 	src/static_headers.cxx src/static_headers.hxx \
 	src/stock.c src/stock.h \
-	src/hstock.c src/hstock.h \
-	src/mstock.cxx src/hstock.h \
+	src/hstock.cxx src/hstock.hxx \
+	src/mstock.cxx src/mstock.h \
 	src/strmap.cxx src/strmap.hxx \
 	src/strref-dpool.h \
 	src/strref-pool.h \
@@ -381,7 +381,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/tpool.c \
 	src/stock.c \
-	src/hstock.c \
+	src/hstock.cxx \
 	src/tcp_stock.cxx \
 	src/tcp_balancer.cxx \
 	src/pipe-stock.c \
@@ -1436,7 +1436,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
 	src/tcp_stock.cxx src/client-socket.c \
 	src/fd_util.c src/fd-util.c \
-	src/stock.c src/hstock.c src/hashmap.c src/strmap.cxx \
+	src/stock.c src/hstock.cxx src/hashmap.c src/strmap.cxx \
 	src/strset.c \
 	src/abort-unref.c \
 	src/uri-edit.c src/uri_base.cxx \
@@ -1527,7 +1527,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
 	src/header_writer.cxx src/args.cxx src/buffered_io.c \
-	src/tcp_stock.cxx src/stock.c src/hstock.c \
+	src/tcp_stock.cxx src/stock.c src/hstock.cxx \
 	src/client-socket.c src/fd_util.c \
 	src/header_parser.cxx \
 	src/widget_request.cxx \
@@ -1563,7 +1563,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/tpool.c \
 	src/istream-html-escape.c src/istream-escape.c \
 	src/header_writer.cxx src/args.cxx src/buffered_io.c \
-	src/tcp_stock.cxx src/stock.c src/hstock.c \
+	src/tcp_stock.cxx src/stock.c src/hstock.cxx \
 	src/client-socket.c src/fd_util.c \
 	src/header_parser.cxx \
 	src/widget_request.cxx \
@@ -1771,7 +1771,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/cache.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/client-socket.c src/fd_util.c src/fd-util.c \
-	src/stock.c src/hstock.c \
+	src/stock.c src/hstock.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/memcached_stock.cxx \
 	src/http_cache_choice.cxx src/http_cache_rfc.cxx \
@@ -1807,7 +1807,7 @@ test_t_memcached_client_LDADD = $(AM_LDADD) \
 test_run_delegate_SOURCES = test/run_delegate.cxx \
 	src/delegate_stock.cxx src/delegate_client.cxx src/delegate_glue.cxx \
 	src/exec.cxx \
-	src/hashmap.c src/hstock.c src/stock.c \
+	src/hashmap.c src/hstock.cxx src/stock.c \
 	src/defer.c \
 	src/fd_util.c
 test_run_delegate_LDADD = $(AM_LDADD) \

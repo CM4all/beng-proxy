@@ -6,7 +6,7 @@
 
 #include "child_stock.hxx"
 #include "child_socket.hxx"
-#include "hstock.h"
+#include "hstock.hxx"
 #include "stock.h"
 #include "child_manager.h"
 #include "gerrno.h"

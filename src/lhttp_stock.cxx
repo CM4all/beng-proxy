@@ -8,7 +8,7 @@
 #include "lhttp_quark.hxx"
 #include "lhttp_launch.hxx"
 #include "lhttp_address.hxx"
-#include "hstock.h"
+#include "hstock.hxx"
 #include "mstock.h"
 #include "stock.h"
 #include "lease.h"

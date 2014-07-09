@@ -8,7 +8,7 @@
 #include "was_stock.hxx"
 #include "was_quark.h"
 #include "was_launch.hxx"
-#include "hstock.h"
+#include "hstock.hxx"
 #include "stock.h"
 #include "child_manager.h"
 #include "async.h"

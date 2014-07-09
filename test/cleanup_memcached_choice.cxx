@@ -1,7 +1,7 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "balancer.hxx"
-#include "hstock.h"
+#include "hstock.hxx"
 #include "address_list.hxx"
 #include "address_resolver.hxx"
 #include "memcached_stock.hxx"

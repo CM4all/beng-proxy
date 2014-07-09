@@ -6,7 +6,7 @@
  */
 
 #include "mstock.h"
-#include "hstock.h"
+#include "hstock.hxx"
 #include "stock.h"
 #include "hashmap.h"
 #include "pool.h"
