@@ -56,7 +56,7 @@ proxy_collect_cookies(request &request2, const struct strmap *headers)
         cookie_jar_set_cookie2(session->cookies, cookies->value,
                                host_and_port, path);
 
-        cookies = strmap_lookup_next(cookies);
+        cookies = strmap_lookup_next(headers, cookies);
     } while (cookies != NULL);
 
     session_put(session);

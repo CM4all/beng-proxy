@@ -10,8 +10,8 @@ def command_expect(command, expected):
         print "expected", repr(expected)
         assert False
 
-prefix = 'cookie2: $Version="1"\r\n'
-suffix = '\r\n'
+prefix = ''
+suffix = '\r\ncookie2: $Version="1"\r\n'
 
 command_expect('./test/run_cookie_client foo=bar',
                prefix + 'cookie: foo=bar' + suffix)

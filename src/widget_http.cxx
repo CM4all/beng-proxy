@@ -486,7 +486,7 @@ widget_collect_cookies(struct cookie_jar *jar, const struct strmap *headers,
     do {
         cookie_jar_set_cookie2(jar, cookies->value, host_and_port, nullptr);
 
-        cookies = strmap_lookup_next(cookies);
+        cookies = strmap_lookup_next(headers, cookies);
     } while (cookies != nullptr);
 }
 

@@ -13,6 +13,9 @@ struct pool;
 
 struct strmap_pair {
     const char *key, *value;
+
+    constexpr strmap_pair(const char *_key, const char *_value)
+        :key(_key), value(_value) {}
 };
 
 struct strmap *gcc_malloc
@@ -46,7 +49,7 @@ strmap_lookup_first(const struct strmap *map, const char *key);
  */
 gcc_pure
 const struct strmap_pair *
-strmap_lookup_next(const struct strmap_pair *pair);
+strmap_lookup_next(const struct strmap *map, const struct strmap_pair *pair);
 
 void
 strmap_rewind(struct strmap *map);
