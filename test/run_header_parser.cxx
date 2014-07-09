@@ -26,7 +26,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* parse the headers */
 
-    headers = strmap_new(pool, 16);
+    headers = strmap_new(pool);
     header_parse_buffer(pool, headers, gb);
 
     /* dump headers */

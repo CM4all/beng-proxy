@@ -317,7 +317,7 @@ struct strmap *
 http_cache_copy_vary(struct pool *pool, const char *vary,
                      const struct strmap *headers)
 {
-    struct strmap *dest = strmap_new(pool, 16);
+    struct strmap *dest = strmap_new(pool);
     struct pool_mark_state mark;
     char **list;
 

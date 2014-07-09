@@ -76,7 +76,7 @@ add_translation_vary_header(struct pool *pool, struct strmap *headers,
     const char *old;
     if (headers == nullptr) {
         old = nullptr;
-        headers = strmap_new(pool, 5);
+        headers = strmap_new(pool);
     } else {
         old = strmap_get(headers, "vary");
     }

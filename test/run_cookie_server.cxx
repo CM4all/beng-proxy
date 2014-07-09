@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(nullptr, "root");
 
-    cookies = strmap_new(pool, 17);
+    cookies = strmap_new(pool);
     for (int i = 1; i < argc; ++i)
         cookie_map_parse(cookies, argv[i], pool);
 

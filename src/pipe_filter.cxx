@@ -178,7 +178,7 @@ pipe_filter(struct pool *pool, const char *path,
         etag = make_pipe_etag(pool, etag, path, args, env);
         assert(etag != nullptr);
 
-        headers = strmap_dup(pool, headers, 17);
+        headers = strmap_dup(pool, headers);
         strmap_set(headers, "etag", etag);
     }
 

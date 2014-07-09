@@ -399,7 +399,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
 
     request->response.status = status;
     request->response.headers = headers != nullptr
-        ? strmap_dup(request->pool, headers, 17)
+        ? strmap_dup(request->pool, headers)
         : nullptr;
 
     struct istream *const input = body;
@@ -691,7 +691,7 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
                                       session_sticky, *cache,
                                       method, *address,
                                       http_cache_key(pool, address),
-                                      headers == nullptr ? nullptr : strmap_dup(pool, headers, 17),
+                                      headers == nullptr ? nullptr : strmap_dup(pool, headers),
                                       *handler, handler_ctx,
                                       *info, *async_ref);
 
@@ -781,7 +781,7 @@ http_cache_test(HttpCacheRequest *request,
     cache_log(4, "http_cache: test %s\n", request->key);
 
     if (headers == nullptr)
-        headers = strmap_new(request->pool, 16);
+        headers = strmap_new(request->pool);
 
     if (document->info.last_modified != nullptr)
         strmap_set(headers, "if-modified-since",
@@ -824,7 +824,7 @@ http_cache_heap_test(struct http_cache *cache, struct pool *caller_pool,
                                       session_sticky, *cache,
                                       method, *address,
                                       http_cache_key(pool, address),
-                                      headers == nullptr ? nullptr : strmap_dup(pool, headers, 17),
+                                      headers == nullptr ? nullptr : strmap_dup(pool, headers),
                                       *handler, handler_ctx,
                                       *info, *async_ref);
 
@@ -1020,7 +1020,7 @@ http_cache_memcached_use(struct http_cache *cache,
                                       session_sticky, *cache,
                                       method, *address,
                                       http_cache_key(pool, address),
-                                      headers == nullptr ? nullptr : strmap_dup(pool, headers, 17),
+                                      headers == nullptr ? nullptr : strmap_dup(pool, headers),
                                       *handler, handler_ctx,
                                       *info, *async_ref);
 

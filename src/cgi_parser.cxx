@@ -19,7 +19,7 @@ cgi_parser_init(struct pool *pool, struct cgi_parser *parser)
 {
     parser->status = HTTP_STATUS_OK;
     parser->remaining = -1;
-    parser->headers = strmap_new(pool, 31);
+    parser->headers = strmap_new(pool);
 
 #ifndef NDEBUG
     parser->finished = false;

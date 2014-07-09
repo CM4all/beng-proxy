@@ -234,8 +234,7 @@ filter_cache_put(FilterCacheRequest *request,
                                              *request->info,
                                              request->response.status,
                                              strmap_dup(pool,
-                                                        request->response.headers,
-                                                        7),
+                                                        request->response.headers),
                                              size,
                                              *request->cache->rubber,
                                              rubber_id,
@@ -410,7 +409,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         body = istream_tee_new(request->pool, body, false, true);
 
         request->response.status = status;
-        request->response.headers = strmap_dup(request->pool, headers, 17);
+        request->response.headers = strmap_dup(request->pool, headers);
 
         pool_ref(request->pool);
 

@@ -22,7 +22,7 @@ lb_session_get(const struct strmap *request_headers,
     if (cookie == NULL)
         return 0;
 
-    struct strmap *jar = strmap_new(tpool, 8);
+    struct strmap *jar = strmap_new(tpool);
     cookie_map_parse(jar, cookie, tpool);
 
     const char *session = strmap_get(jar, cookie_name);

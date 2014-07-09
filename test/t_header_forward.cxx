@@ -78,7 +78,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
     pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
-    headers = strmap_new(pool, 17);
+    headers = strmap_new(pool);
     strmap_add(headers, "from", "foo");
     strmap_add(headers, "abc", "def");
     strmap_add(headers, "cookie", "a=b");
@@ -317,7 +317,7 @@ int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
 
     /* response headers: basic test */
 
-    headers = strmap_new(pool, 17);
+    headers = strmap_new(pool);
     strmap_add(headers, "server", "apache");
     strmap_add(headers, "abc", "def");
     strmap_add(headers, "set-cookie", "a=b");

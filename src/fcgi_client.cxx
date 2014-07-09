@@ -979,7 +979,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     client->id = header.request_id;
 
     client->response.read_state = fcgi_client::Response::READ_HEADERS;
-    client->response.headers = strmap_new(client->caller_pool, 17);
+    client->response.headers = strmap_new(client->caller_pool);
     client->response.no_body = http_method_is_empty(method);
     client->content_length = 0;
     client->skip_length = 0;

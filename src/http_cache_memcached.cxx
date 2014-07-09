@@ -597,7 +597,7 @@ http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
     data->background_pool = background_pool;
     data->background = &background;
     data->uri = p_strdup(pool, uri);
-    data->headers = strmap_dup(pool, headers, 17);
+    data->headers = strmap_dup(pool, headers);
 
     http_cache_choice_filter(pool, stock, uri,
                              mcd_delete_filter_callback, data,

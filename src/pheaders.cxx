@@ -11,7 +11,7 @@
 struct strmap *
 processor_header_forward(struct pool *pool, struct strmap *headers)
 {
-    struct strmap *headers2 = strmap_new(pool, 17);
+    struct strmap *headers2 = strmap_new(pool);
 
     if (headers != nullptr) {
         static const char *const copy_headers[] = {

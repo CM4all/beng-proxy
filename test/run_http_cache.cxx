@@ -39,7 +39,7 @@ put_random(struct http_cache_heap *cache, Rubber *rubber)
         }
     }
 
-    struct strmap *request_headers = strmap_new(tpool, 7);
+    struct strmap *request_headers = strmap_new(tpool);
 
     if (random() % 3 == 0) {
         static const char *const values[] = {
@@ -48,7 +48,7 @@ put_random(struct http_cache_heap *cache, Rubber *rubber)
         strmap_add(request_headers, "x-foo", values[random() % 8]);
     }
 
-    struct strmap *response_headers = strmap_new(tpool, 7);
+    struct strmap *response_headers = strmap_new(tpool);
     strmap_add(response_headers, "content-type", "text/plain");
     strmap_add(response_headers, "x-foo", "bar");
     strmap_add(response_headers, "x-bar", "foo");

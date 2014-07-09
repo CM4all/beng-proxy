@@ -302,7 +302,6 @@ forward_request_headers(struct pool *pool, struct strmap *src,
                         const struct session *session,
                         const char *host_and_port, const char *uri)
 {
-    struct strmap *dest;
     const char *p;
 
     assert(settings != nullptr);
@@ -322,7 +321,7 @@ forward_request_headers(struct pool *pool, struct strmap *src,
     }
 #endif
 
-    dest = strmap_new(pool, 32);
+    struct strmap *dest = strmap_new(pool);
 
     if (src != nullptr) {
         forward_basic_headers(dest, src, with_body);
@@ -429,11 +428,9 @@ forward_response_headers(struct pool *pool, struct strmap *src,
                          const char *session_cookie,
                          const struct header_forward_settings *settings)
 {
-    struct strmap *dest;
-
     assert(settings != nullptr);
 
-    dest = strmap_new(pool, 61);
+    struct strmap *dest = strmap_new(pool);
     if (src != nullptr) {
         header_copy_list(src, dest, basic_response_headers);
 

@@ -55,7 +55,7 @@ http_server_request_new(struct http_server_connection *connection)
     request->local_host_and_port = connection->local_host_and_port;
     request->remote_host_and_port = connection->remote_host_and_port;
     request->remote_host = connection->remote_host;
-    request->headers = strmap_new(pool, 64);
+    request->headers = strmap_new(pool);
 
     return request;
 }

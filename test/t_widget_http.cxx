@@ -158,7 +158,7 @@ resource_get(gcc_unused struct http_cache *cache,
              void *handler_ctx,
              gcc_unused struct async_operation_ref *async_ref)
 {
-    struct strmap *response_headers = strmap_new(pool, 16);
+    struct strmap *response_headers = strmap_new(pool);
     struct istream *response_body = istream_null_new(pool);
     const char *p;
 
@@ -288,7 +288,7 @@ test_cookie_client(struct pool *pool)
 
     env.local_host = "localhost";
     env.remote_host = "localhost";
-    env.request_headers = strmap_new(pool, 16);
+    env.request_headers = strmap_new(pool);
     env.session_id = session->id;
     session_put(session);
 

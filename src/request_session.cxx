@@ -33,7 +33,7 @@ request_get_cookies(struct request *request)
     if (cookie == nullptr)
         return nullptr;
 
-    request->cookies = strmap_new(request->request->pool, 8);
+    request->cookies = strmap_new(request->request->pool);
     cookie_map_parse(request->cookies, cookie, request->request->pool);
 
     return request->cookies;
@@ -188,7 +188,7 @@ request_make_session(struct request *request)
     request->send_session_cookie = true;
 
     if (request->args == nullptr)
-        request->args = strmap_new(request->request->pool, 4);
+        request->args = strmap_new(request->request->pool);
     strmap_set(request->args, "session",
                session_id_format(request->session_id,
                                  &request->session_id_string));

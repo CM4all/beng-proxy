@@ -119,13 +119,13 @@ struct strmap {
 };
 
 struct strmap *
-strmap_new(struct pool *pool, gcc_unused unsigned capacity)
+strmap_new(struct pool *pool)
 {
     return NewFromPool<struct strmap>(pool, *pool);
 }
 
 struct strmap *gcc_malloc
-strmap_dup(struct pool *pool, struct strmap *src, gcc_unused unsigned capacity)
+strmap_dup(struct pool *pool, struct strmap *src)
 {
     return NewFromPool<struct strmap>(pool, *pool, *src);
 }

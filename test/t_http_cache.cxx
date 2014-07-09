@@ -151,13 +151,12 @@ static struct strmap *
 parse_headers(struct pool *pool, const char *raw)
 {
     struct growing_buffer *gb;
-    struct strmap *headers;
 
     if (raw == NULL)
         return NULL;
 
     gb = growing_buffer_new(pool, 512);
-    headers = strmap_new(pool, 64);
+    struct strmap *headers = strmap_new(pool);
     growing_buffer_write_string(gb, raw);
     header_parse_buffer(pool, headers, gb);
 
@@ -221,7 +220,7 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
         struct growing_buffer *gb = growing_buffer_new(pool, 512);
         growing_buffer_write_string(gb, request->response_headers);
 
-        response_headers = strmap_new(pool, 64);
+        response_headers = strmap_new(pool);
         header_parse_buffer(pool, response_headers, gb);
     } else
         response_headers = NULL;
@@ -339,7 +338,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     if (request->request_headers != NULL) {
         struct growing_buffer *gb = growing_buffer_new(pool, 512);
 
-        headers = strmap_new(pool, 64);
+        headers = strmap_new(pool);
         growing_buffer_write_string(gb, request->request_headers);
         header_parse_buffer(pool, headers, gb);
     } else

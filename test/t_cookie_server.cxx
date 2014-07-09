@@ -9,11 +9,10 @@
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
     struct pool *pool;
-    struct strmap *cookies;
 
     pool = pool_new_libc(nullptr, "root");
 
-    cookies = strmap_new(pool, 17);
+    struct strmap *cookies = strmap_new(pool);
 
     cookie_map_parse(cookies, "a=b", pool);
     assert(strcmp(strmap_get(cookies, "a"), "b") == 0);

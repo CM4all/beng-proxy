@@ -55,7 +55,7 @@ delegate_get_callback(int fd, void *ctx)
 
     /* XXX handle if-modified-since, ... */
 
-    struct strmap *headers = strmap_new(get->pool, 13);
+    struct strmap *headers = strmap_new(get->pool);
     static_response_headers(get->pool, headers, fd, &st, get->content_type);
 
     struct istream *body = istream_file_fd_new(get->pool, get->path,

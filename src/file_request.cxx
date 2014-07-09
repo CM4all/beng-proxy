@@ -52,7 +52,7 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
         return;
     }
 
-    struct strmap *headers = strmap_new(pool, 16);
+    struct strmap *headers = strmap_new(pool);
     static_response_headers(pool, headers,
                             istream_file_fd(body), &st,
                             content_type);

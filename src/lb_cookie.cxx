@@ -22,7 +22,7 @@ lb_cookie_get(const struct strmap *request_headers)
     if (cookie == NULL)
         return 0;
 
-    struct strmap *jar = strmap_new(tpool, 31);
+    struct strmap *jar = strmap_new(tpool);
     cookie_map_parse(jar, cookie, tpool);
 
     const char *p = strmap_get(jar, "beng_lb_node");

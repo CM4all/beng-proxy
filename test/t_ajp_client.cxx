@@ -162,7 +162,7 @@ read_ajp_request(struct pool *pool, struct ajp_request *r)
     read_short(&remaining); /* server_port */
     read_byte(&remaining); /* is_ssl */
 
-    r->headers = strmap_new(pool, 17);
+    r->headers = strmap_new(pool);
 
     unsigned n_headers = read_short(&remaining);
     while (n_headers-- > 0) {
@@ -445,7 +445,7 @@ ajp_server_tiny(struct pool *pool)
     if (request.code != AJP_CODE_FORWARD_REQUEST)
         exit(EXIT_FAILURE);
 
-    struct strmap *headers = strmap_new(pool, 17);
+    struct strmap *headers = strmap_new(pool);
     strmap_add(headers, "content-length", "5");
 
     write_headers(HTTP_STATUS_OK, headers);

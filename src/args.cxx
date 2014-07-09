@@ -23,7 +23,7 @@ struct strmap *
 args_parse(struct pool *pool, const char *p, size_t length)
 {
     const char *end = p + length;
-    struct strmap *args = strmap_new(pool, 16);
+    struct strmap *args = strmap_new(pool);
 
     do {
         const char *ampersand = (const char *)memchr(p, '&', end - p);

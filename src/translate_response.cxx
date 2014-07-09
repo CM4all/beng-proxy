@@ -97,7 +97,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     cookie_path = p_strdup_checked(pool, src.cookie_path);
 
     headers = src.headers != nullptr
-        ? strmap_dup(pool, src.headers, 17)
+        ? strmap_dup(pool, src.headers)
         : nullptr;
 
     views = src.views != nullptr

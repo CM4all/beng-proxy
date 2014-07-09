@@ -18,7 +18,7 @@ http_cache_document::http_cache_document(struct pool &pool,
           : nullptr),
      status(_status),
      headers(response_headers != nullptr
-             ? strmap_dup(&pool, response_headers, 7)
+             ? strmap_dup(&pool, response_headers)
              : nullptr)
 {
     assert(http_status_is_valid(_status));

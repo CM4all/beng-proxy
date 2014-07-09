@@ -1458,7 +1458,7 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
 
         if (processor->widget.widget->headers == nullptr)
             processor->widget.widget->headers =
-                strmap_new(processor->widget.pool, 16);
+                strmap_new(processor->widget.pool);
 
         char *value = expansible_buffer_strdup(processor->widget.param.value,
                                                processor->widget.pool);

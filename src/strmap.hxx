@@ -19,10 +19,10 @@ struct strmap_pair {
 };
 
 struct strmap *gcc_malloc
-strmap_new(struct pool *pool, unsigned capacity);
+strmap_new(struct pool *pool);
 
 struct strmap *gcc_malloc
-strmap_dup(struct pool *pool, struct strmap *src, unsigned capacity);
+strmap_dup(struct pool *pool, struct strmap *src);
 
 void
 strmap_add(struct strmap *map, const char *key, const char *value);

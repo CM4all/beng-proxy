@@ -144,7 +144,7 @@ read_fcgi_params(struct pool *pool, struct fcgi_request *r)
 {
     r->method = HTTP_METHOD_GET;
     r->uri = nullptr;
-    r->headers = strmap_new(pool, 17);
+    r->headers = strmap_new(pool);
 
     char name[1024], value[8192];
     while (true) {

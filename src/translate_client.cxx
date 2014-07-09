@@ -705,7 +705,7 @@ parse_header(struct pool *pool, TranslateResponse *response,
     }
 
     if (response->headers == nullptr)
-        response->headers = strmap_new(pool, 17);
+        response->headers = strmap_new(pool);
     strmap_add(response->headers, name, value);
 
     return true;

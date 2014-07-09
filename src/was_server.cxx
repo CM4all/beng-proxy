@@ -251,7 +251,7 @@ was_server_control_packet(enum was_command cmd, const void *payload,
                                                "was_server_request", 32768);
         server->request.method = HTTP_METHOD_GET;
         server->request.uri = nullptr;
-        server->request.headers = strmap_new(server->request.pool, 41);
+        server->request.headers = strmap_new(server->request.pool);
         server->request.body = nullptr;
         server->response.body = nullptr;
         break;

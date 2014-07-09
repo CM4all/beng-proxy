@@ -681,7 +681,7 @@ response_dispatch(struct request *request2,
 
         if (headers != nullptr) {
             struct http_server_request *request = request2->request;
-            headers2 = strmap_new(request->pool, 41);
+            headers2 = strmap_new(request->pool);
             header_parse_buffer(request->pool, headers2, headers);
         } else
             headers2 = nullptr;

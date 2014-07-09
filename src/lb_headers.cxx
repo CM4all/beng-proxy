@@ -99,7 +99,7 @@ lb_forward_request_headers(struct pool *pool, struct strmap *src,
     if (peer_subject == NULL && !mangle_via)
         return src;
 
-    struct strmap *dest = strmap_new(pool, 32);
+    struct strmap *dest = strmap_new(pool);
 
     if (src != NULL)
         forward_other_headers(dest, src);

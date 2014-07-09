@@ -144,7 +144,7 @@ ajp_stock_request(struct pool *pool,
 
     hr->headers = headers;
     if (hr->headers == nullptr)
-        hr->headers = strmap_new(pool, 16);
+        hr->headers = strmap_new(pool);
 
     http_response_handler_set(&hr->handler, handler, handler_ctx);
     hr->async_ref = async_ref;

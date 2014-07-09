@@ -176,7 +176,7 @@ deserialize_strmap(ConstBuffer<void> &input, struct pool *pool)
     if (key == nullptr || *key == 0)
         return nullptr;
 
-    map = strmap_new(pool, 17);
+    map = strmap_new(pool);
 
     do {
         value = deserialize_string(input);
