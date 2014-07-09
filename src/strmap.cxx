@@ -50,6 +50,16 @@ struct strmap {
 
     explicit strmap(struct pool &_pool):pool(_pool) {}
 
+    strmap(struct pool &_pool, const strmap &src):pool(_pool) {
+        const auto hint = map.end();
+        for (auto &i : src.map) {
+            Item *item = NewFromPool<Item>(&pool,
+                                           p_strdup(&pool, i.key),
+                                           p_strdup(&pool, i.value));
+            map.insert(hint, *item);
+        }
+    }
+
     strmap(const strmap &) = delete;
 
     void Add(const char *key, const char *value) {
@@ -115,17 +125,9 @@ strmap_new(struct pool *pool, gcc_unused unsigned capacity)
 }
 
 struct strmap *gcc_malloc
-strmap_dup(struct pool *pool, struct strmap *src, unsigned capacity)
+strmap_dup(struct pool *pool, struct strmap *src, gcc_unused unsigned capacity)
 {
-    struct strmap *dest = strmap_new(pool, capacity);
-    const struct strmap_pair *pair;
-
-    strmap_rewind(src);
-    while ((pair = strmap_next(src)) != nullptr)
-        strmap_add(dest, p_strdup(pool, pair->key),
-                   p_strdup(pool, pair->value));
-
-    return dest;
+    return NewFromPool<struct strmap>(pool, *pool, *src);
 }
 
 void
