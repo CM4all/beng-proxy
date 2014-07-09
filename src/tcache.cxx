@@ -18,7 +18,7 @@
 #include "tpool.h"
 #include "pbuffer.hxx"
 #include "slice.hxx"
-#include "djbhash.h"
+#include "util/djbhash.h"
 #include "beng-proxy/translation.h"
 
 #include <boost/intrusive/list.hpp>

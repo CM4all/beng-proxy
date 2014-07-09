@@ -5,7 +5,7 @@
  */
 
 #include "address_sticky.h"
-#include "djbhash.h"
+#include "util/djbhash.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>

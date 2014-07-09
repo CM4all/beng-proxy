@@ -7,7 +7,7 @@
 
 #include "dhashmap.h"
 #include "dpool.h"
-#include "djbhash.h"
+#include "util/djbhash.h"
 
 #include <assert.h>
 #include <string.h>

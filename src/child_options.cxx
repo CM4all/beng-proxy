@@ -4,7 +4,7 @@
 
 #include "child_options.hxx"
 #include "pool.h"
-#include "djbhash.h"
+#include "util/djbhash.h"
 
 #include <assert.h>
 #include <string.h>

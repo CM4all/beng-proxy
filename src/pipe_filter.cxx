@@ -14,9 +14,9 @@
 #include "istream.h"
 #include "sigutil.h"
 #include "child_options.hxx"
-#include "djbhash.h"
 #include "exec.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/djbhash.h"
 
 #include <daemon/log.h>
 

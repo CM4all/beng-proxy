@@ -5,8 +5,8 @@
  */
 
 #include "hashmap.h"
-#include "djbhash.h"
 #include "pool.h"
+#include "util/djbhash.h"
 
 #include <inline/compiler.h>
 

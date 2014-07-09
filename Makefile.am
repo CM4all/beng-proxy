@@ -601,7 +601,7 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 libutil_a_SOURCES = \
 	src/util/Domain.hxx \
 	src/util/Error.cxx src/util/Error.hxx \
-	src/djbhash.c src/djbhash.h \
+	src/util/djbhash.c src/util/djbhash.h \
 	src/format.c format.h \
 	src/date.c src/date.h \
 	src/gmtime.c src/gmtime.h \

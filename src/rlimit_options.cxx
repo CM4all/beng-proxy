@@ -3,7 +3,7 @@
  */
 
 #include "rlimit_options.hxx"
-#include "djbhash.h"
+#include "util/djbhash.h"
 
 #include <assert.h>
 #include <stdlib.h>
