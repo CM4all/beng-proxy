@@ -36,18 +36,18 @@ ServerSocket::Callback()
     if (!remote_fd.IsDefined()) {
         if (!error.IsDomain(errno_domain) ||
             (error.GetCode() != EAGAIN && error.GetCode() != EWOULDBLOCK))
-            handler.error(std::move(error), handler_ctx);
+            OnAcceptError(std::move(error));
 
         return;
     }
 
     if (!socket_set_nodelay(remote_fd.Get(), true)) {
         error.SetErrno("setsockopt(TCP_NODELAY) failed");
-        handler.error(std::move(error), handler_ctx);
+        OnAcceptError(std::move(error));
         return;
     }
 
-    handler.connected(std::move(remote_fd), remote_address, handler_ctx);
+    OnAccept(std::move(remote_fd), remote_address);
 }
 
 void

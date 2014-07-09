@@ -9,7 +9,7 @@
 
 #include "config.hxx"
 #include "shutdown_listener.h"
-#include "net/ServerSocket.hxx"
+#include "bp_listener.hxx"
 
 #include <inline/list.h>
 
@@ -26,7 +26,7 @@ struct instance {
 
     uint64_t http_request_counter;
 
-    std::forward_list<ServerSocket> listeners;
+    std::forward_list<BPListener> listeners;
 
     struct list_head connections;
     unsigned num_connections;

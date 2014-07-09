@@ -11,7 +11,8 @@
 
 class Error;
 
-struct lb_listener : ServerSocket {
+class lb_listener final : public ServerSocket {
+public:
     struct lb_instance &instance;
 
     const struct lb_listener_config &config;
@@ -23,6 +24,10 @@ struct lb_listener : ServerSocket {
     ~lb_listener();
 
     bool Setup(Error &error);
+
+protected:
+    void OnAccept(SocketDescriptor &&fd, SocketAddress address) override;
+    void OnAcceptError(Error &&error) override;
 };
 
 #endif

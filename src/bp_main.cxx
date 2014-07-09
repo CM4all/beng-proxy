@@ -230,7 +230,7 @@ add_listener(struct instance *instance, struct addrinfo *ai)
     assert(ai != NULL);
 
     do {
-        instance->listeners.emplace_front(http_listener_handler, instance);
+        instance->listeners.emplace_front(*instance);
         auto &listener = instance->listeners.front();
 
         if (!listener.Listen(ai->ai_family, ai->ai_socktype,
@@ -250,7 +250,7 @@ add_tcp_listener(struct instance *instance, int port)
 {
     Error error;
 
-    instance->listeners.emplace_front(http_listener_handler, instance);
+    instance->listeners.emplace_front(*instance);
     auto &listener = instance->listeners.front();
     if (!listener.ListenTCP(port, error)) {
         fprintf(stderr, "%s\n", error.GetMessage());

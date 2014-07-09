@@ -16,32 +16,19 @@
 
 #include <daemon/log.h>
 
-/*
- * listener_handler
- *
- */
-
-static void
-lb_listener_connected(SocketDescriptor &&fd, SocketAddress address,
-                      void *ctx)
+void
+lb_listener::OnAccept(SocketDescriptor &&fd, SocketAddress address)
 {
-    struct lb_listener *listener = (struct lb_listener *)ctx;
-
-    lb_connection_new(&listener->instance, &listener->config,
-                      listener->ssl_factory,
+    lb_connection_new(&instance, &config,
+                      ssl_factory,
                       fd.Steal(), address, address.GetSize());
 }
 
-static void
-lb_listener_error(Error &&error, G_GNUC_UNUSED void *ctx)
+void
+lb_listener::OnAcceptError(Error &&error)
 {
     daemon_log(2, "%s\n", error.GetMessage());
 }
-
-const struct listener_handler lb_listener_handler = {
-    .connected = lb_listener_connected,
-    .error = lb_listener_error,
-};
 
 /*
  * constructor
@@ -50,8 +37,7 @@ const struct listener_handler lb_listener_handler = {
 
 lb_listener::lb_listener(struct lb_instance &_instance,
                          const struct lb_listener_config &_config)
-    :ServerSocket(lb_listener_handler, this),
-     instance(_instance), config(_config) {}
+    :instance(_instance), config(_config) {}
 
 bool
 lb_listener::Setup(Error &error)

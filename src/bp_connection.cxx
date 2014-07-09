@@ -17,7 +17,6 @@
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/StaticSocketAddress.hxx"
-#include "net/ServerSocket.hxx"
 
 #include <daemon/log.h>
 
@@ -125,11 +124,10 @@ static const struct http_server_connection_handler my_http_server_connection_han
  *
  */
 
-static void
-http_listener_connected(SocketDescriptor &&fd, SocketAddress address,
-                        void *ctx)
+void
+new_connection(struct instance *instance,
+               SocketDescriptor &&fd, SocketAddress address)
 {
-    struct instance *instance = (struct instance*)ctx;
     struct pool *pool;
 
     if (instance->num_connections >= instance->config.max_connections) {
@@ -168,14 +166,3 @@ http_listener_connected(SocketDescriptor &&fd, SocketAddress address,
                                connection,
                                &connection->http);
 }
-
-static void
-http_listener_error(Error &&error, G_GNUC_UNUSED void *ctx)
-{
-    daemon_log(2, "%s\n", error.GetMessage());
-}
-
-const struct listener_handler http_listener_handler = {
-    .connected = http_listener_connected,
-    .error = http_listener_error,
-};

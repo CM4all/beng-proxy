@@ -16,22 +16,11 @@
 class SocketAddress;
 class Error;
 
-struct listener_handler {
-    void (*connected)(SocketDescriptor &&fd, SocketAddress address, void *ctx);
-    void (*error)(Error &&error, void *ctx);
-};
-
 class ServerSocket {
     SocketDescriptor fd;
     struct event event;
 
-    const struct listener_handler &handler;
-    void *handler_ctx;
-
 public:
-    ServerSocket(const struct listener_handler &_handler, void *_handler_ctx)
-        :handler(_handler), handler_ctx(_handler_ctx) {}
-
     ~ServerSocket();
 
     bool Listen(int family, int socktype, int protocol,
@@ -46,6 +35,15 @@ public:
     void RemoveEvent() {
         event_del(&event);
     }
+
+protected:
+    /**
+     * A new incoming connection has been established.
+     *
+     * @param fd the socket owned by the callee
+     */
+    virtual void OnAccept(SocketDescriptor &&fd, SocketAddress address) = 0;
+    virtual void OnAcceptError(Error &&error) = 0;
 
 private:
     void Callback();

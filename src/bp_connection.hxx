@@ -14,8 +14,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
-struct sockaddr;
 struct config;
+class SocketDescriptor;
+class SocketAddress;
 
 struct client_connection {
     struct list_head siblings;
@@ -39,7 +40,9 @@ struct client_connection {
     uint64_t request_start_time;
 };
 
-extern const struct listener_handler http_listener_handler;
+void
+new_connection(struct instance *instance,
+               SocketDescriptor &&fd, SocketAddress address);
 
 void
 close_connection(struct client_connection *connection);
