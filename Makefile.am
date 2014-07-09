@@ -233,7 +233,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/filtered_socket.cxx src/filtered_socket.hxx \
 	src/nop_socket_filter.cxx src/nop_socket_filter.hxx \
 	src/file_request.cxx src/file_request.hxx \
-	src/static-headers.c src/static-headers.h \
+	src/static_headers.cxx src/static_headers.hxx \
 	src/stock.c src/stock.h \
 	src/hstock.c src/hstock.h \
 	src/mstock.cxx src/hstock.h \
@@ -1616,7 +1616,7 @@ test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c \
 	src/stock.c src/pipe-stock.c \
-	src/static-headers.c \
+	src/static_headers.cxx \
 	src/shutdown_listener.c
 test_run_nfs_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \

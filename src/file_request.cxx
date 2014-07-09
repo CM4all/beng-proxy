@@ -5,7 +5,7 @@
  */
 
 #include "file_request.hxx"
-#include "static-headers.h"
+#include "static_headers.hxx"
 #include "http_response.hxx"
 #include "gerrno.h"
 #include "strmap.h"

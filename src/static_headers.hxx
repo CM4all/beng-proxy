@@ -4,20 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_STATIC_HEADERS_H
-#define BENG_PROXY_STATIC_HEADERS_H
+#ifndef BENG_PROXY_STATIC_HEADERS_HXX
+#define BENG_PROXY_STATIC_HEADERS_HXX
 
-#include <stdbool.h>
+#include <sys/stat.h>
 #include <stddef.h>
 
 struct pool;
 struct strmap;
 struct stat;
 struct file_request;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 static_etag(char *p, const struct stat *st);
@@ -33,9 +29,5 @@ void
 static_response_headers(struct pool *pool, struct strmap *headers,
                         int fd, const struct stat *st,
                         const char *content_type);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "static-headers.h"
+#include "static_headers.hxx"
 #include "strmap.h"
 #include "format.h"
 #include "date.h"
@@ -75,7 +75,7 @@ static_response_headers(struct pool *pool, struct strmap *headers,
 
     char buffer[256];
 
-    if (content_type == NULL)
+    if (content_type == nullptr)
         content_type = load_xattr_content_type(buffer, sizeof(buffer), fd)
             ? p_strdup(pool, buffer)
             : "application/octet-stream";

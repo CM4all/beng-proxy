@@ -8,7 +8,7 @@
 #include "delegate_request.hxx"
 #include "delegate_client.hxx"
 #include "delegate_glue.hxx"
-#include "static-headers.h"
+#include "static_headers.hxx"
 #include "http_response.hxx"
 #include "strmap.h"
 #include "istream.h"

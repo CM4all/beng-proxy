@@ -5,7 +5,7 @@
  */
 
 #include "file_headers.hxx"
-#include "static-headers.h"
+#include "static_headers.hxx"
 #include "growing_buffer.hxx"
 #include "header_writer.hxx"
 #include "format.h"
