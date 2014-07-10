@@ -31,7 +31,7 @@ my_istream_data(const void *data, size_t length, void *ctx)
 static void
 my_istream_eof(void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
     ctx->eof = true;
 }
@@ -39,7 +39,7 @@ my_istream_eof(void *_ctx)
 static void
 my_istream_abort(GError *error, void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
     g_error_free(error);
 
@@ -61,10 +61,10 @@ static const struct istream_handler block_istream_handler = {
 static void
 buffer_callback(GString *value, GError *error, void *_ctx)
 {
-    struct ctx *ctx = _ctx;
+    struct ctx *ctx = (struct ctx *)_ctx;
 
-    assert(value != NULL);
-    assert(error == NULL);
+    assert(value != nullptr);
+    assert(error == nullptr);
 
     ctx->value = value;
 }
@@ -73,7 +73,7 @@ static void
 test_block1(struct pool *pool)
 {
     struct ctx ctx = {
-        .value = NULL,
+        .value = nullptr,
         .eof = false,
         .aborted = false,
     };
@@ -86,26 +86,26 @@ test_block1(struct pool *pool)
     istream_handler_set(tee, &block_istream_handler, &ctx, 0);
 
     sink_gstring_new(pool, second, buffer_callback, &ctx, &async_ref);
-    assert(ctx.value == NULL);
+    assert(ctx.value == nullptr);
 
     /* the input (istream_delayed) blocks */
     istream_read(second);
-    assert(ctx.value == NULL);
+    assert(ctx.value == nullptr);
 
     /* feed data into input */
     istream_delayed_set(delayed, istream_string_new(pool, "foo"));
-    assert(ctx.value == NULL);
+    assert(ctx.value == nullptr);
 
     /* the first output (block_istream_handler) blocks */
     istream_read(second);
-    assert(ctx.value == NULL);
+    assert(ctx.value == nullptr);
 
     /* close the blocking output, this should release the "tee"
        object and restart reading (into the second output) */
     assert(!ctx.aborted && !ctx.eof);
     istream_free_handler(&tee);
     assert(!ctx.aborted && !ctx.eof);
-    assert(ctx.value != NULL);
+    assert(ctx.value != nullptr);
     assert(strcmp(ctx.value->str, "foo") == 0);
     g_string_free(ctx.value, true);
 }
@@ -114,7 +114,7 @@ static void
 test_close_data(struct pool *pool)
 {
     struct ctx ctx = {
-        .value = NULL,
+        .value = nullptr,
         .eof = false,
         .aborted = false,
     };
@@ -127,14 +127,14 @@ test_close_data(struct pool *pool)
     struct istream *second = istream_tee_second(tee);
 
     sink_gstring_new(pool, second, buffer_callback, &ctx, &async_ref);
-    assert(ctx.value == NULL);
+    assert(ctx.value == nullptr);
 
     istream_read(second);
 
     /* at this point, sink_close has closed itself, and istream_tee
        should have passed the data to the sink_gstring */
 
-    assert(ctx.value != NULL);
+    assert(ctx.value != nullptr);
     assert(strcmp(ctx.value->str, "foo") == 0);
     g_string_free(ctx.value, true);
 }
@@ -148,7 +148,7 @@ static void
 test_close_skipped(struct pool *pool)
 {
     struct ctx ctx = {
-        .value = NULL,
+        .value = nullptr,
         .eof = false,
         .aborted = false,
     };
@@ -161,11 +161,11 @@ test_close_skipped(struct pool *pool)
     struct istream *second = istream_tee_second(tee);
     sink_close_new(second);
 
-    assert(ctx.value == NULL);
+    assert(ctx.value == nullptr);
 
     istream_read(input);
 
-    assert(ctx.value != NULL);
+    assert(ctx.value != nullptr);
     assert(strcmp(ctx.value->str, "foo") == 0);
     g_string_free(ctx.value, true);
 }
@@ -186,7 +186,7 @@ int main(int argc, char **argv) {
 
     event_base = event_init();
 
-    root_pool = pool_new_libc(NULL, "root");
+    root_pool = pool_new_libc(nullptr, "root");
 
     /* run test suite */
 

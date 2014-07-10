@@ -676,7 +676,7 @@ libistream_a_SOURCES = \
 	src/istream_fcgi.c \
 	src/istream-cat.c \
 	src/istream_pipe.cxx \
-	src/istream-delayed.c \
+	src/istream_delayed.cxx \
 	src/istream-hold.c \
 	src/istream-optional.c \
 	src/istream-deflate.c \

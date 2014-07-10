@@ -6,6 +6,7 @@
 
 #include "istream-internal.h"
 #include "async.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -25,7 +26,7 @@ struct istream_delayed {
 static inline struct istream_delayed *
 istream_to_delayed(struct istream *istream)
 {
-    return (struct istream_delayed *)(((char*)istream) - offsetof(struct istream_delayed, output));
+    return ContainerCast(istream, struct istream_delayed, output);
 }
 
 static off_t
@@ -33,7 +34,7 @@ istream_delayed_available(struct istream *istream, bool partial)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
-    if (delayed->input == NULL)
+    if (delayed->input == nullptr)
         return (off_t)-1;
     else
         return istream_available(delayed->input, partial);
@@ -44,7 +45,7 @@ istream_delayed_read(struct istream *istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
-    if (delayed->input != NULL) {
+    if (delayed->input != nullptr) {
         istream_handler_set_direct(delayed->input,
                                    delayed->output.handler_direct);
         istream_read(delayed->input);
@@ -56,7 +57,7 @@ istream_delayed_as_fd(struct istream *istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
-    if (delayed->input == NULL)
+    if (delayed->input == nullptr)
         return -1;
 
     int fd = istream_as_fd(delayed->input);
@@ -71,7 +72,7 @@ istream_delayed_close(struct istream *istream)
 {
     struct istream_delayed *delayed = istream_to_delayed(istream);
 
-    if (delayed->input != NULL)
+    if (delayed->input != nullptr)
         istream_close_handler(delayed->input);
     else if (async_ref_defined(&delayed->async))
         async_abort(&delayed->async);
@@ -97,7 +98,7 @@ istream_delayed_new(struct pool *pool)
 {
     struct istream_delayed *delayed = istream_new_macro(pool, delayed);
 
-    delayed->input = NULL;
+    delayed->input = nullptr;
     return istream_struct_cast(&delayed->output);
 }
 
@@ -114,9 +115,9 @@ istream_delayed_set(struct istream *i_delayed, struct istream *input)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 
-    assert(delayed != NULL);
-    assert(delayed->input == NULL);
-    assert(input != NULL);
+    assert(delayed != nullptr);
+    assert(delayed->input == nullptr);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
     async_ref_poison(&delayed->async);
@@ -131,8 +132,8 @@ istream_delayed_set_eof(struct istream *i_delayed)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 
-    assert(delayed != NULL);
-    assert(delayed->input == NULL);
+    assert(delayed != nullptr);
+    assert(delayed->input == nullptr);
 
     async_ref_poison(&delayed->async);
 
@@ -144,8 +145,8 @@ istream_delayed_set_abort(struct istream *i_delayed, GError *error)
 {
     struct istream_delayed *delayed = (struct istream_delayed *)i_delayed;
 
-    assert(delayed != NULL);
-    assert(delayed->input == NULL);
+    assert(delayed != nullptr);
+    assert(delayed->input == nullptr);
 
     async_ref_poison(&delayed->async);
 
