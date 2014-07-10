@@ -481,8 +481,9 @@ http_client_headers_finished(struct http_client *client)
 {
     stopwatch_event(client->stopwatch, "headers");
 
-    const char *header_connection =
-        strmap_remove(client->response.headers, "connection");
+    auto &response_headers = *client->response.headers;
+
+    const char *header_connection = response_headers.Remove("connection");
     client->keep_alive =
         (header_connection == nullptr && !client->response.http_1_0) ||
         (header_connection != nullptr &&
@@ -495,14 +496,14 @@ http_client_headers_finished(struct http_client *client)
         return true;
     }
 
-    const char *transfer_encoding = strmap_remove(client->response.headers,
-                                                  "transfer-encoding");
-    const char *content_length_string = strmap_remove(client->response.headers,
-                                                      "content-length");
+    const char *transfer_encoding =
+        response_headers.Remove("transfer-encoding");
+    const char *content_length_string =
+        response_headers.Remove("content-length");
 
     /* remove the other hop-by-hop response headers */
-    strmap_remove(client->response.headers, "proxy-authenticate");
-    strmap_remove(client->response.headers, "upgrade");
+    response_headers.Remove("proxy-authenticate");
+    response_headers.Remove("upgrade");
 
     off_t content_length;
     bool chunked;

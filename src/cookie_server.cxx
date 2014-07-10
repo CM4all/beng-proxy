@@ -28,7 +28,7 @@ cookie_map_parse(struct strmap *cookies, const char *p, struct pool *pool)
         if (strref_is_empty(&name))
             break;
 
-        strmap_add(cookies, strref_dup(pool, &name), strref_dup(pool, &value));
+        cookies->Add(strref_dup(pool, &name), strref_dup(pool, &value));
 
         strref_ltrim(&input);
         if (strref_is_empty(&input) || input.data[0] != ';')

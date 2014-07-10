@@ -51,14 +51,14 @@ main(gcc_unused int argc, gcc_unused char **argv)
     tpool_init(pool);
 
     headers = strmap_new(pool);
-    strmap_add(headers, "from", "foo");
-    strmap_add(headers, "abc", "def");
-    strmap_add(headers, "cookie", "a=b");
-    strmap_add(headers, "content-type", "image/jpeg");
-    strmap_add(headers, "accept", "text/*");
-    strmap_add(headers, "via", "1.1 192.168.0.1");
-    strmap_add(headers, "x-forwarded-for", "10.0.0.2");
-    strmap_add(headers, "x-cm4all-beng-user", "hans");
+    headers->Add("from", "foo");
+    headers->Add("abc", "def");
+    headers->Add("cookie", "a=b");
+    headers->Add("content-type", "image/jpeg");
+    headers->Add("accept", "text/*");
+    headers->Add("via", "1.1 192.168.0.1");
+    headers->Add("x-forwarded-for", "10.0.0.2");
+    headers->Add("x-cm4all-beng-user", "hans");
 
     /* verify strmap_to_string() */
     check_strmap(headers, "abc=def;accept=text/*;"
@@ -73,12 +73,12 @@ main(gcc_unused int argc, gcc_unused char **argv)
                                   false, false, false, false,
                                   &settings,
                                   nullptr, nullptr, nullptr, nullptr);
-    assert(strcmp(strmap_remove(out, "user-agent"), PRODUCT_TOKEN) == 0);
+    assert(strcmp(out->Remove("user-agent"), PRODUCT_TOKEN) == 0);
     check_strmap(out, "accept-charset=utf-8;"
                  "via=1.1 192.168.0.2;x-forwarded-for=192.168.0.3;");
 
     /* basic test */
-    strmap_add(headers, "user-agent", "firesomething");
+    headers->Add("user-agent", "firesomething");
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
                                   false, false, false, false,
@@ -90,7 +90,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                  "x-forwarded-for=10.0.0.2, 192.168.0.3;");
 
     /* no accept-charset forwarded */
-    strmap_add(headers, "accept-charset", "iso-8859-1");
+    headers->Add("accept-charset", "iso-8859-1");
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
@@ -146,7 +146,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                                   false, false, false, false,
                                   &settings,
                                   nullptr, nullptr, nullptr, nullptr);
-    assert(strcmp(strmap_remove(out, "user-agent"), PRODUCT_TOKEN) == 0);
+    assert(strcmp(out->Remove("user-agent"), PRODUCT_TOKEN) == 0);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
                  "from=foo;"
                  "via=1.1 192.168.0.1, 1.1 192.168.0.2;"
@@ -194,7 +194,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     /* forward 2 cookies */
 
-    strmap_add(headers, "cookie", "c=d");
+    headers->Add("cookie", "c=d");
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
@@ -233,8 +233,8 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     /* forward CORS headers */
 
-    strmap_add(headers, "access-control-request-method", "POST");
-    strmap_add(headers, "origin", "example.com");
+    headers->Add("access-control-request-method", "POST");
+    headers->Add("origin", "example.com");
 
     out = forward_request_headers(pool, headers,
                                   "192.168.0.2", "192.168.0.3",
@@ -284,18 +284,18 @@ main(gcc_unused int argc, gcc_unused char **argv)
     out = forward_response_headers(pool, nullptr,
                                    "192.168.0.2", nullptr,
                                    &settings);
-    assert(strmap_remove(out, "server") == nullptr);
+    assert(out->Remove("server") == nullptr);
     check_strmap(out, "");
 
     /* response headers: basic test */
 
     headers = strmap_new(pool);
-    strmap_add(headers, "server", "apache");
-    strmap_add(headers, "abc", "def");
-    strmap_add(headers, "set-cookie", "a=b");
-    strmap_add(headers, "content-type", "image/jpeg");
-    strmap_add(headers, "via", "1.1 192.168.0.1");
-    strmap_add(headers, "x-cm4all-beng-user", "hans");
+    headers->Add("server", "apache");
+    headers->Add("abc", "def");
+    headers->Add("set-cookie", "a=b");
+    headers->Add("content-type", "image/jpeg");
+    headers->Add("via", "1.1 192.168.0.1");
+    headers->Add("x-cm4all-beng-user", "hans");
 
     out = forward_response_headers(pool, headers,
                                    "192.168.0.2", nullptr,
@@ -346,7 +346,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     /* forward CORS headers */
 
-    strmap_add(headers, "access-control-allow-methods", "POST");
+    headers->Add("access-control-allow-methods", "POST");
 
     out = forward_response_headers(pool, headers,
                                    "192.168.0.2", nullptr,

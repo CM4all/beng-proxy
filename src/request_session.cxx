@@ -139,7 +139,7 @@ request_determine_session(struct request *request)
     if (session == nullptr) {
         if (!cookie_received && request->args != nullptr)
             /* remove invalid session id from URI args */
-            strmap_remove(request->args, "session");
+            request->args->Remove("session");
 
         return;
     }
@@ -156,7 +156,7 @@ request_determine_session(struct request *request)
         if (request->args != nullptr)
             /* we're using cookies, and we can safely remove the
                session id from the args */
-            strmap_remove(request->args, "session");
+            request->args->Remove("session");
     }
 
     request->session_realm = p_strdup(request->request->pool, session->realm);
@@ -189,9 +189,9 @@ request_make_session(struct request *request)
 
     if (request->args == nullptr)
         request->args = strmap_new(request->request->pool);
-    strmap_set(request->args, "session",
-               session_id_format(request->session_id,
-                                 &request->session_id_string));
+    request->args->Set("session",
+                       session_id_format(request->session_id,
+                                         &request->session_id_string));
 
     return session;
 }
@@ -207,7 +207,7 @@ request_ignore_session(struct request *request)
     assert(!request->stateless);
 
     if (request->args != nullptr)
-        strmap_remove(request->args, "session");
+        request->args->Remove("session");
 
     session_id_clear(&request->session_id);
 }
@@ -223,7 +223,7 @@ request_discard_session(struct request *request)
     assert(!request->stateless);
 
     if (request->args != nullptr)
-        strmap_remove(request->args, "session");
+        request->args->Remove("session");
 
     session_delete(request->session_id);
     session_id_clear(&request->session_id);

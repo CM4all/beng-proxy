@@ -28,14 +28,12 @@ forward_via(struct pool *pool, struct strmap *dest, const struct strmap *src,
     p = strmap_get_checked(src, "via");
     if (p == NULL) {
         if (local_host != NULL)
-            strmap_add(dest, "via",
-                       p_strcat(pool, "1.1 ", local_host, NULL));
+            dest->Add("via", p_strcat(pool, "1.1 ", local_host, NULL));
     } else {
         if (local_host == NULL)
-            strmap_add(dest, "via", p);
+            dest->Add("via", p);
         else
-            strmap_add(dest, "via",
-                       p_strcat(pool, p, ", 1.1 ", local_host, NULL));
+            dest->Add("via", p_strcat(pool, p, ", 1.1 ", local_host, NULL));
     }
 }
 
@@ -48,13 +46,13 @@ forward_xff(struct pool *pool, struct strmap *dest, const struct strmap *src,
     p = strmap_get_checked(src, "x-forwarded-for");
     if (p == NULL) {
         if (remote_host != NULL)
-            strmap_add(dest, "x-forwarded-for", remote_host);
+            dest->Add("x-forwarded-for", remote_host);
     } else {
         if (remote_host == NULL)
-            strmap_add(dest, "x-forwarded-for", p);
+            dest->Add("x-forwarded-for", p);
         else
-            strmap_add(dest, "x-forwarded-for",
-                       p_strcat(pool, p, ", ", remote_host, NULL));
+            dest->Add("x-forwarded-for",
+                      p_strcat(pool, p, ", ", remote_host, NULL));
     }
 }
 
@@ -83,7 +81,7 @@ forward_other_headers(struct strmap *dest, const struct strmap *src)
     for (const auto &i : *src)
         if (!string_in_array(via_request_headers, i.key) &&
             !http_header_is_hop_by_hop(i.key))
-            strmap_add(dest, i.key, i.value);
+            dest->Add(i.key, i.value);
 }
 
 const struct strmap *
@@ -102,11 +100,10 @@ lb_forward_request_headers(struct pool *pool, const struct strmap *src,
         forward_other_headers(dest, src);
 
     if (peer_subject != NULL)
-        strmap_add(dest, "x-cm4all-beng-peer-subject", peer_subject);
+        dest->Add("x-cm4all-beng-peer-subject", peer_subject);
 
     if (peer_issuer_subject != NULL)
-        strmap_add(dest, "x-cm4all-beng-peer-issuer-subject",
-                   peer_issuer_subject);
+        dest->Add("x-cm4all-beng-peer-issuer-subject", peer_issuer_subject);
 
     if (mangle_via)
         forward_identity(pool, dest, src, local_host, remote_host);

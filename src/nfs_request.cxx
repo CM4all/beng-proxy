@@ -51,7 +51,7 @@ nfs_request_response(struct nfs_cache_handle *handle,
     struct strmap *headers = strmap_new(&r->pool);
     static_response_headers(&r->pool, headers, -1, st,
                             r->content_type);
-    strmap_add(headers, "cache-control", "max-age=60");
+    headers->Add("cache-control", "max-age=60");
 
     struct istream *body = nfs_cache_handle_open(&r->pool, handle,
                                                  0, st->st_size);

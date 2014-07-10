@@ -245,7 +245,7 @@ my_client_socket_success(int fd, void *ctx)
     c->fd = fd;
 
     struct strmap *headers = strmap_new(c->pool);
-    strmap_add(headers, "host", c->url.host);
+    headers->Add("host", c->url.host);
 
     switch (c->url.protocol) {
     case parsed_url::AJP:

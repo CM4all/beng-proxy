@@ -95,7 +95,7 @@ deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
         lname = p_strdup(pool, name);
         str_to_lower(lname);
 
-        strmap_add(headers, lname, p_strdup(pool, value));
+        headers->Add(lname, p_strdup(pool, value));
     }
 }
 
@@ -137,6 +137,6 @@ deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
         lname = p_strdup(pool, name);
         str_to_lower(lname);
 
-        strmap_add(headers, lname, p_strdup(pool, value));
+        headers->Add(lname, p_strdup(pool, value));
     }
 }

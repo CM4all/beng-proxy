@@ -80,11 +80,11 @@ static_response_headers(struct pool *pool, struct strmap *headers,
             ? p_strdup(pool, buffer)
             : "application/octet-stream";
 
-    strmap_add(headers, "content-type", content_type);
+    headers->Add("content-type", content_type);
 
-    strmap_add(headers, "last-modified",
-               p_strdup(pool, http_date_format(st->st_mtime)));
+    headers->Add("last-modified",
+                 p_strdup(pool, http_date_format(st->st_mtime)));
 
     static_etag(buffer, st);
-    strmap_add(headers, "etag", p_strdup(pool, buffer));
+    headers->Add("etag", p_strdup(pool, buffer));
 }

@@ -179,7 +179,7 @@ pipe_filter(struct pool *pool, const char *path,
         assert(etag != nullptr);
 
         headers = strmap_dup(pool, headers);
-        strmap_set(headers, "etag", etag);
+        headers->Set("etag", etag);
     }
 
     response = istream_stopwatch_new(pool, response, stopwatch);

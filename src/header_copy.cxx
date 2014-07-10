@@ -19,7 +19,7 @@ header_copy_one(const struct strmap *in, struct strmap *out, const char *key)
 
     for (const struct strmap_pair *pair = strmap_lookup_first(in, key);
          pair != nullptr; pair = strmap_lookup_next(in, pair))
-        strmap_add(out, key, pair->value);
+        out->Add(key, pair->value);
 }
 
 void
@@ -47,5 +47,5 @@ header_copy_prefix(const struct strmap *in, struct strmap *out,
 
     for (const auto &i : *in)
         if (memcmp(i.key, prefix, prefix_length) == 0)
-            strmap_add(out, i.key, i.value);
+            out->Add(i.key, i.value);
 }

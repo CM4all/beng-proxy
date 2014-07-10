@@ -147,7 +147,7 @@ forward_secure_headers(struct strmap *dest, const struct strmap *src)
 {
     for (const auto &i : *src)
         if (is_secure_header(i.key))
-            strmap_add(dest, i.key, i.value);
+            dest->Add(i.key, i.value);
 }
 
 static void
@@ -162,7 +162,7 @@ forward_user_agent(struct strmap *dest, const struct strmap *src,
     if (p == nullptr)
         p = PRODUCT_TOKEN;
 
-    strmap_add(dest, "user-agent", p);
+    dest->Add("user-agent", p);
 }
 
 static void
@@ -174,14 +174,12 @@ forward_via(struct pool *pool, struct strmap *dest, const struct strmap *src,
     p = strmap_get_checked(src, "via");
     if (p == nullptr) {
         if (local_host != nullptr && mangle)
-            strmap_add(dest, "via",
-                       p_strcat(pool, "1.1 ", local_host, nullptr));
+            dest->Add("via", p_strcat(pool, "1.1 ", local_host, nullptr));
     } else {
         if (local_host == nullptr || !mangle)
-            strmap_add(dest, "via", p);
+            dest->Add("via", p);
         else
-            strmap_add(dest, "via",
-                       p_strcat(pool, p, ", 1.1 ", local_host, nullptr));
+            dest->Add("via", p_strcat(pool, p, ", 1.1 ", local_host, nullptr));
     }
 }
 
@@ -194,13 +192,13 @@ forward_xff(struct pool *pool, struct strmap *dest, const struct strmap *src,
     p = strmap_get_checked(src, "x-forwarded-for");
     if (p == nullptr) {
         if (remote_host != nullptr && mangle)
-            strmap_add(dest, "x-forwarded-for", remote_host);
+            dest->Add("x-forwarded-for", remote_host);
     } else {
         if (remote_host == nullptr || !mangle)
-            strmap_add(dest, "x-forwarded-for", p);
+            dest->Add("x-forwarded-for", p);
         else
-            strmap_add(dest, "x-forwarded-for",
-                       p_strcat(pool, p, ", ", remote_host, nullptr));
+            dest->Add("x-forwarded-for",
+                      p_strcat(pool, p, ", ", remote_host, nullptr));
     }
 }
 
@@ -236,7 +234,7 @@ forward_other_headers(struct strmap *dest, const struct strmap *src)
             !string_in_array(exclude_request_headers, i.key) &&
             !is_secure_header(i.key) &&
             !http_header_is_hop_by_hop(i.key))
-            strmap_add(dest, i.key, i.value);
+            dest->Add(i.key, i.value);
 }
 
 /**
@@ -249,11 +247,11 @@ header_copy_cookie_except(struct pool *pool,
 {
     for (const auto &i : *src) {
         if (strcmp(i.key, "cookie2") == 0)
-            strmap_add(dest, i.key, i.value);
+            dest->Add(i.key, i.value);
         else if (strcmp(i.key, "cookie") == 0) {
             const char *new_value = cookie_exclude(i.value, except, pool);
             if (new_value != nullptr)
-                strmap_add(dest, i.key, new_value);
+                dest->Add(i.key, new_value);
         }
     }
 }
@@ -277,7 +275,7 @@ header_copy_set_cookie_except(struct strmap *dest, const struct strmap *src,
     for (const auto &i : *src)
         if (string_in_array(cookie_response_headers, i.key) &&
             !compare_set_cookie_name(i.value, except))
-            strmap_add(dest, i.key, i.value);
+            dest->Add(i.key, i.value);
 }
 
 struct strmap *
@@ -333,11 +331,11 @@ forward_request_headers(struct pool *pool, const struct strmap *src,
         : nullptr;
     if (p == nullptr)
         p = "utf-8";
-    strmap_add(dest, "accept-charset", p);
+    dest->Add("accept-charset", p);
 
     if (forward_encoding &&
         (p = strmap_get_checked(src, "accept-encoding")) != nullptr)
-        strmap_add(dest, "accept-encoding", p);
+        dest->Add("accept-encoding", p);
 
     if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
         if (src != nullptr)
@@ -355,12 +353,12 @@ forward_request_headers(struct pool *pool, const struct strmap *src,
                                dest, pool);
 
     if (session != nullptr && session->language != nullptr)
-        strmap_add(dest, "accept-language", p_strdup(pool, session->language));
+        dest->Add("accept-language", p_strdup(pool, session->language));
     else if (src != nullptr)
         header_copy_list(src, dest, language_request_headers);
 
     if (session != nullptr && session->user != nullptr)
-        strmap_add(dest, "x-cm4all-beng-user", p_strdup(pool, session->user));
+        dest->Add("x-cm4all-beng-user", p_strdup(pool, session->user));
 
     if (settings->modes[HEADER_GROUP_CAPABILITIES] != HEADER_FORWARD_NO)
         forward_user_agent(dest, src,
@@ -373,7 +371,7 @@ forward_request_headers(struct pool *pool, const struct strmap *src,
     if (settings->modes[HEADER_GROUP_FORWARD] == HEADER_FORWARD_MANGLE) {
         const char *host = strmap_get_checked(src, "host");
         if (host != nullptr)
-            strmap_add(dest, "x-forwarded-host", host);
+            dest->Add("x-forwarded-host", host);
     }
 
     return dest;
@@ -389,7 +387,7 @@ forward_other_response_headers(struct strmap *dest, const struct strmap *src)
             !string_in_array(exclude_response_headers, i.key) &&
             !is_secure_header(i.key) &&
             !http_header_is_hop_by_hop(i.key))
-            strmap_add(dest, i.key, i.value);
+            dest->Add(i.key, i.value);
 }
 
 static void
@@ -405,7 +403,7 @@ forward_server(struct strmap *dest, const struct strmap *src,
     if (p == nullptr)
         return;
 
-    strmap_add(dest, "server", p);
+    dest->Add("server", p);
 }
 
 struct strmap *

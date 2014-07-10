@@ -72,10 +72,10 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     headers = add_translation_vary_header(request->pool, headers,
                                           request2->translate.response);
 
-    request2->product_token = strmap_remove(headers, "server");
+    request2->product_token = headers->Remove("server");
 
 #ifdef NO_DATE_HEADER
-    request2->date = strmap_remove(headers, "date");
+    request2->date = headers->Remove("date");
 #endif
 
     headers2 = headers_dup(request->pool, headers);

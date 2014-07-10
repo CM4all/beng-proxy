@@ -135,7 +135,7 @@ handle_fcgi_param(struct pool *pool, struct fcgi_request *r,
                 *q += 'a' - 'A';
         }
 
-        strmap_add(r->headers, p, p_strdup(pool, value));
+        r->headers->Add(p, p_strdup(pool, value));
     }
 }
 
@@ -192,7 +192,7 @@ read_fcgi_request(struct pool *pool, struct fcgi_request *r)
 
     read_fcgi_params(pool, r);
 
-    const char *content_length = strmap_remove(r->headers, "content-length");
+    const char *content_length = r->headers->Remove("content-length");
     r->length = content_length != nullptr
         ? strtol(content_length, nullptr, 10)
         : -1;
@@ -419,7 +419,7 @@ fcgi_server_mirror(struct pool *pool)
     if (request.length > 0) {
         char buffer[32];
         sprintf(buffer, "%llu", (unsigned long long)request.length);
-        strmap_add(request.headers, "content-length", buffer);
+        request.headers->Add("content-length", buffer);
     }
 
     write_fcgi_headers(&request, status, request.headers);

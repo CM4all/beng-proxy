@@ -408,8 +408,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
 
     http_status_t status = HTTP_STATUS_OK;
 
-    const char *p = strmap_remove(client->response.headers,
-                                  "status");
+    const char *p = client->response.headers->Remove("status");
     if (p != nullptr) {
         int i = atoi(p);
         if (http_status_is_valid((http_status_t)i))
@@ -427,8 +426,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
     }
 
     client->response.available = -1;
-    p = strmap_remove(client->response.headers,
-                      "content-length");
+    p = client->response.headers->Remove("content-length");
     if (p != nullptr) {
         char *endptr;
         unsigned long long l = strtoull(p, &endptr, 10);

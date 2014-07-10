@@ -84,7 +84,7 @@ add_translation_vary_header(struct pool *pool, struct strmap *headers,
     if (old != nullptr)
         value = p_strcat(pool, old, ",", value, nullptr);
 
-    strmap_set(headers, "vary", value);
+    headers->Set("vary", value);
     return headers;
 }
 

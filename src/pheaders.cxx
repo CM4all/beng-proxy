@@ -35,7 +35,7 @@ processor_header_forward(struct pool *pool, struct strmap *headers)
     /* reportedly, the Internet Explorer caches uncacheable resources
        without revalidating them; only Cache-Control will prevent him
        from showing stale data to the user */
-    strmap_add(headers2, "cache-control", "no-store");
+    headers2->Add("cache-control", "no-store");
 
     return headers2;
 }

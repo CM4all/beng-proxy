@@ -42,6 +42,6 @@ request_args_parse(struct request *request)
 
     request->args = args_parse(request->request->pool,
                                request->uri.args.data, request->uri.args.length);
-    request->translate.request.param = strmap_remove(request->args, "translate");
+    request->translate.request.param = request->args->Remove("translate");
     request->translate.request.session = nullptr;
 }

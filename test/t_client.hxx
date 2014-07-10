@@ -644,7 +644,7 @@ static void
 test_data_blocking2(struct pool *pool, struct context *c)
 {
     struct strmap *request_headers = strmap_new(pool);
-    strmap_add(request_headers, "connection", "close");
+    request_headers->Add("connection", "close");
 
     c->response_body_byte = true;
     c->connection = connect_mirror();

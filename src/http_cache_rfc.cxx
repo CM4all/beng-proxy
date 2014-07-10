@@ -326,8 +326,7 @@ http_cache_copy_vary(struct pool *pool, const char *vary,
         const char *value = strmap_get_checked(headers, *list);
         if (value == nullptr)
             value = "";
-        strmap_set(dest, p_strdup(pool, *list),
-                   p_strdup(pool, value));
+        dest->Set(p_strdup(pool, *list), p_strdup(pool, value));
     }
 
     if (pool != tpool)

@@ -35,7 +35,7 @@ cgi_parser_finish(struct cgi_parser *parser, struct fifo_buffer *buffer,
                   GError **error_r)
 {
     /* parse the status */
-    const char *p = strmap_remove(parser->headers, "status");
+    const char *p = parser->headers->Remove("status");
     if (p != nullptr) {
         int i = atoi(p);
         if (http_status_is_valid((http_status_t)i))
@@ -46,7 +46,7 @@ cgi_parser_finish(struct cgi_parser *parser, struct fifo_buffer *buffer,
         /* there cannot be a response body */
         parser->remaining = 0;
     } else {
-        p = strmap_remove(parser->headers, "content-length");
+        p = parser->headers->Remove("content-length");
         if (p != nullptr) {
             /* parse the Content-Length response header */
             char *endptr;

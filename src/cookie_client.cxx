@@ -275,7 +275,7 @@ cookie_jar_http_header(struct cookie_jar *jar,
     char *cookie = cookie_jar_http_header_value(jar, domain, path, pool);
 
     if (cookie != nullptr) {
-        strmap_add(headers, "cookie2", "$Version=\"1\"");
-        strmap_add(headers, "cookie", cookie);
+        headers->Add("cookie2", "$Version=\"1\"");
+        headers->Add("cookie", cookie);
     }
 }

@@ -784,11 +784,11 @@ http_cache_test(HttpCacheRequest *request,
         headers = strmap_new(request->pool);
 
     if (document->info.last_modified != nullptr)
-        strmap_set(headers, "if-modified-since",
-                   document->info.last_modified);
+        headers->Set("if-modified-since",
+                     document->info.last_modified);
 
     if (document->info.etag != nullptr)
-        strmap_set(headers, "if-none-match", document->info.etag);
+        headers->Set("if-none-match", document->info.etag);
 
     resource_loader_request(&cache->resource_loader, request->pool,
                             request->session_sticky,

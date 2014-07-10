@@ -281,11 +281,10 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             return false;
         }
 
-        strmap_add(client->response.headers,
-                   p_strndup(client->pool, (const char *)payload,
-                             p - (const char *)payload),
-                   p_strndup(client->pool, p + 1,
-                             (const char*)payload + payload_length - p - 1));
+        client->response.headers->Add(p_strndup(client->pool, (const char *)payload,
+                                                p - (const char *)payload),
+                                      p_strndup(client->pool, p + 1,
+                                                (const char*)payload + payload_length - p - 1));
         break;
 
     case WAS_COMMAND_STATUS:

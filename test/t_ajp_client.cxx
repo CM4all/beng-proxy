@@ -179,7 +179,7 @@ read_ajp_request(struct pool *pool, struct ajp_request *r)
         }
 
         const char *value = read_string(pool, &remaining);
-        strmap_add(r->headers, name, value);
+        r->headers->Add(name, value);
     }
 
     // ...
@@ -442,7 +442,7 @@ ajp_server_tiny(struct pool *pool)
         exit(EXIT_FAILURE);
 
     struct strmap *headers = strmap_new(pool);
-    strmap_add(headers, "content-length", "5");
+    headers->Add("content-length", "5");
 
     write_headers(HTTP_STATUS_OK, headers);
     write_body_chunk("hello", 5, 0);

@@ -1468,10 +1468,9 @@ processor_parser_tag_finished(const struct parser_tag *tag, void *ctx)
             value[length] = 0;
         }
 
-        strmap_add(processor->widget.widget->headers,
-                   expansible_buffer_strdup(processor->widget.param.name,
-                                            processor->widget.pool),
-                   value);
+        processor->widget.widget->headers->Add(expansible_buffer_strdup(processor->widget.param.name,
+                                                                        processor->widget.pool),
+                                               value);
     } else if (processor->tag == TAG_SCRIPT) {
         if (tag->type == TAG_OPEN)
             parser_script(processor->parser);

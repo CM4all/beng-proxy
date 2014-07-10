@@ -15,7 +15,7 @@ http_response_handler_direct_message(const struct http_response_handler *handler
                                      http_status_t status, const char *msg)
 {
     struct strmap *headers = strmap_new(pool);
-    strmap_add(headers, "content-type", "text/plain; charset=utf-8");
+    headers->Add("content-type", "text/plain; charset=utf-8");
     http_response_handler_direct_response(handler, ctx, status, headers,
                                           istream_string_new(pool, msg));
 }
@@ -26,7 +26,7 @@ http_response_handler_invoke_message(struct http_response_handler_ref *ref,
                                      http_status_t status, const char *msg)
 {
     struct strmap *headers = strmap_new(pool);
-    strmap_add(headers, "content-type", "text/plain; charset=utf-8");
+    headers->Add("content-type", "text/plain; charset=utf-8");
     http_response_handler_invoke_response(ref, status, headers,
                                           istream_string_new(pool, msg));
 }

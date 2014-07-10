@@ -177,7 +177,7 @@ resource_get(gcc_unused struct http_cache *cache,
         assert(p == nullptr);
 
         /* set one cookie */
-        strmap_add(response_headers, "set-cookie", "foo=bar");
+        response_headers->Add("set-cookie", "foo=bar");
         break;
 
     case 1:
@@ -187,7 +187,7 @@ resource_get(gcc_unused struct http_cache *cache,
         assert(strcmp(p, "foo=bar") == 0);
 
         /* add 2 more cookies */
-        strmap_add(response_headers, "set-cookie", "a=b, c=d");
+        response_headers->Add("set-cookie", "a=b, c=d");
         break;
 
     case 2:
@@ -197,8 +197,8 @@ resource_get(gcc_unused struct http_cache *cache,
         assert(strcmp(p, "c=d; a=b; foo=bar") == 0);
 
         /* set two cookies in two headers */
-        strmap_add(response_headers, "set-cookie", "e=f");
-        strmap_add(response_headers, "set-cookie", "g=h");
+        response_headers->Add("set-cookie", "e=f");
+        response_headers->Add("set-cookie", "g=h");
         break;
 
     case 3:

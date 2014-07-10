@@ -112,22 +112,21 @@ widget_request_headers(struct embed *embed, const struct widget_view *view,
 
     if (widget->cls->info_headers) {
         if (widget->id != nullptr)
-            strmap_add(headers, "x-cm4all-widget-id", widget->id);
+            headers->Add("x-cm4all-widget-id", widget->id);
 
         if (widget->class_name != nullptr)
-            strmap_add(headers, "x-cm4all-widget-type", widget->class_name);
+            headers->Add("x-cm4all-widget-type", widget->class_name);
 
         const char *prefix = widget_prefix(widget);
         if (prefix != nullptr)
-            strmap_add(headers, "x-cm4all-widget-prefix", prefix);
+            headers->Add("x-cm4all-widget-prefix", prefix);
     }
 
     if (widget->headers != nullptr)
         /* copy HTTP request headers from template */
         for (const auto &i : *widget->headers)
-            strmap_add(headers,
-                       p_strdup(embed->pool, i.key),
-                       p_strdup(embed->pool, i.value));
+            headers->Add(p_strdup(embed->pool, i.key),
+                         p_strdup(embed->pool, i.value));
 
     return headers;
 }
