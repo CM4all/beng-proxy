@@ -3054,6 +3054,15 @@ translate_handle_packet(TranslateClient *client,
 
         client->response.expand_site = payload;
         return true;
+
+    case TRANSLATE_REQUEST_HEADER:
+        if (!parse_header(client->pool, client->response.request_headers,
+                          "REQUEST_HEADER", payload, payload_length, &error)) {
+            translate_client_abort(client, error);
+            return false;
+        }
+
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

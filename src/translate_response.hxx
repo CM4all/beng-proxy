@@ -152,6 +152,8 @@ struct TranslateResponse {
     const char *cookie_host;
     const char *cookie_path;
 
+    struct strmap *request_headers;
+
     struct strmap *response_headers;
 
     struct widget_view *views;
