@@ -3,50 +3,23 @@
 #include "strmap.hxx"
 #include "product.h"
 
-#include <glib.h>
-
 #include <assert.h>
 #include <string.h>
-
-static inline gint
-cmp_pair(gconstpointer _a, gconstpointer _b)
-{
-    const strmap_pair *a = (strmap_pair *)_a;
-    const strmap_pair *b = (strmap_pair *)_b;
-
-    return strcmp(a->key, b->key);
-}
-
-static void
-print_pair(gpointer data, gpointer user_data)
-{
-    const strmap_pair *pair = (strmap_pair *)data;
-    char *p = (char *)user_data;
-
-    strcat(p, pair->key);
-    strcat(p, "=");
-    strcat(p, pair->value);
-    strcat(p, ";");
-}
 
 static const char *
 strmap_to_string(struct strmap *map)
 {
-    union {
-        const struct strmap_pair *pair;
-        gpointer data;
-    } u;
-    GSList *list = nullptr;
     static char buffer[4096];
+    buffer[0] = 0;
 
     strmap_rewind(map);
-    while ((u.pair = strmap_next(map)) != nullptr)
-        list = g_slist_prepend(list, u.data);
-
-    list = g_slist_sort(list, cmp_pair);
-
-    buffer[0] = 0;
-    g_slist_foreach(list, print_pair, buffer);
+    const struct strmap_pair *pair;
+    while ((pair = strmap_next(map)) != nullptr) {
+        strcat(buffer, pair->key);
+        strcat(buffer, "=");
+        strcat(buffer, pair->value);
+        strcat(buffer, ";");
+    }
 
     return buffer;
 }
@@ -231,7 +204,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
                                   &settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
-                 "cookie=c=d;cookie=a=b;"
+                 "cookie=a=b;cookie=c=d;"
                  "from=foo;");
 
     /* exclude one cookie */
