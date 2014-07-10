@@ -10,7 +10,6 @@
 
 #include <inline/list.h>
 
-#include <glib.h>
 #include <event.h>
 #include <assert.h>
 #include <unistd.h>
@@ -40,7 +39,7 @@ udp_recipient_remove(struct udp_recipient *ur)
 }
 
 static void
-udp_recipient_event_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
+udp_recipient_event_callback(gcc_unused int fd, gcc_unused short event,
                              void *ctx)
 {
     struct udp_recipient *ur = ctx;

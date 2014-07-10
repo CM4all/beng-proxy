@@ -81,7 +81,7 @@ static const struct lease memcached_socket_lease = {
  */
 
 static void
-my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
+my_sink_done(void *data0, size_t length, gcc_unused void *ctx)
 {
     struct http_cache_document document;
     /*uint32_t magic;*/
@@ -109,7 +109,7 @@ my_sink_done(void *data0, size_t length, G_GNUC_UNUSED void *ctx)
 }
 
 static void
-my_sink_error(GError *error, G_GNUC_UNUSED void *ctx)
+my_sink_error(GError *error, gcc_unused void *ctx)
 {
     fprintf(stderr, "sink_buffer has failed: %s\n", error->message);
     g_error_free(error);
@@ -128,10 +128,10 @@ static const struct sink_buffer_handler my_sink_handler = {
 
 static void
 my_mcd_response(enum memcached_response_status status,
-                G_GNUC_UNUSED const void *extras,
-                G_GNUC_UNUSED size_t extras_length,
-                G_GNUC_UNUSED const void *key,
-                G_GNUC_UNUSED size_t key_length,
+                gcc_unused const void *extras,
+                gcc_unused size_t extras_length,
+                gcc_unused const void *key,
+                gcc_unused size_t key_length,
                 struct istream *value, void *ctx)
 {
     context *c = (context *)ctx;
@@ -149,7 +149,7 @@ my_mcd_response(enum memcached_response_status status,
 }
 
 static void
-my_mcd_error(GError *error, G_GNUC_UNUSED void *ctx)
+my_mcd_error(GError *error, gcc_unused void *ctx)
 {
     fprintf(stderr, "%s\n", error->message);
     g_error_free(error);

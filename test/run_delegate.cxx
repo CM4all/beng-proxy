@@ -31,7 +31,7 @@ my_delegate_callback(int fd, void *ctx gcc_unused)
 }
 
 static void
-my_delegate_error(GError *error, G_GNUC_UNUSED void *ctx)
+my_delegate_error(GError *error, gcc_unused void *ctx)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);

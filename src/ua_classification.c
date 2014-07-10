@@ -134,7 +134,7 @@ ua_classification_deinit(void)
     }
 }
 
-G_GNUC_PURE
+gcc_pure
 const char *
 ua_classification_lookup(const char *user_agent)
 {

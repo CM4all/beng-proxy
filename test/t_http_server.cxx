@@ -11,7 +11,7 @@
 #include <event.h>
 
 static GError *
-catch_callback(GError *error, G_GNUC_UNUSED void *ctx)
+catch_callback(GError *error, gcc_unused void *ctx)
 {
     fprintf(stderr, "%s\n", error->message);
     g_error_free(error);

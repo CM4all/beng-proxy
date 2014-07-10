@@ -59,7 +59,8 @@ check_strmap(struct strmap *map, const char *p)
     assert(strcmp(q, p) == 0);
 }
 
-int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
+int
+main(gcc_unused int argc, gcc_unused char **argv)
 {
     struct pool *pool;
     struct strmap *headers, *out;

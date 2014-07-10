@@ -40,7 +40,7 @@ memcached_stock_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
 }
 
 void
-memcached_stock_free(G_GNUC_UNUSED struct memcached_stock *stock)
+memcached_stock_free(gcc_unused struct memcached_stock *stock)
 {
 }
 

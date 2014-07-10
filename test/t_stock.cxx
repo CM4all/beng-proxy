@@ -30,17 +30,17 @@ test_quark(void)
  */
 
 static struct pool *
-my_stock_pool(G_GNUC_UNUSED void *ctx, struct pool *parent,
-              G_GNUC_UNUSED const char *uri)
+my_stock_pool(gcc_unused void *ctx, struct pool *parent,
+              gcc_unused const char *uri)
 {
     return pool_new_linear(parent, "my_stock", 512);
 }
 
 static void
 my_stock_create(void *ctx gcc_unused, struct stock_item *_item,
-                G_GNUC_UNUSED const char *uri, void *info,
-                G_GNUC_UNUSED struct pool *caller_pool,
-                G_GNUC_UNUSED struct async_operation_ref *async_ref)
+                gcc_unused const char *uri, void *info,
+                gcc_unused struct pool *caller_pool,
+                gcc_unused struct async_operation_ref *async_ref)
 {
     struct my_stock_item *item = (struct my_stock_item *)_item;
 
@@ -58,23 +58,23 @@ my_stock_create(void *ctx gcc_unused, struct stock_item *_item,
 }
 
 static bool
-my_stock_borrow(G_GNUC_UNUSED void *ctx,
-                G_GNUC_UNUSED struct stock_item *item)
+my_stock_borrow(gcc_unused void *ctx,
+                gcc_unused struct stock_item *item)
 {
     ++num_borrow;
     return true;
 }
 
 static void
-my_stock_release(G_GNUC_UNUSED void *ctx,
-                 G_GNUC_UNUSED struct stock_item *item)
+my_stock_release(gcc_unused void *ctx,
+                 gcc_unused struct stock_item *item)
 {
     ++num_release;
 }
 
 static void
-my_stock_destroy(G_GNUC_UNUSED void *ctx,
-                 G_GNUC_UNUSED struct stock_item *_item)
+my_stock_destroy(gcc_unused void *ctx,
+                 gcc_unused struct stock_item *_item)
 {
     ++num_destroy;
 }
@@ -89,7 +89,7 @@ static const struct stock_class my_stock_class = {
 };
 
 static void
-my_stock_ready(struct stock_item *item, G_GNUC_UNUSED void *ctx)
+my_stock_ready(struct stock_item *item, gcc_unused void *ctx)
 {
     assert(!got_item);
 
@@ -98,7 +98,7 @@ my_stock_ready(struct stock_item *item, G_GNUC_UNUSED void *ctx)
 }
 
 static void
-my_stock_error(GError *error, G_GNUC_UNUSED void *ctx)
+my_stock_error(GError *error, gcc_unused void *ctx)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);
@@ -112,7 +112,7 @@ static const struct stock_get_handler my_stock_handler = {
     .error = my_stock_error,
 };
 
-int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
+int main(gcc_unused int argc, gcc_unused char **argv)
 {
     struct event_base *event_base;
     struct pool *pool;

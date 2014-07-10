@@ -129,7 +129,7 @@ istream_to_value(struct istream *istream)
 }
 
 static off_t
-istream_request_value_available(struct istream *istream, G_GNUC_UNUSED bool partial)
+istream_request_value_available(struct istream *istream, gcc_unused bool partial)
 {
     const struct request_value *v = istream_to_value(istream);
 
@@ -203,7 +203,7 @@ request_value_async_ref(struct istream *istream)
  */
 
 static size_t
-my_istream_data(G_GNUC_UNUSED const void *data, size_t length, void *ctx)
+my_istream_data(gcc_unused const void *data, size_t length, void *ctx)
 {
     struct context *c = (struct context *)ctx;
 
@@ -258,10 +258,10 @@ static const struct istream_handler my_istream_handler = {
 
 static void
 my_mcd_response(enum memcached_response_status status,
-                G_GNUC_UNUSED const void *extras,
-                G_GNUC_UNUSED size_t extras_length,
-                G_GNUC_UNUSED const void *key,
-                G_GNUC_UNUSED size_t key_length,
+                gcc_unused const void *extras,
+                gcc_unused size_t extras_length,
+                gcc_unused const void *key,
+                gcc_unused size_t key_length,
                 struct istream *value, void *ctx)
 {
     struct context *c = (struct context *)ctx;
@@ -283,7 +283,7 @@ my_mcd_response(enum memcached_response_status status,
 }
 
 static void
-my_mcd_error(GError *error, G_GNUC_UNUSED void *ctx)
+my_mcd_error(GError *error, gcc_unused void *ctx)
 {
     struct context *c = (struct context *)ctx;
 

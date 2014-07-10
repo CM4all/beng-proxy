@@ -14,6 +14,8 @@
 #include "pool.h"
 #include "net/SocketAddress.hxx"
 
+#include <glib.h>
+
 struct tcp_balancer {
     struct hstock *tcp_stock;
 

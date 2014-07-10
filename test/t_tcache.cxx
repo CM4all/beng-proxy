@@ -213,7 +213,7 @@ my_translate_response(TranslateResponse *response,
 }
 
 static void
-my_translate_error(GError *error, G_GNUC_UNUSED void *ctx)
+my_translate_error(GError *error, gcc_unused void *ctx)
 {
     assert(expected_response == nullptr);
 

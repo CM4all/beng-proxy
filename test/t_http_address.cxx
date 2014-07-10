@@ -61,7 +61,7 @@ test_apply(struct pool *pool)
 }
 
 int
-main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
+main(gcc_unused int argc, gcc_unused char **argv)
 {
     struct pool *pool = pool_new_libc(NULL, "root");
 

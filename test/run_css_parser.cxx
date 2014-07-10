@@ -32,7 +32,7 @@ my_parser_xml_id(const struct css_parser_value *id, void *ctx)
 
 static void
 my_parser_property_keyword(const char *name, const char *value,
-                           G_GNUC_UNUSED off_t start, G_GNUC_UNUSED off_t end,
+                           gcc_unused off_t start, gcc_unused off_t end,
                            void *ctx)
 {
     (void)ctx;

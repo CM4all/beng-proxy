@@ -665,7 +665,7 @@ replace_get_last_substitution(struct istream_replace *replace)
 }
 
 void
-istream_replace_extend(struct istream *istream, G_GNUC_UNUSED off_t start, off_t end)
+istream_replace_extend(struct istream *istream, gcc_unused off_t start, off_t end)
 {
     assert(istream != nullptr);
 

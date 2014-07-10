@@ -10,8 +10,6 @@
 #include "pool.h"
 #include "gerrno.h"
 
-#include <glib.h>
-
 #include <daemon/log.h>
 
 #include <assert.h>
@@ -40,17 +38,17 @@ valid_fd(int fd)
  */
 
 static struct pool *
-pipe_stock_pool(G_GNUC_UNUSED void *ctx, struct pool *parent,
-                G_GNUC_UNUSED const char *uri)
+pipe_stock_pool(gcc_unused void *ctx, struct pool *parent,
+                gcc_unused const char *uri)
 {
     return pool_new_linear(parent, "pipe_stock", 128);
 }
 
 static void
 pipe_stock_create(void *ctx gcc_unused, struct stock_item *_item,
-                  G_GNUC_UNUSED const char *uri, G_GNUC_UNUSED void *info,
-                  G_GNUC_UNUSED struct pool *caller_pool,
-                  G_GNUC_UNUSED struct async_operation_ref *async_ref)
+                  gcc_unused const char *uri, gcc_unused void *info,
+                  gcc_unused struct pool *caller_pool,
+                  gcc_unused struct async_operation_ref *async_ref)
 {
     struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
     int ret;
@@ -66,7 +64,7 @@ pipe_stock_create(void *ctx gcc_unused, struct stock_item *_item,
 }
 
 static bool
-pipe_stock_borrow(G_GNUC_UNUSED void *ctx, struct stock_item *_item)
+pipe_stock_borrow(gcc_unused void *ctx, struct stock_item *_item)
 {
     struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
     (void)item;
@@ -78,7 +76,7 @@ pipe_stock_borrow(G_GNUC_UNUSED void *ctx, struct stock_item *_item)
 }
 
 static void
-pipe_stock_release(G_GNUC_UNUSED void *ctx, struct stock_item *_item)
+pipe_stock_release(gcc_unused void *ctx, struct stock_item *_item)
 {
     struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
     (void)item;
@@ -88,7 +86,7 @@ pipe_stock_release(G_GNUC_UNUSED void *ctx, struct stock_item *_item)
 }
 
 static void
-pipe_stock_destroy(G_GNUC_UNUSED void *ctx, struct stock_item *_item)
+pipe_stock_destroy(gcc_unused void *ctx, struct stock_item *_item)
 {
     struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
 

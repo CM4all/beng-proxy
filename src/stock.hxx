@@ -11,11 +11,12 @@
 #ifndef BENG_PROXY_STOCK_HXX
 #define BENG_PROXY_STOCK_HXX
 
+#include "glibfwd.hxx"
+
 #include <inline/compiler.h>
 #include <inline/list.h>
 
-#include <glib.h>
-#include <stdbool.h>
+#include <stddef.h>
 
 struct pool;
 struct async_operation_ref;
@@ -78,7 +79,7 @@ stock_new(struct pool *pool, const struct stock_class *_class,
 void
 stock_free(struct stock *stock);
 
-G_GNUC_PURE
+gcc_pure
 const char *
 stock_get_uri(struct stock *stock);
 

@@ -40,7 +40,7 @@ struct context {
 };
 
 static void
-cleanup_callback(GError *error, G_GNUC_UNUSED void *ctx)
+cleanup_callback(GError *error, gcc_unused void *ctx)
 {
     if (error != NULL) {
         g_printerr("%s\n", error->message);

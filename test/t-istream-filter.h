@@ -100,7 +100,7 @@ my_istream_data(const void *data, size_t length, void *_ctx)
 }
 
 static ssize_t
-my_istream_direct(G_GNUC_UNUSED enum istream_direct type, int fd,
+my_istream_direct(gcc_unused enum istream_direct type, int fd,
                   size_t max_length, void *_ctx)
 {
     struct ctx *ctx = (struct ctx *)_ctx;

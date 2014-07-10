@@ -233,7 +233,7 @@ global_control_packet(enum beng_control_command command,
 }
 
 static void
-global_control_error(GError *error, G_GNUC_UNUSED void *ctx)
+global_control_error(GError *error, gcc_unused void *ctx)
 {
     daemon_log(2, "%s\n", error->message);
     g_error_free(error);

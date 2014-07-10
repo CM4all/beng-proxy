@@ -10,6 +10,8 @@
 #include "stock.hxx"
 #include "beng-proxy/control.h"
 
+#include <glib.h>
+
 void
 lb_get_stats(const struct lb_instance *instance,
              struct beng_control_stats *data)

@@ -134,10 +134,10 @@ static const struct sink_fd_handler my_sink_fd_handler = {
 
 static void
 my_mcd_response(enum memcached_response_status status,
-                G_GNUC_UNUSED const void *extras,
-                G_GNUC_UNUSED size_t extras_length,
-                G_GNUC_UNUSED const void *key,
-                G_GNUC_UNUSED size_t key_length,
+                gcc_unused const void *extras,
+                gcc_unused size_t extras_length,
+                gcc_unused const void *key,
+                gcc_unused size_t key_length,
                 struct istream *value, void *ctx)
 {
     context *c = (context *)ctx;

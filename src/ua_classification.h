@@ -5,6 +5,8 @@
 #ifndef BENG_PROXY_UA_CLASSIFICATION_H
 #define BENG_PROXY_UA_CLASSIFICATION_H
 
+#include <inline/compiler.h>
+
 #include <glib.h>
 #include <stdbool.h>
 
@@ -25,7 +27,7 @@ ua_classification_init(const char *path, GError **error_r);
 void
 ua_classification_deinit(void);
 
-G_GNUC_PURE
+gcc_pure
 const char *
 ua_classification_lookup(const char *user_agent);
 

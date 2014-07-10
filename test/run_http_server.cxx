@@ -43,8 +43,7 @@ shutdown_callback(void *ctx)
 }
 
 static void
-timer_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
-                           void *_ctx)
+timer_callback(gcc_unused int fd, gcc_unused short event, void *_ctx)
 {
     struct context *ctx = (struct context *)_ctx;
 

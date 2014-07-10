@@ -161,7 +161,7 @@ static const struct istream_handler sink_fd_handler = {
  */
 
 static void
-socket_event_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
+socket_event_callback(gcc_unused int fd, gcc_unused short event,
                       void *ctx)
 {
     struct sink_fd *ss = ctx;

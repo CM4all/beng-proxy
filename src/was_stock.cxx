@@ -84,7 +84,7 @@ was_child_callback(gcc_unused int status, void *ctx)
  */
 
 static void
-was_child_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
+was_child_event_callback(int fd, gcc_unused short event, void *ctx)
 {
     struct was_child *child = (struct was_child *)ctx;
 
@@ -119,7 +119,7 @@ was_stock_pool(gcc_unused void *ctx, struct pool *parent,
 }
 
 static void
-was_stock_create(G_GNUC_UNUSED void *ctx, struct stock_item *item,
+was_stock_create(gcc_unused void *ctx, struct stock_item *item,
                  const char *key, void *info,
                  struct pool *caller_pool,
                  struct async_operation_ref *async_ref)

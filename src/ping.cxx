@@ -149,7 +149,7 @@ ping_read(struct ping *p)
  */
 
 static void
-ping_event_callback(int fd G_GNUC_UNUSED, short event, void *ctx)
+ping_event_callback(int fd gcc_unused, short event, void *ctx)
 {
     struct ping *p = (struct ping *)ctx;
 

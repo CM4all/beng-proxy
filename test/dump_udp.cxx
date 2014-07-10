@@ -13,17 +13,17 @@
 #include <signal.h>
 
 static void
-dump_udp_datagram(G_GNUC_UNUSED const void *data, size_t length,
-                  G_GNUC_UNUSED const struct sockaddr *addr,
-                  G_GNUC_UNUSED size_t addrlen,
+dump_udp_datagram(gcc_unused const void *data, size_t length,
+                  gcc_unused const struct sockaddr *addr,
+                  gcc_unused size_t addrlen,
                   int uid,
-                  G_GNUC_UNUSED void *ctx)
+                  gcc_unused void *ctx)
 {
     printf("packet: %zu uid=%d\n", length, uid);
 }
 
 static void
-dump_udp_error(GError *error, G_GNUC_UNUSED void *ctx)
+dump_udp_error(GError *error, gcc_unused void *ctx)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);

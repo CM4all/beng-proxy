@@ -53,7 +53,7 @@ lhttp_stock_key(struct pool *pool, const struct lhttp_address *address)
  */
 
 static void
-lhttp_connection_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
+lhttp_connection_event_callback(int fd, gcc_unused short event, void *ctx)
 {
     auto connection = (struct lhttp_connection *)ctx;
 

@@ -55,7 +55,7 @@ widget_get_session(gcc_unused struct widget *widget,
 }
 
 enum uri_mode
-parse_uri_mode(G_GNUC_UNUSED const struct strref *s)
+parse_uri_mode(gcc_unused const struct strref *s)
 {
     return URI_MODE_DIRECT;
 }

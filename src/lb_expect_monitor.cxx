@@ -76,7 +76,7 @@ static const struct async_operation_class expect_monitor_async_operation = {
  */
 
 static void
-expect_monitor_event_callback(G_GNUC_UNUSED int fd, short event, void *ctx)
+expect_monitor_event_callback(gcc_unused int fd, short event, void *ctx)
 {
     ExpectMonitor *expect =
         (ExpectMonitor *)ctx;

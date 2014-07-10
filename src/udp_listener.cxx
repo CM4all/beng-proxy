@@ -33,7 +33,7 @@ struct udp_listener {
 };
 
 static void
-udp_listener_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
+udp_listener_event_callback(int fd, gcc_unused short event, void *ctx)
 {
     struct udp_listener *udp = (struct udp_listener *)ctx;
 

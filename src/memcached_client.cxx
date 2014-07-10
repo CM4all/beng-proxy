@@ -226,7 +226,7 @@ istream_to_memcached_client(struct istream *istream)
 }
 
 static off_t
-istream_memcached_available(struct istream *istream, G_GNUC_UNUSED bool partial)
+istream_memcached_available(struct istream *istream, gcc_unused bool partial)
 {
     struct memcached_client *client = istream_to_memcached_client(istream);
 

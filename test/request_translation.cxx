@@ -116,7 +116,7 @@ my_translate_response(TranslateResponse *response, void *ctx)
 }
 
 static void
-my_translate_error(GError *error, G_GNUC_UNUSED void *ctx)
+my_translate_error(GError *error, gcc_unused void *ctx)
 {
     fprintf(stderr, "%s\n", error->message);
     g_error_free(error);

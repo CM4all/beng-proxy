@@ -132,7 +132,7 @@ lb_monitor::Error(GError *error)
 }
 
 static void
-lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
+lb_monitor_interval_callback(gcc_unused int fd, gcc_unused short event,
                           void *ctx)
 {
     struct lb_monitor *monitor = (struct lb_monitor *)ctx;
@@ -152,8 +152,8 @@ lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
 }
 
 static void
-lb_monitor_timeout_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
-                          void *ctx)
+lb_monitor_timeout_callback(gcc_unused int fd, gcc_unused short event,
+                            void *ctx)
 {
     struct lb_monitor *monitor = (struct lb_monitor *)ctx;
     assert(async_ref_defined(&monitor->async_ref));

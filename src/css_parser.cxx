@@ -10,8 +10,6 @@
 #include "istream.h"
 #include "strutil.h"
 
-#include <glib.h>
-
 enum css_parser_state {
     CSS_PARSER_NONE,
     CSS_PARSER_BLOCK,
@@ -73,7 +71,7 @@ skip_whitespace(const char *p, const char *end)
     return p;
 }
 
-G_GNUC_PURE
+gcc_pure
 static bool
 at_url_start(const char *p, size_t length)
 {

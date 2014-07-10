@@ -13,20 +13,20 @@ static bool success;
 static struct async_operation_ref my_async_ref;
 
 static void
-my_ping_response(G_GNUC_UNUSED void *ctx)
+my_ping_response(gcc_unused void *ctx)
 {
     success = true;
     printf("ok\n");
 }
 
 static void
-my_ping_timeout(G_GNUC_UNUSED void *ctx)
+my_ping_timeout(gcc_unused void *ctx)
 {
     fprintf(stderr, "timeout\n");
 }
 
 static void
-my_ping_error(GError *error, G_GNUC_UNUSED void *ctx)
+my_ping_error(GError *error, gcc_unused void *ctx)
 {
     fprintf(stderr, "%s\n", error->message);
     g_error_free(error);

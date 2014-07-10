@@ -16,16 +16,16 @@
 
 static void
 dump_control_packet(enum beng_control_command command,
-                    G_GNUC_UNUSED const void *payload, size_t payload_length,
-                    G_GNUC_UNUSED const struct sockaddr *address,
-                    G_GNUC_UNUSED size_t address_length,
-                    G_GNUC_UNUSED void *ctx)
+                    gcc_unused const void *payload, size_t payload_length,
+                    gcc_unused const struct sockaddr *address,
+                    gcc_unused size_t address_length,
+                    gcc_unused void *ctx)
 {
     printf("packet command=%u length=%zu\n", command, payload_length);
 }
 
 static void
-dump_control_error(GError *error, G_GNUC_UNUSED void *ctx)
+dump_control_error(GError *error, gcc_unused void *ctx)
 {
     g_printerr("%s\n", error->message);
     g_error_free(error);

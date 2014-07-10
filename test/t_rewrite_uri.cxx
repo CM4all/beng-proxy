@@ -32,19 +32,19 @@ const struct widget_class root_widget_class = {
 };
 
 struct session *
-session_get(G_GNUC_UNUSED session_id_t id)
+session_get(gcc_unused session_id_t id)
 {
     return NULL;
 }
 
 void
-session_put(G_GNUC_UNUSED struct session *session)
+session_put(gcc_unused struct session *session)
 {
 }
 
 void
-widget_sync_session(G_GNUC_UNUSED struct widget *widget,
-                    G_GNUC_UNUSED struct session *session)
+widget_sync_session(gcc_unused struct widget *widget,
+                    gcc_unused struct session *session)
 {
 }
 
@@ -64,11 +64,11 @@ embed_inline_widget(struct pool *pool, gcc_unused struct processor_env *env,
  */
 
 void
-widget_resolver_new(G_GNUC_UNUSED struct pool *pool, G_GNUC_UNUSED struct pool *widget_pool,
+widget_resolver_new(gcc_unused struct pool *pool, gcc_unused struct pool *widget_pool,
                     struct widget *widget,
-                    G_GNUC_UNUSED struct tcache *translate_cache,
+                    gcc_unused struct tcache *translate_cache,
                     widget_resolver_callback_t callback, void *ctx,
-                    G_GNUC_UNUSED struct async_operation_ref *async_ref)
+                    gcc_unused struct async_operation_ref *async_ref)
 {
     static struct http_address address1 = {
         .scheme = URI_SCHEME_HTTP,
@@ -249,7 +249,7 @@ assert_rewrite_check(struct pool *widget_pool, struct widget *widget,
  *
  */
 
-int main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
+int main(gcc_unused int argc, gcc_unused char **argv)
 {
     bool ret;
     struct pool *root_pool, *pool;

@@ -103,7 +103,7 @@ fcgi_connection_key(const struct fcgi_connection *connection)
  */
 
 static void
-fcgi_connection_event_callback(int fd, G_GNUC_UNUSED short event, void *ctx)
+fcgi_connection_event_callback(int fd, gcc_unused short event, void *ctx)
 {
     struct fcgi_connection *connection = (struct fcgi_connection *)ctx;
 
