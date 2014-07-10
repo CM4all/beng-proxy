@@ -154,6 +154,7 @@ struct TranslateResponse {
     const char *cookie_path;
 
     KeyValueList request_headers;
+    KeyValueList expand_request_headers;
 
     KeyValueList response_headers;
 

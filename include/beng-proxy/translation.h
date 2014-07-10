@@ -549,6 +549,11 @@ enum beng_translation_command {
      * Send an addtional request header to the backend server.
      */
     TRANSLATE_REQUEST_HEADER = 138,
+
+    /**
+     * Expansion for #TRANSLATE_REQUEST_HEADER.
+     */
+    TRANSLATE_EXPAND_REQUEST_HEADER = 139,
 };
 
 struct beng_translation_header {

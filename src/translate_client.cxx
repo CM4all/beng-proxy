@@ -3043,6 +3043,17 @@ translate_handle_packet(TranslateClient *client,
         }
 
         return true;
+
+    case TRANSLATE_EXPAND_REQUEST_HEADER:
+        if (!parse_header(client->pool,
+                          client->response.expand_request_headers,
+                          "EXPAND_REQUEST_HEADER", payload, payload_length,
+                          &error)) {
+            translate_client_abort(client, error);
+            return false;
+        }
+
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

@@ -97,6 +97,7 @@ TranslateResponse::Clear()
     cookie_domain = cookie_host = cookie_path = nullptr;
 
     request_headers.Clear();
+    expand_request_headers.Clear();
     response_headers.Clear();
 
     views = nullptr;
@@ -193,6 +194,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     cookie_path = p_strdup_checked(pool, src.cookie_path);
 
     request_headers = KeyValueList(PoolAllocator(*pool), src.request_headers);
+    expand_request_headers = KeyValueList(PoolAllocator(*pool),
+                                          src.expand_request_headers);
     response_headers = KeyValueList(PoolAllocator(*pool), src.response_headers);
 
     views = src.views != nullptr
@@ -300,6 +303,7 @@ TranslateResponse::IsExpandable() const
          expand_site != nullptr ||
          expand_uri != nullptr ||
          expand_test_path != nullptr ||
+         !expand_request_headers.IsEmpty() ||
          resource_address_is_expandable(&address) ||
          widget_view_any_is_expandable(views));
 }
@@ -336,6 +340,15 @@ TranslateResponse::Expand(struct pool *pool,
                                             match_info, error_r);
         if (test_path == nullptr)
             return false;
+    }
+
+    for (const auto &i : expand_request_headers) {
+        const char *value = expand_string_unescaped(pool, i.value,
+                                                    match_info, error_r);
+        if (value == nullptr)
+            return false;
+
+        request_headers.Add(PoolAllocator(*pool), i.key, value);
     }
 
     return resource_address_expand(pool, &address, match_info, error_r) &&
