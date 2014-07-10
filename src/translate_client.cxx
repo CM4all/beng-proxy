@@ -679,14 +679,16 @@ parse_header_forward(TranslateClient &client,
 }
 
 static bool
-parse_header(struct pool *pool, TranslateResponse *response,
+parse_header(struct pool *pool,
+             struct strmap *&headers, const char *packet_name,
              const char *payload, size_t payload_length,
              GError **error_r)
 {
     const char *value = (const char *)memchr(payload, ':', payload_length);
     if (value == nullptr || value == payload ||
         has_null_byte(payload, payload_length)) {
-        g_set_error(error_r, translate_quark(), 0, "malformed HEADER packet");
+        g_set_error(error_r, translate_quark(), 0, "malformed %s packet",
+                    packet_name);
         return false;
     }
 
@@ -697,17 +699,17 @@ parse_header(struct pool *pool, TranslateResponse *response,
 
     if (!http_header_name_valid(name)) {
         g_set_error(error_r, translate_quark(), 0,
-                    "malformed name in HEADER packet");
+                    "malformed name in %s packet", packet_name);
         return false;
     } else if (http_header_is_hop_by_hop(name)) {
-        g_set_error(error_r, translate_quark(), 0, "hop-by-hop HEADER packet");
+        g_set_error(error_r, translate_quark(), 0, "hop-by-hop %s packet",
+                    packet_name);
         return false;
     }
 
-    if (response->response_headers == nullptr)
-        response->response_headers = strmap_new(pool);
-    response->response_headers->Add(name, value);
-
+    if (headers == nullptr)
+        headers = strmap_new(pool);
+    headers->Add(name, value);
     return true;
 }
 
@@ -2468,8 +2470,8 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_HEADER:
-        if (!parse_header(client->pool, &client->response,
-                          payload, payload_length, &error)) {
+        if (!parse_header(client->pool, client->response.response_headers,
+                          "HEADER", payload, payload_length, &error)) {
             translate_client_abort(client, error);
             return false;
         }
