@@ -5,6 +5,7 @@
  */
 
 #include "ConnectSocket.hxx"
+#include "SocketAddress.hxx"
 #include "async.h"
 #include "fd_util.h"
 #include "stopwatch.h"
@@ -139,19 +140,18 @@ void
 client_socket_new(struct pool &pool,
                   int domain, int type, int protocol,
                   bool ip_transparent,
-                  const struct sockaddr *bind_addr, size_t bind_addrlen,
-                  const struct sockaddr *addr, size_t addrlen,
+                  const SocketAddress bind_address,
+                  const SocketAddress address,
                   unsigned timeout,
                   const ConnectSocketHandler &handler, void *ctx,
                   struct async_operation_ref &async_ref)
 {
+    assert(!address.IsNull());
+
     int fd, ret;
 #ifdef ENABLE_STOPWATCH
     struct stopwatch *stopwatch;
 #endif
-
-    assert(addr != nullptr);
-    assert(addrlen > 0);
 
     fd = socket_cloexec_nonblock(domain, type, protocol);
     if (fd < 0) {
@@ -178,7 +178,8 @@ client_socket_new(struct pool &pool,
         }
     }
 
-    if (bind_addr != nullptr && bind(fd, bind_addr, bind_addrlen) < 0) {
+    if (!bind_address.IsNull() &&
+        bind(fd, bind_address, bind_address.GetSize()) < 0) {
         GError *error = new_error_errno();
         close(fd);
         handler.error(error, ctx);
@@ -186,10 +187,11 @@ client_socket_new(struct pool &pool,
     }
 
 #ifdef ENABLE_STOPWATCH
-    stopwatch = stopwatch_sockaddr_new(&pool, addr, addrlen, nullptr);
+    stopwatch = stopwatch_sockaddr_new(&pool, address, address.GetSize(),
+                                       nullptr);
 #endif
 
-    ret = connect(fd, addr, addrlen);
+    ret = connect(fd, address, address.GetSize());
     if (ret == 0) {
 #ifdef ENABLE_STOPWATCH
         stopwatch_event(stopwatch, "connect");

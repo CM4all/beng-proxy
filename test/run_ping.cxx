@@ -3,6 +3,7 @@
 #include "async.h"
 #include "address_string.hxx"
 #include "address_envelope.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <event.h>
 #include <stdio.h>
@@ -60,7 +61,7 @@ int main(int argc, char **argv)
 
     struct event_base *event_base = event_init();
 
-    ping(pool, &envelope->address, envelope->length,
+    ping(pool, { &envelope->address, envelope->length },
          &my_ping_handler, nullptr,
          &my_async_ref);
 

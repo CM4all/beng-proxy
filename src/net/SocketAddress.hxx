@@ -22,6 +22,14 @@ public:
     constexpr SocketAddress(const struct sockaddr *_address, socklen_t _size)
         :address(_address), size(_size) {}
 
+    static constexpr SocketAddress Null() {
+        return {nullptr, 0};
+    }
+
+    bool IsNull() const {
+        return address == nullptr;
+    }
+
     operator const struct sockaddr *() const {
         return address;
     }

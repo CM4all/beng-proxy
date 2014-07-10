@@ -9,10 +9,8 @@
 
 #include "glibfwd.hxx"
 
-#include <stddef.h>
-
 struct pool;
-struct sockaddr;
+class SocketAddress;
 struct async_operation_ref;
 
 struct ConnectSocketHandler {
@@ -29,8 +27,8 @@ void
 client_socket_new(struct pool &pool,
                   int domain, int type, int protocol,
                   bool ip_transparent,
-                  const struct sockaddr *bind_addr, size_t bind_addrlen,
-                  const struct sockaddr *addr, size_t addrlen,
+                  const SocketAddress bind_address,
+                  const SocketAddress address,
                   unsigned timeout,
                   const ConnectSocketHandler &handler, void *ctx,
                   struct async_operation_ref &async_ref);

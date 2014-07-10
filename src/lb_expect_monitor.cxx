@@ -11,6 +11,7 @@
 #include "async.h"
 #include "gerrno.h"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/Cast.hxx"
 
 #include <event.h>
@@ -187,7 +188,7 @@ static constexpr ConnectSocketHandler expect_monitor_handler = {
 
 static void
 expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
-                   const struct sockaddr *address, size_t address_length,
+                   SocketAddress address,
                    LBMonitorHandler &handler,
                    struct async_operation_ref *async_ref)
 {
@@ -201,10 +202,10 @@ expect_monitor_run(struct pool *pool, const struct lb_monitor_config *config,
            ? config->timeout
            : 30);
 
-    client_socket_new(*pool, address->sa_family, SOCK_STREAM, 0,
+    client_socket_new(*pool, address.GetFamily(), SOCK_STREAM, 0,
                       false,
-                      NULL, 0,
-                      address, address_length,
+                      SocketAddress::Null(),
+                      address,
                       connect_timeout,
                       expect_monitor_handler, expect,
                       *async_ref);

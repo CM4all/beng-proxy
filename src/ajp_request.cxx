@@ -17,6 +17,7 @@
 #include "tcp_balancer.hxx"
 #include "abort-close.h"
 #include "istream.h"
+#include "net/SocketAddress.hxx"
 
 #include <inline/compiler.h>
 
@@ -158,7 +159,7 @@ ajp_stock_request(struct pool *pool,
     hr->uri = uwa->path;
 
     tcp_balancer_get(tcp_balancer, pool,
-                     false, nullptr, 0,
+                     false, SocketAddress::Null(),
                      session_sticky,
                      &uwa->addresses,
                      20,

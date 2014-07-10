@@ -15,6 +15,7 @@
 #include "hashmap.hxx"
 #include "address_envelope.hxx"
 #include "address_edit.h"
+#include "net/SocketAddress.hxx"
 
 static struct pool *hmonitor_pool;
 static struct hashmap *hmonitor_map;
@@ -93,7 +94,7 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
                                         node->envelope->length, port);
 
         monitor = lb_monitor_new(pool, key, config,
-                                 address, node->envelope->length,
+                                 SocketAddress(address, node->envelope->length),
                                  class_);
         pool_unref(pool);
         hashmap_add(hmonitor_map, key, monitor);

@@ -17,6 +17,7 @@
 #include "ssl_init.hxx"
 #include "ssl_client.h"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <inline/compiler.h>
 #include <socket/resolver.h>
@@ -418,8 +419,8 @@ main(int argc, char **argv)
     client_socket_new(*pool,
                       ai->ai_family, ai->ai_socktype, ai->ai_protocol,
                       false,
-                      nullptr, 0,
-                      ai->ai_addr, ai->ai_addrlen,
+                      SocketAddress::Null(),
+                      SocketAddress(ai->ai_addr, ai->ai_addrlen),
                       30,
                       my_client_socket_handler, &ctx,
                       ctx.async_ref);

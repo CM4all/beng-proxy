@@ -20,6 +20,7 @@
 #include "address_envelope.hxx"
 #include "istream.h"
 #include "filtered_socket.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <inline/compiler.h>
 
@@ -97,7 +98,7 @@ http_request_response_abort(GError *error, void *ctx)
 
         --hr->retries;
         tcp_balancer_get(hr->tcp_balancer, hr->pool,
-                         false, nullptr, 0,
+                         false, SocketAddress::Null(),
                          hr->session_sticky,
                          &hr->uwa->addresses,
                          30,
@@ -236,7 +237,7 @@ http_request(struct pool *pool,
 
     hr->retries = 2;
     tcp_balancer_get(tcp_balancer, pool,
-                     false, nullptr, 0,
+                     false, SocketAddress::Null(),
                      session_sticky,
                      &uwa->addresses,
                      30,

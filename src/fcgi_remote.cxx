@@ -15,6 +15,7 @@
 #include "address_list.hxx"
 #include "pool.h"
 #include "istream.h"
+#include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
@@ -162,7 +163,7 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
         request->body = nullptr;
 
     tcp_balancer_get(tcp_balancer, pool,
-                     false, nullptr, 0,
+                     false, SocketAddress::Null(),
                      0, address_list, 20,
                      &fcgi_remote_stock_handler, request,
                      async_ref);

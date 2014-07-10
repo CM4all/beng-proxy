@@ -12,6 +12,7 @@
 #include "async.h"
 #include "direct.h"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <unistd.h>
 #include <errno.h>
@@ -386,8 +387,7 @@ void
 lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
            int fd, enum istream_direct fd_type,
            const struct socket_filter *filter, void *filter_ctx,
-           const struct sockaddr *remote_address,
-           size_t remote_address_size,
+           SocketAddress remote_address,
            bool transparent_source,
            const struct address_list &address_list,
            struct balancer &balancer,
@@ -412,24 +412,26 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
 
     unsigned session_sticky = lb_tcp_sticky(address_list, remote_address);
 
-    const struct sockaddr *bind_address = nullptr;
-    size_t bind_address_size = 0;
+    SocketAddress bind_address = SocketAddress::Null();
 
     if (transparent_source) {
         bind_address = remote_address;
-        bind_address_size = remote_address_size;
 
         /* reset the port to 0 to allow the kernel to choose one */
-        if (bind_address->sa_family == AF_INET) {
+        if (bind_address.GetFamily() == AF_INET) {
+            const struct sockaddr *src = bind_address;
             struct sockaddr_in *s_in = (struct sockaddr_in *)
-                p_memdup(pool, bind_address, bind_address_size);
+                p_memdup(pool, src, bind_address.GetSize());
             s_in->sin_port = 0;
-            bind_address = (const struct sockaddr *)s_in;
-        } else if (bind_address->sa_family == AF_INET6) {
+            bind_address = SocketAddress((const struct sockaddr *)s_in,
+                                         bind_address.GetSize());
+        } else if (bind_address.GetFamily() == AF_INET6) {
+            const struct sockaddr *src = bind_address;
             struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
-                p_memdup(pool, bind_address, bind_address_size);
+                p_memdup(pool, src, bind_address.GetSize());
             s_in->sin6_port = 0;
-            bind_address = (const struct sockaddr *)s_in;
+            bind_address = SocketAddress((const struct sockaddr *)s_in,
+                                         bind_address.GetSize());
         }
     }
 
@@ -437,7 +439,7 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
 
     client_balancer_connect(pool, &balancer,
                             transparent_source,
-                            bind_address, bind_address_size,
+                            bind_address,
                             session_sticky,
                             &address_list,
                             20,

@@ -13,6 +13,7 @@
 #include "lease.h"
 #include "pool.h"
 #include "istream.h"
+#include "net/SocketAddress.hxx"
 
 #include <glib.h>
 
@@ -151,7 +152,7 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
     request->async_ref = async_ref;
 
     tcp_balancer_get(stock->tcp_balancer, pool,
-                     false, nullptr, 0,
+                     false, SocketAddress::Null(),
                      0, stock->address,
                      10,
                      &memcached_stock_handler, request,

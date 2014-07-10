@@ -10,6 +10,7 @@
 #include "tcp_stock.hxx"
 #include "lease.h"
 #include "pool.h"
+#include "net/SocketAddress.hxx"
 
 #include <daemon/log.h>
 
@@ -139,9 +140,8 @@ tstock_translate(struct tstock *stock, struct pool *pool,
     r->async_ref = async_ref;
 
     tcp_stock_get(stock->tcp_stock, pool, stock->address_string,
-                  false, nullptr, 0,
-                  (const struct sockaddr *)&stock->address,
-                  stock->address_size,
+                  false, SocketAddress::Null(),
+                  { (const struct sockaddr *)&stock->address, stock->address_size },
                   10,
                   &tstock_stock_handler, r,
                   async_ref);

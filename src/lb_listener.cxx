@@ -21,7 +21,7 @@ lb_listener::OnAccept(SocketDescriptor &&fd, SocketAddress address)
 {
     lb_connection_new(&instance, &config,
                       ssl_factory,
-                      fd.Steal(), address, address.GetSize());
+                      fd.Steal(), address);
 }
 
 void

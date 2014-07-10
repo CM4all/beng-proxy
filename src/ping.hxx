@@ -18,7 +18,7 @@ struct ping_handler {
 };
 
 struct pool;
-struct sockaddr;
+class SocketAddress;
 struct async_operation_ref;
 
 G_GNUC_CONST
@@ -27,10 +27,6 @@ ping_quark(void)
 {
     return g_quark_from_static_string("ping");
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Is the "ping" client available?
@@ -43,12 +39,8 @@ ping_available(void);
  * Sends a "ping" to the server, and waits for the reply.
  */
 void
-ping(struct pool *pool, const struct sockaddr *address, size_t address_length,
+ping(struct pool *pool, SocketAddress address,
      const struct ping_handler *handler, void *ctx,
      struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

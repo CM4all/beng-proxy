@@ -8,6 +8,7 @@
 #include "pool.h"
 #include "pevent.h"
 #include "async.h"
+#include "net/SocketAddress.hxx"
 #include "util/Cast.hxx"
 
 #include <event.h>
@@ -209,7 +210,7 @@ ping_available(void)
 }
 
 void
-ping(struct pool *pool, const struct sockaddr *address, size_t address_length,
+ping(struct pool *pool, SocketAddress address,
      const struct ping_handler *handler, void *ctx,
      struct async_operation_ref *async_ref)
 {
@@ -256,7 +257,7 @@ ping(struct pool *pool, const struct sockaddr *address, size_t address_length,
 
     struct msghdr m = {
         .msg_name = deconst_address(address),
-        .msg_namelen = socklen_t(address_length),
+        .msg_namelen = socklen_t(address.GetSize()),
         .msg_iov = &iov,
         .msg_iovlen = 1,
         .msg_control = nullptr,

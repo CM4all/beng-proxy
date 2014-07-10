@@ -12,6 +12,7 @@
 #include "balancer.hxx"
 #include "failure.hxx"
 #include "pool.h"
+#include "net/SocketAddress.hxx"
 
 struct tcp_balancer {
     struct hstock *tcp_stock;
@@ -24,8 +25,7 @@ struct tcp_balancer_request {
     struct tcp_balancer *tcp_balancer;
 
     bool ip_transparent;
-    const struct sockaddr *bind_address;
-    size_t bind_address_size;
+    SocketAddress bind_address;
 
     /**
      * The "sticky id" of the incoming HTTP request.
@@ -73,9 +73,9 @@ tcp_balancer_next(struct tcp_balancer_request *request)
     tcp_stock_get(request->tcp_balancer->tcp_stock, request->pool,
                   nullptr,
                   request->ip_transparent,
-                  request->bind_address, request->bind_address_size,
-                  &request->current_address->address,
-                  request->current_address->length,
+                  request->bind_address,
+                  SocketAddress(&request->current_address->address,
+                                request->current_address->length),
                   request->timeout,
                   &tcp_balancer_stock_handler, request,
                   request->async_ref);
@@ -141,7 +141,7 @@ tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
 void
 tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  bool ip_transparent,
-                 const struct sockaddr *bind_address, size_t bind_address_size,
+                 SocketAddress bind_address,
                  unsigned session_sticky,
                  const struct address_list *address_list,
                  unsigned timeout,
@@ -153,7 +153,6 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
     request->tcp_balancer = tcp_balancer;
     request->ip_transparent = ip_transparent;
     request->bind_address = bind_address;
-    request->bind_address_size = bind_address_size;
     request->session_sticky = session_sticky;
     request->timeout = timeout;
 

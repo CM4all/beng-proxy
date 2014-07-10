@@ -11,10 +11,8 @@
 
 #include <inline/compiler.h>
 
-#include <stddef.h>
-
 struct pool;
-struct sockaddr;
+class SocketAddress;
 struct async_operation_ref;
 struct lb_monitor_config;
 
@@ -28,7 +26,7 @@ public:
 
 struct lb_monitor_class {
     void (*run)(struct pool *pool, const struct lb_monitor_config *config,
-                const struct sockaddr *address, size_t address_length,
+                SocketAddress address,
                 LBMonitorHandler &handler,
                 struct async_operation_ref *async_ref);
 };
@@ -36,7 +34,7 @@ struct lb_monitor_class {
 struct lb_monitor *
 lb_monitor_new(struct pool *pool, const char *name,
                const struct lb_monitor_config *config,
-               const struct sockaddr *address, size_t address_length,
+                SocketAddress address,
                const struct lb_monitor_class *class_);
 
 void

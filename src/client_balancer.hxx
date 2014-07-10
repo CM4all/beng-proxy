@@ -7,14 +7,12 @@
 #ifndef BENG_PROXY_CLIENT_BALANCER_HXX
 #define BENG_PROXY_CLIENT_BALANCER_HXX
 
-#include <stddef.h>
-
 struct pool;
 struct balancer;
 struct address_list;
 struct ConnectSocketHandler;
 struct async_operation_ref;
-struct sockaddr;
+class SocketAddress;
 
 /**
  * Open a connection to any address in the specified address list.
@@ -26,8 +24,7 @@ struct sockaddr;
 void
 client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         bool ip_transparent,
-                        const struct sockaddr *bind_address,
-                        size_t bind_address_size,
+                        SocketAddress bind_address,
                         unsigned session_sticky,
                         const struct address_list *address_list,
                         unsigned timeout,

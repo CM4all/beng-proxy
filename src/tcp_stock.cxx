@@ -13,6 +13,7 @@
 #include "pevent.h"
 #include "gerrno.h"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -27,11 +28,8 @@
 
 struct tcp_stock_request {
     bool ip_transparent;
-    const struct sockaddr *bind_address;
-    size_t bind_address_size;
 
-    const struct sockaddr *address;
-    size_t address_length;
+    SocketAddress bind_address, address;
 
     unsigned timeout;
 };
@@ -202,11 +200,11 @@ tcp_stock_create(void *ctx, struct stock_item *item,
 
     connection->uri = uri;
 
-    connection->domain = request->address->sa_family;
+    connection->domain = request->address.GetFamily();
     client_socket_new(*caller_pool, connection->domain, SOCK_STREAM, 0,
                       request->ip_transparent,
-                      request->bind_address, request->bind_address_size,
-                      request->address, request->address_length,
+                      request->bind_address,
+                      request->address,
                       request->timeout,
                       tcp_stock_socket_handler, connection,
                       connection->client_socket);
@@ -273,33 +271,30 @@ tcp_stock_new(struct pool *pool, unsigned limit)
 void
 tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               bool ip_transparent,
-              const struct sockaddr *bind_address, size_t bind_address_size,
-              const struct sockaddr *address, size_t address_length,
+              SocketAddress bind_address,
+              SocketAddress address,
               unsigned timeout,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
-    assert(address != nullptr);
-    assert(address_length > 0);
+    assert(!address.IsNull());
 
     auto request = NewFromPool<struct tcp_stock_request>(pool);
     request->ip_transparent = ip_transparent;
     request->bind_address = bind_address;
-    request->bind_address_size = bind_address_size;
     request->address = address;
-    request->address_length = address_length;
     request->timeout = timeout;
 
     if (name == nullptr) {
         char buffer[1024];
         if (!socket_address_to_string(buffer, sizeof(buffer),
-                                      address, address_length))
+                                      address, address.GetSize()))
             buffer[0] = 0;
 
-        if (bind_address != nullptr) {
+        if (!bind_address.IsNull()) {
             char bind_buffer[1024];
             if (!socket_address_to_string(bind_buffer, sizeof(bind_buffer),
-                                          bind_address, bind_address_size))
+                                          bind_address, bind_address.GetSize()))
                 bind_buffer[0] = 0;
             name = p_strcat(pool, bind_buffer, ">", buffer, nullptr);
         } else

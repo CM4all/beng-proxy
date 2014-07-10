@@ -9,16 +9,14 @@
 
 #include "istream-direct.h"
 
-#include <stddef.h>
-
 typedef struct _GError GError;
 struct pool;
 struct stock;
-struct sockaddr;
 struct socket_filter;
 struct address_list;
 struct balancer;
 struct lb_tcp;
+class SocketAddress;
 
 struct lb_tcp_handler {
     void (*eof)(void *ctx);
@@ -34,8 +32,7 @@ void
 lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
            int fd, enum istream_direct fd_type,
            const struct socket_filter *filter, void *filter_ctx,
-           const struct sockaddr *remote_address,
-           size_t remote_address_size,
+           SocketAddress remote_address,
            bool transparent_source,
            const struct address_list &address_list,
            struct balancer &balancer,

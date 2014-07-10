@@ -12,6 +12,7 @@
 #include "failure.hxx"
 #include "async.h"
 #include "pool.h"
+#include "net/StaticSocketAddress.hxx"
 
 #include <glib.h>
 
@@ -20,8 +21,7 @@ struct client_balancer_request {
     struct balancer *balancer;
 
     bool ip_transparent;
-    const struct sockaddr *bind_address;
-    size_t bind_address_size;
+    StaticSocketAddress bind_address;
 
     /**
      * The "sticky id" of the incoming HTTP request.
@@ -61,8 +61,8 @@ client_balancer_next(struct client_balancer_request *request)
     client_socket_new(*request->pool,
                       envelope.address.sa_family, SOCK_STREAM, 0,
                       request->ip_transparent,
-                      request->bind_address, request->bind_address_size,
-                      &envelope.address, envelope.length,
+                      request->bind_address,
+                      SocketAddress(&envelope.address, envelope.length),
                       request->timeout,
                       client_balancer_socket_handler, request,
                       *request->async_ref);
@@ -136,8 +136,7 @@ const ConnectSocketHandler client_balancer_socket_handler = {
 void
 client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         bool ip_transparent,
-                        const struct sockaddr *bind_address,
-                        size_t bind_address_size,
+                        SocketAddress bind_address,
                         unsigned session_sticky,
                         const struct address_list *address_list,
                         unsigned timeout,
@@ -148,10 +147,12 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
     request->pool = pool;
     request->balancer = balancer;
     request->ip_transparent = ip_transparent;
-    request->bind_address = bind_address != nullptr
-        ? (struct sockaddr *)p_memdup(pool, bind_address, bind_address_size)
-        : nullptr;
-    request->bind_address_size = bind_address_size;
+
+    if (bind_address.IsNull())
+        request->bind_address.Clear();
+    else
+        request->bind_address = bind_address;
+
     request->session_sticky = session_sticky;
     request->timeout = timeout;
 

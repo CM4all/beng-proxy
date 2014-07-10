@@ -9,6 +9,7 @@
 #include "async.h"
 #include "pool.h"
 #include "failure.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <daemon/log.h>
 
@@ -19,8 +20,7 @@ struct lb_monitor final : public LBMonitorHandler {
 
     const char *name;
     const struct lb_monitor_config *config;
-    const struct sockaddr *address;
-    size_t address_length;
+    SocketAddress address;
     const struct lb_monitor_class *class_;
 
     struct timeval interval;
@@ -36,7 +36,7 @@ struct lb_monitor final : public LBMonitorHandler {
 
     lb_monitor(struct pool *_pool, const char *_name,
                const struct lb_monitor_config *_config,
-               const struct sockaddr *_address, size_t _address_length,
+               SocketAddress _address,
                const struct lb_monitor_class *_class);
 
     ~lb_monitor() {
@@ -70,11 +70,11 @@ lb_monitor::Success()
 
     state = true;
 
-    failure_unset(address, address_length, FAILURE_MONITOR);
+    failure_unset(address, address.GetSize(), FAILURE_MONITOR);
 
     if (fade) {
         fade = false;
-        failure_unset(address, address_length, FAILURE_FADE);
+        failure_unset(address, address.GetSize(), FAILURE_FADE);
     }
 
     evtimer_add(&interval_event, &interval);
@@ -92,7 +92,7 @@ lb_monitor::Fade()
         daemon_log(6, "monitor still fade: %s\n", name);
 
     fade = true;
-    failure_set(address, address_length, FAILURE_FADE, 300);
+    failure_set(address, address.GetSize(), FAILURE_FADE, 300);
 
     evtimer_add(&interval_event, &interval);
 }
@@ -106,7 +106,7 @@ lb_monitor::Timeout()
     daemon_log(state ? 3 : 6, "monitor timeout: %s\n", name);
 
     state = false;
-    failure_set(address, address_length, FAILURE_MONITOR, 0);
+    failure_set(address, address.GetSize(), FAILURE_MONITOR, 0);
 
     evtimer_add(&interval_event, &interval);
 }
@@ -126,7 +126,7 @@ lb_monitor::Error(GError *error)
     g_error_free(error);
 
     state = false;
-    failure_set(address, address_length, FAILURE_MONITOR, 0);
+    failure_set(address, address.GetSize(), FAILURE_MONITOR, 0);
 
     evtimer_add(&interval_event, &interval);
 }
@@ -145,7 +145,7 @@ lb_monitor_interval_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
 
     struct pool *pool = pool_new_linear(monitor->pool, "monitor_run", 8192);
     monitor->class_->run(pool, monitor->config,
-                         monitor->address, monitor->address_length,
+                         monitor->address,
                          *monitor,
                          &monitor->async_ref);
     pool_unref(pool);
@@ -164,7 +164,7 @@ lb_monitor_timeout_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
     async_ref_clear(&monitor->async_ref);
 
     monitor->state = false;
-    failure_set(monitor->address, monitor->address_length,
+    failure_set(monitor->address, monitor->address.GetSize(),
                 FAILURE_MONITOR, 0);
 
     evtimer_add(&monitor->interval_event, &monitor->interval);
@@ -173,10 +173,10 @@ lb_monitor_timeout_callback(G_GNUC_UNUSED int fd, G_GNUC_UNUSED short event,
 inline
 lb_monitor::lb_monitor(struct pool *_pool, const char *_name,
                        const struct lb_monitor_config *_config,
-                       const struct sockaddr *_address, size_t _address_length,
+                       SocketAddress _address,
                        const struct lb_monitor_class *_class)
     :pool(_pool), name(_name), config(_config),
-     address(_address), address_length(_address_length),
+     address(_address),
      class_(_class),
      interval{time_t(config->interval), 0},
      timeout{time_t(config->timeout), 0},
@@ -190,11 +190,11 @@ lb_monitor::lb_monitor(struct pool *_pool, const char *_name,
 struct lb_monitor *
 lb_monitor_new(struct pool *pool, const char *name,
                const struct lb_monitor_config *config,
-               const struct sockaddr *address, size_t address_length,
+               SocketAddress address,
                const struct lb_monitor_class *class_)
 {
     return new lb_monitor(pool, name, config,
-                          address, address_length,
+                          address,
                           class_);
 }
 

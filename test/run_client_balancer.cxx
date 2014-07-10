@@ -1,5 +1,6 @@
 #include "client_balancer.hxx"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketAddress.hxx"
 #include "pool.h"
 #include "async.h"
 #include "balancer.hxx"
@@ -130,7 +131,7 @@ main(int argc, char **argv)
 
     struct async_operation_ref async_ref;
     client_balancer_connect(pool, ctx.balancer,
-                            false, nullptr, 0,
+                            false, SocketAddress::Null(),
                             0, &address_list, 30,
                             &my_socket_handler, &ctx,
                             &async_ref);

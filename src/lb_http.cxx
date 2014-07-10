@@ -30,6 +30,7 @@
 #include "failure.hxx"
 #include "bulldog.h"
 #include "abort-close.h"
+#include "net/SocketAddress.hxx"
 
 #include <http/status.h>
 #include <daemon/log.h>
@@ -355,24 +356,27 @@ lb_http_connection_request(struct http_server_request *request,
     request2->async_ref = async_ref;
     request2->new_cookie = 0;
 
-    const struct sockaddr *bind_address = nullptr;
-    size_t bind_address_size = 0;
+    SocketAddress bind_address = SocketAddress::Null();
     const bool transparent_source = cluster->transparent_source;
     if (transparent_source) {
-        bind_address = request->remote_address;
-        bind_address_size = request->remote_address_length;
+        bind_address = SocketAddress(request->remote_address,
+                                     request->remote_address_length);
 
         /* reset the port to 0 to allow the kernel to choose one */
-        if (bind_address->sa_family == AF_INET) {
+        if (bind_address.GetFamily() == AF_INET) {
+            const struct sockaddr *src = bind_address;
             struct sockaddr_in *s_in = (struct sockaddr_in *)
-                p_memdup(request->pool, bind_address, bind_address_size);
+                p_memdup(request->pool, src, bind_address.GetSize());
             s_in->sin_port = 0;
-            bind_address = (const struct sockaddr *)s_in;
-        } else if (bind_address->sa_family == AF_INET6) {
+            bind_address = SocketAddress((const struct sockaddr *)s_in,
+                                         bind_address.GetSize());
+        } else if (bind_address.GetFamily() == AF_INET6) {
+            const struct sockaddr *src = bind_address;
             struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
-                p_memdup(request->pool, bind_address, bind_address_size);
+                p_memdup(request->pool, src, bind_address.GetSize());
             s_in->sin6_port = 0;
-            bind_address = (const struct sockaddr *)s_in;
+            bind_address = SocketAddress((const struct sockaddr *)s_in,
+                                         bind_address.GetSize());
         }
     }
 
@@ -406,7 +410,7 @@ lb_http_connection_request(struct http_server_request *request,
 
     tcp_balancer_get(request2->balancer, request->pool,
                      transparent_source,
-                     bind_address, bind_address_size,
+                     bind_address,
                      session_sticky,
                      &cluster->address_list,
                      20,

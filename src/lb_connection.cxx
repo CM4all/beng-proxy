@@ -17,6 +17,7 @@
 #include "pool.h"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <assert.h>
 #include <unistd.h>
@@ -79,7 +80,7 @@ struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
                   struct ssl_factory *ssl_factory,
-                  int fd, const struct sockaddr *addr, size_t addrlen)
+                  int fd, SocketAddress address)
 {
     /* determine the local socket address */
     struct sockaddr_storage local_address;
@@ -131,7 +132,7 @@ lb_connection_new(struct lb_instance *instance,
                                    ? (const struct sockaddr *)&local_address
                                    : nullptr,
                                    local_address_length,
-                                   addr, addrlen,
+                                   address, address.GetSize(),
                                    false,
                                    &lb_http_connection_handler,
                                    connection,
@@ -140,7 +141,7 @@ lb_connection_new(struct lb_instance *instance,
 
     case LB_PROTOCOL_TCP:
         lb_tcp_new(connection->pool, instance->pipe_stock,
-                   fd, fd_type, filter, filter_ctx, addr, addrlen,
+                   fd, fd_type, filter, filter_ctx, address,
                    listener->destination.cluster->transparent_source,
                    listener->destination.cluster->address_list,
                    *connection->instance->balancer,

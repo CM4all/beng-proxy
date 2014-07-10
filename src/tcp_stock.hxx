@@ -7,14 +7,12 @@
 #ifndef BENG_PROXY_TCP_STOCK_HXX
 #define BENG_PROXY_TCP_STOCK_HXX
 
-#include <stddef.h>
-
 struct pool;
 struct balancer;
 struct stock_item;
 struct stock_get_handler;
 struct async_operation_ref;
-struct sockaddr;
+class SocketAddress;
 
 /**
  * Creates a new TCP connection stock.
@@ -34,8 +32,8 @@ tcp_stock_new(struct pool *pool, unsigned limit);
 void
 tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               bool ip_transparent,
-              const struct sockaddr *bind_address, size_t bind_address_size,
-              const struct sockaddr *address, size_t address_length,
+              SocketAddress bind_address,
+              SocketAddress address,
               unsigned timeout,
               const struct stock_get_handler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);

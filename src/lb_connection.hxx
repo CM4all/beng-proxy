@@ -10,11 +10,10 @@
 #include <boost/intrusive/list.hpp>
 
 #include <stdint.h>
-#include <stddef.h>
 
 struct pool;
 struct ssl_factory;
-struct sockaddr;
+class SocketAddress;
 
 struct lb_connection
     : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
@@ -42,7 +41,7 @@ struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
                   struct ssl_factory *ssl_factory,
-                  int fd, const struct sockaddr *addr, size_t addrlen);
+                  int fd, SocketAddress address);
 
 void
 lb_connection_remove(struct lb_connection *connection);
