@@ -13,6 +13,19 @@
 #include <sys/un.h>
 #include <netdb.h>
 
+StaticSocketAddress &
+StaticSocketAddress::operator=(const SocketAddress &src)
+{
+    assert(!src.IsNull());
+    assert(src.GetSize() <= sizeof(address));
+
+    size = src.GetSize();
+    const struct sockaddr *src2 = src;
+    memcpy(&address, src2, size);
+
+    return *this;
+}
+
 void
 StaticSocketAddress::SetLocal(const char *path)
 {

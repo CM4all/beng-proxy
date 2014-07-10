@@ -21,6 +21,8 @@ class StaticSocketAddress {
 public:
     StaticSocketAddress() = default;
 
+    StaticSocketAddress &operator=(const SocketAddress &src);
+
     constexpr size_t GetCapacity() const {
         return sizeof(address);
     }
