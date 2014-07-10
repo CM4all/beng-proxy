@@ -264,24 +264,22 @@ discard_ajp_request_body(struct ajp_request *r)
 */
 
 static void
-write_headers(http_status_t status, struct strmap *headers)
+write_headers(http_status_t status, const struct strmap *headers)
 {
     unsigned n = 0;
     size_t length = 7;
 
     if (headers != nullptr) {
-        strmap_rewind(headers);
-        const struct strmap_pair *pair;
-        while ((pair = strmap_next(headers)) != nullptr) {
+        for (const auto &i : *headers) {
             ++n;
             length += 4;
 
             enum ajp_response_header_code code =
-                ajp_encode_response_header_name(pair->key);
+                ajp_encode_response_header_name(i.key);
             if (code == AJP_RESPONSE_HEADER_NONE)
-                length += strlen(pair->key) + 1;
+                length += strlen(i.key) + 1;
 
-            length += strlen(pair->value) + 1;
+            length += strlen(i.value) + 1;
         }
     }
 
@@ -299,17 +297,15 @@ write_headers(http_status_t status, struct strmap *headers)
     write_short(n);
 
     if (headers != nullptr) {
-        strmap_rewind(headers);
-        const struct strmap_pair *pair;
-        while ((pair = strmap_next(headers)) != nullptr) {
+        for (const auto &i : *headers) {
             enum ajp_response_header_code code =
-                ajp_encode_response_header_name(pair->key);
+                ajp_encode_response_header_name(i.key);
             if (code == AJP_RESPONSE_HEADER_NONE)
-                write_string(pair->key);
+                write_string(i.key);
             else
                 write_short(code);
 
-            write_string(pair->value);
+            write_string(i.value);
         }
     }
 }

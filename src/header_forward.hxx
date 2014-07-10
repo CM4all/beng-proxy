@@ -22,7 +22,7 @@ struct session;
  * need to generate a new one
  */
 struct strmap *
-forward_request_headers(struct pool *pool, struct strmap *src,
+forward_request_headers(struct pool *pool, const struct strmap *src,
                         const char *local_host, const char *remote_host,
                         bool exclude_host,
                         bool with_body, bool forward_charset,
@@ -33,7 +33,7 @@ forward_request_headers(struct pool *pool, struct strmap *src,
                         const char *host_and_port, const char *uri);
 
 struct strmap *
-forward_response_headers(struct pool *pool, struct strmap *src,
+forward_response_headers(struct pool *pool, const struct strmap *src,
                          const char *local_host,
                          const char *session_cookie,
                          const struct header_forward_settings *settings);

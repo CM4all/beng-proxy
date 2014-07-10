@@ -12,7 +12,6 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     char buffer[16];
     ssize_t nbytes;
     struct strmap *headers;
-    const struct strmap_pair *pair;
 
     pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
@@ -31,9 +30,8 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     /* dump headers */
 
-    strmap_rewind(headers);
-    while ((pair = strmap_next(headers)) != nullptr)
-        printf("%s: %s\n", pair->key, pair->value);
+    for (const auto &i : *headers)
+        printf("%s: %s\n", i.key, i.value);
 
     /* cleanup */
 

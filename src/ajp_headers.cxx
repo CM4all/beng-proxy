@@ -36,13 +36,11 @@ serialize_ajp_header_name(struct growing_buffer *gb, const char *name)
 unsigned
 serialize_ajp_headers(struct growing_buffer *gb, struct strmap *headers)
 {
-    const struct strmap_pair *pair;
     unsigned n = 0;
 
-    strmap_rewind(headers);
-    while ((pair = strmap_next(headers)) != nullptr) {
-        if (serialize_ajp_header_name(gb, pair->key)) {
-            serialize_ajp_string(gb, pair->value);
+    for (const auto &i : *headers) {
+        if (serialize_ajp_header_name(gb, i.key)) {
+            serialize_ajp_string(gb, i.value);
             ++n;
         }
     }

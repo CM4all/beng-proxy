@@ -49,7 +49,7 @@ args_parse(struct pool *pool, const char *p, size_t length)
 }
 
 const char *
-args_format_n(struct pool *pool, struct strmap *args,
+args_format_n(struct pool *pool, const struct strmap *args,
               const char *replace_key, const char *replace_value,
               size_t replace_value_length,
               const char *replace_key2, const char *replace_value2,
@@ -58,17 +58,13 @@ args_format_n(struct pool *pool, struct strmap *args,
               size_t replace_value3_length,
               const char *remove_key)
 {
-    const struct strmap_pair *pair;
     size_t length = 0;
 
     /* determine length */
 
-    if (args != nullptr) {
-        strmap_rewind(args);
-
-        while ((pair = strmap_next(args)) != nullptr)
-            length += strlen(pair->key) + 1 + strlen(pair->value) * 3 + 1;
-    }
+    if (args != nullptr)
+        for (const auto &i : *args)
+            length += strlen(i.key) + 1 + strlen(i.value) * 3 + 1;
 
     if (replace_key != nullptr)
         length += strlen(replace_key) + 1 + replace_value_length * 3 + 1;
@@ -85,21 +81,19 @@ args_format_n(struct pool *pool, struct strmap *args,
     const char *const ret = p;
 
     if (args != nullptr) {
-        strmap_rewind(args);
-
-        while ((pair = strmap_next(args)) != nullptr) {
-            if ((replace_key != nullptr && strcmp(pair->key, replace_key) == 0) ||
-                (replace_key2 != nullptr && strcmp(pair->key, replace_key2) == 0) ||
-                (replace_key3 != nullptr && strcmp(pair->key, replace_key3) == 0) ||
-                (remove_key != nullptr && strcmp(pair->key, remove_key) == 0))
+        for (const auto &i : *args) {
+            if ((replace_key != nullptr && strcmp(i.key, replace_key) == 0) ||
+                (replace_key2 != nullptr && strcmp(i.key, replace_key2) == 0) ||
+                (replace_key3 != nullptr && strcmp(i.key, replace_key3) == 0) ||
+                (remove_key != nullptr && strcmp(i.key, remove_key) == 0))
                 continue;
             if (p > ret)
                 *p++ = '&';
-            length = strlen(pair->key);
-            memcpy(p, pair->key, length);
+            length = strlen(i.key);
+            memcpy(p, i.key, length);
             p += length;
             *p++ = '=';
-            p += uri_escape(p, pair->value, strlen(pair->value),
+            p += uri_escape(p, i.value, strlen(i.value),
                             ARGS_ESCAPE_CHAR);
         }
     }
@@ -142,7 +136,7 @@ args_format_n(struct pool *pool, struct strmap *args,
 }
 
 const char *
-args_format(struct pool *pool, struct strmap *args,
+args_format(struct pool *pool, const struct strmap *args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2,
             const char *remove_key)

@@ -260,12 +260,9 @@ write_fcgi_headers(const struct fcgi_request *r, http_status_t status,
     char buffer[8192], *p = buffer;
     p += sprintf(p, "status: %u\n", status);
 
-    if (headers != nullptr) {
-        strmap_rewind(headers);
-        const struct strmap_pair *pair;
-        while ((pair = strmap_next(headers)) != nullptr)
-            p += sprintf(p, "%s: %s\n", pair->key, pair->value);
-    }
+    if (headers != nullptr)
+        for (const auto &i : *headers)
+            p += sprintf(p, "%s: %s\n", i.key, i.value);
 
     p += sprintf(p, "\n");
 

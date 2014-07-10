@@ -34,13 +34,13 @@ headers_copy_one(const struct strmap *in, struct growing_buffer *out,
                  const char *key);
 
 void
-headers_copy(struct strmap *in, struct growing_buffer *out,
+headers_copy(const struct strmap *in, struct growing_buffer *out,
              const char *const* keys);
 
 void
-headers_copy_all(struct strmap *in, struct growing_buffer *out);
+headers_copy_all(const struct strmap *in, struct growing_buffer *out);
 
 struct growing_buffer *
-headers_dup(struct pool *pool, struct strmap *in);
+headers_dup(struct pool *pool, const struct strmap *in);
 
 #endif

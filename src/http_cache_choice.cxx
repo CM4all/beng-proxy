@@ -61,15 +61,12 @@ static unsigned
 mcd_vary_hash(struct strmap *vary)
 {
     unsigned hash = 0;
-    const struct strmap_pair *pair;
 
     if (vary == nullptr)
         return 0;
 
-    strmap_rewind(vary);
-
-    while ((pair = strmap_next(vary)) != nullptr)
-        hash ^= djb_hash_string(pair->key) ^ djb_hash_string(pair->value);
+    for (const auto &i : *vary)
+        hash ^= djb_hash_string(i.key) ^ djb_hash_string(i.value);
 
     return hash;
 }

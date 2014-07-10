@@ -73,7 +73,7 @@ was_control_send_array(struct was_control *control, enum was_command cmd,
 
 bool
 was_control_send_strmap(struct was_control *control, enum was_command cmd,
-                        struct strmap *map);
+                        const struct strmap *map);
 
 /**
  * Enables bulk mode.

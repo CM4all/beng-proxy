@@ -40,13 +40,10 @@ struct context {
 static void
 dump_choice(const struct http_cache_document *document)
 {
-    const struct strmap_pair *pair;
-
     printf("expires=%ld\n", (long)(document->info.expires - time(NULL)));
 
-    strmap_rewind(document->vary);
-    while ((pair = strmap_next(document->vary)) != NULL)
-        printf("\t%s: %s\n", pair->key, pair->value);
+    for (const auto &i : *document->vary)
+        printf("\t%s: %s\n", i.key, i.value);
 }
 
 

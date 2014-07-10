@@ -201,15 +201,12 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
 
     expected_rh = parse_request_headers(pool, request);
     if (expected_rh != NULL) {
-        const struct strmap_pair *pair;
-
         assert(headers != NULL);
 
-        strmap_rewind(expected_rh);
-        while ((pair = strmap_next(expected_rh)) != NULL) {
-            const char *value = strmap_get_checked(headers, pair->key);
+        for (const auto &i : *headers) {
+            const char *value = strmap_get_checked(headers, i.key);
             assert(value != NULL);
-            assert(strcmp(value, pair->value) == 0);
+            assert(strcmp(value, i.value) == 0);
         }
     }
 
@@ -278,15 +275,12 @@ my_http_response(http_status_t status, struct strmap *headers,
 
     expected_rh = parse_response_headers(pool, request);
     if (expected_rh != NULL) {
-        const struct strmap_pair *pair;
-
         assert(headers != NULL);
 
-        strmap_rewind(expected_rh);
-        while ((pair = strmap_next(expected_rh)) != NULL) {
-            const char *value = strmap_get(headers, pair->key);
+        for (const auto &i : *expected_rh) {
+            const char *value = strmap_get(headers, i.key);
             assert(value != NULL);
-            assert(strcmp(value, pair->value) == 0);
+            assert(strcmp(value, i.value) == 0);
         }
     }
 

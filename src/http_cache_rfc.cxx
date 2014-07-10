@@ -141,19 +141,16 @@ http_cache_request_evaluate(struct pool *pool,
     return info;
 }
 
+gcc_pure
 static bool
-vary_fits(struct strmap *vary, const struct strmap *headers)
+vary_fits(const struct strmap *vary, const struct strmap *headers)
 {
-    const struct strmap_pair *pair;
-
-    strmap_rewind(vary);
-
-    while ((pair = strmap_next(vary)) != nullptr) {
-        const char *value = strmap_get_checked(headers, pair->key);
+    for (const auto &i : *vary) {
+        const char *value = strmap_get_checked(headers, i.key);
         if (value == nullptr)
             value = "";
 
-        if (strcmp(pair->value, value) != 0)
+        if (strcmp(i.value, value) != 0)
             /* mismatch in one of the "Vary" request headers */
             return false;
     }

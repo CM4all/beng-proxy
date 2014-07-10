@@ -75,7 +75,8 @@ headers_copy_one(const struct strmap *in, struct growing_buffer *out,
 }
 
 void
-headers_copy(struct strmap *in, struct growing_buffer *out, const char *const* keys)
+headers_copy(const struct strmap *in, struct growing_buffer *out,
+             const char *const* keys)
 {
     const char *value;
 
@@ -87,39 +88,31 @@ headers_copy(struct strmap *in, struct growing_buffer *out, const char *const* k
 }
 
 void
-headers_copy_all(struct strmap *in, struct growing_buffer *out)
+headers_copy_all(const struct strmap *in, struct growing_buffer *out)
 {
-    const struct strmap_pair *pair;
-
     assert(in != nullptr);
     assert(out != nullptr);
 
-    strmap_rewind(in);
-
-    while ((pair = strmap_next(in)) != nullptr)
-        header_write(out, pair->key, pair->value);
+    for (const auto &i : *in)
+        header_write(out, i.key, i.value);
 }
 
 /**
  * Like headers_copy_all(), but doesn't copy hop-by-hop headers.
  */
 static void
-headers_copy_most(struct strmap *in, struct growing_buffer *out)
+headers_copy_most(const struct strmap *in, struct growing_buffer *out)
 {
-    const struct strmap_pair *pair;
-
     assert(in != nullptr);
     assert(out != nullptr);
 
-    strmap_rewind(in);
-
-    while ((pair = strmap_next(in)) != nullptr)
-        if (!http_header_is_hop_by_hop(pair->key))
-            header_write(out, pair->key, pair->value);
+    for (const auto &i : *in)
+        if (!http_header_is_hop_by_hop(i.key))
+            header_write(out, i.key, i.value);
 }
 
 struct growing_buffer *
-headers_dup(struct pool *pool, struct strmap *in)
+headers_dup(struct pool *pool, const struct strmap *in)
 {
     struct growing_buffer *out = growing_buffer_new(pool, 2048);
     headers_copy_most(in, out);

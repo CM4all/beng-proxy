@@ -35,19 +35,17 @@ header_copy_list(const struct strmap *in, struct strmap *out,
 }
 
 void
-header_copy_prefix(struct strmap *in, struct strmap *out, const char *prefix)
+header_copy_prefix(const struct strmap *in, struct strmap *out,
+                   const char *prefix)
 {
     assert(in != nullptr);
     assert(out != nullptr);
     assert(prefix != nullptr);
     assert(*prefix != 0);
 
-    strmap_rewind(in);
-
     const size_t prefix_length = strlen(prefix);
 
-    const struct strmap_pair *pair;
-    while ((pair = strmap_next(in)) != nullptr)
-        if (memcmp(pair->key, prefix, prefix_length) == 0)
-            strmap_add(out, pair->key, pair->value);
+    for (const auto &i : *in)
+        if (memcmp(i.key, prefix, prefix_length) == 0)
+            strmap_add(out, i.key, i.value);
 }

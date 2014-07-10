@@ -122,17 +122,12 @@ widget_request_headers(struct embed *embed, const struct widget_view *view,
             strmap_add(headers, "x-cm4all-widget-prefix", prefix);
     }
 
-    if (widget->headers != nullptr) {
+    if (widget->headers != nullptr)
         /* copy HTTP request headers from template */
-        const struct strmap_pair *pair;
-
-        strmap_rewind(widget->headers);
-
-        while ((pair = strmap_next(widget->headers)) != nullptr)
+        for (const auto &i : *widget->headers)
             strmap_add(headers,
-                       p_strdup(embed->pool, pair->key),
-                       p_strdup(embed->pool, pair->value));
-    }
+                       p_strdup(embed->pool, i.key),
+                       p_strdup(embed->pool, i.value));
 
     return headers;
 }
@@ -543,10 +538,9 @@ widget_response_response(http_status_t status, struct strmap *headers,
         if (widget->cls->dump_headers) {
             daemon_log(4, "response headers from widget '%s'\n",
                        widget_path(widget));
-            strmap_rewind(headers);
-            const struct strmap_pair *pair;
-            while ((pair = strmap_next(headers)) != nullptr)
-                daemon_log(4, "  %s: %s\n", pair->key, pair->value);
+
+            for (const auto &i : *headers)
+                daemon_log(4, "  %s: %s\n", i.key, i.value);
         }
 
         if (embed->host_and_port != nullptr) {
@@ -683,10 +677,9 @@ widget_http_request(struct pool *pool, struct widget *widget,
 
     if (widget->cls->dump_headers) {
         daemon_log(4, "request headers for widget '%s'\n", widget_path(widget));
-        strmap_rewind(headers);
-        const struct strmap_pair *pair;
-        while ((pair = strmap_next(headers)) != nullptr)
-            daemon_log(4, "  %s: %s\n", pair->key, pair->value);
+
+        for (const auto &i : *headers)
+            daemon_log(4, "  %s: %s\n", i.key, i.value);
     }
 
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);

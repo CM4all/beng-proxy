@@ -62,23 +62,19 @@ serialize_string_null(struct growing_buffer *gb, const char *value)
 void
 serialize_strmap(struct growing_buffer *gb, struct strmap *map)
 {
-    const struct strmap_pair *pair;
-
     if (map == nullptr) {
         /* same as empty map */
         serialize_string(gb, "");
         return;
     }
 
-    strmap_rewind(map);
-
-    while ((pair = strmap_next(map)) != nullptr) {
-        if (*pair->key == 0)
+    for (const auto &i : *map) {
+        if (*i.key == 0)
             /* this shouldn't happen; ignore this invalid entry  */
             continue;
 
-        serialize_string(gb, pair->key);
-        serialize_string(gb, pair->value);
+        serialize_string(gb, i.key);
+        serialize_string(gb, i.value);
     }
 
     /* key length 0 means "end of map" */

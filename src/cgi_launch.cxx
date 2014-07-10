@@ -31,11 +31,10 @@ cgi_run(const struct jail_params *jail,
         const char *query_string,
         const char *document_root,
         const char *remote_addr,
-        struct strmap *headers,
+        const struct strmap *headers,
         off_t content_length,
         ConstBuffer<const char *> env)
 {
-    const struct strmap_pair *pair;
     const char *arg = nullptr;
 
     assert(path != nullptr);
@@ -98,27 +97,26 @@ cgi_run(const struct jail_params *jail,
 
     const char *content_type = nullptr;
     if (headers != nullptr) {
-        strmap_rewind(headers);
-        while ((pair = strmap_next(headers)) != nullptr) {
-            if (strcmp(pair->key, "content-type") == 0) {
-                content_type = pair->value;
+        for (const auto &pair : *headers) {
+            if (strcmp(pair.key, "content-type") == 0) {
+                content_type = pair.value;
                 continue;
             }
 
             char buffer[512] = "HTTP_";
             size_t i;
-            for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
-                if (char_is_minuscule_letter(pair->key[i]))
-                    buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
-                else if (char_is_capital_letter(pair->key[i]) ||
-                         char_is_digit(pair->key[i]))
-                    buffer[5 + i] = pair->key[i];
+            for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
+                if (char_is_minuscule_letter(pair.key[i]))
+                    buffer[5 + i] = (char)(pair.key[i] - 'a' + 'A');
+                else if (char_is_capital_letter(pair.key[i]) ||
+                         char_is_digit(pair.key[i]))
+                    buffer[5 + i] = pair.key[i];
                 else
                     buffer[5 + i] = '_';
             }
 
             buffer[5 + i] = 0;
-            e.SetEnv(buffer, pair->value);
+            e.SetEnv(buffer, pair.value);
         }
     }
 

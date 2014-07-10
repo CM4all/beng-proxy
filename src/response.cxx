@@ -417,13 +417,9 @@ translation_response_headers(struct growing_buffer *headers,
     if (tr->authentication_info != nullptr)
         header_write(headers, "authentication-info", tr->authentication_info);
 
-    if (tr->headers != nullptr) {
-        strmap_rewind(tr->headers);
-
-        const struct strmap_pair *pair;
-        while ((pair = strmap_next(tr->headers)) != nullptr)
-            header_write(headers, pair->key, pair->value);
-    }
+    if (tr->headers != nullptr)
+        for (const auto &i : *tr->headers)
+            header_write(headers, i.key, i.value);
 }
 
 /**

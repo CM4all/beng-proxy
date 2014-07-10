@@ -78,19 +78,16 @@ string_in_array(const char *const array[], const char *value)
 }
 
 static void
-forward_other_headers(struct strmap *dest, struct strmap *src)
+forward_other_headers(struct strmap *dest, const struct strmap *src)
 {
-    const struct strmap_pair *pair;
-
-    strmap_rewind(src);
-    while ((pair = strmap_next(src)) != NULL)
-        if (!string_in_array(via_request_headers, pair->key) &&
-            !http_header_is_hop_by_hop(pair->key))
-            strmap_add(dest, pair->key, pair->value);
+    for (const auto &i : *src)
+        if (!string_in_array(via_request_headers, i.key) &&
+            !http_header_is_hop_by_hop(i.key))
+            strmap_add(dest, i.key, i.value);
 }
 
-struct strmap *
-lb_forward_request_headers(struct pool *pool, struct strmap *src,
+const struct strmap *
+lb_forward_request_headers(struct pool *pool, const struct strmap *src,
                            const char *local_host, const char *remote_host,
                            const char *peer_subject,
                            const char *peer_issuer_subject,

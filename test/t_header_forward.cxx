@@ -12,12 +12,10 @@ strmap_to_string(struct strmap *map)
     static char buffer[4096];
     buffer[0] = 0;
 
-    strmap_rewind(map);
-    const struct strmap_pair *pair;
-    while ((pair = strmap_next(map)) != nullptr) {
-        strcat(buffer, pair->key);
+    for (const auto &i : *map) {
+        strcat(buffer, i.key);
         strcat(buffer, "=");
-        strcat(buffer, pair->value);
+        strcat(buffer, i.value);
         strcat(buffer, ";");
     }
 

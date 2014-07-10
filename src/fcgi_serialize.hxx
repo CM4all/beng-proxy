@@ -28,6 +28,6 @@ fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
 
 void
 fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,
-                       struct strmap *headers);
+                       const struct strmap *headers);
 
 #endif

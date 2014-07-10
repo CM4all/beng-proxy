@@ -139,12 +139,6 @@ strmap_lookup_next(const struct strmap *map, const struct strmap_pair *pair)
     return map->LookupNext(pair);
 }
 
-void
-strmap_rewind(struct strmap *map);
-
-const struct strmap_pair *
-strmap_next(struct strmap *map);
-
 /**
  * This variation of strmap_remove() allows the caller to pass map=nullptr.
  */

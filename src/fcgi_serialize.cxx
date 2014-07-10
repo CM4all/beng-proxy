@@ -131,7 +131,7 @@ fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
 
 void
 fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,
-                       struct strmap *headers)
+                       const struct strmap *headers)
 {
     struct fcgi_record_header *header = (struct fcgi_record_header *)
         growing_buffer_write(gb, sizeof(*header));
@@ -143,24 +143,23 @@ fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,
 
     size_t content_length = 0;
     char buffer[512] = "HTTP_";
-    const struct strmap_pair *pair;
-    strmap_rewind(headers);
-    while ((pair = strmap_next(headers)) != nullptr) {
+
+    for (const auto &pair : *headers) {
         size_t i;
 
-        for (i = 0; 5 + i < sizeof(buffer) - 1 && pair->key[i] != 0; ++i) {
-            if (char_is_minuscule_letter(pair->key[i]))
-                buffer[5 + i] = (char)(pair->key[i] - 'a' + 'A');
-            else if (char_is_capital_letter(pair->key[i]) ||
-                     char_is_digit(pair->key[i]))
-                buffer[5 + i] = pair->key[i];
+        for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
+            if (char_is_minuscule_letter(pair.key[i]))
+                buffer[5 + i] = (char)(pair.key[i] - 'a' + 'A');
+            else if (char_is_capital_letter(pair.key[i]) ||
+                     char_is_digit(pair.key[i]))
+                buffer[5 + i] = pair.key[i];
             else
                 buffer[5 + i] = '_';
         }
 
         buffer[5 + i] = 0;
 
-        content_length += fcgi_serialize_pair(gb, buffer, pair->value);
+        content_length += fcgi_serialize_pair(gb, buffer, pair.value);
     }
 
     header->content_length = GUINT16_TO_BE(content_length);

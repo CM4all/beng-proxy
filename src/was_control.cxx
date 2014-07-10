@@ -411,17 +411,14 @@ was_control_send_array(struct was_control *control, enum was_command cmd,
 
 bool
 was_control_send_strmap(struct was_control *control, enum was_command cmd,
-                        struct strmap *map)
+                        const struct strmap *map)
 {
     assert(control != nullptr);
     assert(map != nullptr);
 
-    strmap_rewind(map);
-
-    const struct strmap_pair *pair;
-    while ((pair = strmap_next(map)) != nullptr) {
-        size_t key_length = strlen(pair->key);
-        size_t value_length = strlen(pair->value);
+    for (const auto &i : *map) {
+        size_t key_length = strlen(i.key);
+        size_t value_length = strlen(i.value);
         size_t payload_length = key_length + 1 + value_length;
 
         uint8_t *dest = (uint8_t *)
@@ -429,9 +426,9 @@ was_control_send_strmap(struct was_control *control, enum was_command cmd,
         if (dest == nullptr)
             return false;
 
-        memcpy(dest, pair->key, key_length);
+        memcpy(dest, i.key, key_length);
         dest[key_length] = '=';
-        memcpy(dest + key_length + 1, pair->value, value_length);
+        memcpy(dest + key_length + 1, i.value, value_length);
         if (!was_control_finish(control, payload_length))
             return false;
     }

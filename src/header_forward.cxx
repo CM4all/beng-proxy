@@ -143,14 +143,11 @@ forward_basic_headers(struct strmap *dest, const struct strmap *src,
 }
 
 static void
-forward_secure_headers(struct strmap *dest, struct strmap *src)
+forward_secure_headers(struct strmap *dest, const struct strmap *src)
 {
-    strmap_rewind(src);
-
-    const struct strmap_pair *pair;
-    while ((pair = strmap_next(src)) != nullptr)
-        if (is_secure_header(pair->key))
-            strmap_add(dest, pair->key, pair->value);
+    for (const auto &i : *src)
+        if (is_secure_header(i.key))
+            strmap_add(dest, i.key, i.value);
 }
 
 static void
@@ -208,7 +205,8 @@ forward_xff(struct pool *pool, struct strmap *dest, const struct strmap *src,
 }
 
 static void
-forward_identity(struct pool *pool, struct strmap *dest, const struct strmap *src,
+forward_identity(struct pool *pool,
+                 struct strmap *dest, const struct strmap *src,
                  const char *local_host, const char *remote_host,
                  bool mangle)
 {
@@ -227,21 +225,18 @@ string_in_array(const char *const array[], const char *value)
 }
 
 static void
-forward_other_headers(struct strmap *dest, struct strmap *src)
+forward_other_headers(struct strmap *dest, const struct strmap *src)
 {
-    const struct strmap_pair *pair;
-
-    strmap_rewind(src);
-    while ((pair = strmap_next(src)) != nullptr)
-        if (!string_in_array(basic_request_headers, pair->key) &&
-            !string_in_array(body_request_headers, pair->key) &&
-            !string_in_array(language_request_headers, pair->key) &&
-            !string_in_array(cookie_request_headers, pair->key) &&
-            !string_in_array(cors_request_headers, pair->key) &&
-            !string_in_array(exclude_request_headers, pair->key) &&
-            !is_secure_header(pair->key) &&
-            !http_header_is_hop_by_hop(pair->key))
-            strmap_add(dest, pair->key, pair->value);
+    for (const auto &i : *src)
+        if (!string_in_array(basic_request_headers, i.key) &&
+            !string_in_array(body_request_headers, i.key) &&
+            !string_in_array(language_request_headers, i.key) &&
+            !string_in_array(cookie_request_headers, i.key) &&
+            !string_in_array(cors_request_headers, i.key) &&
+            !string_in_array(exclude_request_headers, i.key) &&
+            !is_secure_header(i.key) &&
+            !http_header_is_hop_by_hop(i.key))
+            strmap_add(dest, i.key, i.value);
 }
 
 /**
@@ -249,19 +244,16 @@ forward_other_headers(struct strmap *dest, struct strmap *src)
  */
 static void
 header_copy_cookie_except(struct pool *pool,
-                          struct strmap *dest, struct strmap *src,
+                          struct strmap *dest, const struct strmap *src,
                           const char *except)
 {
-    const struct strmap_pair *pair;
-
-    strmap_rewind(src);
-    while ((pair = strmap_next(src)) != nullptr) {
-        if (strcmp(pair->key, "cookie2") == 0)
-            strmap_add(dest, pair->key, pair->value);
-        else if (strcmp(pair->key, "cookie") == 0) {
-            const char *new_value = cookie_exclude(pair->value, except, pool);
+    for (const auto &i : *src) {
+        if (strcmp(i.key, "cookie2") == 0)
+            strmap_add(dest, i.key, i.value);
+        else if (strcmp(i.key, "cookie") == 0) {
+            const char *new_value = cookie_exclude(i.value, except, pool);
             if (new_value != nullptr)
-                strmap_add(dest, pair->key, new_value);
+                strmap_add(dest, i.key, new_value);
         }
     }
 }
@@ -279,20 +271,17 @@ compare_set_cookie_name(const char *set_cookie, const char *name)
  * Copy cookie response headers, but exclude one cookie name.
  */
 static void
-header_copy_set_cookie_except(struct strmap *dest, struct strmap *src,
+header_copy_set_cookie_except(struct strmap *dest, const struct strmap *src,
                               const char *except)
 {
-    const struct strmap_pair *pair;
-
-    strmap_rewind(src);
-    while ((pair = strmap_next(src)) != nullptr)
-        if (string_in_array(cookie_response_headers, pair->key) &&
-            !compare_set_cookie_name(pair->value, except))
-            strmap_add(dest, pair->key, pair->value);
+    for (const auto &i : *src)
+        if (string_in_array(cookie_response_headers, i.key) &&
+            !compare_set_cookie_name(i.value, except))
+            strmap_add(dest, i.key, i.value);
 }
 
 struct strmap *
-forward_request_headers(struct pool *pool, struct strmap *src,
+forward_request_headers(struct pool *pool, const struct strmap *src,
                         const char *local_host, const char *remote_host,
                         bool exclude_host,
                         bool with_body, bool forward_charset,
@@ -391,19 +380,16 @@ forward_request_headers(struct pool *pool, struct strmap *src,
 }
 
 static void
-forward_other_response_headers(struct strmap *dest, struct strmap *src)
+forward_other_response_headers(struct strmap *dest, const struct strmap *src)
 {
-    const struct strmap_pair *pair;
-
-    strmap_rewind(src);
-    while ((pair = strmap_next(src)) != nullptr)
-        if (!string_in_array(basic_response_headers, pair->key) &&
-            !string_in_array(cookie_response_headers, pair->key) &&
-            !string_in_array(cors_response_headers, pair->key) &&
-            !string_in_array(exclude_response_headers, pair->key) &&
-            !is_secure_header(pair->key) &&
-            !http_header_is_hop_by_hop(pair->key))
-            strmap_add(dest, pair->key, pair->value);
+    for (const auto &i : *src)
+        if (!string_in_array(basic_response_headers, i.key) &&
+            !string_in_array(cookie_response_headers, i.key) &&
+            !string_in_array(cors_response_headers, i.key) &&
+            !string_in_array(exclude_response_headers, i.key) &&
+            !is_secure_header(i.key) &&
+            !http_header_is_hop_by_hop(i.key))
+            strmap_add(dest, i.key, i.value);
 }
 
 static void
@@ -423,7 +409,7 @@ forward_server(struct strmap *dest, const struct strmap *src,
 }
 
 struct strmap *
-forward_response_headers(struct pool *pool, struct strmap *src,
+forward_response_headers(struct pool *pool, const struct strmap *src,
                          const char *local_host,
                          const char *session_cookie,
                          const struct header_forward_settings *settings)

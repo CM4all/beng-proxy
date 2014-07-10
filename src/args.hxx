@@ -27,7 +27,7 @@ args_parse(struct pool *pool, const char *p, size_t length);
  */
 gcc_pure
 const char *
-args_format_n(struct pool *pool, struct strmap *args,
+args_format_n(struct pool *pool, const struct strmap *args,
               const char *replace_key, const char *replace_value,
               size_t replace_value_length,
               const char *replace_key2, const char *replace_value2,
@@ -38,7 +38,7 @@ args_format_n(struct pool *pool, struct strmap *args,
 
 gcc_pure
 const char *
-args_format(struct pool *pool, struct strmap *args,
+args_format(struct pool *pool, const struct strmap *args,
             const char *replace_key, const char *replace_value,
             const char *replace_key2, const char *replace_value2,
             const char *remove_key);

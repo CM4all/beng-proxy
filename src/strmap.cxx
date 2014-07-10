@@ -107,22 +107,3 @@ strmap_dup(struct pool *pool, struct strmap *src)
 {
     return NewFromPool<struct strmap>(pool, *pool, *src);
 }
-
-void
-strmap_rewind(struct strmap *map)
-{
-    assert(map != nullptr);
-
-    map->cursor = map->map.begin();
-}
-
-const struct strmap_pair *
-strmap_next(struct strmap *map)
-{
-    assert(map != nullptr);
-
-    if (map->cursor == map->map.end())
-        return nullptr;
-
-    return &*map->cursor++;
-}
