@@ -15,11 +15,11 @@ struct file_request;
 struct stat;
 
 void
-file_dispatch(struct request *request2, const struct stat *st,
-              const struct file_request *file_request,
+file_dispatch(struct request &request2, const struct stat &st,
+              const struct file_request &file_request,
               struct istream *body);
 
 void
-file_callback(struct request *request);
+file_callback(struct request &request);
 
 #endif

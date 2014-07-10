@@ -25,31 +25,30 @@ static void
 proxy_collect_cookies(request &request2, const struct strmap *headers)
 {
     const struct resource_address &address = *request2.translate.address;
-    struct session *session;
 
-    if (headers == NULL)
+    if (headers == nullptr)
         return;
 
     const struct strmap_pair *cookies =
         strmap_lookup_first(headers, "set-cookie2");
-    if (cookies == NULL) {
+    if (cookies == nullptr) {
         cookies = strmap_lookup_first(headers, "set-cookie");
-        if (cookies == NULL)
+        if (cookies == nullptr)
             return;
     }
 
     const char *host_and_port = request2.translate.response->cookie_host;
-    if (host_and_port == NULL)
+    if (host_and_port == nullptr)
         host_and_port = resource_address_host_and_port(&address);
-    if (host_and_port == NULL)
+    if (host_and_port == nullptr)
         return;
 
     const char *path = resource_address_uri_path(&address);
-    if (path == NULL)
+    if (path == nullptr)
         return;
 
-    session = request_make_session(&request2);
-    if (session == NULL)
+    struct session *session = request_make_session(&request2);
+    if (session == nullptr)
         return;
 
     do {
@@ -57,7 +56,7 @@ proxy_collect_cookies(request &request2, const struct strmap *headers)
                                host_and_port, path);
 
         cookies = strmap_lookup_next(headers, cookies);
-    } while (cookies != NULL);
+    } while (cookies != nullptr);
 
     session_put(session);
 }
@@ -100,9 +99,8 @@ void
 proxy_handler(request &request2)
 {
     struct http_server_request *request = request2.request;
-    const TranslateResponse *tr = request2.translate.response;
+    const TranslateResponse &tr = *request2.translate.response;
     const struct resource_address *address = request2.translate.address;
-    struct forward_request forward;
 
     assert(address->type == RESOURCE_ADDRESS_HTTP ||
            address->type == RESOURCE_ADDRESS_LHTTP ||
@@ -110,7 +108,7 @@ proxy_handler(request &request2)
            address->type == RESOURCE_ADDRESS_NFS ||
            resource_address_is_cgi_alike(address));
 
-    const char *host_and_port = NULL, *uri_p = NULL;
+    const char *host_and_port = nullptr, *uri_p = nullptr;
     if (address->type == RESOURCE_ADDRESS_HTTP ||
         address->type == RESOURCE_ADDRESS_AJP) {
         host_and_port = address->u.http->host_and_port;
@@ -120,8 +118,9 @@ proxy_handler(request &request2)
         uri_p = address->u.lhttp->uri;
     }
 
+    struct forward_request forward;
     request_forward(&forward, &request2,
-                    &tr->request_header_forward,
+                    &tr.request_header_forward,
                     host_and_port, uri_p,
                     address->type == RESOURCE_ADDRESS_HTTP ||
                     address->type == RESOURCE_ADDRESS_LHTTP);
@@ -142,7 +141,7 @@ proxy_handler(request &request2)
                                                             request->uri);
 
     if (resource_address_is_cgi_alike(address) &&
-        address->u.cgi->uri == NULL) {
+        address->u.cgi->uri == nullptr) {
         struct resource_address *copy = resource_address_dup(request->pool,
                                                              address);
         struct cgi_address *cgi = resource_address_get_cgi(copy);
@@ -161,13 +160,13 @@ proxy_handler(request &request2)
                                  "?", (size_t)1,
                                  request2.uri.query.data,
                                  request2.uri.query.length,
-                                 NULL);
+                                 nullptr);
 
         address = copy;
     }
 
 #ifdef SPLICE
-    if (forward.body != NULL)
+    if (forward.body != nullptr)
         forward.body = istream_pipe_new(request->pool, forward.body,
                                         global_pipe_stock);
 #endif

@@ -47,32 +47,32 @@
 static unsigned translation_protocol_version;
 
 static const char *
-bounce_uri(struct pool *pool, const struct request *request,
+bounce_uri(struct pool &pool, const struct request &request,
            const TranslateResponse &response)
 {
     const char *scheme = response.scheme != nullptr
         ? response.scheme : "http";
     const char *host = response.host != nullptr
         ? response.host
-        : strmap_get(request->request->headers, "host");
+        : strmap_get(request.request->headers, "host");
     if (host == nullptr)
         host = "localhost";
 
     const char *uri_path = response.uri != nullptr
-        ? p_strncat(pool, response.uri, strlen(response.uri),
-                    ";", strref_is_empty(&request->uri.args) ? (size_t)0 : 1,
-                    request->uri.args.data, request->uri.args.length,
-                    "?", strref_is_empty(&request->uri.query) ? (size_t)0 : 1,
-                    request->uri.query.data, request->uri.query.length,
+        ? p_strncat(&pool, response.uri, strlen(response.uri),
+                    ";", strref_is_empty(&request.uri.args) ? (size_t)0 : 1,
+                    request.uri.args.data, request.uri.args.length,
+                    "?", strref_is_empty(&request.uri.query) ? (size_t)0 : 1,
+                    request.uri.query.data, request.uri.query.length,
                     nullptr)
-        : request->request->uri;
+        : request.request->uri;
 
-    const char *current_uri = p_strcat(pool, scheme, "://", host, uri_path,
+    const char *current_uri = p_strcat(&pool, scheme, "://", host, uri_path,
                                        nullptr);
-    const char *escaped_uri = uri_escape_dup(pool, current_uri,
+    const char *escaped_uri = uri_escape_dup(&pool, current_uri,
                                              strlen(current_uri));
 
-    return p_strcat(pool, response.bounce, escaped_uri, nullptr);
+    return p_strcat(&pool, response.bounce, escaped_uri, nullptr);
 }
 
 /**
@@ -158,7 +158,7 @@ handle_translated_request2(request &request,
         if (address.u.file->delegate != nullptr)
             delegate_handler(request);
         else
-            file_callback(&request);
+            file_callback(request);
 #ifdef HAVE_LIBNFS
     } else if (address.type == RESOURCE_ADDRESS_NFS) {
         nfs_handler(&request);
@@ -209,7 +209,7 @@ request::CheckHandleBounce(const TranslateResponse &response)
         return false;
 
     response_dispatch_redirect(this, HTTP_STATUS_SEE_OTHER,
-                               bounce_uri(request->pool, this,
+                               bounce_uri(*request->pool, *this,
                                           response),
                                nullptr);
     return true;
@@ -403,9 +403,9 @@ fill_translate_request_user_agent(TranslateRequest &t,
 
 static void
 fill_translate_request_ua_class(TranslateRequest &t,
-                                const strmap *headers)
+                                const strmap &headers)
 {
-    const char *user_agent = strmap_get(headers, "user-agent");
+    const char *user_agent = strmap_get(&headers, "user-agent");
 
     t.ua_class = user_agent != nullptr
         ? ua_classification_lookup(user_agent)
@@ -414,17 +414,17 @@ fill_translate_request_ua_class(TranslateRequest &t,
 
 static void
 fill_translate_request_language(TranslateRequest &t,
-                                const strmap *headers)
+                                const strmap &headers)
 {
-    t.accept_language = strmap_get(headers, "accept-language");
+    t.accept_language = strmap_get(&headers, "accept-language");
 }
 
 static void
 fill_translate_request_args(TranslateRequest &t,
-                            struct pool *pool, strmap *args)
+                            struct pool &pool, strmap *args)
 {
     t.args = args != nullptr
-        ? args_format(pool, args,
+        ? args_format(&pool, args,
                       nullptr, nullptr, nullptr, nullptr,
                       "translate")
         : nullptr;
@@ -434,12 +434,12 @@ fill_translate_request_args(TranslateRequest &t,
 
 static void
 fill_translate_request_query_string(TranslateRequest &t,
-                                    struct pool *pool,
+                                    struct pool &pool,
                                     const parsed_uri &uri)
 {
     t.query_string = strref_is_empty(&uri.query)
         ? nullptr
-        : strref_dup(pool, &uri.query);
+        : strref_dup(&pool, &uri.query);
 }
 
 static void
@@ -479,20 +479,20 @@ repeat_translation(struct request &request, const TranslateResponse &response)
 
         if (response.Wants(TRANSLATE_UA_CLASS))
             fill_translate_request_ua_class(request.translate.request,
-                                            request.request->headers);
+                                            *request.request->headers);
 
         if (response.Wants(TRANSLATE_LANGUAGE))
             fill_translate_request_language(request.translate.request,
-                                            request.request->headers);
+                                            *request.request->headers);
 
         if (response.Wants(TRANSLATE_ARGS) &&
             request.translate.request.args == nullptr)
             fill_translate_request_args(request.translate.request,
-                                        request.request->pool, request.args);
+                                        *request.request->pool, request.args);
 
         if (response.Wants(TRANSLATE_QUERY_STRING))
             fill_translate_request_query_string(request.translate.request,
-                                                request.request->pool,
+                                                *request.request->pool,
                                                 request.uri);
     }
 
@@ -671,35 +671,35 @@ request_uri_parse(request &request2, parsed_uri &dest)
 }
 
 static void
-fill_translate_request(TranslateRequest *t,
-                       const struct http_server_request *request,
-                       const struct parsed_uri *uri,
+fill_translate_request(TranslateRequest &t,
+                       const struct http_server_request &request,
+                       const struct parsed_uri &uri,
                        struct strmap *args)
 {
     /* these two were set by request_args_parse() */
-    const auto session = t->session;
-    const auto param = t->param;
+    const auto session = t.session;
+    const auto param = t.param;
 
-    t->Clear();
+    t.Clear();
 
     /* restore */
-    t->session = session;
-    t->param = param;
+    t.session = session;
+    t.param = param;
 
-    t->host = strmap_get(request->headers, "host");
-    t->authorization = strmap_get(request->headers, "authorization");
-    t->uri = strref_dup(request->pool, &uri->base);
+    t.host = strmap_get(request.headers, "host");
+    t.authorization = strmap_get(request.headers, "authorization");
+    t.uri = strref_dup(request.pool, &uri.base);
 
     if (translation_protocol_version < 1) {
         /* old translation server: send all packets that have become
            optional */
-        fill_translate_request_local_address(*t, *request);
-        fill_translate_request_remote_host(*t, *request);
-        fill_translate_request_user_agent(*t, request->headers);
-        fill_translate_request_ua_class(*t, request->headers);
-        fill_translate_request_language(*t, request->headers);
-        fill_translate_request_args(*t, request->pool, args);
-        fill_translate_request_query_string(*t, request->pool, *uri);
+        fill_translate_request_local_address(t, request);
+        fill_translate_request_remote_host(t, request);
+        fill_translate_request_user_agent(t, request.headers);
+        fill_translate_request_ua_class(t, *request.headers);
+        fill_translate_request_language(t, *request.headers);
+        fill_translate_request_args(t, *request.pool, args);
+        fill_translate_request_query_string(t, *request.pool, uri);
     }
 }
 
@@ -713,8 +713,8 @@ ask_translation_server(struct request *request2)
     request2->translate.enotdir_uri = nullptr;
     request2->translate.enotdir_path_info = nullptr;
 
-    fill_translate_request(&request2->translate.request, request2->request,
-                           &request2->uri, request2->args);
+    fill_translate_request(request2->translate.request, *request2->request,
+                           request2->uri, request2->args);
     request2->SubmitTranslateRequest();
 }
 
@@ -799,7 +799,7 @@ serve_document_root_file(request &request2,
     request2.processor_focus = process &&
         strmap_get_checked(request2.args, "focus") != nullptr;
 
-    file_callback(&request2);
+    file_callback(request2);
 }
 
 /*

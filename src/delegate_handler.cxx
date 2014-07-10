@@ -30,7 +30,7 @@ static void
 delegate_handler_callback(int fd, void *ctx)
 {
     request &request2 = *(request *)ctx;
-    struct http_server_request *request = request2.request;
+    struct http_server_request &request = *request2.request;
     int ret;
     struct stat st;
     struct file_request file_request = {
@@ -71,8 +71,8 @@ delegate_handler_callback(int fd, void *ctx)
 
     const struct file_address &address = *request2.translate.address->u.file;
 
-    file_dispatch(&request2, &st, &file_request,
-                  istream_file_fd_new(request->pool,
+    file_dispatch(request2, st, file_request,
+                  istream_file_fd_new(request.pool,
                                       address.path,
                                       fd, ISTREAM_FILE, file_request.size));
 }
@@ -99,7 +99,7 @@ static const struct delegate_handler delegate_handler_handler = {
 void
 delegate_handler(request &request2)
 {
-    struct http_server_request *request = request2.request;
+    struct http_server_request &request = *request2.request;
     const struct file_address &address = *request2.translate.address->u.file;
 
     assert(address.path != NULL);
@@ -107,8 +107,8 @@ delegate_handler(request &request2)
 
     /* check request */
 
-    if (request->method != HTTP_METHOD_HEAD &&
-        request->method != HTTP_METHOD_GET &&
+    if (request.method != HTTP_METHOD_HEAD &&
+        request.method != HTTP_METHOD_GET &&
         !request2.processor_focus) {
         method_not_allowed(&request2, "GET, HEAD");
         return;
@@ -116,7 +116,7 @@ delegate_handler(request &request2)
 
     /* run the delegate helper */
 
-    delegate_stock_open(global_delegate_stock, request->pool,
+    delegate_stock_open(global_delegate_stock, request.pool,
                         address.delegate,
                         &address.child_options,
                         address.path,
