@@ -441,7 +441,7 @@ forward_response_headers(struct pool *pool, struct strmap *src,
             header_copy_list(src, dest, cookie_response_headers);
         else if (settings->modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_BOTH) {
             if (session_cookie == nullptr)
-                header_copy_list(dest, src, cookie_response_headers);
+                header_copy_list(src, dest, cookie_response_headers);
             else
                 header_copy_set_cookie_except(dest, src, session_cookie);
         }
