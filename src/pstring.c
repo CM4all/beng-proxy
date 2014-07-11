@@ -39,7 +39,6 @@ p_strndup_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL
 char * gcc_malloc
 p_sprintf(struct pool *pool, const char *fmt, ...)
 {
-#if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || defined(__ICC)
     size_t length;
     int gcc_unused length2;
     va_list ap;
@@ -58,10 +57,6 @@ p_sprintf(struct pool *pool, const char *fmt, ...)
     assert((size_t)length2 + 1 == length);
 
     return p;
-#else
-#error C99 required for snprintf(NULL, 0, ...)
-    return NULL;
-#endif
 }
 
 char * gcc_malloc
