@@ -48,11 +48,6 @@ else
 AM_CPPFLAGS += -DNO_DEFLATE
 endif
 
-#ifeq ($(ICC),1)
-#CC = icc
-#AM_CFLAGS = -std=gnu99 -x c -Wall -Werror -wd981
-#endif
-
 
 #
 # Source files
