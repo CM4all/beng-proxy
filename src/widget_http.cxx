@@ -469,19 +469,12 @@ static void
 widget_collect_cookies(struct cookie_jar *jar, const struct strmap *headers,
                        const char *host_and_port)
 {
-    const struct strmap_pair *cookies =
-        strmap_lookup_first(headers, "set-cookie2");
-    if (cookies == nullptr) {
-        cookies = strmap_lookup_first(headers, "set-cookie");
-        if (cookies == nullptr)
-            return;
-    }
+    auto r = headers->EqualRange("set-cookie2");
+    if (r.first == r.second)
+        r = headers->EqualRange("set-cookie");
 
-    do {
-        cookie_jar_set_cookie2(jar, cookies->value, host_and_port, nullptr);
-
-        cookies = strmap_lookup_next(headers, cookies);
-    } while (cookies != nullptr);
+    for (auto i = r.first; i != r.second; ++i)
+        cookie_jar_set_cookie2(jar, i->value, host_and_port, nullptr);
 }
 
 static bool

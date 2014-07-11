@@ -17,9 +17,9 @@ header_copy_one(const struct strmap *in, struct strmap *out, const char *key)
     assert(out != nullptr);
     assert(key != nullptr);
 
-    for (const struct strmap_pair *pair = strmap_lookup_first(in, key);
-         pair != nullptr; pair = strmap_lookup_next(in, pair))
-        out->Add(key, pair->value);
+    const auto r = in->EqualRange(key);
+    for (auto i = r.first; i != r.second; ++i)
+        out->Add(key, i->value);
 }
 
 void

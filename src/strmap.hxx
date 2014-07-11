@@ -83,10 +83,7 @@ struct strmap {
     const char *Get(const char *key) const;
 
     gcc_pure
-    const struct strmap_pair *LookupFirst(const char *key) const;
-
-    gcc_pure
-    const struct strmap_pair *LookupNext(const struct strmap_pair *pair) const;
+    std::pair<const_iterator, const_iterator> EqualRange(const char *key) const;
 };
 
 struct strmap *gcc_malloc
@@ -99,24 +96,6 @@ static inline const char *
 strmap_get(const struct strmap *map, const char *key)
 {
     return map->Get(key);
-}
-
-/**
- * @see hashmap_lookup_first()
- */
-static inline const struct strmap_pair *
-strmap_lookup_first(const struct strmap *map, const char *key)
-{
-    return map->LookupFirst(key);
-}
-
-/**
- * @see hashmap_lookup_next()
- */
-static inline const struct strmap_pair *
-strmap_lookup_next(const struct strmap *map, const struct strmap_pair *pair)
-{
-    return map->LookupNext(pair);
 }
 
 /**

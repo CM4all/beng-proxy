@@ -73,24 +73,10 @@ strmap::Get(const char *key) const
     return i->value;
 }
 
-const struct strmap_pair *
-strmap::LookupFirst(const char *key) const
+std::pair<strmap::const_iterator, strmap::const_iterator>
+strmap::EqualRange(const char *key) const
 {
-    auto i = map.find(key, Item::Compare());
-    if (i == map.end())
-        return nullptr;
-
-    return &*i;
-}
-
-const struct strmap_pair *
-strmap::LookupNext(const struct strmap_pair *pair) const
-{
-    const Item &item = *(const Item *)pair;
-    const auto i = std::next(map.iterator_to(item));
-    return i != map.end() && strcmp(i->key, pair->key) == 0
-        ? &*i
-        : nullptr;
+    return map.equal_range(key, Item::Compare());
 }
 
 struct strmap *

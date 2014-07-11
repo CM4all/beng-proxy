@@ -29,11 +29,10 @@ proxy_collect_cookies(request &request2, const struct strmap *headers)
     if (headers == nullptr)
         return;
 
-    const struct strmap_pair *cookies =
-        strmap_lookup_first(headers, "set-cookie2");
-    if (cookies == nullptr) {
-        cookies = strmap_lookup_first(headers, "set-cookie");
-        if (cookies == nullptr)
+    auto r = headers->EqualRange("set-cookie2");
+    if (r.first == r.second) {
+        r = headers->EqualRange("set-cookie");
+        if (r.first == r.second)
             return;
     }
 
@@ -51,12 +50,9 @@ proxy_collect_cookies(request &request2, const struct strmap *headers)
     if (session == nullptr)
         return;
 
-    do {
-        cookie_jar_set_cookie2(session->cookies, cookies->value,
+    for (auto i = r.first; i != r.second; ++i)
+        cookie_jar_set_cookie2(session->cookies, i->value,
                                host_and_port, path);
-
-        cookies = strmap_lookup_next(headers, cookies);
-    } while (cookies != nullptr);
 
     session_put(session);
 }
