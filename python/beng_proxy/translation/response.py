@@ -228,8 +228,14 @@ class Response:
         return self.header_forward(TRANSLATE_RESPONSE_HEADER_FORWARD,
                                    *args)
 
-    def header(self, name, value):
+    def response_header(self, name, value):
+        assert isinstance(name, str)
+        assert isinstance(value, str)
         return self.packet(TRANSLATE_HEADER, name + ':' + value)
+
+    def header(self, name, value):
+        """Deprecated.  Use response_header() instead."""
+        return self.response_header(name, value)
 
     def validate_mtime(self, mtime, path):
         return self.packet(TRANSLATE_VALIDATE_MTIME,
