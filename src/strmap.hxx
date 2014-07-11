@@ -14,10 +14,7 @@
 struct pool;
 
 struct strmap {
-    struct Item {
-        typedef boost::intrusive::set_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> Hook;
-        Hook hook;
-
+    struct Item : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         const char *key, *value;
 
         Item(const char *_key, const char *_value)
@@ -48,7 +45,6 @@ struct strmap {
     struct pool &pool;
 
     typedef boost::intrusive::multiset<Item,
-                                       boost::intrusive::member_hook<Item, Item::Hook, &Item::hook>,
                                        boost::intrusive::compare<Item::Compare>,
                                        boost::intrusive::constant_time_size<false>> Map;
 
