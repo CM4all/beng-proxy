@@ -233,6 +233,11 @@ class Response:
         assert isinstance(value, str)
         return self.packet(TRANSLATE_HEADER, name + ':' + value)
 
+    def request_header(self, name, value):
+        assert isinstance(name, str)
+        assert isinstance(value, str)
+        return self.packet(TRANSLATE_REQUEST_HEADER, name + ':' + value)
+
     def header(self, name, value):
         """Deprecated.  Use response_header() instead."""
         return self.response_header(name, value)
