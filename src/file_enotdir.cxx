@@ -12,7 +12,7 @@
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
 #include "http_server.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

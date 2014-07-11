@@ -1,4 +1,4 @@
-#include "pool.h"
+#include "pool.hxx"
 
 #include <cppunit/TestFixture.h>
 

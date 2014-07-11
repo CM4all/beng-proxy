@@ -10,7 +10,7 @@
 #include "translate_client.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 struct SuffixRegistryLookup {
     struct pool *const pool;

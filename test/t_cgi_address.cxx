@@ -1,6 +1,6 @@
 #include "PoolTest.hxx"
 #include "cgi_address.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>

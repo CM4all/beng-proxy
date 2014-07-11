@@ -10,7 +10,7 @@
 #include "widget.h"
 #include "widget_class.hxx"
 #include "transformation.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "tpool.h"
 
 #include <string.h>

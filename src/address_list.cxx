@@ -6,7 +6,7 @@
 
 #include "address_list.hxx"
 #include "address_envelope.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <socket/address.h>
 

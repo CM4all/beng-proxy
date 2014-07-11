@@ -13,7 +13,7 @@
 #include "stock.hxx"
 #include "abort-close.h"
 #include "address_list.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "istream.h"
 #include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"

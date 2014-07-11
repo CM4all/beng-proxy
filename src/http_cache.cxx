@@ -21,6 +21,7 @@
 #include "sink_rubber.hxx"
 #include "istream_rubber.hxx"
 #include "istream_tee.h"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>

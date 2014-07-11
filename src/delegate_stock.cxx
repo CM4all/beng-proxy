@@ -14,6 +14,7 @@
 #include "child_options.hxx"
 #include "gerrno.h"
 #include "sigutil.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

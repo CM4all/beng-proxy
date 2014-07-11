@@ -5,7 +5,7 @@
  */
 
 #include "nfs_client.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "async.h"
 #include "hashmap.hxx"
 #include "gerrno.h"

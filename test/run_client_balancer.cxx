@@ -1,7 +1,7 @@
 #include "client_balancer.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "async.h"
 #include "balancer.hxx"
 #include "failure.hxx"

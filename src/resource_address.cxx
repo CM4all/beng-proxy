@@ -17,7 +17,7 @@
 #include "uri-verify.h"
 #include "uri_base.hxx"
 #include "strref.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "http_quark.h"
 
 #include <http/status.h>

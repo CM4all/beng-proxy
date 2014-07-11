@@ -13,6 +13,7 @@
 #include "address_edit.h"
 #include "failure.hxx"
 #include "tpool.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>

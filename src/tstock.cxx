@@ -9,7 +9,7 @@
 #include "stock.hxx"
 #include "tcp_stock.hxx"
 #include "lease.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <daemon/log.h>

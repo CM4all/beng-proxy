@@ -7,7 +7,7 @@
 #include "config.hxx"
 #include "address_resolver.hxx"
 #include "stopwatch.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "ua_classification.h"
 
 #include <daemon/daemonize.h>

@@ -14,6 +14,7 @@
 #include "child_options.hxx"
 #include "pevent.h"
 #include "gerrno.h"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

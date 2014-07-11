@@ -17,6 +17,7 @@
 #include "background.hxx"
 #include "istream_gb.hxx"
 #include "istream.h"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>

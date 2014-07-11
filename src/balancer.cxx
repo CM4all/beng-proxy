@@ -10,6 +10,7 @@
 #include "address_envelope.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <stdbool.h>

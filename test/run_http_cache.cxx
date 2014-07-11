@@ -1,4 +1,4 @@
-#include "pool.h"
+#include "pool.hxx"
 #include "tpool.h"
 #include "cache.hxx"
 #include "http_cache_heap.hxx"

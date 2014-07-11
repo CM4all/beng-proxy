@@ -11,7 +11,7 @@
 #include "tcp_balancer.hxx"
 #include "address_list.hxx"
 #include "lease.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "istream.h"
 #include "net/SocketAddress.hxx"
 

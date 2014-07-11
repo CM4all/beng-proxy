@@ -18,6 +18,7 @@
 #include "abort-close.h"
 #include "istream.h"
 #include "net/SocketAddress.hxx"
+#include "pool.hxx"
 
 #include <inline/compiler.h>
 

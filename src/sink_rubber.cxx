@@ -8,6 +8,7 @@
 #include "istream-internal.h"
 #include "async.h"
 #include "rubber.hxx"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <string.h>

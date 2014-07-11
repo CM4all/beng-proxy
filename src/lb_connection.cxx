@@ -14,7 +14,7 @@
 #include "http_server.hxx"
 #include "drop.hxx"
 #include "ssl_filter.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
 #include "net/SocketAddress.hxx"

@@ -6,7 +6,7 @@
 
 #include "widget_view.hxx"
 #include "transformation.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <string.h>
 

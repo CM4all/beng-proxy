@@ -26,6 +26,7 @@
 #include "stopwatch.h"
 #include "beng-proxy/translation.h"
 #include "gerrno.h"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>

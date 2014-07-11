@@ -7,7 +7,7 @@
 #include "tcp_stock.hxx"
 #include "async.h"
 #include "fb_pool.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"
 #include "file_address.hxx"

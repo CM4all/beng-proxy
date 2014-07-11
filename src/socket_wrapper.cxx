@@ -9,7 +9,7 @@
 #include "buffered_io.h"
 #include "fd-util.h"
 #include "fd_util.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "pevent.h"
 
 #include <socket/util.h>

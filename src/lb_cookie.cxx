@@ -8,6 +8,7 @@
 #include "strmap.hxx"
 #include "tpool.h"
 #include "cookie_server.hxx"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <string.h>

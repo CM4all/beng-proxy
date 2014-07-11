@@ -10,7 +10,7 @@
 #include "uri-relative.h"
 #include "uri-verify.h"
 #include "uri-extract.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "strref.h"
 #include "regex.hxx"
 

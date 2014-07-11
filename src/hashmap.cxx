@@ -5,7 +5,7 @@
  */
 
 #include "hashmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "util/djbhash.h"
 #include "util/Cast.hxx"
 

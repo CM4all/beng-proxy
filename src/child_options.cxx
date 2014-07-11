@@ -3,7 +3,7 @@
  */
 
 #include "child_options.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "util/djbhash.h"
 
 #include <assert.h>

@@ -1,6 +1,6 @@
 #include "stock.hxx"
 #include "async.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <glib.h>
 

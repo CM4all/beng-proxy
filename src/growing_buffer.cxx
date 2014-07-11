@@ -5,7 +5,7 @@
  */
 
 #include "growing_buffer.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <assert.h>

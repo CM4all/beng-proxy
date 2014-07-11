@@ -11,7 +11,7 @@
 #include "balancer.hxx"
 #include "failure.hxx"
 #include "async.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "net/StaticSocketAddress.hxx"
 
 #include <glib.h>

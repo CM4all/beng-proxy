@@ -5,7 +5,7 @@
  */
 
 #include "ping.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "pevent.h"
 #include "async.h"
 #include "net/SocketAddress.hxx"

@@ -2,7 +2,7 @@
 #include "async.h"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "istream-impl.h"
 #include "istream.h"
 

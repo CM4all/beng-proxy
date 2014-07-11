@@ -7,7 +7,7 @@
 #include "lb_expect_monitor.hxx"
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "async.h"
 #include "gerrno.h"
 #include "net/ConnectSocket.hxx"

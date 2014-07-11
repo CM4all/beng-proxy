@@ -7,7 +7,7 @@
 #include "http_util.hxx"
 #include "strutil.h"
 #include "strref.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <string.h>
 

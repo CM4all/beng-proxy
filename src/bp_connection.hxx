@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_CONNECTION_HXX
 #define BENG_PROXY_CONNECTION_HXX
 
-#include "pool.h"
+#include "pool.hxx"
 
 #include <inline/list.h>
 

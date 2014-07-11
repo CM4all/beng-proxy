@@ -23,6 +23,7 @@
 #include "istream.h"
 #include "istream_replace.hxx"
 #include "istream_tee.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

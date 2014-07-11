@@ -19,7 +19,7 @@
 #include "http_server.hxx"
 #include "http_quark.h"
 #include "gerrno.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #ifdef HAVE_LIBNFS
 #include "nfs_client.hxx"

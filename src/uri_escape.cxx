@@ -7,7 +7,7 @@
 #include "uri_escape.hxx"
 #include "strutil.h"
 #include "format.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <string.h>
 

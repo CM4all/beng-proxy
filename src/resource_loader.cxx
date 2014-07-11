@@ -28,6 +28,7 @@
 #include "istream.h"
 #include "ssl_client.h"
 #include "gerrno.h"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #ifdef HAVE_LIBNFS

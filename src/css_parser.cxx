@@ -6,7 +6,7 @@
 
 #include "css_parser.hxx"
 #include "css_syntax.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "istream.h"
 #include "strutil.h"
 

@@ -9,7 +9,7 @@
 #include "hstock.hxx"
 #include "stock.hxx"
 #include "hashmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "lease.h"
 
 #include <daemon/log.h>

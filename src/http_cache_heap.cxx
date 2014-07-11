@@ -12,6 +12,7 @@
 #include "rubber.hxx"
 #include "istream_rubber.hxx"
 #include "slice.hxx"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <time.h>

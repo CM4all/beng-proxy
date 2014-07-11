@@ -1,5 +1,5 @@
 #include "http_address.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <string.h>

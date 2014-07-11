@@ -7,7 +7,7 @@
 #include "lb_ping_monitor.hxx"
 #include "lb_monitor.hxx"
 #include "ping.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 
 static void

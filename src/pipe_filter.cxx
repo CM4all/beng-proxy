@@ -10,7 +10,7 @@
 #include "format.h"
 #include "stopwatch.h"
 #include "strmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "istream.h"
 #include "sigutil.h"
 #include "child_options.hxx"

@@ -5,7 +5,7 @@
  */
 
 #include "strmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <string.h>
 

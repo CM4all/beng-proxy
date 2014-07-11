@@ -9,7 +9,7 @@
 #include "SocketAddress.hxx"
 #include "StaticSocketAddress.hxx"
 #include "fd_util.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "util/Error.hxx"
 
 #include <socket/util.h>

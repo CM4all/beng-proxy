@@ -11,7 +11,7 @@
 #include "child_manager.h"
 #include "gerrno.h"
 #include "sigutil.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <glib.h>
 

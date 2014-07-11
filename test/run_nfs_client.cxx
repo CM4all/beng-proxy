@@ -2,7 +2,7 @@
 #include "istream_nfs.hxx"
 #include "shutdown_listener.h"
 #include "async.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "http_response.hxx"
 #include "istream.h"
 #include "sink_fd.h"

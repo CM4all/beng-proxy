@@ -4,7 +4,7 @@
 #include "hstock.hxx"
 #include "async.h"
 #include "defer.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <event.h>
 #include <assert.h>

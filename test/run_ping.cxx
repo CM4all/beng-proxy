@@ -1,5 +1,5 @@
 #include "ping.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "async.h"
 #include "address_string.hxx"
 #include "address_envelope.hxx"

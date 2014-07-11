@@ -10,6 +10,7 @@
 #include "fifo-buffer.h"
 #include "fb_pool.h"
 #include "thread_queue.hxx"
+#include "pool.hxx"
 
 #include "gerrno.h"
 

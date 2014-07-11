@@ -1,7 +1,7 @@
 #include "http_server.hxx"
 #include "sink-impl.h"
 #include "direct.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "istream.h"
 #include "istream-catch.h"
 #include "fb_pool.h"

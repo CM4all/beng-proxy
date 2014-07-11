@@ -14,6 +14,7 @@
 #include "istream.h"
 #include "istream_file.h"
 #include "gerrno.h"
+#include "pool.hxx"
 
 #include <sys/types.h>
 #include <sys/stat.h>

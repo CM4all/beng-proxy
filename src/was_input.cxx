@@ -12,6 +12,7 @@
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "fd-util.h"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>

@@ -10,7 +10,7 @@
 #include "lb_syn_monitor.hxx"
 #include "lb_expect_monitor.hxx"
 #include "lb_config.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "tpool.h"
 #include "hashmap.hxx"
 #include "address_envelope.hxx"

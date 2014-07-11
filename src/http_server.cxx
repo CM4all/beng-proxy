@@ -9,6 +9,7 @@
 #include "strmap.hxx"
 #include "address.h"
 #include "gerrno.h"
+#include "pool.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>

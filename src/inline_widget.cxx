@@ -24,6 +24,7 @@
 #include "istream.h"
 #include "istream_pause.h"
 #include "session.hxx"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

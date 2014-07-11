@@ -6,7 +6,7 @@
 
 #include "cache.hxx"
 #include "hashmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "cleanup_timer.h"
 #include "clock.h"
 

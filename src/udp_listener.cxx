@@ -5,7 +5,7 @@
  */
 
 #include "udp_listener.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "fd_util.h"
 #include "address_string.hxx"
 #include "address_envelope.hxx"

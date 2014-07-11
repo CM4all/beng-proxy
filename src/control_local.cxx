@@ -6,7 +6,7 @@
 
 #include "control_local.hxx"
 #include "control_server.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <sys/socket.h>

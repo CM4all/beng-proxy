@@ -16,6 +16,7 @@
 #include "child_manager.h"
 #include "pevent.h"
 #include "gerrno.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

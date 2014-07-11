@@ -14,7 +14,7 @@
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "transformation.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

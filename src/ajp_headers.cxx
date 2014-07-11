@@ -11,7 +11,7 @@
 #include "growing_buffer.hxx"
 #include "strmap.hxx"
 #include "strutil.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <assert.h>

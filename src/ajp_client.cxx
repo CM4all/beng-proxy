@@ -25,6 +25,7 @@
 #include "strmap.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 #include <socket/util.h>

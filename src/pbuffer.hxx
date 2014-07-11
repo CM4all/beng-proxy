@@ -7,7 +7,7 @@
 #ifndef PBUFFER_HXX
 #define PBUFFER_HXX
 
-#include "pool.h"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 template<typename T>

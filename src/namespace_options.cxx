@@ -4,7 +4,7 @@
 
 #include "namespace_options.hxx"
 #include "mount_list.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "pivot_root.h"
 #include "bind_mount.h"
 

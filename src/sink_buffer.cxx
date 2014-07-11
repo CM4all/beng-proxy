@@ -1,6 +1,7 @@
 #include "sink_buffer.hxx"
 #include "istream-internal.h"
 #include "async.h"
+#include "pool.hxx"
 
 #include <glib.h>
 

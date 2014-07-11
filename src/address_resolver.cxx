@@ -5,7 +5,7 @@
 #include "address_resolver.hxx"
 #include "address_list.hxx"
 #include "address_quark.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <socket/resolver.h>
 

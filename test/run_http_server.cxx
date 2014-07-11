@@ -3,7 +3,7 @@
 #include "direct.h"
 #include "sink-impl.h"
 #include "istream.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "async.h"
 #include "shutdown_listener.h"
 #include "fb_pool.h"

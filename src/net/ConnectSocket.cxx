@@ -12,6 +12,7 @@
 #include "pevent.h"
 #include "gerrno.h"
 #include "util/Cast.hxx"
+#include "pool.hxx"
 
 #include <socket/util.h>
 

@@ -8,7 +8,7 @@
 #include "http_string.hxx"
 #include "strref.h"
 #include "strref2.h"
-#include "pool.h"
+#include "pool.hxx"
 
 gcc_always_inline
 static constexpr bool

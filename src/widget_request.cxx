@@ -13,7 +13,7 @@
 #include "uri-parser.h"
 #include "uri-relative.h"
 #include "strref-dpool.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <string.h>
 #include <assert.h>

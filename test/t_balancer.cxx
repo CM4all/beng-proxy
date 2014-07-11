@@ -1,7 +1,7 @@
 #include "PoolTest.hxx"
 #include "failure.hxx"
 #include "balancer.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "address_list.hxx"
 #include "address_envelope.hxx"
 

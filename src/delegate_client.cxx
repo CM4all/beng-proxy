@@ -12,6 +12,7 @@
 #include "fd_util.h"
 #include "pevent.h"
 #include "gerrno.h"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #ifdef __linux

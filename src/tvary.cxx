@@ -7,7 +7,7 @@
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "header_writer.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <beng-proxy/translation.h>
 

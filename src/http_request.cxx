@@ -20,6 +20,7 @@
 #include "address_envelope.hxx"
 #include "istream.h"
 #include "filtered_socket.hxx"
+#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <inline/compiler.h>

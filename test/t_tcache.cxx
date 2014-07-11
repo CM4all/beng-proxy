@@ -10,7 +10,7 @@
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "tpool.h"
 
 #include <event.h>

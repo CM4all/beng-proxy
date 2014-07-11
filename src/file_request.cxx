@@ -11,7 +11,7 @@
 #include "strmap.hxx"
 #include "istream.h"
 #include "istream_file.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <http/status.h>
 

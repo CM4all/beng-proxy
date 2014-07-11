@@ -9,6 +9,7 @@
 #include "sink_buffer.hxx"
 #include "istream.h"
 #include "direct.h"
+#include "pool.hxx"
 #include "fb_pool.h"
 #include "util/ConstBuffer.hxx"
 

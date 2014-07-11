@@ -10,7 +10,7 @@
 #include "istream_nfs.hxx"
 #include "istream.h"
 #include "strmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "istream_rubber.hxx"

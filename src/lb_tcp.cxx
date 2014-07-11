@@ -11,6 +11,7 @@
 #include "address_sticky.h"
 #include "async.h"
 #include "direct.h"
+#include "pool.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 

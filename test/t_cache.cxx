@@ -1,5 +1,5 @@
 #include "cache.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <time.h>

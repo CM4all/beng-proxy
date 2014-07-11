@@ -15,6 +15,7 @@
 #include "resource_address.hxx"
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <stdlib.h>

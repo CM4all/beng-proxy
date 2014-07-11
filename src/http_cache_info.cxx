@@ -5,7 +5,7 @@
  */
 
 #include "http_cache_internal.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 http_cache_info::http_cache_info(struct pool &pool,
                                  const http_cache_info &src)

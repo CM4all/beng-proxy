@@ -5,7 +5,7 @@
  */
 
 #include "translate_response.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "pbuffer.hxx"
 #include "strmap.hxx"
 #include "widget_view.hxx"

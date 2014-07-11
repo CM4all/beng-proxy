@@ -19,6 +19,7 @@
 #include "buffered_io.h"
 #include "fd-util.h"
 #include "strmap.hxx"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 

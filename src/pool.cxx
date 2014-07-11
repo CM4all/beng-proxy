@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "pool.h"
+#include "pool.hxx"
 #include "slice.hxx"
 
 #include <inline/poison.h>

@@ -37,6 +37,7 @@
 #include "istream_replace.hxx"
 #include "istream-catch.h"
 #include "istream_tee.h"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>

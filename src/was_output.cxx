@@ -10,6 +10,7 @@
 #include "direct.h"
 #include "fd-util.h"
 #include "istream.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>

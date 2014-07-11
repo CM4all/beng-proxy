@@ -6,7 +6,7 @@
 
 #include "http_string.hxx"
 #include "strref2.h"
-#include "pool.h"
+#include "pool.hxx"
 
 void
 http_next_token(struct strref *input, struct strref *value)

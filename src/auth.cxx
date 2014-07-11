@@ -9,7 +9,7 @@
 #include "bp_instance.hxx"
 #include "tcache.hxx"
 #include "http_server.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "translate_client.hxx"
 #include "http_quark.h"
 #include "expiry.h"

@@ -12,6 +12,7 @@
 #include "address_envelope.hxx"
 #include "pevent.h"
 #include "gerrno.h"
+#include "pool.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cast.hxx"

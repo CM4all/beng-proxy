@@ -1,5 +1,5 @@
 #include "control_server.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 #include <socket/resolver.h>

@@ -624,7 +624,7 @@ libmemory_a_SOURCES = \
 libpool_a_SOURCES = \
 	src/pbuffer.hxx \
 	src/pstring.c \
-	src/pool.cxx src/pool.h
+	src/pool.cxx src/pool.hxx src/pool.h
 
 libnet_a_SOURCES = \
 	src/net/Error.cxx src/net/Error.hxx \

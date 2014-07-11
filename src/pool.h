@@ -11,11 +11,6 @@
 
 #include <inline/compiler.h>
 
-#ifdef __cplusplus
-#include <utility>
-#include <new>
-#endif
-
 #include <stddef.h>
 #include <stdbool.h>
 
@@ -282,24 +277,6 @@ pool_mark(struct pool *pool, struct pool_mark_state *mark);
 void
 pool_rewind(struct pool *pool, const struct pool_mark_state *mark);
 
-#ifdef __cplusplus
-
-class AutoRewindPool {
-    struct pool *const pool;
-    pool_mark_state mark;
-
-public:
-    AutoRewindPool(struct pool *_pool):pool(_pool) {
-        pool_mark(pool, &mark);
-    }
-
-    ~AutoRewindPool() {
-        pool_rewind(pool, &mark);
-    }
-};
-
-#endif
-
 gcc_malloc
 void *
 p_malloc_impl(struct pool *pool, size_t size TRACE_ARGS_DECL);
@@ -357,53 +334,6 @@ p_strncat(struct pool *pool, const char *s, size_t length, ...);
 
 #ifdef __cplusplus
 }
-
-template<typename T>
-T *
-PoolAlloc(pool *p)
-{
-    return (T *)p_malloc(p, sizeof(T));
-}
-
-template<typename T>
-T *
-PoolAlloc(pool *p, size_t n)
-{
-    return (T *)p_malloc(p, sizeof(T) * n);
-}
-
-template<typename T, typename... Args>
-T *
-NewFromPool(pool *p, Args&&... args)
-{
-    void *t = PoolAlloc<T>(p);
-    return ::new(t) T(std::forward<Args>(args)...);
-}
-
-template<typename T>
-void
-DeleteFromPool(struct pool *pool, T *t)
-{
-    t->~T();
-    p_free(pool, t);
-}
-
-template<typename T>
-void
-DeleteUnrefPool(struct pool &pool, T *t)
-{
-    DeleteFromPool(&pool, t);
-    pool_unref(&pool);
-}
-
-template<typename T>
-void
-DeleteUnrefTrashPool(struct pool &pool, T *t)
-{
-    pool_trash(&pool);
-    DeleteUnrefPool(pool, t);
-}
-
 #endif
 
 #endif

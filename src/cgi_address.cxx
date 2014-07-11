@@ -3,7 +3,7 @@
  */
 
 #include "cgi_address.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "uri_base.hxx"
 #include "uri-relative.h"
 #include "uri_escape.hxx"

@@ -6,7 +6,7 @@
 
 #include "uri_base.hxx"
 #include "uri_escape.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <string.h>

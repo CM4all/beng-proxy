@@ -6,7 +6,7 @@
 
 #include "transformation.hxx"
 #include "processor.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <string.h>
 

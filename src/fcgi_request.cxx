@@ -14,6 +14,7 @@
 #include "child_options.hxx"
 #include "istream.h"
 #include "async.h"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 

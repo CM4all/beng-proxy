@@ -1,5 +1,5 @@
 #include "udp_listener.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

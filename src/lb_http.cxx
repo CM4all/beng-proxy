@@ -30,6 +30,7 @@
 #include "failure.hxx"
 #include "bulldog.h"
 #include "abort-close.h"
+#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <http/status.h>

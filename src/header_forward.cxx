@@ -12,7 +12,7 @@
 #include "cookie_client.hxx"
 #include "cookie_server.hxx"
 #include "growing_buffer.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "product.h"
 #include "strutil.h"
 

@@ -7,7 +7,7 @@
 #include "pipe_stock.hxx"
 #include "stock.hxx"
 #include "fd_util.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "gerrno.h"
 
 #include <daemon/log.h>

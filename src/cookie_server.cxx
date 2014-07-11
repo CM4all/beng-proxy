@@ -9,7 +9,7 @@
 #include "strref2.h"
 #include "strref-pool.h"
 #include "strmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <inline/list.h>
 

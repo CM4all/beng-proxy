@@ -9,7 +9,7 @@
 #include "http_response.hxx"
 #include "static_headers.hxx"
 #include "strmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <sys/stat.h>
 

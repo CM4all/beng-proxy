@@ -9,7 +9,7 @@
 #include "ssl_config.hxx"
 #include "ssl_quark.hxx"
 #include "thread_socket_filter.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "gerrno.h"

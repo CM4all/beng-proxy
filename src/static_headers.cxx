@@ -8,7 +8,7 @@
 #include "strmap.hxx"
 #include "format.h"
 #include "date.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <sys/stat.h>

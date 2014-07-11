@@ -7,6 +7,7 @@
 #include "istream_gb.hxx"
 #include "istream-internal.h"
 #include "growing_buffer.hxx"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <assert.h>

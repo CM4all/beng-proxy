@@ -3,7 +3,7 @@
  */
 
 #include "lhttp_address.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "uri-edit.h"
 #include "uri_base.hxx"
 #include "uri-relative.h"

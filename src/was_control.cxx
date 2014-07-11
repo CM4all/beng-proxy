@@ -10,6 +10,7 @@
 #include "buffered_io.h"
 #include "pevent.h"
 #include "strmap.hxx"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

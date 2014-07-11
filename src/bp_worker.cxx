@@ -6,7 +6,7 @@
 
 #include "worker.h"
 #include "http_server.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
 #include "session_manager.hxx"

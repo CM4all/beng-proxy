@@ -7,7 +7,7 @@
 #include "failure.hxx"
 #include "expiry.h"
 #include "address_envelope.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "util/djbhash.h"
 
 #include <daemon/log.h>

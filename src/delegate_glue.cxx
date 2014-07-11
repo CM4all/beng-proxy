@@ -10,7 +10,7 @@
 #include "delegate_stock.hxx"
 #include "stock.hxx"
 #include "lease.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

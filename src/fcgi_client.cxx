@@ -22,6 +22,7 @@
 #include "fd-util.h"
 #include "strmap.hxx"
 #include "product.h"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 

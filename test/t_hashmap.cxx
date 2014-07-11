@@ -1,5 +1,5 @@
 #include "hashmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <assert.h>
 

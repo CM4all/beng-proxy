@@ -20,6 +20,7 @@
 #include "istream.h"
 #include "session.hxx"
 #include "inline_widget.hxx"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

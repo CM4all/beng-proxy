@@ -14,6 +14,7 @@
 #include "translate_request.hxx"
 #include "tpool.h"
 #include "beng-proxy/translation.h"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

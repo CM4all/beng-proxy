@@ -3,7 +3,7 @@
  */
 
 #include "param_array.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "regex.hxx"
 
 void

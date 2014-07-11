@@ -1,6 +1,6 @@
 #include "cookie_server.hxx"
 #include "strmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <stdio.h>
 #include <unistd.h>

@@ -9,6 +9,7 @@
 #include "growing_buffer.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
+#include "pool.hxx"
 
 #include <inline/poison.h>
 #include <daemon/log.h>

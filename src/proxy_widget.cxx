@@ -21,6 +21,7 @@
 #include "istream-impl.h"
 #include "istream.h"
 #include "tvary.hxx"
+#include "pool.hxx"
 
 #include <daemon/log.h>
 

@@ -25,6 +25,7 @@
 #include "strmap.hxx"
 #include "completion.h"
 #include "filtered_socket.hxx"
+#include "pool.hxx"
 #include "util/Cast.hxx"
 
 #include <inline/compiler.h>

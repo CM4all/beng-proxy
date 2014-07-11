@@ -14,6 +14,7 @@
 #include "net/ConnectSocket.hxx"
 #include "child_options.hxx"
 #include "pevent.h"
+#include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>

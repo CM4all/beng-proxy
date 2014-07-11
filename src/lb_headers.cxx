@@ -6,7 +6,7 @@
 
 #include "lb_headers.hxx"
 #include "strmap.hxx"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <http/header.h>
 

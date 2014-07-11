@@ -11,7 +11,7 @@
 #include "address_list.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
-#include "pool.h"
+#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <glib.h>

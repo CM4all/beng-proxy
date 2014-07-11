@@ -9,6 +9,7 @@
 #include "async.h"
 #include "http_response.hxx"
 #include "istream.h"
+#include "pool.hxx"
 
 #include <glib.h>
 
