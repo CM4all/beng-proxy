@@ -7,9 +7,6 @@
 #include "strmap.hxx"
 #include "pool.h"
 
-#include <boost/intrusive/set.hpp>
-
-#include <assert.h>
 #include <string.h>
 
 inline bool
