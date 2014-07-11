@@ -276,7 +276,7 @@ global_control_handler_init(struct pool *pool, struct instance *instance)
 
     GError *error = NULL;
     instance->control_server =
-        control_server_new_port(pool, instance->config.control_listen, 5478,
+        control_server_new_port(instance->config.control_listen, 5478,
                                 group,
                                 &global_control_handler, instance,
                                 &error);
@@ -348,7 +348,7 @@ void
 local_control_handler_init(struct instance *instance)
 {
     instance->local_control_server =
-        control_local_new(instance->pool, "beng_control:pid=",
+        control_local_new("beng_control:pid=",
                           &local_control_handler, instance);
 }
 

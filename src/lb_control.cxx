@@ -293,7 +293,7 @@ lb_control_new(struct lb_instance *instance,
     control->instance = instance;
 
     control->server =
-        control_server_new(pool, config->bind_address,
+        control_server_new(config->bind_address,
                            &lb_control_handler, control,
                            error_r);
     if (control->server == NULL) {

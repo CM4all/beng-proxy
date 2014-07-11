@@ -6,7 +6,6 @@
 
 #include "control_local.hxx"
 #include "control_server.hxx"
-#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <assert.h>
@@ -16,14 +15,11 @@
 #include <unistd.h>
 
 struct control_local {
-    struct pool *pool;
-
     const char *prefix;
 
     const struct control_handler *handler;
     void *handler_ctx;
 
-    struct pool *server_pool;
     struct control_server *server;
 };
 
@@ -82,16 +78,14 @@ static const struct control_handler control_local_handler = {
  */
 
 struct control_local *
-control_local_new(struct pool *pool, const char *prefix,
+control_local_new(const char *prefix,
                   const struct control_handler *handler, void *ctx)
 {
-    auto cl = NewFromPool<struct control_local>(pool);
-    cl->pool = pool;
+    auto cl = new control_local();
     cl->prefix = prefix;
     cl->handler = handler;
     cl->handler_ctx = ctx;
     cl->server = nullptr;
-    cl->server_pool = nullptr;
 
     return cl;
 }
@@ -103,18 +97,13 @@ control_local_close(struct control_local *cl)
         control_server_free(cl->server);
         cl->server = nullptr;
     }
-
-    if (cl->server_pool != nullptr) {
-        pool_trash(cl->server_pool);
-        pool_unref(cl->server_pool);
-        cl->server_pool = nullptr;
-    }
 }
 
 void
 control_local_free(struct control_local *cl)
 {
     control_local_close(cl);
+    delete cl;
 }
 
 bool
@@ -127,9 +116,7 @@ control_local_open(struct control_local *cl, GError **error_r)
     sa.sun_path[0] = '\0';
     sprintf(sa.sun_path + 1, "%s%d", cl->prefix, (int)getpid());
 
-    cl->server_pool = pool_new_libc(cl->pool, "control_local");
-    cl->server = control_server_new(cl->server_pool,
-                                    SocketAddress((const struct sockaddr *)&sa,
+    cl->server = control_server_new(SocketAddress((const struct sockaddr *)&sa,
                                                   SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
                                     &control_local_handler, cl,
                                     error_r);

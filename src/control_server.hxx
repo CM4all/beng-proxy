@@ -43,13 +43,12 @@ control_server_quark(void)
 }
 
 struct control_server *
-control_server_new(struct pool *pool, SocketAddress address,
+control_server_new(SocketAddress address,
                    const struct control_handler *handler, void *ctx,
                    GError **error_r);
 
 struct control_server *
-control_server_new_port(struct pool *pool,
-                        const char *host_and_port, int default_port,
+control_server_new_port(const char *host_and_port, int default_port,
                         const struct in_addr *group,
                         const struct control_handler *handler, void *ctx,
                         GError **error_r);

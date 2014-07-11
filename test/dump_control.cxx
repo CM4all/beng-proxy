@@ -1,7 +1,7 @@
 #include "control_server.hxx"
-#include "pool.hxx"
 #include "net/SocketAddress.hxx"
 
+#include <inline/compiler.h>
 #include <daemon/log.h>
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -51,15 +51,13 @@ int main(int argc, char **argv) {
 
     struct event_base *event_base = event_init();
 
-    struct pool *pool = pool_new_libc(NULL, "root");
-
     struct in_addr mcast_group_addr;
     if (mcast_group != NULL)
         mcast_group_addr.s_addr = inet_addr(mcast_group);
 
     GError *error = NULL;
     struct control_server *cs =
-        control_server_new_port(pool, listen_host, 1234,
+        control_server_new_port(listen_host, 1234,
                                 mcast_group != NULL ? &mcast_group_addr : NULL,
                                 &dump_control_handler, NULL, &error);
     if (cs == NULL) {
@@ -69,11 +67,6 @@ int main(int argc, char **argv) {
     }
 
     event_dispatch();
-
-    pool_commit();
-    pool_unref(pool);
-    pool_commit();
-    pool_recycler_clear();
 
     event_base_free(event_base);
 

@@ -9,12 +9,11 @@
 
 #include "glibfwd.hxx"
 
-struct pool;
 struct control_local;
 struct control_handler;
 
 struct control_local *
-control_local_new(struct pool *pool, const char *prefix,
+control_local_new(const char *prefix,
                   const struct control_handler *handler, void *ctx);
 
 void
