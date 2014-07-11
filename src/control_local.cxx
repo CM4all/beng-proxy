@@ -7,6 +7,7 @@
 #include "control_local.hxx"
 #include "control_server.hxx"
 #include "pool.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <assert.h>
 #include <sys/socket.h>
@@ -33,7 +34,7 @@ struct control_local {
 
 static bool
 control_local_raw(const void *data, size_t length,
-                  const struct sockaddr *address, size_t address_length,
+                  SocketAddress address,
                   int uid, void *ctx)
 {
     struct control_local *cl = (struct control_local *)ctx;
@@ -44,20 +45,20 @@ control_local_raw(const void *data, size_t length,
         return false;
 
     return cl->handler->raw == nullptr ||
-        cl->handler->raw(data, length, address, address_length,
+        cl->handler->raw(data, length, address,
                          uid, cl->handler_ctx);
 }
 
 static void
 control_local_packet(enum beng_control_command command,
                      const void *payload, size_t payload_length,
-                     const struct sockaddr *address, size_t address_length,
+                     SocketAddress address,
                      void *ctx)
 {
     struct control_local *cl = (struct control_local *)ctx;
 
     cl->handler->packet(command, payload, payload_length,
-                        address, address_length,
+                        address,
                         cl->handler_ctx);
 }
 
@@ -128,8 +129,8 @@ control_local_open(struct control_local *cl, GError **error_r)
 
     cl->server_pool = pool_new_libc(cl->pool, "control_local");
     cl->server = control_server_new(cl->server_pool,
-                                    (const struct sockaddr *)&sa,
-                                    SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1),
+                                    SocketAddress((const struct sockaddr *)&sa,
+                                                  SUN_LEN(&sa) + 1 + strlen(sa.sun_path + 1)),
                                     &control_local_handler, cl,
                                     error_r);
     if (cl->server == nullptr) {

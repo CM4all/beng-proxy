@@ -96,33 +96,33 @@ udp_listener_event_callback(int fd, gcc_unused short event, void *ctx)
 #endif
 
     udp->handler->datagram(buffer, nbytes,
-                           (struct sockaddr *)&sa, msg.msg_namelen,
+                           SocketAddress((struct sockaddr *)&sa,
+                                         msg.msg_namelen),
                            uid,
                            udp->handler_ctx);
 }
 
 struct udp_listener *
 udp_listener_new(struct pool *pool,
-                 const struct sockaddr *address, size_t address_length,
+                 SocketAddress address,
                  const struct udp_handler *handler, void *ctx,
                  GError **error_r)
 {
-    assert(address != nullptr);
-    assert(address_length > 0);
     assert(handler != nullptr);
     assert(handler->datagram != nullptr);
     assert(handler->error != nullptr);
 
     auto udp = NewFromPool<struct udp_listener>(pool);
-    udp->fd = socket_cloexec_nonblock(address->sa_family,
+    udp->fd = socket_cloexec_nonblock(address.GetFamily(),
                                       SOCK_DGRAM, 0);
     if (udp->fd < 0) {
         set_error_errno_msg(error_r, "Failed to create socket");
         return nullptr;
     }
 
-    if (address->sa_family == AF_UNIX) {
-        const struct sockaddr_un *sun = (const struct sockaddr_un *)address;
+    if (address.GetFamily() == AF_UNIX) {
+        const struct sockaddr_un *sun = (const struct sockaddr_un *)
+            (const struct sockaddr *)address;
         if (sun->sun_path[0] != '\0')
             /* delete non-abstract socket files before reusing them */
             unlink(sun->sun_path);
@@ -132,11 +132,11 @@ udp_listener_new(struct pool *pool,
         setsockopt(udp->fd, SOL_SOCKET, SO_PASSCRED, &value, sizeof(value));
     }
 
-    if (bind(udp->fd, address, address_length) < 0) {
+    if (bind(udp->fd, address, address.GetSize()) < 0) {
         char buffer[256];
         const char *address_string =
             socket_address_to_string(buffer, sizeof(buffer),
-                                     address, address_length)
+                                     address, address.GetSize())
             ? buffer
             : "?";
 
@@ -172,7 +172,7 @@ udp_listener_port_new(struct pool *pool,
     if (!address.Parse(host_and_port, default_port, true, error_r))
         return nullptr;
 
-    return udp_listener_new(pool, address, address.GetSize(),
+    return udp_listener_new(pool, address,
                             handler, ctx, error_r);
 }
 
@@ -241,18 +241,16 @@ udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
 
 bool
 udp_listener_reply(struct udp_listener *udp,
-                   const struct sockaddr *address, size_t address_length,
+                   SocketAddress address,
                    const void *data, size_t data_length,
                    GError **error_r)
 {
     assert(udp != nullptr);
     assert(udp->fd >= 0);
-    assert(address != nullptr);
-    assert(address_length > 0);
 
     ssize_t nbytes = sendto(udp->fd, data, data_length,
                             MSG_DONTWAIT|MSG_NOSIGNAL,
-                            address, address_length);
+                            address, address.GetSize());
     if (G_UNLIKELY(nbytes < 0)) {
         set_error_errno_msg(error_r, "Failed to send UDP packet");
         return false;

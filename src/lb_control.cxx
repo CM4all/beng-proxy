@@ -128,7 +128,7 @@ failure_status_to_string(enum failure_status status)
 
 static bool
 node_status_response(struct control_server *server, struct pool *pool,
-                     const struct sockaddr *address, size_t address_length,
+                     SocketAddress address,
                      const char *payload, size_t length, const char *status,
                      GError **error_r)
 {
@@ -140,7 +140,7 @@ node_status_response(struct control_server *server, struct pool *pool,
     response[length] = 0;
     memcpy(response + length + 1, status, status_length);
 
-    return control_server_reply(server, pool, address, address_length,
+    return control_server_reply(server, pool, address,
                                 CONTROL_NODE_STATUS, response, response_length,
                                 error_r);
 }
@@ -148,16 +148,16 @@ node_status_response(struct control_server *server, struct pool *pool,
 static void
 query_node_status(struct lb_control *control,
                   const char *payload, size_t length,
-                  const struct sockaddr *address, size_t address_length)
+                  SocketAddress address)
 {
-    if (address_length == 0) {
+    if (address.GetSize() == 0) {
         daemon_log(3, "got NODE_STATUS from unbound client socket\n");
         return;
     }
 
     const char *colon = (const char *)memchr(payload, ':', length);
     if (colon == NULL || colon == payload || colon == payload + length - 1) {
-        node_status_response(control->server, tpool, address, address_length,
+        node_status_response(control->server, tpool, address,
                              payload, length, "malformed", NULL);
         daemon_log(3, "malformed NODE_STATUS control packet: no port\n");
         return;
@@ -172,7 +172,7 @@ query_node_status(struct lb_control *control,
     const lb_node_config *node =
         control->instance->config->FindNode(node_name);
     if (node == NULL) {
-        node_status_response(control->server, tpool, address, address_length,
+        node_status_response(control->server, tpool, address,
                              payload, length, "unknown", NULL);
         daemon_log(3, "unknown node in NODE_STATUS control packet\n");
         return;
@@ -181,7 +181,7 @@ query_node_status(struct lb_control *control,
     char *endptr;
     unsigned port = strtoul(port_string, &endptr, 10);
     if (port == 0 || *endptr != 0) {
-        node_status_response(control->server, tpool, address, address_length,
+        node_status_response(control->server, tpool, address,
                              payload, length, "malformed", NULL);
         daemon_log(3, "malformed NODE_STATUS control packet: port is not a number\n");
         return;
@@ -201,7 +201,7 @@ query_node_status(struct lb_control *control,
     const char *s = failure_status_to_string(status);
 
     GError *error = NULL;
-    if (!node_status_response(control->server, tpool, address, address_length,
+    if (!node_status_response(control->server, tpool, address,
                               payload, length, s,
                               &error)) {
         daemon_log(3, "%s\n", error->message);
@@ -210,8 +210,7 @@ query_node_status(struct lb_control *control,
 }
 
 static void
-query_stats(struct lb_control *control,
-            const struct sockaddr *address, size_t address_length)
+query_stats(struct lb_control *control, SocketAddress address)
 {
     struct beng_control_stats stats;
     lb_get_stats(control->instance, &stats);
@@ -219,7 +218,8 @@ query_stats(struct lb_control *control,
     const AutoRewindPool auto_rewind(tpool);
 
     GError *error = NULL;
-    if (!control_server_reply(control->server, tpool, address, address_length,
+    if (!control_server_reply(control->server, tpool,
+                              address,
                               CONTROL_STATS, &stats, sizeof(stats),
                               &error)) {
         daemon_log(3, "%s\n", error->message);
@@ -230,7 +230,7 @@ query_stats(struct lb_control *control,
 static void
 lb_control_packet(enum beng_control_command command,
                   const void *payload, size_t payload_length,
-                  const struct sockaddr *address, size_t address_length,
+                  SocketAddress address,
                   void *ctx)
 {
     struct lb_control *control = (struct lb_control *)ctx;
@@ -250,7 +250,7 @@ lb_control_packet(enum beng_control_command command,
 
     case CONTROL_NODE_STATUS:
         query_node_status(control, (const char *)payload, payload_length,
-                          address, address_length);
+                          address);
         break;
 
     case CONTROL_DUMP_POOLS:
@@ -258,7 +258,7 @@ lb_control_packet(enum beng_control_command command,
         break;
 
     case CONTROL_STATS:
-        query_stats(control, address, address_length);
+        query_stats(control, address);
         break;
 
     case CONTROL_VERBOSE:
@@ -294,7 +294,6 @@ lb_control_new(struct lb_instance *instance,
 
     control->server =
         control_server_new(pool, config->bind_address,
-                           config->bind_address.GetSize(),
                            &lb_control_handler, control,
                            error_r);
     if (control->server == NULL) {

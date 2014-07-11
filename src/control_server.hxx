@@ -16,19 +16,20 @@
 struct pool;
 struct sockaddr;
 struct in_addr;
+class SocketAddress;
 
 struct control_handler {
     /**
      * @return false if the datagram shall be discarded
      */
     bool (*raw)(const void *data, size_t length,
-                const struct sockaddr *address, size_t address_length,
+                SocketAddress address,
                 int uid,
                 void *ctx);
 
     void (*packet)(enum beng_control_command command,
                    const void *payload, size_t payload_length,
-                   const struct sockaddr *address, size_t address_length,
+                   SocketAddress address,
                    void *ctx);
 
     void (*error)(GError *error, void *ctx);
@@ -42,8 +43,7 @@ control_server_quark(void)
 }
 
 struct control_server *
-control_server_new(struct pool *pool,
-                   const struct sockaddr *address, size_t address_length,
+control_server_new(struct pool *pool, SocketAddress address,
                    const struct control_handler *handler, void *ctx,
                    GError **error_r);
 
@@ -72,14 +72,14 @@ control_server_set_fd(struct control_server *cs, int fd);
 
 bool
 control_server_reply(struct control_server *cs, struct pool *pool,
-                     const struct sockaddr *address, size_t address_length,
+                     SocketAddress address,
                      enum beng_control_command command,
                      const void *payload, size_t payload_length,
                      GError **error_r);
 
 void
 control_server_decode(const void *data, size_t length,
-                      const struct sockaddr *address, size_t address_length,
+                      SocketAddress address,
                       const struct control_handler *handler, void *handler_ctx);
 
 #endif

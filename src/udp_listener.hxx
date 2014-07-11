@@ -12,15 +12,15 @@
 #include <stddef.h>
 
 struct pool;
-struct sockaddr;
 struct in_addr;
+class SocketAddress;
 
 struct udp_handler {
     /**
      * @param uid the peer process uid, or -1 if unknown
      */
     void (*datagram)(const void *data, size_t length,
-                     const struct sockaddr *addres, size_t address_length,
+                     SocketAddress address,
                      int uid,
                      void *ctx);
 
@@ -28,8 +28,7 @@ struct udp_handler {
 };
 
 struct udp_listener *
-udp_listener_new(struct pool *pool,
-                 const struct sockaddr *address, size_t address_length,
+udp_listener_new(struct pool *pool, SocketAddress address,
                  const struct udp_handler *handler, void *ctx,
                  GError **error_r);
 
@@ -79,8 +78,7 @@ udp_listener_join4(struct udp_listener *udp, const struct in_addr *group,
  * Send a reply datagram to a client.
  */
 bool
-udp_listener_reply(struct udp_listener *udp,
-                   const struct sockaddr *address, size_t address_length,
+udp_listener_reply(struct udp_listener *udp, SocketAddress address,
                    const void *data, size_t data_length,
                    GError **error_r);
 

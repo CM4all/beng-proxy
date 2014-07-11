@@ -15,6 +15,7 @@
 #include "tpool.h"
 #include "beng-proxy/translation.h"
 #include "pool.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
@@ -157,9 +158,9 @@ control_tcache_invalidate(struct instance *instance,
 
 static void
 query_stats(struct instance *instance, struct control_server *server,
-            const struct sockaddr *address, size_t address_length)
+            SocketAddress address)
 {
-    if (address_length == 0)
+    if (address.GetSize() == 0)
         /* TODO: this packet was forwarded by the master process, and
            has no source address; however, the master process must get
            statistics from all worker processes (even those that have
@@ -173,7 +174,7 @@ query_stats(struct instance *instance, struct control_server *server,
 
     GError *error = NULL;
     if (!control_server_reply(server, tpool,
-                              address, address_length,
+                              address,
                               CONTROL_STATS, &stats, sizeof(stats),
                               &error)) {
         daemon_log(3, "%s\n", error->message);
@@ -185,7 +186,7 @@ static void
 handle_control_packet(struct instance *instance, struct control_server *server,
                       enum beng_control_command command,
                       const void *payload, size_t payload_length,
-                      const struct sockaddr *address, size_t address_length)
+                      SocketAddress address)
 {
     daemon_log(5, "control command=%d payload_length=%zu\n",
                command, payload_length);
@@ -210,7 +211,7 @@ handle_control_packet(struct instance *instance, struct control_server *server,
         break;
 
     case CONTROL_STATS:
-        query_stats(instance, server, address, address_length);
+        query_stats(instance, server, address);
         break;
 
     case CONTROL_VERBOSE:
@@ -223,14 +224,14 @@ handle_control_packet(struct instance *instance, struct control_server *server,
 static void
 global_control_packet(enum beng_control_command command,
                       const void *payload, size_t payload_length,
-                      const struct sockaddr *address, size_t address_length,
+                      SocketAddress address,
                       void *ctx)
 {
     struct instance *instance = (struct instance *)ctx;
 
     handle_control_packet(instance, instance->control_server,
                           command, payload, payload_length,
-                          address, address_length);
+                          address);
 }
 
 static void
@@ -244,8 +245,7 @@ static struct udp_distribute *global_udp_distribute;
 
 static bool
 global_control_raw(const void *data, size_t length,
-                   gcc_unused const struct sockaddr *address,
-                   gcc_unused size_t address_length,
+                   gcc_unused SocketAddress address,
                    gcc_unused int uid,
                    gcc_unused void *ctx)
 {
@@ -327,7 +327,7 @@ global_control_handler_set_fd(struct instance *instance, int fd)
 static void
 local_control_packet(enum beng_control_command command,
                      const void *payload, size_t payload_length,
-                     const struct sockaddr *address, size_t address_length,
+                     SocketAddress address,
                      void *ctx)
 {
     struct instance *instance = (struct instance *)ctx;
@@ -335,7 +335,7 @@ local_control_packet(enum beng_control_command command,
     handle_control_packet(instance,
                           control_local_get(instance->local_control_server),
                           command, payload, payload_length,
-                          address, address_length);
+                          address);
 }
 
 static const struct control_handler local_control_handler = {

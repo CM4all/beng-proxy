@@ -1,5 +1,6 @@
 #include "udp_listener.hxx"
 #include "pool.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <daemon/log.h>
 
@@ -14,8 +15,7 @@
 
 static void
 dump_udp_datagram(gcc_unused const void *data, size_t length,
-                  gcc_unused const struct sockaddr *addr,
-                  gcc_unused size_t addrlen,
+                  gcc_unused SocketAddress address,
                   int uid,
                   gcc_unused void *ctx)
 {

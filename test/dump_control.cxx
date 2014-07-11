@@ -1,5 +1,6 @@
 #include "control_server.hxx"
 #include "pool.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <daemon/log.h>
 #include <socket/resolver.h>
@@ -17,8 +18,7 @@
 static void
 dump_control_packet(enum beng_control_command command,
                     gcc_unused const void *payload, size_t payload_length,
-                    gcc_unused const struct sockaddr *address,
-                    gcc_unused size_t address_length,
+                    gcc_unused SocketAddress address,
                     gcc_unused void *ctx)
 {
     printf("packet command=%u length=%zu\n", command, payload_length);

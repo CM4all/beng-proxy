@@ -7,6 +7,7 @@
 #include "control_server.hxx"
 #include "udp_listener.hxx"
 #include "pool.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <glib.h>
 
@@ -22,7 +23,7 @@ struct control_server {
 
 void
 control_server_decode(const void *data, size_t length,
-                      const struct sockaddr *address, size_t address_length,
+                      SocketAddress address,
                       const struct control_handler *handler, void *handler_ctx)
 {
     assert(handler != nullptr);
@@ -82,7 +83,7 @@ control_server_decode(const void *data, size_t length,
 
         handler->packet(command, payload_length > 0 ? payload : nullptr,
                         payload_length,
-                        address, address_length,
+                        address,
                         handler_ctx);
 
         payload_length = ((payload_length + 3) | 3) - 3; /* apply padding */
@@ -94,20 +95,19 @@ control_server_decode(const void *data, size_t length,
 
 static void
 control_server_udp_datagram(const void *data, size_t length,
-                            const struct sockaddr *address,
-                            size_t address_length,
+                            SocketAddress address,
                             int uid,
                             void *ctx)
 {
     struct control_server *cs = (struct control_server *)ctx;
 
     if (cs->handler->raw != nullptr &&
-        !cs->handler->raw(data, length, address, address_length, uid,
+        !cs->handler->raw(data, length, address, uid,
                           cs->handler_ctx))
         /* discard datagram if raw() returns false */
         return;
 
-    control_server_decode(data, length, address, address_length,
+    control_server_decode(data, length, address,
                           cs->handler, cs->handler_ctx);
 }
 
@@ -156,8 +156,7 @@ control_server_new_port(struct pool *pool,
 }
 
 struct control_server *
-control_server_new(struct pool *pool,
-                   const struct sockaddr *address, size_t address_length,
+control_server_new(struct pool *pool, SocketAddress address,
                    const struct control_handler *handler, void *ctx,
                    GError **error_r)
 {
@@ -167,7 +166,7 @@ control_server_new(struct pool *pool,
     assert(handler->error != nullptr);
 
     auto cs = NewFromPool<struct control_server>(pool);
-    cs->udp = udp_listener_new(pool, address, address_length,
+    cs->udp = udp_listener_new(pool, address,
                                &control_server_udp_handler, cs,
                                error_r);
     if (cs->udp == nullptr)
@@ -205,15 +204,13 @@ control_server_set_fd(struct control_server *cs, int fd)
 
 bool
 control_server_reply(struct control_server *cs, struct pool *pool,
-                     const struct sockaddr *address, size_t address_length,
+                     SocketAddress address,
                      enum beng_control_command command,
                      const void *payload, size_t payload_length,
                      GError **error_r)
 {
     assert(cs != nullptr);
     assert(cs->udp != nullptr);
-    assert(address != nullptr);
-    assert(address_length > 0);
 
     struct beng_control_header *header = (struct beng_control_header *)
         p_malloc(pool, sizeof(*header) + payload_length);
@@ -221,7 +218,7 @@ control_server_reply(struct control_server *cs, struct pool *pool,
     header->command = GUINT16_TO_BE(command);
     memcpy(header + 1, payload, payload_length);
 
-    return udp_listener_reply(cs->udp, address, address_length,
+    return udp_listener_reply(cs->udp, address,
                               header, sizeof(*header) + payload_length,
                               error_r);
 }
