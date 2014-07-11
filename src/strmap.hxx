@@ -61,8 +61,6 @@ struct strmap {
 
     Map map;
 
-    mutable Map::const_iterator cursor;
-
     explicit strmap(struct pool &_pool):pool(_pool) {}
 
     strmap(struct pool &_pool, const strmap &src);
