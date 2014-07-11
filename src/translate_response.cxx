@@ -18,7 +18,103 @@
 void
 TranslateResponse::Clear()
 {
-    memset(this, 0, sizeof(*this));
+    protocol_version = 0;
+    max_age = -1;
+    expires_relative = 0;
+    status = (http_status_t)0;
+    address.Clear();
+
+    request_header_forward =
+        (struct header_forward_settings){
+        .modes = {
+            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
+            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
+        },
+    };
+
+    response_header_forward =
+        (struct header_forward_settings){
+        .modes = {
+            [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
+            [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
+            [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
+            [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
+        },
+    };
+
+    base = nullptr;
+    regex = inverse_regex = nullptr;
+    site = expand_site = nullptr;
+    document_root = nullptr;
+
+    redirect = expand_redirect = nullptr;
+    bounce = nullptr;
+
+    scheme = nullptr;
+    host = nullptr;
+    uri = expand_uri = nullptr;
+
+    local_uri = nullptr;
+
+    untrusted = nullptr;
+    untrusted_prefix = nullptr;
+    untrusted_site_suffix = nullptr;
+
+    test_path = expand_test_path = nullptr;
+    unsafe_base = false;
+    easy_base = false;
+    regex_tail = regex_unescape = false;
+    direct_addressing = false;
+    stateful = false;
+    discard_session = false;
+    secure_cookie = false;
+    filter_4xx = false;
+    previous = false;
+    transparent = false;
+    redirect_query_string = false;
+    auto_base = false;
+    widget_info = false;
+    anchor_absolute = false;
+    dump_headers = false;
+
+    session = nullptr;
+    check = nullptr;
+    auth = nullptr;
+    want_full_uri = nullptr;
+
+    user = nullptr;
+    user_max_age = -1;
+    language = nullptr;
+    realm = nullptr;
+
+    www_authenticate = nullptr;
+    authentication_info = nullptr;
+
+    cookie_domain = cookie_host = cookie_path = nullptr;
+
+    request_headers = nullptr;
+    response_headers = nullptr;
+
+    views = nullptr;
+    widget_group = nullptr;
+    strset_init(&container_groups);
+
+    vary = nullptr;
+    invalidate = nullptr;
+    want = nullptr;
+    file_not_found = nullptr;
+    content_type_lookup = nullptr;
+    content_type = nullptr;
+    enotdir = nullptr;
+    directory_index = nullptr;
+    error_document = nullptr;
+
+    validate_mtime.mtime = 0;
+    validate_mtime.path = nullptr;
 }
 
 void

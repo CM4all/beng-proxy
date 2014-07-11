@@ -46,6 +46,10 @@ struct resource_address {
         const struct nfs_address *nfs;
     } u;
 
+    void Clear() {
+        type = RESOURCE_ADDRESS_NONE;
+    }
+
     bool Check(GError **error_r) const;
 
     gcc_pure

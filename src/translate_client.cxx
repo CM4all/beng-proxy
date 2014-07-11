@@ -1334,30 +1334,6 @@ translate_handle_packet(TranslateClient *client,
         client->lhttp_address = nullptr;
         client->address_list = nullptr;
 
-        client->response.request_header_forward =
-            (struct header_forward_settings){
-            .modes = {
-                [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE,
-                [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
-                [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
-                [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
-                [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
-            },
-        };
-
-        client->response.response_header_forward =
-            (struct header_forward_settings){
-            .modes = {
-                [HEADER_GROUP_IDENTITY] = HEADER_FORWARD_NO,
-                [HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES,
-                [HEADER_GROUP_COOKIE] = HEADER_FORWARD_MANGLE,
-                [HEADER_GROUP_OTHER] = HEADER_FORWARD_NO,
-                [HEADER_GROUP_FORWARD] = HEADER_FORWARD_NO,
-            },
-        };
-
-        client->response.max_age = -1;
-        client->response.user_max_age = -1;
         client->response.views = NewFromPool<widget_view>(*client->pool);
         client->response.views->Init();
         client->view = nullptr;
