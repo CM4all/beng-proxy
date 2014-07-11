@@ -52,15 +52,15 @@ enable_node(const struct lb_instance *instance,
 
     const struct sockaddr *with_port =
         sockaddr_set_port(tpool,
-                          &node->envelope->address, node->envelope->length,
+                          node->address, node->address.GetSize(),
                           port);
 
     char buffer[64];
     socket_address_to_string(buffer, sizeof(buffer), with_port,
-                             node->envelope->length);
+                             node->address.GetSize());
     daemon_log(4, "enabling node %s (%s)\n", node_name, buffer);
 
-    failure_unset(with_port, node->envelope->length, FAILURE_OK);
+    failure_unset(with_port, node->address.GetSize(), FAILURE_OK);
 }
 
 static void
@@ -94,16 +94,16 @@ fade_node(const struct lb_instance *instance,
 
     const struct sockaddr *with_port =
         sockaddr_set_port(tpool,
-                          &node->envelope->address, node->envelope->length,
+                          node->address, node->address.GetSize(),
                           port);
 
     char buffer[64];
     socket_address_to_string(buffer, sizeof(buffer), with_port,
-                             node->envelope->length);
+                             node->address.GetSize());
     daemon_log(4, "fading node %s (%s)\n", node_name, buffer);
 
     /* set status "FADE" for 3 hours */
-    failure_set(with_port, node->envelope->length, FAILURE_FADE, 3 * 3600);
+    failure_set(with_port, node->address.GetSize(), FAILURE_FADE, 3 * 3600);
 }
 
 G_GNUC_CONST
@@ -189,15 +189,15 @@ query_node_status(struct lb_control *control,
 
     const struct sockaddr *with_port =
         sockaddr_set_port(tpool,
-                          &node->envelope->address, node->envelope->length,
+                          node->address, node->address.GetSize(),
                           port);
 
     char buffer[64];
     socket_address_to_string(buffer, sizeof(buffer), with_port,
-                             node->envelope->length);
+                             node->address.GetSize());
 
     enum failure_status status =
-        failure_get_status(with_port, node->envelope->length);
+        failure_get_status(with_port, node->address.GetSize());
     const char *s = failure_status_to_string(status);
 
     GError *error = NULL;
@@ -293,8 +293,8 @@ lb_control_new(struct lb_instance *instance,
     control->instance = instance;
 
     control->server =
-        control_server_new(pool, &config->envelope->address,
-                           config->envelope->length,
+        control_server_new(pool, config->bind_address,
+                           config->bind_address.GetSize(),
                            &lb_control_handler, control,
                            error_r);
     if (control->server == NULL) {

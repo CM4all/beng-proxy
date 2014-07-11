@@ -285,7 +285,7 @@ config_parser_feed_control(struct config_parser *parser, char *p,
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
-        if (control->envelope == NULL)
+        if (control->bind_address.IsNull())
             return _throw(error_r, "Bind address is missing");
 
         parser->config.controls.emplace_back(std::move(*control));
@@ -307,10 +307,7 @@ config_parser_feed_control(struct config_parser *parser, char *p,
         if (!expect_eol(p))
             return syntax_error(error_r);
 
-        control->envelope = address_envelope_parse(parser->pool,
-                                                   address, 80, true,
-                                                   error_r);
-        if (control->envelope == NULL)
+        if (!control->bind_address.Parse(address, 80, true, error_r))
             return false;
 
         return true;
@@ -478,16 +475,13 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         if (!expect_eol(p + 1))
             return syntax_error(error_r);
 
-        if (node->envelope == NULL) {
-            node->envelope = address_envelope_parse(parser->pool,
-                                                    node->name.c_str(),
-                                                    80, false,
-                                                    error_r);
-            if (node->envelope == NULL)
-                return false;
-        }
+        if (node->address.IsNull() &&
+            !node->address.Parse(node->name.c_str(),
+                                 80, false,
+                                 error_r))
+            return false;
 
-        parser->config.nodes.insert(std::make_pair(node->name, *node));
+        parser->config.nodes.insert(std::make_pair(node->name, std::move(*node)));
         delete node;
 
         parser->state = config_parser::State::ROOT;
@@ -506,12 +500,10 @@ config_parser_feed_node(struct config_parser *parser, char *p,
         if (!expect_eol(p))
             return syntax_error(error_r);
 
-        if (node->envelope != NULL)
+        if (!node->address.IsNull())
             return _throw(error_r, "Duplicate node address");
 
-        node->envelope = address_envelope_parse(parser->pool,
-                                                value, 80, false, error_r);
-        if (node->envelope == NULL)
+        if (!node->address.Parse(value, 80, false, error_r))
             return false;
 
         return true;
@@ -536,13 +528,13 @@ static struct lb_node_config *
 auto_create_node(struct config_parser *parser, const char *name,
                  GError **error_r)
 {
-    const struct address_envelope *envelope =
-        address_envelope_parse(parser->pool, name, 80, false, error_r);
-    if (envelope == NULL)
+    AllocatedSocketAddress address;
+    if (!address.Parse(name, 80, false, error_r))
         return NULL;
 
-    lb_node_config node(name, envelope);
-    auto i = parser->config.nodes.insert(std::make_pair(name, node));
+    lb_node_config node(name, std::move(address));
+    auto i = parser->config.nodes.insert(std::make_pair(name,
+                                                        std::move(node)));
 
     return &i.first->second;
 }
@@ -609,11 +601,11 @@ sockaddr_port(const struct sockaddr *address)
 }
 
 static unsigned
-parse_port(const char *p, const struct address_envelope *envelope)
+parse_port(const char *p, SocketAddress address)
 {
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = envelope->address.sa_family;
+    hints.ai_family = address.GetFamily();
     hints.ai_socktype = SOCK_STREAM;
 
     struct addrinfo *ai;
@@ -776,7 +768,7 @@ config_parser_feed_cluster(struct config_parser *parser, char *p,
                                               error_r);
                 }
 
-                member->port = parse_port(q, member->node->envelope);
+                member->port = parse_port(q, member->node->address);
                 if (member->port == 0)
                     return _throw(error_r, "Malformed port");
             } else
@@ -1318,13 +1310,13 @@ lb_cluster_config_finish(struct pool *pool, lb_cluster_config &config,
     config.address_list.SetStickyMode(config.sticky_mode);
 
     for (auto &member : config.members) {
-        const struct address_envelope *envelope = member.node->envelope;
+        const AllocatedSocketAddress &node_address = member.node->address;
         const struct sockaddr *address = member.port != 0
-            ? sockaddr_set_port(pool, &envelope->address, envelope->length,
+            ? sockaddr_set_port(pool, node_address, node_address.GetSize(),
                                 member.port)
-            : &envelope->address;
+            : node_address;
 
-        if (!config.address_list.Add(pool, address, envelope->length))
+        if (!config.address_list.Add(pool, address, node_address.GetSize()))
             return _throw(error_r, "Too many members");
     }
 

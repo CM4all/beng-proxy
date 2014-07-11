@@ -10,6 +10,7 @@
 #include "address_list.hxx"
 #include "sticky.h"
 #include "ssl_config.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 
 #include <http/status.h>
 
@@ -28,9 +29,7 @@ enum lb_protocol {
 };
 
 struct lb_control_config {
-    const struct address_envelope *envelope;
-
-    lb_control_config():envelope(nullptr) {}
+    AllocatedSocketAddress bind_address;
 };
 
 struct lb_monitor_config {
@@ -89,7 +88,7 @@ struct lb_monitor_config {
 struct lb_node_config {
     std::string name;
 
-    const struct address_envelope *envelope;
+    AllocatedSocketAddress address;
 
     /**
      * The Tomcat "jvmRoute" setting of this node.  It is used for
@@ -97,10 +96,15 @@ struct lb_node_config {
      */
     std::string jvm_route;
 
-    lb_node_config(const char *_name,
-                   const struct address_envelope *_envelope=nullptr)
-        :name(_name),
-         envelope(_envelope) {}
+    lb_node_config(const char *_name)
+        :name(_name) {}
+
+    lb_node_config(const char *_name, AllocatedSocketAddress &&_address)
+        :name(_name), address(std::move(_address)) {}
+
+    lb_node_config(lb_node_config &&src)
+        :name(std::move(src.name)), address(std::move(src.address)),
+         jvm_route(std::move(jvm_route)) {}
 };
 
 struct lb_member_config {

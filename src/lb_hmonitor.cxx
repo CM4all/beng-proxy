@@ -88,13 +88,14 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
         struct pool *pool = pool_new_linear(hmonitor_pool, "monitor", 1024);
         key = p_strdup(pool, key);
 
-        const struct sockaddr *address = &node->envelope->address;
+        const struct sockaddr *address = node->address;
         if (port > 0)
             address = sockaddr_set_port(pool, address,
-                                        node->envelope->length, port);
+                                        node->address.GetSize(), port);
 
         monitor = lb_monitor_new(pool, key, config,
-                                 SocketAddress(address, node->envelope->length),
+                                 SocketAddress(address,
+                                               node->address.GetSize()),
                                  class_);
         pool_unref(pool);
         hashmap_add(hmonitor_map, key, monitor);
