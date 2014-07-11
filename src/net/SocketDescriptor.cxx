@@ -111,6 +111,7 @@ SocketDescriptor::GetLocalAddress() const
     assert(IsDefined());
 
     StaticSocketAddress result;
+    result.size = result.GetCapacity();
     if (getsockname(fd, result, &result.size) < 0)
         result.Clear();
 
