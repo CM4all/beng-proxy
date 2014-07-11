@@ -13,20 +13,15 @@
 
 struct pool;
 
-struct strmap_pair {
-    const char *key, *value;
-
-    constexpr strmap_pair(const char *_key, const char *_value)
-        :key(_key), value(_value) {}
-};
-
 struct strmap {
-    struct Item : strmap_pair {
+    struct Item {
         typedef boost::intrusive::set_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> Hook;
         Hook hook;
 
+        const char *key, *value;
+
         Item(const char *_key, const char *_value)
-            :strmap_pair(_key, _value) {}
+            :key(_key), value(_value) {}
 
         class Compare {
             gcc_pure
