@@ -202,7 +202,7 @@ client_socket_new(struct pool &pool,
         handler.success(fd, ctx);
     } else if (errno == EINPROGRESS) {
         const struct timeval tv = {
-            .tv_sec = timeout,
+            .tv_sec = time_t(timeout),
             .tv_usec = 0,
         };
 
