@@ -299,7 +299,7 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               const struct delegate_handler *handler, void *ctx,
               struct async_operation_ref *async_ref)
 {
-    auto d = NewFromPool<struct delegate_client>(pool);
+    auto d = NewFromPool<struct delegate_client>(*pool);
     p_lease_ref_set(&d->lease_ref, lease, lease_ctx,
                     pool, "delegate_client_lease");
     d->fd = fd;

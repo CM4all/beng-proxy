@@ -33,7 +33,7 @@ transformation::IsContainer() const
 struct transformation *
 transformation::Dup(struct pool *pool) const
 {
-    struct transformation *dest = NewFromPool<struct transformation>(pool);
+    struct transformation *dest = NewFromPool<struct transformation>(*pool);
 
     dest->type = type;
     switch (dest->type) {
@@ -49,7 +49,7 @@ transformation::Dup(struct pool *pool) const
         break;
 
     case TRANSFORMATION_FILTER:
-        resource_address_copy(pool, &dest->u.filter, &u.filter);
+        resource_address_copy(*pool, &dest->u.filter, &u.filter);
         break;
     }
 

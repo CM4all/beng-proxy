@@ -76,7 +76,7 @@ hashmap_add(struct hashmap *map, const char *key, void *value)
     struct slot *slot = hashmap_get_slot(map, key);
     if (slot->pair.key != nullptr) {
         struct slot *prev = slot;
-        slot = NewFromPool<struct slot>(map->pool);
+        slot = NewFromPool<struct slot>(*map->pool);
         slot->next = prev->next;
         prev->next = slot;
     }
@@ -119,7 +119,7 @@ hashmap_set(struct hashmap *map, const char *key, void *value)
             return hashmap_overwrite(slot, key, value);
     }
 
-    auto slot = NewFromPool<struct slot>(map->pool);
+    auto slot = NewFromPool<struct slot>(*map->pool);
     slot->next = prev->next;
     slot->pair.key = key;
     slot->pair.value = value;

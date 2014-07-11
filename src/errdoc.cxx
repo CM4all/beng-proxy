@@ -176,7 +176,7 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
     assert(instance->translate_cache != nullptr);
 
     struct pool *pool = request2->request->pool;
-    error_response *er = NewFromPool<error_response>(pool);
+    error_response *er = NewFromPool<error_response>(*pool);
     er->request2 = request2;
     er->status = status;
     er->headers = headers;

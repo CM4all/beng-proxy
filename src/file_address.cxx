@@ -34,15 +34,15 @@ file_address::file_address(struct pool *pool, const file_address &src)
 }
 
 struct file_address *
-file_address_new(struct pool *pool, const char *path)
+file_address_new(struct pool &pool, const char *path)
 {
     return NewFromPool<struct file_address>(pool, path);
 }
 
 struct file_address *
-file_address_dup(struct pool *pool, const struct file_address *src)
+file_address_dup(struct pool &pool, const struct file_address *src)
 {
-    return NewFromPool<struct file_address>(pool, pool, *src);
+    return NewFromPool<struct file_address>(pool, &pool, *src);
 }
 
 bool
@@ -61,7 +61,7 @@ file_address::SaveBase(struct pool *pool, const char *suffix) const
     if (length == (size_t)-1)
         return nullptr;
 
-    struct file_address *dest = file_address_dup(pool, this);
+    struct file_address *dest = file_address_dup(*pool, this);
     dest->path = p_strndup(pool, dest->path, length);
 
     /* BASE+DEFLATED is not supported */
@@ -82,7 +82,7 @@ file_address::LoadBase(struct pool *pool, const char *suffix) const
 
     char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
 
-    struct file_address *dest = file_address_dup(pool, this);
+    struct file_address *dest = file_address_dup(*pool, this);
     dest->path = p_strcat(pool, dest->path, unescaped, nullptr);
     return dest;
 }

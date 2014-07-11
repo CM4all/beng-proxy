@@ -46,7 +46,7 @@ http_server_request_new(struct http_server_connection *connection)
                                         "http_server_request", 32768);
     pool_set_major(pool);
 
-    auto request = NewFromPool<struct http_server_request>(pool);
+    auto request = NewFromPool<struct http_server_request>(*pool);
     request->pool = pool;
     request->connection = connection;
     request->local_address = connection->local_address;
@@ -214,7 +214,7 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     assert(handler->free != nullptr);
     assert((local_address == nullptr) == (local_address_length == 0));
 
-    auto connection = NewFromPool<struct http_server_connection>(pool);
+    auto connection = NewFromPool<struct http_server_connection>(*pool);
     connection->pool = pool;
 
     filtered_socket_init(&connection->socket, pool, fd, fd_type,

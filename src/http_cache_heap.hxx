@@ -39,7 +39,7 @@ http_cache_heap_is_defined(const struct http_cache_heap *cache)
 
 void
 http_cache_heap_init(struct http_cache_heap *cache,
-                     struct pool *pool, size_t max_size);
+                     struct pool &pool, size_t max_size);
 
 void
 http_cache_heap_deinit(struct http_cache_heap *cache);

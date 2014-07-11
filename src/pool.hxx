@@ -13,36 +13,36 @@
 #include <new>
 
 class AutoRewindPool {
-    struct pool *const pool;
+    struct pool &pool;
     pool_mark_state mark;
 
 public:
-    AutoRewindPool(struct pool *_pool):pool(_pool) {
-        pool_mark(pool, &mark);
+    AutoRewindPool(struct pool &_pool):pool(_pool) {
+        pool_mark(&pool, &mark);
     }
 
     ~AutoRewindPool() {
-        pool_rewind(pool, &mark);
+        pool_rewind(&pool, &mark);
     }
 };
 
 template<typename T>
 T *
-PoolAlloc(pool *p)
+PoolAlloc(pool &p)
 {
-    return (T *)p_malloc(p, sizeof(T));
+    return (T *)p_malloc(&p, sizeof(T));
 }
 
 template<typename T>
 T *
-PoolAlloc(pool *p, size_t n)
+PoolAlloc(pool &p, size_t n)
 {
-    return (T *)p_malloc(p, sizeof(T) * n);
+    return (T *)p_malloc(&p, sizeof(T) * n);
 }
 
 template<typename T, typename... Args>
 T *
-NewFromPool(pool *p, Args&&... args)
+NewFromPool(pool &p, Args&&... args)
 {
     void *t = PoolAlloc<T>(p);
     return ::new(t) T(std::forward<Args>(args)...);
@@ -50,17 +50,17 @@ NewFromPool(pool *p, Args&&... args)
 
 template<typename T>
 void
-DeleteFromPool(struct pool *pool, T *t)
+DeleteFromPool(struct pool &pool, T *t)
 {
     t->~T();
-    p_free(pool, t);
+    p_free(&pool, t);
 }
 
 template<typename T>
 void
 DeleteUnrefPool(struct pool &pool, T *t)
 {
-    DeleteFromPool(&pool, t);
+    DeleteFromPool(pool, t);
     pool_unref(&pool);
 }
 

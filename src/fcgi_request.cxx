@@ -120,7 +120,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     if (action == nullptr)
         action = path;
 
-    auto request = NewFromPool<struct fcgi_request>(pool);
+    auto request = NewFromPool<struct fcgi_request>(*pool);
     request->pool = pool;
     request->fcgi_stock = fcgi_stock;
 

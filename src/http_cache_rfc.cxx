@@ -43,7 +43,7 @@ next_item(struct strref *s, struct strref *p)
 }
 
 static struct http_cache_info *
-http_cache_info_new(struct pool *pool)
+http_cache_info_new(struct pool &pool)
 {
     return NewFromPool<http_cache_info>(pool);
 }
@@ -121,7 +121,7 @@ http_cache_request_evaluate(struct pool *pool,
 
                 if (strref_cmp_literal(s, "only-if-cached") == 0) {
                     if (info == nullptr)
-                        info = http_cache_info_new(pool);
+                        info = http_cache_info_new(*pool);
                     info->only_if_cached = true;
                 }
             }
@@ -133,7 +133,7 @@ http_cache_request_evaluate(struct pool *pool,
     }
 
     if (info == nullptr)
-        info = http_cache_info_new(pool);
+        info = http_cache_info_new(*pool);
 
     info->is_remote = address->type == RESOURCE_ADDRESS_HTTP ||
         address->type == RESOURCE_ADDRESS_AJP;

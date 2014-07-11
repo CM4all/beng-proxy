@@ -667,8 +667,8 @@ static const struct istream_handler parser_input_handler = {
  *
  */
 
-struct parser * gcc_malloc
-parser_new(struct pool *pool, struct istream *input,
+struct parser *
+parser_new(struct pool &pool, struct istream *input,
            const struct parser_handler *handler, void *handler_ctx)
 {
     auto parser = NewFromPool<struct parser>(pool);
@@ -681,8 +681,8 @@ parser_new(struct pool *pool, struct istream *input,
     assert(handler->eof != nullptr);
     assert(handler->abort != nullptr);
 
-    pool_ref(pool);
-    parser->pool = pool;
+    pool_ref(&pool);
+    parser->pool = &pool;
 
     istream_assign_handler(&parser->input, input,
                            &parser_input_handler, parser,
@@ -692,7 +692,7 @@ parser_new(struct pool *pool, struct istream *input,
     parser->state = PARSER_NONE;
     parser->handler = handler;
     parser->handler_ctx = handler_ctx;
-    parser->attr_value = expansible_buffer_new(pool, 512, 8192);
+    parser->attr_value = expansible_buffer_new(&pool, 512, 8192);
 
     return parser;
 }

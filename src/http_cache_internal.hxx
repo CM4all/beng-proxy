@@ -81,7 +81,7 @@ http_cache_info_init(struct http_cache_info *info)
 }
 
 struct http_cache_info *
-http_cache_info_dup(struct pool *pool, const struct http_cache_info *src);
+http_cache_info_dup(struct pool &pool, const struct http_cache_info &src);
 
 struct http_cache_info *
 http_cache_request_evaluate(struct pool *pool,

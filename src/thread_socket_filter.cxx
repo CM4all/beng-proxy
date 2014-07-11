@@ -673,7 +673,7 @@ thread_socket_filter_new(struct pool &pool,
                          const ThreadSocketFilterHandler &handler,
                          void *ctx)
 {
-    return NewFromPool<ThreadSocketFilter>(&pool,
+    return NewFromPool<ThreadSocketFilter>(pool,
                                            pool, queue,
                                            handler, ctx);
 }

@@ -57,9 +57,9 @@ struct file_address {
 };
 
 struct file_address *
-file_address_new(struct pool *pool, const char *path);
+file_address_new(struct pool &pool, const char *path);
 
 struct file_address *
-file_address_dup(struct pool *pool, const struct file_address *src);
+file_address_dup(struct pool &pool, const struct file_address *src);
 
 #endif

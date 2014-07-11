@@ -28,7 +28,7 @@ struct istream;
  * @param message_id the id of the message
  */
 struct istream *
-memcached_request_packet(struct pool *pool, enum memcached_opcode opcode,
+memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
                          struct istream *value,

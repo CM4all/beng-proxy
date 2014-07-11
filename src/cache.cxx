@@ -48,7 +48,7 @@ struct cache {
     ~cache();
 
     void Delete() {
-        DeleteFromPool(&pool, this);
+        DeleteFromPool(pool, this);
     }
 
     /** clean up expired cache items every 60 seconds */
@@ -61,12 +61,12 @@ struct cache {
 };
 
 struct cache *
-cache_new(struct pool *pool, const struct cache_class *cls,
+cache_new(struct pool &pool, const struct cache_class *cls,
           unsigned hashtable_capacity, size_t max_size)
 {
     assert(cls != nullptr);
 
-    return NewFromPool<struct cache>(pool, *pool, *cls,
+    return NewFromPool<struct cache>(pool, pool, *cls,
                                      hashtable_capacity, max_size);
 }
 

@@ -60,7 +60,7 @@ lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
         return;
     }
 
-    auto request = NewFromPool<struct lhttp_request>(pool);
+    auto request = NewFromPool<struct lhttp_request>(*pool);
     request->pool = pool;
     request->lhttp_stock = lhttp_stock;
 

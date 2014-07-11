@@ -186,7 +186,7 @@ widget_resolver_callback(const struct widget_class *cls, void *ctx)
 static struct widget_resolver *
 widget_resolver_alloc(struct pool *pool, struct widget *widget)
 {
-    auto resolver = NewFromPool<struct widget_resolver>(pool);
+    auto resolver = NewFromPool<struct widget_resolver>(*pool);
 
     pool_ref(pool);
 
@@ -242,7 +242,7 @@ widget_resolver_new(struct pool *pool, struct pool *widget_pool,
     /* add a new listener to the resolver */
 
     pool_ref(pool);
-    auto listener = NewFromPool<struct widget_resolver_listener>(pool);
+    auto listener = NewFromPool<struct widget_resolver_listener>(*pool);
     listener->pool = pool;
     listener->resolver = resolver;
 

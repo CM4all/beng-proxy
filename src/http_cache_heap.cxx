@@ -94,7 +94,7 @@ http_cache_heap_put(struct http_cache_heap *cache,
 
     struct pool *pool = pool_new_slice(cache->pool, "http_cache_item",
                                        cache->slice_pool);
-    auto item = NewFromPool<http_cache_item>(pool, *pool,
+    auto item = NewFromPool<http_cache_item>(*pool, *pool,
                                              *info, request_headers,
                                              status, response_headers,
                                              size, *rubber, rubber_id);
@@ -203,9 +203,9 @@ static const struct cache_class http_cache_class = {
 
 void
 http_cache_heap_init(struct http_cache_heap *cache,
-                     struct pool *pool, size_t max_size)
+                     struct pool &pool, size_t max_size)
 {
-    cache->pool = pool;
+    cache->pool = &pool;
     cache->cache = cache_new(pool, &http_cache_class, 65521, max_size);
 
     cache->slice_pool = slice_pool_new(1024, 65536);

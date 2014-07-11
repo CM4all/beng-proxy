@@ -163,11 +163,11 @@ static const struct cache_class balancer_cache_class = {
  */
 
 struct balancer *
-balancer_new(struct pool *pool)
+balancer_new(struct pool &pool)
 {
     auto balancer = NewFromPool<struct balancer>(pool);
 
-    balancer->pool = pool;
+    balancer->pool = &pool;
     balancer->cache = cache_new(pool, &balancer_cache_class,
                                 1021, 2048);
     return balancer;
@@ -212,7 +212,7 @@ balancer_get(struct balancer &balancer, const struct address_list &list,
         /* create a new cache item */
 
         pool = pool_new_linear(balancer.pool, "balancer_item", 1024);
-        item = NewFromPool<struct balancer_item>(pool);
+        item = NewFromPool<struct balancer_item>(*pool);
         cache_item_init_relative(&item->item, 1800, 1);
         item->pool = pool;
         item->next = 0;

@@ -91,7 +91,7 @@ delegate_stock_request(struct hstock *stock, struct pool *pool,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref *async_ref)
 {
-    auto get = NewFromPool<struct delegate_get>(pool);
+    auto get = NewFromPool<struct delegate_get>(*pool);
 
     get->pool = pool;
     get->path = path;

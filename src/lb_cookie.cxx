@@ -17,7 +17,7 @@
 unsigned
 lb_cookie_get(const struct strmap *request_headers)
 {
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     const char *cookie = strmap_get(request_headers, "cookie");
     if (cookie == NULL)

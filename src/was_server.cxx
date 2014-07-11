@@ -458,7 +458,7 @@ was_server_new(struct pool *pool, int control_fd, int input_fd, int output_fd,
     assert(handler->request != nullptr);
     assert(handler->free != nullptr);
 
-    auto server = NewFromPool<struct was_server>(pool);
+    auto server = NewFromPool<struct was_server>(*pool);
     server->pool = pool;
     server->control_fd = control_fd;
     server->input_fd = input_fd;

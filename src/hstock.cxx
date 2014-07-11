@@ -68,7 +68,7 @@ hstock_new(struct pool *pool, const struct stock_class *cls, void *class_ctx,
 
     pool = pool_new_linear(pool, "hstock", 4096);
 
-    auto hstock = NewFromPool<struct hstock>(pool);
+    auto hstock = NewFromPool<struct hstock>(*pool);
     hstock->pool = pool;
     hstock->cls = cls;
     hstock->class_ctx = class_ctx;

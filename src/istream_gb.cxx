@@ -81,5 +81,5 @@ istream_gb_new(struct pool *pool, const struct growing_buffer *gb)
 {
     assert(gb != nullptr);
 
-    return &NewFromPool<struct istream_gb>(pool, *pool, *gb)->output;
+    return &NewFromPool<struct istream_gb>(*pool, *pool, *gb)->output;
 }

@@ -286,7 +286,7 @@ embed_inline_widget(struct pool *pool, struct processor_env *env,
                     bool plain_text,
                     struct widget *widget)
 {
-    auto iw = NewFromPool<struct inline_widget>(pool);
+    auto iw = NewFromPool<struct inline_widget>(*pool);
     struct istream *hold;
 
     assert(pool != nullptr);

@@ -20,13 +20,13 @@ nfs_address::nfs_address(struct pool *pool, const nfs_address &other)
      content_type(p_strdup_checked(pool, other.content_type)) {}
 
 struct nfs_address *
-nfs_address_new(struct pool *pool, const char *server,
+nfs_address_new(struct pool &pool, const char *server,
                 const char *export_name, const char *path)
 {
     return NewFromPool<struct nfs_address>(pool,
-                                           p_strdup(pool, server),
-                                           p_strdup(pool, export_name),
-                                           p_strdup(pool, path));
+                                           p_strdup(&pool, server),
+                                           p_strdup(&pool, export_name),
+                                           p_strdup(&pool, path));
 }
 
 const char *
@@ -40,9 +40,9 @@ nfs_address::GetId(struct pool *pool) const
 }
 
 struct nfs_address *
-nfs_address_dup(struct pool *pool, const struct nfs_address *src)
+nfs_address_dup(struct pool &pool, const struct nfs_address *src)
 {
-    return NewFromPool<struct nfs_address>(pool, pool, *src);
+    return NewFromPool<struct nfs_address>(pool, &pool, *src);
 }
 
 bool
@@ -79,7 +79,7 @@ nfs_address::SaveBase(struct pool *pool, const char *suffix) const
     if (length == (size_t)-1)
         return nullptr;
 
-    auto dest = NewFromPool<struct nfs_address>(pool,
+    auto dest = NewFromPool<struct nfs_address>(*pool,
                                                 p_strdup(pool, server),
                                                 p_strdup(pool, export_name),
                                                 p_strndup(pool, path, length));
@@ -98,7 +98,7 @@ nfs_address::LoadBase(struct pool *pool, const char *suffix) const
 
     char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
 
-    auto dest = NewFromPool<struct nfs_address>(pool,
+    auto dest = NewFromPool<struct nfs_address>(*pool,
                                                 p_strdup(pool, server),
                                                 p_strdup(pool, export_name),
                                                 p_strcat(pool, path,
@@ -122,7 +122,7 @@ nfs_address::Expand(struct pool *pool, const GMatchInfo *match_info,
     if (new_path == nullptr)
         return nullptr;
 
-    auto dest = NewFromPool<struct nfs_address>(pool, server, export_name,
+    auto dest = NewFromPool<struct nfs_address>(*pool, server, export_name,
                                                 new_path);
     dest->content_type = p_strdup_checked(pool, content_type);
     return dest;

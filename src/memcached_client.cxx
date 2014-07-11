@@ -783,7 +783,7 @@ memcached_client_invoke(struct pool *caller_pool,
 
     struct pool *pool = pool_new_linear(caller_pool, "memcached_client", 4096);
 
-    request = memcached_request_packet(pool, opcode, extras, extras_length,
+    request = memcached_request_packet(*pool, opcode, extras, extras_length,
                                        key, key_length, value,
                                        0x1234 /* XXX? */);
     if (request == nullptr) {
@@ -798,7 +798,7 @@ memcached_client_invoke(struct pool *caller_pool,
 
     pool_ref(caller_pool);
 
-    auto client = PoolAlloc<memcached_client>(pool);
+    auto client = PoolAlloc<memcached_client>(*pool);
     client->pool = pool;
     client->caller_pool = caller_pool;
 

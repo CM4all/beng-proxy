@@ -124,7 +124,7 @@ proxy_handler(request &request2)
     if (request2.translate.response->transparent &&
         (!strref_is_empty(&request2.uri.args) ||
          !strref_is_empty(&request2.uri.path_info)))
-        address = resource_address_insert_args(request->pool, address,
+        address = resource_address_insert_args(*request->pool, address,
                                                request2.uri.args.data,
                                                request2.uri.args.length,
                                                request2.uri.path_info.data,
@@ -132,13 +132,13 @@ proxy_handler(request &request2)
 
     if (!request2.processor_focus)
         /* forward query string */
-        address = resource_address_insert_query_string_from(request->pool,
+        address = resource_address_insert_query_string_from(*request->pool,
                                                             address,
                                                             request->uri);
 
     if (resource_address_is_cgi_alike(address) &&
         address->u.cgi->uri == nullptr) {
-        struct resource_address *copy = resource_address_dup(request->pool,
+        struct resource_address *copy = resource_address_dup(*request->pool,
                                                              address);
         struct cgi_address *cgi = resource_address_get_cgi(copy);
 

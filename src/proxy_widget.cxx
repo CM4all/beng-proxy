@@ -356,7 +356,7 @@ proxy_widget(struct request *request2,
     assert(widget != nullptr);
     assert(proxy_ref != nullptr);
 
-    auto proxy = NewFromPool<struct proxy_widget>(request2->request->pool);
+    auto proxy = NewFromPool<struct proxy_widget>(*request2->request->pool);
     proxy->request = request2;
     proxy->widget = widget;
     proxy->ref = proxy_ref;

@@ -209,7 +209,7 @@ worker_new(struct instance *instance)
 
         event_reinit(instance->event_base);
 
-        worker *worker = NewFromPool<struct worker>(instance->pool);
+        worker *worker = NewFromPool<struct worker>(*instance->pool);
         worker->instance = instance;
         worker->pid = pid;
         worker->crash = crash;

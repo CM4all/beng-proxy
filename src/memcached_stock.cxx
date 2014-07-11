@@ -28,7 +28,7 @@ struct memcached_stock {
 };
 
 struct memcached_stock *
-memcached_stock_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
+memcached_stock_new(struct pool &pool, struct tcp_balancer *tcp_balancer,
                     const struct address_list *address)
 {
     auto stock = PoolAlloc<memcached_stock>(pool);
@@ -134,7 +134,7 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
                        void *handler_ctx,
                        struct async_operation_ref *async_ref)
 {
-    auto request = PoolAlloc<memcached_stock_request>(pool);
+    auto request = PoolAlloc<memcached_stock_request>(*pool);
 
     assert(extras_length <= MEMCACHED_EXTRAS_MAX);
     assert(key_length <= MEMCACHED_KEY_MAX);

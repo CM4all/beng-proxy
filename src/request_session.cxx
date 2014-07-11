@@ -78,7 +78,7 @@ build_session_cookie_name(struct pool *pool, const struct config *config,
         return config->session_cookie;
 
     size_t length = strlen(config->session_cookie);
-    char *name = PoolAlloc<char>(pool, length + 5);
+    char *name = PoolAlloc<char>(*pool, length + 5);
     memcpy(name, config->session_cookie, length);
     format_uint16_hex_fixed(name + length, crc16_string(0, host));
     name[length + 4] = 0;

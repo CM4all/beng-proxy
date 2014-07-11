@@ -19,7 +19,7 @@ unsigned
 lb_jvm_route_get(const struct strmap *request_headers,
                  const struct lb_cluster_config *cluster)
 {
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     const char *cookie = strmap_get(request_headers, "cookie");
     if (cookie == NULL)

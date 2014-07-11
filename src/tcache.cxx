@@ -386,7 +386,7 @@ tcache::MakePerHost(const char *host)
     if (!result.second)
         return *result.first;
 
-    auto ph = NewFromPool<TranslateCachePerHost>(&pool, *this,
+    auto ph = NewFromPool<TranslateCachePerHost>(pool, *this,
                                                  p_strdup(&pool, host));
     per_host.insert_commit(*ph, commit_data);
 
@@ -415,7 +415,7 @@ TranslateCachePerHost::Dispose()
     tcache.per_host.erase(tcache.per_host.iterator_to(*this));
 
     p_free(&tcache.pool, host);
-    DeleteFromPool(&tcache.pool, this);
+    DeleteFromPool(tcache.pool, this);
 }
 
 void
@@ -442,7 +442,7 @@ tcache::MakePerSite(const char *site)
     if (!result.second)
         return *result.first;
 
-    auto ph = NewFromPool<TranslateCachePerSite>(&pool, *this,
+    auto ph = NewFromPool<TranslateCachePerSite>(pool, *this,
                                                  p_strdup(&pool, site));
     per_site.insert_commit(*ph, commit_data);
 
@@ -468,7 +468,7 @@ TranslateCachePerSite::Dispose()
     tcache.per_site.erase(tcache.per_site.iterator_to(*this));
 
     p_free(&tcache.pool, site);
-    DeleteFromPool(&tcache.pool, this);
+    DeleteFromPool(tcache.pool, this);
 }
 
 void
@@ -667,7 +667,7 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
     assert(response->regex != nullptr);
     assert(response->base != nullptr);
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     uri = tcache_regex_input(tpool, uri, *response);
     if (!response->unsafe_base && !uri_path_verify_paranoid(uri)) {
@@ -862,7 +862,7 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
            a "BASE" packet */
         return false;
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     if (item.response.base != nullptr && item.inverse_regex != nullptr &&
         g_regex_match(item.inverse_regex,
@@ -1059,7 +1059,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
 
     struct pool *pool = pool_new_slice(&tcr.tcache->pool, "tcache_item",
                                        &tcr.tcache->slice_pool);
-    auto item = NewFromPool<TranslateCacheItem>(pool, *pool);
+    auto item = NewFromPool<TranslateCacheItem>(*pool, *pool);
     unsigned max_age = response.max_age;
 
     if (max_age > 86400)
@@ -1237,7 +1237,7 @@ tcache_hit(struct pool *pool, const char *uri, gcc_unused const char *key,
            const TranslateCacheItem *item,
            const TranslateHandler *handler, void *ctx)
 {
-    auto response = NewFromPool<TranslateResponse>(pool);
+    auto response = NewFromPool<TranslateResponse>(*pool);
 
     cache_log(4, "translate_cache: hit %s\n", key);
 
@@ -1262,7 +1262,7 @@ tcache_miss(struct pool &pool, struct tcache &tcache,
             const TranslateHandler &handler, void *ctx,
             struct async_operation_ref &async_ref)
 {
-    auto tcr = NewFromPool<TranslateCacheRequest>(&pool, pool, tcache,
+    auto tcr = NewFromPool<TranslateCacheRequest>(pool, pool, tcache,
                                                   request, key,
                                                   handler, ctx);
 
@@ -1359,11 +1359,11 @@ inline
 tcache::tcache(struct pool &_pool, struct tstock &_stock, unsigned max_size)
     :pool(_pool),
      slice_pool(*slice_pool_new(2048, 65536)),
-     cache(*cache_new(&_pool, &tcache_class, 65521, max_size)),
-     per_host(PerHostSet::bucket_traits(PoolAlloc<PerHostSet::bucket_type>(&_pool,
+     cache(*cache_new(_pool, &tcache_class, 65521, max_size)),
+     per_host(PerHostSet::bucket_traits(PoolAlloc<PerHostSet::bucket_type>(_pool,
                                                                            3779),
                                         3779)),
-     per_site(PerSiteSet::bucket_traits(PoolAlloc<PerSiteSet::bucket_type>(&_pool,
+     per_site(PerSiteSet::bucket_traits(PoolAlloc<PerSiteSet::bucket_type>(_pool,
                                                                            3779),
                                         3779)),
      stock(_stock) {}
@@ -1382,7 +1382,7 @@ translate_cache_new(struct pool *pool, struct tstock *stock,
     assert(stock != nullptr);
 
     pool = pool_new_libc(pool, "translate_cache");
-    return NewFromPool<struct tcache>(pool, *pool, *stock, max_size);
+    return NewFromPool<struct tcache>(*pool, *pool, *stock, max_size);
 }
 
 void

@@ -239,7 +239,7 @@ sink_rubber_new(struct pool *pool, struct istream *input,
         return;
     }
 
-    auto s = PoolAlloc<sink_rubber>(pool);
+    auto s = NewFromPool<sink_rubber>(*pool);
     s->rubber = rubber;
     s->rubber_id = rubber_id;
     s->max_size = allocate;

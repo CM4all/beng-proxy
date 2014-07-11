@@ -27,7 +27,7 @@ widget_registry_lookup(struct pool *pool,
                        const TranslateHandler *handler, void *ctx,
                        struct async_operation_ref *async_ref)
 {
-    auto request = NewFromPool<TranslateRequest>(pool);
+    auto request = NewFromPool<TranslateRequest>(*pool);
     request->Clear();
 
     request->widget_type = widget_type;
@@ -53,7 +53,7 @@ widget_translate_response(TranslateResponse *response, void *ctx)
         return;
     }
 
-    widget_class *cls = NewFromPool<widget_class>(lookup->pool);
+    widget_class *cls = NewFromPool<widget_class>(*lookup->pool);
     cls->local_uri = response->local_uri;
     cls->untrusted_host = response->untrusted;
     cls->untrusted_prefix = response->untrusted_prefix;
@@ -102,7 +102,7 @@ widget_class_lookup(struct pool *pool, struct pool *widget_pool,
                     struct async_operation_ref *async_ref)
 {
     struct widget_class_lookup *lookup =
-        NewFromPool<struct widget_class_lookup>(pool);
+        NewFromPool<struct widget_class_lookup>(*pool);
 
     assert(widget_type != nullptr);
 

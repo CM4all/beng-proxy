@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     pool = pool_new_linear(root_pool, "test", 8192);
 
     istream = istream_file_new(pool, "/dev/stdin", (off_t)-1, NULL);
-    parser = parser_new(pool, istream, &my_parser_handler, NULL);
+    parser = parser_new(*pool, istream, &my_parser_handler, NULL);
 
     while (!should_exit)
         parser_read(parser);

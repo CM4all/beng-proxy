@@ -573,7 +573,7 @@ css_parser_new(struct pool *pool, struct istream *input, bool block,
 
     pool_ref(pool);
 
-    return NewFromPool<struct css_parser>(pool, pool, input, block,
+    return NewFromPool<struct css_parser>(*pool, pool, input, block,
                                           handler, handler_ctx);
 }
 

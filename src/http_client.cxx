@@ -1176,7 +1176,7 @@ http_client_request(struct pool *caller_pool,
     struct pool *pool =
         pool_new_linear(caller_pool, "http_client_request", 8192);
 
-    auto client = NewFromPool<struct http_client>(pool);
+    auto client = NewFromPool<struct http_client>(*pool);
     client->stopwatch = stopwatch_fd_new(pool, fd, uri);
     client->pool = pool;
     client->peer_name = p_strdup(pool, get_peer_name(fd));

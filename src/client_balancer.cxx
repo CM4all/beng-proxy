@@ -143,7 +143,7 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         const ConnectSocketHandler *handler, void *ctx,
                         struct async_operation_ref *async_ref)
 {
-    auto request = NewFromPool<struct client_balancer_request>(pool);
+    auto request = NewFromPool<struct client_balancer_request>(*pool);
     request->pool = pool;
     request->balancer = balancer;
     request->ip_transparent = ip_transparent;

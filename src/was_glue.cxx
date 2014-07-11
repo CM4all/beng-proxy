@@ -141,7 +141,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
     if (action == nullptr)
         action = path;
 
-    auto request = NewFromPool<struct was_request>(pool);
+    auto request = NewFromPool<struct was_request>(*pool);
     request->pool = pool;
     request->was_stock = was_stock;
     request->action = action;

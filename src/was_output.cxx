@@ -210,7 +210,7 @@ was_output_new(struct pool *pool, int fd, struct istream *input,
     assert(handler->eof != nullptr);
     assert(handler->abort != nullptr);
 
-    auto output = NewFromPool<struct was_output>(pool);
+    auto output = NewFromPool<struct was_output>(*pool);
     output->pool = pool;
     output->fd = fd;
     event_set(&output->event, output->fd, EV_WRITE|EV_TIMEOUT,

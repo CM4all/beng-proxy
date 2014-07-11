@@ -61,10 +61,10 @@ struct nfs_address {
 };
 
 struct nfs_address *
-nfs_address_new(struct pool *pool, const char *server,
+nfs_address_new(struct pool &pool, const char *server,
                 const char *export_name, const char *path);
 
 struct nfs_address *
-nfs_address_dup(struct pool *pool, const struct nfs_address *src);
+nfs_address_dup(struct pool &pool, const struct nfs_address *src);
 
 #endif

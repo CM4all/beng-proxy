@@ -67,7 +67,7 @@ resource_loader_new(struct pool *pool, struct tcp_balancer *tcp_balancer,
 {
     assert(fcgi_stock != nullptr);
 
-    auto rl = NewFromPool<struct resource_loader>(pool);
+    auto rl = NewFromPool<struct resource_loader>(*pool);
 
     rl->tcp_balancer = tcp_balancer;
     rl->lhttp_stock = lhttp_stock;

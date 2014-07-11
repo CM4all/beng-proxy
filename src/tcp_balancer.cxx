@@ -134,7 +134,7 @@ struct tcp_balancer *
 tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
                  struct balancer *balancer)
 {
-    auto tcp_balancer = NewFromPool<struct tcp_balancer>(pool);
+    auto tcp_balancer = NewFromPool<struct tcp_balancer>(*pool);
     tcp_balancer->tcp_stock = tcp_stock;
     tcp_balancer->balancer = balancer;
     return tcp_balancer;
@@ -150,7 +150,7 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  const struct stock_get_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    auto request = NewFromPool<struct tcp_balancer_request>(pool);
+    auto request = NewFromPool<struct tcp_balancer_request>(*pool);
     request->pool = pool;
     request->tcp_balancer = tcp_balancer;
     request->ip_transparent = ip_transparent;

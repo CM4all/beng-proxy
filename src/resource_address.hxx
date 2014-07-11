@@ -102,12 +102,12 @@ resource_address_get_cgi(struct resource_address *address)
 }
 
 void
-resource_address_copy(struct pool *pool, struct resource_address *dest,
+resource_address_copy(struct pool &pool, struct resource_address *dest,
                       const struct resource_address *src);
 
 gcc_malloc
 struct resource_address *
-resource_address_dup(struct pool *pool, const struct resource_address *src);
+resource_address_dup(struct pool &pool, const struct resource_address *src);
 
 /**
  * Duplicate the #resource_address object, but replace the HTTP/AJP
@@ -115,7 +115,7 @@ resource_address_dup(struct pool *pool, const struct resource_address *src);
  */
 gcc_malloc
 struct resource_address *
-resource_address_dup_with_path(struct pool *pool,
+resource_address_dup_with_path(struct pool &pool,
                                const struct resource_address *src,
                                const char *path);
 
@@ -127,7 +127,7 @@ resource_address_dup_with_path(struct pool *pool,
  */
 gcc_pure gcc_malloc
 const struct resource_address *
-resource_address_insert_query_string_from(struct pool *pool,
+resource_address_insert_query_string_from(struct pool &pool,
                                           const struct resource_address *src,
                                           const char *uri);
 
@@ -139,7 +139,7 @@ resource_address_insert_query_string_from(struct pool *pool,
  */
 gcc_pure gcc_malloc
 const struct resource_address *
-resource_address_insert_args(struct pool *pool,
+resource_address_insert_args(struct pool &pool,
                              const struct resource_address *src,
                              const char *args, size_t args_length,
                              const char *path, size_t path_length);

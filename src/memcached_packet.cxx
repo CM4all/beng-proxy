@@ -12,7 +12,7 @@
 #include <string.h>
 
 struct istream *
-memcached_request_packet(struct pool *pool, enum memcached_opcode opcode,
+memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
                          const void *extras, size_t extras_length,
                          const void *key, size_t key_length,
                          struct istream *value,
@@ -37,13 +37,14 @@ memcached_request_packet(struct pool *pool, enum memcached_opcode opcode,
     memset(header->cas, 0, sizeof(header->cas));
 
     struct istream *header_stream =
-        istream_memory_new(pool, header, sizeof(*header));
+        istream_memory_new(&pool, header, sizeof(*header));
     struct istream *extras_stream = extras_length > 0
-        ? istream_memory_new(pool, extras, extras_length)
-        : istream_null_new(pool);
+        ? istream_memory_new(&pool, extras, extras_length)
+        : istream_null_new(&pool);
 
-    return istream_cat_new(pool, header_stream, extras_stream,
-                           key_length == 0 ? istream_null_new(pool)
-                           : istream_memory_new(pool, key, key_length),
+    return istream_cat_new(&pool, header_stream, extras_stream,
+                           key_length == 0
+                           ? istream_null_new(&pool)
+                           : istream_memory_new(&pool, key, key_length),
                            value, nullptr);
 }

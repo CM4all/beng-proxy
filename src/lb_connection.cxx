@@ -93,7 +93,7 @@ lb_connection_new(struct lb_instance *instance,
                                         2048);
     pool_set_major(pool);
 
-    lb_connection *connection = NewFromPool<lb_connection>(pool);
+    lb_connection *connection = NewFromPool<lb_connection>(*pool);
     connection->pool = pool;
     connection->instance = instance;
     connection->listener = listener;

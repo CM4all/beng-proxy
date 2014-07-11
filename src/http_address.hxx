@@ -75,7 +75,7 @@ struct http_address {
      * query string into the URI.
      */
     gcc_malloc
-    struct http_address *InsertQueryString(struct pool *pool,
+    struct http_address *InsertQueryString(struct pool &pool,
                                            const char *query_string) const;
 
     /**
@@ -83,7 +83,7 @@ struct http_address {
      * arguments into the URI.
      */
     gcc_malloc
-    struct http_address *InsertArgs(struct pool *pool,
+    struct http_address *InsertArgs(struct pool &pool,
                                     const char *args, size_t args_length,
                                     const char *path_info,
                                     size_t path_info_length) const;
@@ -152,13 +152,13 @@ http_address_parse(struct pool *pool, const char *uri, GError **error_r);
  */
 gcc_malloc
 struct http_address *
-http_address_with_path(struct pool *pool,
+http_address_with_path(struct pool &pool,
                        const struct http_address *uwa,
                        const char *path);
 
 gcc_malloc
 struct http_address *
-http_address_dup(struct pool *pool, const struct http_address *uwa);
+http_address_dup(struct pool &pool, const struct http_address *uwa);
 
 /**
  * Create a new #http_address object from the specified one, but
@@ -167,7 +167,7 @@ http_address_dup(struct pool *pool, const struct http_address *uwa);
  */
 gcc_malloc
 struct http_address *
-http_address_dup_with_path(struct pool *pool,
+http_address_dup_with_path(struct pool &pool,
                            const struct http_address *uwa,
                            const char *path);
 

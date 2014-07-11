@@ -132,7 +132,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
 
         document.info.expires = deserialize_uint64(data);
 
-        const AutoRewindPool auto_rewind(tpool);
+        const AutoRewindPool auto_rewind(*tpool);
 
         document.vary = deserialize_strmap(data, tpool);
 
@@ -224,7 +224,7 @@ http_cache_choice_get(struct pool *pool, struct memcached_stock *stock,
                       void *callback_ctx,
                       struct async_operation_ref *async_ref)
 {
-    auto choice = PoolAlloc<http_cache_choice>(pool);
+    auto choice = PoolAlloc<http_cache_choice>(*pool);
 
     choice->pool = pool;
     choice->stock = stock;
@@ -249,7 +249,7 @@ http_cache_choice_prepare(struct pool *pool, const char *uri,
                           const struct http_cache_info *info,
                           struct strmap *vary)
 {
-    auto choice = PoolAlloc<http_cache_choice>(pool);
+    auto choice = PoolAlloc<http_cache_choice>(*pool);
 
     choice->pool = pool;
     choice->uri = uri;
@@ -422,7 +422,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 
         document.info.expires = deserialize_uint64(data);
 
-        const AutoRewindPool auto_rewind(tpool);
+        const AutoRewindPool auto_rewind(*tpool);
         document.vary = deserialize_strmap(data, tpool);
 
         if (data.IsNull())
@@ -522,7 +522,7 @@ http_cache_choice_filter(struct pool *pool, struct memcached_stock *stock,
                          void *callback_ctx,
                          struct async_operation_ref *async_ref)
 {
-    auto choice = PoolAlloc<http_cache_choice>(pool);
+    auto choice = PoolAlloc<http_cache_choice>(*pool);
 
     choice->pool = pool;
     choice->stock = stock;
@@ -574,7 +574,7 @@ http_cache_choice_cleanup(struct pool *pool, struct memcached_stock *stock,
                           void *callback_ctx,
                           struct async_operation_ref *async_ref)
 {
-    auto data = PoolAlloc<cleanup_data>(pool);
+    auto data = NewFromPool<cleanup_data>(*pool);
 
     data->now = time(nullptr);
     uset_init(&data->uset);
@@ -622,7 +622,7 @@ http_cache_choice_delete(struct pool *pool, struct memcached_stock *stock,
                          void *callback_ctx,
                          struct async_operation_ref *async_ref)
 {
-    auto choice = PoolAlloc<http_cache_choice>(pool);
+    auto choice = PoolAlloc<http_cache_choice>(*pool);
 
     choice->pool = pool;
     choice->stock = stock;

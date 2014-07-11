@@ -212,7 +212,7 @@ http_cache_put(HttpCacheRequest *request,
                             request->response.headers,
                             request->cache->rubber, rubber_id, size);
     else if (request->cache->memcached_stock != nullptr) {
-        auto job = NewFromPool<LinkedBackgroundJob>(request->pool,
+        auto job = NewFromPool<LinkedBackgroundJob>(*request->pool,
                                                     request->cache->background);
 
         struct istream *value = rubber_id != 0
@@ -411,7 +411,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
            it to keep it alive even after the caller pool is
            destroyed */
         request->key = p_strdup(request->pool, request->key);
-        request->info = http_cache_info_dup(request->pool, request->info);
+        request->info = http_cache_info_dup(*request->pool, *request->info);
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
@@ -517,7 +517,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
     session_sticky(_session_sticky),
     cache(&_cache),
     method(_method),
-    address(resource_address_dup(&_pool, &_address)),
+    address(resource_address_dup(_pool, &_address)),
     key(_key),
     headers(_headers),
     info(&_info), document(nullptr) {
@@ -553,7 +553,7 @@ http_cache::http_cache(struct pool &_pool, size_t max_size,
         /* leave 12.5% of the rubber allocator empty, to increase the
            chances that a hole can be found for a new allocation, to
            reduce the pressure that rubber_compress() creates */
-        http_cache_heap_init(&heap, &pool, max_size * 7 / 8);
+        http_cache_heap_init(&heap, pool, max_size * 7 / 8);
     else
         http_cache_heap_clear(&heap);
 }
@@ -565,7 +565,7 @@ http_cache_new(struct pool *pool, size_t max_size,
 {
     pool = pool_new_libc(pool, "http_cache");
 
-    return NewFromPool<http_cache>(pool, *pool, max_size,
+    return NewFromPool<http_cache>(*pool, *pool, max_size,
                                    memcached_stock, *resource_loader);
 }
 
@@ -646,7 +646,7 @@ http_cache_flush(struct http_cache *cache)
     else if (cache->memcached_stock != nullptr) {
         struct pool *pool = pool_new_linear(&cache->pool,
                                             "http_cache_memcached_flush", 1024);
-        auto flush = NewFromPool<LinkedBackgroundJob>(pool, cache->background);
+        auto flush = NewFromPool<LinkedBackgroundJob>(*pool, cache->background);
 
         http_cache_memcached_flush(pool, cache->memcached_stock,
                                    http_cache_flush_callback, flush,
@@ -688,7 +688,7 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
     pool = pool_new_linear(&cache->pool, "HttpCacheRequest", 8192);
 
     auto request =
-        NewFromPool<HttpCacheRequest>(pool, *pool, *caller_pool,
+        NewFromPool<HttpCacheRequest>(*pool, *pool, *caller_pool,
                                       session_sticky, *cache,
                                       method, *address,
                                       http_cache_key(pool, address),
@@ -821,7 +821,7 @@ http_cache_heap_test(struct http_cache *cache, struct pool *caller_pool,
     struct pool *pool = pool_new_linear(&cache->pool, "HttpCacheRequest", 8192);
 
     auto request =
-        NewFromPool<HttpCacheRequest>(pool, *pool, *caller_pool,
+        NewFromPool<HttpCacheRequest>(*pool, *pool, *caller_pool,
                                       session_sticky, *cache,
                                       method, *address,
                                       http_cache_key(pool, address),
@@ -1017,7 +1017,7 @@ http_cache_memcached_use(struct http_cache *cache,
     pool = pool_new_linear(&cache->pool, "HttpCacheRequest", 8192);
 
     auto request =
-        NewFromPool<HttpCacheRequest>(pool, *pool, *caller_pool,
+        NewFromPool<HttpCacheRequest>(*pool, *pool, *caller_pool,
                                       session_sticky, *cache,
                                       method, *address,
                                       http_cache_key(pool, address),

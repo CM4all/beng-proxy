@@ -277,7 +277,7 @@ css_processor(struct pool *caller_pool, struct istream *istream,
     assert(!istream_has_handler(istream));
 
     struct pool *pool = pool_new_linear(caller_pool, "css_processor", 32768);
-    auto processor = NewFromPool<struct css_processor>(pool);
+    auto processor = NewFromPool<struct css_processor>(*pool);
     processor->pool = pool;
     processor->caller_pool = caller_pool;
 

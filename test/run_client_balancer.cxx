@@ -101,7 +101,7 @@ main(int argc, char **argv)
     struct context ctx;
     ctx.result = context::TIMEOUT;
 
-    ctx.balancer = balancer_new(pool);
+    ctx.balancer = balancer_new(*pool);
 
     struct address_list address_list;
     address_list.Init();

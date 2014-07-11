@@ -726,7 +726,7 @@ serve_document_root_file(request &request2,
 
     struct parsed_uri *uri = &request2.uri;
 
-    auto tr = NewFromPool<TranslateResponse>(request.pool);
+    auto tr = NewFromPool<TranslateResponse>(*request.pool);
     tr->Clear();
     request2.translate.response = tr;
 
@@ -741,8 +741,8 @@ serve_document_root_file(request &request2,
 
     if (process) {
         transformation *transformation =
-            NewFromPool<struct transformation>(request.pool);
-        widget_view *view = NewFromPool<widget_view>(request.pool);
+            NewFromPool<struct transformation>(*request.pool);
+        widget_view *view = NewFromPool<widget_view>(*request.pool);
         view->Init();
 
         transformation->next = nullptr;
@@ -752,7 +752,7 @@ serve_document_root_file(request &request2,
 
         tr->views = view;
     } else {
-        widget_view *view = NewFromPool<widget_view>(request.pool);
+        widget_view *view = NewFromPool<widget_view>(*request.pool);
         view->Init();
 
         tr->views = view;
@@ -768,7 +768,7 @@ serve_document_root_file(request &request2,
                                  uri->base.length,
                                  index_file, (size_t)10,
                                  nullptr);
-    file_address *fa = NewFromPool<file_address>(request.pool, path);
+    file_address *fa = NewFromPool<file_address>(*request.pool, path);
 
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
     tr->address.u.file = fa;
@@ -832,7 +832,7 @@ handle_http_request(client_connection &connection,
                     http_server_request &request,
                     struct async_operation_ref *async_ref)
 {
-    struct request *request2 = NewFromPool<struct request>(request.pool);
+    struct request *request2 = NewFromPool<struct request>(*request.pool);
     request2->connection = &connection;
     request2->request = &request;
     request2->translate.content_type = nullptr;

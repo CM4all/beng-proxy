@@ -448,7 +448,7 @@ packet_reader_feed(struct pool *pool, TranslatePacketReader *reader,
         reader->state = TranslatePacketReader::State::PAYLOAD;
 
         reader->payload_position = 0;
-        reader->payload = PoolAlloc<char>(pool, reader->header.length + 1);
+        reader->payload = PoolAlloc<char>(*pool, reader->header.length + 1);
         reader->payload[reader->header.length] = 0;
 
         if (length == 0)
@@ -588,7 +588,7 @@ finish_view(TranslateClient *client, GError **error_r)
         if (address->type != RESOURCE_ADDRESS_NONE &&
             view->address.type == RESOURCE_ADDRESS_NONE) {
             /* no address yet: copy address from response */
-            resource_address_copy(client->pool, &view->address, address);
+            resource_address_copy(*client->pool, &view->address, address);
             view->filter_4xx = client->response.filter_4xx;
         }
 
@@ -614,7 +614,7 @@ add_view(TranslateClient *client, const char *name, GError **error_r)
     if (!finish_view(client, error_r))
         return false;
 
-    auto view = NewFromPool<widget_view>(client->pool);
+    auto view = NewFromPool<widget_view>(*client->pool);
     view->Init();
     view->name = name;
     view->request_header_forward = client->response.request_header_forward;
@@ -981,7 +981,7 @@ translate_client_bind_mount(TranslateClient *client,
         return false;
     }
 
-    mount_list *m = NewFromPool<mount_list>(client->pool);
+    mount_list *m = NewFromPool<mount_list>(*client->pool);
     m->next = nullptr;
     m->source = payload + 1; /* skip the slash to make it relative */
     m->target = separator + 1;
@@ -1358,7 +1358,7 @@ translate_handle_packet(TranslateClient *client,
 
         client->response.max_age = -1;
         client->response.user_max_age = -1;
-        client->response.views = NewFromPool<widget_view>(client->pool);
+        client->response.views = NewFromPool<widget_view>(*client->pool);
         client->response.views->Init();
         client->view = nullptr;
         client->widget_view_tail = &client->response.views->next;
@@ -1430,7 +1430,7 @@ translate_handle_packet(TranslateClient *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_LOCAL;
         client->resource_address->u.file = client->file_address =
-            file_address_new(client->pool, payload);
+            file_address_new(*client->pool, payload);
         return true;
 
     case TRANSLATE_PATH_INFO:
@@ -1852,7 +1852,7 @@ translate_handle_packet(TranslateClient *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_PIPE;
         client->resource_address->u.cgi = client->cgi_address =
-            cgi_address_new(client->pool, payload, false);
+            cgi_address_new(*client->pool, payload, false);
 
         client->child_options = &client->cgi_address->options;
         client->ns_options = &client->child_options->ns;
@@ -1874,7 +1874,7 @@ translate_handle_packet(TranslateClient *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_CGI;
         client->resource_address->u.cgi = client->cgi_address =
-            cgi_address_new(client->pool, payload, false);
+            cgi_address_new(*client->pool, payload, false);
 
         client->cgi_address->document_root = client->response.document_root;
         client->child_options = &client->cgi_address->options;
@@ -1899,7 +1899,7 @@ translate_handle_packet(TranslateClient *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_FASTCGI;
         client->resource_address->u.cgi = client->cgi_address =
-            cgi_address_new(client->pool, payload, true);
+            cgi_address_new(*client->pool, payload, true);
 
         client->child_options = &client->cgi_address->options;
         client->ns_options = &client->child_options->ns;
@@ -1952,7 +1952,7 @@ translate_handle_packet(TranslateClient *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_NFS;
         client->resource_address->u.nfs = client->nfs_address =
-            nfs_address_new(client->pool, payload, "", "");
+            nfs_address_new(*client->pool, payload, "", "");
         return true;
 
     case TRANSLATE_NFS_EXPORT:
@@ -2533,7 +2533,7 @@ translate_handle_packet(TranslateClient *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_WAS;
         client->resource_address->u.cgi = client->cgi_address =
-            cgi_address_new(client->pool, payload, false);
+            cgi_address_new(*client->pool, payload, false);
 
         client->child_options = &client->cgi_address->options;
         client->ns_options = &client->child_options->ns;
@@ -2750,7 +2750,7 @@ translate_handle_packet(TranslateClient *client,
 
         client->resource_address->type = RESOURCE_ADDRESS_LHTTP;
         client->resource_address->u.lhttp = client->lhttp_address =
-            lhttp_address_new(client->pool, payload);
+            lhttp_address_new(*client->pool, payload);
         client->child_options = &client->lhttp_address->options;
         client->ns_options = &client->child_options->ns;
         client->mount_list = &client->ns_options->mounts;
@@ -3239,7 +3239,7 @@ translate(struct pool *pool, int fd,
         return;
     }
 
-    TranslateClient *client = NewFromPool<TranslateClient>(pool, *gb);
+    TranslateClient *client = NewFromPool<TranslateClient>(*pool, *gb);
     client->pool = pool;
     client->stopwatch = stopwatch_fd_new(pool, fd,
                                          request->uri != nullptr ? request->uri

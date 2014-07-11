@@ -244,7 +244,7 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
         return;
     }
 
-    auto params = NewFromPool<struct was_child_params>(pool);
+    auto params = NewFromPool<struct was_child_params>(*pool);
     params->executable_path = executable_path;
     params->args = args;
     params->env = env;

@@ -896,7 +896,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     }
 
     pool_ref(pool);
-    auto client = NewFromPool<struct ajp_client>(pool);
+    auto client = NewFromPool<struct ajp_client>(*pool);
     client->pool = pool;
 
     client->socket.Init(pool, fd, fd_type,

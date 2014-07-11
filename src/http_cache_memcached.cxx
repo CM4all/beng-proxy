@@ -138,7 +138,7 @@ http_cache_memcached_flush(struct pool *pool, struct memcached_stock *stock,
                            struct async_operation_ref *async_ref)
 {
     auto request =
-        NewFromPool<http_cache_memcached_request>(pool, *pool);
+        NewFromPool<http_cache_memcached_request>(*pool, *pool);
 
     request->callback.flush = callback;
     request->callback_ctx = callback_ctx;
@@ -155,7 +155,7 @@ static struct http_cache_document *
 mcd_deserialize_document(struct pool *pool, ConstBuffer<void> &header,
                          const struct strmap *request_headers)
 {
-    auto document = PoolAlloc<http_cache_document>(pool);
+    auto document = PoolAlloc<http_cache_document>(*pool);
 
     http_cache_info_init(&document->info);
 
@@ -222,7 +222,7 @@ mcd_choice_get_callback(const char *key, bool unclean,
            background job */
         struct pool *pool = pool_new_linear(request->background_pool,
                                       "http_cache_choice_cleanup", 8192);
-        auto job = NewFromPool<LinkedBackgroundJob>(pool,
+        auto job = NewFromPool<LinkedBackgroundJob>(*pool,
                                                     *request->background);
 
         http_cache_choice_cleanup(pool, request->stock, request->uri,
@@ -337,7 +337,7 @@ http_cache_memcached_get(struct pool *pool, struct memcached_stock *stock,
                          struct async_operation_ref *async_ref)
 {
     auto request =
-        NewFromPool<http_cache_memcached_request>(pool, *pool,
+        NewFromPool<http_cache_memcached_request>(*pool, *pool,
                                                   *stock,
                                                   *background_pool,
                                                   background,
@@ -414,7 +414,7 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
                          struct async_operation_ref *async_ref)
 {
     auto request =
-        NewFromPool<http_cache_memcached_request>(pool, *pool, *stock,
+        NewFromPool<http_cache_memcached_request>(*pool, *pool, *stock,
                                                   *background_pool,
                                                   background,
                                                   uri, *async_ref);
@@ -423,7 +423,7 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
     struct growing_buffer *gb;
     const char *key;
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     vary = info->vary != nullptr
         ? http_cache_copy_vary(tpool, info->vary, request_headers)
@@ -513,7 +513,7 @@ mcd_background_delete(struct memcached_stock *stock,
 {
     struct pool *pool = pool_new_linear(background_pool,
                                         "http_cache_memcached_bkg_delete", 1024);
-    auto job = NewFromPool<LinkedBackgroundJob>(pool, background);
+    auto job = NewFromPool<LinkedBackgroundJob>(*pool, background);
     const char *key = http_cache_choice_vary_key(pool, uri, vary);
 
     memcached_stock_invoke(pool, stock,
@@ -536,7 +536,7 @@ http_cache_memcached_remove_uri(struct memcached_stock *stock,
 
     struct pool *pool = pool_new_linear(background_pool,
                                         "http_cache_memcached_remove_uri", 8192);
-    auto job = NewFromPool<LinkedBackgroundJob>(pool, background);
+    auto job = NewFromPool<LinkedBackgroundJob>(*pool, background);
     http_cache_choice_delete(pool, stock, uri,
                              background_callback, job,
                              background.Add2(*job));
@@ -593,7 +593,7 @@ http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
                                         "http_cache_memcached_remove_uri", 8192);
 
     /* now delete all matching Vary documents */
-    auto data = PoolAlloc<match_data>(pool);
+    auto data = NewFromPool<match_data>(*pool);
     data->stock = stock;
     data->background_pool = background_pool;
     data->background = &background;

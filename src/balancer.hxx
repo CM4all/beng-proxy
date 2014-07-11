@@ -15,7 +15,7 @@ struct address_list;
 struct sockaddr;
 
 struct balancer *
-balancer_new(struct pool *pool);
+balancer_new(struct pool &pool);
 
 void
 balancer_free(struct balancer *balancer);

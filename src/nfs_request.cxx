@@ -80,7 +80,7 @@ nfs_request(struct pool &pool, struct nfs_cache *nfs_cache,
             const struct http_response_handler *handler, void *handler_ctx,
             struct async_operation_ref *async_ref)
 {
-    auto r = NewFromPool<struct nfs_request>(&pool, pool, path, content_type,
+    auto r = NewFromPool<struct nfs_request>(pool, pool, path, content_type,
                                              handler, handler_ctx);
 
     nfs_cache_request(&pool, nfs_cache, server, export_name, path,

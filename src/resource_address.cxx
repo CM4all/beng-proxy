@@ -23,7 +23,7 @@
 #include <http/status.h>
 
 void
-resource_address_copy(struct pool *pool, struct resource_address *dest,
+resource_address_copy(struct pool &pool, struct resource_address *dest,
                       const struct resource_address *src)
 {
     dest->type = src->type;
@@ -63,17 +63,15 @@ resource_address_copy(struct pool *pool, struct resource_address *dest,
 }
 
 struct resource_address *
-resource_address_dup(struct pool *pool, const struct resource_address *src)
+resource_address_dup(struct pool &pool, const struct resource_address *src)
 {
-    struct resource_address *dest = (struct resource_address *)
-        p_malloc(pool, sizeof(*dest));
-
+    auto dest = NewFromPool<struct resource_address>(pool);
     resource_address_copy(pool, dest, src);
     return dest;
 }
 
 struct resource_address *
-resource_address_dup_with_path(struct pool *pool,
+resource_address_dup_with_path(struct pool &pool,
                                const struct resource_address *src,
                                const char *path)
 {
@@ -105,7 +103,7 @@ resource_address_dup_with_path(struct pool *pool,
 }
 
 const struct resource_address *
-resource_address_insert_query_string_from(struct pool *pool,
+resource_address_insert_query_string_from(struct pool &pool,
                                           const struct resource_address *src,
                                           const char *uri)
 {
@@ -163,10 +161,10 @@ resource_address_insert_query_string_from(struct pool *pool,
         cgi = resource_address_get_cgi(dest);
 
         if (cgi->query_string != NULL)
-            cgi->query_string = p_strcat(pool, query_string, "&",
+            cgi->query_string = p_strcat(&pool, query_string, "&",
                                          cgi->query_string, NULL);
         else
-            cgi->query_string = p_strdup(pool, query_string);
+            cgi->query_string = p_strdup(&pool, query_string);
         return dest;
     }
 
@@ -175,7 +173,7 @@ resource_address_insert_query_string_from(struct pool *pool,
 }
 
 const struct resource_address *
-resource_address_insert_args(struct pool *pool,
+resource_address_insert_args(struct pool &pool,
                              const struct resource_address *src,
                              const char *args, size_t args_length,
                              const char *path, size_t path_length)
@@ -225,13 +223,13 @@ resource_address_insert_args(struct pool *pool,
         cgi = resource_address_get_cgi(dest);
 
         if (cgi->uri != NULL)
-            cgi->uri = uri_insert_args(pool, cgi->uri,
+            cgi->uri = uri_insert_args(&pool, cgi->uri,
                                        args, args_length,
                                        path, path_length);
 
         if (cgi->path_info != NULL)
             cgi->path_info =
-                p_strncat(pool,
+                p_strncat(&pool,
                           cgi->path_info, strlen(cgi->path_info),
                           ";", (size_t)1, args, args_length, path, path_length,
                           NULL);
@@ -347,7 +345,7 @@ resource_address::CacheStore(struct pool *pool,
         if (easy_base || expandable) {
             /* when the response is expandable, skip appending the
                tail URI, don't call resource_address_save_base() */
-            resource_address_copy(pool, this, src);
+            resource_address_copy(*pool, this, src);
             return true;
         }
 
@@ -363,7 +361,7 @@ resource_address::CacheStore(struct pool *pool,
             return true;
     }
 
-    resource_address_copy(pool, this, src);
+    resource_address_copy(*pool, this, src);
     return false;
 }
 
@@ -445,7 +443,7 @@ resource_address::CacheLoad(struct pool *pool,
             return true;
     }
 
-    resource_address_copy(pool, this, &src);
+    resource_address_copy(*pool, this, &src);
     return true;
 }
 
@@ -755,7 +753,7 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
         return true;
 
     case RESOURCE_ADDRESS_LOCAL:
-        address->u.file = file = file_address_dup(pool, address->u.file);
+        address->u.file = file = file_address_dup(*pool, address->u.file);
         return file->Expand(pool, match_info, error_r);
 
     case RESOURCE_ADDRESS_PIPE:
@@ -763,7 +761,7 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
         address->u.cgi = cgi =
-            cgi_address_dup(pool, address->u.cgi,
+            cgi_address_dup(*pool, address->u.cgi,
                             address->type == RESOURCE_ADDRESS_FASTCGI);
         return cgi->Expand(pool, match_info, error_r);
 
@@ -771,13 +769,13 @@ resource_address_expand(struct pool *pool, struct resource_address *address,
     case RESOURCE_ADDRESS_AJP:
         /* copy the http_address object (it's a pointer, not
            in-line) and expand it */
-        address->u.http = uwa = http_address_dup(pool, address->u.http);
+        address->u.http = uwa = http_address_dup(*pool, address->u.http);
         return uwa->Expand(pool, match_info, error_r);
 
     case RESOURCE_ADDRESS_LHTTP:
         /* copy the lhttp_address object (it's a pointer, not
            in-line) and expand it */
-        address->u.lhttp = lhttp = lhttp_address_dup(pool, address->u.lhttp);
+        address->u.lhttp = lhttp = lhttp_address_dup(*pool, address->u.lhttp);
         return lhttp->Expand(pool, match_info, error_r);
 
     case RESOURCE_ADDRESS_NFS:

@@ -280,7 +280,7 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
 {
     assert(!address.IsNull());
 
-    auto request = NewFromPool<struct tcp_stock_request>(pool);
+    auto request = NewFromPool<struct tcp_stock_request>(*pool);
     request->ip_transparent = ip_transparent;
     request->bind_address = bind_address;
     request->address = address;

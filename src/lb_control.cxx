@@ -31,7 +31,7 @@ enable_node(const struct lb_instance *instance,
         return;
     }
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     char *node_name = p_strndup(tpool, payload, length);
     char *port_string = node_name + (colon - payload);
@@ -73,7 +73,7 @@ fade_node(const struct lb_instance *instance,
         return;
     }
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     char *node_name = p_strndup(tpool, payload, length);
     char *port_string = node_name + (colon - payload);
@@ -135,7 +135,7 @@ node_status_response(struct control_server *server, struct pool *pool,
     size_t status_length = strlen(status);
 
     size_t response_length = length + 1 + status_length;
-    char *response = PoolAlloc<char>(tpool, response_length);
+    char *response = PoolAlloc<char>(*tpool, response_length);
     memcpy(response, payload, length);
     response[length] = 0;
     memcpy(response + length + 1, status, status_length);
@@ -163,7 +163,7 @@ query_node_status(struct lb_control *control,
         return;
     }
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     char *node_name = p_strndup(tpool, payload, length);
     char *port_string = node_name + (colon - payload);
@@ -215,7 +215,7 @@ query_stats(struct lb_control *control, SocketAddress address)
     struct beng_control_stats stats;
     lb_get_stats(control->instance, &stats);
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     GError *error = NULL;
     if (!control_server_reply(control->server, tpool,
@@ -288,7 +288,7 @@ lb_control_new(struct lb_instance *instance,
 {
     struct pool *pool = pool_new_linear(instance->pool, "lb_control", 1024);
 
-    lb_control *control = NewFromPool<lb_control>(pool);
+    lb_control *control = NewFromPool<lb_control>(*pool);
     control->pool = pool;
     control->instance = instance;
 

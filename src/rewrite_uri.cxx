@@ -364,7 +364,7 @@ rewrite_widget_uri(struct pool *pool, struct pool *widget_pool,
 
         return istream;
     } else {
-        auto rwu = NewFromPool<struct rewrite_widget_uri>(pool);
+        auto rwu = NewFromPool<struct rewrite_widget_uri>(*pool);
 
         rwu->pool = pool;
         rwu->env = env;

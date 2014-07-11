@@ -70,7 +70,7 @@ suffix_registry_lookup(struct pool *pool,
                        const SuffixRegistryHandler &handler, void *ctx,
                        struct async_operation_ref *async_ref)
 {
-    auto lookup = NewFromPool<SuffixRegistryLookup>(pool, pool,
+    auto lookup = NewFromPool<SuffixRegistryLookup>(*pool, pool,
                                                     payload, suffix,
                                                     handler, ctx);
 

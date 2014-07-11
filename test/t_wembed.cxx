@@ -85,7 +85,7 @@ widget_resolver_new(struct pool *pool, struct pool *widget_pool gcc_unused,
                     widget_resolver_callback_t callback gcc_unused, void *ctx gcc_unused,
                     struct async_operation_ref *async_ref)
 {
-    auto to = NewFromPool<struct test_operation>(pool);
+    auto to = NewFromPool<struct test_operation>(*pool);
 
     to->pool = pool;
 

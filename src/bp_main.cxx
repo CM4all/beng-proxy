@@ -339,7 +339,7 @@ int main(int argc, char **argv)
     local_control_handler_init(&instance);
     local_control_handler_open(&instance);
 
-    instance.balancer = balancer_new(instance.pool);
+    instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.pool,
                                        instance.config.tcp_stock_limit);
     instance.tcp_balancer = tcp_balancer_new(instance.pool, instance.tcp_stock,
@@ -347,7 +347,7 @@ int main(int argc, char **argv)
 
     if (instance.config.memcached_server != NULL)
         instance.memcached_stock =
-            memcached_stock_new(instance.pool, instance.tcp_balancer,
+            memcached_stock_new(*instance.pool, instance.tcp_balancer,
                                 instance.config.memcached_server);
 
     if (instance.config.translation_socket != NULL) {

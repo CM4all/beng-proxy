@@ -87,7 +87,7 @@ my_sink_done(void *data0, size_t length, gcc_unused void *ctx)
     ConstBuffer<void> data(data0, length);
 
     while (!data.IsEmpty()) {
-        const AutoRewindPool auto_rewind(tpool);
+        const AutoRewindPool auto_rewind(*tpool);
 
         /*magic = */deserialize_uint32(data);
         /*

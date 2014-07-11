@@ -93,7 +93,7 @@ request::HandleAuth(const TranslateResponse &response)
         }
     }
 
-    auto t = NewFromPool<TranslateRequest>(pool);
+    auto t = NewFromPool<TranslateRequest>(*pool);
     t->Clear();
     t->auth = response.auth;
     t->uri = request->uri;

@@ -313,7 +313,7 @@ static const struct stock_class fcgi_stock_class = {
 struct fcgi_stock *
 fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    auto fcgi_stock = NewFromPool<struct fcgi_stock>(pool);
+    auto fcgi_stock = NewFromPool<struct fcgi_stock>(*pool);
     fcgi_stock->child_stock = child_stock_new(pool, limit, max_idle,
                                               &fcgi_child_stock_class);
     fcgi_stock->hstock = hstock_new(pool, &fcgi_stock_class, fcgi_stock,
@@ -340,7 +340,7 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
     if (!jail_params_check(&options->jail, error_r))
         return nullptr;
 
-    auto params = NewFromPool<struct fcgi_child_params>(pool);
+    auto params = NewFromPool<struct fcgi_child_params>(*pool);
     params->executable_path = executable_path;
     params->args = args;
     params->env = env;

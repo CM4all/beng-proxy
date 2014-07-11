@@ -308,7 +308,7 @@ was_control_new(struct pool *pool, int fd,
     assert(handler->eof != nullptr);
     assert(handler->abort != nullptr);
 
-    auto control = NewFromPool<struct was_control>(pool);
+    auto control = NewFromPool<struct was_control>(*pool);
     control->pool = pool;
     control->fd = fd;
     control->done = false;

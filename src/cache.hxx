@@ -71,7 +71,7 @@ struct cache_stats {
 
 gcc_malloc
 struct cache *
-cache_new(struct pool *pool, const struct cache_class *cls,
+cache_new(struct pool &pool, const struct cache_class *cls,
           unsigned hashtable_capacity, size_t max_size);
 
 void

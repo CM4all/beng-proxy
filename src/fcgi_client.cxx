@@ -953,7 +953,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     struct pool *pool = pool_new_linear(caller_pool, "fcgi_client_request",
                                         2048);
-    auto client = NewFromPool<struct fcgi_client>(pool);
+    auto client = NewFromPool<struct fcgi_client>(*pool);
 #ifndef NDEBUG
     list_add(&client->siblings, &fcgi_clients);
 #endif

@@ -341,7 +341,7 @@ was_input_new(struct pool *pool, int fd,
     assert(handler->premature != nullptr);
     assert(handler->abort != nullptr);
 
-    auto input = NewFromPool<struct was_input>(pool);
+    auto input = NewFromPool<struct was_input>(*pool);
     istream_init(&input->output, &was_input_stream, pool);
 
     input->fd = fd;

@@ -141,7 +141,7 @@ const struct socket_filter nop_socket_filter = {
  */
 
 void *
-nop_socket_filter_new(struct pool *pool)
+nop_socket_filter_new(struct pool &pool)
 {
     return NewFromPool<struct nop_socket_filter>(pool);
 }

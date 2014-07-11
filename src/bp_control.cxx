@@ -136,7 +136,7 @@ control_tcache_invalidate(struct instance *instance,
 {
     (void)instance;
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     TranslateRequest request;
     memset(&request, 0, sizeof(request));
@@ -170,7 +170,7 @@ query_stats(struct instance *instance, struct control_server *server,
     struct beng_control_stats stats;
     bp_get_stats(instance, &stats);
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     GError *error = NULL;
     if (!control_server_reply(server, tpool,

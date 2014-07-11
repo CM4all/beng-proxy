@@ -68,14 +68,14 @@ tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
     assert(request->param == NULL);
 
     if (strcmp(request->widget_type, "sync") == 0) {
-        auto response = NewFromPool<TranslateResponse>(pool);
+        auto response = NewFromPool<TranslateResponse>(*pool);
         response->address.type = RESOURCE_ADDRESS_HTTP;
         response->address.u.http = http_address_parse(pool, "http://foo/", NULL);
         response->views = (widget_view *)p_calloc(pool, sizeof(*response->views));
         response->views->address = response->address;
         handler->response(response, ctx);
     } else if (strcmp(request->widget_type, "block") == 0) {
-        async_operation *ao = NewFromPool<async_operation>(pool);
+        async_operation *ao = NewFromPool<async_operation>(*pool);
 
         async_init(ao, &my_operation);
         async_ref_set(async_ref, ao);

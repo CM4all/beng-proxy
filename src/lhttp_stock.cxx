@@ -215,7 +215,7 @@ static const struct stock_class lhttp_stock_class = {
 struct lhttp_stock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    auto lhttp_stock = NewFromPool<struct lhttp_stock>(pool);
+    auto lhttp_stock = NewFromPool<struct lhttp_stock>(*pool);
 
     struct hstock *child_stock = child_stock_new(pool, limit, max_idle,
                                                  &lhttp_child_stock_class);

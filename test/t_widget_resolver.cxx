@@ -161,7 +161,7 @@ test_normal(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    auto widget = NewFromPool<struct widget>(pool);
+    auto widget = NewFromPool<struct widget>(*pool);
     widget_init(widget, pool, nullptr);
     widget->class_name = "foo";
 
@@ -196,7 +196,7 @@ test_abort(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    auto widget = NewFromPool<struct widget>(pool);
+    auto widget = NewFromPool<struct widget>(*pool);
     widget_init(widget, pool, nullptr);
     widget->class_name = "foo";
 
@@ -231,7 +231,7 @@ test_two_clients(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    auto widget = NewFromPool<struct widget>(pool);
+    auto widget = NewFromPool<struct widget>(*pool);
     widget_init(widget, pool, nullptr);
     widget->class_name = "foo";
 
@@ -272,7 +272,7 @@ test_two_abort(struct pool *pool)
 
     pool = pool_new_linear(pool, "test", 8192);
 
-    auto widget = NewFromPool<struct widget>(pool);
+    auto widget = NewFromPool<struct widget>(*pool);
     widget_init(widget, pool, nullptr);
     widget->class_name = "foo";
 

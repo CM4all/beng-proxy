@@ -72,7 +72,7 @@ struct lhttp_address {
      * query string into the URI.
      */
     gcc_malloc
-    struct lhttp_address *InsertQueryString(struct pool *pool,
+    struct lhttp_address *InsertQueryString(struct pool &pool,
                                             const char *query_string) const;
 
     /**
@@ -80,7 +80,7 @@ struct lhttp_address {
      * arguments into the URI.
      */
     gcc_malloc
-    struct lhttp_address *InsertArgs(struct pool *pool,
+    struct lhttp_address *InsertArgs(struct pool &pool,
                                      const char *new_args,
                                      size_t new_args_length,
                                      const char *path_info,
@@ -119,17 +119,17 @@ void
 lhttp_address_init(struct lhttp_address *address, const char *path);
 
 struct lhttp_address *
-lhttp_address_new(struct pool *pool, const char *path);
+lhttp_address_new(struct pool &pool, const char *path);
 
 void
 lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
                    const struct lhttp_address *src);
 
 struct lhttp_address *
-lhttp_address_dup(struct pool *pool, const struct lhttp_address *old);
+lhttp_address_dup(struct pool &pool, const struct lhttp_address *old);
 
 struct lhttp_address *
-lhttp_address_dup_with_uri(struct pool *pool, const struct lhttp_address *src,
+lhttp_address_dup_with_uri(struct pool &pool, const struct lhttp_address *src,
                            const char *uri);
 
 gcc_pure

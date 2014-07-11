@@ -133,7 +133,7 @@ ajp_stock_request(struct pool *pool,
     assert(handler->response != nullptr);
     assert(body == nullptr || !istream_has_handler(body));
 
-    auto hr = NewFromPool<struct ajp_request>(pool);
+    auto hr = NewFromPool<struct ajp_request>(*pool);
     hr->pool = pool;
     hr->tcp_balancer = tcp_balancer;
     hr->protocol = protocol;

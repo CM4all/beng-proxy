@@ -49,7 +49,7 @@ widget_view::InheritAddress(struct pool &pool,
         src.type == RESOURCE_ADDRESS_NONE)
         return false;
 
-    resource_address_copy(&pool, &address, &src);
+    resource_address_copy(pool, &address, &src);
     inherited = true;
     return true;
 }
@@ -103,11 +103,11 @@ widget_view::IsContainer() const
 static struct widget_view *
 widget_view_dup(struct pool *pool, const struct widget_view *src)
 {
-    auto dest = NewFromPool<struct widget_view>(pool);
+    auto dest = NewFromPool<struct widget_view>(*pool);
     dest->Init();
 
     dest->name = src->name != nullptr ? p_strdup(pool, src->name) : nullptr;
-    resource_address_copy(pool, &dest->address, &src->address);
+    resource_address_copy(*pool, &dest->address, &src->address);
     dest->filter_4xx = src->filter_4xx;
     dest->inherited = src->inherited;
     dest->transformation = src->transformation->DupChain(pool);

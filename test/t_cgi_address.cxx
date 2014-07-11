@@ -22,7 +22,7 @@ public:
     void TestURI() {
         auto pool = GetPool();
 
-        struct cgi_address *a = cgi_address_new(pool, "/usr/bin/cgi", false);
+        struct cgi_address *a = cgi_address_new(*pool, "/usr/bin/cgi", false);
         CPPUNIT_ASSERT_EQUAL(false, a->IsExpandable());
         CPPUNIT_ASSERT_EQUAL(0, strcmp(a->GetURI(pool), "/"));
 
@@ -65,7 +65,7 @@ public:
     void TestApply() {
         auto pool = GetPool();
 
-        struct cgi_address *a = cgi_address_new(pool, "/usr/bin/cgi", false);
+        struct cgi_address *a = cgi_address_new(*pool, "/usr/bin/cgi", false);
         a->script_name = "/test.pl";
         a->path_info = "/foo";
 

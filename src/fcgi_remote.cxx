@@ -137,7 +137,7 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
                     void *handler_ctx,
                     struct async_operation_ref *async_ref)
 {
-    auto request = NewFromPool<struct fcgi_remote_request>(pool);
+    auto request = NewFromPool<struct fcgi_remote_request>(*pool);
     request->pool = pool;
     request->tcp_balancer = tcp_balancer;
     request->method = method;

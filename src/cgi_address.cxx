@@ -31,7 +31,7 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
 }
 
 struct cgi_address *
-cgi_address_new(struct pool *pool, const char *path, bool have_address_list)
+cgi_address_new(struct pool &pool, const char *path, bool have_address_list)
 {
     auto cgi = NewFromPool<struct cgi_address>(pool);
     cgi_address_init(cgi, path, have_address_list);
@@ -156,11 +156,11 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
 }
 
 struct cgi_address *
-cgi_address_dup(struct pool *pool, const struct cgi_address *old,
+cgi_address_dup(struct pool &pool, const struct cgi_address *old,
                 bool have_address_list)
 {
     auto n = NewFromPool<struct cgi_address>(pool);
-    cgi_address_copy(pool, n, old, have_address_list);
+    cgi_address_copy(&pool, n, old, have_address_list);
     return n;
 }
 
@@ -208,7 +208,7 @@ cgi_address::SaveBase(struct pool *pool, const char *suffix,
     if (length == (size_t)-1)
         return nullptr;
 
-    struct cgi_address *dest = cgi_address_dup(pool, this, have_address_list);
+    struct cgi_address *dest = cgi_address_dup(*pool, this, have_address_list);
     if (dest->uri != nullptr)
         dest->uri = p_strndup(pool, dest->uri, uri_length);
     dest->path_info = p_strndup(pool, new_path_info, length);
@@ -224,7 +224,7 @@ cgi_address::LoadBase(struct pool *pool, const char *suffix,
 
     char *unescaped = uri_unescape_dup(pool, suffix, strlen(suffix));
 
-    struct cgi_address *dest = cgi_address_dup(pool, this, have_address_list);
+    struct cgi_address *dest = cgi_address_dup(*pool, this, have_address_list);
     if (dest->uri != nullptr)
         dest->uri = p_strcat(pool, dest->uri, unescaped, nullptr);
 
@@ -249,7 +249,7 @@ cgi_address::Apply(struct pool *pool,
 
     const char *new_path_info = path_info != nullptr ? path_info : "";
 
-    struct cgi_address *dest = cgi_address_dup(pool, this, have_address_list);
+    struct cgi_address *dest = cgi_address_dup(*pool, this, have_address_list);
     dest->path_info = uri_absolute(pool, new_path_info,
                                    unescaped, unescaped_length);
     assert(dest->path_info != nullptr);

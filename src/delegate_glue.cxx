@@ -79,7 +79,7 @@ delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref *async_ref)
 {
-    auto glue = NewFromPool<struct delegate_glue>(pool);
+    auto glue = NewFromPool<struct delegate_glue>(*pool);
 
     glue->pool = pool;
     glue->path = path;

@@ -92,8 +92,8 @@ int main(int argc, char **argv) {
 
     tcp_stock = tcp_stock_new(ctx.pool, 0);
     struct tcp_balancer *tcp_balancer = tcp_balancer_new(ctx.pool, tcp_stock,
-                                                         balancer_new(ctx.pool));
-    stock = memcached_stock_new(ctx.pool, tcp_balancer, &address_list);
+                                                         balancer_new(*ctx.pool));
+    stock = memcached_stock_new(*ctx.pool, tcp_balancer, &address_list);
 
     /* send memcached request */
 

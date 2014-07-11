@@ -122,7 +122,7 @@ cgi_address_init(struct cgi_address *cgi, const char *path,
                  bool have_address_list);
 
 struct cgi_address *
-cgi_address_new(struct pool *pool, const char *path,
+cgi_address_new(struct pool &pool, const char *path,
                 bool have_address_list);
 
 void
@@ -130,7 +130,7 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
                  const struct cgi_address *src, bool have_address_list);
 
 struct cgi_address *
-cgi_address_dup(struct pool *pool, const struct cgi_address *old,
+cgi_address_dup(struct pool &pool, const struct cgi_address *old,
                 bool have_address_list);
 
 #endif

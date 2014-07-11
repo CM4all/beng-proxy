@@ -177,7 +177,7 @@ static const struct async_operation_class nfs_stock_request_operation = {
 struct nfs_stock *
 nfs_stock_new(struct pool *pool)
 {
-    return NewFromPool<struct nfs_stock>(pool, *pool);
+    return NewFromPool<struct nfs_stock>(*pool, *pool);
 }
 
 nfs_stock::~nfs_stock()
@@ -202,7 +202,7 @@ nfs_stock::~nfs_stock()
 void
 nfs_stock_free(struct nfs_stock *stock)
 {
-    DeleteFromPool(stock->pool, stock);
+    DeleteFromPool(*stock->pool, stock);
 }
 
 void
@@ -220,7 +220,7 @@ nfs_stock_get(struct nfs_stock *stock, struct pool *pool,
         struct pool *c_pool = pool_new_libc(stock->pool,
                                             "nfs_stock_connection");
         connection =
-            NewFromPool<struct nfs_stock_connection>(c_pool, *stock, *c_pool,
+            NewFromPool<struct nfs_stock_connection>(*c_pool, *stock, *c_pool,
                                                      p_strdup(c_pool, key));
 
         hashmap_add(stock->connection_map, connection->key, connection);
@@ -232,7 +232,7 @@ nfs_stock_get(struct nfs_stock *stock, struct pool *pool,
     }
 
     pool_ref(pool);
-    auto request = NewFromPool<struct nfs_stock_request>(pool);
+    auto request = NewFromPool<struct nfs_stock_request>(*pool);
     request->connection = connection;
     request->pool = pool;
     request->handler = handler;

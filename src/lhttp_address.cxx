@@ -29,7 +29,7 @@ lhttp_address_init(struct lhttp_address *address, const char *path)
 }
 
 struct lhttp_address *
-lhttp_address_new(struct pool *pool, const char *path)
+lhttp_address_new(struct pool &pool, const char *path)
 {
     auto address = NewFromPool<struct lhttp_address>(pool);
     lhttp_address_init(address, path);
@@ -87,10 +87,10 @@ lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
 }
 
 struct lhttp_address *
-lhttp_address_dup(struct pool *pool, const struct lhttp_address *old)
+lhttp_address_dup(struct pool &pool, const struct lhttp_address *old)
 {
     auto n = NewFromPool<struct lhttp_address>(pool);
-    lhttp_address_copy(pool, n, old);
+    lhttp_address_copy(&pool, n, old);
     return n;
 }
 
@@ -107,7 +107,7 @@ lhttp_address::Check(GError **error_r) const
 }
 
 struct lhttp_address *
-lhttp_address_dup_with_uri(struct pool *pool, const struct lhttp_address *src,
+lhttp_address_dup_with_uri(struct pool &pool, const struct lhttp_address *src,
                            const char *uri)
 {
     struct lhttp_address *p = lhttp_address_dup(pool, src);
@@ -116,21 +116,21 @@ lhttp_address_dup_with_uri(struct pool *pool, const struct lhttp_address *src,
 }
 
 struct lhttp_address *
-lhttp_address::InsertQueryString(struct pool *pool,
+lhttp_address::InsertQueryString(struct pool &pool,
                                  const char *query_string) const
 {
     return lhttp_address_dup_with_uri(pool, this,
-                                      uri_insert_query_string(pool, uri,
+                                      uri_insert_query_string(&pool, uri,
                                                               query_string));
 }
 
 struct lhttp_address *
-lhttp_address::InsertArgs(struct pool *pool,
+lhttp_address::InsertArgs(struct pool &pool,
                           const char *new_args, size_t new_args_length,
                           const char *path_info, size_t path_info_length) const
 {
     return lhttp_address_dup_with_uri(pool, this,
-                                      uri_insert_args(pool, uri,
+                                      uri_insert_args(&pool, uri,
                                                       new_args,
                                                       new_args_length,
                                                       path_info,
@@ -153,7 +153,7 @@ lhttp_address::SaveBase(struct pool *pool, const char *suffix) const
     if (length == (size_t)-1)
         return nullptr;
 
-    return lhttp_address_dup_with_uri(pool, this,
+    return lhttp_address_dup_with_uri(*pool, this,
                                       p_strndup(pool, uri, length));
 }
 
@@ -167,7 +167,7 @@ lhttp_address::LoadBase(struct pool *pool, const char *suffix) const
     assert(uri[strlen(uri) - 1] == '/');
     assert(suffix != nullptr);
 
-    return lhttp_address_dup_with_uri(pool, this,
+    return lhttp_address_dup_with_uri(*pool, this,
                                       p_strcat(pool, uri, suffix, nullptr));
 }
 
@@ -185,7 +185,7 @@ lhttp_address::Apply(struct pool *pool, const char *relative,
                                  relative, relative_length);
     assert(p != nullptr);
 
-    return lhttp_address_dup_with_uri(pool, this, p);
+    return lhttp_address_dup_with_uri(*pool, this, p);
 }
 
 const struct strref *

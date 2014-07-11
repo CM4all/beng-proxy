@@ -846,7 +846,7 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
     assert(handler->mount_error != nullptr);
     assert(handler->closed != nullptr);
 
-    auto client = NewFromPool<struct nfs_client>(pool);
+    auto client = NewFromPool<struct nfs_client>(*pool);
     client->pool = pool;
 
     client->context = nfs_init_context();
@@ -917,7 +917,7 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
         hashmap_get(client->file_map, path);
     if (file == nullptr) {
         struct pool *f_pool = pool_new_libc(client->pool, "nfs_file");
-        file = NewFromPool<struct nfs_file>(f_pool);
+        file = NewFromPool<struct nfs_file>(*f_pool);
         file->pool = f_pool;
         file->client = client;
         file->path = p_strdup(f_pool, path);
@@ -943,7 +943,7 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
 
     struct pool *r_pool = pool_new_libc(file->pool, "nfs_file_handle");
 
-    auto handle = NewFromPool<struct nfs_file_handle>(r_pool);
+    auto handle = NewFromPool<struct nfs_file_handle>(*r_pool);
     handle->file = file;
     handle->pool = r_pool;
     handle->caller_pool = caller_pool;

@@ -651,7 +651,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
     const struct widget_view *t_view = widget_get_transformation_view(widget);
     assert(t_view != nullptr);
 
-    auto embed = NewFromPool<struct embed>(pool);
+    auto embed = NewFromPool<struct embed>(*pool);
     embed->pool = pool;
 
     embed->num_redirects = 0;
@@ -722,7 +722,7 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     const struct widget_view *t_view = widget_get_transformation_view(widget);
     assert(t_view != nullptr);
 
-    auto embed = NewFromPool<struct embed>(pool);
+    auto embed = NewFromPool<struct embed>(*pool);
     embed->pool = pool;
 
     embed->num_redirects = 0;

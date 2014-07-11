@@ -19,7 +19,7 @@ strmap::strmap(struct pool &_pool, const strmap &src)
     :pool(_pool) {
     const auto hint = map.end();
     for (auto &i : src.map) {
-        Item *item = NewFromPool<Item>(&pool,
+        Item *item = NewFromPool<Item>(pool,
                                        p_strdup(&pool, i.key),
                                        p_strdup(&pool, i.value));
         map.insert(hint, *item);
@@ -29,7 +29,7 @@ strmap::strmap(struct pool &_pool, const strmap &src)
 void
 strmap::Add(const char *key, const char *value)
 {
-    Item *item = NewFromPool<Item>(&pool, key, value);
+    Item *item = NewFromPool<Item>(pool, key, value);
     map.insert(*item);
 }
 
@@ -43,7 +43,7 @@ strmap::Set(const char *key, const char *value)
         i->value = value;
         return old_value;
     } else {
-        map.insert(*NewFromPool<Item>(&pool, item));
+        map.insert(*NewFromPool<Item>(pool, item));
         return nullptr;
     }
 }
@@ -59,7 +59,7 @@ strmap::Remove(const char *key)
     map.erase(i);
 
     const char *value = found->value;
-    DeleteFromPool(&pool, found);
+    DeleteFromPool(pool, found);
     return value;
 }
 
@@ -82,11 +82,11 @@ strmap::EqualRange(const char *key) const
 struct strmap *
 strmap_new(struct pool *pool)
 {
-    return NewFromPool<struct strmap>(pool, *pool);
+    return NewFromPool<struct strmap>(*pool, *pool);
 }
 
 struct strmap *gcc_malloc
 strmap_dup(struct pool *pool, struct strmap *src)
 {
-    return NewFromPool<struct strmap>(pool, *pool, *src);
+    return NewFromPool<struct strmap>(*pool, *pool, *src);
 }

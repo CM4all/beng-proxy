@@ -76,7 +76,7 @@ lb_hmonitor_add(const struct lb_node_config *node, unsigned port,
 
     assert(class_ != NULL);
 
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     const char *key = p_sprintf(tpool, "%s:[%s]:%u",
                                 config->name.c_str(), node->name.c_str(),

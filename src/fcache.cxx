@@ -187,7 +187,7 @@ filter_cache_request_abort(struct FilterCacheRequest *request)
 
 /* check whether the request could produce a cacheable response */
 static filter_cache_info *
-filter_cache_request_evaluate(struct pool *pool,
+filter_cache_request_evaluate(struct pool &pool,
                               const struct resource_address *address,
                               const char *source_id)
 {
@@ -195,22 +195,22 @@ filter_cache_request_evaluate(struct pool *pool,
         return nullptr;
 
     return NewFromPool<struct filter_cache_info>(pool,
-                                                 p_strcat(pool, source_id, "|",
-                                                          resource_address_id(address, pool), nullptr));
+                                                 p_strcat(&pool, source_id, "|",
+                                                          resource_address_id(address, &pool), nullptr));
 }
 
 static filter_cache_info *
-filter_cache_info_dup(struct pool *pool, const filter_cache_info *src)
+filter_cache_info_dup(struct pool &pool, const filter_cache_info &src)
 {
-    return NewFromPool<filter_cache_info>(pool, *pool, *src);
+    return NewFromPool<filter_cache_info>(pool, pool, src);
 }
 
 static FilterCacheRequest *
 filter_cache_request_dup(struct pool &pool, const FilterCacheRequest &src)
 {
-    auto dest = NewFromPool<FilterCacheRequest>(&pool, pool, *src.caller_pool,
+    auto dest = NewFromPool<FilterCacheRequest>(pool, pool, *src.caller_pool,
                                                 *src.cache,
-                                                *filter_cache_info_dup(&pool, src.info));
+                                                *filter_cache_info_dup(pool, *src.info));
     dest->handler = src.handler;
     return dest;
 }
@@ -231,7 +231,7 @@ filter_cache_put(FilterCacheRequest *request,
 
     struct pool *pool = pool_new_slice(&request->cache->pool, "FilterCacheItem",
                                        request->cache->slice_pool);
-    auto item = NewFromPool<FilterCacheItem>(pool, *pool,
+    auto item = NewFromPool<FilterCacheItem>(*pool, *pool,
                                              *request->info,
                                              request->response.status,
                                              strmap_dup(pool,
@@ -498,7 +498,7 @@ filter_cache::filter_cache(struct pool &_pool, size_t max_size,
      /* leave 12.5% of the rubber allocator empty, to increase the
         chances that a hole can be found for a new allocation, to
         reduce the pressure that rubber_compress() creates */
-     cache(cache_new(&_pool, &filter_cache_class, 65521,
+     cache(cache_new(_pool, &filter_cache_class, 65521,
                      max_size * 7 / 8)),
      rubber(rubber_new(max_size)),
      slice_pool(slice_pool_new(1024, 65536)),
@@ -515,11 +515,11 @@ filter_cache_new(struct pool *pool, size_t max_size,
 {
     if (max_size == 0)
         /* the filter cache is disabled, return a disabled object */
-        return NewFromPool<filter_cache>(pool, *pool, *resource_loader);
+        return NewFromPool<filter_cache>(*pool, *pool, *resource_loader);
 
     pool = pool_new_libc(pool, "filter_cache");
 
-    return NewFromPool<filter_cache>(pool, *pool, max_size,
+    return NewFromPool<filter_cache>(*pool, *pool, max_size,
                                      *resource_loader);
 }
 
@@ -530,7 +530,7 @@ filter_cache_close(struct filter_cache *cache)
 
     if (cache->cache == nullptr) {
         /* filter cache is disabled */
-        DeleteFromPool(&pool, cache);
+        DeleteFromPool(pool, cache);
         return;
     }
 
@@ -591,7 +591,7 @@ filter_cache_miss(struct filter_cache &cache, struct pool &caller_pool,
        allocate a new pool for it from cache->pool */
     pool = pool_new_linear(&cache.pool, "filter_cache_request", 8192);
 
-    auto request = NewFromPool<FilterCacheRequest>(pool, *pool, caller_pool,
+    auto request = NewFromPool<FilterCacheRequest>(*pool, *pool, caller_pool,
                                                    cache, info);
     http_response_handler_set(&request->handler, handler, handler_ctx);
 
@@ -659,7 +659,7 @@ filter_cache_request(struct filter_cache *cache,
                      struct async_operation_ref *async_ref)
 {
     filter_cache_info *info = cache->cache != nullptr
-        ? filter_cache_request_evaluate(pool, address, source_id)
+        ? filter_cache_request_evaluate(*pool, address, source_id)
         : nullptr;
     if (info != nullptr) {
         FilterCacheItem *item

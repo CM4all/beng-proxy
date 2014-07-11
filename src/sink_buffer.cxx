@@ -161,7 +161,7 @@ sink_buffer_new(struct pool *pool, struct istream *input,
         return;
     }
 
-    auto buffer = PoolAlloc<sink_buffer>(pool);
+    auto buffer = PoolAlloc<sink_buffer>(*pool);
     buffer->pool = pool;
 
     istream_assign_handler(&buffer->input, input,

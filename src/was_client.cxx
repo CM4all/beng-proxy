@@ -673,7 +673,7 @@ was_client_request(struct pool *caller_pool, int control_fd,
     assert(uri != nullptr);
 
     struct pool *pool = pool_new_linear(caller_pool, "was_client_request", 32768);
-    auto client = NewFromPool<struct was_client>(pool);
+    auto client = NewFromPool<struct was_client>(*pool);
     client->pool = pool;
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;

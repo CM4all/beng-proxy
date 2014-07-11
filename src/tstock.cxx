@@ -99,7 +99,7 @@ static const struct stock_get_handler tstock_stock_handler = {
 struct tstock *
 tstock_new(struct pool *pool, struct hstock *tcp_stock, const char *socket_path)
 {
-    auto stock = NewFromPool<tstock>(pool);
+    auto stock = NewFromPool<tstock>(*pool);
 
     assert(tcp_stock != nullptr);
     assert(socket_path != nullptr);
@@ -130,7 +130,7 @@ tstock_translate(struct tstock *stock, struct pool *pool,
                  const TranslateHandler *handler, void *ctx,
                  struct async_operation_ref *async_ref)
 {
-    auto r = NewFromPool<tstock_request>(pool);
+    auto r = NewFromPool<tstock_request>(*pool);
 
     r->pool = pool;
     r->stock = stock;

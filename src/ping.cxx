@@ -275,7 +275,7 @@ ping(struct pool *pool, SocketAddress address,
     }
 
     pool_ref(pool);
-    auto p = NewFromPool<struct ping>(pool);
+    auto p = NewFromPool<struct ping>(*pool);
     p->pool = pool;
     p->fd = fd;
     p->ident = ident;

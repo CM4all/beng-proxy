@@ -302,7 +302,7 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
 {
     assert(pool != NULL);
 
-    ssl_filter *ssl = NewFromPool<ssl_filter>(pool);
+    ssl_filter *ssl = NewFromPool<ssl_filter>(*pool);
     ssl->pool = pool;
 
     ssl->ssl = ssl_factory_make(factory);

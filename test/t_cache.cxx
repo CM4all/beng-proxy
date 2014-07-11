@@ -53,7 +53,7 @@ static struct my_cache_item *
 my_cache_item_new(struct pool *pool, int match, int value)
 {
     pool = pool_new_linear(pool, "my_cache_item", 1024);
-    auto i = NewFromPool<struct my_cache_item>(pool);
+    auto i = NewFromPool<struct my_cache_item>(*pool);
     cache_item_init_relative(&i->item, 3600, 1);
     i->pool = pool;
     i->match = match;
@@ -81,7 +81,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
     pool = pool_new_libc(nullptr, "root");
 
-    cache = cache_new(pool, &my_cache_class, 1024, 4);
+    cache = cache_new(*pool, &my_cache_class, 1024, 4);
 
     /* add first item */
 

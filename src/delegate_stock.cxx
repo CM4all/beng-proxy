@@ -233,7 +233,7 @@ delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
     if (*options_buffer != 0)
         uri = p_strcat(pool, helper, "|", options_buffer, NULL);
 
-    auto info = NewFromPool<struct delegate_info>(pool);
+    auto info = NewFromPool<struct delegate_info>(*pool);
     info->helper = helper;
     info->options = options;
 

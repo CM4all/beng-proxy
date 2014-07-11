@@ -37,7 +37,7 @@ class Balancer {
 
 public:
     Balancer(struct pool *pool)
-        :balancer(balancer_new(pool)) {}
+        :balancer(balancer_new(*pool)) {}
 
     ~Balancer() {
         balancer_free(balancer);

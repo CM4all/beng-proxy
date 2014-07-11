@@ -208,7 +208,7 @@ client_socket_new(struct pool &pool,
 
         pool_ref(&pool);
         auto client_socket =
-            NewFromPool<ConnectSocket>(&pool, pool, fd,
+            NewFromPool<ConnectSocket>(pool, pool, fd,
                                        handler, ctx);
 
 #ifdef ENABLE_STOPWATCH

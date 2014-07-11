@@ -626,7 +626,7 @@ istream_replace_add(struct istream *istream, off_t start, off_t end,
     if (contents == nullptr && start == end)
         return;
 
-    auto s = NewFromPool<struct substitution>(replace->output.pool);
+    auto s = NewFromPool<struct substitution>(*replace->output.pool);
     s->next = nullptr;
     s->replace = replace;
 

@@ -17,7 +17,7 @@ http_cache_info::http_cache_info(struct pool &pool,
 }
 
 struct http_cache_info *
-http_cache_info_dup(struct pool *pool, const struct http_cache_info *src)
+http_cache_info_dup(struct pool &pool, const struct http_cache_info &src)
 {
-    return NewFromPool<http_cache_info>(pool, *pool, *src);
+    return NewFromPool<http_cache_info>(pool, pool, src);
 }

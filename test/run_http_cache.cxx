@@ -15,7 +15,7 @@
 static void
 put_random(struct http_cache_heap *cache, Rubber *rubber)
 {
-    const AutoRewindPool auto_rewind(tpool);
+    const AutoRewindPool auto_rewind(*tpool);
 
     char uri[8];
     uri[0] = '0' + random() % 10;
@@ -80,7 +80,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     struct pool *pool2 = pool_new_libc(pool, "cache");
 
     struct http_cache_heap cache;
-    http_cache_heap_init(&cache, pool2, max_size);
+    http_cache_heap_init(&cache, *pool2, max_size);
 
     for (unsigned i = 0; i < 32 * 1024; ++i)
         put_random(&cache, rubber);

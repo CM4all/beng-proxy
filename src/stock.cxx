@@ -347,7 +347,7 @@ stock_new(struct pool *pool, const struct stock_class *cls,
 
     pool = pool_new_linear(pool, "stock", 1024);
 
-    auto stock = NewFromPool<struct stock>(pool);
+    auto stock = NewFromPool<struct stock>(*pool);
     stock->pool = pool;
     stock->cls = cls;
     stock->class_ctx = class_ctx;
@@ -519,7 +519,7 @@ stock_get(struct stock *stock, struct pool *caller_pool, void *info,
     if (stock->limit > 0 &&
         stock->num_busy + stock->num_create >= stock->limit) {
         /* item limit reached: wait for an item to return */
-        auto waiting = NewFromPool<struct stock_waiting>(caller_pool);
+        auto waiting = NewFromPool<struct stock_waiting>(*caller_pool);
 
         pool_ref(caller_pool);
         waiting->pool = caller_pool;

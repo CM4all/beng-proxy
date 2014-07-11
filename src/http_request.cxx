@@ -209,7 +209,7 @@ http_request(struct pool *pool,
     assert(handler->response != nullptr);
     assert(body == nullptr || !istream_has_handler(body));
 
-    auto hr = NewFromPool<struct http_request>(pool);
+    auto hr = NewFromPool<struct http_request>(*pool);
     hr->pool = pool;
     hr->tcp_balancer = tcp_balancer;
     hr->session_sticky = session_sticky;

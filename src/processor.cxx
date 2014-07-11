@@ -283,7 +283,7 @@ processor_new(struct pool *caller_pool,
 
     struct pool *pool = pool_new_linear(caller_pool, "processor", 32768);
 
-    auto processor = NewFromPool<struct processor>(pool);
+    auto processor = NewFromPool<struct processor>(*pool);
     processor->pool = pool;
     processor->caller_pool = caller_pool;
 
@@ -668,7 +668,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
         }
 
         processor->tag = TAG_WIDGET;
-        processor->widget.widget = NewFromPool<widget>(processor->widget.pool);
+        processor->widget.widget = NewFromPool<widget>(*processor->widget.pool);
         widget_init(processor->widget.widget, processor->widget.pool, nullptr);
         expansible_buffer_reset(processor->widget.params);
 
@@ -1605,6 +1605,6 @@ static const struct parser_handler processor_parser_handler = {
 static void
 processor_parser_init(struct processor *processor, struct istream *input)
 {
-    processor->parser = parser_new(processor->pool, input,
+    processor->parser = parser_new(*processor->pool, input,
                                    &processor_parser_handler, processor);
 }
