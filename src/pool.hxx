@@ -72,4 +72,33 @@ DeleteUnrefTrashPool(struct pool &pool, T *t)
     DeleteUnrefPool(pool, t);
 }
 
+class PoolAllocator {
+    struct pool &pool;
+
+public:
+    explicit constexpr PoolAllocator(struct pool &_pool):pool(_pool) {}
+
+    void *Allocate(size_t size) {
+        return p_malloc(&pool, size);
+    }
+
+    char *DupString(const char *p) {
+        return p_strdup(&pool, p);
+    }
+
+    void Free(void *p) {
+        p_free(&pool, p);
+    }
+
+    template<typename T, typename... Args>
+    T *New(Args&&... args) {
+        return NewFromPool<T>(pool, std::forward<Args>(args)...);
+    }
+
+    template<typename T>
+    void Delete(T *t) {
+        DeleteFromPool(pool, t);
+    }
+};
+
 #endif
