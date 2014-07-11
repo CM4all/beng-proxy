@@ -417,9 +417,8 @@ translation_response_headers(struct growing_buffer *headers,
     if (tr->authentication_info != nullptr)
         header_write(headers, "authentication-info", tr->authentication_info);
 
-    if (tr->response_headers != nullptr)
-        for (const auto &i : *tr->response_headers)
-            header_write(headers, i.key, i.value);
+    for (const auto &i : tr->response_headers)
+        header_write(headers, i.key, i.value);
 }
 
 /**

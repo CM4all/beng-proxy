@@ -232,6 +232,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/stock.cxx src/stock.hxx \
 	src/hstock.cxx src/hstock.hxx \
 	src/mstock.cxx src/mstock.h \
+	src/kvlist.hxx \
 	src/strmap.cxx src/strmap.hxx \
 	src/strref-dpool.h \
 	src/strref-pool.h \

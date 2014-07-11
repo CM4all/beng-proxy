@@ -12,6 +12,7 @@
 #include "header_forward.hxx"
 #include "strset.h"
 #include "glibfwd.hxx"
+#include "kvlist.hxx"
 
 #include <http/status.h>
 
@@ -152,9 +153,9 @@ struct TranslateResponse {
     const char *cookie_host;
     const char *cookie_path;
 
-    struct strmap *request_headers;
+    KeyValueList request_headers;
 
-    struct strmap *response_headers;
+    KeyValueList response_headers;
 
     struct widget_view *views;
 

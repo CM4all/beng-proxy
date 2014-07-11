@@ -681,7 +681,7 @@ parse_header_forward(TranslateClient &client,
 
 static bool
 parse_header(struct pool *pool,
-             struct strmap *&headers, const char *packet_name,
+             KeyValueList &headers, const char *packet_name,
              const char *payload, size_t payload_length,
              GError **error_r)
 {
@@ -708,9 +708,7 @@ parse_header(struct pool *pool,
         return false;
     }
 
-    if (headers == nullptr)
-        headers = strmap_new(pool);
-    headers->Add(name, value);
+    headers.Add(PoolAllocator(*pool), name, value);
     return true;
 }
 
@@ -779,6 +777,11 @@ translate_response_finish(TranslateResponse *response,
                                    error_r))
             return false;
     }
+
+    /* these lists are in reverse order because new items were added
+       to the front; reverse them now */
+    response->request_headers.Reverse();
+    response->response_headers.Reverse();
 
     return true;
 }

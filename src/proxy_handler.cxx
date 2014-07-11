@@ -167,9 +167,8 @@ proxy_handler(request &request2)
                                         global_pipe_stock);
 #endif
 
-    if (tr.request_headers != nullptr)
-        for (const auto &i : *tr.request_headers)
-            forward.headers->Add(i.key, i.value);
+    for (const auto &i : tr.request_headers)
+        forward.headers->Add(i.key, i.value);
 
     http_cache_request(global_http_cache, request->pool,
                        session_id_low(request2.session_id),

@@ -96,8 +96,8 @@ TranslateResponse::Clear()
 
     cookie_domain = cookie_host = cookie_path = nullptr;
 
-    request_headers = nullptr;
-    response_headers = nullptr;
+    request_headers.Clear();
+    response_headers.Clear();
 
     views = nullptr;
     widget_group = nullptr;
@@ -192,13 +192,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     cookie_host = p_strdup_checked(pool, src.cookie_host);
     cookie_path = p_strdup_checked(pool, src.cookie_path);
 
-    request_headers = src.request_headers != nullptr
-        ? strmap_dup(pool, src.request_headers)
-        : nullptr;
-
-    response_headers = src.response_headers != nullptr
-        ? strmap_dup(pool, src.response_headers)
-        : nullptr;
+    request_headers = KeyValueList(PoolAllocator(*pool), src.request_headers);
+    response_headers = KeyValueList(PoolAllocator(*pool), src.response_headers);
 
     views = src.views != nullptr
         ? widget_view_dup_chain(pool, src.views)
