@@ -14,7 +14,10 @@
 
 #include <inline/list.h>
 
+extern "C" {
 #include <nfsc/libnfs.h>
+}
+
 #include <event.h>
 #include <fcntl.h>
 #include <sys/poll.h>
