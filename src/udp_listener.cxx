@@ -32,6 +32,13 @@ struct udp_listener {
     void *handler_ctx;
 };
 
+G_GNUC_CONST
+static inline GQuark
+udp_listener_quark(void)
+{
+    return g_quark_from_static_string("udp_listener");
+}
+
 static void
 udp_listener_event_callback(int fd, gcc_unused short event, void *ctx)
 {

@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_UDP_LISTENER_HXX
 #define BENG_PROXY_UDP_LISTENER_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 #include <stddef.h>
 
@@ -26,13 +26,6 @@ struct udp_handler {
 
     void (*error)(GError *error, void *ctx);
 };
-
-G_GNUC_CONST
-static inline GQuark
-udp_listener_quark(void)
-{
-    return g_quark_from_static_string("udp_listener");
-}
 
 struct udp_listener *
 udp_listener_new(struct pool *pool,
