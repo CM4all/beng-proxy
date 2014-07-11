@@ -32,7 +32,7 @@ public:
     KeyValueList() = default;
     KeyValueList(const KeyValueList &) = delete;
     KeyValueList(KeyValueList &&src) {
-        std::swap(list, src.list);
+        list.swap(src.list);
     }
 
     template<typename Alloc>
@@ -42,7 +42,7 @@ public:
     }
 
     KeyValueList &operator=(KeyValueList &&src) {
-        std::swap(list, src.list);
+        list.swap(src.list);
         return *this;
     }
 
