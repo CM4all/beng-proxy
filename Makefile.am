@@ -631,6 +631,7 @@ libnet_a_SOURCES = \
 	src/net/ConnectSocket.cxx src/net/ConnectSocket.hxx \
 	src/net/ServerSocket.cxx src/net/ServerSocket.hxx \
 	src/net/StaticSocketAddress.cxx src/net/StaticSocketAddress.hxx \
+	src/net/AllocatedSocketAddress.cxx src/net/AllocatedSocketAddress.hxx \
 	src/net/SocketDescriptor.cxx src/net/SocketDescriptor.hxx
 
 libraddress_a_SOURCES = \
