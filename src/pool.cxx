@@ -1027,6 +1027,13 @@ void
 pool_mark(struct pool *pool, struct pool_mark_state *mark)
 {
 #ifndef POOL_LIBC_ONLY
+
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND)
+        /* ignore on Valgrind */
+        return;
+#endif
+
     assert(pool->type == POOL_LINEAR);
 
     mark->area = pool->current_area.linear;
@@ -1070,6 +1077,13 @@ void
 pool_rewind(struct pool *pool, const struct pool_mark_state *mark)
 {
 #ifndef POOL_LIBC_ONLY
+
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND)
+        /* ignore on Valgrind */
+        return;
+#endif
+
     assert(pool->type == POOL_LINEAR);
     assert(mark->area == nullptr || mark->position <= mark->area->used);
     assert(mark->area != nullptr || mark->position == 0);
