@@ -5,7 +5,6 @@
  */
 
 #include "udp_listener.hxx"
-#include "pool.hxx"
 #include "fd_util.h"
 #include "net/AllocatedSocketAddress.hxx"
 #include "gerrno.h"
@@ -103,8 +102,7 @@ udp_listener_event_callback(int fd, gcc_unused short event, void *ctx)
 }
 
 struct udp_listener *
-udp_listener_new(struct pool *pool,
-                 SocketAddress address,
+udp_listener_new(SocketAddress address,
                  const struct udp_handler *handler, void *ctx,
                  GError **error_r)
 {
@@ -112,7 +110,7 @@ udp_listener_new(struct pool *pool,
     assert(handler->datagram != nullptr);
     assert(handler->error != nullptr);
 
-    auto udp = NewFromPool<struct udp_listener>(pool);
+    auto udp = new udp_listener();
     udp->fd = socket_cloexec_nonblock(address.GetFamily(),
                                       SOCK_DGRAM, 0);
     if (udp->fd < 0) {
@@ -158,8 +156,7 @@ udp_listener_new(struct pool *pool,
 }
 
 struct udp_listener *
-udp_listener_port_new(struct pool *pool,
-                      const char *host_and_port, int default_port,
+udp_listener_port_new(const char *host_and_port, int default_port,
                       const struct udp_handler *handler, void *ctx,
                       GError **error_r)
 {
@@ -172,7 +169,7 @@ udp_listener_port_new(struct pool *pool,
     if (!address.Parse(host_and_port, default_port, true, error_r))
         return nullptr;
 
-    return udp_listener_new(pool, address,
+    return udp_listener_new(address,
                             handler, ctx, error_r);
 }
 

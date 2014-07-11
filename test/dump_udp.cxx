@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
 
     GError *error = nullptr;
     struct udp_listener *udp =
-        udp_listener_port_new(pool, listen_host, 1234,
+        udp_listener_port_new(listen_host, 1234,
                               &dump_udp_handler, nullptr, &error);
     if (udp == nullptr) {
         g_printerr("%s\n", error->message);

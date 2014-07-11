@@ -138,7 +138,7 @@ control_server_new_port(struct pool *pool,
     assert(handler->error != nullptr);
 
     auto cs = NewFromPool<struct control_server>(pool);
-    cs->udp = udp_listener_port_new(pool, host_and_port, default_port,
+    cs->udp = udp_listener_port_new(host_and_port, default_port,
                                     &control_server_udp_handler, cs,
                                     error_r);
     if (cs->udp == nullptr)
@@ -166,7 +166,7 @@ control_server_new(struct pool *pool, SocketAddress address,
     assert(handler->error != nullptr);
 
     auto cs = NewFromPool<struct control_server>(pool);
-    cs->udp = udp_listener_new(pool, address,
+    cs->udp = udp_listener_new(address,
                                &control_server_udp_handler, cs,
                                error_r);
     if (cs->udp == nullptr)
