@@ -1,9 +1,8 @@
 #include "ping.hxx"
 #include "pool.hxx"
 #include "async.h"
-#include "address_string.hxx"
-#include "address_envelope.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 
 #include <event.h>
 #include <stdio.h>
@@ -49,9 +48,8 @@ int main(int argc, char **argv)
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
     GError *error = nullptr;
-    struct address_envelope *envelope =
-        address_envelope_parse(pool, argv[1], 0, false, &error);
-    if (envelope == nullptr) {
+    AllocatedSocketAddress address;
+    if (!address.Parse(argv[1], 0, false, &error)) {
         fprintf(stderr, "%s\n", error->message);
         g_error_free(error);
         pool_unref(pool);
@@ -61,7 +59,7 @@ int main(int argc, char **argv)
 
     struct event_base *event_base = event_init();
 
-    ping(pool, { &envelope->address, envelope->length },
+    ping(pool, address,
          &my_ping_handler, nullptr,
          &my_async_ref);
 

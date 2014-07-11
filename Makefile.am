@@ -825,6 +825,7 @@ test_run_ping_SOURCES = test/run_ping.cxx \
 	src/address_string.cxx
 test_run_ping_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
+	libnet.a \
 	$(LIBEVENT_LIBS) $(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS) \
 	$(GLIB_LIBS)
