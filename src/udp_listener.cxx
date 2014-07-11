@@ -7,8 +7,7 @@
 #include "udp_listener.hxx"
 #include "pool.hxx"
 #include "fd_util.h"
-#include "address_string.hxx"
-#include "address_envelope.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "gerrno.h"
 
 #include <socket/address.h>
@@ -169,17 +168,12 @@ udp_listener_port_new(struct pool *pool,
     assert(handler->datagram != nullptr);
     assert(handler->error != nullptr);
 
-    struct address_envelope *envelope =
-        address_envelope_parse(pool, host_and_port, default_port,
-                               true, error_r);
-    if (envelope == nullptr)
+    AllocatedSocketAddress address;
+    if (!address.Parse(host_and_port, default_port, true, error_r))
         return nullptr;
 
-    struct udp_listener *udp =
-        udp_listener_new(pool, &envelope->address, envelope->length,
-                         handler, ctx, error_r);
-    p_free(pool, envelope);
-    return udp;
+    return udp_listener_new(pool, address, address.GetSize(),
+                            handler, ctx, error_r);
 }
 
 void

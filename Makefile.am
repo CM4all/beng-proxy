@@ -1813,20 +1813,20 @@ test_run_delegate_LDADD = $(AM_LDADD) \
 
 test_dump_udp_SOURCES = test/dump_udp.cxx \
 	src/udp_listener.cxx \
-	src/address_string.cxx \
 	src/fd_util.c
 test_dump_udp_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
+	libnet.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS)
 
 test_dump_control_SOURCES = test/dump_control.cxx \
 	src/udp_listener.cxx \
-	src/address_string.cxx \
 	src/fd_util.c \
 	src/control_server.cxx
 test_dump_control_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
+	libnet.a \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS)
 
