@@ -1918,7 +1918,6 @@ VALGRIND_FLAGS = --leak-check=yes --show-reachable=yes
 VALGRIND_FLAGS += --track-fds=yes --track-origins=yes
 VALGRIND_FLAGS += --suppressions=valgrind.suppressions
 
-valgrind: AM_CPPFLAGS += -DPOOL_LIBC_ONLY
 valgrind: export G_SLICE=always-malloc
 valgrind: src/cm4all-beng-proxy
 	valgrind $(VALGRIND_FLAGS) ./src/cm4all-beng-proxy $(DEBUG_ARGS)

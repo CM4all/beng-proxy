@@ -11,6 +11,10 @@
 #include <inline/list.h>
 #include <daemon/log.h>
 
+#ifdef VALGRIND
+#include <valgrind/memcheck.h>
+#endif
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -429,6 +433,15 @@ pool_new_linear(struct pool *parent, const char *name, size_t initial_size)
 
     return pool_new_libc(parent, name);
 #else
+
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND)
+        /* Valgrind cannot verify allocations and memory accesses with
+           this library; therefore use the "libc" pool when running on
+           valgrind */
+        return pool_new_libc(parent, name);
+#endif
+
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LINEAR;
     pool->area_size = initial_size;
@@ -453,6 +466,15 @@ pool_new_slice(struct pool *parent, const char *name,
 
     return pool_new_libc(parent, name);
 #else
+
+#ifdef VALGRIND
+    if (RUNNING_ON_VALGRIND)
+        /* Valgrind cannot verify allocations and memory accesses with
+           this library; therefore use the "libc" pool when running on
+           valgrind */
+        return pool_new_libc(parent, name);
+#endif
+
     struct pool *pool = pool_new(parent, name);
     pool->type = POOL_LINEAR;
     pool->area_size = slice_pool_get_slice_size(slice_pool) - LINEAR_POOL_AREA_HEADER;
