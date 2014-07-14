@@ -12,7 +12,7 @@
 
 #include <event.h>
 
-struct defer {
+struct Defer {
     struct pool *pool;
 
     defer_callback_t callback;
@@ -33,7 +33,7 @@ struct async_operation_ref;
 static void
 defer_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
 {
-    struct defer *d = (struct defer *)ctx;
+    Defer *d = (Defer *)ctx;
 
     d->operation.Finished();
 
@@ -49,16 +49,16 @@ defer_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
  *
  */
 
-static struct defer *
+static Defer *
 async_to_defer(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct defer, operation);
+    return ContainerCast(ao, Defer, operation);
 }
 
 static void
 defer_abort(struct async_operation *ao)
 {
-    struct defer *d = async_to_defer(ao);
+    Defer *d = async_to_defer(ao);
 
     event_del(&d->event);
     pool_unref(d->pool);
@@ -78,7 +78,7 @@ void
 defer(struct pool *pool, defer_callback_t callback, void *ctx,
       struct async_operation_ref *async_ref)
 {
-    auto d = NewFromPool<struct defer>(*pool);
+    auto d = NewFromPool<Defer>(*pool);
     static const struct timeval tv = {
         .tv_sec = 0,
         .tv_usec = 0,
