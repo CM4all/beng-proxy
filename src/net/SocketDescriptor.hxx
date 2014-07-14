@@ -58,6 +58,11 @@ public:
         return result;
     }
 
+    /**
+     * @return false on error (with errno set)
+     */
+    bool Create(int domain, int type, int protocol);
+
     bool Create(int domain, int type, int protocol, Error &error);
     bool CreateListen(int family, int socktype, int protocol,
                       const SocketAddress &address, Error &error);

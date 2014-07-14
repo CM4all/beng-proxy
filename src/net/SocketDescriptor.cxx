@@ -28,6 +28,16 @@ SocketDescriptor::Close()
 }
 
 bool
+SocketDescriptor::Create(int domain, int type, int protocol)
+{
+    assert(!IsDefined());
+
+    type |= SOCK_CLOEXEC|SOCK_NONBLOCK;
+    fd = socket(domain, type, protocol);
+    return fd >= 0;
+}
+
+bool
 SocketDescriptor::Create(int domain, int type, int protocol, Error &error)
 {
     assert(!IsDefined());
