@@ -4,16 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ABORT_CLOSE_H
-#define BENG_PROXY_ABORT_CLOSE_H
+#ifndef BENG_PROXY_ABORT_CLOSE_HXX
+#define BENG_PROXY_ABORT_CLOSE_HXX
 
 struct pool;
 struct istream;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * @param istream the istream to be closed on abort; it should be
@@ -29,9 +25,5 @@ async_close_on_abort(struct pool *pool, struct istream *istream,
 struct async_operation_ref *
 async_optional_close_on_abort(struct pool *pool, struct istream *istream,
                               struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -9,9 +9,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "abort-unref.h"
+#include "abort_unref.hxx"
 #include "async.h"
-#include "pool.h"
+#include "pool.hxx"
+#include "util/Cast.hxx"
 
 struct unref_on_abort {
     struct pool *pool;
@@ -32,7 +33,7 @@ struct unref_on_abort {
 static struct unref_on_abort *
 async_to_uoa(struct async_operation *ao)
 {
-    return (struct unref_on_abort*)(((char*)ao) - offsetof(struct unref_on_abort, operation));
+    return ContainerCast(ao, struct unref_on_abort, operation);
 }
 
 static void
@@ -63,7 +64,7 @@ async_unref_on_abort_impl(struct pool *pool,
                           struct async_operation_ref *async_ref
                           TRACE_ARGS_DECL)
 {
-    struct unref_on_abort *uoa = p_malloc(pool, sizeof(*uoa));
+    auto uoa = NewFromPool<struct unref_on_abort>(*pool);
 
     uoa->pool = pool;
     async_init(&uoa->operation, &uoa_operation);

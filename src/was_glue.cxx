@@ -12,7 +12,7 @@
 #include "lease.h"
 #include "tcp_stock.hxx"
 #include "stock.hxx"
-#include "abort-close.h"
+#include "abort_close.hxx"
 #include "child_options.hxx"
 #include "istream.h"
 #include "pool.hxx"

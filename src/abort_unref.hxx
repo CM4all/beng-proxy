@@ -9,17 +9,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_ABORT_UNREF_H
-#define __BENG_ABORT_UNREF_H
+#ifndef BENG_PROXY_ABORT_UNREF_HXX
+#define BENG_PROXY_ABORT_UNREF_HXX
 
 #include "trace.h"
 
 struct pool;
 struct async_operation_ref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct async_operation_ref *
 async_unref_on_abort_impl(struct pool *pool,
@@ -27,9 +23,5 @@ async_unref_on_abort_impl(struct pool *pool,
                           TRACE_ARGS_DECL);
 
 #define async_unref_on_abort(pool, async_ref) async_unref_on_abort_impl(pool, async_ref TRACE_ARGS)
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

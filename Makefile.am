@@ -86,9 +86,9 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/gerrno.h \
 	src/glibfwd.hxx \
-	src/abort-close.c src/abort-close.h \
-	src/abort-flag.c src/abort-flag.h \
-	src/abort-unref.c src/abort-unref.h \
+	src/abort_close.cxx src/abort_close.hxx \
+	src/abort_flag.cxx src/abort_flag.hxx \
+	src/abort_unref.cxx src/abort_unref.hxx \
 	src/access-log.c src/access-log.h \
 	src/address.c src/address.h \
 	src/ajp_client.cxx src/ajp_client.hxx \
@@ -371,7 +371,7 @@ endif
 
 src_cm4all_beng_lb_SOURCES = \
 	src/isolate.cxx src/isolate.hxx \
-	src/abort-close.c src/abort-close.h \
+	src/abort_close.cxx src/abort_close.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/clock.c src/clock.h \
 	src/cleanup_timer.c src/cleanup_timer.h \
@@ -1125,7 +1125,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/child_manager.c src/child_manager.h \
 	src/crash.c \
-	src/abort-flag.c src/direct.c
+	src/abort_flag.cxx src/direct.c
 test_t_cgi_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libraddress.a \
@@ -1233,7 +1233,7 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/http_cache_heap.cxx src/http_cache_age.cxx \
 	src/uri-edit.c src/uri-relative.c src/uri_escape.cxx \
 	src/uri-extract.c src/uri_base.cxx \
-	src/abort-unref.c src/cache.cxx \
+	src/abort_unref.cxx src/cache.cxx \
 	src/header_writer.cxx src/http_util.cxx \
 	src/clock.c \
 	src/istream_unlock.cxx
@@ -1345,7 +1345,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/translate_response.cxx \
 	src/widget_view.cxx \
 	src/exec.cxx \
-	src/hashmap.cxx src/strmap.cxx src/abort-unref.c \
+	src/hashmap.cxx src/strmap.cxx src/abort_unref.cxx \
 	src/strset.c \
 	src/uri-relative.c src/uri_escape.cxx src/uri-edit.c \
 	src/uri-extract.c src/uri_base.cxx \
@@ -1436,7 +1436,7 @@ test_request_translation_SOURCES = test/request_translation.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/stock.cxx src/hstock.cxx src/hashmap.cxx src/strmap.cxx \
 	src/strset.c \
-	src/abort-unref.c \
+	src/abort_unref.cxx \
 	src/uri-edit.c src/uri_base.cxx \
 	src/uri_escape.cxx src/uri-relative.c \
 	src/uri-extract.c \

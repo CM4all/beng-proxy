@@ -15,7 +15,7 @@
 #include "lease.h"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "abort-close.h"
+#include "abort_close.hxx"
 #include "istream.h"
 #include "net/SocketAddress.hxx"
 #include "pool.hxx"

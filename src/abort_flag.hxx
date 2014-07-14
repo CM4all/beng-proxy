@@ -2,12 +2,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_ABORT_FLAG_H
-#define BENG_ABORT_FLAG_H
+#ifndef BENG_ABORT_FLAG_HXX
+#define BENG_ABORT_FLAG_HXX
 
 #include "async.h"
-
-#include <stdbool.h>
 
 /**
  * An async_operation implementation which sets a flag.  This can be
@@ -19,10 +17,6 @@ struct abort_flag {
 
     bool aborted;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Initialize the abort_flag object, which was allocated by the
@@ -41,9 +35,5 @@ abort_flag_set(struct abort_flag *af, struct async_operation_ref *async_ref)
     abort_flag_init(af);
     async_ref_set(async_ref, &af->operation);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -4,11 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "abort-close.h"
+#include "abort_close.hxx"
 #include "async.h"
-#include "pool.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "istream.h"
+#include "util/Cast.hxx"
 
 struct close_on_abort {
     struct istream *istream;
@@ -24,7 +24,7 @@ struct close_on_abort {
 static struct close_on_abort *
 async_to_coa(struct async_operation *ao)
 {
-    return (struct close_on_abort*)(((char*)ao) - offsetof(struct close_on_abort, operation));
+    return ContainerCast(ao, struct close_on_abort, operation);
 }
 
 static void
@@ -50,11 +50,11 @@ struct async_operation_ref *
 async_close_on_abort(struct pool *pool, struct istream *istream,
                      struct async_operation_ref *async_ref)
 {
-    struct close_on_abort *coa = p_malloc(pool, sizeof(*coa));
+    auto coa = NewFromPool<struct close_on_abort>(*pool);
 
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(!istream_has_handler(istream));
-    assert(async_ref != NULL);
+    assert(async_ref != nullptr);
 
     coa->istream = istream;
     async_init(&coa->operation, &coa_operation);
@@ -67,7 +67,7 @@ struct async_operation_ref *
 async_optional_close_on_abort(struct pool *pool, struct istream *istream,
                               struct async_operation_ref *async_ref)
 {
-    return istream != NULL
+    return istream != nullptr
         ? async_close_on_abort(pool, istream, async_ref)
         : async_ref;
 }

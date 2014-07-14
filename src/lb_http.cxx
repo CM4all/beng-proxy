@@ -29,7 +29,7 @@
 #include "strmap.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
-#include "abort-close.h"
+#include "abort_close.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 

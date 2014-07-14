@@ -6,7 +6,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "abort-flag.h"
+#include "abort_flag.hxx"
+#include "util/Cast.hxx"
 
 /*
  * async operation
@@ -16,7 +17,7 @@
 static struct abort_flag *
 async_to_af(struct async_operation *ao)
 {
-    return (struct abort_flag*)(((char*)ao) - offsetof(struct abort_flag, operation));
+    return ContainerCast(ao, struct abort_flag, operation);
 }
 
 static void

@@ -11,7 +11,7 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock.hxx"
-#include "abort-close.h"
+#include "abort_close.hxx"
 #include "address_list.hxx"
 #include "pool.hxx"
 #include "istream.h"

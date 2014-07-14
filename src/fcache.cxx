@@ -12,7 +12,7 @@
 #include "http_response.hxx"
 #include "date.h"
 #include "strref.h"
-#include "abort-unref.h"
+#include "abort_unref.hxx"
 #include "tpool.h"
 #include "http_util.hxx"
 #include "resource_address.hxx"

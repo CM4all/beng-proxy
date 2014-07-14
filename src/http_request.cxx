@@ -15,7 +15,7 @@
 #include "async.h"
 #include "growing_buffer.hxx"
 #include "lease.h"
-#include "abort-close.h"
+#include "abort_close.hxx"
 #include "failure.hxx"
 #include "address_envelope.hxx"
 #include "istream.h"
