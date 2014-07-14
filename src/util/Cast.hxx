@@ -38,7 +38,7 @@
 static inline constexpr void *
 OffsetPointer(void *p, ptrdiff_t offset)
 {
-    return (char *)p + offset;
+	return (char *)p + offset;
 }
 
 /**
@@ -47,28 +47,28 @@ OffsetPointer(void *p, ptrdiff_t offset)
 static inline constexpr const void *
 OffsetPointer(const void *p, ptrdiff_t offset)
 {
-    return (const char *)p + offset;
+	return (const char *)p + offset;
 }
 
 template<typename T, typename U>
 static inline constexpr T *
 OffsetCast(U *p, ptrdiff_t offset)
 {
-    return reinterpret_cast<T *>(OffsetPointer(p, offset));
+	return reinterpret_cast<T *>(OffsetPointer(p, offset));
 }
 
 template<typename T, typename U>
 static inline constexpr T *
 OffsetCast(const U *p, ptrdiff_t offset)
 {
-    return reinterpret_cast<const T *>(OffsetPointer(p, offset));
+	return reinterpret_cast<const T *>(OffsetPointer(p, offset));
 }
 
 /**
  * Cast the given pointer to a struct member to its parent structure.
  */
 #define ContainerCast(p, container, attribute) \
-    OffsetCast<container, decltype(((container*)nullptr)->attribute)>\
-    ((p), -ptrdiff_t(offsetof(container, attribute)))
+	OffsetCast<container, decltype(((container*)nullptr)->attribute)> \
+	((p), -ptrdiff_t(offsetof(container, attribute)))
 
 #endif
