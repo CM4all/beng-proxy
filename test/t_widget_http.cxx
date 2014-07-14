@@ -13,7 +13,7 @@
 #include "css_processor.h"
 #include "text_processor.hxx"
 #include "penv.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "fcache.h"
 #include "transformation.hxx"
 #include "crash.h"

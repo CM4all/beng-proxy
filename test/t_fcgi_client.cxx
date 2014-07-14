@@ -6,7 +6,7 @@
 #include "fcgi_client.hxx"
 #include "fcgi_protocol.h"
 #include "http_response.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "fd-util.h"
 #include "header_writer.hxx"
 #include "lease.h"

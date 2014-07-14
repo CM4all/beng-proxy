@@ -8,7 +8,7 @@
 #include "uri-parser.h"
 #include "sink_gstring.hxx"
 #include "tpool.h"
-#include "async.h"
+#include "async.hxx"
 #include "escape_pool.h"
 #include "escape_html.h"
 #include "istream.h"

@@ -7,7 +7,7 @@
 #include "tcp_stock.hxx"
 #include "hstock.hxx"
 #include "stock.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "address_list.hxx"
 #include "address_envelope.hxx"
 #include "pevent.h"

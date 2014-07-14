@@ -5,7 +5,7 @@
  */
 
 #include "stock.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 #include "defer_event.h"
 #include "util/Cast.hxx"

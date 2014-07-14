@@ -6,7 +6,7 @@
 
 #include "ConnectSocket.hxx"
 #include "SocketAddress.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "fd_util.h"
 #include "stopwatch.h"
 #include "pevent.h"

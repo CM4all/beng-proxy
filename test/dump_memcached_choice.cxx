@@ -1,7 +1,7 @@
 #include "memcached_client.hxx"
 #include "http_cache_internal.hxx"
 #include "lease.h"
-#include "async.h"
+#include "async.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"
 #include "tpool.h"

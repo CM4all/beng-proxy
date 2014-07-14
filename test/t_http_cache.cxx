@@ -7,7 +7,7 @@
 #include "header_parser.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "tpool.h"
 #include "istream.h"
 

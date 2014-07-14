@@ -16,7 +16,7 @@
 #include "istream_rubber.hxx"
 #include "istream_tee.h"
 #include "cache.hxx"
-#include "async.h"
+#include "async.hxx"
 
 #include <inline/list.h>
 

@@ -2,7 +2,7 @@
 #include "delegate_client.hxx"
 #include "delegate_stock.hxx"
 #include "hstock.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "defer.hxx"
 #include "pool.hxx"
 

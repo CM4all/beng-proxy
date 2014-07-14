@@ -18,7 +18,7 @@
 #include "widget-quark.h"
 #include "session.hxx"
 #include "cookie_client.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "dpool.h"
 #include "get.hxx"
 #include "fcache.h"

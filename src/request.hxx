@@ -12,7 +12,7 @@
 #include "translate_request.hxx"
 #include "translate_response.hxx"
 #include "penv.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "session.hxx"
 #include "transformation.hxx"
 #include "widget_class.hxx"

@@ -6,7 +6,7 @@
 #include "widget_request.hxx"
 #include "processor.h"
 #include "penv.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "http_response.hxx"
 #include "istream.h"
 #include "pool.hxx"

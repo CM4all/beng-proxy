@@ -13,7 +13,7 @@
 #include "widget_resolver.hxx"
 #include "widget_approval.hxx"
 #include "widget_request.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "global.h"
 #include "http_util.hxx"
 #include "http_response.hxx"

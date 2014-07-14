@@ -8,7 +8,7 @@
 #include "memcached_packet.hxx"
 #include "buffered_socket.hxx"
 #include "please.h"
-#include "async.h"
+#include "async.hxx"
 #include "pevent.h"
 #include "istream-internal.h"
 #include "buffered_io.h"

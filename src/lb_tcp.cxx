@@ -9,7 +9,7 @@
 #include "address_list.hxx"
 #include "client_balancer.hxx"
 #include "address_sticky.h"
-#include "async.h"
+#include "async.hxx"
 #include "direct.h"
 #include "pool.hxx"
 #include "net/ConnectSocket.hxx"

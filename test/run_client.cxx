@@ -3,7 +3,7 @@
 #include "header_writer.hxx"
 #include "http_client.hxx"
 #include "http_response.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "fd_util.h"
 #include "lease.h"
 #include "direct.h"

@@ -7,7 +7,7 @@
 #include "memcached_stock.hxx"
 #include "http_cache_choice.hxx"
 #include "lease.h"
-#include "async.h"
+#include "async.hxx"
 #include "strref.h"
 #include "strmap.hxx"
 #include "tpool.h"

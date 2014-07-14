@@ -13,7 +13,7 @@
 #include "stock.hxx"
 #include "child_options.hxx"
 #include "istream.h"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"

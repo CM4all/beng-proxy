@@ -8,7 +8,7 @@
 
 #include "sink_header.hxx"
 #include "istream-internal.h"
-#include "async.h"
+#include "async.hxx"
 
 #include <glib.h>
 

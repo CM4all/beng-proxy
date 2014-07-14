@@ -1,6 +1,6 @@
 #include "widget_resolver.hxx"
 #include "widget_registry.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "widget.h"
 #include "widget_class.hxx"
 #include "pool.hxx"

@@ -1,5 +1,5 @@
 #include "istream.h"
-#include "async.h"
+#include "async.hxx"
 
 #include <stdio.h>
 

@@ -1,6 +1,6 @@
 #include "ping.hxx"
 #include "pool.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "net/SocketAddress.hxx"
 #include "net/AllocatedSocketAddress.hxx"
 

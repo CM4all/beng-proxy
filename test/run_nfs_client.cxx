@@ -1,7 +1,7 @@
 #include "nfs_client.hxx"
 #include "istream_nfs.hxx"
 #include "shutdown_listener.h"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 #include "http_response.hxx"
 #include "istream.h"

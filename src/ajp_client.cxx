@@ -9,7 +9,7 @@
 #include "ajp_serialize.hxx"
 #include "buffered_socket.hxx"
 #include "http_response.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "growing_buffer.hxx"
 #include "pevent.h"
 #include "format.h"

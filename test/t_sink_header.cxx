@@ -1,5 +1,5 @@
 #include "sink_header.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "istream.h"
 
 #include <string.h>

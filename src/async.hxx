@@ -26,14 +26,12 @@
  *
  */
 
-#ifndef __BENG_ASYNC_H
-#define __BENG_ASYNC_H
+#ifndef ASYNC_HXX
+#define ASYNC_HXX
 
 #include <inline/compiler.h>
 
 #include <assert.h>
-#include <stdbool.h>
-#include <stddef.h>
 
 struct async_operation;
 
@@ -81,7 +79,7 @@ async_init(struct async_operation *ao,
 static inline void
 async_operation_finished(gcc_unused struct async_operation *ao)
 {
-    assert(ao != NULL);
+    assert(ao != nullptr);
     assert(!ao->finished);
     assert(!ao->aborted);
 
@@ -93,23 +91,23 @@ async_operation_finished(gcc_unused struct async_operation *ao)
 static inline void
 async_ref_clear(struct async_operation_ref *ref)
 {
-    assert(ref != NULL);
+    assert(ref != nullptr);
 
-    ref->operation = NULL;
+    ref->operation = nullptr;
 }
 
 static inline bool
 async_ref_defined(const struct async_operation_ref *ref)
 {
-    assert(ref != NULL);
+    assert(ref != nullptr);
 
-    return ref->operation != NULL;
+    return ref->operation != nullptr;
 }
 
 static inline void
 async_ref_poison(gcc_unused struct async_operation_ref *ref)
 {
-    assert(ref != NULL);
+    assert(ref != nullptr);
 
 #ifndef NDEBUG
     ref->operation = (struct async_operation *)0x03030303;
@@ -120,8 +118,8 @@ static inline void
 async_ref_set(struct async_operation_ref *ref,
               struct async_operation *ao)
 {
-    assert(ref != NULL);
-    assert(ao != NULL);
+    assert(ref != nullptr);
+    assert(ao != nullptr);
     assert(!ao->finished);
     assert(!ao->aborted);
 
@@ -135,7 +133,7 @@ async_ref_set(struct async_operation_ref *ref,
 static inline void
 async_operation_abort(struct async_operation *ao)
 {
-    assert(ao != NULL);
+    assert(ao != nullptr);
     assert(!ao->finished);
     assert(!ao->aborted);
 
@@ -151,13 +149,13 @@ async_abort(struct async_operation_ref *ref)
 {
     struct async_operation *ao;
 
-    assert(ref != NULL);
-    assert(ref->operation != NULL);
+    assert(ref != nullptr);
+    assert(ref->operation != nullptr);
     assert(ref->operation == ref->copy);
 
     ao = ref->operation;
 #ifndef NDEBUG
-    ref->operation = NULL;
+    ref->operation = nullptr;
 #endif
 
     async_operation_abort(ao);

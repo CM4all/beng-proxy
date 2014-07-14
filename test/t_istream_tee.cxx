@@ -1,6 +1,6 @@
 #include "istream_tee.h"
 #include "istream.h"
-#include "async.h"
+#include "async.hxx"
 #include "sink_gstring.hxx"
 #include "sink-impl.h"
 

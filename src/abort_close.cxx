@@ -5,7 +5,7 @@
  */
 
 #include "abort_close.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 #include "istream.h"
 #include "util/Cast.hxx"

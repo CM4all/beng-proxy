@@ -7,7 +7,7 @@
 
 #include "delegate_client.hxx"
 #include "delegate_protocol.h"
-#include "async.h"
+#include "async.hxx"
 #include "please.h"
 #include "fd_util.h"
 #include "pevent.h"

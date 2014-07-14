@@ -8,7 +8,7 @@
 #include "cgi_quark.h"
 #include "cgi_parser.hxx"
 #include "istream-buffer.h"
-#include "async.h"
+#include "async.hxx"
 #include "header_parser.hxx"
 #include "strutil.h"
 #include "stopwatch.h"

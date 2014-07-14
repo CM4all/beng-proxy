@@ -6,7 +6,7 @@
 
 #include "delegate_stock.hxx"
 #include "hstock.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "failure.hxx"
 #include "fd_util.h"
 #include "pevent.h"

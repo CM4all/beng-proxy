@@ -1,7 +1,7 @@
 #include "memcached_client.hxx"
 #include "http_response.hxx"
 #include "duplex.h"
-#include "async.h"
+#include "async.hxx"
 #include "fd-util.h"
 #include "growing_buffer.hxx"
 #include "header_writer.hxx"

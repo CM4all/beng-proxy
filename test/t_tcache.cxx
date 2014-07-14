@@ -3,7 +3,7 @@
 #include "translate_client.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "transformation.hxx"
 #include "widget_view.hxx"
 #include "beng-proxy/translation.h"

@@ -12,7 +12,7 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "growing_buffer.hxx"
 #include "lease.h"
 #include "abort_close.hxx"

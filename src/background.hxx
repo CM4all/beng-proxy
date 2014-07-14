@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_BACKGROUND_HXX
 #define BENG_PROXY_BACKGROUND_HXX
 
-#include "async.h"
+#include "async.hxx"
 
 #include <boost/intrusive/list.hpp>
 

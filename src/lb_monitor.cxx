@@ -6,7 +6,7 @@
 
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 #include "failure.hxx"
 #include "net/SocketAddress.hxx"

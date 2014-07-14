@@ -1,5 +1,5 @@
 #include "http_response.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "lease.h"
 #include "istream.h"
 #include "strmap.hxx"

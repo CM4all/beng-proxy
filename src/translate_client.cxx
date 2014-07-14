@@ -14,7 +14,7 @@
 #include "growing_buffer.hxx"
 #include "processor.h"
 #include "css_processor.h"
-#include "async.h"
+#include "async.hxx"
 #include "file_address.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"

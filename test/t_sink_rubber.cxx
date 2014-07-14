@@ -1,5 +1,5 @@
 #include "PoolTest.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
 #include "pool.hxx"

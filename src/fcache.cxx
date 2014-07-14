@@ -23,7 +23,7 @@
 #include "istream_rubber.hxx"
 #include "sink_rubber.hxx"
 #include "istream_tee.h"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 
 #include <boost/intrusive/list.hpp>

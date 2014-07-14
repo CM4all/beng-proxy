@@ -5,7 +5,7 @@
 #ifndef BENG_ABORT_FLAG_HXX
 #define BENG_ABORT_FLAG_HXX
 
-#include "async.h"
+#include "async.hxx"
 
 /**
  * An async_operation implementation which sets a flag.  This can be

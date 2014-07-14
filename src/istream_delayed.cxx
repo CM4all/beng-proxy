@@ -5,7 +5,7 @@
  */
 
 #include "istream-internal.h"
-#include "async.h"
+#include "async.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>

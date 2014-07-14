@@ -3,7 +3,7 @@
 #include "lease.h"
 #include "http_response.hxx"
 #include "direct.h"
-#include "async.h"
+#include "async.hxx"
 #include "istream.h"
 #include "istream_file.h"
 #include "fb_pool.h"

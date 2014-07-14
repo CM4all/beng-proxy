@@ -10,7 +10,7 @@
 #include "hstock.hxx"
 #include "stock.hxx"
 #include "child_manager.h"
-#include "async.h"
+#include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "child_options.hxx"
 #include "pevent.h"

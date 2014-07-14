@@ -8,7 +8,7 @@
 #include "lb_monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "gerrno.h"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"

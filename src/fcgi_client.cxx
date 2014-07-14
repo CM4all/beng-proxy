@@ -11,7 +11,7 @@
 #include "buffered_socket.hxx"
 #include "growing_buffer.hxx"
 #include "http_response.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "istream-internal.h"
 #include "istream_gb.hxx"
 #include "please.h"

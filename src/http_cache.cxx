@@ -13,7 +13,7 @@
 #include "resource_address.hxx"
 #include "strref2.h"
 #include "http_util.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "background.hxx"
 #include "istream.h"
 #include "cache.hxx"

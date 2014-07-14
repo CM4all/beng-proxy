@@ -14,7 +14,7 @@
 #include "http_body.hxx"
 #include "istream-internal.h"
 #include "istream_gb.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "growing_buffer.hxx"
 #include "please.h"
 #include "uri-verify.h"

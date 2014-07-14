@@ -5,7 +5,7 @@
 #include "widget_view.hxx"
 #include "transformation.hxx"
 #include "tcp_stock.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "fb_pool.h"
 #include "pool.hxx"
 #include "lhttp_address.hxx"

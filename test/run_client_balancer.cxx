@@ -2,7 +2,7 @@
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
 #include "pool.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
 #include "address_list.hxx"

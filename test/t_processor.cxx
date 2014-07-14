@@ -6,7 +6,7 @@
 #include "widget_class.hxx"
 #include "widget-lookup.h"
 #include "rewrite_uri.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "istream.h"
 
 #include <glib.h>

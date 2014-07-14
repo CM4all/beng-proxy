@@ -10,7 +10,7 @@
 #include "widget_registry.hxx"
 #include "widget.h"
 #include "widget_class.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

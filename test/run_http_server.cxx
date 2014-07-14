@@ -4,7 +4,7 @@
 #include "sink-impl.h"
 #include "istream.h"
 #include "pool.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "shutdown_listener.h"
 #include "fb_pool.h"
 

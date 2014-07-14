@@ -10,7 +10,7 @@
  */
 
 #include "abort_unref.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

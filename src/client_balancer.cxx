@@ -10,7 +10,7 @@
 #include "address_list.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 #include "net/StaticSocketAddress.hxx"
 

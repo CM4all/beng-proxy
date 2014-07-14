@@ -6,7 +6,7 @@
  */
 
 #include "defer.hxx"
-#include "async.h"
+#include "async.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
