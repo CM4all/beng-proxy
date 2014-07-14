@@ -51,14 +51,14 @@ OffsetPointer(const void *p, ptrdiff_t offset)
 }
 
 template<typename T, typename U>
-static constexpr T *
+static inline constexpr T *
 OffsetCast(U *p, ptrdiff_t offset)
 {
     return reinterpret_cast<T *>(OffsetPointer(p, offset));
 }
 
 template<typename T, typename U>
-static constexpr T *
+static inline constexpr T *
 OffsetCast(const U *p, ptrdiff_t offset)
 {
     return reinterpret_cast<const T *>(OffsetPointer(p, offset));
