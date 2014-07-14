@@ -118,7 +118,6 @@ ConnectSocket::OnEvent(int _fd, short events)
         close(fd);
         handler.timeout(handler_ctx);
         pool_unref(&pool);
-        pool_commit();
         return;
     }
 
@@ -142,7 +141,6 @@ ConnectSocket::OnEvent(int _fd, short events)
     }
 
     pool_unref(&pool);
-    pool_commit();
 }
 
 void
@@ -151,6 +149,7 @@ ConnectSocket::OnEvent(int fd, short event, void *ctx)
     ConnectSocket &client_socket = *(ConnectSocket *)ctx;
 
     client_socket.OnEvent(fd, event);
+    pool_commit();
 }
 
 
