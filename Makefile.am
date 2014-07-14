@@ -221,7 +221,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/rwlock.h \
 	src/serialize.cxx src/serialize.hxx \
 	src/shm.c src/shm.h \
-	src/sink-gstring.h \
+	src/sink_gstring.cxx src/sink_gstring.hxx \
 	src/sink-impl.h \
 	src/socket_wrapper.cxx src/socket_wrapper.hxx \
 	src/buffered_socket.cxx src/buffered_socket.hxx \
@@ -1081,7 +1081,7 @@ test_t_sink_header_empty_SOURCES = test/t_sink_header_empty.cxx \
 test_t_sink_header_empty_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_tee_SOURCES = test/t_istream_tee.cxx \
-	src/sink-gstring.c \
+	src/sink_gstring.cxx \
 	src/sink-close.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_tee_LDADD = $(T_ISTREAM_FILTER_LIB)
@@ -1325,7 +1325,7 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/istream-html-escape.c \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
 	src/widget_init.cxx src/widget_view.cxx src/transformation.cxx \
-	src/sink-gstring.c \
+	src/sink_gstring.cxx \
 	src/args.cxx \
 	src/strmap.cxx \
 	src/uri-relative.c src/uri-edit.c src/uri_escape.cxx \

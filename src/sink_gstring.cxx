@@ -1,6 +1,14 @@
-#include "sink-gstring.h"
+/*
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#include "sink_gstring.hxx"
 #include "async.h"
 #include "istream.h"
+#include "pool.hxx"
+#include "util/Cast.hxx"
+
+#include <glib.h>
 
 struct sink_gstring {
     struct pool *pool;
@@ -22,31 +30,31 @@ struct sink_gstring {
 static size_t
 sink_gstring_input_data(const void *data, size_t length, void *ctx)
 {
-    struct sink_gstring *sg = ctx;
+    struct sink_gstring *sg = (struct sink_gstring *)ctx;
 
-    g_string_append_len(sg->value, data, length);
+    g_string_append_len(sg->value, (const char *)data, length);
     return length;
 }
 
 static void
 sink_gstring_input_eof(void *ctx)
 {
-    struct sink_gstring *sg = ctx;
+    struct sink_gstring *sg = (struct sink_gstring *)ctx;
 
     async_operation_finished(&sg->async_operation);
 
-    sg->callback(sg->value, NULL, sg->callback_ctx);
+    sg->callback(sg->value, nullptr, sg->callback_ctx);
 }
 
 static void
 sink_gstring_input_abort(GError *error, void *ctx)
 {
-    struct sink_gstring *sg = ctx;
+    struct sink_gstring *sg = (struct sink_gstring *)ctx;
 
     async_operation_finished(&sg->async_operation);
 
     g_string_free(sg->value, true);
-    sg->callback(NULL, error, sg->callback_ctx);
+    sg->callback(nullptr, error, sg->callback_ctx);
 }
 
 static const struct istream_handler sink_gstring_input_handler = {
@@ -64,7 +72,7 @@ static const struct istream_handler sink_gstring_input_handler = {
 static struct sink_gstring *
 async_to_sink_gstring(struct async_operation *ao)
 {
-    return (struct sink_gstring*)(((char*)ao) - offsetof(struct sink_gstring, async_operation));
+    return ContainerCast(ao, struct sink_gstring, async_operation);
 }
 
 static void
@@ -94,7 +102,7 @@ sink_gstring_new(struct pool *pool, struct istream *input,
                  void (*callback)(GString *value, GError *error, void *ctx),
                  void *ctx, struct async_operation_ref *async_ref)
 {
-    struct sink_gstring *sg = p_malloc(pool, sizeof(*sg));
+    auto sg = NewFromPool<struct sink_gstring>(*pool);
 
     sg->pool = pool;
 

@@ -1,8 +1,10 @@
 #include "istream_tee.h"
 #include "istream.h"
 #include "async.h"
-#include "sink-gstring.h"
+#include "sink_gstring.hxx"
 #include "sink-impl.h"
+
+#include <glib.h>
 
 #include <event.h>
 #include <string.h>
