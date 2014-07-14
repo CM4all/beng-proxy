@@ -619,7 +619,7 @@ widget_http_abort(struct async_operation *ao)
 
     widget_cancel(embed->widget);
 
-    async_abort(&embed->async_ref);
+    embed->async_ref.Abort();
 }
 
 static const struct async_operation_class widget_http_operation = {
@@ -677,8 +677,8 @@ widget_http_request(struct pool *pool, struct widget *widget,
 
     http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
 
-    async_init(&embed->operation, &widget_http_operation);
-    async_ref_set(async_ref, &embed->operation);
+    embed->operation.Init(widget_http_operation);
+    async_ref->Set(embed->operation);
 
     address = widget_address(widget);
     embed->resource_tag = resource_address_id(address, pool);
@@ -742,8 +742,8 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     embed->lookup_handler = handler;
     embed->lookup_handler_ctx = handler_ctx;
 
-    async_init(&embed->operation, &widget_http_operation);
-    async_ref_set(async_ref, &embed->operation);
+    embed->operation.Init(widget_http_operation);
+    async_ref->Set(embed->operation);
 
     address = widget_address(widget);
     embed->resource_tag = resource_address_id(address, pool);

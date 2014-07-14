@@ -37,7 +37,7 @@ shutdown_callback(void *ctx)
     if (c->body != nullptr)
         sink_fd_close(c->body);
     else
-        async_abort(&c->async_ref);
+        c->async_ref.Abort();
 }
 
 /*

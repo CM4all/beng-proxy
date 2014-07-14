@@ -177,7 +177,7 @@ ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
     pool_ref(client->pool);
 
     client->response.read_state = ajp_client::Response::READ_END;
-    async_operation_finished(&client->request.async);
+    client->request.async.Finished();
     http_response_handler_invoke_abort(&client->request.handler, error);
 
     ajp_client_release(client, false);
@@ -371,7 +371,7 @@ ajp_consume_send_headers(struct ajp_client *client,
     client->response.chunk_length = 0;
     client->response.junk_length = 0;
 
-    async_operation_finished(&client->request.async);
+    client->request.async.Finished();
 
     client->response.in_handler = true;
     http_response_handler_invoke_response(&client->request.handler, status,
@@ -847,9 +847,9 @@ ajp_client_request_abort(struct async_operation *ao)
 {
     struct ajp_client *client
         = async_to_ajp_connection(ao);
-    
-    /* async_abort() can only be used before the response was
-       delivered to our callback */
+
+    /* async_operation_rerf::Abort() can only be used before the
+       response was delivered to our callback */
     assert(client->response.read_state == ajp_client::Response::READ_BEGIN ||
            client->response.read_state == ajp_client::Response::READ_NO_BODY);
 
@@ -1029,9 +1029,8 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
 
     http_response_handler_set(&client->request.handler, handler, handler_ctx);
 
-    async_init(&client->request.async,
-               &ajp_client_request_async_operation);
-    async_ref_set(async_ref, &client->request.async);
+    client->request.async.Init(ajp_client_request_async_operation);
+    async_ref->Set(client->request.async);
 
     /* XXX append request body */
 

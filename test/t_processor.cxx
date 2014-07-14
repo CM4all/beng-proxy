@@ -143,7 +143,7 @@ test_proxy_abort(struct pool *pool)
 
     pool_unref(pool);
 
-    async_abort(&async_ref);
+    async_ref.Abort();
 
     pool_commit();
 }

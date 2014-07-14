@@ -33,7 +33,7 @@ my_sink_header_error(GError *error, void *ctx)
 {
     istream *delayed = (istream *)ctx;
 
-    async_ref_clear(istream_delayed_async_ref(delayed));
+    istream_delayed_async_ref(delayed)->Clear();
     istream_delayed_set_abort(delayed, error);
 }
 

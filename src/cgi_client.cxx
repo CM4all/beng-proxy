@@ -50,7 +50,7 @@ struct cgi {
 static bool
 cgi_return_response(struct cgi *cgi)
 {
-    async_operation_finished(&cgi->async);
+    cgi->async.Finished();
 
     http_status_t status = cgi_parser_get_status(&cgi->parser);
     struct strmap *headers = cgi_parser_get_headers(&cgi->parser);
@@ -510,8 +510,8 @@ cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
 
     http_response_handler_set(&cgi->handler, handler, handler_ctx);
 
-    async_init(&cgi->async, &cgi_async_operation);
-    async_ref_set(async_ref, &cgi->async);
+    cgi->async.Init(cgi_async_operation);
+    async_ref->Set(cgi->async);
 
     istream_read(input);
 }

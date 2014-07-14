@@ -66,7 +66,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     tcp->got_inbound_data = true;
 
-    if (async_ref_defined(&tcp->connect))
+    if (tcp->connect.IsDefined())
         /* outbound is not yet connected */
         return BufferedResult::BLOCKING;
 
@@ -315,7 +315,7 @@ lb_tcp_client_socket_success(int fd, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
-    async_ref_clear(&tcp->connect);
+    tcp->connect.Clear();
 
     tcp->outbound.Init(tcp->pool,
                        fd, ISTREAM_TCP,
@@ -454,8 +454,8 @@ lb_tcp_close(struct lb_tcp *tcp)
     if (filtered_socket_valid(&tcp->inbound))
         lb_tcp_destroy_inbound(tcp);
 
-    if (async_ref_defined(&tcp->connect))
-        async_abort(&tcp->connect);
+    if (tcp->connect.IsDefined())
+        tcp->connect.Abort();
     else if (tcp->outbound.IsValid())
         lb_tcp_destroy_outbound(tcp);
 }

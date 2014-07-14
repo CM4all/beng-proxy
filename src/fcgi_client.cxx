@@ -197,7 +197,7 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
     assert(client->response.read_state == fcgi_client::Response::READ_HEADERS ||
            client->response.read_state == fcgi_client::Response::READ_NO_BODY);
 
-    async_operation_finished(&client->async);
+    client->async.Finished();
 
     if (client->socket.IsConnected())
         fcgi_client_release_socket(client, false);
@@ -435,7 +435,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
             client->response.available = l;
     }
 
-    async_operation_finished(&client->async);
+    client->async.Finished();
 
     fcgi_client_response_body_init(client);
     struct istream *body = body = istream_struct_cast(&client->response.body);
@@ -476,7 +476,7 @@ fcgi_client_handle_end(struct fcgi_client *client)
         istream_close_handler(client->request.istream);
 
     if (client->response.read_state == fcgi_client::Response::READ_NO_BODY) {
-        async_operation_finished(&client->async);
+        client->async.Finished();
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
                                               client->response.headers,
@@ -898,8 +898,8 @@ fcgi_client_request_abort(struct async_operation *ao)
     struct fcgi_client *client
         = async_to_fcgi_client(ao);
 
-    /* async_abort() can only be used before the response was
-       delivered to our callback */
+    /* async_operation_ref::Abort() can only be used before the
+       response was delivered to our callback */
     assert(client->response.read_state == fcgi_client::Response::READ_HEADERS ||
            client->response.read_state == fcgi_client::Response::READ_NO_BODY);
 
@@ -972,8 +972,8 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     http_response_handler_set(&client->handler, handler, handler_ctx);
 
-    async_init(&client->async, &fcgi_client_async_operation);
-    async_ref_set(async_ref, &client->async);
+    client->async.Init(fcgi_client_async_operation);
+    async_ref->Set(client->async);
 
     client->id = header.request_id;
 

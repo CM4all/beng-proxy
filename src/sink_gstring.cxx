@@ -41,7 +41,7 @@ sink_gstring_input_eof(void *ctx)
 {
     struct sink_gstring *sg = (struct sink_gstring *)ctx;
 
-    async_operation_finished(&sg->async_operation);
+    sg->async_operation.Finished();
 
     sg->callback(sg->value, nullptr, sg->callback_ctx);
 }
@@ -51,7 +51,7 @@ sink_gstring_input_abort(GError *error, void *ctx)
 {
     struct sink_gstring *sg = (struct sink_gstring *)ctx;
 
-    async_operation_finished(&sg->async_operation);
+    sg->async_operation.Finished();
 
     g_string_free(sg->value, true);
     sg->callback(nullptr, error, sg->callback_ctx);
@@ -114,6 +114,6 @@ sink_gstring_new(struct pool *pool, struct istream *input,
     sg->callback = callback;
     sg->callback_ctx = ctx;
 
-    async_init(&sg->async_operation, &sink_gstring_operation);
-    async_ref_set(async_ref, &sg->async_operation);
+    sg->async_operation.Init(sink_gstring_operation);
+    async_ref->Set(sg->async_operation);
 }

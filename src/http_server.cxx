@@ -300,10 +300,10 @@ http_server_request_close(struct http_server_connection *connection)
          connection->request.read_state == http_server_connection::Request::END)) {
         if (connection->response.istream != nullptr)
             istream_free_handler(&connection->response.istream);
-        else if (async_ref_defined(&connection->request.async_ref))
+        else if (connection->request.async_ref.IsDefined())
             /* don't call this if coming from
                _response_stream_abort() */
-            async_abort(&connection->request.async_ref);
+            connection->request.async_ref.Abort();
     }
 
     /* the handler must have closed the request body */

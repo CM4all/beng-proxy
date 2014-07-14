@@ -122,7 +122,7 @@ ping_read(struct ping *p)
     int cc = recvmsg(p->fd, &msg, MSG_DONTWAIT);
     if (cc >= 0) {
         if (parse_reply(&msg, cc, p->ident)) {
-            async_operation_finished(&p->async_operation);
+            p->async_operation.Finished();
 
             close(p->fd);
             p->handler->response(p->handler_ctx);
@@ -132,7 +132,7 @@ ping_read(struct ping *p)
     } else if (errno == EAGAIN || errno == EINTR) {
         ping_schedule_read(p);
     } else {
-        async_operation_finished(&p->async_operation);
+        p->async_operation.Finished();
 
         GError *error = g_error_new_literal(ping_quark(), errno,
                                             strerror(errno));
@@ -285,6 +285,6 @@ ping(struct pool *pool, SocketAddress address,
     event_set(&p->event, fd, EV_READ|EV_TIMEOUT, ping_event_callback, p);
     ping_schedule_read(p);
 
-    async_init(&p->async_operation, &ping_async_operation);
-    async_ref_set(async_ref, &p->async_operation);
+    p->async_operation.Init(ping_async_operation);
+    async_ref->Set(p->async_operation);
 }

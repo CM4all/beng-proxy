@@ -3,7 +3,7 @@
  *
  * The idea behind it is that functions starting an asynchronous
  * operation return a pointer to a struct async_operation, which can
- * be used to call async_abort().
+ * be used to call async_operation_ref::Abort().
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
@@ -21,8 +21,9 @@
  * is invoked exactly once.
  *
  * There is one exception to this rule: the async_operation_ref struct
- * can be used to abort the operation by calling async_abort().  In
- * this case, the callback is not invoked.
+ * can be used to abort the operation by calling
+ * async_operation_ref::Abort().  In this case, the callback is not
+ * invoked.
  *
  */
 
@@ -47,6 +48,39 @@ struct async_operation {
 
     bool aborted;
 #endif
+
+    void Init(const struct async_operation_class &_cls) {
+        cls = _cls;
+
+#ifndef NDEBUG
+        finished = false;
+        aborted = false;
+#endif
+    }
+
+    void Abort() {
+        assert(!finished);
+        assert(!aborted);
+
+#ifndef NDEBUG
+        aborted = true;
+#endif
+
+        cls.abort(this);
+    }
+
+    /**
+     * Mark this operation as "finished".  This is a no-op in the
+     * NDEBUG build.
+     */
+    void Finished() {
+        assert(!finished);
+        assert(!aborted);
+
+#ifndef NDEBUG
+        finished = true;
+#endif
+    }
 };
 
 struct async_operation_ref {
@@ -58,107 +92,42 @@ struct async_operation_ref {
      */
     struct async_operation *copy;
 #endif
+
+    constexpr bool IsDefined() const {
+        return operation != nullptr;
+    }
+
+    void Clear() {
+        operation = nullptr;
+    }
+
+    void Poison() {
+#ifndef NDEBUG
+        operation = (struct async_operation *)0x03030303;
+#endif
+    }
+
+    void Set(struct async_operation &ao) {
+        assert(!ao.finished);
+        assert(!ao.aborted);
+
+        operation = &ao;
+#ifndef NDEBUG
+        copy = &ao;
+#endif
+    }
+
+    void Abort() {
+        assert(operation != nullptr);
+        assert(operation == copy);
+
+        struct async_operation &ao = *operation;
+#ifndef NDEBUG
+        operation = nullptr;
+#endif
+
+        ao.Abort();
+    }
 };
-
-static inline void
-async_init(struct async_operation *ao,
-           const struct async_operation_class *cls)
-{
-    ao->cls = *cls;
-
-#ifndef NDEBUG
-    ao->finished = false;
-    ao->aborted = false;
-#endif
-}
-
-/**
- * Mark this operation as "finished".  This is a no-op in the NDEBUG
- * build.
- */
-static inline void
-async_operation_finished(gcc_unused struct async_operation *ao)
-{
-    assert(ao != nullptr);
-    assert(!ao->finished);
-    assert(!ao->aborted);
-
-#ifndef NDEBUG
-    ao->finished = true;
-#endif
-}
-
-static inline void
-async_ref_clear(struct async_operation_ref *ref)
-{
-    assert(ref != nullptr);
-
-    ref->operation = nullptr;
-}
-
-static inline bool
-async_ref_defined(const struct async_operation_ref *ref)
-{
-    assert(ref != nullptr);
-
-    return ref->operation != nullptr;
-}
-
-static inline void
-async_ref_poison(gcc_unused struct async_operation_ref *ref)
-{
-    assert(ref != nullptr);
-
-#ifndef NDEBUG
-    ref->operation = (struct async_operation *)0x03030303;
-#endif
-}
-
-static inline void
-async_ref_set(struct async_operation_ref *ref,
-              struct async_operation *ao)
-{
-    assert(ref != nullptr);
-    assert(ao != nullptr);
-    assert(!ao->finished);
-    assert(!ao->aborted);
-
-    ref->operation = ao;
-
-#ifndef NDEBUG
-    ref->copy = ao;
-#endif
-}
-
-static inline void
-async_operation_abort(struct async_operation *ao)
-{
-    assert(ao != nullptr);
-    assert(!ao->finished);
-    assert(!ao->aborted);
-
-#ifndef NDEBUG
-    ao->aborted = true;
-#endif
-
-    ao->cls.abort(ao);
-}
-
-static inline void
-async_abort(struct async_operation_ref *ref)
-{
-    struct async_operation *ao;
-
-    assert(ref != nullptr);
-    assert(ref->operation != nullptr);
-    assert(ref->operation == ref->copy);
-
-    ao = ref->operation;
-#ifndef NDEBUG
-    ref->operation = nullptr;
-#endif
-
-    async_operation_abort(ao);
-}
 
 #endif

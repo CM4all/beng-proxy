@@ -882,8 +882,8 @@ nfs_client_new(struct pool *pool, const char *server, const char *root,
 
     nfs_client_add_event(client);
 
-    async_init(&client->mount_operation, &nfs_client_mount_operation);
-    async_ref_set(async_ref, &client->mount_operation);
+    client->mount_operation.Init(nfs_client_mount_operation);
+    async_ref->Set(client->mount_operation);
 
     evtimer_set(&client->timeout_event, nfs_client_timeout_callback, client);
     evtimer_add(&client->timeout_event, &nfs_client_mount_timeout);
@@ -972,8 +972,8 @@ nfs_client_open_file(struct nfs_client *client, struct pool *caller_pool,
         handle->open_handler = handler;
         handle->handler_ctx = ctx;
 
-        async_init(&handle->operation, &nfs_file_open_operation);
-        async_ref_set(async_ref, &handle->operation);
+        handle->operation.Init(nfs_file_open_operation);
+        async_ref->Set(handle->operation);
 
         pool_ref(caller_pool);
     }

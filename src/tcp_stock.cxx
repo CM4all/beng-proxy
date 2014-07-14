@@ -65,9 +65,9 @@ tcp_create_abort(struct async_operation *ao)
     struct tcp_stock_connection *connection = async_to_tcp_stock_connection(ao);
 
     assert(connection != nullptr);
-    assert(async_ref_defined(&connection->client_socket));
+    assert(connection->client_socket.IsDefined());
 
-    async_abort(&connection->client_socket);
+    connection->client_socket.Abort();
     stock_item_aborted(&connection->stock_item);
 }
 
@@ -123,8 +123,8 @@ tcp_stock_socket_success(int fd, void *ctx)
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)ctx;
 
-    async_ref_clear(&connection->client_socket);
-    async_operation_finished(&connection->create_operation);
+    connection->client_socket.Clear();
+    connection->create_operation.Finished();
 
     connection->fd = fd;
     event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
@@ -139,8 +139,8 @@ tcp_stock_socket_timeout(void *ctx)
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)ctx;
 
-    async_ref_clear(&connection->client_socket);
-    async_operation_finished(&connection->create_operation);
+    connection->client_socket.Clear();
+    connection->create_operation.Finished();
 
     GError *error = g_error_new(errno_quark(), ETIMEDOUT,
                                 "failed to connect to '%s': timeout",
@@ -154,8 +154,8 @@ tcp_stock_socket_error(GError *error, void *ctx)
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)ctx;
 
-    async_ref_clear(&connection->client_socket);
-    async_operation_finished(&connection->create_operation);
+    connection->client_socket.Clear();
+    connection->create_operation.Finished();
 
     g_prefix_error(&error, "failed to connect to '%s': ", connection->uri);
     stock_item_failed(&connection->stock_item, error);
@@ -194,10 +194,10 @@ tcp_stock_create(void *ctx, struct stock_item *item,
 
     assert(uri != nullptr);
 
-    async_ref_clear(&connection->client_socket);
+    connection->client_socket.Clear();
 
-    async_init(&connection->create_operation, &tcp_create_operation);
-    async_ref_set(async_ref, &connection->create_operation);
+    connection->create_operation.Init(tcp_create_operation);
+    async_ref->Set(connection->create_operation);
 
     connection->uri = uri;
 
@@ -240,8 +240,8 @@ tcp_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
 
-    if (async_ref_defined(&connection->client_socket))
-        async_abort(&connection->client_socket);
+    if (connection->client_socket.IsDefined())
+        connection->client_socket.Abort();
     else if (connection->fd >= 0) {
         p_event_del(&connection->event, item->pool);
         close(connection->fd);

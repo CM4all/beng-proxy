@@ -35,7 +35,7 @@ defer_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
 {
     struct defer *d = (struct defer *)ctx;
 
-    async_operation_finished(&d->operation);
+    d->operation.Finished();
 
     d->callback(d->callback_ctx);
 
@@ -90,8 +90,8 @@ defer(struct pool *pool, defer_callback_t callback, void *ctx,
     d->callback_ctx = ctx;
 
     if (async_ref != nullptr) {
-        async_init(&d->operation, &defer_operation);
-        async_ref_set(async_ref, &d->operation);
+        d->operation.Init(defer_operation);
+        async_ref->Set(d->operation);
     }
 
     evtimer_set(&d->event, defer_event_callback, d);

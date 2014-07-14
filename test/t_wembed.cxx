@@ -89,8 +89,8 @@ widget_resolver_new(struct pool *pool, struct pool *widget_pool gcc_unused,
 
     to->pool = pool;
 
-    async_init(&to->operation, &test_operation);
-    async_ref_set(async_ref, &to->operation);
+    to->operation.Init(test_operation);
+    async_ref->Set(to->operation);
     pool_ref(pool);
 }
 

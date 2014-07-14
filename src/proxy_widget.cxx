@@ -334,7 +334,7 @@ widget_proxy_operation_abort(struct async_operation *ao)
        is cancelled */
     widget_cancel(proxy->widget);
 
-    async_abort(&proxy->async_ref);
+    proxy->async_ref.Abort();
 }
 
 static const struct async_operation_class widget_proxy_operation = {
@@ -361,8 +361,8 @@ proxy_widget(struct request *request2,
     proxy->widget = widget;
     proxy->ref = proxy_ref;
 
-    async_init(&proxy->operation, &widget_proxy_operation);
-    async_ref_set(&request2->async_ref, &proxy->operation);
+    proxy->operation.Init(widget_proxy_operation);
+    request2->async_ref.Set(proxy->operation);
 
     processor_lookup_widget(request2->request->pool, body,
                             widget, proxy_ref->id,

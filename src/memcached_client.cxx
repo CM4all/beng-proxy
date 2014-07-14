@@ -154,7 +154,7 @@ memcached_connection_abort_response_header(struct memcached_client *client,
            client->response.read_state == memcached_client::ReadState::EXTRAS ||
            client->response.read_state == memcached_client::ReadState::KEY);
 
-    async_operation_finished(&client->request.async);
+    client->request.async.Finished();
 
     if (client->socket.IsValid())
         memcached_client_destroy_socket(client, false);
@@ -287,7 +287,7 @@ memcached_submit_response(struct memcached_client *client)
 {
     assert(client->response.read_state == memcached_client::ReadState::KEY);
 
-    async_operation_finished(&client->request.async);
+    client->request.async.Finished();
 
     if (client->request.istream != nullptr) {
         /* at this point, the request must have been sent */
@@ -742,8 +742,8 @@ memcached_client_request_abort(struct async_operation *ao)
     struct pool *caller_pool = client->caller_pool;
     struct istream *request_istream = client->request.istream;
 
-    /* async_abort() can only be used before the response was
-       delivered to our callback */
+    /* async_operation_ref::Abort() can only be used before the
+       response was delivered to our callback */
     assert(client->response.read_state == memcached_client::ReadState::HEADER ||
            client->response.read_state == memcached_client::ReadState::EXTRAS ||
            client->response.read_state == memcached_client::ReadState::KEY);
@@ -816,8 +816,8 @@ memcached_client_invoke(struct pool *caller_pool,
     client->request.handler = handler;
     client->request.handler_ctx = handler_ctx;
 
-    async_init(&client->request.async, &memcached_client_async_operation);
-    async_ref_set(async_ref, &client->request.async);
+    client->request.async.Init(memcached_client_async_operation);
+    async_ref->Set(client->request.async);
 
     client->response.read_state = memcached_client::ReadState::HEADER;
 

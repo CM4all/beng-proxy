@@ -46,7 +46,7 @@ shutdown_callback(void *ctx)
         c->value_abort = true;
     } else {
         c->aborted = true;
-        async_abort(&c->async_ref);
+        c->async_ref.Abort();
     }
 }
 

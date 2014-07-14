@@ -152,7 +152,7 @@ errdoc_abort(struct async_operation *ao)
     if (er.body != nullptr)
         istream_close_unused(er.body);
 
-    async_abort(&er.async_ref);
+    er.async_ref.Abort();
 }
 
 static const struct async_operation_class errdoc_operation = {
@@ -184,8 +184,8 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
         ? istream_hold_new(pool, body)
         : nullptr;
 
-    async_init(&er->operation, &errdoc_operation);
-    async_ref_set(&request2->async_ref, &er->operation);
+    er->operation.Init(errdoc_operation);
+    request2->async_ref.Set(er->operation);
 
     fill_translate_request(&er->translate_request,
                            &request2->translate.request,

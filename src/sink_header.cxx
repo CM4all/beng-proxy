@@ -54,7 +54,7 @@ header_invoke_callback(struct sink_header *header, size_t consumed)
     assert(header->state == sink_header::SIZE ||
            header->state == sink_header::HEADER);
 
-    async_operation_finished(&header->async_operation);
+    header->async_operation.Finished();
 
     pool_ref(header->output.pool);
 
@@ -99,7 +99,7 @@ header_consume_size(struct sink_header *header,
     header->size = g_ntohl(*size_p);
     if (header->size > 0x100000) {
         /* header too large */
-        async_operation_finished(&header->async_operation);
+        header->async_operation.Finished();
         istream_close_handler(header->input);
 
         GError *error =
@@ -229,7 +229,7 @@ sink_header_input_eof(void *ctx)
 
     case sink_header::SIZE:
     case sink_header::HEADER:
-        async_operation_finished(&header->async_operation);
+        header->async_operation.Finished();
 
         error = g_error_new_literal(sink_header_quark(), 0,
                                     "premature end of file");
@@ -255,7 +255,7 @@ sink_header_input_abort(GError *error, void *ctx)
     switch (header->state) {
     case sink_header::SIZE:
     case sink_header::HEADER:
-        async_operation_finished(&header->async_operation);
+        header->async_operation.Finished();
         header->handler->error(error, header->handler_ctx);
         istream_deinit(&header->output);
         break;
@@ -393,6 +393,6 @@ sink_header_new(struct pool *pool, struct istream *input,
     header->handler = handler;
     header->handler_ctx = ctx;
 
-    async_init(&header->async_operation, &sink_header_operation);
-    async_ref_set(async_ref, &header->async_operation);
+    header->async_operation.Init(sink_header_operation);
+    async_ref->Set(header->async_operation);
 }

@@ -99,7 +99,7 @@ client_socket_event_callback(int fd, short event gcc_unused, void *ctx)
 
     p_event_consumed(&client_socket->event, client_socket->pool);
 
-    async_operation_finished(&client_socket->operation);
+    client_socket->operation.Finished();
 
     if (event & EV_TIMEOUT) {
         close(fd);
@@ -215,8 +215,8 @@ client_socket_new(struct pool &pool,
         client_socket->stopwatch = stopwatch;
 #endif
 
-        async_init(&client_socket->operation, &client_socket_operation);
-        async_ref_set(&async_ref, &client_socket->operation);
+        client_socket->operation.Init(client_socket_operation);
+        async_ref.Set(client_socket->operation);
 
         event_set(&client_socket->event, client_socket->fd,
                   EV_WRITE|EV_TIMEOUT, client_socket_event_callback,

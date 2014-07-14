@@ -373,7 +373,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         return;
     }
 
-    async_operation_finished(&request->operation);
+    request->operation.Finished();
 
     if (request->document != nullptr)
         http_cache_remove(request->cache, request->key, request->document);
@@ -430,7 +430,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     pool_unref_denotify(request->caller_pool,
                         &request->caller_pool_notify);
 
-    if (input != nullptr && async_ref_defined(&request->async_ref))
+    if (input != nullptr && request->async_ref.IsDefined())
             /* just in case our handler has closed the body without
                looking at it: call istream_read() to start reading */
             istream_read(input);
@@ -453,7 +453,7 @@ http_cache_response_abort(GError *error, void *ctx)
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
 
-    async_operation_finished(&request->operation);
+    request->operation.Finished();
     http_response_handler_invoke_abort(&request->handler, error);
     pool_unref_denotify(request->caller_pool,
                         &request->caller_pool_notify);
@@ -488,7 +488,7 @@ http_cache_abort(struct async_operation *ao)
     pool_unref_denotify(request->caller_pool,
                         &request->caller_pool_notify);
 
-    async_abort(&request->async_ref);
+    request->async_ref.Abort();
 }
 
 static const struct async_operation_class http_cache_async_operation = {
@@ -522,8 +522,8 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
     headers(_headers),
     info(&_info), document(nullptr) {
     http_response_handler_set(&handler, &_handler, _handler_ctx);
-    async_init(&operation, &http_cache_async_operation);
-    async_ref_set(&_async_ref, &operation);
+    operation.Init(http_cache_async_operation);
+    _async_ref.Set(operation);
     pool_ref_notify(caller_pool, &caller_pool_notify);
 }
 
@@ -572,9 +572,9 @@ http_cache_new(struct pool *pool, size_t max_size,
 void
 HttpCacheRequest::RubberStoreFinished()
 {
-    assert(async_ref_defined(&async_ref));
+    assert(async_ref.IsDefined());
 
-    async_ref_clear(&async_ref);
+    async_ref.Clear();
     cache->requests.erase(cache->requests.iterator_to(*this));
 }
 
@@ -582,7 +582,7 @@ void
 HttpCacheRequest::AbortRubberStore()
 {
     cache->requests.erase(cache->requests.iterator_to(*this));
-    async_abort(&async_ref);
+    async_ref.Abort();
 }
 
 inline
@@ -742,7 +742,7 @@ http_cache_memcached_serve(HttpCacheRequest *request)
 {
     cache_log(4, "http_cache: serve %s\n", request->key);
 
-    async_operation_finished(&request->operation);
+    request->operation.Finished();
     http_response_handler_invoke_response(&request->handler,
                                           request->document->status,
                                           request->document->headers,
@@ -934,7 +934,7 @@ http_cache_memcached_miss(HttpCacheRequest *request)
     struct http_cache_info *info = request->info;
 
     if (info->only_if_cached) {
-        async_operation_finished(&request->operation);
+        request->operation.Finished();
         http_response_handler_invoke_response(&request->handler,
                                               HTTP_STATUS_GATEWAY_TIMEOUT,
                                               nullptr, nullptr);
@@ -976,7 +976,7 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
     if (http_cache_may_serve(request->info, document)) {
         cache_log(4, "http_cache: serve %s\n", request->key);
 
-        async_operation_finished(&request->operation);
+        request->operation.Finished();
         http_response_handler_invoke_response(&request->handler,
                                               document->status,
                                               document->headers,

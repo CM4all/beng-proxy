@@ -73,7 +73,7 @@ public:
      */
     void AbortAll() {
         jobs.clear_and_dispose([this](BackgroundJob *job){
-                async_abort(&job->async_ref);
+                job->async_ref.Abort();
             });
     }
 };

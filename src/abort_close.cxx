@@ -32,7 +32,7 @@ coa_abort(struct async_operation *ao)
 {
     struct close_on_abort *coa = async_to_coa(ao);
 
-    async_abort(&coa->ref);
+    coa->ref.Abort();
     istream_close_unused(coa->istream);
 }
 
@@ -57,8 +57,8 @@ async_close_on_abort(struct pool *pool, struct istream *istream,
     assert(async_ref != nullptr);
 
     coa->istream = istream;
-    async_init(&coa->operation, &coa_operation);
-    async_ref_set(async_ref, &coa->operation);
+    coa->operation.Init(coa_operation);
+    async_ref->Set(coa->operation);
 
     return &coa->ref;
 }

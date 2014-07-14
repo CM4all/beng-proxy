@@ -108,7 +108,7 @@ shutdown_callback(void *ctx)
         c->body_abort = true;
     } else {
         c->aborted = true;
-        async_abort(&c->async_ref);
+        c->async_ref.Abort();
     }
 }
 

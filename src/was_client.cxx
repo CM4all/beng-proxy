@@ -140,7 +140,7 @@ was_client_abort_response_headers(struct was_client *client, GError *error)
 {
     assert(was_client_receiving_metadata(client));
 
-    async_operation_finished(&client->async);
+    client->async.Finished();
 
     was_client_clear(client, g_error_copy(error));
 
@@ -211,7 +211,7 @@ was_client_abort_pending(struct was_client *client, GError *error)
     assert(!was_client_receiving_metadata(client) &&
            !was_client_response_submitted(client));
 
-    async_operation_finished(&client->async);
+    client->async.Finished();
 
     was_client_clear(client, error);
 
@@ -339,7 +339,7 @@ was_client_control_packet(enum was_command cmd, const void *payload,
             pool_unref(client->pool);
         }
 
-        async_operation_finished(&client->async);
+        client->async.Finished();
 
         was_client_clear_request_body(client);
 
@@ -449,7 +449,7 @@ was_client_control_drained(void *ctx)
 
     struct istream *body = was_input_enable(client->response.body);
 
-    async_operation_finished(&client->async);
+    client->async.Finished();
 
 #ifndef NDEBUG
     struct pool_notify_state notify;
@@ -580,7 +580,7 @@ was_client_input_eof(void *ctx)
            we use an istream_null instead */
         struct istream *body = istream_null_new(client->caller_pool);
 
-        async_operation_finished(&client->async);
+        client->async.Finished();
 
         http_response_handler_invoke_response(&client->handler,
                                               client->response.status,
@@ -636,8 +636,8 @@ was_client_request_abort(struct async_operation *ao)
 {
     struct was_client *client = async_to_was_client(ao);
 
-    /* async_abort() can only be used before the response was
-       delivered to our callback */
+    /* async_operation_ref::Abort() can only be used before the
+       response was delivered to our callback */
     assert(!was_client_response_submitted(client));
 
     was_client_clear_unused(client);
@@ -686,8 +686,8 @@ was_client_request(struct pool *caller_pool, int control_fd,
 
     http_response_handler_set(&client->handler, handler, handler_ctx);
 
-    async_init(&client->async, &was_client_async_operation);
-    async_ref_set(async_ref, &client->async);
+    client->async.Init(was_client_async_operation);
+    async_ref->Set(client->async);
 
     client->request.body = body != nullptr
         ? was_output_new(pool, output_fd, body,

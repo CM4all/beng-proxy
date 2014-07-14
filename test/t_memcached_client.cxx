@@ -145,7 +145,7 @@ istream_request_value_read(struct istream *istream)
         GError *error = g_error_new_literal(test_quark(), 0, "read_close");
         istream_deinit_abort(&v->base, error);
     } else if (v->read_abort)
-        async_abort(&v->async_ref);
+        v->async_ref.Abort();
     else if (v->sent >= sizeof(request_value))
         istream_deinit_eof(&v->base);
     else {
@@ -434,7 +434,7 @@ test_abort(struct pool *pool, struct context *c)
     pool_unref(pool);
     pool_commit();
 
-    async_abort(&c->async_ref);
+    c->async_ref.Abort();
 
     assert(!c->got_response);
     assert(c->released);

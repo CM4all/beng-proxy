@@ -164,7 +164,7 @@ delegate_handle_msghdr(struct delegate_client *d, const struct msghdr *msg,
 static void
 delegate_try_read(struct delegate_client *d)
 {
-    async_operation_finished(&d->operation);
+    d->operation.Finished();
 
     struct iovec iov;
     int fd;
@@ -334,8 +334,8 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
     d->handler = handler;
     d->handler_ctx = ctx;
 
-    async_init(&d->operation, &delegate_operation);
-    async_ref_set(async_ref, &d->operation);
+    d->operation.Init(delegate_operation);
+    async_ref->Set(d->operation);
 
     event_set(&d->event, d->fd, EV_WRITE,
               delegate_write_event_callback, d);

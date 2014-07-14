@@ -1123,8 +1123,8 @@ http_client_request_abort(struct async_operation *ao)
 
     stopwatch_event(client->stopwatch, "abort");
 
-    /* async_abort() can only be used before the response was
-       delivered to our callback */
+    /* async_operation_ref::Abort() can only be used before the
+       response was delivered to our callback */
     assert(client->response.read_state == http_client::response::READ_STATUS ||
            client->response.read_state == http_client::response::READ_HEADERS);
 
@@ -1195,8 +1195,8 @@ http_client_request(struct pool *caller_pool,
     client->caller_pool = caller_pool;
     http_response_handler_set(&client->request.handler, handler, ctx);
 
-    async_init(&client->request.async, &http_client_async_operation);
-    async_ref_set(async_ref, &client->request.async);
+    client->request.async.Init(http_client_async_operation);
+    async_ref->Set(client->request.async);
 
     /* request line */
 

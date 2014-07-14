@@ -164,7 +164,7 @@ static void
 filter_cache_request_release(struct FilterCacheRequest *request)
 {
     assert(request != nullptr);
-    assert(!async_ref_defined(&request->response.async_ref));
+    assert(!request->response.async_ref.IsDefined());
 
     evtimer_del(&request->timeout);
 
@@ -178,10 +178,10 @@ static void
 filter_cache_request_abort(struct FilterCacheRequest *request)
 {
     assert(request != nullptr);
-    assert(async_ref_defined(&request->response.async_ref));
+    assert(request->response.async_ref.IsDefined());
 
-    async_abort(&request->response.async_ref);
-    async_ref_clear(&request->response.async_ref);
+    request->response.async_ref.Abort();
+    request->response.async_ref.Clear();
     filter_cache_request_release(request);
 }
 
@@ -323,7 +323,7 @@ static void
 filter_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
 {
     FilterCacheRequest *request = (FilterCacheRequest *)ctx;
-    async_ref_clear(&request->response.async_ref);
+    request->response.async_ref.Clear();
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
@@ -336,7 +336,7 @@ static void
 filter_cache_rubber_no_store(void *ctx)
 {
     FilterCacheRequest *request = (FilterCacheRequest *)ctx;
-    async_ref_clear(&request->response.async_ref);
+    request->response.async_ref.Clear();
 
     cache_log(4, "filter_cache: nocache %s\n", request->info->key);
     filter_cache_request_release(request);
@@ -346,7 +346,7 @@ static void
 filter_cache_rubber_error(GError *error, void *ctx)
 {
     FilterCacheRequest *request = (FilterCacheRequest *)ctx;
-    async_ref_clear(&request->response.async_ref);
+    request->response.async_ref.Clear();
 
     cache_log(4, "filter_cache: body_abort %s: %s\n",
               request->info->key, error->message);
@@ -390,7 +390,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
     }
 
     if (body == nullptr) {
-        async_ref_clear(&request->response.async_ref);
+        request->response.async_ref.Clear();
 
         request->response.status = status;
         request->response.headers = headers;
@@ -430,7 +430,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
     pool_unref(caller_pool);
 
     if (body != nullptr) {
-        if (async_ref_defined(&request->response.async_ref))
+        if (request->response.async_ref.IsDefined())
             /* just in case our handler has closed the body without
                looking at it: call istream_read() to start reading */
             istream_read(istream_tee_second(body));

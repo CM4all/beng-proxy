@@ -74,8 +74,8 @@ istream_delayed_close(struct istream *istream)
 
     if (delayed->input != nullptr)
         istream_close_handler(delayed->input);
-    else if (async_ref_defined(&delayed->async))
-        async_abort(&delayed->async);
+    else if (delayed->async.IsDefined())
+        delayed->async.Abort();
 
     istream_deinit(&delayed->output);
 }
@@ -120,7 +120,7 @@ istream_delayed_set(struct istream *i_delayed, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    async_ref_poison(&delayed->async);
+    delayed->async.Poison();
 
     istream_assign_handler(&delayed->input, input,
                            &istream_forward_handler, &delayed->output,
@@ -135,7 +135,7 @@ istream_delayed_set_eof(struct istream *i_delayed)
     assert(delayed != nullptr);
     assert(delayed->input == nullptr);
 
-    async_ref_poison(&delayed->async);
+    delayed->async.Poison();
 
     istream_deinit_eof(&delayed->output);
 }
@@ -148,7 +148,7 @@ istream_delayed_set_abort(struct istream *i_delayed, GError *error)
     assert(delayed != nullptr);
     assert(delayed->input == nullptr);
 
-    async_ref_poison(&delayed->async);
+    delayed->async.Poison();
 
     istream_deinit_abort(&delayed->output, error);
 }

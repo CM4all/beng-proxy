@@ -496,10 +496,10 @@ wrap_fake_request_body(gcc_unused struct pool *pool, struct istream *i)
 static struct istream *
 make_delayed_request_body(struct pool *pool, struct context *c)
 {
-    async_init(&c->operation, &my_async_class);
+    c->operation.Init(my_async_class);
 
     struct istream *i = c->request_body = istream_delayed_new(pool);
-    async_ref_set(istream_delayed_async_ref(i), &c->operation);
+    istream_delayed_async_ref(i)->Set(c->operation);
 
     return i;
 }
@@ -1016,13 +1016,13 @@ test_twice_100(struct pool *pool, struct context *c)
 {
     c->connection = connect_twice_100();
     c->request_body = istream_delayed_new(pool);
-    async_ref_clear(istream_delayed_async_ref(c->request_body));
+    istream_delayed_async_ref(c->request_body)->Clear();
     client_request(pool, c->connection, &my_lease, c,
                    HTTP_METHOD_GET, "/foo", nullptr,
                    c->request_body,
                    false,
                    &my_response_handler, c, &c->async_ref);
-    async_ref_clear(istream_delayed_async_ref(c->request_body));
+    istream_delayed_async_ref(c->request_body)->Clear();
 
     pool_unref(pool);
     pool_commit();
@@ -1046,7 +1046,7 @@ static void
 test_close_100(struct pool *pool, struct context *c)
 {
     struct istream *request_body = istream_delayed_new(pool);
-    async_ref_clear(istream_delayed_async_ref(request_body));
+    istream_delayed_async_ref(request_body)->Clear();
 
     c->connection = connect_close_100();
     client_request(pool, c->connection, &my_lease, c,

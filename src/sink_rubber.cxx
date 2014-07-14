@@ -41,7 +41,7 @@ static void
 sink_rubber_abort_too_large(struct sink_rubber *s)
 {
     rubber_remove(s->rubber, s->rubber_id);
-    async_operation_finished(&s->async_operation);
+    s->async_operation.Finished();
 
     if (s->input != nullptr)
         istream_free_handler(&s->input);
@@ -52,7 +52,7 @@ sink_rubber_abort_too_large(struct sink_rubber *s)
 static void
 sink_rubber_eof(struct sink_rubber *s)
 {
-    async_operation_finished(&s->async_operation);
+    s->async_operation.Finished();
 
     if (s->input != nullptr)
         istream_free_handler(&s->input);
@@ -153,7 +153,7 @@ sink_rubber_input_abort(GError *error, void *ctx)
     s->input = nullptr;
 
     rubber_remove(s->rubber, s->rubber_id);
-    async_operation_finished(&s->async_operation);
+    s->async_operation.Finished();
     s->handler->error(error, s->handler_ctx);
 }
 
@@ -251,6 +251,6 @@ sink_rubber_new(struct pool *pool, struct istream *input,
                            &sink_rubber_input_handler, s,
                            ISTREAM_ANY);
 
-    async_init(&s->async_operation, &sink_rubber_operation);
-    async_ref_set(async_ref, &s->async_operation);
+    s->async_operation.Init(sink_rubber_operation);
+    async_ref->Set(s->async_operation);
 }

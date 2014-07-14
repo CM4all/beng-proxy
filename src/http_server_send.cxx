@@ -74,7 +74,7 @@ http_server_response(const struct http_server_request *request,
     assert(connection->request.request == request);
     assert(filtered_socket_connected(&connection->socket));
 
-    async_ref_poison(&connection->request.async_ref);
+    connection->request.async_ref.Poison();
 
     if (http_status_is_success(status)) {
         if (connection->score == HTTP_SERVER_FIRST)

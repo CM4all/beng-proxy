@@ -200,7 +200,7 @@ translate_client_abort(TranslateClient *client, GError *error)
 
     translate_client_release_socket(client, false);
 
-    async_operation_finished(&client->async);
+    client->async.Finished();
     client->handler->error(error, client->handler_ctx);
     pool_unref(client->pool);
 }
@@ -1317,7 +1317,7 @@ translate_handle_packet(TranslateClient *client,
 
         translate_client_release_socket(client, true);
 
-        async_operation_finished(&client->async);
+        client->async.Finished();
         client->handler->response(&client->response, client->handler_ctx);
         pool_unref(client->pool);
         return false;
@@ -3251,8 +3251,8 @@ translate(struct pool *pool, int fd,
     client->handler_ctx = ctx;
     client->response.status = (http_status_t)-1;
 
-    async_init(&client->async, &translate_operation);
-    async_ref_set(async_ref, &client->async);
+    client->async.Init(translate_operation);
+    async_ref->Set(client->async);
 
     pool_ref(client->pool);
     translate_try_write(client);

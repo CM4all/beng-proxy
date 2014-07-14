@@ -163,7 +163,7 @@ http_server_response_stream_abort(GError *error, void *ctx)
 
     /* we clear this async_ref here so http_server_request_close()
        won't think we havn't sent a response yet */
-    async_ref_clear(&connection->request.async_ref);
+    connection->request.async_ref.Clear();
 
     g_prefix_error(&error, "error on HTTP response stream: ");
     http_server_error(connection, error);

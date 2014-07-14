@@ -231,7 +231,7 @@ public:
         Data data(r);
 
         istream *input = istream_delayed_new(GetPool());
-        async_ref_clear(istream_delayed_async_ref(input));
+        istream_delayed_async_ref(input)->Clear();
 
         sink_rubber_new(GetPool(), input, r, 8 * 1024 * 1024,
                         &my_sink_rubber_handler, &data, &data.async_ref);
@@ -242,7 +242,7 @@ public:
         Data data(r);
 
         istream *delayed = istream_delayed_new(GetPool());
-        async_ref_clear(istream_delayed_async_ref(delayed));
+        istream_delayed_async_ref(delayed)->Clear();
 
         istream *input = istream_cat_new(GetPool(),
                                          istream_string_new(GetPool(), "foo"),
@@ -254,7 +254,7 @@ public:
         istream_read(input);
         CPPUNIT_ASSERT_EQUAL(Data::NONE, data.result);
 
-        async_abort(&data.async_ref);
+        data.async_ref.Abort();
     }
 };
 

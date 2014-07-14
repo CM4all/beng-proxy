@@ -73,7 +73,7 @@ fcgi_request_abort(struct async_operation *ao)
     if (request->stock_item != nullptr)
         fcgi_stock_aborted(request->stock_item);
 
-    async_abort(&request->async_ref);
+    request->async_ref.Abort();
 }
 
 static const struct async_operation_class fcgi_request_async_operation = {
@@ -142,8 +142,8 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
 
     request->stock_item = stock_item;
 
-    async_init(&request->async, &fcgi_request_async_operation);
-    async_ref_set(async_ref, &request->async);
+    request->async.Init(fcgi_request_async_operation);
+    async_ref->Set(request->async);
     async_ref = &request->async_ref;
 
     const char *script_filename = fcgi_stock_translate_path(stock_item, path,

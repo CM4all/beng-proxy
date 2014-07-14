@@ -127,8 +127,8 @@ my_request(struct http_server_request *request, void *_ctx,
             : NULL;
 
         body = istream_delayed_new(request->pool);
-        async_init(&ctx->operation, &my_operation);
-        async_ref_set(istream_delayed_async_ref(body), &ctx->operation);
+        ctx->operation.Init(my_operation);
+        istream_delayed_async_ref(body)->Set(ctx->operation);
 
         http_server_response(request, HTTP_STATUS_OK, NULL, body);
 

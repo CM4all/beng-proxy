@@ -222,7 +222,7 @@ stock_retry_waiting(struct stock *stock)
         if (list_empty(&stock->waiting))
             return;
 
-        async_operation_finished(&waiting->operation);
+        waiting->operation.Finished();
         list_remove(&waiting->siblings);
 
         if (stock_get_idle(stock, waiting->handler, waiting->handler_ctx))
@@ -243,7 +243,7 @@ stock_retry_waiting(struct stock *stock)
         if (list_empty(&stock->waiting))
             return;
 
-        async_operation_finished(&waiting->operation);
+        waiting->operation.Finished();
         list_remove(&waiting->siblings);
         stock_get_create(stock, waiting->pool, waiting->info,
                          waiting->handler, waiting->handler_ctx,
@@ -528,8 +528,8 @@ stock_get(struct stock *stock, struct pool *caller_pool, void *info,
         waiting->handler_ctx = handler_ctx;
         waiting->async_ref = async_ref;
 
-        async_init(&waiting->operation, &stock_wait_operation);
-        async_ref_set(async_ref, &waiting->operation);
+        waiting->operation.Init(stock_wait_operation);
+        async_ref->Set(waiting->operation);
 
         list_add(&waiting->siblings, &stock->waiting);
         return;

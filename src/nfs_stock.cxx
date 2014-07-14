@@ -192,7 +192,7 @@ nfs_stock::~nfs_stock()
         if (connection->client != nullptr)
             nfs_client_free(connection->client);
         else
-            async_abort(&connection->async_ref);
+            connection->async_ref.Abort();
 
         assert(list_empty(&connection->requests));
         DeleteUnrefTrashPool(*connection->pool, connection);
@@ -237,8 +237,8 @@ nfs_stock_get(struct nfs_stock *stock, struct pool *pool,
     request->pool = pool;
     request->handler = handler;
     request->handler_ctx = ctx;
-    async_init(&request->operation, &nfs_stock_request_operation);
-    async_ref_set(async_ref, &request->operation);
+    request->operation.Init(nfs_stock_request_operation);
+    async_ref->Set(request->operation);
 
     list_add(&request->siblings, &connection->requests);
 

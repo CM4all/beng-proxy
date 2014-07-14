@@ -81,7 +81,7 @@ expect_monitor_event_callback(gcc_unused int fd, short event, void *ctx)
     ExpectMonitor *expect =
         (ExpectMonitor *)ctx;
 
-    async_operation_finished(&expect->async_operation);
+    expect->async_operation.Finished();
 
     if (event & EV_TIMEOUT) {
         close(expect->fd);
@@ -151,8 +151,8 @@ expect_monitor_success(int fd, void *ctx)
               expect_monitor_event_callback, expect);
     event_add(&expect->event, &expect_timeout);
 
-    async_init(&expect->async_operation, &expect_monitor_async_operation);
-    async_ref_set(expect->async_ref, &expect->async_operation);
+    expect->async_operation.Init(expect_monitor_async_operation);
+    expect->async_ref->Set(expect->async_operation);
 
     pool_ref(expect->pool);
 }

@@ -125,7 +125,7 @@ static void
 nfs_cache_store_release(NFSCacheStore *store)
 {
     assert(store != nullptr);
-    assert(!async_ref_defined(&store->async_ref));
+    assert(!store->async_ref.IsDefined());
 
     evtimer_del(&store->timeout_event);
 
@@ -140,10 +140,10 @@ static void
 nfs_cache_store_abort(NFSCacheStore *store)
 {
     assert(store != nullptr);
-    assert(async_ref_defined(&store->async_ref));
+    assert(store->async_ref.IsDefined());
 
-    async_abort(&store->async_ref);
-    async_ref_clear(&store->async_ref);
+    store->async_ref.Abort();
+    store->async_ref.Clear();
     nfs_cache_store_release(store);
 }
 
@@ -177,7 +177,7 @@ nfs_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
     NFSCacheStore *store = (NFSCacheStore *)ctx;
     assert((off_t)size == store->stat.st_size);
 
-    async_ref_clear(&store->async_ref);
+    store->async_ref.Clear();
 
     /* the request was successful, and all of the body data has been
        saved: add it to the cache */
@@ -190,7 +190,7 @@ static void
 nfs_cache_rubber_no_store(void *ctx)
 {
     NFSCacheStore *store = (NFSCacheStore *)ctx;
-    async_ref_clear(&store->async_ref);
+    store->async_ref.Clear();
 
     cache_log(4, "nfs_cache: nocache %s\n", store->key);
     nfs_cache_store_release(store);
@@ -200,7 +200,7 @@ static void
 nfs_cache_rubber_error(GError *error, void *ctx)
 {
     NFSCacheStore *store = (NFSCacheStore *)ctx;
-    async_ref_clear(&store->async_ref);
+    store->async_ref.Clear();
 
     cache_log(4, "nfs_cache: body_abort %s: %s\n", store->key, error->message);
     g_error_free(error);

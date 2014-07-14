@@ -63,7 +63,7 @@ widget_resolver_callback1(void *ctx)
     data->first.finished = true;
 
     if (data->first.abort)
-        async_abort(&data->second.async_ref);
+        data->second.async_ref.Abort();
 }
 
 static void
@@ -128,8 +128,8 @@ widget_class_lookup(gcc_unused struct pool *pool,
     data->registry.requested = true;
     data->registry.callback = callback;
     data->registry.ctx = ctx;
-    async_init(&data->registry.operation, &widget_registry_operation);
-    async_ref_set(async_ref, &data->registry.operation);
+    data->registry.operation.Init(widget_registry_operation);
+    async_ref->Set(data->registry.operation);
 }
 
 static void
@@ -211,7 +211,7 @@ test_abort(struct pool *pool)
     assert(!data.registry.finished);
     assert(!data.registry.aborted);
 
-    async_abort(&data.first.async_ref);
+    data.first.async_ref.Abort();
 
     assert(!data.first.finished);
     assert(!data.second.finished);

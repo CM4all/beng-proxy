@@ -101,7 +101,7 @@ wrl_abort(struct async_operation *ao)
 #endif
 
         resolver->widget->resolver = nullptr;
-        async_abort(&resolver->async_ref);
+        resolver->async_ref.Abort();
         pool_unref(resolver->pool);
     }
 }
@@ -163,7 +163,7 @@ widget_resolver_callback(const struct widget_class *cls, void *ctx)
 
         list_remove(&listener->siblings);
 
-        async_operation_finished(&listener->operation);
+        listener->operation.Finished();
         listener->callback(listener->callback_ctx);
         pool_unref(listener->pool);
     } while (!list_empty(&resolver->listeners));
@@ -246,8 +246,8 @@ widget_resolver_new(struct pool *pool, struct pool *widget_pool,
     listener->pool = pool;
     listener->resolver = resolver;
 
-    async_init(&listener->operation, &listener_async_operation);
-    async_ref_set(async_ref, &listener->operation);
+    listener->operation.Init(listener_async_operation);
+    async_ref->Set(listener->operation);
 
     listener->callback = callback;
     listener->callback_ctx = ctx;

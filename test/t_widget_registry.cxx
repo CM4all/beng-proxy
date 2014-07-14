@@ -77,8 +77,8 @@ tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
     } else if (strcmp(request->widget_type, "block") == 0) {
         async_operation *ao = NewFromPool<async_operation>(*pool);
 
-        async_init(ao, &my_operation);
-        async_ref_set(async_ref, ao);
+        ao->Init(my_operation);
+        async_ref->Set(*ao);
     } else
         assert(0);
 }
@@ -145,7 +145,7 @@ test_abort(struct pool *pool)
     assert(!data.got_class);
     assert(!aborted);
 
-    async_abort(&async_ref);
+    async_ref.Abort();
 
     /* need to unref the pool after aborted(), because our fake
        tstock_translate() implementation does not reference the

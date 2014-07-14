@@ -75,7 +75,7 @@ sink_buffer_input_eof(void *ctx)
 
     assert(buffer->position == buffer->size);
 
-    async_operation_finished(&buffer->async_operation);
+    buffer->async_operation.Finished();
     buffer->handler->done(buffer->data, buffer->size, buffer->handler_ctx);
 }
 
@@ -84,7 +84,7 @@ sink_buffer_input_abort(GError *error, void *ctx)
 {
     sink_buffer *buffer = (sink_buffer *)ctx;
 
-    async_operation_finished(&buffer->async_operation);
+    buffer->async_operation.Finished();
     buffer->handler->error(error, buffer->handler_ctx);
 }
 
@@ -174,6 +174,6 @@ sink_buffer_new(struct pool *pool, struct istream *input,
     buffer->handler = handler;
     buffer->handler_ctx = ctx;
 
-    async_init(&buffer->async_operation, &sink_buffer_operation);
-    async_ref_set(async_ref, &buffer->async_operation);
+    buffer->async_operation.Init(sink_buffer_operation);
+    async_ref->Set(buffer->async_operation);
 }

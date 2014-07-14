@@ -42,8 +42,8 @@ struct lb_monitor final : public LBMonitorHandler {
     ~lb_monitor() {
         event_del(&interval_event);
 
-        if (async_ref_defined(&async_ref))
-            async_abort(&async_ref);
+        if (async_ref.IsDefined())
+            async_ref.Abort();
 
         pool_unref(pool);
     }
@@ -58,7 +58,7 @@ struct lb_monitor final : public LBMonitorHandler {
 void
 lb_monitor::Success()
 {
-    async_ref_clear(&async_ref);
+    async_ref.Clear();
     evtimer_del(&timeout_event);
 
     if (!state)
@@ -83,7 +83,7 @@ lb_monitor::Success()
 void
 lb_monitor::Fade()
 {
-    async_ref_clear(&async_ref);
+    async_ref.Clear();
     evtimer_del(&timeout_event);
 
     if (!fade)
@@ -100,7 +100,7 @@ lb_monitor::Fade()
 void
 lb_monitor::Timeout()
 {
-    async_ref_clear(&async_ref);
+    async_ref.Clear();
     evtimer_del(&timeout_event);
 
     daemon_log(state ? 3 : 6, "monitor timeout: %s\n", name);
@@ -114,7 +114,7 @@ lb_monitor::Timeout()
 void
 lb_monitor::Error(GError *error)
 {
-    async_ref_clear(&async_ref);
+    async_ref.Clear();
     evtimer_del(&timeout_event);
 
     if (state)
@@ -136,7 +136,7 @@ lb_monitor_interval_callback(gcc_unused int fd, gcc_unused short event,
                           void *ctx)
 {
     struct lb_monitor *monitor = (struct lb_monitor *)ctx;
-    assert(!async_ref_defined(&monitor->async_ref));
+    assert(!monitor->async_ref.IsDefined());
 
     daemon_log(6, "running monitor %s\n", monitor->name);
 
@@ -156,12 +156,12 @@ lb_monitor_timeout_callback(gcc_unused int fd, gcc_unused short event,
                             void *ctx)
 {
     struct lb_monitor *monitor = (struct lb_monitor *)ctx;
-    assert(async_ref_defined(&monitor->async_ref));
+    assert(monitor->async_ref.IsDefined());
 
     daemon_log(6, "monitor timeout: %s\n", monitor->name);
 
-    async_abort(&monitor->async_ref);
-    async_ref_clear(&monitor->async_ref);
+    monitor->async_ref.Abort();
+    monitor->async_ref.Clear();
 
     monitor->state = false;
     failure_set(monitor->address, monitor->address.GetSize(),
@@ -183,7 +183,7 @@ lb_monitor::lb_monitor(struct pool *_pool, const char *_name,
      state(true), fade(false) {
     evtimer_set(&interval_event, lb_monitor_interval_callback, this);
     evtimer_set(&timeout_event, lb_monitor_timeout_callback, this);
-    async_ref_clear(&async_ref);
+    async_ref.Clear();
     pool_ref(pool);
 }
 

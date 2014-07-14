@@ -387,8 +387,8 @@ processor_lookup_widget(struct pool *caller_pool,
 
     pool_ref(caller_pool);
 
-    async_init(&processor->async, &processor_async_operation);
-    async_ref_set(async_ref, &processor->async);
+    processor->async.Init(processor_async_operation);
+    async_ref->Set(processor->async);
     processor->async_ref = async_ref;
 
     do {
@@ -1557,7 +1557,7 @@ processor_parser_eof(void *ctx, off_t length gcc_unused)
 
     if (processor->lookup_id != nullptr) {
         /* widget was not found */
-        async_operation_finished(&processor->async);
+        processor->async.Finished();
 
         processor->handler->not_found(processor->handler_ctx);
         pool_unref(processor->caller_pool);
@@ -1584,7 +1584,7 @@ processor_parser_abort(GError *error, void *ctx)
         istream_free_unused(&processor->container->for_focused.body);
 
     if (processor->lookup_id != nullptr) {
-        async_operation_finished(&processor->async);
+        processor->async.Finished();
         processor->handler->error(error, processor->handler_ctx);
         pool_unref(processor->caller_pool);
     } else

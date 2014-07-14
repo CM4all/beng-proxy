@@ -45,7 +45,7 @@ uoa_abort(struct async_operation *ao)
     unsigned line = uoa->line;
 #endif
 
-    async_abort(&uoa->ref);
+    uoa->ref.Abort();
     pool_unref_fwd(uoa->pool);
 }
 
@@ -67,8 +67,8 @@ async_unref_on_abort_impl(struct pool *pool,
     auto uoa = NewFromPool<struct unref_on_abort>(*pool);
 
     uoa->pool = pool;
-    async_init(&uoa->operation, &uoa_operation);
-    async_ref_set(async_ref, &uoa->operation);
+    uoa->operation.Init(uoa_operation);
+    async_ref->Set(uoa->operation);
 
 #ifdef TRACE
     uoa->file = file;

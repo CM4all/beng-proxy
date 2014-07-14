@@ -28,9 +28,9 @@ create_test(struct pool *pool, struct istream *input)
     struct istream *istream;
     static struct async_operation async;
 
-    async_init(&async, &my_delayed_operation);
+    async.Init(my_delayed_operation);
     istream = istream_delayed_new(pool);
-    async_ref_set(istream_delayed_async_ref(istream), &async);
+    istream_delayed_async_ref(istream)->Set(async);
 
     istream_delayed_set(istream, input);
     return istream;

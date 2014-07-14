@@ -815,7 +815,7 @@ handler_abort(struct async_operation *ao)
     request_discard_body(&request2);
 
     /* forward the abort to the http_server library */
-    async_abort(&request2.async_ref);
+    request2.async_ref.Abort();
 }
 
 static const struct async_operation_class handler_operation = {
@@ -853,8 +853,8 @@ handle_http_request(client_connection &connection,
         : nullptr;
     request2->transformed = false;
 
-    async_init(&request2->operation, &handler_operation);
-    async_ref_set(async_ref, &request2->operation);
+    request2->operation.Init(handler_operation);
+    async_ref->Set(request2->operation);
 
 #ifndef NDEBUG
     request2->response_sent = false;
