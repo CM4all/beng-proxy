@@ -3,7 +3,7 @@
 #include "delegate_stock.hxx"
 #include "hstock.hxx"
 #include "async.h"
-#include "defer.h"
+#include "defer.hxx"
 #include "pool.hxx"
 
 #include <event.h>

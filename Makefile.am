@@ -118,7 +118,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/bp_listener.cxx src/bp_listener.hxx \
 	src/bp_connection.cxx src/bp_connection.hxx \
 	src/dchunk.h \
-	src/defer.c src/defer.h \
+	src/defer.cxx src/defer.hxx \
 	src/defer_event.h \
 	src/delegate_client.cxx src/delegate_client.hxx \
 	src/delegate_glue.cxx src/delegate_glue.hxx \
@@ -1805,7 +1805,7 @@ test_run_delegate_SOURCES = test/run_delegate.cxx \
 	src/delegate_stock.cxx src/delegate_client.cxx src/delegate_glue.cxx \
 	src/exec.cxx \
 	src/hashmap.cxx src/hstock.cxx src/stock.cxx \
-	src/defer.c \
+	src/defer.cxx \
 	src/fd_util.c
 test_run_delegate_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \

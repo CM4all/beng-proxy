@@ -5,9 +5,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "defer.h"
+#include "defer.hxx"
 #include "async.h"
-#include "pool.h"
+#include "pool.hxx"
+#include "util/Cast.hxx"
 
 #include <event.h>
 
@@ -32,7 +33,7 @@ struct async_operation_ref;
 static void
 defer_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
 {
-    struct defer *d = ctx;
+    struct defer *d = (struct defer *)ctx;
 
     async_operation_finished(&d->operation);
 
@@ -51,7 +52,7 @@ defer_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
 static struct defer *
 async_to_defer(struct async_operation *ao)
 {
-    return (struct defer*)(((char*)ao) - offsetof(struct defer, operation));
+    return ContainerCast(ao, struct defer, operation);
 }
 
 static void
@@ -77,7 +78,7 @@ void
 defer(struct pool *pool, defer_callback_t callback, void *ctx,
       struct async_operation_ref *async_ref)
 {
-    struct defer *d = p_malloc(pool, sizeof(*d));
+    auto d = NewFromPool<struct defer>(*pool);
     static const struct timeval tv = {
         .tv_sec = 0,
         .tv_usec = 0,
@@ -88,7 +89,7 @@ defer(struct pool *pool, defer_callback_t callback, void *ctx,
     d->callback = callback;
     d->callback_ctx = ctx;
 
-    if (async_ref != NULL) {
+    if (async_ref != nullptr) {
         async_init(&d->operation, &defer_operation);
         async_ref_set(async_ref, &d->operation);
     }
