@@ -76,6 +76,10 @@ public:
         p_event_add(&event, &tv, &pool, "client_socket_event");
     }
 
+    void Delete() {
+        DeleteUnrefPool(pool, this);
+    }
+
 private:
     void OnEvent(int _fd, short events);
     static void OnEvent(int fd, short event, void *ctx);
@@ -96,7 +100,7 @@ ConnectSocket::Abort()
 
     p_event_del(&event, &pool);
     close(fd);
-    pool_unref(&pool);
+    Delete();
 }
 
 
@@ -117,7 +121,7 @@ ConnectSocket::OnEvent(int _fd, short events)
     if (events & EV_TIMEOUT) {
         close(fd);
         handler.timeout(handler_ctx);
-        pool_unref(&pool);
+        Delete();
         return;
     }
 
@@ -140,7 +144,7 @@ ConnectSocket::OnEvent(int _fd, short events)
         handler.error(error, handler_ctx);
     }
 
-    pool_unref(&pool);
+    Delete();
 }
 
 void
