@@ -7,6 +7,8 @@
 
 #include <inline/compiler.h>
 
+#include <algorithm>
+
 #include <assert.h>
 #include <stddef.h>
 
@@ -33,6 +35,11 @@ public:
     }
 
     ~SocketDescriptor();
+
+    SocketDescriptor &operator=(SocketDescriptor &&src) {
+        std::swap(fd, src.fd);
+        return *this;
+    }
 
     bool IsDefined() const {
         return fd >= 0;
