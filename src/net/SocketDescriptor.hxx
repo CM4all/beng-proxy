@@ -76,6 +76,8 @@ public:
      */
     bool Connect(const SocketAddress address);
 
+    int GetError();
+
     gcc_pure
     StaticSocketAddress GetLocalAddress() const;
 };

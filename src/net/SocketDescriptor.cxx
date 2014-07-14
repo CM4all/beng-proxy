@@ -131,6 +131,19 @@ SocketDescriptor::Connect(const SocketAddress address)
     return connect(fd, address, address.GetSize());
 }
 
+int
+SocketDescriptor::GetError()
+{
+    assert(IsDefined());
+
+    int s_err = 0;
+    socklen_t s_err_size = sizeof(s_err);
+    return getsockopt(fd, SOL_SOCKET, SO_ERROR,
+                      (char *)&s_err, &s_err_size) == 0
+        ? s_err
+        : errno;
+}
+
 StaticSocketAddress
 SocketDescriptor::GetLocalAddress() const
 {
