@@ -36,30 +36,30 @@
 
 class ConnectSocket {
     struct async_operation operation;
-    struct pool *const pool;
+    struct pool &pool;
     int fd;
     struct event event;
 
 #ifdef ENABLE_STOPWATCH
-    struct stopwatch *stopwatch;
+    struct stopwatch &stopwatch;
 #endif
 
-    const ConnectSocketHandler *const handler;
+    const ConnectSocketHandler &handler;
     void *const handler_ctx;
 
 public:
     ConnectSocket(struct pool &_pool, int _fd, unsigned timeout,
 #ifdef ENABLE_STOPWATCH
-                  struct stopwatch *_stopwatch,
+                  struct stopwatch &_stopwatch,
 #endif
                   const ConnectSocketHandler &_handler, void *ctx,
                   struct async_operation_ref &async_ref)
-        :pool(&_pool), fd(_fd),
+        :pool(_pool), fd(_fd),
 #ifdef ENABLE_STOPWATCH
          stopwatch(_stopwatch),
 #endif
-         handler(&_handler), handler_ctx(ctx) {
-        pool_ref(pool);
+         handler(_handler), handler_ctx(ctx) {
+        pool_ref(&pool);
 
         operation.Init2<ConnectSocket, &ConnectSocket::operation,
                         &ConnectSocket::Abort>();
@@ -73,7 +73,7 @@ public:
             .tv_sec = time_t(timeout),
             .tv_usec = 0,
         };
-        p_event_add(&event, &tv, pool, "client_socket_event");
+        p_event_add(&event, &tv, &pool, "client_socket_event");
     }
 
 private:
@@ -94,9 +94,9 @@ ConnectSocket::Abort()
 {
     assert(fd >= 0);
 
-    p_event_del(&event, pool);
+    p_event_del(&event, &pool);
     close(fd);
-    pool_unref(pool);
+    pool_unref(&pool);
 }
 
 
@@ -110,14 +110,14 @@ ConnectSocket::OnEvent(int _fd, short events)
 {
     assert(_fd == fd);
 
-    p_event_consumed(&event, pool);
+    p_event_consumed(&event, &pool);
 
     operation.Finished();
 
     if (events & EV_TIMEOUT) {
         close(fd);
-        handler->timeout(handler_ctx);
-        pool_unref(pool);
+        handler.timeout(handler_ctx);
+        pool_unref(&pool);
         pool_commit();
         return;
     }
@@ -129,19 +129,19 @@ ConnectSocket::OnEvent(int _fd, short events)
 
     if (s_err == 0) {
 #ifdef ENABLE_STOPWATCH
-        stopwatch_event(stopwatch, "connect");
-        stopwatch_dump(stopwatch);
+        stopwatch_event(&stopwatch, "connect");
+        stopwatch_dump(&stopwatch);
 #endif
 
-        handler->success(fd, handler_ctx);
+        handler.success(fd, handler_ctx);
     } else {
         close(fd);
 
         GError *error = new_error_errno2(s_err);
-        handler->error(error, handler_ctx);
+        handler.error(error, handler_ctx);
     }
 
-    pool_unref(pool);
+    pool_unref(&pool);
     pool_commit();
 }
 
@@ -219,7 +219,7 @@ client_socket_new(struct pool &pool,
     } else if (errno == EINPROGRESS) {
         NewFromPool<ConnectSocket>(pool, pool, fd, timeout,
 #ifdef ENABLE_STOPWATCH
-                                   stopwatch,
+                                   *stopwatch,
 #endif
                                    handler, ctx, async_ref);
     } else {
