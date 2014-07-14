@@ -34,22 +34,51 @@
 #define IP_TRANSPARENT 19
 #endif
 
-struct ConnectSocket {
+class ConnectSocket {
     struct async_operation operation;
     struct pool *const pool;
     int fd;
     struct event event;
 
-    const ConnectSocketHandler *const handler;
-    void *const handler_ctx;
-
 #ifdef ENABLE_STOPWATCH
     struct stopwatch *stopwatch;
 #endif
 
-    ConnectSocket(struct pool &_pool, int _fd,
-                  const ConnectSocketHandler &_handler, void *ctx)
-        :pool(&_pool), fd(_fd), handler(&_handler), handler_ctx(ctx) {}
+    const ConnectSocketHandler *const handler;
+    void *const handler_ctx;
+
+public:
+    ConnectSocket(struct pool &_pool, int _fd, unsigned timeout,
+#ifdef ENABLE_STOPWATCH
+                  struct stopwatch *_stopwatch,
+#endif
+                  const ConnectSocketHandler &_handler, void *ctx,
+                  struct async_operation_ref &async_ref)
+        :pool(&_pool), fd(_fd),
+#ifdef ENABLE_STOPWATCH
+         stopwatch(_stopwatch),
+#endif
+         handler(&_handler), handler_ctx(ctx) {
+        pool_ref(pool);
+
+        operation.Init2<ConnectSocket, &ConnectSocket::operation,
+                        &ConnectSocket::Abort>();
+        async_ref.Set(operation);
+
+        event_set(&event, fd,
+                  EV_WRITE|EV_TIMEOUT, OnEvent,
+                  this);
+
+        const struct timeval tv = {
+            .tv_sec = time_t(timeout),
+            .tv_usec = 0,
+        };
+        p_event_add(&event, &tv, pool, "client_socket_event");
+    }
+
+private:
+    void OnEvent(int _fd, short events);
+    static void OnEvent(int fd, short event, void *ctx);
 
     void Abort();
 };
@@ -76,48 +105,52 @@ ConnectSocket::Abort()
  *
  */
 
-static void
-client_socket_event_callback(int fd, short event gcc_unused, void *ctx)
+inline void
+ConnectSocket::OnEvent(int _fd, short events)
 {
-    ConnectSocket *client_socket = (ConnectSocket *)ctx;
-    int ret;
-    int s_err = 0;
-    socklen_t s_err_size = sizeof(s_err);
+    assert(_fd == fd);
 
-    assert(client_socket->fd == fd);
+    p_event_consumed(&event, pool);
 
-    p_event_consumed(&client_socket->event, client_socket->pool);
+    operation.Finished();
 
-    client_socket->operation.Finished();
-
-    if (event & EV_TIMEOUT) {
+    if (events & EV_TIMEOUT) {
         close(fd);
-        client_socket->handler->timeout(client_socket->handler_ctx);
-        pool_unref(client_socket->pool);
+        handler->timeout(handler_ctx);
+        pool_unref(pool);
         pool_commit();
         return;
     }
 
-    ret = getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&s_err, &s_err_size);
-    if (ret < 0)
+    int s_err = 0;
+    socklen_t s_err_size = sizeof(s_err);
+    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&s_err, &s_err_size) < 0)
         s_err = errno;
 
     if (s_err == 0) {
 #ifdef ENABLE_STOPWATCH
-        stopwatch_event(client_socket->stopwatch, "connect");
-        stopwatch_dump(client_socket->stopwatch);
+        stopwatch_event(stopwatch, "connect");
+        stopwatch_dump(stopwatch);
 #endif
 
-        client_socket->handler->success(fd, client_socket->handler_ctx);
+        handler->success(fd, handler_ctx);
     } else {
         close(fd);
 
         GError *error = new_error_errno2(s_err);
-        client_socket->handler->error(error, client_socket->handler_ctx);
+        handler->error(error, handler_ctx);
     }
 
-    pool_unref(client_socket->pool);
+    pool_unref(pool);
     pool_commit();
+}
+
+void
+ConnectSocket::OnEvent(int fd, short event, void *ctx)
+{
+    ConnectSocket &client_socket = *(ConnectSocket *)ctx;
+
+    client_socket.OnEvent(fd, event);
 }
 
 
@@ -138,12 +171,7 @@ client_socket_new(struct pool &pool,
 {
     assert(!address.IsNull());
 
-    int fd, ret;
-#ifdef ENABLE_STOPWATCH
-    struct stopwatch *stopwatch;
-#endif
-
-    fd = socket_cloexec_nonblock(domain, type, protocol);
+    const int fd = socket_cloexec_nonblock(domain, type, protocol);
     if (fd < 0) {
         GError *error = new_error_errno();
         handler.error(error, ctx);
@@ -177,12 +205,11 @@ client_socket_new(struct pool &pool,
     }
 
 #ifdef ENABLE_STOPWATCH
-    stopwatch = stopwatch_sockaddr_new(&pool, address, address.GetSize(),
-                                       nullptr);
+    struct stopwatch *stopwatch =
+        stopwatch_sockaddr_new(&pool, address, address.GetSize(), nullptr);
 #endif
 
-    ret = connect(fd, address, address.GetSize());
-    if (ret == 0) {
+    if (connect(fd, address, address.GetSize()) == 0) {
 #ifdef ENABLE_STOPWATCH
         stopwatch_event(stopwatch, "connect");
         stopwatch_dump(stopwatch);
@@ -190,28 +217,11 @@ client_socket_new(struct pool &pool,
 
         handler.success(fd, ctx);
     } else if (errno == EINPROGRESS) {
-        const struct timeval tv = {
-            .tv_sec = time_t(timeout),
-            .tv_usec = 0,
-        };
-
-        pool_ref(&pool);
-        auto client_socket =
-            NewFromPool<ConnectSocket>(pool, pool, fd,
-                                       handler, ctx);
-
+        NewFromPool<ConnectSocket>(pool, pool, fd, timeout,
 #ifdef ENABLE_STOPWATCH
-        client_socket->stopwatch = stopwatch;
+                                   stopwatch,
 #endif
-
-        client_socket->operation.Init2<ConnectSocket>();
-        async_ref.Set(client_socket->operation);
-
-        event_set(&client_socket->event, client_socket->fd,
-                  EV_WRITE|EV_TIMEOUT, client_socket_event_callback,
-                  client_socket);
-        p_event_add(&client_socket->event, &tv,
-                    client_socket->pool, "client_socket_event");
+                                   handler, ctx, async_ref);
     } else {
         GError *error = new_error_errno();
         close(fd);
