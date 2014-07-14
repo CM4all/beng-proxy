@@ -30,6 +30,8 @@
 #ifndef ASYNC_HXX
 #define ASYNC_HXX
 
+#include "util/Cast.hxx"
+
 #include <inline/compiler.h>
 
 #include <assert.h>
@@ -58,6 +60,25 @@ struct async_operation {
 #endif
     }
 
+    template<typename T,
+             async_operation T::*operation_member = &T::operation,
+             void (T::*abort_member)() = &T::Abort>
+    struct Generator {
+        static void Abort(async_operation *ao) {
+            T &t = ContainerCast2<T, async_operation>(*ao, operation_member);
+            (t.*abort_member)();
+        }
+
+        static const struct async_operation_class cls;
+    };
+
+    template<typename T,
+             async_operation T::*operation_member = &T::operation,
+             void (T::*abort_member)() = &T::Abort>
+    void Init2() {
+        Init(Generator<T, operation_member, abort_member>::cls);
+    }
+
     void Abort() {
         assert(!finished);
         assert(!aborted);
@@ -81,6 +102,13 @@ struct async_operation {
         finished = true;
 #endif
     }
+};
+
+template<class T,
+         async_operation T::*operation_member,
+         void (T::*abort_member)()>
+const struct async_operation_class async_operation::Generator<T, operation_member, abort_member>::cls = {
+    .abort = Abort,
 };
 
 struct async_operation_ref {

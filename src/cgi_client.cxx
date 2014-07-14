@@ -40,8 +40,10 @@ struct cgi_client {
 
     bool had_input, had_output;
 
-    struct async_operation async;
+    struct async_operation operation;
     struct http_response_handler_ref handler;
+
+    void Abort();
 };
 
 /**
@@ -50,7 +52,7 @@ struct cgi_client {
 static bool
 cgi_return_response(cgi_client *cgi)
 {
-    cgi->async.Finished();
+    cgi->operation.Finished();
 
     http_status_t status = cgi_parser_get_status(&cgi->parser);
     struct strmap *headers = cgi_parser_get_headers(&cgi->parser);
@@ -461,21 +463,15 @@ static const struct istream_class istream_cgi = {
  *
  */
 
-static void
-cgi_async_abort(struct async_operation *ao)
+inline void
+cgi_client::Abort()
 {
-    cgi_client &cgi = ContainerCast2(*ao, &cgi_client::async);
+    assert(input != nullptr);
 
-    assert(cgi.input != nullptr);
-
-    fb_pool_free(cgi.buffer);
-    istream_close_handler(cgi.input);
-    pool_unref(cgi.output.pool);
+    fb_pool_free(buffer);
+    istream_close_handler(input);
+    pool_unref(output.pool);
 }
-
-static const struct async_operation_class cgi_async_operation = {
-    .abort = cgi_async_abort,
-};
 
 
 /*
@@ -504,8 +500,8 @@ cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
 
     http_response_handler_set(&cgi->handler, handler, handler_ctx);
 
-    cgi->async.Init(cgi_async_operation);
-    async_ref->Set(cgi->async);
+    cgi->operation.Init2<cgi_client>();
+    async_ref->Set(cgi->operation);
 
     istream_read(input);
 }

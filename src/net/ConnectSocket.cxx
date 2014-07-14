@@ -50,6 +50,8 @@ struct ConnectSocket {
     ConnectSocket(struct pool &_pool, int _fd,
                   const ConnectSocketHandler &_handler, void *ctx)
         :pool(&_pool), fd(_fd), handler(&_handler), handler_ctx(ctx) {}
+
+    void Abort();
 };
 
 
@@ -58,28 +60,15 @@ struct ConnectSocket {
  *
  */
 
-static ConnectSocket *
-async_to_client_socket(struct async_operation *ao)
+inline void
+ConnectSocket::Abort()
 {
-    return &ContainerCast2(*ao, &ConnectSocket::operation);
+    assert(fd >= 0);
+
+    p_event_del(&event, pool);
+    close(fd);
+    pool_unref(pool);
 }
-
-static void
-client_socket_abort(struct async_operation *ao)
-{
-    ConnectSocket *client_socket = async_to_client_socket(ao);
-
-    assert(client_socket != nullptr);
-    assert(client_socket->fd >= 0);
-
-    p_event_del(&client_socket->event, client_socket->pool);
-    close(client_socket->fd);
-    pool_unref(client_socket->pool);
-}
-
-static const struct async_operation_class client_socket_operation = {
-    .abort = client_socket_abort,
-};
 
 
 /*
@@ -215,7 +204,7 @@ client_socket_new(struct pool &pool,
         client_socket->stopwatch = stopwatch;
 #endif
 
-        client_socket->operation.Init(client_socket_operation);
+        client_socket->operation.Init2<ConnectSocket>();
         async_ref.Set(client_socket->operation);
 
         event_set(&client_socket->event, client_socket->fd,
