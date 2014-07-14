@@ -174,7 +174,7 @@ static const struct istream_handler sink_rubber_input_handler = {
 static struct sink_rubber *
 async_to_sink_rubber(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct sink_rubber, async_operation);
+    return &ContainerCast2(*ao, &sink_rubber::async_operation);
 }
 
 static void

@@ -473,7 +473,7 @@ static const struct istream_handler replace_input_handler = {
 static inline struct istream_replace *
 istream_to_replace(struct istream *istream)
 {
-    return ContainerCast(istream, struct istream_replace, output);
+    return &ContainerCast2(*istream, &istream_replace::output);
 }
 
 static off_t

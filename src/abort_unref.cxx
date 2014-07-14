@@ -30,23 +30,17 @@ struct unref_on_abort {
  *
  */
 
-static struct unref_on_abort *
-async_to_uoa(struct async_operation *ao)
-{
-    return ContainerCast(ao, struct unref_on_abort, operation);
-}
-
 static void
 uoa_abort(struct async_operation *ao)
 {
-    struct unref_on_abort *uoa = async_to_uoa(ao);
+    unref_on_abort &uoa = ContainerCast2(*ao, &unref_on_abort::operation);
 #ifdef TRACE
-    const char *file = uoa->file;
-    unsigned line = uoa->line;
+    const char *file = uoa.file;
+    unsigned line = uoa.line;
 #endif
 
-    uoa->ref.Abort();
-    pool_unref_fwd(uoa->pool);
+    uoa.ref.Abort();
+    pool_unref_fwd(uoa.pool);
 }
 
 static const struct async_operation_class uoa_operation = {

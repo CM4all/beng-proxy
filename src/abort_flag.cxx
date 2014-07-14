@@ -14,20 +14,14 @@
  *
  */
 
-static struct abort_flag *
-async_to_af(struct async_operation *ao)
-{
-    return ContainerCast(ao, struct abort_flag, operation);
-}
-
 static void
 af_abort(struct async_operation *ao)
 {
-    struct abort_flag *af = async_to_af(ao);
+    abort_flag &af = ContainerCast2(*ao, &abort_flag::operation);
 
-    assert(!af->aborted);
+    assert(!af.aborted);
 
-    af->aborted = true;
+    af.aborted = true;
 }
 
 static const struct async_operation_class abort_flag_operation = {

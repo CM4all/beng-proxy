@@ -25,7 +25,7 @@ struct istream_rubber {
 static inline struct istream_rubber *
 istream_to_rubber(struct istream *istream)
 {
-    return ContainerCast(istream, struct istream_rubber, base);
+    return &ContainerCast2(*istream, &istream_rubber::base);
 }
 
 static off_t

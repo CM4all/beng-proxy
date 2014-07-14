@@ -112,7 +112,7 @@ public:
     HttpCacheRequest(const HttpCacheRequest &) = delete;
 
     static HttpCacheRequest *FromAsync(async_operation *ao) {
-        return ContainerCast(ao, HttpCacheRequest, operation);
+        return &ContainerCast2(*ao, &HttpCacheRequest::operation);
     }
 
     /**

@@ -385,7 +385,7 @@ static const struct istream_handler cgi_input_handler = {
 static inline struct cgi *
 istream_to_cgi(struct istream *istream)
 {
-    return ContainerCast(istream, struct cgi, output);
+    return &ContainerCast2(*istream, &cgi::output);
 }
 
 static off_t
@@ -461,22 +461,16 @@ static const struct istream_class istream_cgi = {
  *
  */
 
-static struct cgi *
-async_to_cgi(struct async_operation *ao)
-{
-    return ContainerCast(ao, struct cgi, async);
-}
-
 static void
 cgi_async_abort(struct async_operation *ao)
 {
-    struct cgi *cgi = async_to_cgi(ao);
+    cgi &cgi = ContainerCast2(*ao, &cgi::async);
 
-    assert(cgi->input != nullptr);
+    assert(cgi.input != nullptr);
 
-    fb_pool_free(cgi->buffer);
-    istream_close_handler(cgi->input);
-    pool_unref(cgi->output.pool);
+    fb_pool_free(cgi.buffer);
+    istream_close_handler(cgi.input);
+    pool_unref(cgi.output.pool);
 }
 
 static const struct async_operation_class cgi_async_operation = {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Max Kellermann <max@duempel.org>
+ * Copyright (C) 2013-2014 Max Kellermann <max@duempel.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
 #ifndef CAST_HXX
 #define CAST_HXX
 
-#include <stddef.h>
+#include <cstddef>
 
 /**
  * Offset the given pointer by the specified number of bytes.
@@ -70,5 +70,45 @@ OffsetCast(const U *p, ptrdiff_t offset)
 #define ContainerCast(p, container, attribute) \
 	OffsetCast<container, decltype(((container*)nullptr)->attribute)> \
 	((p), -ptrdiff_t(offsetof(container, attribute)))
+
+template<class C, class A>
+static constexpr inline ptrdiff_t
+ContainerAttributeOffset(const C *null_c, const A C::*p)
+{
+	return ptrdiff_t((const char *)null_c - (const char *)&(null_c->*p));
+}
+
+template<class C, class A>
+static constexpr inline ptrdiff_t
+ContainerAttributeOffset(const A C::*p)
+{
+	return ContainerAttributeOffset<C, A>(nullptr, p);
+}
+
+/**
+ * Cast the given pointer to a struct member to its parent structure.
+ */
+template<class C, class A>
+#if defined(__clang__) || GCC_CHECK_VERSION(4,7)
+constexpr
+#endif
+static inline C &
+ContainerCast2(A &a, A C::*member)
+{
+	return *OffsetCast<C, A>(&a, ContainerAttributeOffset<C, A>(member));
+}
+
+/**
+ * Cast the given pointer to a struct member to its parent structure.
+ */
+template<class C, class A>
+#if defined(__clang__) || GCC_CHECK_VERSION(4,7)
+constexpr
+#endif
+static inline const C &
+ContainerCast2(const A &a, A C::*member)
+{
+	return *OffsetCast<const C, const A>(&a, ContainerAttributeOffset<C, A>(member));
+}
 
 #endif

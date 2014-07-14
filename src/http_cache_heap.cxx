@@ -54,7 +54,7 @@ struct http_cache_item {
     http_cache_item(const http_cache_item &) = delete;
 
     static http_cache_item *FromDocument(http_cache_document *document) {
-        return ContainerCast(document, http_cache_item, document);
+        return &ContainerCast2(*document, &http_cache_item::document);
     }
 };
 

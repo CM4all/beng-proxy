@@ -72,7 +72,7 @@ static const struct istream_handler sink_gstring_input_handler = {
 static struct sink_gstring *
 async_to_sink_gstring(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct sink_gstring, async_operation);
+    return &ContainerCast2(*ao, &sink_gstring::async_operation);
 }
 
 static void

@@ -56,7 +56,7 @@ struct tcp_stock_connection {
 static struct tcp_stock_connection *
 async_to_tcp_stock_connection(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct tcp_stock_connection, create_operation);
+    return &ContainerCast2(*ao, &tcp_stock_connection::create_operation);
 }
 
 static void

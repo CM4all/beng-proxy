@@ -322,7 +322,7 @@ const struct widget_lookup_handler widget_processor_handler = {
 static struct proxy_widget *
 async_to_proxy(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct proxy_widget, operation);
+    return &ContainerCast2(*ao, &proxy_widget::operation);
 }
 
 static void

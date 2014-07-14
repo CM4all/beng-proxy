@@ -188,7 +188,7 @@ const struct nfs_client_read_file_handler istream_nfs_read_handler = {
 static inline struct istream_nfs *
 istream_to_nfs(struct istream *istream)
 {
-    return ContainerCast(istream, istream_nfs, base);
+    return &ContainerCast2(*istream, &istream_nfs::base);
 }
 
 static off_t

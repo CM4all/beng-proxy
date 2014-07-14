@@ -149,7 +149,7 @@ struct TranslateClient {
     struct async_operation async;
 
     static TranslateClient *FromAsync(async_operation *ao) {
-        return ContainerCast(ao, TranslateClient, async);
+        return &ContainerCast2(*ao, &TranslateClient::async);
     }
 
     explicit TranslateClient(const struct growing_buffer &_request)

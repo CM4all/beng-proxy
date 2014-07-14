@@ -21,19 +21,13 @@ struct close_on_abort {
  *
  */
 
-static struct close_on_abort *
-async_to_coa(struct async_operation *ao)
-{
-    return ContainerCast(ao, struct close_on_abort, operation);
-}
-
 static void
 coa_abort(struct async_operation *ao)
 {
-    struct close_on_abort *coa = async_to_coa(ao);
+    close_on_abort &coa = ContainerCast2(*ao, &close_on_abort::operation);
 
-    coa->ref.Abort();
-    istream_close_unused(coa->istream);
+    coa.ref.Abort();
+    istream_close_unused(coa.istream);
 }
 
 static const struct async_operation_class coa_operation = {

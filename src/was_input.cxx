@@ -276,7 +276,7 @@ was_input_event_callback(int fd gcc_unused, short event, void *ctx)
 static inline struct was_input *
 response_stream_to_data(struct istream *istream)
 {
-    return ContainerCast(istream, struct was_input, output);
+    return &ContainerCast2(*istream, &was_input::output);
 }
 
 static off_t

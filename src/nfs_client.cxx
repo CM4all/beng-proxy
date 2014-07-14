@@ -578,7 +578,7 @@ nfs_file_continue(struct nfs_file *file)
 static struct nfs_file_handle *
 operation_to_nfs_file_handle(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct nfs_file_handle, operation);
+    return &ContainerCast2(*ao, &nfs_file_handle::operation);
 }
 
 static void
@@ -604,7 +604,7 @@ static const struct async_operation_class nfs_file_open_operation = {
 static struct nfs_client *
 operation_to_nfs_client(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct nfs_client, mount_operation);
+    return &ContainerCast2(*ao, &nfs_client::mount_operation);
 }
 
 static void

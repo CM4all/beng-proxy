@@ -146,7 +146,7 @@ static const struct lease my_lease = {
 static struct context *
 async_to_context(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct context, operation);
+    return &ContainerCast2(*ao, &context::operation);
 }
 
 static void

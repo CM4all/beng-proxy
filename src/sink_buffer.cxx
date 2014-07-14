@@ -105,7 +105,7 @@ static const struct istream_handler sink_buffer_input_handler = {
 static struct sink_buffer *
 async_to_sink_buffer(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct sink_buffer, async_operation);
+    return &ContainerCast2(*ao, &sink_buffer::async_operation);
 }
 
 static void

@@ -177,7 +177,7 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 static struct stock_waiting *
 async_to_waiting(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct stock_waiting, operation);
+    return &ContainerCast2(*ao, &stock_waiting::operation);
 }
 
 static void

@@ -609,7 +609,7 @@ const struct http_response_handler widget_response_handler = {
 static struct embed *
 async_to_embed(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct embed, operation);
+    return &ContainerCast2(*ao, &embed::operation);
 }
 
 static void

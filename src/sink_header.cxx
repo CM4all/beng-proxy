@@ -287,7 +287,7 @@ static const struct istream_handler sink_header_input_handler = {
 static inline struct sink_header *
 istream_to_header(struct istream *istream)
 {
-    return ContainerCast(istream, struct sink_header, output);
+    return &ContainerCast2(*istream, &sink_header::output);
 }
 
 static off_t
@@ -347,7 +347,7 @@ static const struct istream_class istream_sink = {
 static struct sink_header *
 async_to_sink_header(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct sink_header, async_operation);
+    return &ContainerCast2(*ao, &sink_header::async_operation);
 }
 
 static void

@@ -58,7 +58,8 @@ check_expectation(char *received, size_t received_length,
 static void
 expect_monitor_request_abort(struct async_operation *ao)
 {
-    ExpectMonitor *expect = ContainerCast(ao, ExpectMonitor, async_operation);
+    ExpectMonitor *expect =
+        &ContainerCast2(*ao, &ExpectMonitor::async_operation);
 
     event_del(&expect->event);
     close(expect->fd);

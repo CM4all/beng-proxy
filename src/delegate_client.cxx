@@ -267,20 +267,15 @@ delegate_write_event_callback(int fd gcc_unused, short event gcc_unused,
  *
  */
 
-static struct delegate_client *
-async_to_delegate_client(struct async_operation *ao)
-{
-    return ContainerCast(ao, struct delegate_client, operation);
-}
-
 static void
 delegate_connection_abort(struct async_operation *ao)
 {
-    struct delegate_client *d = async_to_delegate_client(ao);
+    struct delegate_client &d =
+        ContainerCast2(*ao, &delegate_client::operation);
 
-    p_event_del(&d->event, d->pool);
-    delegate_release_socket(d, false);
-    pool_unref(d->pool);
+    p_event_del(&d.event, d.pool);
+    delegate_release_socket(&d, false);
+    pool_unref(d.pool);
 }
 
 static const struct async_operation_class delegate_operation = {

@@ -125,7 +125,7 @@ struct request_value {
 static inline struct request_value *
 istream_to_value(struct istream *istream)
 {
-    return ContainerCast(istream, struct request_value, base);
+    return &ContainerCast2(*istream, &request_value::base);
 }
 
 static off_t

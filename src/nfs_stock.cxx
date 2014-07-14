@@ -151,7 +151,7 @@ static const struct nfs_client_handler nfs_stock_client_handler = {
 static struct nfs_stock_request *
 operation_to_nfs_stock_request(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct nfs_stock_request, operation);
+    return &ContainerCast2(*ao, &nfs_stock_request::operation);
 }
 
 static void

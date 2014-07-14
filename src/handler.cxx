@@ -810,7 +810,7 @@ serve_document_root_file(request &request2,
 static void
 handler_abort(struct async_operation *ao)
 {
-    request &request2 = *ContainerCast(ao, request, operation);
+    request &request2 = ContainerCast2(*ao, &request::operation);
 
     request_discard_body(&request2);
 

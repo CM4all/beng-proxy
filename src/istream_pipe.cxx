@@ -261,7 +261,7 @@ static const struct istream_handler pipe_input_handler = {
 static inline struct istream_pipe *
 istream_to_pipe(struct istream *istream)
 {
-    return ContainerCast(istream, struct istream_pipe, output);
+    return &ContainerCast2(*istream, &istream_pipe::output);
 }
 
 static off_t

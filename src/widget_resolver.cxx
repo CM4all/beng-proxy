@@ -64,7 +64,7 @@ struct widget_resolver {
 static struct widget_resolver_listener *
 async_to_wrl(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct widget_resolver_listener, operation);
+    return &ContainerCast2(*ao, &widget_resolver_listener::operation);
 }
 
 static void

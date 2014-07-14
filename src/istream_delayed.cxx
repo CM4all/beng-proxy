@@ -26,7 +26,7 @@ struct istream_delayed {
 static inline struct istream_delayed *
 istream_to_delayed(struct istream *istream)
 {
-    return ContainerCast(istream, struct istream_delayed, output);
+    return &ContainerCast2(*istream, &istream_delayed::output);
 }
 
 static off_t

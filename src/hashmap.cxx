@@ -338,7 +338,7 @@ hashmap_lookup_first(const struct hashmap *map, const char *key)
 static const struct slot *
 pair_to_slot(const struct hashmap_pair *pair)
 {
-    return ContainerCast(pair, const struct slot, pair);
+    return &ContainerCast2(*pair, &slot::pair);
 }
 
 const struct hashmap_pair *

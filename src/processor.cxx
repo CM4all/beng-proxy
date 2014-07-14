@@ -239,7 +239,7 @@ processor_replace_add(struct processor *processor, off_t start, off_t end,
 static struct processor *
 async_to_processor(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct processor, async);
+    return &ContainerCast2(*ao, &processor::async);
 }
 
 static void
@@ -549,7 +549,7 @@ processor_stop_cdata_stream(struct processor *processor)
 static inline struct processor *
 cdata_stream_to_processor(struct istream *istream)
 {
-    return ContainerCast(istream, struct processor, cdata_stream);
+    return &ContainerCast2(*istream, &processor::cdata_stream);
 }
 
 static void

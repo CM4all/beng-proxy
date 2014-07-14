@@ -49,19 +49,13 @@ defer_event_callback(int fd gcc_unused, short event gcc_unused, void *ctx)
  *
  */
 
-static Defer *
-async_to_defer(struct async_operation *ao)
-{
-    return ContainerCast(ao, Defer, operation);
-}
-
 static void
 defer_abort(struct async_operation *ao)
 {
-    Defer *d = async_to_defer(ao);
+    Defer &d = ContainerCast2(*ao, &Defer::operation);
 
-    event_del(&d->event);
-    pool_unref(d->pool);
+    event_del(&d.event);
+    pool_unref(d.pool);
 }
 
 static const struct async_operation_class defer_operation = {

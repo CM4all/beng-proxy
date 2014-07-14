@@ -59,21 +59,15 @@ static const struct lease fcgi_socket_lease = {
  *
  */
 
-static struct fcgi_request *
-async_to_fcgi_request(struct async_operation *ao)
-{
-    return ContainerCast(ao, struct fcgi_request, async);
-}
-
 static void
 fcgi_request_abort(struct async_operation *ao)
 {
-    struct fcgi_request *request = async_to_fcgi_request(ao);
+    struct fcgi_request &request = ContainerCast2(*ao, &fcgi_request::async);
 
-    if (request->stock_item != nullptr)
-        fcgi_stock_aborted(request->stock_item);
+    if (request.stock_item != nullptr)
+        fcgi_stock_aborted(request.stock_item);
 
-    request->async_ref.Abort();
+    request.async_ref.Abort();
 }
 
 static const struct async_operation_class fcgi_request_async_operation = {

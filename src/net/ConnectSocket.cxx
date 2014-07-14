@@ -61,7 +61,7 @@ struct ConnectSocket {
 static ConnectSocket *
 async_to_client_socket(struct async_operation *ao)
 {
-    return ContainerCast(ao, ConnectSocket, operation);
+    return &ContainerCast2(*ao, &ConnectSocket::operation);
 }
 
 static void

@@ -628,7 +628,7 @@ static const struct was_input_handler was_client_input_handler = {
 static struct was_client *
 async_to_was_client(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct was_client, async);
+    return &ContainerCast2(*ao, &was_client::async);
 }
 
 static void

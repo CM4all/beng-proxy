@@ -60,7 +60,7 @@ static const struct istream_handler unlock_input_handler = {
 static inline struct istream_unlock *
 istream_to_unlock(struct istream *istream)
 {
-    return ContainerCast(istream, struct istream_unlock, output);
+    return &ContainerCast2(*istream, &istream_unlock::output);
 }
 
 static off_t

@@ -176,7 +176,7 @@ ping_event_callback(int fd gcc_unused, short event, void *ctx)
 static struct ping *
 async_to_ping(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct ping, async_operation);
+    return &ContainerCast2(*ao, &ping::async_operation);
 }
 
 static void

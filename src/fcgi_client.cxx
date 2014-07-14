@@ -886,27 +886,20 @@ static constexpr BufferedSocketHandler fcgi_client_socket_handler = {
  *
  */
 
-static struct fcgi_client *
-async_to_fcgi_client(struct async_operation *ao)
-{
-    return ContainerCast(ao, struct fcgi_client, async);
-}
-
 static void
 fcgi_client_request_abort(struct async_operation *ao)
 {
-    struct fcgi_client *client
-        = async_to_fcgi_client(ao);
+    struct fcgi_client &client = ContainerCast2(*ao, &fcgi_client::async);
 
     /* async_operation_ref::Abort() can only be used before the
        response was delivered to our callback */
-    assert(client->response.read_state == fcgi_client::Response::READ_HEADERS ||
-           client->response.read_state == fcgi_client::Response::READ_NO_BODY);
+    assert(client.response.read_state == fcgi_client::Response::READ_HEADERS ||
+           client.response.read_state == fcgi_client::Response::READ_NO_BODY);
 
-    if (client->request.istream != nullptr)
-        istream_close_handler(client->request.istream);
+    if (client.request.istream != nullptr)
+        istream_close_handler(client.request.istream);
 
-    fcgi_client_release(client, false);
+    fcgi_client_release(&client, false);
 }
 
 static constexpr struct async_operation_class fcgi_client_async_operation = {
