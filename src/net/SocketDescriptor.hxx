@@ -69,6 +69,11 @@ public:
 
     SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
 
+    /**
+     * @return false on error (with errno set)
+     */
+    bool Connect(const SocketAddress address);
+
     gcc_pure
     StaticSocketAddress GetLocalAddress() const;
 };

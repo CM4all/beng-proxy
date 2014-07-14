@@ -115,6 +115,14 @@ SocketDescriptor::Accept(StaticSocketAddress &address, Error &error) const
     return SocketDescriptor(result);
 }
 
+bool
+SocketDescriptor::Connect(const SocketAddress address)
+{
+    assert(IsDefined());
+
+    return connect(fd, address, address.GetSize());
+}
+
 StaticSocketAddress
 SocketDescriptor::GetLocalAddress() const
 {
