@@ -5,6 +5,7 @@
  */
 
 #include "ConnectSocket.hxx"
+#include "SocketDescriptor.hxx"
 #include "SocketAddress.hxx"
 #include "async.hxx"
 #include "fd_util.h"
@@ -37,7 +38,7 @@
 class ConnectSocket {
     struct async_operation operation;
     struct pool &pool;
-    int fd;
+    SocketDescriptor fd;
     struct event event;
 
 #ifdef ENABLE_STOPWATCH
@@ -48,13 +49,13 @@ class ConnectSocket {
     void *const handler_ctx;
 
 public:
-    ConnectSocket(struct pool &_pool, int _fd, unsigned timeout,
+    ConnectSocket(struct pool &_pool, SocketDescriptor &&_fd, unsigned timeout,
 #ifdef ENABLE_STOPWATCH
                   struct stopwatch &_stopwatch,
 #endif
                   const ConnectSocketHandler &_handler, void *ctx,
                   struct async_operation_ref &async_ref)
-        :pool(_pool), fd(_fd),
+        :pool(_pool), fd(std::move(_fd)),
 #ifdef ENABLE_STOPWATCH
          stopwatch(_stopwatch),
 #endif
@@ -65,7 +66,7 @@ public:
                         &ConnectSocket::Abort>();
         async_ref.Set(operation);
 
-        event_set(&event, fd,
+        event_set(&event, fd.Get(),
                   EV_WRITE|EV_TIMEOUT, OnEvent,
                   this);
 
@@ -96,10 +97,9 @@ private:
 inline void
 ConnectSocket::Abort()
 {
-    assert(fd >= 0);
+    assert(fd.IsDefined());
 
     p_event_del(&event, &pool);
-    close(fd);
     Delete();
 }
 
@@ -112,34 +112,27 @@ ConnectSocket::Abort()
 inline void
 ConnectSocket::OnEvent(int _fd, short events)
 {
-    assert(_fd == fd);
+    assert(_fd == fd.Get());
 
     p_event_consumed(&event, &pool);
 
     operation.Finished();
 
     if (events & EV_TIMEOUT) {
-        close(fd);
         handler.timeout(handler_ctx);
         Delete();
         return;
     }
 
-    int s_err = 0;
-    socklen_t s_err_size = sizeof(s_err);
-    if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&s_err, &s_err_size) < 0)
-        s_err = errno;
-
+    int s_err = fd.GetError();
     if (s_err == 0) {
 #ifdef ENABLE_STOPWATCH
         stopwatch_event(&stopwatch, "connect");
         stopwatch_dump(&stopwatch);
 #endif
 
-        handler.success(fd, handler_ctx);
+        handler.success(std::move(fd), handler_ctx);
     } else {
-        close(fd);
-
         GError *error = new_error_errno2(s_err);
         handler.error(error, handler_ctx);
     }
@@ -174,35 +167,31 @@ client_socket_new(struct pool &pool,
 {
     assert(!address.IsNull());
 
-    const int fd = socket_cloexec_nonblock(domain, type, protocol);
-    if (fd < 0) {
+    SocketDescriptor fd;
+    if (!fd.Create(domain, type, protocol)) {
         GError *error = new_error_errno();
         handler.error(error, ctx);
         return;
     }
 
     if ((domain == PF_INET || domain == PF_INET6) && type == SOCK_STREAM &&
-        !socket_set_nodelay(fd, true)) {
+        !socket_set_nodelay(fd.Get(), true)) {
         GError *error = new_error_errno();
-        close(fd);
         handler.error(error, ctx);
         return;
     }
 
     if (ip_transparent) {
         int on = 1;
-        if (setsockopt(fd, SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
+        if (setsockopt(fd.Get(), SOL_IP, IP_TRANSPARENT, &on, sizeof on) < 0) {
             GError *error = new_error_errno_msg("Failed to set IP_TRANSPARENT");
-            close(fd);
             handler.error(error, ctx);
             return;
         }
     }
 
-    if (!bind_address.IsNull() &&
-        bind(fd, bind_address, bind_address.GetSize()) < 0) {
+    if (!bind_address.IsNull() && !fd.Bind(bind_address)) {
         GError *error = new_error_errno();
-        close(fd);
         handler.error(error, ctx);
         return;
     }
@@ -212,22 +201,21 @@ client_socket_new(struct pool &pool,
         stopwatch_sockaddr_new(&pool, address, address.GetSize(), nullptr);
 #endif
 
-    if (connect(fd, address, address.GetSize()) == 0) {
+    if (fd.Connect(address)) {
 #ifdef ENABLE_STOPWATCH
         stopwatch_event(stopwatch, "connect");
         stopwatch_dump(stopwatch);
 #endif
 
-        handler.success(fd, ctx);
+        handler.success(std::move(fd), ctx);
     } else if (errno == EINPROGRESS) {
-        NewFromPool<ConnectSocket>(pool, pool, fd, timeout,
+        NewFromPool<ConnectSocket>(pool, pool, std::move(fd), timeout,
 #ifdef ENABLE_STOPWATCH
                                    *stopwatch,
 #endif
                                    handler, ctx, async_ref);
     } else {
         GError *error = new_error_errno();
-        close(fd);
         handler.error(error, ctx);
     }
 }

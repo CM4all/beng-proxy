@@ -20,10 +20,9 @@
  */
 
 static void
-syn_monitor_success(int fd, void *ctx)
+syn_monitor_success(gcc_unused SocketDescriptor &&fd, void *ctx)
 {
-    /* dispose the socket, we don't need it */
-    close(fd);
+    /* ignore the socket, we don't need it */
 
     LBMonitorHandler &handler = *(LBMonitorHandler *)ctx;
     handler.Success();

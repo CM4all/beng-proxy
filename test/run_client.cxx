@@ -17,6 +17,7 @@
 #include "ssl_init.hxx"
 #include "ssl_client.h"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <inline/compiler.h>
@@ -88,7 +89,7 @@ struct context {
     http_method_t method;
     struct istream *request_body;
 
-    int fd;
+    SocketDescriptor fd;
     bool idle, reuse, aborted;
     http_status_t status;
 
@@ -123,13 +124,12 @@ ajp_socket_release(bool reuse, void *ctx)
     context *c = (context *)ctx;
 
     assert(!c->idle);
-    assert(c->fd >= 0);
+    assert(c->fd.IsDefined());
 
     c->idle = true;
     c->reuse = reuse;
 
-    close(c->fd);
-    c->fd = -1;
+    c->fd.Close();
 }
 
 static const struct lease ajp_socket_lease = {
@@ -238,18 +238,19 @@ static const struct http_response_handler my_response_handler = {
  */
 
 static void
-my_client_socket_success(int fd, void *ctx)
+my_client_socket_success(SocketDescriptor &&fd, void *ctx)
 {
     context *c = (context *)ctx;
 
-    c->fd = fd;
+    c->fd = std::move(fd);
 
     struct strmap *headers = strmap_new(c->pool);
     headers->Add("host", c->url.host);
 
     switch (c->url.protocol) {
     case parsed_url::AJP:
-        ajp_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
+        ajp_client_request(c->pool, c->fd.Get(), ISTREAM_TCP,
+                           &ajp_socket_lease, c,
                            "http", "127.0.0.1", "localhost",
                            "localhost", 80, false,
                            c->method, c->url.uri, headers, c->request_body,
@@ -258,7 +259,8 @@ my_client_socket_success(int fd, void *ctx)
         break;
 
     case parsed_url::HTTP:
-        http_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
+        http_client_request(c->pool, c->fd.Get(), ISTREAM_TCP,
+                            &ajp_socket_lease, c,
                             nullptr, nullptr,
                             c->method, c->url.uri,
                             headers_dup(c->pool, headers),
@@ -286,7 +288,8 @@ my_client_socket_success(int fd, void *ctx)
         }
 
         const socket_filter *filter = ssl_client_get_filter();
-        http_client_request(c->pool, fd, ISTREAM_TCP, &ajp_socket_lease, c,
+        http_client_request(c->pool, c->fd.Get(), ISTREAM_TCP,
+                            &ajp_socket_lease, c,
                             filter, filter_ctx,
                             c->method, c->url.uri,
                             headers_dup(c->pool, headers),

@@ -74,7 +74,7 @@ client_balancer_next(struct client_balancer_request *request)
  */
 
 static void
-client_balancer_socket_success(int fd, void *ctx)
+client_balancer_socket_success(SocketDescriptor &&fd, void *ctx)
 {
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
@@ -83,7 +83,7 @@ client_balancer_socket_success(int fd, void *ctx)
                   request->current_address->length,
                   FAILURE_FAILED);
 
-    request->handler->success(fd, request->handler_ctx);
+    request->handler->success(std::move(fd), request->handler_ctx);
 }
 
 static void

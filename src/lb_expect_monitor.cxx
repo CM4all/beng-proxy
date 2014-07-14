@@ -11,6 +11,7 @@
 #include "async.hxx"
 #include "gerrno.h"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cast.hxx"
 
@@ -125,18 +126,17 @@ expect_monitor_event_callback(gcc_unused int fd, short event, void *ctx)
  */
 
 static void
-expect_monitor_success(int fd, void *ctx)
+expect_monitor_success(SocketDescriptor &&fd, void *ctx)
 {
     ExpectMonitor *expect =
         (ExpectMonitor *)ctx;
 
     if (!expect->config->send.empty()) {
-        ssize_t nbytes = send(fd, expect->config->send.data(),
+        ssize_t nbytes = send(fd.Get(), expect->config->send.data(),
                               expect->config->send.length(),
                               MSG_DONTWAIT);
         if (nbytes < 0) {
             GError *error = new_error_errno();
-            close(fd);
             expect->handler->Error(error);
             return;
         }
@@ -147,8 +147,8 @@ expect_monitor_success(int fd, void *ctx)
         0,
     };
 
-    expect->fd = fd;
-    event_set(&expect->event, fd, EV_READ|EV_TIMEOUT,
+    expect->fd = fd.Steal();
+    event_set(&expect->event, expect->fd, EV_READ|EV_TIMEOUT,
               expect_monitor_event_callback, expect);
     event_add(&expect->event, &expect_timeout);
 

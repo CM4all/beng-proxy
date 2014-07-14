@@ -15,6 +15,7 @@
 #include "pool.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -116,17 +117,15 @@ tcp_stock_event(int fd, short event, void *ctx)
  */
 
 static void
-tcp_stock_socket_success(int fd, void *ctx)
+tcp_stock_socket_success(SocketDescriptor &&fd, void *ctx)
 {
-    assert(fd >= 0);
-
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)ctx;
 
     connection->client_socket.Clear();
     connection->create_operation.Finished();
 
-    connection->fd = fd;
+    connection->fd = fd.Steal();
     event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
               tcp_stock_event, connection);
 

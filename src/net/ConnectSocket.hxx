@@ -11,10 +11,11 @@
 
 struct pool;
 class SocketAddress;
+class SocketDescriptor;
 struct async_operation_ref;
 
 struct ConnectSocketHandler {
-    void (*success)(int fd, void *ctx);
+    void (*success)(SocketDescriptor &&fd, void *ctx);
     void (*timeout)(void *ctx);
     void (*error)(GError *error, void *ctx);
 };

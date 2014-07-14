@@ -13,6 +13,7 @@
 #include "direct.h"
 #include "pool.hxx"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 
 #include <unistd.h>
@@ -311,14 +312,14 @@ static constexpr BufferedSocketHandler outbound_buffered_socket_handler = {
  */
 
 static void
-lb_tcp_client_socket_success(int fd, void *ctx)
+lb_tcp_client_socket_success(SocketDescriptor &&fd, void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
     tcp->connect.Clear();
 
     tcp->outbound.Init(tcp->pool,
-                       fd, ISTREAM_TCP,
+                       fd.Steal(), ISTREAM_TCP,
                        nullptr, &write_timeout,
                        &outbound_buffered_socket_handler, tcp);
 

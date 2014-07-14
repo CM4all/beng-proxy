@@ -1,5 +1,6 @@
 #include "client_balancer.hxx"
 #include "net/ConnectSocket.hxx"
+#include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
 #include "pool.hxx"
 #include "async.hxx"
@@ -27,7 +28,7 @@ struct context {
         NONE, SUCCESS, TIMEOUT, ERROR,
     } result;
 
-    int fd;
+    SocketDescriptor fd;
     GError *error;
 };
 
@@ -37,14 +38,12 @@ struct context {
  */
 
 static void
-my_socket_success(int fd, void *_ctx)
+my_socket_success(SocketDescriptor &&fd, void *_ctx)
 {
-    assert(fd >= 0);
-
     struct context *ctx = (struct context *)_ctx;
 
     ctx->result = context::SUCCESS;
-    ctx->fd = fd;
+    ctx->fd = std::move(fd);
 
     balancer_free(ctx->balancer);
 }
@@ -158,7 +157,6 @@ main(int argc, char **argv)
         break;
 
     case context::SUCCESS:
-        close(ctx.fd);
         return EXIT_SUCCESS;
 
     case context::TIMEOUT:
