@@ -730,8 +730,7 @@ static const struct istream_handler memcached_request_stream_handler = {
 static struct memcached_client *
 async_to_memcached_client(struct async_operation *ao)
 {
-    void *p = ((char *)ao) - offsetof(struct memcached_client, request.async);
-    return (struct memcached_client *)p;
+    return ContainerCast(ao, struct memcached_client, request.async);
 }
 
 static void

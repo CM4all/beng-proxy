@@ -9,6 +9,7 @@
 #include "sink_header.hxx"
 #include "istream-internal.h"
 #include "async.hxx"
+#include "util/Cast.hxx"
 
 #include <glib.h>
 
@@ -286,8 +287,7 @@ static const struct istream_handler sink_header_input_handler = {
 static inline struct sink_header *
 istream_to_header(struct istream *istream)
 {
-    void *p = ((char *)istream) - offsetof(struct sink_header, output);
-    return (struct sink_header *)p;
+    return ContainerCast(istream, struct sink_header, output);
 }
 
 static off_t
@@ -347,8 +347,7 @@ static const struct istream_class istream_sink = {
 static struct sink_header *
 async_to_sink_header(struct async_operation *ao)
 {
-    void *p = ((char *)ao) - offsetof(struct sink_header, async_operation);
-    return (struct sink_header *)p;
+    return ContainerCast(ao, struct sink_header, async_operation);
 }
 
 static void

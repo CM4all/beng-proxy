@@ -2,6 +2,7 @@
 #include "istream-internal.h"
 #include "async.hxx"
 #include "pool.hxx"
+#include "util/Cast.hxx"
 
 #include <glib.h>
 
@@ -104,8 +105,7 @@ static const struct istream_handler sink_buffer_input_handler = {
 static struct sink_buffer *
 async_to_sink_buffer(struct async_operation *ao)
 {
-    void *p = ((char *)ao) - offsetof(struct sink_buffer, async_operation);
-    return (struct sink_buffer *)p;
+    return ContainerCast(ao, struct sink_buffer, async_operation);
 }
 
 static void

@@ -9,6 +9,7 @@
 #include "async.hxx"
 #include "rubber.hxx"
 #include "pool.hxx"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -173,8 +174,7 @@ static const struct istream_handler sink_rubber_input_handler = {
 static struct sink_rubber *
 async_to_sink_rubber(struct async_operation *ao)
 {
-    void *p = ((char *)ao) - offsetof(struct sink_rubber, async_operation);
-    return (struct sink_rubber *)p;
+    return ContainerCast(ao, struct sink_rubber, async_operation);
 }
 
 static void

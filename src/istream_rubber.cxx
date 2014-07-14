@@ -7,6 +7,7 @@
 #include "istream_rubber.hxx"
 #include "istream-internal.h"
 #include "rubber.hxx"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 
@@ -24,8 +25,7 @@ struct istream_rubber {
 static inline struct istream_rubber *
 istream_to_rubber(struct istream *istream)
 {
-    void *p = ((char *)istream) - offsetof(struct istream_rubber, base);
-    return (struct istream_rubber *)p;
+    return ContainerCast(istream, struct istream_rubber, base);
 }
 
 static off_t

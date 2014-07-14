@@ -10,6 +10,7 @@
 #include "istream-internal.h"
 #include "fd_util.h"
 #include "fb_pool.h"
+#include "util/Cast.hxx"
 
 #include <glib.h>
 
@@ -124,8 +125,7 @@ struct request_value {
 static inline struct request_value *
 istream_to_value(struct istream *istream)
 {
-    void *p = ((char *)istream) - offsetof(struct request_value, base);
-    return (struct request_value *)p;
+    return ContainerCast(istream, struct request_value, base);
 }
 
 static off_t

@@ -22,6 +22,7 @@
 #include "istream.h"
 #include "tvary.hxx"
 #include "pool.hxx"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -321,8 +322,7 @@ const struct widget_lookup_handler widget_processor_handler = {
 static struct proxy_widget *
 async_to_proxy(struct async_operation *ao)
 {
-    void *p = (char *)ao - offsetof(struct proxy_widget, operation);
-    return (struct proxy_widget *)p;
+    return ContainerCast(ao, struct proxy_widget, operation);
 }
 
 static void
