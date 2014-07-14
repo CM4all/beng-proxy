@@ -67,6 +67,8 @@ public:
     bool CreateListen(int family, int socktype, int protocol,
                       const SocketAddress &address, Error &error);
 
+    bool Bind(SocketAddress address);
+
     SocketDescriptor Accept(StaticSocketAddress &address, Error &error) const;
 
     /**

@@ -67,7 +67,7 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
         return false;
     }
 
-    if (bind(fd, address, address.GetSize()) < 0) {
+    if (!Bind(address)) {
         error.SetErrno("Failed to bind");
         Close();
         return false;
@@ -97,6 +97,14 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
                (const char *)&reuse, sizeof(reuse));
 
     return true;
+}
+
+bool
+SocketDescriptor::Bind(SocketAddress address)
+{
+    assert(IsDefined());
+
+    return bind(fd, address, address.GetSize()) == 0;
 }
 
 SocketDescriptor
