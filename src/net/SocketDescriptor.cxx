@@ -64,13 +64,13 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
                    (const char *)&reuse, sizeof(reuse)) < 0) {
         error.SetErrno("Failed to set SO_REUSEADDR");
         Close();
-        return -1;
+        return false;
     }
 
     if (bind(fd, address, address.GetSize()) < 0) {
         error.SetErrno("Failed to bind");
         Close();
-        return -1;
+        return false;
     }
 
 #ifdef __linux
@@ -90,13 +90,13 @@ SocketDescriptor::CreateListen(int family, int socktype, int protocol,
     if (listen(fd, 64) < 0) {
         error.SetErrno("Failed to listen");
         Close();
-        return -1;
+        return false;
     }
 
     setsockopt(fd, SOL_SOCKET, SO_PASSCRED,
                (const char *)&reuse, sizeof(reuse));
 
-    return fd;
+    return true;
 }
 
 SocketDescriptor
