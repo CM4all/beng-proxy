@@ -16,7 +16,7 @@ struct fifo_buffer;
 struct FilteredSocket;
 
 struct SocketFilter {
-    void (*init)(FilteredSocket *s, void *ctx);
+    void (*init)(FilteredSocket &s, void *ctx);
 
     /**
      * Data has been read from the socket into the input buffer.  Call

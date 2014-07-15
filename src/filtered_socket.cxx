@@ -150,7 +150,7 @@ FilteredSocket::Init(struct pool &pool,
     drained = true;
 
     if (filter != nullptr)
-        filter->init(this, filter_ctx);
+        filter->init(*this, filter_ctx);
 }
 
 void

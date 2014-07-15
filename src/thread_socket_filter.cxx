@@ -307,11 +307,11 @@ ThreadSocketFilter::Done()
  */
 
 static void
-thread_socket_filter_init_(FilteredSocket *s, void *ctx)
+thread_socket_filter_init_(FilteredSocket &s, void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    f->socket = s;
+    f->socket = &s;
 }
 
 static BufferedResult

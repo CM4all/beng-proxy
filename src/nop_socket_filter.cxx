@@ -16,11 +16,11 @@ struct nop_socket_filter {
  */
 
 static void
-nop_socket_filter_init(FilteredSocket *s, void *ctx)
+nop_socket_filter_init(FilteredSocket &s, void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    f->socket = s;
+    f->socket = &s;
 }
 
 static BufferedResult
