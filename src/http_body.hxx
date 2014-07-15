@@ -83,6 +83,9 @@ struct HttpBodyReader {
 
     size_t FeedBody(const void *data, size_t length);
 
+    gcc_pure
+    bool CheckDirect(enum istream_direct fd_type) const;
+
     ssize_t TryDirect(int fd, enum istream_direct fd_type);
 
     /**

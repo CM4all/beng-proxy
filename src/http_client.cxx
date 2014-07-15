@@ -155,8 +155,7 @@ http_client_check_direct(const struct http_client *client)
            client->socket.IsConnected());
     assert(client->response.read_state == http_client::response::READ_BODY);
 
-    return istream_check_direct(&client->response.body_reader.output,
-                                client->socket.GetType());
+    return client->response.body_reader.CheckDirect(client->socket.GetType());
 }
 
 #if 0
