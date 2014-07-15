@@ -13,7 +13,7 @@
 
 gcc_pure
 off_t
-http_body_reader::GetAvailable(const FilteredSocket &s, bool partial) const
+HttpBodyReader::GetAvailable(const FilteredSocket &s, bool partial) const
 {
     assert(rest != REST_EOF_CHUNK);
 
@@ -27,7 +27,7 @@ http_body_reader::GetAvailable(const FilteredSocket &s, bool partial) const
 
 /** determine how much can be read from the body */
 size_t
-http_body_reader::GetMaxRead(size_t length) const
+HttpBodyReader::GetMaxRead(size_t length) const
 {
     assert(rest != REST_EOF_CHUNK);
 
@@ -40,7 +40,7 @@ http_body_reader::GetMaxRead(size_t length) const
 }
 
 void
-http_body_reader::Consumed(size_t nbytes)
+HttpBodyReader::Consumed(size_t nbytes)
 {
     if (!KnownLength())
         return;
@@ -51,7 +51,7 @@ http_body_reader::Consumed(size_t nbytes)
 }
 
 size_t
-http_body_reader::FeedBody(const void *data, size_t length)
+HttpBodyReader::FeedBody(const void *data, size_t length)
 {
     assert(length > 0);
 
@@ -64,7 +64,7 @@ http_body_reader::FeedBody(const void *data, size_t length)
 }
 
 ssize_t
-http_body_reader::TryDirect(int fd, enum istream_direct fd_type)
+HttpBodyReader::TryDirect(int fd, enum istream_direct fd_type)
 {
     assert(fd >= 0);
     assert(istream_check_direct(&output, fd_type));
@@ -80,14 +80,14 @@ http_body_reader::TryDirect(int fd, enum istream_direct fd_type)
 }
 
 bool
-http_body_reader::IsSocketDone(const FilteredSocket &s) const
+HttpBodyReader::IsSocketDone(const FilteredSocket &s) const
 {
     return KnownLength() &&
         (IsEOF() || (off_t)s.GetAvailable() >= rest);
 }
 
 bool
-http_body_reader::SocketEOF(size_t remaining)
+HttpBodyReader::SocketEOF(size_t remaining)
 {
 #ifndef NDEBUG
     socket_eof = true;
@@ -125,7 +125,7 @@ http_body_reader::SocketEOF(size_t remaining)
 }
 
 void
-http_body_reader::DechunkerEOF()
+HttpBodyReader::DechunkerEOF()
 {
 
     assert(chunked);
@@ -135,17 +135,17 @@ http_body_reader::DechunkerEOF()
 }
 
 void
-http_body_reader::DechunkerEOF(void *ctx)
+HttpBodyReader::DechunkerEOF(void *ctx)
 {
-    struct http_body_reader *body = (struct http_body_reader *)ctx;
+    HttpBodyReader *body = (HttpBodyReader *)ctx;
 
     body->DechunkerEOF();
 }
 
 struct istream &
-http_body_reader::Init(const struct istream_class &stream,
-                       struct pool &stream_pool,
-                       struct pool &pool, off_t content_length, bool _chunked)
+HttpBodyReader::Init(const struct istream_class &stream,
+                     struct pool &stream_pool,
+                     struct pool &pool, off_t content_length, bool _chunked)
 {
     assert(pool_contains(&stream_pool, this, sizeof(*this)));
     assert(content_length >= -1);

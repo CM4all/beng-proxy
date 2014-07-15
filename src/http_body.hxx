@@ -16,7 +16,7 @@
 struct pool;
 struct FilteredSocket;
 
-struct http_body_reader {
+struct HttpBodyReader {
     /**
      * The remaining size is unknown.
      */

@@ -105,7 +105,7 @@ struct http_client {
         http_status_t status;
         struct strmap *headers;
         struct istream *body;
-        struct http_body_reader body_reader;
+        HttpBodyReader body_reader;
     } response;
 
     /* connection settings */

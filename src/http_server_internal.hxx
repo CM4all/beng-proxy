@@ -81,7 +81,7 @@ struct http_server_connection {
 
         /** the request body reader; this variable is only valid if
             read_state==READ_BODY */
-        struct http_body_reader body_reader;
+        HttpBodyReader body_reader;
 
         struct async_operation_ref async_ref;
 
