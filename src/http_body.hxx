@@ -17,7 +17,7 @@
 struct pool;
 struct FilteredSocket;
 
-struct HttpBodyReader {
+class HttpBodyReader {
     /**
      * The remaining size is unknown.
      */
@@ -48,6 +48,7 @@ struct HttpBodyReader {
     bool chunked, socket_eof;
 #endif
 
+public:
     struct istream &Init(const struct istream_class &stream,
                          struct pool &stream_pool,
                          struct pool &pool, off_t content_length,
