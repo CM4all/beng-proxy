@@ -31,7 +31,7 @@ http_server_feed_body(struct http_server_connection *connection,
     size_t nbytes = http_body_feed_body(&connection->request.body_reader,
                                         data, length);
     if (nbytes == 0) {
-        const bool valid = filtered_socket_valid(&connection->socket);
+        const bool valid = connection->socket.IsValid();
         pool_unref(pool);
         return valid
             ? BufferedResult::BLOCKING
@@ -41,7 +41,7 @@ http_server_feed_body(struct http_server_connection *connection,
     pool_unref(pool);
 
     connection->request.bytes_received += nbytes;
-    filtered_socket_consumed(&connection->socket, nbytes);
+    connection->socket.Consumed(nbytes);
 
     if (connection->request.read_state == http_server_connection::Request::BODY &&
         http_body_eof(&connection->request.body_reader)) {
@@ -49,7 +49,7 @@ http_server_feed_body(struct http_server_connection *connection,
 
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        filtered_socket_schedule_read_no_timeout(&connection->socket, false);
+        connection->socket.ScheduleReadNoTimeout(false);
 
         pool_ref(connection->pool);
         istream_deinit_eof(&connection->request.body_reader.output);
@@ -102,8 +102,7 @@ http_server_request_stream_read(struct istream *istream)
     if (!http_server_maybe_send_100_continue(connection))
         return;
 
-    filtered_socket_read(&connection->socket,
-                         http_body_require_more(&connection->request.body_reader));
+    connection->socket.Read(http_body_require_more(&connection->request.body_reader));
 }
 
 static void
@@ -117,8 +116,8 @@ http_server_request_stream_close(struct istream *istream)
     assert(connection->request.read_state == http_server_connection::Request::BODY);
     assert(!http_body_eof(&connection->request.body_reader));
 
-    if (!filtered_socket_valid(&connection->socket) ||
-        !filtered_socket_connected(&connection->socket)) {
+    if (!connection->socket.IsValid() ||
+        !connection->socket.IsConnected()) {
         /* this happens when there's an error on the socket while
            reading the request body before the response gets
            submitted, and this HTTP server library invokes the

@@ -31,7 +31,7 @@ http_body_available(const struct http_body_reader *body,
         return body->rest;
 
     return partial
-        ? (off_t)filtered_socket_available(s)
+        ? (off_t)s->GetAvailable()
         : -1;
 }
 
@@ -97,7 +97,7 @@ http_body_socket_is_done(struct http_body_reader *body,
 {
     return http_body_known_length(body) &&
         (http_body_eof(body) ||
-         (off_t)filtered_socket_available(s) >= body->rest);
+         (off_t)s->GetAvailable() >= body->rest);
 }
 
 bool

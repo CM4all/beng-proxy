@@ -28,7 +28,7 @@ nop_socket_filter_data(const void *data, size_t length, void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    return filtered_socket_invoke_data(f->socket, data, length);
+    return f->socket->InvokeData(data, length);
 }
 
 static bool
@@ -36,7 +36,7 @@ nop_socket_filter_is_empty(void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    return filtered_socket_internal_is_empty(f->socket);
+    return f->socket->InternalIsEmpty();
 }
 
 static bool
@@ -44,7 +44,7 @@ nop_socket_filter_is_full(void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    return filtered_socket_internal_is_full(f->socket);
+    return f->socket->InternalIsFull();
 }
 
 static size_t
@@ -52,7 +52,7 @@ nop_socket_filter_available(void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    return filtered_socket_internal_available(f->socket);
+    return f->socket->InternalGetAvailable();
 }
 
 static void
@@ -60,7 +60,7 @@ nop_socket_filter_consumed(size_t nbytes, void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    filtered_socket_internal_consumed(f->socket, nbytes);
+    f->socket->InternalConsumed(nbytes);
 }
 
 static bool
@@ -68,7 +68,7 @@ nop_socket_filter_read(bool expect_more, void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    return filtered_socket_internal_read(f->socket, expect_more);
+    return f->socket->InternalRead(expect_more);
 }
 
 static ssize_t
@@ -76,7 +76,7 @@ nop_socket_filter_write(const void *data, size_t length, void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    return filtered_socket_internal_write(f->socket, data, length);
+    return f->socket->InternalWrite(data, length);
 }
 
 static bool
@@ -84,7 +84,7 @@ nop_socket_filter_internal_write(void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    return filtered_socket_invoke_write(f->socket);
+    return f->socket->InvokeWrite();
 }
 
 static bool
@@ -92,7 +92,7 @@ nop_socket_filter_closed(void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    return filtered_socket_invoke_closed(f->socket);
+    return f->socket->InvokeClosed();
 }
 
 static bool
@@ -100,7 +100,7 @@ nop_socket_filter_remaining(size_t remaining, void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    return filtered_socket_invoke_remaining(f->socket, remaining);
+    return f->socket->InvokeRemaining(remaining);
 }
 
 static void
@@ -108,7 +108,7 @@ nop_socket_filter_end(void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
-    filtered_socket_invoke_end(f->socket);
+    f->socket->InvokeEnd();
 }
 
 static void

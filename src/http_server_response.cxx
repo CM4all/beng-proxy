@@ -21,14 +21,14 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;
 
-    assert(filtered_socket_connected(&connection->socket) ||
+    assert(connection->socket.IsConnected() ||
            connection->request.request == nullptr);
     assert(connection->response.istream != nullptr);
 
-    if (!filtered_socket_connected(&connection->socket))
+    if (!connection->socket.IsConnected())
         return 0;
 
-    ssize_t nbytes = filtered_socket_write(&connection->socket, data, length);
+    ssize_t nbytes = connection->socket.Write(data, length);
 
     if (likely(nbytes >= 0)) {
         connection->response.bytes_sent += nbytes;
@@ -56,15 +56,14 @@ http_server_response_stream_direct(istream_direct type, int fd, size_t max_lengt
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;
 
-    assert(filtered_socket_connected(&connection->socket) ||
+    assert(connection->socket.IsConnected() ||
            connection->request.request == nullptr);
     assert(connection->response.istream != nullptr);
 
-    if (!filtered_socket_connected(&connection->socket))
+    if (!connection->socket.IsConnected())
         return 0;
 
-    ssize_t nbytes = filtered_socket_write_from(&connection->socket, fd, type,
-                                                max_length);
+    ssize_t nbytes = connection->socket.WriteFrom(fd, type, max_length);
     if (likely(nbytes > 0)) {
         connection->response.bytes_sent += nbytes;
         connection->response.length += (off_t)nbytes;
@@ -93,7 +92,7 @@ http_server_response_stream_eof(void *ctx)
 
     connection->response.istream = nullptr;
 
-    filtered_socket_unschedule_write(&connection->socket);
+    connection->socket.UnscheduleWrite();
 
     if (connection->handler->log != nullptr)
         connection->handler->log(connection->request.request,
@@ -132,13 +131,13 @@ http_server_response_stream_eof(void *ctx)
         /* handle pipelined request (if any), or set up events for
            next request */
 
-        filtered_socket_schedule_read_no_timeout(&connection->socket, false);
+        connection->socket.ScheduleReadNoTimeout(false);
         evtimer_add(&connection->idle_timeout, &http_server_idle_timeout);
     } else {
         /* keepalive disabled and response is finished: we must close
            the connection */
 
-        if (filtered_socket_is_drained(&connection->socket)) {
+        if (connection->socket.IsDrained()) {
             http_server_done(connection);
         } else {
             /* there is still data in the filter's output buffer; wait for

@@ -62,7 +62,7 @@ thread_socket_filter_closed_prematurely(ThreadSocketFilter *f)
     GError *error =
         g_error_new_literal(buffered_socket_quark(), 0,
                             "Peer closed the socket prematurely");
-    filtered_socket_invoke_error(f->socket, error);
+    f->socket->InvokeError(error);
 }
 
 static void
@@ -103,7 +103,7 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
         f->want_read = false;
         f->read_timeout = nullptr;
 
-        switch (filtered_socket_invoke_data(f->socket, copy, length)) {
+        switch (f->socket->InvokeData(copy, length)) {
         case BufferedResult::OK:
             return true;
 
@@ -137,8 +137,7 @@ thread_socket_filter_check_read(ThreadSocketFilter *f)
 
     f->read_scheduled = true;
     pthread_mutex_unlock(&f->mutex);
-    filtered_socket_internal_schedule_read(f->socket, false,
-                                           f->read_timeout);
+    f->socket->InternalScheduleRead(false, f->read_timeout);
     pthread_mutex_lock(&f->mutex);
 
     return true;
@@ -154,7 +153,7 @@ thread_socket_filter_check_write(ThreadSocketFilter *f)
 
     f->want_write = false;
 
-    if (!filtered_socket_invoke_write(f->socket))
+    if (!f->socket->InvokeWrite())
         return false;
 
     pthread_mutex_lock(&f->mutex);
@@ -226,7 +225,7 @@ ThreadSocketFilter::Done()
         GError *error2 = error;
         error = nullptr;
         pthread_mutex_unlock(&mutex);
-        filtered_socket_invoke_error(socket, error2);
+        socket->InvokeError(error2);
         return;
     }
 
@@ -255,7 +254,7 @@ ThreadSocketFilter::Done()
 
             postponed_remaining = false;
 
-            if (!filtered_socket_invoke_remaining(socket, available))
+            if (!socket->InvokeRemaining(available))
                 return;
 
             pthread_mutex_lock(&mutex);
@@ -269,7 +268,7 @@ ThreadSocketFilter::Done()
                 return;
             }
 
-            filtered_socket_invoke_end(socket);
+            socket->InvokeEnd();
             return;
         }
 
@@ -281,11 +280,10 @@ ThreadSocketFilter::Done()
         // TODO: timeouts?
 
         if (!fifo_buffer_full(encrypted_input))
-            filtered_socket_schedule_read_no_timeout(socket,
-                                                     expect_more);
+            socket->InternalScheduleRead(expect_more, nullptr);
 
         if (!fifo_buffer_empty(encrypted_output))
-            filtered_socket_internal_schedule_write(socket);
+            socket->InternalScheduleWrite();
     }
 
     if (!thread_socket_filter_check_write(this))
@@ -297,7 +295,7 @@ ThreadSocketFilter::Done()
 
     pthread_mutex_unlock(&mutex);
 
-    if (drained2 && !filtered_socket_internal_drained(socket))
+    if (drained2 && !socket->InternalDrained())
         return;
 
     thread_socket_filter_submit_decrypted_input(this);
@@ -342,7 +340,7 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
     fifo_buffer_append(f->encrypted_input, length);
     pthread_mutex_unlock(&f->mutex);
 
-    filtered_socket_internal_consumed(f->socket, length);
+    f->socket->InternalConsumed(length);
 
     thread_socket_filter_schedule(*f);
 
@@ -412,7 +410,7 @@ thread_socket_filter_read(bool expect_more, void *ctx)
 
     return thread_socket_filter_submit_decrypted_input(f) &&
         (f->postponed_end ||
-         filtered_socket_internal_read(f->socket, false));
+         f->socket->InternalRead(false));
 }
 
 static ssize_t
@@ -434,7 +432,7 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
     pthread_mutex_unlock(&f->mutex);
 
     if (nbytes > 0)
-        filtered_socket_internal_undrained(f->socket);
+        f->socket->InternalUndrained();
 
     thread_socket_filter_schedule(*f);
 
@@ -499,7 +497,7 @@ thread_socket_filter_internal_write(void *ctx)
     const void *p = fifo_buffer_read(f->encrypted_output, &length);
     if (p == nullptr) {
         pthread_mutex_unlock(&f->mutex);
-        filtered_socket_internal_unschedule_write(f->socket);
+        f->socket->InternalUnscheduleWrite();
         return true;
     }
 
@@ -508,10 +506,10 @@ thread_socket_filter_internal_write(void *ctx)
     memcpy(copy, p, length);
     pthread_mutex_unlock(&f->mutex);
 
-    ssize_t nbytes = filtered_socket_internal_write(f->socket, copy, length);
+    ssize_t nbytes = f->socket->InternalWrite(copy, length);
     if (nbytes < 0 && errno != EAGAIN) {
         GError *error = new_error_errno_msg("write error");
-        filtered_socket_invoke_error(f->socket, error);
+        f->socket->InvokeError(error);
         return false;
     }
 
@@ -530,9 +528,9 @@ thread_socket_filter_internal_write(void *ctx)
             thread_socket_filter_schedule(*f);
 
         if (empty)
-            filtered_socket_internal_unschedule_write(f->socket);
+            f->socket->InternalUnscheduleWrite();
 
-        if (drained && !filtered_socket_internal_drained(f->socket))
+        if (drained && !f->socket->InternalDrained())
             return false;
     }
 
@@ -550,7 +548,7 @@ thread_socket_filter_closed(void *ctx)
     f->connected = false;
     f->want_write = false;
 
-    return filtered_socket_invoke_closed(f->socket);
+    return f->socket->InvokeClosed();
 }
 
 static bool
@@ -570,7 +568,7 @@ thread_socket_filter_remaining(size_t remaining, void *ctx)
             pthread_mutex_unlock(&f->mutex);
 
             /* forward the call */
-            return filtered_socket_invoke_remaining(f->socket, available);
+            return f->socket->InvokeRemaining(available);
         }
 
         pthread_mutex_unlock(&f->mutex);
@@ -600,7 +598,7 @@ thread_socket_filter_end(void *ctx)
             pthread_mutex_unlock(&f->mutex);
 
             f->postponed_remaining = false;
-            if (!filtered_socket_invoke_remaining(f->socket, available))
+            if (!f->socket->InvokeRemaining(available))
                 return;
         } else {
             /* postpone both "remaining" and "end" */
@@ -620,7 +618,7 @@ thread_socket_filter_end(void *ctx)
 
     if (empty)
         /* already empty: forward the call now */
-        filtered_socket_invoke_end(f->socket);
+        f->socket->InvokeEnd();
     else
         /* postpone */
         f->postponed_end = true;

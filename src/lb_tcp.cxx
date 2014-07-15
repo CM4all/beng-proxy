@@ -40,10 +40,10 @@ static constexpr timeval write_timeout = { 30, 0 };
 static void
 lb_tcp_destroy_inbound(struct lb_tcp *tcp)
 {
-    if (filtered_socket_connected(&tcp->inbound))
-        filtered_socket_close(&tcp->inbound);
+    if (tcp->inbound.IsConnected())
+        tcp->inbound.Close();
 
-    filtered_socket_destroy(&tcp->inbound);
+    tcp->inbound.Destroy();
 }
 
 static void
@@ -79,7 +79,7 @@ inbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     ssize_t nbytes = tcp->outbound.Write(buffer, size);
     if (nbytes > 0) {
-        filtered_socket_consumed(&tcp->inbound, nbytes);
+        tcp->inbound.Consumed(nbytes);
         return (size_t)nbytes == size
             ? BufferedResult::OK
             : BufferedResult::PARTIAL;
@@ -132,7 +132,7 @@ inbound_buffered_socket_write(void *ctx)
         return false;
 
     if (!tcp->got_outbound_data)
-        filtered_socket_unschedule_write(&tcp->inbound);
+        tcp->inbound.UnscheduleWrite();
     return true;
 }
 
@@ -197,7 +197,7 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
 
     tcp->got_outbound_data = true;
 
-    ssize_t nbytes = filtered_socket_write(&tcp->inbound, buffer, size);
+    ssize_t nbytes = tcp->inbound.Write(buffer, size);
     if (nbytes > 0) {
         tcp->outbound.Consumed(nbytes);
         return (size_t)nbytes == size
@@ -247,7 +247,7 @@ outbound_buffered_socket_end(void *ctx)
 
     tcp->outbound.Destroy();
 
-    if (filtered_socket_is_drained(&tcp->inbound)) {
+    if (tcp->inbound.IsDrained()) {
         /* all output buffers to "inbound" are drained; close the
            connection, because there's nothing left to do */
         lb_tcp_close(tcp);
@@ -266,7 +266,7 @@ outbound_buffered_socket_write(void *ctx)
 
     tcp->got_inbound_data = false;
 
-    if (!filtered_socket_read(&tcp->inbound, false))
+    if (!tcp->inbound.Read(false))
         return false;
 
     if (!tcp->got_inbound_data)
@@ -329,7 +329,7 @@ lb_tcp_client_socket_success(SocketDescriptor &&fd, void *ctx)
         (istream_direct_mask_to(tcp->inbound.base.base.fd_type) & ISTREAM_PIPE) != 0;
     */
 
-    if (filtered_socket_read(&tcp->inbound, false))
+    if (tcp->inbound.Read(false))
         tcp->outbound.Read(false);
 }
 
@@ -402,10 +402,10 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
     tcp->handler = handler;
     tcp->handler_ctx = ctx;
 
-    filtered_socket_init(&tcp->inbound, pool, fd, fd_type,
-                         nullptr, &write_timeout,
-                         filter, filter_ctx,
-                         &inbound_buffered_socket_handler, tcp);
+    tcp->inbound.Init(*pool, fd, fd_type,
+                      nullptr, &write_timeout,
+                      filter, filter_ctx,
+                      inbound_buffered_socket_handler, tcp);
     /* TODO
     tcp->inbound.base.direct = pipe_stock != nullptr &&
         (ISTREAM_TO_PIPE & fd_type) != 0 &&
@@ -452,7 +452,7 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
 void
 lb_tcp_close(struct lb_tcp *tcp)
 {
-    if (filtered_socket_valid(&tcp->inbound))
+    if (tcp->inbound.IsValid())
         lb_tcp_destroy_inbound(tcp);
 
     if (tcp->connect.IsDefined())

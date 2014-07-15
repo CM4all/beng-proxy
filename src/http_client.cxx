@@ -145,18 +145,18 @@ get_peer_name(int fd)
 static inline bool
 http_client_valid(const struct http_client *client)
 {
-    return filtered_socket_valid(&client->socket);
+    return client->socket.IsValid();
 }
 
 static inline bool
 http_client_check_direct(const struct http_client *client)
 {
-    assert(filtered_socket_fd_type(&client->socket) == ISTREAM_NONE ||
-           filtered_socket_connected(&client->socket));
+    assert(client->socket.GetType() == ISTREAM_NONE ||
+           client->socket.IsConnected());
     assert(client->response.read_state == http_client::response::READ_BODY);
 
     return istream_check_direct(&client->response.body_reader.output,
-                                filtered_socket_fd_type(&client->socket));
+                                client->socket.GetType());
 }
 
 #if 0
@@ -166,18 +166,18 @@ http_client_schedule_read(struct http_client *client)
     assert(client->input != nullptr);
     assert(!fifo_buffer_full(client->input));
 
-    filtered_socket_schedule_read_timeout(&client->socket,
-                                          client->request.istream != nullptr
-                                          ? nullptr : &http_client_timeout);
+    client->socket.ScheduleReadTimeout(client->request.istream != nullptr
+                                       ? nullptr
+                                       : &http_client_timeout);
 }
 #endif
 
 static void
 http_client_schedule_write(struct http_client *client)
 {
-    assert(filtered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
 
-    filtered_socket_schedule_write(&client->socket);
+    client->socket.ScheduleWrite();
 }
 
 /**
@@ -186,13 +186,13 @@ http_client_schedule_write(struct http_client *client)
 static void
 http_client_release_socket(struct http_client *client, bool reuse)
 {
-    if (filtered_socket_has_filter(&client->socket))
+    if (client->socket.HasFilter())
         /* never reuse the socket if it was filtered */
         /* TODO: move the filtering layer to the tcp_stock to allow
            reusing connections */
         reuse = false;
 
-    filtered_socket_abandon(&client->socket);
+    client->socket.Abandon();
     p_lease_release(&client->lease_ref, reuse, client->pool);
 }
 
@@ -207,10 +207,10 @@ http_client_release(struct http_client *client, bool reuse)
 
     stopwatch_dump(client->stopwatch);
 
-    if (filtered_socket_connected(&client->socket))
+    if (client->socket.IsConnected())
         http_client_release_socket(client, reuse);
 
-    filtered_socket_destroy(&client->socket);
+    client->socket.Destroy();
 
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
@@ -232,7 +232,7 @@ http_client_abort_response_headers(struct http_client *client, GError *error)
     assert(client->response.read_state == http_client::response::READ_STATUS ||
            client->response.read_state == http_client::response::READ_HEADERS);
 
-    if (filtered_socket_connected(&client->socket))
+    if (client->socket.IsConnected())
         http_client_release_socket(client, false);
 
     if (client->request.istream != nullptr)
@@ -324,11 +324,10 @@ http_client_response_stream_read(struct istream *istream)
            continue parsing the response if possible */
         return;
 
-    if (filtered_socket_connected(&client->socket))
+    if (client->socket.IsConnected())
         client->socket.base.direct = http_client_check_direct(client);
 
-    filtered_socket_read(&client->socket,
-                         http_body_require_more(&client->response.body_reader));
+    client->socket.Read(http_body_require_more(&client->response.body_reader));
 }
 
 static int
@@ -343,13 +342,13 @@ http_client_response_stream_as_fd(struct istream *istream)
     assert(client->response.read_state == http_client::response::READ_BODY);
     assert(http_response_handler_used(&client->request.handler));
 
-    if (!filtered_socket_connected(&client->socket) ||
+    if (!client->socket.IsConnected() ||
         client->keep_alive ||
         /* must not be chunked */
         http_body_istream(&client->response.body_reader) != client->response.body)
         return -1;
 
-    int fd = filtered_socket_as_fd(&client->socket);
+    int fd = client->socket.AsFD();
     if (fd < 0)
         return -1;
 
@@ -389,7 +388,7 @@ static inline void
 http_client_cork(struct http_client *client)
 {
     assert(client != nullptr);
-    assert(filtered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
 
 #ifdef __linux
     if (!client->cork) {
@@ -408,7 +407,7 @@ http_client_uncork(struct http_client *client)
 
 #ifdef __linux
     if (client->cork) {
-        assert(filtered_socket_connected(&client->socket));
+        assert(client->socket.IsConnected());
         client->cork = false;
         socket_set_cork(client->fd, client->cork);
     }
@@ -598,7 +597,7 @@ http_client_response_finished(struct http_client *client)
 
     stopwatch_event(client->stopwatch, "end");
 
-    if (!filtered_socket_empty(&client->socket)) {
+    if (!client->socket.IsEmpty()) {
         daemon_log(2, "excess data after HTTP response\n");
         client->keep_alive = false;
     }
@@ -639,7 +638,7 @@ http_client_parse_headers(struct http_client *client,
             return BufferedResult::CLOSED;
         if (client->response.read_state != http_client::response::READ_HEADERS) {
             /* header parsing is finished */
-            filtered_socket_consumed(&client->socket, next - buffer);
+            client->socket.Consumed(next - buffer);
             return BufferedResult::AGAIN_EXPECT;
         }
 
@@ -647,7 +646,7 @@ http_client_parse_headers(struct http_client *client,
     }
 
     /* remove the parsed part of the buffer */
-    filtered_socket_consumed(&client->socket, start - buffer);
+    client->socket.Consumed(start - buffer);
     return BufferedResult::MORE;
 }
 
@@ -685,11 +684,11 @@ http_client_feed_body(struct http_client *client,
     size_t nbytes = http_body_feed_body(&client->response.body_reader,
                                         data, length);
     if (nbytes == 0)
-        return filtered_socket_valid(&client->socket)
+        return client->socket.IsValid()
             ? BufferedResult::BLOCKING
             : BufferedResult::CLOSED;
 
-    filtered_socket_consumed(&client->socket, nbytes);
+    client->socket.Consumed(nbytes);
 
     if (http_body_eof(&client->response.body_reader)) {
         http_client_response_stream_eof(client);
@@ -746,7 +745,7 @@ http_client_feed_headers(struct http_client *client,
         istream_optional_resume(client->request.body);
         client->request.body = nullptr;
 
-        if (!filtered_socket_connected(&client->socket)) {
+        if (!client->socket.IsConnected()) {
             GError *error = g_error_new_literal(http_client_quark(),
                                                 HTTP_CLIENT_UNSPECIFIED,
                                                 "Peer closed the socket prematurely after status 100");
@@ -772,7 +771,7 @@ http_client_feed_headers(struct http_client *client,
     if ((client->response.body == nullptr ||
          http_body_socket_is_done(&client->response.body_reader,
                                  &client->socket)) &&
-        filtered_socket_connected(&client->socket))
+        client->socket.IsConnected())
         /* we don't need the socket anymore, we've got everything we
            need in the input buffer */
         http_client_release_socket(client, client->keep_alive);
@@ -809,7 +808,7 @@ static DirectResult
 http_client_try_response_direct(struct http_client *client,
                                 int fd, enum istream_direct fd_type)
 {
-    assert(filtered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
     assert(client->response.read_state == http_client::response::READ_BODY);
     assert(http_client_check_direct(client));
 
@@ -860,7 +859,7 @@ http_client_feed(struct http_client *client, const void *data, size_t length)
     case http_client::response::READ_BODY:
         assert(client->response.body != nullptr);
 
-        if (filtered_socket_connected(&client->socket) &&
+        if (client->socket.IsConnected() &&
             http_body_socket_is_done(&client->response.body_reader,
                                      &client->socket))
             /* we don't need the socket anymore, we've got everything
@@ -946,13 +945,13 @@ http_client_socket_write(void *ctx)
     client->request.got_data = false;
     istream_read(client->request.istream);
 
-    const bool result = filtered_socket_valid(&client->socket) &&
-        filtered_socket_connected(&client->socket);
+    const bool result = client->socket.IsValid() &&
+        client->socket.IsConnected();
     if (result && client->request.istream != nullptr) {
         if (client->request.got_data)
             http_client_schedule_write(client);
         else
-            filtered_socket_unschedule_write(&client->socket);
+            client->socket.UnscheduleWrite();
     }
 
     pool_unref(client->pool);
@@ -973,9 +972,7 @@ http_client_socket_broken(void *ctx)
     if (client->request.istream != nullptr)
         istream_free(&client->request.istream);
 
-    filtered_socket_schedule_read_timeout(&client->socket, true,
-                                          &http_client_timeout);
-
+    client->socket.ScheduleReadTimeout(true, &http_client_timeout);
     return true;
 }
 
@@ -1009,11 +1006,11 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 {
     struct http_client *client = (struct http_client *)ctx;
 
-    assert(filtered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
 
     client->request.got_data = true;
 
-    ssize_t nbytes = filtered_socket_write(&client->socket, data, length);
+    ssize_t nbytes = client->socket.Write(data, length);
     if (likely(nbytes >= 0)) {
         http_client_schedule_write(client);
         return (size_t)nbytes;
@@ -1039,12 +1036,11 @@ http_client_request_stream_direct(istream_direct type, int fd,
 {
     struct http_client *client = (struct http_client *)ctx;
 
-    assert(filtered_socket_connected(&client->socket));
+    assert(client->socket.IsConnected());
 
     client->request.got_data = true;
 
-    ssize_t nbytes = filtered_socket_write_from(&client->socket, fd, type,
-                                                max_length);
+    ssize_t nbytes = client->socket.WriteFrom(fd, type, max_length);
     if (likely(nbytes > 0))
         http_client_schedule_write(client);
     else if (nbytes == WRITE_BLOCKING)
@@ -1054,7 +1050,7 @@ http_client_request_stream_direct(istream_direct type, int fd,
     else if (likely(nbytes < 0)) {
         if (gcc_likely(errno == EAGAIN)) {
             client->request.got_data = false;
-            filtered_socket_unschedule_write(&client->socket);
+            client->socket.UnscheduleWrite();
         }
     }
 
@@ -1071,8 +1067,8 @@ http_client_request_stream_eof(void *ctx)
     assert(client->request.istream != nullptr);
     client->request.istream = nullptr;
 
-    filtered_socket_unschedule_write(&client->socket);
-    filtered_socket_read(&client->socket, false);
+    client->socket.UnscheduleWrite();
+    client->socket.Read(false);
 }
 
 static void
@@ -1181,10 +1177,10 @@ http_client_request(struct pool *caller_pool,
     client->pool = pool;
     client->peer_name = p_strdup(pool, get_peer_name(fd));
 
-    filtered_socket_init(&client->socket, pool, fd, fd_type,
-                         &http_client_timeout, &http_client_timeout,
-                         filter, filter_ctx,
-                         &http_client_socket_handler, client);
+    client->socket.Init(*pool, fd, fd_type,
+                        &http_client_timeout, &http_client_timeout,
+                        filter, filter_ctx,
+                        http_client_socket_handler, client);
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "http_client_lease");
 
@@ -1253,8 +1249,8 @@ http_client_request(struct pool *caller_pool,
 
     istream_handler_set(client->request.istream,
                         &http_client_request_stream_handler, client,
-                        filtered_socket_direct_mask(&client->socket));
+                        client->socket.GetDirectMask());
 
-    filtered_socket_schedule_read_no_timeout(&client->socket, true);
+    client->socket.ScheduleReadNoTimeout(true);
     istream_read(client->request.istream);
 }

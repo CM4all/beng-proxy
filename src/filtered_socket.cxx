@@ -106,17 +106,18 @@ static constexpr BufferedSocketHandler filtered_socket_bs_handler = {
  */
 
 void
-filtered_socket_init(FilteredSocket *s, struct pool *pool,
+FilteredSocket::Init(struct pool &pool,
                      int fd, enum istream_direct fd_type,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
-                     const SocketFilter *filter,
-                     void *filter_ctx,
-                     const BufferedSocketHandler *handler,
-                     void *handler_ctx)
+                     const SocketFilter *_filter, void *_filter_ctx,
+                     const BufferedSocketHandler &__handler,
+                     void *_handler_ctx)
 {
-    s->filter = filter;
-    s->filter_ctx = filter_ctx;
+    const BufferedSocketHandler *_handler = &__handler;
+
+    filter = _filter;
+    filter_ctx = _filter_ctx;
 
     if (filter != nullptr) {
         assert(filter->init != nullptr);
@@ -131,99 +132,97 @@ filtered_socket_init(FilteredSocket *s, struct pool *pool,
         assert(filter->closed != nullptr);
         assert(filter->close != nullptr);
 
-        s->handler = handler;
-        s->handler_ctx = handler_ctx;
+        handler = _handler;
+        handler_ctx = _handler_ctx;
 
-        handler = &filtered_socket_bs_handler;
-        handler_ctx = s;
+        _handler = &filtered_socket_bs_handler;
+        _handler_ctx = this;
     }
 
-    s->base.Init(pool, fd, fd_type,
-                 read_timeout, write_timeout,
-                 handler, handler_ctx);
+    base.Init(&pool, fd, fd_type,
+              read_timeout, write_timeout,
+              _handler, _handler_ctx);
 
 #ifndef NDEBUG
-    s->ended = false;
+    ended = false;
 #endif
 
-    s->drained = true;
+    drained = true;
 
     if (filter != nullptr)
-        filter->init(s, filter_ctx);
+        filter->init(this, filter_ctx);
 }
 
 void
-filtered_socket_destroy(FilteredSocket *s)
+FilteredSocket::Destroy()
 {
-    if (s->filter != nullptr) {
-        s->filter->close(s->filter_ctx);
-        s->filter = nullptr;
+    if (filter != nullptr) {
+        filter->close(filter_ctx);
+        filter = nullptr;
     }
 
-    s->base.Destroy();
+    base.Destroy();
 }
 
 bool
-filtered_socket_empty(const FilteredSocket *s)
+FilteredSocket::IsEmpty() const
 {
-    return s->filter != nullptr
-        ? s->filter->is_empty(s->filter_ctx)
-        : s->base.IsEmpty();
+    return filter != nullptr
+        ? filter->is_empty(filter_ctx)
+        : base.IsEmpty();
 }
 
 bool
-filtered_socket_full(const FilteredSocket *s)
+FilteredSocket::IsFull() const
 {
-    return s->filter != nullptr
-        ? s->filter->is_full(s->filter_ctx)
-        : s->base.IsFull();
+    return filter != nullptr
+        ? filter->is_full(filter_ctx)
+        : base.IsFull();
 }
 
 size_t
-filtered_socket_available(const FilteredSocket *s)
+FilteredSocket::GetAvailable() const
 {
-    return s->filter != nullptr
-        ? s->filter->available(s->filter_ctx)
-        : s->base.GetAvailable();
+    return filter != nullptr
+        ? filter->available(filter_ctx)
+        : base.GetAvailable();
 }
 
 void
-filtered_socket_consumed(FilteredSocket *s, size_t nbytes)
+FilteredSocket::Consumed(size_t nbytes)
 {
-    if (s->filter != nullptr)
-        s->filter->consumed(nbytes, s->filter_ctx);
+    if (filter != nullptr)
+        filter->consumed(nbytes, filter_ctx);
     else
-        s->base.Consumed(nbytes);
+        base.Consumed(nbytes);
 }
 
 bool
-filtered_socket_read(FilteredSocket *s, bool expect_more)
+FilteredSocket::Read(bool expect_more)
 {
-    if (s->filter != nullptr)
-        return s->filter->read(expect_more, s->filter_ctx);
+    if (filter != nullptr)
+        return filter->read(expect_more, filter_ctx);
     else
-        return s->base.Read(expect_more);
+        return base.Read(expect_more);
 }
 
 ssize_t
-filtered_socket_write(FilteredSocket *s,
-                      const void *data, size_t length)
+FilteredSocket::Write(const void *data, size_t length)
 {
-    return s->filter != nullptr
-        ? s->filter->write(data, length, s->filter_ctx)
-        : s->base.Write(data, length);
+    return filter != nullptr
+        ? filter->write(data, length, filter_ctx)
+        : base.Write(data, length);
 }
 
 bool
-filtered_socket_internal_drained(FilteredSocket *s)
+FilteredSocket::InternalDrained()
 {
-    assert(s != nullptr);
-    assert(s->filter != nullptr);
-    assert(filtered_socket_connected(s));
+    assert(filter != nullptr);
+    assert(IsConnected());
 
-    if (s->drained || s->handler->drained == nullptr)
+    if (drained || handler->drained == nullptr)
         return true;
 
-    s->drained = true;
-    return s->handler->drained(s->handler_ctx);
+    drained = true;
+    return handler->drained(handler_ctx);
 }

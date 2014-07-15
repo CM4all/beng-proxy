@@ -117,7 +117,7 @@ http_server_socket_write(void *ctx)
         return false;
 
     if (!connection->response.want_write)
-        filtered_socket_unschedule_write(&connection->socket);
+        connection->socket.UnscheduleWrite();
 
     return true;
 }
@@ -217,10 +217,10 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     auto connection = NewFromPool<struct http_server_connection>(*pool);
     connection->pool = pool;
 
-    filtered_socket_init(&connection->socket, pool, fd, fd_type,
-                         nullptr, &http_server_write_timeout,
-                         filter, filter_ctx,
-                         &http_server_socket_handler, connection);
+    connection->socket.Init(*pool, fd, fd_type,
+                            nullptr, &http_server_write_timeout,
+                            filter, filter_ctx,
+                            http_server_socket_handler, connection);
 
     connection->handler = handler;
     connection->handler_ctx = ctx;
@@ -261,15 +261,15 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
 
     *connection_r = connection;
 
-    filtered_socket_read(&connection->socket, false);
+    connection->socket.Read(false);
 }
 
 static void
 http_server_socket_close(struct http_server_connection *connection)
 {
-    assert(filtered_socket_connected(&connection->socket));
+    assert(connection->socket.IsConnected());
 
-    filtered_socket_close(&connection->socket);
+    connection->socket.Close();
 
     evtimer_del(&connection->idle_timeout);
 }
@@ -277,12 +277,12 @@ http_server_socket_close(struct http_server_connection *connection)
 static void
 http_server_socket_destroy(struct http_server_connection *connection)
 {
-    assert(filtered_socket_valid(&connection->socket));
+    assert(connection->socket.IsValid());
 
-    if (filtered_socket_connected(&connection->socket))
+    if (connection->socket.IsConnected())
         http_server_socket_close(connection);
 
-    filtered_socket_destroy(&connection->socket);
+    connection->socket.Destroy();
 }
 
 static void

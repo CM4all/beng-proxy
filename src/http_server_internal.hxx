@@ -142,15 +142,14 @@ http_server_connection_valid(const struct http_server_connection *connection)
 {
     assert(connection != NULL);
 
-    return filtered_socket_valid(&connection->socket) &&
-        filtered_socket_connected(&connection->socket);
+    return connection->socket.IsValid() && connection->socket.IsConnected();
 }
 
 static inline void
 http_server_schedule_write(struct http_server_connection *connection)
 {
     connection->response.want_write = true;
-    filtered_socket_schedule_write(&connection->socket);
+    connection->socket.ScheduleWrite();
 }
 
 /**

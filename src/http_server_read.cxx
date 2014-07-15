@@ -144,8 +144,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
         static const char msg[] =
             "This server requires HTTP 1.1.";
 
-        ssize_t nbytes = filtered_socket_write(&connection->socket,
-                                               msg, sizeof(msg) - 1);
+        ssize_t nbytes = connection->socket.Write(msg, sizeof(msg) - 1);
         if (nbytes != WRITE_DESTROYED)
             http_server_done(connection);
         return false;
@@ -235,8 +234,7 @@ http_server_headers_finished(struct http_server_connection *connection)
 
     /* for the response body, the filtered_socket class tracks
        inactivity timeout */
-    filtered_socket_schedule_read_timeout(&connection->socket, false,
-                                          &http_server_read_timeout);
+    connection->socket.ScheduleReadTimeout(false, &http_server_read_timeout);
 
     return true;
 }
@@ -307,7 +305,7 @@ http_server_feed_headers(struct http_server_connection *connection,
     if (next != NULL) {
         consumed = next - buffer;
         connection->request.bytes_received += consumed;
-        filtered_socket_consumed(&connection->socket, consumed);
+        connection->socket.Consumed(consumed);
     }
 
     return connection->request.read_state == http_server_connection::Request::HEADERS
@@ -324,7 +322,7 @@ http_server_submit_request(struct http_server_connection *connection)
     if (connection->request.read_state == http_server_connection::Request::END)
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        filtered_socket_schedule_read_no_timeout(&connection->socket, false);
+        connection->socket.ScheduleReadNoTimeout(false);
 
     pool_ref(connection->pool);
 
@@ -381,7 +379,7 @@ http_server_feed(struct http_server_connection *connection,
         /* check if the connection was closed by the client while we
            were processing the request */
 
-        if (filtered_socket_full(&connection->socket))
+        if (connection->socket.IsFull())
             /* the buffer is full, the peer has been pipelining too
                much - that would disallow us to detect a disconnect;
                let's disable keep-alive now and discard all data */
@@ -390,7 +388,7 @@ http_server_feed(struct http_server_connection *connection,
         if (!connection->keep_alive) {
             /* discard all pipelined input when keep-alive has been
                disabled */
-            filtered_socket_consumed(&connection->socket, length);
+            connection->socket.Consumed(length);
             return BufferedResult::OK;
         }
 
