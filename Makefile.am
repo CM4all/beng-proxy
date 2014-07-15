@@ -336,7 +336,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/thread_pool.cxx src/thread_pool.hxx \
 	src/ssl_domain.cxx src/ssl_domain.hxx \
 	src/ssl_init.cxx src/ssl_init.hxx \
-	src/ssl_client.cxx src/ssl_client.h \
+	src/ssl_client.cxx src/ssl_client.hxx \
 	src/ssl_factory.cxx src/ssl_factory.hxx \
 	src/ssl_filter.cxx src/ssl_filter.hxx \
 	src/thread_socket_filter.cxx src/thread_socket_filter.hxx \

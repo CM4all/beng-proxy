@@ -15,7 +15,7 @@
 #include "tpool.h"
 #include "fb_pool.h"
 #include "ssl_init.hxx"
-#include "ssl_client.h"
+#include "ssl_client.hxx"
 #include "net/ConnectSocket.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"

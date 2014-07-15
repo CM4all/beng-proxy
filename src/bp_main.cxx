@@ -37,7 +37,7 @@
 #include "log-glue.h"
 #include "ua_classification.h"
 #include "ssl_init.hxx"
-#include "ssl_client.h"
+#include "ssl_client.hxx"
 #include "capabilities.hxx"
 #include "namespace_options.hxx"
 #include "util/Error.hxx"

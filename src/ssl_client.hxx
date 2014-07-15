@@ -4,16 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SSL_CLIENT_H
-#define BENG_PROXY_SSL_CLIENT_H
+#ifndef BENG_PROXY_SSL_CLIENT_HXX
+#define BENG_PROXY_SSL_CLIENT_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 struct pool;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 ssl_client_init(void);
@@ -28,9 +24,5 @@ void *
 ssl_client_create(struct pool *pool,
                   const char *hostname,
                   GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

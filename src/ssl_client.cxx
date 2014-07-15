@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "ssl_client.h"
+#include "ssl_client.hxx"
 #include "ssl_config.hxx"
 #include "ssl_factory.hxx"
 #include "ssl_filter.hxx"

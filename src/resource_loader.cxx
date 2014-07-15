@@ -26,7 +26,7 @@
 #include "strutil.h"
 #include "strmap.hxx"
 #include "istream.h"
-#include "ssl_client.h"
+#include "ssl_client.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
