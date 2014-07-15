@@ -54,6 +54,9 @@ class SocketWrapper {
     void *handler_ctx;
 
 public:
+    SocketWrapper() = default;
+    SocketWrapper(const SocketWrapper &) = delete;
+
     void Init(struct pool *_pool,
               int _fd, enum istream_direct _fd_type,
               const struct socket_handler *_handler, void *_ctx);
