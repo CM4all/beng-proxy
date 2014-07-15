@@ -51,7 +51,7 @@ http_server_feed_body(struct http_server_connection *connection,
         connection->socket.ScheduleReadNoTimeout(false);
 
         pool_ref(connection->pool);
-        istream_deinit_eof(&connection->request.body_reader.output);
+        connection->request.body_reader.DeinitEOF();
         const bool valid = http_server_connection_valid(connection);
         pool_unref(connection->pool);
 
@@ -132,7 +132,7 @@ http_server_request_stream_close(struct istream *istream)
 
     connection->keep_alive = false;
 
-    istream_deinit(&connection->request.body_reader.output);
+    connection->request.body_reader.Deinit();
 }
 
 const struct istream_class http_server_request_stream = {

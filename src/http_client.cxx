@@ -255,7 +255,7 @@ http_client_abort_response_body(struct http_client *client, GError *error)
         istream_close_handler(client->request.istream);
 
     http_client_prefix_error(client, &error);
-    istream_deinit_abort(&client->response.body_reader.output, error);
+    client->response.body_reader.DeinitAbort(error);
     http_client_release(client, false);
 }
 
@@ -347,7 +347,7 @@ http_client_response_stream_as_fd(struct istream *istream)
     if (fd < 0)
         return -1;
 
-    istream_deinit(&client->response.body_reader.output);
+    client->response.body_reader.Deinit();
     http_client_release(client, false);
     return fd;
 }
@@ -366,7 +366,7 @@ http_client_response_stream_close(struct istream *istream)
     if (client->request.istream != nullptr)
         istream_close_handler(client->request.istream);
 
-    istream_deinit(&client->response.body_reader.output);
+    client->response.body_reader.Deinit();
     http_client_release(client, false);
 }
 
@@ -659,7 +659,7 @@ http_client_response_stream_eof(struct http_client *client)
        response body is already finished  */
     client->response.body = nullptr;
 
-    istream_deinit_eof(&client->response.body_reader.output);
+    client->response.body_reader.DeinitEOF();
 
     http_client_response_finished(client);
 }

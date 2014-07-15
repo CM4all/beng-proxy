@@ -433,7 +433,7 @@ http_server_try_request_direct(struct http_server_connection *connection,
 
     if (connection->request.body_reader.IsEOF()) {
         connection->request.read_state = http_server_connection::Request::END;
-        istream_deinit_eof(&connection->request.body_reader.output);
+        connection->request.body_reader.DeinitEOF();
         return http_server_connection_valid(connection)
             ? DirectResult::OK
             : DirectResult::CLOSED;

@@ -56,6 +56,10 @@ struct HttpBodyReader {
         return output;
     }
 
+    void Deinit();
+    void DeinitEOF();
+    void DeinitAbort(GError *error);
+
     bool IsChunked() const {
         return rest == REST_CHUNKED;
     }

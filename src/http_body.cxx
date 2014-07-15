@@ -11,6 +11,24 @@
 #include <assert.h>
 #include <limits.h>
 
+void
+HttpBodyReader::Deinit()
+{
+    istream_deinit(&output);
+}
+
+void
+HttpBodyReader::DeinitEOF()
+{
+    istream_deinit_eof(&output);
+}
+
+void
+HttpBodyReader::DeinitAbort(GError *error)
+{
+    istream_deinit_abort(&output, error);
+}
+
 gcc_pure
 off_t
 HttpBodyReader::GetAvailable(const FilteredSocket &s, bool partial) const
