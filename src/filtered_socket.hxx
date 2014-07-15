@@ -438,11 +438,4 @@ struct FilteredSocket {
     }
 };
 
-gcc_const
-static inline GQuark
-filtered_socket_quark(void)
-{
-    return g_quark_from_static_string("filtered_socket");
-}
-
 #endif
