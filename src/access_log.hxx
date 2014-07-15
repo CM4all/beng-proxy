@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_ACCESS_LOG_HXX
 #define BENG_PROXY_ACCESS_LOG_HXX
 
-#include "istream.h"
-
 #include <http/status.h>
 
 #include <stdint.h>

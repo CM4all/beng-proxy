@@ -32,6 +32,7 @@
 #include "abort_close.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "istream.h"
 
 #include <http/status.h>
 #include <daemon/log.h>
