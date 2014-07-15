@@ -34,7 +34,7 @@ struct http_request {
 
     unsigned session_sticky;
 
-    const struct socket_filter *filter;
+    const SocketFilter *filter;
     void *filter_ctx;
 
     struct stock_item *stock_item;
@@ -193,7 +193,7 @@ void
 http_request(struct pool *pool,
              struct tcp_balancer *tcp_balancer,
              unsigned session_sticky,
-             const struct socket_filter *filter, void *filter_ctx,
+             const SocketFilter *filter, void *filter_ctx,
              http_method_t method,
              const struct http_address *uwa,
              struct growing_buffer *headers,

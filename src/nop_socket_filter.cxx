@@ -7,16 +7,16 @@
 #include "pool.hxx"
 
 struct nop_socket_filter {
-    struct filtered_socket *socket;
+    FilteredSocket *socket;
 };
 
 /*
- * socket_filter
+ * SocketFilter
  *
  */
 
 static void
-nop_socket_filter_init(struct filtered_socket *s, void *ctx)
+nop_socket_filter_init(FilteredSocket *s, void *ctx)
 {
     struct nop_socket_filter *f = (struct nop_socket_filter *)ctx;
 
@@ -119,7 +119,7 @@ nop_socket_filter_close(void *ctx)
     (void)f;
 }
 
-const struct socket_filter nop_socket_filter = {
+const SocketFilter nop_socket_filter = {
     .init = nop_socket_filter_init,
     .data = nop_socket_filter_data,
     .is_empty = nop_socket_filter_is_empty,

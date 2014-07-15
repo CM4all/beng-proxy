@@ -49,7 +49,7 @@ struct http_client {
     struct stopwatch *stopwatch;
 
     /* I/O */
-    struct filtered_socket socket;
+    FilteredSocket socket;
     struct lease_ref lease_ref;
 
     /* request */
@@ -1148,7 +1148,7 @@ void
 http_client_request(struct pool *caller_pool,
                     int fd, enum istream_direct fd_type,
                     const struct lease *lease, void *lease_ctx,
-                    const struct socket_filter *filter, void *filter_ctx,
+                    const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
                     struct istream *body, bool expect_100,

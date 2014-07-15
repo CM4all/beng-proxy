@@ -23,7 +23,7 @@ http_body_known_length(const struct http_body_reader *body)
 gcc_pure
 off_t
 http_body_available(const struct http_body_reader *body,
-                    const struct filtered_socket *s, bool partial)
+                    const FilteredSocket *s, bool partial)
 {
     assert(body->rest != HTTP_BODY_REST_EOF_CHUNK);
 
@@ -93,7 +93,7 @@ http_body_try_direct(struct http_body_reader *body, int fd,
 
 bool
 http_body_socket_is_done(struct http_body_reader *body,
-                         const struct filtered_socket *s)
+                         const FilteredSocket *s)
 {
     return http_body_known_length(body) &&
         (http_body_eof(body) ||

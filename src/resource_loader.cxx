@@ -165,7 +165,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         int stderr_fd;
         const char *server_name;
         unsigned server_port;
-        const struct socket_filter *filter;
+        const SocketFilter *filter;
         void *filter_ctx;
 
     case RESOURCE_ADDRESS_NONE:

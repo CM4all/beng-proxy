@@ -21,7 +21,7 @@ struct istream;
 struct sockaddr;
 struct growing_buffer;
 struct async_operation_ref;
-struct socket_filter;
+struct SocketFilter;
 
 struct http_server_connection;
 
@@ -117,17 +117,13 @@ http_server_quark(void)
     return g_quark_from_static_string("http_server");
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * @param date_header generate Date response headers?
  */
 void
 http_server_connection_new(struct pool *pool,
                            int fd, enum istream_direct fd_type,
-                           const struct socket_filter *filter,
+                           const SocketFilter *filter,
                            void *filter_ctx,
                            const struct sockaddr *local_address,
                            size_t local_address_length,
@@ -167,9 +163,5 @@ void
 http_server_send_redirect(const struct http_server_request *request,
                           http_status_t status, const char *location,
                           const char *msg);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

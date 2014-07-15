@@ -17,7 +17,7 @@ struct http_server_connection {
     struct pool *pool;
 
     /* I/O */
-    struct filtered_socket socket;
+    FilteredSocket socket;
 
     /**
      * Track the total time for idle periods plus receiving all

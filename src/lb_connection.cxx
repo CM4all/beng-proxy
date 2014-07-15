@@ -100,7 +100,7 @@ lb_connection_new(struct lb_instance *instance,
 
     enum istream_direct fd_type = ISTREAM_TCP;
 
-    const socket_filter *filter = nullptr;
+    const SocketFilter *filter = nullptr;
     void *filter_ctx = nullptr;
 
     if (ssl_factory != nullptr) {

@@ -196,7 +196,7 @@ http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
 
 void
 http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_type,
-                           const struct socket_filter *filter,
+                           const SocketFilter *filter,
                            void *filter_ctx,
                            const struct sockaddr *local_address,
                            size_t local_address_length,

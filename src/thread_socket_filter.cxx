@@ -309,7 +309,7 @@ ThreadSocketFilter::Done()
  */
 
 static void
-thread_socket_filter_init_(struct filtered_socket *s, void *ctx)
+thread_socket_filter_init_(FilteredSocket *s, void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
@@ -643,7 +643,7 @@ thread_socket_filter_close(void *ctx)
     thread_socket_filter_destroy(&f);
 }
 
-const struct socket_filter thread_socket_filter = {
+const SocketFilter thread_socket_filter = {
     .init = thread_socket_filter_init_,
     .data = thread_socket_filter_data,
     .is_empty = thread_socket_filter_is_empty,

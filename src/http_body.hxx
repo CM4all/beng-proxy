@@ -14,7 +14,7 @@
 #include <stddef.h>
 
 struct pool;
-struct filtered_socket;
+struct FilteredSocket;
 
 struct http_body_reader {
     struct istream output;
@@ -82,7 +82,7 @@ extern "C" {
 gcc_pure
 off_t
 http_body_available(const struct http_body_reader *body,
-                    const struct filtered_socket *s, bool partial);
+                    const FilteredSocket *s, bool partial);
 
 size_t
 http_body_feed_body(struct http_body_reader *body,
@@ -100,7 +100,7 @@ http_body_try_direct(struct http_body_reader *body, int fd,
 gcc_pure
 bool
 http_body_socket_is_done(struct http_body_reader *body,
-                         const struct filtered_socket *s);
+                         const FilteredSocket *s);
 
 /**
  * The underlying socket has been closed by the remote.

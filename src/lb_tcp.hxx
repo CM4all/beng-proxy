@@ -12,7 +12,7 @@
 typedef struct _GError GError;
 struct pool;
 struct stock;
-struct socket_filter;
+struct SocketFilter;
 struct address_list;
 struct balancer;
 struct lb_tcp;
@@ -31,7 +31,7 @@ struct lb_tcp_handler {
 void
 lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
            int fd, enum istream_direct fd_type,
-           const struct socket_filter *filter, void *filter_ctx,
+           const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            bool transparent_source,
            const struct address_list &address_list,

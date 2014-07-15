@@ -13,10 +13,10 @@
 #include <pthread.h>
 
 struct fifo_buffer;
-struct filtered_socket;
+struct FilteredSocket;
 
-struct socket_filter {
-    void (*init)(struct filtered_socket *s, void *ctx);
+struct SocketFilter {
+    void (*init)(FilteredSocket *s, void *ctx);
 
     /**
      * Data has been read from the socket into the input buffer.  Call
@@ -94,7 +94,7 @@ struct socket_filter {
 /**
  * A wrapper for #buffered_socket that can filter input and output.
  */
-struct filtered_socket {
+struct FilteredSocket {
     BufferedSocket base;
 
 #ifndef NDEBUG
@@ -105,7 +105,7 @@ struct filtered_socket {
      * The actual filter.  If this is nullptr, then this object behaves
      * just like #buffered_socket.
      */
-    const struct socket_filter *filter;
+    const SocketFilter *filter;
     void *filter_ctx;
 
     const BufferedSocketHandler *handler;
@@ -126,28 +126,24 @@ filtered_socket_quark(void)
     return g_quark_from_static_string("filtered_socket");
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
-filtered_socket_init(struct filtered_socket *s, struct pool *pool,
+filtered_socket_init(FilteredSocket *s, struct pool *pool,
                      int fd, enum istream_direct fd_type,
                      const struct timeval *read_timeout,
                      const struct timeval *write_timeout,
-                     const struct socket_filter *filter,
+                     const SocketFilter *filter,
                      void *filter_ctx,
                      const BufferedSocketHandler *handler,
                      void *handler_ctx);
 
 static inline bool
-filtered_socket_has_filter(const struct filtered_socket *s)
+filtered_socket_has_filter(const FilteredSocket *s)
 {
     return s->filter != nullptr;
 }
 
 static inline enum istream_direct
-filtered_socket_fd_type(const struct filtered_socket *s)
+filtered_socket_fd_type(const FilteredSocket *s)
 {
     return s->filter == nullptr
         ? s->base.base.GetType()
@@ -160,7 +156,7 @@ filtered_socket_fd_type(const struct filtered_socket *s)
  * do the latter, call filtered_socket_destroy().
  */
 static inline void
-filtered_socket_close(struct filtered_socket *s)
+filtered_socket_close(FilteredSocket *s)
 {
 #ifndef NDEBUG
     /* work around bogus assertion failure */
@@ -177,7 +173,7 @@ filtered_socket_close(struct filtered_socket *s)
  * scheduling it for reuse).
  */
 static inline void
-filtered_socket_abandon(struct filtered_socket *s)
+filtered_socket_abandon(FilteredSocket *s)
 {
 #ifndef NDEBUG
     /* work around bogus assertion failure */
@@ -194,14 +190,14 @@ filtered_socket_abandon(struct filtered_socket *s)
  * filtered_socket_abandon().
  */
 void
-filtered_socket_destroy(struct filtered_socket *s);
+filtered_socket_destroy(FilteredSocket *s);
 
 /**
  * Returns the socket descriptor and calls filtered_socket_abandon().
  * Returns -1 if the input buffer is not empty.
  */
 static inline int
-filtered_socket_as_fd(struct filtered_socket *s)
+filtered_socket_as_fd(FilteredSocket *s)
 {
     return s->filter != nullptr
         ? -1
@@ -214,7 +210,7 @@ filtered_socket_as_fd(struct filtered_socket *s)
  * closed.
  */
 static inline bool
-filtered_socket_connected(const struct filtered_socket *s)
+filtered_socket_connected(const FilteredSocket *s)
 {
 #ifndef NDEBUG
     /* work around bogus assertion failure */
@@ -230,7 +226,7 @@ filtered_socket_connected(const struct filtered_socket *s)
  * the input buffer may still have data.
  */
 static inline bool
-filtered_socket_valid(const struct filtered_socket *s)
+filtered_socket_valid(const FilteredSocket *s)
 {
     assert(s != nullptr);
 
@@ -241,7 +237,7 @@ filtered_socket_valid(const struct filtered_socket *s)
  * Accessor for #drained.
  */
 static inline bool
-filtered_socket_is_drained(const struct filtered_socket *s)
+filtered_socket_is_drained(const FilteredSocket *s)
 {
     assert(s != nullptr);
     assert(filtered_socket_valid(s));
@@ -255,21 +251,21 @@ filtered_socket_is_drained(const struct filtered_socket *s)
  */
 gcc_pure
 bool
-filtered_socket_empty(const struct filtered_socket *s);
+filtered_socket_empty(const FilteredSocket *s);
 
 /**
  * Is the input buffer full?
  */
 gcc_pure
 bool
-filtered_socket_full(const struct filtered_socket *s);
+filtered_socket_full(const FilteredSocket *s);
 
 /**
  * Returns the number of bytes in the input buffer.
  */
 gcc_pure
 size_t
-filtered_socket_available(const struct filtered_socket *s);
+filtered_socket_available(const FilteredSocket *s);
 
 /**
  * Mark the specified number of bytes of the input buffer as
@@ -278,13 +274,13 @@ filtered_socket_available(const struct filtered_socket *s);
  * repeatedly.
  */
 void
-filtered_socket_consumed(struct filtered_socket *s, size_t nbytes);
+filtered_socket_consumed(FilteredSocket *s, size_t nbytes);
 
 /**
  * Returns the istream_direct mask for splicing data into this socket.
  */
 static inline enum istream_direct
-filtered_socket_direct_mask(const struct filtered_socket *s)
+filtered_socket_direct_mask(const FilteredSocket *s)
 {
     assert(s != nullptr);
 
@@ -301,20 +297,20 @@ filtered_socket_direct_mask(const struct filtered_socket *s)
  * yet) an event gets scheduled and the function returns immediately.
  */
 bool
-filtered_socket_read(struct filtered_socket *s, bool expect_more);
+filtered_socket_read(FilteredSocket *s, bool expect_more);
 
 static inline void
-filtered_socket_set_cork(struct filtered_socket *s, bool cork)
+filtered_socket_set_cork(FilteredSocket *s, bool cork)
 {
     s->base.SetCork(cork);
 }
 
 ssize_t
-filtered_socket_write(struct filtered_socket *s,
+filtered_socket_write(FilteredSocket *s,
                       const void *data, size_t length);
 
 static inline ssize_t
-filtered_socket_write_from(struct filtered_socket *s,
+filtered_socket_write_from(FilteredSocket *s,
                            int fd, enum istream_direct fd_type,
                            size_t length)
 {
@@ -325,7 +321,7 @@ filtered_socket_write_from(struct filtered_socket *s,
 
 gcc_pure
 static inline bool
-filtered_socket_ready_for_writing(const struct filtered_socket *s)
+filtered_socket_ready_for_writing(const FilteredSocket *s)
 {
     assert(s->filter == nullptr);
 
@@ -333,7 +329,7 @@ filtered_socket_ready_for_writing(const struct filtered_socket *s)
 }
 
 static inline void
-filtered_socket_schedule_read_timeout(struct filtered_socket *s,
+filtered_socket_schedule_read_timeout(FilteredSocket *s,
                                       bool expect_more,
                                       const struct timeval *timeout)
 {
@@ -351,14 +347,14 @@ filtered_socket_schedule_read_timeout(struct filtered_socket *s,
  * you should call filtered_socket_read() to enable the read timeout.
  */
 static inline void
-filtered_socket_schedule_read_no_timeout(struct filtered_socket *s,
+filtered_socket_schedule_read_no_timeout(FilteredSocket *s,
                                          bool expect_more)
 {
     filtered_socket_schedule_read_timeout(s, expect_more, nullptr);
 }
 
 static inline void
-filtered_socket_schedule_write(struct filtered_socket *s)
+filtered_socket_schedule_write(FilteredSocket *s)
 {
     if (s->filter != nullptr && s->filter->schedule_write != nullptr)
         s->filter->schedule_write(s->filter_ctx);
@@ -367,7 +363,7 @@ filtered_socket_schedule_write(struct filtered_socket *s)
 }
 
 static inline void
-filtered_socket_unschedule_write(struct filtered_socket *s)
+filtered_socket_unschedule_write(FilteredSocket *s)
 {
     if (s->filter != nullptr && s->filter->unschedule_write != nullptr)
         s->filter->unschedule_write(s->filter_ctx);
@@ -377,7 +373,7 @@ filtered_socket_unschedule_write(struct filtered_socket *s)
 
 gcc_pure
 static inline bool
-filtered_socket_internal_is_empty(const struct filtered_socket *s)
+filtered_socket_internal_is_empty(const FilteredSocket *s)
 {
     assert(s->filter != nullptr);
 
@@ -386,7 +382,7 @@ filtered_socket_internal_is_empty(const struct filtered_socket *s)
 
 gcc_pure
 static inline bool
-filtered_socket_internal_is_full(const struct filtered_socket *s)
+filtered_socket_internal_is_full(const FilteredSocket *s)
 {
     assert(s->filter != nullptr);
 
@@ -395,7 +391,7 @@ filtered_socket_internal_is_full(const struct filtered_socket *s)
 
 gcc_pure
 static inline size_t
-filtered_socket_internal_available(const struct filtered_socket *s)
+filtered_socket_internal_available(const FilteredSocket *s)
 {
     assert(s->filter != nullptr);
 
@@ -403,7 +399,7 @@ filtered_socket_internal_available(const struct filtered_socket *s)
 }
 
 static inline void
-filtered_socket_internal_consumed(struct filtered_socket *s, size_t nbytes)
+filtered_socket_internal_consumed(FilteredSocket *s, size_t nbytes)
 {
     assert(s->filter != nullptr);
 
@@ -411,7 +407,7 @@ filtered_socket_internal_consumed(struct filtered_socket *s, size_t nbytes)
 }
 
 static inline bool
-filtered_socket_internal_read(struct filtered_socket *s, bool expect_more)
+filtered_socket_internal_read(FilteredSocket *s, bool expect_more)
 {
     assert(s->filter != nullptr);
 
@@ -419,7 +415,7 @@ filtered_socket_internal_read(struct filtered_socket *s, bool expect_more)
 }
 
 static inline ssize_t
-filtered_socket_internal_write(struct filtered_socket *s,
+filtered_socket_internal_write(FilteredSocket *s,
                                const void *data, size_t length)
 {
     assert(s->filter != nullptr);
@@ -428,11 +424,11 @@ filtered_socket_internal_write(struct filtered_socket *s,
 }
 
 /**
- * A #socket_filter must call this function whenever it adds data to
+ * A #SocketFilter must call this function whenever it adds data to
  * its output buffer (only if it implements such a buffer).
  */
 static inline void
-filtered_socket_internal_undrained(struct filtered_socket *s)
+filtered_socket_internal_undrained(FilteredSocket *s)
 {
     assert(s != nullptr);
     assert(s->filter != nullptr);
@@ -442,14 +438,14 @@ filtered_socket_internal_undrained(struct filtered_socket *s)
 }
 
 /**
- * A #socket_filter must call this function whenever its output buffer
+ * A #SocketFilter must call this function whenever its output buffer
  * drains (only if it implements such a buffer).
  */
 bool
-filtered_socket_internal_drained(struct filtered_socket *s);
+filtered_socket_internal_drained(FilteredSocket *s);
 
 static inline void
-filtered_socket_internal_schedule_read(struct filtered_socket *s,
+filtered_socket_internal_schedule_read(FilteredSocket *s,
                                        bool expect_more,
                                        const struct timeval *timeout)
 {
@@ -459,7 +455,7 @@ filtered_socket_internal_schedule_read(struct filtered_socket *s,
 }
 
 static inline void
-filtered_socket_internal_schedule_write(struct filtered_socket *s)
+filtered_socket_internal_schedule_write(FilteredSocket *s)
 {
     assert(s->filter != nullptr);
 
@@ -467,7 +463,7 @@ filtered_socket_internal_schedule_write(struct filtered_socket *s)
 }
 
 static inline void
-filtered_socket_internal_unschedule_write(struct filtered_socket *s)
+filtered_socket_internal_unschedule_write(FilteredSocket *s)
 {
     assert(s->filter != nullptr);
 
@@ -475,7 +471,7 @@ filtered_socket_internal_unschedule_write(struct filtered_socket *s)
 }
 
 static inline BufferedResult
-filtered_socket_invoke_data(struct filtered_socket *s,
+filtered_socket_invoke_data(FilteredSocket *s,
                             const void *data, size_t size)
 {
     assert(s->filter != nullptr);
@@ -484,7 +480,7 @@ filtered_socket_invoke_data(struct filtered_socket *s,
 }
 
 static inline bool
-filtered_socket_invoke_closed(struct filtered_socket *s)
+filtered_socket_invoke_closed(FilteredSocket *s)
 {
     assert(s->filter != nullptr);
 
@@ -492,7 +488,7 @@ filtered_socket_invoke_closed(struct filtered_socket *s)
 }
 
 static inline bool
-filtered_socket_invoke_remaining(struct filtered_socket *s, size_t remaining)
+filtered_socket_invoke_remaining(FilteredSocket *s, size_t remaining)
 {
     assert(s->filter != nullptr);
 
@@ -501,7 +497,7 @@ filtered_socket_invoke_remaining(struct filtered_socket *s, size_t remaining)
 }
 
 static inline void
-filtered_socket_invoke_end(struct filtered_socket *s)
+filtered_socket_invoke_end(FilteredSocket *s)
 {
     assert(s->filter != nullptr);
     assert(!s->ended);
@@ -516,7 +512,7 @@ filtered_socket_invoke_end(struct filtered_socket *s)
 }
 
 static inline bool
-filtered_socket_invoke_write(struct filtered_socket *s)
+filtered_socket_invoke_write(FilteredSocket *s)
 {
     assert(s->filter != nullptr);
 
@@ -524,7 +520,7 @@ filtered_socket_invoke_write(struct filtered_socket *s)
 }
 
 static inline bool
-filtered_socket_invoke_timeout(struct filtered_socket *s)
+filtered_socket_invoke_timeout(FilteredSocket *s)
 {
     assert(s->filter != nullptr);
 
@@ -532,15 +528,11 @@ filtered_socket_invoke_timeout(struct filtered_socket *s)
 }
 
 static inline void
-filtered_socket_invoke_error(struct filtered_socket *s, GError *error)
+filtered_socket_invoke_error(FilteredSocket *s, GError *error)
 {
     assert(s->filter != nullptr);
 
     s->handler->error(error, s->handler_ctx);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

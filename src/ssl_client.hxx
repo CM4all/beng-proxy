@@ -10,6 +10,7 @@
 #include "glibfwd.hxx"
 
 struct pool;
+struct SocketFilter;
 
 void
 ssl_client_init(void);
@@ -17,7 +18,7 @@ ssl_client_init(void);
 void
 ssl_client_deinit(void);
 
-const struct socket_filter *
+const SocketFilter *
 ssl_client_get_filter(void);
 
 void *

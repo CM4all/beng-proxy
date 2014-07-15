@@ -14,6 +14,8 @@
 #include <pthread.h>
 
 typedef struct _GError GError;
+struct SocketFilter;
+struct FilteredSocket;
 struct ThreadSocketFilter;
 class ThreadQueue;
 
@@ -39,7 +41,7 @@ struct ThreadSocketFilter : ThreadJob {
 
     ThreadQueue &queue;
 
-    struct filtered_socket *socket;
+    FilteredSocket *socket;
 
     /**
      * The actual filter.  If this is NULL, then this object behaves
@@ -162,6 +164,6 @@ thread_socket_filter_new(struct pool &pool,
                          const ThreadSocketFilterHandler &handler,
                          void *ctx);
 
-extern const struct socket_filter thread_socket_filter;
+extern const SocketFilter thread_socket_filter;
 
 #endif

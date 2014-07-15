@@ -36,7 +36,7 @@ ssl_client_deinit(void)
         ssl_factory_free(factory);
 }
 
-const struct socket_filter *
+const SocketFilter *
 ssl_client_get_filter(void)
 {
     return &thread_socket_filter;;
