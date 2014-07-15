@@ -312,7 +312,7 @@ http_client_response_stream_read(struct istream *istream)
     assert(!client->socket.ended ||
            client->response.body_reader.IsSocketDone(client->socket));
     assert(client->response.read_state == http_client::response::READ_BODY);
-    assert(client->response.body_reader.output.handler != nullptr);
+    assert(istream_has_handler(&client->response.body_reader.GetStream()));
     assert(http_response_handler_used(&client->request.handler));
 
     if (client->response.in_handler)
