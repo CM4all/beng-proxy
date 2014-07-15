@@ -665,10 +665,6 @@ http_client_response_stream_eof(struct http_client *client)
     http_client_response_finished(client);
 }
 
-/**
- * Returns true if data has been consumed; false if nothing has been
- * consumed or if the client has been closed.
- */
 static BufferedResult
 http_client_feed_body(struct http_client *client,
                       const void *data, size_t length)
