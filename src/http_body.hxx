@@ -8,6 +8,7 @@
 #define BENG_PROXY_HTTP_BODY_HXX
 
 #include "istream.h"
+#include "util/Cast.hxx"
 
 #include <inline/compiler.h>
 
@@ -54,6 +55,10 @@ struct HttpBodyReader {
 
     struct istream &GetStream() {
         return output;
+    }
+
+    static HttpBodyReader &FromStream(struct istream &stream) {
+        return ContainerCast2(stream, &HttpBodyReader::output);
     }
 
     void Deinit();

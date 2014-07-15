@@ -67,8 +67,9 @@ http_server_feed_body(struct http_server_connection *connection,
 static inline struct http_server_connection *
 response_stream_to_connection(struct istream *istream)
 {
-    return ContainerCast(istream, struct http_server_connection,
-                         request.body_reader.output);
+    auto &body = HttpBodyReader::FromStream(*istream);
+    return ContainerCast(&body, struct http_server_connection,
+                         request.body_reader);
 }
 
 static off_t

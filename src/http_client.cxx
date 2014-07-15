@@ -285,8 +285,9 @@ http_client_abort_response(struct http_client *client, GError *error)
 static inline struct http_client *
 response_stream_to_http_client(struct istream *istream)
 {
-    return ContainerCast(istream, struct http_client,
-                         response.body_reader.output);
+    auto &body = HttpBodyReader::FromStream(*istream);
+    return ContainerCast(&body, struct http_client,
+                         response.body_reader);
 }
 
 static off_t
