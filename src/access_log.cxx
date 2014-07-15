@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "access-log.h"
+#include "access_log.hxx"
 
 #ifndef NO_ACCESS_LOG
 
@@ -16,7 +16,7 @@
 static const char *
 optional_string(const char *p)
 {
-    if (p == NULL)
+    if (p == nullptr)
         return "-";
 
     return p;
@@ -30,7 +30,8 @@ access_log(struct http_server_request *request, const char *site,
            uint64_t duration)
 {
     if (log_global_enabled()) {
-        log_http_request(time(NULL) * 1000000, request->method, request->uri,
+        log_http_request(time(nullptr) * 1000000,
+                         request->method, request->uri,
                          request->remote_host, site,
                          referer, user_agent,
                          status, content_length,
@@ -39,10 +40,10 @@ access_log(struct http_server_request *request, const char *site,
         return;
     }
 
-    time_t now = time(NULL);
+    time_t now = time(nullptr);
     char stamp[32];
 
-    if (site == NULL)
+    if (site == nullptr)
         site = "-";
 
     strftime(stamp, sizeof(stamp),

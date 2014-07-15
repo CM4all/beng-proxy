@@ -89,7 +89,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/abort_close.cxx src/abort_close.hxx \
 	src/abort_flag.cxx src/abort_flag.hxx \
 	src/abort_unref.cxx src/abort_unref.hxx \
-	src/access-log.c src/access-log.h \
+	src/access_log.cxx src/access_log.hxx \
 	src/address.c src/address.h \
 	src/ajp_client.cxx src/ajp_client.hxx \
 	src/ajp_headers.cxx src/ajp_headers.hxx \
@@ -425,7 +425,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/udp_listener.cxx src/udp_listener.hxx \
 	src/control_server.cxx src/control_server.hxx \
 	src/direct.c \
-	src/access-log.c \
+	src/access_log.cxx src/access_log.hxx \
 	src/cookie_server.cxx \
 	src/cookie_string.cxx \
 	src/log-glue.c \

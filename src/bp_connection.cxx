@@ -9,7 +9,7 @@
 #include "strmap.hxx"
 #include "http_server.hxx"
 #include "handler.hxx"
-#include "access-log.h"
+#include "access_log.hxx"
 #include "drop.hxx"
 #include "clock.h"
 #include "gerrno.h"

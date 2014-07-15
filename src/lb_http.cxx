@@ -25,7 +25,7 @@
 #include "http_response.hxx"
 #include "stock.hxx"
 #include "clock.h"
-#include "access-log.h"
+#include "access_log.hxx"
 #include "strmap.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
