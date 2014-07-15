@@ -688,10 +688,7 @@ http_client_feed_body(struct http_client *client,
     if (nbytes < length)
         return BufferedResult::PARTIAL;
 
-    if (client->response.body_reader.rest > 0 ||
-        /* the expect_more flag is true when the response body is
-           chunked */
-        client->socket.base.expect_more)
+    if (client->response.body_reader.RequireMore())
         return BufferedResult::MORE;
 
     return BufferedResult::OK;
