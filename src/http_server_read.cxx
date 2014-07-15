@@ -225,10 +225,11 @@ http_server_headers_finished(struct http_server_connection *connection)
     poison_undefined(&connection->request.body_reader,
                      sizeof(connection->request.body_reader));
 
-    request->body = http_body_init(&connection->request.body_reader,
-                                   &http_server_request_stream,
-                                   connection->pool, request->pool,
-                                   content_length, chunked);
+    request->body =
+        &connection->request.body_reader.Init(http_server_request_stream,
+                                              *connection->pool,
+                                              *request->pool,
+                                              content_length, chunked);
 
     connection->request.read_state = http_server_connection::Request::BODY;
 
@@ -361,8 +362,7 @@ http_server_feed(struct http_server_connection *connection,
             (connection->request.read_state == http_server_connection::Request::BODY ||
              connection->request.read_state == http_server_connection::Request::END)) {
             if (connection->request.read_state == http_server_connection::Request::BODY)
-                result =
-                    http_body_require_more(&connection->request.body_reader)
+                result = connection->request.body_reader.RequireMore()
                     ? BufferedResult::AGAIN_EXPECT
                     : BufferedResult::AGAIN_OPTIONAL;
 
@@ -409,8 +409,7 @@ http_server_try_request_direct(struct http_server_connection *connection,
     if (!http_server_maybe_send_100_continue(connection))
         return DirectResult::CLOSED;
 
-    ssize_t nbytes = http_body_try_direct(&connection->request.body_reader,
-                                          fd, fd_type);
+    ssize_t nbytes = connection->request.body_reader.TryDirect(fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
         return DirectResult::BLOCKING;
@@ -432,7 +431,7 @@ http_server_try_request_direct(struct http_server_connection *connection,
 
     connection->request.bytes_received += nbytes;
 
-    if (http_body_eof(&connection->request.body_reader)) {
+    if (connection->request.body_reader.IsEOF()) {
         connection->request.read_state = http_server_connection::Request::END;
         istream_deinit_eof(&connection->request.body_reader.output);
         return http_server_connection_valid(connection)

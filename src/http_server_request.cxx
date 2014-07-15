@@ -28,8 +28,7 @@ http_server_feed_body(struct http_server_connection *connection,
     struct pool *pool = connection->pool;
     pool_ref(pool);
 
-    size_t nbytes = http_body_feed_body(&connection->request.body_reader,
-                                        data, length);
+    size_t nbytes = connection->request.body_reader.FeedBody(data, length);
     if (nbytes == 0) {
         const bool valid = connection->socket.IsValid();
         pool_unref(pool);
@@ -44,7 +43,7 @@ http_server_feed_body(struct http_server_connection *connection,
     connection->socket.Consumed(nbytes);
 
     if (connection->request.read_state == http_server_connection::Request::BODY &&
-        http_body_eof(&connection->request.body_reader)) {
+        connection->request.body_reader.IsEOF()) {
         connection->request.read_state = http_server_connection::Request::END;
 
         /* re-enable the event, to detect client disconnect while
@@ -80,8 +79,8 @@ http_server_request_stream_available(struct istream *istream, bool partial)
     assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == http_server_connection::Request::BODY);
 
-    return http_body_available(&connection->request.body_reader,
-                               &connection->socket, partial);
+    return connection->request.body_reader.GetAvailable(connection->socket,
+                                                        partial);
 }
 
 static void
@@ -91,7 +90,7 @@ http_server_request_stream_read(struct istream *istream)
 
     assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == http_server_connection::Request::BODY);
-    assert(istream_has_handler(http_body_istream(&connection->request.body_reader)));
+    assert(istream_has_handler(&connection->request.body_reader.GetStream()));
     assert(connection->request.request->body != nullptr);
     assert(istream_has_handler(connection->request.request->body));
 
@@ -102,7 +101,7 @@ http_server_request_stream_read(struct istream *istream)
     if (!http_server_maybe_send_100_continue(connection))
         return;
 
-    connection->socket.Read(http_body_require_more(&connection->request.body_reader));
+    connection->socket.Read(connection->request.body_reader.RequireMore());
 }
 
 static void
@@ -114,7 +113,7 @@ http_server_request_stream_close(struct istream *istream)
         return;
 
     assert(connection->request.read_state == http_server_connection::Request::BODY);
-    assert(!http_body_eof(&connection->request.body_reader));
+    assert(!connection->request.body_reader.IsEOF());
 
     if (!connection->socket.IsValid() ||
         !connection->socket.IsConnected()) {
