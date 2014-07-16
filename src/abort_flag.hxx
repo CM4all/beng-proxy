@@ -15,24 +15,11 @@
 struct AbortFlag {
     struct async_operation operation;
 
-    bool aborted;
+    bool aborted = false;
 
-    /**
-     * Initialize the AbortFlag object, which was allocated by the
-     * caller.
-     */
-    void Init() {
+    AbortFlag(async_operation_ref &async_ref) {
         operation.Init2<AbortFlag>();
-        aborted = false;
-    }
-
-    /**
-     * Initialize the AbortFlag object, and register it with the
-     * #async_operation_ref object.
-     */
-    void Set(struct async_operation_ref *async_ref) {
-        Init();
-        async_ref->Set(operation);
+        async_ref.Set(operation);
     }
 
     void Abort() {

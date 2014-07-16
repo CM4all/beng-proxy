@@ -26,8 +26,7 @@ cgi_new(struct pool *pool, http_method_t method,
 {
     struct stopwatch *stopwatch = stopwatch_new(pool, address->path);
 
-    AbortFlag abort_flag;
-    abort_flag.Set(async_ref);
+    AbortFlag abort_flag(*async_ref);
 
     GError *error = nullptr;
     struct istream *input = cgi_launch(pool, method, address,
