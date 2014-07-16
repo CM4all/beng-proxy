@@ -14,26 +14,12 @@ struct CloseOnAbort {
     struct istream *istream;
     struct async_operation operation;
     struct async_operation_ref ref;
+
+    void Abort() {
+        ref.Abort();
+        istream_close_unused(istream);
+    }
 };
-
-/*
- * async operation
- *
- */
-
-static void
-coa_abort(struct async_operation *ao)
-{
-    CloseOnAbort &coa = ContainerCast2(*ao, &CloseOnAbort::operation);
-
-    coa.ref.Abort();
-    istream_close_unused(coa.istream);
-}
-
-static const struct async_operation_class coa_operation = {
-    .abort = coa_abort,
-};
-
 
 /*
  * constructor
@@ -51,7 +37,7 @@ async_close_on_abort(struct pool *pool, struct istream *istream,
     assert(async_ref != nullptr);
 
     coa->istream = istream;
-    coa->operation.Init(coa_operation);
+    coa->operation.Init2<CloseOnAbort>();
     async_ref->Set(coa->operation);
 
     return &coa->ref;
