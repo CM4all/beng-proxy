@@ -9,6 +9,8 @@
 #include "fifo-buffer.h"
 #include "fb_pool.h"
 
+#include <utility>
+
 #include <string.h>
 #include <errno.h>
 
@@ -140,6 +142,55 @@ FilteredSocket::Init(struct pool &pool,
     }
 
     base.Init(pool, fd, fd_type,
+              read_timeout, write_timeout,
+              *_handler, _handler_ctx);
+
+#ifndef NDEBUG
+    ended = false;
+#endif
+
+    drained = true;
+
+    if (filter != nullptr)
+        filter->init(*this, filter_ctx);
+}
+
+void
+FilteredSocket::Init(struct pool &pool,
+                     FilteredSocket &&src,
+                     const struct timeval *read_timeout,
+                     const struct timeval *write_timeout,
+                     const BufferedSocketHandler &__handler,
+                     void *_handler_ctx)
+{
+    const BufferedSocketHandler *_handler = &__handler;
+
+    /* steal the filter */
+    filter = src.filter;
+    filter_ctx = src.filter_ctx;
+    src.filter = nullptr;
+
+    if (filter != nullptr) {
+        assert(filter->init != nullptr);
+        assert(filter->data != nullptr);
+        assert(filter->is_empty != nullptr);
+        assert(filter->is_full != nullptr);
+        assert(filter->available != nullptr);
+        assert(filter->consumed != nullptr);
+        assert(filter->read != nullptr);
+        assert(filter->write != nullptr);
+        assert(filter->internal_write != nullptr);
+        assert(filter->closed != nullptr);
+        assert(filter->close != nullptr);
+
+        handler = _handler;
+        handler_ctx = _handler_ctx;
+
+        _handler = &filtered_socket_bs_handler;
+        _handler_ctx = this;
+    }
+
+    base.Init(pool, std::move(src.base),
               read_timeout, write_timeout,
               *_handler, _handler_ctx);
 

@@ -125,6 +125,17 @@ struct FilteredSocket {
               const SocketFilter *filter, void *filter_ctx,
               const BufferedSocketHandler &handler, void *handler_ctx);
 
+    /**
+     * Move the socket from another #BufferedSocket instance.  This
+     * disables scheduled events, moves the input buffer and the
+     * filter to this instance and installs a new handler.
+     */
+    void Init(struct pool &pool,
+              FilteredSocket &&src,
+              const struct timeval *read_timeout,
+              const struct timeval *write_timeout,
+              const BufferedSocketHandler &handler, void *handler_ctx);
+
     bool HasFilter() const {
         return filter != nullptr;
     }
