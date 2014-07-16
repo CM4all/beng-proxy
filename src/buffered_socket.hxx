@@ -291,6 +291,17 @@ struct BufferedSocket {
               const BufferedSocketHandler &_handler, void *_ctx);
 
     /**
+     * Move the socket from another #BufferedSocket instance.  This
+     * disables scheduled events, moves the input buffer to this
+     * instance and installs a new handler.
+     */
+    void Init(struct pool &_pool,
+              BufferedSocket &&src,
+              const struct timeval *_read_timeout,
+              const struct timeval *_write_timeout,
+              const BufferedSocketHandler &_handler, void *_ctx);
+
+    /**
      * Close the physical socket, but do not destroy the input buffer.  To
      * do the latter, call buffered_socket_destroy().
      */

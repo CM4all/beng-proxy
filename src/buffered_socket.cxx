@@ -10,6 +10,8 @@
 #include "fb_pool.h"
 #include "gerrno.h"
 
+#include <utility>
+
 #include <limits.h>
 #include <errno.h>
 
@@ -469,6 +471,42 @@ BufferedSocket::Init(struct pool &_pool,
     handler = &_handler;
     handler_ctx = _ctx;
     input = nullptr;
+    direct = false;
+    expect_more = false;
+
+#ifndef NDEBUG
+    reading = false;
+    ended = false;
+    destroyed = false;
+    last_buffered_result = BufferedResult(-1);
+#endif
+}
+
+void
+BufferedSocket::Init(struct pool &_pool,
+                     BufferedSocket &&src,
+                     const struct timeval *_read_timeout,
+                     const struct timeval *_write_timeout,
+                     const BufferedSocketHandler &_handler, void *_ctx)
+{
+    assert(_handler.data != nullptr);
+    /* handler method closed() is optional */
+    assert(_handler.write != nullptr);
+    assert(_handler.error != nullptr);
+
+    base.Init(_pool, std::move(src.base),
+              buffered_socket_handler, this);
+
+    read_timeout = _read_timeout;
+    write_timeout = _write_timeout;
+
+    handler = &_handler;
+    handler_ctx = _ctx;
+
+    /* steal the input buffer (after we already stole the socket) */
+    input = src.input;
+    src.input = nullptr;
+
     direct = false;
     expect_more = false;
 
