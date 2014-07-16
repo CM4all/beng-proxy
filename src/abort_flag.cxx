@@ -17,7 +17,7 @@
 static void
 af_abort(struct async_operation *ao)
 {
-    abort_flag &af = ContainerCast2(*ao, &abort_flag::operation);
+    AbortFlag &af = ContainerCast2(*ao, &AbortFlag::operation);
 
     assert(!af.aborted);
 
@@ -35,7 +35,7 @@ static const struct async_operation_class abort_flag_operation = {
  */
 
 void
-abort_flag_init(struct abort_flag *af)
+abort_flag_init(AbortFlag *af)
 {
     af->operation.Init(abort_flag_operation);
     af->aborted = false;

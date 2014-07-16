@@ -26,7 +26,7 @@ cgi_new(struct pool *pool, http_method_t method,
 {
     struct stopwatch *stopwatch = stopwatch_new(pool, address->path);
 
-    struct abort_flag abort_flag;
+    AbortFlag abort_flag;
     abort_flag_set(&abort_flag, async_ref);
 
     GError *error = nullptr;
