@@ -954,9 +954,9 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     pool_ref(caller_pool);
     client->caller_pool = caller_pool;
 
-    client->socket.Init(pool, fd, fd_type,
+    client->socket.Init(*pool, fd, fd_type,
                         &fcgi_client_timeout, &fcgi_client_timeout,
-                        &fcgi_client_socket_handler, client);
+                        fcgi_client_socket_handler, client);
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "fcgi_client_lease");

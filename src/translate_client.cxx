@@ -3234,10 +3234,10 @@ translate(struct pool *pool, int fd,
     client->stopwatch = stopwatch_fd_new(pool, fd,
                                          request->uri != nullptr ? request->uri
                                          : request->widget_type);
-    client->socket.Init(pool, fd, ISTREAM_SOCKET,
+    client->socket.Init(*pool, fd, ISTREAM_SOCKET,
                         &translate_read_timeout,
                         &translate_write_timeout,
-                        &translate_client_socket_handler, client);
+                        translate_client_socket_handler, client);
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "translate_lease");
 

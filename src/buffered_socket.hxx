@@ -284,11 +284,11 @@ struct BufferedSocket {
     BufferedResult last_buffered_result;
 #endif
 
-    void Init(struct pool *_pool,
+    void Init(struct pool &_pool,
               int _fd, enum istream_direct _fd_type,
               const struct timeval *_read_timeout,
               const struct timeval *_write_timeout,
-              const BufferedSocketHandler *_handler, void *_ctx);
+              const BufferedSocketHandler &_handler, void *_ctx);
 
     /**
      * Close the physical socket, but do not destroy the input buffer.  To

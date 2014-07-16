@@ -449,25 +449,24 @@ static const struct socket_handler buffered_socket_handler = {
  */
 
 void
-BufferedSocket::Init(struct pool *_pool,
+BufferedSocket::Init(struct pool &_pool,
                      int _fd, enum istream_direct _fd_type,
                      const struct timeval *_read_timeout,
                      const struct timeval *_write_timeout,
-                     const BufferedSocketHandler *_handler, void *_ctx)
+                     const BufferedSocketHandler &_handler, void *_ctx)
 {
-    assert(_handler != nullptr);
-    assert(_handler->data != nullptr);
+    assert(_handler.data != nullptr);
     /* handler method closed() is optional */
-    assert(_handler->write != nullptr);
-    assert(_handler->error != nullptr);
+    assert(_handler.write != nullptr);
+    assert(_handler.error != nullptr);
 
-    base.Init(*_pool, _fd, _fd_type,
+    base.Init(_pool, _fd, _fd_type,
               buffered_socket_handler, this);
 
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;
 
-    handler = _handler;
+    handler = &_handler;
     handler_ctx = _ctx;
     input = nullptr;
     direct = false;

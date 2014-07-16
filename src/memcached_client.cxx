@@ -801,9 +801,9 @@ memcached_client_invoke(struct pool *caller_pool,
     client->pool = pool;
     client->caller_pool = caller_pool;
 
-    client->socket.Init(pool, fd, fd_type,
+    client->socket.Init(*pool, fd, fd_type,
                         nullptr, &memcached_client_timeout,
-                        &memcached_client_socket_handler, client);
+                        memcached_client_socket_handler, client);
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "memcached_client_lease");

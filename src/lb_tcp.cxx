@@ -318,10 +318,10 @@ lb_tcp_client_socket_success(SocketDescriptor &&fd, void *ctx)
 
     tcp->connect.Clear();
 
-    tcp->outbound.Init(tcp->pool,
+    tcp->outbound.Init(*tcp->pool,
                        fd.Steal(), ISTREAM_TCP,
                        nullptr, &write_timeout,
-                       &outbound_buffered_socket_handler, tcp);
+                       outbound_buffered_socket_handler, tcp);
 
     /* TODO
     tcp->outbound.direct = tcp->pipe_stock != nullptr &&

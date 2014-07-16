@@ -139,9 +139,9 @@ FilteredSocket::Init(struct pool &pool,
         _handler_ctx = this;
     }
 
-    base.Init(&pool, fd, fd_type,
+    base.Init(pool, fd, fd_type,
               read_timeout, write_timeout,
-              _handler, _handler_ctx);
+              *_handler, _handler_ctx);
 
 #ifndef NDEBUG
     ended = false;

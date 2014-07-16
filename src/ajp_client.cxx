@@ -899,9 +899,9 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     auto client = NewFromPool<struct ajp_client>(*pool);
     client->pool = pool;
 
-    client->socket.Init(pool, fd, fd_type,
+    client->socket.Init(*pool, fd, fd_type,
                         &ajp_client_timeout, &ajp_client_timeout,
-                        &ajp_client_socket_handler, client);
+                        ajp_client_socket_handler, client);
 
     p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
                     pool, "ajp_client_lease");
