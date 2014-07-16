@@ -110,7 +110,7 @@ ConnectSocket::Abort()
  */
 
 inline void
-ConnectSocket::OnEvent(int _fd, short events)
+ConnectSocket::OnEvent(gcc_unused int _fd, short events)
 {
     assert(_fd == fd.Get());
 

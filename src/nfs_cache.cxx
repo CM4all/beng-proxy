@@ -172,7 +172,7 @@ nfs_cache_put(NFSCacheStore *store, unsigned rubber_id)
  */
 
 static void
-nfs_cache_rubber_done(unsigned rubber_id, size_t size, void *ctx)
+nfs_cache_rubber_done(unsigned rubber_id, gcc_unused size_t size, void *ctx)
 {
     NFSCacheStore *store = (NFSCacheStore *)ctx;
     assert((off_t)size == store->stat.st_size);
