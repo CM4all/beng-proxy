@@ -16,24 +16,21 @@ struct AbortFlag {
     struct async_operation operation;
 
     bool aborted;
+
+    /**
+     * Initialize the AbortFlag object, which was allocated by the
+     * caller.
+     */
+    void Init();
+
+    /**
+     * Initialize the AbortFlag object, and register it with the
+     * #async_operation_ref object.
+     */
+    void Set(struct async_operation_ref *async_ref) {
+        Init();
+        async_ref->Set(operation);
+    }
 };
-
-/**
- * Initialize the AbortFlag object, which was allocated by the
- * caller.
- */
-void
-abort_flag_init(AbortFlag *af);
-
-/**
- * Initialize the AbortFlag object, and register it with the
- * #async_operation_ref object.
- */
-static inline void
-abort_flag_set(AbortFlag *af, struct async_operation_ref *async_ref)
-{
-    abort_flag_init(af);
-    async_ref->Set(af->operation);
-}
 
 #endif

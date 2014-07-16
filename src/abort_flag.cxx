@@ -35,8 +35,8 @@ static const struct async_operation_class abort_flag_operation = {
  */
 
 void
-abort_flag_init(AbortFlag *af)
+AbortFlag::Init()
 {
-    af->operation.Init(abort_flag_operation);
-    af->aborted = false;
+    operation.Init(abort_flag_operation);
+    aborted = false;
 }
