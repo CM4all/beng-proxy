@@ -87,7 +87,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/gerrno.h \
 	src/glibfwd.hxx \
 	src/abort_close.cxx src/abort_close.hxx \
-	src/abort_flag.cxx src/abort_flag.hxx \
+	src/abort_flag.hxx \
 	src/abort_unref.cxx src/abort_unref.hxx \
 	src/access_log.cxx src/access_log.hxx \
 	src/address.c src/address.h \
@@ -1125,7 +1125,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/child_manager.c src/child_manager.h \
 	src/crash.c \
-	src/abort_flag.cxx src/direct.c
+	src/direct.c
 test_t_cgi_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libraddress.a \

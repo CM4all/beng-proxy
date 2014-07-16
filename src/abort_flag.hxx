@@ -21,7 +21,10 @@ struct AbortFlag {
      * Initialize the AbortFlag object, which was allocated by the
      * caller.
      */
-    void Init();
+    void Init() {
+        operation.Init2<AbortFlag>();
+        aborted = false;
+    }
 
     /**
      * Initialize the AbortFlag object, and register it with the
@@ -30,6 +33,12 @@ struct AbortFlag {
     void Set(struct async_operation_ref *async_ref) {
         Init();
         async_ref->Set(operation);
+    }
+
+    void Abort() {
+        assert(!aborted);
+
+        aborted = true;
     }
 };
 
