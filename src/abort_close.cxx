@@ -10,7 +10,7 @@
 #include "istream.h"
 #include "util/Cast.hxx"
 
-struct close_on_abort {
+struct CloseOnAbort {
     struct istream *istream;
     struct async_operation operation;
     struct async_operation_ref ref;
@@ -24,7 +24,7 @@ struct close_on_abort {
 static void
 coa_abort(struct async_operation *ao)
 {
-    close_on_abort &coa = ContainerCast2(*ao, &close_on_abort::operation);
+    CloseOnAbort &coa = ContainerCast2(*ao, &CloseOnAbort::operation);
 
     coa.ref.Abort();
     istream_close_unused(coa.istream);
@@ -44,7 +44,7 @@ struct async_operation_ref *
 async_close_on_abort(struct pool *pool, struct istream *istream,
                      struct async_operation_ref *async_ref)
 {
-    auto coa = NewFromPool<struct close_on_abort>(*pool);
+    auto coa = NewFromPool<struct CloseOnAbort>(*pool);
 
     assert(istream != nullptr);
     assert(!istream_has_handler(istream));
