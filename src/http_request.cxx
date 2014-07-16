@@ -226,10 +226,11 @@ http_request(struct pool *pool,
     hr->async_ref = async_ref;
 
     if (body != nullptr) {
-        hr->body = istream_hold_new(pool, body);
-        async_ref = async_close_on_abort(pool, hr->body, async_ref);
-    } else
-        hr->body = nullptr;
+        body = istream_hold_new(pool, body);
+        async_ref = async_close_on_abort(pool, body, async_ref);
+    }
+
+    hr->body = body;
 
     if (uwa->host_and_port != nullptr)
         header_write(hr->headers, "host", uwa->host_and_port);
