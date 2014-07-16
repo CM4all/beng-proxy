@@ -14,7 +14,7 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
-struct unref_on_abort {
+struct UnrefOnAbort {
     struct pool *pool;
     struct async_operation operation;
     struct async_operation_ref ref;
@@ -33,7 +33,7 @@ struct unref_on_abort {
 static void
 uoa_abort(struct async_operation *ao)
 {
-    unref_on_abort &uoa = ContainerCast2(*ao, &unref_on_abort::operation);
+    UnrefOnAbort &uoa = ContainerCast2(*ao, &UnrefOnAbort::operation);
 #ifdef TRACE
     const char *file = uoa.file;
     unsigned line = uoa.line;
@@ -58,7 +58,7 @@ async_unref_on_abort_impl(struct pool *pool,
                           struct async_operation_ref *async_ref
                           TRACE_ARGS_DECL)
 {
-    auto uoa = NewFromPool<struct unref_on_abort>(*pool);
+    auto uoa = NewFromPool<UnrefOnAbort>(*pool);
 
     uoa->pool = pool;
     uoa->operation.Init(uoa_operation);
