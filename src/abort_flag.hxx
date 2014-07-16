@@ -12,16 +12,18 @@
  * used by libraries which don't have their own implementation, but
  * need to know whether the operation has been aborted.
  */
-struct AbortFlag {
+class AbortFlag {
     struct async_operation operation;
 
+public:
     bool aborted = false;
 
     AbortFlag(async_operation_ref &async_ref) {
-        operation.Init2<AbortFlag>();
+        operation.Init2<AbortFlag, &AbortFlag::operation, &AbortFlag::Abort>();
         async_ref.Set(operation);
     }
 
+private:
     void Abort() {
         assert(!aborted);
 
