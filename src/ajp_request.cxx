@@ -153,7 +153,7 @@ ajp_stock_request(struct pool *pool,
 
     if (body != nullptr) {
         hr->body = istream_hold_new(pool, body);
-        async_ref = async_close_on_abort(pool, hr->body, async_ref);
+        async_ref = &async_close_on_abort(*pool, *hr->body, *async_ref);
     } else
         hr->body = nullptr;
 

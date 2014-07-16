@@ -15,15 +15,15 @@ struct async_operation_ref;
  * @param istream the istream to be closed on abort; it should be
  * allocated from the specified pool, and must not have a handler
  */
-struct async_operation_ref *
-async_close_on_abort(struct pool *pool, struct istream *istream,
-                     struct async_operation_ref *async_ref);
+struct async_operation_ref &
+async_close_on_abort(struct pool &pool, struct istream &istream,
+                     struct async_operation_ref &async_ref);
 
 /**
  * Same as async_close_on_abort(), but allows #istream to be NULL.
  */
-struct async_operation_ref *
-async_optional_close_on_abort(struct pool *pool, struct istream *istream,
-                              struct async_operation_ref *async_ref);
+struct async_operation_ref &
+async_optional_close_on_abort(struct pool &pool, struct istream *istream,
+                              struct async_operation_ref &async_ref);
 
 #endif

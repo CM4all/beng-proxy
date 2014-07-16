@@ -158,7 +158,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
 
     if (body != nullptr) {
         request->body = istream_hold_new(pool, body);
-        async_ref = async_close_on_abort(pool, request->body, async_ref);
+        async_ref = &async_close_on_abort(*pool, *request->body, *async_ref);
     } else
         request->body = nullptr;
 

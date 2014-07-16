@@ -227,7 +227,7 @@ http_request(struct pool *pool,
 
     if (body != nullptr) {
         body = istream_hold_new(pool, body);
-        async_ref = async_close_on_abort(pool, body, async_ref);
+        async_ref = &async_close_on_abort(*pool, *body, *async_ref);
     }
 
     hr->body = body;

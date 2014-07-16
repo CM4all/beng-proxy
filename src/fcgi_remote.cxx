@@ -158,7 +158,7 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
 
     if (body != nullptr) {
         request->body = istream_hold_new(pool, body);
-        async_ref = async_close_on_abort(pool, request->body, async_ref);
+        async_ref = &async_close_on_abort(*pool, *request->body, *async_ref);
     } else
         request->body = nullptr;
 

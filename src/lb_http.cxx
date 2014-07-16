@@ -417,9 +417,9 @@ lb_http_connection_request(struct http_server_request *request,
                      &cluster->address_list,
                      20,
                      &my_stock_handler, request2,
-                     async_optional_close_on_abort(request->pool,
-                                                   request2->body,
-                                                   async_ref));
+                     &async_optional_close_on_abort(*request->pool,
+                                                    request2->body,
+                                                    *async_ref));
 }
 
 static void
