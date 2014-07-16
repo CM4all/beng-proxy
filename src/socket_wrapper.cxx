@@ -71,6 +71,15 @@ SocketWrapper::Init(struct pool &_pool,
 }
 
 void
+SocketWrapper::Init(struct pool &_pool,
+                    SocketWrapper &&src,
+                    const struct socket_handler &_handler, void *_ctx)
+{
+    Init(_pool, src.fd, src.fd_type, _handler, _ctx);
+    src.Abandon();
+}
+
+void
 SocketWrapper::Close()
 {
     if (fd < 0)

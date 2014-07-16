@@ -61,6 +61,14 @@ public:
               int _fd, enum istream_direct _fd_type,
               const struct socket_handler &_handler, void *_ctx);
 
+    /**
+     * Move the socket from another #SocketWrapper instance.  This
+     * disables scheduled events and installs a new handler.
+     */
+    void Init(struct pool &_pool,
+              SocketWrapper &&src,
+              const struct socket_handler &_handler, void *_ctx);
+
     void Close();
 
     /**
