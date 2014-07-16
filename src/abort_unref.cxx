@@ -24,6 +24,15 @@ struct UnrefOnAbort {
     unsigned line;
 #endif
 
+    UnrefOnAbort(struct pool &_pool,
+                 struct async_operation_ref &async_ref
+                 TRACE_ARGS_DECL_)
+        :pool(&_pool)
+         TRACE_ARGS_INIT {
+        operation.Init2<UnrefOnAbort>();
+        async_ref.Set(operation);
+    }
+
     void Abort() {
         ref.Abort();
         pool_unref_fwd(pool);
@@ -40,16 +49,7 @@ async_unref_on_abort_impl(struct pool *pool,
                           struct async_operation_ref *async_ref
                           TRACE_ARGS_DECL)
 {
-    auto uoa = NewFromPool<UnrefOnAbort>(*pool);
-
-    uoa->pool = pool;
-    uoa->operation.Init2<UnrefOnAbort>();
-    async_ref->Set(uoa->operation);
-
-#ifdef TRACE
-    uoa->file = file;
-    uoa->line = line;
-#endif
-
+    auto uoa = NewFromPool<UnrefOnAbort>(*pool, *pool, *async_ref
+                                         TRACE_ARGS_FWD);
     return &uoa->ref;
 }
