@@ -23,30 +23,12 @@ struct UnrefOnAbort {
     const char *file;
     unsigned line;
 #endif
+
+    void Abort() {
+        ref.Abort();
+        pool_unref_fwd(pool);
+    }
 };
-
-/*
- * async operation
- *
- */
-
-static void
-uoa_abort(struct async_operation *ao)
-{
-    UnrefOnAbort &uoa = ContainerCast2(*ao, &UnrefOnAbort::operation);
-#ifdef TRACE
-    const char *file = uoa.file;
-    unsigned line = uoa.line;
-#endif
-
-    uoa.ref.Abort();
-    pool_unref_fwd(uoa.pool);
-}
-
-static const struct async_operation_class uoa_operation = {
-    .abort = uoa_abort,
-};
-
 
 /*
  * constructor
@@ -61,7 +43,7 @@ async_unref_on_abort_impl(struct pool *pool,
     auto uoa = NewFromPool<UnrefOnAbort>(*pool);
 
     uoa->pool = pool;
-    uoa->operation.Init(uoa_operation);
+    uoa->operation.Init2<UnrefOnAbort>();
     async_ref->Set(uoa->operation);
 
 #ifdef TRACE
