@@ -15,6 +15,13 @@ struct CloseOnAbort {
     struct async_operation operation;
     struct async_operation_ref ref;
 
+    CloseOnAbort(struct istream &_istream,
+                 struct async_operation_ref &async_ref)
+        :istream(&_istream) {
+        operation.Init2<CloseOnAbort>();
+        async_ref.Set(operation);
+    }
+
     void Abort() {
         ref.Abort();
         istream_close_unused(istream);
@@ -30,16 +37,11 @@ struct async_operation_ref *
 async_close_on_abort(struct pool *pool, struct istream *istream,
                      struct async_operation_ref *async_ref)
 {
-    auto coa = NewFromPool<struct CloseOnAbort>(*pool);
-
     assert(istream != nullptr);
     assert(!istream_has_handler(istream));
     assert(async_ref != nullptr);
 
-    coa->istream = istream;
-    coa->operation.Init2<CloseOnAbort>();
-    async_ref->Set(coa->operation);
-
+    auto coa = NewFromPool<struct CloseOnAbort>(*pool, *istream, *async_ref);
     return &coa->ref;
 }
 
