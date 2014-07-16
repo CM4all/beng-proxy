@@ -15,19 +15,19 @@
 #include "util/Cast.hxx"
 
 struct UnrefOnAbort {
-    struct pool *pool;
+    struct pool &pool;
     struct async_operation operation;
     struct async_operation_ref ref;
 
 #ifdef TRACE
-    const char *file;
+    const char *const file;
     unsigned line;
 #endif
 
     UnrefOnAbort(struct pool &_pool,
                  struct async_operation_ref &async_ref
                  TRACE_ARGS_DECL_)
-        :pool(&_pool)
+        :pool(_pool)
          TRACE_ARGS_INIT {
         operation.Init2<UnrefOnAbort>();
         async_ref.Set(operation);
@@ -35,7 +35,7 @@ struct UnrefOnAbort {
 
     void Abort() {
         ref.Abort();
-        pool_unref_fwd(pool);
+        pool_unref_fwd(&pool);
     }
 };
 
@@ -44,12 +44,12 @@ struct UnrefOnAbort {
  *
  */
 
-struct async_operation_ref *
-async_unref_on_abort_impl(struct pool *pool,
-                          struct async_operation_ref *async_ref
+struct async_operation_ref &
+async_unref_on_abort_impl(struct pool &pool,
+                          struct async_operation_ref &async_ref
                           TRACE_ARGS_DECL)
 {
-    auto uoa = NewFromPool<UnrefOnAbort>(*pool, *pool, *async_ref
+    auto uoa = NewFromPool<UnrefOnAbort>(pool, pool, async_ref
                                          TRACE_ARGS_FWD);
-    return &uoa->ref;
+    return uoa->ref;
 }

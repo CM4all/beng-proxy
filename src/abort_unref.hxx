@@ -17,9 +17,9 @@
 struct pool;
 struct async_operation_ref;
 
-struct async_operation_ref *
-async_unref_on_abort_impl(struct pool *pool,
-                          struct async_operation_ref *async_ref
+struct async_operation_ref &
+async_unref_on_abort_impl(struct pool &pool,
+                          struct async_operation_ref &async_ref
                           TRACE_ARGS_DECL);
 
 #define async_unref_on_abort(pool, async_ref) async_unref_on_abort_impl(pool, async_ref TRACE_ARGS)

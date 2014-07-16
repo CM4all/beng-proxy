@@ -601,7 +601,7 @@ filter_cache_miss(struct filter_cache &cache, struct pool &caller_pool,
     resource_loader_request(&cache.resource_loader, pool, 0,
                             HTTP_METHOD_POST, address, status, headers, body,
                             &filter_cache_response_handler, request,
-                            async_unref_on_abort(&caller_pool, async_ref));
+                            &async_unref_on_abort(caller_pool, *async_ref));
     pool_unref(pool);
 }
 
