@@ -57,9 +57,9 @@ public:
     SocketWrapper() = default;
     SocketWrapper(const SocketWrapper &) = delete;
 
-    void Init(struct pool *_pool,
+    void Init(struct pool &_pool,
               int _fd, enum istream_direct _fd_type,
-              const struct socket_handler *_handler, void *_ctx);
+              const struct socket_handler &_handler, void *_ctx);
 
     void Close();
 
@@ -75,8 +75,8 @@ public:
      */
     int AsFD();
 
-    struct pool *GetPool() {
-        return pool;
+    struct pool &GetPool() {
+        return *pool;
     }
 
     bool IsValid() const {
@@ -143,7 +143,7 @@ public:
         return event_pending(&write_event, EV_WRITE, nullptr);
     }
 
-    ssize_t ReadToBuffer(struct fifo_buffer *buffer, size_t length);
+    ssize_t ReadToBuffer(struct fifo_buffer &buffer, size_t length);
 
     void SetCork(bool cork);
 

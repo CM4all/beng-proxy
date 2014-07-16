@@ -108,7 +108,7 @@ buffered_socket_invoke_data(BufferedSocket *s)
 
 #ifndef NDEBUG
         struct pool_notify_state notify;
-        pool_notify(s->base.GetPool(), &notify);
+        pool_notify(&s->base.GetPool(), &notify);
 #endif
 
         BufferedResult result =
@@ -261,7 +261,7 @@ buffered_socket_fill_buffer(BufferedSocket *s)
     if (buffer == nullptr)
         buffer = s->input = fb_pool_alloc();
 
-    ssize_t nbytes = s->base.ReadToBuffer(buffer, INT_MAX);
+    ssize_t nbytes = s->base.ReadToBuffer(*buffer, INT_MAX);
     if (gcc_likely(nbytes > 0)) {
         /* success: data was added to the buffer */
         s->expect_more = false;
@@ -380,7 +380,7 @@ buffered_socket_try_read(BufferedSocket *s)
 
 #ifndef NDEBUG
     struct pool_notify_state notify;
-    pool_notify(s->base.GetPool(), &notify);
+    pool_notify(&s->base.GetPool(), &notify);
     s->reading = true;
 #endif
 
@@ -461,8 +461,8 @@ BufferedSocket::Init(struct pool *_pool,
     assert(_handler->write != nullptr);
     assert(_handler->error != nullptr);
 
-    base.Init(_pool, _fd, _fd_type,
-              &buffered_socket_handler, this);
+    base.Init(*_pool, _fd, _fd_type,
+              buffered_socket_handler, this);
 
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;

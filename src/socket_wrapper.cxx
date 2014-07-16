@@ -47,17 +47,15 @@ SocketWrapper::WriteEventCallback(gcc_unused int fd, gcc_unused short event,
 }
 
 void
-SocketWrapper::Init(struct pool *_pool,
+SocketWrapper::Init(struct pool &_pool,
                     int _fd, enum istream_direct _fd_type,
-                    const struct socket_handler *_handler, void *_ctx)
+                    const struct socket_handler &_handler, void *_ctx)
 {
-    assert(_pool != nullptr);
     assert(_fd >= 0);
-    assert(_handler != nullptr);
-    assert(_handler->read != nullptr);
-    assert(_handler->write != nullptr);
+    assert(_handler.read != nullptr);
+    assert(_handler.write != nullptr);
 
-    pool = _pool;
+    pool = &_pool;
     fd = _fd;
     fd_type = _fd_type;
     direct_mask = istream_direct_mask_to(fd_type);
@@ -68,7 +66,7 @@ SocketWrapper::Init(struct pool *_pool,
     event_set(&write_event, fd, EV_WRITE|EV_PERSIST|EV_TIMEOUT,
               WriteEventCallback, this);
 
-    handler = _handler;
+    handler = &_handler;
     handler_ctx = _ctx;
 }
 
@@ -107,11 +105,11 @@ SocketWrapper::AsFD()
 }
 
 ssize_t
-SocketWrapper::ReadToBuffer(struct fifo_buffer *buffer, size_t length)
+SocketWrapper::ReadToBuffer(struct fifo_buffer &buffer, size_t length)
 {
     assert(IsValid());
 
-    return recv_to_buffer(fd, buffer, length);
+    return recv_to_buffer(fd, &buffer, length);
 }
 
 void
