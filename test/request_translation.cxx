@@ -6,7 +6,7 @@
 #include "transformation.hxx"
 #include "tcp_stock.hxx"
 #include "async.hxx"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "pool.hxx"
 #include "lhttp_address.hxx"
 #include "http_address.hxx"

@@ -6,7 +6,7 @@
 #include "async.hxx"
 #include "istream.h"
 #include "istream_file.hxx"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "child_options.hxx"
 #include "util/ConstBuffer.hxx"
 

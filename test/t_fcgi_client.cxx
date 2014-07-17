@@ -16,7 +16,7 @@
 #include "strmap.hxx"
 #include "strutil.h"
 #include "tpool.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>

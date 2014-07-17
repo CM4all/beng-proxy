@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "slice.hxx"
 #include "fifo-buffer.h"
 #include "cleanup_timer.h"

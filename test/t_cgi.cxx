@@ -7,7 +7,7 @@
 #include "crash.h"
 #include "istream_file.hxx"
 #include "istream.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 
 #include <inline/compiler.h>
 

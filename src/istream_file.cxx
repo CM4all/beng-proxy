@@ -9,7 +9,7 @@
 #include "buffered_io.h"
 #include "fd_util.h"
 #include "gerrno.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>

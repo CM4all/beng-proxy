@@ -13,7 +13,7 @@
 #include "tpool.h"
 #include "sink-impl.h"
 #include "direct.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>

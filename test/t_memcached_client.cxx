@@ -9,7 +9,7 @@
 #include "direct.h"
 #include "istream-internal.h"
 #include "fd_util.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "util/Cast.hxx"
 
 #include <glib.h>

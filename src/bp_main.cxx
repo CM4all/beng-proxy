@@ -10,7 +10,7 @@
 #include "bp_connection.hxx"
 #include "worker.h"
 #include "crash.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "session_manager.hxx"
 #include "session_save.hxx"
 #include "tstock.hxx"

@@ -4,7 +4,7 @@
 #include "pool.hxx"
 #include "istream.h"
 #include "istream-catch.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>

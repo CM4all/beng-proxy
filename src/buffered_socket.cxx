@@ -7,7 +7,7 @@
 
 #include "buffered_socket.hxx"
 #include "fifo-buffer.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
 

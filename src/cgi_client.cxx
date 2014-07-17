@@ -15,7 +15,7 @@
 #include "stopwatch.h"
 #include "strmap.hxx"
 #include "http_response.hxx"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "util/Cast.hxx"
 
 #include <string.h>

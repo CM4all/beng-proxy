@@ -3,7 +3,7 @@
 #include "lease.h"
 #include "istream.h"
 #include "strmap.hxx"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "util/Cast.hxx"
 
 #ifdef HAVE_EXPECT_100

@@ -17,7 +17,7 @@
 #include "istream.h"
 #include "strmap.hxx"
 #include "strutil.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 
 #include <inline/compiler.h>
 

@@ -6,7 +6,7 @@
 #include "sink_fd.h"
 #include "direct.h"
 #include "shutdown_listener.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>

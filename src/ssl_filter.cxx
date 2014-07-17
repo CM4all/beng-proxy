@@ -13,7 +13,7 @@
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "gerrno.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>

@@ -12,7 +12,7 @@
 #include "buffered_io.h"
 #include "pevent.h"
 #include "gerrno.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "util/Cast.hxx"
 
 #include <event.h>

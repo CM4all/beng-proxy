@@ -5,16 +5,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_FB_POOL_H
-#define BENG_PROXY_FB_POOL_H
+#ifndef BENG_PROXY_FB_POOL_HXX
+#define BENG_PROXY_FB_POOL_HXX
 
 #include <inline/compiler.h>
-
-#ifdef __cplusplus
-extern "C" {
-#else
-#include <stdbool.h>
-#endif
 
 /**
  * Global initialization.
@@ -50,9 +44,5 @@ fb_pool_alloc(void);
 gcc_nonnull_all
 void
 fb_pool_free(struct fifo_buffer *buffer);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

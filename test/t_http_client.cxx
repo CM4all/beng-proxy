@@ -9,7 +9,7 @@
 #include "fd-util.h"
 #include "direct.h"
 #include "fd_util.h"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 
 #include <sys/wait.h>
 

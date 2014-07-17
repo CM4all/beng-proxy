@@ -10,7 +10,7 @@
 #include "istream.h"
 #include "direct.h"
 #include "pool.hxx"
-#include "fb_pool.h"
+#include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <socket/resolver.h>
