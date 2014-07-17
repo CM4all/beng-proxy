@@ -8,17 +8,10 @@
 #define BENG_PROXY_FORK_HXX
 
 #include "child_manager.h"
-
-#include <glib.h>
+#include "glibfwd.hxx"
 
 struct pool;
 struct istream;
-
-static inline GQuark
-fork_quark(void)
-{
-    return g_quark_from_static_string("fork");
-}
 
 /**
  * Wrapper for the fork() system call.  Forks a sub process, returns
