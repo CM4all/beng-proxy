@@ -12,6 +12,31 @@
 #include <utility>
 #include <new>
 
+#ifndef NDEBUG
+#include <assert.h>
+#endif
+
+class PoolNotify {
+    struct pool_notify_state state;
+
+public:
+    explicit PoolNotify(struct pool &pool) {
+        pool_notify(&pool, &state);
+    }
+
+    PoolNotify(const PoolNotify &) = delete;
+
+#ifndef NDEBUG
+    ~PoolNotify() {
+        assert(!state.registered);
+    }
+#endif
+
+    bool Denotify() {
+        return pool_denotify(&state);
+    }
+};
+
 class AutoRewindPool {
     struct pool &pool;
     pool_mark_state mark;

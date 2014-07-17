@@ -146,8 +146,7 @@ was_control_consume_input(struct was_control *control)
         const void *payload = header + 1;
 
 #ifndef NDEBUG
-        struct pool_notify_state notify;
-        pool_notify(control->pool, &notify);
+        PoolNotify notify(*control->pool);
 #endif
 
         fifo_buffer_consume(control->input.buffer,
@@ -158,7 +157,7 @@ was_control_consume_input(struct was_control *control)
                                       control->handler_ctx))
             return false;
 
-        assert(!pool_denotify(&notify));
+        assert(!notify.Denotify());
     }
 }
 

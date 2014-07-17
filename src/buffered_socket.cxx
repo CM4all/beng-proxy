@@ -8,6 +8,7 @@
 #include "buffered_socket.hxx"
 #include "fifo-buffer.h"
 #include "fb_pool.h"
+#include "pool.hxx"
 #include "gerrno.h"
 
 #include <utility>
@@ -109,15 +110,14 @@ buffered_socket_invoke_data(BufferedSocket *s)
                 : BufferedResult::OK;
 
 #ifndef NDEBUG
-        struct pool_notify_state notify;
-        pool_notify(&s->base.GetPool(), &notify);
+        PoolNotify notify(s->base.GetPool());
 #endif
 
         BufferedResult result =
             s->handler->data(data, length, s->handler_ctx);
 
 #ifndef NDEBUG
-        if (pool_denotify(&notify)) {
+        if (notify.Denotify()) {
             assert(result == BufferedResult::CLOSED);
         } else {
             s->last_buffered_result = result;
@@ -381,15 +381,14 @@ buffered_socket_try_read(BufferedSocket *s)
     assert(!s->reading);
 
 #ifndef NDEBUG
-    struct pool_notify_state notify;
-    pool_notify(&s->base.GetPool(), &notify);
+    PoolNotify notify(s->base.GetPool());
     s->reading = true;
 #endif
 
     const bool result = buffered_socket_try_read2(s);
 
 #ifndef NDEBUG
-    if (!pool_denotify(&notify)) {
+    if (!notify.Denotify()) {
         assert(s->reading);
         s->reading = false;
     }
