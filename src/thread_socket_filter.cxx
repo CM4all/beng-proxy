@@ -276,8 +276,8 @@ thread_socket_filter_done(struct thread_job *job)
         // TODO: timeouts?
 
         if (!fifo_buffer_full(f->encrypted_input))
-            filtered_socket_schedule_read_no_timeout(f->socket,
-                                                     f->expect_more);
+            filtered_socket_internal_schedule_read(f->socket, f->expect_more,
+                                                   nullptr);
 
         if (!fifo_buffer_empty(f->encrypted_output))
             filtered_socket_internal_schedule_write(f->socket);
