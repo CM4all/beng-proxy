@@ -571,3 +571,17 @@ BufferedSocket::WriteFrom(int other_fd, enum istream_direct other_fd_type,
 
     return nbytes;
 }
+
+void
+BufferedSocket::ScheduleReadTimeout(bool _expect_more,
+                                    const struct timeval *timeout)
+{
+    assert(!ended);
+    assert(!destroyed);
+
+    if (_expect_more)
+        expect_more = true;
+
+    read_timeout = timeout;
+    base.ScheduleRead(timeout);
+}

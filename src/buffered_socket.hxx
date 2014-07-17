@@ -427,16 +427,7 @@ struct BufferedSocket {
     }
 
     void ScheduleReadTimeout(bool _expect_more,
-                             const struct timeval *timeout) {
-        assert(!ended);
-        assert(!destroyed);
-
-        if (_expect_more)
-            expect_more = true;
-
-        read_timeout = timeout;
-        base.ScheduleRead(timeout);
-    }
+                             const struct timeval *timeout);
 
     /**
      * Schedules reading on the socket with timeout disabled, to indicate
