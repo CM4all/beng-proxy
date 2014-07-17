@@ -440,16 +440,13 @@ fcgi_client_submit_response(struct fcgi_client *client)
     fcgi_client_response_body_init(client);
     struct istream *body = body = istream_struct_cast(&client->response.body);
 
-    struct pool *caller_pool = client->caller_pool;
-    pool_ref(caller_pool);
+    const ScopePoolRef ref(*client->caller_pool TRACE_ARGS);
 
     client->response.in_handler = true;
     http_response_handler_invoke_response(&client->handler, status,
                                           client->response.headers,
                                           body);
     client->response.in_handler = false;
-
-    pool_unref(caller_pool);
 
     return client->socket.IsValid();
 }
@@ -802,11 +799,8 @@ fcgi_client_socket_data(const void *buffer, size_t size, void *ctx)
             fcgi_client_release_socket(client, offset == size);
     }
 
-    pool_ref(client->pool);
-    const BufferedResult result =
-        fcgi_client_consume_input(client, (const uint8_t *)buffer, size);
-    pool_unref(client->pool);
-    return result;
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    return fcgi_client_consume_input(client, (const uint8_t *)buffer, size);
 }
 
 static bool
@@ -837,7 +831,7 @@ fcgi_client_socket_write(void *ctx)
 {
     struct fcgi_client *client = (struct fcgi_client *)ctx;
 
-    pool_ref(client->pool);
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
     client->request.got_data = false;
     istream_read(client->request.istream);
@@ -850,7 +844,6 @@ fcgi_client_socket_write(void *ctx)
             client->socket.UnscheduleWrite();
     }
 
-    pool_unref(client->pool);
     return result;
 }
 

@@ -577,14 +577,11 @@ memcached_client_socket_write(void *ctx)
     memcached_client *client = (memcached_client *)ctx;
     assert(client->response.read_state != memcached_client::ReadState::END);
 
-    pool_ref(client->pool);
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
     istream_read(client->request.istream);
 
-    bool result = client->socket.IsValid() &&
-        client->socket.IsConnected();
-    pool_unref(client->pool);
-    return result;
+    return client->socket.IsValid() && client->socket.IsConnected();
 }
 
 static BufferedResult
@@ -593,10 +590,8 @@ memcached_client_socket_data(const void *buffer, size_t size, void *ctx)
     memcached_client *client = (memcached_client *)ctx;
     assert(client->response.read_state != memcached_client::ReadState::END);
 
-    pool_ref(client->pool);
-    BufferedResult result = memcached_feed(client, buffer, size);
-    pool_unref(client->pool);
-    return result;
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    return memcached_feed(client, buffer, size);
 }
 
 static DirectResult

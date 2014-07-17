@@ -867,11 +867,8 @@ http_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct http_client *client = (struct http_client *)ctx;
 
-    pool_ref(client->pool);
-    BufferedResult result = http_client_feed(client, buffer, size);
-    pool_unref(client->pool);
-
-    return result;
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    return http_client_feed(client, buffer, size);
 }
 
 static DirectResult
@@ -924,7 +921,7 @@ http_client_socket_write(void *ctx)
 {
     struct http_client *client = (struct http_client *)ctx;
 
-    pool_ref(client->pool);
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
     client->request.got_data = false;
     istream_read(client->request.istream);
@@ -938,7 +935,6 @@ http_client_socket_write(void *ctx)
             client->socket.UnscheduleWrite();
     }
 
-    pool_unref(client->pool);
     return result;
 }
 

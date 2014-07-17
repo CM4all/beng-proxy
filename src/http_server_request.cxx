@@ -7,6 +7,7 @@
  */
 
 #include "http_server_internal.hxx"
+#include "pool.hxx"
 #include "istream-internal.h"
 #include "util/Cast.hxx"
 
@@ -25,19 +26,14 @@ http_server_feed_body(struct http_server_connection *connection,
         /* the handler is not yet connected */
         return BufferedResult::BLOCKING;
 
-    struct pool *pool = connection->pool;
-    pool_ref(pool);
+    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
 
     size_t nbytes = connection->request.body_reader.FeedBody(data, length);
     if (nbytes == 0) {
-        const bool valid = connection->socket.IsValid();
-        pool_unref(pool);
-        return valid
+        return connection->socket.IsValid()
             ? BufferedResult::BLOCKING
             : BufferedResult::CLOSED;
     }
-
-    pool_unref(pool);
 
     connection->request.bytes_received += nbytes;
     connection->socket.Consumed(nbytes);
@@ -50,12 +46,8 @@ http_server_feed_body(struct http_server_connection *connection,
            we're processing the request */
         connection->socket.ScheduleReadNoTimeout(false);
 
-        pool_ref(connection->pool);
         connection->request.body_reader.DeinitEOF();
-        const bool valid = http_server_connection_valid(connection);
-        pool_unref(connection->pool);
-
-        if (!valid)
+        if (!http_server_connection_valid(connection))
             return BufferedResult::CLOSED;
     }
 

@@ -8,6 +8,7 @@
 
 #include "http_server_internal.hxx"
 #include "http_util.hxx"
+#include "pool.hxx"
 #include "strutil.h"
 #include "strmap.hxx"
 #include "buffered_io.h"
@@ -325,7 +326,7 @@ http_server_submit_request(struct http_server_connection *connection)
            we're processing the request */
         connection->socket.ScheduleReadNoTimeout(false);
 
-    pool_ref(connection->pool);
+    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
 
     if (connection->request.expect_failed)
         http_server_send_message(connection->request.request,
@@ -339,10 +340,7 @@ http_server_submit_request(struct http_server_connection *connection)
         connection->request.in_handler = false;
     }
 
-    bool ret = http_server_connection_valid(connection);
-    pool_unref(connection->pool);
-
-    return ret;
+    return http_server_connection_valid(connection);
 }
 
 BufferedResult

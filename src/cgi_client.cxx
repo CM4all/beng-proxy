@@ -7,6 +7,7 @@
 #include "cgi_client.hxx"
 #include "cgi_quark.h"
 #include "cgi_parser.hxx"
+#include "pool.hxx"
 #include "istream-buffer.h"
 #include "async.hxx"
 #include "header_parser.hxx"
@@ -250,7 +251,7 @@ cgi_input_data(const void *data, size_t length, void *ctx)
     cgi->had_input = true;
 
     if (!cgi_parser_headers_finished(&cgi->parser)) {
-        pool_ref(cgi->output.pool);
+        const ScopePoolRef ref(*cgi->output.pool TRACE_ARGS);
 
         size_t nbytes = cgi_feed_headers3(cgi, (const char *)data, length);
 
@@ -267,8 +268,6 @@ cgi_input_data(const void *data, size_t length, void *ctx)
                 /* the connection was closed, must return 0 */
                 nbytes = 0;
         }
-
-        pool_unref(cgi->output.pool);
 
         return nbytes;
     } else {
@@ -425,7 +424,7 @@ istream_cgi_read(struct istream *istream)
             return;
         }
 
-        pool_ref(cgi->output.pool);
+        const ScopePoolRef ref(*cgi->output.pool TRACE_ARGS);
 
         cgi->had_output = false;
         do {
@@ -433,8 +432,6 @@ istream_cgi_read(struct istream *istream)
             istream_read(cgi->input);
         } while (cgi->input != nullptr && cgi->had_input &&
                  !cgi->had_output);
-
-        pool_unref(cgi->output.pool);
     }
 }
 

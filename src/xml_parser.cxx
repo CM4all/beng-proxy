@@ -624,11 +624,8 @@ parser_input_data(const void *data, size_t length, void *ctx)
 {
     struct parser *parser = (struct parser *)ctx;
 
-    pool_ref(parser->pool);
-    size_t nbytes = parser_feed(parser, (const char *)data, length);
-    pool_unref(parser->pool);
-
-    return nbytes;
+    const ScopePoolRef ref(*parser->pool TRACE_ARGS);
+    return parser_feed(parser, (const char *)data, length);
 }
 
 static void

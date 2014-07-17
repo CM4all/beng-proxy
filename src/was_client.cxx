@@ -327,16 +327,12 @@ was_client_control_packet(enum was_command cmd, const void *payload,
         client->response.headers = nullptr;
 
         if (client->response.body != nullptr) {
-            pool_ref(client->pool);
+            const ScopePoolRef ref(*client->pool TRACE_ARGS);
             was_input_free_unused_p(&client->response.body);
 
-            if (client->control == nullptr) {
+            if (client->control == nullptr)
                 /* aborted; don't invoke response handler */
-                pool_unref(client->pool);
                 return false;
-            }
-
-            pool_unref(client->pool);
         }
 
         client->async.Finished();
@@ -451,20 +447,14 @@ was_client_control_drained(void *ctx)
 
     client->async.Finished();
 
-#ifndef NDEBUG
-    struct pool_notify_state notify;
-#endif
-    pool_ref_notify(client->pool, &notify);
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
     http_response_handler_invoke_response(&client->handler,
                                           client->response.status,
                                           headers, body);
-    if (client->control == nullptr) {
+    if (client->control == nullptr)
         /* closed, must return false */
-        pool_unref_denotify(client->pool, &notify);
         return false;
-    }
 
-    pool_unref_denotify(client->pool, &notify);
     return true;
 }
 

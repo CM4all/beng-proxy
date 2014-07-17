@@ -37,6 +37,22 @@ public:
     }
 };
 
+class ScopePoolRef {
+    struct pool &pool;
+    PoolNotify notify;
+
+public:
+    explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL)
+        :pool(_pool), notify(_pool) {
+        pool_ref_fwd(&_pool);
+    }
+
+    ~ScopePoolRef() {
+        notify.Denotify();
+        pool_unref(&pool);
+    }
+};
+
 class AutoRewindPool {
     struct pool &pool;
     pool_mark_state mark;

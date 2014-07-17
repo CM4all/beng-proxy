@@ -71,13 +71,10 @@ http_server_try_write(struct http_server_connection *connection)
     assert(connection->request.request != nullptr);
     assert(connection->response.istream != nullptr);
 
-    pool_ref(connection->pool);
+    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
     istream_read(connection->response.istream);
 
-    bool valid = http_server_connection_valid(connection);
-    pool_unref(connection->pool);
-
-    return valid;
+    return http_server_connection_valid(connection);
 }
 
 /*
@@ -335,7 +332,7 @@ http_server_cancel(struct http_server_connection *connection)
 
     http_server_socket_destroy(connection);
 
-    pool_ref(connection->pool);
+    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
 
     if (connection->request.read_state != http_server_connection::Request::START)
         http_server_request_close(connection);
@@ -344,8 +341,6 @@ http_server_cancel(struct http_server_connection *connection)
         connection->handler->free(connection->handler_ctx);
         connection->handler = nullptr;
     }
-
-    pool_unref(connection->pool);
 }
 
 void
@@ -357,7 +352,7 @@ http_server_error(struct http_server_connection *connection, GError *error)
 
     http_server_socket_destroy(connection);
 
-    pool_ref(connection->pool);
+    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
 
     if (connection->request.read_state != http_server_connection::Request::START)
         http_server_request_close(connection);
@@ -373,8 +368,6 @@ http_server_error(struct http_server_connection *connection, GError *error)
         handler->error(error, handler_ctx);
     } else
         g_error_free(error);
-
-    pool_unref(connection->pool);
 }
 
 void

@@ -113,9 +113,8 @@ sink_buffer_abort(struct async_operation *ao)
 {
     struct sink_buffer *buffer = async_to_sink_buffer(ao);
 
-    pool_ref(buffer->pool);
+    const ScopePoolRef ref(*buffer->pool TRACE_ARGS);
     istream_close_handler(buffer->input);
-    pool_unref(buffer->pool);
 }
 
 static const struct async_operation_class sink_buffer_operation = {

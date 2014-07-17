@@ -507,11 +507,8 @@ css_parser_input_data(const void *data, size_t length, void *ctx)
 {
     struct css_parser *parser = (struct css_parser *)ctx;
 
-    pool_ref(parser->pool);
-    size_t nbytes = css_parser_feed(parser, (const char *)data, length);
-    pool_unref(parser->pool);
-
-    return nbytes;
+    const ScopePoolRef ref(*parser->pool TRACE_ARGS);
+    return css_parser_feed(parser, (const char *)data, length);
 }
 
 static void

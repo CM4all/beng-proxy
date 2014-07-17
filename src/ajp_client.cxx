@@ -174,15 +174,13 @@ ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
     assert(client->response.read_state == ajp_client::Response::READ_BEGIN ||
            client->response.read_state == ajp_client::Response::READ_NO_BODY);
 
-    pool_ref(client->pool);
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
     client->response.read_state = ajp_client::Response::READ_END;
     client->request.async.Finished();
     http_response_handler_invoke_abort(&client->request.handler, error);
 
     ajp_client_release(client, false);
-
-    pool_unref(client->pool);
 }
 
 /**
@@ -194,14 +192,12 @@ ajp_client_abort_response_body(struct ajp_client *client, GError *error)
     assert(client != nullptr);
     assert(client->response.read_state == ajp_client::Response::READ_BODY);
 
-    pool_ref(client->pool);
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
     client->response.read_state = ajp_client::Response::READ_END;
     istream_deinit_abort(&client->response.body, error);
 
     ajp_client_release(client, false);
-
-    pool_unref(client->pool);
 }
 
 static void
@@ -760,12 +756,8 @@ ajp_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
     struct ajp_client *client = (struct ajp_client *)ctx;
 
-    pool_ref(client->pool);
-    BufferedResult result =
-        ajp_client_feed(client, (const uint8_t *)buffer, size);
-    pool_unref(client->pool);
-
-    return result;
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    return ajp_client_feed(client, (const uint8_t *)buffer, size);
 }
 
 static bool
@@ -796,7 +788,7 @@ ajp_client_socket_write(void *ctx)
 {
     struct ajp_client *client = (struct ajp_client *)ctx;
 
-    pool_ref(client->pool);
+    const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
     client->request.got_data = false;
     istream_read(client->request.istream);
@@ -810,7 +802,6 @@ ajp_client_socket_write(void *ctx)
             client->socket.UnscheduleWrite();
     }
 
-    pool_unref(client->pool);
     return result;
 }
 

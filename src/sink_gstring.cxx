@@ -82,9 +82,8 @@ sink_gstring_async_abort(struct async_operation *ao)
 
     g_string_free(sg->value, true);
 
-    pool_ref(sg->pool);
+    const ScopePoolRef ref(*sg->pool TRACE_ARGS);
     istream_close_handler(sg->input);
-    pool_unref(sg->pool);
 }
 
 static const struct async_operation_class sink_gstring_operation = {

@@ -7,6 +7,7 @@
  */
 
 #include "sink_header.hxx"
+#include "pool.hxx"
 #include "istream-internal.h"
 #include "async.hxx"
 #include "util/Cast.hxx"
@@ -57,7 +58,7 @@ header_invoke_callback(struct sink_header *header, size_t consumed)
 
     header->async_operation.Finished();
 
-    pool_ref(header->output.pool);
+    const ScopePoolRef ref(*header->output.pool TRACE_ARGS);
 
     /* the base value has been set by sink_header_input_data() */
     header->pending += consumed;
@@ -74,8 +75,6 @@ header_invoke_callback(struct sink_header *header, size_t consumed)
     } else
         /* we have been closed meanwhile; bail out */
         consumed = 0;
-
-    pool_unref(header->output.pool);
 
     return consumed;
 }
@@ -195,15 +194,13 @@ sink_header_input_data(const void *data0, size_t length, void *ctx)
     assert(consumed > 0);
 
     if (header->state == sink_header::DATA && length > 0) {
-        pool_ref(header->output.pool);
+        const ScopePoolRef ref(*header->output.pool TRACE_ARGS);
 
         nbytes = istream_invoke_data(&header->output, data, length);
         if (nbytes == 0 && header->input == NULL)
             consumed = 0;
         else
             consumed += nbytes;
-
-        pool_unref(header->output.pool);
     }
 
     return consumed;

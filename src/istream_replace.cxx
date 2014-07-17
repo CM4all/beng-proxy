@@ -128,9 +128,8 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
     /* don't recurse if we're being called
        replace_read_substitution() */
     if (!replace->read_locked) {
-        pool_ref(replace->output.pool);
+        const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
         replace_read(replace);
-        pool_unref(replace->output.pool);
     }
 }
 
@@ -386,9 +385,8 @@ replace_read_check_empty(struct istream_replace *replace)
     if (replace_is_eof(replace))
         istream_deinit_eof(&replace->output);
     else {
-        pool_ref(replace->output.pool);
+        const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
         replace_read(replace);
-        pool_unref(replace->output.pool);
     }
 }
 
@@ -421,15 +419,13 @@ replace_input_data(const void *data, size_t length, void *ctx)
 
     replace->reader.Update();
 
-    pool_ref(replace->output.pool);
+    const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
 
     replace_try_read_from_buffer(replace);
     if (replace->input == nullptr)
         /* the istream API mandates that we must return 0 if the
            stream is finished */
         length = 0;
-
-    pool_unref(replace->output.pool);
 
     return length;
 }
@@ -531,14 +527,12 @@ istream_replace_read(struct istream *istream)
 {
     struct istream_replace *replace = istream_to_replace(istream);
 
-    pool_ref(replace->output.pool);
+    const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
 
     replace_read(replace);
 
-    if (replace->input == nullptr) {
-        pool_unref(replace->output.pool);
+    if (replace->input == nullptr)
         return;
-    }
 
     replace->had_output = false;
 
@@ -547,8 +541,6 @@ istream_replace_read(struct istream *istream)
         istream_read(replace->input);
     } while (replace->had_input && !replace->had_output &&
              replace->input != nullptr);
-
-    pool_unref(replace->output.pool);
 }
 
 static void
