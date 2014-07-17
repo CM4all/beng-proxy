@@ -12,7 +12,7 @@
 #include "http_response.hxx"
 #include "strmap.hxx"
 #include "istream.h"
-#include "istream_file.h"
+#include "istream_file.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 

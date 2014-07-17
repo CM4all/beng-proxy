@@ -1,7 +1,9 @@
 #include "xml_parser.hxx"
 #include "istream.h"
-#include "istream_file.h"
+#include "istream_file.hxx"
 #include "fb_pool.h"
+
+#include <glib.h>
 
 #include <unistd.h>
 #include <stdlib.h>

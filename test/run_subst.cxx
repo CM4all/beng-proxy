@@ -1,8 +1,10 @@
 #include "istream.h"
-#include "istream_file.h"
+#include "istream_file.hxx"
 #include "fb_pool.h"
 
 #include <inline/compiler.h>
+
+#include <glib.h>
 
 #include <stdlib.h>
 #include <stdio.h>

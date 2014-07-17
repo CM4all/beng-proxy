@@ -10,7 +10,7 @@
 #include "gerrno.h"
 #include "strmap.hxx"
 #include "istream.h"
-#include "istream_file.h"
+#include "istream_file.hxx"
 #include "pool.hxx"
 
 #include <http/status.h>

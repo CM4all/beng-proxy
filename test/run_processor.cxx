@@ -5,10 +5,12 @@
 #include "widget.h"
 #include "widget_class.hxx"
 #include "rewrite_uri.hxx"
-#include "istream_file.h"
+#include "istream_file.hxx"
 #include "istream.h"
 
 #include <event.h>
+
+#include <glib.h>
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -7,7 +7,7 @@
 #include "fd_util.h"
 #include "lease.h"
 #include "direct.h"
-#include "istream_file.h"
+#include "istream_file.hxx"
 #include "istream.h"
 #include "sink_fd.h"
 #include "direct.h"

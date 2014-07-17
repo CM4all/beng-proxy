@@ -5,7 +5,7 @@
 #include "direct.h"
 #include "async.hxx"
 #include "istream.h"
-#include "istream_file.h"
+#include "istream_file.hxx"
 #include "fb_pool.h"
 #include "child_options.hxx"
 #include "util/ConstBuffer.hxx"

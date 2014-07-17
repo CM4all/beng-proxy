@@ -4,12 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream_file.h"
+#include "istream_file.hxx"
 #include "istream-buffer.h"
 #include "buffered_io.h"
 #include "fd_util.h"
 #include "gerrno.h"
 #include "fb_pool.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <sys/types.h>
@@ -70,9 +71,9 @@ file_destroy(struct file *file)
 {
     file_close(file);
 
-    if (file->buffer != NULL) {
+    if (file->buffer != nullptr) {
         fb_pool_free(file->buffer);
-        file->buffer = NULL;
+        file->buffer = nullptr;
     }
 }
 
@@ -117,7 +118,7 @@ istream_file_try_data(struct file *file)
 {
     size_t rest = 0;
 
-    if (file->buffer == NULL) {
+    if (file->buffer == nullptr) {
         if (file->rest != 0)
             file->buffer = fb_pool_alloc();
     } else {
@@ -173,10 +174,10 @@ istream_file_try_data(struct file *file)
 static void
 istream_file_try_direct(struct file *file)
 {
-    assert(file->stream.handler->direct != NULL);
+    assert(file->stream.handler->direct != nullptr);
 
     /* first consume the rest of the buffer */
-    if (file->buffer != NULL && istream_file_invoke_data(file) > 0)
+    if (file->buffer != nullptr && istream_file_invoke_data(file) > 0)
         return;
 
     if (file->rest == 0) {
@@ -238,7 +239,7 @@ static void
 file_event_callback(gcc_unused int fd, gcc_unused short event,
                     void *ctx)
 {
-    struct file *file = ctx;
+    struct file *file = (struct file *)ctx;
 
     file_try_read(file);
 }
@@ -252,7 +253,7 @@ file_event_callback(gcc_unused int fd, gcc_unused short event,
 static inline struct file *
 istream_to_file(struct istream *istream)
 {
-    return (struct file *)(((char*)istream) - offsetof(struct file, stream));
+    return &ContainerCast2(*istream, &file::stream);
 }
 
 static off_t
@@ -268,10 +269,10 @@ istream_file_available(struct istream *istream, bool partial)
     else
         available = 0;
 
-    if (file->buffer != NULL) {
+    if (file->buffer != nullptr) {
         size_t length;
         const void *data = fifo_buffer_read(file->buffer, &length);
-        if (data != NULL)
+        if (data != nullptr)
             available += length;
     }
 
@@ -291,7 +292,7 @@ istream_file_skip(struct istream *istream, off_t length)
     if (length == 0)
         return 0;
 
-    if (file->buffer != NULL)
+    if (file->buffer != nullptr)
         /* clear the buffer; later we could optimize this function by
            flushing only the skipped number of bytes */
         fifo_buffer_clear(file->buffer);
@@ -318,7 +319,7 @@ istream_file_read(struct istream *istream)
 {
     struct file *file = istream_to_file(istream);
 
-    assert(file->stream.handler != NULL);
+    assert(file->stream.handler != nullptr);
 
     evtimer_del(&file->event);
 
@@ -374,7 +375,7 @@ istream_file_fd_new(struct pool *pool, const char *path,
     file->fd = fd;
     file->fd_type = fd_type;
     file->rest = length;
-    file->buffer = NULL;
+    file->buffer = nullptr;
     file->path = path;
 
     evtimer_set(&file->event, file_event_callback, file);
@@ -386,21 +387,21 @@ struct istream *
 istream_file_stat_new(struct pool *pool, const char *path, struct stat *st,
                       GError **error_r)
 {
-    assert(path != NULL);
-    assert(st != NULL);
+    assert(path != nullptr);
+    assert(st != nullptr);
 
     int fd = open_cloexec(path, O_RDONLY|O_NOCTTY, 0);
     if (fd < 0) {
         set_error_errno(error_r);
         g_prefix_error(error_r, "Failed to open %s: ", path);
-        return NULL;
+        return nullptr;
     }
 
     if (fstat(fd, st) < 0) {
         set_error_errno(error_r);
         g_prefix_error(error_r, "Failed to stat %s: ", path);
         close(fd);
-        return NULL;
+        return nullptr;
     }
 
     enum istream_direct fd_type = ISTREAM_FILE;
@@ -424,7 +425,7 @@ istream_file_new(struct pool *pool, const char *path, off_t length,
     if (fd < 0) {
         set_error_errno(error_r);
         g_prefix_error(error_r, "Failed to open %s: ", path);
-        return NULL;
+        return nullptr;
     }
 
     return istream_file_fd_new(pool, path, fd, ISTREAM_FILE, length);
@@ -433,7 +434,7 @@ istream_file_new(struct pool *pool, const char *path, off_t length,
 int
 istream_file_fd(struct istream *istream)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(istream->cls == &istream_file);
 
     struct file *file = istream_to_file(istream);
@@ -446,7 +447,7 @@ istream_file_fd(struct istream *istream)
 bool
 istream_file_set_range(struct istream *istream, off_t start, off_t end)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(istream->cls == &istream_file);
     assert(start >= 0);
     assert(end >= start);
@@ -454,7 +455,7 @@ istream_file_set_range(struct istream *istream, off_t start, off_t end)
     struct file *file = istream_to_file(istream);
     assert(file->fd >= 0);
     assert(file->rest >= 0);
-    assert(file->buffer == NULL);
+    assert(file->buffer == nullptr);
     assert(end <= file->rest);
 
     if (start > 0 && lseek(file->fd, start, SEEK_CUR) < 0)

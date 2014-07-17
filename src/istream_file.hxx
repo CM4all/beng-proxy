@@ -4,25 +4,18 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ISTREAM_FILE_H
-#define BENG_PROXY_ISTREAM_FILE_H
+#ifndef BENG_PROXY_ISTREAM_FILE_HXX
+#define BENG_PROXY_ISTREAM_FILE_HXX
 
 #include "istream-direct.h"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 
-#include <glib.h>
-
-#include <stdbool.h>
-#include <stdint.h>
 #include <sys/types.h>
 
 struct pool;
 struct stat;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct istream *
 istream_file_fd_new(struct pool *pool, const char *path,
@@ -48,9 +41,5 @@ istream_file_fd(struct istream * istream);
  */
 bool
 istream_file_set_range(struct istream *istream, off_t start, off_t end);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
