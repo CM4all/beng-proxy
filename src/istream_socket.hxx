@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ISTREAM_GB_H
-#define BENG_PROXY_ISTREAM_GB_H
+#ifndef BENG_PROXY_ISTREAM_SOCKET_HXX
+#define BENG_PROXY_ISTREAM_SOCKET_HXX
 
-#include "istream.h"
+#include "istream-direct.h"
 
 struct growing_buffer;
 
@@ -64,16 +64,8 @@ struct istream_socket_handler {
     bool (*finished)(void *ctx);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct istream *
-istream_socket_new(struct pool *pool, int fd, istream_direct_t fd_type,
+istream_socket_new(struct pool *pool, int fd, enum istream_direct fd_type,
                    const struct istream_socket_handler *handler, void *ctx);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

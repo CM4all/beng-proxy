@@ -4,14 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream-socket.h"
+#include "istream_socket.hxx"
 #include "istream-internal.h"
 #include "istream-buffer.h"
+#include "pool.hxx"
 #include "fifo-buffer.h"
 #include "buffered_io.h"
 #include "pevent.h"
 #include "gerrno.h"
 #include "fb_pool.h"
+#include "util/Cast.hxx"
 
 #include <event.h>
 #include <errno.h>
@@ -25,8 +27,8 @@ struct istream_socket {
      * closed.
      */
     int fd;
+    enum istream_direct fd_type;
 
-    istream_direct_t fd_type;
     const struct istream_socket_handler *handler;
     void *handler_ctx;
 
@@ -38,7 +40,7 @@ struct istream_socket {
 static inline bool
 socket_valid(const struct istream_socket *s)
 {
-    assert(s != NULL);
+    assert(s != nullptr);
 
     return s->fd >= 0;
 }
@@ -47,9 +49,9 @@ static void
 socket_schedule_read(struct istream_socket *s)
 {
     assert(socket_valid(s));
-    assert(s->buffer == NULL || !fifo_buffer_full(s->buffer));
+    assert(s->buffer == nullptr || !fifo_buffer_full(s->buffer));
 
-    p_event_add(&s->event, NULL, s->output.pool, "istream_socket");
+    p_event_add(&s->event, nullptr, s->output.pool, "istream_socket");
 }
 
 /**
@@ -60,10 +62,10 @@ static bool
 socket_buffer_consume(struct istream_socket *s)
 {
     assert(socket_valid(s));
-    assert(s->buffer != NULL);
+    assert(s->buffer != nullptr);
 
     if (gcc_likely(!fifo_buffer_full(s->buffer) ||
-                   s->handler->full == NULL))
+                   s->handler->full == nullptr))
         /* quick path without an additional pool reference */
         return istream_buffer_consume(&s->output, s->buffer) > 0;
 
@@ -89,10 +91,10 @@ static bool
 socket_buffer_send(struct istream_socket *s)
 {
     assert(socket_valid(s));
-    assert(s->buffer != NULL);
+    assert(s->buffer != nullptr);
 
     if (gcc_likely(!fifo_buffer_full(s->buffer) ||
-                   s->handler->full == NULL))
+                   s->handler->full == nullptr))
         /* quick path without an additional pool reference */
         return istream_buffer_send(&s->output, s->buffer) > 0;
 
@@ -112,12 +114,12 @@ socket_try_direct(struct istream_socket *s)
 {
     assert(socket_valid(s));
 
-    if (s->buffer != NULL) {
+    if (s->buffer != nullptr) {
         if (socket_buffer_consume(s))
             return;
 
         fb_pool_free(s->buffer);
-        s->buffer = NULL;
+        s->buffer = nullptr;
     }
 
     ssize_t nbytes = istream_invoke_direct(&s->output, s->fd_type, s->fd,
@@ -156,7 +158,7 @@ socket_try_buffered(struct istream_socket *s)
 {
     assert(socket_valid(s));
 
-    if (s->buffer == NULL)
+    if (s->buffer == nullptr)
         s->buffer = fb_pool_alloc();
     else if (socket_buffer_consume(s))
         return;
@@ -180,7 +182,7 @@ socket_try_buffered(struct istream_socket *s)
         const int e = errno;
 
         fb_pool_free(s->buffer);
-        s->buffer = NULL;
+        s->buffer = nullptr;
 
         if (!s->handler->error(e, s->handler_ctx))
             return;
@@ -208,7 +210,7 @@ socket_try_read(struct istream_socket *s)
 static inline struct istream_socket *
 istream_to_socket(struct istream *istream)
 {
-    return (struct istream_socket *)(((char*)istream) - offsetof(struct istream_socket, output));
+    return &ContainerCast2(*istream, &istream_socket::output);
 }
 
 static off_t
@@ -218,7 +220,7 @@ istream_socket_available(struct istream *istream, bool partial)
 
     assert(socket_valid(s));
 
-    if (s->buffer == NULL || (!partial && s->fd >= 0))
+    if (s->buffer == nullptr || (!partial && s->fd >= 0))
         return -1;
 
     return fifo_buffer_available(s->buffer);
@@ -241,9 +243,9 @@ istream_socket_close(struct istream *istream)
 
     assert(socket_valid(s));
 
-    if (s->buffer != NULL) {
+    if (s->buffer != nullptr) {
         fb_pool_free(s->buffer);
-        s->buffer = NULL;
+        s->buffer = nullptr;
     }
 
     p_event_del(&s->event, s->output.pool);
@@ -269,7 +271,7 @@ static void
 socket_event_callback(int fd gcc_unused, short event gcc_unused,
                       void *ctx)
 {
-    struct istream_socket *s = ctx;
+    struct istream_socket *s = (struct istream_socket *)ctx;
 
     assert(fd == s->fd);
 
@@ -284,15 +286,15 @@ socket_event_callback(int fd gcc_unused, short event gcc_unused,
  */
 
 struct istream *
-istream_socket_new(struct pool *pool, int fd, istream_direct_t fd_type,
+istream_socket_new(struct pool *pool, int fd, enum istream_direct fd_type,
                    const struct istream_socket_handler *handler, void *ctx)
 {
     assert(fd >= 0);
-    assert(handler != NULL);
-    assert(handler->close != NULL);
-    assert(handler->error != NULL);
-    assert(handler->depleted != NULL);
-    assert(handler->finished != NULL);
+    assert(handler != nullptr);
+    assert(handler->close != nullptr);
+    assert(handler->error != nullptr);
+    assert(handler->depleted != nullptr);
+    assert(handler->finished != nullptr);
 
     struct istream_socket *s = istream_new_macro(pool, socket);
     s->fd = fd;
@@ -300,7 +302,7 @@ istream_socket_new(struct pool *pool, int fd, istream_direct_t fd_type,
     s->handler = handler;
     s->handler_ctx = ctx;
 
-    s->buffer = NULL;
+    s->buffer = nullptr;
 
     event_set(&s->event, fd, EV_READ, socket_event_callback, s);
     socket_schedule_read(s);
