@@ -9,7 +9,7 @@
 #include "was_launch.hxx"
 #include "hstock.hxx"
 #include "stock.hxx"
-#include "child_manager.h"
+#include "child_manager.hxx"
 #include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "child_options.hxx"

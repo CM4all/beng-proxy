@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_FORK_HXX
 #define BENG_PROXY_FORK_HXX
 
-#include "child_manager.h"
+#include "child_manager.hxx"
 #include "glibfwd.hxx"
 
 struct pool;

@@ -13,7 +13,7 @@
 #include "stock.hxx"
 #include "lease.h"
 #include "child_stock.hxx"
-#include "child_manager.h"
+#include "child_manager.hxx"
 #include "pevent.h"
 #include "gerrno.h"
 #include "pool.hxx"

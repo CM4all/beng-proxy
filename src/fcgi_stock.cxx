@@ -10,7 +10,7 @@
 #include "hstock.hxx"
 #include "stock.hxx"
 #include "child_stock.hxx"
-#include "child_manager.h"
+#include "child_manager.hxx"
 #include "child_options.hxx"
 #include "pevent.h"
 #include "gerrno.h"

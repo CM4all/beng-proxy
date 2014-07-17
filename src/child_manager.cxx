@@ -4,9 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "child_manager.h"
+#include "child_manager.hxx"
 #include "crash.h"
-#include "pool.h"
+#include "pool.hxx"
 #include "defer_event.h"
 #include "clock.h"
 
@@ -77,7 +77,7 @@ find_child_by_pid(pid_t pid)
         if (child->pid == pid)
             return child;
 
-    return NULL;
+    return nullptr;
 }
 
 static void
@@ -147,7 +147,7 @@ child_done(struct child *child, int status, const struct rusage *rusage)
 
     child_remove(child);
 
-    if (child->callback != NULL)
+    if (child->callback != nullptr)
         child->callback(status, child->callback_ctx);
     child_free(child);
 }
@@ -156,7 +156,7 @@ static void
 child_kill_timeout_callback(gcc_unused int fd, gcc_unused short event,
                             void *ctx)
 {
-    struct child *child = ctx;
+    struct child *child = (struct child *)ctx;
 
     daemon_log(3, "sending SIGKILL to child process '%s' (pid %d) due to timeout\n",
                child->name, (int)child->pid);
@@ -181,7 +181,7 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
             continue;
 
         struct child *child = find_child_by_pid(pid);
-        if (child != NULL)
+        if (child != nullptr)
             child_done(child, status, &rusage);
     }
 
@@ -198,7 +198,7 @@ children_init(struct pool *_pool)
     list_init(&children);
     num_children = 0;
 
-    defer_event_init(&defer_event, child_event_callback, NULL);
+    defer_event_init(&defer_event, child_event_callback, nullptr);
     children_event_add();
 }
 
@@ -221,8 +221,8 @@ children_event_add(void)
     assert(!shutdown_flag);
 
     event_set(&sigchld_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
-              child_event_callback, NULL);
-    event_add(&sigchld_event, NULL);
+              child_event_callback, nullptr);
+    event_add(&sigchld_event, nullptr);
 
     /* schedule an immediate waitpid() run, just in case we lost a
        SIGCHLD */
@@ -249,7 +249,7 @@ child_register(pid_t pid, const char *name,
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
 
-    struct child *child = p_malloc(pool, sizeof(*child));
+    auto child = NewFromPool<struct child>(*pool);
 
     child->pid = pid;
     child->name = p_strdup(pool, name);
@@ -268,13 +268,13 @@ child_kill_signal(pid_t pid, int signo)
 {
     struct child *child = find_child_by_pid(pid);
 
-    assert(child != NULL);
-    assert(child->callback != NULL);
+    assert(child != nullptr);
+    assert(child->callback != nullptr);
 
     daemon_log(5, "sending %s to child process '%s' (pid %d)\n",
                strsignal(signo), child->name, (int)pid);
 
-    child->callback = NULL;
+    child->callback = nullptr;
 
     if (kill(pid, signo) < 0) {
         daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",

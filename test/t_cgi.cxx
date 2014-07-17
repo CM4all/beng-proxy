@@ -2,7 +2,7 @@
 #include "cgi_address.hxx"
 #include "async.hxx"
 #include "http_response.hxx"
-#include "child_manager.h"
+#include "child_manager.hxx"
 #include "direct.h"
 #include "crash.h"
 #include "istream_file.hxx"

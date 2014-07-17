@@ -111,7 +111,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/cgi_client.cxx src/cgi_client.hxx \
 	src/cgi_launch.cxx src/cgi_launch.hxx \
 	src/pivot_root.h \
-	src/child_manager.c src/child_manager.h \
+	src/child_manager.cxx src/child_manager.hxx \
 	src/child_socket.cxx src/child_socket.hxx \
 	src/child_stock.cxx src/child_stock.hxx \
 	src/config.hxx \
@@ -393,7 +393,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/address_sticky.c src/address_sticky.h \
 	src/client_balancer.cxx src/client_balancer.hxx \
 	src/bulldog.c \
-	src/child_manager.c src/child_manager.h \
+	src/child_manager.cxx src/child_manager.hxx \
 	src/hashmap.cxx \
 	src/strmap.cxx \
 	src/cache.cxx \
@@ -1123,7 +1123,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/header_parser.cxx \
 	src/strmap.cxx \
 	src/fd_util.c src/fd-util.c \
-	src/child_manager.c src/child_manager.h \
+	src/child_manager.cxx src/child_manager.hxx \
 	src/crash.c \
 	src/direct.c
 test_t_cgi_LDADD = $(AM_LDADD) \

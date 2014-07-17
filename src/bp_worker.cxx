@@ -10,7 +10,7 @@
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
 #include "session_manager.hxx"
-#include "child_manager.h"
+#include "child_manager.hxx"
 #include "bp_control.hxx"
 #include "net/ServerSocket.hxx"
 

@@ -25,7 +25,7 @@
 #include "was_stock.hxx"
 #include "delegate_stock.hxx"
 #include "fcache.h"
-#include "child_manager.h"
+#include "child_manager.hxx"
 #include "thread_pool.hxx"
 #include "global.h"
 #include "failure.hxx"
