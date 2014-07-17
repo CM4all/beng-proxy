@@ -12,7 +12,7 @@
 
 #include <assert.h>
 
-static const size_t FB_SIZE = 8192;
+static constexpr size_t FB_SIZE = 8192;
 
 struct fbp_meta {
     struct slice_area *area;
