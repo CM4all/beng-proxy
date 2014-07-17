@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.8) unstable; urgency=low
 
-  * 
+  * ssl: fix choking decryption on large SSL packets
 
  --   
 
