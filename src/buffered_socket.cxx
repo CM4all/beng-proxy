@@ -191,7 +191,6 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
 
     case BufferedResult::BLOCKING:
         s->expect_more = old_expect_more;
-        s->base.UnscheduleRead();
         return false;
 
     case BufferedResult::CLOSED:
