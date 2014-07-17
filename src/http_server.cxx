@@ -90,6 +90,13 @@ http_server_socket_data(const void *data, size_t length, void *ctx)
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;
 
+    if (connection->response.pending_drained) {
+        /* discard all incoming data while we're waiting for the
+           (filtered) response to be drained */
+        filtered_socket_consumed(&connection->socket, length);
+        return BufferedResult::OK;
+    }
+
     return http_server_feed(connection, data, length);
 }
 
