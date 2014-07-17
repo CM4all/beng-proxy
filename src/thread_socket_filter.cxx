@@ -480,7 +480,9 @@ thread_socket_filter_unschedule_write(void *ctx)
         return;
 
     f->want_write = false;
-    defer_event_cancel(&f->defer_event);
+
+    if (!f->want_read)
+        defer_event_cancel(&f->defer_event);
 }
 
 static bool
