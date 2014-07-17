@@ -153,7 +153,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/fd_util.c src/fd_util.h \
 	src/file_headers.cxx src/file_headers.hxx \
 	src/file_handler.cxx src/file_handler.hxx \
-	src/fork.c src/fork.h \
+	src/fork.cxx src/fork.hxx \
 	src/get.cxx src/get.hxx \
 	src/global.c src/global.h \
 	src/growing_buffer.cxx src/growing_buffer.hxx \
@@ -1110,7 +1110,7 @@ test_t_balancer_LDADD = $(AM_LDADD) \
 test_t_cgi_SOURCES = test/t_cgi.cxx \
 	$(STOPWATCH_SRC) \
 	src/clock.c \
-	src/cgi_glue.cxx src/fork.c \
+	src/cgi_glue.cxx src/fork.cxx \
 	src/cgi_client.cxx src/cgi_launch.cxx \
 	src/cgi_parser.cxx \
 	src/exec.cxx \

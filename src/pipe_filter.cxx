@@ -6,7 +6,7 @@
 
 #include "pipe_filter.hxx"
 #include "http_response.hxx"
-#include "fork.h"
+#include "fork.hxx"
 #include "format.h"
 #include "stopwatch.h"
 #include "strmap.hxx"

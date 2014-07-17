@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fork.h"
+#include "fork.hxx"
 #include "fd_util.h"
 #include "istream-buffer.h"
 #include "buffered_io.h"
@@ -13,6 +13,7 @@
 #include "pevent.h"
 #include "gerrno.h"
 #include "fb_pool.h"
+#include "util/Cast.hxx"
 
 #ifdef __linux
 #include <fcntl.h>
@@ -50,7 +51,7 @@ fork_close(struct fork *f)
 {
     assert(f->output_fd >= 0);
 
-    if (f->input != NULL) {
+    if (f->input != nullptr) {
         assert(f->input_fd >= 0);
 
         p_event_del(&f->input_event, f->output.pool);
@@ -70,11 +71,11 @@ fork_close(struct fork *f)
 static void
 fork_free_buffer(struct fork *f)
 {
-    if (f->buffer == NULL)
+    if (f->buffer == nullptr)
         return;
 
     fb_pool_free(f->buffer);
-    f->buffer = NULL;
+    f->buffer = nullptr;
 }
 
 /**
@@ -86,7 +87,7 @@ fork_free_buffer(struct fork *f)
 static bool
 fork_buffer_send(struct fork *f)
 {
-    assert(f->buffer != NULL);
+    assert(f->buffer != nullptr);
 
     if (istream_buffer_send(&f->output, f->buffer) == 0)
         return false;
@@ -111,17 +112,17 @@ fork_buffer_send(struct fork *f)
 static size_t
 fork_input_data(const void *data, size_t length, void *ctx)
 {
-    struct fork *f = ctx;
+    struct fork *f = (struct fork *)ctx;
 
     assert(f->input_fd >= 0);
 
     ssize_t nbytes = write(f->input_fd, data, length);
     if (nbytes > 0)
-        p_event_add(&f->input_event, NULL,
+        p_event_add(&f->input_event, nullptr,
                     f->output.pool, "fork_input_event");
     else if (nbytes < 0) {
         if (errno == EAGAIN) {
-            p_event_add(&f->input_event, NULL,
+            p_event_add(&f->input_event, nullptr,
                         f->output.pool, "fork_input_event");
             return 0;
         }
@@ -139,21 +140,21 @@ fork_input_data(const void *data, size_t length, void *ctx)
 
 #ifdef __linux
 static ssize_t
-fork_input_direct(istream_direct_t type,
+fork_input_direct(enum istream_direct type,
                   int fd, size_t max_length, void *ctx)
 {
-    struct fork *f = ctx;
+    struct fork *f = (struct fork *)ctx;
 
     assert(f->input_fd >= 0);
 
     ssize_t nbytes = istream_direct_to_pipe(type, fd, f->input_fd, max_length);
     if (nbytes > 0)
-        p_event_add(&f->input_event, NULL,
+        p_event_add(&f->input_event, nullptr,
                     f->output.pool, "fork_input_event");
     else if (nbytes < 0) {
         if (errno == EAGAIN) {
             if (!fd_ready_for_writing(f->input_fd)) {
-                p_event_add(&f->input_event, NULL,
+                p_event_add(&f->input_event, nullptr,
                             f->output.pool, "fork_input_event");
                 return ISTREAM_RESULT_BLOCKING;
             }
@@ -172,30 +173,30 @@ fork_input_direct(istream_direct_t type,
 static void
 fork_input_eof(void *ctx)
 {
-    struct fork *f = ctx;
+    struct fork *f = (struct fork *)ctx;
 
-    assert(f->input != NULL);
+    assert(f->input != nullptr);
     assert(f->input_fd >= 0);
 
     p_event_del(&f->input_event, f->output.pool);
     close(f->input_fd);
 
-    f->input = NULL;
+    f->input = nullptr;
 }
 
 static void
 fork_input_abort(GError *error, void *ctx)
 {
-    struct fork *f = ctx;
+    struct fork *f = (struct fork *)ctx;
 
-    assert(f->input != NULL);
+    assert(f->input != nullptr);
     assert(f->input_fd >= 0);
 
     fork_free_buffer(f);
 
     p_event_del(&f->input_event, f->output.pool);
     close(f->input_fd);
-    f->input = NULL;
+    f->input = nullptr;
 
     fork_close(f);
     istream_deinit_abort(&f->output, error);
@@ -226,7 +227,7 @@ fork_read_from_output(struct fork *f)
     assert(f->output_fd >= 0);
 
     if (!fork_check_direct(f)) {
-        if (f->buffer == NULL)
+        if (f->buffer == nullptr)
             f->buffer = fb_pool_alloc();
 
         ssize_t nbytes = read_to_buffer(f->output_fd, f->buffer, INT_MAX);
@@ -234,7 +235,7 @@ fork_read_from_output(struct fork *f)
             /* XXX should not happen */
         } else if (nbytes > 0) {
             if (istream_buffer_send(&f->output, f->buffer) > 0)
-                p_event_add(&f->output_event, NULL,
+                p_event_add(&f->output_event, nullptr,
                             f->output.pool, "fork_output_event");
         } else if (nbytes == 0) {
             fork_close(f);
@@ -244,10 +245,10 @@ fork_read_from_output(struct fork *f)
                 istream_deinit_eof(&f->output);
             }
         } else if (errno == EAGAIN) {
-            p_event_add(&f->output_event, NULL,
+            p_event_add(&f->output_event, nullptr,
                         f->output.pool, "fork_output_event");
 
-            if (f->input != NULL)
+            if (f->input != nullptr)
                 /* the CGI may be waiting for more data from stdin */
                 istream_read(f->input);
         } else {
@@ -258,7 +259,7 @@ fork_read_from_output(struct fork *f)
             istream_deinit_abort(&f->output, error);
         }
     } else {
-        if (f->buffer != NULL &&
+        if (f->buffer != nullptr &&
             istream_buffer_consume(&f->output, f->buffer) > 0)
             /* there's data left in the buffer, which must be consumed
                before we can switch to "direct" transfer */
@@ -268,7 +269,7 @@ fork_read_from_output(struct fork *f)
            istream_buffer_consume(), and the new handler might not
            support "direct" transfer - check again */
         if (!fork_check_direct(f)) {
-            p_event_add(&f->output_event, NULL,
+            p_event_add(&f->output_event, nullptr,
                         f->output.pool, "fork_output_event");
             return;
         }
@@ -280,17 +281,17 @@ fork_read_from_output(struct fork *f)
             /* -2 means the callback wasn't able to consume any data right
                now */
         } else if (nbytes > 0) {
-            p_event_add(&f->output_event, NULL,
+            p_event_add(&f->output_event, nullptr,
                         f->output.pool, "fork_output_event");
         } else if (nbytes == ISTREAM_RESULT_EOF) {
             fork_free_buffer(f);
             fork_close(f);
             istream_deinit_eof(&f->output);
         } else if (errno == EAGAIN) {
-            p_event_add(&f->output_event, NULL,
+            p_event_add(&f->output_event, nullptr,
                         f->output.pool, "fork_output_event");
 
-            if (f->input != NULL)
+            if (f->input != nullptr)
                 /* the CGI may be waiting for more data from stdin */
                 istream_read(f->input);
         } else {
@@ -307,10 +308,10 @@ static void
 fork_input_event_callback(int fd gcc_unused, short event gcc_unused,
                           void *ctx)
 {
-    struct fork *f = ctx;
+    struct fork *f = (struct fork *)ctx;
 
     assert(f->input_fd == fd);
-    assert(f->input != NULL);
+    assert(f->input != nullptr);
 
     p_event_consumed(&f->input_event, f->output.pool);
 
@@ -321,7 +322,7 @@ static void
 fork_output_event_callback(int fd gcc_unused, short event gcc_unused,
                            void *ctx)
 {
-    struct fork *f = ctx;
+    struct fork *f = (struct fork *)ctx;
 
     assert(f->output_fd == fd);
 
@@ -339,7 +340,7 @@ fork_output_event_callback(int fd gcc_unused, short event gcc_unused,
 static inline struct fork *
 istream_to_fork(struct istream *istream)
 {
-    return (struct fork *)(((char*)istream) - offsetof(struct fork, output));
+    return &ContainerCast2(*istream, &fork::output);
 }
 
 static void
@@ -347,7 +348,7 @@ istream_fork_read(struct istream *istream)
 {
     struct fork *f = istream_to_fork(istream);
 
-    if (f->buffer == NULL || fifo_buffer_empty(f->buffer) ||
+    if (f->buffer == nullptr || fifo_buffer_empty(f->buffer) ||
         fork_buffer_send(f))
         fork_read_from_output(f);
 }
@@ -386,7 +387,7 @@ struct clone_ctx {
 static int
 beng_fork_fn(void *ctx)
 {
-    struct clone_ctx *c = ctx;
+    struct clone_ctx *c = (struct clone_ctx *)ctx;
 
     if (c->stdin_pipe[0] >= 0) {
         dup2(c->stdin_pipe[0], STDIN_FILENO);
@@ -413,7 +414,7 @@ beng_fork_fn(void *ctx)
 static void
 fork_child_callback(int status, void *ctx)
 {
-    struct fork *f = ctx;
+    struct fork *f = (struct fork *)ctx;
 
     assert(f->pid >= 0);
 
@@ -446,13 +447,13 @@ beng_fork(struct pool *pool, const char *name,
         .ctx = fn_ctx,
     };
 
-    if (input != NULL) {
+    if (input != nullptr) {
         c.stdin_fd = istream_as_fd(input);
         if (c.stdin_fd >= 0)
-            input = NULL;
+            input = nullptr;
     }
 
-    if (input != NULL) {
+    if (input != nullptr) {
         if (pipe_cloexec(c.stdin_pipe) < 0) {
             g_set_error(error_r, fork_quark(), errno,
                         "pipe_cloexec() failed: %s", strerror(errno));
@@ -472,7 +473,7 @@ beng_fork(struct pool *pool, const char *name,
         g_set_error(error_r, fork_quark(), errno,
                     "pipe() failed: %s", strerror(errno));
 
-        if (input != NULL) {
+        if (input != nullptr) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
         } else if (c.stdin_fd >= 0)
@@ -485,7 +486,7 @@ beng_fork(struct pool *pool, const char *name,
         g_set_error(error_r, fork_quark(), errno,
                     "fcntl(O_NONBLOCK) failed: %s", strerror(errno));
 
-        if (input != NULL) {
+        if (input != nullptr) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
         } else if (c.stdin_fd >= 0)
@@ -503,7 +504,7 @@ beng_fork(struct pool *pool, const char *name,
         g_set_error(error_r, fork_quark(), errno,
                     "fork() failed: %s", strerror(errno));
 
-        if (input != NULL) {
+        if (input != nullptr) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
         } else if (c.stdin_fd >= 0)
@@ -516,13 +517,13 @@ beng_fork(struct pool *pool, const char *name,
             istream_new(pool, &istream_fork, sizeof(*f));
 
         f->input = input;
-        if (input != NULL) {
+        if (input != nullptr) {
             close(c.stdin_pipe[0]);
             f->input_fd = c.stdin_pipe[1];
 
             event_set(&f->input_event, f->input_fd, EV_WRITE,
                       fork_input_event_callback, f);
-            p_event_add(&f->input_event, NULL,
+            p_event_add(&f->input_event, nullptr,
                         f->output.pool, "fork_input_event");
 
             istream_assign_handler(&f->input, input,
@@ -535,7 +536,7 @@ beng_fork(struct pool *pool, const char *name,
         f->output_fd = c.stdout_pipe[0];
         event_set(&f->output_event, f->output_fd, EV_READ,
                   fork_output_event_callback, f);
-        f->buffer = NULL;
+        f->buffer = nullptr;
 
         f->pid = pid;
         f->callback = callback;

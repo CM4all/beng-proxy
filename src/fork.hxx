@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_FORK_H
-#define __BENG_FORK_H
+#ifndef BENG_PROXY_FORK_HXX
+#define BENG_PROXY_FORK_HXX
 
 #include "child_manager.h"
 
@@ -19,10 +19,6 @@ fork_quark(void)
 {
     return g_quark_from_static_string("fork");
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Wrapper for the fork() system call.  Forks a sub process, returns
@@ -43,9 +39,5 @@ beng_fork(struct pool *pool, const char *name,
           int (*fn)(void *ctx), void *fn_ctx,
           child_callback_t callback, void *ctx,
           GError **error_r);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
