@@ -3,7 +3,7 @@ cm4all-beng-proxy (4.8) unstable; urgency=low
   * ssl: fix choking decryption on large SSL packets
   * http_server: discard incoming data while waiting for drained response
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 17 Jul 2014 23:16:21 -0000
 
 cm4all-beng-proxy (4.7) unstable; urgency=low
 
