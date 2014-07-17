@@ -17,6 +17,7 @@ http_server_feed_body(struct http_server_connection *connection,
     assert(connection != nullptr);
     assert(connection->request.read_state == http_server_connection::Request::BODY);
     assert(connection->request.request->body != nullptr);
+    assert(!connection->response.pending_drained);
 
     /* checking request.request->body and not request.body_reader,
        because the dechunker might be attached to the
@@ -79,6 +80,7 @@ http_server_request_stream_available(struct istream *istream, bool partial)
 
     assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == http_server_connection::Request::BODY);
+    assert(!connection->response.pending_drained);
 
     return http_body_available(&connection->request.body_reader,
                                &connection->socket, partial);
@@ -94,6 +96,7 @@ http_server_request_stream_read(struct istream *istream)
     assert(istream_has_handler(http_body_istream(&connection->request.body_reader)));
     assert(connection->request.request->body != nullptr);
     assert(istream_has_handler(connection->request.request->body));
+    assert(!connection->response.pending_drained);
 
     if (connection->request.in_handler)
         /* avoid recursion */
@@ -116,6 +119,7 @@ http_server_request_stream_close(struct istream *istream)
 
     assert(connection->request.read_state == http_server_connection::Request::BODY);
     assert(!http_body_eof(&connection->request.body_reader));
+    assert(!connection->response.pending_drained);
 
     if (!filtered_socket_valid(&connection->socket) ||
         !filtered_socket_connected(&connection->socket)) {

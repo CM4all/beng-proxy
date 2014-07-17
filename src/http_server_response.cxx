@@ -24,6 +24,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     assert(filtered_socket_connected(&connection->socket) ||
            connection->request.request == nullptr);
     assert(connection->response.istream != nullptr);
+    assert(!connection->response.pending_drained);
 
     if (!filtered_socket_connected(&connection->socket))
         return 0;
@@ -59,6 +60,7 @@ http_server_response_stream_direct(istream_direct type, int fd, size_t max_lengt
     assert(filtered_socket_connected(&connection->socket) ||
            connection->request.request == nullptr);
     assert(connection->response.istream != nullptr);
+    assert(!connection->response.pending_drained);
 
     if (!filtered_socket_connected(&connection->socket))
         return 0;

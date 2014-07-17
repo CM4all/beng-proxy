@@ -33,6 +33,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
     assert(connection != NULL);
     assert(connection->request.read_state == http_server_connection::Request::START);
     assert(connection->request.request == NULL);
+    assert(!connection->response.pending_drained);
 
     if (unlikely(length < 5)) {
         http_server_error_message(connection, "malformed request line");
@@ -350,6 +351,8 @@ BufferedResult
 http_server_feed(struct http_server_connection *connection,
                   const void *data, size_t length)
 {
+    assert(!connection->response.pending_drained);
+
     switch (connection->request.read_state) {
         BufferedResult result;
 
@@ -407,6 +410,7 @@ http_server_try_request_direct(struct http_server_connection *connection,
 {
     assert(http_server_connection_valid(connection));
     assert(connection->request.read_state == http_server_connection::Request::BODY);
+    assert(!connection->response.pending_drained);
 
     if (!http_server_maybe_send_100_continue(connection))
         return DirectResult::CLOSED;

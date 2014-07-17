@@ -100,6 +100,7 @@ http_server_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
         (struct http_server_connection *)ctx;
 
     assert(connection->request.read_state != http_server_connection::Request::END);
+    assert(!connection->response.pending_drained);
 
     return http_server_try_request_direct(connection, fd, fd_type);
 }
@@ -109,6 +110,8 @@ http_server_socket_write(void *ctx)
 {
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;
+
+    assert(!connection->response.pending_drained);
 
     connection->response.want_write = false;
 
