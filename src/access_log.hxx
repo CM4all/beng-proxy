@@ -10,6 +10,7 @@
 #include <http/status.h>
 
 #include <stdint.h>
+#include <sys/types.h>
 
 struct http_server_request;
 
