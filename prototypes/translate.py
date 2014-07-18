@@ -137,6 +137,7 @@ class Translation(Protocol):
             response.packet(TRANSLATE_EASY_BASE)
             response.packet(TRANSLATE_INVERSE_REGEX, r'(\.(cls|php|py)|/)$')
             response.packet(TRANSLATE_PATH, easy_path)
+            response.packet(TRANSLATE_AUTO_GZIPPED)
             response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_DIRECTORY_INDEX, 'foo')
 

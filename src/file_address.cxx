@@ -17,7 +17,8 @@ file_address::file_address(const char *_path)
      content_type(nullptr),
      delegate(nullptr),
      document_root(nullptr),
-     expand_path(nullptr)
+     expand_path(nullptr),
+     auto_gzipped(false)
 {
     child_options.Init();
 }
@@ -29,7 +30,8 @@ file_address::file_address(struct pool *pool, const file_address &src)
      content_type(p_strdup_checked(pool, src.content_type)),
      delegate(p_strdup_checked(pool, src.delegate)),
      document_root(p_strdup_checked(pool, src.document_root)),
-     expand_path(p_strdup_checked(pool, src.expand_path)) {
+     expand_path(p_strdup_checked(pool, src.expand_path)),
+     auto_gzipped(src.auto_gzipped) {
     child_options.CopyFrom(pool, &src.child_options);
 }
 

@@ -20,6 +20,7 @@ struct file_address {
     const char *path;
     const char *deflated;
     const char *gzipped;
+
     const char *content_type;
     const char *delegate;
     const char *document_root;
@@ -34,6 +35,8 @@ struct file_address {
      * Options for the delegate process.
      */
     struct child_options child_options;
+
+    bool auto_gzipped;
 
     file_address(const char *path);
     file_address(struct pool *pool, const file_address &src);

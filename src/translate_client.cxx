@@ -1514,6 +1514,12 @@ translate_handle_packet(TranslateClient *client,
         }
 
         if (client->file_address != nullptr) {
+            if (client->file_address->auto_gzipped ||
+                client->file_address->gzipped != nullptr) {
+                translate_client_error(client, "misplaced GZIPPED packet");
+                return false;
+            }
+
             client->file_address->gzipped = payload;
             return true;
         } else if (client->nfs_address != nullptr) {
@@ -3054,6 +3060,28 @@ translate_handle_packet(TranslateClient *client,
         }
 
         return true;
+
+    case TRANSLATE_AUTO_GZIPPED:
+        if (payload_length > 0) {
+            translate_client_error(client, "malformed AUTO_GZIPPED packet");
+            return false;
+        }
+
+        if (client->file_address != nullptr) {
+            if (client->file_address->auto_gzipped ||
+                client->file_address->gzipped != nullptr) {
+                translate_client_error(client, "misplaced AUTO_GZIPPED packet");
+                return false;
+            }
+
+            client->file_address->auto_gzipped = true;
+            return true;
+        } else if (client->nfs_address != nullptr) {
+            /* ignore for now */
+        } else {
+            translate_client_error(client, "misplaced AUTO_GZIPPED packet");
+            return false;
+        }
     }
 
     error = g_error_new(translate_quark(), 0,

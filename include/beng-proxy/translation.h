@@ -554,6 +554,12 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_REQUEST_HEADER.
      */
     TRANSLATE_EXPAND_REQUEST_HEADER = 139,
+
+    /**
+     * Build the "gzipped" path automatically by appending ".gz" to
+     * the "regular" path.
+     */
+    TRANSLATE_AUTO_GZIPPED = 140,
 };
 
 struct beng_translation_header {

@@ -158,6 +158,29 @@ file_check_compressed(struct request &request2, const struct stat &st,
         file_dispatch_compressed(request2, st, body, encoding, path);
 }
 
+static bool
+file_check_auto_compressed(struct request &request2, const struct stat &st,
+                           struct istream &body, const char *encoding,
+                           const char *path, const char *suffix)
+{
+    assert(encoding != nullptr);
+    assert(path != nullptr);
+    assert(suffix != nullptr);
+    assert(*suffix == '.');
+    assert(suffix[1] != 0);
+
+    struct http_server_request &request = *request2.request;
+
+    if (!http_client_accepts_encoding(request.headers, encoding))
+        return false;
+
+    const char *compressed_path = p_strcat(request.pool, path, suffix,
+                                           nullptr);
+
+    return file_dispatch_compressed(request2, st, body, encoding,
+                                    compressed_path);
+}
+
 void
 file_callback(struct request &request2)
 {
@@ -225,6 +248,9 @@ file_callback(struct request &request2)
         !request_transformation_enabled(&request2) &&
         (file_check_compressed(request2, st, *body, "deflate",
                                address.deflated) ||
+         (address.auto_gzipped &&
+          file_check_auto_compressed(request2, st, *body, "gzip",
+                                     address.path, ".gz")) ||
          file_check_compressed(request2, st, *body, "gzip",
                                address.gzipped)))
         return;
