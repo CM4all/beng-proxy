@@ -1491,7 +1491,7 @@ translate_handle_packet(TranslateClient *client,
         }
 
     case TRANSLATE_DEFLATED:
-        if (payload == nullptr || has_null_byte(payload, payload_length)) {
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client, "malformed DEFLATED packet");
             return false;
         }
@@ -1508,7 +1508,7 @@ translate_handle_packet(TranslateClient *client,
         }
 
     case TRANSLATE_GZIPPED:
-        if (payload == nullptr || has_null_byte(payload, payload_length)) {
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client, "malformed GZIPPED packet");
             return false;
         }
@@ -1526,7 +1526,7 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_SITE:
         assert(client->resource_address != nullptr);
 
-        if (payload == nullptr || has_null_byte(payload, payload_length)) {
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client, "malformed SITE packet");
             return false;
         }
@@ -1543,7 +1543,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_CONTENT_TYPE:
-        if (payload == nullptr || has_null_byte(payload, payload_length)) {
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client, "malformed CONTENT_TYPE packet");
             return false;
         }
@@ -1598,7 +1598,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_REDIRECT:
-        if (payload == nullptr || has_null_byte(payload, payload_length)) {
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client, "malformed REDIRECT packet");
             return false;
         }
@@ -1622,7 +1622,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_BOUNCE:
-        if (payload == nullptr || has_null_byte(payload, payload_length)) {
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client, "malformed BOUNCE packet");
             return false;
         }
@@ -2226,7 +2226,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload == nullptr || has_null_byte(payload, payload_length)) {
+        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client, "malformed INVERSE_REGEX packet");
             return false;
         }
