@@ -16,6 +16,8 @@
 #include <assert.h>
 #endif
 
+#ifndef NDEBUG
+
 class PoolNotify {
     struct pool_notify_state state;
 
@@ -37,18 +39,28 @@ public:
     }
 };
 
+#endif
+
 class ScopePoolRef {
     struct pool &pool;
+#ifndef NDEBUG
     PoolNotify notify;
+#endif
 
 public:
     explicit ScopePoolRef(struct pool &_pool TRACE_ARGS_DECL)
-        :pool(_pool), notify(_pool) {
+        :pool(_pool)
+#ifndef NDEBUG
+        , notify(_pool)
+#endif
+    {
         pool_ref_fwd(&_pool);
     }
 
     ~ScopePoolRef() {
+#ifndef NDEBUG
         notify.Denotify();
+#endif
         pool_unref(&pool);
     }
 };
