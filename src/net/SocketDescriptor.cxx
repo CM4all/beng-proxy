@@ -128,7 +128,7 @@ SocketDescriptor::Connect(const SocketAddress address)
 {
     assert(IsDefined());
 
-    return connect(fd, address, address.GetSize());
+    return connect(fd, address, address.GetSize()) == 0;
 }
 
 int
