@@ -105,10 +105,7 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
     const TranslateResponse &tr = *request2.translate.response;
     const struct file_address &address = *request2.translate.address->u.file;
 
-    const char *accept_encoding = strmap_get(request.headers,
-                                             "accept-encoding");
-    if (accept_encoding == nullptr ||
-        !http_list_contains(accept_encoding, encoding))
+    if (!http_client_accepts_encoding(request.headers, encoding))
         /* encoding not supported by the client */
         return false;
 
