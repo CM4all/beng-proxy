@@ -116,7 +116,7 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
 
     struct stat st2;
     struct istream *compressed_body =
-        istream_file_stat_new(request.pool, path, &st2, NULL);
+        istream_file_stat_new(request.pool, path, &st2, nullptr);
     if (compressed_body == nullptr)
         return false;
 
