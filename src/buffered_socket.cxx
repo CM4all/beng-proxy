@@ -193,7 +193,6 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
 
     case BufferedResult::BLOCKING:
         s->expect_more = old_expect_more;
-        s->base.UnscheduleRead();
         return false;
 
     case BufferedResult::CLOSED:
@@ -229,6 +228,7 @@ buffered_socket_submit_direct(BufferedSocket *s)
     case DirectResult::BLOCKING:
         s->expect_more = old_expect_more;
         s->base.UnscheduleRead();
+        defer_event_cancel(&s->defer_read);
         return false;
 
     case DirectResult::EMPTY:
@@ -304,6 +304,7 @@ buffered_socket_fill_buffer(BufferedSocket *s)
     if (nbytes == -2) {
         /* input buffer is full */
         s->base.UnscheduleRead();
+        defer_event_cancel(&s->defer_read);
         return true;
     }
 
@@ -352,6 +353,7 @@ buffered_socket_try_read2(BufferedSocket *s)
                ready for consuming it - stop reading from the
                socket */
             s->base.UnscheduleRead();
+            defer_event_cancel(&s->defer_read);
             return true;
         }
 
@@ -445,6 +447,19 @@ static const struct socket_handler buffered_socket_handler = {
 };
 
 /*
+ * defer_event handler
+ *
+ */
+
+static void
+buffered_socket_defer_read(evutil_socket_t, short, void *ctx)
+{
+    BufferedSocket &s = *(BufferedSocket *)ctx;
+
+    s.Read(false);
+}
+
+/*
  * public API
  *
  */
@@ -466,6 +481,8 @@ BufferedSocket::Init(struct pool &_pool,
 
     read_timeout = _read_timeout;
     write_timeout = _write_timeout;
+
+    defer_event_init(&defer_read, buffered_socket_defer_read, this);
 
     handler = &_handler;
     handler_ctx = _ctx;
@@ -607,4 +624,25 @@ BufferedSocket::WriteFrom(int other_fd, enum istream_direct other_fd_type,
     }
 
     return nbytes;
+}
+
+void
+BufferedSocket::ScheduleReadTimeout(bool _expect_more,
+                                    const struct timeval *timeout)
+{
+    assert(!ended);
+    assert(!destroyed);
+
+    if (_expect_more)
+        expect_more = true;
+
+    read_timeout = timeout;
+
+    if (input != nullptr && !fifo_buffer_empty(input))
+        /* deferred call to Read() to deliver data from the buffer */
+        defer_event_add(&defer_read);
+    else
+        /* the input buffer is empty: wait for more data from the
+           socket */
+        base.ScheduleRead(timeout);
 }

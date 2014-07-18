@@ -24,6 +24,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     assert(connection->socket.IsConnected() ||
            connection->request.request == nullptr);
     assert(connection->response.istream != nullptr);
+    assert(!connection->response.pending_drained);
 
     if (!connection->socket.IsConnected())
         return 0;
@@ -59,6 +60,7 @@ http_server_response_stream_direct(istream_direct type, int fd, size_t max_lengt
     assert(connection->socket.IsConnected() ||
            connection->request.request == nullptr);
     assert(connection->response.istream != nullptr);
+    assert(!connection->response.pending_drained);
 
     if (!connection->socket.IsConnected())
         return 0;

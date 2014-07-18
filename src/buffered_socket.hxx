@@ -8,6 +8,7 @@
 #define BENG_PROXY_BUFFERED_SOCKET_HXX
 
 #include "socket_wrapper.hxx"
+#include "defer_event.h"
 
 #include <glib.h>
 
@@ -257,6 +258,11 @@ struct BufferedSocket {
 
     const struct timeval *read_timeout, *write_timeout;
 
+    /**
+     * Postpone ScheduleRead(), calls Read().
+     */
+    struct defer_event defer_read;
+
     const BufferedSocketHandler *handler;
     void *handler_ctx;
 
@@ -309,6 +315,7 @@ struct BufferedSocket {
         assert(!ended);
         assert(!destroyed);
 
+        defer_event_cancel(&defer_read);
         base.Close();
     }
 
@@ -321,6 +328,7 @@ struct BufferedSocket {
         assert(!ended);
         assert(!destroyed);
 
+        defer_event_cancel(&defer_read);
         base.Abandon();
     }
 
@@ -438,16 +446,7 @@ struct BufferedSocket {
     }
 
     void ScheduleReadTimeout(bool _expect_more,
-                             const struct timeval *timeout) {
-        assert(!ended);
-        assert(!destroyed);
-
-        if (_expect_more)
-            expect_more = true;
-
-        read_timeout = timeout;
-        base.ScheduleRead(timeout);
-    }
+                             const struct timeval *timeout);
 
     /**
      * Schedules reading on the socket with timeout disabled, to indicate

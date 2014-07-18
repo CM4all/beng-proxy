@@ -88,6 +88,13 @@ http_server_socket_data(const void *data, size_t length, void *ctx)
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;
 
+    if (connection->response.pending_drained) {
+        /* discard all incoming data while we're waiting for the
+           (filtered) response to be drained */
+        connection->socket.Consumed(length);
+        return BufferedResult::OK;
+    }
+
     return http_server_feed(connection, data, length);
 }
 
@@ -98,6 +105,7 @@ http_server_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
         (struct http_server_connection *)ctx;
 
     assert(connection->request.read_state != http_server_connection::Request::END);
+    assert(!connection->response.pending_drained);
 
     return http_server_try_request_direct(connection, fd, fd_type);
 }
@@ -107,6 +115,8 @@ http_server_socket_write(void *ctx)
 {
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;
+
+    assert(!connection->response.pending_drained);
 
     connection->response.want_write = false;
 
