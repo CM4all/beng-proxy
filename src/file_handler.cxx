@@ -105,10 +105,6 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
     const TranslateResponse &tr = *request2.translate.response;
     const struct file_address &address = *request2.translate.address->u.file;
 
-    if (!http_client_accepts_encoding(request.headers, encoding))
-        /* encoding not supported by the client */
-        return false;
-
     /* open compressed file */
 
     struct stat st2;
@@ -148,6 +144,18 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
     response_dispatch(&request2, status, headers, compressed_body);
     return true;
+}
+
+static bool
+file_check_compressed(struct request &request2, const struct stat &st,
+                      struct istream &body, const char *encoding,
+                      const char *path)
+{
+    struct http_server_request &request = *request2.request;
+
+    return path != nullptr &&
+        http_client_accepts_encoding(request.headers, encoding) &&
+        file_dispatch_compressed(request2, st, body, encoding, path);
 }
 
 void
@@ -215,12 +223,10 @@ file_callback(struct request &request2)
 
     if (file_request.range == RANGE_NONE &&
         !request_transformation_enabled(&request2) &&
-        ((address.deflated != nullptr &&
-          file_dispatch_compressed(request2, st, *body, "deflate",
-                                   address.deflated)) ||
-         (address.gzipped != nullptr &&
-          file_dispatch_compressed(request2, st, *body, "gzip",
-                                   address.gzipped))))
+        (file_check_compressed(request2, st, *body, "deflate",
+                               address.deflated) ||
+         file_check_compressed(request2, st, *body, "gzip",
+                               address.gzipped)))
         return;
 
     /* build the response */
