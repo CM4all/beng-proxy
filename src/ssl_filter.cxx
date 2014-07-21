@@ -278,11 +278,10 @@ ssl_filter_thread(void *ctx)
 
     if (!ssl->closing) {
         X509 *cert = SSL_get_peer_certificate(ssl->ssl);
-        if (cert != NULL)
+        if (cert != NULL) {
             ssl->peer_subject = format_subject_name(cert);
-        if (cert != NULL)
-            ssl->peer_issuer_subject =
-                format_issuer_subject_name(cert);
+            ssl->peer_issuer_subject = format_issuer_subject_name(cert);
+        }
     }
 
     struct pollfd pfds[2] = {
