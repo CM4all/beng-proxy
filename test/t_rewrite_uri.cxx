@@ -277,7 +277,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.class_name = "1";
     widget.parent = &container;
     strref_set_c(&value, "1");
-    widget_set_id(&widget, pool, &value);
+    widget_set_id(&widget, &value);
 
     strref_set_c(&value, "123");
 
@@ -418,7 +418,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.class_name = "2";
     widget.parent = &container;
     strref_set_c(&value, "1");
-    widget_set_id(&widget, pool, &value);
+    widget_set_id(&widget, &value);
 
     assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_DIRECT,
                          "http://widget-server/@/foo");
@@ -457,7 +457,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     widget.class_name = "3";
     widget.parent = &container;
     strref_set_c(&value, "id3");
-    widget_set_id(&widget, pool, &value);
+    widget_set_id(&widget, &value);
 
     assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/123");

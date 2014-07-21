@@ -83,9 +83,9 @@ quote_prefix(struct pool *pool, const char *p)
 }
 
 void
-widget_set_id(struct widget *widget, struct pool *pool,
-              const struct strref *id)
+widget_set_id(struct widget *widget, const struct strref *id)
 {
+    struct pool *const pool = widget->pool;
     const char *p;
 
     assert(id != nullptr);
@@ -108,18 +108,17 @@ widget_set_id(struct widget *widget, struct pool *pool,
 }
 
 void
-widget_set_class_name(struct widget *widget, struct pool *pool,
-                      const struct strref *class_name)
+widget_set_class_name(struct widget *widget, const struct strref *class_name)
 {
     assert(widget != nullptr);
     assert(widget->parent != nullptr);
     assert(widget->class_name == nullptr);
     assert(widget->cls == nullptr);
-    assert(pool != nullptr);
     assert(class_name != nullptr);
 
-    widget->class_name = strref_dup(pool, class_name);
-    widget->lazy.quoted_class_name = quote_prefix(pool, widget->class_name);
+    widget->class_name = strref_dup(widget->pool, class_name);
+    widget->lazy.quoted_class_name =
+        quote_prefix(widget->pool, widget->class_name);
 }
 
 bool

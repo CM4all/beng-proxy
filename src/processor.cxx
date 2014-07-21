@@ -862,15 +862,14 @@ transform_uri_attribute(struct processor *processor,
 
 static void
 parser_widget_attr_finished(struct widget *widget,
-                            struct pool *pool,
                             const struct strref *name,
                             const struct strref *value)
 {
     if (strref_cmp_literal(name, "type") == 0) {
-        widget_set_class_name(widget, pool, value);
+        widget_set_class_name(widget, value);
     } else if (strref_cmp_literal(name, "id") == 0) {
         if (!strref_is_empty(value))
-            widget_set_id(widget, pool, value);
+            widget_set_id(widget, value);
     } else if (strref_cmp_literal(name, "display") == 0) {
         if (strref_cmp_literal(value, "inline") == 0)
             widget->display = widget::WIDGET_DISPLAY_INLINE;
@@ -1158,7 +1157,6 @@ processor_parser_attr_finished(const struct parser_attr *attr, void *ctx)
         assert(processor->widget.widget != nullptr);
 
         parser_widget_attr_finished(processor->widget.widget,
-                                    processor->widget.pool,
                                     &attr->name, &attr->value);
         break;
 

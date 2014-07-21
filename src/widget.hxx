@@ -217,11 +217,10 @@ void
 widget_init_root(struct widget *widget, struct pool *pool, const char *id);
 
 void
-widget_set_id(struct widget *widget, struct pool *pool, const struct strref *id);
+widget_set_id(struct widget *widget, const struct strref *id);
 
 void
-widget_set_class_name(struct widget *widget, struct pool *pool,
-                      const struct strref *class_name);
+widget_set_class_name(struct widget *widget, const struct strref *class_name);
 
 gcc_pure
 static inline struct widget *
