@@ -49,7 +49,7 @@ struct WidgetView {
      */
     struct header_forward_settings response_header_forward;
 
-    void Init();
+    void Init(const char *_name);
 
     /**
      * Copy the specified address into the view, if it does not have an

@@ -615,8 +615,7 @@ add_view(TranslateClient *client, const char *name, GError **error_r)
         return false;
 
     auto view = NewFromPool<WidgetView>(*client->pool);
-    view->Init();
-    view->name = name;
+    view->Init(name);
     view->request_header_forward = client->response.request_header_forward;
     view->response_header_forward = client->response.response_header_forward;
 
@@ -1338,7 +1337,7 @@ translate_handle_packet(TranslateClient *client,
         client->address_list = nullptr;
 
         client->response.views = NewFromPool<WidgetView>(*client->pool);
-        client->response.views->Init();
+        client->response.views->Init(nullptr);
         client->view = nullptr;
         client->widget_view_tail = &client->response.views->next;
         client->transformation = nullptr;

@@ -11,10 +11,10 @@
 #include <string.h>
 
 void
-WidgetView::Init()
+WidgetView::Init(const char *_name)
 {
     next = nullptr;
-    name = nullptr;
+    name = _name;
     address.type = RESOURCE_ADDRESS_NONE;
     filter_4xx = false;
     inherited = false;
@@ -104,9 +104,8 @@ static WidgetView *
 widget_view_dup(struct pool *pool, const WidgetView *src)
 {
     auto dest = NewFromPool<WidgetView>(*pool);
-    dest->Init();
+    dest->Init(p_strdup_checked(pool, src->name));
 
-    dest->name = src->name != nullptr ? p_strdup(pool, src->name) : nullptr;
     resource_address_copy(*pool, &dest->address, &src->address);
     dest->filter_4xx = src->filter_4xx;
     dest->inherited = src->inherited;

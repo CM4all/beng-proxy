@@ -72,7 +72,7 @@ tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
         response->address.type = RESOURCE_ADDRESS_HTTP;
         response->address.u.http = http_address_parse(pool, "http://foo/", NULL);
         response->views = NewFromPool<WidgetView>(*pool);
-        response->views->Init();
+        response->views->Init(nullptr);
         response->views->address = response->address;
         handler->response(response, ctx);
     } else if (strcmp(request->widget_type, "block") == 0) {

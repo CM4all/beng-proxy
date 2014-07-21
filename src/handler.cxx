@@ -743,7 +743,7 @@ serve_document_root_file(request &request2,
         transformation *transformation =
             NewFromPool<struct transformation>(*request.pool);
         auto view = NewFromPool<WidgetView>(*request.pool);
-        view->Init();
+        view->Init(nullptr);
 
         transformation->next = nullptr;
         transformation->type = transformation::TRANSFORMATION_PROCESS;
@@ -753,7 +753,7 @@ serve_document_root_file(request &request2,
         tr->views = view;
     } else {
         auto view = NewFromPool<WidgetView>(*request.pool);
-        view->Init();
+        view->Init(nullptr);
 
         tr->views = view;
         tr->transparent = true;
