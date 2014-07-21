@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WIDGET_HXX
-#define BENG_PROXY_WIDGET_HXX
+#ifndef BENG_PROXY_PROXY_WIDGET_HXX
+#define BENG_PROXY_PROXY_WIDGET_HXX
 
 #include <http/status.h>
 

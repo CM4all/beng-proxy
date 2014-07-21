@@ -11,7 +11,7 @@
 #include "header_writer.hxx"
 #include "header_parser.hxx"
 #include "header_forward.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_dump.hxx"
 #include "proxy_widget.hxx"

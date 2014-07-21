@@ -8,7 +8,7 @@
 #include "widget_http.hxx"
 #include "widget-lookup.h"
 #include "widget_resolver.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "frame.hxx"
 #include "request.hxx"
 #include "header_writer.hxx"

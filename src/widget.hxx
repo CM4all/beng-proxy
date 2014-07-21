@@ -4,16 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_WIDGET_H
-#define __BENG_WIDGET_H
+#ifndef BENG_PROXY_WIDGET_HXX
+#define BENG_PROXY_WIDGET_HXX
 
 #include "strref.h"
 
 #include <inline/list.h>
 #include <inline/compiler.h>
 #include <http/method.h>
-
-#include <stdbool.h>
 
 struct pool;
 struct strmap;
@@ -33,7 +31,7 @@ struct widget {
     const char *class_name;
 
     /**
-     * The widget class.  May be NULL if the #class_name hasn't been
+     * The widget class.  May be nullptr if the #class_name hasn't been
      * looked up yet.
      */
     const struct widget_class *cls;
@@ -67,7 +65,7 @@ struct widget {
 
     /**
      * The view that was specified in the template.  This attribute is
-     * undefined before the widget resolver finishes.  Being NULL is a
+     * undefined before the widget resolver finishes.  Being nullptr is a
      * fatal error, and means that no operation is possible on this
      * widget.
      */
@@ -127,7 +125,7 @@ struct widget {
     struct {
         /**
          * A reference to the focused widget relative to this one.
-         * NULL when the focused widget is not an (indirect) child of
+         * nullptr when the focused widget is not an (indirect) child of
          * this one.
          */
         const struct widget_ref *focus_ref;
@@ -200,7 +198,7 @@ struct widget {
     } lazy;
 };
 
-/** a reference to a widget inside a widget.  NULL means the current
+/** a reference to a widget inside a widget.  nullptr means the current
     (root) widget is being referenced */
 struct widget_ref {
     const struct widget_ref *next;
@@ -208,12 +206,8 @@ struct widget_ref {
     const char *id;
 };
 
-#define WIDGET_REF_SEPARATOR ':'
+static constexpr char WIDGET_REF_SEPARATOR = ':';
 #define WIDGET_REF_SEPARATOR_S ":"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 void
 widget_init(struct widget *widget, struct pool *pool,
@@ -233,7 +227,7 @@ gcc_pure
 static inline struct widget *
 widget_root(struct widget *widget)
 {
-    while (widget->parent != NULL)
+    while (widget->parent != nullptr)
         widget = widget->parent;
     return widget;
 }
@@ -263,7 +257,7 @@ widget_get_quoted_class_name(const struct widget *widget)
 static inline const char *
 widget_get_path_info(const struct widget *widget)
 {
-    return widget->from_request.path_info != NULL
+    return widget->from_request.path_info != nullptr
         ? widget->from_request.path_info
         : widget->path_info;
 }
@@ -271,7 +265,7 @@ widget_get_path_info(const struct widget *widget)
 static inline bool
 widget_has_default_view(const struct widget *widget)
 {
-    return widget->view != NULL;
+    return widget->view != nullptr;
 }
 
 /**
@@ -360,7 +354,7 @@ gcc_pure
 static inline const struct resource_address *
 widget_address(struct widget *widget)
 {
-    if (widget->lazy.address == NULL)
+    if (widget->lazy.address == nullptr)
         widget->lazy.address = widget_determine_address(widget, true);
 
     return widget->lazy.address;
@@ -370,7 +364,7 @@ gcc_pure
 static inline const struct resource_address *
 widget_stateless_address(struct widget *widget)
 {
-    if (widget->lazy.stateless_address == NULL)
+    if (widget->lazy.stateless_address == nullptr)
         widget->lazy.stateless_address =
             widget_determine_address(widget, false);
 
@@ -424,9 +418,5 @@ widget_check_recursion(const struct widget *widget);
  */
 void
 widget_cancel(struct widget *widget);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

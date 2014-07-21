@@ -6,7 +6,7 @@
 
 #include "widget_request.hxx"
 #include "widget-quark.h"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "session.hxx"
 #include "penv.hxx"

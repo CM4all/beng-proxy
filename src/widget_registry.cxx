@@ -8,7 +8,7 @@
 #include "widget_registry.hxx"
 #include "widget_class.hxx"
 #include "processor.h"
-#include "widget.h"
+#include "widget.hxx"
 #include "tcache.hxx"
 #include "translate_client.hxx"
 #include "translate_request.hxx"

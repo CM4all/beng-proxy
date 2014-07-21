@@ -247,7 +247,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/uri-edit.h \
 	src/uri-extract.h \
 	src/uri-relative.h \
-	src/widget.h \
+	src/widget.hxx \
 	$(STOPWATCH_SRC) \
 	src/clock.c src/clock.h \
 	src/cleanup_timer.c src/cleanup_timer.h \
@@ -285,7 +285,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget_root.cxx \
 	src/widget_class.cxx \
 	src/widget_view.cxx src/widget_view.hxx \
-	src/widget-ref.c \
+	src/widget_ref.cxx \
 	src/widget_session.cxx \
 	src/widget_uri.cxx \
 	src/widget-quark.h \
@@ -1054,7 +1054,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget_request.cxx src/widget_approval.cxx \
-	src/widget.cxx src/widget_init.cxx src/widget-ref.c src/widget_uri.cxx src/args.cxx \
+	src/widget.cxx src/widget_init.cxx src/widget_ref.cxx src/widget_uri.cxx src/args.cxx \
 	src/widget_session.cxx src/xml_parser.cxx src/widget_class.cxx \
 	src/widget_view.cxx \
 	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
@@ -1515,7 +1515,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
-	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
+	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
 	src/uri_base.cxx src/uri-relative.c src/uri-edit.c src/uri-extract.c \
 	src/uri_escape.cxx \
 	src/strmap.cxx src/hashmap.cxx \
@@ -1549,7 +1549,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
-	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget-ref.c \
+	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
 	src/exec.cxx \
 	src/uri-relative.c src/uri-edit.c src/uri_base.cxx \
 	src/uri_escape.cxx \

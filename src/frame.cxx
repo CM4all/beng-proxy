@@ -8,7 +8,7 @@
 #include "widget_http.hxx"
 #include "widget-quark.h"
 #include "penv.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_approval.hxx"
 #include "widget_resolver.hxx"

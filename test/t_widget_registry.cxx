@@ -7,7 +7,7 @@
 #include "translate_client.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "transformation.hxx"
 #include "pool.hxx"

@@ -1,7 +1,7 @@
 #include "rewrite_uri.hxx"
 #include "http_address.hxx"
 #include "session.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_resolver.hxx"
 #include "widget_request.hxx"

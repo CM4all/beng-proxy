@@ -6,7 +6,7 @@
 
 #include "widget_approval.hxx"
 #include "widget_class.hxx"
-#include "widget.h"
+#include "widget.hxx"
 
 bool
 widget_init_approval(struct widget *widget, bool self_container)

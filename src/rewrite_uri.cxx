@@ -6,7 +6,7 @@
 
 #include "rewrite_uri.hxx"
 #include "penv.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_request.hxx"
 #include "widget_resolver.hxx"
 #include "widget_class.hxx"

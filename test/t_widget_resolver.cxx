@@ -1,7 +1,7 @@
 #include "widget_resolver.hxx"
 #include "widget_registry.hxx"
 #include "async.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"

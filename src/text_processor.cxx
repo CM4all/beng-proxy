@@ -7,7 +7,7 @@
 #include "text_processor.hxx"
 #include "strmap.hxx"
 #include "istream.h"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "penv.hxx"
 

@@ -9,7 +9,7 @@
 #include "css_util.hxx"
 #include "penv.hxx"
 #include "strmap.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget-lookup.h"
 #include "growing_buffer.hxx"
 #include "tpool.h"

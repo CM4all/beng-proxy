@@ -2,7 +2,7 @@
 #include "penv.hxx"
 #include "uri-parser.h"
 #include "inline_widget.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "rewrite_uri.hxx"
 #include "istream_file.hxx"

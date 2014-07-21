@@ -1,4 +1,4 @@
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_http.hxx"
 #include "widget-lookup.h"

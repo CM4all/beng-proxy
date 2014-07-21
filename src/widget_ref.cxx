@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget.h"
-#include "pool.h"
+#include "widget.hxx"
+#include "pool.hxx"
 
 #include <string.h>
 
@@ -13,23 +13,22 @@ const struct widget_ref *
 widget_ref_parse(struct pool *pool, const char *_p)
 {
     char *p, *slash;
-    const struct widget_ref *root = NULL, **wr_p = &root;
-    struct widget_ref *wr;
+    const struct widget_ref *root = nullptr, **wr_p = &root;
 
-    if (_p == NULL || *_p == 0)
-        return NULL;
+    if (_p == nullptr || *_p == 0)
+        return nullptr;
 
     p = p_strdup(pool, _p);
 
-    while ((slash = strchr(p, WIDGET_REF_SEPARATOR)) != NULL) {
+    while ((slash = strchr(p, WIDGET_REF_SEPARATOR)) != nullptr) {
         if (slash == p) {
             ++p;
             continue;
         }
 
         *slash = 0;
-        wr = p_malloc(pool, sizeof(*wr));
-        wr->next = NULL;
+        auto wr = NewFromPool<struct widget_ref>(*pool);
+        wr->next = nullptr;
         wr->id = p;
 
         *wr_p = wr;
@@ -39,8 +38,8 @@ widget_ref_parse(struct pool *pool, const char *_p)
     }
 
     if (*p != 0) {
-        wr = p_malloc(pool, sizeof(*wr));
-        wr->next = NULL;
+        auto wr = NewFromPool<struct widget_ref>(*pool);
+        wr->next = nullptr;
         wr->id = p;
         *wr_p = wr;
     }
@@ -52,18 +51,18 @@ bool
 widget_ref_includes(const struct widget_ref *outer,
                     const struct widget_ref *inner)
 {
-    assert(inner != NULL);
+    assert(inner != nullptr);
 
     while (true) {
         if (strcmp(outer->id, inner->id) != 0)
             return false;
 
         outer = outer->next;
-        if (outer == NULL)
+        if (outer == nullptr)
             return true;
 
         inner = inner->next;
-        if (inner == NULL)
+        if (inner == nullptr)
             return false;
     }
 }

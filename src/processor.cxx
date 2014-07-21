@@ -12,7 +12,7 @@
 #include "xml_parser.hxx"
 #include "uri_escape.hxx"
 #include "uri-extract.h"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_approval.hxx"
 #include "widget_request.hxx"
 #include "widget-lookup.h"

@@ -5,7 +5,7 @@
  */
 
 #include "widget_dump.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "istream-notify.h"
 
 #include <daemon/log.h>

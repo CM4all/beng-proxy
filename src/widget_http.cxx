@@ -11,7 +11,7 @@
 #include "css_processor.h"
 #include "text_processor.hxx"
 #include "penv.hxx"
-#include "widget.h"
+#include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_request.hxx"
 #include "widget-lookup.h"
