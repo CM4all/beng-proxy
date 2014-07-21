@@ -16,8 +16,8 @@
 
 struct pool;
 
-struct transformation {
-    struct transformation *next;
+struct Transformation {
+    Transformation *next;
 
     enum {
         TRANSFORMATION_PROCESS,
@@ -70,10 +70,10 @@ struct transformation {
     bool IsChainExpandable() const;
 
     gcc_malloc
-    struct transformation *Dup(struct pool *pool) const;
+    Transformation *Dup(struct pool *pool) const;
 
     gcc_malloc
-    struct transformation *DupChain(struct pool *pool) const;
+    Transformation *DupChain(struct pool *pool) const;
 
     /**
      * Expand the strings in this transformation (not following the linked

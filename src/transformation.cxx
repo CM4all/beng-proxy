@@ -11,7 +11,7 @@
 #include <string.h>
 
 bool
-transformation::HasProcessor() const
+Transformation::HasProcessor() const
 {
     for (auto t = this; t != nullptr; t = t->next)
         if (t->type == TRANSFORMATION_PROCESS)
@@ -21,7 +21,7 @@ transformation::HasProcessor() const
 }
 
 bool
-transformation::IsContainer() const
+Transformation::IsContainer() const
 {
     for (auto t = this; t != nullptr; t = t->next)
         if (t->type == TRANSFORMATION_PROCESS)
@@ -30,10 +30,10 @@ transformation::IsContainer() const
     return false;
 }
 
-struct transformation *
-transformation::Dup(struct pool *pool) const
+Transformation *
+Transformation::Dup(struct pool *pool) const
 {
-    struct transformation *dest = NewFromPool<struct transformation>(*pool);
+    Transformation *dest = NewFromPool<Transformation>(*pool);
 
     dest->type = type;
     switch (dest->type) {
@@ -57,13 +57,13 @@ transformation::Dup(struct pool *pool) const
     return dest;
 }
 
-struct transformation *
-transformation::DupChain(struct pool *pool) const
+Transformation *
+Transformation::DupChain(struct pool *pool) const
 {
-    struct transformation *dest = nullptr, **tail_p = &dest;
+    Transformation *dest = nullptr, **tail_p = &dest;
 
     for (auto src = this; src != nullptr; src = src->next) {
-        struct transformation *p = src->Dup(pool);
+        Transformation *p = src->Dup(pool);
         *tail_p = p;
         tail_p = &p->next;
     }
@@ -72,7 +72,7 @@ transformation::DupChain(struct pool *pool) const
 }
 
 bool
-transformation::IsChainExpandable() const
+Transformation::IsChainExpandable() const
 {
     for (auto t = this; t != nullptr; t = t->next)
         if (t->IsExpandable())
@@ -82,7 +82,7 @@ transformation::IsChainExpandable() const
 }
 
 bool
-transformation::Expand(struct pool *pool, const GMatchInfo *match_info,
+Transformation::Expand(struct pool *pool, const GMatchInfo *match_info,
                        GError **error_r)
 {
     assert(pool != nullptr);
@@ -103,7 +103,7 @@ transformation::Expand(struct pool *pool, const GMatchInfo *match_info,
 }
 
 bool
-transformation::ExpandChain(struct pool *pool, const GMatchInfo *match_info,
+Transformation::ExpandChain(struct pool *pool, const GMatchInfo *match_info,
                             GError **error_r)
 {
     assert(pool != nullptr);

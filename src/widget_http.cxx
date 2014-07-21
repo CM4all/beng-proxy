@@ -52,7 +52,7 @@ struct embed {
     /**
      * the next transformation to be applied to the widget response
      */
-    const struct transformation *transformation;
+    const Transformation *transformation;
 
     /**
      * An identifier for the source stream of the current
@@ -364,7 +364,7 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
 static void
 widget_response_transform(struct embed *embed, http_status_t status,
                           struct strmap *headers, struct istream *body,
-                          const struct transformation *transformation)
+                          const Transformation *transformation)
 {
     const char *p;
 
@@ -387,7 +387,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
     }
 
     switch (transformation->type) {
-    case transformation::TRANSFORMATION_PROCESS:
+    case Transformation::TRANSFORMATION_PROCESS:
         /* processor responses cannot be cached */
         embed->resource_tag = nullptr;
 
@@ -395,7 +395,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
                                 transformation->u.processor.options);
         break;
 
-    case transformation::TRANSFORMATION_PROCESS_CSS:
+    case Transformation::TRANSFORMATION_PROCESS_CSS:
         /* processor responses cannot be cached */
         embed->resource_tag = nullptr;
 
@@ -403,14 +403,14 @@ widget_response_transform(struct embed *embed, http_status_t status,
                                     transformation->u.css_processor.options);
         break;
 
-    case transformation::TRANSFORMATION_PROCESS_TEXT:
+    case Transformation::TRANSFORMATION_PROCESS_TEXT:
         /* processor responses cannot be cached */
         embed->resource_tag = nullptr;
 
         widget_response_process_text(embed, status, headers, body);
         break;
 
-    case transformation::TRANSFORMATION_FILTER:
+    case Transformation::TRANSFORMATION_FILTER:
         widget_response_apply_filter(embed, status, headers, body,
                                      &transformation->u.filter);
         break;
@@ -438,7 +438,7 @@ static void
 widget_response_dispatch(struct embed *embed, http_status_t status,
                          struct strmap *headers, struct istream *body)
 {
-    const struct transformation *transformation = embed->transformation;
+    const Transformation *transformation = embed->transformation;
 
     if (transformation != nullptr &&
         widget_transformation_enabled(embed->widget, status)) {

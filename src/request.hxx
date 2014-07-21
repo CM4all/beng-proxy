@@ -62,7 +62,7 @@ struct request {
 
         const struct resource_address *address;
 
-        const struct transformation *transformation;
+        const Transformation *transformation;
 
         /**
          * A pointer to the "previous" translate response, non-nullptr
@@ -200,7 +200,7 @@ request_processor_first(const struct request *request)
 {
     return request_transformation_enabled(request) &&
         request->translate.response->views->transformation->type
-        == transformation::TRANSFORMATION_PROCESS;
+        == Transformation::TRANSFORMATION_PROCESS;
 }
 
 bool

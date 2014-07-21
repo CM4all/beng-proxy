@@ -118,8 +118,8 @@ resource_address_equals(const struct resource_address *a,
 }
 
 static bool
-transformation_equals(const struct transformation *a,
-                      const struct transformation *b)
+transformation_equals(const Transformation *a,
+                      const Transformation *b)
 {
     assert(a != nullptr);
     assert(b != nullptr);
@@ -128,16 +128,16 @@ transformation_equals(const struct transformation *a,
         return false;
 
     switch (a->type) {
-    case transformation::TRANSFORMATION_PROCESS:
+    case Transformation::TRANSFORMATION_PROCESS:
         return a->u.processor.options == b->u.processor.options;
 
-    case transformation::TRANSFORMATION_PROCESS_CSS:
+    case Transformation::TRANSFORMATION_PROCESS_CSS:
         return a->u.css_processor.options == b->u.css_processor.options;
 
-    case transformation::TRANSFORMATION_PROCESS_TEXT:
+    case Transformation::TRANSFORMATION_PROCESS_TEXT:
         return true;
 
-    case transformation::TRANSFORMATION_FILTER:
+    case Transformation::TRANSFORMATION_FILTER:
         return resource_address_equals(&a->u.filter, &b->u.filter);
     }
 
@@ -147,8 +147,8 @@ transformation_equals(const struct transformation *a,
 }
 
 static bool
-transformation_chain_equals(const struct transformation *a,
-                  const struct transformation *b)
+transformation_chain_equals(const Transformation *a,
+                  const Transformation *b)
 {
     while (a != nullptr && b != nullptr) {
         if (!transformation_equals(a, b))
@@ -1597,8 +1597,8 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         .path = "/usr/lib/cgi-bin/image-processor.cgi",
         .expand_path_info = "/\\2",
     };
-    static struct transformation transformation1n = {
-        .type = transformation::TRANSFORMATION_FILTER,
+    static Transformation transformation1n = {
+        .type = Transformation::TRANSFORMATION_FILTER,
         .u.filter = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
@@ -1630,8 +1630,8 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         .path_info = "/b=c",
         .expand_path_info = "/\\2",
     };
-    static struct transformation transformation1e = {
-        .type = transformation::TRANSFORMATION_FILTER,
+    static Transformation transformation1e = {
+        .type = Transformation::TRANSFORMATION_FILTER,
         .u.filter = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
@@ -1673,8 +1673,8 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         .path_info = "/d=e",
         .expand_path_info = "/\\2",
     };
-    static struct transformation transformation2 = {
-        .type = transformation::TRANSFORMATION_FILTER,
+    static Transformation transformation2 = {
+        .type = Transformation::TRANSFORMATION_FILTER,
         .u.filter = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {

@@ -78,27 +78,26 @@ my_translate_response(TranslateResponse *response, void *ctx)
     print_resource_address(&response->address);
 
     for (view = response->views; view != nullptr; view = view->next) {
-        const struct transformation *transformation;
-
         if (view->name != nullptr)
             printf("view=%s\n", view->name);
 
-        for (transformation = view->transformation; transformation != nullptr;
+        for (const Transformation *transformation = view->transformation;
+             transformation != nullptr;
              transformation = transformation->next) {
             switch (transformation->type) {
-            case transformation::TRANSFORMATION_PROCESS:
+            case Transformation::TRANSFORMATION_PROCESS:
                 printf("process\n");
                 break;
 
-            case transformation::TRANSFORMATION_PROCESS_CSS:
+            case Transformation::TRANSFORMATION_PROCESS_CSS:
                 printf("process_css\n");
                 break;
 
-            case transformation::TRANSFORMATION_PROCESS_TEXT:
+            case Transformation::TRANSFORMATION_PROCESS_TEXT:
                 printf("process_text\n");
                 break;
 
-            case transformation::TRANSFORMATION_FILTER:
+            case Transformation::TRANSFORMATION_FILTER:
                 printf("filter\n");
                 print_resource_address(&transformation->u.filter);
                 break;

@@ -14,6 +14,7 @@
 #include <inline/compiler.h>
 
 struct pool;
+struct Transformation;
 
 struct WidgetView {
     WidgetView *next;
@@ -37,7 +38,7 @@ struct WidgetView {
      */
     bool inherited;
 
-    struct transformation *transformation;
+    Transformation *transformation;
 
     /**
      * Which request headers are forwarded?

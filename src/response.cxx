@@ -108,7 +108,7 @@ response_invoke_processor(request &request2,
                           http_status_t status,
                           struct strmap *response_headers,
                           struct istream *body,
-                          const struct transformation *transformation)
+                          const Transformation *transformation)
 {
     struct http_server_request *request = request2.request;
     const char *uri;
@@ -267,7 +267,7 @@ response_invoke_css_processor(request &request2,
                               http_status_t status,
                               struct strmap *response_headers,
                               struct istream *body,
-                              const struct transformation *transformation)
+                              const Transformation *transformation)
 {
     struct http_server_request *request = request2.request;
 
@@ -599,19 +599,19 @@ static void
 response_apply_transformation(request &request2,
                               http_status_t status, struct strmap *headers,
                               struct istream *body,
-                              const struct transformation *transformation)
+                              const Transformation *transformation)
 {
     assert(transformation != nullptr);
 
     request2.transformed = true;
 
     switch (transformation->type) {
-    case transformation::TRANSFORMATION_FILTER:
+    case Transformation::TRANSFORMATION_FILTER:
         response_apply_filter(request2, status, headers, body,
                               &transformation->u.filter);
         break;
 
-    case transformation::TRANSFORMATION_PROCESS:
+    case Transformation::TRANSFORMATION_PROCESS:
         /* processor responses cannot be cached */
         request2.resource_tag = nullptr;
 
@@ -619,14 +619,14 @@ response_apply_transformation(request &request2,
                                   transformation);
         break;
 
-    case transformation::TRANSFORMATION_PROCESS_CSS:
+    case Transformation::TRANSFORMATION_PROCESS_CSS:
         /* processor responses cannot be cached */
         request2.resource_tag = nullptr;
 
         response_invoke_css_processor(request2, status, headers, body,
                                       transformation);
 
-    case transformation::TRANSFORMATION_PROCESS_TEXT:
+    case Transformation::TRANSFORMATION_PROCESS_TEXT:
         /* processor responses cannot be cached */
         request2.resource_tag = nullptr;
 
@@ -666,7 +666,7 @@ response_dispatch(struct request *request2,
 
     /* if HTTP status code is not successful: don't apply
        transformation on the error document */
-    const struct transformation *transformation
+    const Transformation *transformation
         = request2->translate.transformation;
     if (transformation != nullptr &&
         filter_enabled(request2->translate.response, status)) {
@@ -750,7 +750,7 @@ response_response(http_status_t status, struct strmap *headers,
 
     if (request2.translate.transformation != nullptr &&
         http_status_is_success(status)) {
-        const struct transformation *transformation
+        const Transformation *transformation
             = request2.translate.transformation;
         request2.translate.transformation = transformation->next;
 
