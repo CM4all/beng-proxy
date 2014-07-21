@@ -167,8 +167,6 @@ first_sink_send_error(int error, void *ctx)
 {
     struct lb_connection *connection = (struct lb_connection *)ctx;
 
-    connection->tcp.peers[0].sink = NULL;
-
     lb_connection_log_errno(3, connection, "Send failed", error);
     lb_connection_close(connection);
     return false;
@@ -210,8 +208,6 @@ static bool
 second_sink_send_error(int error, void *ctx)
 {
     struct lb_connection *connection = (struct lb_connection *)ctx;
-
-    connection->tcp.peers[1].sink = NULL;
 
     lb_connection_log_errno(3, connection, "Send failed", error);
     lb_connection_close(connection);
