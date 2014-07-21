@@ -115,14 +115,14 @@ widget::SetClassName(const struct strref &_class_name)
 bool
 widget_is_container_by_default(const struct widget *widget)
 {
-    const struct widget_view *view = widget_get_default_view(widget);
+    const WidgetView *view = widget_get_default_view(widget);
     return view != nullptr && view->IsContainer();
 }
 
 bool
 widget_has_processor(const struct widget *widget)
 {
-    const struct widget_view *view = widget_get_view(widget);
+    const WidgetView *view = widget_get_view(widget);
     assert(view != nullptr);
     return view->HasProcessor();
 }
@@ -130,7 +130,7 @@ widget_has_processor(const struct widget *widget)
 bool
 widget_is_container(const struct widget *widget)
 {
-    const struct widget_view *view = widget_get_transformation_view(widget);
+    const WidgetView *view = widget_get_transformation_view(widget);
     return view != nullptr && view->IsContainer();
 }
 

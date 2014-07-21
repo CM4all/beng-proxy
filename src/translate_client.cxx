@@ -133,10 +133,10 @@ struct TranslateClient {
     int default_port;
 
     /** the current widget view */
-    struct widget_view *view;
+    WidgetView *view;
 
     /** pointer to the tail of the transformation view linked list */
-    struct widget_view **widget_view_tail;
+    WidgetView **widget_view_tail;
 
     /** the current transformation */
     struct transformation *transformation;
@@ -579,7 +579,7 @@ finish_view(TranslateClient *client, GError **error_r)
     assert(client != nullptr);
     assert(client->response.views != nullptr);
 
-    struct widget_view *view = client->view;
+    WidgetView *view = client->view;
     if (client->view == nullptr) {
         view = client->response.views;
         assert(view != nullptr);
@@ -614,7 +614,7 @@ add_view(TranslateClient *client, const char *name, GError **error_r)
     if (!finish_view(client, error_r))
         return false;
 
-    auto view = NewFromPool<widget_view>(*client->pool);
+    auto view = NewFromPool<WidgetView>(*client->pool);
     view->Init();
     view->name = name;
     view->request_header_forward = client->response.request_header_forward;
@@ -1337,7 +1337,7 @@ translate_handle_packet(TranslateClient *client,
         client->lhttp_address = nullptr;
         client->address_list = nullptr;
 
-        client->response.views = NewFromPool<widget_view>(*client->pool);
+        client->response.views = NewFromPool<WidgetView>(*client->pool);
         client->response.views->Init();
         client->view = nullptr;
         client->widget_view_tail = &client->response.views->next;

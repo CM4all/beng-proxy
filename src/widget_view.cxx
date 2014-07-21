@@ -11,7 +11,7 @@
 #include <string.h>
 
 void
-widget_view::Init()
+WidgetView::Init()
 {
     next = nullptr;
     name = nullptr;
@@ -42,8 +42,8 @@ widget_view::Init()
 }
 
 bool
-widget_view::InheritAddress(struct pool &pool,
-                            const struct resource_address &src)
+WidgetView::InheritAddress(struct pool &pool,
+                           const struct resource_address &src)
 {
     if (address.type != RESOURCE_ADDRESS_NONE ||
         src.type == RESOURCE_ADDRESS_NONE)
@@ -55,7 +55,7 @@ widget_view::InheritAddress(struct pool &pool,
 }
 
 bool
-widget_view::InheritFrom(struct pool &pool, const struct widget_view &src)
+WidgetView::InheritFrom(struct pool &pool, const WidgetView &src)
 {
     if (InheritAddress(pool, src.address)) {
         filter_4xx = src.filter_4xx;
@@ -68,8 +68,8 @@ widget_view::InheritFrom(struct pool &pool, const struct widget_view &src)
         return false;
 }
 
-const struct widget_view *
-widget_view_lookup(const struct widget_view *view, const char *name)
+const WidgetView *
+widget_view_lookup(const WidgetView *view, const char *name)
 {
     assert(view != nullptr);
     assert(view->name == nullptr);
@@ -89,21 +89,21 @@ widget_view_lookup(const struct widget_view *view, const char *name)
 }
 
 bool
-widget_view::HasProcessor() const
+WidgetView::HasProcessor() const
 {
     return transformation->HasProcessor();
 }
 
 bool
-widget_view::IsContainer() const
+WidgetView::IsContainer() const
 {
     return transformation->IsContainer();
 }
 
-static struct widget_view *
-widget_view_dup(struct pool *pool, const struct widget_view *src)
+static WidgetView *
+widget_view_dup(struct pool *pool, const WidgetView *src)
 {
-    auto dest = NewFromPool<struct widget_view>(*pool);
+    auto dest = NewFromPool<WidgetView>(*pool);
     dest->Init();
 
     dest->name = src->name != nullptr ? p_strdup(pool, src->name) : nullptr;
@@ -117,16 +117,16 @@ widget_view_dup(struct pool *pool, const struct widget_view *src)
     return dest;
 }
 
-struct widget_view *
-widget_view_dup_chain(struct pool *pool, const struct widget_view *src)
+WidgetView *
+widget_view_dup_chain(struct pool *pool, const WidgetView *src)
 {
-    struct widget_view *dest = nullptr, **tail_p = &dest;
+    WidgetView *dest = nullptr, **tail_p = &dest;
 
     assert(src != nullptr);
     assert(src->name == nullptr);
 
     for (; src != nullptr; src = src->next) {
-        struct widget_view *p = widget_view_dup(pool, src);
+        WidgetView *p = widget_view_dup(pool, src);
         *tail_p = p;
         tail_p = &p->next;
     }
@@ -135,14 +135,14 @@ widget_view_dup_chain(struct pool *pool, const struct widget_view *src)
 }
 
 bool
-widget_view::IsExpandable() const
+WidgetView::IsExpandable() const
 {
     return resource_address_is_expandable(&address) ||
         transformation->IsChainExpandable();
 }
 
 bool
-widget_view_any_is_expandable(const struct widget_view *view)
+widget_view_any_is_expandable(const WidgetView *view)
 {
     while (view != nullptr) {
         if (view->IsExpandable())
@@ -155,7 +155,7 @@ widget_view_any_is_expandable(const struct widget_view *view)
 }
 
 bool
-widget_view::Expand(struct pool &pool, const GMatchInfo &match_info,
+WidgetView::Expand(struct pool &pool, const GMatchInfo &match_info,
                     GError **error_r)
 {
     return resource_address_expand(&pool, &address,
@@ -164,7 +164,7 @@ widget_view::Expand(struct pool &pool, const GMatchInfo &match_info,
 }
 
 bool
-widget_view_expand_all(struct pool *pool, struct widget_view *view,
+widget_view_expand_all(struct pool *pool, WidgetView *view,
                        const GMatchInfo *match_info, GError **error_r)
 {
     assert(pool != nullptr);

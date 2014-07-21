@@ -20,6 +20,7 @@
 #include <stdint.h>
 
 struct pool;
+struct WidgetView;
 
 struct TranslateResponse {
     /**
@@ -158,7 +159,7 @@ struct TranslateResponse {
 
     KeyValueList response_headers;
 
-    struct widget_view *views;
+    WidgetView *views;
 
     /**
      * From #TRANSLATE_WIDGET_GROUP.

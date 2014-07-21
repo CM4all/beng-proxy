@@ -63,7 +63,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 
     /* XXX shall the address view or the transformation view be used
        to control response header forwarding? */
-    const struct widget_view *view = widget_get_transformation_view(widget);
+    const WidgetView *view = widget_get_transformation_view(widget);
     assert(view != nullptr);
 
     headers = forward_response_headers(request->pool, headers,
@@ -144,7 +144,7 @@ extern const struct widget_lookup_handler widget_processor_handler;
 gcc_pure
 static bool
 widget_view_allowed(struct widget *widget,
-                    const struct widget_view *view)
+                    const WidgetView *view)
 {
     assert(widget != nullptr);
     assert(view != nullptr);
@@ -199,7 +199,7 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
         if (env->view_name != nullptr) {
             /* the client can select the view; he can never explicitly
                select the default view */
-            const struct widget_view *view =
+            const WidgetView *view =
                 widget_class_view_lookup(widget->cls, env->view_name);
             if (view == nullptr || view->name == nullptr) {
                 widget_cancel(widget);

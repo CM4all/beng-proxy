@@ -742,7 +742,7 @@ serve_document_root_file(request &request2,
     if (process) {
         transformation *transformation =
             NewFromPool<struct transformation>(*request.pool);
-        widget_view *view = NewFromPool<widget_view>(*request.pool);
+        auto view = NewFromPool<WidgetView>(*request.pool);
         view->Init();
 
         transformation->next = nullptr;
@@ -752,7 +752,7 @@ serve_document_root_file(request &request2,
 
         tr->views = view;
     } else {
-        widget_view *view = NewFromPool<widget_view>(*request.pool);
+        auto view = NewFromPool<WidgetView>(*request.pool);
         view->Init();
 
         tr->views = view;

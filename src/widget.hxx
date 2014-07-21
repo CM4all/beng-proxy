@@ -18,6 +18,7 @@ struct strmap;
 struct processor_env;
 struct parsed_uri;
 struct session;
+struct WidgetView;
 
 /**
  * A widget instance.
@@ -69,7 +70,7 @@ struct widget {
      * fatal error, and means that no operation is possible on this
      * widget.
      */
-    const struct widget_view *view;
+    const WidgetView *view;
 
     /**
      * The approval level for embedding this widget into its
@@ -152,7 +153,7 @@ struct widget {
          * template.  This attribute is undefined before the widget
          * resolver finishes.
          */
-        const struct widget_view *view;
+        const WidgetView *view;
 
         /**
          * This flag is set when the view selected by the client is
@@ -257,7 +258,7 @@ widget_has_default_view(const struct widget *widget)
  * and the view specification in the parent.  It ignores the view name
  * from the request.
  */
-static inline const struct widget_view *
+static inline const WidgetView *
 widget_get_default_view(const struct widget *widget)
 {
     return widget->view;
@@ -271,7 +272,7 @@ bool
 widget_is_container_by_default(const struct widget *widget);
 
 gcc_pure
-static inline const struct widget_view *
+static inline const WidgetView *
 widget_get_view(const struct widget *widget)
 {
     return widget->from_request.view;
@@ -295,7 +296,7 @@ widget_is_container(const struct widget *widget);
  * Returns the view that is used to determine the address of the
  * server.
  */
-static inline const struct widget_view *
+static inline const WidgetView *
 widget_get_address_view(const struct widget *widget)
 {
     return widget_get_default_view(widget);
@@ -305,7 +306,7 @@ widget_get_address_view(const struct widget *widget)
  * Returns the view that is used to determine the transformations of
  * the response.
  */
-static inline const struct widget_view *
+static inline const WidgetView *
 widget_get_transformation_view(const struct widget *widget)
 {
     return widget_get_view(widget);

@@ -15,8 +15,8 @@
 
 struct pool;
 
-struct widget_view {
-    struct widget_view *next;
+struct WidgetView {
+    WidgetView *next;
 
     /**
      * The name of this view; always NULL for the first (default)
@@ -70,7 +70,7 @@ struct widget_view {
      * view already had an address or if the source view's address is
      * empty
      */
-    bool InheritFrom(struct pool &pool, const struct widget_view &src);
+    bool InheritFrom(struct pool &pool, const WidgetView &src);
 
     /**
      * Does the effective view enable the HTML processor?
@@ -103,12 +103,12 @@ struct widget_view {
  * view.
  */
 gcc_pure
-const struct widget_view *
-widget_view_lookup(const struct widget_view *view, const char *name);
+const WidgetView *
+widget_view_lookup(const WidgetView *view, const char *name);
 
 gcc_malloc
-struct widget_view *
-widget_view_dup_chain(struct pool *pool, const struct widget_view *src);
+WidgetView *
+widget_view_dup_chain(struct pool *pool, const WidgetView *src);
 
 /**
  * Does any view in the linked list need to be expanded with
@@ -116,14 +116,14 @@ widget_view_dup_chain(struct pool *pool, const struct widget_view *src);
  */
 gcc_pure
 bool
-widget_view_any_is_expandable(const struct widget_view *view);
+widget_view_any_is_expandable(const WidgetView *view);
 
 /**
  * The same as widget_view_expand(), but expand all voews in
  * the linked list.
  */
 bool
-widget_view_expand_all(struct pool *pool, struct widget_view *view,
+widget_view_expand_all(struct pool *pool, WidgetView *view,
                        const GMatchInfo *match_info, GError **error_r);
 
 #endif

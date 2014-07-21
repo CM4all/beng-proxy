@@ -88,7 +88,7 @@ widget_uri(struct widget *widget)
 }
 
 static struct strmap *
-widget_request_headers(struct embed *embed, const struct widget_view *view,
+widget_request_headers(struct embed *embed, const WidgetView *view,
                        bool exclude_host, bool with_body)
 {
     struct widget *widget = embed->widget;
@@ -149,7 +149,7 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (embed->num_redirects >= 8)
         return false;
 
-    const struct widget_view *view = widget_get_address_view(widget);
+    const WidgetView *view = widget_get_address_view(widget);
     assert(view != nullptr);
 
     if (view->address.type != RESOURCE_ADDRESS_HTTP)
@@ -488,7 +488,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
     if (view_name != nullptr) {
         /* yes, look it up in the class */
 
-        const struct widget_view *view =
+        const WidgetView *view =
             widget_class_view_lookup(widget->cls, view_name);
         if (view == nullptr) {
             /* the view specified in the response header does not
@@ -645,10 +645,10 @@ widget_http_request(struct pool *pool, struct widget *widget,
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
 
-    const struct widget_view *a_view = widget_get_address_view(widget);
+    const WidgetView *a_view = widget_get_address_view(widget);
     assert(a_view != nullptr);
 
-    const struct widget_view *t_view = widget_get_transformation_view(widget);
+    const WidgetView *t_view = widget_get_transformation_view(widget);
     assert(t_view != nullptr);
 
     auto embed = NewFromPool<struct embed>(*pool);
@@ -717,10 +717,10 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     assert(handler->not_found != nullptr);
     assert(handler->error != nullptr);
 
-    const struct widget_view *a_view = widget_get_address_view(widget);
+    const WidgetView *a_view = widget_get_address_view(widget);
     assert(a_view != nullptr);
 
-    const struct widget_view *t_view = widget_get_transformation_view(widget);
+    const WidgetView *t_view = widget_get_transformation_view(widget);
     assert(t_view != nullptr);
 
     auto embed = NewFromPool<struct embed>(*pool);

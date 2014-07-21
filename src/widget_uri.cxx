@@ -54,7 +54,7 @@ widget_get_original_address(const struct widget *widget)
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
 
-    const struct widget_view *view = widget_get_address_view(widget);
+    const WidgetView *view = widget_get_address_view(widget);
     assert(view != nullptr);
 
     return &view->address;

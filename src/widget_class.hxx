@@ -10,6 +10,8 @@
 #include "widget_view.hxx"
 #include "strset.h"
 
+struct WidgetView;
+
 /**
  * A widget class is a server which provides a widget.
  */
@@ -17,7 +19,7 @@ struct widget_class {
     /**
      * A linked list of view descriptions.
      */
-    struct widget_view views;
+    WidgetView views;
 
     /**
      * The URI prefix that represents '@/'.
@@ -91,7 +93,7 @@ struct widget_class {
 
 extern const struct widget_class root_widget_class;
 
-static inline const struct widget_view *
+static inline const WidgetView *
 widget_class_view_lookup(const struct widget_class *cls, const char *name)
 {
     return widget_view_lookup(&cls->views, name);

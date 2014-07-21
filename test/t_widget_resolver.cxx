@@ -30,8 +30,8 @@ struct data {
 
 static struct data *global;
 
-const struct widget_view *
-widget_view_lookup(const struct widget_view *view,
+const WidgetView *
+widget_view_lookup(const WidgetView *view,
                    gcc_unused const char *name)
 {
     return view;

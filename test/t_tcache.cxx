@@ -162,7 +162,7 @@ transformation_chain_equals(const struct transformation *a,
 }
 
 static bool
-view_equals(const struct widget_view *a, const struct widget_view *b)
+view_equals(const WidgetView *a, const WidgetView *b)
 {
     assert(a != nullptr);
     assert(b != nullptr);
@@ -174,8 +174,7 @@ view_equals(const struct widget_view *a, const struct widget_view *b)
 }
 
 static bool
-view_chain_equals(const struct widget_view *a,
-                  const struct widget_view *b)
+view_chain_equals(const WidgetView *a, const WidgetView *b)
 {
     while (a != nullptr && b != nullptr) {
         if (!view_equals(a, b))
@@ -1607,7 +1606,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
             },
         },
     };
-    static struct widget_view view1n = {
+    static WidgetView view1n = {
         .transformation = &transformation1n,
     };
     static struct file_address file1n("/dummy");
@@ -1640,7 +1639,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
             },
         },
     };
-    static struct widget_view view1e = {
+    static WidgetView view1e = {
         .transformation = &transformation1e,
     };
     static struct file_address file1e("/var/www/foo/bar.jpg");
@@ -1683,7 +1682,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
             },
         },
     };
-    static struct widget_view view2 = {
+    static WidgetView view2 = {
         .transformation = &transformation2,
     };
     static const struct file_address file2("/var/www/x/y/z.jpg");
