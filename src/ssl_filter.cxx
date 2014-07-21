@@ -281,6 +281,7 @@ ssl_filter_thread(void *ctx)
         if (cert != NULL) {
             ssl->peer_subject = format_subject_name(cert);
             ssl->peer_issuer_subject = format_issuer_subject_name(cert);
+            X509_free(cert);
         }
     }
 
