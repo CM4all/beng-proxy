@@ -263,7 +263,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     /* set up input objects */
 
-    widget_init(&container, pool, &root_widget_class);
+    container.Init(*pool, &root_widget_class);
     container.id = "foobar";
     container.lazy.path = "";
     container.lazy.prefix = "__";
@@ -273,11 +273,11 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     /* test all modes with a normal widget */
 
-    widget_init(&widget, pool, NULL);
+    widget.Init(*pool, nullptr);
     widget.class_name = "1";
     widget.parent = &container;
     strref_set_c(&value, "1");
-    widget_set_id(&widget, &value);
+    widget.SetId(value);
 
     strref_set_c(&value, "123");
 
@@ -414,11 +414,11 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     /* without trailing slash in server URI; first with an invalid
        suffix, which does not match the server URI */
 
-    widget_init(&widget, pool, NULL);
+    widget.Init(*pool, nullptr);
     widget.class_name = "2";
     widget.parent = &container;
     strref_set_c(&value, "1");
-    widget_set_id(&widget, &value);
+    widget.SetId(value);
 
     assert_rewrite_check(pool, &widget, "@/foo", URI_MODE_DIRECT,
                          "http://widget-server/@/foo");
@@ -453,11 +453,11 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     /* test the "@/" syntax */
 
-    widget_init(&widget, pool, NULL);
+    widget.Init(*pool, nullptr);
     widget.class_name = "3";
     widget.parent = &container;
     strref_set_c(&value, "id3");
-    widget_set_id(&widget, &value);
+    widget.SetId(value);
 
     assert_rewrite_check(pool, &widget, "123", URI_MODE_DIRECT,
                          "http://widget-server/123");

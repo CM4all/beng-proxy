@@ -8,10 +8,10 @@
 #include "widget_class.hxx"
 
 void
-widget_init_root(struct widget *widget, struct pool *pool, const char *id)
+widget::InitRoot(struct pool &_pool, const char *_id)
 {
-    widget_init(widget, pool, &root_widget_class);
-    widget->id = id;
-    widget->lazy.path = "";
-    widget->lazy.prefix = "C_";
+    Init(_pool, &root_widget_class);
+    id = _id;
+    lazy.path = "";
+    lazy.prefix = "C_";
 }

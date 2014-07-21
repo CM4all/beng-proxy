@@ -130,7 +130,7 @@ response_invoke_processor(request &request2,
     }
 
     struct widget *widget = NewFromPool<struct widget>(*request->pool);
-    widget_init_root(widget, request->pool,
+    widget->InitRoot(*request->pool,
                      request2.translate.response->uri != nullptr
                      ? request2.translate.response->uri
                      : strref_dup(request->pool, &request2.uri.base));
@@ -288,7 +288,7 @@ response_invoke_css_processor(request &request2,
     }
 
     struct widget *widget = NewFromPool<struct widget>(*request->pool);
-    widget_init_root(widget, request->pool,
+    widget->InitRoot(*request->pool,
                      strref_dup(request->pool, &request2.uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {
@@ -359,7 +359,7 @@ response_invoke_text_processor(request &request2,
     }
 
     struct widget *widget = NewFromPool<struct widget>(*request->pool);
-    widget_init_root(widget, request->pool,
+    widget->InitRoot(*request->pool,
                      strref_dup(request->pool, &request2.uri.base));
 
     if (request2.translate.response->untrusted != nullptr) {

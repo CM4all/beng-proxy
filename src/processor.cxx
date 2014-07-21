@@ -669,7 +669,7 @@ processor_parser_tag_start(const struct parser_tag *tag, void *ctx)
 
         processor->tag = TAG_WIDGET;
         processor->widget.widget = NewFromPool<widget>(*processor->widget.pool);
-        widget_init(processor->widget.widget, processor->widget.pool, nullptr);
+        processor->widget.widget->Init(*processor->widget.pool, nullptr);
         expansible_buffer_reset(processor->widget.params);
 
         processor->widget.widget->parent = processor->container;
@@ -798,8 +798,8 @@ transform_uri_attribute(struct processor *processor,
     case URI_BASE_CHILD:
         strref_split(value, '/', &child_id, &suffix);
 
-        widget = widget_get_child(processor->container,
-                                  strref_dup(processor->pool, &child_id));
+        widget = processor->container->FindChild(strref_dup(processor->pool,
+                                                            &child_id));
         if (widget == nullptr)
             return;
 
@@ -866,10 +866,10 @@ parser_widget_attr_finished(struct widget *widget,
                             const struct strref *value)
 {
     if (strref_cmp_literal(name, "type") == 0) {
-        widget_set_class_name(widget, value);
+        widget->SetClassName(*value);
     } else if (strref_cmp_literal(name, "id") == 0) {
         if (!strref_is_empty(value))
-            widget_set_id(widget, value);
+            widget->SetId(*value);
     } else if (strref_cmp_literal(name, "display") == 0) {
         if (strref_cmp_literal(value, "inline") == 0)
             widget->display = widget::WIDGET_DISPLAY_INLINE;
@@ -987,12 +987,12 @@ handle_class_attribute(struct processor *processor,
 
         const unsigned n = underscore_prefix(p, end);
         const char *prefix;
-        if (n == 3 && (prefix = widget_prefix(processor->container)) != nullptr) {
+        if (n == 3 && (prefix = processor->container->GetPrefix()) != nullptr) {
             if (!expansible_buffer_write_string(buffer, prefix))
                 return;
 
             p += 3;
-        } else if (n == 2 && (prefix = widget_get_quoted_class_name(processor->container)) != nullptr) {
+        } else if (n == 2 && (prefix = processor->container->GetQuotedClassName()) != nullptr) {
             if (!expansible_buffer_write_string(buffer, prefix))
                 return;
 
@@ -1031,7 +1031,7 @@ handle_id_attribute(struct processor *processor,
     if (n == 3) {
         /* triple underscore: add widget path prefix */
 
-        const char *prefix = widget_prefix(processor->container);
+        const char *prefix = processor->container->GetPrefix();
         if (prefix == nullptr)
             return;
 
@@ -1041,8 +1041,7 @@ handle_id_attribute(struct processor *processor,
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
-        const char *class_name =
-            widget_get_quoted_class_name(processor->container);
+        const char *class_name = processor->container->GetQuotedClassName();
         if (class_name == nullptr)
             return;
 
@@ -1252,7 +1251,7 @@ widget_catch_callback(GError *error, void *ctx)
     struct widget *widget = (struct widget *)ctx;
 
     daemon_log(3, "error from widget '%s': %s\n",
-               widget_path(widget), error->message);
+               widget->GetIdPath(), error->message);
     g_error_free(error);
     return nullptr;
 }
@@ -1323,7 +1322,7 @@ open_widget_element(struct processor *processor, struct widget *widget)
         (processor->options & PROCESSOR_SELF_CONTAINER) != 0;
     if (!widget_init_approval(widget, self_container)) {
         daemon_log(5, "widget '%s'[class='%s'] is not allowed to embed widget class '%s'\n",
-                   widget_path(processor->container),
+                   processor->container->GetIdPath(),
                    processor->container->class_name,
                    widget->class_name);
         return nullptr;

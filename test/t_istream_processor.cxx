@@ -58,7 +58,7 @@ create_test(struct pool *pool, struct istream *input)
     if (!ret)
         abort();
 
-    widget_init(&widget, pool, &root_widget_class);
+    widget.Init(*pool, &root_widget_class);
 
     crash_global_init();
     session_manager_init(1200, 0, 0);

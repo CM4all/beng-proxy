@@ -118,7 +118,7 @@ widget_request_headers(struct embed *embed, const struct widget_view *view,
         if (widget->class_name != nullptr)
             headers->Add("x-cm4all-widget-type", widget->class_name);
 
-        const char *prefix = widget_prefix(widget);
+        const char *prefix = widget->GetPrefix();
         if (prefix != nullptr)
             headers->Add("x-cm4all-widget-prefix", prefix);
     }
@@ -227,7 +227,7 @@ widget_response_process(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
-                        widget_path(widget));
+                        widget->GetIdPath());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -238,7 +238,7 @@ widget_response_process(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-HTML response",
-                        widget_path(widget));
+                        widget->GetIdPath());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -280,7 +280,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
-                        widget_path(widget));
+                        widget->GetIdPath());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -291,7 +291,7 @@ widget_response_process_css(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-CSS response",
-                        widget_path(widget));
+                        widget->GetIdPath());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -311,7 +311,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_EMPTY,
                         "widget '%s' didn't send a response body",
-                        widget_path(widget));
+                        widget->GetIdPath());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -322,7 +322,7 @@ widget_response_process_text(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-text response",
-                        widget_path(widget));
+                        widget->GetIdPath());
         widget_dispatch_error(embed, error);
         return;
     }
@@ -380,7 +380,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
             g_error_new(widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                         "widget '%s' sent non-identity response, "
                         "cannot transform",
-                        widget_path(embed->widget));
+                        embed->widget->GetIdPath());
 
         widget_dispatch_error(embed, error);
         return;
@@ -455,7 +455,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_NOT_A_CONTAINER,
                         "Cannot process container widget response of %s",
-                        widget_path(embed->widget));
+                        embed->widget->GetIdPath());
         embed->lookup_handler->error(error, embed->lookup_handler_ctx);
     } else {
         /* no transformation left */
@@ -530,7 +530,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
     if (headers != nullptr) {
         if (widget->cls->dump_headers) {
             daemon_log(4, "response headers from widget '%s'\n",
-                       widget_path(widget));
+                       widget->GetIdPath());
 
             for (const auto &i : *headers)
                 daemon_log(4, "  %s: %s\n", i.key, i.value);
@@ -669,7 +669,8 @@ widget_http_request(struct pool *pool, struct widget *widget,
                                      widget->from_request.body != nullptr);
 
     if (widget->cls->dump_headers) {
-        daemon_log(4, "request headers for widget '%s'\n", widget_path(widget));
+        daemon_log(4, "request headers for widget '%s'\n",
+                   widget->GetIdPath());
 
         for (const auto &i : *headers)
             daemon_log(4, "  %s: %s\n", i.key, i.value);

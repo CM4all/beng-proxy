@@ -285,7 +285,7 @@ compare_widget_path(const struct widget *widget, const char *other)
     if (other == nullptr)
         return false;
 
-    const char *path = widget_path(widget);
+    const char *path = widget->GetIdPath();
     if (path == nullptr)
         return false;
 
@@ -300,13 +300,12 @@ widget_external_uri(struct pool *pool,
                     const struct strref *relative_uri,
                     const char *frame, const char *view)
 {
-    const char *path;
     const char *qmark, *args2, *new_uri;
     struct strref buffer, query_string;
     const struct strref *p;
     struct pool_mark_state mark;
 
-    path = widget_path(widget);
+    const char *path = widget->GetIdPath();
     if (path == nullptr ||
         external_uri == nullptr ||
         widget->cls == &root_widget_class)

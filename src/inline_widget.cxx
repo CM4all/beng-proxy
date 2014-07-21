@@ -65,7 +65,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
     if (p != nullptr && strcmp(p, "identity") != 0) {
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                     "widget '%s' sent non-identity response, cannot embed",
-                    widget_path(widget));
+                    widget->GetIdPath());
         istream_close_unused(body);
         return nullptr;
     }
@@ -77,7 +77,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
             memcmp(content_type, "text/plain", 10) != 0) {
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent non-text/plain response",
-                        widget_path(widget));
+                        widget->GetIdPath());
             istream_close_unused(body);
             return nullptr;
         }
@@ -91,7 +91,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
          strncmp(content_type, "application/xhtml+xml", 21) != 0)) {
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                     "widget '%s' sent non-text response",
-                    widget_path(widget));
+                    widget->GetIdPath());
         istream_close_unused(body);
         return nullptr;
     }
@@ -107,13 +107,13 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         if (ic == nullptr) {
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_WRONG_TYPE,
                         "widget '%s' sent unknown charset '%s'",
-                        widget_path(widget), charset2);
+                        widget->GetIdPath(), charset2);
             istream_close_unused(body);
             return nullptr;
         }
 
         daemon_log(6, "widget '%s': charset conversion '%s' -> utf-8\n",
-                   widget_path(widget), charset2);
+                   widget->GetIdPath(), charset2);
         body = ic;
     }
 
@@ -123,7 +123,7 @@ widget_response_format(struct pool *pool, const struct widget *widget,
         /* convert text to HTML */
 
         daemon_log(6, "widget '%s': converting text to HTML\n",
-                   widget_path(widget));
+                   widget->GetIdPath());
 
         body = istream_html_escape_new(pool, body);
         body = istream_cat_new(pool,
@@ -159,7 +159,7 @@ inline_widget_response(http_status_t status,
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_UNSPECIFIED,
                         "response status %d from widget '%s'",
-                        status, widget_path(iw->widget));
+                        status, iw->widget->GetIdPath());
         inline_widget_close(iw, error);
         return;
     }
@@ -211,7 +211,7 @@ inline_widget_set(struct inline_widget *iw)
         GError *error =
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "widget '%s'[class='%s'] is not allowed to embed widget class '%s'",
-                        widget_path(widget->parent),
+                        widget->parent->GetIdPath(),
                         widget->parent->class_name,
                         widget->class_name);
         widget_cancel(widget);

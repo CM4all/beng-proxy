@@ -196,6 +196,35 @@ struct widget {
          */
         const struct resource_address *stateless_address;
     } lazy;
+
+    void Init(struct pool &_pool, const struct widget_class *_cls);
+    void InitRoot(struct pool &_pool, const char *_id);
+
+    void SetId(const struct strref &_id);
+    void SetClassName(const struct strref &_class_name);
+
+    const char *GetIdPath() const {
+        return lazy.path;
+    }
+
+    const char *GetPrefix() const {
+        return lazy.prefix;
+    }
+
+    const char *GetQuotedClassName() const {
+        return lazy.quoted_class_name;
+    }
+
+    gcc_pure
+    struct widget *FindRoot() {
+        struct widget *w = this;
+        while (w->parent != nullptr)
+            w = w->parent;
+        return w;
+    }
+
+    gcc_pure
+    struct widget *FindChild(const char *child_id);
 };
 
 /** a reference to a widget inside a widget.  nullptr means the current
@@ -208,50 +237,6 @@ struct widget_ref {
 
 static constexpr char WIDGET_REF_SEPARATOR = ':';
 #define WIDGET_REF_SEPARATOR_S ":"
-
-void
-widget_init(struct widget *widget, struct pool *pool,
-            const struct widget_class *cls);
-
-void
-widget_init_root(struct widget *widget, struct pool *pool, const char *id);
-
-void
-widget_set_id(struct widget *widget, const struct strref *id);
-
-void
-widget_set_class_name(struct widget *widget, const struct strref *class_name);
-
-gcc_pure
-static inline struct widget *
-widget_root(struct widget *widget)
-{
-    while (widget->parent != nullptr)
-        widget = widget->parent;
-    return widget;
-}
-
-gcc_pure
-struct widget *
-widget_get_child(struct widget *widget, const char *id);
-
-static inline const char *
-widget_path(const struct widget *widget)
-{
-    return widget->lazy.path;
-}
-
-static inline const char *
-widget_prefix(const struct widget *widget)
-{
-    return widget->lazy.prefix;
-}
-
-static inline const char *
-widget_get_quoted_class_name(const struct widget *widget)
-{
-    return widget->lazy.quoted_class_name;
-}
 
 static inline const char *
 widget_get_path_info(const struct widget *widget)

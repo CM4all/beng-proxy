@@ -292,7 +292,7 @@ test_cookie_client(struct pool *pool)
     env.session_id = session->id;
     session_put(session);
 
-    widget_init(&widget, pool, &cls);
+    widget.Init(*pool, &cls);
 
     for (test_id = 0; test_id < 4; ++test_id) {
         got_request = false;

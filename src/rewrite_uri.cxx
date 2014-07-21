@@ -172,7 +172,7 @@ do_rewrite_widget_uri(struct pool *pool, struct processor_env *env,
         break;
 
     case URI_MODE_PARTIAL:
-        frame = widget_path(widget);
+        frame = widget->GetIdPath();
 
         if (frame == nullptr)
             /* no widget_path available - "frame=" not possible*/
@@ -192,12 +192,12 @@ do_rewrite_widget_uri(struct pool *pool, struct processor_env *env,
         if (widget->id == nullptr)
             daemon_log(4, "Cannot rewrite URI for widget of type '%s': no id\n",
                        widget->class_name);
-        else if (widget_path(widget) == nullptr)
+        else if (widget->GetIdPath() == nullptr)
             daemon_log(4, "Cannot rewrite URI for widget '%s', type '%s': broken id chain\n",
                        widget->id, widget->class_name);
         else
             daemon_log(4, "Base mismatch in widget '%s', type '%s'\n",
-                       widget_path(widget), widget->class_name);
+                       widget->GetIdPath(), widget->class_name);
         return nullptr;
     }
 

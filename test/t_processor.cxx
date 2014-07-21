@@ -39,7 +39,7 @@ embed_inline_widget(struct pool *pool,
                     gcc_unused bool plain_text,
                     struct widget *widget)
 {
-    const char *s = widget_path(widget);
+    const char *s = widget->GetIdPath();
     if (s == nullptr)
         s = "widget";
 
@@ -122,7 +122,7 @@ test_proxy_abort(struct pool *pool)
     assert(success);
 
     struct widget widget;
-    widget_init(&widget, pool, &root_widget_class);
+    widget.Init(*pool, &root_widget_class);
 
     struct processor_env env(pool,
                              nullptr, nullptr,

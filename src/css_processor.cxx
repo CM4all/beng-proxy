@@ -100,7 +100,7 @@ css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
     if (n == 3) {
         /* triple underscore: add widget path prefix */
 
-        const char *prefix = widget_prefix(processor->container);
+        const char *prefix = processor->container->GetPrefix();
         if (prefix == nullptr)
             return;
 
@@ -110,8 +110,7 @@ css_processor_parser_class_name(const struct css_parser_value *name, void *ctx)
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
-        const char *class_name =
-            widget_get_quoted_class_name(processor->container);
+        const char *class_name = processor->container->GetQuotedClassName();
         if (class_name == nullptr)
             return;
 
@@ -135,7 +134,7 @@ css_processor_parser_xml_id(const struct css_parser_value *name, void *ctx)
     if (n == 3) {
         /* triple underscore: add widget path prefix */
 
-        const char *prefix = widget_prefix(processor->container);
+        const char *prefix = processor->container->GetPrefix();
         if (prefix == nullptr)
             return;
 
@@ -145,8 +144,7 @@ css_processor_parser_xml_id(const struct css_parser_value *name, void *ctx)
     } else if (n == 2) {
         /* double underscore: add class name prefix */
 
-        const char *class_name =
-            widget_get_quoted_class_name(processor->container);
+        const char *class_name = processor->container->GetQuotedClassName();
         if (class_name == nullptr)
             return;
 

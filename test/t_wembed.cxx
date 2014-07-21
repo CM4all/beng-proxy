@@ -113,7 +113,7 @@ test_abort_resolver(struct pool *pool)
         exit(2);
     }
 
-    widget_init(&widget, pool, NULL);
+    widget.Init(*pool, nullptr);
 
     istream = embed_inline_widget(pool, &env, false, &widget);
     pool_unref(pool);

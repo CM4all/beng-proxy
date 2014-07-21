@@ -57,12 +57,11 @@ processor_subst_beng_widget(struct istream *istream,
                             const struct processor_env *env)
 {
     istream_subst_add(istream, "&c:type;", widget->class_name);
-    istream_subst_add(istream, "&c:class;",
-                      widget_get_quoted_class_name(widget));
+    istream_subst_add(istream, "&c:class;", widget->GetQuotedClassName());
     istream_subst_add(istream, "&c:local;", widget->cls->local_uri);
     istream_subst_add(istream, "&c:id;", widget->id);
-    istream_subst_add(istream, "&c:path;", widget_path(widget));
-    istream_subst_add(istream, "&c:prefix;", widget_prefix(widget));
+    istream_subst_add(istream, "&c:path;", widget->GetIdPath());
+    istream_subst_add(istream, "&c:prefix;", widget->GetPrefix());
     istream_subst_add(istream, "&c:uri;", env->absolute_uri);
     istream_subst_add(istream, "&c:base;",
                       base_uri(env->pool, env->uri));

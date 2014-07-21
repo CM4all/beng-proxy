@@ -83,42 +83,33 @@ quote_prefix(struct pool *pool, const char *p)
 }
 
 void
-widget_set_id(struct widget *widget, const struct strref *id)
+widget::SetId(const struct strref &_id)
 {
-    struct pool *const pool = widget->pool;
-    const char *p;
+    assert(parent != nullptr);
+    assert(!strref_is_empty(&_id));
 
-    assert(id != nullptr);
-    assert(widget->parent != nullptr);
-    assert(!strref_is_empty(id));
+    id = strref_dup(pool, &_id);
 
-    widget->id = strref_dup(pool, id);
-
-    p = widget_path(widget->parent);
+    const char *p = parent->GetIdPath();
     if (p != nullptr)
-        widget->lazy.path = *p == 0
-            ? widget->id
-            : p_strcat(pool, p, WIDGET_REF_SEPARATOR_S, widget->id, nullptr);
+        lazy.path = *p == 0
+            ? id
+            : p_strcat(pool, p, WIDGET_REF_SEPARATOR_S, id, nullptr);
 
-    p = widget_prefix(widget->parent);
+    p = parent->GetPrefix();
     if (p != nullptr)
-        widget->lazy.prefix = p_strcat(pool, p,
-                                       quote_prefix(pool, widget->id),
-                                       "__", nullptr);
+        lazy.prefix = p_strcat(pool, p, quote_prefix(pool, id), "__", nullptr);
 }
 
 void
-widget_set_class_name(struct widget *widget, const struct strref *class_name)
+widget::SetClassName(const struct strref &_class_name)
 {
-    assert(widget != nullptr);
-    assert(widget->parent != nullptr);
-    assert(widget->class_name == nullptr);
-    assert(widget->cls == nullptr);
-    assert(class_name != nullptr);
+    assert(parent != nullptr);
+    assert(class_name == nullptr);
+    assert(cls == nullptr);
 
-    widget->class_name = strref_dup(widget->pool, class_name);
-    widget->lazy.quoted_class_name =
-        quote_prefix(widget->pool, widget->class_name);
+    class_name = strref_dup(pool, &_class_name);
+    lazy.quoted_class_name = quote_prefix(pool, class_name);
 }
 
 bool
@@ -144,17 +135,15 @@ widget_is_container(const struct widget *widget)
 }
 
 struct widget *
-widget_get_child(struct widget *widget, const char *id)
+widget::FindChild(const char *child_id)
 {
+    assert(child_id != nullptr);
+
     struct widget *child;
-
-    assert(widget != nullptr);
-    assert(id != nullptr);
-
-    for (child = (struct widget *)widget->children.next;
-         child != (struct widget *)&widget->children;
+    for (child = (struct widget *)children.next;
+         child != (struct widget *)&children;
          child = (struct widget *)child->siblings.next) {
-        if (child->id != nullptr && strcmp(child->id, id) == 0)
+        if (child->id != nullptr && strcmp(child->id, child_id) == 0)
             return child;
     }
 
