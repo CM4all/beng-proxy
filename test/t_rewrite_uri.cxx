@@ -22,7 +22,7 @@
  *
  */
 
-const struct widget_class root_widget_class = {
+const WidgetClass root_widget_class = {
     .views = {
         .address = {
             .type = RESOURCE_ADDRESS_NONE,
@@ -75,7 +75,7 @@ widget_resolver_new(gcc_unused struct pool *pool, gcc_unused struct pool *widget
         .host_and_port = "widget-server",
         .path = "/1/",
     };
-    static const struct widget_class class1 = {
+    static const WidgetClass class1 = {
         .views = {
             .address = {
                 .type = RESOURCE_ADDRESS_HTTP,
@@ -91,7 +91,7 @@ widget_resolver_new(gcc_unused struct pool *pool, gcc_unused struct pool *widget
         .host_and_port = "widget-server",
         .path = "/2",
     };
-    static const struct widget_class class2 = {
+    static const WidgetClass class2 = {
         .views = {
             .address = {
                 .type = RESOURCE_ADDRESS_HTTP,
@@ -107,7 +107,7 @@ widget_resolver_new(gcc_unused struct pool *pool, gcc_unused struct pool *widget
         .host_and_port = "widget-server",
         .path = "/3",
     };
-    static const struct widget_class class3 = {
+    static const WidgetClass class3 = {
         .local_uri = "/resources/3/",
         .views = {
             .address = {

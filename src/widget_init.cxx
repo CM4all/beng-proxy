@@ -9,7 +9,7 @@
 
 void
 widget::Init(struct pool &_pool,
-             const struct widget_class *_cls)
+             const WidgetClass *_cls)
 {
     list_init(&children);
     parent = nullptr;

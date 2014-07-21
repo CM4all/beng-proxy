@@ -22,7 +22,7 @@
  *
  */
 
-const struct widget_class root_widget_class = {
+const WidgetClass root_widget_class = {
     .views = {
         .address = {
             .type = RESOURCE_ADDRESS_NONE,

@@ -10,10 +10,10 @@
 
 struct pool;
 struct tcache;
-struct widget_class;
 struct async_operation_ref;
+struct WidgetClass;
 
-typedef void (*widget_class_callback_t)(const struct widget_class *cls,
+typedef void (*widget_class_callback_t)(const WidgetClass *cls,
                                         void *ctx);
 
 void

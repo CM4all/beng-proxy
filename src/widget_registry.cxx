@@ -53,7 +53,7 @@ widget_translate_response(TranslateResponse *response, void *ctx)
         return;
     }
 
-    widget_class *cls = NewFromPool<widget_class>(*lookup->pool);
+    auto cls = NewFromPool<WidgetClass>(*lookup->pool);
     cls->local_uri = response->local_uri;
     cls->untrusted_host = response->untrusted;
     cls->untrusted_prefix = response->untrusted_prefix;

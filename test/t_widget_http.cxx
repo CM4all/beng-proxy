@@ -51,7 +51,7 @@ int global_was_stock;
 int global_http_cache;
 int global_nfs_cache;
 int global_tcp_balancer;
-const widget_class root_widget_class = widget_class();
+const WidgetClass root_widget_class = WidgetClass();
 
 static unsigned test_id;
 static bool got_request, got_response;
@@ -249,7 +249,7 @@ test_cookie_client(struct pool *pool)
         .host_and_port = "foo",
         .path = "/bar/",
     };
-    static const struct widget_class cls = {
+    static const WidgetClass cls = {
         .views = {
             .address = {
                 .type = RESOURCE_ADDRESS_HTTP,

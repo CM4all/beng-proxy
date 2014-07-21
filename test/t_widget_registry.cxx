@@ -18,13 +18,13 @@
 
 struct data {
     bool got_class;
-    const struct widget_class *cls;
+    const WidgetClass *cls;
 };
 
 static bool aborted;
 
 static void
-widget_class_callback(const struct widget_class *cls, void *ctx)
+widget_class_callback(const WidgetClass *cls, void *ctx)
 {
     struct data *data = (struct data *)ctx;
 

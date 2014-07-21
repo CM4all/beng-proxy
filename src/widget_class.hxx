@@ -10,12 +10,10 @@
 #include "widget_view.hxx"
 #include "strset.h"
 
-struct WidgetView;
-
 /**
  * A widget class is a server which provides a widget.
  */
-struct widget_class {
+struct WidgetClass {
     /**
      * A linked list of view descriptions.
      */
@@ -91,23 +89,23 @@ struct widget_class {
     bool dump_headers;
 };
 
-extern const struct widget_class root_widget_class;
+extern const WidgetClass root_widget_class;
 
 static inline const WidgetView *
-widget_class_view_lookup(const struct widget_class *cls, const char *name)
+widget_class_view_lookup(const WidgetClass *cls, const char *name)
 {
     return widget_view_lookup(&cls->views, name);
 }
 
 static inline bool
-widget_class_has_groups(const struct widget_class *cls)
+widget_class_has_groups(const WidgetClass *cls)
 {
     return !strset_is_empty(&cls->container_groups);
 }
 
 static inline bool
-widget_class_may_embed(const struct widget_class *container,
-                       const struct widget_class *child)
+widget_class_may_embed(const WidgetClass *container,
+                       const WidgetClass *child)
 {
     return strset_is_empty(&container->container_groups) ||
         (child->group != NULL && strset_contains(&container->container_groups,

@@ -117,7 +117,7 @@ static const struct async_operation_class listener_async_operation = {
  */
 
 static void
-widget_resolver_callback(const struct widget_class *cls, void *ctx)
+widget_resolver_callback(const WidgetClass *cls, void *ctx)
 {
     struct widget *widget = (struct widget *)ctx;
     struct widget_resolver *resolver = widget->resolver;

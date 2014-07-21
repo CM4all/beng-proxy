@@ -19,6 +19,7 @@ struct processor_env;
 struct parsed_uri;
 struct session;
 struct WidgetView;
+struct WidgetClass;
 
 /**
  * A widget instance.
@@ -35,7 +36,7 @@ struct widget {
      * The widget class.  May be nullptr if the #class_name hasn't been
      * looked up yet.
      */
-    const struct widget_class *cls;
+    const WidgetClass *cls;
 
     /**
      * The object that is currently requesting the widget class from
@@ -198,7 +199,7 @@ struct widget {
         const struct resource_address *stateless_address;
     } lazy;
 
-    void Init(struct pool &_pool, const struct widget_class *_cls);
+    void Init(struct pool &_pool, const WidgetClass *_cls);
     void InitRoot(struct pool &_pool, const char *_id);
 
     void SetId(const struct strref &_id);
