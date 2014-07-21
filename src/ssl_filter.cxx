@@ -36,7 +36,7 @@ struct ssl_filter {
 
     SSL *ssl;
 
-    const char *peer_subject, *peer_issuer_subject;
+    char *peer_subject, *peer_issuer_subject;
 
     pthread_mutex_t mutex;
     pthread_t thread;
@@ -172,7 +172,7 @@ ssl_filter_do_handshake(struct ssl_filter *ssl, GError **error_r)
 }
 
 static char *
-format_name(struct pool *pool, X509_NAME *name)
+format_name(X509_NAME *name)
 {
     if (name == NULL)
         return NULL;
@@ -187,19 +187,19 @@ format_name(struct pool *pool, X509_NAME *name)
     int length = BIO_read(bio, buffer, sizeof(buffer) - 1);
     BIO_free(bio);
 
-    return p_strndup(pool, buffer, length);
+    return strndup(buffer, length);
 }
 
 static char *
-format_subject_name(struct pool *pool, X509 *cert)
+format_subject_name(X509 *cert)
 {
-    return format_name(pool, X509_get_subject_name(cert));
+    return format_name(X509_get_subject_name(cert));
 }
 
 static char *
-format_issuer_subject_name(struct pool *pool, X509 *cert)
+format_issuer_subject_name(X509 *cert)
 {
-    return format_name(pool, X509_get_issuer_name(cert));
+    return format_name(X509_get_issuer_name(cert));
 }
 
 gcc_const
@@ -281,10 +281,10 @@ ssl_filter_thread(void *ctx)
     if (!ssl->closing) {
         X509 *cert = SSL_get_peer_certificate(ssl->ssl);
         if (cert != NULL)
-            ssl->peer_subject = format_subject_name(ssl->pool, cert);
+            ssl->peer_subject = format_subject_name(cert);
         if (cert != NULL)
             ssl->peer_issuer_subject =
-                format_issuer_subject_name(ssl->pool, cert);
+                format_issuer_subject_name(cert);
     }
 
     struct pollfd pfds[2] = {
@@ -461,6 +461,9 @@ ssl_filter_free(struct ssl_filter *ssl)
     pthread_mutex_destroy(&ssl->mutex);
 
     ssl_filter_close_sockets(ssl);
+
+    free(ssl->peer_subject);
+    free(ssl->peer_issuer_subject);
 }
 
 const char *
