@@ -731,33 +731,14 @@ serve_document_root_file(request &request2,
     request2.translate.response = tr;
 
     const char *index_file = nullptr;
-    bool process;
-    if (uri->base.data[uri->base.length - 1] == '/') {
+    if (uri->base.data[uri->base.length - 1] == '/')
         index_file = "index.html";
-        process = true;
-    } else {
-        process = strref_ends_with_n(&uri->base, ".html", 5);
-    }
 
-    if (process) {
-        transformation *transformation =
-            NewFromPool<struct transformation>(*request.pool);
-        auto view = NewFromPool<WidgetView>(*request.pool);
-        view->Init(nullptr);
+    auto view = NewFromPool<WidgetView>(*request.pool);
+    view->Init(nullptr);
 
-        transformation->next = nullptr;
-        transformation->type = transformation::TRANSFORMATION_PROCESS;
-
-        view->transformation = transformation;
-
-        tr->views = view;
-    } else {
-        auto view = NewFromPool<WidgetView>(*request.pool);
-        view->Init(nullptr);
-
-        tr->views = view;
-        tr->transparent = true;
-    }
+    tr->views = view;
+    tr->transparent = true;
 
     request2.translate.transformation = tr->views->transformation;
 
@@ -796,8 +777,6 @@ serve_document_root_file(request &request2,
     };
 
     request2.resource_tag = request2.translate.address->u.file->path;
-    request2.processor_focus = process &&
-        strmap_get_checked(request2.args, "focus") != nullptr;
 
     file_callback(request2);
 }
