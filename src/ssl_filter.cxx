@@ -22,8 +22,6 @@
 #include <string.h>
 
 struct ssl_filter {
-    struct pool *pool;
-
     /**
      * Buffers which can be accessed from within the thread without
      * holding locks.  These will be copied to/from the accordding
@@ -40,7 +38,7 @@ struct ssl_filter {
 
     bool handshaking;
 
-    const char *peer_subject, *peer_issuer_subject;
+    char *peer_subject, *peer_issuer_subject;
 };
 
 static void
@@ -113,7 +111,7 @@ copy_bio_to_fifo_buffer(fifo_buffer *dest, BIO *src)
 }
 
 static char *
-format_name(struct pool *pool, X509_NAME *name)
+format_name(X509_NAME *name)
 {
     if (name == NULL)
         return NULL;
@@ -128,19 +126,19 @@ format_name(struct pool *pool, X509_NAME *name)
     int length = BIO_read(bio, buffer, sizeof(buffer) - 1);
     BIO_free(bio);
 
-    return p_strndup(pool, buffer, length);
+    return strndup(buffer, length);
 }
 
 static char *
-format_subject_name(struct pool *pool, X509 *cert)
+format_subject_name(X509 *cert)
 {
-    return format_name(pool, X509_get_subject_name(cert));
+    return format_name(X509_get_subject_name(cert));
 }
 
 static char *
-format_issuer_subject_name(struct pool *pool, X509 *cert)
+format_issuer_subject_name(X509 *cert)
 {
-    return format_name(pool, X509_get_issuer_name(cert));
+    return format_name(X509_get_issuer_name(cert));
 }
 
 gcc_const
@@ -246,9 +244,9 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
 
             X509 *cert = SSL_get_peer_certificate(ssl->ssl);
             if (cert != nullptr) {
-                ssl->peer_subject = format_subject_name(ssl->pool, cert);
-                ssl->peer_issuer_subject =
-                    format_issuer_subject_name(ssl->pool, cert);
+                ssl->peer_subject = format_subject_name(cert);
+                ssl->peer_issuer_subject = format_issuer_subject_name(cert);
+                X509_free(cert);
             }
         } else if (result == 0) {
             ssl_set_error(error_r);
@@ -284,6 +282,9 @@ ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
 
     fb_pool_free(ssl->decrypted_input);
     fb_pool_free(ssl->plain_output);
+
+    free(ssl->peer_subject);
+    free(ssl->peer_issuer_subject);
 }
 
 const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
@@ -303,7 +304,6 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
     assert(pool != NULL);
 
     ssl_filter *ssl = NewFromPool<ssl_filter>(*pool);
-    ssl->pool = pool;
 
     ssl->ssl = ssl_factory_make(factory);
     if (ssl->ssl == NULL) {
