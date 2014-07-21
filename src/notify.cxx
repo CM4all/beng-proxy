@@ -16,13 +16,14 @@
 
 #include <assert.h>
 #include <unistd.h>
+#include <sys/eventfd.h>
 
 class Notify {
 public:
     notify_callback_t callback;
     void *callback_ctx;
 
-    int fds[2];
+    int fd;
 
     struct event event;
 
@@ -37,8 +38,8 @@ notify_event_callback(int fd, gcc_unused short event, void *ctx)
 {
     Notify *notify = (Notify *)ctx;
 
-    char buffer[32];
-    (void)read(fd, buffer, sizeof(buffer));
+    uint64_t value;
+    (void)read(fd, &value, sizeof(value));
 
     if (notify->pending.exchange(false))
         notify->callback(notify->callback_ctx);
@@ -52,12 +53,13 @@ notify_new(notify_callback_t callback, void *ctx, GError **error_r)
     notify->callback = callback;
     notify->callback_ctx = ctx;
 
-    if (pipe_cloexec_nonblock(notify->fds)) {
-        set_error_errno_msg(error_r, "pipe() failed");
+    notify->fd = eventfd(0, EFD_NONBLOCK|EFD_CLOEXEC);
+    if (notify->fd < 0) {
+        set_error_errno_msg(error_r, "eventfd() failed");
         return nullptr;
     }
 
-    event_set(&notify->event, notify->fds[0], EV_READ|EV_PERSIST,
+    event_set(&notify->event, notify->fd, EV_READ|EV_PERSIST,
               notify_event_callback, notify);
     event_add(&notify->event, nullptr);
 
@@ -68,8 +70,7 @@ void
 notify_free(Notify *notify)
 {
     event_del(&notify->event);
-    close(notify->fds[0]);
-    close(notify->fds[1]);
+    close(notify->fd);
 
     delete notify;
 }
@@ -77,8 +78,10 @@ notify_free(Notify *notify)
 void
 notify_signal(Notify *notify)
 {
-    if (!notify->pending.exchange(true))
-        (void)write(notify->fds[1], notify, 1);
+    if (!notify->pending.exchange(true)) {
+        static constexpr uint64_t value = 1;
+        (void)write(notify->fd, &value, sizeof(value));
+    }
 }
 
 void
