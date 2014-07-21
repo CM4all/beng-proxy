@@ -26,8 +26,6 @@
 #include <sys/socket.h>
 
 struct ssl_filter {
-    struct pool *pool;
-
     struct notify *notify;
 
     int encrypted_fd, plain_fd;
@@ -402,7 +400,6 @@ ssl_filter_new(struct pool *pool, struct ssl_factory *factory,
     assert(factory != NULL);
 
     struct ssl_filter *ssl = (struct ssl_filter *)p_malloc(pool, sizeof(*ssl));
-    ssl->pool = pool;
     ssl->notify = notify;
     ssl->encrypted_fd = encrypted_fd;
     ssl->plain_fd = plain_fd;
