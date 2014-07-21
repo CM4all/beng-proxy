@@ -1906,6 +1906,11 @@ If the suffix is unknown, the translation server may omit the
 \verb|CONTENT_TYPE| packet and only reply with \verb|BEGIN| and
 \verb|END|.
 
+Additionally, the translation server may specify transformations
+(\verb|PROCESS| or \verb|FILTER|) for all files of this type.  They
+will be applied before other transformations from the original
+translation response.
+
 \subsection{Error documents}
 \label{errdoc}
 

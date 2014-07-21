@@ -10,6 +10,7 @@
 #include "translate_client.hxx"
 #include "translate_request.hxx"
 #include "translate_response.hxx"
+#include "widget_view.hxx"
 #include "pool.hxx"
 
 struct SuffixRegistryLookup {
@@ -41,7 +42,11 @@ suffix_translate_response(TranslateResponse *response, void *ctx)
 {
     SuffixRegistryLookup &lookup = *(SuffixRegistryLookup *)ctx;
 
-    lookup.handler.success(response->content_type, lookup.handler_ctx);
+    lookup.handler.success(response->content_type,
+                           response->views != nullptr
+                           ? response->views->transformation
+                           : nullptr,
+                           lookup.handler_ctx);
 }
 
 static void

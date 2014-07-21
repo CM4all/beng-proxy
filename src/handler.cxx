@@ -278,11 +278,15 @@ get_suffix(const resource_address &address)
 }
 
 static void
-handler_suffix_registry_success(const char *content_type, void *ctx)
+handler_suffix_registry_success(const char *content_type,
+                                const Transformation *transformations,
+                                void *ctx)
 {
     struct request &request = *(struct request *)ctx;
 
     request.translate.content_type = content_type;
+    request.translate.suffix_transformation = transformations;
+
     handle_translated_request2(request, *request.translate.response);
 }
 
@@ -343,11 +347,14 @@ handle_translated_request(request &request, const TranslateResponse &response)
 {
     request.translate.response = &response;
     request.translate.address = &response.address;
+    request.translate.transformation = nullptr;
 
     apply_file_enotdir(request);
 
-    if (!do_content_type_lookup(request, response))
+    if (!do_content_type_lookup(request, response)) {
+        request.translate.suffix_transformation = nullptr;
         handle_translated_request2(request, response);
+    }
 }
 
 /**
@@ -364,6 +371,7 @@ install_error_response(request &request)
     request.translate.response = &error_response;
     request.translate.address = &error_response.address;
     request.translate.transformation = nullptr;
+    request.translate.suffix_transformation = nullptr;
 }
 
 static const char *
@@ -741,6 +749,7 @@ serve_document_root_file(request &request2,
     tr->transparent = true;
 
     request2.translate.transformation = tr->views->transformation;
+    request2.translate.suffix_transformation = nullptr;
 
     const char *path = p_strncat(request.pool,
                                  config->document_root,

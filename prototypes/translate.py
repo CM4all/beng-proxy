@@ -57,6 +57,11 @@ class Translation(Protocol):
         log.msg("content_type_lookup '%s' suffix='%s'" % (payload, suffix))
 
         response = Response(protocol_version=1)
+        if suffix == 'phtml':
+            response.packet(TRANSLATE_CONTENT_TYPE, 'text/html')
+            response.process(container=True)
+            return response
+
         if suffix in content_types:
             response.packet(TRANSLATE_CONTENT_TYPE, content_types[suffix])
         return response

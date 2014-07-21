@@ -62,7 +62,17 @@ struct request {
 
         const struct resource_address *address;
 
+        /**
+         * The next transformation.
+         */
         const Transformation *transformation;
+
+        /**
+         * The next transformation from the
+         * #TRANSLATE_CONTENT_TYPE_LOOKUP response.  These are applied
+         * before other transformations.
+         */
+        const Transformation *suffix_transformation;
 
         /**
          * A pointer to the "previous" translate response, non-nullptr
@@ -202,17 +212,25 @@ struct request {
     bool IsProcessorEnabled() const;
 
     bool HasTransformations() const {
-        return translate.transformation != nullptr;
+        return translate.transformation != nullptr ||
+            translate.suffix_transformation != nullptr;
     }
 
     void CancelTransformations() {
         translate.transformation = nullptr;
+        translate.suffix_transformation = nullptr;
     }
 
     const Transformation *PopTransformation() {
-        const Transformation *t = translate.transformation;
+        const Transformation *t = translate.suffix_transformation;
         if (t != nullptr)
-            translate.transformation = t->next;
+            translate.suffix_transformation = t->next;
+        else {
+            t = translate.transformation;
+            if (t != nullptr)
+                translate.transformation = t->next;
+        }
+
         return t;
     }
 };

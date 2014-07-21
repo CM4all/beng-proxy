@@ -13,9 +13,17 @@ struct pool;
 struct tcache;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
+struct Transformation;
 
 struct SuffixRegistryHandler {
-    void (*success)(const char *content_type, void *ctx);
+    /**
+     * @param transformations an optional #Transformation chain for
+     * all files of this type
+     */
+    void (*success)(const char *content_type,
+                    const Transformation *transformations,
+                    void *ctx);
+
     void (*error)(GError *error, void *ctx);
 };
 typedef void (*widget_class_callback_t)(const struct widget_class *cls,
