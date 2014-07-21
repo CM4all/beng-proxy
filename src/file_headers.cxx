@@ -103,7 +103,7 @@ file_evaluate_request(struct request *request2,
     char buffer[64];
 
     if (tr->status == 0 && request->method == HTTP_METHOD_GET &&
-        !request_transformation_enabled(request2)) {
+        !request2->IsTransformationEnabled()) {
         p = strmap_get(request->headers, "range");
 
         if (p != nullptr &&
@@ -113,7 +113,7 @@ file_evaluate_request(struct request *request2,
                                    &file_request->size);
     }
 
-    if (!request_processor_enabled(request2)) {
+    if (!request2->IsProcessorEnabled()) {
         p = strmap_get(request->headers, "if-modified-since");
         if (p != nullptr) {
             time_t t = http_date_parse(p);
@@ -144,7 +144,8 @@ file_evaluate_request(struct request *request2,
         }
     }
 
-    if (!request_transformation_enabled(request2)) {
+    if (!request2->
+IsTransformationEnabled()) {
         p = strmap_get(request->headers, "if-match");
         if (p != nullptr && strcmp(p, "*") != 0) {
             static_etag(buffer, st);

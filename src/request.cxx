@@ -12,9 +12,9 @@
 #include "istream.h"
 
 bool
-request_processor_enabled(const struct request *request)
+request::IsProcessorEnabled() const
 {
-    return request->translate.response->views->HasProcessor();
+    return translate.response->views->HasProcessor();
 }
 
 void

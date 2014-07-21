@@ -141,7 +141,7 @@ handle_translated_request2(request &request,
         apply_translate_response_session(request, response);
 
     /* always enforce sessions when the processor is enabled */
-    if (request_processor_enabled(&request) && session == nullptr)
+    if (request.IsProcessorEnabled() && session == nullptr)
         session = request_make_session(&request);
 
     if (session != nullptr)
@@ -151,7 +151,7 @@ handle_translated_request2(request &request,
                                                request.request->pool);
 
     request.processor_focus = request.args != nullptr &&
-        request_processor_enabled(&request) &&
+        request.IsProcessorEnabled() &&
         strmap_get(request.args, "focus") != nullptr;
 
     if (address.type == RESOURCE_ADDRESS_LOCAL) {

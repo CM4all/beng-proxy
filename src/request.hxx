@@ -184,27 +184,23 @@ struct request {
      * Handle #TRANSLATE_AUTH.
      */
     void HandleAuth(const TranslateResponse &response);
+
+    bool IsTransformationEnabled() const {
+        return translate.response->views->transformation != nullptr;
+    }
+
+    /**
+     * Returns true if the first transformation (if any) is the
+     * processor.
+     */
+    bool IsProcessorFirst() const {
+        return IsTransformationEnabled() &&
+            translate.response->views->transformation->type
+            == Transformation::Type::PROCESS;
+    }
+
+    bool IsProcessorEnabled() const;
 };
-
-static inline bool
-request_transformation_enabled(const struct request *request)
-{
-    return request->translate.response->views->transformation != nullptr;
-}
-
-/**
- * Returns true if the first transformation (if any) is the processor.
- */
-static inline bool
-request_processor_first(const struct request *request)
-{
-    return request_transformation_enabled(request) &&
-        request->translate.response->views->transformation->type
-        == Transformation::Type::PROCESS;
-}
-
-bool
-request_processor_enabled(const struct request *request);
 
 /**
  * Discard the request body if it was not used yet.  Call this before

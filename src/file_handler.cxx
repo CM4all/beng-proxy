@@ -50,8 +50,8 @@ file_dispatch(struct request &request2, const struct stat &st,
     file_response_headers(headers, override_content_type,
                           istream_file_fd(body), &st,
                           tr.expires_relative,
-                          request_processor_enabled(&request2),
-                          request_processor_first(&request2));
+                          request2.IsProcessorEnabled(),
+                          request2.IsProcessorFirst());
     write_translation_vary_header(headers, request2.translate.response);
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
@@ -128,8 +128,8 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
     file_response_headers(headers, override_content_type,
                           istream_file_fd(&body), &st,
                           tr.expires_relative,
-                          request_processor_enabled(&request2),
-                          request_processor_first(&request2));
+                          request2.IsProcessorEnabled(),
+                          request2.IsProcessorFirst());
     write_translation_vary_header(headers, request2.translate.response);
 
     header_write(headers, "content-encoding", encoding);
@@ -245,7 +245,7 @@ file_callback(struct request &request2)
     /* precompressed? */
 
     if (file_request.range == RANGE_NONE &&
-        !request_transformation_enabled(&request2) &&
+        !request2.IsTransformationEnabled() &&
         (file_check_compressed(request2, st, *body, "deflate",
                                address.deflated) ||
          (address.auto_gzipped &&

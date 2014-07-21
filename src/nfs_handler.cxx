@@ -64,8 +64,8 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
                           override_content_type,
                           -1, st,
                           tr->expires_relative,
-                          request_processor_enabled(request2),
-                          request_processor_first(request2));
+                          request2->IsProcessorEnabled(),
+                          request2->IsProcessorFirst());
     write_translation_vary_header(headers, request2->translate.response);
 
     http_status_t status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
