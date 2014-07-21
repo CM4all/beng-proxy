@@ -200,7 +200,7 @@ request_processor_first(const struct request *request)
 {
     return request_transformation_enabled(request) &&
         request->translate.response->views->transformation->type
-        == Transformation::TRANSFORMATION_PROCESS;
+        == Transformation::Type::PROCESS;
 }
 
 bool

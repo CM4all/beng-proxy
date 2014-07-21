@@ -128,16 +128,16 @@ transformation_equals(const Transformation *a,
         return false;
 
     switch (a->type) {
-    case Transformation::TRANSFORMATION_PROCESS:
+    case Transformation::Type::PROCESS:
         return a->u.processor.options == b->u.processor.options;
 
-    case Transformation::TRANSFORMATION_PROCESS_CSS:
+    case Transformation::Type::PROCESS_CSS:
         return a->u.css_processor.options == b->u.css_processor.options;
 
-    case Transformation::TRANSFORMATION_PROCESS_TEXT:
+    case Transformation::Type::PROCESS_TEXT:
         return true;
 
-    case Transformation::TRANSFORMATION_FILTER:
+    case Transformation::Type::FILTER:
         return resource_address_equals(&a->u.filter, &b->u.filter);
     }
 
@@ -1598,7 +1598,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         .expand_path_info = "/\\2",
     };
     static Transformation transformation1n = {
-        .type = Transformation::TRANSFORMATION_FILTER,
+        .type = Transformation::Type::FILTER,
         .u.filter = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
@@ -1631,7 +1631,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         .expand_path_info = "/\\2",
     };
     static Transformation transformation1e = {
-        .type = Transformation::TRANSFORMATION_FILTER,
+        .type = Transformation::Type::FILTER,
         .u.filter = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {
@@ -1674,7 +1674,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         .expand_path_info = "/\\2",
     };
     static Transformation transformation2 = {
-        .type = Transformation::TRANSFORMATION_FILTER,
+        .type = Transformation::Type::FILTER,
         .u.filter = {
             .type = RESOURCE_ADDRESS_CGI,
             .u = {

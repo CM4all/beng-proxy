@@ -1636,7 +1636,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_FILTER:
         transformation = translate_add_transformation(client);
-        transformation->type = Transformation::TRANSFORMATION_FILTER;
+        transformation->type = Transformation::Type::FILTER;
         transformation->u.filter.type = RESOURCE_ADDRESS_NONE;
         client->resource_address = &transformation->u.filter;
         client->jail = nullptr;
@@ -1659,7 +1659,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_PROCESS:
         transformation = translate_add_transformation(client);
-        transformation->type = Transformation::TRANSFORMATION_PROCESS;
+        transformation->type = Transformation::Type::PROCESS;
         transformation->u.processor.options = PROCESSOR_REWRITE_URL;
         return true;
 
@@ -1669,7 +1669,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_CONTAINER:
         if (client->transformation == nullptr ||
-            client->transformation->type != Transformation::TRANSFORMATION_PROCESS) {
+            client->transformation->type != Transformation::Type::PROCESS) {
             translate_client_error(client,
                                    "misplaced CONTAINER packet");
             return false;
@@ -1680,7 +1680,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_SELF_CONTAINER:
         if (client->transformation == nullptr ||
-            client->transformation->type != Transformation::TRANSFORMATION_PROCESS) {
+            client->transformation->type != Transformation::Type::PROCESS) {
             translate_client_error(client,
                                    "misplaced SELF_CONTAINER packet");
             return false;
@@ -1698,7 +1698,7 @@ translate_handle_packet(TranslateClient *client,
         }
 
         if (client->transformation == nullptr ||
-            client->transformation->type != Transformation::TRANSFORMATION_PROCESS) {
+            client->transformation->type != Transformation::Type::PROCESS) {
             translate_client_error(client,
                                    "misplaced GROUP_CONTAINER packet");
             return false;
@@ -2581,7 +2581,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_PROCESS_CSS:
         transformation = translate_add_transformation(client);
-        transformation->type = Transformation::TRANSFORMATION_PROCESS_CSS;
+        transformation->type = Transformation::Type::PROCESS_CSS;
         transformation->u.css_processor.options = CSS_PROCESSOR_REWRITE_URL;
         return true;
 
@@ -2593,11 +2593,11 @@ translate_handle_packet(TranslateClient *client,
         }
 
         switch (client->transformation->type) {
-        case Transformation::TRANSFORMATION_PROCESS:
+        case Transformation::Type::PROCESS:
             client->transformation->u.processor.options |= PROCESSOR_PREFIX_CSS_CLASS;
             break;
 
-        case Transformation::TRANSFORMATION_PROCESS_CSS:
+        case Transformation::Type::PROCESS_CSS:
             client->transformation->u.css_processor.options |= CSS_PROCESSOR_PREFIX_CLASS;
             break;
 
@@ -2617,11 +2617,11 @@ translate_handle_packet(TranslateClient *client,
         }
 
         switch (client->transformation->type) {
-        case Transformation::TRANSFORMATION_PROCESS:
+        case Transformation::Type::PROCESS:
             client->transformation->u.processor.options |= PROCESSOR_PREFIX_XML_ID;
             break;
 
-        case Transformation::TRANSFORMATION_PROCESS_CSS:
+        case Transformation::Type::PROCESS_CSS:
             client->transformation->u.css_processor.options |= CSS_PROCESSOR_PREFIX_ID;
             break;
 
@@ -2635,7 +2635,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_PROCESS_STYLE:
         if (client->transformation == nullptr ||
-            client->transformation->type != Transformation::TRANSFORMATION_PROCESS) {
+            client->transformation->type != Transformation::Type::PROCESS) {
             translate_client_error(client,
                                    "misplaced PROCESS_STYLE packet");
             return false;
@@ -2646,7 +2646,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_FOCUS_WIDGET:
         if (client->transformation == nullptr ||
-            client->transformation->type != Transformation::TRANSFORMATION_PROCESS) {
+            client->transformation->type != Transformation::Type::PROCESS) {
             translate_client_error(client,
                                    "misplaced FOCUS_WIDGET packet");
             return false;
@@ -2657,7 +2657,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_ANCHOR_ABSOLUTE:
         if (client->transformation == nullptr ||
-            client->transformation->type != Transformation::TRANSFORMATION_PROCESS) {
+            client->transformation->type != Transformation::Type::PROCESS) {
             translate_client_error(client,
                                    "misplaced ANCHOR_ABSOLUTE packet");
             return false;
@@ -2668,7 +2668,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_PROCESS_TEXT:
         transformation = translate_add_transformation(client);
-        transformation->type = Transformation::TRANSFORMATION_PROCESS_TEXT;
+        transformation->type = Transformation::Type::PROCESS_TEXT;
         return true;
 
     case TRANSLATE_LOCAL_URI:

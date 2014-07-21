@@ -14,7 +14,7 @@ bool
 Transformation::HasProcessor() const
 {
     for (auto t = this; t != nullptr; t = t->next)
-        if (t->type == TRANSFORMATION_PROCESS)
+        if (t->type == Type::PROCESS)
             return true;
 
     return false;
@@ -24,7 +24,7 @@ bool
 Transformation::IsContainer() const
 {
     for (auto t = this; t != nullptr; t = t->next)
-        if (t->type == TRANSFORMATION_PROCESS)
+        if (t->type == Type::PROCESS)
             return (t->u.processor.options & PROCESSOR_CONTAINER) != 0;
 
     return false;
@@ -37,18 +37,18 @@ Transformation::Dup(struct pool *pool) const
 
     dest->type = type;
     switch (dest->type) {
-    case TRANSFORMATION_PROCESS:
+    case Type::PROCESS:
         dest->u.processor.options = u.processor.options;
         break;
 
-    case TRANSFORMATION_PROCESS_CSS:
+    case Type::PROCESS_CSS:
         dest->u.css_processor.options = u.css_processor.options;
         break;
 
-    case TRANSFORMATION_PROCESS_TEXT:
+    case Type::PROCESS_TEXT:
         break;
 
-    case TRANSFORMATION_FILTER:
+    case Type::FILTER:
         resource_address_copy(*pool, &dest->u.filter, &u.filter);
         break;
     }
@@ -89,12 +89,12 @@ Transformation::Expand(struct pool *pool, const GMatchInfo *match_info,
     assert(match_info != nullptr);
 
     switch (type) {
-    case TRANSFORMATION_PROCESS:
-    case TRANSFORMATION_PROCESS_CSS:
-    case TRANSFORMATION_PROCESS_TEXT:
+    case Type::PROCESS:
+    case Type::PROCESS_CSS:
+    case Type::PROCESS_TEXT:
         return true;
 
-    case TRANSFORMATION_FILTER:
+    case Type::FILTER:
         return resource_address_expand(pool, &u.filter, match_info, error_r);
     }
 

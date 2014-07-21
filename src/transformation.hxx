@@ -19,11 +19,11 @@ struct pool;
 struct Transformation {
     Transformation *next;
 
-    enum {
-        TRANSFORMATION_PROCESS,
-        TRANSFORMATION_PROCESS_CSS,
-        TRANSFORMATION_PROCESS_TEXT,
-        TRANSFORMATION_FILTER,
+    enum class Type {
+        PROCESS,
+        PROCESS_CSS,
+        PROCESS_TEXT,
+        FILTER,
     } type;
 
     union {
@@ -58,7 +58,7 @@ struct Transformation {
      */
     gcc_pure
     bool IsExpandable() const {
-        return type == TRANSFORMATION_FILTER &&
+        return type == Type::FILTER &&
             resource_address_is_expandable(&u.filter);
     }
 

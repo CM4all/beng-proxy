@@ -387,7 +387,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
     }
 
     switch (transformation->type) {
-    case Transformation::TRANSFORMATION_PROCESS:
+    case Transformation::Type::PROCESS:
         /* processor responses cannot be cached */
         embed->resource_tag = nullptr;
 
@@ -395,7 +395,7 @@ widget_response_transform(struct embed *embed, http_status_t status,
                                 transformation->u.processor.options);
         break;
 
-    case Transformation::TRANSFORMATION_PROCESS_CSS:
+    case Transformation::Type::PROCESS_CSS:
         /* processor responses cannot be cached */
         embed->resource_tag = nullptr;
 
@@ -403,14 +403,14 @@ widget_response_transform(struct embed *embed, http_status_t status,
                                     transformation->u.css_processor.options);
         break;
 
-    case Transformation::TRANSFORMATION_PROCESS_TEXT:
+    case Transformation::Type::PROCESS_TEXT:
         /* processor responses cannot be cached */
         embed->resource_tag = nullptr;
 
         widget_response_process_text(embed, status, headers, body);
         break;
 
-    case Transformation::TRANSFORMATION_FILTER:
+    case Transformation::Type::FILTER:
         widget_response_apply_filter(embed, status, headers, body,
                                      &transformation->u.filter);
         break;

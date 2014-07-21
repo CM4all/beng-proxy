@@ -85,19 +85,19 @@ my_translate_response(TranslateResponse *response, void *ctx)
              transformation != nullptr;
              transformation = transformation->next) {
             switch (transformation->type) {
-            case Transformation::TRANSFORMATION_PROCESS:
+            case Transformation::Type::PROCESS:
                 printf("process\n");
                 break;
 
-            case Transformation::TRANSFORMATION_PROCESS_CSS:
+            case Transformation::Type::PROCESS_CSS:
                 printf("process_css\n");
                 break;
 
-            case Transformation::TRANSFORMATION_PROCESS_TEXT:
+            case Transformation::Type::PROCESS_TEXT:
                 printf("process_text\n");
                 break;
 
-            case Transformation::TRANSFORMATION_FILTER:
+            case Transformation::Type::FILTER:
                 printf("filter\n");
                 print_resource_address(&transformation->u.filter);
                 break;

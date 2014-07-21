@@ -606,12 +606,12 @@ response_apply_transformation(request &request2,
     request2.transformed = true;
 
     switch (transformation->type) {
-    case Transformation::TRANSFORMATION_FILTER:
+    case Transformation::Type::FILTER:
         response_apply_filter(request2, status, headers, body,
                               &transformation->u.filter);
         break;
 
-    case Transformation::TRANSFORMATION_PROCESS:
+    case Transformation::Type::PROCESS:
         /* processor responses cannot be cached */
         request2.resource_tag = nullptr;
 
@@ -619,14 +619,14 @@ response_apply_transformation(request &request2,
                                   transformation);
         break;
 
-    case Transformation::TRANSFORMATION_PROCESS_CSS:
+    case Transformation::Type::PROCESS_CSS:
         /* processor responses cannot be cached */
         request2.resource_tag = nullptr;
 
         response_invoke_css_processor(request2, status, headers, body,
                                       transformation);
 
-    case Transformation::TRANSFORMATION_PROCESS_TEXT:
+    case Transformation::Type::PROCESS_TEXT:
         /* processor responses cannot be cached */
         request2.resource_tag = nullptr;
 
