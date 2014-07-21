@@ -3,7 +3,7 @@ cm4all-beng-proxy (5.0.9) unstable; urgency=low
   * merge release 4.9
   * translation: CONTENT_TYPE_LOOKUP response may contain transformations
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 21 Jul 2014 16:37:34 -0000
 
 cm4all-beng-proxy (5.0.8) unstable; urgency=low
 
