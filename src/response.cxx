@@ -13,7 +13,7 @@
 #include "header_forward.hxx"
 #include "widget.h"
 #include "widget_class.hxx"
-#include "widget-dump.h"
+#include "widget_dump.hxx"
 #include "proxy_widget.hxx"
 #include "session.hxx"
 #include "fcache.h"

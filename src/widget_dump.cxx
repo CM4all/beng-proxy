@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "widget-dump.h"
+#include "widget_dump.hxx"
 #include "widget.h"
 #include "istream-notify.h"
 
@@ -26,7 +26,7 @@ static void dump_widget_tree(unsigned indent, const struct widget *widget)
 static void
 widget_dump_callback(void *ctx)
 {
-    const struct widget *widget = ctx;
+    const struct widget *widget = (const struct widget *)ctx;
 
     dump_widget_tree(0, widget);
 }
@@ -41,7 +41,7 @@ struct istream *
 widget_dump_tree_after_istream(struct pool *pool, struct istream *istream,
                                struct widget *widget)
 {
-    assert(widget != NULL);
+    assert(widget != nullptr);
 
     return istream_notify_new(pool, istream,
                               &widget_dump_handler, widget);

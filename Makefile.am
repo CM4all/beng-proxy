@@ -293,8 +293,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget_registry.cxx src/widget_registry.hxx \
 	src/widget_resolver.cxx src/widget_resolver.hxx \
 	src/widget_approval.cxx src/widget_approval.hxx \
-	src/widget-dump.h \
-	src/widget-dump.c \
+	src/widget_dump.cxx src/widget_dump.hxx \
 	src/escape_pool.c src/escape_pool.h \
 	src/istream-escape.c src/istream-escape.h \
 	src/istream-html-escape.c \
