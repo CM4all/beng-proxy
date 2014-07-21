@@ -161,7 +161,7 @@ response_invoke_processor(request &request2,
     if (proxy_ref != nullptr)
         /* disable all following transformations, because we're doing
            a direct proxy request to a widget */
-        request2.translate.transformation = nullptr;
+        request2.CancelTransformations();
 
     if (request2.translate.response->untrusted != nullptr &&
         proxy_ref == nullptr) {
@@ -198,8 +198,7 @@ response_invoke_processor(request &request2,
     }
 
     http_method_t method = request->method;
-    if (http_method_is_empty(method) &&
-        request2.translate.transformation != nullptr)
+    if (http_method_is_empty(method) && request2.HasTransformations())
         /* the following transformation may need the processed
            document to generate its headers, so we should not pass
            HEAD to the processor */
@@ -666,13 +665,10 @@ response_dispatch(struct request *request2,
 
     /* if HTTP status code is not successful: don't apply
        transformation on the error document */
-    const Transformation *transformation
-        = request2->translate.transformation;
+    const Transformation *transformation = request2->PopTransformation();
     if (transformation != nullptr &&
         filter_enabled(request2->translate.response, status)) {
         struct strmap *headers2;
-
-        request2->translate.transformation = transformation->next;
 
         if (headers != nullptr) {
             struct http_server_request *request = request2->request;
@@ -748,15 +744,13 @@ response_response(http_status_t status, struct strmap *headers,
     assert(!request2.response_sent);
     assert(body == nullptr || !istream_has_handler(body));
 
-    if (request2.translate.transformation != nullptr &&
-        http_status_is_success(status)) {
-        const Transformation *transformation
-            = request2.translate.transformation;
-        request2.translate.transformation = transformation->next;
-
-        response_apply_transformation(request2, status, headers, body,
-                                      transformation);
-        return;
+    if (http_status_is_success(status)) {
+        const Transformation *transformation = request2.PopTransformation();
+        if (transformation != nullptr) {
+            response_apply_transformation(request2, status, headers, body,
+                                          transformation);
+            return;
+        }
     }
 
     const struct strmap *original_headers = headers;

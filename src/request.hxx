@@ -200,6 +200,21 @@ struct request {
     }
 
     bool IsProcessorEnabled() const;
+
+    bool HasTransformations() const {
+        return translate.transformation != nullptr;
+    }
+
+    void CancelTransformations() {
+        translate.transformation = nullptr;
+    }
+
+    const Transformation *PopTransformation() {
+        const Transformation *t = translate.transformation;
+        if (t != nullptr)
+            translate.transformation = t->next;
+        return t;
+    }
 };
 
 /**

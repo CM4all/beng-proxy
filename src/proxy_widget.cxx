@@ -103,7 +103,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 
     /* disable the following transformations, because they are meant
        for the template, not for this widget */
-    request2->translate.transformation = nullptr;
+    request2->CancelTransformations();
 
     response_dispatch(request2, status, headers2, body);
 }
