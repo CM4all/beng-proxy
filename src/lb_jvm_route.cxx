@@ -21,14 +21,14 @@ lb_jvm_route_get(const struct strmap *request_headers,
 {
     const AutoRewindPool auto_rewind(*tpool);
 
-    const char *cookie = strmap_get(request_headers, "cookie");
+    const char *cookie = request_headers->Get("cookie");
     if (cookie == NULL)
         return 0;
 
     struct strmap *jar = strmap_new(tpool);
     cookie_map_parse(jar, cookie, tpool);
 
-    const char *p = strmap_get(jar, "JSESSIONID");
+    const char *p = jar->Get("JSESSIONID");
     if (p == NULL)
         return 0;
 

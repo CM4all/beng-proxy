@@ -300,7 +300,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     out = forward_response_headers(pool, headers,
                                    "192.168.0.2", nullptr,
                                    &settings);
-    assert(strmap_get(out, "server") == nullptr);
+    assert(out->Get("server") == nullptr);
     check_strmap(out, "content-type=image/jpeg;");
 
     /* response headers: server */

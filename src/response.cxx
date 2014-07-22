@@ -48,7 +48,7 @@ request_absolute_uri(const struct http_server_request *request,
         scheme = "http";
 
     if (host == nullptr)
-        host = strmap_get(request->headers, "host");
+        host = request->headers->Get("host");
 
     if (host == nullptr || !hostname_is_well_formed(host))
         return nullptr;

@@ -484,7 +484,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
 {
     struct widget *widget = embed->widget;
 
-    const char *view_name = strmap_get(headers, "x-cm4all-view");
+    const char *view_name = headers->Get("x-cm4all-view");
     if (view_name != nullptr) {
         /* yes, look it up in the class */
 
@@ -546,7 +546,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         }
 
         /*
-        translate = strmap_get(headers, "x-cm4all-beng-translate");
+        translate = headers->Get("x-cm4all-beng-translate");
         if (translate != nullptr) {
             struct session *session = session_get(embed->env->session_id);
             if (session != nullptr)
@@ -556,7 +556,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         */
 
         if (http_status_is_redirect(status)) {
-            const char *location = strmap_get(headers, "location");
+            const char *location = headers->Get("location");
             if (location != nullptr &&
                 widget_response_redirect(embed, location, body)) {
                 return;

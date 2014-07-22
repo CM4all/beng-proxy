@@ -69,7 +69,7 @@ headers_copy_one(const struct strmap *in, struct growing_buffer *out,
     assert(in != nullptr);
     assert(out != nullptr);
 
-    const char *value = strmap_get(in, key);
+    const char *value = in->Get(key);
     if (value != nullptr)
         header_write(out, key, value);
 }
@@ -81,7 +81,7 @@ headers_copy(const struct strmap *in, struct growing_buffer *out,
     const char *value;
 
     for (; *keys != nullptr; ++keys) {
-        value = strmap_get(in, *keys);
+        value = in->Get(*keys);
         if (value != nullptr)
             header_write(out, *keys, value);
     }

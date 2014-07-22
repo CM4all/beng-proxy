@@ -19,14 +19,14 @@ lb_session_get(const struct strmap *request_headers,
 {
     const AutoRewindPool auto_rewind(*tpool);
 
-    const char *cookie = strmap_get(request_headers, "cookie");
+    const char *cookie = request_headers->Get("cookie");
     if (cookie == NULL)
         return 0;
 
     struct strmap *jar = strmap_new(tpool);
     cookie_map_parse(jar, cookie, tpool);
 
-    const char *session = strmap_get(jar, cookie_name);
+    const char *session = jar->Get(cookie_name);
     if (session == NULL)
         return 0;
 

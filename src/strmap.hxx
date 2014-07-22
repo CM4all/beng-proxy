@@ -83,12 +83,6 @@ strmap_new(struct pool *pool);
 struct strmap *gcc_malloc
 strmap_dup(struct pool *pool, struct strmap *src);
 
-static inline const char *
-strmap_get(const struct strmap *map, const char *key)
-{
-    return map->Get(key);
-}
-
 /**
  * This variation of strmap::Remove() allows the caller to pass
  * map=nullptr.
@@ -102,14 +96,15 @@ strmap_remove_checked(struct strmap *map, const char *key)
 }
 
 /**
- * This variation of strmap_get() allows the caller to pass map=nullptr.
+ * This variation of strmap::Get() allows the caller to pass
+ * map=nullptr.
  */
 gcc_pure
 static inline const char *
 strmap_get_checked(const struct strmap *map, const char *key)
 {
     return map != nullptr
-        ? strmap_get(map, key)
+        ? map->Get(key)
         : nullptr;
 }
 

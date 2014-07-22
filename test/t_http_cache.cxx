@@ -278,7 +278,7 @@ my_http_response(http_status_t status, struct strmap *headers,
         assert(headers != NULL);
 
         for (const auto &i : *expected_rh) {
-            const char *value = strmap_get(headers, i.key);
+            const char *value = headers->Get(i.key);
             assert(value != NULL);
             assert(strcmp(value, i.value) == 0);
         }

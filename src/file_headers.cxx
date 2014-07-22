@@ -104,17 +104,17 @@ file_evaluate_request(struct request *request2,
 
     if (tr->status == 0 && request->method == HTTP_METHOD_GET &&
         !request2->IsTransformationEnabled()) {
-        p = strmap_get(request->headers, "range");
+        p = request->headers->Get("range");
 
         if (p != nullptr &&
-            check_if_range(strmap_get(request->headers, "if-range"), st))
+            check_if_range(request->headers->Get("if-range"), st))
             file_request->range =
                 parse_range_header(p, &file_request->skip,
                                    &file_request->size);
     }
 
     if (!request2->IsProcessorEnabled()) {
-        p = strmap_get(request->headers, "if-modified-since");
+        p = request->headers->Get("if-modified-since");
         if (p != nullptr) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st->st_mtime <= t) {
@@ -133,7 +133,7 @@ file_evaluate_request(struct request *request2,
             }
         }
 
-        p = strmap_get(request->headers, "if-unmodified-since");
+        p = request->headers->Get("if-unmodified-since");
         if (p != nullptr) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st->st_mtime > t) {
@@ -146,7 +146,7 @@ file_evaluate_request(struct request *request2,
 
     if (!request2->
 IsTransformationEnabled()) {
-        p = strmap_get(request->headers, "if-match");
+        p = request->headers->Get("if-match");
         if (p != nullptr && strcmp(p, "*") != 0) {
             static_etag(buffer, st);
 
@@ -157,7 +157,7 @@ IsTransformationEnabled()) {
             }
         }
 
-        p = strmap_get(request->headers, "if-none-match");
+        p = request->headers->Get("if-none-match");
         if (p != nullptr && strcmp(p, "*") == 0) {
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
                               nullptr, nullptr);

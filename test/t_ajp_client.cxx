@@ -186,7 +186,7 @@ read_ajp_request(struct pool *pool, struct ajp_request *r)
 
     discard(remaining);
 
-    const char *length_string = strmap_get(r->headers, "content-length");
+    const char *length_string = r->headers->Get("content-length");
     r->length = length_string != nullptr
         ? strtoul(length_string, nullptr, 10)
         : 0;

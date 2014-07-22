@@ -21,7 +21,7 @@ vary_exists(const char *vary, const struct strmap *request_headers,
 
     return request_headers != nullptr &&
         strstr(vary, key) != nullptr &&
-        strmap_get(request_headers, key) != nullptr;
+        request_headers->Get(key) != nullptr;
 }
 
 /**

@@ -276,13 +276,13 @@ filter_cache_response_evaluate(filter_cache_info *info,
         /* too large for the cache */
         return false;
 
-    p = strmap_get(headers, "cache-control");
+    p = headers->Get("cache-control");
     if (p != nullptr && http_list_contains(p, "no-store"))
         return false;
 
     now = time(nullptr);
 
-    p = strmap_get(headers, "date");
+    p = headers->Get("date");
     if (p != nullptr) {
         time_t date = http_date_parse(p);
         if (date != (time_t)-1)
@@ -290,13 +290,13 @@ filter_cache_response_evaluate(filter_cache_info *info,
     }
 
     if (info->expires == (time_t)-1) {
-        info->expires = parse_translate_time(strmap_get(headers, "expires"), offset);
+        info->expires = parse_translate_time(headers->Get("expires"), offset);
         if (info->expires != (time_t)-1 && info->expires < now)
             cache_log(2, "invalid 'expires' header\n");
     }
 
     /*
-    info->out_etag = strmap_get(headers, "etag");
+    info->out_etag = headers->Get("etag");
     */
 
     return true;

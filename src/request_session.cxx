@@ -29,7 +29,7 @@ request_get_cookies(struct request *request)
     if (request->cookies != nullptr)
         return request->cookies;
 
-    const char *cookie = strmap_get(request->request->headers, "cookie");
+    const char *cookie = request->request->headers->Get("cookie");
     if (cookie == nullptr)
         return nullptr;
 
@@ -73,7 +73,7 @@ build_session_cookie_name(struct pool *pool, const struct config *config,
     if (headers == nullptr || !config->dynamic_session_cookie)
         return config->session_cookie;
 
-    const char *host = strmap_get(headers, "host");
+    const char *host = headers->Get("host");
     if (host == nullptr || *host == 0)
         return config->session_cookie;
 
@@ -113,8 +113,7 @@ request_determine_session(struct request *request)
 
     request->session_realm = nullptr;
 
-    const char *user_agent = strmap_get(request->request->headers,
-                                        "user-agent");
+    const char *user_agent = request->request->headers->Get("user-agent");
     request->stateless = user_agent == nullptr ||
         user_agent_is_bot(user_agent);
     if (request->stateless)

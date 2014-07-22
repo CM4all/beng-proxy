@@ -35,7 +35,7 @@ static inline int
 http_client_accepts_encoding(struct strmap *request_headers,
                              const char *coding)
 {
-    const char *accept_encoding = strmap_get(request_headers, "accept-encoding");
+    const char *accept_encoding = request_headers->Get("accept-encoding");
     return accept_encoding != nullptr &&
         http_list_contains(accept_encoding, coding);
 }

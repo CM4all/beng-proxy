@@ -88,7 +88,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 
 #ifndef NO_DEFLATE
     if (body != nullptr && istream_available(body, false) == (off_t)-1 &&
-        (headers == nullptr || strmap_get(headers, "content-encoding") == nullptr) &&
+        (headers == nullptr || headers->Get("content-encoding") == nullptr) &&
         http_client_accepts_encoding(request->headers, "deflate")) {
         header_write(headers2, "content-encoding", "deflate");
         body = istream_deflate_new(request->pool, body);

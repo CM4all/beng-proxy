@@ -54,7 +54,7 @@ bounce_uri(struct pool &pool, const struct request &request,
         ? response.scheme : "http";
     const char *host = response.host != nullptr
         ? response.host
-        : strmap_get(request.request->headers, "host");
+        : request.request->headers->Get("host");
     if (host == nullptr)
         host = "localhost";
 
@@ -152,7 +152,7 @@ handle_translated_request2(request &request,
 
     request.processor_focus = request.args != nullptr &&
         request.IsProcessorEnabled() &&
-        strmap_get(request.args, "focus") != nullptr;
+        request.args->Get("focus") != nullptr;
 
     if (address.type == RESOURCE_ADDRESS_LOCAL) {
         if (address.u.file->delegate != nullptr)
@@ -406,14 +406,14 @@ static void
 fill_translate_request_user_agent(TranslateRequest &t,
                                   const strmap *headers)
 {
-    t.user_agent = strmap_get(headers, "user-agent");
+    t.user_agent = headers->Get("user-agent");
 }
 
 static void
 fill_translate_request_ua_class(TranslateRequest &t,
                                 const strmap &headers)
 {
-    const char *user_agent = strmap_get(&headers, "user-agent");
+    const char *user_agent = headers.Get("user-agent");
 
     t.ua_class = user_agent != nullptr
         ? ua_classification_lookup(user_agent)
@@ -424,7 +424,7 @@ static void
 fill_translate_request_language(TranslateRequest &t,
                                 const strmap &headers)
 {
-    t.accept_language = strmap_get(&headers, "accept-language");
+    t.accept_language = headers.Get("accept-language");
 }
 
 static void
@@ -694,8 +694,8 @@ fill_translate_request(TranslateRequest &t,
     t.session = session;
     t.param = param;
 
-    t.host = strmap_get(request.headers, "host");
-    t.authorization = strmap_get(request.headers, "authorization");
+    t.host = request.headers->Get("host");
+    t.authorization = request.headers->Get("authorization");
     t.uri = strref_dup(request.pool, &uri.base);
 
     if (translation_protocol_version < 1) {

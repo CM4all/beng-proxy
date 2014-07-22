@@ -174,13 +174,13 @@ http_server_headers_finished(struct http_server_connection *connection)
        be tracked by filtered_socket (auto-refreshing) */
     evtimer_del(&connection->idle_timeout);
 
-    const char *value = strmap_get(request->headers, "expect");
+    const char *value = request->headers->Get("expect");
     connection->request.expect_100_continue = value != nullptr &&
         strcmp(value, "100-continue") == 0;
     connection->request.expect_failed = value != nullptr &&
         strcmp(value, "100-continue") != 0;
 
-    value = strmap_get(request->headers, "connection");
+    value = request->headers->Get("connection");
 
     /* we disable keep-alive support on ancient HTTP 1.0, because that
        feature was not well-defined and led to problems with some
@@ -188,12 +188,12 @@ http_server_headers_finished(struct http_server_connection *connection)
     connection->keep_alive = !connection->request.http_1_0 &&
         (value == nullptr || !http_list_contains_i(value, "close"));
 
-    value = strmap_get(request->headers, "transfer-encoding");
+    value = request->headers->Get("transfer-encoding");
 
     off_t content_length = -1;
     const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
     if (!chunked) {
-        value = strmap_get(request->headers, "content-length");
+        value = request->headers->Get("content-length");
         if (value == nullptr) {
             /* no body at all */
 

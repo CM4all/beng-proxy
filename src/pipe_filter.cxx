@@ -168,7 +168,7 @@ pipe_filter(struct pool *pool, const char *path,
 
     stopwatch_event(stopwatch, "fork");
 
-    etag = strmap_get(headers, "etag");
+    etag = headers->Get("etag");
     if (etag != nullptr) {
         /* we cannot pass the original ETag to the client, because the
            pipe has modified the resource (which is what the pipe is

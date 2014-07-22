@@ -18,11 +18,11 @@ resource_tag_append_etag(struct pool *pool, const char *tag,
     if (tag == NULL || headers == NULL)
         return NULL;
 
-    etag = strmap_get(headers, "etag");
+    etag = headers->Get("etag");
     if (etag == NULL)
         return NULL;
 
-    p = strmap_get(headers, "cache-control");
+    p = headers->Get("cache-control");
     if (p != NULL && http_list_contains(p, "no-store"))
         /* generating a resource tag for the cache is pointless,
            because we are not allowed to store the response anyway */

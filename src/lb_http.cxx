@@ -71,7 +71,7 @@ lb_http_get_attribute(const http_server_request &request,
         return request.uri;
 
     case lb_attribute_reference::Type::HEADER:
-        return strmap_get(request.headers, reference.name.c_str());
+        return request.headers->Get(reference.name.c_str());
     }
 
     assert(false);

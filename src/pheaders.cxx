@@ -27,7 +27,7 @@ processor_header_forward(struct pool *pool, struct strmap *headers)
 #ifndef NDEBUG
         /* copy Wildfire headers if present (debug build only, to avoid
            overhead on production servers) */
-        if (strmap_get(headers, "x-wf-protocol-1") != nullptr)
+        if (headers->Get("x-wf-protocol-1") != nullptr)
             header_copy_prefix(headers, headers2, "x-wf-");
 #endif
     }

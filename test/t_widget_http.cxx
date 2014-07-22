@@ -173,7 +173,7 @@ resource_get(gcc_unused struct http_cache *cache,
 
     switch (test_id) {
     case 0:
-        p = strmap_get(headers, "cookie");
+        p = headers->Get("cookie");
         assert(p == nullptr);
 
         /* set one cookie */
@@ -182,7 +182,7 @@ resource_get(gcc_unused struct http_cache *cache,
 
     case 1:
         /* is the one cookie present? */
-        p = strmap_get(headers, "cookie");
+        p = headers->Get("cookie");
         assert(p != nullptr);
         assert(strcmp(p, "foo=bar") == 0);
 
@@ -192,7 +192,7 @@ resource_get(gcc_unused struct http_cache *cache,
 
     case 2:
         /* are 3 cookies present? */
-        p = strmap_get(headers, "cookie");
+        p = headers->Get("cookie");
         assert(p != nullptr);
         assert(strcmp(p, "c=d; a=b; foo=bar") == 0);
 
@@ -203,7 +203,7 @@ resource_get(gcc_unused struct http_cache *cache,
 
     case 3:
         /* check for 5 cookies */
-        p = strmap_get(headers, "cookie");
+        p = headers->Get("cookie");
         assert(p != nullptr);
         assert(strcmp(p, "g=h; e=f; c=d; a=b; foo=bar") == 0);
         break;

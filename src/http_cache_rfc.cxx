@@ -97,7 +97,7 @@ http_cache_request_evaluate(struct pool *pool,
         return nullptr;
 
     if (headers != nullptr) {
-        p = strmap_get(headers, "range");
+        p = headers->Get("range");
         if (p != nullptr)
             return nullptr;
 
@@ -105,10 +105,10 @@ http_cache_request_evaluate(struct pool *pool,
            containing an Authorization field, it MUST NOT return the
            corresponding response as a reply to any other request
            [...] */
-        if (strmap_get(headers, "authorization") != nullptr)
+        if (headers->Get("authorization") != nullptr)
             return nullptr;
 
-        p = strmap_get(headers, "cache-control");
+        p = headers->Get("cache-control");
         if (p != nullptr) {
             struct strref cc, tmp, *s;
 
@@ -126,7 +126,7 @@ http_cache_request_evaluate(struct pool *pool,
                 }
             }
         } else {
-            p = strmap_get(headers, "pragma");
+            p = headers->Get("pragma");
             if (p != nullptr && strcmp(p, "no-cache") == 0)
                 return nullptr;
         }
@@ -207,7 +207,7 @@ gcc_pure
 static const char *
 strmap_get_non_empty(const struct strmap *map, const char *key)
 {
-    const char *value = strmap_get(map, key);
+    const char *value = map->Get(key);
     if (value != nullptr && *value == 0)
         value = nullptr;
     return value;
@@ -228,7 +228,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
         /* too large for the cache */
         return false;
 
-    p = strmap_get(headers, "cache-control");
+    p = headers->Get("cache-control");
     if (p != nullptr) {
         struct strref cc, tmp, *s;
 
@@ -262,7 +262,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     now = time(nullptr);
 
     if (info->is_remote) {
-        p = strmap_get(headers, "date");
+        p = headers->Get("date");
         if (p == nullptr)
             /* we cannot determine whether to cache a resource if the
                server does not provide its system time */
@@ -282,7 +282,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
            header and a max-age directive, the max-age directive
            overrides the Expires header" */
 
-        info->expires = parse_translate_time(strmap_get(headers, "expires"), offset);
+        info->expires = parse_translate_time(headers->Get("expires"), offset);
         if (info->expires != (time_t)-1 && info->expires < now)
             cache_log(4, "invalid 'expires' header\n");
     }
@@ -297,8 +297,8 @@ http_cache_response_evaluate(struct http_cache_info *info,
            storing the resource at all */
         return false;
 
-    info->last_modified = strmap_get(headers, "last-modified");
-    info->etag = strmap_get(headers, "etag");
+    info->last_modified = headers->Get("last-modified");
+    info->etag = headers->Get("etag");
 
     info->vary = strmap_get_non_empty(headers, "vary");
     if (info->vary != nullptr && strcmp(info->vary, "*") == 0)
