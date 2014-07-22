@@ -15,31 +15,31 @@
 #include <string.h>
 
 bool
-http_server_maybe_send_100_continue(struct http_server_connection *connection)
+http_server_connection::MaybeSend100Continue()
 {
-    assert(http_server_connection_valid(connection));
-    assert(connection->request.read_state == http_server_connection::Request::BODY);
+    assert(IsValid());
+    assert(request.read_state == Request::BODY);
 
-    if (!connection->request.expect_100_continue)
+    if (!request.expect_100_continue)
         return true;
 
-    assert(connection->response.istream == NULL);
+    assert(response.istream == NULL);
 
-    connection->request.expect_100_continue = false;
+    request.expect_100_continue = false;
 
     /* this string is simple enough to expect that we don't need to
        check for partial writes, not before we have sent a single byte
        of response to the peer */
     static const char *const response = "HTTP/1.1 100 Continue\r\n\r\n";
     const size_t length = strlen(response);
-    ssize_t nbytes = connection->socket.Write(response, length);
+    ssize_t nbytes = socket.Write(response, length);
     if (gcc_likely(nbytes == (ssize_t)length))
         return true;
 
     if (nbytes == WRITE_ERRNO)
-        http_server_errno(connection, "write error");
+        ErrorErrno("write error");
     else if (nbytes != WRITE_DESTROYED)
-        http_server_error_message(connection, "write error");
+        Error("write error");
     return false;
 }
 
@@ -86,7 +86,7 @@ http_server_response(const struct http_server_request *request,
         /* if we didn't send "100 Continue" yet, we should do it now;
            we don't know if the request body will be used, but at
            least it hasn't been closed yet */
-        !http_server_maybe_send_100_continue(connection))
+        !connection->MaybeSend100Continue())
         return;
 
     connection->response.status = status;
@@ -145,7 +145,7 @@ http_server_response(const struct http_server_request *request,
                         connection->socket.GetDirectMask());
 
     connection->socket.SetCork(true);
-    if (http_server_try_write(connection))
+    if (connection->TryWrite())
         connection->socket.SetCork(false);
 }
 

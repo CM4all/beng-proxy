@@ -37,7 +37,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
     assert(!connection->response.pending_drained);
 
     if (unlikely(length < 5)) {
-        http_server_error_message(connection, "malformed request line");
+        connection->Error("malformed request line");
         return false;
     }
 
@@ -135,7 +135,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
     if (method == HTTP_METHOD_NULL) {
         /* invalid request method */
 
-        http_server_error_message(connection, "unrecognized request method");
+        connection->Error("unrecognized request method");
         return false;
     }
 
@@ -148,7 +148,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
 
         ssize_t nbytes = connection->socket.Write(msg, sizeof(msg) - 1);
         if (nbytes != WRITE_DESTROYED)
-            http_server_done(connection);
+            connection->Done();
         return false;
     }
 
@@ -206,8 +206,7 @@ http_server_headers_finished(struct http_server_connection *connection)
 
             content_length = strtoul(value, &endptr, 10);
             if (unlikely(*endptr != 0 || content_length < 0)) {
-                http_server_error_message(connection,
-                                          "invalid Content-Length header in HTTP request");
+                connection->Error("invalid Content-Length header in HTTP request");
                 return false;
             }
 
@@ -341,55 +340,54 @@ http_server_submit_request(struct http_server_connection *connection)
         connection->request.in_handler = false;
     }
 
-    return http_server_connection_valid(connection);
+    return connection->IsValid();
 }
 
 BufferedResult
-http_server_feed(struct http_server_connection *connection,
-                  const void *data, size_t length)
+http_server_connection::Feed(const void *data, size_t length)
 {
-    assert(!connection->response.pending_drained);
+    assert(!response.pending_drained);
 
-    switch (connection->request.read_state) {
+    switch (request.read_state) {
         BufferedResult result;
 
-    case http_server_connection::Request::START:
-    case http_server_connection::Request::HEADERS:
-        if (connection->score == HTTP_SERVER_NEW)
-            connection->score = HTTP_SERVER_FIRST;
+    case Request::START:
+    case Request::HEADERS:
+        if (score == HTTP_SERVER_NEW)
+            score = HTTP_SERVER_FIRST;
 
-        result = http_server_feed_headers(connection, data, length);
+        result = http_server_feed_headers(this, data, length);
         if ((result == BufferedResult::OK || result == BufferedResult::PARTIAL) &&
-            (connection->request.read_state == http_server_connection::Request::BODY ||
-             connection->request.read_state == http_server_connection::Request::END)) {
-            if (connection->request.read_state == http_server_connection::Request::BODY)
-                result = connection->request.body_reader.RequireMore()
+            (request.read_state == Request::BODY ||
+             request.read_state == Request::END)) {
+            if (request.read_state == Request::BODY)
+                result = request.body_reader.RequireMore()
                     ? BufferedResult::AGAIN_EXPECT
                     : BufferedResult::AGAIN_OPTIONAL;
 
-            if (!http_server_submit_request(connection))
+            if (!http_server_submit_request(this))
                 result = BufferedResult::CLOSED;
         }
 
         return result;
 
-    case http_server_connection::Request::BODY:
-        return http_server_feed_body(connection, data, length);
+    case Request::BODY:
+        return FeedRequestBody(data, length);
 
-    case http_server_connection::Request::END:
+    case Request::END:
         /* check if the connection was closed by the client while we
            were processing the request */
 
-        if (connection->socket.IsFull())
+        if (socket.IsFull())
             /* the buffer is full, the peer has been pipelining too
                much - that would disallow us to detect a disconnect;
                let's disable keep-alive now and discard all data */
-            connection->keep_alive = false;
+            keep_alive = false;
 
-        if (!connection->keep_alive) {
+        if (!keep_alive) {
             /* discard all pipelined input when keep-alive has been
                disabled */
-            connection->socket.Consumed(length);
+            socket.Consumed(length);
             return BufferedResult::OK;
         }
 
@@ -401,17 +399,17 @@ http_server_feed(struct http_server_connection *connection,
 }
 
 DirectResult
-http_server_try_request_direct(struct http_server_connection *connection,
-                               int fd, enum istream_direct fd_type)
+http_server_connection::TryRequestBodyDirect(int fd,
+                                             enum istream_direct fd_type)
 {
-    assert(http_server_connection_valid(connection));
-    assert(connection->request.read_state == http_server_connection::Request::BODY);
-    assert(!connection->response.pending_drained);
+    assert(IsValid());
+    assert(request.read_state == Request::BODY);
+    assert(!response.pending_drained);
 
-    if (!http_server_maybe_send_100_continue(connection))
+    if (!MaybeSend100Continue())
         return DirectResult::CLOSED;
 
-    ssize_t nbytes = connection->request.body_reader.TryDirect(fd, fd_type);
+    ssize_t nbytes = request.body_reader.TryDirect(fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
         return DirectResult::BLOCKING;
@@ -431,12 +429,12 @@ http_server_try_request_direct(struct http_server_connection *connection,
     if (nbytes == ISTREAM_RESULT_EOF)
         return DirectResult::END;
 
-    connection->request.bytes_received += nbytes;
+    request.bytes_received += nbytes;
 
-    if (connection->request.body_reader.IsEOF()) {
-        connection->request.read_state = http_server_connection::Request::END;
-        connection->request.body_reader.DeinitEOF();
-        return http_server_connection_valid(connection)
+    if (request.body_reader.IsEOF()) {
+        request.read_state = Request::END;
+        request.body_reader.DeinitEOF();
+        return IsValid()
             ? DirectResult::OK
             : DirectResult::CLOSED;
     } else {

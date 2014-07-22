@@ -62,19 +62,18 @@ http_server_request_new(struct http_server_connection *connection)
 }
 
 bool
-http_server_try_write(struct http_server_connection *connection)
+http_server_connection::TryWrite()
 {
-    assert(connection != nullptr);
-    assert(http_server_connection_valid(connection));
-    assert(connection->request.read_state != http_server_connection::Request::START &&
-           connection->request.read_state != http_server_connection::Request::HEADERS);
-    assert(connection->request.request != nullptr);
-    assert(connection->response.istream != nullptr);
+    assert(IsValid());
+    assert(request.read_state != Request::START &&
+           request.read_state != Request::HEADERS);
+    assert(request.request != nullptr);
+    assert(response.istream != nullptr);
 
-    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
-    istream_read(connection->response.istream);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
+    istream_read(response.istream);
 
-    return http_server_connection_valid(connection);
+    return IsValid();
 }
 
 /*
@@ -95,7 +94,7 @@ http_server_socket_data(const void *data, size_t length, void *ctx)
         return BufferedResult::OK;
     }
 
-    return http_server_feed(connection, data, length);
+    return connection->Feed(data, length);
 }
 
 static DirectResult
@@ -107,7 +106,7 @@ http_server_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
     assert(connection->request.read_state != http_server_connection::Request::END);
     assert(!connection->response.pending_drained);
 
-    return http_server_try_request_direct(connection, fd, fd_type);
+    return connection->TryRequestBodyDirect(fd, fd_type);
 }
 
 static bool
@@ -120,7 +119,7 @@ http_server_socket_write(void *ctx)
 
     connection->response.want_write = false;
 
-    if (!http_server_try_write(connection))
+    if (!connection->TryWrite())
         return false;
 
     if (!connection->response.want_write)
@@ -136,7 +135,7 @@ http_server_socket_drained(void *ctx)
         (struct http_server_connection *)ctx;
 
     if (connection->response.pending_drained) {
-        http_server_done(connection);
+        connection->Done();
         return false;
     }
 
@@ -151,7 +150,7 @@ http_server_socket_timeout(void *ctx)
 
     daemon_log(4, "timeout on HTTP connection from '%s'\n",
                connection->remote_host_and_port);
-    http_server_cancel(connection);
+    connection->Cancel();
     return false;
 }
 
@@ -161,7 +160,7 @@ http_server_socket_closed(void *ctx)
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;
 
-    http_server_cancel(connection);
+    connection->Cancel();
     return false;
 }
 
@@ -171,7 +170,7 @@ http_server_socket_error(GError *error, void *ctx)
     struct http_server_connection *connection =
         (struct http_server_connection *)ctx;
 
-    http_server_error(connection, error);
+    connection->Error(error);
 }
 
 static constexpr BufferedSocketHandler http_server_socket_handler = {
@@ -197,7 +196,7 @@ http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
                : (connection->request.read_state == http_server_connection::Request::HEADERS
                   ? "header" : "read"),
                connection->remote_host_and_port);
-    http_server_cancel(connection);
+    connection->Cancel();
     pool_commit();
 }
 
@@ -318,74 +317,70 @@ http_server_request_close(struct http_server_connection *connection)
 }
 
 void
-http_server_done(struct http_server_connection *connection)
+http_server_connection::Done()
 {
-    assert(connection != nullptr);
-    assert(connection->handler != nullptr);
-    assert(connection->handler->free != nullptr);
-    assert(connection->request.read_state == http_server_connection::Request::START);
+    assert(handler != nullptr);
+    assert(handler->free != nullptr);
+    assert(request.read_state == Request::START);
 
-    http_server_socket_destroy(connection);
+    http_server_socket_destroy(this);
 
-    const struct http_server_connection_handler *handler = connection->handler;
-    connection->handler = nullptr;
+    const struct http_server_connection_handler *_handler = handler;
+    handler = nullptr;
 
-    handler->free(connection->handler_ctx);
+    _handler->free(handler_ctx);
 }
 
 void
-http_server_cancel(struct http_server_connection *connection)
+http_server_connection::Cancel()
 {
-    assert(connection != nullptr);
-    assert(connection->handler != nullptr);
-    assert(connection->handler->free != nullptr);
+    assert(handler != nullptr);
+    assert(handler->free != nullptr);
 
-    http_server_socket_destroy(connection);
+    http_server_socket_destroy(this);
 
-    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
 
-    if (connection->request.read_state != http_server_connection::Request::START)
-        http_server_request_close(connection);
+    if (request.read_state != Request::START)
+        http_server_request_close(this);
 
-    if (connection->handler != nullptr) {
-        connection->handler->free(connection->handler_ctx);
-        connection->handler = nullptr;
+    if (handler != nullptr) {
+        handler->free(handler_ctx);
+        handler = nullptr;
     }
 }
 
 void
-http_server_error(struct http_server_connection *connection, GError *error)
+http_server_connection::Error(GError *error)
 {
-    assert(connection != nullptr);
-    assert(connection->handler != nullptr);
-    assert(connection->handler->free != nullptr);
+    assert(handler != nullptr);
+    assert(handler->free != nullptr);
 
-    http_server_socket_destroy(connection);
+    http_server_socket_destroy(this);
 
-    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
 
-    if (connection->request.read_state != http_server_connection::Request::START)
-        http_server_request_close(connection);
+    if (request.read_state != Request::START)
+        http_server_request_close(this);
 
-    if (connection->handler != nullptr) {
+    if (handler != nullptr) {
         g_prefix_error(&error, "error on HTTP connection from '%s': ",
-                       connection->remote_host_and_port);
+                       remote_host_and_port);
 
-        const struct http_server_connection_handler *handler = connection->handler;
-        void *handler_ctx = connection->handler_ctx;
-        connection->handler = nullptr;
-        connection->handler_ctx = nullptr;
-        handler->error(error, handler_ctx);
+        const struct http_server_connection_handler *_handler = handler;
+        void *_handler_ctx = handler_ctx;
+        handler = nullptr;
+        handler_ctx = nullptr;
+        _handler->error(error, _handler_ctx);
     } else
         g_error_free(error);
 }
 
 void
-http_server_error_message(struct http_server_connection *connection,
-                          const char *msg)
+http_server_connection::Error(const char *msg)
 {
     GError *error = g_error_new_literal(http_server_quark(), 0, msg);
-    http_server_error(connection, error);
+    Error(error);
 }
 
 void
@@ -402,16 +397,16 @@ http_server_connection_close(struct http_server_connection *connection)
 }
 
 void
-http_server_errno(struct http_server_connection *connection, const char *msg)
+http_server_connection::ErrorErrno(const char *msg)
 {
     if (errno == EPIPE || errno == ECONNRESET) {
         /* don't report this common problem */
-        http_server_cancel(connection);
+        Cancel();
         return;
     }
 
     GError *error = new_error_errno_msg(msg);
-    http_server_error(connection, error);
+    Error(error);
 }
 
 void
@@ -422,7 +417,7 @@ http_server_connection_graceful(struct http_server_connection *connection)
     if (connection->request.read_state == http_server_connection::Request::START)
         /* there is no request currently; close the connection
            immediately */
-        http_server_done(connection);
+        connection->Done();
     else
         /* a request is currently being handled; disable keep_alive so
            the connection will be closed after this last request */

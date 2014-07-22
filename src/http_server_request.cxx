@@ -12,43 +12,40 @@
 #include "util/Cast.hxx"
 
 BufferedResult
-http_server_feed_body(struct http_server_connection *connection,
-                      const void *data, size_t length)
+http_server_connection::FeedRequestBody(const void *data, size_t length)
 {
-    assert(connection != nullptr);
-    assert(connection->request.read_state == http_server_connection::Request::BODY);
-    assert(connection->request.request->body != nullptr);
-    assert(!connection->response.pending_drained);
+    assert(request.read_state == Request::BODY);
+    assert(request.request->body != nullptr);
+    assert(!response.pending_drained);
 
     /* checking request.request->body and not request.body_reader,
        because the dechunker might be attached to the
        http_body_reader */
-    if (!istream_has_handler(connection->request.request->body))
+    if (!istream_has_handler(request.request->body))
         /* the handler is not yet connected */
         return BufferedResult::BLOCKING;
 
-    const ScopePoolRef ref(*connection->pool TRACE_ARGS);
+    const ScopePoolRef ref(*pool TRACE_ARGS);
 
-    size_t nbytes = connection->request.body_reader.FeedBody(data, length);
+    size_t nbytes = request.body_reader.FeedBody(data, length);
     if (nbytes == 0) {
-        return connection->socket.IsValid()
+        return socket.IsValid()
             ? BufferedResult::BLOCKING
             : BufferedResult::CLOSED;
     }
 
-    connection->request.bytes_received += nbytes;
-    connection->socket.Consumed(nbytes);
+    request.bytes_received += nbytes;
+    socket.Consumed(nbytes);
 
-    if (connection->request.read_state == http_server_connection::Request::BODY &&
-        connection->request.body_reader.IsEOF()) {
-        connection->request.read_state = http_server_connection::Request::END;
+    if (request.read_state == Request::BODY && request.body_reader.IsEOF()) {
+        request.read_state = Request::END;
 
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
-        connection->socket.ScheduleReadNoTimeout(false);
+        socket.ScheduleReadNoTimeout(false);
 
-        connection->request.body_reader.DeinitEOF();
-        if (!http_server_connection_valid(connection))
+        request.body_reader.DeinitEOF();
+        if (!IsValid())
             return BufferedResult::CLOSED;
     }
 
@@ -70,7 +67,7 @@ http_server_request_stream_available(struct istream *istream, bool partial)
 {
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
-    assert(http_server_connection_valid(connection));
+    assert(connection->IsValid());
     assert(connection->request.read_state == http_server_connection::Request::BODY);
     assert(!connection->response.pending_drained);
 
@@ -83,7 +80,7 @@ http_server_request_stream_read(struct istream *istream)
 {
     struct http_server_connection *connection = response_stream_to_connection(istream);
 
-    assert(http_server_connection_valid(connection));
+    assert(connection->IsValid());
     assert(connection->request.read_state == http_server_connection::Request::BODY);
     assert(istream_has_handler(&connection->request.body_reader.GetStream()));
     assert(connection->request.request->body != nullptr);
@@ -94,7 +91,7 @@ http_server_request_stream_read(struct istream *istream)
         /* avoid recursion */
         return;
 
-    if (!http_server_maybe_send_100_continue(connection))
+    if (!connection->MaybeSend100Continue())
         return;
 
     connection->socket.Read(connection->request.body_reader.RequireMore());

@@ -34,7 +34,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     if (likely(nbytes >= 0)) {
         connection->response.bytes_sent += nbytes;
         connection->response.length += (off_t)nbytes;
-        http_server_schedule_write(connection);
+        connection->ScheduleWrite();
         return (size_t)nbytes;
     }
 
@@ -46,7 +46,7 @@ http_server_response_stream_data(const void *data, size_t length, void *ctx)
     if (nbytes == WRITE_DESTROYED)
         return 0;
 
-    http_server_errno(connection, "write error on HTTP connection");
+    connection->ErrorErrno("write error on HTTP connection");
     return 0;
 }
 
@@ -69,7 +69,7 @@ http_server_response_stream_direct(istream_direct type, int fd, size_t max_lengt
     if (likely(nbytes > 0)) {
         connection->response.bytes_sent += nbytes;
         connection->response.length += (off_t)nbytes;
-        http_server_schedule_write(connection);
+        connection->ScheduleWrite();
     } else if (nbytes == WRITE_BLOCKING) {
         connection->response.want_write = true;
         return ISTREAM_RESULT_BLOCKING;
@@ -117,7 +117,7 @@ http_server_response_stream_eof(void *ctx)
             g_error_new_literal(http_server_quark(), 0,
                                 "request body discarded");
         connection->request.body_reader.DeinitAbort(error);
-        if (!http_server_connection_valid(connection))
+        if (!connection->IsValid())
             return;
     }
 
@@ -140,7 +140,7 @@ http_server_response_stream_eof(void *ctx)
            the connection */
 
         if (connection->socket.IsDrained()) {
-            http_server_done(connection);
+            connection->Done();
         } else {
             /* there is still data in the filter's output buffer; wait for
                that to drain, which will trigger
@@ -167,7 +167,7 @@ http_server_response_stream_abort(GError *error, void *ctx)
     connection->request.async_ref.Clear();
 
     g_prefix_error(&error, "error on HTTP response stream: ");
-    http_server_error(connection, error);
+    connection->Error(error);
 }
 
 const struct istream_handler http_server_response_stream_handler = {

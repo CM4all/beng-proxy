@@ -115,6 +115,66 @@ struct http_server_connection {
 
     /* connection settings */
     bool keep_alive;
+
+    gcc_pure
+    bool IsValid() const {
+        return socket.IsValid() && socket.IsConnected();
+    }
+
+    /**
+     * @return false if the connection has been closed
+     */
+    BufferedResult Feed(const void *data, size_t size);
+
+    /**
+     * Send data from the input buffer to the request body istream
+     * handler.
+     */
+    BufferedResult FeedRequestBody(const void *data, size_t size);
+
+    /**
+     * Attempt a "direct" transfer of the request body.  Caller must
+     * hold an additional pool reference.
+     */
+    DirectResult TryRequestBodyDirect(int fd, enum istream_direct fd_type);
+
+    /**
+     * @return false if the connection has been closed
+     */
+    bool MaybeSend100Continue();
+
+    void ScheduleWrite() {
+        response.want_write = true;
+        socket.ScheduleWrite();
+    }
+
+    /**
+     * @return false if the connection has been closed
+     */
+    bool TryWrite();
+
+    /**
+     * The last response on this connection is finished, and it should
+     * be closed.
+     */
+    void Done();
+
+    /**
+     * The peer has closed the socket.
+     */
+    void Cancel();
+
+    /**
+     * A fatal error has occurred, and the connection should be closed
+     * immediately, without sending any further information to the
+     * client.  This invokes the error() handler method, but not
+     * free().
+     */
+    void Error(GError *error);
+
+    void Error(const char *msg);
+
+    void ErrorErrno(const char *msg);
 };
 
 /**
@@ -137,86 +197,8 @@ extern const struct timeval http_server_read_timeout;
  */
 extern const struct timeval http_server_write_timeout;
 
-static inline int
-http_server_connection_valid(const struct http_server_connection *connection)
-{
-    assert(connection != NULL);
-
-    return connection->socket.IsValid() && connection->socket.IsConnected();
-}
-
-static inline void
-http_server_schedule_write(struct http_server_connection *connection)
-{
-    connection->response.want_write = true;
-    connection->socket.ScheduleWrite();
-}
-
-/**
- * A fatal error has occurred, and the connection should be closed
- * immediately, without sending any further information to the client.
- * This invokes the error() handler method, but not free().
- */
-void
-http_server_error(struct http_server_connection *connection, GError *error);
-
-void
-http_server_error_message(struct http_server_connection *connection,
-                          const char *msg);
-
-void
-http_server_errno(struct http_server_connection *connection, const char *msg);
-
 struct http_server_request *
 http_server_request_new(struct http_server_connection *connection);
-
-/**
- * @return false if the connection has been closed
- */
-bool
-http_server_try_write(struct http_server_connection *connection);
-
-/**
- * @return false if the connection has been closed
- */
-bool
-http_server_maybe_send_100_continue(struct http_server_connection *connection);
-
-/**
- * @return false if the connection has been closed
- */
-BufferedResult
-http_server_feed(struct http_server_connection *connection,
-                 const void *data, size_t length);
-
-/**
- * Attempt a "direct" transfer of the request body.  Caller must hold
- * an additional pool reference.
- */
-DirectResult
-http_server_try_request_direct(struct http_server_connection *connection,
-                               int fd, enum istream_direct fd_type);
-
-/**
- * Send data from the input buffer to the request body istream
- * handler.
- */
-BufferedResult
-http_server_feed_body(struct http_server_connection *connection,
-                      const void *data, size_t length);
-
-/**
- * The last response on this connection is finished, and it should be
- * closed.
- */
-void
-http_server_done(struct http_server_connection *connection);
-
-/**
- * The peer has closed the socket.
- */
-void
-http_server_cancel(struct http_server_connection *connection);
 
 extern const struct istream_class http_server_request_stream;
 
