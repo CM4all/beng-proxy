@@ -95,7 +95,7 @@ ajp_request_stock_error(GError *error, void *ctx)
 {
     struct ajp_request *hr = (struct ajp_request *)ctx;
 
-    http_response_handler_invoke_abort(&hr->handler, error);
+    hr->handler.InvokeAbort(error);
 
     if (hr->body != nullptr)
         istream_close_unused(hr->body);
@@ -148,7 +148,7 @@ ajp_stock_request(struct pool *pool,
     if (hr->headers == nullptr)
         hr->headers = strmap_new(pool);
 
-    http_response_handler_set(&hr->handler, handler, handler_ctx);
+    hr->handler.Set(*handler, handler_ctx);
     hr->async_ref = async_ref;
 
     if (body != nullptr) {

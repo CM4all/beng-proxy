@@ -58,7 +58,7 @@ widget_http_request(struct pool *pool gcc_unused, struct widget *widget gcc_unus
 {
     GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
                                         "Test");
-    http_response_handler_direct_abort(handler, handler_ctx, error);
+    handler->InvokeAbort(handler_ctx, error);
 }
 
 struct test_operation {

@@ -39,7 +39,7 @@ cgi_new(struct pool *pool, http_method_t method,
             return;
         }
 
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 

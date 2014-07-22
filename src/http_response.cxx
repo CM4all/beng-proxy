@@ -9,24 +9,14 @@
 #include "istream.h"
 
 void
-http_response_handler_direct_message(const struct http_response_handler *handler,
-                                     void *ctx,
-                                     struct pool *pool,
-                                     http_status_t status, const char *msg)
+http_response_handler::InvokeMessage(void *ctx, struct pool &pool,
+                                     http_status_t status,
+                                     const char *msg) const
 {
-    struct strmap *headers = strmap_new(pool);
-    headers->Add("content-type", "text/plain; charset=utf-8");
-    http_response_handler_direct_response(handler, ctx, status, headers,
-                                          istream_string_new(pool, msg));
-}
+    assert(http_status_is_valid(status));
+    assert(msg != nullptr);
 
-void
-http_response_handler_invoke_message(struct http_response_handler_ref *ref,
-                                     struct pool *pool,
-                                     http_status_t status, const char *msg)
-{
-    struct strmap *headers = strmap_new(pool);
+    struct strmap *headers = strmap_new(&pool);
     headers->Add("content-type", "text/plain; charset=utf-8");
-    http_response_handler_invoke_response(ref, status, headers,
-                                          istream_string_new(pool, msg));
+    InvokeResponse(ctx, status, headers, istream_string_new(&pool, msg));
 }

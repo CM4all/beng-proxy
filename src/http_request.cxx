@@ -79,8 +79,7 @@ http_request_response_response(http_status_t status, struct strmap *headers,
                   hr->current_address->length,
                   FAILURE_RESPONSE);
 
-    http_response_handler_invoke_response(&hr->handler,
-                                          status, headers, body);
+    hr->handler.InvokeResponse(status, headers, body);
 }
 
 static void
@@ -111,7 +110,7 @@ http_request_response_abort(GError *error, void *ctx)
                         hr->current_address->length,
                         FAILURE_RESPONSE, 20);
 
-        http_response_handler_invoke_abort(&hr->handler, error);
+        hr->handler.InvokeAbort(error);
     }
 }
 
@@ -175,7 +174,7 @@ http_request_stock_error(GError *error, void *ctx)
     if (hr->filter != nullptr)
         hr->filter->close(hr->filter_ctx);
 
-    http_response_handler_invoke_abort(&hr->handler, error);
+    hr->handler.InvokeAbort(error);
 }
 
 const struct stock_get_handler http_request_stock_handler = {
@@ -222,7 +221,7 @@ http_request(struct pool *pool,
     if (hr->headers == nullptr)
         hr->headers = growing_buffer_new(pool, 512);
 
-    http_response_handler_set(&hr->handler, handler, handler_ctx);
+    hr->handler.Set(*handler, handler_ctx);
     hr->async_ref = async_ref;
 
     if (body != nullptr) {

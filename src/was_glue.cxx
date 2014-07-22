@@ -96,7 +96,7 @@ was_stock_error(GError *error, void *ctx)
 {
     struct was_request *request = (struct was_request *)ctx;
 
-    http_response_handler_invoke_abort(&request->handler, error);
+    request->handler.InvokeAbort(error);
 
     if (request->body != nullptr)
         istream_close_unused(request->body);
@@ -134,7 +134,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
         if (body != nullptr)
             istream_close_unused(body);
 
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
@@ -153,7 +153,7 @@ was_request(struct pool *pool, struct hstock *was_stock,
     request->headers = headers;
     request->parameters = parameters;
 
-    http_response_handler_set(&request->handler, handler, handler_ctx);
+    request->handler.Set(*handler, handler_ctx);
     request->async_ref = async_ref;
 
     if (body != nullptr) {

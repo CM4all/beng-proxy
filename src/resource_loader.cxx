@@ -181,7 +181,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             if (rl->delegate_stock == nullptr) {
                 GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                                     "No delegate stock");
-                http_response_handler_direct_abort(handler, handler_ctx, error);
+                handler->InvokeAbort(handler_ctx, error);
                 return;
             }
 
@@ -212,9 +212,9 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                     address->u.nfs->content_type,
                     handler, handler_ctx, async_ref);
 #else
-        http_response_handler_direct_abort(handler, handler_ctx,
-                                           g_error_new_literal(resource_loader_quark(), 0,
-                                                               "libnfs disabled"));
+        handler->InvokeAbort(handler_ctx,
+                             g_error_new_literal(resource_loader_quark(), 0,
+                                                 "libnfs disabled"));
 #endif
         return;
 
@@ -246,8 +246,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                     g_error_new(errno_quark(), code, "open('%s') failed: %s",
                                 cgi->options.stderr_path,
                                 g_strerror(code));
-                http_response_handler_direct_abort(handler, handler_ctx,
-                                                   error);
+                handler->InvokeAbort(handler_ctx, error);
                 return;
             }
         } else
@@ -310,8 +309,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                                            address->u.http->host_and_port,
                                            &error);
             if (filter_ctx == nullptr) {
-                http_response_handler_direct_abort(handler, handler_ctx,
-                                                   error);
+                handler->InvokeAbort(handler_ctx, error);
                 return;
             }
 
@@ -355,5 +353,5 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     GError *error = g_error_new_literal(resource_loader_quark(), 0,
                                         "Could not locate resource");
-    http_response_handler_direct_abort(handler, handler_ctx, error);
+    handler->InvokeAbort(handler_ctx, error);
 }

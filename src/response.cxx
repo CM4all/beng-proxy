@@ -246,8 +246,8 @@ response_invoke_processor(request &request2,
         response_headers = processor_header_forward(request->pool,
                                                     response_headers);
 
-        http_response_handler_direct_response(&response_handler, &request2,
-                                              status, response_headers, body);
+        response_handler.InvokeResponse(&request2, status,
+                                        response_headers, body);
     }
 }
 
@@ -329,8 +329,7 @@ response_invoke_css_processor(request &request2,
     response_headers = processor_header_forward(request->pool,
                                                 response_headers);
 
-    http_response_handler_direct_response(&response_handler, &request2,
-                                          status, response_headers, body);
+    response_handler.InvokeResponse(&request2, status, response_headers, body);
 }
 
 static void
@@ -399,8 +398,7 @@ response_invoke_text_processor(request &request2,
     response_headers = processor_header_forward(request->pool,
                                                 response_headers);
 
-    http_response_handler_direct_response(&response_handler, &request2,
-                                          status, response_headers, body);
+    response_handler.InvokeResponse(&request2, status, response_headers, body);
 }
 
 /**

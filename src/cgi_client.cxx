@@ -33,7 +33,7 @@ struct cgi_client {
 
     /**
      * This flag is true while cgi_parse_headers() is calling
-     * http_response_handler_invoke_response().  In this case,
+     * http_response_handler_ref::InvokeResponse().  In this case,
      * istream_read(cgi->input) is already up in the stack, and must
      * not be called again.
      */
@@ -67,8 +67,7 @@ cgi_return_response(cgi_client *cgi)
 
         fb_pool_free(cgi->buffer);
         istream_free_handler(&cgi->input);
-        http_response_handler_invoke_response(&cgi->handler, status, headers,
-                                              nullptr);
+        cgi->handler.InvokeResponse(status, headers, nullptr);
         pool_unref(cgi->output.pool);
         return false;
     } else if (cgi_parser_eof(&cgi->parser)) {
@@ -79,16 +78,15 @@ cgi_return_response(cgi_client *cgi)
 
         fb_pool_free(cgi->buffer);
         istream_free_handler(&cgi->input);
-        http_response_handler_invoke_response(&cgi->handler, status, headers,
-                                              istream_null_new(cgi->output.pool));
+        cgi->handler.InvokeResponse(status, headers,
+                                    istream_null_new(cgi->output.pool));
         pool_unref(cgi->output.pool);
         return false;
     } else {
         stopwatch_event(cgi->stopwatch, "headers");
 
         cgi->in_response_callback = true;
-        http_response_handler_invoke_response(&cgi->handler, status, headers,
-                                              istream_struct_cast(&cgi->output));
+        cgi->handler.InvokeResponse(status, headers, &cgi->output);
         cgi->in_response_callback = false;
         return cgi->input != nullptr;
     }
@@ -144,7 +142,7 @@ cgi_feed_headers(cgi_client *cgi, const void *data, size_t length)
     case C_ERROR:
         fb_pool_free(cgi->buffer);
         istream_free_handler(&cgi->input);
-        http_response_handler_invoke_abort(&cgi->handler, error);
+        cgi->handler.InvokeAbort(error);
         pool_unref(cgi->output.pool);
         return 0;
 
@@ -322,7 +320,7 @@ cgi_input_eof(void *ctx)
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
                                 "premature end of headers from CGI script");
-        http_response_handler_invoke_abort(&cgi->handler, error);
+        cgi->handler.InvokeAbort(error);
         pool_unref(cgi->output.pool);
     } else if (cgi_parser_requires_more(&cgi->parser)) {
         stopwatch_event(cgi->stopwatch, "malformed");
@@ -361,7 +359,7 @@ cgi_input_abort(GError *error, void *ctx)
         fb_pool_free(cgi->buffer);
 
         g_prefix_error(&error, "CGI request body failed: ");
-        http_response_handler_invoke_abort(&cgi->handler, error);
+        cgi->handler.InvokeAbort(error);
         pool_unref(cgi->output.pool);
     } else {
         /* response has been sent: abort only the output stream */
@@ -402,8 +400,8 @@ istream_cgi_available(struct istream *istream, bool partial)
 
     if (cgi->in_response_callback)
         /* this condition catches the case in cgi_parse_headers():
-           http_response_handler_invoke_response() might recursively call
-           istream_read(cgi->input) */
+           http_response_handler_ref::InvokeResponse() might
+           recursively call istream_read(cgi->input) */
         return (off_t)-1;
 
     return istream_available(cgi->input, partial);
@@ -418,8 +416,8 @@ istream_cgi_read(struct istream *istream)
         istream_handler_set_direct(cgi->input, cgi->output.handler_direct);
 
         /* this condition catches the case in cgi_parse_headers():
-           http_response_handler_invoke_response() might recursively call
-           istream_read(cgi->input) */
+           http_response_handler_ref::InvokeResponse() might
+           recursively call istream_read(cgi->input) */
         if (cgi->in_response_callback) {
             return;
         }
@@ -495,7 +493,7 @@ cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
 
     cgi_parser_init(pool, &cgi->parser);
 
-    http_response_handler_set(&cgi->handler, handler, handler_ctx);
+    cgi->handler.Set(*handler, handler_ctx);
 
     cgi->operation.Init2<cgi_client>();
     async_ref->Set(cgi->operation);

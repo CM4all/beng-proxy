@@ -209,7 +209,7 @@ widget_dispatch_error(struct embed *embed, GError *error)
     if (embed->lookup_id != nullptr)
         embed->lookup_handler->error(error, embed->lookup_handler_ctx);
     else
-        http_response_handler_invoke_abort(&embed->handler_ref, error);
+        embed->handler_ref.InvokeAbort(error);
 }
 
 /**
@@ -461,8 +461,7 @@ widget_response_dispatch(struct embed *embed, http_status_t status,
         /* no transformation left */
 
         /* finally pass the response to our handler */
-        http_response_handler_invoke_response(&embed->handler_ref,
-                                              status, headers, body);
+        embed->handler_ref.InvokeResponse(status, headers, body);
     }
 }
 
@@ -676,7 +675,7 @@ widget_http_request(struct pool *pool, struct widget *widget,
             daemon_log(4, "  %s: %s\n", i.key, i.value);
     }
 
-    http_response_handler_set(&embed->handler_ref, handler, handler_ctx);
+    embed->handler_ref.Set(*handler, handler_ctx);
 
     embed->operation.Init(widget_http_operation);
     async_ref->Set(embed->operation);

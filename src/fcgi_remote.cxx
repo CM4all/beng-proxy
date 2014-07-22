@@ -107,7 +107,7 @@ fcgi_remote_stock_error(GError *error, void *ctx)
     if (request->stderr_fd >= 0)
         close(request->stderr_fd);
 
-    http_response_handler_invoke_abort(&request->handler, error);
+    request->handler.InvokeAbort(error);
 }
 
 static const struct stock_get_handler fcgi_remote_stock_handler = {
@@ -153,7 +153,7 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
 
     request->stderr_fd = stderr_fd;
 
-    http_response_handler_set(&request->handler, handler, handler_ctx);
+    request->handler.Set(*handler, handler_ctx);
     request->async_ref = async_ref;
 
     if (body != nullptr) {

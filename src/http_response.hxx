@@ -21,6 +21,31 @@ struct http_response_handler {
     void (*response)(http_status_t status, struct strmap *headers,
                      struct istream *body, void *ctx);
     void (*abort)(GError *error, void *ctx);
+
+    void InvokeResponse(void *ctx,
+                        http_status_t status, struct strmap *headers,
+                        struct istream *body) const {
+        assert(response != nullptr);
+        assert(abort != nullptr);
+        assert(http_status_is_valid(status));
+        assert(!http_status_is_empty(status) || body == nullptr);
+
+        response(status, headers, body, ctx);
+    }
+
+    /**
+     * Sends a plain-text message.
+     */
+    void InvokeMessage(void *ctx, struct pool &pool,
+                       http_status_t status, const char *msg) const;
+
+    void InvokeAbort(void *ctx, GError *error) const {
+        assert(response != nullptr);
+        assert(abort != nullptr);
+        assert(error != nullptr);
+
+        abort(error, ctx);
+    }
 };
 
 struct http_response_handler_ref {
@@ -29,140 +54,69 @@ struct http_response_handler_ref {
 
 #ifndef NDEBUG
     bool used;
+
+    bool IsUsed() const {
+        return used;
+    }
 #endif
+
+    bool IsDefined() const {
+        return handler != nullptr;
+    }
+
+    void Clear() {
+        handler = nullptr;
+    }
+
+    void Set(const struct http_response_handler &_handler, void *_ctx) {
+        assert(_handler.response != nullptr);
+        assert(_handler.abort != nullptr);
+
+        handler = &_handler;
+        ctx = _ctx;
+
+#ifndef NDEBUG
+        used = false;
+#endif
+    }
+
+    void InvokeResponse(http_status_t status, struct strmap *headers,
+                        struct istream *body) {
+        assert(handler != nullptr);
+        assert(!IsUsed());
+
+#ifndef NDEBUG
+        used = true;
+#endif
+
+        handler->InvokeResponse(ctx, status, headers, body);
+    }
+
+    /**
+     * Sends a plain-text message.
+     */
+    void InvokeMessage(struct pool &pool,
+                       http_status_t status, const char *msg) {
+        assert(handler != nullptr);
+        assert(!IsUsed());
+
+#ifndef NDEBUG
+        used = true;
+#endif
+
+        handler->InvokeMessage(ctx, pool, status, msg);
+    }
+
+    void InvokeAbort(GError *error) {
+        assert(handler != nullptr);
+        assert(!IsUsed());
+
+#ifndef NDEBUG
+        used = true;
+#endif
+
+        handler->InvokeAbort(ctx, error);
+    }
 };
-
-#ifndef NDEBUG
-
-static inline int
-http_response_handler_used(const struct http_response_handler_ref *ref)
-{
-    assert(ref != nullptr);
-
-    return ref->used;
-}
-
-#endif
-
-static inline int
-http_response_handler_defined(const struct http_response_handler_ref *ref)
-{
-    assert(ref != nullptr);
-
-    return ref->handler != nullptr;
-}
-
-static inline void
-http_response_handler_clear(struct http_response_handler_ref *ref)
-{
-    assert(ref != nullptr);
-
-    ref->handler = nullptr;
-}
-
-static inline void
-http_response_handler_set(struct http_response_handler_ref *ref,
-                          const struct http_response_handler *handler,
-                          void *ctx)
-{
-    assert(ref != nullptr);
-    assert(handler != nullptr);
-    assert(handler->response != nullptr);
-    assert(handler->abort != nullptr);
-
-    ref->handler = handler;
-    ref->ctx = ctx;
-
-#ifndef NDEBUG
-    ref->used = false;
-#endif
-}
-
-static inline void
-http_response_handler_direct_response(const struct http_response_handler *handler,
-                                      void *ctx,
-                                      http_status_t status,
-                                      struct strmap *headers,
-                                      struct istream *body)
-{
-    assert(handler != nullptr);
-    assert(handler->response != nullptr);
-    assert(http_status_is_valid(status));
-    assert(!http_status_is_empty(status) || body == nullptr);
-
-    handler->response(status, headers, body, ctx);
-}
-
-static inline void
-http_response_handler_direct_abort(const struct http_response_handler *handler,
-                                   void *ctx,
-                                   GError *error)
-{
-    assert(handler != nullptr);
-    assert(handler->abort != nullptr);
-    assert(error != nullptr);
-
-    handler->abort(error, ctx);
-}
-
-/**
- * Sends a plain-text message.
- */
-void
-http_response_handler_direct_message(const struct http_response_handler *handler,
-                                     void *ctx,
-                                     struct pool *pool,
-                                     http_status_t status, const char *msg);
-
-static inline void
-http_response_handler_invoke_response(struct http_response_handler_ref *ref,
-                                      http_status_t status,
-                                      struct strmap *headers,
-                                      struct istream *body)
-{
-    const struct http_response_handler *handler;
-
-    assert(ref != nullptr);
-    assert(ref->handler != nullptr);
-    assert(ref->handler->response != nullptr);
-    assert(!http_response_handler_used(ref));
-    assert(http_status_is_valid(status));
-    assert(!http_status_is_empty(status) || body == nullptr);
-
-    handler = ref->handler;
-#ifndef NDEBUG
-    ref->used = true;
-#endif
-
-    handler->response(status, headers, body, ref->ctx);
-}
-
-static inline void
-http_response_handler_invoke_abort(struct http_response_handler_ref *ref,
-                                   GError *error)
-{
-    const struct http_response_handler *handler;
-
-    assert(ref != nullptr);
-    assert(ref->handler != nullptr);
-    assert(ref->handler->abort != nullptr);
-    assert(error != nullptr);
-    assert(!http_response_handler_used(ref));
-
-    handler = ref->handler;
-#ifndef NDEBUG
-    ref->used = true;
-#endif
-
-    handler->abort(error, ref->ctx);
-}
-
-/**
- * Sends a plain-text message.
- */
-void
-http_response_handler_invoke_message(struct http_response_handler_ref *ref,
-                                     struct pool *pool,
-                                     http_status_t status, const char *msg);
 
 #endif

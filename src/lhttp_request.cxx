@@ -56,7 +56,7 @@ lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
         if (body != nullptr)
             istream_close(body);
 
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
@@ -71,7 +71,7 @@ lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
         if (body != nullptr)
             istream_close(body);
 
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 

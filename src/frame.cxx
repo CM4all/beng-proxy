@@ -41,7 +41,7 @@ frame_top_widget(struct pool *pool, struct widget *widget,
                         widget->parent->class_name,
                         widget->class_name);
         widget_cancel(widget);
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
@@ -51,7 +51,7 @@ frame_top_widget(struct pool *pool, struct widget *widget,
             g_error_new(widget_quark(), WIDGET_ERROR_FORBIDDEN,
                         "untrusted host name mismatch");
         widget_cancel(widget);
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 

@@ -74,8 +74,7 @@ proxy_response(http_status_t status, struct strmap *headers,
 
     proxy_collect_cookies(request2, headers);
 
-    http_response_handler_direct_response(&response_handler, &request2,
-                                          status, headers, body);
+    response_handler.InvokeResponse(&request2, status, headers, body);
 }
 
 static void
@@ -83,7 +82,7 @@ proxy_abort(GError *error, void *ctx)
 {
     request &request2 = *(request *)ctx;
 
-    http_response_handler_direct_abort(&response_handler, &request2, error);
+    response_handler.InvokeAbort(&request2, error);
 }
 
 static const struct http_response_handler proxy_response_handler = {

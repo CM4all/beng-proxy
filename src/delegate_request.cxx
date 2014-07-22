@@ -42,15 +42,14 @@ delegate_get_callback(int fd, void *ctx)
     if (fstat(fd, &st) < 0) {
         GError *error = new_error_errno();
         g_prefix_error(&error, "Failed to stat %s: ", get->path);
-        http_response_handler_invoke_abort(&get->handler, error);
+        get->handler.InvokeAbort(error);
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
         close(fd);
-        http_response_handler_invoke_message(&get->handler, get->pool,
-                                             HTTP_STATUS_NOT_FOUND,
-                                             "Not a regular file");
+        get->handler.InvokeMessage(*get->pool, HTTP_STATUS_NOT_FOUND,
+                                   "Not a regular file");
         return;
     }
 
@@ -61,8 +60,7 @@ delegate_get_callback(int fd, void *ctx)
 
     struct istream *body = istream_file_fd_new(get->pool, get->path,
                                                fd, ISTREAM_FILE, st.st_size);
-    http_response_handler_invoke_response(&get->handler, HTTP_STATUS_OK,
-                                          headers, body);
+    get->handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
 }
 
 static void
@@ -70,7 +68,7 @@ delegate_get_error(GError *error, void *ctx)
 {
     struct delegate_get *get = (struct delegate_get *)ctx;
 
-    http_response_handler_invoke_abort(&get->handler, error);
+    get->handler.InvokeAbort(error);
 }
 
 static const struct delegate_handler delegate_get_handler = {
@@ -96,7 +94,7 @@ delegate_stock_request(struct hstock *stock, struct pool *pool,
     get->pool = pool;
     get->path = path;
     get->content_type = content_type;
-    http_response_handler_set(&get->handler, handler, ctx);
+    get->handler.Set(*handler, ctx);
 
     delegate_stock_open(stock, pool,
                         helper, options, path,

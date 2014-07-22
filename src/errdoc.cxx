@@ -53,8 +53,7 @@ errdoc_response_response(http_status_t status, struct strmap *headers,
             /* close the original (error) response body */
             istream_close_unused(er.body);
 
-        http_response_handler_direct_response(&response_handler, er.request2,
-                                              er.status, headers, body);
+        response_handler.InvokeResponse(er.request2, er.status, headers, body);
     } else {
         if (body != nullptr)
             /* discard the error document response */

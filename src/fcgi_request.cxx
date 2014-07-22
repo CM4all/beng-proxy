@@ -107,7 +107,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
         if (stderr_fd >= 0)
             close(stderr_fd);
 
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
@@ -130,7 +130,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
         if (stderr_fd >= 0)
             close(stderr_fd);
 
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 

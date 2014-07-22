@@ -29,16 +29,13 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
     if (lstat(path, &st) != 0) {
         GError *error = new_error_errno();
         g_prefix_error(&error, "Failed to open %s: ", path);
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
     if (!S_ISREG(st.st_mode) && !S_ISCHR(st.st_mode)) {
-        struct http_response_handler_ref handler_ref;
-        http_response_handler_set(&handler_ref, handler, handler_ctx);
-        http_response_handler_invoke_message(&handler_ref, pool,
-                                             HTTP_STATUS_NOT_FOUND,
-                                             "Not a regular file");
+        handler->InvokeMessage(handler_ctx, *pool, HTTP_STATUS_NOT_FOUND,
+                               "Not a regular file");
         return;
     }
 
@@ -48,7 +45,7 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
     GError *error = nullptr;
     struct istream *body = istream_file_new(pool, path, size, &error);
     if (body == nullptr) {
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
@@ -57,7 +54,5 @@ static_file_get(struct pool *pool, const char *path, const char *content_type,
                             istream_file_fd(body), &st,
                             content_type);
 
-    http_response_handler_direct_response(handler, handler_ctx,
-                                          HTTP_STATUS_OK,
-                                          headers, body);
+    handler->InvokeResponse(handler_ctx, HTTP_STATUS_OK, headers, body);
 }

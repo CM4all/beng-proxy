@@ -391,8 +391,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         /* don't cache response */
         cache_log(4, "http_cache: nocache %s\n", request->key);
 
-        http_response_handler_invoke_response(&request->handler, status,
-                                              headers, body);
+        request->handler.InvokeResponse(status, headers, body);
         pool_unref_denotify(request->caller_pool,
                             &request->caller_pool_notify);
         return;
@@ -425,8 +424,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
                         &request->async_ref);
     }
 
-    http_response_handler_invoke_response(&request->handler, status,
-                                          headers, body);
+    request->handler.InvokeResponse(status, headers, body);
     pool_unref_denotify(request->caller_pool,
                         &request->caller_pool_notify);
 
@@ -454,7 +452,7 @@ http_cache_response_abort(GError *error, void *ctx)
         istream_close_unused(request->document_body);
 
     request->operation.Finished();
-    http_response_handler_invoke_abort(&request->handler, error);
+    request->handler.InvokeAbort(error);
     pool_unref_denotify(request->caller_pool,
                         &request->caller_pool_notify);
 }
@@ -521,7 +519,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
     key(_key),
     headers(_headers),
     info(&_info), document(nullptr) {
-    http_response_handler_set(&handler, &_handler, _handler_ctx);
+    handler.Set(_handler, _handler_ctx);
     operation.Init(http_cache_async_operation);
     _async_ref.Set(operation);
     pool_ref_notify(caller_pool, &caller_pool_notify);
@@ -677,9 +675,8 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
     struct pool *pool;
 
     if (info->only_if_cached) {
-        http_response_handler_direct_response(handler, handler_ctx,
-                                              HTTP_STATUS_GATEWAY_TIMEOUT,
-                                              nullptr, nullptr);
+        handler->InvokeResponse(handler_ctx, HTTP_STATUS_GATEWAY_TIMEOUT,
+                                nullptr, nullptr);
         return;
     }
 
@@ -724,12 +721,12 @@ http_cache_heap_serve(struct http_cache_heap *cache,
 
     cache_log(4, "http_cache: serve %s\n", key);
 
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
+    handler_ref.Set(*handler, handler_ctx);
 
     response_body = http_cache_heap_istream(pool, cache, document);
 
-    http_response_handler_invoke_response(&handler_ref, document->status,
-                                          document->headers, response_body);
+    handler_ref.InvokeResponse(document->status, document->headers,
+                               response_body);
 }
 
 /**
@@ -743,10 +740,9 @@ http_cache_memcached_serve(HttpCacheRequest *request)
     cache_log(4, "http_cache: serve %s\n", request->key);
 
     request->operation.Finished();
-    http_response_handler_invoke_response(&request->handler,
-                                          request->document->status,
-                                          request->document->headers,
-                                          request->document_body);
+    request->handler.InvokeResponse(request->document->status,
+                                    request->document->headers,
+                                    request->document_body);
 }
 
 /**
@@ -935,9 +931,8 @@ http_cache_memcached_miss(HttpCacheRequest *request)
 
     if (info->only_if_cached) {
         request->operation.Finished();
-        http_response_handler_invoke_response(&request->handler,
-                                              HTTP_STATUS_GATEWAY_TIMEOUT,
-                                              nullptr, nullptr);
+        request->handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
+                                        nullptr, nullptr);
 
         pool_unref_denotify(request->caller_pool,
                             &request->caller_pool_notify);
@@ -977,10 +972,8 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
         cache_log(4, "http_cache: serve %s\n", request->key);
 
         request->operation.Finished();
-        http_response_handler_invoke_response(&request->handler,
-                                              document->status,
-                                              document->headers,
-                                              body);
+        request->handler.InvokeResponse(document->status, document->headers,
+                                        body);
         pool_unref_denotify(request->caller_pool,
                             &request->caller_pool_notify);
     } else {

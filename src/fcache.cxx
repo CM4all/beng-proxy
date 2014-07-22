@@ -383,8 +383,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
         /* don't cache response */
         cache_log(4, "filter_cache: nocache %s\n", request->info->key);
 
-        http_response_handler_invoke_response(&request->handler, status,
-                                              headers, body);
+        request->handler.InvokeResponse(status, headers, body);
         pool_unref(caller_pool);
         return;
     }
@@ -425,8 +424,7 @@ filter_cache_response_response(http_status_t status, struct strmap *headers,
                         &request->response.async_ref);
     }
 
-    http_response_handler_invoke_response(&request->handler, status,
-                                          headers, body);
+    request->handler.InvokeResponse(status, headers, body);
     pool_unref(caller_pool);
 
     if (body != nullptr) {
@@ -446,7 +444,7 @@ filter_cache_response_abort(GError *error, void *ctx)
 
     g_prefix_error(&error, "http_cache %s: ", request->info->key);
 
-    http_response_handler_invoke_abort(&request->handler, error);
+    request->handler.InvokeAbort(error);
     pool_unref(request->caller_pool);
 }
 
@@ -593,7 +591,7 @@ filter_cache_miss(struct filter_cache &cache, struct pool &caller_pool,
 
     auto request = NewFromPool<FilterCacheRequest>(*pool, *pool, caller_pool,
                                                    cache, info);
-    http_response_handler_set(&request->handler, handler, handler_ctx);
+    request->handler.Set(*handler, handler_ctx);
 
     cache_log(4, "filter_cache: miss %s\n", info.key);
 
@@ -619,7 +617,7 @@ filter_cache_serve(struct filter_cache *cache, FilterCacheItem *item,
 
     cache_log(4, "filter_cache: serve %s\n", item->info.key);
 
-    http_response_handler_set(&handler_ref, handler, handler_ctx);
+    handler_ref.Set(*handler, handler_ctx);
 
     /* XXX hold reference on item */
 
@@ -633,8 +631,7 @@ filter_cache_serve(struct filter_cache *cache, FilterCacheItem *item,
     response_body = istream_unlock_new(pool, response_body,
                                        cache->cache, &item->item);
 
-    http_response_handler_invoke_response(&handler_ref, item->status,
-                                          item->headers, response_body);
+    handler_ref.InvokeResponse(item->status, item->headers, response_body);
 }
 
 static void

@@ -178,7 +178,7 @@ ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
 
     client->response.read_state = ajp_client::Response::READ_END;
     client->request.async.Finished();
-    http_response_handler_invoke_abort(&client->request.handler, error);
+    client->request.handler.InvokeAbort(error);
 
     ajp_client_release(client, false);
 }
@@ -370,8 +370,7 @@ ajp_consume_send_headers(struct ajp_client *client,
     client->request.async.Finished();
 
     client->response.in_handler = true;
-    http_response_handler_invoke_response(&client->request.handler, status,
-                                          headers, body);
+    client->request.handler.InvokeResponse(status, headers, body);
     client->response.in_handler = false;
 
     return client->socket.IsValid();
@@ -419,10 +418,9 @@ ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
             client->response.read_state = ajp_client::Response::READ_END;
             ajp_client_release(client, client->socket.IsEmpty());
 
-            http_response_handler_invoke_response(&client->request.handler,
-                                                  client->response.status,
-                                                  client->response.headers,
-                                                  nullptr);
+            client->request.handler.InvokeResponse(client->response.status,
+                                                   client->response.headers,
+                                                   nullptr);
         } else
             ajp_client_release(client, true);
 
@@ -882,7 +880,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
         GError *error =
             g_error_new(ajp_client_quark(), 0,
                         "malformed request URI '%s'", uri);
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
@@ -914,7 +912,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
         GError *error =
             g_error_new_literal(ajp_client_quark(), 0,
                                 "unknown request method");
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
@@ -971,7 +969,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
             GError *error =
                 g_error_new_literal(ajp_client_quark(), 0,
                                     "AJPv13 does not support chunked request bodies");
-            http_response_handler_direct_abort(handler, handler_ctx, error);
+            handler->InvokeAbort(handler_ctx, error);
             return;
         }
 
@@ -1018,7 +1016,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                            &ajp_request_stream_handler, client,
                            client->socket.GetDirectMask());
 
-    http_response_handler_set(&client->request.handler, handler, handler_ctx);
+    client->request.handler.Set(*handler, handler_ctx);
 
     client->request.async.Init(ajp_client_request_async_operation);
     async_ref->Set(client->request.async);

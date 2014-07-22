@@ -227,9 +227,8 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
     else
         response_body = NULL;
 
-    http_response_handler_direct_response(handler, handler_ctx,
-                                          request->status, response_headers,
-                                          response_body);
+    handler->InvokeResponse(handler_ctx, request->status, response_headers,
+                            response_body);
 }
 
 static size_t

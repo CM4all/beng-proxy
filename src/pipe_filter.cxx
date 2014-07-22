@@ -125,8 +125,7 @@ pipe_filter(struct pool *pool, const char *path,
     if (body == nullptr) {
         /* if the resource does not have a body (which is different
            from Content-Length:0), don't filter it */
-        http_response_handler_direct_response(handler, handler_ctx,
-                                              status, headers, nullptr);
+        handler->InvokeResponse(handler_ctx, status, headers, nullptr);
         return;
     }
 
@@ -160,7 +159,7 @@ pipe_filter(struct pool *pool, const char *path,
         leave_signal_section(&c.signals);
 
         istream_close_unused(body);
-        http_response_handler_direct_abort(handler, handler_ctx, error);
+        handler->InvokeAbort(handler_ctx, error);
         return;
     }
 
@@ -184,6 +183,5 @@ pipe_filter(struct pool *pool, const char *path,
 
     response = istream_stopwatch_new(pool, response, stopwatch);
 
-    http_response_handler_direct_response(handler, handler_ctx, status,
-                                          headers, response);
+    handler->InvokeResponse(handler_ctx, status, headers, response);
 }

@@ -144,7 +144,7 @@ was_client_abort_response_headers(struct was_client *client, GError *error)
 
     was_client_clear(client, g_error_copy(error));
 
-    http_response_handler_invoke_abort(&client->handler, error);
+    client->handler.InvokeAbort(error);
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
@@ -339,9 +339,8 @@ was_client_control_packet(enum was_command cmd, const void *payload,
 
         was_client_clear_request_body(client);
 
-        http_response_handler_invoke_response(&client->handler,
-                                              client->response.status,
-                                              headers, nullptr);
+        client->handler.InvokeResponse(client->response.status,
+                                       headers, nullptr);
         was_client_response_eof(client);
         return false;
 
@@ -448,9 +447,7 @@ was_client_control_drained(void *ctx)
     client->async.Finished();
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
-    http_response_handler_invoke_response(&client->handler,
-                                          client->response.status,
-                                          headers, body);
+    client->handler.InvokeResponse(client->response.status, headers, body);
     if (client->control == nullptr)
         /* closed, must return false */
         return false;
@@ -572,9 +569,7 @@ was_client_input_eof(void *ctx)
 
         client->async.Finished();
 
-        http_response_handler_invoke_response(&client->handler,
-                                              client->response.status,
-                                              headers, body);
+        client->handler.InvokeResponse(client->response.status, headers, body);
 
         if (client->request.body == nullptr) {
             /* reuse the connection */
@@ -674,7 +669,7 @@ was_client_request(struct pool *caller_pool, int control_fd,
     p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
                     *pool, "was_client_lease");
 
-    http_response_handler_set(&client->handler, handler, handler_ctx);
+    client->handler.Set(*handler, handler_ctx);
 
     client->async.Init(was_client_async_operation);
     async_ref->Set(client->async);

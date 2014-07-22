@@ -268,7 +268,7 @@ http_client::AbortResponseHeaders(GError *error)
         istream_close_handler(request.istream);
 
     PrefixError(&error);
-    http_response_handler_invoke_abort(&request.handler, error);
+    request.handler.InvokeAbort(error);
     Release(false);
 }
 
@@ -317,7 +317,7 @@ http_client::GetAvailable(bool partial) const
 {
     assert(!socket.ended || response.body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
-    assert(http_response_handler_used(&request.handler));
+    assert(request.handler.IsUsed());
 
     return response.body_reader.GetAvailable(socket, partial);
 }
@@ -336,7 +336,7 @@ http_client::Read()
     assert(!socket.ended || response.body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
     assert(istream_has_handler(&response.body_reader.GetStream()));
-    assert(http_response_handler_used(&request.handler));
+    assert(request.handler.IsUsed());
 
     if (response.in_handler)
         /* avoid recursion; the http_response_handler caller will
@@ -362,7 +362,7 @@ http_client::AsFD()
 {
     assert(!socket.ended || response.body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
-    assert(http_response_handler_used(&request.handler));
+    assert(request.handler.IsUsed());
 
     if (!socket.IsConnected() ||
         keep_alive ||
@@ -391,7 +391,7 @@ inline void
 http_client::Close()
 {
     assert(response.read_state == response::READ_BODY);
-    assert(http_response_handler_used(&request.handler));
+    assert(request.handler.IsUsed());
     assert(!response.body_reader.IsEOF());
 
     stopwatch_event(stopwatch, "close");
@@ -577,7 +577,7 @@ static void
 http_client_response_finished(struct http_client *client)
 {
     assert(client->response.read_state == http_client::response::READ_BODY);
-    assert(http_response_handler_used(&client->request.handler));
+    assert(client->request.handler.IsUsed());
 
     stopwatch_event(client->stopwatch, "end");
 
@@ -637,7 +637,7 @@ void
 http_client::ResponseBodyEOF()
 {
     assert(response.read_state == response::READ_BODY);
-    assert(http_response_handler_used(&request.handler));
+    assert(request.handler.IsUsed());
     assert(response.body_reader.IsEOF());
 
     /* this pointer must be cleared before forwarding the EOF event to
@@ -749,10 +749,8 @@ http_client::FeedHeaders(const void *data, size_t length)
     pool_ref(caller_pool);
 
     response.in_handler = true;
-    http_response_handler_invoke_response(&request.handler,
-                                          response.status,
-                                          response.headers,
-                                          response.body);
+    request.handler.InvokeResponse(response.status, response.headers,
+                                   response.body);
     response.in_handler = false;
 
     const bool valid = IsValid();
@@ -1126,7 +1124,7 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
     response.no_body = http_method_is_empty(method);
 
     pool_ref(caller_pool);
-    http_response_handler_set(&request.handler, handler, ctx);
+    request.handler.Set(*handler, ctx);
 
     request.async.Init(http_client_async_operation);
     async_ref->Set(request.async);
@@ -1217,7 +1215,7 @@ http_client_request(struct pool *caller_pool,
         GError *error = g_error_new(http_client_quark(),
                                     HTTP_CLIENT_UNSPECIFIED,
                                     "malformed request URI '%s'", uri);
-        http_response_handler_direct_abort(handler, ctx, error);
+        handler->InvokeAbort(ctx, error);
         return;
     }
 

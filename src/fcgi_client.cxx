@@ -205,7 +205,7 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
     if (client->request.istream != nullptr)
         istream_free_handler(&client->request.istream);
 
-    http_response_handler_invoke_abort(&client->handler, error);
+    client->handler.InvokeAbort(error);
 
     fcgi_client_release(client, false);
 }
@@ -443,9 +443,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
     const ScopePoolRef ref(*client->caller_pool TRACE_ARGS);
 
     client->response.in_handler = true;
-    http_response_handler_invoke_response(&client->handler, status,
-                                          client->response.headers,
-                                          body);
+    client->handler.InvokeResponse(status, client->response.headers, body);
     client->response.in_handler = false;
 
     return client->socket.IsValid();
@@ -474,10 +472,9 @@ fcgi_client_handle_end(struct fcgi_client *client)
 
     if (client->response.read_state == fcgi_client::Response::READ_NO_BODY) {
         client->async.Finished();
-        http_response_handler_invoke_response(&client->handler,
-                                              client->response.status,
-                                              client->response.headers,
-                                              nullptr);
+        client->handler.InvokeResponse(client->response.status,
+                                       client->response.headers,
+                                       nullptr);
     } else if (client->response.available > 0) {
         GError *error =
             g_error_new_literal(fcgi_quark(), 0,
@@ -956,7 +953,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     client->stderr_fd = stderr_fd;
 
-    http_response_handler_set(&client->handler, handler, handler_ctx);
+    client->handler.Set(*handler, handler_ctx);
 
     client->async.Init(fcgi_client_async_operation);
     async_ref->Set(client->async);

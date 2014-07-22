@@ -25,7 +25,7 @@ struct nfs_request {
                 const char *_content_type,
                 const struct http_response_handler *_handler, void *ctx)
         :pool(_pool), path(_path), content_type(_content_type) {
-        http_response_handler_set(&handler, _handler, ctx);
+        handler.Set(*_handler, ctx);
     }
 };
 
@@ -34,7 +34,7 @@ nfs_request_error(GError *error, void *ctx)
 {
     struct nfs_request *r = (struct nfs_request *)ctx;
 
-    http_response_handler_invoke_abort(&r->handler, error);
+    r->handler.InvokeAbort(error);
 }
 
 /*
@@ -56,11 +56,8 @@ nfs_request_response(struct nfs_cache_handle *handle,
     struct istream *body = nfs_cache_handle_open(&r->pool, handle,
                                                  0, st->st_size);
 
-    http_response_handler_invoke_response(&r->handler,
-                                          // TODO: handle revalidation etc.
-                                          HTTP_STATUS_OK,
-                                          headers,
-                                          body);
+    // TODO: handle revalidation etc.
+    r->handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
 }
 
 static const struct nfs_cache_handler nfs_request_cache_handler = {

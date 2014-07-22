@@ -124,7 +124,7 @@ filter_cache_request(gcc_unused struct filter_cache *cache,
 {
     GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
                                         "Test");
-    http_response_handler_direct_abort(handler, handler_ctx, error);
+    handler->InvokeAbort(handler_ctx, error);
 }
 
 struct stock *global_pipe_stock;
@@ -209,9 +209,8 @@ resource_get(gcc_unused struct http_cache *cache,
         break;
     }
 
-    http_response_handler_direct_response(handler, handler_ctx,
-                                          status, response_headers,
-                                          response_body);
+    handler->InvokeResponse(handler_ctx, status, response_headers,
+                            response_body);
 }
 
 static void
