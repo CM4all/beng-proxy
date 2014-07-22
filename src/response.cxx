@@ -738,7 +738,7 @@ response_response(http_status_t status, struct strmap *headers,
 
     const struct strmap *original_headers = headers;
 
-    headers = forward_response_headers(*request->pool, headers,
+    headers = forward_response_headers(*request->pool, status, headers,
                                        request->local_host_and_port,
                                        request2.session_cookie,
                                        request2.translate.response->response_header_forward);

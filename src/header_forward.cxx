@@ -7,6 +7,7 @@
 #include "header_forward.hxx"
 #include "header_copy.hxx"
 #include "header_writer.hxx"
+#include "http_upgrade.hxx"
 #include "strmap.hxx"
 #include "session.hxx"
 #include "cookie_client.hxx"
@@ -122,6 +123,22 @@ static const char *const exclude_response_headers[] = {
     "date",
     nullptr,
 };
+
+static void
+forward_upgrade_request_headers(struct strmap &dest, const struct strmap &src,
+                                bool with_body)
+{
+    if (with_body && http_is_upgrade(src))
+        header_copy_list(&src, &dest, http_upgrade_request_headers);
+}
+
+static void
+forward_upgrade_response_headers(struct strmap &dest, http_status_t status,
+                                 const struct strmap &src)
+{
+    if (http_is_upgrade(status, src))
+        header_copy_list(&src, &dest, http_upgrade_response_headers);
+}
 
 /**
  * @see #HEADER_GROUP_SECURE
@@ -310,6 +327,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
 
     if (src != nullptr) {
         forward_basic_headers(dest, src, with_body);
+        forward_upgrade_request_headers(*dest, *src, with_body);
 
         if (!exclude_host)
             header_copy_one(src, dest, "host");
@@ -405,7 +423,8 @@ forward_server(struct strmap *dest, const struct strmap *src,
 }
 
 struct strmap *
-forward_response_headers(struct pool &pool, const struct strmap *src,
+forward_response_headers(struct pool &pool, http_status_t status,
+                         const struct strmap *src,
                          const char *local_host,
                          const char *session_cookie,
                          const struct header_forward_settings &settings)
@@ -413,6 +432,7 @@ forward_response_headers(struct pool &pool, const struct strmap *src,
     struct strmap *dest = strmap_new(&pool);
     if (src != nullptr) {
         header_copy_list(src, dest, basic_response_headers);
+        forward_upgrade_response_headers(*dest, status, *src);
 
         if (settings.modes[HEADER_GROUP_OTHER] == HEADER_FORWARD_YES)
             forward_other_response_headers(dest, src);

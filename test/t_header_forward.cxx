@@ -281,7 +281,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_NO;
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_NO;
 
-    out = forward_response_headers(*pool, nullptr,
+    out = forward_response_headers(*pool, HTTP_STATUS_OK, nullptr,
                                    "192.168.0.2", nullptr,
                                    settings);
     assert(out->Remove("server") == nullptr);
@@ -297,7 +297,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     headers->Add("via", "1.1 192.168.0.1");
     headers->Add("x-cm4all-beng-user", "hans");
 
-    out = forward_response_headers(*pool, headers,
+    out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
                                    settings);
     assert(out->Get("server") == nullptr);
@@ -307,7 +307,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, headers,
+    out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;");
@@ -316,7 +316,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, headers,
+    out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;"
@@ -326,7 +326,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_IDENTITY] = HEADER_FORWARD_MANGLE;
 
-    out = forward_response_headers(*pool, headers,
+    out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;"
@@ -338,7 +338,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_COOKIE] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, headers,
+    out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;"
@@ -348,7 +348,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     headers->Add("access-control-allow-methods", "POST");
 
-    out = forward_response_headers(*pool, headers,
+    out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
                                    settings);
     check_strmap(out, "content-type=image/jpeg;server=apache;"
@@ -356,7 +356,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_CORS] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, headers,
+    out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
                                    settings);
     check_strmap(out, "access-control-allow-methods=POST;"
@@ -367,7 +367,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     settings.modes[HEADER_GROUP_SECURE] = HEADER_FORWARD_YES;
 
-    out = forward_response_headers(*pool, headers,
+    out = forward_response_headers(*pool, HTTP_STATUS_OK, headers,
                                    "192.168.0.2", nullptr,
                                    settings);
     check_strmap(out, "access-control-allow-methods=POST;"

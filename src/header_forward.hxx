@@ -9,6 +9,8 @@
 
 #include <beng-proxy/headers.h>
 
+#include <http/status.h>
+
 struct header_forward_settings {
     enum beng_header_forward_mode modes[HEADER_GROUP_MAX];
 };
@@ -33,7 +35,8 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
                         const char *host_and_port, const char *uri);
 
 struct strmap *
-forward_response_headers(struct pool &pool, const struct strmap *src,
+forward_response_headers(struct pool &pool, http_status_t status,
+                         const struct strmap *src,
                          const char *local_host,
                          const char *session_cookie,
                          const struct header_forward_settings &settings);

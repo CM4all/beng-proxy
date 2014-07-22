@@ -898,6 +898,7 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/header_forward.cxx src/header_writer.cxx \
 	src/header_copy.cxx \
 	src/http_string.cxx \
+	src/http_upgrade.cxx src/http_util.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_server.cxx \
 	src/cookie_string.cxx \
@@ -1371,6 +1372,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/header_parser.cxx src/header_forward.cxx src/header_writer.cxx \
 	src/header_copy.cxx \
 	src/http_string.cxx src/http_util.cxx \
+	src/http_upgrade.cxx \
 	src/istream-escape.c \
 	src/transformation.cxx \
 	src/dpool.c src/dstring.c src/dhashmap.c src/shm.c \

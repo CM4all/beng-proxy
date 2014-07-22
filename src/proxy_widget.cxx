@@ -66,7 +66,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     const WidgetView *view = widget_get_transformation_view(widget);
     assert(view != nullptr);
 
-    headers = forward_response_headers(*request->pool, headers,
+    headers = forward_response_headers(*request->pool, status, headers,
                                        request->local_host_and_port,
                                        request2.session_cookie,
                                        view->response_header_forward);
