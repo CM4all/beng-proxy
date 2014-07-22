@@ -124,7 +124,15 @@ http_server_request_stream_close(struct istream *istream)
     if (connection->request.request != nullptr)
         connection->request.request->body = nullptr;
 
-    connection->keep_alive = false;
+    if (connection->request.expect_100_continue)
+        /* the request body was optional, and we did not send the "100
+           Continue" response (yet): pretend there never was a request
+           body */
+        connection->request.expect_100_continue = false;
+    else
+        /* disable keep-alive so we don't need to wait for the client
+           to finish sending the request body */
+        connection->keep_alive = false;
 
     connection->request.body_reader.Deinit();
 }
