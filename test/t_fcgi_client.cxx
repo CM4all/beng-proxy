@@ -236,7 +236,7 @@ struct Connection {
     void Request(struct pool *pool,
                  Lease &lease,
                  http_method_t method, const char *uri,
-                 StringMap *headers, Istream *body,
+                 StringMap &headers, Istream *body,
                  const struct http_response_handler *handler,
                  void *ctx,
                  struct async_operation_ref *async_ref) {
@@ -244,7 +244,7 @@ struct Connection {
                             lease,
                             method, uri, uri, nullptr, nullptr, nullptr,
                             nullptr, "192.168.1.100",
-                            headers, body,
+                            &headers, body,
                             nullptr,
                             -1,
                             handler, ctx, async_ref);

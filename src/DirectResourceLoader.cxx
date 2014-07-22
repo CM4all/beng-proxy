@@ -200,7 +200,7 @@ DirectResourceLoader::SendRequest(struct pool &pool,
         pipe_filter(spawn_service, event_loop, &pool,
                     cgi->path, cgi->args,
                     cgi->options,
-                    status, &headers, body,
+                    status, headers, body,
                     &handler, handler_ctx);
         return;
 

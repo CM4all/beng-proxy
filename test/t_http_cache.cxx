@@ -213,7 +213,6 @@ MyResourceLoader::SendRequest(struct pool &pool,
 {
     const auto *request = &requests[current_request];
     StringMap *expected_rh;
-    StringMap *response_headers;
     Istream *response_body;
 
     assert(!got_request);
@@ -236,26 +235,25 @@ MyResourceLoader::SendRequest(struct pool &pool,
     if (body != NULL)
         body->CloseUnused();
 
+    auto *response_headers = strmap_new(&pool);
     if (request->response_headers != NULL) {
         GrowingBuffer *gb = growing_buffer_new(&pool, 512);
         gb->Write(request->response_headers);
 
-        response_headers = strmap_new(&pool);
         header_parse_buffer(pool, *response_headers, *gb);
-    } else
-        response_headers = NULL;
+    }
 
     if (request->response_body != NULL)
         response_body = istream_string_new(&pool, request->response_body);
     else
         response_body = NULL;
 
-    handler.InvokeResponse(handler_ctx, request->status, response_headers,
+    handler.InvokeResponse(handler_ctx, request->status, *response_headers,
                            response_body);
 }
 
 static void
-my_http_response(http_status_t status, StringMap *headers,
+my_http_response(http_status_t status, StringMap &headers,
                  Istream *body, void *ctx)
 {
     struct pool *pool = (struct pool *)ctx;
@@ -266,10 +264,8 @@ my_http_response(http_status_t status, StringMap *headers,
 
     expected_rh = parse_response_headers(*pool, *request);
     if (expected_rh != NULL) {
-        assert(headers != NULL);
-
         for (const auto &i : *expected_rh) {
-            const char *value = headers->Get(i.key);
+            const char *value = headers.Get(i.key);
             assert(value != NULL);
             assert(strcmp(value, i.value) == 0);
         }

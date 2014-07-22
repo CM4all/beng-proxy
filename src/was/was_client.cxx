@@ -331,7 +331,7 @@ WasClient::SubmitPendingResponse()
 
     operation.Finished();
 
-    handler.InvokeResponse(response.status, headers, body);
+    handler.InvokeResponse(response.status, *headers, body);
     return control.IsDefined();
 }
 
@@ -448,7 +448,7 @@ WasClient::OnWasControlPacket(enum was_command cmd, ConstBuffer<void> payload)
         ReleaseControl();
 
         operation.Finished();
-        handler.InvokeResponse(response.status, headers, nullptr);
+        handler.InvokeResponse(response.status, *headers, nullptr);
 
         pool_unref(&caller_pool);
         pool_unref(&pool);

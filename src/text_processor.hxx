@@ -21,7 +21,7 @@ struct processor_env;
  */
 gcc_pure
 bool
-text_processor_allowed(const StringMap *headers);
+text_processor_allowed(const StringMap &headers);
 
 /**
  * Process the specified istream, and return the processed stream.

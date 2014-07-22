@@ -297,11 +297,9 @@ struct XmlProcessor final : XmlParserHandler {
 };
 
 bool
-processable(const StringMap *headers)
+processable(const StringMap &headers)
 {
-    const char *content_type;
-
-    content_type = strmap_get_checked(headers, "content-type");
+    const char *content_type = headers.Get("content-type");
     return content_type != nullptr &&
         (strncmp(content_type, "text/html", 9) == 0 ||
          strncmp(content_type, "text/xml", 8) == 0 ||

@@ -41,7 +41,7 @@ http_cache_request_invalidate(http_method_t method);
 bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                              HttpCacheResponseInfo &info,
-                             http_status_t status, const StringMap *headers,
+                             http_status_t status, const StringMap &headers,
                              off_t body_available);
 
 /**
@@ -58,6 +58,6 @@ http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
  */
 bool
 http_cache_prefer_cached(const HttpCacheDocument &document,
-                         const StringMap *response_headers);
+                         const StringMap &response_headers);
 
 #endif

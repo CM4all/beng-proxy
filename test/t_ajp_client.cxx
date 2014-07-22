@@ -167,7 +167,7 @@ struct Connection {
     void Request(struct pool *pool,
                  Lease &lease,
                  http_method_t method, const char *uri,
-                 StringMap *headers,
+                 StringMap &headers,
                  Istream *body,
                  const struct http_response_handler *handler,
                  void *ctx,
@@ -175,7 +175,7 @@ struct Connection {
         ajp_client_request(pool, event_loop, fd, FdType::FD_SOCKET,
                            lease,
                            "http", "192.168.1.100", "remote", "server", 80, false,
-                           method, uri, headers, body,
+                           method, uri, &headers, body,
                            handler, ctx, async_ref);
     }
 

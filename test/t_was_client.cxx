@@ -147,7 +147,7 @@ public:
     void Request(struct pool *pool,
                  Lease &_lease,
                  http_method_t method, const char *uri,
-                 StringMap *headers, Istream *body,
+                 StringMap &headers, Istream *body,
                  const struct http_response_handler *handler,
                  void *ctx,
                  struct async_operation_ref *async_ref) {
@@ -155,7 +155,7 @@ public:
         was_client_request(*pool, event_loop,
                            control_fd, input_fd, output_fd, *this,
                            method, uri, uri, nullptr, nullptr,
-                           headers, body, nullptr,
+                           &headers, body, nullptr,
                            *handler, ctx, *async_ref);
     }
 

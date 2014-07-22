@@ -191,12 +191,12 @@ private:
 
     /* virtual methods from struct http_response_handler */
 
-    void OnResponse(http_status_t _status, StringMap *_headers,
+    void OnResponse(http_status_t _status, StringMap &_headers,
                     Istream *_body) {
         assert(error == nullptr);
 
         status = _status;
-        headers = _headers;
+        headers = &_headers;
 
         if (_body != nullptr) {
             body.Set(*_body, *this);
@@ -212,7 +212,7 @@ private:
         done = true;
     }
 
-    static void OnResponse(http_status_t status, StringMap *headers,
+    static void OnResponse(http_status_t status, StringMap &headers,
                            Istream *body, void *ctx) {
         ((GlueHttpRequest *)ctx)->OnResponse(status, headers, body);
     }

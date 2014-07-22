@@ -138,7 +138,7 @@ Context::OnError(GError *error)
  */
 
 static void
-my_response(http_status_t status, StringMap *headers gcc_unused,
+my_response(http_status_t status, gcc_unused StringMap &headers,
             Istream *body,
             void *ctx)
 {

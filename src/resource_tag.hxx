@@ -12,6 +12,6 @@ class StringMap;
 
 const char *
 resource_tag_append_etag(struct pool *pool, const char *tag,
-                         const StringMap *headers);
+                         const StringMap &headers);
 
 #endif

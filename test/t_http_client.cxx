@@ -32,7 +32,7 @@ struct Connection {
     void Request(struct pool *pool,
                  Lease &lease,
                  http_method_t method, const char *uri,
-                 StringMap *headers,
+                 StringMap &headers,
                  Istream *body,
                  bool expect_100,
                  const struct http_response_handler *handler,
@@ -191,7 +191,7 @@ test_no_keepalive(Context<Connection> &c)
 {
     c.connection = Connection::NewClose(*c.pool, c.event_loop);
     c.connection->Request(c.pool, c,
-                          HTTP_METHOD_GET, "/foo", nullptr,
+                          HTTP_METHOD_GET, "/foo", *strmap_new(c.pool),
                           nullptr,
 #ifdef HAVE_EXPECT_100
                           false,

@@ -161,7 +161,7 @@ response_invoke_processor(Request &request2,
         return;
     }
 
-    if (!processable(&response_headers)) {
+    if (!processable(response_headers)) {
         body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
@@ -277,18 +277,16 @@ response_invoke_processor(Request &request2,
                                                   *widget);
 
         response_handler.InvokeResponse(&request2, status,
-                                        processor_header_forward(request2.pool,
-                                                                 response_headers),
+                                        *processor_header_forward(request2.pool,
+                                                                  response_headers),
                                         body);
     }
 }
 
 static bool
-css_processable(const StringMap *headers)
+css_processable(const StringMap &headers)
 {
-    const char *content_type;
-
-    content_type = strmap_get_checked(headers, "content-type");
+    const char *content_type = headers.Get("content-type");
     return content_type != nullptr &&
         strncmp(content_type, "text/css", 8) == 0;
 }
@@ -311,7 +309,7 @@ response_invoke_css_processor(Request &request2,
         return;
     }
 
-    if (!css_processable(&response_headers)) {
+    if (!css_processable(response_headers)) {
         body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
@@ -362,8 +360,8 @@ response_invoke_css_processor(Request &request2,
     assert(body != nullptr);
 
     response_handler.InvokeResponse(&request2, status,
-                                    processor_header_forward(request2.pool,
-                                                             response_headers),
+                                    *processor_header_forward(request2.pool,
+                                                              response_headers),
                                     body);
 }
 
@@ -384,7 +382,7 @@ response_invoke_text_processor(Request &request2,
         return;
     }
 
-    if (!text_processor_allowed(&response_headers)) {
+    if (!text_processor_allowed(response_headers)) {
         body->CloseUnused();
         response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
@@ -434,8 +432,8 @@ response_invoke_text_processor(Request &request2,
     assert(body != nullptr);
 
     response_handler.InvokeResponse(&request2, status,
-                                    processor_header_forward(request2.pool,
-                                                             response_headers),
+                                    *processor_header_forward(request2.pool,
+                                                              response_headers),
                                     body);
 }
 
@@ -602,7 +600,7 @@ response_apply_filter(Request &request2,
 {
     const char *source_tag;
     source_tag = resource_tag_append_etag(&request2.pool,
-                                          request2.resource_tag, &headers2);
+                                          request2.resource_tag, headers2);
     request2.resource_tag = source_tag != nullptr
         ? p_strcat(&request2.pool, source_tag, "|",
                    filter.GetId(request2.pool),
@@ -792,7 +790,7 @@ RelocateCallback(const char *const uri, void *ctx)
  */
 
 static void
-response_response(http_status_t status, StringMap *headers,
+response_response(http_status_t status, StringMap &headers,
                   Istream *body,
                   void *ctx)
 {
@@ -806,7 +804,7 @@ response_response(http_status_t status, StringMap *headers,
         if (!request2.transformed &&
             (request2.translate.response->response_header_forward.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_MANGLE)) {
             /* handle the response header "x-cm4all-view" */
-            const char *view_name = headers->Get("x-cm4all-view");
+            const char *view_name = headers.Get("x-cm4all-view");
             if (view_name != nullptr) {
                 const WidgetView *view =
                     widget_view_lookup(request2.translate.response->views,
@@ -830,30 +828,30 @@ response_response(http_status_t status, StringMap *headers,
 
         const Transformation *transformation = request2.PopTransformation();
         if (transformation != nullptr) {
-            response_apply_transformation(request2, status, *headers, body,
+            response_apply_transformation(request2, status, headers, body,
                                           *transformation);
             return;
         }
     }
 
-    const auto *original_headers = headers;
+    const auto *original_headers = &headers;
 
-    headers = forward_response_headers(request2.pool, status, headers,
-                                       request.local_host_and_port,
-                                       request2.session_cookie,
-                                       RelocateCallback, &request2,
-                                       request2.translate.response->response_header_forward);
+    auto *new_headers = forward_response_headers(request2.pool, status, &headers,
+                                                 request.local_host_and_port,
+                                                 request2.session_cookie,
+                                                 RelocateCallback, &request2,
+                                                 request2.translate.response->response_header_forward);
 
-    headers = add_translation_vary_header(&request2.pool, headers,
-                                          request2.translate.response);
+    new_headers = add_translation_vary_header(&request2.pool, new_headers,
+                                              request2.translate.response);
 
-    request2.product_token = headers->Remove("server");
+    request2.product_token = new_headers->Remove("server");
 
 #ifdef NO_DATE_HEADER
-    request2.date = headers.Remove("date");
+    request2.date = new_headers.Remove("date");
 #endif
 
-    HttpHeaders headers2(headers);
+    HttpHeaders headers2(*new_headers);
 
     if (original_headers != nullptr && request.method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body

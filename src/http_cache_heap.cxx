@@ -37,7 +37,7 @@ struct HttpCacheItem final : HttpCacheDocument, CacheItem {
                   const HttpCacheResponseInfo &_info,
                   const StringMap &_request_headers,
                   http_status_t _status,
-                  const StringMap *_response_headers,
+                  const StringMap &_response_headers,
                   size_t _size,
                   Rubber &_rubber, unsigned _rubber_id)
         :HttpCacheDocument(_pool, _info, _request_headers,
@@ -87,7 +87,7 @@ HttpCacheHeap::Put(const char *url,
                    const HttpCacheResponseInfo &info,
                    StringMap &request_headers,
                    http_status_t status,
-                   const StringMap *response_headers,
+                   const StringMap &response_headers,
                    Rubber &rubber, unsigned rubber_id, size_t size)
 {
     struct pool *item_pool = pool_new_slice(pool, "http_cache_item",

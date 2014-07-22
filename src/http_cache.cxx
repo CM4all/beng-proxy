@@ -238,7 +238,7 @@ http_cache_put(HttpCacheRequest &request,
         request.cache.heap.Put(request.key,
                                request.info, request.headers,
                                request.response.status,
-                               request.response.headers,
+                               *request.response.headers,
                                *request.cache.rubber, rubber_id, size);
     else if (request.cache.memcached_stock != nullptr) {
         auto job = NewFromPool<LinkedBackgroundJob>(request.pool,
@@ -346,7 +346,7 @@ HttpCacheRequest::RubberError(GError *error)
  */
 
 static void
-http_cache_response_response(http_status_t status, StringMap *headers,
+http_cache_response_response(http_status_t status, StringMap &headers,
                              Istream *body,
                              void *ctx)
 {
@@ -415,9 +415,7 @@ http_cache_response_response(http_status_t status, StringMap *headers,
     }
 
     request.response.status = status;
-    request.response.headers = headers != nullptr
-        ? strmap_dup(&request.pool, headers)
-        : nullptr;
+    request.response.headers = strmap_dup(&request.pool, &headers);
 
     Istream *const input = body;
     if (body == nullptr) {
@@ -704,7 +702,8 @@ http_cache_miss(HttpCache &cache, struct pool &caller_pool,
 {
     if (info.only_if_cached) {
         handler.InvokeResponse(handler_ctx, HTTP_STATUS_GATEWAY_TIMEOUT,
-                               nullptr, nullptr);
+                               *NewFromPool<StringMap>(caller_pool, caller_pool),
+                               nullptr);
         return;
     }
 
@@ -753,7 +752,7 @@ http_cache_heap_serve(HttpCacheHeap &cache,
 
     Istream *response_body = cache.OpenStream(pool, document);
 
-    handler_ref.InvokeResponse(document.status, &document.response_headers,
+    handler_ref.InvokeResponse(document.status, document.response_headers,
                                response_body);
 }
 
@@ -769,7 +768,7 @@ http_cache_memcached_serve(HttpCacheRequest &request)
 
     request.operation.Finished();
     request.handler.InvokeResponse(request.document->status,
-                                   &request.document->response_headers,
+                                   request.document->response_headers,
                                    request.document_body);
 }
 
@@ -954,7 +953,9 @@ http_cache_memcached_miss(HttpCacheRequest &request)
     if (request.request_info.only_if_cached) {
         request.operation.Finished();
         request.handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
-                                       nullptr, nullptr);
+                                       *NewFromPool<StringMap>(request.pool,
+                                                               request.pool),
+                                       nullptr);
 
         pool_unref_denotify(&request.caller_pool,
                             &request.caller_pool_notify);
@@ -995,7 +996,7 @@ http_cache_memcached_get_callback(HttpCacheDocument *document,
 
         request.operation.Finished();
         request.handler.InvokeResponse(document->status,
-                                       &document->response_headers,
+                                       document->response_headers,
                                        body);
         pool_unref_denotify(&request.caller_pool,
                             &request.caller_pool_notify);

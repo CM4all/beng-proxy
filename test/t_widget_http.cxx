@@ -53,7 +53,7 @@ static unsigned test_id;
 static bool got_request, got_response;
 
 bool
-processable(gcc_unused const StringMap *headers)
+processable(gcc_unused const StringMap &headers)
 {
     return false;
 }
@@ -90,7 +90,7 @@ css_processor(gcc_unused struct pool &pool, Istream &stream,
 }
 
 bool
-text_processor_allowed(gcc_unused const StringMap *headers)
+text_processor_allowed(gcc_unused const StringMap &headers)
 {
     return false;
 }
@@ -203,12 +203,12 @@ MyResourceLoader::SendRequest(struct pool &pool,
         break;
     }
 
-    handler.InvokeResponse(handler_ctx, HTTP_STATUS_OK, response_headers,
+    handler.InvokeResponse(handler_ctx, HTTP_STATUS_OK, *response_headers,
                            response_body);
 }
 
 static void
-my_http_response(http_status_t status, gcc_unused StringMap *headers,
+my_http_response(http_status_t status, gcc_unused StringMap &headers,
                  Istream *body, gcc_unused void *ctx)
 {
     assert(!got_response);

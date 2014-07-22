@@ -55,5 +55,5 @@ static_file_get(EventLoop &event_loop, struct pool &pool,
                             istream_file_fd(*body), st,
                             content_type);
 
-    handler->InvokeResponse(handler_ctx, HTTP_STATUS_OK, headers, body);
+    handler->InvokeResponse(handler_ctx, HTTP_STATUS_OK, *headers, body);
 }

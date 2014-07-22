@@ -161,12 +161,12 @@ strmap_get_non_empty(const StringMap &map, const char *key)
 bool
 http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
                              HttpCacheResponseInfo &info,
-                             http_status_t status, const StringMap *headers,
+                             http_status_t status, const StringMap &headers,
                              off_t body_available)
 {
     const char *p;
 
-    if (!http_status_cacheable(status) || headers == nullptr)
+    if (!http_status_cacheable(status))
         return false;
 
     if (body_available != (off_t)-1 && body_available > cacheable_size_limit)
@@ -174,7 +174,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
         return false;
 
     info.expires = std::chrono::system_clock::from_time_t(-1);
-    p = headers->Get("cache-control");
+    p = headers.Get("cache-control");
     if (p != nullptr) {
         StringView cc = p, s;
 
@@ -207,7 +207,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
 
     std::chrono::system_clock::duration offset;
     if (request_info.is_remote) {
-        p = headers->Get("date");
+        p = headers.Get("date");
         if (p == nullptr)
             /* we cannot determine whether to cache a resource if the
                server does not provide its system time */
@@ -227,7 +227,7 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
            header and a max-age directive, the max-age directive
            overrides the Expires header" */
 
-        info.expires = parse_translate_time(headers->Get("expires"), offset);
+        info.expires = parse_translate_time(headers.Get("expires"), offset);
         if (info.expires != std::chrono::system_clock::from_time_t(-1) &&
             info.expires < now)
             cache_log(4, "invalid 'expires' header\n");
@@ -243,10 +243,10 @@ http_cache_response_evaluate(const HttpCacheRequestInfo &request_info,
            explicit expiration time" */
         return false;
 
-    info.last_modified = headers->Get("last-modified");
-    info.etag = headers->Get("etag");
+    info.last_modified = headers.Get("last-modified");
+    info.etag = headers.Get("etag");
 
-    info.vary = strmap_get_non_empty(*headers, "vary");
+    info.vary = strmap_get_non_empty(headers, "vary");
     if (info.vary != nullptr && strcmp(info.vary, "*") == 0)
         /* RFC 2616 13.6: A Vary header field-value of "*" always
            fails to match and subsequent requests on that resource can
@@ -276,12 +276,12 @@ http_cache_copy_vary(StringMap &dest, struct pool &pool, const char *vary,
 
 bool
 http_cache_prefer_cached(const HttpCacheDocument &document,
-                         const StringMap *response_headers)
+                         const StringMap &response_headers)
 {
     if (document.info.etag == nullptr)
         return false;
 
-    const char *etag = strmap_get_checked(response_headers, "etag");
+    const char *etag = response_headers.Get("etag");
 
     /* if the ETags are the same, then the resource hasn't changed,
        but the server was too lazy to check that properly */

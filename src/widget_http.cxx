@@ -121,7 +121,7 @@ struct WidgetRequest {
      * This function will be called (semi-)recursively for every
      * transformation in the chain.
      */
-    void DispatchResponse(http_status_t status, StringMap *headers,
+    void DispatchResponse(http_status_t status, StringMap &headers,
                           Istream *body);
 
     /**
@@ -287,7 +287,7 @@ WidgetRequest::ProcessResponse(http_status_t status,
         return;
     }
 
-    if (!processable(&headers)) {
+    if (!processable(headers)) {
         body->CloseUnused();
 
         GError *error =
@@ -308,15 +308,15 @@ WidgetRequest::ProcessResponse(http_status_t status,
         body = processor_process(pool, *body,
                                  widget, env, options);
 
-        DispatchResponse(status, processor_header_forward(pool, headers),
+        DispatchResponse(status, *processor_header_forward(pool, headers),
                          body);
     }
 }
 
 static bool
-css_processable(const StringMap *headers)
+css_processable(const StringMap &headers)
 {
-    const char *content_type = strmap_get_checked(headers, "content-type");
+    const char *content_type = headers.Get("content-type");
     return content_type != nullptr &&
         strncmp(content_type, "text/css", 8) == 0;
 }
@@ -335,7 +335,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
         return;
     }
 
-    if (!css_processable(&headers)) {
+    if (!css_processable(headers)) {
         body->CloseUnused();
 
         GError *error =
@@ -347,7 +347,7 @@ WidgetRequest::CssProcessResponse(http_status_t status,
     }
 
     body = css_processor(pool, *body, widget, env, options);
-    DispatchResponse(status, processor_header_forward(pool, headers), body);
+    DispatchResponse(status, *processor_header_forward(pool, headers), body);
 }
 
 void
@@ -363,7 +363,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
         return;
     }
 
-    if (!text_processor_allowed(&headers)) {
+    if (!text_processor_allowed(headers)) {
         body->CloseUnused();
 
         GError *error =
@@ -375,7 +375,7 @@ WidgetRequest::TextProcessResponse(http_status_t status,
     }
 
     body = text_processor(pool, *body, widget, env);
-    DispatchResponse(status, processor_header_forward(pool, headers), body);
+    DispatchResponse(status, *processor_header_forward(pool, headers), body);
 }
 
 void
@@ -384,7 +384,7 @@ WidgetRequest::FilterResponse(http_status_t status,
                               const ResourceAddress &filter, bool reveal_user)
 {
     const char *source_tag = resource_tag_append_etag(&pool, resource_tag,
-                                                      &headers);
+                                                      headers);
     resource_tag = source_tag != nullptr
         ? p_strcat(&pool, source_tag, "|", filter.GetId(pool), nullptr)
         : nullptr;
@@ -468,7 +468,7 @@ widget_transformation_enabled(const Widget *widget,
 }
 
 void
-WidgetRequest::DispatchResponse(http_status_t status, StringMap *headers,
+WidgetRequest::DispatchResponse(http_status_t status, StringMap &headers,
                                 Istream *body)
 {
     const Transformation *t = transformation;
@@ -478,10 +478,7 @@ WidgetRequest::DispatchResponse(http_status_t status, StringMap *headers,
 
         transformation = t->next;
 
-        if (headers == nullptr)
-            headers = strmap_new(&pool);
-
-        TransformResponse(status, *headers, body, *t);
+        TransformResponse(status, headers, body, *t);
     } else if (lookup_id != nullptr) {
         if (body != nullptr)
             body->CloseUnused();
@@ -533,7 +530,7 @@ WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
         /* install the new view */
         transformation = view->transformation;
     } else if (widget.from_request.unauthorized_view &&
-               processable(&headers) &&
+               processable(headers) &&
                !widget.IsContainer()) {
         /* postponed check from proxy_widget_continue(): an
            unauthorized view was selected, which is only allowed if
@@ -552,62 +549,56 @@ WidgetRequest::UpdateView(StringMap &headers, GError **error_r)
 }
 
 static void
-widget_response_response(http_status_t status, StringMap *headers,
+widget_response_response(http_status_t status, StringMap &headers,
                          Istream *body, void *ctx)
 {
     WidgetRequest *embed = (WidgetRequest *)ctx;
     auto &widget = embed->widget;
 
-    if (headers != nullptr) {
-        if (widget.cls->dump_headers) {
-            daemon_log(4, "response headers from widget '%s'\n",
-                       widget.GetLogName());
+    if (widget.cls->dump_headers) {
+        daemon_log(4, "response headers from widget '%s'\n",
+                   widget.GetLogName());
 
-            for (const auto &i : *headers)
-                daemon_log(4, "  %s: %s\n", i.key, i.value);
-        }
+        for (const auto &i : headers)
+            daemon_log(4, "  %s: %s\n", i.key, i.value);
+    }
 
-        if (embed->host_and_port != nullptr) {
-            auto session = embed->env.GetRealmSession();
-            if (session)
-                widget_collect_cookies(session->cookies, *headers,
-                                       embed->host_and_port);
-        } else {
+    if (embed->host_and_port != nullptr) {
+        auto session = embed->env.GetRealmSession();
+        if (session)
+            widget_collect_cookies(session->cookies, headers,
+                                   embed->host_and_port);
+    } else {
 #ifndef NDEBUG
-            auto r = headers->EqualRange("set-cookie2");
-            if (r.first == r.second)
-                r = headers->EqualRange("set-cookie");
-            if (r.first != r.second)
-                daemon_log(4, "ignoring Set-Cookie from widget '%s': no host\n",
-                           widget.GetLogName());
+        auto r = headers.EqualRange("set-cookie2");
+        if (r.first == r.second)
+            r = headers.EqualRange("set-cookie");
+        if (r.first != r.second)
+            daemon_log(4, "ignoring Set-Cookie from widget '%s': no host\n",
+                       widget.GetLogName());
 #endif
-        }
+    }
 
-        if (http_status_is_redirect(status)) {
-            const char *location = headers->Get("location");
-            if (location != nullptr && embed->HandleRedirect(location, body)) {
-                return;
-            }
-        }
-
-        /* select a new view? */
-
-        GError *error = nullptr;
-        if (!embed->UpdateView(*headers, &error)) {
-            if (body != nullptr)
-                body->CloseUnused();
-
-            embed->DispatchError(error);
+    if (http_status_is_redirect(status)) {
+        const char *location = headers.Get("location");
+        if (location != nullptr && embed->HandleRedirect(location, body)) {
             return;
         }
     }
 
-    if (embed->content_type != nullptr) {
-        headers = headers != nullptr
-            ? strmap_dup(&embed->pool, headers)
-            : strmap_new(&embed->pool);
-        headers->Set("content-type", embed->content_type);
+    /* select a new view? */
+
+    GError *error = nullptr;
+    if (!embed->UpdateView(headers, &error)) {
+        if (body != nullptr)
+            body->CloseUnused();
+
+        embed->DispatchError(error);
+        return;
     }
+
+    if (embed->content_type != nullptr)
+        headers.Set("content-type", embed->content_type);
 
     if (widget.session_save_pending &&
         embed->transformation->HasProcessor()) {

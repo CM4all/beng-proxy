@@ -54,7 +54,7 @@ class WidgetLookupHandler;
 
 gcc_pure
 bool
-processable(const StringMap *headers);
+processable(const StringMap &headers);
 
 /**
  * Process the specified istream, and return the processed stream.

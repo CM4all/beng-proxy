@@ -305,7 +305,7 @@ parse_translate_time(const char *p, std::chrono::system_clock::duration offset)
 /** check whether the HTTP response should be put into the cache */
 static bool
 filter_cache_response_evaluate(FilterCacheInfo *info,
-                               http_status_t status, StringMap *headers,
+                               http_status_t status, const StringMap &headers,
                                off_t body_available)
 {
     const char *p;
@@ -317,14 +317,14 @@ filter_cache_response_evaluate(FilterCacheInfo *info,
         /* too large for the cache */
         return false;
 
-    p = headers->Get("cache-control");
+    p = headers.Get("cache-control");
     if (p != nullptr && http_list_contains(p, "no-store"))
         return false;
 
     const auto now = std::chrono::system_clock::now();
     std::chrono::system_clock::duration offset = std::chrono::system_clock::duration::zero();
 
-    p = headers->Get("date");
+    p = headers.Get("date");
     if (p != nullptr) {
         auto date = http_date_parse(p);
         if (date != std::chrono::system_clock::from_time_t(-1))
@@ -332,14 +332,14 @@ filter_cache_response_evaluate(FilterCacheInfo *info,
     }
 
     if (info->expires == std::chrono::system_clock::from_time_t(-1)) {
-        info->expires = parse_translate_time(headers->Get("expires"), offset);
+        info->expires = parse_translate_time(headers.Get("expires"), offset);
         if (info->expires != std::chrono::system_clock::from_time_t(-1) &&
             info->expires < now)
             cache_log(2, "invalid 'expires' header\n");
     }
 
     /*
-    info->out_etag = headers->Get("etag");
+    info->out_etag = headers.Get("etag");
     */
 
     return true;
@@ -407,7 +407,7 @@ FilterCacheRequest::RubberError(GError *error)
  */
 
 static void
-filter_cache_response_response(http_status_t status, StringMap *headers,
+filter_cache_response_response(http_status_t status, StringMap &headers,
                                Istream *body,
                                void *ctx)
 {
@@ -431,7 +431,7 @@ filter_cache_response_response(http_status_t status, StringMap *headers,
         request->response.async_ref.Clear();
 
         request->response.status = status;
-        request->response.headers = headers;
+        request->response.headers = &headers;
 
         filter_cache_put(request, 0, 0);
     } else {
@@ -450,7 +450,7 @@ filter_cache_response_response(http_status_t status, StringMap *headers,
                                false, true);
 
         request->response.status = status;
-        request->response.headers = strmap_dup(request->pool, headers);
+        request->response.headers = strmap_dup(request->pool, &headers);
 
         pool_ref(request->pool);
 
@@ -629,7 +629,7 @@ filter_cache_serve(FilterCache *cache, FilterCacheItem *item,
     response_body = istream_unlock_new(*pool, *response_body,
                                        cache->cache, *item);
 
-    handler_ref.InvokeResponse(item->status, item->headers, response_body);
+    handler_ref.InvokeResponse(item->status, *item->headers, response_body);
 }
 
 static void

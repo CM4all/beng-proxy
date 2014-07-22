@@ -80,7 +80,7 @@ DelegateHttpRequest::OnDelegateSuccess(int fd)
     Istream *body = istream_file_fd_new(event_loop, pool, path,
                                         fd, FdType::FD_FILE,
                                         st.st_size);
-    handler.InvokeResponse(HTTP_STATUS_OK, &response_headers, body);
+    handler.InvokeResponse(HTTP_STATUS_OK, response_headers, body);
 }
 
 void

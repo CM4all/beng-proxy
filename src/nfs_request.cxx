@@ -56,7 +56,7 @@ nfs_request_response(NfsCacheHandle &handle,
     Istream *body = nfs_cache_handle_open(r->pool, handle, 0, st.st_size);
 
     // TODO: handle revalidation etc.
-    r->handler.InvokeResponse(HTTP_STATUS_OK, headers, body);
+    r->handler.InvokeResponse(HTTP_STATUS_OK, *headers, body);
 }
 
 static constexpr NfsCacheHandler nfs_request_cache_handler = {

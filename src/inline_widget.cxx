@@ -74,17 +74,15 @@ inline_widget_close(InlineWidget *iw, GError *error)
  */
 static Istream *
 widget_response_format(struct pool &pool, const Widget &widget,
-                       const StringMap *headers, Istream &_body,
+                       const StringMap &headers, Istream &_body,
                        bool plain_text,
                        GError **error_r)
 {
     auto *body = &_body;
 
-    const char *p, *content_type;
-
     assert(body != nullptr);
 
-    p = strmap_get_checked(headers, "content-encoding");
+    const char *p = headers.Get("content-encoding");
     if (p != nullptr && strcmp(p, "identity") != 0) {
         g_set_error(error_r, widget_quark(), WIDGET_ERROR_UNSUPPORTED_ENCODING,
                     "widget '%s' sent non-identity response, cannot embed",
@@ -93,7 +91,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
         return nullptr;
     }
 
-    content_type = strmap_get_checked(headers, "content-type");
+    const char *content_type = headers.Get("content-type");
 
     if (plain_text) {
         if (content_type == nullptr ||
@@ -166,7 +164,7 @@ widget_response_format(struct pool &pool, const Widget &widget,
 
 static void
 inline_widget_response(http_status_t status,
-                       StringMap *headers,
+                       StringMap &headers,
                        Istream *body, void *ctx)
 {
     auto *iw = (InlineWidget *)ctx;

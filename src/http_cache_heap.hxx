@@ -53,7 +53,7 @@ public:
              const HttpCacheResponseInfo &info,
              StringMap &request_headers,
              http_status_t status,
-             const StringMap *response_headers,
+             const StringMap &response_headers,
              Rubber &rubber, unsigned rubber_id, size_t size);
 
     void Remove(HttpCacheDocument &document);

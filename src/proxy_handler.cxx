@@ -78,14 +78,11 @@ GetCookieURI(const Request &r)
 }
 
 static void
-proxy_collect_cookies(Request &request2, const StringMap *headers)
+proxy_collect_cookies(Request &request2, const StringMap &headers)
 {
-    if (headers == nullptr)
-        return;
-
-    auto r = headers->EqualRange("set-cookie2");
+    auto r = headers.EqualRange("set-cookie2");
     if (r.first == r.second) {
-        r = headers->EqualRange("set-cookie");
+        r = headers.EqualRange("set-cookie");
         if (r.first == r.second)
             return;
     }
@@ -108,7 +105,7 @@ proxy_collect_cookies(Request &request2, const StringMap *headers)
 }
 
 static void
-proxy_response(http_status_t status, StringMap *headers,
+proxy_response(http_status_t status, StringMap &headers,
                Istream *body, void *ctx)
 {
     auto &request2 = *(Request *)ctx;

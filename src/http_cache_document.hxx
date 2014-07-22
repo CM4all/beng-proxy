@@ -22,7 +22,7 @@ struct HttpCacheDocument {
                       const HttpCacheResponseInfo &_info,
                       const StringMap &request_headers,
                       http_status_t _status,
-                      const StringMap *response_headers);
+                      const StringMap &response_headers);
 
     HttpCacheDocument(const HttpCacheDocument &) = delete;
     HttpCacheDocument &operator=(const HttpCacheDocument &) = delete;
