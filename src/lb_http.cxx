@@ -20,7 +20,7 @@
 #include "http_client.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "header_writer.hxx"
 #include "http_response.hxx"
 #include "stock.hxx"

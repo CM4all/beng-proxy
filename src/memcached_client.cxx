@@ -7,7 +7,7 @@
 #include "memcached_client.hxx"
 #include "memcached_packet.hxx"
 #include "buffered_socket.hxx"
-#include "please.h"
+#include "please.hxx"
 #include "async.hxx"
 #include "pevent.h"
 #include "istream-internal.h"
@@ -117,7 +117,7 @@ memcached_client_release_socket(struct memcached_client *client, bool reuse)
     assert(client != nullptr);
 
     client->socket.Abandon();
-    p_lease_release(&client->lease_ref, reuse, client->pool);
+    p_lease_release(client->lease_ref, reuse, *client->pool);
 }
 
 static void
@@ -781,7 +781,7 @@ memcached_client_invoke(struct pool *caller_pool,
                                        key, key_length, value,
                                        0x1234 /* XXX? */);
     if (request == nullptr) {
-        lease_direct_release(lease, lease_ctx, true);
+        lease->Release(lease_ctx, true);
 
         GError *error =
             g_error_new_literal(memcached_client_quark(), 0,
@@ -800,8 +800,8 @@ memcached_client_invoke(struct pool *caller_pool,
                         nullptr, &memcached_client_timeout,
                         memcached_client_socket_handler, client);
 
-    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
-                    pool, "memcached_client_lease");
+    p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
+                    *pool, "memcached_client_lease");
 
     istream_assign_handler(&client->request.istream, request,
                            &memcached_request_stream_handler, client,

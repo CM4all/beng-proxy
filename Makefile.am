@@ -601,7 +601,8 @@ libutil_a_SOURCES = \
 	src/gmtime.c src/gmtime.h \
 	src/html-chars.h \
 	src/async.hxx \
-	src/lease.h \
+	src/lease.hxx \
+	src/please.hxx \
 	src/strref.h \
 	src/strref2.h \
 	src/strutil.c src/strutil.h \

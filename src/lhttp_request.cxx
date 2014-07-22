@@ -9,7 +9,7 @@
 #include "lhttp_address.hxx"
 #include "http_response.hxx"
 #include "http_client.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "istream.h"
 #include "header_writer.hxx"
 #include "pool.hxx"

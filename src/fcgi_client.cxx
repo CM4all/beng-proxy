@@ -14,7 +14,7 @@
 #include "async.hxx"
 #include "istream-internal.h"
 #include "istream_gb.hxx"
-#include "please.h"
+#include "please.hxx"
 #include "strutil.h"
 #include "header_parser.hxx"
 #include "pevent.h"
@@ -159,7 +159,7 @@ fcgi_client_release_socket(struct fcgi_client *client, bool reuse)
     assert(client != nullptr);
 
     client->socket.Abandon();
-    p_lease_release(&client->lease_ref, reuse, client->pool);
+    p_lease_release(client->lease_ref, reuse, *client->pool);
 }
 
 /**
@@ -951,8 +951,8 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
                         &fcgi_client_timeout, &fcgi_client_timeout,
                         fcgi_client_socket_handler, client);
 
-    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
-                    pool, "fcgi_client_lease");
+    p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
+                    *pool, "fcgi_client_lease");
 
     client->stderr_fd = stderr_fd;
 

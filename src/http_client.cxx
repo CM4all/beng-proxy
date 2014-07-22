@@ -16,7 +16,7 @@
 #include "istream_gb.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"
-#include "please.h"
+#include "please.hxx"
 #include "uri-verify.h"
 #include "direct.h"
 #include "stopwatch.h"
@@ -171,7 +171,7 @@ struct http_client {
             reuse = false;
 
         socket.Abandon();
-        p_lease_release(&lease_ref, reuse, pool);
+        p_lease_release(lease_ref, reuse, *pool);
     }
 
     /**
@@ -1119,8 +1119,8 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
                 &http_client_timeout, &http_client_timeout,
                 filter, filter_ctx,
                 http_client_socket_handler, this);
-    p_lease_ref_set(&lease_ref, lease, lease_ctx,
-                    pool, "http_client_lease");
+    p_lease_ref_set(lease_ref, *lease, lease_ctx,
+                    *pool, "http_client_lease");
 
     response.read_state = http_client::response::READ_STATUS;
     response.no_body = http_method_is_empty(method);
@@ -1210,7 +1210,7 @@ http_client_request(struct pool *caller_pool,
     assert(handler->response != nullptr);
 
     if (!uri_path_verify_quick(uri)) {
-        lease_direct_release(lease, lease_ctx, true);
+        lease->Release(lease_ctx, true);
         if (body != nullptr)
             istream_close_unused(body);
 

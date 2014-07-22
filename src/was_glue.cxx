@@ -9,7 +9,7 @@
 #include "was_stock.hxx"
 #include "was_client.hxx"
 #include "http_response.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "stock.hxx"
 #include "abort_close.hxx"

@@ -1,5 +1,5 @@
 #include "memcached_client.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "async.hxx"
 #include "fd-util.h"
 #include "istream.h"

@@ -8,7 +8,7 @@
 #include "fcgi_stock.hxx"
 #include "fcgi_client.hxx"
 #include "http_response.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "stock.hxx"
 #include "child_options.hxx"

@@ -10,7 +10,7 @@
 #include "stock.hxx"
 #include "hashmap.hxx"
 #include "pool.hxx"
-#include "lease.h"
+#include "lease.hxx"
 
 #include <daemon/log.h>
 
@@ -106,14 +106,14 @@ class MultiStock : public mstock {
             void AddLease(const stock_get_handler &handler, void *ctx,
                           struct lease_ref &lease_ref) {
                 Lease &lease = AddLease();
-                lease_ref_set(&lease_ref, &Lease::lease, &lease);
+                lease_ref.Set(Lease::lease, &lease);
 
                 handler.ready(&item, ctx);
             }
 
             stock_item *AddLease(struct lease_ref &lease_ref) {
                 Lease &lease = AddLease();
-                lease_ref_set(&lease_ref, &Lease::lease, &lease);
+                lease_ref.Set(Lease::lease, &lease);
                 return &item;
             }
 

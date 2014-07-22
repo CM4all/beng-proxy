@@ -7,7 +7,7 @@
 #include "fcgi_remote.hxx"
 #include "fcgi_client.hxx"
 #include "http_response.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "stock.hxx"

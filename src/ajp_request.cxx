@@ -12,7 +12,7 @@
 #include "async.hxx"
 #include "ajp_client.hxx"
 #include "strmap.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "abort_close.hxx"

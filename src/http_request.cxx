@@ -14,7 +14,7 @@
 #include "stock.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "abort_close.hxx"
 #include "failure.hxx"
 #include "address_envelope.hxx"

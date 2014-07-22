@@ -11,7 +11,7 @@
 #include "was_input.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
-#include "please.h"
+#include "please.hxx"
 #include "pevent.h"
 #include "direct.h"
 #include "istream-internal.h"
@@ -109,7 +109,7 @@ was_client_clear(struct was_client *client, GError *error)
         client->control = nullptr;
     }
 
-    p_lease_release(&client->lease_ref, false, client->pool);
+    p_lease_release(client->lease_ref, false, *client->pool);
 }
 
 /**
@@ -129,7 +129,7 @@ was_client_clear_unused(struct was_client *client)
         client->control = nullptr;
     }
 
-    p_lease_release(&client->lease_ref, false, client->pool);
+    p_lease_release(client->lease_ref, false, *client->pool);
 }
 
 /**
@@ -196,7 +196,7 @@ was_client_response_eof(struct was_client *client)
     was_control_free(client->control);
     client->control = nullptr;
 
-    p_lease_release(&client->lease_ref, true, client->pool);
+    p_lease_release(client->lease_ref, true, *client->pool);
     pool_unref(client->caller_pool);
     pool_unref(client->pool);
 }
@@ -579,7 +579,7 @@ was_client_input_eof(void *ctx)
         if (client->request.body == nullptr) {
             /* reuse the connection */
             was_control_free(client->control);
-            p_lease_release(&client->lease_ref, true, client->pool);
+            p_lease_release(client->lease_ref, true, *client->pool);
             pool_unref(client->caller_pool);
             pool_unref(client->pool);
         } else
@@ -671,8 +671,8 @@ was_client_request(struct pool *caller_pool, int control_fd,
     client->control = was_control_new(pool, control_fd,
                                       &was_client_control_handler, client);
 
-    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
-                    pool, "was_client_lease");
+    p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
+                    *pool, "was_client_lease");
 
     http_response_handler_set(&client->handler, handler, handler_ctx);
 

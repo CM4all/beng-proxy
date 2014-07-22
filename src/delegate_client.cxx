@@ -8,7 +8,7 @@
 #include "delegate_client.hxx"
 #include "delegate_protocol.h"
 #include "async.hxx"
-#include "please.h"
+#include "please.hxx"
 #include "fd_util.h"
 #include "pevent.h"
 #include "gerrno.h"
@@ -56,7 +56,7 @@ delegate_release_socket(struct delegate_client *d, bool reuse)
     assert(d != nullptr);
     assert(d->fd >= 0);
 
-    p_lease_release(&d->lease_ref, reuse, d->pool);
+    p_lease_release(d->lease_ref, reuse, *d->pool);
 }
 
 static void
@@ -295,8 +295,8 @@ delegate_open(int fd, const struct lease *lease, void *lease_ctx,
               struct async_operation_ref *async_ref)
 {
     auto d = NewFromPool<struct delegate_client>(*pool);
-    p_lease_ref_set(&d->lease_ref, lease, lease_ctx,
-                    pool, "delegate_client_lease");
+    p_lease_ref_set(d->lease_ref, *lease, lease_ctx,
+                    *pool, "delegate_client_lease");
     d->fd = fd;
     d->pool = pool;
 

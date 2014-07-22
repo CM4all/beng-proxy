@@ -10,7 +10,7 @@
 #include "tcp_stock.hxx"
 #include "tcp_balancer.hxx"
 #include "address_list.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "pool.hxx"
 #include "istream.h"
 #include "net/SocketAddress.hxx"

@@ -8,7 +8,7 @@
 #include "translate_client.hxx"
 #include "stock.hxx"
 #include "tcp_stock.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 

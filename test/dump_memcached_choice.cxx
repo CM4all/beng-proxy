@@ -1,6 +1,6 @@
 #include "memcached_client.hxx"
 #include "http_cache_internal.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "async.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"

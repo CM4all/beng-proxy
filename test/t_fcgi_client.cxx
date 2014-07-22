@@ -9,7 +9,7 @@
 #include "async.hxx"
 #include "fd-util.h"
 #include "header_writer.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "direct.h"
 #include "fd_util.h"
 #include "istream.h"

@@ -5,7 +5,7 @@
 #include "http_response.hxx"
 #include "async.hxx"
 #include "fd_util.h"
-#include "lease.h"
+#include "lease.hxx"
 #include "direct.h"
 #include "istream_file.hxx"
 #include "istream.h"

@@ -1,6 +1,6 @@
 #include "http_response.hxx"
 #include "async.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "istream.h"
 #include "strmap.hxx"
 #include "fb_pool.hxx"

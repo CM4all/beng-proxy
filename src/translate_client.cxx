@@ -10,7 +10,7 @@
 #include "buffered_socket.hxx"
 #include "transformation.hxx"
 #include "widget_class.hxx"
-#include "please.h"
+#include "please.hxx"
 #include "growing_buffer.hxx"
 #include "processor.h"
 #include "css_processor.h"
@@ -177,7 +177,7 @@ translate_client_release_socket(TranslateClient *client, bool reuse)
     client->socket.Abandon();
     client->socket.Destroy();
 
-    p_lease_release(&client->lease_ref, reuse, client->pool);
+    p_lease_release(client->lease_ref, reuse, *client->pool);
 }
 
 /**
@@ -3248,7 +3248,7 @@ translate(struct pool *pool, int fd,
     GError *error = nullptr;
     struct growing_buffer *gb = marshal_request(pool, request, &error);
     if (gb == nullptr) {
-        lease_direct_release(lease, lease_ctx, true);
+        lease->Release(lease_ctx, true);
 
         handler->error(error, ctx);
         pool_unref(pool);
@@ -3264,8 +3264,8 @@ translate(struct pool *pool, int fd,
                         &translate_read_timeout,
                         &translate_write_timeout,
                         translate_client_socket_handler, client);
-    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
-                    pool, "translate_lease");
+    p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
+                    *pool, "translate_lease");
 
     client->from_request.uri = request->uri;
     client->from_request.want_full_uri = !request->want_full_uri.IsNull();

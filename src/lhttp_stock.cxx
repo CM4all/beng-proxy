@@ -11,7 +11,7 @@
 #include "hstock.hxx"
 #include "mstock.h"
 #include "stock.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "child_stock.hxx"
 #include "child_manager.hxx"
 #include "pevent.h"
@@ -153,7 +153,7 @@ lhttp_stock_create(void *ctx, struct stock_item *item,
     if (connection->fd < 0) {
         g_prefix_error(&error, "failed to connect to LHTTP server '%s': ",
                        key);
-        lease_release(&connection->lease_ref, false);
+        connection->lease_ref.Release(false);
         stock_item_failed(item, error);
         return;
     }
@@ -194,7 +194,7 @@ lhttp_stock_destroy(gcc_unused void *ctx, struct stock_item *item)
     p_event_del(&connection->event, connection->base.pool);
     close(connection->fd);
 
-    lease_release(&connection->lease_ref, true);
+    connection->lease_ref.Release(true);
 }
 
 static const struct stock_class lhttp_stock_class = {

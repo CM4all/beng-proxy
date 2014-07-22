@@ -5,7 +5,7 @@
 #include "fd-util.h"
 #include "growing_buffer.hxx"
 #include "header_writer.hxx"
-#include "lease.h"
+#include "lease.hxx"
 #include "direct.h"
 #include "istream-internal.h"
 #include "fd_util.h"

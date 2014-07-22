@@ -18,7 +18,7 @@
 #include "ajp-protocol.h"
 #include "serialize.hxx"
 #include "strref.h"
-#include "please.h"
+#include "please.hxx"
 #include "uri-verify.h"
 #include "direct.h"
 #include "fd-util.h"
@@ -142,7 +142,7 @@ ajp_client_release_socket(struct ajp_client *client, bool reuse)
            client->response.read_state == ajp_client::Response::READ_END);
 
     client->socket.Abandon();
-    p_lease_release(&client->lease_ref, reuse, client->pool);
+    p_lease_release(client->lease_ref, reuse, *client->pool);
 }
 
 /**
@@ -875,7 +875,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     assert(http_method_is_valid(method));
 
     if (!uri_path_verify_quick(uri)) {
-        lease_direct_release(lease, lease_ctx, true);
+        lease->Release(lease_ctx, true);
         if (body != nullptr)
             istream_close_unused(body);
 
@@ -894,8 +894,8 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
                         &ajp_client_timeout, &ajp_client_timeout,
                         ajp_client_socket_handler, client);
 
-    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
-                    pool, "ajp_client_lease");
+    p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
+                    *pool, "ajp_client_lease");
 
     struct growing_buffer *gb = growing_buffer_new(pool, 256);
 
@@ -907,7 +907,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     const enum ajp_method ajp_method = to_ajp_method(method);
     if (ajp_method == AJP_METHOD_NULL) {
         /* invalid or unknown method */
-        p_lease_release(&client->lease_ref, true, client->pool);
+        p_lease_release(client->lease_ref, true, *client->pool);
         if (body != nullptr)
             istream_close_unused(body);
 
@@ -965,7 +965,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
         available = istream_available(body, false);
         if (available == -1) {
             /* AJPv13 does not support chunked request bodies */
-            p_lease_release(&client->lease_ref, true, client->pool);
+            p_lease_release(client->lease_ref, true, *client->pool);
             istream_close_unused(body);
 
             GError *error =
