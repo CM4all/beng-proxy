@@ -19,8 +19,6 @@
 #include "please.h"
 #include "uri-verify.h"
 #include "direct.h"
-#include "fd-util.h"
-#include "fd_util.h"
 #include "stopwatch.h"
 #include "strmap.hxx"
 #include "completion.h"
@@ -110,9 +108,6 @@ struct http_client {
 
     /* connection settings */
     bool keep_alive;
-#ifdef __linux
-    bool cork;
-#endif
 };
 
 /**
@@ -377,41 +372,6 @@ static const struct istream_class http_client_response_stream = {
     .as_fd = http_client_response_stream_as_fd,
     .close = http_client_response_stream_close,
 };
-
-
-/*
-static inline void
-http_client_cork(struct http_client *client)
-{
-    assert(client != nullptr);
-    assert(client->socket.IsConnected());
-
-#ifdef __linux
-    if (!client->cork) {
-        client->cork = true;
-        socket_set_cork(client->fd, client->cork);
-    }
-#else
-    (void)connection;
-#endif
-}
-
-static inline void
-http_client_uncork(struct http_client *client)
-{
-    assert(client != nullptr);
-
-#ifdef __linux
-    if (client->cork) {
-        assert(client->socket.IsConnected());
-        client->cork = false;
-        socket_set_cork(client->fd, client->cork);
-    }
-#else
-    (void)connection;
-#endif
-}
-*/
 
 /**
  * @return false if the connection is closed
