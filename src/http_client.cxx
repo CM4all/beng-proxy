@@ -51,11 +51,11 @@ static constexpr struct timeval http_client_timeout = {
 };
 
 struct http_client {
-    struct pool *pool, *caller_pool;
+    struct pool *const pool, *const caller_pool;
 
-    const char *peer_name;
+    const char *const peer_name;
 
-    struct stopwatch *stopwatch;
+    struct stopwatch *const stopwatch;
 
     /* I/O */
     FilteredSocket socket;
@@ -119,6 +119,17 @@ struct http_client {
 
     /* connection settings */
     bool keep_alive;
+
+    http_client(struct pool &_caller_pool, struct pool &_pool,
+                int fd, enum istream_direct fd_type,
+                const struct lease *lease, void *lease_ctx,
+                const SocketFilter *filter, void *filter_ctx,
+                http_method_t method, const char *uri,
+                const struct growing_buffer *headers,
+                struct istream *body, bool expect_100,
+                const struct http_response_handler *handler,
+                void *ctx,
+                struct async_operation_ref *async_ref);
 
     static struct http_client &FromResponseBody(struct istream &istream) {
         auto &body = HttpBodyReader::FromStream(istream);
@@ -1089,6 +1100,98 @@ static const struct async_operation_class http_client_async_operation = {
  *
  */
 
+inline
+http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
+                         int fd, enum istream_direct fd_type,
+                         const struct lease *lease, void *lease_ctx,
+                         const SocketFilter *filter, void *filter_ctx,
+                         http_method_t method, const char *uri,
+                         const struct growing_buffer *headers,
+                         struct istream *body, bool expect_100,
+                         const struct http_response_handler *handler,
+                         void *ctx,
+                         struct async_operation_ref *async_ref)
+    :pool(&_pool), caller_pool(&_caller_pool),
+    peer_name(p_strdup(pool, get_peer_name(fd))),
+    stopwatch(stopwatch_fd_new(pool, fd, uri))
+{
+    socket.Init(*pool, fd, fd_type,
+                &http_client_timeout, &http_client_timeout,
+                filter, filter_ctx,
+                http_client_socket_handler, this);
+    p_lease_ref_set(&lease_ref, lease, lease_ctx,
+                    pool, "http_client_lease");
+
+    response.read_state = http_client::response::READ_STATUS;
+    response.no_body = http_method_is_empty(method);
+
+    pool_ref(caller_pool);
+    http_response_handler_set(&request.handler, handler, ctx);
+
+    request.async.Init(http_client_async_operation);
+    async_ref->Set(request.async);
+
+    /* request line */
+
+    const char *p = p_strcat(pool,
+                             http_method_to_string(method), " ", uri,
+                             " HTTP/1.1\r\n", nullptr);
+    struct istream *request_line_stream = istream_string_new(pool, p);
+
+    /* headers */
+
+    struct istream *header_stream = headers != nullptr
+        ? istream_gb_new(pool, headers)
+        : istream_null_new(pool);
+
+    struct growing_buffer *headers2 =
+        growing_buffer_new(pool, 256);
+
+    if (body != nullptr) {
+        off_t content_length = istream_available(body, false);
+        if (content_length == (off_t)-1) {
+            header_write(headers2, "transfer-encoding", "chunked");
+            body = istream_chunked_new(pool, body);
+        } else {
+            snprintf(request.content_length_buffer,
+                     sizeof(request.content_length_buffer),
+                     "%lu", (unsigned long)content_length);
+            header_write(headers2, "content-length",
+                         request.content_length_buffer);
+        }
+
+        off_t available = expect_100 ? istream_available(body, true) : 0;
+        if (available < 0 || available >= EXPECT_100_THRESHOLD) {
+            /* large request body: ask the server for confirmation
+               that he's really interested */
+            header_write(headers2, "expect", "100-continue");
+            body = request.body = istream_optional_new(pool, body);
+        } else
+            /* short request body: send it immediately */
+            request.body = nullptr;
+    } else
+        request.body = nullptr;
+
+    growing_buffer_write_buffer(headers2, "\r\n", 2);
+
+    struct istream *header_stream2 = istream_gb_new(pool, headers2);
+
+    /* request istream */
+
+    request.istream = istream_cat_new(pool,
+                                      request_line_stream,
+                                      header_stream, header_stream2,
+                                      body,
+                                      nullptr);
+
+    istream_handler_set(request.istream,
+                        &http_client_request_stream_handler, this,
+                        socket.GetDirectMask());
+
+    socket.ScheduleReadNoTimeout(true);
+    istream_read(request.istream);
+}
+
 void
 http_client_request(struct pool *caller_pool,
                     int fd, enum istream_direct fd_type,
@@ -1121,85 +1224,11 @@ http_client_request(struct pool *caller_pool,
     struct pool *pool =
         pool_new_linear(caller_pool, "http_client_request", 8192);
 
-    auto client = NewFromPool<struct http_client>(*pool);
-    client->stopwatch = stopwatch_fd_new(pool, fd, uri);
-    client->pool = pool;
-    client->peer_name = p_strdup(pool, get_peer_name(fd));
-
-    client->socket.Init(*pool, fd, fd_type,
-                        &http_client_timeout, &http_client_timeout,
-                        filter, filter_ctx,
-                        http_client_socket_handler, client);
-    p_lease_ref_set(&client->lease_ref, lease, lease_ctx,
-                    pool, "http_client_lease");
-
-    client->response.read_state = http_client::response::READ_STATUS;
-    client->response.no_body = http_method_is_empty(method);
-
-    pool_ref(caller_pool);
-    client->caller_pool = caller_pool;
-    http_response_handler_set(&client->request.handler, handler, ctx);
-
-    client->request.async.Init(http_client_async_operation);
-    async_ref->Set(client->request.async);
-
-    /* request line */
-
-    const char *p = p_strcat(client->pool,
-                             http_method_to_string(method), " ", uri,
-                             " HTTP/1.1\r\n", nullptr);
-    struct istream *request_line_stream = istream_string_new(client->pool, p);
-
-    /* headers */
-
-    struct istream *header_stream = headers != nullptr
-        ? istream_gb_new(client->pool, headers)
-        : istream_null_new(client->pool);
-
-    struct growing_buffer *headers2 =
-        growing_buffer_new(client->pool, 256);
-
-    if (body != nullptr) {
-        off_t content_length = istream_available(body, false);
-        if (content_length == (off_t)-1) {
-            header_write(headers2, "transfer-encoding", "chunked");
-            body = istream_chunked_new(client->pool, body);
-        } else {
-            snprintf(client->request.content_length_buffer,
-                     sizeof(client->request.content_length_buffer),
-                     "%lu", (unsigned long)content_length);
-            header_write(headers2, "content-length",
-                         client->request.content_length_buffer);
-        }
-
-        off_t available = expect_100 ? istream_available(body, true) : 0;
-        if (available < 0 || available >= EXPECT_100_THRESHOLD) {
-            /* large request body: ask the server for confirmation
-               that he's really interested */
-            header_write(headers2, "expect", "100-continue");
-            body = client->request.body = istream_optional_new(pool, body);
-        } else
-            /* short request body: send it immediately */
-            client->request.body = nullptr;
-    } else
-        client->request.body = nullptr;
-
-    growing_buffer_write_buffer(headers2, "\r\n", 2);
-
-    struct istream *header_stream2 = istream_gb_new(client->pool, headers2);
-
-    /* request istream */
-
-    client->request.istream = istream_cat_new(client->pool,
-                                              request_line_stream,
-                                              header_stream, header_stream2,
-                                              body,
-                                              nullptr);
-
-    istream_handler_set(client->request.istream,
-                        &http_client_request_stream_handler, client,
-                        client->socket.GetDirectMask());
-
-    client->socket.ScheduleReadNoTimeout(true);
-    istream_read(client->request.istream);
+    NewFromPool<struct http_client>(*pool, *caller_pool, *pool,
+                                    fd, fd_type,
+                                    lease, lease_ctx,
+                                    filter, filter_ctx,
+                                    method, uri,
+                                    headers, body, expect_100,
+                                    handler, ctx, async_ref);
 }
