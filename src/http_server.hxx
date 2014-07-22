@@ -146,7 +146,7 @@ http_server_connection_score(const struct http_server_connection *connection);
 static inline bool
 http_server_request_has_body(const struct http_server_request *request)
 {
-    return request->body != NULL;
+    return request->body != nullptr;
 }
 
 void

@@ -23,7 +23,7 @@ http_server_connection::MaybeSend100Continue()
     if (!request.expect_100_continue)
         return true;
 
-    assert(response.istream == NULL);
+    assert(response.istream == nullptr);
 
     request.expect_100_continue = false;
 
@@ -49,7 +49,7 @@ format_status_line(char *p, http_status_t status)
     assert(http_status_is_valid(status));
 
     const char *status_string = http_status_to_string(status);
-    assert(status_string != NULL);
+    assert(status_string != nullptr);
     size_t length = strlen(status_string);
 
     memcpy(p, "HTTP/1.1 ", 9);
@@ -96,13 +96,13 @@ http_server_response(const struct http_server_request *request,
                              format_status_line(connection->response.status_buffer,
                                                 status));
 
-    if (headers == NULL)
+    if (headers == nullptr)
         headers = growing_buffer_new(request->pool, 256);
 
     /* how will we transfer the body?  determine length and
        transfer-encoding */
 
-    const off_t content_length = body == NULL
+    const off_t content_length = body == nullptr
         ? 0 : istream_available(body, false);
     if (content_length == (off_t)-1) {
         /* the response length is unknown yet */
@@ -116,14 +116,14 @@ http_server_response(const struct http_server_request *request,
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);
-    } else if (body != NULL || !http_method_is_empty(request->method)) {
+    } else if (body != nullptr || !http_method_is_empty(request->method)) {
         /* fixed body size */
         format_uint64(connection->response.content_length_buffer, content_length);
         header_write(headers, "content-length",
                      connection->response.content_length_buffer);
     }
 
-    if (http_method_is_empty(request->method) && body != NULL)
+    if (http_method_is_empty(request->method) && body != nullptr)
         istream_free_unused(&body);
 
     if (!connection->keep_alive && !connection->request.http_1_0)
@@ -137,7 +137,7 @@ http_server_response(const struct http_server_request *request,
         - istream_available(header_stream, false);
 
     body = istream_cat_new(request->pool, status_stream,
-                           header_stream, body, NULL);
+                           header_stream, body, nullptr);
 
     connection->response.istream = body;
     istream_handler_set(connection->response.istream,
@@ -157,7 +157,7 @@ http_server_send_message(const struct http_server_request *request,
     header_write(headers, "content-type", "text/plain");
 
 #ifndef NO_DATE_HEADER
-    header_write(headers, "date", http_date_format(time(NULL)));
+    header_write(headers, "date", http_date_format(time(nullptr)));
 #endif
 
     http_server_response(request, status, headers,
@@ -169,11 +169,11 @@ http_server_send_redirect(const struct http_server_request *request,
                           http_status_t status, const char *location,
                           const char *msg)
 {
-    assert(request != NULL);
+    assert(request != nullptr);
     assert(status >= 300 && status < 400);
-    assert(location != NULL);
+    assert(location != nullptr);
 
-    if (msg == NULL)
+    if (msg == nullptr)
         msg = "redirection";
 
     struct growing_buffer *headers = growing_buffer_new(request->pool, 1024);
@@ -181,7 +181,7 @@ http_server_send_redirect(const struct http_server_request *request,
     header_write(headers, "location", location);
 
 #ifndef NO_DATE_HEADER
-    header_write(headers, "date", http_date_format(time(NULL)));
+    header_write(headers, "date", http_date_format(time(nullptr)));
 #endif
 
     http_server_response(request, status, headers,

@@ -31,9 +31,9 @@ static bool
 http_server_parse_request_line(struct http_server_connection *connection,
                                const char *line, size_t length)
 {
-    assert(connection != NULL);
+    assert(connection != nullptr);
     assert(connection->request.read_state == http_server_connection::Request::START);
-    assert(connection->request.request == NULL);
+    assert(connection->request.request == nullptr);
     assert(!connection->response.pending_drained);
 
     if (unlikely(length < 5)) {
@@ -140,7 +140,7 @@ http_server_parse_request_line(struct http_server_connection *connection,
     }
 
     const char *space = (const char *)memchr(line, ' ', eol - line);
-    if (unlikely(space == NULL || space + 6 > line + length ||
+    if (unlikely(space == nullptr || space + 6 > line + length ||
                  memcmp(space + 1, "HTTP/", 5) != 0)) {
         /* refuse HTTP 0.9 requests */
         static const char msg[] =
@@ -175,9 +175,9 @@ http_server_headers_finished(struct http_server_connection *connection)
     evtimer_del(&connection->idle_timeout);
 
     const char *value = strmap_get(request->headers, "expect");
-    connection->request.expect_100_continue = value != NULL &&
+    connection->request.expect_100_continue = value != nullptr &&
         strcmp(value, "100-continue") == 0;
-    connection->request.expect_failed = value != NULL &&
+    connection->request.expect_failed = value != nullptr &&
         strcmp(value, "100-continue") != 0;
 
     value = strmap_get(request->headers, "connection");
@@ -186,18 +186,18 @@ http_server_headers_finished(struct http_server_connection *connection)
        feature was not well-defined and led to problems with some
        clients */
     connection->keep_alive = !connection->request.http_1_0 &&
-        (value == NULL || !http_list_contains_i(value, "close"));
+        (value == nullptr || !http_list_contains_i(value, "close"));
 
     value = strmap_get(request->headers, "transfer-encoding");
 
     off_t content_length = -1;
-    const bool chunked = value != NULL && strcasecmp(value, "chunked") == 0;
+    const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
     if (!chunked) {
         value = strmap_get(request->headers, "content-length");
-        if (value == NULL) {
+        if (value == nullptr) {
             /* no body at all */
 
-            request->body = NULL;
+            request->body = nullptr;
             connection->request.read_state = http_server_connection::Request::END;
 
             return true;
@@ -252,12 +252,12 @@ http_server_handle_line(struct http_server_connection *connection,
            connection->request.read_state == http_server_connection::Request::HEADERS);
 
     if (unlikely(connection->request.read_state == http_server_connection::Request::START)) {
-        assert(connection->request.request == NULL);
+        assert(connection->request.request == nullptr);
 
         return http_server_parse_request_line(connection, line, length);
     } else if (likely(length > 0)) {
         assert(connection->request.read_state == http_server_connection::Request::HEADERS);
-        assert(connection->request.request != NULL);
+        assert(connection->request.request != nullptr);
 
         header_parse_line(connection->request.request->pool,
                           connection->request.request->headers,
@@ -265,7 +265,7 @@ http_server_handle_line(struct http_server_connection *connection,
         return true;
     } else {
         assert(connection->request.read_state == http_server_connection::Request::HEADERS);
-        assert(connection->request.request != NULL);
+        assert(connection->request.request != nullptr);
 
         return http_server_headers_finished(connection);
     }
@@ -286,9 +286,9 @@ http_server_feed_headers(struct http_server_connection *connection,
 
     const char *const buffer = (const char *)_data;
     const char *const buffer_end = buffer + length;
-    const char *start = buffer, *end, *next = NULL;
+    const char *start = buffer, *end, *next = nullptr;
     while ((end = (const char *)memchr(start, '\n',
-                                       buffer_end - start)) != NULL) {
+                                       buffer_end - start)) != nullptr) {
         next = end + 1;
         --end;
         while (end >= start && char_is_whitespace(*end))
@@ -304,7 +304,7 @@ http_server_feed_headers(struct http_server_connection *connection,
     }
 
     size_t consumed = 0;
-    if (next != NULL) {
+    if (next != nullptr) {
         consumed = next - buffer;
         connection->request.bytes_received += consumed;
         connection->socket.Consumed(consumed);
