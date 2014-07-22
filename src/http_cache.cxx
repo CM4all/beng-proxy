@@ -500,25 +500,25 @@ static const struct async_operation_class http_cache_async_operation = {
  */
 
 HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
-                                       struct pool &_caller_pool,
-                                       unsigned _session_sticky,
-                                       struct http_cache &_cache,
-                                       http_method_t _method,
-                                       const struct resource_address &_address,
-                                       const char *_key,
-                                       struct strmap *_headers,
-                                       const struct http_response_handler &_handler,
-                                       void *_handler_ctx,
-                                       struct http_cache_info &_info,
-                                       struct async_operation_ref &_async_ref)
+                                   struct pool &_caller_pool,
+                                   unsigned _session_sticky,
+                                   struct http_cache &_cache,
+                                   http_method_t _method,
+                                   const struct resource_address &_address,
+                                   const char *_key,
+                                   struct strmap *_headers,
+                                   const struct http_response_handler &_handler,
+                                   void *_handler_ctx,
+                                   struct http_cache_info &_info,
+                                   struct async_operation_ref &_async_ref)
     :pool(&_pool), caller_pool(&_caller_pool),
-    session_sticky(_session_sticky),
-    cache(&_cache),
-    method(_method),
-    address(resource_address_dup(_pool, &_address)),
-    key(_key),
-    headers(_headers),
-    info(&_info), document(nullptr) {
+     session_sticky(_session_sticky),
+     cache(&_cache),
+     method(_method),
+     address(resource_address_dup(_pool, &_address)),
+     key(_key),
+     headers(_headers),
+     info(&_info), document(nullptr) {
     handler.Set(_handler, _handler_ctx);
     operation.Init(http_cache_async_operation);
     _async_ref.Set(operation);
