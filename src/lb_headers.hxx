@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_LB_HEADERS_H
-#define BENG_LB_HEADERS_H
+#ifndef BENG_LB_HEADERS_HXX
+#define BENG_LB_HEADERS_HXX
 
 struct pool;
 struct session;

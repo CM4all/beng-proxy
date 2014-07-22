@@ -16,7 +16,7 @@ static const char *const via_request_headers[] = {
     "via",
     "x-forwarded-for",
     "x-cm4all-beng-peer-subject",
-    NULL,
+    nullptr,
 };
 
 static void
@@ -26,14 +26,14 @@ forward_via(struct pool *pool, struct strmap *dest, const struct strmap *src,
     const char *p;
 
     p = strmap_get_checked(src, "via");
-    if (p == NULL) {
-        if (local_host != NULL)
-            dest->Add("via", p_strcat(pool, "1.1 ", local_host, NULL));
+    if (p == nullptr) {
+        if (local_host != nullptr)
+            dest->Add("via", p_strcat(pool, "1.1 ", local_host, nullptr));
     } else {
-        if (local_host == NULL)
+        if (local_host == nullptr)
             dest->Add("via", p);
         else
-            dest->Add("via", p_strcat(pool, p, ", 1.1 ", local_host, NULL));
+            dest->Add("via", p_strcat(pool, p, ", 1.1 ", local_host, nullptr));
     }
 }
 
@@ -44,15 +44,15 @@ forward_xff(struct pool *pool, struct strmap *dest, const struct strmap *src,
     const char *p;
 
     p = strmap_get_checked(src, "x-forwarded-for");
-    if (p == NULL) {
-        if (remote_host != NULL)
+    if (p == nullptr) {
+        if (remote_host != nullptr)
             dest->Add("x-forwarded-for", remote_host);
     } else {
-        if (remote_host == NULL)
+        if (remote_host == nullptr)
             dest->Add("x-forwarded-for", p);
         else
             dest->Add("x-forwarded-for",
-                      p_strcat(pool, p, ", ", remote_host, NULL));
+                      p_strcat(pool, p, ", ", remote_host, nullptr));
     }
 }
 
@@ -68,7 +68,7 @@ forward_identity(struct pool *pool,
 static bool
 string_in_array(const char *const array[], const char *value)
 {
-    for (unsigned i = 0; array[i] != NULL; ++i)
+    for (unsigned i = 0; array[i] != nullptr; ++i)
         if (strcmp(array[i], value) == 0)
             return true;
 
@@ -91,18 +91,18 @@ lb_forward_request_headers(struct pool *pool, const struct strmap *src,
                            const char *peer_issuer_subject,
                            bool mangle_via)
 {
-    if (peer_subject == NULL && !mangle_via)
+    if (peer_subject == nullptr && !mangle_via)
         return src;
 
     struct strmap *dest = strmap_new(pool);
 
-    if (src != NULL)
+    if (src != nullptr)
         forward_other_headers(dest, src);
 
-    if (peer_subject != NULL)
+    if (peer_subject != nullptr)
         dest->Add("x-cm4all-beng-peer-subject", peer_subject);
 
-    if (peer_issuer_subject != NULL)
+    if (peer_issuer_subject != nullptr)
         dest->Add("x-cm4all-beng-peer-issuer-subject", peer_issuer_subject);
 
     if (mangle_via)
