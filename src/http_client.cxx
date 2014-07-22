@@ -39,6 +39,17 @@
 #include <string.h>
 #include <unistd.h>
 
+/**
+ * With a request body of this size or larger, we send "Expect:
+ * 100-continue".
+ */
+static constexpr off_t EXPECT_100_THRESHOLD = 1024;
+
+static constexpr struct timeval http_client_timeout = {
+    .tv_sec = 30,
+    .tv_usec = 0,
+};
+
 struct http_client {
     struct pool *pool, *caller_pool;
 
@@ -108,17 +119,110 @@ struct http_client {
 
     /* connection settings */
     bool keep_alive;
-};
 
-/**
- * With a request body of this size or larger, we send "Expect:
- * 100-continue".
- */
-static const off_t EXPECT_100_THRESHOLD = 1024;
+    static struct http_client &FromResponseBody(struct istream &istream) {
+        auto &body = HttpBodyReader::FromStream(istream);
+        return *ContainerCast(&body, struct http_client,
+                              response.body_reader);
+    }
 
-static const struct timeval http_client_timeout = {
-    .tv_sec = 30,
-    .tv_usec = 0,
+    static struct http_client &FromAsync(struct async_operation &ao) {
+        return *ContainerCast(&ao, struct http_client, request.async);
+    }
+
+    gcc_pure
+    bool IsValid() const {
+        return socket.IsValid();
+    }
+
+    gcc_pure
+    bool CheckDirect() const {
+        assert(socket.GetType() == ISTREAM_NONE || socket.IsConnected());
+        assert(response.read_state == response::READ_BODY);
+
+        return response.body_reader.CheckDirect(socket.GetType());
+    }
+
+    void ScheduleWrite() {
+        assert(socket.IsConnected());
+
+        socket.ScheduleWrite();
+    }
+
+    /**
+     * Release the socket held by this object.
+     */
+    void ReleaseSocket(bool reuse) {
+        if (socket.HasFilter())
+            /* never reuse the socket if it was filtered */
+            /* TODO: move the filtering layer to the tcp_stock to
+               allow reusing connections */
+            reuse = false;
+
+        socket.Abandon();
+        p_lease_release(&lease_ref, reuse, pool);
+    }
+
+    /**
+     * Release resources held by this object: the event object, the
+     * socket lease, and the pool reference.
+     */
+    void Release(bool reuse) {
+        stopwatch_dump(stopwatch);
+
+        if (socket.IsConnected())
+            ReleaseSocket(reuse);
+
+        socket.Destroy();
+
+        pool_unref(caller_pool);
+        pool_unref(pool);
+    }
+
+    void PrefixError(GError **error_r) const {
+        g_prefix_error(error_r, "error on HTTP connection to '%s': ",
+                       peer_name);
+    }
+
+    void AbortResponseHeaders(GError *error);
+    void AbortResponseBody(GError *error);
+    void AbortResponse(GError *error);
+
+    gcc_pure
+    off_t GetAvailable(bool partial) const;
+
+    void Read();
+    int AsFD();
+    void Close();
+
+    /**
+     * @return false if the connection is closed
+     */
+    bool ParseStatusLine(const char *line, size_t length);
+
+    /**
+     * @return false if the connection is closed
+     */
+    bool HeadersFinished();
+
+    /**
+     * @return false if the connection is closed
+     */
+    bool HandleLine(const char *line, size_t length);
+
+    BufferedResult ParseHeaders(const void *data, size_t length);
+
+    BufferedResult FeedHeaders(const void *data, size_t length);
+
+    void ResponseBodyEOF();
+
+    BufferedResult FeedBody(const void *data, size_t length);
+
+    BufferedResult Feed(const void *data, size_t length);
+
+    DirectResult TryResponseDirect(int fd, enum istream_direct fd_type);
+
+    void Abort();
 };
 
 static const char *
@@ -137,138 +241,58 @@ get_peer_name(int fd)
      return buffer;
 }
 
-static inline bool
-http_client_valid(const struct http_client *client)
-{
-    return client->socket.IsValid();
-}
-
-static inline bool
-http_client_check_direct(const struct http_client *client)
-{
-    assert(client->socket.GetType() == ISTREAM_NONE ||
-           client->socket.IsConnected());
-    assert(client->response.read_state == http_client::response::READ_BODY);
-
-    return client->response.body_reader.CheckDirect(client->socket.GetType());
-}
-
-#if 0
-static void
-http_client_schedule_read(struct http_client *client)
-{
-    assert(client->input != nullptr);
-    assert(!fifo_buffer_full(client->input));
-
-    client->socket.ScheduleReadTimeout(client->request.istream != nullptr
-                                       ? nullptr
-                                       : &http_client_timeout);
-}
-#endif
-
-static void
-http_client_schedule_write(struct http_client *client)
-{
-    assert(client->socket.IsConnected());
-
-    client->socket.ScheduleWrite();
-}
-
 /**
- * Release the socket held by this object.
+ * Abort receiving the response status/headers from the HTTP server.
  */
-static void
-http_client_release_socket(struct http_client *client, bool reuse)
+void
+http_client::AbortResponseHeaders(GError *error)
 {
-    if (client->socket.HasFilter())
-        /* never reuse the socket if it was filtered */
-        /* TODO: move the filtering layer to the tcp_stock to allow
-           reusing connections */
-        reuse = false;
+    assert(response.read_state == response::READ_STATUS ||
+           response.read_state == response::READ_HEADERS);
 
-    client->socket.Abandon();
-    p_lease_release(&client->lease_ref, reuse, client->pool);
-}
+    if (socket.IsConnected())
+        ReleaseSocket(false);
 
-/**
- * Release resources held by this object: the event object, the socket
- * lease, and the pool reference.
- */
-static void
-http_client_release(struct http_client *client, bool reuse)
-{
-    assert(client != nullptr);
+    if (request.istream != nullptr)
+        istream_close_handler(request.istream);
 
-    stopwatch_dump(client->stopwatch);
-
-    if (client->socket.IsConnected())
-        http_client_release_socket(client, reuse);
-
-    client->socket.Destroy();
-
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
-}
-
-static void
-http_client_prefix_error(struct http_client *client, GError **error_r)
-{
-    g_prefix_error(error_r, "error on HTTP connection to '%s': ",
-                   client->peer_name);
+    PrefixError(&error);
+    http_response_handler_invoke_abort(&request.handler, error);
+    Release(false);
 }
 
 /**
  * Abort receiving the response status/headers from the HTTP server.
  */
-static void
-http_client_abort_response_headers(struct http_client *client, GError *error)
+void
+http_client::AbortResponseBody(GError *error)
 {
-    assert(client->response.read_state == http_client::response::READ_STATUS ||
-           client->response.read_state == http_client::response::READ_HEADERS);
+    assert(response.read_state == response::READ_BODY);
+    assert(response.body != nullptr);
 
-    if (client->socket.IsConnected())
-        http_client_release_socket(client, false);
+    if (request.istream != nullptr)
+        istream_close_handler(request.istream);
 
-    if (client->request.istream != nullptr)
-        istream_close_handler(client->request.istream);
-
-    http_client_prefix_error(client, &error);
-    http_response_handler_invoke_abort(&client->request.handler, error);
-    http_client_release(client, false);
-}
-
-/**
- * Abort receiving the response status/headers from the HTTP server.
- */
-static void
-http_client_abort_response_body(struct http_client *client, GError *error)
-{
-    assert(client->response.read_state == http_client::response::READ_BODY);
-    assert(client->response.body != nullptr);
-
-    if (client->request.istream != nullptr)
-        istream_close_handler(client->request.istream);
-
-    http_client_prefix_error(client, &error);
-    client->response.body_reader.DeinitAbort(error);
-    http_client_release(client, false);
+    PrefixError(&error);
+    response.body_reader.DeinitAbort(error);
+    Release(false);
 }
 
 /**
  * Abort receiving the response status/headers/body from the HTTP
  * server.
  */
-static void
-http_client_abort_response(struct http_client *client, GError *error)
+void
+http_client::AbortResponse(GError *error)
 {
-    assert(client->response.read_state == http_client::response::READ_STATUS ||
-           client->response.read_state == http_client::response::READ_HEADERS ||
-           client->response.read_state == http_client::response::READ_BODY);
+    assert(response.read_state == response::READ_STATUS ||
+           response.read_state == response::READ_HEADERS ||
+           response.read_state == response::READ_BODY);
 
-    if (client->response.read_state != http_client::response::READ_BODY)
-        http_client_abort_response_headers(client, error);
+    if (response.read_state != response::READ_BODY)
+        AbortResponseHeaders(error);
     else
-        http_client_abort_response_body(client, error);
+        AbortResponseBody(error);
 }
 
 
@@ -277,93 +301,103 @@ http_client_abort_response(struct http_client *client, GError *error)
  *
  */
 
-static inline struct http_client *
-response_stream_to_http_client(struct istream *istream)
+inline off_t
+http_client::GetAvailable(bool partial) const
 {
-    auto &body = HttpBodyReader::FromStream(*istream);
-    return ContainerCast(&body, struct http_client,
-                         response.body_reader);
+    assert(!socket.ended || response.body_reader.IsSocketDone(socket));
+    assert(response.read_state == response::READ_BODY);
+    assert(http_response_handler_used(&request.handler));
+
+    return response.body_reader.GetAvailable(socket, partial);
 }
 
 static off_t
 http_client_response_stream_available(struct istream *istream, bool partial)
 {
-    struct http_client *client = response_stream_to_http_client(istream);
+    struct http_client &client = http_client::FromResponseBody(*istream);
 
-    assert(client != nullptr);
-    assert(!client->socket.ended ||
-           client->response.body_reader.IsSocketDone(client->socket));
-    assert(client->response.read_state == http_client::response::READ_BODY);
-    assert(http_response_handler_used(&client->request.handler));
+    return client.GetAvailable(partial);
+}
 
-    return client->response.body_reader.GetAvailable(client->socket, partial);
+inline void
+http_client::Read()
+{
+    assert(!socket.ended || response.body_reader.IsSocketDone(socket));
+    assert(response.read_state == response::READ_BODY);
+    assert(istream_has_handler(&response.body_reader.GetStream()));
+    assert(http_response_handler_used(&request.handler));
+
+    if (response.in_handler)
+        /* avoid recursion; the http_response_handler caller will
+           continue parsing the response if possible */
+        return;
+
+    if (socket.IsConnected())
+        socket.base.direct = CheckDirect();
+
+    socket.Read(response.body_reader.RequireMore());
 }
 
 static void
 http_client_response_stream_read(struct istream *istream)
 {
-    struct http_client *client = response_stream_to_http_client(istream);
+    struct http_client &client = http_client::FromResponseBody(*istream);
 
-    assert(client != nullptr);
-    assert(!client->socket.ended ||
-           client->response.body_reader.IsSocketDone(client->socket));
-    assert(client->response.read_state == http_client::response::READ_BODY);
-    assert(istream_has_handler(&client->response.body_reader.GetStream()));
-    assert(http_response_handler_used(&client->request.handler));
+    client.Read();
+}
 
-    if (client->response.in_handler)
-        /* avoid recursion; the http_response_handler caller will
-           continue parsing the response if possible */
-        return;
+inline int
+http_client::AsFD()
+{
+    assert(!socket.ended || response.body_reader.IsSocketDone(socket));
+    assert(response.read_state == response::READ_BODY);
+    assert(http_response_handler_used(&request.handler));
 
-    if (client->socket.IsConnected())
-        client->socket.base.direct = http_client_check_direct(client);
+    if (!socket.IsConnected() ||
+        keep_alive ||
+        /* must not be chunked */
+        &response.body_reader.GetStream() != response.body)
+        return -1;
 
-    client->socket.Read(client->response.body_reader.RequireMore());
+    int fd = socket.AsFD();
+    if (fd < 0)
+        return -1;
+
+    response.body_reader.Deinit();
+    Release(false);
+    return fd;
 }
 
 static int
 http_client_response_stream_as_fd(struct istream *istream)
 {
-    struct http_client *client = response_stream_to_http_client(istream);
+    struct http_client &client = http_client::FromResponseBody(*istream);
 
-    assert(client != nullptr);
-    assert(!client->socket.ended ||
-           client->response.body_reader.IsSocketDone(client->socket));
-    assert(client->response.read_state == http_client::response::READ_BODY);
-    assert(http_response_handler_used(&client->request.handler));
+    return client.AsFD();
+}
 
-    if (!client->socket.IsConnected() ||
-        client->keep_alive ||
-        /* must not be chunked */
-        &client->response.body_reader.GetStream() != client->response.body)
-        return -1;
+inline void
+http_client::Close()
+{
+    assert(response.read_state == response::READ_BODY);
+    assert(http_response_handler_used(&request.handler));
+    assert(!response.body_reader.IsEOF());
 
-    int fd = client->socket.AsFD();
-    if (fd < 0)
-        return -1;
+    stopwatch_event(stopwatch, "close");
 
-    client->response.body_reader.Deinit();
-    http_client_release(client, false);
-    return fd;
+    if (request.istream != nullptr)
+        istream_close_handler(request.istream);
+
+    response.body_reader.Deinit();
+    Release(false);
 }
 
 static void
 http_client_response_stream_close(struct istream *istream)
 {
-    struct http_client *client = response_stream_to_http_client(istream);
+    struct http_client &client = http_client::FromResponseBody(*istream);
 
-    assert(client->response.read_state == http_client::response::READ_BODY);
-    assert(http_response_handler_used(&client->request.handler));
-    assert(!client->response.body_reader.IsEOF());
-
-    stopwatch_event(client->stopwatch, "close");
-
-    if (client->request.istream != nullptr)
-        istream_close_handler(client->request.istream);
-
-    client->response.body_reader.Deinit();
-    http_client_release(client, false);
+    client.Close();
 }
 
 static const struct istream_class http_client_response_stream = {
@@ -373,82 +407,73 @@ static const struct istream_class http_client_response_stream = {
     .close = http_client_response_stream_close,
 };
 
-/**
- * @return false if the connection is closed
- */
-static bool
-http_client_parse_status_line(struct http_client *client,
-                              const char *line, size_t length)
+inline bool
+http_client::ParseStatusLine(const char *line, size_t length)
 {
-    assert(client != nullptr);
-    assert(client->response.read_state == http_client::response::READ_STATUS);
+    assert(response.read_state == response::READ_STATUS);
 
     const char *space;
     if (length < 10 || memcmp(line, "HTTP/", 5) != 0 ||
         (space = (const char *)memchr(line + 6, ' ', length - 6)) == nullptr) {
-        stopwatch_event(client->stopwatch, "malformed");
+        stopwatch_event(stopwatch, "malformed");
 
         GError *error =
             g_error_new_literal(http_client_quark(), HTTP_CLIENT_GARBAGE,
                                 "malformed HTTP status line");
-        http_client_abort_response_headers(client, error);
+        AbortResponseHeaders(error);
         return false;
     }
 
-    client->response.http_1_0 = line[7] == '0' &&
-        line[6] == '.' && line[5] == '1';
+    response.http_1_0 = line[7] == '0' && line[6] == '.' && line[5] == '1';
 
     length = line + length - space - 1;
     line = space + 1;
 
     if (unlikely(length < 3 || !char_is_digit(line[0]) ||
                  !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
-        stopwatch_event(client->stopwatch, "malformed");
+        stopwatch_event(stopwatch, "malformed");
 
         GError *error =
             g_error_new_literal(http_client_quark(), HTTP_CLIENT_GARBAGE,
                                 "no HTTP status found");
-        http_client_abort_response_headers(client, error);
+        AbortResponseHeaders(error);
         return false;
     }
 
-    client->response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
-    if (unlikely(!http_status_is_valid(client->response.status))) {
-        stopwatch_event(client->stopwatch, "malformed");
+    response.status = (http_status_t)(((line[0] - '0') * 10 + line[1] - '0') * 10 + line[2] - '0');
+    if (gcc_unlikely(!http_status_is_valid(response.status))) {
+        stopwatch_event(stopwatch, "malformed");
 
         GError *error =
             g_error_new(http_client_quark(), HTTP_CLIENT_GARBAGE,
                         "invalid HTTP status %d",
-                        client->response.status);
-        http_client_abort_response_headers(client, error);
+                        response.status);
+        AbortResponseHeaders(error);
         return false;
     }
 
-    client->response.read_state = http_client::response::READ_HEADERS;
-    client->response.headers = strmap_new(client->caller_pool);
+    response.read_state = response::READ_HEADERS;
+    response.headers = strmap_new(caller_pool);
     return true;
 }
 
-/**
- * @return false if the connection is closed
- */
-static bool
-http_client_headers_finished(struct http_client *client)
+inline bool
+http_client::HeadersFinished()
 {
-    stopwatch_event(client->stopwatch, "headers");
+    stopwatch_event(stopwatch, "headers");
 
-    auto &response_headers = *client->response.headers;
+    auto &response_headers = *response.headers;
 
     const char *header_connection = response_headers.Remove("connection");
-    client->keep_alive =
-        (header_connection == nullptr && !client->response.http_1_0) ||
+    keep_alive =
+        (header_connection == nullptr && !response.http_1_0) ||
         (header_connection != nullptr &&
          strcasecmp(header_connection, "keep-alive") == 0);
 
-    if (http_status_is_empty(client->response.status) ||
-        client->response.no_body) {
-        client->response.body = nullptr;
-        client->response.read_state = http_client::response::READ_BODY;
+    if (http_status_is_empty(response.status) ||
+        response.no_body) {
+        response.body = nullptr;
+        response.read_state = response::READ_BODY;
         return true;
     }
 
@@ -468,14 +493,14 @@ http_client_headers_finished(struct http_client *client)
         /* not chunked */
 
         if (unlikely(content_length_string == nullptr)) {
-            if (client->keep_alive) {
-                stopwatch_event(client->stopwatch, "malformed");
+            if (keep_alive) {
+                stopwatch_event(stopwatch, "malformed");
 
                 GError *error =
                     g_error_new_literal(http_client_quark(),
                                         HTTP_CLIENT_UNSPECIFIED,
                                         "no Content-Length header response");
-                http_client_abort_response_headers(client, error);
+                AbortResponseHeaders(error);
                 return false;
             }
             content_length = (off_t)-1;
@@ -485,19 +510,19 @@ http_client_headers_finished(struct http_client *client)
                                              &endptr, 10);
             if (unlikely(endptr == content_length_string || *endptr != 0 ||
                          content_length < 0)) {
-                stopwatch_event(client->stopwatch, "malformed");
+                stopwatch_event(stopwatch, "malformed");
 
                 GError *error =
                     g_error_new_literal(http_client_quark(),
                                         HTTP_CLIENT_UNSPECIFIED,
                                         "invalid Content-Length header in response");
-                http_client_abort_response_headers(client, error);
+                AbortResponseHeaders(error);
                 return false;
             }
 
             if (content_length == 0) {
-                client->response.body = nullptr;
-                client->response.read_state = http_client::response::READ_BODY;
+                response.body = nullptr;
+                response.read_state = response::READ_BODY;
                 return true;
             }
         }
@@ -510,38 +535,31 @@ http_client_headers_finished(struct http_client *client)
         chunked = true;
     }
 
-    client->response.body
-        = &client->response.body_reader.Init(http_client_response_stream,
-                                             *client->pool,
-                                             *client->pool,
-                                             content_length,
-                                             chunked);
+    response.body = &response.body_reader.Init(http_client_response_stream,
+                                               *pool,
+                                               *pool,
+                                               content_length,
+                                               chunked);
 
-    client->response.read_state = http_client::response::READ_BODY;
-    client->socket.base.direct = http_client_check_direct(client);
+    response.read_state = response::READ_BODY;
+    socket.base.direct = CheckDirect();
     return true;
 }
 
-/**
- * @return false if the connection is closed
- */
-static bool
-http_client_handle_line(struct http_client *client,
-                        const char *line, size_t length)
+inline bool
+http_client::HandleLine(const char *line, size_t length)
 {
-    assert(client != nullptr);
-    assert(client->response.read_state == http_client::response::READ_STATUS ||
-           client->response.read_state == http_client::response::READ_HEADERS);
+    assert(response.read_state == response::READ_STATUS ||
+           response.read_state == response::READ_HEADERS);
 
-    if (client->response.read_state == http_client::response::READ_STATUS)
-        return http_client_parse_status_line(client, line, length);
+    if (response.read_state == response::READ_STATUS)
+        return ParseStatusLine(line, length);
     else if (length > 0) {
-        header_parse_line(client->pool,
-                          client->response.headers,
+        header_parse_line(pool, response.headers,
                           line, length);
         return true;
     } else
-        return http_client_headers_finished(client);
+        return HeadersFinished();
 }
 
 static void
@@ -560,17 +578,15 @@ http_client_response_finished(struct http_client *client)
     if (client->request.istream != nullptr)
         istream_close_handler(client->request.istream);
 
-    http_client_release(client, client->keep_alive &&
+    client->Release(client->keep_alive &&
                         client->request.istream == nullptr);
 }
 
-static BufferedResult
-http_client_parse_headers(struct http_client *client,
-                          const void *_data, size_t length)
+inline BufferedResult
+http_client::ParseHeaders(const void *_data, size_t length)
 {
-    assert(client != nullptr);
-    assert(client->response.read_state == http_client::response::READ_STATUS ||
-           client->response.read_state == http_client::response::READ_HEADERS);
+    assert(response.read_state == response::READ_STATUS ||
+           response.read_state == response::READ_HEADERS);
     assert(_data != nullptr);
     assert(length > 0);
 
@@ -589,11 +605,12 @@ http_client_parse_headers(struct http_client *client,
             --end;
 
         /* handle this line */
-        if (!http_client_handle_line(client, start, end - start + 1))
+        if (!HandleLine(start, end - start + 1))
             return BufferedResult::CLOSED;
-        if (client->response.read_state != http_client::response::READ_HEADERS) {
+
+        if (response.read_state != response::READ_HEADERS) {
             /* header parsing is finished */
-            client->socket.Consumed(next - buffer);
+            socket.Consumed(next - buffer);
             return BufferedResult::AGAIN_EXPECT;
         }
 
@@ -601,16 +618,16 @@ http_client_parse_headers(struct http_client *client,
     }
 
     /* remove the parsed part of the buffer */
-    client->socket.Consumed(start - buffer);
+    socket.Consumed(start - buffer);
     return BufferedResult::MORE;
 }
 
-static void
-http_client_response_stream_eof(struct http_client *client)
+void
+http_client::ResponseBodyEOF()
 {
-    assert(client->response.read_state == http_client::response::READ_BODY);
-    assert(http_response_handler_used(&client->request.handler));
-    assert(client->response.body_reader.IsEOF());
+    assert(response.read_state == response::READ_BODY);
+    assert(http_response_handler_used(&request.handler));
+    assert(response.body_reader.IsEOF());
 
     /* this pointer must be cleared before forwarding the EOF event to
        our response body handler.  If we forget that, the handler
@@ -618,147 +635,141 @@ http_client_response_stream_eof(struct http_client *client)
        because http_client_request_stream_abort() calls
        http_client_abort_response_body(), not knowing that the
        response body is already finished  */
-    client->response.body = nullptr;
+    response.body = nullptr;
 
-    client->response.body_reader.DeinitEOF();
+    response.body_reader.DeinitEOF();
 
-    http_client_response_finished(client);
+    http_client_response_finished(this);
 }
 
-static BufferedResult
-http_client_feed_body(struct http_client *client,
-                      const void *data, size_t length)
+inline BufferedResult
+http_client::FeedBody(const void *data, size_t length)
 {
-    assert(client != nullptr);
-    assert(client->response.read_state == http_client::response::READ_BODY);
+    assert(response.read_state == response::READ_BODY);
 
-    size_t nbytes = client->response.body_reader.FeedBody(data, length);
+    size_t nbytes = response.body_reader.FeedBody(data, length);
     if (nbytes == 0)
-        return client->socket.IsValid()
+        return socket.IsValid()
             ? BufferedResult::BLOCKING
             : BufferedResult::CLOSED;
 
-    client->socket.Consumed(nbytes);
+    socket.Consumed(nbytes);
 
-    if (client->response.body_reader.IsEOF()) {
-        http_client_response_stream_eof(client);
+    if (response.body_reader.IsEOF()) {
+        ResponseBodyEOF();
         return BufferedResult::CLOSED;
     }
 
     if (nbytes < length)
         return BufferedResult::PARTIAL;
 
-    if (client->response.body_reader.RequireMore())
+    if (response.body_reader.RequireMore())
         return BufferedResult::MORE;
 
     return BufferedResult::OK;
 }
 
-static BufferedResult
-http_client_feed_headers(struct http_client *client,
-                         const void *data, size_t length)
+BufferedResult
+http_client::FeedHeaders(const void *data, size_t length)
 {
-    assert(client != nullptr);
-    assert(client->response.read_state == http_client::response::READ_STATUS ||
-           client->response.read_state == http_client::response::READ_HEADERS);
+    assert(response.read_state == response::READ_STATUS ||
+           response.read_state == response::READ_HEADERS);
 
-    const BufferedResult result =
-        http_client_parse_headers(client, data, length);
+    const BufferedResult result = ParseHeaders(data, length);
     if (result != BufferedResult::AGAIN_EXPECT)
         return result;
 
     /* the headers are finished, we can now report the response to
        the handler */
-    assert(client->response.read_state == http_client::response::READ_BODY);
+    assert(response.read_state == response::READ_BODY);
 
-    if (client->response.status == HTTP_STATUS_CONTINUE) {
-        assert(client->response.body == nullptr);
+    if (response.status == HTTP_STATUS_CONTINUE) {
+        assert(response.body == nullptr);
 
-        if (client->request.body == nullptr) {
+        if (request.body == nullptr) {
             GError *error = g_error_new_literal(http_client_quark(),
                                                 HTTP_CLIENT_UNSPECIFIED,
                                                 "unexpected status 100");
 #ifndef NDEBUG
             /* assertion workaround */
-            client->response.read_state = http_client::response::READ_STATUS;
+            response.read_state = response::READ_STATUS;
 #endif
-            http_client_abort_response_headers(client, error);
+            AbortResponseHeaders(error);
             return BufferedResult::CLOSED;
         }
 
         /* reset read_state, we're now expecting the real response */
-        client->response.read_state = http_client::response::READ_STATUS;
+        response.read_state = response::READ_STATUS;
 
-        istream_optional_resume(client->request.body);
-        client->request.body = nullptr;
+        istream_optional_resume(request.body);
+        request.body = nullptr;
 
-        if (!client->socket.IsConnected()) {
+        if (!socket.IsConnected()) {
             GError *error = g_error_new_literal(http_client_quark(),
                                                 HTTP_CLIENT_UNSPECIFIED,
                                                 "Peer closed the socket prematurely after status 100");
 #ifndef NDEBUG
             /* assertion workaround */
-            client->response.read_state = http_client::response::READ_STATUS;
+            response.read_state = http_client::response::READ_STATUS;
 #endif
-            http_client_abort_response_headers(client, error);
+            AbortResponseHeaders(error);
             return BufferedResult::CLOSED;
         }
 
-        http_client_schedule_write(client);
+        ScheduleWrite();
 
         /* try again */
         return BufferedResult::AGAIN_EXPECT;
-    } else if (client->request.body != nullptr) {
+    } else if (request.body != nullptr) {
         /* the server begins sending a response - he's not interested
            in the request body, discard it now */
-        istream_optional_discard(client->request.body);
-        client->request.body = nullptr;
+        istream_optional_discard(request.body);
+        request.body = nullptr;
     }
 
-    if ((client->response.body == nullptr ||
-         client->response.body_reader.IsSocketDone(client->socket)) &&
-        client->socket.IsConnected())
+    if ((response.body == nullptr ||
+         response.body_reader.IsSocketDone(socket)) &&
+        socket.IsConnected())
         /* we don't need the socket anymore, we've got everything we
            need in the input buffer */
-        http_client_release_socket(client, client->keep_alive);
+        ReleaseSocket(keep_alive);
 
-    pool_ref(client->pool);
-    pool_ref(client->caller_pool);
+    pool_ref(pool);
+    pool_ref(caller_pool);
 
-    client->response.in_handler = true;
-    http_response_handler_invoke_response(&client->request.handler,
-                                          client->response.status,
-                                          client->response.headers,
-                                          client->response.body);
-    client->response.in_handler = false;
+    response.in_handler = true;
+    http_response_handler_invoke_response(&request.handler,
+                                          response.status,
+                                          response.headers,
+                                          response.body);
+    response.in_handler = false;
 
-    bool valid = http_client_valid(client);
-    pool_unref(client->caller_pool);
-    pool_unref(client->pool);
+    const bool valid = IsValid();
+    pool_unref(caller_pool);
+    pool_unref(pool);
 
     if (!valid)
         return BufferedResult::CLOSED;
 
-    if (client->response.body == nullptr) {
-        http_client_response_finished(client);
+    if (response.body == nullptr) {
+        http_client_response_finished(this);
         return BufferedResult::CLOSED;
     }
 
     /* now do the response body */
-    return client->response.body_reader.RequireMore()
+    return response.body_reader.RequireMore()
         ? BufferedResult::AGAIN_EXPECT
         : BufferedResult::AGAIN_OPTIONAL;
 }
 
-static DirectResult
-http_client_try_response_direct(struct http_client *client,
-                                int fd, enum istream_direct fd_type)
+inline DirectResult
+http_client::TryResponseDirect(int fd, enum istream_direct fd_type)
 {
-    assert(client->socket.IsConnected());
-    assert(client->response.read_state == http_client::response::READ_BODY);
-    assert(http_client_check_direct(client));
+    assert(socket.IsConnected());
+    assert(response.read_state == response::READ_BODY);
+    assert(CheckDirect());
 
-    ssize_t nbytes = client->response.body_reader.TryDirect(fd, fd_type);
+    ssize_t nbytes = response.body_reader.TryDirect(fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
         return DirectResult::BLOCKING;
@@ -777,40 +788,39 @@ http_client_try_response_direct(struct http_client *client,
     }
 
     if (nbytes == ISTREAM_RESULT_EOF) {
-        if (client->request.istream != nullptr)
-            istream_close_handler(client->request.istream);
+        if (request.istream != nullptr)
+            istream_close_handler(request.istream);
 
-        client->response.body_reader.SocketEOF(0);
-        http_client_release(client, false);
+        response.body_reader.SocketEOF(0);
+        Release(false);
         return DirectResult::CLOSED;
    }
 
-    if (client->response.body_reader.IsEOF()) {
-        http_client_response_stream_eof(client);
+    if (response.body_reader.IsEOF()) {
+        ResponseBodyEOF();
         return DirectResult::CLOSED;
     }
 
     return DirectResult::OK;
 }
 
-static BufferedResult
-http_client_feed(struct http_client *client, const void *data, size_t length)
+inline BufferedResult
+http_client::Feed(const void *data, size_t length)
 {
-    switch (client->response.read_state) {
-    case http_client::response::READ_STATUS:
-    case http_client::response::READ_HEADERS:
-        return http_client_feed_headers(client, data, length);
+    switch (response.read_state) {
+    case response::READ_STATUS:
+    case response::READ_HEADERS:
+        return FeedHeaders(data, length);
 
-    case http_client::response::READ_BODY:
-        assert(client->response.body != nullptr);
+    case response::READ_BODY:
+        assert(response.body != nullptr);
 
-        if (client->socket.IsConnected() &&
-            client->response.body_reader.IsSocketDone(client->socket))
+        if (socket.IsConnected() && response.body_reader.IsSocketDone(socket))
             /* we don't need the socket anymore, we've got everything
                we need in the input buffer */
-            http_client_release_socket(client, client->keep_alive);
+            ReleaseSocket(keep_alive);
 
-        return http_client_feed_body(client, data, length);
+        return FeedBody(data, length);
     }
 
     assert(false);
@@ -828,7 +838,7 @@ http_client_socket_data(const void *buffer, size_t size, void *ctx)
     struct http_client *client = (struct http_client *)ctx;
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
-    return http_client_feed(client, buffer, size);
+    return client->Feed(buffer, size);
 }
 
 static DirectResult
@@ -836,7 +846,7 @@ http_client_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
 {
     struct http_client *client = (struct http_client *)ctx;
 
-    return http_client_try_response_direct(client, fd, fd_type);
+    return client->TryResponseDirect(fd, fd_type);
 
 }
 
@@ -851,7 +861,7 @@ http_client_socket_closed(void *ctx)
         istream_free(&client->request.istream);
 
     /* can't reuse the socket, it was closed by the peer */
-    http_client_release_socket(client, false);
+    client->ReleaseSocket(false);
 
     return true;
 }
@@ -871,7 +881,7 @@ http_client_socket_remaining(size_t remaining, void *ctx)
         return true;
     } else {
         /* finished: close the HTTP client */
-        http_client_release(client, false);
+        client->Release(false);
         return false;
     }
 }
@@ -890,7 +900,7 @@ http_client_socket_write(void *ctx)
         client->socket.IsConnected();
     if (result && client->request.istream != nullptr) {
         if (client->request.got_data)
-            http_client_schedule_write(client);
+            client->ScheduleWrite();
         else
             client->socket.UnscheduleWrite();
     }
@@ -922,7 +932,7 @@ http_client_socket_error(GError *error, void *ctx)
     struct http_client *client = (struct http_client *)ctx;
 
     stopwatch_event(client->stopwatch, "error");
-    http_client_abort_response(client, error);
+    client->AbortResponse(error);
 }
 
 static constexpr BufferedSocketHandler http_client_socket_handler = {
@@ -952,7 +962,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     ssize_t nbytes = client->socket.Write(data, length);
     if (likely(nbytes >= 0)) {
-        http_client_schedule_write(client);
+        client->ScheduleWrite();
         return (size_t)nbytes;
     }
 
@@ -966,7 +976,7 @@ http_client_request_stream_data(const void *data, size_t length, void *ctx)
 
     GError *error = g_error_new(http_client_quark(), HTTP_CLIENT_IO,
                                 "write error (%s)", strerror(_errno));
-    http_client_abort_response(client, error);
+    client->AbortResponse(error);
     return 0;
 }
 
@@ -982,7 +992,7 @@ http_client_request_stream_direct(istream_direct type, int fd,
 
     ssize_t nbytes = client->socket.WriteFrom(fd, type, max_length);
     if (likely(nbytes > 0))
-        http_client_schedule_write(client);
+        client->ScheduleWrite();
     else if (nbytes == WRITE_BLOCKING)
         return ISTREAM_RESULT_BLOCKING;
     else if (nbytes == WRITE_DESTROYED || nbytes == WRITE_BROKEN)
@@ -1025,9 +1035,9 @@ http_client_request_stream_abort(GError *error, void *ctx)
     client->request.istream = nullptr;
 
     if (client->response.read_state != http_client::response::READ_BODY)
-        http_client_abort_response_headers(client, error);
+        client->AbortResponseHeaders(error);
     else if (client->response.body != nullptr)
-        http_client_abort_response_body(client, error);
+        client->AbortResponseBody(error);
     else
         g_error_free(error);
 }
@@ -1045,29 +1055,28 @@ static const struct istream_handler http_client_request_stream_handler = {
  *
  */
 
-static struct http_client *
-async_to_http_client(struct async_operation *ao)
+inline void
+http_client::Abort()
 {
-    return ContainerCast(ao, struct http_client, request.async);
+    stopwatch_event(stopwatch, "abort");
+
+    /* async_operation_ref::Abort() can only be used before the
+       response was delivered to our callback */
+    assert(response.read_state == response::READ_STATUS ||
+           response.read_state == response::READ_HEADERS);
+
+    if (request.istream != nullptr)
+        istream_close_handler(request.istream);
+
+    Release(false);
 }
 
 static void
 http_client_request_abort(struct async_operation *ao)
 {
-    struct http_client *client
-        = async_to_http_client(ao);
+    struct http_client &client = http_client::FromAsync(*ao);
 
-    stopwatch_event(client->stopwatch, "abort");
-
-    /* async_operation_ref::Abort() can only be used before the
-       response was delivered to our callback */
-    assert(client->response.read_state == http_client::response::READ_STATUS ||
-           client->response.read_state == http_client::response::READ_HEADERS);
-
-    if (client->request.istream != nullptr)
-        istream_close_handler(client->request.istream);
-
-    http_client_release(client, false);
+    client.Abort();
 }
 
 static const struct async_operation_class http_client_async_operation = {
