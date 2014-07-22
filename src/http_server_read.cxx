@@ -7,6 +7,7 @@
  */
 
 #include "http_server_internal.hxx"
+#include "http_upgrade.hxx"
 #include "http_util.hxx"
 #include "pool.hxx"
 #include "strutil.h"
@@ -188,13 +189,31 @@ http_server_headers_finished(struct http_server_connection *connection)
     connection->keep_alive = !connection->request.http_1_0 &&
         (value == nullptr || !http_list_contains_i(value, "close"));
 
+    const bool upgrade = !connection->request.http_1_0 && value != nullptr &&
+        http_is_upgrade(value);
+
     value = request->headers->Get("transfer-encoding");
+
+    const struct timeval *read_timeout = &http_server_read_timeout;
 
     off_t content_length = -1;
     const bool chunked = value != nullptr && strcasecmp(value, "chunked") == 0;
     if (!chunked) {
         value = request->headers->Get("content-length");
-        if (value == nullptr) {
+
+        if (upgrade) {
+            if (value != nullptr) {
+                connection->Error("cannot upgrade with Content-Length request header");
+                return false;
+            }
+
+            /* disable timeout */
+            read_timeout = nullptr;
+
+            /* forward incoming data as-is */
+
+            connection->keep_alive = false;
+        } else if (value == nullptr) {
             /* no body at all */
 
             request->body = nullptr;
@@ -219,6 +238,9 @@ http_server_headers_finished(struct http_server_connection *connection)
                 return true;
             }
         }
+    } else if (upgrade) {
+        connection->Error("cannot upgrade chunked request");
+        return false;
     }
 
     /* istream_deinit() used poison_noaccess() - make it writable now
@@ -236,7 +258,7 @@ http_server_headers_finished(struct http_server_connection *connection)
 
     /* for the response body, the filtered_socket class tracks
        inactivity timeout */
-    connection->socket.ScheduleReadTimeout(false, &http_server_read_timeout);
+    connection->socket.ScheduleReadTimeout(false, read_timeout);
 
     return true;
 }

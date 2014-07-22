@@ -1,6 +1,7 @@
 cm4all-beng-proxy (5.0.11) unstable; urgency=low
 
   * merge release 4.11
+  * http_server: support WebSocket (RFC 6455)
 
  --   
 

@@ -6,6 +6,7 @@
 
 #include "http_server_internal.hxx"
 #include "http_headers.hxx"
+#include "http_upgrade.hxx"
 #include "direct.h"
 #include "header_writer.hxx"
 #include "format.h"
@@ -126,7 +127,11 @@ http_server_response(const struct http_server_request *request,
     if (http_method_is_empty(request->method) && body != nullptr)
         istream_free_unused(&body);
 
-    if (!connection->keep_alive && !connection->request.http_1_0)
+    const bool upgrade = body != nullptr && http_is_upgrade(status, headers);
+    if (upgrade) {
+        headers.Write(*request->pool, "connection", "upgrade");
+        headers.MoveToBuffer(*request->pool, "upgrade");
+    } else if (!connection->keep_alive && !connection->request.http_1_0)
         header_write(&headers2, "connection", "close");
 
     struct growing_buffer &headers3 = headers.ToBuffer(*request->pool);

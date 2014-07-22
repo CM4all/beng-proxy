@@ -1118,7 +1118,7 @@ test_t_cgi_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_http_server_SOURCES = test/t_http_server.cxx \
-	src/http_util.cxx \
+	src/http_upgrade.cxx src/http_util.cxx \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
@@ -1143,7 +1143,7 @@ test_t_http_server_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_http_server_SOURCES = test/run_http_server.cxx \
-	src/http_util.cxx \
+	src/http_upgrade.cxx src/http_util.cxx \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
