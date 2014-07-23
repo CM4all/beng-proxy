@@ -20,8 +20,8 @@ CGIParser::CGIParser(struct pool &pool)
      headers(strmap_new(&pool))
 #ifndef NDEBUG
     , finished(false)
-{
 #endif
+{
 }
 
 /**
