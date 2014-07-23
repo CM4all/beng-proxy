@@ -511,7 +511,7 @@ static void
 mcd_background_delete(struct memcached_stock *stock,
                       struct pool *background_pool,
                       BackgroundManager &background,
-                      const char *uri, struct strmap *vary)
+                      const char *uri, const struct strmap *vary)
 {
     struct pool *pool = pool_new_linear(background_pool,
                                         "http_cache_memcached_bkg_delete", 1024);
