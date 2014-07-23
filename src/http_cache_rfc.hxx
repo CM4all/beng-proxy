@@ -16,6 +16,10 @@ http_cache_request_evaluate(struct pool *pool,
 
 gcc_pure
 bool
+http_cache_vary_fits(const struct strmap &vary, const struct strmap *headers);
+
+gcc_pure
+bool
 http_cache_vary_fits(const struct strmap *vary, const struct strmap *headers);
 
 /**

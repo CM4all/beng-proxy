@@ -155,8 +155,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
         if (expires != -1 && expires < now)
             unclean = true;
         else if (uri == nullptr &&
-                 (vary == nullptr ||
-                  http_cache_vary_fits(vary, choice->request_headers)))
+                 http_cache_vary_fits(vary, choice->request_headers))
             uri = http_cache_choice_vary_key(choice->pool, choice->uri, vary);
 
         if (uri != nullptr && unclean)

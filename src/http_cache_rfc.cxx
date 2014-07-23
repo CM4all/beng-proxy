@@ -146,9 +146,9 @@ http_cache_request_evaluate(struct pool *pool,
 
 gcc_pure
 bool
-http_cache_vary_fits(const struct strmap *vary, const struct strmap *headers)
+http_cache_vary_fits(const struct strmap &vary, const struct strmap *headers)
 {
-    for (const auto &i : *vary) {
+    for (const auto &i : vary) {
         const char *value = strmap_get_checked(headers, i.key);
         if (value == nullptr)
             value = "";
@@ -161,12 +161,18 @@ http_cache_vary_fits(const struct strmap *vary, const struct strmap *headers)
     return true;
 }
 
+gcc_pure
+bool
+http_cache_vary_fits(const struct strmap *vary, const struct strmap *headers)
+{
+    return vary == nullptr || http_cache_vary_fits(*vary, headers);
+}
+
 bool
 http_cache_document_fits(const struct http_cache_document *document,
                          const struct strmap *headers)
 {
-    return document->vary == nullptr ||
-        http_cache_vary_fits(document->vary, headers);
+    return http_cache_vary_fits(document->vary, headers);
 }
 
 bool
