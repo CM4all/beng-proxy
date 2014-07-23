@@ -179,6 +179,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/http_server_read.cxx \
 	src/http_server_response.cxx \
 	src/http_string.cxx src/http_string.hxx \
+	src/http_upgrade.cxx src/http_upgrade.hxx \
 	src/http_util.cxx src/http_util.hxx \
 	src/http_headers.hxx \
 	src/http_quark.h \
@@ -384,6 +385,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/http_server_response.cxx \
 	src/http_client.cxx \
 	src/http_string.cxx \
+	src/http_upgrade.cxx src/http_upgrade.hxx \
 	src/http_util.cxx src/http_util.hxx \
 	src/header_writer.cxx \
 	src/header_parser.cxx \
