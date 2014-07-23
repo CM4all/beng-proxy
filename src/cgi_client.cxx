@@ -484,7 +484,9 @@ cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
     assert(input != nullptr);
     assert(handler != nullptr);
 
-    cgi_client *cgi = (cgi_client *)istream_new(pool, &istream_cgi, sizeof(*cgi));
+    auto cgi = NewFromPool<cgi_client>(*pool);
+    istream_init(&cgi->output, &istream_cgi, pool);
+
     cgi->stopwatch = stopwatch;
     istream_assign_handler(&cgi->input, input,
                            &cgi_input_handler, cgi, 0);
