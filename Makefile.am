@@ -172,7 +172,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/http_cache.cxx src/http_cache.h \
 	src/http_cache_choice.cxx src/http_cache_choice.hxx \
 	src/http_cache_internal.hxx \
-	src/http_cache_document.cxx \
+	src/http_cache_document.cxx src/http_cache_document.hxx \
 	src/http_cache_age.cxx src/http_cache_age.hxx \
 	src/http_cache_heap.cxx src/http_cache_heap.hxx \
 	src/http_cache_info.cxx src/http_cache_info.hxx \

@@ -2,7 +2,7 @@
 #include "tpool.h"
 #include "cache.hxx"
 #include "http_cache_heap.hxx"
-#include "http_cache_internal.hxx"
+#include "http_cache_info.hxx"
 #include "strmap.hxx"
 #include "rubber.hxx"
 

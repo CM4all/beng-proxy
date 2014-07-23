@@ -1,5 +1,5 @@
 #include "memcached_client.hxx"
-#include "http_cache_internal.hxx"
+#include "http_cache_document.hxx"
 #include "lease.hxx"
 #include "async.hxx"
 #include "fd-util.h"

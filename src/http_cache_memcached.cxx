@@ -7,6 +7,7 @@
 #include "http_cache_memcached.hxx"
 #include "http_cache_choice.hxx"
 #include "http_cache_rfc.hxx"
+#include "http_cache_document.hxx"
 #include "http_cache_internal.hxx"
 #include "memcached_stock.hxx"
 #include "memcached_client.hxx"
