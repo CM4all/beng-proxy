@@ -23,14 +23,6 @@ bool
 http_cache_vary_fits(const struct strmap *vary, const struct strmap *headers);
 
 /**
- * Checks whether the specified cache item fits the current request.
- * This is not true if the Vary headers mismatch.
- */
-bool
-http_cache_document_fits(const struct http_cache_document *document,
-                         const struct strmap *headers);
-
-/**
  * Check whether the request should invalidate the existing cache.
  */
 bool

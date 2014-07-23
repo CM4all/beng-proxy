@@ -66,7 +66,7 @@ http_cache_item_match(const struct cache_item *_item, void *ctx)
         (const struct http_cache_item *)_item;
     struct strmap *headers = (struct strmap *)ctx;
 
-    return http_cache_document_fits(&item->document, headers);
+    return item->document.VaryFits(headers);
 }
 
 struct http_cache_document *

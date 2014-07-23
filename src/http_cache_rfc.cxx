@@ -169,13 +169,6 @@ http_cache_vary_fits(const struct strmap *vary, const struct strmap *headers)
 }
 
 bool
-http_cache_document_fits(const struct http_cache_document *document,
-                         const struct strmap *headers)
-{
-    return http_cache_vary_fits(document->vary, headers);
-}
-
-bool
 http_cache_request_invalidate(http_method_t method)
 {
     /* RFC 2616 13.10 "Invalidation After Updates or Deletions" */

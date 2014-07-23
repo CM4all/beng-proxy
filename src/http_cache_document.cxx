@@ -24,3 +24,9 @@ http_cache_document::http_cache_document(struct pool &pool,
 {
     assert(http_status_is_valid(_status));
 }
+
+bool
+http_cache_document::VaryFits(const struct strmap *request_headers) const
+{
+    return http_cache_vary_fits(vary, request_headers);
+}

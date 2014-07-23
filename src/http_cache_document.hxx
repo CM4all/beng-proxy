@@ -3,6 +3,7 @@
 
 #include "http_cache_info.hxx"
 
+#include <inline/compiler.h>
 #include <http/status.h>
 
 struct http_cache_document {
@@ -21,6 +22,13 @@ struct http_cache_document {
                         struct strmap *request_headers,
                         http_status_t _status,
                         struct strmap *response_headers);
+
+    /**
+     * Checks whether the specified cache item fits the current request.
+     * This is not true if the Vary headers mismatch.
+     */
+    gcc_pure
+    bool VaryFits(const struct strmap *request_headers) const;
 };
 
 #endif

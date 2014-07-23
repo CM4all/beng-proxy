@@ -174,7 +174,7 @@ mcd_deserialize_document(struct pool *pool, ConstBuffer<void> &header,
     document->info.etag = strmap_get_checked(document->headers, "etag");
     document->info.vary = strmap_get_checked(document->headers, "vary");
 
-    if (!http_cache_document_fits(document, request_headers))
+    if (!document->VaryFits(request_headers))
         /* Vary mismatch */
         return nullptr;
 
@@ -564,7 +564,7 @@ mcd_delete_filter_callback(const struct http_cache_document *document,
 
     if (document != nullptr) {
         /* discard documents matching the Vary specification */
-        if (http_cache_document_fits(document, data->headers)) {
+        if (document->VaryFits(data->headers)) {
             mcd_background_delete(data->stock, data->background_pool,
                                   *data->background, data->uri,
                                   document->vary);
