@@ -1176,6 +1176,7 @@ test_run_http_server_LDADD = $(AM_LDADD) \
 test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/t_client.hxx \
 	src/http_client.cxx \
+	src/http_util.c \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/cleanup_timer.c \
 	$(STOPWATCH_SRC) \
@@ -1651,6 +1652,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/notify.c \
 	src/client-socket.c \
 	src/http_client.cxx src/http_body.cxx \
+	src/http_util.c \
 	src/header-writer.c src/header-parser.c \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
 	src/ajp_headers.cxx src/ajp-protocol.c \

@@ -1,5 +1,6 @@
 cm4all-beng-proxy (4.10) unstable; urgency=low
 
+  * merge release 3.1.36
   * lhttp_stock: fix crash after fork failure
 
  --   
@@ -452,6 +453,14 @@ cm4all-beng-proxy (4.0) unstable; urgency=low
   * translate-client, resource-loader: support https://
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 23 Oct 2013 19:29:38 -0000
+
+cm4all-beng-proxy (3.1.36) unstable; urgency=low
+
+  * http_server: ignore case in "Connection" request header
+  * http_client: allow comma-separated list in "Connection" response
+    header
+
+ -- Max Kellermann <mk@cm4all.com>  Wed, 23 Jul 2014 17:43:09 -0000
 
 cm4all-beng-proxy (3.1.35) unstable; urgency=low
 

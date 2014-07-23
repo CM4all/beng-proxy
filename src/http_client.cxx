@@ -6,6 +6,7 @@
 
 #include "http_client.hxx"
 #include "http_response.h"
+#include "http_util.h"
 #include "fifo-buffer.h"
 #include "strutil.h"
 #include "header-parser.h"
@@ -486,7 +487,7 @@ http_client_headers_finished(struct http_client *client)
     client->keep_alive =
         (header_connection == nullptr && !client->response.http_1_0) ||
         (header_connection != nullptr &&
-         strcasecmp(header_connection, "keep-alive") == 0);
+         http_list_contains_i(header_connection, "keep-alive") == 0);
 
     if (http_status_is_empty(client->response.status) ||
         client->response.no_body) {
