@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.10) unstable; urgency=low
 
-  * 
+  * lhttp_stock: fix crash after fork failure
 
  --   
 

@@ -240,6 +240,9 @@ MultiStock::Domain::GetNow(DomainMap::iterator di,
         stock_item *item =
             hstock_get_now(stock.hstock, caller_pool, uri, info,
                            error_r);
+        if (item == nullptr)
+            return nullptr;
+
         items.emplace_front(di, max_leases, *item);
         i = items.begin();
     }
