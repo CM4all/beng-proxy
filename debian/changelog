@@ -4,7 +4,7 @@ cm4all-beng-proxy (5.0.10) unstable; urgency=low
   * http_server: don't disable keep-alive when discarding optional request
     body ("Expect: 100-continue")
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 23 Jul 2014 17:51:02 -0000
 
 cm4all-beng-proxy (5.0.9) unstable; urgency=low
 
