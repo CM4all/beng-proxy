@@ -26,7 +26,8 @@ typedef void (*http_cache_choice_cleanup_t)(GError *error, void *ctx);
 typedef void (*http_cache_choice_delete_t)(GError *error, void *ctx);
 
 const char *
-http_cache_choice_vary_key(struct pool *pool, const char *uri, struct strmap *vary);
+http_cache_choice_vary_key(struct pool *pool, const char *uri,
+                           const struct strmap *vary);
 
 void
 http_cache_choice_get(struct pool *pool, struct memcached_stock *stock,

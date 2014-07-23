@@ -59,7 +59,7 @@ struct http_cache_choice {
  * This is used as a suffix for the memcached
  */
 static unsigned
-mcd_vary_hash(struct strmap *vary)
+mcd_vary_hash(const struct strmap *vary)
 {
     unsigned hash = 0;
 
@@ -93,7 +93,8 @@ maybe_abbreviate(const char *p)
 }
 
 const char *
-http_cache_choice_vary_key(struct pool *pool, const char *uri, struct strmap *vary)
+http_cache_choice_vary_key(struct pool *pool, const char *uri,
+                           const struct strmap *vary)
 {
     char hash[9];
     format_uint32_hex_fixed(hash, mcd_vary_hash(vary));
