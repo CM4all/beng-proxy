@@ -7,6 +7,7 @@
 #include "http_client.hxx"
 #include "http_headers.hxx"
 #include "http_response.hxx"
+#include "http_upgrade.hxx"
 #include "http_util.hxx"
 #include "fifo-buffer.h"
 #include "strutil.h"
@@ -497,7 +498,14 @@ http_client::HeadersFinished()
 
     /* remove the other hop-by-hop response headers */
     response_headers.Remove("proxy-authenticate");
-    response_headers.Remove("upgrade");
+
+    const bool upgrade = !response.http_1_0 && header_connection != nullptr &&
+        transfer_encoding == nullptr && content_length_string == nullptr &&
+        http_is_upgrade(response.status, header_connection);
+    if (upgrade) {
+        response_headers.Add("connection", "upgrade");
+        keep_alive = false;
+    }
 
     off_t content_length;
     bool chunked;
@@ -1142,7 +1150,14 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
 
     struct growing_buffer &headers2 = headers.MakeBuffer(_pool);
 
-    if (body != nullptr) {
+    const bool upgrade = body != nullptr && http_is_upgrade(headers);
+    if (upgrade) {
+        /* forward hop-by-hop headers requesting the protocol
+           upgrade */
+        headers.Write(*pool, "connection", "upgrade");
+        headers.MoveToBuffer(*pool, "upgrade");
+        request.body = nullptr;
+    } else if (body != nullptr) {
         off_t content_length = istream_available(body, false);
         if (content_length == (off_t)-1) {
             header_write(&headers2, "transfer-encoding", "chunked");
