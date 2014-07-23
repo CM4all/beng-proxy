@@ -81,7 +81,7 @@ struct strmap *gcc_malloc
 strmap_new(struct pool *pool);
 
 struct strmap *gcc_malloc
-strmap_dup(struct pool *pool, struct strmap *src);
+strmap_dup(struct pool *pool, const struct strmap *src);
 
 /**
  * This variation of strmap::Remove() allows the caller to pass

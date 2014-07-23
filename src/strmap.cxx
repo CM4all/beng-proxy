@@ -86,7 +86,7 @@ strmap_new(struct pool *pool)
 }
 
 struct strmap *gcc_malloc
-strmap_dup(struct pool *pool, struct strmap *src)
+strmap_dup(struct pool *pool, const struct strmap *src)
 {
     return NewFromPool<struct strmap>(*pool, *pool, *src);
 }
