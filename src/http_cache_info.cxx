@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "http_cache_internal.hxx"
+#include "http_cache_info.hxx"
 #include "pool.hxx"
 
 http_cache_info::http_cache_info(struct pool &pool,
