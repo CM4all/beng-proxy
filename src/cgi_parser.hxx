@@ -58,9 +58,9 @@ cgi_parser_init(struct pool *pool, CGIParser *parser);
 static inline bool
 cgi_parser_headers_finished(const CGIParser *parser)
 {
-    assert(parser->finished == (parser->headers == NULL));
+    assert(parser->finished == (parser->headers == nullptr));
 
-    return parser->headers == NULL;
+    return parser->headers == nullptr;
 }
 
 /**
@@ -80,7 +80,7 @@ cgi_parser_feed_headers(struct pool *pool, CGIParser *parser,
 static inline http_status_t
 cgi_parser_get_status(const CGIParser *parser)
 {
-    assert(parser != NULL);
+    assert(parser != nullptr);
     assert(parser->finished);
 
     return parser->status;
@@ -89,12 +89,12 @@ cgi_parser_get_status(const CGIParser *parser)
 static inline struct strmap *
 cgi_parser_get_headers(CGIParser *parser)
 {
-    assert(parser != NULL);
-    assert(parser->headers != NULL);
+    assert(parser != nullptr);
+    assert(parser->headers != nullptr);
     assert(parser->finished);
 
     struct strmap *headers = parser->headers;
-    parser->headers = NULL;
+    parser->headers = nullptr;
     return headers;
 }
 
