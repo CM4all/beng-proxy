@@ -6,6 +6,7 @@
 
 #include "http_client.hxx"
 #include "http_response.hxx"
+#include "http_util.hxx"
 #include "fifo-buffer.h"
 #include "strutil.h"
 #include "header_parser.hxx"
@@ -479,7 +480,7 @@ http_client::HeadersFinished()
     keep_alive =
         (header_connection == nullptr && !response.http_1_0) ||
         (header_connection != nullptr &&
-         strcasecmp(header_connection, "keep-alive") == 0);
+         http_list_contains_i(header_connection, "keep-alive") == 0);
 
     if (http_status_is_empty(response.status) ||
         response.no_body) {
