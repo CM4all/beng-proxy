@@ -5,6 +5,7 @@
  */
 
 #include "http_cache_heap.hxx"
+#include "http_cache_rfc.hxx"
 #include "http_cache_internal.hxx"
 #include "http_cache_age.hxx"
 #include "cache.hxx"

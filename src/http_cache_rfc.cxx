@@ -5,6 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "http_cache_rfc.hxx"
 #include "http_cache_internal.hxx"
 #include "http_address.hxx"
 #include "http_util.hxx"
