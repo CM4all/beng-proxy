@@ -149,7 +149,7 @@ http_list_contains_i(const char *list, const char *item)
         /* XXX what if the comma is within an quoted-string? */
         comma = strchr(list, ',');
         if (comma == NULL)
-            return http_equals(list, strlen(list), item, item_length);
+            return http_equals_i(list, strlen(list), item, item_length);
 
         if (http_equals_i(list, comma - list, item, item_length))
             return true;
