@@ -24,10 +24,10 @@
 struct CGIClient {
     struct istream output;
 
-    struct stopwatch *stopwatch;
+    struct stopwatch *const stopwatch;
 
     struct istream *input;
-    struct fifo_buffer *buffer;
+    struct fifo_buffer *const buffer;
 
     struct cgi_parser parser;
 
@@ -43,6 +43,12 @@ struct CGIClient {
 
     struct async_operation operation;
     struct http_response_handler_ref handler;
+
+    CGIClient(struct pool &pool, struct stopwatch *_stopwatch,
+              struct istream &_input,
+              const struct http_response_handler &_handler,
+              void *handler_ctx,
+              struct async_operation_ref &async_ref);
 
     void Abort();
 };
@@ -474,6 +480,30 @@ CGIClient::Abort()
  *
  */
 
+inline
+CGIClient::CGIClient(struct pool &pool, struct stopwatch *_stopwatch,
+                     struct istream &_input,
+                     const struct http_response_handler &_handler,
+                     void *handler_ctx,
+                     struct async_operation_ref &async_ref)
+    :stopwatch(_stopwatch),
+     buffer(fb_pool_alloc())
+{
+    istream_init(&output, &istream_cgi, &pool);
+
+    istream_assign_handler(&input, &_input,
+                           &cgi_input_handler, this, 0);
+
+    cgi_parser_init(&pool, &parser);
+
+    handler.Set(_handler, handler_ctx);
+
+    operation.Init2<CGIClient>();
+    async_ref.Set(operation);
+
+    istream_read(input);
+}
+
 void
 cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
                struct istream *input,
@@ -484,21 +514,6 @@ cgi_client_new(struct pool *pool, struct stopwatch *stopwatch,
     assert(input != nullptr);
     assert(handler != nullptr);
 
-    auto cgi = NewFromPool<CGIClient>(*pool);
-    istream_init(&cgi->output, &istream_cgi, pool);
-
-    cgi->stopwatch = stopwatch;
-    istream_assign_handler(&cgi->input, input,
-                           &cgi_input_handler, cgi, 0);
-
-    cgi->buffer = fb_pool_alloc();
-
-    cgi_parser_init(pool, &cgi->parser);
-
-    cgi->handler.Set(*handler, handler_ctx);
-
-    cgi->operation.Init2<CGIClient>();
-    async_ref->Set(cgi->operation);
-
-    istream_read(input);
+    NewFromPool<CGIClient>(*pool, *pool, stopwatch, *input,
+                           *handler, handler_ctx, *async_ref);
 }
