@@ -117,7 +117,6 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
     http_cache_choice *choice = (http_cache_choice *)ctx;
     time_t now = time(nullptr);
     uint32_t magic;
-    struct http_cache_document document;
     const char *uri = nullptr;
     bool unclean = false;
     struct uset uset;
@@ -131,11 +130,11 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
         if (magic != CHOICE_MAGIC)
             break;
 
-        document.info.expires = deserialize_uint64(data);
+        const time_t expires = deserialize_uint64(data);
 
         const AutoRewindPool auto_rewind(*tpool);
 
-        document.vary = deserialize_strmap(data, tpool);
+        const struct strmap *const vary = deserialize_strmap(data, tpool);
 
         if (data.IsNull()) {
             /* deserialization failure */
@@ -143,7 +142,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
             break;
         }
 
-        hash = mcd_vary_hash(document.vary);
+        hash = mcd_vary_hash(vary);
         if (hash != 0) {
             if (uset_contains_or_add(&uset, hash))
                 /* duplicate: mark the record as
@@ -151,13 +150,12 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
                 unclean = true;
         }
 
-        if (document.info.expires != -1 && document.info.expires < now)
+        if (expires != -1 && expires < now)
             unclean = true;
         else if (uri == nullptr &&
-                 http_cache_document_fits(&document,
-                                          choice->request_headers))
-            uri = http_cache_choice_vary_key(choice->pool, choice->uri,
-                                             document.vary);
+                 (vary == nullptr ||
+                  http_cache_vary_fits(vary, choice->request_headers)))
+            uri = http_cache_choice_vary_key(choice->pool, choice->uri, vary);
 
         if (uri != nullptr && unclean)
             /* we have already found something, and we think that this

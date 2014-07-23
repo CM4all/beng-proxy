@@ -3,6 +3,7 @@
 
 #include "http_cache.h"
 
+#include <inline/compiler.h>
 #include <http/status.h>
 
 #ifdef CACHE_LOG
@@ -89,6 +90,10 @@ http_cache_request_evaluate(struct pool *pool,
                             const struct resource_address *address,
                             const struct strmap *headers,
                             struct istream *body);
+
+gcc_pure
+bool
+http_cache_vary_fits(const struct strmap *vary, const struct strmap *headers);
 
 /**
  * Checks whether the specified cache item fits the current request.
