@@ -6,7 +6,7 @@
 
 #include "http_cache_choice.hxx"
 #include "http_cache_rfc.hxx"
-#include "http_cache_document.hxx"
+#include "http_cache_info.hxx"
 #include "http_cache_internal.hxx"
 #include "memcached_stock.hxx"
 #include "memcached_client.hxx"
@@ -55,6 +55,12 @@ struct http_cache_choice {
 
     struct async_operation_ref *async_ref;
 };
+
+bool
+http_cache_choice_info::VaryFits(const struct strmap *headers) const
+{
+    return vary == nullptr || http_cache_vary_fits(vary, headers);
+}
 
 /**
  * Calculate a aggregated hash value of the specified string map.
@@ -408,7 +414,6 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
     http_cache_choice *choice = (http_cache_choice *)ctx;
     const void *current;
     uint32_t magic;
-    struct http_cache_document document;
 
     ConstBuffer<void> data(data0, length);
     char *dest = (char *)data0;
@@ -420,16 +425,17 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
         if (magic != CHOICE_MAGIC)
             break;
 
-        document.info.expires = deserialize_uint64(data);
+        struct http_cache_choice_info info;
+        info.expires = deserialize_uint64(data);
 
         const AutoRewindPool auto_rewind(*tpool);
-        document.vary = deserialize_strmap(data, tpool);
+        info.vary = deserialize_strmap(data, tpool);
 
         if (data.IsNull())
             /* deserialization failure */
             break;
 
-        if (choice->callback.filter(&document, nullptr, choice->callback_ctx)) {
+        if (choice->callback.filter(&info, nullptr, choice->callback_ctx)) {
             memmove(dest, current, (const uint8_t *)data.data + data.size - (const uint8_t *)current);
             dest += (const uint8_t *)data.data - (const uint8_t *)current;
         }
@@ -550,16 +556,16 @@ struct cleanup_data {
 };
 
 static bool
-http_cache_choice_cleanup_filter_callback(const struct http_cache_document *document,
+http_cache_choice_cleanup_filter_callback(const struct http_cache_choice_info *info,
                                           GError *error, void *ctx)
 {
     cleanup_data *data = (cleanup_data *)ctx;
 
-    if (document != nullptr) {
-        unsigned hash = mcd_vary_hash(document->vary);
+    if (info != nullptr) {
+        unsigned hash = mcd_vary_hash(info->vary);
         bool duplicate = uset_contains_or_add(&data->uset, hash);
-        return (document->info.expires == -1 ||
-                document->info.expires >= data->now) &&
+        return (info->expires == -1 ||
+                info->expires >= data->now) &&
             !duplicate;
     } else {
         data->callback(error, data->callback_ctx);

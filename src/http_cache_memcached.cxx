@@ -557,17 +557,17 @@ struct match_data {
 };
 
 static bool
-mcd_delete_filter_callback(const struct http_cache_document *document,
+mcd_delete_filter_callback(const struct http_cache_choice_info *info,
                            GError *error, void *ctx)
 {
     match_data *data = (match_data *)ctx;
 
-    if (document != nullptr) {
+    if (info != nullptr) {
         /* discard documents matching the Vary specification */
-        if (document->VaryFits(data->headers)) {
+        if (info->VaryFits(data->headers)) {
             mcd_background_delete(data->stock, data->background_pool,
                                   *data->background, data->uri,
-                                  document->vary);
+                                  info->vary);
             return false;
         } else
             return true;

@@ -9,6 +9,10 @@
 
 #include "glibfwd.hxx"
 
+#include <inline/compiler.h>
+
+#include <time.h>
+
 struct pool;
 struct http_cache_choice;
 struct http_cache_info;
@@ -17,10 +21,18 @@ struct strmap;
 struct memcached_stock;
 struct async_operation_ref;
 
+struct http_cache_choice_info {
+    time_t expires;
+    const struct strmap *vary;
+
+    gcc_pure
+    bool VaryFits(const struct strmap *headers) const;
+};
+
 typedef void (*http_cache_choice_get_t)(const char *key, bool unclean,
                                         GError *error, void *ctx);
 typedef void (*http_cache_choice_commit_t)(GError *error, void *ctx);
-typedef bool (*http_cache_choice_filter_t)(const struct http_cache_document *document,
+typedef bool (*http_cache_choice_filter_t)(const struct http_cache_choice_info *info,
                                            GError *error, void *ctx);
 typedef void (*http_cache_choice_cleanup_t)(GError *error, void *ctx);
 typedef void (*http_cache_choice_delete_t)(GError *error, void *ctx);
