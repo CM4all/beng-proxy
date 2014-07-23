@@ -92,8 +92,8 @@ CGIClient::ReturnResponse()
 {
     operation.Finished();
 
-    http_status_t status = cgi_parser_get_status(&parser);
-    struct strmap *headers = cgi_parser_get_headers(&parser);
+    http_status_t status = parser.GetStatus();
+    struct strmap &headers = parser.GetHeaders();
 
     if (http_status_is_empty(status)) {
         /* this response does not have a response body, as indicated
@@ -104,10 +104,10 @@ CGIClient::ReturnResponse()
 
         fb_pool_free(buffer);
         istream_free_handler(&input);
-        handler.InvokeResponse(status, headers, nullptr);
+        handler.InvokeResponse(status, &headers, nullptr);
         pool_unref(output.pool);
         return false;
-    } else if (cgi_parser_eof(&parser)) {
+    } else if (parser.IsEOF()) {
         /* the response body is empty */
 
         stopwatch_event(stopwatch, "empty");
@@ -115,7 +115,7 @@ CGIClient::ReturnResponse()
 
         fb_pool_free(buffer);
         istream_free_handler(&input);
-        handler.InvokeResponse(status, headers,
+        handler.InvokeResponse(status, &headers,
                                istream_null_new(output.pool));
         pool_unref(output.pool);
         return false;
@@ -123,7 +123,7 @@ CGIClient::ReturnResponse()
         stopwatch_event(stopwatch, "headers");
 
         in_response_callback = true;
-        handler.InvokeResponse(status, headers, &output);
+        handler.InvokeResponse(status, &headers, &output);
         in_response_callback = false;
         return input != nullptr;
     }
@@ -132,7 +132,7 @@ CGIClient::ReturnResponse()
 inline size_t
 CGIClient::FeedHeaders(const void *data, size_t length)
 {
-    assert(!cgi_parser_headers_finished(&parser));
+    assert(!parser.AreHeadersFinished());
 
     size_t max_length;
     void *dest = fifo_buffer_write(buffer, &max_length);
@@ -145,8 +145,7 @@ CGIClient::FeedHeaders(const void *data, size_t length)
     fifo_buffer_append(buffer, length);
 
     GError *error = nullptr;
-    enum completion c = cgi_parser_feed_headers(output.pool, &parser,
-                                                buffer, &error);
+    enum completion c = parser.FeedHeaders(*output.pool, *buffer, &error);
     switch (c) {
     case C_DONE:
         /* the C_DONE status can only be triggered by new data that
@@ -187,7 +186,7 @@ inline size_t
 CGIClient::FeedHeadersLoop(const char *data, size_t length)
 {
     assert(length > 0);
-    assert(!cgi_parser_headers_finished(&parser));
+    assert(!parser.AreHeadersFinished());
 
     size_t consumed = 0;
 
@@ -197,7 +196,7 @@ CGIClient::FeedHeadersLoop(const char *data, size_t length)
             break;
 
         consumed += nbytes;
-    } while (consumed < length && !cgi_parser_headers_finished(&parser));
+    } while (consumed < length && !parser.AreHeadersFinished());
 
     if (input == nullptr)
         return 0;
@@ -212,8 +211,8 @@ CGIClient::FeedHeadersCheck(const char *data, size_t length)
 
     assert(nbytes == 0 || input != nullptr);
     assert(nbytes == 0 ||
-           !cgi_parser_headers_finished(&parser) ||
-           !cgi_parser_eof(&parser));
+           !parser.AreHeadersFinished() ||
+           !parser.IsEOF());
 
     return nbytes;
 }
@@ -221,7 +220,7 @@ CGIClient::FeedHeadersCheck(const char *data, size_t length)
 inline size_t
 CGIClient::FeedBody(const char *data, size_t length)
 {
-    if (cgi_parser_is_too_much(&parser, length)) {
+    if (parser.IsTooMuch(length)) {
         stopwatch_event(stopwatch, "malformed");
         stopwatch_dump(stopwatch);
 
@@ -238,7 +237,7 @@ CGIClient::FeedBody(const char *data, size_t length)
     had_output = true;
 
     size_t nbytes = istream_invoke_data(&output, data, length);
-    if (nbytes > 0 && cgi_parser_body_consumed(&parser, nbytes)) {
+    if (nbytes > 0 && parser.BodyConsumed(nbytes)) {
         stopwatch_event(stopwatch, "end");
         stopwatch_dump(stopwatch);
 
@@ -258,13 +257,13 @@ CGIClient::Feed(const void *data, size_t length)
 
     had_input = true;
 
-    if (!cgi_parser_headers_finished(&parser)) {
+    if (!parser.AreHeadersFinished()) {
         const ScopePoolRef ref(*output.pool TRACE_ARGS);
 
         size_t nbytes = FeedHeadersCheck((const char *)data, length);
 
         if (nbytes > 0 && nbytes < length &&
-            cgi_parser_headers_finished(&parser)) {
+            parser.AreHeadersFinished()) {
             /* the headers are finished; now begin sending the
                response body */
             size_t nbytes2 = FeedBody((const char *)data + nbytes,
@@ -302,17 +301,17 @@ cgi_input_direct(enum istream_direct type, int fd, size_t max_length,
 {
     CGIClient *cgi = (CGIClient *)ctx;
 
-    assert(cgi_parser_headers_finished(&cgi->parser));
+    assert(cgi->parser.AreHeadersFinished());
 
     cgi->had_input = true;
     cgi->had_output = true;
 
-    if (cgi_parser_known_length(&cgi->parser) &&
-        (off_t)max_length > cgi_parser_available(&cgi->parser))
-        max_length = (size_t)cgi_parser_available(&cgi->parser);
+    if (cgi->parser.KnownLength() &&
+        (off_t)max_length > cgi->parser.GetAvailable())
+        max_length = (size_t)cgi->parser.GetAvailable();
 
     ssize_t nbytes = istream_invoke_direct(&cgi->output, type, fd, max_length);
-    if (nbytes > 0 && cgi_parser_body_consumed(&cgi->parser, nbytes)) {
+    if (nbytes > 0 && cgi->parser.BodyConsumed(nbytes)) {
         stopwatch_event(cgi->stopwatch, "end");
         stopwatch_dump(cgi->stopwatch);
 
@@ -332,7 +331,7 @@ cgi_input_eof(void *ctx)
 
     cgi->input = nullptr;
 
-    if (!cgi_parser_headers_finished(&cgi->parser)) {
+    if (!cgi->parser.AreHeadersFinished()) {
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
@@ -345,7 +344,7 @@ cgi_input_eof(void *ctx)
                                 "premature end of headers from CGI script");
         cgi->handler.InvokeAbort(error);
         pool_unref(cgi->output.pool);
-    } else if (cgi_parser_requires_more(&cgi->parser)) {
+    } else if (cgi->parser.DoesRequireMore()) {
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
@@ -374,7 +373,7 @@ cgi_input_abort(GError *error, void *ctx)
 
     cgi->input = nullptr;
 
-    if (!cgi_parser_headers_finished(&cgi->parser)) {
+    if (!cgi->parser.AreHeadersFinished()) {
         /* the response hasn't been sent yet: notify the response
            handler */
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
@@ -415,8 +414,8 @@ istream_cgi_available(struct istream *istream, bool partial)
 {
     CGIClient *cgi = istream_to_cgi(istream);
 
-    if (cgi_parser_known_length(&cgi->parser))
-        return cgi_parser_available(&cgi->parser);
+    if (cgi->parser.KnownLength())
+        return cgi->parser.GetAvailable();
 
     if (cgi->input == nullptr)
         return 0;
@@ -504,14 +503,13 @@ CGIClient::CGIClient(struct pool &pool, struct stopwatch *_stopwatch,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
     :stopwatch(_stopwatch),
-     buffer(fb_pool_alloc())
+     buffer(fb_pool_alloc()),
+     parser(pool)
 {
     istream_init(&output, &istream_cgi, &pool);
 
     istream_assign_handler(&input, &_input,
                            &cgi_input_handler, this, 0);
-
-    cgi_parser_init(&pool, &parser);
 
     handler.Set(_handler, handler_ctx);
 

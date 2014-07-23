@@ -14,15 +14,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-void
-cgi_parser_init(struct pool *pool, CGIParser *parser)
-{
-    parser->status = HTTP_STATUS_OK;
-    parser->remaining = -1;
-    parser->headers = strmap_new(pool);
-
+CGIParser::CGIParser(struct pool &pool)
+    :status(HTTP_STATUS_OK),
+     remaining(-1),
+     headers(strmap_new(&pool))
 #ifndef NDEBUG
-    parser->finished = false;
+    , finished(false)
+{
 #endif
 }
 
@@ -30,53 +28,52 @@ cgi_parser_init(struct pool *pool, CGIParser *parser)
  * Evaluate the response headers after the headers have been finalized
  * by an empty line.
  */
-static enum completion
-cgi_parser_finish(CGIParser *parser, struct fifo_buffer *buffer,
-                  GError **error_r)
+inline enum completion
+CGIParser::Finish(struct fifo_buffer &buffer, GError **error_r)
 {
     /* parse the status */
-    const char *p = parser->headers->Remove("status");
+    const char *p = headers->Remove("status");
     if (p != nullptr) {
         int i = atoi(p);
         if (http_status_is_valid((http_status_t)i))
-            parser->status = (http_status_t)i;
+            status = (http_status_t)i;
     }
 
-    if (http_status_is_empty(parser->status)) {
+    if (http_status_is_empty(status)) {
         /* there cannot be a response body */
-        parser->remaining = 0;
+        remaining = 0;
     } else {
-        p = parser->headers->Remove("content-length");
+        p = headers->Remove("content-length");
         if (p != nullptr) {
             /* parse the Content-Length response header */
             char *endptr;
-            parser->remaining = (off_t)strtoull(p, &endptr, 10);
-            if (endptr == p || *endptr != 0 || parser->remaining < 0)
-                parser->remaining = -1;
+            remaining = (off_t)strtoull(p, &endptr, 10);
+            if (endptr == p || *endptr != 0 || remaining < 0)
+                remaining = -1;
         } else
             /* unknown length */
-            parser->remaining = -1;
+            remaining = -1;
     }
 
-    if (cgi_parser_is_too_much(parser, fifo_buffer_available(buffer))) {
+    if (IsTooMuch(fifo_buffer_available(&buffer))) {
         g_set_error(error_r, cgi_quark(), 0, "too much data from CGI script");
         return C_ERROR;
     }
 
 #ifndef NDEBUG
-    parser->finished = true;
+    finished = true;
 #endif
     return C_DONE;
 }
 
 enum completion
-cgi_parser_feed_headers(struct pool *pool, CGIParser *parser,
-                        struct fifo_buffer *buffer, GError **error_r)
+CGIParser::FeedHeaders(struct pool &pool, struct fifo_buffer &buffer,
+                       GError **error_r)
 {
-    assert(!cgi_parser_headers_finished(parser));
+    assert(!AreHeadersFinished());
 
     size_t length;
-    const char *data = (const char *)fifo_buffer_read(buffer, &length);
+    const char *data = (const char *)fifo_buffer_read(&buffer, &length);
     if (data == nullptr)
         return C_MORE;
 
@@ -96,21 +93,21 @@ cgi_parser_feed_headers(struct pool *pool, CGIParser *parser,
         if (line_length == 0) {
             /* found an empty line, which is the separator between
                headers and body */
-            fifo_buffer_consume(buffer, next - data);
-            return cgi_parser_finish(parser, buffer, error_r);
+            fifo_buffer_consume(&buffer, next - data);
+            return Finish(buffer, error_r);
         }
 
-        header_parse_line(pool, parser->headers, start, line_length);
+        header_parse_line(&pool, headers, start, line_length);
 
         start = next;
     }
 
     if (next != nullptr) {
-        fifo_buffer_consume(buffer, next - data);
+        fifo_buffer_consume(&buffer, next - data);
         return C_MORE;
     }
 
-    if (fifo_buffer_full(buffer)) {
+    if (fifo_buffer_full(&buffer)) {
         /* the buffer is full, and no header could be parsed: this
            means the current header is too large for the buffer; bail
            out */
