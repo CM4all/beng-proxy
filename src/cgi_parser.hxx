@@ -33,7 +33,7 @@ struct fifo_buffer;
  * - use cgi_parser_available() and cgi_parser_consumed() while
  * transferring the response body
  */
-struct cgi_parser {
+struct CGIParser {
     http_status_t status;
 
     /**
@@ -50,13 +50,13 @@ struct cgi_parser {
 };
 
 void
-cgi_parser_init(struct pool *pool, struct cgi_parser *parser);
+cgi_parser_init(struct pool *pool, CGIParser *parser);
 
 /**
  * Did the parser finish reading the response headers?
  */
 static inline bool
-cgi_parser_headers_finished(const struct cgi_parser *parser)
+cgi_parser_headers_finished(const CGIParser *parser)
 {
     assert(parser->finished == (parser->headers == NULL));
 
@@ -74,11 +74,11 @@ cgi_parser_headers_finished(const struct cgi_parser *parser)
  * data is expected; C_ERROR on error
  */
 enum completion
-cgi_parser_feed_headers(struct pool *pool, struct cgi_parser *parser,
+cgi_parser_feed_headers(struct pool *pool, CGIParser *parser,
                         struct fifo_buffer *buffer, GError **error_r);
 
 static inline http_status_t
-cgi_parser_get_status(const struct cgi_parser *parser)
+cgi_parser_get_status(const CGIParser *parser)
 {
     assert(parser != NULL);
     assert(parser->finished);
@@ -87,7 +87,7 @@ cgi_parser_get_status(const struct cgi_parser *parser)
 }
 
 static inline struct strmap *
-cgi_parser_get_headers(struct cgi_parser *parser)
+cgi_parser_get_headers(CGIParser *parser)
 {
     assert(parser != NULL);
     assert(parser->headers != NULL);
@@ -99,25 +99,25 @@ cgi_parser_get_headers(struct cgi_parser *parser)
 }
 
 static inline bool
-cgi_parser_known_length(const struct cgi_parser *parser)
+cgi_parser_known_length(const CGIParser *parser)
 {
     return parser->remaining >= 0;
 }
 
 static inline off_t
-cgi_parser_available(const struct cgi_parser *parser)
+cgi_parser_available(const CGIParser *parser)
 {
     return parser->remaining;
 }
 
 static inline bool
-cgi_parser_requires_more(const struct cgi_parser *parser)
+cgi_parser_requires_more(const CGIParser *parser)
 {
     return parser->remaining > 0;
 }
 
 static inline bool
-cgi_parser_is_too_much(const struct cgi_parser *parser, size_t length)
+cgi_parser_is_too_much(const CGIParser *parser, size_t length)
 {
     return parser->remaining != -1 && (off_t)length > parser->remaining;
 }
@@ -128,7 +128,7 @@ cgi_parser_is_too_much(const struct cgi_parser *parser, size_t length)
  * @return true if the response body is finished
  */
 static inline bool
-cgi_parser_body_consumed(struct cgi_parser *parser, size_t nbytes)
+cgi_parser_body_consumed(CGIParser *parser, size_t nbytes)
 {
     assert(nbytes > 0);
 
@@ -142,7 +142,7 @@ cgi_parser_body_consumed(struct cgi_parser *parser, size_t nbytes)
 }
 
 static inline bool
-cgi_parser_eof(const struct cgi_parser *parser)
+cgi_parser_eof(const CGIParser *parser)
 {
     return parser->remaining == 0;
 }

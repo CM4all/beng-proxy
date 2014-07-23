@@ -29,7 +29,7 @@ struct CGIClient {
     struct istream *input;
     struct fifo_buffer *const buffer;
 
-    struct cgi_parser parser;
+    CGIParser parser;
 
     /**
      * This flag is true while cgi_parse_headers() is calling

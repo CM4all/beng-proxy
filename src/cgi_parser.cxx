@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 void
-cgi_parser_init(struct pool *pool, struct cgi_parser *parser)
+cgi_parser_init(struct pool *pool, CGIParser *parser)
 {
     parser->status = HTTP_STATUS_OK;
     parser->remaining = -1;
@@ -31,7 +31,7 @@ cgi_parser_init(struct pool *pool, struct cgi_parser *parser)
  * by an empty line.
  */
 static enum completion
-cgi_parser_finish(struct cgi_parser *parser, struct fifo_buffer *buffer,
+cgi_parser_finish(CGIParser *parser, struct fifo_buffer *buffer,
                   GError **error_r)
 {
     /* parse the status */
@@ -70,7 +70,7 @@ cgi_parser_finish(struct cgi_parser *parser, struct fifo_buffer *buffer,
 }
 
 enum completion
-cgi_parser_feed_headers(struct pool *pool, struct cgi_parser *parser,
+cgi_parser_feed_headers(struct pool *pool, CGIParser *parser,
                         struct fifo_buffer *buffer, GError **error_r)
 {
     assert(!cgi_parser_headers_finished(parser));
