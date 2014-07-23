@@ -50,106 +50,126 @@ struct CGIClient {
               void *handler_ctx,
               struct async_operation_ref &async_ref);
 
+    /**
+     * @return false if the connection has been closed
+     */
+    bool ReturnResponse();
+
+    /**
+     * Feed data into the input buffer and continue parsing response
+     * headers from it.  After this function returns, the response may
+     * have been delivered to the response handler, and the caller should
+     * post the rest of the specified buffer to the response body stream.
+     *
+     * Caller must hold pool reference.
+     *
+     * @return the number of bytes consumed from the specified buffer
+     * (moved to the input buffer), 0 if the object has been closed
+     */
+    size_t FeedHeaders(const void *data, size_t length);
+
+    /**
+     * Call FeedHeaders() in a loop, to parse as much as possible.
+     *
+     * Caller must hold pool reference.
+     */
+    size_t FeedHeadersLoop(const char *data, size_t length);
+
+    /**
+     * Caller must hold pool reference.
+     */
+    size_t FeedHeadersCheck(const char *data, size_t length);
+
+    size_t FeedBody(const char *data, size_t length);
+
+    size_t Feed(const void *data, size_t length);
+
     void Abort();
 };
 
-/**
- * @return false if the connection has been closed
- */
-static bool
-cgi_return_response(CGIClient *cgi)
+inline bool
+CGIClient::ReturnResponse()
 {
-    cgi->operation.Finished();
+    operation.Finished();
 
-    http_status_t status = cgi_parser_get_status(&cgi->parser);
-    struct strmap *headers = cgi_parser_get_headers(&cgi->parser);
+    http_status_t status = cgi_parser_get_status(&parser);
+    struct strmap *headers = cgi_parser_get_headers(&parser);
 
     if (http_status_is_empty(status)) {
         /* this response does not have a response body, as indicated
            by the HTTP status code */
 
-        stopwatch_event(cgi->stopwatch, "empty");
-        stopwatch_dump(cgi->stopwatch);
+        stopwatch_event(stopwatch, "empty");
+        stopwatch_dump(stopwatch);
 
-        fb_pool_free(cgi->buffer);
-        istream_free_handler(&cgi->input);
-        cgi->handler.InvokeResponse(status, headers, nullptr);
-        pool_unref(cgi->output.pool);
+        fb_pool_free(buffer);
+        istream_free_handler(&input);
+        handler.InvokeResponse(status, headers, nullptr);
+        pool_unref(output.pool);
         return false;
-    } else if (cgi_parser_eof(&cgi->parser)) {
+    } else if (cgi_parser_eof(&parser)) {
         /* the response body is empty */
 
-        stopwatch_event(cgi->stopwatch, "empty");
-        stopwatch_dump(cgi->stopwatch);
+        stopwatch_event(stopwatch, "empty");
+        stopwatch_dump(stopwatch);
 
-        fb_pool_free(cgi->buffer);
-        istream_free_handler(&cgi->input);
-        cgi->handler.InvokeResponse(status, headers,
-                                    istream_null_new(cgi->output.pool));
-        pool_unref(cgi->output.pool);
+        fb_pool_free(buffer);
+        istream_free_handler(&input);
+        handler.InvokeResponse(status, headers,
+                               istream_null_new(output.pool));
+        pool_unref(output.pool);
         return false;
     } else {
-        stopwatch_event(cgi->stopwatch, "headers");
+        stopwatch_event(stopwatch, "headers");
 
-        cgi->in_response_callback = true;
-        cgi->handler.InvokeResponse(status, headers, &cgi->output);
-        cgi->in_response_callback = false;
-        return cgi->input != nullptr;
+        in_response_callback = true;
+        handler.InvokeResponse(status, headers, &output);
+        in_response_callback = false;
+        return input != nullptr;
     }
 }
 
-/**
- * Feed data into the input buffer and continue parsing response
- * headers from it.  After this function returns, the response may
- * have been delivered to the response handler, and the caller should
- * post the rest of the specified buffer to the response body stream.
- *
- * Caller must hold pool reference.
- *
- * @return the number of bytes consumed from the specified buffer
- * (moved to the input buffer), 0 if the object has been closed
- */
-static size_t
-cgi_feed_headers(CGIClient *cgi, const void *data, size_t length)
+inline size_t
+CGIClient::FeedHeaders(const void *data, size_t length)
 {
-    assert(!cgi_parser_headers_finished(&cgi->parser));
+    assert(!cgi_parser_headers_finished(&parser));
 
     size_t max_length;
-    void *dest = fifo_buffer_write(cgi->buffer, &max_length);
+    void *dest = fifo_buffer_write(buffer, &max_length);
     assert(dest != nullptr);
 
     if (length > max_length)
         length = max_length;
 
     memcpy(dest, data, length);
-    fifo_buffer_append(cgi->buffer, length);
+    fifo_buffer_append(buffer, length);
 
     GError *error = nullptr;
-    enum completion c = cgi_parser_feed_headers(cgi->output.pool, &cgi->parser,
-                                                cgi->buffer, &error);
+    enum completion c = cgi_parser_feed_headers(output.pool, &parser,
+                                                buffer, &error);
     switch (c) {
     case C_DONE:
         /* the C_DONE status can only be triggered by new data that
            was just received; therefore, the amount of data still in
            the buffer (= response body) must be smaller */
-        assert(fifo_buffer_available(cgi->buffer) < length);
+        assert(fifo_buffer_available(buffer) < length);
 
-        if (!cgi_return_response(cgi))
+        if (!ReturnResponse())
             return 0;
 
         /* don't consider data still in the buffer (= response body)
            as "consumed"; the caller will attempt to submit it to the
            response body handler */
-        return length - fifo_buffer_available(cgi->buffer);
+        return length - fifo_buffer_available(buffer);
 
     case C_MORE:
         return length;
 
     case C_ERROR:
-        fb_pool_free(cgi->buffer);
-        istream_free_handler(&cgi->input);
-        cgi->handler.InvokeAbort(error);
-        pool_unref(cgi->output.pool);
+        fb_pool_free(buffer);
+        istream_free_handler(&input);
+        handler.InvokeAbort(error);
+        pool_unref(output.pool);
         return 0;
 
     case C_CLOSED:
@@ -163,81 +183,104 @@ cgi_feed_headers(CGIClient *cgi, const void *data, size_t length)
     return 0;
 }
 
-/**
- * Call cgi_feed_headers() in a loop, to parse as much as possible.
- *
- * Caller must hold pool reference.
- */
-static size_t
-cgi_feed_headers2(CGIClient *cgi, const char *data, size_t length)
+inline size_t
+CGIClient::FeedHeadersLoop(const char *data, size_t length)
 {
     assert(length > 0);
-    assert(!cgi_parser_headers_finished(&cgi->parser));
+    assert(!cgi_parser_headers_finished(&parser));
 
     size_t consumed = 0;
 
     do {
-        size_t nbytes = cgi_feed_headers(cgi, data + consumed,
-                                         length - consumed);
+        size_t nbytes = FeedHeaders(data + consumed, length - consumed);
         if (nbytes == 0)
             break;
 
         consumed += nbytes;
-    } while (consumed < length && !cgi_parser_headers_finished(&cgi->parser));
+    } while (consumed < length && !cgi_parser_headers_finished(&parser));
 
-    if (cgi->input == nullptr)
+    if (input == nullptr)
         return 0;
 
     return consumed;
 }
 
-/**
- * Caller must hold pool reference.
- */
-static size_t
-cgi_feed_headers3(CGIClient *cgi, const char *data, size_t length)
+inline size_t
+CGIClient::FeedHeadersCheck(const char *data, size_t length)
 {
-    size_t nbytes = cgi_feed_headers2(cgi, data, length);
+    size_t nbytes = FeedHeadersLoop(data, length);
 
-    assert(nbytes == 0 || cgi->input != nullptr);
+    assert(nbytes == 0 || input != nullptr);
     assert(nbytes == 0 ||
-           !cgi_parser_headers_finished(&cgi->parser) ||
-           !cgi_parser_eof(&cgi->parser));
+           !cgi_parser_headers_finished(&parser) ||
+           !cgi_parser_eof(&parser));
 
     return nbytes;
 }
 
-static size_t
-cgi_feed_body(CGIClient *cgi, const char *data, size_t length)
+inline size_t
+CGIClient::FeedBody(const char *data, size_t length)
 {
-    if (cgi_parser_is_too_much(&cgi->parser, length)) {
-        stopwatch_event(cgi->stopwatch, "malformed");
-        stopwatch_dump(cgi->stopwatch);
+    if (cgi_parser_is_too_much(&parser, length)) {
+        stopwatch_event(stopwatch, "malformed");
+        stopwatch_dump(stopwatch);
 
-        fb_pool_free(cgi->buffer);
-        istream_free_handler(&cgi->input);
+        fb_pool_free(buffer);
+        istream_free_handler(&input);
 
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
                                 "too much data from CGI script");
-        istream_deinit_abort(&cgi->output, error);
+        istream_deinit_abort(&output, error);
         return 0;
     }
 
-    cgi->had_output = true;
+    had_output = true;
 
-    size_t nbytes = istream_invoke_data(&cgi->output, data, length);
-    if (nbytes > 0 && cgi_parser_body_consumed(&cgi->parser, nbytes)) {
-        stopwatch_event(cgi->stopwatch, "end");
-        stopwatch_dump(cgi->stopwatch);
+    size_t nbytes = istream_invoke_data(&output, data, length);
+    if (nbytes > 0 && cgi_parser_body_consumed(&parser, nbytes)) {
+        stopwatch_event(stopwatch, "end");
+        stopwatch_dump(stopwatch);
 
-        fb_pool_free(cgi->buffer);
-        istream_free_handler(&cgi->input);
-        istream_deinit_eof(&cgi->output);
+        fb_pool_free(buffer);
+        istream_free_handler(&input);
+        istream_deinit_eof(&output);
         return 0;
     }
 
     return nbytes;
+}
+
+inline size_t
+CGIClient::Feed(const void *data, size_t length)
+{
+    assert(input != nullptr);
+
+    had_input = true;
+
+    if (!cgi_parser_headers_finished(&parser)) {
+        const ScopePoolRef ref(*output.pool TRACE_ARGS);
+
+        size_t nbytes = FeedHeadersCheck((const char *)data, length);
+
+        if (nbytes > 0 && nbytes < length &&
+            cgi_parser_headers_finished(&parser)) {
+            /* the headers are finished; now begin sending the
+               response body */
+            size_t nbytes2 = FeedBody((const char *)data + nbytes,
+                                      length - nbytes);
+            if (nbytes2 > 0)
+                /* more data was consumed */
+                nbytes += nbytes2;
+            else if (input == nullptr)
+                /* the connection was closed, must return 0 */
+                nbytes = 0;
+        }
+
+        return nbytes;
+    } else {
+        return FeedBody((const char *)data, length);
+    }
 }
 
 /*
@@ -250,33 +293,7 @@ cgi_input_data(const void *data, size_t length, void *ctx)
 {
     CGIClient *cgi = (CGIClient *)ctx;
 
-    assert(cgi->input != nullptr);
-
-    cgi->had_input = true;
-
-    if (!cgi_parser_headers_finished(&cgi->parser)) {
-        const ScopePoolRef ref(*cgi->output.pool TRACE_ARGS);
-
-        size_t nbytes = cgi_feed_headers3(cgi, (const char *)data, length);
-
-        if (nbytes > 0 && nbytes < length &&
-            cgi_parser_headers_finished(&cgi->parser)) {
-            /* the headers are finished; now begin sending the
-               response body */
-            size_t nbytes2 = cgi_feed_body(cgi, (const char *)data + nbytes,
-                                           length - nbytes);
-            if (nbytes2 > 0)
-                /* more data was consumed */
-                nbytes += nbytes2;
-            else if (cgi->input == nullptr)
-                /* the connection was closed, must return 0 */
-                nbytes = 0;
-        }
-
-        return nbytes;
-    } else {
-        return cgi_feed_body(cgi, (const char *)data, length);
-    }
+    return cgi->Feed(data, length);
 }
 
 static ssize_t
