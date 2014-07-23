@@ -19,9 +19,9 @@ struct http_cache_document {
 
     http_cache_document(struct pool &pool,
                         const struct http_cache_info &_info,
-                        struct strmap *request_headers,
+                        const struct strmap *request_headers,
                         http_status_t _status,
-                        struct strmap *response_headers);
+                        const struct strmap *response_headers);
 
     /**
      * Checks whether the specified cache item fits the current request.

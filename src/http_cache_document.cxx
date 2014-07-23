@@ -10,9 +10,9 @@
 
 http_cache_document::http_cache_document(struct pool &pool,
                                          const struct http_cache_info &_info,
-                                         struct strmap *request_headers,
+                                         const struct strmap *request_headers,
                                          http_status_t _status,
-                                         struct strmap *response_headers)
+                                         const struct strmap *response_headers)
     :info(pool, _info),
      vary(_info.vary != nullptr
           ? http_cache_copy_vary(&pool, _info.vary, request_headers)

@@ -36,9 +36,9 @@ struct http_cache_item {
 
     http_cache_item(struct pool &_pool,
                     const struct http_cache_info &info,
-                    struct strmap *request_headers,
+                    const struct strmap *request_headers,
                     http_status_t status,
-                    struct strmap *response_headers,
+                    const struct strmap *response_headers,
                     size_t _size,
                     Rubber &_rubber, unsigned _rubber_id)
         :pool(&_pool),
@@ -64,7 +64,7 @@ http_cache_item_match(const struct cache_item *_item, void *ctx)
 {
     const struct http_cache_item *item =
         (const struct http_cache_item *)_item;
-    struct strmap *headers = (struct strmap *)ctx;
+    const struct strmap *headers = (const struct strmap *)ctx;
 
     return item->document.VaryFits(headers);
 }
@@ -89,7 +89,7 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     const struct http_cache_info *info,
                     struct strmap *request_headers,
                     http_status_t status,
-                    struct strmap *response_headers,
+                    const struct strmap *response_headers,
                     Rubber *rubber, unsigned rubber_id, size_t size)
 {
 

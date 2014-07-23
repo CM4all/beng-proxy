@@ -59,7 +59,7 @@ http_cache_heap_put(struct http_cache_heap *cache,
                     const struct http_cache_info *info,
                     struct strmap *request_headers,
                     http_status_t status,
-                    struct strmap *response_headers,
+                    const struct strmap *response_headers,
                     Rubber *rubber, unsigned rubber_id, size_t size);
 
 void
