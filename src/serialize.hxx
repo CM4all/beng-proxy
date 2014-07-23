@@ -30,7 +30,7 @@ void
 serialize_string_null(struct growing_buffer *gb, const char *value);
 
 void
-serialize_strmap(struct growing_buffer *gb, struct strmap *map);
+serialize_strmap(struct growing_buffer *gb, const struct strmap *map);
 
 uint16_t
 deserialize_uint16(ConstBuffer<void> &input);

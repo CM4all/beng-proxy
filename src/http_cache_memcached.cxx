@@ -407,8 +407,9 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
                          BackgroundManager &background,
                          const char *uri,
                          const struct http_cache_info *info,
-                         struct strmap *request_headers,
-                         http_status_t status, struct strmap *response_headers,
+                         const struct strmap *request_headers,
+                         http_status_t status,
+                         const struct strmap *response_headers,
                          struct istream *value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
                          struct async_operation_ref *async_ref)
@@ -419,13 +420,12 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
                                                   background,
                                                   uri, *async_ref);
 
-    struct strmap *vary;
     struct growing_buffer *gb;
     const char *key;
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    vary = info->vary != nullptr
+    const struct strmap *vary = info->vary != nullptr
         ? http_cache_copy_vary(tpool, info->vary, request_headers)
         : nullptr;
 

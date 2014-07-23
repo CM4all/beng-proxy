@@ -60,7 +60,7 @@ serialize_string_null(struct growing_buffer *gb, const char *value)
 }
 
 void
-serialize_strmap(struct growing_buffer *gb, struct strmap *map)
+serialize_strmap(struct growing_buffer *gb, const struct strmap *map)
 {
     if (map == nullptr) {
         /* same as empty map */
