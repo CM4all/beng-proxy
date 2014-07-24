@@ -11,6 +11,8 @@
 
 #include <boost/intrusive/set.hpp>
 
+#include <utility>
+
 struct pool;
 
 struct strmap {
@@ -57,6 +59,9 @@ struct strmap {
     strmap(struct pool &_pool, const strmap &src);
 
     strmap(const strmap &) = delete;
+
+    strmap(strmap &&src)
+        :pool(src.pool), map(std::move(src.map)) {}
 
     const_iterator begin() const {
         return map.begin();
