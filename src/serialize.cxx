@@ -60,15 +60,9 @@ serialize_string_null(struct growing_buffer *gb, const char *value)
 }
 
 void
-serialize_strmap(struct growing_buffer *gb, const struct strmap *map)
+serialize_strmap(struct growing_buffer *gb, const struct strmap &map)
 {
-    if (map == nullptr) {
-        /* same as empty map */
-        serialize_string(gb, "");
-        return;
-    }
-
-    for (const auto &i : *map) {
+    for (const auto &i : map) {
         if (*i.key == 0)
             /* this shouldn't happen; ignore this invalid entry  */
             continue;
@@ -79,6 +73,16 @@ serialize_strmap(struct growing_buffer *gb, const struct strmap *map)
 
     /* key length 0 means "end of map" */
     serialize_string(gb, "");
+}
+
+void
+serialize_strmap(struct growing_buffer *gb, const struct strmap *map)
+{
+    if (map == nullptr)
+        /* same as empty map */
+        serialize_string(gb, "");
+    else
+        serialize_strmap(gb, *map);
 }
 
 static void
