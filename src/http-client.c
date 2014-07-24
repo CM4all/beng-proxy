@@ -483,7 +483,7 @@ http_client_headers_finished(struct http_client *client)
     client->keep_alive =
         (header_connection == NULL && !client->response.http_1_0) ||
         (header_connection != NULL &&
-         http_list_contains_i(header_connection, "keep-alive") == 0);
+         http_list_contains_i(header_connection, "keep-alive"));
 
     if (http_status_is_empty(client->response.status) ||
         client->response.no_body) {
