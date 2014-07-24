@@ -42,7 +42,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
  */
 struct strmap *
 http_cache_copy_vary(struct pool *pool, const char *vary,
-                     const struct strmap *headers);
+                     const struct strmap *request_headers);
 
 /**
  * The server sent us a non-"Not Modified" response.  Check if we want

@@ -314,7 +314,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
 
 struct strmap *
 http_cache_copy_vary(struct pool *pool, const char *vary,
-                     const struct strmap *headers)
+                     const struct strmap *request_headers)
 {
     struct strmap *dest = strmap_new(pool);
     char **list;
@@ -322,7 +322,7 @@ http_cache_copy_vary(struct pool *pool, const char *vary,
     for (list = http_list_split(pool, vary);
          *list != nullptr; ++list) {
         const char *name = *list;
-        const char *value = strmap_get_checked(headers, name);
+        const char *value = strmap_get_checked(request_headers, name);
         if (value == nullptr)
             value = "";
         else
