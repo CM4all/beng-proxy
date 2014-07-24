@@ -82,6 +82,11 @@ struct cgi_address {
     const char *GetId(struct pool *pool) const;
 
     gcc_pure
+    bool HasQueryString() const {
+        return query_string != nullptr && *query_string != 0;
+    }
+
+    gcc_pure
     bool IsValidBase() const;
 
     char *AutoBase(struct pool *pool, const char *request_uri) const;

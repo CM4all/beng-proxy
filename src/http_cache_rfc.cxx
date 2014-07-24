@@ -49,39 +49,6 @@ http_cache_info_new(struct pool &pool)
     return NewFromPool<http_cache_info>(pool);
 }
 
-static bool
-resource_address_has_query_string(const struct resource_address *address)
-{
-    switch (address->type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_NFS:
-        return false;
-
-    case RESOURCE_ADDRESS_HTTP:
-        return strchr(address->u.http->path, '?') != nullptr;
-
-    case RESOURCE_ADDRESS_LHTTP:
-        return strchr(address->u.lhttp->uri, '?') != nullptr;
-
-    case RESOURCE_ADDRESS_PIPE:
-        return false;
-
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-        return address->u.cgi->query_string != nullptr &&
-            *address->u.cgi->query_string != 0;
-
-    case RESOURCE_ADDRESS_AJP:
-        return false;
-    }
-
-    /* unreachable */
-    assert(false);
-    return false;
-}
-
 /* check whether the request could produce a cacheable response */
 struct http_cache_info *
 http_cache_request_evaluate(struct pool &pool,
@@ -138,7 +105,7 @@ http_cache_request_evaluate(struct pool &pool,
 
     info->is_remote = address.type == RESOURCE_ADDRESS_HTTP ||
         address.type == RESOURCE_ADDRESS_AJP;
-    info->has_query_string = resource_address_has_query_string(&address);
+    info->has_query_string = address.HasQueryString();
 
     return info;
 }

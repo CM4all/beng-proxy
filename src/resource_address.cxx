@@ -702,6 +702,38 @@ resource_address::IsValidBase() const
 }
 
 bool
+resource_address::HasQueryString() const
+{
+    switch (type) {
+    case RESOURCE_ADDRESS_NONE:
+        return false;
+
+    case RESOURCE_ADDRESS_LOCAL:
+        return u.file->HasQueryString();
+
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_AJP:
+        return u.http->HasQueryString();
+
+    case RESOURCE_ADDRESS_LHTTP:
+        return u.lhttp->HasQueryString();
+
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
+        return u.cgi->HasQueryString();
+
+    case RESOURCE_ADDRESS_NFS:
+        return u.nfs->HasQueryString();
+    }
+
+    /* unreachable */
+    assert(false);
+    return false;
+}
+
+bool
 resource_address_is_expandable(const struct resource_address *address)
 {
     assert(address != NULL);

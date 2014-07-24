@@ -115,6 +115,12 @@ lhttp_address_dup_with_uri(struct pool &pool, const struct lhttp_address *src,
     return p;
 }
 
+bool
+lhttp_address::HasQueryString() const
+{
+        return strchr(uri, '?') != nullptr;
+}
+
 struct lhttp_address *
 lhttp_address::InsertQueryString(struct pool &pool,
                                  const char *query_string) const

@@ -174,6 +174,12 @@ http_address::GetAbsoluteURI(struct pool *pool) const
     return GetAbsoluteURI(pool, path);
 }
 
+bool
+http_address::HasQueryString() const
+{
+        return strchr(path, '?') != nullptr;
+}
+
 struct http_address *
 http_address::InsertQueryString(struct pool &pool,
                                 const char *query_string) const

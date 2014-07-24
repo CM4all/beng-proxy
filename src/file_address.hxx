@@ -42,6 +42,11 @@ struct file_address {
     file_address(struct pool *pool, const file_address &src);
 
     gcc_pure
+    bool HasQueryString() const {
+        return false;
+    }
+
+    gcc_pure
     bool IsValidBase() const;
 
     struct file_address *SaveBase(struct pool *pool, const char *suffix) const;

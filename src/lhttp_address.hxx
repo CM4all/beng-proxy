@@ -67,6 +67,9 @@ struct lhttp_address {
 
     bool Check(GError **error_r) const;
 
+    gcc_pure
+    bool HasQueryString() const;
+
     /**
      * Duplicates this #lhttp_address object and inserts the specified
      * query string into the URI.

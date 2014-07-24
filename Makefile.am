@@ -1664,6 +1664,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/http_address.cxx \
 	src/regex.cxx \
 	src/address_list.cxx \
+	src/exec.cxx \
 	src/istream_unlock.cxx \
 	src/cache.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
@@ -1671,6 +1672,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/clock.c \
 	src/istream_rubber.cxx
 test_run_http_cache_LDADD = $(AM_LDADD) \
+	libraddress.a \
 	libistream.a libpool.a libmemory.a \
 	libputil.a \
 	libutil.a \
@@ -1719,6 +1721,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/cache.cxx \
 	src/cleanup_timer.c src/cleanup_timer.h \
 	src/fd_util.c src/fd-util.c \
+	src/exec.cxx \
 	src/stock.cxx src/hstock.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/memcached_stock.cxx \
@@ -1731,9 +1734,10 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
+	libraddress.a \
+	libputil.a \
 	libistream.a libpool.a libmemory.a \
 	libnet.a \
-	libputil.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)

@@ -70,6 +70,9 @@ struct http_address {
     gcc_malloc
     char *GetAbsoluteURI(struct pool *pool) const;
 
+    gcc_pure
+    bool HasQueryString() const;
+
     /**
      * Duplicates this #http_address object and inserts the specified
      * query string into the URI.
