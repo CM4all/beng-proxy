@@ -60,8 +60,7 @@ struct strmap {
 
     strmap(const strmap &) = delete;
 
-    strmap(strmap &&src)
-        :pool(src.pool), map(std::move(src.map)) {}
+    strmap(strmap &&src) = default;
 
     const_iterator begin() const {
         return map.begin();
