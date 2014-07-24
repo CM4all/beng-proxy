@@ -70,6 +70,11 @@ struct strmap {
         return map.end();
     }
 
+    gcc_pure
+    bool IsEmpty() const {
+        return map.empty();
+    }
+
     void Add(const char *key, const char *value);
     const char *Set(const char *key, const char *value);
     const char *Remove(const char *key);
