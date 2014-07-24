@@ -57,6 +57,10 @@ struct http_cache_item {
     static http_cache_item *FromDocument(http_cache_document *document) {
         return &ContainerCast2(*document, &http_cache_item::document);
     }
+
+    struct istream *OpenStream(struct pool *_pool) {
+        return istream_rubber_new(_pool, rubber, rubber_id, 0, size, false);
+    }
 };
 
 static bool
@@ -158,9 +162,7 @@ http_cache_heap_istream(struct pool *pool, struct http_cache_heap *cache,
         /* don't lock the item */
         return istream_null_new(pool);
 
-    struct istream *istream =
-        istream_rubber_new(pool, item->rubber, item->rubber_id,
-                           0, item->size, false);
+    struct istream *istream = item->OpenStream(pool);
     return istream_unlock_new(pool, istream,
                               cache->cache, &item->item);
 }
