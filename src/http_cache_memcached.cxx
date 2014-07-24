@@ -157,10 +157,13 @@ static struct http_cache_document *
 mcd_deserialize_document(struct pool *pool, ConstBuffer<void> &header,
                          const struct strmap *request_headers)
 {
-    auto document = NewFromPool<http_cache_document>(*pool);
+    auto document = NewFromPool<http_cache_document>(*pool, *pool);
 
     document->info.expires = deserialize_uint64(header);
-    document->vary = deserialize_strmap(header, pool);
+
+    if (!deserialize_strmap(header, document->vary))
+        return nullptr;
+
     document->status = (http_status_t)deserialize_uint16(header);
     document->response_headers = deserialize_strmap(header, pool);
 
@@ -423,15 +426,15 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    const struct strmap *vary = info.vary != nullptr
-        ? http_cache_copy_vary(*tpool, info.vary, request_headers)
-        : nullptr;
+    struct strmap vary(*tpool);
+    if (info.vary != nullptr)
+        http_cache_copy_vary(vary, *tpool, info.vary, request_headers);
 
-    request->choice = vary != nullptr
+    request->choice = !vary.IsEmpty()
         ? http_cache_choice_prepare(pool, uri, info, vary)
         : nullptr;
 
-    const char *key = http_cache_choice_vary_key(pool, uri, vary);
+    const char *key = http_cache_choice_vary_key(pool, uri, &vary);
 
     struct growing_buffer *gb = growing_buffer_new(&pool, 1024);
 

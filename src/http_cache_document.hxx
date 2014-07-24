@@ -2,6 +2,7 @@
 #define BENG_PROXY_HTTP_CACHE_DOCUMENT_HXX
 
 #include "http_cache_info.hxx"
+#include "strmap.hxx"
 
 #include <inline/compiler.h>
 #include <http/status.h>
@@ -9,12 +10,14 @@
 struct http_cache_document {
     struct http_cache_response_info info;
 
-    struct strmap *vary;
+    struct strmap vary;
 
     http_status_t status;
     struct strmap *response_headers;
 
-    http_cache_document() = default;
+    explicit http_cache_document(struct pool &pool)
+        :vary(pool) {}
+
     http_cache_document(const http_cache_document &) = delete;
 
     http_cache_document(struct pool &pool,

@@ -21,6 +21,6 @@ struct strmap;
 gcc_pure
 time_t
 http_cache_calc_expires(const struct http_cache_response_info &info,
-                        const struct strmap *vary);
+                        const struct strmap &vary);
 
 #endif

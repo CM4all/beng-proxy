@@ -253,7 +253,7 @@ http_cache_choice_get(struct pool &pool, struct memcached_stock &stock,
 struct http_cache_choice *
 http_cache_choice_prepare(struct pool &pool, const char *uri,
                           const struct http_cache_response_info &info,
-                          const struct strmap *vary)
+                          const struct strmap &vary)
 {
     auto choice = PoolAlloc<http_cache_choice>(pool);
 

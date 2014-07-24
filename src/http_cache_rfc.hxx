@@ -41,8 +41,8 @@ http_cache_response_evaluate(const struct http_cache_request_info &request_info,
  * Copy all request headers mentioned in the Vary response header to a
  * new strmap.
  */
-struct strmap *
-http_cache_copy_vary(struct pool &pool, const char *vary,
+void
+http_cache_copy_vary(struct strmap &dest, struct pool &pool, const char *vary,
                      const struct strmap *request_headers);
 
 /**

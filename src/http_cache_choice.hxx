@@ -51,7 +51,7 @@ http_cache_choice_get(struct pool &pool, struct memcached_stock &stock,
 struct http_cache_choice *
 http_cache_choice_prepare(struct pool &pool, const char *uri,
                           const struct http_cache_response_info &info,
-                          const struct strmap *vary);
+                          const struct strmap &vary);
 
 void
 http_cache_choice_commit(struct http_cache_choice &choice,

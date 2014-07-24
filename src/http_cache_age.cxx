@@ -20,23 +20,23 @@ static constexpr time_t WEEK = 7 * DAY;
  */
 gcc_pure
 static time_t
-http_cache_age_limit(const struct strmap *vary)
+http_cache_age_limit(const struct strmap &vary)
 {
-    if (vary == nullptr)
+    if (vary.IsEmpty())
         return WEEK;
 
     /* if there's a "Vary" response header, we may assume that the
        response is much more volatile, and lower limits apply */
 
-    if (vary->Contains("x-cm4all-beng-user") ||
-        vary->Contains("cookie") ||
-        vary->Contains("cookie2"))
+    if (vary.Contains("x-cm4all-beng-user") ||
+        vary.Contains("cookie") ||
+        vary.Contains("cookie2"))
         /* this response is specific to this one authenticated
            user, and caching it for a long time will not be
            helpful */
         return 5 * MINUTE;
 
-    if (vary->Contains("x-widgetid") || vary->Contains("x-widgethref"))
+    if (vary.Contains("x-widgetid") || vary.Contains("x-widgethref"))
         /* this response is specific to one widget instance */
         return 30 * MINUTE;
 
@@ -45,7 +45,7 @@ http_cache_age_limit(const struct strmap *vary)
 
 time_t
 http_cache_calc_expires(const struct http_cache_response_info &info,
-                        const struct strmap *vary)
+                        const struct strmap &vary)
 {
     const time_t now = time(nullptr);
 

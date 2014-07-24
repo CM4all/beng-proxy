@@ -262,12 +262,10 @@ http_cache_response_evaluate(const struct http_cache_request_info &request_info,
         info.etag != nullptr;
 }
 
-struct strmap *
-http_cache_copy_vary(struct pool &pool, const char *vary,
+void
+http_cache_copy_vary(struct strmap &dest, struct pool &pool, const char *vary,
                      const struct strmap *request_headers)
 {
-    struct strmap *dest = strmap_new(&pool);
-
     for (char **list = http_list_split(&pool, vary);
          *list != nullptr; ++list) {
         const char *name = *list;
@@ -276,10 +274,8 @@ http_cache_copy_vary(struct pool &pool, const char *vary,
             value = "";
         else
             value = p_strdup(&pool, value);
-        dest->Set(name, value);
+        dest.Set(name, value);
     }
-
-    return dest;
 }
 
 bool

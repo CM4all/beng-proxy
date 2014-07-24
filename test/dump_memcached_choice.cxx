@@ -43,7 +43,7 @@ dump_choice(const struct http_cache_document *document)
 {
     printf("expires=%ld\n", (long)(document->info.expires - time(NULL)));
 
-    for (const auto &i : *document->vary)
+    for (const auto &i : document->vary)
         printf("\t%s: %s\n", i.key, i.value);
 }
 
@@ -81,13 +81,13 @@ static const struct lease memcached_socket_lease = {
 static void
 my_sink_done(void *data0, size_t length, gcc_unused void *ctx)
 {
-    struct http_cache_document document;
     /*uint32_t magic;*/
 
     ConstBuffer<void> data(data0, length);
 
     while (!data.IsEmpty()) {
         const AutoRewindPool auto_rewind(*tpool);
+        struct http_cache_document document(*tpool);
 
         /*magic = */deserialize_uint32(data);
         /*
@@ -96,7 +96,7 @@ my_sink_done(void *data0, size_t length, gcc_unused void *ctx)
         */
 
         document.info.expires = deserialize_uint64(data);
-        document.vary = deserialize_strmap(data, tpool);
+        deserialize_strmap(data, document.vary);
 
         if (data.IsNull())
             /* deserialization failure */
