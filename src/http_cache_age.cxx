@@ -72,7 +72,7 @@ http_cache_calc_expires(const struct http_cache_info *info,
     if (info->expires == (time_t)-1)
         /* there is no Expires response header; keep it in the cache
            for 1 hour, but check with If-Modified-Since */
-        max_age = 3600;
+        max_age = HOUR;
     else {
         const time_t expires = info->expires;
         if (expires <= now)
