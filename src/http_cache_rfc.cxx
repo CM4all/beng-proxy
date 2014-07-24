@@ -326,10 +326,11 @@ http_cache_copy_vary(struct pool *pool, const char *vary,
 
     for (list = http_list_split(tpool, vary);
          *list != nullptr; ++list) {
-        const char *value = strmap_get_checked(headers, *list);
+        const char *name = *list;
+        const char *value = strmap_get_checked(headers, name);
         if (value == nullptr)
             value = "";
-        dest->Set(p_strdup(pool, *list), p_strdup(pool, value));
+        dest->Set(p_strdup(pool, name), p_strdup(pool, value));
     }
 
     if (pool != tpool)
