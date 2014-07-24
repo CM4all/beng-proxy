@@ -8,9 +8,9 @@
 #include <sys/types.h> /* for off_t */
 
 struct http_cache_info *
-http_cache_request_evaluate(struct pool *pool,
+http_cache_request_evaluate(struct pool &pool,
                             http_method_t method,
-                            const struct resource_address *address,
+                            const struct resource_address &address,
                             const struct strmap *headers,
                             struct istream *body);
 
@@ -41,7 +41,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
  * new strmap.
  */
 struct strmap *
-http_cache_copy_vary(struct pool *pool, const char *vary,
+http_cache_copy_vary(struct pool &pool, const char *vary,
                      const struct strmap *request_headers);
 
 /**

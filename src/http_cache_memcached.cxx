@@ -428,7 +428,7 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
     const AutoRewindPool auto_rewind(*tpool);
 
     const struct strmap *vary = info->vary != nullptr
-        ? http_cache_copy_vary(tpool, info->vary, request_headers)
+        ? http_cache_copy_vary(*tpool, info->vary, request_headers)
         : nullptr;
 
     request->choice = vary != nullptr

@@ -84,9 +84,9 @@ resource_address_has_query_string(const struct resource_address *address)
 
 /* check whether the request could produce a cacheable response */
 struct http_cache_info *
-http_cache_request_evaluate(struct pool *pool,
+http_cache_request_evaluate(struct pool &pool,
                             http_method_t method,
-                            const struct resource_address *address,
+                            const struct resource_address &address,
                             const struct strmap *headers,
                             struct istream *body)
 {
@@ -122,7 +122,7 @@ http_cache_request_evaluate(struct pool *pool,
 
                 if (strref_cmp_literal(s, "only-if-cached") == 0) {
                     if (info == nullptr)
-                        info = http_cache_info_new(*pool);
+                        info = http_cache_info_new(pool);
                     info->only_if_cached = true;
                 }
             }
@@ -134,11 +134,11 @@ http_cache_request_evaluate(struct pool *pool,
     }
 
     if (info == nullptr)
-        info = http_cache_info_new(*pool);
+        info = http_cache_info_new(pool);
 
-    info->is_remote = address->type == RESOURCE_ADDRESS_HTTP ||
-        address->type == RESOURCE_ADDRESS_AJP;
-    info->has_query_string = resource_address_has_query_string(address);
+    info->is_remote = address.type == RESOURCE_ADDRESS_HTTP ||
+        address.type == RESOURCE_ADDRESS_AJP;
+    info->has_query_string = resource_address_has_query_string(&address);
 
     return info;
 }
@@ -313,20 +313,20 @@ http_cache_response_evaluate(struct http_cache_info *info,
 }
 
 struct strmap *
-http_cache_copy_vary(struct pool *pool, const char *vary,
+http_cache_copy_vary(struct pool &pool, const char *vary,
                      const struct strmap *request_headers)
 {
-    struct strmap *dest = strmap_new(pool);
+    struct strmap *dest = strmap_new(&pool);
     char **list;
 
-    for (list = http_list_split(pool, vary);
+    for (list = http_list_split(&pool, vary);
          *list != nullptr; ++list) {
         const char *name = *list;
         const char *value = strmap_get_checked(request_headers, name);
         if (value == nullptr)
             value = "";
         else
-            value = p_strdup(pool, value);
+            value = p_strdup(&pool, value);
         dest->Set(name, value);
     }
 

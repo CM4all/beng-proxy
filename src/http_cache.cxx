@@ -1060,7 +1060,7 @@ http_cache_request(struct http_cache *cache,
     }
 
     struct http_cache_info *info =
-        http_cache_request_evaluate(pool, method, address, headers, body);
+        http_cache_request_evaluate(*pool, method, *address, headers, body);
     if (info != nullptr) {
         assert(body == nullptr);
 

@@ -15,7 +15,7 @@ http_cache_document::http_cache_document(struct pool &pool,
                                          const struct strmap *_response_headers)
     :info(pool, _info),
      vary(_info.vary != nullptr
-          ? http_cache_copy_vary(&pool, _info.vary, request_headers)
+          ? http_cache_copy_vary(pool, _info.vary, request_headers)
           : nullptr),
      status(_status),
      response_headers(_response_headers != nullptr
