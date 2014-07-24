@@ -44,48 +44,48 @@ static const struct lease lhttp_socket_lease = {
  */
 
 void
-lhttp_request(struct pool *pool, struct lhttp_stock *lhttp_stock,
-              const struct lhttp_address *address,
+lhttp_request(struct pool &pool, struct lhttp_stock &lhttp_stock,
+              const struct lhttp_address &address,
               http_method_t method,
               struct growing_buffer *headers, struct istream *body,
-              const struct http_response_handler *handler, void *handler_ctx,
-              struct async_operation_ref *async_ref)
+              const struct http_response_handler &handler, void *handler_ctx,
+              struct async_operation_ref &async_ref)
 {
     GError *error = nullptr;
-    if (!jail_params_check(&address->options.jail, &error)) {
+    if (!jail_params_check(&address.options.jail, &error)) {
         if (body != nullptr)
             istream_close(body);
 
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeAbort(handler_ctx, error);
         return;
     }
 
-    auto request = NewFromPool<struct lhttp_request>(*pool);
-    request->pool = pool;
-    request->lhttp_stock = lhttp_stock;
+    auto request = NewFromPool<struct lhttp_request>(pool);
+    request->pool = &pool;
+    request->lhttp_stock = &lhttp_stock;
 
     struct stock_item *stock_item =
-        lhttp_stock_get(lhttp_stock, pool, address,
+        lhttp_stock_get(&lhttp_stock, &pool, &address,
                         &error);
     if (stock_item == nullptr) {
         if (body != nullptr)
             istream_close(body);
 
-        handler->InvokeAbort(handler_ctx, error);
+        handler.InvokeAbort(handler_ctx, error);
         return;
     }
 
     request->stock_item = stock_item;
 
-    if (address->host_and_port != nullptr)
-        header_write(headers, "host", address->host_and_port);
+    if (address.host_and_port != nullptr)
+        header_write(headers, "host", address.host_and_port);
 
-    http_client_request(request->pool,
+    http_client_request(pool,
                         lhttp_stock_item_get_socket(stock_item),
                         lhttp_stock_item_get_type(stock_item),
-                        &lhttp_socket_lease, request,
+                        lhttp_socket_lease, request,
                         nullptr, nullptr,
-                        method, address->uri, headers, body, true,
+                        method, address.uri, headers, body, true,
                         handler, handler_ctx,
                         async_ref);
 }

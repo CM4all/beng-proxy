@@ -123,14 +123,14 @@ struct http_client {
 
     http_client(struct pool &_caller_pool, struct pool &_pool,
                 int fd, enum istream_direct fd_type,
-                const struct lease *lease, void *lease_ctx,
+                const struct lease &lease, void *lease_ctx,
                 const SocketFilter *filter, void *filter_ctx,
                 http_method_t method, const char *uri,
                 const struct growing_buffer *headers,
                 struct istream *body, bool expect_100,
-                const struct http_response_handler *handler,
+                const struct http_response_handler &handler,
                 void *ctx,
-                struct async_operation_ref *async_ref);
+                struct async_operation_ref &async_ref);
 
     static struct http_client &FromResponseBody(struct istream &istream) {
         auto &body = HttpBodyReader::FromStream(istream);
@@ -1102,33 +1102,33 @@ static const struct async_operation_class http_client_async_operation = {
 inline
 http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
                          int fd, enum istream_direct fd_type,
-                         const struct lease *lease, void *lease_ctx,
+                         const struct lease &lease, void *lease_ctx,
                          const SocketFilter *filter, void *filter_ctx,
                          http_method_t method, const char *uri,
                          const struct growing_buffer *headers,
                          struct istream *body, bool expect_100,
-                         const struct http_response_handler *handler,
+                         const struct http_response_handler &handler,
                          void *ctx,
-                         struct async_operation_ref *async_ref)
+                         struct async_operation_ref &async_ref)
     :pool(&_pool), caller_pool(&_caller_pool),
-    peer_name(p_strdup(pool, get_peer_name(fd))),
-    stopwatch(stopwatch_fd_new(pool, fd, uri))
+     peer_name(p_strdup(pool, get_peer_name(fd))),
+     stopwatch(stopwatch_fd_new(pool, fd, uri))
 {
     socket.Init(*pool, fd, fd_type,
                 &http_client_timeout, &http_client_timeout,
                 filter, filter_ctx,
                 http_client_socket_handler, this);
-    p_lease_ref_set(lease_ref, *lease, lease_ctx,
+    p_lease_ref_set(lease_ref, lease, lease_ctx,
                     *pool, "http_client_lease");
 
     response.read_state = http_client::response::READ_STATUS;
     response.no_body = http_method_is_empty(method);
 
     pool_ref(caller_pool);
-    request.handler.Set(*handler, ctx);
+    request.handler.Set(handler, ctx);
 
     request.async.Init(http_client_async_operation);
-    async_ref->Set(request.async);
+    async_ref.Set(request.async);
 
     /* request line */
 
@@ -1192,38 +1192,37 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
 }
 
 void
-http_client_request(struct pool *caller_pool,
+http_client_request(struct pool &caller_pool,
                     int fd, enum istream_direct fd_type,
-                    const struct lease *lease, void *lease_ctx,
+                    const struct lease &lease, void *lease_ctx,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
                     struct istream *body, bool expect_100,
-                    const struct http_response_handler *handler,
+                    const struct http_response_handler &handler,
                     void *ctx,
-                    struct async_operation_ref *async_ref)
+                    struct async_operation_ref &async_ref)
 {
     assert(fd >= 0);
     assert(http_method_is_valid(method));
-    assert(handler != nullptr);
-    assert(handler->response != nullptr);
+    assert(handler.response != nullptr);
 
     if (!uri_path_verify_quick(uri)) {
-        lease->Release(lease_ctx, true);
+        lease.Release(lease_ctx, true);
         if (body != nullptr)
             istream_close_unused(body);
 
         GError *error = g_error_new(http_client_quark(),
                                     HTTP_CLIENT_UNSPECIFIED,
                                     "malformed request URI '%s'", uri);
-        handler->InvokeAbort(ctx, error);
+        handler.InvokeAbort(ctx, error);
         return;
     }
 
     struct pool *pool =
-        pool_new_linear(caller_pool, "http_client_request", 8192);
+        pool_new_linear(&caller_pool, "http_client_request", 8192);
 
-    NewFromPool<struct http_client>(*pool, *caller_pool, *pool,
+    NewFromPool<struct http_client>(*pool, caller_pool, *pool,
                                     fd, fd_type,
                                     lease, lease_ctx,
                                     filter, filter_ctx,

@@ -319,11 +319,11 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
             filter_ctx = nullptr;
         }
 
-        http_request(pool, rl->tcp_balancer, session_sticky,
+        http_request(*pool, *rl->tcp_balancer, session_sticky,
                      filter, filter_ctx,
-                     method, address->u.http,
+                     method, *address->u.http,
                      headers_dup(pool, headers), body,
-                     handler, handler_ctx, async_ref);
+                     *handler, handler_ctx, *async_ref);
         return;
 
     case RESOURCE_ADDRESS_AJP:
@@ -340,9 +340,9 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         return;
 
     case RESOURCE_ADDRESS_LHTTP:
-        lhttp_request(pool, rl->lhttp_stock, address->u.lhttp,
+        lhttp_request(*pool, *rl->lhttp_stock, *address->u.lhttp,
                       method, headers_dup(pool, headers), body,
-                      handler, handler_ctx, async_ref);
+                      *handler, handler_ctx, *async_ref);
         return;
     }
 

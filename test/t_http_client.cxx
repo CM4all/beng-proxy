@@ -35,11 +35,11 @@ client_request(struct pool *pool, struct connection *connection,
         headers_copy_all(headers, headers2);
     }
 
-    http_client_request(pool, connection->fd, ISTREAM_SOCKET,
-                        lease, lease_ctx,
+    http_client_request(*pool, connection->fd, ISTREAM_SOCKET,
+                        *lease, lease_ctx,
                         nullptr, nullptr,
                         method, uri, headers2, body, expect_100,
-                        handler, ctx, async_ref);
+                        *handler, ctx, *async_ref);
 }
 
 static void

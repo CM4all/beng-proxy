@@ -23,15 +23,15 @@ struct async_operation_ref;
  * select the worker; 0 means disable stickiness
  */
 void
-http_request(struct pool *pool,
-             struct tcp_balancer *tcp_balancer,
+http_request(struct pool &pool,
+             struct tcp_balancer &tcp_balancer,
              unsigned session_sticky,
              const SocketFilter *filter, void *filter_ctx,
              http_method_t method,
-             const struct http_address *address,
+             const struct http_address &address,
              struct growing_buffer *headers, struct istream *body,
-             const struct http_response_handler *handler,
+             const struct http_response_handler &handler,
              void *handler_ctx,
-             struct async_operation_ref *async_ref);
+             struct async_operation_ref &async_ref);
 
 #endif

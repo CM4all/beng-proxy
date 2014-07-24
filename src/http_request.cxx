@@ -151,16 +151,16 @@ http_request_stock_ready(struct stock_item *item, void *ctx)
     hr->stock_item = item;
     hr->current_address = tcp_balancer_get_last();
 
-    http_client_request(hr->pool,
+    http_client_request(*hr->pool,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
-                        &http_socket_lease, hr,
+                        http_socket_lease, hr,
                         hr->filter, hr->filter_ctx,
                         hr->method, hr->uwa->path, hr->headers,
                         hr->body, true,
-                        &http_request_response_handler, hr,
-                        hr->async_ref);
+                        http_request_response_handler, hr,
+                        *hr->async_ref);
 }
 
 static void
@@ -189,58 +189,57 @@ const struct stock_get_handler http_request_stock_handler = {
  */
 
 void
-http_request(struct pool *pool,
-             struct tcp_balancer *tcp_balancer,
+http_request(struct pool &pool,
+             struct tcp_balancer &tcp_balancer,
              unsigned session_sticky,
              const SocketFilter *filter, void *filter_ctx,
              http_method_t method,
-             const struct http_address *uwa,
+             const struct http_address &uwa,
              struct growing_buffer *headers,
              struct istream *body,
-             const struct http_response_handler *handler,
+             const struct http_response_handler &handler,
              void *handler_ctx,
-             struct async_operation_ref *async_ref)
+             struct async_operation_ref &_async_ref)
 {
-    assert(uwa != nullptr);
-    assert(uwa->host_and_port != nullptr);
-    assert(uwa->path != nullptr);
-    assert(handler != nullptr);
-    assert(handler->response != nullptr);
+    assert(uwa.host_and_port != nullptr);
+    assert(uwa.path != nullptr);
+    assert(handler.response != nullptr);
     assert(body == nullptr || !istream_has_handler(body));
 
-    auto hr = NewFromPool<struct http_request>(*pool);
-    hr->pool = pool;
-    hr->tcp_balancer = tcp_balancer;
+    auto hr = NewFromPool<struct http_request>(pool);
+    hr->pool = &pool;
+    hr->tcp_balancer = &tcp_balancer;
     hr->session_sticky = session_sticky;
     hr->filter = filter;
     hr->filter_ctx = filter_ctx;
     hr->method = method;
-    hr->uwa = uwa;
+    hr->uwa = &uwa;
 
     hr->headers = headers;
     if (hr->headers == nullptr)
-        hr->headers = growing_buffer_new(pool, 512);
+        hr->headers = growing_buffer_new(&pool, 512);
 
-    hr->handler.Set(*handler, handler_ctx);
-    hr->async_ref = async_ref;
+    hr->handler.Set(handler, handler_ctx);
+    hr->async_ref = &_async_ref;
 
+    struct async_operation_ref *async_ref = &_async_ref;
     if (body != nullptr) {
-        body = istream_hold_new(pool, body);
-        async_ref = &async_close_on_abort(*pool, *body, *async_ref);
+        body = istream_hold_new(&pool, body);
+        async_ref = &async_close_on_abort(pool, *body, *async_ref);
     }
 
     hr->body = body;
 
-    if (uwa->host_and_port != nullptr)
-        header_write(hr->headers, "host", uwa->host_and_port);
+    if (uwa.host_and_port != nullptr)
+        header_write(hr->headers, "host", uwa.host_and_port);
 
     header_write(hr->headers, "connection", "keep-alive");
 
     hr->retries = 2;
-    tcp_balancer_get(tcp_balancer, pool,
+    tcp_balancer_get(&tcp_balancer, &pool,
                      false, SocketAddress::Null(),
                      session_sticky,
-                     &uwa->addresses,
+                     &uwa.addresses,
                      30,
                      &http_request_stock_handler, hr,
                      async_ref);

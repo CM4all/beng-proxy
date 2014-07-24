@@ -82,14 +82,14 @@ http_client_quark(void)
  * @param async_ref a handle which may be used to abort the operation
  */
 void
-http_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
-                    const struct lease *lease, void *lease_ctx,
+http_client_request(struct pool &pool, int fd, enum istream_direct fd_type,
+                    const struct lease &lease, void *lease_ctx,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
                     const struct growing_buffer *headers,
                     struct istream *body, bool expect_100,
-                    const struct http_response_handler *handler,
+                    const struct http_response_handler &handler,
                     void *ctx,
-                    struct async_operation_ref *async_ref);
+                    struct async_operation_ref &async_ref);
 
 #endif

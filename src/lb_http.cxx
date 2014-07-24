@@ -290,16 +290,16 @@ my_stock_ready(struct stock_item *item, void *ctx)
 
     struct growing_buffer *headers2 = headers_dup(request->pool, headers);
 
-    http_client_request(request->pool,
+    http_client_request(*request->pool,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
-                        &my_socket_lease, request2,
+                        my_socket_lease, request2,
                         NULL, NULL,
                         request->method, request->uri,
                         headers2, request2->body, true,
-                        &my_response_handler, request2,
-                        request2->async_ref);
+                        my_response_handler, request2,
+                        *request2->async_ref);
 }
 
 static void

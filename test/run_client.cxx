@@ -259,14 +259,14 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
         break;
 
     case parsed_url::HTTP:
-        http_client_request(c->pool, c->fd.Get(), ISTREAM_TCP,
-                            &ajp_socket_lease, c,
+        http_client_request(*c->pool, c->fd.Get(), ISTREAM_TCP,
+                            ajp_socket_lease, c,
                             nullptr, nullptr,
                             c->method, c->url.uri,
                             headers_dup(c->pool, headers),
                             c->request_body, false,
-                            &my_response_handler, c,
-                            &c->async_ref);
+                            my_response_handler, c,
+                            c->async_ref);
         break;
 
     case parsed_url::HTTPS: {
@@ -288,14 +288,14 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
         }
 
         const SocketFilter *filter = ssl_client_get_filter();
-        http_client_request(c->pool, c->fd.Get(), ISTREAM_TCP,
-                            &ajp_socket_lease, c,
+        http_client_request(*c->pool, c->fd.Get(), ISTREAM_TCP,
+                            ajp_socket_lease, c,
                             filter, filter_ctx,
                             c->method, c->url.uri,
                             headers_dup(c->pool, headers),
                             c->request_body, false,
-                            &my_response_handler, c,
-                            &c->async_ref);
+                            my_response_handler, c,
+                            c->async_ref);
         break;
     }
     }
