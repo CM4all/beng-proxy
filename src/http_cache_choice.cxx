@@ -59,7 +59,7 @@ struct http_cache_choice {
 bool
 http_cache_choice_info::VaryFits(const struct strmap *headers) const
 {
-    return vary == nullptr || http_cache_vary_fits(vary, headers);
+    return http_cache_vary_fits(vary, headers);
 }
 
 /**
