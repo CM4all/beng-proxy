@@ -10,6 +10,12 @@
 
 #include <string.h>
 
+static constexpr time_t SECOND = 1;
+static constexpr time_t MINUTE = 60 * SECOND;
+static constexpr time_t HOUR = 60 * MINUTE;
+static constexpr time_t DAY = 24 * HOUR;
+static constexpr time_t WEEK = 7 * DAY;
+
 gcc_pure
 static bool
 vary_exists(const char *vary, const struct strmap *request_headers,
@@ -33,14 +39,6 @@ static time_t
 http_cache_age_limit(const struct http_cache_info *info,
                      const struct strmap *request_headers)
 {
-    enum {
-        SECOND = 1,
-        MINUTE = 60 * SECOND,
-        HOUR = 60 * MINUTE,
-        DAY = 24 * HOUR,
-        WEEK = 7 * DAY,
-    };
-
     if (info->vary != nullptr) {
         /* if there's a "Vary" response header, we may assume that the
            response is much more volatile, and lower limits apply */
