@@ -12,7 +12,7 @@ struct http_cache_document {
     struct strmap *vary;
 
     http_status_t status;
-    struct strmap *headers;
+    struct strmap *response_headers;
 
     http_cache_document() = default;
     http_cache_document(const http_cache_document &) = delete;

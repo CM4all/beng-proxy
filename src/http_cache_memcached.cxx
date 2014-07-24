@@ -164,15 +164,17 @@ mcd_deserialize_document(struct pool *pool, ConstBuffer<void> &header,
     document->info.expires = deserialize_uint64(header);
     document->vary = deserialize_strmap(header, pool);
     document->status = (http_status_t)deserialize_uint16(header);
-    document->headers = deserialize_strmap(header, pool);
+    document->response_headers = deserialize_strmap(header, pool);
 
     if (header.IsNull() || !http_status_is_valid(document->status))
         return nullptr;
 
     document->info.last_modified =
-        strmap_get_checked(document->headers, "last-modified");
-    document->info.etag = strmap_get_checked(document->headers, "etag");
-    document->info.vary = strmap_get_checked(document->headers, "vary");
+        strmap_get_checked(document->response_headers, "last-modified");
+    document->info.etag =
+        strmap_get_checked(document->response_headers, "etag");
+    document->info.vary =
+        strmap_get_checked(document->response_headers, "vary");
 
     if (!document->VaryFits(request_headers))
         /* Vary mismatch */

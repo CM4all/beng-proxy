@@ -727,7 +727,7 @@ http_cache_heap_serve(struct http_cache_heap *cache,
 
     response_body = http_cache_heap_istream(pool, cache, document);
 
-    handler_ref.InvokeResponse(document->status, document->headers,
+    handler_ref.InvokeResponse(document->status, document->response_headers,
                                response_body);
 }
 
@@ -743,7 +743,7 @@ http_cache_memcached_serve(HttpCacheRequest *request)
 
     request->operation.Finished();
     request->handler.InvokeResponse(request->document->status,
-                                    request->document->headers,
+                                    request->document->response_headers,
                                     request->document_body);
 }
 
@@ -974,7 +974,8 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
         cache_log(4, "http_cache: serve %s\n", request->key);
 
         request->operation.Finished();
-        request->handler.InvokeResponse(document->status, document->headers,
+        request->handler.InvokeResponse(document->status,
+                                        document->response_headers,
                                         body);
         pool_unref_denotify(request->caller_pool,
                             &request->caller_pool_notify);
