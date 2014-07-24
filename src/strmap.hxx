@@ -83,6 +83,11 @@ struct strmap {
     const char *Get(const char *key) const;
 
     gcc_pure
+    bool Contains(const char *key) const {
+        return Get(key) != nullptr;
+    }
+
+    gcc_pure
     std::pair<const_iterator, const_iterator> EqualRange(const char *key) const;
 };
 
