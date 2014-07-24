@@ -36,15 +36,6 @@ struct http_cache_info {
     http_cache_info(struct pool &pool, const http_cache_info &src);
 };
 
-static inline void
-http_cache_info_init(struct http_cache_info *info)
-{
-    info->only_if_cached = false;
-    info->expires = (time_t)-1;
-    info->last_modified = nullptr;
-    info->etag = nullptr;
-}
-
 struct http_cache_info *
 http_cache_info_dup(struct pool &pool, const struct http_cache_info &src);
 

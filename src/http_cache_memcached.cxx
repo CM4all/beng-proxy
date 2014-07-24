@@ -157,9 +157,7 @@ static struct http_cache_document *
 mcd_deserialize_document(struct pool *pool, ConstBuffer<void> &header,
                          const struct strmap *request_headers)
 {
-    auto document = PoolAlloc<http_cache_document>(*pool);
-
-    http_cache_info_init(&document->info);
+    auto document = NewFromPool<http_cache_document>(*pool);
 
     document->info.expires = deserialize_uint64(header);
     document->vary = deserialize_strmap(header, pool);
