@@ -11,6 +11,7 @@
 
 #include <inline/compiler.h>
 
+#include <type_traits>
 #include <utility>
 #include <new>
 
@@ -484,6 +485,14 @@ template<typename T>
 T *
 PoolAlloc(pool &p)
 {
+#if CLANG_OR_GCC_VERSION(5,0)
+    static_assert(std::is_trivially_default_constructible<T>::value,
+                  "Must be trivially constructible");
+#else
+    static_assert(std::has_trivial_default_constructor<T>::value,
+                  "Must be trivially constructible");
+#endif
+
     return (T *)p_malloc(&p, sizeof(T));
 }
 
@@ -491,6 +500,14 @@ template<typename T>
 T *
 PoolAlloc(pool &p, size_t n)
 {
+#if CLANG_OR_GCC_VERSION(5,0)
+    static_assert(std::is_trivially_default_constructible<T>::value,
+                  "Must be trivially constructible");
+#else
+    static_assert(std::has_trivial_default_constructor<T>::value,
+                  "Must be trivially constructible");
+#endif
+
     return (T *)p_malloc(&p, sizeof(T) * n);
 }
 
@@ -505,7 +522,7 @@ template<typename T, typename... Args>
 T *
 NewFromPool(pool &p, Args&&... args)
 {
-    void *t = PoolAlloc<T>(p);
+    void *t = p_malloc(&p, sizeof(T));
     return ::new(t) T(std::forward<Args>(args)...);
 }
 
