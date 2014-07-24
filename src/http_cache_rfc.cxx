@@ -13,7 +13,6 @@
 #include "strref2.h"
 #include "strmap.hxx"
 #include "date.h"
-#include "tpool.h"
 #include "resource_address.hxx"
 #include "cgi_address.hxx"
 #include "lhttp_address.hxx"
@@ -318,23 +317,16 @@ http_cache_copy_vary(struct pool *pool, const char *vary,
                      const struct strmap *headers)
 {
     struct strmap *dest = strmap_new(pool);
-    struct pool_mark_state mark;
     char **list;
 
-    if (pool != tpool)
-        pool_mark(tpool, &mark);
-
-    for (list = http_list_split(tpool, vary);
+    for (list = http_list_split(pool, vary);
          *list != nullptr; ++list) {
         const char *name = *list;
         const char *value = strmap_get_checked(headers, name);
         if (value == nullptr)
             value = "";
-        dest->Set(p_strdup(pool, name), p_strdup(pool, value));
+        dest->Set(name, p_strdup(pool, value));
     }
-
-    if (pool != tpool)
-        pool_rewind(tpool, &mark);
 
     return dest;
 }
