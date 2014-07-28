@@ -69,8 +69,8 @@ resource_address_has_query_string(const struct resource_address *address)
     case RESOURCE_ADDRESS_CGI:
     case RESOURCE_ADDRESS_FASTCGI:
     case RESOURCE_ADDRESS_WAS:
-        return address->u.cgi->query_string == NULL ||
-            *address->u.cgi->query_string == 0;
+        return address->u.cgi->query_string != NULL &&
+            *address->u.cgi->query_string != 0;
 
     case RESOURCE_ADDRESS_AJP:
         return false;
