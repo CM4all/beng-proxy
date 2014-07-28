@@ -44,7 +44,7 @@ http_cache_age_limit(const struct strmap *vary)
 }
 
 time_t
-http_cache_calc_expires(const struct http_cache_info &info,
+http_cache_calc_expires(const struct http_cache_response_info &info,
                         const struct strmap *vary)
 {
     const time_t now = time(nullptr);

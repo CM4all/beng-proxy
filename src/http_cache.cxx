@@ -68,10 +68,12 @@ public:
 
     struct http_response_handler_ref handler;
 
+    struct http_cache_request_info request_info;
+
     /**
      * Information on the request passed to http_cache_request().
      */
-    struct http_cache_info *info;
+    struct http_cache_response_info info;
 
     /**
      * The document which was found in the cache, in case this is a
@@ -108,7 +110,7 @@ public:
                      struct strmap *_headers,
                      const struct http_response_handler &_handler,
                      void *_handler_ctx,
-                     struct http_cache_info &_info,
+                     struct http_cache_request_info &_info,
                      struct async_operation_ref &_async_ref);
 
     HttpCacheRequest(const HttpCacheRequest &) = delete;
@@ -203,13 +205,11 @@ static void
 http_cache_put(HttpCacheRequest &request,
                unsigned rubber_id, size_t size)
 {
-    assert(request.info != nullptr);
-
     cache_log(4, "http_cache: put %s\n", request.key);
 
     if (request.cache.heap.IsDefined())
         request.cache.heap.Put(request.key,
-                               *request.info, request.headers,
+                               request.info, request.headers,
                                request.response.status,
                                request.response.headers,
                                *request.cache.rubber, rubber_id, size);
@@ -227,7 +227,7 @@ http_cache_put(HttpCacheRequest &request,
                                  request.cache.pool,
                                  request.cache.background,
                                  request.key,
-                                 *request.info,
+                                 request.info,
                                  request.headers,
                                  request.response.status, request.response.headers,
                                  value,
@@ -392,7 +392,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         ? istream_available(body, true)
         : 0;
 
-    if (!http_cache_response_evaluate(*request.info,
+    if (!http_cache_response_evaluate(request.request_info, request.info,
                                       status, headers, available)) {
         /* don't cache response */
         cache_log(4, "http_cache: nocache %s\n", request.key);
@@ -416,7 +416,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
            it to keep it alive even after the caller pool is
            destroyed */
         request.key = p_strdup(&request.pool, request.key);
-        request.info = http_cache_info_dup(request.pool, *request.info);
+        request.info.MoveToPool(request.pool);
 
         /* tee the body: one goes to our client, and one goes into the
            cache */
@@ -515,7 +515,7 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
                                    struct strmap *_headers,
                                    const struct http_response_handler &_handler,
                                    void *_handler_ctx,
-                                   struct http_cache_info &_info,
+                                   struct http_cache_request_info &_request_info,
                                    struct async_operation_ref &_async_ref)
     :pool(_pool), caller_pool(_caller_pool),
      session_sticky(_session_sticky),
@@ -524,7 +524,8 @@ HttpCacheRequest::HttpCacheRequest(struct pool &_pool,
      address(*resource_address_dup(_pool, &_address)),
      key(_key),
      headers(_headers),
-     info(&_info), document(nullptr) {
+     request_info(_request_info),
+     document(nullptr) {
     handler.Set(_handler, _handler_ctx);
     operation.Init(http_cache_async_operation);
     _async_ref.Set(operation);
@@ -670,7 +671,7 @@ http_cache_flush(struct http_cache &cache)
 static void
 http_cache_miss(struct http_cache &cache, struct pool &caller_pool,
                 unsigned session_sticky,
-                struct http_cache_info &info,
+                struct http_cache_request_info &info,
                 http_method_t method,
                 const struct resource_address &address,
                 struct strmap *headers,
@@ -805,7 +806,7 @@ http_cache_test(HttpCacheRequest &request,
 static void
 http_cache_heap_test(struct http_cache &cache, struct pool &caller_pool,
                      unsigned session_sticky,
-                     struct http_cache_info &info,
+                     struct http_cache_request_info &info,
                      struct http_cache_document &document,
                      http_method_t method,
                      const struct resource_address &address,
@@ -835,7 +836,7 @@ http_cache_heap_test(struct http_cache &cache, struct pool &caller_pool,
 }
 
 static bool
-http_cache_may_serve(struct http_cache_info &info,
+http_cache_may_serve(struct http_cache_request_info &info,
                      const struct http_cache_document &document)
 {
     return info.only_if_cached ||
@@ -852,7 +853,7 @@ http_cache_may_serve(struct http_cache_info &info,
  */
 static void
 http_cache_found(struct http_cache &cache,
-                 struct http_cache_info &info,
+                 struct http_cache_request_info &info,
                  struct http_cache_document &document,
                  struct pool &pool,
                  unsigned session_sticky,
@@ -885,7 +886,7 @@ http_cache_heap_use(struct http_cache &cache,
                     http_method_t method,
                     const struct resource_address &address,
                     struct strmap *headers,
-                    struct http_cache_info &info,
+                    struct http_cache_request_info &info,
                     const struct http_response_handler &handler,
                     void *handler_ctx,
                     struct async_operation_ref &async_ref)
@@ -928,9 +929,7 @@ http_cache_memcached_forward(HttpCacheRequest &request,
 static void
 http_cache_memcached_miss(HttpCacheRequest &request)
 {
-    struct http_cache_info &info = *request.info;
-
-    if (info.only_if_cached) {
+    if (request.request_info.only_if_cached) {
         request.operation.Finished();
         request.handler.InvokeResponse(HTTP_STATUS_GATEWAY_TIMEOUT,
                                        nullptr, nullptr);
@@ -969,7 +968,7 @@ http_cache_memcached_get_callback(struct http_cache_document *document,
         return;
     }
 
-    if (http_cache_may_serve(*request.info, *document)) {
+    if (http_cache_may_serve(request.request_info, *document)) {
         cache_log(4, "http_cache: serve %s\n", request.key);
 
         request.operation.Finished();
@@ -998,7 +997,7 @@ http_cache_memcached_use(struct http_cache &cache,
                          http_method_t method,
                          const struct resource_address &address,
                          struct strmap *headers,
-                         struct http_cache_info &info,
+                         struct http_cache_request_info &info,
                          const struct http_response_handler &handler,
                          void *handler_ctx,
                          struct async_operation_ref &async_ref)
@@ -1057,7 +1056,7 @@ http_cache_request(struct http_cache &cache,
         return;
     }
 
-    struct http_cache_info *info =
+    struct http_cache_request_info *info =
         http_cache_request_evaluate(pool, method, address, headers, body);
     if (info != nullptr) {
         assert(body == nullptr);

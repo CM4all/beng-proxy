@@ -25,7 +25,7 @@ put_random(struct http_cache_heap *cache, Rubber *rubber)
     uri[4] = '0' + random() % 10;
     uri[5] = 0;
 
-    struct http_cache_info info;
+    struct http_cache_response_info info;
     info.expires = 1350000000;
     info.vary = "x-foo";
 

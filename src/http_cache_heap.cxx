@@ -35,7 +35,7 @@ struct http_cache_item {
     unsigned rubber_id;
 
     http_cache_item(struct pool &_pool,
-                    const struct http_cache_info &info,
+                    const struct http_cache_response_info &info,
                     const struct strmap *request_headers,
                     http_status_t status,
                     const struct strmap *response_headers,
@@ -87,7 +87,7 @@ http_cache_heap::Get(const char *uri, struct strmap *request_headers)
 
 void
 http_cache_heap::Put(const char *url,
-                     const struct http_cache_info &info,
+                     const struct http_cache_response_info &info,
                      struct strmap *request_headers,
                      http_status_t status,
                      const struct strmap *response_headers,

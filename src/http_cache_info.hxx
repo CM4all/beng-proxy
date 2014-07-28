@@ -3,7 +3,7 @@
 
 #include <sys/time.h>
 
-struct http_cache_info {
+struct http_cache_request_info {
     /**
      * Is the request served by a remote server?  If yes, then we
      * require the "Date" header to be present.
@@ -16,6 +16,11 @@ struct http_cache_info {
         important for RFC 2616 13.9 */
     bool has_query_string;
 
+    http_cache_request_info()
+        :only_if_cached(false) {}
+};
+
+struct http_cache_response_info {
     /** when will the cached resource expire? (beng-proxy time) */
     time_t expires;
 
@@ -27,16 +32,16 @@ struct http_cache_info {
 
     const char *vary;
 
-    http_cache_info()
-        :only_if_cached(false),
-         expires((time_t)-1),
+    http_cache_response_info()
+        :expires((time_t)-1),
          last_modified(nullptr),
          etag(nullptr) {}
 
-    http_cache_info(struct pool &pool, const http_cache_info &src);
-};
+    http_cache_response_info(const http_cache_response_info &) = delete;
+    http_cache_response_info(struct pool &pool,
+                             const http_cache_response_info &src);
 
-struct http_cache_info *
-http_cache_info_dup(struct pool &pool, const struct http_cache_info &src);
+    void MoveToPool(struct pool &pool);
+};
 
 #endif

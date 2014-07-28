@@ -15,7 +15,7 @@ struct pool;
 class Rubber;
 struct strmap;
 struct cache_stats;
-struct http_cache_info;
+struct http_cache_response_info;
 
 struct http_cache_heap {
     struct pool *pool;
@@ -41,7 +41,7 @@ struct http_cache_heap {
                                     struct strmap *request_headers);
 
     void Put(const char *url,
-             const struct http_cache_info &info,
+             const struct http_cache_response_info &info,
              struct strmap *request_headers,
              http_status_t status,
              const struct strmap *response_headers,

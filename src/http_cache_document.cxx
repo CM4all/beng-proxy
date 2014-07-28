@@ -9,7 +9,7 @@
 #include "strmap.hxx"
 
 http_cache_document::http_cache_document(struct pool &pool,
-                                         const struct http_cache_info &_info,
+                                         const struct http_cache_response_info &_info,
                                          const struct strmap *request_headers,
                                          http_status_t _status,
                                          const struct strmap *_response_headers)

@@ -7,7 +7,7 @@
 
 #include <sys/types.h> /* for off_t */
 
-struct http_cache_info *
+struct http_cache_request_info *
 http_cache_request_evaluate(struct pool &pool,
                             http_method_t method,
                             const struct resource_address &address,
@@ -32,7 +32,8 @@ http_cache_request_invalidate(http_method_t method);
  * Check whether the HTTP response should be put into the cache.
  */
 bool
-http_cache_response_evaluate(struct http_cache_info &info,
+http_cache_response_evaluate(const struct http_cache_request_info &request_info,
+                             struct http_cache_response_info &info,
                              http_status_t status, const struct strmap *headers,
                              off_t body_available);
 

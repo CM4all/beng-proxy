@@ -41,21 +41,21 @@ next_item(struct strref *s, struct strref *p)
     return p;
 }
 
-static struct http_cache_info *
-http_cache_info_new(struct pool &pool)
+static struct http_cache_request_info *
+http_cache_request_info_new(struct pool &pool)
 {
-    return NewFromPool<http_cache_info>(pool);
+    return NewFromPool<http_cache_request_info>(pool);
 }
 
 /* check whether the request could produce a cacheable response */
-struct http_cache_info *
+struct http_cache_request_info *
 http_cache_request_evaluate(struct pool &pool,
                             http_method_t method,
                             const struct resource_address &address,
                             const struct strmap *headers,
                             struct istream *body)
 {
-    struct http_cache_info *info = nullptr;
+    struct http_cache_request_info *info = nullptr;
 
     if (method != HTTP_METHOD_GET || body != nullptr)
         /* RFC 2616 13.11 "Write-Through Mandatory" */
@@ -86,7 +86,7 @@ http_cache_request_evaluate(struct pool &pool,
 
                 if (strref_cmp_literal(s, "only-if-cached") == 0) {
                     if (info == nullptr)
-                        info = http_cache_info_new(pool);
+                        info = http_cache_request_info_new(pool);
                     info->only_if_cached = true;
                 }
             }
@@ -98,7 +98,7 @@ http_cache_request_evaluate(struct pool &pool,
     }
 
     if (info == nullptr)
-        info = http_cache_info_new(pool);
+        info = http_cache_request_info_new(pool);
 
     info->is_remote = address.type == RESOURCE_ADDRESS_HTTP ||
         address.type == RESOURCE_ADDRESS_AJP;
@@ -177,7 +177,8 @@ strmap_get_non_empty(const struct strmap &map, const char *key)
 }
 
 bool
-http_cache_response_evaluate(struct http_cache_info &info,
+http_cache_response_evaluate(const struct http_cache_request_info &request_info,
+                             struct http_cache_response_info &info,
                              http_status_t status, const struct strmap *headers,
                              off_t body_available)
 {
@@ -224,7 +225,7 @@ http_cache_response_evaluate(struct http_cache_info &info,
     const time_t now = time(nullptr);
 
     time_t offset;
-    if (info.is_remote) {
+    if (request_info.is_remote) {
         p = headers->Get("date");
         if (p == nullptr)
             /* we cannot determine whether to cache a resource if the
@@ -250,7 +251,7 @@ http_cache_response_evaluate(struct http_cache_info &info,
             cache_log(4, "invalid 'expires' header\n");
     }
 
-    if (info.has_query_string && info.expires == (time_t)-1)
+    if (request_info.has_query_string && info.expires == (time_t)-1)
         /* RFC 2616 13.9: "since some applications have traditionally
            used GETs and HEADs with query URLs (those containing a "?"
            in the rel_path part) to perform operations with

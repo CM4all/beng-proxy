@@ -7,7 +7,7 @@
 #include <http/status.h>
 
 struct http_cache_document {
-    struct http_cache_info info;
+    struct http_cache_response_info info;
 
     struct strmap *vary;
 
@@ -18,7 +18,7 @@ struct http_cache_document {
     http_cache_document(const http_cache_document &) = delete;
 
     http_cache_document(struct pool &pool,
-                        const struct http_cache_info &_info,
+                        const struct http_cache_response_info &_info,
                         const struct strmap *request_headers,
                         http_status_t _status,
                         const struct strmap *response_headers);

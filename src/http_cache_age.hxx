@@ -11,7 +11,7 @@
 
 #include <time.h>
 
-struct http_cache_info;
+struct http_cache_response_info;
 struct strmap;
 
 /**
@@ -20,7 +20,7 @@ struct strmap;
  */
 gcc_pure
 time_t
-http_cache_calc_expires(const struct http_cache_info &info,
+http_cache_calc_expires(const struct http_cache_response_info &info,
                         const struct strmap *vary);
 
 #endif

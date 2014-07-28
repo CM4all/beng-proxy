@@ -15,7 +15,7 @@
 
 struct pool;
 struct http_cache_choice;
-struct http_cache_info;
+struct http_cache_response_info;
 struct http_cache_document;
 struct strmap;
 struct memcached_stock;
@@ -50,7 +50,7 @@ http_cache_choice_get(struct pool &pool, struct memcached_stock &stock,
 
 struct http_cache_choice *
 http_cache_choice_prepare(struct pool &pool, const char *uri,
-                          const struct http_cache_info &info,
+                          const struct http_cache_response_info &info,
                           const struct strmap *vary);
 
 void
