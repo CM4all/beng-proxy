@@ -50,6 +50,9 @@ deserialize_string(ConstBuffer<void> &input);
 const char *
 deserialize_string_null(ConstBuffer<void> &input);
 
+bool
+deserialize_strmap(ConstBuffer<void> &input, struct strmap &dest);
+
 struct strmap *
 deserialize_strmap(ConstBuffer<void> &input, struct pool *pool);
 

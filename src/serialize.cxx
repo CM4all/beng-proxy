@@ -166,6 +166,25 @@ deserialize_string_null(ConstBuffer<void> &input)
     return value;
 }
 
+bool
+deserialize_strmap(ConstBuffer<void> &input, struct strmap &dest)
+{
+    while (true) {
+        const char *key = deserialize_string(input);
+        if (key == nullptr)
+            return false;
+
+        if (*key == 0)
+            return true;
+
+        const char *value = deserialize_string(input);
+        if (value == nullptr)
+            return false;
+
+        dest.Add(key, value);
+    }
+}
+
 struct strmap *
 deserialize_strmap(ConstBuffer<void> &input, struct pool *pool)
 {
