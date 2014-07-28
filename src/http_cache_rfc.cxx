@@ -191,6 +191,7 @@ http_cache_response_evaluate(const struct http_cache_request_info &request_info,
         /* too large for the cache */
         return false;
 
+    info.expires = -1;
     p = headers->Get("cache-control");
     if (p != nullptr) {
         struct strref cc, tmp, *s;

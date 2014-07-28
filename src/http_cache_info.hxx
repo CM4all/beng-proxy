@@ -32,11 +32,7 @@ struct http_cache_response_info {
 
     const char *vary;
 
-    http_cache_response_info()
-        :expires((time_t)-1),
-         last_modified(nullptr),
-         etag(nullptr) {}
-
+    http_cache_response_info() = default;
     http_cache_response_info(const http_cache_response_info &) = delete;
     http_cache_response_info(struct pool &pool,
                              const http_cache_response_info &src);
