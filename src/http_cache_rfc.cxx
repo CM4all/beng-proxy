@@ -168,16 +168,16 @@ http_status_cacheable(http_status_t status)
 
 gcc_pure
 static const char *
-strmap_get_non_empty(const struct strmap *map, const char *key)
+strmap_get_non_empty(const struct strmap &map, const char *key)
 {
-    const char *value = map->Get(key);
+    const char *value = map.Get(key);
     if (value != nullptr && *value == 0)
         value = nullptr;
     return value;
 }
 
 bool
-http_cache_response_evaluate(struct http_cache_info *info,
+http_cache_response_evaluate(struct http_cache_info &info,
                              http_status_t status, const struct strmap *headers,
                              off_t body_available)
 {
@@ -216,7 +216,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
 
                 seconds = atoi(value);
                 if (seconds > 0)
-                    info->expires = time(nullptr) + seconds;
+                    info.expires = time(nullptr) + seconds;
             }
         }
     }
@@ -224,7 +224,7 @@ http_cache_response_evaluate(struct http_cache_info *info,
     const time_t now = time(nullptr);
 
     time_t offset;
-    if (info->is_remote) {
+    if (info.is_remote) {
         p = headers->Get("date");
         if (p == nullptr)
             /* we cannot determine whether to cache a resource if the
@@ -240,17 +240,17 @@ http_cache_response_evaluate(struct http_cache_info *info,
         offset = 0;
 
 
-    if (info->expires == (time_t)-1) {
+    if (info.expires == (time_t)-1) {
         /* RFC 2616 14.9.3: "If a response includes both an Expires
            header and a max-age directive, the max-age directive
            overrides the Expires header" */
 
-        info->expires = parse_translate_time(headers->Get("expires"), offset);
-        if (info->expires != (time_t)-1 && info->expires < now)
+        info.expires = parse_translate_time(headers->Get("expires"), offset);
+        if (info.expires != (time_t)-1 && info.expires < now)
             cache_log(4, "invalid 'expires' header\n");
     }
 
-    if (info->has_query_string && info->expires == (time_t)-1)
+    if (info.has_query_string && info.expires == (time_t)-1)
         /* RFC 2616 13.9: "since some applications have traditionally
            used GETs and HEADs with query URLs (those containing a "?"
            in the rel_path part) to perform operations with
@@ -260,18 +260,18 @@ http_cache_response_evaluate(struct http_cache_info *info,
            storing the resource at all */
         return false;
 
-    info->last_modified = headers->Get("last-modified");
-    info->etag = headers->Get("etag");
+    info.last_modified = headers->Get("last-modified");
+    info.etag = headers->Get("etag");
 
-    info->vary = strmap_get_non_empty(headers, "vary");
-    if (info->vary != nullptr && strcmp(info->vary, "*") == 0)
+    info.vary = strmap_get_non_empty(*headers, "vary");
+    if (info.vary != nullptr && strcmp(info.vary, "*") == 0)
         /* RFC 2616 13.6: A Vary header field-value of "*" always
            fails to match and subsequent requests on that resource can
            only be properly interpreted by the origin server. */
         return false;
 
-    return info->expires != (time_t)-1 || info->last_modified != nullptr ||
-        info->etag != nullptr;
+    return info.expires != (time_t)-1 || info.last_modified != nullptr ||
+        info.etag != nullptr;
 }
 
 struct strmap *
@@ -295,15 +295,15 @@ http_cache_copy_vary(struct pool &pool, const char *vary,
 }
 
 bool
-http_cache_prefer_cached(const struct http_cache_document *document,
+http_cache_prefer_cached(const struct http_cache_document &document,
                          const struct strmap *response_headers)
 {
-    if (document->info.etag == nullptr)
+    if (document.info.etag == nullptr)
         return false;
 
     const char *etag = strmap_get_checked(response_headers, "etag");
 
     /* if the ETags are the same, then the resource hasn't changed,
        but the server was too lazy to check that properly */
-    return etag != nullptr && strcmp(etag, document->info.etag) == 0;
+    return etag != nullptr && strcmp(etag, document.info.etag) == 0;
 }

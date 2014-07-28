@@ -47,7 +47,7 @@ struct http_cache_item {
          rubber(&_rubber), rubber_id(_rubber_id) {
 
         cache_item_init_absolute(&item,
-                                 http_cache_calc_expires(&info, document.vary),
+                                 http_cache_calc_expires(info, document.vary),
                                  pool_netto_size(pool) + size);
     }
 

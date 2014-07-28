@@ -97,9 +97,9 @@ int main(int argc, char **argv) {
 
     /* send memcached request */
 
-    http_cache_choice_cleanup(ctx.pool, stock, argv[2],
+    http_cache_choice_cleanup(*ctx.pool, *stock, argv[2],
                               cleanup_callback, &ctx,
-                              &ctx.async_ref);
+                              ctx.async_ref);
 
     pool_unref(ctx.pool);
     pool_commit();

@@ -197,7 +197,7 @@ reload_event_callback(int fd gcc_unused, short event gcc_unused,
     daemonize_reopen_logfile();
 
     translate_cache_flush(instance->translate_cache);
-    http_cache_flush(instance->http_cache);
+    http_cache_flush(*instance->http_cache);
     filter_cache_flush(instance->filter_cache);
     fb_pool_compress();
 }
@@ -386,10 +386,10 @@ int main(int argc, char **argv)
                                                    instance.delegate_stock,
                                                    instance.nfs_cache);
 
-    instance.http_cache = http_cache_new(instance.pool,
+    instance.http_cache = http_cache_new(*instance.pool,
                                          instance.config.http_cache_size,
                                          instance.memcached_stock,
-                                         instance.resource_loader);
+                                         *instance.resource_loader);
 
     instance.pipe_stock = pipe_stock_new(instance.pool);
     instance.filter_cache = filter_cache_new(instance.pool,

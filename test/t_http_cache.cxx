@@ -92,55 +92,55 @@ static bool eof;
 static size_t body_read;
 
 void
-http_cache_memcached_flush(gcc_unused struct pool *pool,
-                           gcc_unused struct memcached_stock *stock,
+http_cache_memcached_flush(gcc_unused struct pool &pool,
+                           gcc_unused struct memcached_stock &stock,
                            gcc_unused http_cache_memcached_flush_t callback,
                            gcc_unused void *callback_ctx,
-                           gcc_unused struct async_operation_ref *async_ref)
+                           gcc_unused struct async_operation_ref &async_ref)
 {
 }
 
 void
-http_cache_memcached_get(gcc_unused struct pool *pool,
-                         gcc_unused struct memcached_stock *stock,
-                         gcc_unused struct pool *background_pool,
+http_cache_memcached_get(gcc_unused struct pool &pool,
+                         gcc_unused struct memcached_stock &stock,
+                         gcc_unused struct pool &background_pool,
                          gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
                          gcc_unused struct strmap *request_headers,
                          gcc_unused http_cache_memcached_get_t callback,
                          gcc_unused void *callback_ctx,
-                         gcc_unused struct async_operation_ref *async_ref)
+                         gcc_unused struct async_operation_ref &async_ref)
 {
 }
 
 void
-http_cache_memcached_put(gcc_unused struct pool *pool,
-                         gcc_unused struct memcached_stock *stock,
-                         gcc_unused struct pool *background_pool,
+http_cache_memcached_put(gcc_unused struct pool &pool,
+                         gcc_unused struct memcached_stock &stock,
+                         gcc_unused struct pool &background_pool,
                          gcc_unused BackgroundManager &background,
                          gcc_unused const char *uri,
-                         gcc_unused const struct http_cache_info *info,
+                         gcc_unused const struct http_cache_info &info,
                          gcc_unused const struct strmap *request_headers,
                          gcc_unused http_status_t status,
                          gcc_unused const struct strmap *response_headers,
                          gcc_unused struct istream *value,
                          gcc_unused http_cache_memcached_put_t put,
                          gcc_unused void *callback_ctx,
-                         gcc_unused struct async_operation_ref *async_ref)
+                         gcc_unused struct async_operation_ref &async_ref)
 {
 }
 
 void
-http_cache_memcached_remove_uri(gcc_unused struct memcached_stock *stock,
-                                gcc_unused struct pool *background_pool,
+http_cache_memcached_remove_uri(gcc_unused struct memcached_stock &stock,
+                                gcc_unused struct pool &background_pool,
                                 gcc_unused BackgroundManager &background,
                                 gcc_unused const char *uri)
 {
 }
 
 void
-http_cache_memcached_remove_uri_match(gcc_unused struct memcached_stock *stock,
-                                      gcc_unused struct pool *background_pool,
+http_cache_memcached_remove_uri_match(gcc_unused struct memcached_stock &stock,
+                                      gcc_unused struct pool &background_pool,
                                       gcc_unused BackgroundManager &background,
                                       gcc_unused const char *uri,
                                       gcc_unused struct strmap *headers)
@@ -342,10 +342,10 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     got_request = cached;
     got_response = false;
 
-    http_cache_request(cache, pool, 0, request->method, &address,
+    http_cache_request(*cache, *pool, 0, request->method, address,
                        headers, body,
-                       &my_http_response_handler, pool,
-                       &async_ref);
+                       my_http_response_handler, pool,
+                       async_ref);
     pool_unref(pool);
 
     assert(got_request);
@@ -363,7 +363,8 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(NULL, "root");
     tpool_init(pool);
-    cache = http_cache_new(pool, 1024 * 1024, NULL, NULL);
+    cache = http_cache_new(*pool, 1024 * 1024, nullptr,
+                           *(struct resource_loader *)nullptr);
 
     /* request one resource, cold and warm cache */
     run_cache_test(pool, 0, false);

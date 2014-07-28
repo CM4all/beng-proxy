@@ -30,42 +30,42 @@ typedef void (*http_cache_memcached_get_t)(struct http_cache_document *document,
 typedef void (*http_cache_memcached_put_t)(GError *error, void *ctx);
 
 void
-http_cache_memcached_flush(struct pool *pool, struct memcached_stock *stock,
+http_cache_memcached_flush(struct pool &pool, struct memcached_stock &stock,
                            http_cache_memcached_flush_t callback,
                            void *callback_ctx,
-                           struct async_operation_ref *async_ref);
+                           struct async_operation_ref &async_ref);
 
 void
-http_cache_memcached_get(struct pool *pool, struct memcached_stock *stock,
-                         struct pool *background_pool,
+http_cache_memcached_get(struct pool &pool, struct memcached_stock &stock,
+                         struct pool &background_pool,
                          BackgroundManager &background,
                          const char *uri, struct strmap *request_headers,
                          http_cache_memcached_get_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref *async_ref);
+                         struct async_operation_ref &async_ref);
 
 void
-http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
-                         struct pool *background_pool,
+http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
+                         struct pool &background_pool,
                          BackgroundManager &background,
                          const char *uri,
-                         const struct http_cache_info *info,
+                         const struct http_cache_info &info,
                          const struct strmap *request_headers,
                          http_status_t status,
                          const struct strmap *response_headers,
                          struct istream *value,
                          http_cache_memcached_put_t put, void *callback_ctx,
-                         struct async_operation_ref *async_ref);
+                         struct async_operation_ref &async_ref);
 
 void
-http_cache_memcached_remove_uri(struct memcached_stock *stock,
-                                struct pool *background_pool,
+http_cache_memcached_remove_uri(struct memcached_stock &stock,
+                                struct pool &background_pool,
                                 BackgroundManager &background,
                                 const char *uri);
 
 void
-http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
-                                      struct pool *background_pool,
+http_cache_memcached_remove_uri_match(struct memcached_stock &stock,
+                                      struct pool &background_pool,
                                       BackgroundManager &background,
                                       const char *uri, struct strmap *headers);
 

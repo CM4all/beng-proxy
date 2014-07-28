@@ -32,10 +32,10 @@ resource_get(struct http_cache *cache,
     assert(address != nullptr);
 
     if (cache != nullptr) {
-        http_cache_request(cache, pool, session_sticky,
-                           method, address,
+        http_cache_request(*cache, *pool, session_sticky,
+                           method, *address,
                            headers, body,
-                           handler, handler_ctx, async_ref);
+                           *handler, handler_ctx, *async_ref);
     } else {
         struct resource_loader *rl =
             resource_loader_new(pool, tcp_balancer,

@@ -44,23 +44,23 @@ http_cache_age_limit(const struct strmap *vary)
 }
 
 time_t
-http_cache_calc_expires(const struct http_cache_info *info,
+http_cache_calc_expires(const struct http_cache_info &info,
                         const struct strmap *vary)
 {
     const time_t now = time(nullptr);
 
     time_t max_age;
-    if (info->expires == (time_t)-1)
+    if (info.expires == (time_t)-1)
         /* there is no Expires response header; keep it in the cache
            for 1 hour, but check with If-Modified-Since */
         max_age = HOUR;
     else {
-        const time_t expires = info->expires;
+        const time_t expires = info.expires;
         if (expires <= now)
             /* already expired, bail out */
             return expires;
 
-        max_age = info->expires - now;
+        max_age = info.expires - now;
     }
 
     const time_t age_limit = http_cache_age_limit(vary);

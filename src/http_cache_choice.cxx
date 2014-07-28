@@ -101,7 +101,7 @@ maybe_abbreviate(const char *p)
 }
 
 const char *
-http_cache_choice_vary_key(struct pool *pool, const char *uri,
+http_cache_choice_vary_key(struct pool &pool, const char *uri,
                            const struct strmap *vary)
 {
     char hash[9];
@@ -110,13 +110,13 @@ http_cache_choice_vary_key(struct pool *pool, const char *uri,
 
     uri = maybe_abbreviate(uri);
 
-    return p_strcat(pool, uri, " ", hash, nullptr);
+    return p_strcat(&pool, uri, " ", hash, nullptr);
 }
 
 static const char *
-http_cache_choice_key(struct pool *pool, const char *uri)
+http_cache_choice_key(struct pool &pool, const char *uri)
 {
-    return p_strcat(pool, maybe_abbreviate(uri), " choice", nullptr);
+    return p_strcat(&pool, maybe_abbreviate(uri), " choice", nullptr);
 }
 
 static void
@@ -162,7 +162,7 @@ http_cache_choice_buffer_done(void *data0, size_t length, void *ctx)
             unclean = true;
         else if (uri == nullptr &&
                  http_cache_vary_fits(vary, choice->request_headers))
-            uri = http_cache_choice_vary_key(choice->pool, choice->uri, vary);
+            uri = http_cache_choice_vary_key(*choice->pool, choice->uri, vary);
 
         if (uri != nullptr && unclean)
             /* we have already found something, and we think that this
@@ -224,48 +224,48 @@ static const struct memcached_client_handler http_cache_choice_get_handler = {
 };
 
 void
-http_cache_choice_get(struct pool *pool, struct memcached_stock *stock,
+http_cache_choice_get(struct pool &pool, struct memcached_stock &stock,
                       const char *uri, const struct strmap *request_headers,
                       http_cache_choice_get_t callback,
                       void *callback_ctx,
-                      struct async_operation_ref *async_ref)
+                      struct async_operation_ref &async_ref)
 {
-    auto choice = PoolAlloc<http_cache_choice>(*pool);
+    auto choice = PoolAlloc<http_cache_choice>(pool);
 
-    choice->pool = pool;
-    choice->stock = stock;
+    choice->pool = &pool;
+    choice->stock = &stock;
     choice->uri = uri;
     choice->key = http_cache_choice_key(pool, uri);
     choice->request_headers = request_headers;
     choice->callback.get = callback;
     choice->callback_ctx = callback_ctx;
-    choice->async_ref = async_ref;
+    choice->async_ref = &async_ref;
 
-    memcached_stock_invoke(pool, stock,
+    memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            choice->key, strlen(choice->key),
                            nullptr,
                            &http_cache_choice_get_handler, choice,
-                           async_ref);
+                           &async_ref);
 }
 
 struct http_cache_choice *
-http_cache_choice_prepare(struct pool *pool, const char *uri,
-                          const struct http_cache_info *info,
+http_cache_choice_prepare(struct pool &pool, const char *uri,
+                          const struct http_cache_info &info,
                           const struct strmap *vary)
 {
-    auto choice = PoolAlloc<http_cache_choice>(*pool);
+    auto choice = PoolAlloc<http_cache_choice>(pool);
 
-    choice->pool = pool;
+    choice->pool = &pool;
     choice->uri = uri;
 
     struct growing_buffer *gb = growing_buffer_new(tpool, 1024);
     serialize_uint32(gb, CHOICE_MAGIC);
-    serialize_uint64(gb, info->expires);
+    serialize_uint64(gb, info.expires);
     serialize_strmap(gb, vary);
 
-    choice->data.data = growing_buffer_dup(gb, pool, &choice->data.size);
+    choice->data.data = growing_buffer_dup(gb, &pool, &choice->data.size);
 
     return choice;
 }
@@ -353,29 +353,29 @@ static const struct memcached_client_handler http_cache_choice_prepend_handler =
 };
 
 void
-http_cache_choice_commit(struct http_cache_choice *choice,
-                         struct memcached_stock *stock,
+http_cache_choice_commit(struct http_cache_choice &choice,
+                         struct memcached_stock &stock,
                          http_cache_choice_commit_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref *async_ref)
+                         struct async_operation_ref &async_ref)
 {
-    choice->key = http_cache_choice_key(choice->pool, choice->uri);
-    choice->stock = stock;
-    choice->callback.commit = callback;
-    choice->callback_ctx = callback_ctx;
-    choice->async_ref = async_ref;
+    choice.key = http_cache_choice_key(*choice.pool, choice.uri);
+    choice.stock = &stock;
+    choice.callback.commit = callback;
+    choice.callback_ctx = callback_ctx;
+    choice.async_ref = &async_ref;
 
-    cache_log(5, "prepend '%s'\n", choice->key);
+    cache_log(5, "prepend '%s'\n", choice.key);
 
-    struct istream *value = istream_memory_new(choice->pool,
-                                               choice->data.data,
-                                               choice->data.size);
-    memcached_stock_invoke(choice->pool, stock,
+    struct istream *value = istream_memory_new(choice.pool,
+                                               choice.data.data,
+                                               choice.data.size);
+    memcached_stock_invoke(choice.pool, &stock,
                            MEMCACHED_OPCODE_PREPEND,
                            nullptr, 0,
-                           choice->key, strlen(choice->key), value,
-                           &http_cache_choice_prepend_handler, choice,
-                           async_ref);
+                           choice.key, strlen(choice.key), value,
+                           &http_cache_choice_prepend_handler, &choice,
+                           &async_ref);
 }
 
 static void
@@ -519,29 +519,29 @@ static const struct memcached_client_handler http_cache_choice_filter_get_handle
 };
 
 void
-http_cache_choice_filter(struct pool *pool, struct memcached_stock *stock,
+http_cache_choice_filter(struct pool &pool, struct memcached_stock &stock,
                          const char *uri,
                          http_cache_choice_filter_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref *async_ref)
+                         struct async_operation_ref &async_ref)
 {
-    auto choice = PoolAlloc<http_cache_choice>(*pool);
+    auto choice = PoolAlloc<http_cache_choice>(pool);
 
-    choice->pool = pool;
-    choice->stock = stock;
+    choice->pool = &pool;
+    choice->stock = &stock;
     choice->uri = uri;
     choice->key = http_cache_choice_key(pool, uri);
     choice->callback.filter = callback;
     choice->callback_ctx = callback_ctx;
-    choice->async_ref = async_ref;
+    choice->async_ref = &async_ref;
 
-    memcached_stock_invoke(pool, stock,
+    memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            choice->key, strlen(choice->key),
                            nullptr,
                            &http_cache_choice_filter_get_handler, choice,
-                           async_ref);
+                           &async_ref);
 }
 
 struct cleanup_data {
@@ -571,13 +571,13 @@ http_cache_choice_cleanup_filter_callback(const struct http_cache_choice_info *i
 }
 
 void
-http_cache_choice_cleanup(struct pool *pool, struct memcached_stock *stock,
+http_cache_choice_cleanup(struct pool &pool, struct memcached_stock &stock,
                           const char *uri,
                           http_cache_choice_cleanup_t callback,
                           void *callback_ctx,
-                          struct async_operation_ref *async_ref)
+                          struct async_operation_ref &async_ref)
 {
-    auto data = NewFromPool<cleanup_data>(*pool);
+    auto data = NewFromPool<cleanup_data>(pool);
 
     data->now = time(nullptr);
     uset_init(&data->uset);
@@ -619,27 +619,27 @@ static const struct memcached_client_handler http_cache_choice_delete_handler = 
 };
 
 void
-http_cache_choice_delete(struct pool *pool, struct memcached_stock *stock,
+http_cache_choice_delete(struct pool &pool, struct memcached_stock &stock,
                          const char *uri,
                          http_cache_choice_delete_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref *async_ref)
+                         struct async_operation_ref &async_ref)
 {
-    auto choice = PoolAlloc<http_cache_choice>(*pool);
+    auto choice = PoolAlloc<http_cache_choice>(pool);
 
-    choice->pool = pool;
-    choice->stock = stock;
+    choice->pool = &pool;
+    choice->stock = &stock;
     choice->uri = uri;
     choice->key = http_cache_choice_key(pool, uri);
     choice->callback.delete_ = callback;
     choice->callback_ctx = callback_ctx;
-    choice->async_ref = async_ref;
+    choice->async_ref = &async_ref;
 
-    memcached_stock_invoke(pool, stock,
+    memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            choice->key, strlen(choice->key),
                            nullptr,
                            &http_cache_choice_delete_handler, choice,
-                           async_ref);
+                           &async_ref);
 }

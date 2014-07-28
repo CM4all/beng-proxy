@@ -134,23 +134,23 @@ static const struct memcached_client_handler http_cache_memcached_flush_handler 
 };
 
 void
-http_cache_memcached_flush(struct pool *pool, struct memcached_stock *stock,
+http_cache_memcached_flush(struct pool &pool, struct memcached_stock &stock,
                            http_cache_memcached_flush_t callback,
                            void *callback_ctx,
-                           struct async_operation_ref *async_ref)
+                           struct async_operation_ref &async_ref)
 {
     auto request =
-        NewFromPool<http_cache_memcached_request>(*pool, *pool);
+        NewFromPool<http_cache_memcached_request>(pool, pool);
 
     request->callback.flush = callback;
     request->callback_ctx = callback_ctx;
 
-    memcached_stock_invoke(pool, stock, MEMCACHED_OPCODE_FLUSH,
+    memcached_stock_invoke(&pool, &stock, MEMCACHED_OPCODE_FLUSH,
                            nullptr, 0,
                            nullptr, 0,
                            nullptr,
                            &http_cache_memcached_flush_handler, request,
-                           async_ref);
+                           &async_ref);
 }
 
 static struct http_cache_document *
@@ -217,41 +217,41 @@ static void
 mcd_choice_get_callback(const char *key, bool unclean,
                         GError *error, void *ctx)
 {
-    auto request = (http_cache_memcached_request *)ctx;
+    auto &request = *(http_cache_memcached_request *)ctx;
 
     if (unclean) {
         /* this choice record is unclean - start cleanup as a
            background job */
-        struct pool *pool = pool_new_linear(request->background_pool,
+        struct pool *pool = pool_new_linear(request.background_pool,
                                       "http_cache_choice_cleanup", 8192);
         auto job = NewFromPool<LinkedBackgroundJob>(*pool,
-                                                    *request->background);
+                                                    *request.background);
 
-        http_cache_choice_cleanup(pool, request->stock, request->uri,
+        http_cache_choice_cleanup(*pool, *request.stock, request.uri,
                                   background_callback, job,
-                                  request->background->Add2(*job));
+                                  *request.background->Add2(*job));
         pool_unref(pool);
     }
 
     if (key == nullptr) {
-        request->callback.get(nullptr, nullptr, error, request->callback_ctx);
+        request.callback.get(nullptr, nullptr, error, request.callback_ctx);
         return;
     }
 
-    request->in_choice = true;
-    memcached_stock_invoke(request->pool, request->stock, MEMCACHED_OPCODE_GET,
+    request.in_choice = true;
+    memcached_stock_invoke(request.pool, request.stock, MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            key, strlen(key),
                            nullptr,
-                           &http_cache_memcached_get_handler, request,
-                           request->async_ref);
+                           &http_cache_memcached_get_handler, &request,
+                           request.async_ref);
 }
 
 static void
 http_cache_memcached_header_done(void *header_ptr, size_t length,
                                  struct istream *tail, void *ctx)
 {
-    auto request = (http_cache_memcached_request *)ctx;
+    auto &request = *(http_cache_memcached_request *)ctx;
     struct http_cache_document *document;
 
     ConstBuffer<void> header(header_ptr, length);
@@ -259,35 +259,35 @@ http_cache_memcached_header_done(void *header_ptr, size_t length,
     auto type = (http_cache_memcached_type)deserialize_uint32(header);
     switch (type) {
     case TYPE_DOCUMENT:
-        document = mcd_deserialize_document(request->pool, header,
-                                            request->request_headers);
+        document = mcd_deserialize_document(request.pool, header,
+                                            request.request_headers);
         if (document == nullptr) {
-            if (request->in_choice)
+            if (request.in_choice)
                 break;
 
             istream_close_unused(tail);
 
-            http_cache_choice_get(request->pool, request->stock,
-                                  request->uri, request->request_headers,
-                                  mcd_choice_get_callback, request,
-                                  request->async_ref);
+            http_cache_choice_get(*request.pool, *request.stock,
+                                  request.uri, request.request_headers,
+                                  mcd_choice_get_callback, &request,
+                                  *request.async_ref);
             return;
         }
 
-        request->callback.get(document, tail, nullptr, request->callback_ctx);
+        request.callback.get(document, tail, nullptr, request.callback_ctx);
         return;
     }
 
     istream_close_unused(tail);
-    request->callback.get(nullptr, nullptr, nullptr, request->callback_ctx);
+    request.callback.get(nullptr, nullptr, nullptr, request.callback_ctx);
 }
 
 static void
 http_cache_memcached_header_error(GError *error, void *ctx)
 {
-    auto request = (http_cache_memcached_request *)ctx;
+    auto &request = *(http_cache_memcached_request *)ctx;
 
-    request->callback.get(nullptr, nullptr, error, request->callback_ctx);
+    request.callback.get(nullptr, nullptr, error, request.callback_ctx);
 }
 
 static const struct sink_header_handler http_cache_memcached_header_handler = {
@@ -303,16 +303,16 @@ http_cache_memcached_get_response(enum memcached_response_status status,
                                   gcc_unused size_t key_length,
                                   struct istream *value, void *ctx)
 {
-    auto request = (http_cache_memcached_request *)ctx;
+    auto &request = *(http_cache_memcached_request *)ctx;
 
-    if (status == MEMCACHED_STATUS_KEY_NOT_FOUND && !request->in_choice) {
+    if (status == MEMCACHED_STATUS_KEY_NOT_FOUND && !request.in_choice) {
         if (value != nullptr)
             istream_close_unused(value);
 
-        http_cache_choice_get(request->pool, request->stock,
-                              request->uri, request->request_headers,
-                              mcd_choice_get_callback, request,
-                              request->async_ref);
+        http_cache_choice_get(*request.pool, *request.stock,
+                              request.uri, request.request_headers,
+                              mcd_choice_get_callback, &request,
+                              *request.async_ref);
         return;
     }
 
@@ -320,50 +320,49 @@ http_cache_memcached_get_response(enum memcached_response_status status,
         if (value != nullptr)
             istream_close_unused(value);
 
-        request->callback.get(nullptr, nullptr, nullptr, request->callback_ctx);
+        request.callback.get(nullptr, nullptr, nullptr, request.callback_ctx);
         return;
     }
 
-    sink_header_new(request->pool, value,
-                    &http_cache_memcached_header_handler, request,
-                    request->async_ref);
+    sink_header_new(request.pool, value,
+                    &http_cache_memcached_header_handler, &request,
+                    request.async_ref);
 }
 
 void
-http_cache_memcached_get(struct pool *pool, struct memcached_stock *stock,
-                         struct pool *background_pool,
+http_cache_memcached_get(struct pool &pool, struct memcached_stock &stock,
+                         struct pool &background_pool,
                          BackgroundManager &background,
                          const char *uri, struct strmap *request_headers,
                          http_cache_memcached_get_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref *async_ref)
+                         struct async_operation_ref &async_ref)
 {
     auto request =
-        NewFromPool<http_cache_memcached_request>(*pool, *pool,
-                                                  *stock,
-                                                  *background_pool,
+        NewFromPool<http_cache_memcached_request>(pool, pool,
+                                                  stock,
+                                                  background_pool,
                                                   background,
                                                   uri, request_headers,
                                                   callback, callback_ctx,
-                                                  *async_ref);
+                                                  async_ref);
 
-    const char *key;
-    key = http_cache_choice_vary_key(pool, uri, nullptr);
+    const char *key = http_cache_choice_vary_key(pool, uri, nullptr);
 
-    memcached_stock_invoke(pool, stock, MEMCACHED_OPCODE_GET,
+    memcached_stock_invoke(&pool, &stock, MEMCACHED_OPCODE_GET,
                            nullptr, 0,
                            key, strlen(key),
                            nullptr,
                            &http_cache_memcached_get_handler, request,
-                           async_ref);
+                           &async_ref);
 }
 
 static void
 mcd_choice_commit_callback(GError *error, void *ctx)
 {
-    auto request = (http_cache_memcached_request *)ctx;
+    auto &request = *(http_cache_memcached_request *)ctx;
 
-    request->callback.put(error, request->callback_ctx);
+    request.callback.put(error, request.callback_ctx);
 }
 
 static void
@@ -374,28 +373,28 @@ http_cache_memcached_put_response(enum memcached_response_status status,
                                   gcc_unused size_t key_length,
                                   struct istream *value, void *ctx)
 {
-    auto request = (http_cache_memcached_request *)ctx;
+    auto &request = *(http_cache_memcached_request *)ctx;
 
     if (value != nullptr)
         istream_close_unused(value);
 
     if (status != MEMCACHED_STATUS_NO_ERROR || /* error */
-        request->choice == nullptr) { /* or no choice entry needed */
-        request->callback.put(nullptr, request->callback_ctx);
+        request.choice == nullptr) { /* or no choice entry needed */
+        request.callback.put(nullptr, request.callback_ctx);
         return;
     }
 
-    http_cache_choice_commit(request->choice, request->stock,
-                             mcd_choice_commit_callback, request,
-                             request->async_ref);
+    http_cache_choice_commit(*request.choice, *request.stock,
+                             mcd_choice_commit_callback, &request,
+                             *request.async_ref);
 }
 
 static void
 http_cache_memcached_put_error(GError *error, void *ctx)
 {
-    auto request = (http_cache_memcached_request *)ctx;
+    auto &request = *(http_cache_memcached_request *)ctx;
 
-    request->callback.put(error, request->callback_ctx);
+    request.callback.put(error, request.callback_ctx);
 }
 
 static const struct memcached_client_handler http_cache_memcached_put_handler = {
@@ -404,28 +403,28 @@ static const struct memcached_client_handler http_cache_memcached_put_handler = 
 };
 
 void
-http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
-                         struct pool *background_pool,
+http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
+                         struct pool &background_pool,
                          BackgroundManager &background,
                          const char *uri,
-                         const struct http_cache_info *info,
+                         const struct http_cache_info &info,
                          const struct strmap *request_headers,
                          http_status_t status,
                          const struct strmap *response_headers,
                          struct istream *value,
                          http_cache_memcached_put_t callback, void *callback_ctx,
-                         struct async_operation_ref *async_ref)
+                         struct async_operation_ref &async_ref)
 {
     auto request =
-        NewFromPool<http_cache_memcached_request>(*pool, *pool, *stock,
-                                                  *background_pool,
+        NewFromPool<http_cache_memcached_request>(pool, pool, stock,
+                                                  background_pool,
                                                   background,
-                                                  uri, *async_ref);
+                                                  uri, async_ref);
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    const struct strmap *vary = info->vary != nullptr
-        ? http_cache_copy_vary(*tpool, info->vary, request_headers)
+    const struct strmap *vary = info.vary != nullptr
+        ? http_cache_copy_vary(*tpool, info.vary, request_headers)
         : nullptr;
 
     request->choice = vary != nullptr
@@ -434,12 +433,12 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
 
     const char *key = http_cache_choice_vary_key(pool, uri, vary);
 
-    struct growing_buffer *gb = growing_buffer_new(pool, 1024);
+    struct growing_buffer *gb = growing_buffer_new(&pool, 1024);
 
     /* type */
     serialize_uint32(gb, TYPE_DOCUMENT);
 
-    serialize_uint64(gb, info->expires);
+    serialize_uint64(gb, info.expires);
     serialize_strmap(gb, vary);
 
     /* serialize status + response headers */
@@ -449,25 +448,25 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
     request->header_size = g_htonl(growing_buffer_size(gb));
 
     /* append response body */
-    value = istream_cat_new(pool,
-                            istream_memory_new(pool, &request->header_size,
+    value = istream_cat_new(&pool,
+                            istream_memory_new(&pool, &request->header_size,
                                                sizeof(request->header_size)),
-                            istream_gb_new(pool, gb), value, nullptr);
+                            istream_gb_new(&pool, gb), value, nullptr);
 
     request->extras.set.flags = 0;
-    request->extras.set.expiration = info->expires > 0
-        ? g_htonl(info->expires) : g_htonl(3600);
+    request->extras.set.expiration = info.expires > 0
+        ? g_htonl(info.expires) : g_htonl(3600);
 
     request->callback.put = callback;
     request->callback_ctx = callback_ctx;
 
-    memcached_stock_invoke(pool, stock,
+    memcached_stock_invoke(&pool, &stock,
                            MEMCACHED_OPCODE_SET,
                            &request->extras.set, sizeof(request->extras.set),
                            key, strlen(key),
                            value,
                            &http_cache_memcached_put_handler, request,
-                           async_ref);
+                           &async_ref);
 }
 
 static void
@@ -505,7 +504,7 @@ static const struct memcached_client_handler mcd_background_handler = {
 };
 
 static void
-mcd_background_delete(struct memcached_stock *stock,
+mcd_background_delete(struct memcached_stock &stock,
                       struct pool *background_pool,
                       BackgroundManager &background,
                       const char *uri, const struct strmap *vary)
@@ -513,9 +512,9 @@ mcd_background_delete(struct memcached_stock *stock,
     struct pool *pool = pool_new_linear(background_pool,
                                         "http_cache_memcached_bkg_delete", 1024);
     auto job = NewFromPool<LinkedBackgroundJob>(*pool, background);
-    const char *key = http_cache_choice_vary_key(pool, uri, vary);
+    const char *key = http_cache_choice_vary_key(*pool, uri, vary);
 
-    memcached_stock_invoke(pool, stock,
+    memcached_stock_invoke(pool, &stock,
                            MEMCACHED_OPCODE_DELETE,
                            nullptr, 0,
                            key, strlen(key),
@@ -526,19 +525,19 @@ mcd_background_delete(struct memcached_stock *stock,
 }
 
 void
-http_cache_memcached_remove_uri(struct memcached_stock *stock,
-                                struct pool *background_pool,
+http_cache_memcached_remove_uri(struct memcached_stock &stock,
+                                struct pool &background_pool,
                                 BackgroundManager &background,
                                 const char *uri)
 {
-    mcd_background_delete(stock, background_pool, background, uri, nullptr);
+    mcd_background_delete(stock, &background_pool, background, uri, nullptr);
 
-    struct pool *pool = pool_new_linear(background_pool,
+    struct pool *pool = pool_new_linear(&background_pool,
                                         "http_cache_memcached_remove_uri", 8192);
     auto job = NewFromPool<LinkedBackgroundJob>(*pool, background);
-    http_cache_choice_delete(pool, stock, uri,
+    http_cache_choice_delete(*pool, stock, uri,
                              background_callback, job,
-                             background.Add2(*job));
+                             *background.Add2(*job));
 
     pool_unref(pool);
 }
@@ -562,7 +561,7 @@ mcd_delete_filter_callback(const struct http_cache_choice_info *info,
     if (info != nullptr) {
         /* discard documents matching the Vary specification */
         if (info->VaryFits(data->headers)) {
-            mcd_background_delete(data->stock, data->background_pool,
+            mcd_background_delete(*data->stock, data->background_pool,
                                   *data->background, data->uri,
                                   info->vary);
             return false;
@@ -580,28 +579,28 @@ mcd_delete_filter_callback(const struct http_cache_choice_info *info,
 }
 
 void
-http_cache_memcached_remove_uri_match(struct memcached_stock *stock,
-                                      struct pool *background_pool,
+http_cache_memcached_remove_uri_match(struct memcached_stock &stock,
+                                      struct pool &background_pool,
                                       BackgroundManager &background,
                                       const char *uri, struct strmap *headers)
 {
     /* delete the main document */
-    mcd_background_delete(stock, background_pool, background, uri, nullptr);
+    mcd_background_delete(stock, &background_pool, background, uri, nullptr);
 
-    struct pool *pool = pool_new_linear(background_pool,
+    struct pool *pool = pool_new_linear(&background_pool,
                                         "http_cache_memcached_remove_uri", 8192);
 
     /* now delete all matching Vary documents */
     auto data = NewFromPool<match_data>(*pool);
-    data->stock = stock;
-    data->background_pool = background_pool;
+    data->stock = &stock;
+    data->background_pool = &background_pool;
     data->background = &background;
     data->uri = p_strdup(pool, uri);
     data->headers = strmap_dup(pool, headers);
 
-    http_cache_choice_filter(pool, stock, uri,
+    http_cache_choice_filter(*pool, stock, uri,
                              mcd_delete_filter_callback, data,
-                             background.Add2(data->job));
+                             *background.Add2(data->job));
 
     pool_unref(pool);
 }

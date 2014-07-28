@@ -169,10 +169,10 @@ proxy_handler(request &request2)
     for (const auto &i : tr.request_headers)
         forward.headers->Add(i.key, i.value);
 
-    http_cache_request(global_http_cache, request->pool,
+    http_cache_request(*global_http_cache, *request->pool,
                        session_id_low(request2.session_id),
-                       forward.method, address,
+                       forward.method, *address,
                        forward.headers, forward.body,
-                       &proxy_response_handler, &request2,
-                       &request2.async_ref);
+                       proxy_response_handler, &request2,
+                       request2.async_ref);
 }

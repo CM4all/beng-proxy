@@ -38,27 +38,27 @@ typedef void (*http_cache_choice_cleanup_t)(GError *error, void *ctx);
 typedef void (*http_cache_choice_delete_t)(GError *error, void *ctx);
 
 const char *
-http_cache_choice_vary_key(struct pool *pool, const char *uri,
+http_cache_choice_vary_key(struct pool &pool, const char *uri,
                            const struct strmap *vary);
 
 void
-http_cache_choice_get(struct pool *pool, struct memcached_stock *stock,
+http_cache_choice_get(struct pool &pool, struct memcached_stock &stock,
                       const char *uri, const struct strmap *request_headers,
                       http_cache_choice_get_t callback,
                       void *callback_ctx,
-                      struct async_operation_ref *async_ref);
+                      struct async_operation_ref &async_ref);
 
 struct http_cache_choice *
-http_cache_choice_prepare(struct pool *pool, const char *uri,
-                          const struct http_cache_info *info,
+http_cache_choice_prepare(struct pool &pool, const char *uri,
+                          const struct http_cache_info &info,
                           const struct strmap *vary);
 
 void
-http_cache_choice_commit(struct http_cache_choice *choice,
-                         struct memcached_stock *stock,
+http_cache_choice_commit(struct http_cache_choice &choice,
+                         struct memcached_stock &stock,
                          http_cache_choice_commit_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref *async_ref);
+                         struct async_operation_ref &async_ref);
 
 /**
  * Filter the choice record, keep only items accepted by the filter
@@ -66,21 +66,21 @@ http_cache_choice_commit(struct http_cache_choice *choice,
  * with document=nullptr.
  */
 void
-http_cache_choice_filter(struct pool *pool, struct memcached_stock *stock,
+http_cache_choice_filter(struct pool &pool, struct memcached_stock &stock,
                          const char *uri,
                          http_cache_choice_filter_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref *async_ref);
+                         struct async_operation_ref &async_ref);
 
 /**
  * Clean up the choice record, removing expired items.
  */
 void
-http_cache_choice_cleanup(struct pool *pool, struct memcached_stock *stock,
+http_cache_choice_cleanup(struct pool &pool, struct memcached_stock &stock,
                           const char *uri,
                           http_cache_choice_cleanup_t callback,
                           void *callback_ctx,
-                          struct async_operation_ref *async_ref);
+                          struct async_operation_ref &async_ref);
 
 /**
  * Deletes the choice record.
@@ -90,10 +90,10 @@ http_cache_choice_cleanup(struct pool *pool, struct memcached_stock *stock,
  * those, too.
  */
 void
-http_cache_choice_delete(struct pool *pool, struct memcached_stock *stock,
+http_cache_choice_delete(struct pool &pool, struct memcached_stock &stock,
                          const char *uri,
                          http_cache_choice_delete_t callback,
                          void *callback_ctx,
-                         struct async_operation_ref *async_ref);
+                         struct async_operation_ref &async_ref);
 
 #endif
