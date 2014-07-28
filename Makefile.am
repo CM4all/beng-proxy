@@ -77,11 +77,6 @@ bin_PROGRAMS = src/cm4all-beng-proxy \
 src_cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
-	src/util/Cast.hxx \
-	src/util/ConstBuffer.hxx \
-	src/util/DereferenceIterator.hxx \
-	src/util/TrivialArray.hxx \
-	src/util/StaticArray.hxx \
 	src/product.h \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/gerrno.h \
@@ -232,7 +227,6 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/stock.cxx src/stock.hxx \
 	src/hstock.cxx src/hstock.hxx \
 	src/mstock.cxx src/mstock.h \
-	src/kvlist.hxx \
 	src/strmap.cxx src/strmap.hxx \
 	src/strref-dpool.h \
 	src/strref-pool.h \
@@ -593,9 +587,15 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libistream.a
 
 libutil_a_SOURCES = \
+	src/util/Cast.hxx \
+	src/util/ConstBuffer.hxx \
+	src/util/DereferenceIterator.hxx \
+	src/util/TrivialArray.hxx \
+	src/util/StaticArray.hxx \
 	src/util/Domain.hxx \
 	src/util/Error.cxx src/util/Error.hxx \
 	src/util/djbhash.c src/util/djbhash.h \
+	src/kvlist.hxx \
 	src/format.c format.h \
 	src/date.c src/date.h \
 	src/gmtime.c src/gmtime.h \

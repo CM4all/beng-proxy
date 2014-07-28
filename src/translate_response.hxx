@@ -8,11 +8,11 @@
 #define BENG_PROXY_TRANSLATE_RESPONSE_HXX
 
 #include "util/ConstBuffer.hxx"
+#include "util/kvlist.hxx"
 #include "resource_address.hxx"
 #include "header_forward.hxx"
 #include "strset.h"
 #include "glibfwd.hxx"
-#include "kvlist.hxx"
 
 #include <http/status.h>
 
