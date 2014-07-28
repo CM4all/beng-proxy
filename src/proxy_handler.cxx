@@ -8,7 +8,7 @@
 #include "request.hxx"
 #include "request_forward.hxx"
 #include "http_server.hxx"
-#include "http_cache.h"
+#include "http_cache.hxx"
 #include "http_response.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"

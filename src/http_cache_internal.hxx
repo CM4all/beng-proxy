@@ -1,7 +1,7 @@
 #ifndef BENG_PROXY_HTTP_CACHE_INTERNAL_HXX
 #define BENG_PROXY_HTTP_CACHE_INTERNAL_HXX
 
-#include "http_cache.h"
+#include "http_cache.hxx"
 
 #include <sys/types.h>
 

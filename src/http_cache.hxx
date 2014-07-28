@@ -4,12 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_HTTP_CACHE_H
-#define __BENG_HTTP_CACHE_H
+#ifndef BENG_PROXY_HTTP_CACHE_H
+#define BENG_PROXY_HTTP_CACHE_H
 
 #include <http/method.h>
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -22,10 +21,6 @@ struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
 struct cache_stats;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct http_cache *
 http_cache_new(struct pool *pool, size_t max_size,
@@ -57,9 +52,5 @@ http_cache_request(struct http_cache *cache,
                    const struct http_response_handler *handler,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

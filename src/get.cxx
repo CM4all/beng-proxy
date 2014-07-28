@@ -7,7 +7,7 @@
 
 #include "get.hxx"
 #include "resource_loader.hxx"
-#include "http_cache.h"
+#include "http_cache.hxx"
 
 void
 resource_get(struct http_cache *cache,

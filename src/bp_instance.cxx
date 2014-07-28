@@ -5,7 +5,7 @@
  */
 
 #include "bp_instance.hxx"
-#include "http_cache.h"
+#include "http_cache.hxx"
 #include "fcache.h"
 
 void

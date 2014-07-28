@@ -1,4 +1,4 @@
-#include "http_cache.h"
+#include "http_cache.hxx"
 #include "http_cache_memcached.hxx"
 #include "resource_loader.hxx"
 #include "resource_address.hxx"
