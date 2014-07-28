@@ -146,7 +146,7 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 
     /* destroy one third of the idle items */
 
-    for (unsigned i = (stock->num_idle + 2) / 3; i > 0; --i) {
+    for (unsigned i = (stock->num_idle - stock->max_idle + 2) / 3; i > 0; --i) {
         struct stock_item *item = (struct stock_item *)stock->idle.next;
 
         assert(!list_empty(&stock->idle));

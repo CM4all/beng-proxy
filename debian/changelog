@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.11) unstable; urgency=low
 
-  * 
+  * merge release 3.1.37
 
  --   
 
@@ -459,6 +459,14 @@ cm4all-beng-proxy (4.0) unstable; urgency=low
   * translate-client, resource-loader: support https://
 
  -- Max Kellermann <mk@cm4all.com>  Wed, 23 Oct 2013 19:29:38 -0000
+
+cm4all-beng-proxy (3.1.37) unstable; urgency=low
+
+  * http_cache: fix caching (Fast-)CGI responses
+  * http_client: fix bug with HTTP 1.0 Keep-Alive
+  * stock: destroy only surplus idle items
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 28 Jul 2014 15:30:50 -0000
 
 cm4all-beng-proxy (3.1.36) unstable; urgency=low
 
