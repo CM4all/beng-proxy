@@ -1056,18 +1056,17 @@ http_cache_request(struct http_cache &cache,
         return;
     }
 
-    struct http_cache_request_info *info =
-        http_cache_request_evaluate(pool, method, address, headers, body);
-    if (info != nullptr) {
+    struct http_cache_request_info info;
+    if (http_cache_request_evaluate(info, method, address, headers, body)) {
         assert(body == nullptr);
 
         if (cache.heap.IsDefined())
             http_cache_heap_use(cache, pool, session_sticky,
-                                method, address, headers, *info,
+                                method, address, headers, info,
                                 handler, handler_ctx, async_ref);
         else if (cache.memcached_stock != nullptr)
             http_cache_memcached_use(cache, pool, session_sticky,
-                                     method, address, headers, *info,
+                                     method, address, headers, info,
                                      handler, handler_ctx, async_ref);
     } else {
         if (http_cache_request_invalidate(method))

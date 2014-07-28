@@ -7,8 +7,8 @@
 
 #include <sys/types.h> /* for off_t */
 
-struct http_cache_request_info *
-http_cache_request_evaluate(struct pool &pool,
+bool
+http_cache_request_evaluate(struct http_cache_request_info &info,
                             http_method_t method,
                             const struct resource_address &address,
                             const struct strmap *headers,

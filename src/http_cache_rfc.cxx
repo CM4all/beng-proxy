@@ -41,37 +41,29 @@ next_item(struct strref *s, struct strref *p)
     return p;
 }
 
-static struct http_cache_request_info *
-http_cache_request_info_new(struct pool &pool)
-{
-    return NewFromPool<http_cache_request_info>(pool);
-}
-
 /* check whether the request could produce a cacheable response */
-struct http_cache_request_info *
-http_cache_request_evaluate(struct pool &pool,
+bool
+http_cache_request_evaluate(struct http_cache_request_info &info,
                             http_method_t method,
                             const struct resource_address &address,
                             const struct strmap *headers,
                             struct istream *body)
 {
-    struct http_cache_request_info *info = nullptr;
-
     if (method != HTTP_METHOD_GET || body != nullptr)
         /* RFC 2616 13.11 "Write-Through Mandatory" */
-        return nullptr;
+        return false;
 
     if (headers != nullptr) {
         const char *p = headers->Get("range");
         if (p != nullptr)
-            return nullptr;
+            return false;
 
         /* RFC 2616 14.8: "When a shared cache receives a request
            containing an Authorization field, it MUST NOT return the
            corresponding response as a reply to any other request
            [...] */
         if (headers->Get("authorization") != nullptr)
-            return nullptr;
+            return false;
 
         p = headers->Get("cache-control");
         if (p != nullptr) {
@@ -82,29 +74,23 @@ http_cache_request_evaluate(struct pool &pool,
             while ((s = next_item(&cc, &tmp)) != nullptr) {
                 if (strref_cmp_literal(s, "no-cache") == 0 ||
                     strref_cmp_literal(s, "no-store") == 0)
-                    return nullptr;
+                    return false;
 
-                if (strref_cmp_literal(s, "only-if-cached") == 0) {
-                    if (info == nullptr)
-                        info = http_cache_request_info_new(pool);
-                    info->only_if_cached = true;
-                }
+                if (strref_cmp_literal(s, "only-if-cached") == 0)
+                    info.only_if_cached = true;
             }
         } else {
             p = headers->Get("pragma");
             if (p != nullptr && strcmp(p, "no-cache") == 0)
-                return nullptr;
+                return false;
         }
     }
 
-    if (info == nullptr)
-        info = http_cache_request_info_new(pool);
-
-    info->is_remote = address.type == RESOURCE_ADDRESS_HTTP ||
+    info.is_remote = address.type == RESOURCE_ADDRESS_HTTP ||
         address.type == RESOURCE_ADDRESS_AJP;
-    info->has_query_string = address.HasQueryString();
+    info.has_query_string = address.HasQueryString();
 
-    return info;
+    return true;
 }
 
 gcc_pure
