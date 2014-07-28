@@ -618,7 +618,7 @@ http_cache_get_stats(const struct http_cache *cache, struct cache_stats *data)
     if (http_cache_heap_is_defined(&cache->heap))
         http_cache_heap_get_stats(&cache->heap, cache->rubber, data);
     else
-        memset(data, 0, sizeof(*data));
+        data->Clear();
 }
 
 static void

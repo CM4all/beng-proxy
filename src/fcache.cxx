@@ -558,7 +558,7 @@ filter_cache_get_stats(const struct filter_cache *cache,
         cache_get_stats(cache->cache, data);
     else
         /* filter cache is disabled */
-        memset(data, 0, sizeof(*data));
+        data->Clear();
 }
 
 void

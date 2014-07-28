@@ -67,6 +67,11 @@ struct cache_stats {
      * The total amount of memory allocated by this cache.
      */
     size_t brutto_size;
+
+    void Clear() {
+        netto_size = 0;
+        brutto_size = 0;
+    }
 };
 
 gcc_malloc
