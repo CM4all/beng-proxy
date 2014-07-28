@@ -53,9 +53,9 @@ put_random(struct http_cache_heap *cache, Rubber *rubber)
     response_headers->Add("x-foo", "bar");
     response_headers->Add("x-bar", "foo");
 
-    http_cache_heap_put(cache, uri, &info, request_headers,
-                        HTTP_STATUS_OK, response_headers,
-                        rubber, rubber_id, length);
+    cache->Put(uri, info, request_headers,
+               HTTP_STATUS_OK, response_headers,
+               *rubber, rubber_id, length);
 }
 
 /*
@@ -80,18 +80,18 @@ main(gcc_unused int argc, gcc_unused char **argv)
     struct pool *pool2 = pool_new_libc(pool, "cache");
 
     struct http_cache_heap cache;
-    http_cache_heap_init(&cache, *pool2, max_size);
+    cache.Init(*pool2, max_size);
 
     for (unsigned i = 0; i < 32 * 1024; ++i)
         put_random(&cache, rubber);
 
     struct cache_stats stats;
-    http_cache_heap_get_stats(&cache, rubber, &stats);
+    cache.GetStats(*rubber, stats);
     printf("netto=%zu brutto=%zu ratio=%f\n",
            stats.netto_size, stats.brutto_size,
            (double)stats.netto_size / stats.brutto_size);
 
-    http_cache_heap_deinit(&cache);
+    cache.Deinit();
 
     pool_unref(pool2);
 

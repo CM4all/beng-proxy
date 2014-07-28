@@ -73,11 +73,10 @@ http_cache_item_match(const struct cache_item *_item, void *ctx)
 }
 
 struct http_cache_document *
-http_cache_heap_get(struct http_cache_heap *cache, const char *uri,
-                    struct strmap *request_headers)
+http_cache_heap::Get(const char *uri, struct strmap *request_headers)
 {
     struct http_cache_item *item
-        = (struct http_cache_item *)cache_get_match(cache->cache, uri,
+        = (struct http_cache_item *)cache_get_match(cache, uri,
                                                     http_cache_item_match,
                                                     request_headers);
     if (item == nullptr)
@@ -87,83 +86,77 @@ http_cache_heap_get(struct http_cache_heap *cache, const char *uri,
 }
 
 void
-http_cache_heap_put(struct http_cache_heap *cache,
-                    const char *url,
-                    const struct http_cache_info *info,
-                    struct strmap *request_headers,
-                    http_status_t status,
-                    const struct strmap *response_headers,
-                    Rubber *rubber, unsigned rubber_id, size_t size)
+http_cache_heap::Put(const char *url,
+                     const struct http_cache_info &info,
+                     struct strmap *request_headers,
+                     http_status_t status,
+                     const struct strmap *response_headers,
+                     Rubber &rubber, unsigned rubber_id, size_t size)
 {
 
-    struct pool *pool = pool_new_slice(cache->pool, "http_cache_item",
-                                       cache->slice_pool);
-    auto item = NewFromPool<http_cache_item>(*pool, *pool,
-                                             *info, request_headers,
+    struct pool *item_pool = pool_new_slice(pool, "http_cache_item",
+                                            slice_pool);
+    auto item = NewFromPool<http_cache_item>(*item_pool, *item_pool,
+                                             info, request_headers,
                                              status, response_headers,
-                                             size, *rubber, rubber_id);
+                                             size, rubber, rubber_id);
 
-    cache_put_match(cache->cache, p_strdup(pool, url),
+    cache_put_match(cache, p_strdup(item_pool, url),
                     &item->item,
                     http_cache_item_match, request_headers);
 }
 
 void
-http_cache_heap_remove(struct http_cache_heap *cache, const char *url,
-                       struct http_cache_document *document)
+http_cache_heap::Remove(const char *url, struct http_cache_document &document)
 {
-    struct cache *cache2 = cache->cache;
-    auto item = http_cache_item::FromDocument(document);
+    auto item = http_cache_item::FromDocument(&document);
 
-    cache_remove_item(cache2, url, &item->item);
-    cache_item_unlock(cache2, &item->item);
+    cache_remove_item(cache, url, &item->item);
+    cache_item_unlock(cache, &item->item);
 }
 
 void
-http_cache_heap_remove_url(struct http_cache_heap *cache, const char *url,
-                           struct strmap *headers)
+http_cache_heap::RemoveURL(const char *url, struct strmap *headers)
 {
-    cache_remove_match(cache->cache, url,
-                       http_cache_item_match, headers);
+    cache_remove_match(cache, url, http_cache_item_match, headers);
 }
 
 void
-http_cache_heap_flush(struct http_cache_heap *cache)
+http_cache_heap::Flush()
 {
-    cache_flush(cache->cache);
-    slice_pool_compress(cache->slice_pool);
+    cache_flush(cache);
+    slice_pool_compress(slice_pool);
 }
 
 void
-http_cache_heap_lock(struct http_cache_document *document)
+http_cache_heap::Lock(struct http_cache_document &document)
 {
-    auto item = http_cache_item::FromDocument(document);
+    auto item = http_cache_item::FromDocument(&document);
 
     cache_item_lock(&item->item);
 }
 
 void
-http_cache_heap_unlock(struct http_cache_heap *cache,
-                       struct http_cache_document *document)
+http_cache_heap::Unlock(struct http_cache_document &document)
 {
-    auto item = http_cache_item::FromDocument(document);
+    auto item = http_cache_item::FromDocument(&document);
 
-    cache_item_unlock(cache->cache, &item->item);
+    cache_item_unlock(cache, &item->item);
 }
 
 struct istream *
-http_cache_heap_istream(struct pool *pool, struct http_cache_heap *cache,
-                        struct http_cache_document *document)
+http_cache_heap::OpenStream(struct pool &_pool,
+                            struct http_cache_document &document)
 {
-    auto item = http_cache_item::FromDocument(document);
+    auto item = http_cache_item::FromDocument(&document);
 
     if (item->rubber_id == 0)
         /* don't lock the item */
-        return istream_null_new(pool);
+        return istream_null_new(&_pool);
 
-    struct istream *istream = item->OpenStream(pool);
-    return istream_unlock_new(pool, istream,
-                              cache->cache, &item->item);
+    struct istream *istream = item->OpenStream(&_pool);
+    return istream_unlock_new(&_pool, istream,
+                              cache, &item->item);
 }
 
 
@@ -204,30 +197,28 @@ static const struct cache_class http_cache_class = {
  */
 
 void
-http_cache_heap_init(struct http_cache_heap *cache,
-                     struct pool &pool, size_t max_size)
+http_cache_heap::Init(struct pool &_pool, size_t max_size)
 {
-    cache->pool = &pool;
-    cache->cache = cache_new(pool, &http_cache_class, 65521, max_size);
+    pool = &_pool;
+    cache = cache_new(_pool, &http_cache_class, 65521, max_size);
 
-    cache->slice_pool = slice_pool_new(1024, 65536);
+    slice_pool = slice_pool_new(1024, 65536);
 }
 
 
 void
-http_cache_heap_deinit(struct http_cache_heap *cache)
+http_cache_heap::Deinit()
 {
-    cache_close(cache->cache);
-    slice_pool_free(cache->slice_pool);
+    cache_close(cache);
+    slice_pool_free(slice_pool);
 }
 
 void
-http_cache_heap_get_stats(const struct http_cache_heap *cache,
-                          const Rubber *rubber,
-                          struct cache_stats *data)
+http_cache_heap::GetStats(const Rubber &rubber,
+                          struct cache_stats &data) const
 {
-    cache_get_stats(cache->cache, data);
+    cache_get_stats(cache, &data);
 
-    data->netto_size += rubber_get_netto_size(rubber);
-    data->brutto_size += rubber_get_brutto_size(rubber);
+    data.netto_size += rubber_get_netto_size(&rubber);
+    data.brutto_size += rubber_get_brutto_size(&rubber);
 }

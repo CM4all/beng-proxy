@@ -208,11 +208,12 @@ http_cache_put(HttpCacheRequest *request,
 
     cache_log(4, "http_cache: put %s\n", request->key);
 
-    if (http_cache_heap_is_defined(&request->cache->heap))
-        http_cache_heap_put(&request->cache->heap, request->key,
-                            request->info, request->headers, request->response.status,
-                            request->response.headers,
-                            request->cache->rubber, rubber_id, size);
+    if (request->cache->heap.IsDefined())
+        request->cache->heap.Put(request->key,
+                                 *request->info, request->headers,
+                                 request->response.status,
+                                 request->response.headers,
+                                 *request->cache->rubber, rubber_id, size);
     else if (request->cache->memcached_stock != nullptr) {
         auto job = NewFromPool<LinkedBackgroundJob>(*request->pool,
                                                     request->cache->background);
@@ -239,16 +240,16 @@ static void
 http_cache_remove(struct http_cache *cache, const char *url,
                   struct http_cache_document *document)
 {
-    if (http_cache_heap_is_defined(&cache->heap))
-        http_cache_heap_remove(&cache->heap, url, document);
+    if (cache->heap.IsDefined())
+        cache->heap.Remove(url, *document);
 }
 
 static void
 http_cache_remove_url(struct http_cache *cache, const char *url,
                       struct strmap *headers)
 {
-    if (http_cache_heap_is_defined(&cache->heap))
-        http_cache_heap_remove_url(&cache->heap, url, headers);
+    if (cache->heap.IsDefined())
+        cache->heap.RemoveURL(url, headers);
     else if (cache->memcached_stock != nullptr)
         http_cache_memcached_remove_uri_match(cache->memcached_stock,
                                               &cache->pool, cache->background,
@@ -256,16 +257,17 @@ http_cache_remove_url(struct http_cache *cache, const char *url,
 }
 
 static void
-http_cache_lock(struct http_cache_document *document)
+http_cache_lock(struct http_cache &cache,
+                struct http_cache_document &document)
 {
-    http_cache_heap_lock(document);
+    cache.heap.Lock(document);
 }
 
 static void
 http_cache_unlock(struct http_cache *cache,
                   struct http_cache_document *document)
 {
-    http_cache_heap_unlock(&cache->heap, document);
+    cache->heap.Unlock(*document);
 }
 
 static void
@@ -340,7 +342,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     HttpCacheRequest *request = (HttpCacheRequest *)ctx;
     struct http_cache *cache = request->cache;
     struct http_cache_document *locked_document =
-        http_cache_heap_is_defined(&cache->heap) ? request->document : nullptr;
+        cache->heap.IsDefined() ? request->document : nullptr;
 
     if (request->document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == nullptr);
@@ -380,7 +382,7 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         http_cache_remove(request->cache, request->key, request->document);
 
     if (request->document != nullptr &&
-        !http_cache_heap_is_defined(&cache->heap) &&
+        !cache->heap.IsDefined() &&
         request->document_body != nullptr)
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
@@ -445,11 +447,11 @@ http_cache_response_abort(GError *error, void *ctx)
     g_prefix_error(&error, "http_cache %s: ", request->key);
 
     if (request->document != nullptr &&
-        http_cache_heap_is_defined(&request->cache->heap))
+        request->cache->heap.IsDefined())
         http_cache_unlock(request->cache, request->document);
 
     if (request->document != nullptr &&
-        !http_cache_heap_is_defined(&request->cache->heap) &&
+        !request->cache->heap.IsDefined() &&
         request->document_body != nullptr)
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
@@ -477,11 +479,11 @@ http_cache_abort(struct async_operation *ao)
     auto request = HttpCacheRequest::FromAsync(ao);
 
     if (request->document != nullptr &&
-        http_cache_heap_is_defined(&request->cache->heap))
+        request->cache->heap.IsDefined())
         http_cache_unlock(request->cache, request->document);
 
     if (request->document != nullptr &&
-        !http_cache_heap_is_defined(&request->cache->heap) &&
+        !request->cache->heap.IsDefined() &&
         request->document_body != nullptr)
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
@@ -554,9 +556,9 @@ http_cache::http_cache(struct pool &_pool, size_t max_size,
         /* leave 12.5% of the rubber allocator empty, to increase the
            chances that a hole can be found for a new allocation, to
            reduce the pressure that rubber_compress() creates */
-        http_cache_heap_init(&heap, pool, max_size * 7 / 8);
+        heap.Init(pool, max_size * 7 / 8);
     else
-        http_cache_heap_clear(&heap);
+        heap.Clear();
 }
 
 struct http_cache *
@@ -593,8 +595,8 @@ http_cache::~http_cache()
 
     background.AbortAll();
 
-    if (http_cache_heap_is_defined(&heap))
-        http_cache_heap_deinit(&heap);
+    if (heap.IsDefined())
+        heap.Deinit();
 
     rubber_free(rubber);
 }
@@ -608,7 +610,7 @@ http_cache_close(struct http_cache *cache)
 void
 http_cache_fork_cow(struct http_cache *cache, bool inherit)
 {
-    if (http_cache_heap_is_defined(&cache->heap) ||
+    if (cache->heap.IsDefined() ||
         cache->memcached_stock != nullptr)
         rubber_fork_cow(cache->rubber, inherit);
 }
@@ -616,8 +618,8 @@ http_cache_fork_cow(struct http_cache *cache, bool inherit)
 void
 http_cache_get_stats(const struct http_cache *cache, struct cache_stats *data)
 {
-    if (http_cache_heap_is_defined(&cache->heap))
-        http_cache_heap_get_stats(&cache->heap, cache->rubber, data);
+    if (cache->heap.IsDefined())
+        cache->heap.GetStats(*cache->rubber, *data);
     else
         data->Clear();
 }
@@ -642,8 +644,8 @@ http_cache_flush_callback(bool success, GError *error, void *ctx)
 void
 http_cache_flush(struct http_cache *cache)
 {
-    if (http_cache_heap_is_defined(&cache->heap))
-        http_cache_heap_flush(&cache->heap);
+    if (cache->heap.IsDefined())
+        cache->heap.Flush();
     else if (cache->memcached_stock != nullptr) {
         struct pool *pool = pool_new_linear(&cache->pool,
                                             "http_cache_memcached_flush", 1024);
@@ -723,8 +725,7 @@ http_cache_heap_serve(struct http_cache_heap *cache,
     struct http_response_handler_ref handler_ref;
     handler_ref.Set(*handler, handler_ctx);
 
-    struct istream *response_body =
-        http_cache_heap_istream(pool, cache, document);
+    struct istream *response_body = cache->OpenStream(*pool, *document);
 
     handler_ref.InvokeResponse(document->status, document->response_headers,
                                response_body);
@@ -754,7 +755,7 @@ http_cache_memcached_serve(HttpCacheRequest *request)
 static void
 http_cache_serve(HttpCacheRequest *request)
 {
-    if (http_cache_heap_is_defined(&request->cache->heap))
+    if (request->cache->heap.IsDefined())
         http_cache_heap_serve(&request->cache->heap, request->document,
                               request->pool, request->key,
                               request->handler.handler, request->handler.ctx);
@@ -826,7 +827,7 @@ http_cache_heap_test(struct http_cache *cache, struct pool *caller_pool,
                                       *handler, handler_ctx,
                                       *info, *async_ref);
 
-    http_cache_lock(document);
+    http_cache_lock(*cache, *document);
     request->document = document;
 
     http_cache_test(request, method, address, headers);
@@ -890,8 +891,7 @@ http_cache_heap_use(struct http_cache *cache,
                     struct async_operation_ref *async_ref)
 {
     struct http_cache_document *document
-        = http_cache_heap_get(&cache->heap, http_cache_key(pool, address),
-                              headers);
+        = cache->heap.Get(http_cache_key(pool, address), headers);
 
     if (document == nullptr)
         http_cache_miss(cache, pool, session_sticky, info,
@@ -1038,7 +1038,7 @@ http_cache_request(struct http_cache *cache,
                    void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    const char *key = http_cache_heap_is_defined(&cache->heap) ||
+    const char *key = cache->heap.IsDefined() ||
         cache->memcached_stock != nullptr
         ? http_cache_key(pool, address)
         : nullptr;
@@ -1062,7 +1062,7 @@ http_cache_request(struct http_cache *cache,
     if (info != nullptr) {
         assert(body == nullptr);
 
-        if (http_cache_heap_is_defined(&cache->heap))
+        if (cache->heap.IsDefined())
             http_cache_heap_use(cache, pool, session_sticky,
                                 method, address, headers, info,
                                 handler, handler_ctx, async_ref);
