@@ -341,7 +341,6 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
     struct http_cache *cache = request->cache;
     struct http_cache_document *locked_document =
         http_cache_heap_is_defined(&cache->heap) ? request->document : nullptr;
-    off_t available;
 
     if (request->document != nullptr && status == HTTP_STATUS_NOT_MODIFIED) {
         assert(body == nullptr);
@@ -386,7 +385,9 @@ http_cache_response_response(http_status_t status, struct strmap *headers,
         /* free the cached document istream (memcached) */
         istream_close_unused(request->document_body);
 
-    available = body == nullptr ? 0 : istream_available(body, true);
+    const off_t available = body != nullptr
+        ? istream_available(body, true)
+        : 0;
 
     if (!http_cache_response_evaluate(request->info,
                                       status, headers, available)) {
@@ -674,8 +675,6 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
                 void *handler_ctx,
                 struct async_operation_ref *async_ref)
 {
-    struct pool *pool;
-
     if (info->only_if_cached) {
         handler->InvokeResponse(handler_ctx, HTTP_STATUS_GATEWAY_TIMEOUT,
                                 nullptr, nullptr);
@@ -684,7 +683,8 @@ http_cache_miss(struct http_cache *cache, struct pool *caller_pool,
 
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    pool = pool_new_linear(&cache->pool, "HttpCacheRequest", 8192);
+    struct pool *pool = pool_new_linear(&cache->pool, "HttpCacheRequest",
+                                        8192);
 
     auto request =
         NewFromPool<HttpCacheRequest>(*pool, *pool, *caller_pool,
@@ -718,14 +718,13 @@ http_cache_heap_serve(struct http_cache_heap *cache,
                       const struct http_response_handler *handler,
                       void *handler_ctx)
 {
-    struct http_response_handler_ref handler_ref;
-    struct istream *response_body;
-
     cache_log(4, "http_cache: serve %s\n", key);
 
+    struct http_response_handler_ref handler_ref;
     handler_ref.Set(*handler, handler_ctx);
 
-    response_body = http_cache_heap_istream(pool, cache, document);
+    struct istream *response_body =
+        http_cache_heap_istream(pool, cache, document);
 
     handler_ref.InvokeResponse(document->status, document->response_headers,
                                response_body);
@@ -1004,13 +1003,12 @@ http_cache_memcached_use(struct http_cache *cache,
                          void *handler_ctx,
                          struct async_operation_ref *async_ref)
 {
-    struct pool *pool;
-
     assert(cache->memcached_stock != nullptr);
 
     /* the cache request may live longer than the caller pool, so
        allocate a new pool for it from cache->pool */
-    pool = pool_new_linear(&cache->pool, "HttpCacheRequest", 8192);
+    struct pool *pool = pool_new_linear(&cache->pool, "HttpCacheRequest",
+                                        8192);
 
     auto request =
         NewFromPool<HttpCacheRequest>(*pool, *pool, *caller_pool,

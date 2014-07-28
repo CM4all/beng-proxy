@@ -24,13 +24,11 @@
 static struct strref *
 next_item(struct strref *s, struct strref *p)
 {
-    const char *comma;
-
     strref_ltrim(s);
     if (strref_is_empty(s))
         return nullptr;
 
-    comma = strref_chr(s, ',');
+    const char *comma = strref_chr(s, ',');
     if (comma == nullptr) {
         *p = *s;
         strref_clear(s);
@@ -58,14 +56,13 @@ http_cache_request_evaluate(struct pool &pool,
                             struct istream *body)
 {
     struct http_cache_info *info = nullptr;
-    const char *p;
 
     if (method != HTTP_METHOD_GET || body != nullptr)
         /* RFC 2616 13.11 "Write-Through Mandatory" */
         return nullptr;
 
     if (headers != nullptr) {
-        p = headers->Get("range");
+        const char *p = headers->Get("range");
         if (p != nullptr)
             return nullptr;
 
@@ -145,12 +142,10 @@ http_cache_request_invalidate(http_method_t method)
 static time_t
 parse_translate_time(const char *p, time_t offset)
 {
-    time_t t;
-
     if (p == nullptr)
         return (time_t)-1;
 
-    t = http_date_parse(p);
+    time_t t = http_date_parse(p);
     if (t != (time_t)-1)
         t += offset;
 
@@ -186,7 +181,6 @@ http_cache_response_evaluate(struct http_cache_info *info,
                              http_status_t status, const struct strmap *headers,
                              off_t body_available)
 {
-    time_t now, offset;
     const char *p;
 
     if (!http_status_cacheable(status) || headers == nullptr)
@@ -227,8 +221,9 @@ http_cache_response_evaluate(struct http_cache_info *info,
         }
     }
 
-    now = time(nullptr);
+    const time_t now = time(nullptr);
 
+    time_t offset;
     if (info->is_remote) {
         p = headers->Get("date");
         if (p == nullptr)
@@ -284,9 +279,8 @@ http_cache_copy_vary(struct pool &pool, const char *vary,
                      const struct strmap *request_headers)
 {
     struct strmap *dest = strmap_new(&pool);
-    char **list;
 
-    for (list = http_list_split(&pool, vary);
+    for (char **list = http_list_split(&pool, vary);
          *list != nullptr; ++list) {
         const char *name = *list;
         const char *value = strmap_get_checked(request_headers, name);
@@ -304,12 +298,10 @@ bool
 http_cache_prefer_cached(const struct http_cache_document *document,
                          const struct strmap *response_headers)
 {
-    const char *etag;
-
     if (document->info.etag == nullptr)
         return false;
 
-    etag = strmap_get_checked(response_headers, "etag");
+    const char *etag = strmap_get_checked(response_headers, "etag");
 
     /* if the ETags are the same, then the resource hasn't changed,
        but the server was too lazy to check that properly */

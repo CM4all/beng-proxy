@@ -422,9 +422,6 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
                                                   background,
                                                   uri, *async_ref);
 
-    struct growing_buffer *gb;
-    const char *key;
-
     const AutoRewindPool auto_rewind(*tpool);
 
     const struct strmap *vary = info->vary != nullptr
@@ -435,9 +432,9 @@ http_cache_memcached_put(struct pool *pool, struct memcached_stock *stock,
         ? http_cache_choice_prepare(pool, uri, info, vary)
         : nullptr;
 
-    key = http_cache_choice_vary_key(pool, uri, vary);
+    const char *key = http_cache_choice_vary_key(pool, uri, vary);
 
-    gb = growing_buffer_new(pool, 1024);
+    struct growing_buffer *gb = growing_buffer_new(pool, 1024);
 
     /* type */
     serialize_uint32(gb, TYPE_DOCUMENT);

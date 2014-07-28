@@ -359,8 +359,6 @@ http_cache_choice_commit(struct http_cache_choice *choice,
                          void *callback_ctx,
                          struct async_operation_ref *async_ref)
 {
-    struct istream *value;
-
     choice->key = http_cache_choice_key(choice->pool, choice->uri);
     choice->stock = stock;
     choice->callback.commit = callback;
@@ -369,8 +367,9 @@ http_cache_choice_commit(struct http_cache_choice *choice,
 
     cache_log(5, "prepend '%s'\n", choice->key);
 
-    value = istream_memory_new(choice->pool,
-                               choice->data.data, choice->data.size);
+    struct istream *value = istream_memory_new(choice->pool,
+                                               choice->data.data,
+                                               choice->data.size);
     memcached_stock_invoke(choice->pool, stock,
                            MEMCACHED_OPCODE_PREPEND,
                            nullptr, 0,
@@ -412,16 +411,14 @@ static void
 http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
 {
     http_cache_choice *choice = (http_cache_choice *)ctx;
-    const void *current;
-    uint32_t magic;
 
     ConstBuffer<void> data(data0, length);
     char *dest = (char *)data0;
 
     while (!data.IsEmpty()) {
-        current = data.data;
+        const void *current = data.data;
 
-        magic = deserialize_uint32(data);
+        const uint32_t magic = deserialize_uint32(data);
         if (magic != CHOICE_MAGIC)
             break;
 
