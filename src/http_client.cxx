@@ -480,7 +480,7 @@ http_client::HeadersFinished()
     keep_alive =
         (header_connection == nullptr && !response.http_1_0) ||
         (header_connection != nullptr &&
-         http_list_contains_i(header_connection, "keep-alive") == 0);
+         http_list_contains_i(header_connection, "keep-alive"));
 
     if (http_status_is_empty(response.status) ||
         response.no_body) {
