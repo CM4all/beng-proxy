@@ -38,6 +38,10 @@ public:
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;
 
+    const struct strmap *GetMap() const {
+        return map;
+    }
+
     struct strmap &MakeMap(struct pool &pool) {
         if (map == nullptr)
             map = strmap_new(&pool);
