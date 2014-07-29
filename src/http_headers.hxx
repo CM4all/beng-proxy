@@ -71,8 +71,6 @@ public:
      * Move a (hop-by-hop) header from the map to the buffer.
      */
     void MoveToBuffer(struct pool &pool, const char *name) {
-        assert(buffer != nullptr);
-
         const char *value = strmap_get_checked(map, name);
         if (value != nullptr)
             Write(pool, name, value);
