@@ -31,7 +31,7 @@ AllocatedSocketAddress::SetLocal(const char *path)
     const size_t path_length = strlen(path);
 
     struct sockaddr_un *sun;
-    SetSize(sizeof(*sun) - sizeof(sun->sun_path) + path_length);
+    SetSize(sizeof(*sun) - sizeof(sun->sun_path) + path_length + 1);
     sun = (struct sockaddr_un *)address;
     sun->sun_family = AF_UNIX;
     memcpy(sun->sun_path, path, path_length + 1);
