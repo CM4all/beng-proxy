@@ -447,8 +447,7 @@ more_response_headers(const request &request2, HttpHeaders &headers)
  * Generate the Set-Cookie response header for the given request.
  */
 static void
-response_generate_set_cookie(request &request2,
-                             struct growing_buffer &headers)
+response_generate_set_cookie(request &request2, struct growing_buffer &headers)
 {
     assert(!request2.stateless);
     assert(request2.session_cookie != nullptr);
@@ -560,7 +559,7 @@ response_dispatch_direct(request &request2,
 #endif
 
     http_server_response(request2.request, status,
-                         &headers.ToBuffer(pool, 512),
+                         std::move(headers),
                          body);
 }
 

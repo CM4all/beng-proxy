@@ -204,17 +204,19 @@ static const struct lease my_socket_lease = {
  */
 
 static void
-my_response_response(http_status_t status, struct strmap *headers,
+my_response_response(http_status_t status, struct strmap *_headers,
                      struct istream *body, void *ctx)
 {
     struct lb_request *request2 = (struct lb_request *)ctx;
     struct http_server_request *request = request2->request;
+    struct pool &pool = *request->pool;
 
-    struct growing_buffer *headers2 = headers_dup(request->pool, headers);
+    HttpHeaders headers(_headers);
+
     if (request2->request->method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
-        headers_copy_one(headers, headers2, "content-length");
+        headers.MoveToBuffer(pool, "content-length");
 
     if (request2->new_cookie != 0) {
         char buffer[64];
@@ -223,11 +225,11 @@ my_response_response(http_status_t status, struct strmap *headers,
                  "beng_lb_node=0-%x; HttpOnly; Path=/; Version=1; Discard",
                  request2->new_cookie);
 
-        header_write(headers2, "cookie2", "$Version=\"1\"");
-        header_write(headers2, "set-cookie", buffer);
+        headers.Write(pool, "cookie2", "$Version=\"1\"");
+        headers.Write(pool, "set-cookie", buffer);
     }
 
-    http_server_response(request2->request, status, headers2, body);
+    http_server_response(request2->request, status, std::move(headers), body);
 }
 
 static void

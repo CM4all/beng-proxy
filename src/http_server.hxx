@@ -19,9 +19,9 @@
 struct pool;
 struct istream;
 struct sockaddr;
-struct growing_buffer;
 struct async_operation_ref;
 struct SocketFilter;
+class HttpHeaders;
 
 struct http_server_connection;
 
@@ -152,7 +152,7 @@ http_server_request_has_body(const struct http_server_request *request)
 void
 http_server_response(const struct http_server_request *request,
                      http_status_t status,
-                     struct growing_buffer *headers,
+                     HttpHeaders &&headers,
                      struct istream *body);
 
 void

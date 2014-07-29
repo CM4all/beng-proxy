@@ -5,6 +5,7 @@
  */
 
 #include "http_server_internal.hxx"
+#include "http_headers.hxx"
 #include "direct.h"
 #include "header_writer.hxx"
 #include "format.h"
@@ -64,7 +65,7 @@ format_status_line(char *p, http_status_t status)
 void
 http_server_response(const struct http_server_request *request,
                      http_status_t status,
-                     struct growing_buffer *headers,
+                     HttpHeaders &&headers,
                      struct istream *body)
 {
     struct http_server_connection *connection = request->connection;
@@ -96,8 +97,7 @@ http_server_response(const struct http_server_request *request,
                              format_status_line(connection->response.status_buffer,
                                                 status));
 
-    if (headers == nullptr)
-        headers = growing_buffer_new(request->pool, 256);
+    struct growing_buffer &headers2 = headers.MakeBuffer(*request->pool, 256);
 
     /* how will we transfer the body?  determine length and
        transfer-encoding */
@@ -111,7 +111,7 @@ http_server_response(const struct http_server_request *request,
         if (!http_method_is_empty(request->method) && connection->keep_alive) {
             /* keep-alive is enabled, which means that we have to
                enable chunking */
-            header_write(headers, "transfer-encoding", "chunked");
+            header_write(&headers2, "transfer-encoding", "chunked");
             body = istream_chunked_new(request->pool, body);
         }
     } else if (http_status_is_empty(status)) {
@@ -119,7 +119,7 @@ http_server_response(const struct http_server_request *request,
     } else if (body != nullptr || !http_method_is_empty(request->method)) {
         /* fixed body size */
         format_uint64(connection->response.content_length_buffer, content_length);
-        header_write(headers, "content-length",
+        header_write(&headers2, "content-length",
                      connection->response.content_length_buffer);
     }
 
@@ -127,11 +127,11 @@ http_server_response(const struct http_server_request *request,
         istream_free_unused(&body);
 
     if (!connection->keep_alive && !connection->request.http_1_0)
-        header_write(headers, "connection", "close");
+        header_write(&headers2, "connection", "close");
 
-    growing_buffer_write_buffer(headers, "\r\n", 2);
-
-    struct istream *header_stream = istream_gb_new(request->pool, headers);
+    struct growing_buffer &headers3 = headers.ToBuffer(*request->pool);
+    growing_buffer_write_buffer(&headers3, "\r\n", 2);
+    struct istream *header_stream = istream_gb_new(request->pool, &headers3);
 
     connection->response.length = - istream_available(status_stream, false)
         - istream_available(header_stream, false);
@@ -153,14 +153,16 @@ void
 http_server_send_message(const struct http_server_request *request,
                          http_status_t status, const char *msg)
 {
-    struct growing_buffer *headers = growing_buffer_new(request->pool, 256);
-    header_write(headers, "content-type", "text/plain");
+    HttpHeaders headers;
+    struct growing_buffer &headers2 = headers.MakeBuffer(*request->pool, 256);
+
+    header_write(&headers2, "content-type", "text/plain");
 
 #ifndef NO_DATE_HEADER
-    header_write(headers, "date", http_date_format(time(nullptr)));
+    header_write(&headers2, "date", http_date_format(time(nullptr)));
 #endif
 
-    http_server_response(request, status, headers,
+    http_server_response(request, status, std::move(headers),
                          istream_string_new(request->pool, msg));
 }
 
@@ -176,14 +178,16 @@ http_server_send_redirect(const struct http_server_request *request,
     if (msg == nullptr)
         msg = "redirection";
 
-    struct growing_buffer *headers = growing_buffer_new(request->pool, 1024);
-    header_write(headers, "content-type", "text/plain");
-    header_write(headers, "location", location);
+    HttpHeaders headers;
+    struct growing_buffer &headers2 = headers.MakeBuffer(*request->pool, 1024);
+
+    header_write(&headers2, "content-type", "text/plain");
+    header_write(&headers2, "location", location);
 
 #ifndef NO_DATE_HEADER
-    header_write(headers, "date", http_date_format(time(nullptr)));
+    header_write(&headers2, "date", http_date_format(time(nullptr)));
 #endif
 
-    http_server_response(request, status, headers,
+    http_server_response(request, status, std::move(headers),
                          istream_string_new(request->pool, msg));
 }

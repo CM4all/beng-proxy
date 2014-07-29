@@ -1,4 +1,5 @@
 #include "http_server.hxx"
+#include "http_headers.hxx"
 #include "sink-impl.h"
 #include "direct.h"
 #include "pool.hxx"
@@ -24,7 +25,7 @@ catch_close_request(struct http_server_request *request, void *ctx,
 {
     (void)ctx;
 
-    http_server_response(request, HTTP_STATUS_OK, NULL,
+    http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
                          istream_catch_new(request->pool, request->body,
                                            catch_callback, NULL));
     http_server_connection_close(request->connection);

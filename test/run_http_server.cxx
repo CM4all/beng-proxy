@@ -1,4 +1,5 @@
 #include "http_server.hxx"
+#include "http_headers.hxx"
 #include "duplex.h"
 #include "direct.h"
 #include "sink-impl.h"
@@ -90,14 +91,15 @@ my_request(struct http_server_request *request, void *_ctx,
         if (request->body != NULL)
             sink_null_new(request->body);
 
-        http_server_response(request, HTTP_STATUS_NO_CONTENT, NULL, NULL);
+        http_server_response(request, HTTP_STATUS_NO_CONTENT,
+                             HttpHeaders(), nullptr);
         break;
 
     case context::Mode::MIRROR:
         http_server_response(request,
                              request->body == NULL
                              ? HTTP_STATUS_NO_CONTENT : HTTP_STATUS_OK,
-                             NULL,
+                             HttpHeaders(),
                              request->body);
         break;
 
@@ -110,14 +112,15 @@ my_request(struct http_server_request *request, void *_ctx,
                                 256, false);
         body = istream_byte_new(request->pool, body);
 
-        http_server_response(request, HTTP_STATUS_OK, NULL, body);
+        http_server_response(request, HTTP_STATUS_OK,
+                             HttpHeaders(), body);
         break;
 
     case context::Mode::FIXED:
         if (request->body != NULL)
             sink_null_new(request->body);
 
-        http_server_response(request, HTTP_STATUS_OK, NULL,
+        http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
                              istream_memory_new(request->pool, data, sizeof(data)));
         break;
 
@@ -130,7 +133,7 @@ my_request(struct http_server_request *request, void *_ctx,
         ctx->operation.Init(my_operation);
         istream_delayed_async_ref(body)->Set(ctx->operation);
 
-        http_server_response(request, HTTP_STATUS_OK, NULL, body);
+        http_server_response(request, HTTP_STATUS_OK, HttpHeaders(), body);
 
         static constexpr struct timeval t{0,0};
         evtimer_add(&ctx->timer, &t);
