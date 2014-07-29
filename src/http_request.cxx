@@ -7,6 +7,7 @@
 #include "http_request.hxx"
 #include "http_response.hxx"
 #include "http_client.hxx"
+#include "http_headers.hxx"
 #include "http_address.hxx"
 #include "header_writer.hxx"
 #include "tcp_stock.hxx"
@@ -42,7 +43,7 @@ struct http_request {
 
     http_method_t method;
     const struct http_address *uwa;
-    struct growing_buffer *headers;
+    HttpHeaders headers;
     struct istream *body;
 
     unsigned retries;
@@ -157,7 +158,7 @@ http_request_stock_ready(struct stock_item *item, void *ctx)
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         http_socket_lease, hr,
                         hr->filter, hr->filter_ctx,
-                        hr->method, hr->uwa->path, hr->headers,
+                        hr->method, hr->uwa->path, std::move(hr->headers),
                         hr->body, true,
                         http_request_response_handler, hr,
                         *hr->async_ref);
@@ -195,7 +196,7 @@ http_request(struct pool &pool,
              const SocketFilter *filter, void *filter_ctx,
              http_method_t method,
              const struct http_address &uwa,
-             struct growing_buffer *headers,
+             HttpHeaders &&headers,
              struct istream *body,
              const struct http_response_handler &handler,
              void *handler_ctx,
@@ -215,9 +216,7 @@ http_request(struct pool &pool,
     hr->method = method;
     hr->uwa = &uwa;
 
-    hr->headers = headers;
-    if (hr->headers == nullptr)
-        hr->headers = growing_buffer_new(&pool, 512);
+    hr->headers = std::move(headers);
 
     hr->handler.Set(handler, handler_ctx);
     hr->async_ref = &_async_ref;
@@ -230,10 +229,11 @@ http_request(struct pool &pool,
 
     hr->body = body;
 
+    growing_buffer &headers2 = hr->headers.MakeBuffer(pool, 256);
     if (uwa.host_and_port != nullptr)
-        header_write(hr->headers, "host", uwa.host_and_port);
+        header_write(&headers2, "host", uwa.host_and_port);
 
-    header_write(hr->headers, "connection", "keep-alive");
+    header_write(&headers2, "connection", "keep-alive");
 
     hr->retries = 2;
     tcp_balancer_get(&tcp_balancer, &pool,

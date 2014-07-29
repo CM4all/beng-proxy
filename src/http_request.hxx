@@ -14,9 +14,9 @@ struct istream;
 struct tcp_balancer;
 struct SocketFilter;
 struct http_address;
-struct growing_buffer;
 struct http_response_handler;
 struct async_operation_ref;
+class HttpHeaders;
 
 /**
  * @param session_sticky a portion of the session id that is used to
@@ -29,7 +29,7 @@ http_request(struct pool &pool,
              const SocketFilter *filter, void *filter_ctx,
              http_method_t method,
              const struct http_address &address,
-             struct growing_buffer *headers, struct istream *body,
+             HttpHeaders &&headers, struct istream *body,
              const struct http_response_handler &handler,
              void *handler_ctx,
              struct async_operation_ref &async_ref);

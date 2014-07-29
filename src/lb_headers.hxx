@@ -9,9 +9,10 @@
 
 struct pool;
 struct session;
+class HttpHeaders;
 
-const struct strmap *
-lb_forward_request_headers(struct pool *pool, const struct strmap *src,
+HttpHeaders
+lb_forward_request_headers(struct pool *pool, struct strmap *src,
                            const char *local_host, const char *remote_host,
                            const char *peer_subject,
                            const char *peer_issuer_subject,

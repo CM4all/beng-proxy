@@ -4,8 +4,7 @@
 
 #include "t_client.hxx"
 #include "http_client.hxx"
-#include "header_writer.hxx"
-#include "growing_buffer.hxx"
+#include "http_headers.hxx"
 #include "fd-util.h"
 #include "direct.h"
 #include "fd_util.h"
@@ -29,16 +28,10 @@ client_request(struct pool *pool, struct connection *connection,
                void *ctx,
                struct async_operation_ref *async_ref)
 {
-    struct growing_buffer *headers2 = nullptr;
-    if (headers != nullptr) {
-        headers2 = growing_buffer_new(pool, 2048);
-        headers_copy_all(headers, headers2);
-    }
-
     http_client_request(*pool, connection->fd, ISTREAM_SOCKET,
                         *lease, lease_ctx,
                         nullptr, nullptr,
-                        method, uri, headers2, body, expect_100,
+                        method, uri, HttpHeaders(headers), body, expect_100,
                         *handler, ctx, *async_ref);
 }
 

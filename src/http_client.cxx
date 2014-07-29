@@ -5,6 +5,7 @@
  */
 
 #include "http_client.hxx"
+#include "http_headers.hxx"
 #include "http_response.hxx"
 #include "http_util.hxx"
 #include "fifo-buffer.h"
@@ -126,7 +127,7 @@ struct http_client {
                 const struct lease &lease, void *lease_ctx,
                 const SocketFilter *filter, void *filter_ctx,
                 http_method_t method, const char *uri,
-                const struct growing_buffer *headers,
+                HttpHeaders &&headers,
                 struct istream *body, bool expect_100,
                 const struct http_response_handler &handler,
                 void *ctx,
@@ -1105,7 +1106,7 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
                          const struct lease &lease, void *lease_ctx,
                          const SocketFilter *filter, void *filter_ctx,
                          http_method_t method, const char *uri,
-                         const struct growing_buffer *headers,
+                         HttpHeaders &&headers,
                          struct istream *body, bool expect_100,
                          const struct http_response_handler &handler,
                          void *ctx,
@@ -1139,23 +1140,18 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
 
     /* headers */
 
-    struct istream *header_stream = headers != nullptr
-        ? istream_gb_new(pool, headers)
-        : istream_null_new(pool);
-
-    struct growing_buffer *headers2 =
-        growing_buffer_new(pool, 256);
+    struct growing_buffer &headers2 = headers.ToBuffer(_pool);
 
     if (body != nullptr) {
         off_t content_length = istream_available(body, false);
         if (content_length == (off_t)-1) {
-            header_write(headers2, "transfer-encoding", "chunked");
+            header_write(&headers2, "transfer-encoding", "chunked");
             body = istream_chunked_new(pool, body);
         } else {
             snprintf(request.content_length_buffer,
                      sizeof(request.content_length_buffer),
                      "%lu", (unsigned long)content_length);
-            header_write(headers2, "content-length",
+            header_write(&headers2, "content-length",
                          request.content_length_buffer);
         }
 
@@ -1163,7 +1159,7 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
         if (available < 0 || available >= EXPECT_100_THRESHOLD) {
             /* large request body: ask the server for confirmation
                that he's really interested */
-            header_write(headers2, "expect", "100-continue");
+            header_write(&headers2, "expect", "100-continue");
             body = request.body = istream_optional_new(pool, body);
         } else
             /* short request body: send it immediately */
@@ -1171,15 +1167,15 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
     } else
         request.body = nullptr;
 
-    growing_buffer_write_buffer(headers2, "\r\n", 2);
+    growing_buffer_write_buffer(&headers2, "\r\n", 2);
 
-    struct istream *header_stream2 = istream_gb_new(pool, headers2);
+    struct istream *header_stream = istream_gb_new(pool, &headers2);
 
     /* request istream */
 
     request.istream = istream_cat_new(pool,
                                       request_line_stream,
-                                      header_stream, header_stream2,
+                                      header_stream,
                                       body,
                                       nullptr);
 
@@ -1197,7 +1193,7 @@ http_client_request(struct pool &caller_pool,
                     const struct lease &lease, void *lease_ctx,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
-                    const struct growing_buffer *headers,
+                    HttpHeaders &&headers,
                     struct istream *body, bool expect_100,
                     const struct http_response_handler &handler,
                     void *ctx,
@@ -1227,6 +1223,6 @@ http_client_request(struct pool &caller_pool,
                                     lease, lease_ctx,
                                     filter, filter_ctx,
                                     method, uri,
-                                    headers, body, expect_100,
+                                    std::move(headers), body, expect_100,
                                     handler, ctx, async_ref);
 }

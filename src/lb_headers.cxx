@@ -5,6 +5,7 @@
  */
 
 #include "lb_headers.hxx"
+#include "http_headers.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 
@@ -84,15 +85,15 @@ forward_other_headers(struct strmap *dest, const struct strmap *src)
             dest->Add(i.key, i.value);
 }
 
-const struct strmap *
-lb_forward_request_headers(struct pool *pool, const struct strmap *src,
+HttpHeaders
+lb_forward_request_headers(struct pool *pool, struct strmap *src,
                            const char *local_host, const char *remote_host,
                            const char *peer_subject,
                            const char *peer_issuer_subject,
                            bool mangle_via)
 {
     if (peer_subject == nullptr && !mangle_via)
-        return src;
+        return HttpHeaders(src);
 
     struct strmap *dest = strmap_new(pool);
 
@@ -108,5 +109,5 @@ lb_forward_request_headers(struct pool *pool, const struct strmap *src,
     if (mangle_via)
         forward_identity(pool, dest, src, local_host, remote_host);
 
-    return dest;
+    return HttpHeaders(*dest);
 }

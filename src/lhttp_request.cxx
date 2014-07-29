@@ -9,6 +9,7 @@
 #include "lhttp_address.hxx"
 #include "http_response.hxx"
 #include "http_client.hxx"
+#include "http_headers.hxx"
 #include "lease.hxx"
 #include "istream.h"
 #include "header_writer.hxx"
@@ -46,8 +47,8 @@ static const struct lease lhttp_socket_lease = {
 void
 lhttp_request(struct pool &pool, struct lhttp_stock &lhttp_stock,
               const struct lhttp_address &address,
-              http_method_t method,
-              struct growing_buffer *headers, struct istream *body,
+              http_method_t method, HttpHeaders &&headers,
+              struct istream *body,
               const struct http_response_handler &handler, void *handler_ctx,
               struct async_operation_ref &async_ref)
 {
@@ -78,14 +79,14 @@ lhttp_request(struct pool &pool, struct lhttp_stock &lhttp_stock,
     request->stock_item = stock_item;
 
     if (address.host_and_port != nullptr)
-        header_write(headers, "host", address.host_and_port);
+        headers.Write(pool, "host", address.host_and_port);
 
     http_client_request(pool,
                         lhttp_stock_item_get_socket(stock_item),
                         lhttp_stock_item_get_type(stock_item),
                         lhttp_socket_lease, request,
                         nullptr, nullptr,
-                        method, address.uri, headers, body, true,
+                        method, address.uri, std::move(headers), body, true,
                         handler, handler_ctx,
                         async_ref);
 }

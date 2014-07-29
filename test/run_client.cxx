@@ -1,7 +1,7 @@
 #include "ajp_client.hxx"
 #include "strmap.hxx"
-#include "header_writer.hxx"
 #include "http_client.hxx"
+#include "http_headers.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
 #include "fd_util.h"
@@ -263,7 +263,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
                             ajp_socket_lease, c,
                             nullptr, nullptr,
                             c->method, c->url.uri,
-                            headers_dup(c->pool, headers),
+                            HttpHeaders(*headers),
                             c->request_body, false,
                             my_response_handler, c,
                             c->async_ref);
@@ -292,7 +292,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
                             ajp_socket_lease, c,
                             filter, filter_ctx,
                             c->method, c->url.uri,
-                            headers_dup(c->pool, headers),
+                            HttpHeaders(*headers),
                             c->request_body, false,
                             my_response_handler, c,
                             c->async_ref);

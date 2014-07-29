@@ -23,6 +23,7 @@
 #include "lease.hxx"
 #include "header_writer.hxx"
 #include "http_response.hxx"
+#include "http_headers.hxx"
 #include "stock.hxx"
 #include "clock.h"
 #include "access_log.hxx"
@@ -281,14 +282,12 @@ my_stock_ready(struct stock_item *item, void *ctx)
         ? ssl_filter_get_peer_issuer_subject(request2->connection->ssl_filter)
         : nullptr;
 
-    const struct strmap *headers =
+    HttpHeaders headers =
         lb_forward_request_headers(request->pool, request->headers,
                                    request->local_host_and_port,
                                    request->remote_host,
                                    peer_subject, peer_issuer_subject,
                                    request2->cluster->mangle_via);
-
-    struct growing_buffer *headers2 = headers_dup(request->pool, headers);
 
     http_client_request(*request->pool,
                         tcp_stock_item_get(item),
@@ -297,7 +296,7 @@ my_stock_ready(struct stock_item *item, void *ctx)
                         my_socket_lease, request2,
                         NULL, NULL,
                         request->method, request->uri,
-                        headers2, request2->body, true,
+                        std::move(headers), request2->body, true,
                         my_response_handler, request2,
                         *request2->async_ref);
 }

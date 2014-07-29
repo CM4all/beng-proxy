@@ -13,6 +13,7 @@
 #include "file_address.hxx"
 #include "lhttp_request.hxx"
 #include "http_address.hxx"
+#include "http_headers.hxx"
 #include "cgi_glue.hxx"
 #include "cgi_address.hxx"
 #include "fcgi_request.hxx"
@@ -322,7 +323,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         http_request(*pool, *rl->tcp_balancer, session_sticky,
                      filter, filter_ctx,
                      method, *address->u.http,
-                     headers_dup(pool, headers), body,
+                     HttpHeaders(headers), body,
                      *handler, handler_ctx, *async_ref);
         return;
 
@@ -341,7 +342,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     case RESOURCE_ADDRESS_LHTTP:
         lhttp_request(*pool, *rl->lhttp_stock, *address->u.lhttp,
-                      method, headers_dup(pool, headers), body,
+                      method, HttpHeaders(headers), body,
                       *handler, handler_ctx, *async_ref);
         return;
     }
