@@ -13,6 +13,7 @@
 #include "request.hxx"
 #include "http_server.hxx"
 #include "http_util.hxx"
+#include "http_headers.hxx"
 #include "tvary.hxx"
 
 #include <assert.h>
@@ -118,17 +119,18 @@ file_evaluate_request(struct request &request2,
         if (p != nullptr) {
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st->st_mtime <= t) {
-                struct growing_buffer *headers = nullptr;
-                headers = growing_buffer_new(request->pool, 512);
+                HttpHeaders headers;
+                struct growing_buffer &headers2 =
+                    headers.MakeBuffer(*request->pool, 512);
 
                 if (fd >= 0)
-                    file_cache_headers(headers, fd, st, tr->expires_relative);
+                    file_cache_headers(&headers2, fd, st, tr->expires_relative);
 
-                write_translation_vary_header(headers,
+                write_translation_vary_header(&headers2,
                                               request2.translate.response);
 
                 response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
-                                  headers, nullptr);
+                                  std::move(headers), nullptr);
                 return false;
             }
         }
@@ -138,7 +140,7 @@ file_evaluate_request(struct request &request2,
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st->st_mtime > t) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  nullptr, nullptr);
+                                  HttpHeaders(), nullptr);
                 return false;
             }
         }
@@ -151,7 +153,7 @@ file_evaluate_request(struct request &request2,
 
             if (!http_list_contains(p, buffer)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  nullptr, nullptr);
+                                  HttpHeaders(), nullptr);
                 return false;
             }
         }
@@ -159,7 +161,7 @@ file_evaluate_request(struct request &request2,
         p = request->headers->Get("if-none-match");
         if (p != nullptr && strcmp(p, "*") == 0) {
             response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                              nullptr, nullptr);
+                              HttpHeaders(), nullptr);
             return false;
         }
 
@@ -168,7 +170,7 @@ file_evaluate_request(struct request &request2,
 
             if (http_list_contains(p, buffer)) {
                 response_dispatch(request2, HTTP_STATUS_PRECONDITION_FAILED,
-                                  nullptr, nullptr);
+                                  HttpHeaders(), nullptr);
                 return false;
             }
         }

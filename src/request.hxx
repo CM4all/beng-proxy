@@ -18,6 +18,8 @@
 #include "widget_class.hxx"
 #include "glibfwd.hxx"
 
+class HttpHeaders;
+
 struct request {
     struct client_connection *connection;
 
@@ -265,11 +267,9 @@ request_ignore_session(struct request &request);
 void
 request_discard_session(struct request &request);
 
-struct growing_buffer;
-
 void
 response_dispatch(struct request &request,
-                  http_status_t status, struct growing_buffer *headers,
+                  http_status_t status, HttpHeaders &&headers,
                   struct istream *body);
 
 void
@@ -278,7 +278,7 @@ response_dispatch_message(struct request &request, http_status_t status,
 
 void
 response_dispatch_message2(struct request &request, http_status_t status,
-                           struct growing_buffer *headers, const char *msg);
+                           HttpHeaders &&headers, const char *msg);
 
 void
 response_dispatch_error(struct request &request, GError *error);

@@ -11,7 +11,7 @@
 
 struct istream;
 struct request;
-struct growing_buffer;
+class HttpHeaders;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -25,6 +25,6 @@ template<typename T> struct ConstBuffer;
 void
 errdoc_dispatch_response(struct request &request2, http_status_t status,
                          ConstBuffer<void> error_document,
-                         struct growing_buffer *headers, struct istream *body);
+                         HttpHeaders &&headers, struct istream *body);
 
 #endif

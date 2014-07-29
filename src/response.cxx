@@ -7,6 +7,7 @@
 #include "request.hxx"
 #include "transformation.hxx"
 #include "http_server.hxx"
+#include "http_headers.hxx"
 #include "http_response.hxx"
 #include "header_writer.hxx"
 #include "header_parser.hxx"
@@ -421,28 +422,25 @@ translation_response_headers(struct growing_buffer &headers,
 /**
  * Generate additional response headers as needed.
  */
-static struct growing_buffer *
-more_response_headers(const request &request2,
-                      struct growing_buffer *headers)
+static void
+more_response_headers(const request &request2, HttpHeaders &headers)
 {
-    if (headers == nullptr)
-        headers = growing_buffer_new(request2.request->pool, 256);
+    struct growing_buffer &headers2 =
+        headers.MakeBuffer(*request2.request->pool, 256);
 
     /* RFC 2616 3.8: Product Tokens */
-    header_write(headers, "server", request2.product_token != nullptr
+    header_write(&headers2, "server", request2.product_token != nullptr
                  ? request2.product_token
                  : BRIEF_PRODUCT_TOKEN);
 
 #ifndef NO_DATE_HEADER
     /* RFC 2616 14.18: Date */
-    header_write(headers, "date", request2.date != nullptr
+    header_write(&headers2, "date", request2.date != nullptr
                  ? request2.date
                  : http_date_format(time(nullptr)));
 #endif
 
-    translation_response_headers(*headers, *request2.translate.response);
-
-    return headers;
+    translation_response_headers(headers2, *request2.translate.response);
 }
 
 /**
@@ -531,23 +529,25 @@ response_generate_set_cookie(request &request2,
 
 static void
 response_dispatch_direct(request &request2,
-                         http_status_t status, struct growing_buffer *headers,
+                         http_status_t status, HttpHeaders &&headers,
                          struct istream *body)
 {
     assert(!request2.response_sent);
     assert(body == nullptr || !istream_has_handler(body));
+
+    struct pool &pool = *request2.request->pool;
 
     if (http_status_is_success(status) &&
         request2.translate.response->www_authenticate != nullptr)
         /* default to "401 Unauthorized" */
         status = HTTP_STATUS_UNAUTHORIZED;
 
-    headers = more_response_headers(request2, headers);
+    more_response_headers(request2, headers);
 
     request_discard_body(request2);
 
     if (!request2.stateless)
-        response_generate_set_cookie(request2, *headers);
+        response_generate_set_cookie(request2, headers.MakeBuffer(pool, 512));
 
 #ifdef SPLICE
     if (body != nullptr)
@@ -559,7 +559,9 @@ response_dispatch_direct(request &request2,
     request2.response_sent = true;
 #endif
 
-    http_server_response(request2.request, status, headers, body);
+    http_server_response(request2.request, status,
+                         &headers.ToBuffer(pool, 512),
+                         body);
 }
 
 static void
@@ -637,7 +639,7 @@ filter_enabled(const TranslateResponse &tr,
 
 void
 response_dispatch(struct request &request2,
-                  http_status_t status, struct growing_buffer *headers,
+                  http_status_t status, HttpHeaders &&headers,
                   struct istream *body)
 {
     assert(!request2.response_sent);
@@ -653,7 +655,7 @@ response_dispatch(struct request &request2,
 
         errdoc_dispatch_response(request2, status,
                                  request2.translate.response->error_document,
-                                 headers, body);
+                                 std::move(headers), body);
         return;
     }
 
@@ -662,36 +664,26 @@ response_dispatch(struct request &request2,
     const Transformation *transformation = request2.PopTransformation();
     if (transformation != nullptr &&
         filter_enabled(*request2.translate.response, status)) {
-        struct strmap *headers2;
-
-        if (headers != nullptr) {
-            struct http_server_request *request = request2.request;
-            headers2 = strmap_new(request->pool);
-            header_parse_buffer(request->pool, headers2, headers);
-        } else
-            headers2 = nullptr;
-
-        response_apply_transformation(request2, status, headers2, body,
+        response_apply_transformation(request2, status,
+                                      &headers.ToMap(*request2.request->pool),
+                                      body,
                                       *transformation);
     } else
-        response_dispatch_direct(request2, status, headers, body);
+        response_dispatch_direct(request2, status, std::move(headers), body);
 }
 
 void
 response_dispatch_message2(struct request &request2, http_status_t status,
-                           struct growing_buffer *headers, const char *msg)
+                           HttpHeaders &&headers, const char *msg)
 {
     struct pool *pool = request2.request->pool;
 
     assert(http_status_is_valid(status));
     assert(msg != nullptr);
 
-    if (headers == nullptr)
-        headers = growing_buffer_new(pool, 256);
+    headers.Write(*pool, "content-type", "text/plain");
 
-    header_write(headers, "content-type", "text/plain");
-
-    response_dispatch(request2, status, headers,
+    response_dispatch(request2, status, std::move(headers),
                       istream_string_new(pool, msg));
 }
 
@@ -699,7 +691,7 @@ void
 response_dispatch_message(struct request &request2, http_status_t status,
                           const char *msg)
 {
-    response_dispatch_message2(request2, status, nullptr, msg);
+    response_dispatch_message2(request2, status, HttpHeaders(), msg);
 }
 
 void
@@ -714,10 +706,10 @@ response_dispatch_redirect(struct request &request2, http_status_t status,
     if (msg == nullptr)
         msg = "redirection";
 
-    struct growing_buffer *headers = growing_buffer_new(pool, 256);
-    header_write(headers, "location", location);
+    HttpHeaders headers;
+    headers.Write(*pool, "location", location);
 
-    response_dispatch_message2(request2, status, headers, msg);
+    response_dispatch_message2(request2, status, std::move(headers), msg);
 }
 
 /*
@@ -732,7 +724,6 @@ response_response(http_status_t status, struct strmap *headers,
 {
     request &request2 = *(request *)ctx;
     struct http_server_request *request = request2.request;
-    struct growing_buffer *response_headers;
 
     assert(!request2.response_sent);
     assert(body == nullptr || !istream_has_handler(body));
@@ -762,16 +753,15 @@ response_response(http_status_t status, struct strmap *headers,
     request2.date = headers->Remove("date");
 #endif
 
-    response_headers = headers != nullptr
-        ? headers_dup(request->pool, headers)
-        : nullptr;
+    HttpHeaders headers2(headers);
+
     if (original_headers != nullptr && request->method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
-        headers_copy_one(original_headers, response_headers, "content-length");
+        headers2.MoveToBuffer(*request->pool, "content-length");
 
     response_dispatch(request2,
-                      status, response_headers,
+                      status, std::move(headers2),
                       body);
 }
 

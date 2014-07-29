@@ -13,7 +13,7 @@
 #include "date.h"
 #include "format.h"
 #include "http_util.hxx"
-#include "growing_buffer.hxx"
+#include "http_headers.hxx"
 #include "http_server.hxx"
 #include "global.h"
 #include "istream_file.hxx"
@@ -46,19 +46,20 @@ file_dispatch(struct request &request2, const struct stat &st,
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    struct growing_buffer *headers = growing_buffer_new(request.pool, 2048);
-    file_response_headers(headers, override_content_type,
+    HttpHeaders headers;
+    struct growing_buffer &headers2 = headers.MakeBuffer(*request.pool, 2048);
+    file_response_headers(&headers2, override_content_type,
                           istream_file_fd(body), &st,
                           tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
-    write_translation_vary_header(headers, request2.translate.response);
+    write_translation_vary_header(&headers2, request2.translate.response);
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
 
     /* generate the Content-Range header */
 
-    header_write(headers, "accept-ranges", "bytes");
+    header_write(&headers2, "accept-ranges", "bytes");
 
     switch (file_request.range) {
     case RANGE_NONE:
@@ -73,7 +74,7 @@ file_dispatch(struct request &request2, const struct stat &st,
 
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
-        header_write(headers, "content-range",
+        header_write(&headers2, "content-range",
                      p_sprintf(request.pool, "bytes %lu-%lu/%lu",
                                (unsigned long)file_request.skip,
                                (unsigned long)(file_request.size - 1),
@@ -83,7 +84,7 @@ file_dispatch(struct request &request2, const struct stat &st,
     case RANGE_INVALID:
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
-        header_write(headers, "content-range",
+        header_write(&headers2, "content-range",
                      p_sprintf(request.pool, "bytes */%lu",
                                (unsigned long)st.st_size));
 
@@ -93,7 +94,7 @@ file_dispatch(struct request &request2, const struct stat &st,
 
     /* finished, dispatch this response */
 
-    response_dispatch(request2, status, headers, body);
+    response_dispatch(request2, status, std::move(headers), body);
 }
 
 static bool
@@ -124,16 +125,17 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
     if (override_content_type == nullptr)
         override_content_type = address.content_type;
 
-    struct growing_buffer *headers = growing_buffer_new(request.pool, 2048);
-    file_response_headers(headers, override_content_type,
+    HttpHeaders headers;
+    struct growing_buffer &headers2 = headers.MakeBuffer(*request.pool, 2048);
+    file_response_headers(&headers2, override_content_type,
                           istream_file_fd(&body), &st,
                           tr.expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
-    write_translation_vary_header(headers, request2.translate.response);
+    write_translation_vary_header(&headers2, request2.translate.response);
 
-    header_write(headers, "content-encoding", encoding);
-    header_write(headers, "vary", "accept-encoding");
+    header_write(&headers2, "content-encoding", encoding);
+    header_write(&headers2, "vary", "accept-encoding");
 
     /* close original file */
 
@@ -142,7 +144,7 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
     /* finished, dispatch this response */
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
-    response_dispatch(request2, status, headers, compressed_body);
+    response_dispatch(request2, status, std::move(headers), compressed_body);
     return true;
 }
 
@@ -221,7 +223,7 @@ file_callback(struct request &request2)
 
     if (S_ISCHR(st.st_mode)) {
         /* allow character devices, but skip range etc. */
-        response_dispatch(request2, HTTP_STATUS_OK, nullptr, body);
+        response_dispatch(request2, HTTP_STATUS_OK, HttpHeaders(), body);
         return;
     }
 

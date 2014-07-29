@@ -15,6 +15,7 @@
 #include "header_forward.hxx"
 #include "http_server.hxx"
 #include "http_util.hxx"
+#include "http_headers.hxx"
 #include "http_response.hxx"
 #include "processor.h"
 #include "global.h"
@@ -56,7 +57,6 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     struct request &request2 = *proxy->request;
     struct http_server_request *request = request2.request;
     struct widget *widget = proxy->widget;
-    struct growing_buffer *headers2;
 
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
@@ -80,17 +80,18 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     request2.date = headers->Remove("date");
 #endif
 
-    headers2 = headers_dup(request->pool, headers);
+    HttpHeaders headers2(*headers);
+
     if (request->method == HTTP_METHOD_HEAD)
         /* pass Content-Length, even though there is no response body
            (RFC 2616 14.13) */
-        headers_copy_one(headers, headers2, "content-length");
+        headers2.MoveToBuffer(*request->pool, "content-length");
 
 #ifndef NO_DEFLATE
     if (body != nullptr && istream_available(body, false) == (off_t)-1 &&
         (headers == nullptr || headers->Get("content-encoding") == nullptr) &&
         http_client_accepts_encoding(request->headers, "deflate")) {
-        header_write(headers2, "content-encoding", "deflate");
+        headers2.Write("content-encoding", "deflate");
         body = istream_deflate_new(request->pool, body);
     } else
 #endif
@@ -105,7 +106,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
        for the template, not for this widget */
     request2.CancelTransformations();
 
-    response_dispatch(request2, status, headers2, body);
+    response_dispatch(request2, status, std::move(headers2), body);
 }
 
 static void

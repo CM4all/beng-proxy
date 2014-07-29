@@ -20,11 +20,11 @@
 #include "session.hxx"
 #include "tcache.hxx"
 #include "suffix_registry.hxx"
-#include "growing_buffer.hxx"
 #include "header_writer.hxx"
 #include "strref-pool.h"
 #include "dpool.h"
 #include "pbuffer.hxx"
+#include "http_headers.hxx"
 #include "http_server.hxx"
 #include "http_quark.h"
 #include "transformation.hxx"
@@ -221,7 +221,7 @@ request::CheckHandleStatus(const TranslateResponse &response)
     if (response.status == (http_status_t)0)
         return false;
 
-    response_dispatch(*this, response.status, nullptr, nullptr);
+    response_dispatch(*this, response.status, HttpHeaders(), nullptr);
     return true;
 }
 

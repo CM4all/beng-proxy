@@ -9,6 +9,7 @@
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
 #include "http_server.hxx"
+#include "http_headers.hxx"
 #include "http_response.hxx"
 #include "tcache.hxx"
 #include "get.hxx"
@@ -25,16 +26,16 @@ struct error_response {
     struct request *request2;
 
     http_status_t status;
-    struct growing_buffer *headers;
+    HttpHeaders headers;
     struct istream *body;
 
     TranslateRequest translate_request;
 };
 
 static void
-errdoc_resubmit(const error_response &er)
+errdoc_resubmit(error_response &er)
 {
-    response_dispatch(*er.request2, er.status, er.headers, er.body);
+    response_dispatch(*er.request2, er.status, std::move(er.headers), er.body);
 }
 
 /*
@@ -166,7 +167,7 @@ static const struct async_operation_class errdoc_operation = {
 void
 errdoc_dispatch_response(struct request &request2, http_status_t status,
                          ConstBuffer<void> error_document,
-                         struct growing_buffer *headers, struct istream *body)
+                         HttpHeaders &&headers, struct istream *body)
 {
     assert(!error_document.IsNull());
 
@@ -178,7 +179,7 @@ errdoc_dispatch_response(struct request &request2, http_status_t status,
     error_response *er = NewFromPool<error_response>(*pool);
     er->request2 = &request2;
     er->status = status;
-    er->headers = headers;
+    er->headers = std::move(headers);
     er->body = body != nullptr
         ? istream_hold_new(pool, body)
         : nullptr;

@@ -15,6 +15,7 @@
 #include "request.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
+#include "http_headers.hxx"
 #include "http_server.hxx"
 
 #include <assert.h>
@@ -57,22 +58,23 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
     if (override_content_type == nullptr)
         override_content_type = request2.translate.address->u.nfs->content_type;
 
-    struct growing_buffer *headers = growing_buffer_new(pool, 2048);
-    header_write(headers, "cache-control", "max-age=60");
+    HttpHeaders headers;
+    struct growing_buffer &headers2 = headers.MakeBuffer(*pool, 2048);
+    header_write(&headers2, "cache-control", "max-age=60");
 
-    file_response_headers(headers,
+    file_response_headers(&headers2,
                           override_content_type,
                           -1, st,
                           tr->expires_relative,
                           request2.IsProcessorEnabled(),
                           request2.IsProcessorFirst());
-    write_translation_vary_header(headers, request2.translate.response);
+    write_translation_vary_header(&headers2, request2.translate.response);
 
     http_status_t status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
     /* generate the Content-Range header */
 
-    header_write(headers, "accept-ranges", "bytes");
+    header_write(&headers2, "accept-ranges", "bytes");
 
     bool no_body = false;
 
@@ -83,7 +85,7 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
     case RANGE_VALID:
         status = HTTP_STATUS_PARTIAL_CONTENT;
 
-        header_write(headers, "content-range",
+        header_write(&headers2, "content-range",
                      p_sprintf(pool, "bytes %lu-%lu/%lu",
                                (unsigned long)file_request.skip,
                                (unsigned long)(file_request.size - 1),
@@ -93,7 +95,7 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
     case RANGE_INVALID:
         status = HTTP_STATUS_REQUESTED_RANGE_NOT_SATISFIABLE;
 
-        header_write(headers, "content-range",
+        header_write(&headers2, "content-range",
                      p_sprintf(pool, "bytes */%lu",
                                (unsigned long)st->st_size));
 
@@ -108,7 +110,7 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
         body = nfs_cache_handle_open(pool, handle,
                                      file_request.skip, file_request.size);
 
-    response_dispatch(request2, status, headers, body);
+    response_dispatch(request2, status, std::move(headers), body);
 }
 
 static const struct nfs_cache_handler nfs_handler_cache_handler = {
