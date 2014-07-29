@@ -34,7 +34,7 @@ struct error_response {
 static void
 errdoc_resubmit(const error_response &er)
 {
-    response_dispatch(er.request2, er.status, er.headers, er.body);
+    response_dispatch(*er.request2, er.status, er.headers, er.body);
 }
 
 /*
@@ -164,19 +164,19 @@ static const struct async_operation_class errdoc_operation = {
  */
 
 void
-errdoc_dispatch_response(struct request *request2, http_status_t status,
+errdoc_dispatch_response(struct request &request2, http_status_t status,
                          ConstBuffer<void> error_document,
                          struct growing_buffer *headers, struct istream *body)
 {
     assert(!error_document.IsNull());
 
-    struct instance *instance = request2->connection->instance;
+    struct instance *instance = request2.connection->instance;
 
     assert(instance->translate_cache != nullptr);
 
-    struct pool *pool = request2->request->pool;
+    struct pool *pool = request2.request->pool;
     error_response *er = NewFromPool<error_response>(*pool);
-    er->request2 = request2;
+    er->request2 = &request2;
     er->status = status;
     er->headers = headers;
     er->body = body != nullptr
@@ -184,10 +184,10 @@ errdoc_dispatch_response(struct request *request2, http_status_t status,
         : nullptr;
 
     er->operation.Init(errdoc_operation);
-    request2->async_ref.Set(er->operation);
+    request2.async_ref.Set(er->operation);
 
     fill_translate_request(&er->translate_request,
-                           &request2->translate.request,
+                           &request2.translate.request,
                            error_document, status);
     translate_cache(pool, instance->translate_cache,
                     &er->translate_request,

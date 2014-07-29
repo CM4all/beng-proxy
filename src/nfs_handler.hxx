@@ -10,6 +10,6 @@
 struct request;
 
 void
-nfs_handler(struct request *request);
+nfs_handler(struct request &request);
 
 #endif

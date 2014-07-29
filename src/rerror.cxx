@@ -27,21 +27,21 @@
 #endif
 
 static void
-response_dispatch_error(struct request *request, GError *error,
+response_dispatch_error(struct request &request, GError *error,
                         http_status_t status, const char *message)
 {
-    if (request->connection->instance->config.verbose_response)
-        message = p_strdup(request->request->pool, error->message);
+    if (request.connection->instance->config.verbose_response)
+        message = p_strdup(request.request->pool, error->message);
 
     response_dispatch_message(request, status, message);
 }
 
 void
-response_dispatch_error(struct request *request, GError *error)
+response_dispatch_error(struct request &request, GError *error)
 {
     if (error->domain == http_response_quark()) {
         response_dispatch_message(request, http_status_t(error->code),
-                                  p_strdup(request->request->pool,
+                                  p_strdup(request.request->pool,
                                            error->message));
         return;
     }
@@ -65,7 +65,7 @@ response_dispatch_error(struct request *request, GError *error)
 
         case WIDGET_ERROR_NOT_A_CONTAINER:
             response_dispatch_message(request, HTTP_STATUS_NOT_FOUND,
-                                      p_strdup(request->request->pool,
+                                      p_strdup(request.request->pool,
                                                error->message));
             return;
 

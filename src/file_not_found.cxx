@@ -43,7 +43,7 @@ check_file_not_found(struct request &request,
         case RESOURCE_ADDRESS_PIPE:
         case RESOURCE_ADDRESS_NFS:
             daemon_log(2, "resource address not compatible with TRANSLATE_FILE_NOT_FOUND\n");
-            response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                       "Internal Server Error");
             return false;
 
@@ -73,7 +73,7 @@ check_file_not_found(struct request &request,
 
     if (++request.translate.n_file_not_found > 20) {
         daemon_log(2, "got too many consecutive FILE_NOT_FOUND packets\n");
-        response_dispatch_message(&request,
+        response_dispatch_message(request,
                                   HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return false;

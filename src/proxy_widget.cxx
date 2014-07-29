@@ -53,8 +53,8 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
                       struct istream *body, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request *request2 = proxy->request;
-    struct http_server_request *request = request2->request;
+    struct request &request2 = *proxy->request;
+    struct http_server_request *request = request2.request;
     struct widget *widget = proxy->widget;
     struct growing_buffer *headers2;
 
@@ -66,18 +66,18 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
     const WidgetView *view = widget_get_transformation_view(widget);
     assert(view != nullptr);
 
-    headers = forward_response_headers(request->pool, headers,
+    headers = forward_response_headers(*request->pool, headers,
                                        request->local_host_and_port,
-                                       request2->session_cookie,
-                                       &view->response_header_forward);
+                                       request2.session_cookie,
+                                       view->response_header_forward);
 
     headers = add_translation_vary_header(request->pool, headers,
-                                          request2->translate.response);
+                                          request2.translate.response);
 
-    request2->product_token = headers->Remove("server");
+    request2.product_token = headers->Remove("server");
 
 #ifdef NO_DATE_HEADER
-    request2->date = headers->Remove("date");
+    request2.date = headers->Remove("date");
 #endif
 
     headers2 = headers_dup(request->pool, headers);
@@ -103,7 +103,7 @@ widget_proxy_response(http_status_t status, struct strmap *headers,
 
     /* disable the following transformations, because they are meant
        for the template, not for this widget */
-    request2->CancelTransformations();
+    request2.CancelTransformations();
 
     response_dispatch(request2, status, headers2, body);
 }
@@ -112,11 +112,11 @@ static void
 widget_proxy_abort(GError *error, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request *request2 = proxy->request;
+    struct request &request2 = *proxy->request;
     struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
-               request2->request->uri, error->message);
+               request2.request->uri, error->message);
 
     if (widget->for_focused.body != nullptr)
         istream_free_unused(&widget->for_focused.body);
@@ -177,8 +177,8 @@ widget_view_allowed(struct widget *widget,
 static void
 proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
 {
-    struct request *request2 = proxy->request;
-    struct http_server_request *request = request2->request;
+    struct request &request2 = *proxy->request;
+    struct http_server_request *request = request2.request;
 
     if (!widget_has_default_view(widget)) {
         widget_cancel(widget);
@@ -190,11 +190,11 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
     if (proxy->ref != nullptr) {
         frame_parent_widget(request->pool, widget,
                             proxy->ref->id,
-                            &request2->env,
+                            &request2.env,
                             &widget_processor_handler, proxy,
                             &proxy->async_ref);
     } else {
-        const struct processor_env *env = &request2->env;
+        const struct processor_env *env = &request2.env;
 
         if (env->view_name != nullptr) {
             /* the client can select the view; he can never explicitly
@@ -219,15 +219,15 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
         }
 
         if (widget->cls->direct_addressing &&
-            !strref_is_empty(&request2->uri.path_info))
+            !strref_is_empty(&request2.uri.path_info))
             /* apply new-style path_info to frame top widget (direct
                addressing) */
             widget->from_request.path_info =
-                p_strndup(request->pool, request2->uri.path_info.data + 1,
-                          request2->uri.path_info.length - 1);
+                p_strndup(request->pool, request2.uri.path_info.data + 1,
+                          request2.uri.path_info.length - 1);
 
         frame_top_widget(request->pool, widget,
-                         &request2->env,
+                         &request2.env,
                          &widget_response_handler, proxy,
                          &proxy->async_ref);
     }
@@ -237,7 +237,7 @@ static void
 proxy_widget_resolver_callback(void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request *request2 = proxy->request;
+    struct request &request2 = *proxy->request;
     struct widget *widget = proxy->widget;
 
     if (widget->cls == nullptr) {
@@ -257,14 +257,14 @@ static void
 widget_proxy_found(struct widget *widget, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request *request2 = proxy->request;
-    struct http_server_request *request = request2->request;
+    struct request &request2 = *proxy->request;
+    struct http_server_request *request = request2.request;
 
     proxy->widget = widget;
     proxy->ref = proxy->ref->next;
 
     if (widget->cls == nullptr) {
-        widget_resolver_new(request->pool, request2->env.pool, widget,
+        widget_resolver_new(request->pool, request2.env.pool, widget,
                             global_translate_cache,
                             &proxy_widget_resolver_callback, proxy,
                             &proxy->async_ref);
@@ -278,14 +278,14 @@ static void
 widget_proxy_not_found(void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request *request2 = proxy->request;
+    struct request &request2 = *proxy->request;
     struct widget *widget = proxy->widget;
 
     assert(proxy->ref != nullptr);
 
     daemon_log(2, "widget '%s' not found in %s [%s]\n",
                proxy->ref->id,
-               widget->GetIdPath(), request2->request->uri);
+               widget->GetIdPath(), request2.request->uri);
 
     widget_cancel(widget);
     response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
@@ -296,11 +296,11 @@ static void
 widget_proxy_error(GError *error, void *ctx)
 {
     struct proxy_widget *proxy = (struct proxy_widget *)ctx;
-    struct request *request2 = proxy->request;
+    struct request &request2 = *proxy->request;
     struct widget *widget = proxy->widget;
 
     daemon_log(2, "error from widget on %s: %s\n",
-               request2->request->uri, error->message);
+               request2.request->uri, error->message);
 
     widget_cancel(widget);
     response_dispatch_error(request2, error);
@@ -347,26 +347,25 @@ static const struct async_operation_class widget_proxy_operation = {
  */
 
 void
-proxy_widget(struct request *request2,
+proxy_widget(struct request &request2,
              struct istream *body,
              struct widget *widget, const struct widget_ref *proxy_ref,
              unsigned options)
 {
-    assert(request2 != nullptr);
     assert(widget != nullptr);
     assert(proxy_ref != nullptr);
 
-    auto proxy = NewFromPool<struct proxy_widget>(*request2->request->pool);
-    proxy->request = request2;
+    auto proxy = NewFromPool<struct proxy_widget>(*request2.request->pool);
+    proxy->request = &request2;
     proxy->widget = widget;
     proxy->ref = proxy_ref;
 
     proxy->operation.Init(widget_proxy_operation);
-    request2->async_ref.Set(proxy->operation);
+    request2.async_ref.Set(proxy->operation);
 
-    processor_lookup_widget(request2->request->pool, body,
+    processor_lookup_widget(request2.request->pool, body,
                             widget, proxy_ref->id,
-                            &request2->env, options,
+                            &request2.env, options,
                             &widget_processor_handler, proxy,
                             &proxy->async_ref);
 }

@@ -39,7 +39,7 @@
 #include <daemon/log.h>
 
 static const char *
-request_absolute_uri(const struct http_server_request *request,
+request_absolute_uri(const struct http_server_request &request,
                      const char *scheme, const char *host, const char *uri)
 {
     assert(uri != nullptr);
@@ -48,12 +48,12 @@ request_absolute_uri(const struct http_server_request *request,
         scheme = "http";
 
     if (host == nullptr)
-        host = request->headers->Get("host");
+        host = request.headers->Get("host");
 
     if (host == nullptr || !hostname_is_well_formed(host))
         return nullptr;
 
-    return p_strcat(request->pool,
+    return p_strcat(request.pool,
                     scheme, "://",
                     host,
                     uri,
@@ -67,10 +67,10 @@ request_absolute_uri(const struct http_server_request *request,
  * @param ref the top window to drop; nullptr drops all widgets
  */
 static void
-session_drop_widgets(struct session *session, const char *uri,
+session_drop_widgets(struct session &session, const char *uri,
                      const struct widget_ref *ref)
 {
-    struct dhashmap *map = session->widgets;
+    struct dhashmap *map = session.widgets;
     const char *id = uri;
     widget_session *ws;
 
@@ -94,7 +94,7 @@ session_drop_widgets(struct session *session, const char *uri,
     }
 
     dhashmap_remove(map, id);
-    widget_session_delete(session->pool, ws);
+    widget_session_delete(session.pool, ws);
 }
 
 
@@ -108,7 +108,7 @@ response_invoke_processor(request &request2,
                           http_status_t status,
                           struct strmap *response_headers,
                           struct istream *body,
-                          const Transformation *transformation)
+                          const Transformation &transformation)
 {
     struct http_server_request *request = request2.request;
     const char *uri;
@@ -117,14 +117,14 @@ response_invoke_processor(request &request2,
     assert(body == nullptr || !istream_has_handler(body));
 
     if (body == nullptr) {
-        response_dispatch_message(&request2, HTTP_STATUS_BAD_GATEWAY,
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Empty template cannot be processed");
         return;
     }
 
     if (!processable(response_headers)) {
         istream_close_unused(body);
-        response_dispatch_message(&request2, HTTP_STATUS_BAD_GATEWAY,
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
     }
@@ -168,7 +168,7 @@ response_invoke_processor(request &request2,
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2.translate.response->untrusted);
         istream_close_unused(body);
-        response_dispatch_message(&request2, HTTP_STATUS_FORBIDDEN,
+        response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;
     }
@@ -186,12 +186,12 @@ response_invoke_processor(request &request2,
         strref_set_c(&request2.uri.base, request2.translate.response->uri);
 
     /* make sure we have a session */
-    struct session *session = request_make_session(&request2);
+    struct session *session = request_make_session(request2);
     if (session != nullptr) {
         if (widget->from_request.focus_ref == nullptr)
             /* drop the widget session and all descendants if there is
                no focus */
-            session_drop_widgets(session, widget->id,
+            session_drop_widgets(*session, widget->id,
                                  proxy_ref);
 
         session_put(session);
@@ -209,7 +209,7 @@ response_invoke_processor(request &request2,
                                  request2.translate.response->untrusted,
                                  request->local_host_and_port, request->remote_host,
                                  uri,
-                                 request_absolute_uri(request,
+                                 request_absolute_uri(*request,
                                                       request2.translate.response->scheme,
                                                       request2.translate.response->host,
                                                       uri),
@@ -222,13 +222,13 @@ response_invoke_processor(request &request2,
     if (proxy_ref != nullptr) {
         /* the client requests a widget in proxy mode */
 
-        proxy_widget(&request2, body,
-                     widget, proxy_ref, transformation->u.processor.options);
+        proxy_widget(request2, body,
+                     widget, proxy_ref, transformation.u.processor.options);
     } else {
         /* the client requests the whole template */
         body = processor_process(request->pool, body,
                                  widget, &request2.env,
-                                 transformation->u.processor.options);
+                                 transformation.u.processor.options);
         assert(body != nullptr);
 
         if (request2.connection->instance->config.dump_widget_tree)
@@ -266,7 +266,7 @@ response_invoke_css_processor(request &request2,
                               http_status_t status,
                               struct strmap *response_headers,
                               struct istream *body,
-                              const Transformation *transformation)
+                              const Transformation &transformation)
 {
     struct http_server_request *request = request2.request;
 
@@ -274,14 +274,14 @@ response_invoke_css_processor(request &request2,
     assert(body == nullptr || !istream_has_handler(body));
 
     if (body == nullptr) {
-        response_dispatch_message(&request2, HTTP_STATUS_BAD_GATEWAY,
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Empty template cannot be processed");
         return;
     }
 
     if (!css_processable(response_headers)) {
         istream_close_unused(body);
-        response_dispatch_message(&request2, HTTP_STATUS_BAD_GATEWAY,
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
     }
@@ -294,7 +294,7 @@ response_invoke_css_processor(request &request2,
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2.translate.response->untrusted);
         istream_close_unused(body);
-        response_dispatch_message(&request2, HTTP_STATUS_FORBIDDEN,
+        response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;
     }
@@ -311,7 +311,7 @@ response_invoke_css_processor(request &request2,
                                  request2.translate.response->untrusted,
                                  request->local_host_and_port, request->remote_host,
                                  uri,
-                                 request_absolute_uri(request,
+                                 request_absolute_uri(*request,
                                                       request2.translate.response->scheme,
                                                       request2.translate.response->host,
                                                       uri),
@@ -323,7 +323,7 @@ response_invoke_css_processor(request &request2,
 
     body = css_processor(request->pool, body,
                          widget, &request2.env,
-                         transformation->u.css_processor.options);
+                         transformation.u.css_processor.options);
     assert(body != nullptr);
 
     response_headers = processor_header_forward(request->pool,
@@ -344,14 +344,14 @@ response_invoke_text_processor(request &request2,
     assert(body == nullptr || !istream_has_handler(body));
 
     if (body == nullptr) {
-        response_dispatch_message(&request2, HTTP_STATUS_BAD_GATEWAY,
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Empty template cannot be processed");
         return;
     }
 
     if (!text_processor_allowed(response_headers)) {
         istream_close_unused(body);
-        response_dispatch_message(&request2, HTTP_STATUS_BAD_GATEWAY,
+        response_dispatch_message(request2, HTTP_STATUS_BAD_GATEWAY,
                                   "Invalid template content type");
         return;
     }
@@ -364,7 +364,7 @@ response_invoke_text_processor(request &request2,
         daemon_log(2, "refusing to render template on untrusted domain '%s'\n",
                    request2.translate.response->untrusted);
         istream_close_unused(body);
-        response_dispatch_message(&request2, HTTP_STATUS_FORBIDDEN,
+        response_dispatch_message(request2, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;
     }
@@ -381,7 +381,7 @@ response_invoke_text_processor(request &request2,
                                  request2.translate.response->untrusted,
                                  request->local_host_and_port, request->remote_host,
                                  uri,
-                                 request_absolute_uri(request,
+                                 request_absolute_uri(*request,
                                                       request2.translate.response->scheme,
                                                       request2.translate.response->host,
                                                       uri),
@@ -405,17 +405,17 @@ response_invoke_text_processor(request &request2,
  * Append response headers set by the translation server.
  */
 static void
-translation_response_headers(struct growing_buffer *headers,
-                             const TranslateResponse *tr)
+translation_response_headers(struct growing_buffer &headers,
+                             const TranslateResponse &tr)
 {
-    if (tr->www_authenticate != nullptr)
-        header_write(headers, "www-authenticate", tr->www_authenticate);
+    if (tr.www_authenticate != nullptr)
+        header_write(&headers, "www-authenticate", tr.www_authenticate);
 
-    if (tr->authentication_info != nullptr)
-        header_write(headers, "authentication-info", tr->authentication_info);
+    if (tr.authentication_info != nullptr)
+        header_write(&headers, "authentication-info", tr.authentication_info);
 
-    for (const auto &i : tr->response_headers)
-        header_write(headers, i.key, i.value);
+    for (const auto &i : tr.response_headers)
+        header_write(&headers, i.key, i.value);
 }
 
 /**
@@ -440,8 +440,7 @@ more_response_headers(const request &request2,
                  : http_date_format(time(nullptr)));
 #endif
 
-    const TranslateResponse *tr = request2.translate.response;
-    translation_response_headers(headers, tr);
+    translation_response_headers(*headers, *request2.translate.response);
 
     return headers;
 }
@@ -451,49 +450,48 @@ more_response_headers(const request &request2,
  */
 static void
 response_generate_set_cookie(request &request2,
-                             struct growing_buffer *headers)
+                             struct growing_buffer &headers)
 {
     assert(!request2.stateless);
     assert(request2.session_cookie != nullptr);
-    assert(headers != nullptr);
 
     if (request2.send_session_cookie) {
-        header_write_begin(headers, "set-cookie");
-        growing_buffer_write_string(headers, request2.session_cookie);
-        growing_buffer_write_buffer(headers, "=", 1);
-        growing_buffer_write_string(headers,
+        header_write_begin(&headers, "set-cookie");
+        growing_buffer_write_string(&headers, request2.session_cookie);
+        growing_buffer_write_buffer(&headers, "=", 1);
+        growing_buffer_write_string(&headers,
                                     session_id_format(request2.session_id,
                                                       &request2.session_id_string));
-        growing_buffer_write_string(headers, "; HttpOnly; Path=");
+        growing_buffer_write_string(&headers, "; HttpOnly; Path=");
 
         const char *cookie_path = request2.translate.response->cookie_path;
         if (cookie_path == nullptr)
             cookie_path = "/";
 
-        growing_buffer_write_string(headers, cookie_path);
-        growing_buffer_write_string(headers, "; Version=1");
+        growing_buffer_write_string(&headers, cookie_path);
+        growing_buffer_write_string(&headers, "; Version=1");
 
         if (request2.translate.response->secure_cookie)
-            growing_buffer_write_string(headers, "; Secure");
+            growing_buffer_write_string(&headers, "; Secure");
 
         if (request2.translate.response->cookie_domain != nullptr) {
-            growing_buffer_write_string(headers, "; Domain=\"");
-            growing_buffer_write_string(headers,
+            growing_buffer_write_string(&headers, "; Domain=\"");
+            growing_buffer_write_string(&headers,
                                         request2.translate.response->cookie_domain);
-            growing_buffer_write_string(headers, "\"");
+            growing_buffer_write_string(&headers, "\"");
         }
 
         /* "Discard" must be last, to work around an Android bug*/
-        growing_buffer_write_string(headers, "; Discard");
+        growing_buffer_write_string(&headers, "; Discard");
 
-        header_write_finish(headers);
+        header_write_finish(&headers);
 
         /* workaround for IE10 bug; see
            http://projects.intern.cm-ag/view.php?id=3789 for
            details */
-        header_write(headers, "p3p", "CP=\"CAO PSA OUR\"");
+        header_write(&headers, "p3p", "CP=\"CAO PSA OUR\"");
 
-        struct session *session = request_make_session(&request2);
+        struct session *session = request_make_session(request2);
         if (session != nullptr) {
             session->cookie_sent = true;
             session_put(session);
@@ -501,28 +499,28 @@ response_generate_set_cookie(request &request2,
     } else if (request2.translate.response->discard_session &&
                !session_id_is_defined(request2.session_id)) {
         /* delete the cookie for the discarded session */
-        header_write_begin(headers, "set-cookie");
-        growing_buffer_write_string(headers, request2.session_cookie);
-        growing_buffer_write_string(headers, "=; HttpOnly; Path=");
+        header_write_begin(&headers, "set-cookie");
+        growing_buffer_write_string(&headers, request2.session_cookie);
+        growing_buffer_write_string(&headers, "=; HttpOnly; Path=");
 
         const char *cookie_path = request2.translate.response->cookie_path;
         if (cookie_path == nullptr)
             cookie_path = "/";
 
-        growing_buffer_write_string(headers, cookie_path);
-        growing_buffer_write_string(headers, "; Version=1; Max-Age=0");
+        growing_buffer_write_string(&headers, cookie_path);
+        growing_buffer_write_string(&headers, "; Version=1; Max-Age=0");
 
         if (request2.translate.response->cookie_domain != nullptr) {
-            growing_buffer_write_string(headers, "; Domain=\"");
-            growing_buffer_write_string(headers,
+            growing_buffer_write_string(&headers, "; Domain=\"");
+            growing_buffer_write_string(&headers,
                                         request2.translate.response->cookie_domain);
-            growing_buffer_write_string(headers, "\"");
+            growing_buffer_write_string(&headers, "\"");
         }
 
         /* "Discard" must be last, to work around an Android bug*/
-        growing_buffer_write_string(headers, "; Discard");
+        growing_buffer_write_string(&headers, "; Discard");
 
-        header_write_finish(headers);
+        header_write_finish(&headers);
     }
 }
 
@@ -546,10 +544,10 @@ response_dispatch_direct(request &request2,
 
     headers = more_response_headers(request2, headers);
 
-    request_discard_body(&request2);
+    request_discard_body(request2);
 
     if (!request2.stateless)
-        response_generate_set_cookie(request2, headers);
+        response_generate_set_cookie(request2, *headers);
 
 #ifdef SPLICE
     if (body != nullptr)
@@ -568,7 +566,7 @@ static void
 response_apply_filter(request &request2,
                       http_status_t status, struct strmap *headers2,
                       struct istream *body,
-                      const struct resource_address *filter)
+                      const struct resource_address &filter)
 {
     struct http_server_request *request = request2.request;
     const char *source_tag;
@@ -577,7 +575,7 @@ response_apply_filter(request &request2,
                                           request2.resource_tag, headers2);
     request2.resource_tag = source_tag != nullptr
         ? p_strcat(request->pool, source_tag, "|",
-                   resource_address_id(filter, request->pool),
+                   resource_address_id(&filter, request->pool),
                    nullptr)
         : nullptr;
 
@@ -586,7 +584,7 @@ response_apply_filter(request &request2,
         body = istream_pipe_new(request->pool, body, global_pipe_stock);
 #endif
 
-    filter_cache_request(global_filter_cache, request->pool, filter,
+    filter_cache_request(global_filter_cache, request->pool, &filter,
                          source_tag, status, headers2, body,
                          &response_handler, &request2,
                          &request2.async_ref);
@@ -596,16 +594,14 @@ static void
 response_apply_transformation(request &request2,
                               http_status_t status, struct strmap *headers,
                               struct istream *body,
-                              const Transformation *transformation)
+                              const Transformation &transformation)
 {
-    assert(transformation != nullptr);
-
     request2.transformed = true;
 
-    switch (transformation->type) {
+    switch (transformation.type) {
     case Transformation::Type::FILTER:
         response_apply_filter(request2, status, headers, body,
-                              &transformation->u.filter);
+                              transformation.u.filter);
         break;
 
     case Transformation::Type::PROCESS:
@@ -632,62 +628,61 @@ response_apply_transformation(request &request2,
 }
 
 static bool
-filter_enabled(const TranslateResponse *tr,
+filter_enabled(const TranslateResponse &tr,
                http_status_t status)
 {
     return http_status_is_success(status) ||
-        (http_status_is_client_error(status) && tr->filter_4xx);
+        (http_status_is_client_error(status) && tr.filter_4xx);
 }
 
 void
-response_dispatch(struct request *request2,
+response_dispatch(struct request &request2,
                   http_status_t status, struct growing_buffer *headers,
                   struct istream *body)
 {
-    assert(!request2->response_sent);
+    assert(!request2.response_sent);
     assert(body == nullptr || !istream_has_handler(body));
 
-    if (http_status_is_error(status) && !request2->transformed &&
-        !request2->translate.response->error_document.IsNull()) {
-        request2->transformed = true;
+    if (http_status_is_error(status) && !request2.transformed &&
+        !request2.translate.response->error_document.IsNull()) {
+        request2.transformed = true;
 
         /* for sure, the errdoc library doesn't use the request body;
            discard it as early as possible */
         request_discard_body(request2);
 
         errdoc_dispatch_response(request2, status,
-                                 request2->translate.response->error_document,
+                                 request2.translate.response->error_document,
                                  headers, body);
         return;
     }
 
     /* if HTTP status code is not successful: don't apply
        transformation on the error document */
-    const Transformation *transformation = request2->PopTransformation();
+    const Transformation *transformation = request2.PopTransformation();
     if (transformation != nullptr &&
-        filter_enabled(request2->translate.response, status)) {
+        filter_enabled(*request2.translate.response, status)) {
         struct strmap *headers2;
 
         if (headers != nullptr) {
-            struct http_server_request *request = request2->request;
+            struct http_server_request *request = request2.request;
             headers2 = strmap_new(request->pool);
             header_parse_buffer(request->pool, headers2, headers);
         } else
             headers2 = nullptr;
 
-        response_apply_transformation(*request2, status, headers2, body,
-                                      transformation);
+        response_apply_transformation(request2, status, headers2, body,
+                                      *transformation);
     } else
-        response_dispatch_direct(*request2, status, headers, body);
+        response_dispatch_direct(request2, status, headers, body);
 }
 
 void
-response_dispatch_message2(struct request *request2, http_status_t status,
+response_dispatch_message2(struct request &request2, http_status_t status,
                            struct growing_buffer *headers, const char *msg)
 {
-    struct pool *pool = request2->request->pool;
+    struct pool *pool = request2.request->pool;
 
-    assert(request2 != nullptr);
     assert(http_status_is_valid(status));
     assert(msg != nullptr);
 
@@ -701,17 +696,17 @@ response_dispatch_message2(struct request *request2, http_status_t status,
 }
 
 void
-response_dispatch_message(struct request *request2, http_status_t status,
+response_dispatch_message(struct request &request2, http_status_t status,
                           const char *msg)
 {
     response_dispatch_message2(request2, status, nullptr, msg);
 }
 
 void
-response_dispatch_redirect(struct request *request2, http_status_t status,
+response_dispatch_redirect(struct request &request2, http_status_t status,
                            const char *location, const char *msg)
 {
-    struct pool *pool = request2->request->pool;
+    struct pool *pool = request2.request->pool;
 
     assert(status >= 300 && status < 400);
     assert(location != nullptr);
@@ -746,17 +741,17 @@ response_response(http_status_t status, struct strmap *headers,
         const Transformation *transformation = request2.PopTransformation();
         if (transformation != nullptr) {
             response_apply_transformation(request2, status, headers, body,
-                                          transformation);
+                                          *transformation);
             return;
         }
     }
 
     const struct strmap *original_headers = headers;
 
-    headers = forward_response_headers(request->pool, headers,
+    headers = forward_response_headers(*request->pool, headers,
                                        request->local_host_and_port,
                                        request2.session_cookie,
-                                       &request2.translate.response->response_header_forward);
+                                       request2.translate.response->response_header_forward);
 
     headers = add_translation_vary_header(request->pool, headers,
                                           request2.translate.response);
@@ -775,7 +770,7 @@ response_response(http_status_t status, struct strmap *headers,
            (RFC 2616 14.13) */
         headers_copy_one(original_headers, response_headers, "content-length");
 
-    response_dispatch(&request2,
+    response_dispatch(request2,
                       status, response_headers,
                       body);
 }
@@ -789,7 +784,7 @@ response_abort(GError *error, void *ctx)
 
     daemon_log(2, "error on %s: %s\n", request2.request->uri, error->message);
 
-    response_dispatch_error(&request2, error);
+    response_dispatch_error(request2, error);
 
     g_error_free(error);
 }

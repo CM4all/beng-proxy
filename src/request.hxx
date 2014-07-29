@@ -240,52 +240,51 @@ struct request {
  * sending the response to the HTTP server library.
  */
 void
-request_discard_body(struct request *request);
+request_discard_body(struct request &request);
 
 void
-request_args_parse(struct request *request);
+request_args_parse(struct request &request);
 
 void
-request_determine_session(struct request *request);
+request_determine_session(struct request &request);
 
 static inline struct session *
-request_get_session(const struct request *request)
+request_get_session(const struct request &request)
 {
-    return session_id_is_defined(request->session_id)
-        ? session_get(request->session_id)
+    return session_id_is_defined(request.session_id)
+        ? session_get(request.session_id)
         : nullptr;
 }
 
 struct session *
-request_make_session(struct request *request);
+request_make_session(struct request &request);
 
 void
-request_ignore_session(struct request *request);
+request_ignore_session(struct request &request);
 
 void
-request_discard_session(struct request *request);
-
+request_discard_session(struct request &request);
 
 struct growing_buffer;
 
 void
-response_dispatch(struct request *request2,
+response_dispatch(struct request &request,
                   http_status_t status, struct growing_buffer *headers,
                   struct istream *body);
 
 void
-response_dispatch_message(struct request *request2, http_status_t status,
+response_dispatch_message(struct request &request, http_status_t status,
                           const char *msg);
 
 void
-response_dispatch_message2(struct request *request2, http_status_t status,
+response_dispatch_message2(struct request &request, http_status_t status,
                            struct growing_buffer *headers, const char *msg);
 
 void
-response_dispatch_error(struct request *request, GError *error);
+response_dispatch_error(struct request &request, GError *error);
 
 void
-response_dispatch_redirect(struct request *request2, http_status_t status,
+response_dispatch_redirect(struct request &request, http_status_t status,
                            const char *location, const char *msg);
 
 extern const struct http_response_handler response_handler;

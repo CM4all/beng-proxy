@@ -24,30 +24,29 @@
 #include <daemon/log.h>
 
 static const struct strmap *
-request_get_cookies(struct request *request)
+request_get_cookies(struct request &request)
 {
-    if (request->cookies != nullptr)
-        return request->cookies;
+    if (request.cookies != nullptr)
+        return request.cookies;
 
-    const char *cookie = request->request->headers->Get("cookie");
+    const char *cookie = request.request->headers->Get("cookie");
     if (cookie == nullptr)
         return nullptr;
 
-    request->cookies = strmap_new(request->request->pool);
-    cookie_map_parse(request->cookies, cookie, request->request->pool);
+    request.cookies = strmap_new(request.request->pool);
+    cookie_map_parse(request.cookies, cookie, request.request->pool);
 
-    return request->cookies;
+    return request.cookies;
 }
 
 static struct session *
-request_load_session(struct request *request, const char *session_id)
+request_load_session(struct request &request, const char *session_id)
 {
-    assert(request != nullptr);
-    assert(!request->stateless);
-    assert(!session_id_is_defined(request->session_id));
+    assert(!request.stateless);
+    assert(!session_id_is_defined(request.session_id));
     assert(session_id != nullptr);
 
-    if (!session_id_parse(session_id, &request->session_id))
+    if (!session_id_parse(session_id, &request.session_id))
         return nullptr;
 
     struct session *session = request_get_session(request);
@@ -55,11 +54,11 @@ request_load_session(struct request *request, const char *session_id)
         return nullptr;
 
     if (!session->translate.IsNull())
-        request->translate.request.session = DupBuffer(request->request->pool,
-                                                       session->translate);
+        request.translate.request.session = DupBuffer(request.request->pool,
+                                                      session->translate);
 
     if (!session->cookie_sent)
-        request->send_session_cookie = true;
+        request.send_session_cookie = true;
 
     session->is_new = false;
 
@@ -86,43 +85,39 @@ build_session_cookie_name(struct pool *pool, const struct config *config,
 }
 
 static const char *
-request_get_uri_session_id(const struct request *request)
+request_get_uri_session_id(const struct request &request)
 {
-    assert(request != nullptr);
-    assert(!request->stateless);
+    assert(!request.stateless);
 
-    return strmap_get_checked(request->args, "session");
+    return strmap_get_checked(request.args, "session");
 }
 
 static const char *
-request_get_cookie_session_id(struct request *request)
+request_get_cookie_session_id(struct request &request)
 {
-    assert(request != nullptr);
-    assert(!request->stateless);
-    assert(request->session_cookie != nullptr);
+    assert(!request.stateless);
+    assert(request.session_cookie != nullptr);
 
     const struct strmap *cookies = request_get_cookies(request);
 
-    return strmap_get_checked(cookies, request->session_cookie);
+    return strmap_get_checked(cookies, request.session_cookie);
 }
 
 void
-request_determine_session(struct request *request)
+request_determine_session(struct request &request)
 {
-    assert(request != nullptr);
+    request.session_realm = nullptr;
 
-    request->session_realm = nullptr;
-
-    const char *user_agent = request->request->headers->Get("user-agent");
-    request->stateless = user_agent == nullptr ||
+    const char *user_agent = request.request->headers->Get("user-agent");
+    request.stateless = user_agent == nullptr ||
         user_agent_is_bot(user_agent);
-    if (request->stateless)
+    if (request.stateless)
         return;
 
-    request->session_cookie =
-        build_session_cookie_name(request->request->pool,
-                                  &request->connection->instance->config,
-                                  request->request->headers);
+    request.session_cookie =
+        build_session_cookie_name(request.request->pool,
+                                  &request.connection->instance->config,
+                                  request.request->headers);
 
     const char *session_id = request_get_uri_session_id(request);
     bool cookie_received = false;
@@ -136,9 +131,9 @@ request_determine_session(struct request *request)
 
     struct session *session = request_load_session(request, session_id);
     if (session == nullptr) {
-        if (!cookie_received && request->args != nullptr)
+        if (!cookie_received && request.args != nullptr)
             /* remove invalid session id from URI args */
-            request->args->Remove("session");
+            request.args->Remove("session");
 
         return;
     }
@@ -152,23 +147,21 @@ request_determine_session(struct request *request)
     if (cookie_received) {
         session->cookie_received = true;
 
-        if (request->args != nullptr)
+        if (request.args != nullptr)
             /* we're using cookies, and we can safely remove the
                session id from the args */
-            request->args->Remove("session");
+            request.args->Remove("session");
     }
 
-    request->session_realm = p_strdup(request->request->pool, session->realm);
+    request.session_realm = p_strdup(request.request->pool, session->realm);
 
     session_put(session);
 }
 
 struct session *
-request_make_session(struct request *request)
+request_make_session(struct request &request)
 {
-    assert(request != nullptr);
-
-    if (request->stateless)
+    if (request.stateless)
         return nullptr;
 
     struct session *session = request_get_session(request);
@@ -181,51 +174,47 @@ request_make_session(struct request *request)
         return nullptr;
     }
 
-    session->realm = d_strdup(session->pool, request->realm);
+    session->realm = d_strdup(session->pool, request.realm);
 
-    request->session_id = session->id;
-    request->send_session_cookie = true;
+    request.session_id = session->id;
+    request.send_session_cookie = true;
 
-    if (request->args == nullptr)
-        request->args = strmap_new(request->request->pool);
-    request->args->Set("session",
-                       session_id_format(request->session_id,
-                                         &request->session_id_string));
+    if (request.args == nullptr)
+        request.args = strmap_new(request.request->pool);
+    request.args->Set("session",
+                      session_id_format(request.session_id,
+                                        &request.session_id_string));
 
     return session;
 }
 
 void
-request_ignore_session(struct request *request)
+request_ignore_session(struct request &request)
 {
-    assert(request != nullptr);
-
-    if (!session_id_is_defined(request->session_id))
+    if (!session_id_is_defined(request.session_id))
         return;
 
-    assert(!request->stateless);
+    assert(!request.stateless);
 
-    if (request->args != nullptr)
-        request->args->Remove("session");
+    if (request.args != nullptr)
+        request.args->Remove("session");
 
-    session_id_clear(&request->session_id);
+    session_id_clear(&request.session_id);
 }
 
 void
-request_discard_session(struct request *request)
+request_discard_session(struct request &request)
 {
-    assert(request != nullptr);
-
-    if (!session_id_is_defined(request->session_id))
+    if (!session_id_is_defined(request.session_id))
         return;
 
-    assert(!request->stateless);
+    assert(!request.stateless);
 
-    if (request->args != nullptr)
-        request->args->Remove("session");
+    if (request.args != nullptr)
+        request.args->Remove("session");
 
-    session_delete(request->session_id);
-    session_id_clear(&request->session_id);
+    session_delete(request.session_id);
+    session_id_clear(&request.session_id);
 }
 
 /**
@@ -259,7 +248,7 @@ request::ApplyTranslateRealm(const TranslateResponse &response)
     if (session_realm != nullptr && strcmp(realm, session_realm) != 0) {
         daemon_log(2, "ignoring spoofed session id from another realm (request='%s', session='%s')\n",
                    realm, session_realm);
-        request_ignore_session(this);
+        request_ignore_session(*this);
     }
 }
 
@@ -270,7 +259,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
         response.language == nullptr)
         return nullptr;
 
-    struct session *session = request_get_session(this);
+    struct session *session = request_get_session(*this);
 
     if (!response.session.IsNull()) {
         if (response.session.IsEmpty()) {
@@ -282,7 +271,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
             /* set new translate session */
 
             if (session == nullptr)
-                session = request_make_session(this);
+                session = request_make_session(*this);
 
             if (session != nullptr)
                 session_set_translate(session, response.session);
@@ -299,7 +288,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
             /* log in */
 
             if (session == nullptr)
-                session = request_make_session(this);
+                session = request_make_session(*this);
 
             if (session != nullptr)
                 session_set_user(session, response.user,
@@ -323,7 +312,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
             /* override language */
 
             if (session == nullptr)
-                session = request_make_session(this);
+                session = request_make_session(*this);
 
             if (session != nullptr)
                 session_set_language(session, response.language);

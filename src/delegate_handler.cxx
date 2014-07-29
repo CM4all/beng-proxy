@@ -45,7 +45,7 @@ delegate_handler_callback(int fd, void *ctx)
     if (ret < 0) {
         close(fd);
 
-        response_dispatch_message(&request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
     }
@@ -53,7 +53,7 @@ delegate_handler_callback(int fd, void *ctx)
     if (!S_ISREG(st.st_mode)) {
         close(fd);
 
-        response_dispatch_message(&request2, HTTP_STATUS_NOT_FOUND,
+        response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                   "Not a regular file");
         return;
     }
@@ -62,7 +62,7 @@ delegate_handler_callback(int fd, void *ctx)
 
     /* request options */
 
-    if (!file_evaluate_request(&request2, fd, &st, &file_request)) {
+    if (!file_evaluate_request(request2, fd, &st, &file_request)) {
         close(fd);
         return;
     }
@@ -82,7 +82,7 @@ delegate_handler_error(GError *error, void *ctx)
 {
     request &request2 = *(request *)ctx;
 
-    response_dispatch_error(&request2, error);
+    response_dispatch_error(request2, error);
     g_error_free(error);
 }
 
@@ -110,7 +110,7 @@ delegate_handler(request &request2)
     if (request.method != HTTP_METHOD_HEAD &&
         request.method != HTTP_METHOD_GET &&
         !request2.processor_focus) {
-        method_not_allowed(&request2, "GET, HEAD");
+        method_not_allowed(request2, "GET, HEAD");
         return;
     }
 

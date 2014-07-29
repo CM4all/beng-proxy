@@ -93,7 +93,7 @@ file_dispatch(struct request &request2, const struct stat &st,
 
     /* finished, dispatch this response */
 
-    response_dispatch(&request2, status, headers, body);
+    response_dispatch(request2, status, headers, body);
 }
 
 static bool
@@ -142,7 +142,7 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
     /* finished, dispatch this response */
 
     http_status_t status = tr.status == 0 ? HTTP_STATUS_OK : tr.status;
-    response_dispatch(&request2, status, headers, compressed_body);
+    response_dispatch(request2, status, headers, compressed_body);
     return true;
 }
 
@@ -201,7 +201,7 @@ file_callback(struct request &request2)
     if (request.method != HTTP_METHOD_HEAD &&
         request.method != HTTP_METHOD_GET &&
         !request2.processor_focus) {
-        method_not_allowed(&request2, "GET, HEAD");
+        method_not_allowed(request2, "GET, HEAD");
         return;
     }
 
@@ -212,7 +212,7 @@ file_callback(struct request &request2)
     struct istream *body = istream_file_stat_new(request.pool, path, &st,
                                                  &error);
     if (body == nullptr) {
-        response_dispatch_error(&request2, error);
+        response_dispatch_error(request2, error);
         g_error_free(error);
         return;
     }
@@ -221,13 +221,13 @@ file_callback(struct request &request2)
 
     if (S_ISCHR(st.st_mode)) {
         /* allow character devices, but skip range etc. */
-        response_dispatch(&request2, HTTP_STATUS_OK, nullptr, body);
+        response_dispatch(request2, HTTP_STATUS_OK, nullptr, body);
         return;
     }
 
     if (!S_ISREG(st.st_mode)) {
         istream_close_unused(body);
-        response_dispatch_message(&request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_message(request2, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Not a regular file");
         return;
     }
@@ -236,7 +236,7 @@ file_callback(struct request &request2)
 
     /* request options */
 
-    if (!file_evaluate_request(&request2, istream_file_fd(body), &st,
+    if (!file_evaluate_request(request2, istream_file_fd(body), &st,
                                &file_request)) {
         istream_close_unused(body);
         return;

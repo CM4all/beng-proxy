@@ -46,7 +46,7 @@ proxy_collect_cookies(request &request2, const struct strmap *headers)
     if (path == nullptr)
         return;
 
-    struct session *session = request_make_session(&request2);
+    struct session *session = request_make_session(request2);
     if (session == nullptr)
         return;
 
@@ -114,8 +114,8 @@ proxy_handler(request &request2)
     }
 
     struct forward_request forward;
-    request_forward(&forward, &request2,
-                    &tr.request_header_forward,
+    request_forward(forward, request2,
+                    tr.request_header_forward,
                     host_and_port, uri_p,
                     address->type == RESOURCE_ADDRESS_HTTP ||
                     address->type == RESOURCE_ADDRESS_LHTTP);

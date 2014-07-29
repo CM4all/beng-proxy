@@ -10,6 +10,6 @@
 struct request;
 
 void
-method_not_allowed(struct request *request2, const char *allow);
+method_not_allowed(struct request &request, const char *allow);
 
 #endif

@@ -45,7 +45,7 @@ check_directory_index(struct request &request,
         case RESOURCE_ADDRESS_WAS:
         case RESOURCE_ADDRESS_NFS:
             daemon_log(2, "resource address not compatible with TRANSLATE_DIRECTORY_INDEX\n");
-            response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                       "Internal Server Error");
             return false;
 
@@ -61,7 +61,7 @@ check_directory_index(struct request &request,
 
     if (++request.translate.n_directory_index > 4) {
         daemon_log(2, "got too many consecutive DIRECTORY_INDEX packets\n");
-        response_dispatch_message(&request,
+        response_dispatch_message(request,
                                   HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return false;

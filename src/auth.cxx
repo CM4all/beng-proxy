@@ -36,7 +36,7 @@ auth_translate_response(TranslateResponse *response, void *ctx)
            REDIRECT/BOUNCE/STATUS, but we still don't have a user -
            this should not happen; bail out, don't dare to accept the
            client */
-        response_dispatch_message(&request, HTTP_STATUS_FORBIDDEN,
+        response_dispatch_message(request, HTTP_STATUS_FORBIDDEN,
                                   "Forbidden");
         return;
     }
@@ -61,7 +61,7 @@ auth_translate_error(GError *error, void *ctx)
         error->code = 0;
     }
 
-    response_dispatch_error(&request, error);
+    response_dispatch_error(request, error);
     g_error_free(error);
 }
 
@@ -80,7 +80,7 @@ request::HandleAuth(const TranslateResponse &response)
     /* we need to validate the session realm early */
     ApplyTranslateRealm(response);
 
-    struct session *session = request_get_session(this);
+    struct session *session = request_get_session(*this);
     if (session != nullptr) {
         bool is_authenticated = session->user != nullptr &&
             (session->user_expires == 0 ||

@@ -93,9 +93,9 @@ apply_translate_response_session(request &request,
     }
 
     if (response.discard_session)
-        request_discard_session(&request);
+        request_discard_session(request);
     else if (response.transparent)
-        request_ignore_session(&request);
+        request_ignore_session(request);
 
     return request.ApplyTranslateSession(response);
 }
@@ -130,7 +130,7 @@ handle_translated_request2(request &request,
          response.www_authenticate == nullptr &&
          response.bounce == nullptr &&
          response.redirect == nullptr)) {
-        response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
         return;
     }
@@ -142,7 +142,7 @@ handle_translated_request2(request &request,
 
     /* always enforce sessions when the processor is enabled */
     if (request.IsProcessorEnabled() && session == nullptr)
-        session = request_make_session(&request);
+        session = request_make_session(request);
 
     if (session != nullptr)
         session_put(session);
@@ -161,7 +161,7 @@ handle_translated_request2(request &request,
             file_callback(request);
 #ifdef HAVE_LIBNFS
     } else if (address.type == RESOURCE_ADDRESS_NFS) {
-        nfs_handler(&request);
+        nfs_handler(request);
 #endif
     } else if (address.type == RESOURCE_ADDRESS_HTTP ||
                address.type == RESOURCE_ADDRESS_LHTTP ||
@@ -172,12 +172,12 @@ handle_translated_request2(request &request,
     } else if (request.CheckHandleRedirectBounceStatus(response)) {
         /* done */
     } else if (response.www_authenticate != nullptr) {
-        response_dispatch_message(&request, HTTP_STATUS_UNAUTHORIZED,
+        response_dispatch_message(request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
     } else {
         daemon_log(2, "empty response from translation server\n");
 
-        response_dispatch_message(&request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                   "Internal server error");
     }
 }
@@ -198,7 +198,7 @@ request::CheckHandleRedirect(const TranslateResponse &response)
                                                  uri.query.data,
                                                  uri.query.length);
 
-    response_dispatch_redirect(this, status, redirect_uri, nullptr);
+    response_dispatch_redirect(*this, status, redirect_uri, nullptr);
     return true;
 }
 
@@ -208,7 +208,7 @@ request::CheckHandleBounce(const TranslateResponse &response)
     if (response.bounce == nullptr)
         return false;
 
-    response_dispatch_redirect(this, HTTP_STATUS_SEE_OTHER,
+    response_dispatch_redirect(*this, HTTP_STATUS_SEE_OTHER,
                                bounce_uri(*request->pool, *this,
                                           response),
                                nullptr);
@@ -221,7 +221,7 @@ request::CheckHandleStatus(const TranslateResponse &response)
     if (response.status == (http_status_t)0)
         return false;
 
-    response_dispatch(this, response.status, nullptr, nullptr);
+    response_dispatch(*this, response.status, nullptr, nullptr);
     return true;
 }
 
@@ -298,7 +298,7 @@ handler_suffix_registry_error(GError *error, void *ctx)
     daemon_log(1, "translation error on '%s': %s\n",
                request.request->uri, error->message);
 
-    response_dispatch_error(&request, error);
+    response_dispatch_error(request, error);
     g_error_free(error);
 }
 
@@ -458,7 +458,7 @@ repeat_translation(struct request &request, const TranslateResponse &response)
 
         if (++request.translate.n_checks > 4) {
             daemon_log(2, "got too many consecutive CHECK packets\n");
-            response_dispatch_message(&request,
+            response_dispatch_message(request,
                                       HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                       "Internal server error");
             return;
@@ -568,7 +568,7 @@ request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
     if (response.previous) {
         if (translate.previous == nullptr) {
             daemon_log(2, "no previous translation response\n");
-            response_dispatch_message(this,
+            response_dispatch_message(*this,
                                       HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                       "Internal server error");
             return;
@@ -633,7 +633,7 @@ handler_translate_error(GError *error, void *ctx)
         error->code = 0;
     }
 
-    response_dispatch_error(&request, error);
+    response_dispatch_error(request, error);
     g_error_free(error);
 }
 
@@ -670,7 +670,7 @@ request_uri_parse(request &request2, parsed_uri &dest)
            session-related attributes have not been initialized yet */
         request2.stateless = true;
 
-        response_dispatch_message(&request2, HTTP_STATUS_BAD_REQUEST,
+        response_dispatch_message(request2, HTTP_STATUS_BAD_REQUEST,
                                   "Malformed URI");
         return false;
     }
@@ -800,7 +800,7 @@ handler_abort(struct async_operation *ao)
 {
     request &request2 = ContainerCast2(*ao, &request::operation);
 
-    request_discard_body(&request2);
+    request_discard_body(request2);
 
     /* forward the abort to the http_server library */
     request2.async_ref.Abort();
@@ -818,7 +818,7 @@ static const struct async_operation_class handler_operation = {
 void
 handle_http_request(client_connection &connection,
                     http_server_request &request,
-                    struct async_operation_ref *async_ref)
+                    struct async_operation_ref &async_ref)
 {
     struct request *request2 = NewFromPool<struct request>(*request.pool);
     request2->connection = &connection;
@@ -842,7 +842,7 @@ handle_http_request(client_connection &connection,
     request2->transformed = false;
 
     request2->operation.Init(handler_operation);
-    async_ref->Set(request2->operation);
+    async_ref.Set(request2->operation);
 
 #ifndef NDEBUG
     request2->response_sent = false;
@@ -854,8 +854,8 @@ handle_http_request(client_connection &connection,
     assert(!strref_is_empty(&request2->uri.base));
     assert(request2->uri.base.data[0] == '/');
 
-    request_args_parse(request2);
-    request_determine_session(request2);
+    request_args_parse(*request2);
+    request_determine_session(*request2);
 
     if (connection.instance->translate_cache == nullptr)
         serve_document_root_file(*request2, connection.config);

@@ -21,8 +21,8 @@ struct forward_request {
 };
 
 void
-request_forward(struct forward_request *dest, struct request *src,
-                const struct header_forward_settings *header_forward,
+request_forward(struct forward_request &dest, struct request &src,
+                const struct header_forward_settings &header_forward,
                 const char *host_and_port, const char *uri,
                 bool exclude_host);
 

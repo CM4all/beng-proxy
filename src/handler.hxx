@@ -27,6 +27,6 @@ proxy_handler(request &request);
 void
 handle_http_request(client_connection &connection,
                     http_server_request &request,
-                    struct async_operation_ref *async_ref);
+                    struct async_operation_ref &async_ref);
 
 #endif

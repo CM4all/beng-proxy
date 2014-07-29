@@ -24,7 +24,7 @@
 static void
 nfs_handler_error(GError *error, void *ctx)
 {
-    request *request2 = (request *)ctx;
+    request &request2 = *(request *)ctx;
 
     response_dispatch_error(request2, error);
     g_error_free(error);
@@ -39,10 +39,10 @@ static void
 nfs_handler_cache_response(struct nfs_cache_handle *handle,
                            const struct stat *st, void *ctx)
 {
-    request *request2 = (request *)ctx;
-    struct http_server_request *const request = request2->request;
+    request &request2 = *(request *)ctx;
+    struct http_server_request *const request = request2.request;
     struct pool *const pool = request->pool;
-    const TranslateResponse *const tr = request2->translate.response;
+    const TranslateResponse *const tr = request2.translate.response;
 
     struct file_request file_request = {
         .range = RANGE_NONE,
@@ -53,9 +53,9 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
     if (!file_evaluate_request(request2, -1, st, &file_request))
         return;
 
-    const char *override_content_type = request2->translate.content_type;
+    const char *override_content_type = request2.translate.content_type;
     if (override_content_type == nullptr)
-        override_content_type = request2->translate.address->u.nfs->content_type;
+        override_content_type = request2.translate.address->u.nfs->content_type;
 
     struct growing_buffer *headers = growing_buffer_new(pool, 2048);
     header_write(headers, "cache-control", "max-age=60");
@@ -64,9 +64,9 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
                           override_content_type,
                           -1, st,
                           tr->expires_relative,
-                          request2->IsProcessorEnabled(),
-                          request2->IsProcessorFirst());
-    write_translation_vary_header(headers, request2->translate.response);
+                          request2.IsProcessorEnabled(),
+                          request2.IsProcessorFirst());
+    write_translation_vary_header(headers, request2.translate.response);
 
     http_status_t status = tr->status == 0 ? HTTP_STATUS_OK : tr->status;
 
@@ -122,13 +122,13 @@ static const struct nfs_cache_handler nfs_handler_cache_handler = {
  */
 
 void
-nfs_handler(struct request *request2)
+nfs_handler(struct request &request2)
 {
-    struct http_server_request *const request = request2->request;
+    struct http_server_request *const request = request2.request;
     struct pool *const pool = request->pool;
 
     const struct nfs_address *const address =
-        request2->translate.address->u.nfs;
+        request2.translate.address->u.nfs;
     assert(address->server != NULL);
     assert(address->export_name != NULL);
     assert(address->path != NULL);
@@ -137,15 +137,15 @@ nfs_handler(struct request *request2)
 
     if (request->method != HTTP_METHOD_HEAD &&
         request->method != HTTP_METHOD_GET &&
-        !request2->processor_focus) {
+        !request2.processor_focus) {
         method_not_allowed(request2, "GET, HEAD");
         return;
     }
 
     /* run the delegate helper */
 
-    nfs_cache_request(pool, request2->connection->instance->nfs_cache,
+    nfs_cache_request(pool, request2.connection->instance->nfs_cache,
                       address->server, address->export_name, address->path,
-                      &nfs_handler_cache_handler, request2,
-                      &request2->async_ref);
+                      &nfs_handler_cache_handler, &request2,
+                      &request2.async_ref);
 }

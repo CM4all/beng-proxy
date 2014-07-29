@@ -97,12 +97,12 @@ widget_request_headers(struct embed *embed, const WidgetView *view,
 
     session = session_get(embed->env->session_id);
 
-    headers = forward_request_headers(embed->pool, embed->env->request_headers,
+    headers = forward_request_headers(*embed->pool, embed->env->request_headers,
                                       embed->env->local_host,
                                       embed->env->remote_host,
                                       exclude_host, with_body,
                                       false, false,
-                                      &view->request_header_forward,
+                                      view->request_header_forward,
                                       embed->env->session_cookie,
                                       session,
                                       embed->host_and_port,

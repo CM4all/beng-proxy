@@ -93,17 +93,17 @@ check_if_range(const char *if_range, const struct stat *st)
 }
 
 bool
-file_evaluate_request(struct request *request2,
+file_evaluate_request(struct request &request2,
                       int fd, const struct stat *st,
                       struct file_request *file_request)
 {
-    struct http_server_request *request = request2->request;
-    const TranslateResponse *tr = request2->translate.response;
+    struct http_server_request *request = request2.request;
+    const TranslateResponse *tr = request2.translate.response;
     const char *p;
     char buffer[64];
 
     if (tr->status == 0 && request->method == HTTP_METHOD_GET &&
-        !request2->IsTransformationEnabled()) {
+        !request2.IsTransformationEnabled()) {
         p = request->headers->Get("range");
 
         if (p != nullptr &&
@@ -113,7 +113,7 @@ file_evaluate_request(struct request *request2,
                                    &file_request->size);
     }
 
-    if (!request2->IsProcessorEnabled()) {
+    if (!request2.IsProcessorEnabled()) {
         p = request->headers->Get("if-modified-since");
         if (p != nullptr) {
             time_t t = http_date_parse(p);
@@ -125,7 +125,7 @@ file_evaluate_request(struct request *request2,
                     file_cache_headers(headers, fd, st, tr->expires_relative);
 
                 write_translation_vary_header(headers,
-                                              request2->translate.response);
+                                              request2.translate.response);
 
                 response_dispatch(request2, HTTP_STATUS_NOT_MODIFIED,
                                   headers, nullptr);
@@ -144,8 +144,7 @@ file_evaluate_request(struct request *request2,
         }
     }
 
-    if (!request2->
-IsTransformationEnabled()) {
+    if (!request2.IsTransformationEnabled()) {
         p = request->headers->Get("if-match");
         if (p != nullptr && strcmp(p, "*") != 0) {
             static_etag(buffer, st);

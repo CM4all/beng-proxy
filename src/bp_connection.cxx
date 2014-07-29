@@ -67,7 +67,7 @@ my_http_server_connection_request(struct http_server_request *request,
     connection.site_name = nullptr;
     connection.request_start_time = now_us();
 
-    handle_http_request(connection, *request, async_ref);
+    handle_http_request(connection, *request, *async_ref);
 }
 
 static void
