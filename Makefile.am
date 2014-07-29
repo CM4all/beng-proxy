@@ -180,6 +180,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/http_server_response.cxx \
 	src/http_string.cxx src/http_string.hxx \
 	src/http_util.cxx src/http_util.hxx \
+	src/http_headers.hxx \
 	src/http_quark.h \
 	src/http_response.cxx src/http_response.hxx \
 	src/control_server.cxx src/control_server.hxx \

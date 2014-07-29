@@ -40,6 +40,12 @@ headers_copy(const struct strmap *in, struct growing_buffer *out,
 void
 headers_copy_all(const struct strmap *in, struct growing_buffer *out);
 
+/**
+ * Like headers_copy_all(), but doesn't copy hop-by-hop headers.
+ */
+void
+headers_copy_most(const struct strmap *in, struct growing_buffer *out);
+
 struct growing_buffer *
 headers_dup(struct pool *pool, const struct strmap *in);
 

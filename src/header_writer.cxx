@@ -97,10 +97,7 @@ headers_copy_all(const struct strmap *in, struct growing_buffer *out)
         header_write(out, i.key, i.value);
 }
 
-/**
- * Like headers_copy_all(), but doesn't copy hop-by-hop headers.
- */
-static void
+void
 headers_copy_most(const struct strmap *in, struct growing_buffer *out)
 {
     assert(in != nullptr);
