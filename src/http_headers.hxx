@@ -8,6 +8,7 @@
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "header_writer.hxx"
+#include "header_parser.hxx"
 
 #include <inline/compiler.h>
 
@@ -41,6 +42,13 @@ public:
         if (map == nullptr)
             map = strmap_new(&pool);
         return *map;
+    }
+
+    struct strmap &ToMap(struct pool &pool) {
+        struct strmap &m = MakeMap(pool);
+        if (buffer != nullptr)
+            header_parse_buffer(&pool, &m, buffer);
+        return m;
     }
 
     gcc_pure
