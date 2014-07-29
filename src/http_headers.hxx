@@ -59,6 +59,17 @@ public:
         header_write(&MakeBuffer(pool), name, value);
     }
 
+    /**
+     * Move a (hop-by-hop) header from the map to the buffer.
+     */
+    void MoveToBuffer(struct pool &pool, const char *name) {
+        assert(buffer != nullptr);
+
+        const char *value = strmap_get_checked(map, name);
+        if (value != nullptr)
+            Write(pool, name, value);
+    }
+
     struct growing_buffer &ToBuffer(struct pool &pool,
                                     size_t initial_size=2048) {
         struct growing_buffer &gb = MakeBuffer(pool, initial_size);
