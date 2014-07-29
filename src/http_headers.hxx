@@ -37,10 +37,10 @@ public:
     HttpHeaders(HttpHeaders &&) = default;
     HttpHeaders &operator=(HttpHeaders &&) = default;
 
-    struct strmap *MakeMap(struct pool &pool) {
+    struct strmap &MakeMap(struct pool &pool) {
         if (map == nullptr)
             map = strmap_new(&pool);
-        return map;
+        return *map;
     }
 
     gcc_pure
