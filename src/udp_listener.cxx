@@ -181,6 +181,7 @@ udp_listener_free(struct udp_listener *udp)
 
     event_del(&udp->event);
     close(udp->fd);
+    delete udp;
 }
 
 void
