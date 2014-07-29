@@ -76,6 +76,12 @@ public:
             Write(pool, name, value);
     }
 
+    void MoveToBuffer(struct pool &pool, const char *const*names) {
+        if (map != nullptr)
+            for (; *names != nullptr; ++names)
+                MoveToBuffer(pool, *names);
+    }
+
     struct growing_buffer &ToBuffer(struct pool &pool,
                                     size_t initial_size=2048) {
         struct growing_buffer &gb = MakeBuffer(pool, initial_size);
