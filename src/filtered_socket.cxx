@@ -74,12 +74,14 @@ filtered_socket_bs_timeout(void *ctx)
     }
 }
 
-static bool
+static enum write_result
 filtered_socket_bs_broken(void *ctx)
 {
     FilteredSocket *s = (FilteredSocket *)ctx;
 
-    return s->handler->broken != nullptr && s->handler->broken(s->handler_ctx);
+    return s->handler->broken != nullptr
+        ? s->handler->broken(s->handler_ctx)
+        : WRITE_ERRNO;
 }
 
 static void

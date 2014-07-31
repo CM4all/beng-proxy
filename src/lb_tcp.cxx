@@ -153,14 +153,14 @@ inbound_buffered_socket_drained(void *ctx)
     return true;
 }
 
-static bool
+static enum write_result
 inbound_buffered_socket_broken(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
     lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
-    return false;
+    return WRITE_DESTROYED;
 }
 
 static void
@@ -206,13 +206,16 @@ outbound_buffered_socket_data(const void *buffer, size_t size, void *ctx)
     }
 
     switch ((enum write_result)nbytes) {
+        int save_errno;
+
     case WRITE_SOURCE_EOF:
         assert(false);
         gcc_unreachable();
 
     case WRITE_ERRNO:
+        save_errno = errno;
         lb_tcp_close(tcp);
-        tcp->handler->_errno("Send failed", errno, tcp->handler_ctx);
+        tcp->handler->_errno("Send failed", save_errno, tcp->handler_ctx);
         return BufferedResult::CLOSED;
 
     case WRITE_BLOCKING:
@@ -274,14 +277,14 @@ outbound_buffered_socket_write(void *ctx)
     return true;
 }
 
-static bool
+static enum write_result
 outbound_buffered_socket_broken(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
     lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
-    return false;
+    return WRITE_DESTROYED;
 }
 
 static void

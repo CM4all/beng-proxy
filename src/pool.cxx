@@ -514,8 +514,6 @@ void
 pool_set_persistent(struct pool *pool)
 {
     assert(!pool->trashed);
-    assert(list_empty(&pool->children));
-    assert(!pool->persistent);
 
     pool->major = true;
     pool->persistent = true;
