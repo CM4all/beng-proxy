@@ -428,10 +428,10 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
 
     pthread_mutex_unlock(&f->mutex);
 
-    if (nbytes > 0)
+    if (nbytes > 0) {
         filtered_socket_internal_undrained(f->socket);
-
-    thread_socket_filter_schedule(f);
+        thread_socket_filter_schedule(f);
+    }
 
     return nbytes;
 }
