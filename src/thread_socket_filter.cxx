@@ -417,7 +417,7 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
 
     pthread_mutex_lock(&f->mutex);
 
-    ssize_t nbytes = 0;
+    ssize_t nbytes = WRITE_BLOCKING;
     size_t max_length;
     void *p = fifo_buffer_write(f->plain_output, &max_length);
     if (p != nullptr) {
