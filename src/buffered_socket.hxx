@@ -219,11 +219,12 @@ struct BufferedSocketHandler {
      * of) the socket.  It may be possible for us to continue reading
      * from the socket.
      *
-     * @return true to continue reading from the socket (by returning
-     * #WRITE_BROKEN), false if the caller shall close the socket with
-     * the error
+     * @return #WRITE_BROKEN to continue reading from the socket (by
+     * returning #WRITE_BROKEN), #WRITE_ERRNO if the caller shall
+     * close the socket with the error, #WRITE_DESTROYED if the
+     * function has destroyed the #BufferedSocket
      */
-    bool (*broken)(void *ctx);
+    enum write_result (*broken)(void *ctx);
 
     /**
      * An I/O error on the socket has occurred.  After returning, it

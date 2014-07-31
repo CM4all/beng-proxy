@@ -958,7 +958,7 @@ http_client_socket_write(void *ctx)
     return result;
 }
 
-static bool
+static enum write_result
 http_client_socket_broken(void *ctx)
 {
     struct http_client *client = (struct http_client *)ctx;
@@ -975,7 +975,7 @@ http_client_socket_broken(void *ctx)
     filtered_socket_schedule_read_timeout(&client->socket, true,
                                           &http_client_timeout);
 
-    return true;
+    return WRITE_BROKEN;
 }
 
 static void

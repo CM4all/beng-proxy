@@ -557,11 +557,15 @@ BufferedSocket::Write(const void *data, size_t length)
         if (gcc_likely(errno == EAGAIN)) {
             ScheduleWrite();
             return WRITE_BLOCKING;
-        } else if ((errno == EPIPE || errno == ECONNRESET) &&
-                   handler->broken != nullptr &&
-                   handler->broken(handler_ctx)) {
-            UnscheduleWrite();
-            return WRITE_BROKEN;
+        } else if ((errno == EPIPE || errno == ECONNRESET)) {
+            enum write_result r = handler->broken != nullptr
+                ? handler->broken(handler_ctx)
+                : WRITE_ERRNO;
+
+            if (r == WRITE_BROKEN)
+                UnscheduleWrite();
+
+            nbytes = ssize_t(r);
         }
     }
 

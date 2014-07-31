@@ -150,14 +150,14 @@ inbound_buffered_socket_drained(void *ctx)
     return true;
 }
 
-static bool
+static enum write_result
 inbound_buffered_socket_broken(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
     lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
-    return false;
+    return WRITE_DESTROYED;
 }
 
 static void
@@ -274,14 +274,14 @@ outbound_buffered_socket_write(void *ctx)
     return true;
 }
 
-static bool
+static enum write_result
 outbound_buffered_socket_broken(void *ctx)
 {
     struct lb_tcp *tcp = (struct lb_tcp *)ctx;
 
     lb_tcp_close(tcp);
     tcp->handler->eof(tcp->handler_ctx);
-    return false;
+    return WRITE_DESTROYED;
 }
 
 static void
