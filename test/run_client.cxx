@@ -9,7 +9,7 @@
 #include "direct.h"
 #include "istream_file.hxx"
 #include "istream.h"
-#include "sink_fd.h"
+#include "sink_fd.hxx"
 #include "direct.h"
 #include "shutdown_listener.h"
 #include "tpool.h"

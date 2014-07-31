@@ -4,13 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SINK_FD_H
-#define BENG_PROXY_SINK_FD_H
+#ifndef BENG_PROXY_SINK_FD_HXX
+#define BENG_PROXY_SINK_FD_HXX
 
 #include "istream-direct.h"
-
-#include <glib.h>
-#include <stdbool.h>
+#include "glibfwd.hxx"
 
 struct pool;
 struct istream;
@@ -37,10 +35,6 @@ struct sink_fd_handler {
     bool (*send_error)(int error, void *ctx);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct sink_fd *
 sink_fd_new(struct pool *pool, struct istream *istream,
             int fd, enum istream_direct fd_type,
@@ -51,9 +45,5 @@ sink_fd_read(struct sink_fd *ss);
 
 void
 sink_fd_close(struct sink_fd *ss);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

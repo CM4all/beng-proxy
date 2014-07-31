@@ -693,7 +693,7 @@ libistream_a_SOURCES = \
 	src/sink-null.c \
 	src/sink_buffer.cxx \
 	src/sink_header.cxx \
-	src/sink_fd.c src/sink_fd.h
+	src/sink_fd.cxx src/sink_fd.hxx
 
 pkginclude_HEADERS = \
 	include/beng-proxy/headers.h \
@@ -1565,7 +1565,7 @@ if HAVE_LIBNFS
 
 test_run_nfs_client_SOURCES = test/run_nfs_client.cxx \
 	src/nfs_client.cxx src/istream_nfs.cxx \
-	src/sink_fd.c \
+	src/sink_fd.cxx \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c \
 	src/stock.cxx src/pipe_stock.cxx \

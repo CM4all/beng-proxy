@@ -4,7 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "sink_fd.h"
+#include "sink_fd.hxx"
+#include "pool.hxx"
 #include "pevent.h"
 #include "direct.h"
 #include "fd-util.h"
@@ -49,13 +50,13 @@ struct sink_fd {
 static void
 sink_fd_schedule_write(struct sink_fd *ss)
 {
-    assert(ss != NULL);
+    assert(ss != nullptr);
     assert(ss->fd >= 0);
-    assert(ss->input != NULL);
+    assert(ss->input != nullptr);
 
     ss->got_event = false;
 
-    p_event_add(&ss->event, NULL, ss->pool, "sink_fd");
+    p_event_add(&ss->event, nullptr, ss->pool, "sink_fd");
 }
 
 /*
@@ -66,7 +67,7 @@ sink_fd_schedule_write(struct sink_fd *ss)
 static size_t
 sink_fd_data(const void *data, size_t length, void *ctx)
 {
-    struct sink_fd *ss = ctx;
+    struct sink_fd *ss = (struct sink_fd *)ctx;
 
     ss->got_data = true;
 
@@ -88,9 +89,9 @@ sink_fd_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-sink_fd_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+sink_fd_direct(enum istream_direct type, int fd, size_t max_length, void *ctx)
 {
-    struct sink_fd *ss = ctx;
+    struct sink_fd *ss = (struct sink_fd *)ctx;
 
     ss->got_data = true;
 
@@ -119,7 +120,7 @@ sink_fd_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 static void
 sink_fd_eof(void *ctx)
 {
-    struct sink_fd *ss = ctx;
+    struct sink_fd *ss = (struct sink_fd *)ctx;
 
     ss->got_data = true;
 
@@ -135,7 +136,7 @@ sink_fd_eof(void *ctx)
 static void
 sink_fd_abort(GError *error, void *ctx)
 {
-    struct sink_fd *ss = ctx;
+    struct sink_fd *ss = (struct sink_fd *)ctx;
 
     ss->got_data = true;
 
@@ -164,7 +165,7 @@ static void
 socket_event_callback(gcc_unused int fd, gcc_unused short event,
                       void *ctx)
 {
-    struct sink_fd *ss = ctx;
+    struct sink_fd *ss = (struct sink_fd *)ctx;
 
     assert(fd == ss->fd);
 
@@ -193,15 +194,15 @@ sink_fd_new(struct pool *pool, struct istream *istream,
                 int fd, enum istream_direct fd_type,
                 const struct sink_fd_handler *handler, void *ctx)
 {
-    assert(pool != NULL);
-    assert(istream != NULL);
+    assert(pool != nullptr);
+    assert(istream != nullptr);
     assert(fd >= 0);
-    assert(handler != NULL);
-    assert(handler->input_eof != NULL);
-    assert(handler->input_error != NULL);
-    assert(handler->send_error != NULL);
+    assert(handler != nullptr);
+    assert(handler->input_eof != nullptr);
+    assert(handler->input_error != nullptr);
+    assert(handler->send_error != nullptr);
 
-    struct sink_fd *ss = p_malloc(pool, sizeof(*ss));
+    auto ss = NewFromPool<struct sink_fd>(*pool);
     ss->pool = pool;
 
     istream_assign_handler(&ss->input, istream,
@@ -228,9 +229,9 @@ sink_fd_new(struct pool *pool, struct istream *istream,
 void
 sink_fd_read(struct sink_fd *ss)
 {
-    assert(ss != NULL);
+    assert(ss != nullptr);
     assert(ss->valid);
-    assert(ss->input != NULL);
+    assert(ss->input != nullptr);
 
     istream_read(ss->input);
 }
@@ -238,9 +239,9 @@ sink_fd_read(struct sink_fd *ss)
 void
 sink_fd_close(struct sink_fd *ss)
 {
-    assert(ss != NULL);
+    assert(ss != nullptr);
     assert(ss->valid);
-    assert(ss->input != NULL);
+    assert(ss->input != nullptr);
 
 #ifndef NDEBUG
     ss->valid = false;

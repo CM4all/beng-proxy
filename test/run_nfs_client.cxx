@@ -5,7 +5,7 @@
 #include "pool.hxx"
 #include "http_response.hxx"
 #include "istream.h"
-#include "sink_fd.h"
+#include "sink_fd.hxx"
 #include "direct.h"
 
 #include <stdio.h>

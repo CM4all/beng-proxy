@@ -3,7 +3,7 @@
 #include "async.hxx"
 #include "fd-util.h"
 #include "istream.h"
-#include "sink_fd.h"
+#include "sink_fd.hxx"
 #include "direct.h"
 #include "shutdown_listener.h"
 #include "fb_pool.hxx"
