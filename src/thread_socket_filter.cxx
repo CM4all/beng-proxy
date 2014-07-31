@@ -506,12 +506,6 @@ thread_socket_filter_internal_write(void *ctx)
     pthread_mutex_unlock(&f->mutex);
 
     ssize_t nbytes = filtered_socket_internal_write(f->socket, copy, length);
-    if (nbytes < 0 && errno != EAGAIN) {
-        GError *error = new_error_errno_msg("write error");
-        filtered_socket_invoke_error(f->socket, error);
-        return false;
-    }
-
     if (nbytes > 0) {
         pthread_mutex_lock(&f->mutex);
         const bool add = fifo_buffer_full(f->encrypted_output);
@@ -531,9 +525,32 @@ thread_socket_filter_internal_write(void *ctx)
 
         if (drained && !filtered_socket_internal_drained(f->socket))
             return false;
-    }
 
-    return true;
+        return true;
+    } else {
+        switch ((enum write_result)nbytes) {
+        case WRITE_SOURCE_EOF:
+            assert(false);
+            gcc_unreachable();
+
+        case WRITE_ERRNO:
+            if (errno == EAGAIN)
+                return true;
+
+            filtered_socket_invoke_error(f->socket,
+                                         new_error_errno_msg("write error"));
+            return false;
+
+        case WRITE_BLOCKING:
+            return true;
+
+        case WRITE_DESTROYED:
+            return false;
+
+        case WRITE_BROKEN:
+            return true;
+        }
+    }
 }
 
 static bool

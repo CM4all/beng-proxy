@@ -3,6 +3,7 @@ cm4all-beng-proxy (4.12) unstable; urgency=low
   * pool: fix bogus assertion failure after SSL disconnect
   * lb/tcp: fix send error message
   * thread_socket_filter: fix assertion failure with full output buffer
+  * thread_socket_filter: fix crash after write error
 
  --   
 
