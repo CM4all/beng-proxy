@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "cleanup_timer.h"
+#include "cleanup_timer.hxx"
 
 #include <inline/compiler.h>
 
@@ -15,7 +15,7 @@ static void
 cleanup_timer_event_callback(gcc_unused int fd, gcc_unused short event,
                              void *ctx)
 {
-    struct cleanup_timer *t = ctx;
+    struct cleanup_timer *t = (struct cleanup_timer *)ctx;
 
     if (t->callback(t->callback_ctx))
         cleanup_timer_enable(t);

@@ -238,7 +238,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget.hxx \
 	$(STOPWATCH_SRC) \
 	src/clock.c src/clock.h \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx src/cleanup_timer.hxx \
 	src/bp_cmdline.cxx \
 	src/completion.h \
 	src/crash.h \
@@ -356,7 +356,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/abort_close.cxx src/abort_close.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/clock.c src/clock.h \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx src/cleanup_timer.hxx \
 	src/tpool.c \
 	src/stock.cxx src/stock.hxx \
 	src/hstock.cxx \
@@ -832,7 +832,7 @@ test_run_was_SOURCES = test/run_was.cxx \
 	src/was_control.cxx src/was_input.cxx src/was_output.cxx \
 	src/exec.cxx \
 	src/buffered_io.c \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/direct.c \
 	src/fd_util.c src/fd-util.c
 test_run_was_LDADD = $(AM_LDADD) \
@@ -868,7 +868,7 @@ test_t_hashmap_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_cache_SOURCES = test/t_cache.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/clock.c \
 	src/cache.cxx
 test_t_cache_LDADD = $(AM_LDADD) \
@@ -881,7 +881,7 @@ test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.cxx \
 	src/translate_response.cxx \
 	src/exec.cxx \
 	src/widget_view.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/clock.c \
 	src/tpool.c \
 	src/transformation.cxx
@@ -1082,7 +1082,7 @@ test_t_balancer_SOURCES = test/t_balancer.cxx \
 	src/bulldog.c \
 	src/balancer.cxx src/cache.cxx src/failure.cxx \
 	src/address_list.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/clock.c
 test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_balancer_LDADD = $(AM_LDADD) \
@@ -1100,7 +1100,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/cgi_client.cxx src/cgi_launch.cxx \
 	src/cgi_parser.cxx \
 	src/exec.cxx \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/regex.cxx \
 	src/tpool.c \
 	src/buffered_io.c \
@@ -1122,7 +1122,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/address.c \
 	src/buffered_io.c \
 	src/header_writer.cxx \
@@ -1156,7 +1156,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/direct.c \
 	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/shutdown_listener.c \
 	src/header_parser.cxx \
 	src/tpool.c src/event2.c
@@ -1174,7 +1174,7 @@ test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/http_client.cxx \
 	src/http_upgrade.cxx src/http_util.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	$(STOPWATCH_SRC) \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
@@ -1203,7 +1203,7 @@ test_t_http_cache_SOURCES = test/t_http_cache.cxx \
 	src/tpool.c \
 	src/sink_rubber.cxx \
 	src/exec.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/header_parser.cxx \
 	src/istream_rubber.cxx \
 	src/istream_gb.cxx \
@@ -1314,7 +1314,7 @@ test_t_rewrite_uri_LDADD = $(AM_LDADD) \
 
 test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/widget_registry.cxx src/stock.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/transformation.cxx \
 	src/tcache.cxx src/cache.cxx \
 	src/translate_response.cxx \
@@ -1397,7 +1397,7 @@ test_format_http_date_LDADD = $(AM_LDADD) libutil.a
 test_request_translation_SOURCES = test/request_translation.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	c src/buffered_io.c src/direct.c \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/translate_client.cxx src/tstock.cxx \
 	src/translate_response.cxx \
 	src/failure.cxx src/bulldog.c src/balancer.cxx src/cache.cxx \
@@ -1422,7 +1422,7 @@ test_request_translation_LDADD = $(AM_LDADD) \
 
 test_run_subst_SOURCES = test/run_subst.cxx \
 	c src/buffered_io.c \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/fd_util.c
 test_run_subst_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1496,7 +1496,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/transformation.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/http_address.cxx src/cache.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/exec.cxx \
 	src/clock.c \
@@ -1526,7 +1526,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/transformation.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/cache.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
 	src/clock.c \
 	$(STOPWATCH_SRC)
@@ -1546,7 +1546,7 @@ test_run_client_balancer_SOURCES = test/run_client_balancer.cxx \
 	src/failure.cxx \
 	src/bulldog.c \
 	src/cache.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/fd_util.c \
 	src/clock.c \
 	$(STOPWATCH_SRC)
@@ -1586,7 +1586,7 @@ test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/fcgi_client.cxx src/fcgi_serialize.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/buffered_io.c \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/header_parser.cxx \
 	src/istream_gb.cxx \
 	src/fd-util.c src/fd_util.c \
@@ -1606,7 +1606,7 @@ test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	src/ajp_client.cxx src/ajp_serialize.cxx \
 	src/ajp_headers.cxx src/ajp-protocol.c \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/serialize.cxx \
 	src/buffered_io.c \
 	src/fd-util.c src/fd_util.c \
@@ -1638,7 +1638,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/ajp_headers.cxx src/ajp-protocol.c \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/serialize.cxx \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/buffered_io.c \
 	src/fd-util.c src/fd_util.c \
 	src/istream_gb.cxx \
@@ -1672,7 +1672,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/exec.cxx \
 	src/istream_unlock.cxx \
 	src/cache.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/tpool.c \
 	src/clock.c \
 	src/istream_rubber.cxx
@@ -1691,7 +1691,7 @@ test_run_memcached_client_SOURCES = test/run_memcached_client.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/stock.cxx src/pipe_stock.cxx \
 	src/fd-util.c src/fd_util.c \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/shutdown_listener.c \
 	src/direct.c
 test_run_memcached_client_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
@@ -1705,7 +1705,7 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 	src/buffered_io.c \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/fd-util.c src/fd_util.c \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/direct.c \
 	src/serialize.cxx \
 	src/sink_buffer.cxx \
@@ -1724,7 +1724,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
 	src/direct.c \
 	src/cache.cxx \
-	src/cleanup_timer.c src/cleanup_timer.h \
+	src/cleanup_timer.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/exec.cxx \
 	src/stock.cxx src/hstock.cxx \
@@ -1752,7 +1752,7 @@ test_fake_memcached_server_SOURCES = test/fake-memcached-server.c
 test_t_memcached_client_SOURCES = test/t_memcached_client.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/direct.c \
 	src/buffered_io.c \
 	src/fd-util.c src/fd_util.c
@@ -1804,7 +1804,7 @@ test_run_ua_parser_LDADD = $(AM_LDADD) $(GLIB_LIBS)
 test_run_parser_cdata_SOURCES = test/run_parser_cdata.cxx \
 	src/xml_parser.cxx \
 	src/buffered_io.c \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/fd_util.c
 test_run_parser_cdata_LDADD = $(AM_LDADD) \
 	libputil.a \
@@ -1814,7 +1814,7 @@ test_run_parser_cdata_LDADD = $(AM_LDADD) \
 test_run_css_parser_SOURCES = test/run_css_parser.cxx \
 	src/css_parser.cxx \
 	src/buffered_io.c \
-	src/cleanup_timer.c \
+	src/cleanup_timer.cxx \
 	src/fd_util.c
 test_run_css_parser_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \

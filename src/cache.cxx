@@ -7,7 +7,7 @@
 #include "cache.hxx"
 #include "hashmap.hxx"
 #include "pool.hxx"
-#include "cleanup_timer.h"
+#include "cleanup_timer.hxx"
 #include "clock.h"
 
 #include <assert.h>
