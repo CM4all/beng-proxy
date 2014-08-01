@@ -176,6 +176,18 @@ class DumpPoolStats(gdb.Command):
             print "pool '%s' type=%d" % (pool['name'].string(), pool['type'])
             print "size", pool_sizes(pool)
             print "recursive_size", pool_recursive_sizes(pool)
+        elif pool.type == gdb.lookup_type('struct slice_pool').pointer():
+            print "slice_pool", pool.address
+            for x in ('slice_size', 'area_size', 'slices_per_area'):
+                print x, pool[x]
+            area_pointer = gdb.lookup_type('struct slice_area').pointer()
+            brutto_size = netto_size = 0
+            for area in for_each_list_head(pool['areas']):
+                area = area.cast(area_pointer)
+                print "area", area.address, "allocated=", area['allocated_count']
+                brutto_size += pool['area_size']
+                netto_size += area['allocated_count'] * pool['slice_size']
+            print "size", brutto_size, netto_size
         else:
             print "unrecognized pool:", arg
 
