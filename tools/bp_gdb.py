@@ -172,13 +172,12 @@ class DumpPoolStats(gdb.Command):
 
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
-        if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
-            print "%s is not a pool*" % arg
-            return
-
-        print "pool '%s' type=%d" % (pool['name'].string(), pool['type'])
-        print "size", pool_sizes(pool)
-        print "recursive_size", pool_recursive_sizes(pool)
+        if pool.type.code == gdb.lookup_type('struct pool').pointer().code:
+            print "pool '%s' type=%d" % (pool['name'].string(), pool['type'])
+            print "size", pool_sizes(pool)
+            print "recursive_size", pool_recursive_sizes(pool)
+        else:
+            print "unrecognized pool:", arg
 
 class DumpPoolRefs(gdb.Command):
     def __init__(self):
