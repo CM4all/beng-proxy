@@ -6,7 +6,7 @@
 
 #include "bp_instance.hxx"
 #include "http_cache.hxx"
-#include "fcache.h"
+#include "fcache.hxx"
 
 void
 instance_fork_cow(struct instance *instance, bool inherit)

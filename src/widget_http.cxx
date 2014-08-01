@@ -21,7 +21,7 @@
 #include "async.hxx"
 #include "dpool.h"
 #include "get.hxx"
-#include "fcache.h"
+#include "fcache.hxx"
 #include "header_writer.hxx"
 #include "header_forward.hxx"
 #include "transformation.hxx"

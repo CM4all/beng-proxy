@@ -14,7 +14,7 @@
 #include "text_processor.hxx"
 #include "penv.hxx"
 #include "async.hxx"
-#include "fcache.h"
+#include "fcache.hxx"
 #include "transformation.hxx"
 #include "crash.h"
 #include "istream.h"

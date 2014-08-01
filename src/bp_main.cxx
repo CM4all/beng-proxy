@@ -24,7 +24,7 @@
 #include "fcgi_stock.hxx"
 #include "was_stock.hxx"
 #include "delegate_stock.hxx"
-#include "fcache.h"
+#include "fcache.hxx"
 #include "child_manager.hxx"
 #include "thread_pool.hxx"
 #include "global.h"

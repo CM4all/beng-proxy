@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "fcache.h"
+#include "fcache.hxx"
 #include "cache.hxx"
 #include "http_request.hxx"
 #include "header_writer.hxx"

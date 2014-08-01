@@ -11,7 +11,7 @@
 #include "cache.hxx"
 #include "tcache.hxx"
 #include "http_cache.hxx"
-#include "fcache.h"
+#include "fcache.hxx"
 #include "child_manager.hxx"
 #include "session_manager.hxx"
 #include "beng-proxy/control.h"

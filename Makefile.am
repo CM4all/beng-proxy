@@ -128,7 +128,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/exec.cxx src/exec.hxx \
 	src/expiry.h \
 	src/failure.cxx src/failure.hxx \
-	src/fcache.cxx src/fcache.h \
+	src/fcache.cxx src/fcache.hxx \
 	src/fcgi_client.cxx src/fcgi_client.hxx \
 	src/fcgi_launch.cxx src/fcgi_launch.hxx \
 	src/fcgi_remote.cxx src/fcgi_remote.hxx \

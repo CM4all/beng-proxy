@@ -17,7 +17,7 @@
 #include "widget_dump.hxx"
 #include "proxy_widget.hxx"
 #include "session.hxx"
-#include "fcache.h"
+#include "fcache.hxx"
 #include "strref-pool.h"
 #include "growing_buffer.hxx"
 #include "global.h"
