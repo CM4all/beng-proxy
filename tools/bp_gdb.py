@@ -7,7 +7,7 @@
 import gdb
 
 def for_each_hashmap(h):
-    if h.type.code != gdb.lookup_type('struct hashmap').code:
+    if h.type != gdb.lookup_type('struct hashmap'):
         print "not a hashmap"
         return
 
@@ -34,7 +34,7 @@ class DumpHashmapSlot(gdb.Command):
             return
 
         h = gdb.parse_and_eval(arg_list[0])
-        if h.type.code != gdb.lookup_type('struct hashmap').pointer().code:
+        if h.type != gdb.lookup_type('struct hashmap').pointer():
             print "%s is not a hashmap*" % arg_list[0]
             return
 
@@ -55,7 +55,7 @@ class DumpHashmap(gdb.Command):
 
     def invoke(self, arg, from_tty):
         h = gdb.parse_and_eval(arg)
-        if h.type.code != gdb.lookup_type('struct hashmap').pointer().code:
+        if h.type != gdb.lookup_type('struct hashmap').pointer():
             print "%s is not a hashmap*" % arg
             return
 
@@ -100,7 +100,7 @@ class DumpStrmap(gdb.Command):
 
     def invoke(self, arg, from_tty):
         h = gdb.parse_and_eval(arg)
-        if h.type.code != gdb.lookup_type('struct strmap').pointer().code:
+        if h.type != gdb.lookup_type('struct strmap').pointer():
             print "%s is not a strmap*" % arg
             return
 
@@ -172,7 +172,7 @@ class DumpPoolStats(gdb.Command):
 
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
-        if pool.type.code == gdb.lookup_type('struct pool').pointer().code:
+        if pool.type == gdb.lookup_type('struct pool').pointer():
             print "pool '%s' type=%d" % (pool['name'].string(), pool['type'])
             print "size", pool_sizes(pool)
             print "recursive_size", pool_recursive_sizes(pool)
@@ -192,7 +192,7 @@ class DumpPoolRefs(gdb.Command):
 
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
-        if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
+        if pool.type != gdb.lookup_type('struct pool').pointer():
             print "%s is not a pool*" % arg
             return
 
@@ -205,7 +205,7 @@ class DumpPoolAllocations(gdb.Command):
 
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
-        if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
+        if pool.type != gdb.lookup_type('struct pool').pointer():
             print "%s is not a pool*" % arg
             return
 
@@ -236,7 +236,7 @@ class FindChild(gdb.Command):
 
     def _find_child_by_pid(self, pid):
         lh = gdb.parse_and_eval('children')
-        if lh.type.code != gdb.lookup_type('struct list_head').code:
+        if lh.type != gdb.lookup_type('struct list_head'):
             print "not a list_head"
             return None
 
@@ -262,7 +262,7 @@ class FindChildStockClient(gdb.Command):
 
     def _find_child_by_pid(self, pid):
         lh = gdb.parse_and_eval('children')
-        if lh.type.code != gdb.lookup_type('struct list_head').code:
+        if lh.type != gdb.lookup_type('struct list_head'):
             print "not a list_head"
             return None
 
