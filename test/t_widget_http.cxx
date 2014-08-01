@@ -1,7 +1,7 @@
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_http.hxx"
-#include "widget-lookup.h"
+#include "widget_lookup.hxx"
 #include "http_address.hxx"
 #include "strmap.hxx"
 #include "growing_buffer.hxx"

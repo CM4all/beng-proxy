@@ -10,7 +10,6 @@
 #include "penv.hxx"
 #include "strmap.hxx"
 #include "widget.hxx"
-#include "widget-lookup.h"
 #include "growing_buffer.hxx"
 #include "tpool.h"
 #include "async.hxx"

@@ -276,6 +276,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/widget_ref.cxx \
 	src/widget_session.cxx \
 	src/widget_uri.cxx \
+	src/widget_lookup.hxx \
 	src/widget-quark.h \
 	src/widget_request.cxx src/widget_request.hxx \
 	src/widget_registry.cxx src/widget_registry.hxx \

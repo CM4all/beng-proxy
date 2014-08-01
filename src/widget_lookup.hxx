@@ -4,10 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_WIDGET_LOOKUP_H
-#define BENG_PROXY_WIDGET_LOOKUP_H
+#ifndef BENG_PROXY_WIDGET_LOOKUP_HXX
+#define BENG_PROXY_WIDGET_LOOKUP_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 struct widget;
 

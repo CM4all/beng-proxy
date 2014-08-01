@@ -4,7 +4,7 @@
 #include "inline_widget.hxx"
 #include "widget.hxx"
 #include "widget_class.hxx"
-#include "widget-lookup.h"
+#include "widget_lookup.hxx"
 #include "rewrite_uri.hxx"
 #include "async.hxx"
 #include "istream.h"

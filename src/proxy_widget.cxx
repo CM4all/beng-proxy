@@ -6,7 +6,7 @@
 
 #include "proxy_widget.hxx"
 #include "widget_http.hxx"
-#include "widget-lookup.h"
+#include "widget_lookup.hxx"
 #include "widget_resolver.hxx"
 #include "widget.hxx"
 #include "frame.hxx"

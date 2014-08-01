@@ -14,7 +14,7 @@
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_request.hxx"
-#include "widget-lookup.h"
+#include "widget_lookup.hxx"
 #include "widget-quark.h"
 #include "session.hxx"
 #include "cookie_client.hxx"

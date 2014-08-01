@@ -12,7 +12,7 @@
 #include "widget_class.hxx"
 #include "widget_approval.hxx"
 #include "widget_resolver.hxx"
-#include "widget-lookup.h"
+#include "widget_lookup.hxx"
 #include "widget_request.hxx"
 #include "global.h"
 #include "http_response.hxx"
