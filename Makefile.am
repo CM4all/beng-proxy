@@ -605,7 +605,7 @@ libputil_a_SOURCES = \
 	src/hashmap.cxx src/hashmap.hxx \
 	src/please.hxx \
 	src/strmap.cxx src/strmap.hxx \
-	src/strref-pool.h \
+	src/strref_pool.hxx \
 	src/strset.c src/strset.h \
 	src/uri_base.cxx src/uri_base.hxx \
 	src/uri-edit.c src/uri-edit.h \

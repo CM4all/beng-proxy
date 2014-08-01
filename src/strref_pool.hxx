@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_STRREF_POOL_H
-#define __BENG_STRREF_POOL_H
+#ifndef BENG_PROXY_STRREF_POOL_HXX
+#define BENG_PROXY_STRREF_POOL_HXX
 
 #include "strref.h"
 #include "pool.h"
@@ -17,13 +17,13 @@ strref_set_dup_impl(struct pool *pool, struct strref *dest,
                     const struct strref *src
                     TRACE_ARGS_DECL)
 {
-    assert(dest != NULL);
-    assert(src != NULL);
-    assert(src->length == 0 || src->data != NULL);
+    assert(dest != nullptr);
+    assert(src != nullptr);
+    assert(src->length == 0 || src->data != nullptr);
 
     if (src->length == 0) {
         dest->length = 0;
-        return NULL;
+        return nullptr;
     } else {
         dest->length = src->length;
         char *p = (char *)p_memdup_fwd(pool, src->data, src->length);
@@ -42,9 +42,9 @@ strref_append_impl(struct pool *pool, struct strref *dest,
 {
     char *p;
 
-    assert(dest != NULL);
-    assert(src != NULL);
-    assert(src->length == 0 || src->data != NULL);
+    assert(dest != nullptr);
+    assert(src != nullptr);
+    assert(src->length == 0 || src->data != nullptr);
 
     if (src->length == 0)
         return;
@@ -64,8 +64,8 @@ static gcc_always_inline char *
 strref_dup_impl(struct pool *pool, const struct strref *s
            TRACE_ARGS_DECL)
 {
-    assert(pool != NULL);
-    assert(s != NULL);
+    assert(pool != nullptr);
+    assert(s != nullptr);
 
     return p_strndup_fwd(pool, s->data, s->length);
 }
@@ -76,10 +76,10 @@ strref_dup_impl(struct pool *pool, const struct strref *s
 static gcc_always_inline void
 strref_free(struct pool *pool, struct strref *s)
 {
-    assert(pool != NULL);
-    assert(s != NULL);
+    assert(pool != nullptr);
+    assert(s != nullptr);
     assert(s->length > 0);
-    assert(s->data != NULL);
+    assert(s->data != nullptr);
 
     p_free(pool, s->data);
     poison_undefined(s, sizeof(*s));

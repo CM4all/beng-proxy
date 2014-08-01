@@ -21,7 +21,7 @@
 #include "tcache.hxx"
 #include "suffix_registry.hxx"
 #include "header_writer.hxx"
-#include "strref-pool.h"
+#include "strref_pool.hxx"
 #include "dpool.h"
 #include "pbuffer.hxx"
 #include "http_headers.hxx"

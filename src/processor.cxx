@@ -24,7 +24,7 @@
 #include "async.hxx"
 #include "rewrite_uri.hxx"
 #include "strref2.hxx"
-#include "strref-pool.h"
+#include "strref_pool.hxx"
 #include "global.h"
 #include "expansible-buffer.h"
 #include "escape_class.h"

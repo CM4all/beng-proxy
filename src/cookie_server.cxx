@@ -7,7 +7,7 @@
 #include "cookie_server.hxx"
 #include "cookie_string.hxx"
 #include "strref2.hxx"
-#include "strref-pool.h"
+#include "strref_pool.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 

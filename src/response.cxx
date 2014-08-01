@@ -18,7 +18,7 @@
 #include "proxy_widget.hxx"
 #include "session.hxx"
 #include "fcache.hxx"
-#include "strref-pool.h"
+#include "strref_pool.hxx"
 #include "growing_buffer.hxx"
 #include "global.h"
 #include "resource_tag.hxx"

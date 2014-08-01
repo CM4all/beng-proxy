@@ -10,7 +10,7 @@
 #include "widget_request.hxx"
 #include "widget_resolver.hxx"
 #include "widget_class.hxx"
-#include "strref-pool.h"
+#include "strref_pool.hxx"
 #include "uri-parser.h"
 #include "uri-extract.h"
 #include "tpool.h"

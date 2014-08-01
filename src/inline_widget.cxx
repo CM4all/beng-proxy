@@ -17,7 +17,7 @@
 #include "global.h"
 #include "http_util.hxx"
 #include "http_response.hxx"
-#include "strref-pool.h"
+#include "strref_pool.hxx"
 #include "strref2.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"

@@ -7,7 +7,7 @@
 #include "widget.hxx"
 #include "widget_class.hxx"
 #include "widget_view.hxx"
-#include "strref-pool.h"
+#include "strref_pool.hxx"
 #include "format.h"
 #include "istream.h"
 
