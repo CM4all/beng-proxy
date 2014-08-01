@@ -56,7 +56,7 @@ class DumpHashmap(gdb.Command):
     def invoke(self, arg, from_tty):
         h = gdb.parse_and_eval(arg)
         if h.type.code != gdb.lookup_type('struct hashmap').pointer().code:
-            print "%s is not a hashmap*" % arg_list[0]
+            print "%s is not a hashmap*" % arg
             return
 
         n_slots = 0
@@ -101,7 +101,7 @@ class DumpStrmap(gdb.Command):
     def invoke(self, arg, from_tty):
         h = gdb.parse_and_eval(arg)
         if h.type.code != gdb.lookup_type('struct strmap').pointer().code:
-            print "%s is not a strmap*" % arg_list[0]
+            print "%s is not a strmap*" % arg
             return
 
         string_type = gdb.lookup_type('char').pointer()
@@ -173,7 +173,7 @@ class DumpPoolStats(gdb.Command):
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
         if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
-            print "%s is not a strmap*" % arg_list[0]
+            print "%s is not a pool*" % arg
             return
 
         print "pool '%s' type=%d" % (pool['name'].string(), pool['type'])
@@ -194,7 +194,7 @@ class DumpPoolRefs(gdb.Command):
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
         if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
-            print "%s is not a pool*" % arg_list[0]
+            print "%s is not a pool*" % arg
             return
 
         for i in ('refs', 'unrefs'):
@@ -207,7 +207,7 @@ class DumpPoolAllocations(gdb.Command):
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
         if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
-            print "%s is not a pool*" % arg_list[0]
+            print "%s is not a pool*" % arg
             return
 
         allocation_pointer = gdb.lookup_type('struct allocation_info').pointer()
