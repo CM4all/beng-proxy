@@ -14,7 +14,6 @@
 #include "tpool.h"
 #include "async.hxx"
 #include "rewrite_uri.hxx"
-#include "strref2.h"
 #include "strref-pool.h"
 #include "global.h"
 #include "expansible-buffer.h"

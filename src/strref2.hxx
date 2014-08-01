@@ -8,8 +8,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_STRREF2_H
-#define __BENG_STRREF2_H
+#ifndef BENG_PROXY_STRREF2_HXX
+#define BENG_PROXY_STRREF2_HXX
 
 #include "strref.h"
 #include "strutil.h"
@@ -43,9 +43,9 @@ strref_lower_cmp(const struct strref *s, const char *p, size_t length)
 {
     size_t i;
 
-    assert(s != NULL);
-    assert(s->data != NULL || s->length == 0);
-    assert(p != NULL || length == 0);
+    assert(s != nullptr);
+    assert(s->data != nullptr || s->length == 0);
+    assert(p != nullptr || length == 0);
 
     if (s->length != length)
         return 1; /* XXX -1 or 1? */
@@ -65,7 +65,7 @@ gcc_pure
 static gcc_always_inline int
 strref_lower_cmp_c(const struct strref *s, const char *p)
 {
-    assert(p != NULL);
+    assert(p != nullptr);
 
     return strref_lower_cmp(s, p, strlen(p));
 }

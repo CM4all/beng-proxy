@@ -23,7 +23,7 @@
 #include "inline_widget.hxx"
 #include "async.hxx"
 #include "rewrite_uri.hxx"
-#include "strref2.h"
+#include "strref2.hxx"
 #include "strref-pool.h"
 #include "global.h"
 #include "expansible-buffer.h"

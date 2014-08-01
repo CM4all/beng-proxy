@@ -7,7 +7,7 @@
 #include "cookie_string.hxx"
 #include "http_string.hxx"
 #include "strref.h"
-#include "strref2.h"
+#include "strref2.hxx"
 #include "pool.hxx"
 
 gcc_always_inline

@@ -586,7 +586,7 @@ libutil_a_SOURCES = \
 	src/async.hxx \
 	src/lease.hxx \
 	src/strref.h \
-	src/strref2.h \
+	src/strref2.hxx \
 	src/strutil.c src/strutil.h \
 	src/trace.h \
 	src/uri-parser.c src/uri-parser.h \

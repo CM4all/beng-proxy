@@ -5,7 +5,7 @@
  */
 
 #include "http_string.hxx"
-#include "strref2.h"
+#include "strref2.hxx"
 #include "pool.hxx"
 
 void

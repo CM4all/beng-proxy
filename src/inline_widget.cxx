@@ -18,7 +18,7 @@
 #include "http_util.hxx"
 #include "http_response.hxx"
 #include "strref-pool.h"
-#include "strref2.h"
+#include "strref2.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "istream.h"

@@ -10,7 +10,7 @@
 #include "http_cache_internal.hxx"
 #include "http_address.hxx"
 #include "http_util.hxx"
-#include "strref2.h"
+#include "strref2.hxx"
 #include "strmap.hxx"
 #include "date.h"
 #include "resource_address.hxx"

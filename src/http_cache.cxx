@@ -13,7 +13,6 @@
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "resource_address.hxx"
-#include "strref2.h"
 #include "http_util.hxx"
 #include "async.hxx"
 #include "background.hxx"
