@@ -1021,7 +1021,7 @@ http_cache_memcached_use(struct http_cache &cache,
                              request->cache.pool,
                              cache.background,
                              request->key, request->headers,
-                             http_cache_memcached_get_callback, &request,
+                             http_cache_memcached_get_callback, request,
                              request->async_ref);
     pool_unref(pool);
 }
