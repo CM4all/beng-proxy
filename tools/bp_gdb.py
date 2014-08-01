@@ -109,7 +109,7 @@ class DumpStrmap(gdb.Command):
             print key, '=', value.cast(string_type).string()
 
 def pool_size(pool):
-    return int(pool['size'])
+    return int(pool['netto_size'])
 
 def pool_sizes(pool):
     netto_size = pool_size(pool)
