@@ -131,6 +131,13 @@ def for_each_list_head(head):
         yield item
         item = item['next']
 
+def for_each_list_item(head, cast):
+    item = head['next']
+    head_address = head.address
+    while item != head_address:
+        yield item.cast(cast)
+        item = item['next']
+
 def for_each_list_head_reverse(head):
     item = head['prev']
     head_address = head.address
@@ -150,8 +157,7 @@ def for_each_recursive_pool(pool):
 
     pool_pointer = gdb.lookup_type('struct pool').pointer()
 
-    for child in for_each_list_head(pool['children']):
-        child = child.cast(pool_pointer)
+    for child in for_each_list_item(pool['children'], pool_pointer):
         for x in for_each_recursive_pool(child):
             yield x
 
@@ -159,8 +165,8 @@ def pool_recursive_sizes(pool):
     pool_pointer = gdb.lookup_type('struct pool').pointer()
 
     brutto_size, netto_size = pool_sizes(pool)
-    for child in for_each_list_head(pool['children']):
-        child_brutto_size, child_netto_size = pool_recursive_sizes(child.cast(pool_pointer))
+    for child in for_each_list_item(pool['children'], pool_pointer):
+        child_brutto_size, child_netto_size = pool_recursive_sizes(child)
         brutto_size += child_brutto_size
         netto_size += child_netto_size
 
@@ -182,8 +188,7 @@ class DumpPoolStats(gdb.Command):
                 print x, pool[x]
             area_pointer = gdb.lookup_type('struct slice_area').pointer()
             brutto_size = netto_size = 0
-            for area in for_each_list_head(pool['areas']):
-                area = area.cast(area_pointer)
+            for area in for_each_list_item(pool['areas'], area_pointer):
                 print "area", area.address, "allocated=", area['allocated_count']
                 brutto_size += pool['area_size']
                 netto_size += area['allocated_count'] * pool['slice_size']
@@ -253,8 +258,7 @@ class FindChild(gdb.Command):
             return None
 
         child_pointer = gdb.lookup_type('struct child').pointer()
-        for li in for_each_list_head(lh):
-            child = li.cast(child_pointer)
+        for child in for_each_list_item(lh, child_pointer):
             if child['pid'] == pid:
                 return child
 
@@ -279,8 +283,7 @@ class FindChildStockClient(gdb.Command):
             return None
 
         child_pointer = gdb.lookup_type('struct child').pointer()
-        for li in for_each_list_head(lh):
-            child = li.cast(child_pointer)
+        for child in for_each_list_item(lh, child_pointer):
             if child['pid'] == pid:
                 return child
 
@@ -307,9 +310,7 @@ class FindChildStockClient(gdb.Command):
             stock = value.cast(stock_type)
 
             for x in ('idle', 'busy'):
-                for lh in for_each_list_head(stock[x]):
-                    c = lh.cast(fcgi_connection_type)
-
+                for c in for_each_list_item(stock[x], fcgi_connection_type):
                     if c['child'] == child_stock_item:
                         print key, c, c.dereference()
 
