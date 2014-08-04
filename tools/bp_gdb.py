@@ -253,6 +253,30 @@ class FindPool(gdb.Command):
             if x['name'].string() == name:
                 print x, x.dereference()
 
+class DumpPoolRecycler(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_dump_pool_recycler", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
+
+    def invoke(self, arg, from_tty):
+        recycler = gdb.parse_and_eval('recycler')
+
+        n_pools = 0
+        pool = recycler['pools']
+        while not is_null(pool):
+            n_pools += 1
+            pool = pool['current_area']['recycler']
+        print "n_pools", recycler['num_pools'], n_pools
+
+        n_areas = 0
+        total_size = 0
+        area = recycler['linear_areas']
+        while not is_null(area):
+            n_areas += 1
+            total_size += area['size']
+            area = area['prev']
+        print "n_areas", recycler['num_linear_areas'], n_areas
+        print "area_total_size", total_size
+
 class FindChild(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "bp_find_child", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
@@ -371,6 +395,7 @@ DumpPoolStats()
 DumpPoolRefs()
 DumpPoolAllocations()
 FindPool()
+DumpPoolRecycler()
 FindChild()
 FindChildStockClient()
 LbStats()
