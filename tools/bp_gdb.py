@@ -6,6 +6,9 @@
 
 import gdb
 
+def is_null(p):
+    return str(p) == '0x0'
+
 def for_each_hashmap(h):
     if h.type != gdb.lookup_type('struct hashmap'):
         print "not a hashmap"
@@ -317,6 +320,49 @@ class FindChildStockClient(gdb.Command):
                     if c['child'] == child_stock_item:
                         print key, c, c.dereference()
 
+class LbStats(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "lb_stats", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
+
+    def invoke(self, arg, from_tty):
+        instance = gdb.parse_and_eval(arg)
+        if instance.type != gdb.lookup_type('struct lb_instance').pointer():
+            print "not a lb_instance"
+            return None
+
+        print "n_connections", instance['num_connections']
+
+        n = 0
+        n_ssl = 0
+        n_http = 0
+        n_tcp = 0
+        n_buffers = 0
+
+        connection_type = gdb.lookup_type('struct lb_connection').pointer()
+        for c in for_each_list_item(instance['connections'], connection_type):
+            n += 1
+
+            if not is_null(c['ssl_filter']):
+                n_ssl += 1
+                n_buffers += 2
+
+            protocol = str(c['listener']['destination']['cluster']['protocol'])
+            if protocol == 'LB_PROTOCOL_HTTP':
+                n_http += 1
+                n_buffers += 1
+            elif protocol == 'LB_PROTOCOL_TCP':
+                n_tcp += 1
+                tcp = c['tcp']
+                if not is_null(tcp['outbound']['input']):
+                    n_buffers += 1
+                if not is_null(tcp['inbound']['base']['input']):
+                    n_buffers += 1
+
+        print "n_connections", n
+        print "n_ssl", n_ssl
+        print "n_http", n_http
+        print "n_buffers", n_buffers
+
 DumpHashmapSlot()
 DumpHashmap()
 DumpHashmap2()
@@ -327,3 +373,4 @@ DumpPoolAllocations()
 FindPool()
 FindChild()
 FindChildStockClient()
+LbStats()
