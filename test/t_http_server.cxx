@@ -4,6 +4,7 @@
 #include "direct.h"
 #include "pool.hxx"
 #include "istream.h"
+#include "istream_socketpair.hxx"
 #include "istream-catch.h"
 #include "fb_pool.hxx"
 

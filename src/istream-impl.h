@@ -136,9 +136,6 @@ istream_iconv_new(struct pool *pool, struct istream *input,
                   const char *tocode, const char *fromcode);
 
 struct istream *
-istream_socketpair_new(struct pool *pool, struct istream *input, int *fd_r);
-
-struct istream *
 istream_unlock_new(struct pool *pool, struct istream *input,
                    struct cache *cache, struct cache_item *item);
 

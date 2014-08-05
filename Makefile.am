@@ -687,7 +687,7 @@ libistream_a_SOURCES = \
 	src/istream_tee.c src/istream_tee.h \
 	src/istream_replace.cxx src/istream_replace.hxx \
 	src/istream_socket.cxx src/istream_socket.hxx \
-	src/istream-socketpair.c \
+	src/istream_socketpair.cxx src/istream_socketpair.hxx \
 	src/istream-notify.h \
 	src/istream-notify.c \
 	src/sink-null.c \

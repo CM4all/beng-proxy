@@ -16,6 +16,7 @@
 #include "buffered_io.h"
 #include "pevent.h"
 #include "gerrno.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -41,7 +42,7 @@ struct istream_socketpair {
 static void
 socketpair_release_socket(struct istream_socketpair *sp)
 {
-    assert(sp != NULL);
+    assert(sp != nullptr);
     assert(sp->fd >= 0);
 
     p_event_del(&sp->recv_event, sp->output.pool);
@@ -56,7 +57,7 @@ socketpair_close(struct istream_socketpair *sp, GError *error)
 {
     pool_ref(sp->output.pool);
 
-    if (sp->input != NULL)
+    if (sp->input != nullptr)
         istream_free_handler(&sp->input);
 
     if (sp->fd >= 0) {
@@ -78,20 +79,19 @@ socketpair_close(struct istream_socketpair *sp, GError *error)
 static size_t
 socketpair_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_socketpair *sp = ctx;
-    ssize_t nbytes;
+    struct istream_socketpair *sp = (struct istream_socketpair *)ctx;
 
     assert(sp->fd >= 0);
 
-    nbytes = send(sp->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    ssize_t nbytes = send(sp->fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (likely(nbytes >= 0)) {
-        p_event_add(&sp->send_event, NULL,
+        p_event_add(&sp->send_event, nullptr,
                     sp->output.pool, "socketpair_send_event");
         return (size_t)nbytes;
     }
 
     if (likely(errno == EAGAIN)) {
-        p_event_add(&sp->send_event, NULL,
+        p_event_add(&sp->send_event, nullptr,
                     sp->output.pool, "socketpair_send_event");
         return 0;
     }
@@ -104,22 +104,22 @@ socketpair_input_data(const void *data, size_t length, void *ctx)
 static void
 socketpair_input_eof(void *ctx)
 {
-    struct istream_socketpair *sp = ctx;
+    struct istream_socketpair *sp = (struct istream_socketpair *)ctx;
 
-    assert(sp->input != NULL);
+    assert(sp->input != nullptr);
     assert(sp->fd >= 0);
 
     p_event_del(&sp->send_event, sp->output.pool);
     shutdown(sp->fd, SHUT_WR);
-    sp->input = NULL;
+    sp->input = nullptr;
 }
 
 static void
 socketpair_input_abort(GError *error, void *ctx)
 {
-    struct istream_socketpair *sp = ctx;
+    struct istream_socketpair *sp = (struct istream_socketpair *)ctx;
 
-    assert(sp->input != NULL);
+    assert(sp->input != nullptr);
 
     socketpair_close(sp, error);
 }
@@ -140,7 +140,7 @@ static const struct istream_handler socketpair_input_handler = {
 static inline struct istream_socketpair *
 istream_to_socketpair(struct istream *istream)
 {
-    return (struct istream_socketpair *)(((char*)istream) - offsetof(struct istream_socketpair, output));
+    return &ContainerCast2(*istream, &istream_socketpair::output);
 }
 
 static void
@@ -158,7 +158,7 @@ istream_socketpair_close(struct istream *istream)
 {
     struct istream_socketpair *sp = istream_to_socketpair(istream);
 
-    if (sp->input != NULL)
+    if (sp->input != nullptr)
         istream_free_handler(&sp->input);
 
     if (sp->fd >= 0) {
@@ -182,9 +182,7 @@ static const struct istream_class istream_socketpair = {
 static void
 socketpair_read(struct istream_socketpair *sp)
 {
-    ssize_t nbytes;
-
-    nbytes = recv_to_buffer(sp->fd, sp->buffer, INT_MAX);
+    ssize_t nbytes = recv_to_buffer(sp->fd, sp->buffer, INT_MAX);
     if (nbytes == -2)
         return;
 
@@ -197,7 +195,7 @@ socketpair_read(struct istream_socketpair *sp)
     if (nbytes == 0) {
         pool_ref(sp->output.pool);
 
-        if (sp->input != NULL)
+        if (sp->input != nullptr)
             istream_free_handler(&sp->input);
 
         if (sp->fd >= 0) {
@@ -211,7 +209,7 @@ socketpair_read(struct istream_socketpair *sp)
     }
 
     if (istream_buffer_send(&sp->output, sp->buffer) > 0)
-        p_event_add(&sp->recv_event, NULL,
+        p_event_add(&sp->recv_event, nullptr,
                     sp->output.pool, "socketpair_recv_event");
 }
 
@@ -225,7 +223,7 @@ static void
 socketpair_recv_callback(int fd gcc_unused, short event gcc_unused,
                          void *ctx)
 {
-    struct istream_socketpair *sp = ctx;
+    struct istream_socketpair *sp = (struct istream_socketpair *)ctx;
 
     assert(fd == sp->fd);
 
@@ -238,7 +236,7 @@ static void
 socketpair_send_callback(int fd gcc_unused, short event gcc_unused,
                          void *ctx)
 {
-    struct istream_socketpair *sp = ctx;
+    struct istream_socketpair *sp = (struct istream_socketpair *)ctx;
 
     assert(fd == sp->fd);
 
@@ -257,22 +255,21 @@ struct istream *
 istream_socketpair_new(struct pool *pool, struct istream *input, int *fd_r)
 {
     struct istream_socketpair *sp;
-    int ret, fds[2];
 
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds);
-    if (ret < 0) {
+    int fds[2];
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0) {
         daemon_log(1, "socketpair() failed: %s\n", strerror(errno));
-        return NULL;
+        return nullptr;
     }
 
     if (fd_set_nonblock(fds[1], true) < 0) {
         daemon_log(1, "fd_set_nonblock() failed: %s\n", strerror(errno));
         close(fds[0]);
         close(fds[1]);
-        return NULL;
+        return nullptr;
     }
 
     sp = istream_new_macro(pool, socketpair);
@@ -286,11 +283,11 @@ istream_socketpair_new(struct pool *pool, struct istream *input, int *fd_r)
     sp->buffer = fifo_buffer_new(pool, 4096);
 
     event_set(&sp->recv_event, sp->fd, EV_READ, socketpair_recv_callback, sp);
-    p_event_add(&sp->recv_event, NULL,
+    p_event_add(&sp->recv_event, nullptr,
                 sp->output.pool, "socketpair_recv_event");
 
     event_set(&sp->send_event, sp->fd, EV_WRITE, socketpair_send_callback, sp);
-    p_event_add(&sp->send_event, NULL,
+    p_event_add(&sp->send_event, nullptr,
                 sp->output.pool, "socketpair_send_event");
 
     return istream_struct_cast(&sp->output);
