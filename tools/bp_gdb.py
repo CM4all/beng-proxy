@@ -6,8 +6,11 @@
 
 import gdb
 
+def is_null(p):
+    return str(p) == '0x0'
+
 def for_each_hashmap(h):
-    if h.type.code != gdb.lookup_type('struct hashmap').code:
+    if h.type != gdb.lookup_type('struct hashmap'):
         print "not a hashmap"
         return
 
@@ -34,7 +37,7 @@ class DumpHashmapSlot(gdb.Command):
             return
 
         h = gdb.parse_and_eval(arg_list[0])
-        if h.type.code != gdb.lookup_type('struct hashmap').pointer().code:
+        if h.type != gdb.lookup_type('struct hashmap').pointer():
             print "%s is not a hashmap*" % arg_list[0]
             return
 
@@ -55,8 +58,8 @@ class DumpHashmap(gdb.Command):
 
     def invoke(self, arg, from_tty):
         h = gdb.parse_and_eval(arg)
-        if h.type.code != gdb.lookup_type('struct hashmap').pointer().code:
-            print "%s is not a hashmap*" % arg_list[0]
+        if h.type != gdb.lookup_type('struct hashmap').pointer():
+            print "%s is not a hashmap*" % arg
             return
 
         n_slots = 0
@@ -100,8 +103,8 @@ class DumpStrmap(gdb.Command):
 
     def invoke(self, arg, from_tty):
         h = gdb.parse_and_eval(arg)
-        if h.type.code != gdb.lookup_type('struct strmap').pointer().code:
-            print "%s is not a strmap*" % arg_list[0]
+        if h.type != gdb.lookup_type('struct strmap').pointer():
+            print "%s is not a strmap*" % arg
             return
 
         string_type = gdb.lookup_type('char').pointer()
@@ -109,7 +112,7 @@ class DumpStrmap(gdb.Command):
             print key, '=', value.cast(string_type).string()
 
 def pool_size(pool):
-    return int(pool['size'])
+    return int(pool['netto_size'])
 
 def pool_sizes(pool):
     netto_size = pool_size(pool)
@@ -131,6 +134,13 @@ def for_each_list_head(head):
         yield item
         item = item['next']
 
+def for_each_list_item(head, cast):
+    item = head['next']
+    head_address = head.address
+    while item != head_address:
+        yield item.cast(cast)
+        item = item['next']
+
 def for_each_list_head_reverse(head):
     item = head['prev']
     head_address = head.address
@@ -150,8 +160,7 @@ def for_each_recursive_pool(pool):
 
     pool_pointer = gdb.lookup_type('struct pool').pointer()
 
-    for child in for_each_list_head(pool['children']):
-        child = child.cast(pool_pointer)
+    for child in for_each_list_item(pool['children'], pool_pointer):
         for x in for_each_recursive_pool(child):
             yield x
 
@@ -159,8 +168,8 @@ def pool_recursive_sizes(pool):
     pool_pointer = gdb.lookup_type('struct pool').pointer()
 
     brutto_size, netto_size = pool_sizes(pool)
-    for child in for_each_list_head(pool['children']):
-        child_brutto_size, child_netto_size = pool_recursive_sizes(child.cast(pool_pointer))
+    for child in for_each_list_item(pool['children'], pool_pointer):
+        child_brutto_size, child_netto_size = pool_recursive_sizes(child)
         brutto_size += child_brutto_size
         netto_size += child_netto_size
 
@@ -172,13 +181,26 @@ class DumpPoolStats(gdb.Command):
 
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
-        if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
-            print "%s is not a strmap*" % arg_list[0]
-            return
-
-        print "pool '%s' type=%d" % (pool['name'].string(), pool['type'])
-        print "size", pool_sizes(pool)
-        print "recursive_size", pool_recursive_sizes(pool)
+        if pool.type == gdb.lookup_type('struct pool').pointer():
+            print "pool '%s' type=%d" % (pool['name'].string(), pool['type'])
+            print "size", pool_sizes(pool)
+            print "recursive_size", pool_recursive_sizes(pool)
+        elif pool.type == gdb.lookup_type('struct slice_pool').pointer():
+            print "slice_pool", pool.address
+            for x in ('slice_size', 'area_size', 'slices_per_area'):
+                print x, pool[x]
+            area_pointer = gdb.lookup_type('struct slice_area').pointer()
+            brutto_size = netto_size = 0
+            n_allocated = 0
+            for area in for_each_list_item(pool['areas'], area_pointer):
+                print "area", area.address, "allocated=", area['allocated_count']
+                n_allocated += area['allocated_count']
+                brutto_size += pool['area_size']
+                netto_size += area['allocated_count'] * pool['slice_size']
+            print "size", brutto_size, netto_size
+            print "n_allocated", n_allocated
+        else:
+            print "unrecognized pool:", arg
 
 class DumpPoolRefs(gdb.Command):
     def __init__(self):
@@ -193,8 +215,8 @@ class DumpPoolRefs(gdb.Command):
 
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
-        if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
-            print "%s is not a pool*" % arg_list[0]
+        if pool.type != gdb.lookup_type('struct pool').pointer():
+            print "%s is not a pool*" % arg
             return
 
         for i in ('refs', 'unrefs'):
@@ -206,8 +228,8 @@ class DumpPoolAllocations(gdb.Command):
 
     def invoke(self, arg, from_tty):
         pool = gdb.parse_and_eval(arg)
-        if pool.type.code != gdb.lookup_type('struct pool').pointer().code:
-            print "%s is not a pool*" % arg_list[0]
+        if pool.type != gdb.lookup_type('struct pool').pointer():
+            print "%s is not a pool*" % arg
             return
 
         allocation_pointer = gdb.lookup_type('struct allocation_info').pointer()
@@ -231,19 +253,42 @@ class FindPool(gdb.Command):
             if x['name'].string() == name:
                 print x, x.dereference()
 
+class DumpPoolRecycler(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "bp_dump_pool_recycler", gdb.COMMAND_DATA, gdb.COMPLETE_SYMBOL, True)
+
+    def invoke(self, arg, from_tty):
+        recycler = gdb.parse_and_eval('recycler')
+
+        n_pools = 0
+        pool = recycler['pools']
+        while not is_null(pool):
+            n_pools += 1
+            pool = pool['current_area']['recycler']
+        print "n_pools", recycler['num_pools'], n_pools
+
+        n_areas = 0
+        total_size = 0
+        area = recycler['linear_areas']
+        while not is_null(area):
+            n_areas += 1
+            total_size += area['size']
+            area = area['prev']
+        print "n_areas", recycler['num_linear_areas'], n_areas
+        print "area_total_size", total_size
+
 class FindChild(gdb.Command):
     def __init__(self):
         gdb.Command.__init__(self, "bp_find_child", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
 
     def _find_child_by_pid(self, pid):
         lh = gdb.parse_and_eval('children')
-        if lh.type.code != gdb.lookup_type('struct list_head').code:
+        if lh.type != gdb.lookup_type('struct list_head'):
             print "not a list_head"
             return None
 
         child_pointer = gdb.lookup_type('struct child').pointer()
-        for li in for_each_list_head(lh):
-            child = li.cast(child_pointer)
+        for child in for_each_list_item(lh, child_pointer):
             if child['pid'] == pid:
                 return child
 
@@ -263,13 +308,12 @@ class FindChildStockClient(gdb.Command):
 
     def _find_child_by_pid(self, pid):
         lh = gdb.parse_and_eval('children')
-        if lh.type.code != gdb.lookup_type('struct list_head').code:
+        if lh.type != gdb.lookup_type('struct list_head'):
             print "not a list_head"
             return None
 
         child_pointer = gdb.lookup_type('struct child').pointer()
-        for li in for_each_list_head(lh):
-            child = li.cast(child_pointer)
+        for child in for_each_list_item(lh, child_pointer):
             if child['pid'] == pid:
                 return child
 
@@ -296,11 +340,52 @@ class FindChildStockClient(gdb.Command):
             stock = value.cast(stock_type)
 
             for x in ('idle', 'busy'):
-                for lh in for_each_list_head(stock[x]):
-                    c = lh.cast(fcgi_connection_type)
-
+                for c in for_each_list_item(stock[x], fcgi_connection_type):
                     if c['child'] == child_stock_item:
                         print key, c, c.dereference()
+
+class LbStats(gdb.Command):
+    def __init__(self):
+        gdb.Command.__init__(self, "lb_stats", gdb.COMMAND_DATA, gdb.COMPLETE_NONE, True)
+
+    def invoke(self, arg, from_tty):
+        instance = gdb.parse_and_eval(arg)
+        if instance.type != gdb.lookup_type('struct lb_instance').pointer():
+            print "not a lb_instance"
+            return None
+
+        print "n_connections", instance['num_connections']
+
+        n = 0
+        n_ssl = 0
+        n_http = 0
+        n_tcp = 0
+        n_buffers = 0
+
+        connection_type = gdb.lookup_type('struct lb_connection').pointer()
+        for c in for_each_list_item(instance['connections'], connection_type):
+            n += 1
+
+            if not is_null(c['ssl_filter']):
+                n_ssl += 1
+                n_buffers += 2
+
+            protocol = str(c['listener']['destination']['cluster']['protocol'])
+            if protocol == 'LB_PROTOCOL_HTTP':
+                n_http += 1
+                n_buffers += 1
+            elif protocol == 'LB_PROTOCOL_TCP':
+                n_tcp += 1
+                tcp = c['tcp']
+                if not is_null(tcp['outbound']['input']):
+                    n_buffers += 1
+                if not is_null(tcp['inbound']['base']['input']):
+                    n_buffers += 1
+
+        print "n_connections", n
+        print "n_ssl", n_ssl
+        print "n_http", n_http
+        print "n_buffers", n_buffers
 
 DumpHashmapSlot()
 DumpHashmap()
@@ -310,5 +395,7 @@ DumpPoolStats()
 DumpPoolRefs()
 DumpPoolAllocations()
 FindPool()
+DumpPoolRecycler()
 FindChild()
 FindChildStockClient()
+LbStats()

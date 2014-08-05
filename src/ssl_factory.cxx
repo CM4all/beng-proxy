@@ -327,7 +327,7 @@ ssl_factory::EnableSNI(Error &error)
     return true;
 }
 
-SSL *
+inline SSL *
 ssl_factory::Make()
 {
     SSL *ssl = SSL_new(ssl_ctx);
@@ -340,6 +340,32 @@ ssl_factory::Make()
         SSL_set_connect_state(ssl);
 
     return ssl;
+}
+
+/**
+ * Enable Elliptic curve Diffie-Hellman (ECDH) for perfect forward
+ * secrecy.  By default, it OpenSSL disables it.
+ */
+static bool
+enable_ecdh(SSL_CTX *ssl_ctx, Error &error)
+{
+    /* OpenSSL 1.0.2 will allow this instead:
+
+       SSL_CTX_set_ecdh_auto(ssl_ctx, 1)
+    */
+
+    EC_KEY *ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+    if (ecdh == nullptr) {
+        error.Set(ssl_domain, "EC_KEY_new_by_curve_name() failed");
+        return nullptr;
+    }
+
+    bool success = SSL_CTX_set_tmp_ecdh(ssl_ctx, ecdh) == 1;
+    EC_KEY_free(ecdh);
+    if (!success)
+        error.Set(ssl_domain, "SSL_CTX_set_tmp_ecdh() failed");
+
+    return success;
 }
 
 struct ssl_factory *
@@ -357,6 +383,11 @@ ssl_factory_new(const ssl_config &config,
     if (ssl_ctx == NULL) {
         error.Format(ssl_domain, "SSL_CTX_new() failed");
         return NULL;
+    }
+
+    if (server && !enable_ecdh(ssl_ctx, error)) {
+        SSL_CTX_free(ssl_ctx);
+        return nullptr;
     }
 
     ssl_factory *factory = new ssl_factory(ssl_ctx, server);
