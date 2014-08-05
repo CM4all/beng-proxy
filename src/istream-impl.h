@@ -58,16 +58,6 @@ struct istream *
 istream_chunked_new(struct pool *pool, struct istream *input);
 
 /**
- * @param eof_callback a callback function which is called when the
- * last chunk is being consumed; note that this occurs inside the
- * data() callback, so the istream doesn't know yet how much is
- * consumed
- */
-struct istream *
-istream_dechunk_new(struct pool *pool, struct istream *input,
-                    void (*eof_callback)(void *ctx), void *callback_ctx);
-
-/**
  * @param request_id the FastCGI request id in network byte order
  */
 struct istream *

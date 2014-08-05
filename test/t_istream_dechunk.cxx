@@ -1,3 +1,4 @@
+#include "istream_dechunk.hxx"
 #include "istream.h"
 
 #include <stdio.h>
@@ -18,7 +19,7 @@ dechunk_eof(gcc_unused void *ctx)
 static struct istream *
 create_test(struct pool *pool, struct istream *input)
 {
-    return istream_dechunk_new(pool, input, dechunk_eof, NULL);
+    return istream_dechunk_new(pool, input, dechunk_eof, nullptr);
 }
 
 #include "t-istream-filter.h"
