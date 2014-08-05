@@ -1,3 +1,4 @@
+#include "istream_deflate.hxx"
 #include "istream.h"
 
 static struct istream *

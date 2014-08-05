@@ -106,9 +106,6 @@ struct istream *
 istream_html_escape_new(struct pool *pool, struct istream *input);
 
 struct istream *
-istream_deflate_new(struct pool *pool, struct istream *input);
-
-struct istream *
 istream_subst_new(struct pool *pool, struct istream *input);
 
 bool
