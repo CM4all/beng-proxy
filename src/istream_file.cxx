@@ -5,7 +5,7 @@
  */
 
 #include "istream_file.hxx"
-#include "istream-buffer.h"
+#include "istream_buffer.hxx"
 #include "buffered_io.hxx"
 #include "fd_util.h"
 #include "gerrno.h"

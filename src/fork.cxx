@@ -6,7 +6,7 @@
 
 #include "fork.hxx"
 #include "fd_util.h"
-#include "istream-buffer.h"
+#include "istream_buffer.hxx"
 #include "buffered_io.hxx"
 #include "fd-util.h"
 #include "direct.h"

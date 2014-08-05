@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __ISTREAM_BUFFER_H
-#define __ISTREAM_BUFFER_H
+#ifndef BENG_PROXY_ISTREAM_BUFFER_HXX
+#define BENG_PROXY_ISTREAM_BUFFER_HXX
 
 #include "istream-internal.h"
 #include "fifo-buffer.h"
@@ -16,14 +16,12 @@
 static inline size_t
 istream_buffer_consume(struct istream *istream, struct fifo_buffer *buffer)
 {
-    const void *data;
-    size_t length, consumed;
-
-    data = fifo_buffer_read(buffer, &length);
-    if (data == NULL)
+    size_t length;
+    const void *data = fifo_buffer_read(buffer, &length);
+    if (data == nullptr)
         return 0;
 
-    consumed = istream_invoke_data(istream, data, length);
+    size_t consumed = istream_invoke_data(istream, data, length);
     if (consumed > 0)
         fifo_buffer_consume(buffer, consumed);
     return length - consumed;
@@ -35,14 +33,12 @@ istream_buffer_consume(struct istream *istream, struct fifo_buffer *buffer)
 static inline size_t
 istream_buffer_send(struct istream *istream, struct fifo_buffer *buffer)
 {
-    const void *data;
-    size_t length, consumed;
-
-    data = fifo_buffer_read(buffer, &length);
-    if (data == NULL)
+    size_t length;
+    const void *data = fifo_buffer_read(buffer, &length);
+    if (data == nullptr)
         return 0;
 
-    consumed = istream_invoke_data(istream, data, length);
+    size_t consumed = istream_invoke_data(istream, data, length);
     if (consumed > 0)
         fifo_buffer_consume(buffer, consumed);
     return consumed;

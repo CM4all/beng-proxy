@@ -3,7 +3,7 @@
  */
 
 #include "istream_iconv.hxx"
-#include "istream-buffer.h"
+#include "istream_buffer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

@@ -9,7 +9,7 @@
  */
 
 #include "istream-internal.h"
-#include "istream-buffer.h"
+#include "istream_buffer.hxx"
 #include "fd_util.h"
 #include "fd-util.h"
 #include "fifo-buffer.h"

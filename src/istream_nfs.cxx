@@ -6,7 +6,7 @@
 
 #include "istream_nfs.hxx"
 #include "istream-internal.h"
-#include "istream-buffer.h"
+#include "istream_buffer.hxx"
 #include "nfs_client.hxx"
 #include "fifo-buffer.h"
 #include "util/Cast.hxx"
