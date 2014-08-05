@@ -677,7 +677,7 @@ libistream_a_SOURCES = \
 	src/istream-subst.c \
 	src/istream-byte.c \
 	src/istream-four.c \
-	src/istream-iconv.c \
+	src/istream_iconv.cxx src/istream_iconv.hxx \
 	src/istream-trace.c \
 	src/istream-fail.c \
 	src/istream-inject.c \

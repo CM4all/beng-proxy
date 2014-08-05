@@ -1,14 +1,15 @@
 /*
- * This istream filter passes one iconv at a time.  This is useful for
- * testing and debugging istream handler implementations.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_iconv.hxx"
 #include "istream-buffer.h"
+#include "pool.hxx"
+#include "util/Cast.hxx"
+
+#include <iconv.h>
 
 #include <assert.h>
-#include <iconv.h>
 #include <errno.h>
 
 struct istream_iconv {
@@ -18,6 +19,7 @@ struct istream_iconv {
     struct fifo_buffer *buffer;
 };
 
+gcc_const
 static GQuark
 iconv_quark(void)
 {
@@ -29,38 +31,34 @@ deconst_iconv(iconv_t cd,
               const char **inbuf, size_t *inbytesleft,
               char **outbuf, size_t *outbytesleft)
 {
-    union {
-        const char **in;
-        char **out;
-    } u;
-
-    u.in = inbuf;
-    return iconv(cd, u.out, inbytesleft, outbuf, outbytesleft);
+    char **inbuf2 = const_cast<char **>(inbuf);
+    return iconv(cd, inbuf2, inbytesleft, outbuf, outbytesleft);
 }
 
 static size_t
 iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
 {
     const char *src = data;
-    char *buffer, *dest;
     size_t dest_left, ret, nbytes;
 
     do {
-        buffer = dest = fifo_buffer_write(ic->buffer, &dest_left);
-        if (buffer == NULL) {
+        char *const buffer = (char *)fifo_buffer_write(ic->buffer, &dest_left);
+        if (buffer == nullptr) {
             /* no space left in the buffer: attempt to flush it */
 
             nbytes = istream_buffer_send(&ic->output, ic->buffer);
             if (nbytes == 0) {
-                if (ic->buffer == NULL)
+                if (ic->buffer == nullptr)
                     return 0;
                 break;
             }
 
-            assert(ic->buffer != NULL);
+            assert(ic->buffer != nullptr);
 
             continue;
         }
+
+        char *dest = buffer;
 
         ret = deconst_iconv(ic->iconv, &src, &length, &dest, &dest_left);
         if (dest > buffer)
@@ -98,7 +96,7 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
                 /* output buffer is full: flush dest */
                 nbytes = istream_buffer_send(&ic->output, ic->buffer);
                 if (nbytes == 0) {
-                    if (ic->buffer == NULL)
+                    if (ic->buffer == nullptr)
                         return 0;
 
                     /* reset length to 0, to make the loop quit
@@ -108,14 +106,14 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
                     break;
                 }
 
-                assert(ic->buffer != NULL);
+                assert(ic->buffer != nullptr);
                 break;
             }
         }
     } while (length > 0);
 
     istream_buffer_send(&ic->output, ic->buffer);
-    if (ic->buffer == NULL)
+    if (ic->buffer == nullptr)
         return 0;
 
     return src - data;
@@ -130,28 +128,24 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
 static size_t
 iconv_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_iconv *ic = ctx;
-    size_t nbytes;
+    struct istream_iconv *ic = (struct istream_iconv *)ctx;
 
-    assert(ic->input != NULL);
+    assert(ic->input != nullptr);
 
-    pool_ref(ic->output.pool);
-    nbytes = iconv_feed(ic, data, length);
-    pool_unref(ic->output.pool);
-
-    return nbytes;
+    const ScopePoolRef ref(*ic->output.pool TRACE_ARGS);
+    return iconv_feed(ic, (const char *)data, length);
 }
 
 static void
 iconv_input_eof(void *ctx)
 {
-    struct istream_iconv *ic = ctx;
+    struct istream_iconv *ic = (struct istream_iconv *)ctx;
 
-    assert(ic->input != NULL);
-    ic->input = NULL;
+    assert(ic->input != nullptr);
+    ic->input = nullptr;
 
     if (fifo_buffer_empty(ic->buffer)) {
-        ic->buffer = NULL;
+        ic->buffer = nullptr;
         iconv_close(ic->iconv);
         istream_deinit_eof(&ic->output);
     }
@@ -160,11 +154,11 @@ iconv_input_eof(void *ctx)
 static void
 iconv_input_abort(GError *error, void *ctx)
 {
-    struct istream_iconv *ic = ctx;
+    struct istream_iconv *ic = (struct istream_iconv *)ctx;
 
-    assert(ic->input != NULL);
+    assert(ic->input != nullptr);
 
-    ic->buffer = NULL;
+    ic->buffer = nullptr;
 
     iconv_close(ic->iconv);
     istream_deinit_abort(&ic->output, error);
@@ -185,7 +179,7 @@ static const struct istream_handler iconv_input_handler = {
 static inline struct istream_iconv *
 istream_to_iconv(struct istream *istream)
 {
-    return (struct istream_iconv *)(((char*)istream) - offsetof(struct istream_iconv, output));
+    return &ContainerCast2(*istream, &istream_iconv::output);
 }
 
 static void
@@ -193,7 +187,7 @@ istream_iconv_read(struct istream *istream)
 {
     struct istream_iconv *ic = istream_to_iconv(istream);
 
-    if (ic->input != NULL)
+    if (ic->input != nullptr)
         istream_read(ic->input);
     else {
         size_t rest = istream_buffer_consume(&ic->output, ic->buffer);
@@ -209,9 +203,9 @@ istream_iconv_close(struct istream *istream)
 {
     struct istream_iconv *ic = istream_to_iconv(istream);
 
-    ic->buffer = NULL;
+    ic->buffer = nullptr;
 
-    if (ic->input != NULL)
+    if (ic->input != nullptr)
         istream_close_handler(ic->input);
     iconv_close(ic->iconv);
     istream_deinit(&ic->output);
@@ -234,13 +228,13 @@ istream_iconv_new(struct pool *pool, struct istream *input,
 {
     struct istream_iconv *ic = istream_new_macro(pool, iconv);
 
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
     ic->iconv = iconv_open(tocode, fromcode);
     if (ic->iconv == (iconv_t)-1) {
         istream_deinit(&ic->output);
-        return NULL;
+        return nullptr;
     }
 
     ic->buffer = fifo_buffer_new(pool, 1024);
