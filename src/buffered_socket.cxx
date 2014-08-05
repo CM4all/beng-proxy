@@ -154,6 +154,11 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
             return false;
         }
 
+        if (!s->base.IsReadPending())
+            /* try to refill the buffer, now that it's become empty
+               (but don't refresh the pending timeout) */
+            s->base.ScheduleRead(s->read_timeout);
+
         return true;
 
     case BufferedResult::PARTIAL:
