@@ -1148,7 +1148,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/address.c \
-	src/duplex.c \
+	src/duplex.cxx src/duplex.hxx \
 	src/buffered_io.c \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \

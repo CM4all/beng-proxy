@@ -6,7 +6,6 @@
 #include "ajp_client.hxx"
 #include "ajp-protocol.h"
 #include "http_response.hxx"
-#include "duplex.h"
 #include "async.hxx"
 #include "fd-util.h"
 #include "growing_buffer.hxx"

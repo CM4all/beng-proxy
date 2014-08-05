@@ -7,13 +7,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "duplex.h"
+#include "duplex.hxx"
 #include "fd-util.h"
 #include "fifo-buffer.h"
 #include "event2.h"
 #include "buffered_io.h"
 #include "fd_util.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -81,15 +81,13 @@ duplex_check_close(struct duplex *duplex)
 static void
 read_event_callback(int fd, short event gcc_unused, void *ctx)
 {
-    struct duplex *duplex = ctx;
-    ssize_t nbytes;
+    struct duplex *duplex = (struct duplex *)ctx;
 
     assert((event & EV_READ) != 0);
 
     event2_reset(&duplex->read_event);
 
-    nbytes = read_to_buffer(fd, duplex->from_read, INT_MAX);
-
+    ssize_t nbytes = read_to_buffer(fd, duplex->from_read, INT_MAX);
     if (nbytes == -1) {
         daemon_log(1, "failed to read: %s\n", strerror(errno));
         duplex_close(duplex);
@@ -113,14 +111,13 @@ read_event_callback(int fd, short event gcc_unused, void *ctx)
 static void
 write_event_callback(int fd, short event gcc_unused, void *ctx)
 {
-    struct duplex *duplex = ctx;
-    ssize_t nbytes;
+    struct duplex *duplex = (struct duplex *)ctx;
 
     assert((event & EV_WRITE) != 0);
 
     event2_reset(&duplex->write_event);
 
-    nbytes = write_from_buffer(fd, duplex->to_write);
+    ssize_t nbytes = write_from_buffer(fd, duplex->to_write);
     if (nbytes == -1) {
         duplex_close(duplex);
         return;
@@ -136,14 +133,13 @@ write_event_callback(int fd, short event gcc_unused, void *ctx)
 static void
 sock_event_callback(int fd, short event, void *ctx)
 {
-    struct duplex *duplex = ctx;
-    ssize_t nbytes;
+    struct duplex *duplex = (struct duplex *)ctx;
 
     event2_lock(&duplex->sock_event);
     event2_occurred_persist(&duplex->sock_event, event);
 
     if ((event & EV_READ) != 0) {
-        nbytes = recv_to_buffer(fd, duplex->to_write, INT_MAX);
+        ssize_t nbytes = recv_to_buffer(fd, duplex->to_write, INT_MAX);
         if (nbytes == -1) {
             daemon_log(1, "failed to read: %s\n", strerror(errno));
             duplex_close(duplex);
@@ -164,7 +160,7 @@ sock_event_callback(int fd, short event, void *ctx)
     }
 
     if ((event & EV_WRITE) != 0) {
-        nbytes = send_from_buffer(fd, duplex->from_read);
+        ssize_t nbytes = send_from_buffer(fd, duplex->from_read);
         if (nbytes == -1) {
             duplex_close(duplex);
             return;
@@ -183,15 +179,12 @@ sock_event_callback(int fd, short event, void *ctx)
 int
 duplex_new(struct pool *pool, int read_fd, int write_fd)
 {
-    struct duplex *duplex;
-    int ret, fds[2];
-
-    assert(pool != NULL);
+    assert(pool != nullptr);
     assert(read_fd >= 0);
     assert(write_fd >= 0);
 
-    ret = socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds);
-    if (ret < 0)
+    int fds[2];
+    if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, fds) < 0)
         return -1;
 
     if (fd_set_nonblock(fds[1], 1) < 0) {
@@ -202,7 +195,7 @@ duplex_new(struct pool *pool, int read_fd, int write_fd)
         return -1;
     }
 
-    duplex = p_malloc(pool, sizeof(*duplex));
+    auto duplex = NewFromPool<struct duplex>(*pool);
     duplex->read_fd = read_fd;
     duplex->write_fd = write_fd;
     duplex->sock_fd = fds[0];
@@ -211,14 +204,14 @@ duplex_new(struct pool *pool, int read_fd, int write_fd)
     duplex->sock_eof = false;
 
     event2_init(&duplex->read_event, read_fd,
-                read_event_callback, duplex, NULL);
+                read_event_callback, duplex, nullptr);
     event2_set(&duplex->read_event, EV_READ);
 
     event2_init(&duplex->write_event, write_fd,
-                write_event_callback, duplex, NULL);
+                write_event_callback, duplex, nullptr);
 
     event2_init(&duplex->sock_event, duplex->sock_fd,
-                sock_event_callback, duplex, NULL);
+                sock_event_callback, duplex, nullptr);
     event2_persist(&duplex->sock_event);
     event2_set(&duplex->sock_event, EV_READ);
 

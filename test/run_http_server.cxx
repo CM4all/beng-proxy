@@ -1,6 +1,6 @@
 #include "http_server.hxx"
 #include "http_headers.hxx"
-#include "duplex.h"
+#include "duplex.hxx"
 #include "direct.h"
 #include "sink-impl.h"
 #include "istream.h"

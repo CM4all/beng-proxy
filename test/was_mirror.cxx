@@ -1,5 +1,4 @@
 #include "was_server.hxx"
-#include "duplex.h"
 #include "direct.h"
 #include "pool.hxx"
 
