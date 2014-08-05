@@ -14,6 +14,7 @@
 #include "fd-util.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -116,12 +117,11 @@ was_input_consume_buffer(struct was_input *input)
 {
     assert(input->buffer != nullptr);
 
-    size_t length;
-    const void *p = fifo_buffer_read(input->buffer, &length);
-    if (p == nullptr)
+    auto r = fifo_buffer_read(input->buffer);
+    if (r.IsEmpty())
         return true;
 
-    size_t nbytes = istream_invoke_data(&input->output, p, length);
+    size_t nbytes = istream_invoke_data(&input->output, r.data, r.size);
     if (nbytes == 0)
         return false;
 

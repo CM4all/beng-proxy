@@ -76,11 +76,13 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
 
         /* parse lines from the buffer */
 
-        const char *src, *p;
-        size_t length;
-        p = src = (const char *)fifo_buffer_read(buffer, &length);
-        if (src == nullptr && gb == nullptr)
+        auto r = fifo_buffer_read(buffer);
+        if (r.IsEmpty() && gb == nullptr)
             break;
+
+        const char *const src = (const char *)r.data;
+        const char *p = src;
+        const size_t length = r.size;
 
         while (true) {
             while (p < src + length && char_is_whitespace(*p))

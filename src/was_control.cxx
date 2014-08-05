@@ -118,18 +118,16 @@ was_control_drained(struct was_control *control)
 static bool
 was_control_consume_input(struct was_control *control)
 {
-    const void *data;
-    size_t length;
     const struct was_header *header;
 
     while (true) {
-        data = fifo_buffer_read(control->input.buffer, &length);
-        if (data == nullptr || length < sizeof(*header))
+        auto r = fifo_buffer_read(control->input.buffer);
+        if (r.size < sizeof(*header))
             /* not enough data yet */
             return was_control_drained(control);
 
-        header = (const struct was_header *)data;
-        if (length < sizeof(*header) + header->length) {
+        header = (const struct was_header *)r.data;
+        if (r.size < sizeof(*header) + header->length) {
             /* not enough data yet */
 
             if (fifo_buffer_full(control->input.buffer)) {

@@ -19,6 +19,7 @@
 
 #include "fifo_buffer.hxx"
 #include "pool.h"
+#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -81,18 +82,14 @@ fifo_buffer_available(const struct fifo_buffer *buffer)
     return buffer->end - buffer->start;
 }
 
-const void *
-fifo_buffer_read(const struct fifo_buffer *buffer, size_t *length_r)
+ConstBuffer<void>
+fifo_buffer_read(const struct fifo_buffer *buffer)
 {
     assert(buffer != nullptr);
     assert(buffer->end >= buffer->start);
-    assert(length_r != nullptr);
 
-    if (buffer->start == buffer->end)
-        return nullptr;
-
-    *length_r = buffer->end - buffer->start;
-    return buffer->buffer + buffer->start;
+    return ConstBuffer<void>(buffer->buffer + buffer->start,
+                             buffer->end - buffer->start);
 }
 
 void

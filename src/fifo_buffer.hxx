@@ -26,6 +26,7 @@
 
 struct pool;
 struct fifo_buffer;
+template<typename T> struct ConstBuffer;
 
 /**
  * Initialize a #fifo_buffer object that was allocated by the caller.
@@ -50,8 +51,9 @@ fifo_buffer_space(const struct fifo_buffer *buffer);
 size_t
 fifo_buffer_available(const struct fifo_buffer *buffer);
 
-const void *
-fifo_buffer_read(const struct fifo_buffer *buffer, size_t *length_r);
+gcc_pure
+ConstBuffer<void>
+fifo_buffer_read(const struct fifo_buffer *buffer);
 
 void
 fifo_buffer_consume(struct fifo_buffer *buffer, size_t length);

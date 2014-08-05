@@ -11,6 +11,7 @@
 #include "fb_pool.hxx"
 #include "thread_queue.hxx"
 #include "pool.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include "gerrno.h"
 
@@ -88,22 +89,21 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
     while (true) {
         pthread_mutex_lock(&f->mutex);
 
-        size_t length;
-        const void *data = fifo_buffer_read(f->decrypted_input, &length);
-        if (data == nullptr) {
+        auto r = fifo_buffer_read(f->decrypted_input);
+        if (r.IsEmpty()) {
             pthread_mutex_unlock(&f->mutex);
             return true;
         }
 
         /* copy to stack, unlock */
-        uint8_t copy[length];
-        memcpy(copy, data, length);
+        uint8_t copy[r.size];
+        memcpy(copy, r.data, r.size);
         pthread_mutex_unlock(&f->mutex);
 
         f->want_read = false;
         f->read_timeout = nullptr;
 
-        switch (f->socket->InvokeData(copy, length)) {
+        switch (f->socket->InvokeData(copy, r.size)) {
         case BufferedResult::OK:
             return true;
 
@@ -501,20 +501,19 @@ thread_socket_filter_internal_write(void *ctx)
 
     pthread_mutex_lock(&f->mutex);
 
-    size_t length;
-    const void *p = fifo_buffer_read(f->encrypted_output, &length);
-    if (p == nullptr) {
+    auto r = fifo_buffer_read(f->encrypted_output);
+    if (r.IsEmpty()) {
         pthread_mutex_unlock(&f->mutex);
         f->socket->InternalUnscheduleWrite();
         return true;
     }
 
     /* copy to stack, unlock */
-    uint8_t copy[length];
-    memcpy(copy, p, length);
+    uint8_t copy[r.size];
+    memcpy(copy, r.data, r.size);
     pthread_mutex_unlock(&f->mutex);
 
-    ssize_t nbytes = f->socket->InternalWrite(copy, length);
+    ssize_t nbytes = f->socket->InternalWrite(copy, r.size);
     if (nbytes > 0) {
         pthread_mutex_lock(&f->mutex);
         const bool add = fifo_buffer_full(f->encrypted_output);

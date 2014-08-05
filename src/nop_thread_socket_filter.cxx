@@ -8,6 +8,7 @@
 #include "nop_thread_socket_filter.hxx"
 #include "thread_socket_filter.hxx"
 #include "fifo_buffer.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <string.h>
 
@@ -17,9 +18,8 @@
 static void
 copy(struct fifo_buffer *dest, struct fifo_buffer *src)
 {
-    size_t length;
-    const void *s = fifo_buffer_read(src, &length);
-    if (s == nullptr)
+    auto r = fifo_buffer_read(src);
+    if (r.IsEmpty())
         return;
 
     size_t max_length;
@@ -27,12 +27,11 @@ copy(struct fifo_buffer *dest, struct fifo_buffer *src)
     if (d == nullptr)
         return;
 
-    if (length > max_length)
-        length = max_length;
+    size_t nbytes = std::min(r.size, max_length);
 
-    memcpy(d, s, length);
-    fifo_buffer_append(dest, length);
-    fifo_buffer_consume(src, length);
+    memcpy(d, r.data, nbytes);
+    fifo_buffer_append(dest, nbytes);
+    fifo_buffer_consume(src, nbytes);
 }
 
 /*

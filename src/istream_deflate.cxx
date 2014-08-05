@@ -7,6 +7,7 @@
 #include "fifo_buffer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -97,17 +98,16 @@ deflate_initialize_z(struct istream_deflate *defl)
 static size_t
 deflate_try_write(struct istream_deflate *defl)
 {
-    size_t length;
-    const void *data = fifo_buffer_read(defl->buffer, &length);
-    assert(data != nullptr);
+    auto r = fifo_buffer_read(defl->buffer);
+    assert(!r.IsEmpty());
 
-    size_t nbytes = istream_invoke_data(&defl->output, data, length);
+    size_t nbytes = istream_invoke_data(&defl->output, r.data, r.size);
     if (nbytes == 0)
         return 0;
 
     fifo_buffer_consume(defl->buffer, nbytes);
 
-    if (nbytes == length && defl->input == nullptr && defl->z_stream_end) {
+    if (nbytes == r.size && defl->input == nullptr && defl->z_stream_end) {
         deflate_close(defl);
         istream_deinit_eof(&defl->output);
         return 0;

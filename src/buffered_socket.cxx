@@ -10,6 +10,7 @@
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
+#include "util/ConstBuffer.hxx"
 
 #include <utility>
 
@@ -101,10 +102,8 @@ buffered_socket_invoke_data(BufferedSocket *s)
     bool local_expect_more = false;
 
     while (true) {
-        size_t length;
-        const void *data = fifo_buffer_read(s->input, &length);
-        data = fifo_buffer_read(s->input, &length);
-        if (data == nullptr)
+        auto r = fifo_buffer_read(s->input);
+        if (r.IsEmpty())
             return s->expect_more || local_expect_more
                 ? BufferedResult::MORE
                 : BufferedResult::OK;
@@ -114,7 +113,7 @@ buffered_socket_invoke_data(BufferedSocket *s)
 #endif
 
         BufferedResult result =
-            s->handler->data(data, length, s->handler_ctx);
+            s->handler->data(r.data, r.size, s->handler_ctx);
 
 #ifndef NDEBUG
         if (notify.Denotify()) {

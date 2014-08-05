@@ -10,6 +10,7 @@
 #include "strmap.hxx"
 #include "header_parser.hxx"
 #include "strutil.h"
+#include "util/ConstBuffer.hxx"
 
 #include <string.h>
 #include <stdlib.h>
@@ -72,13 +73,12 @@ CGIParser::FeedHeaders(struct pool &pool, struct fifo_buffer &buffer,
 {
     assert(!AreHeadersFinished());
 
-    size_t length;
-    const char *data = (const char *)fifo_buffer_read(&buffer, &length);
-    if (data == nullptr)
+    auto r = fifo_buffer_read(&buffer);
+    if (r.IsEmpty())
         return C_MORE;
 
-    assert(length > 0);
-    const char *data_end = data + length;
+    const char *data = (const char *)r.data;
+    const char *data_end = data + r.size;
 
     /* parse each line until we stumble upon an empty one */
     const char *start = data, *end, *next = nullptr;

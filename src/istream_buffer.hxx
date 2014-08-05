@@ -9,6 +9,7 @@
 
 #include "istream-internal.h"
 #include "fifo_buffer.hxx"
+#include "util/ConstBuffer.hxx"
 
 /**
  * @return the number of bytes still in the buffer
@@ -16,15 +17,14 @@
 static inline size_t
 istream_buffer_consume(struct istream *istream, struct fifo_buffer *buffer)
 {
-    size_t length;
-    const void *data = fifo_buffer_read(buffer, &length);
-    if (data == nullptr)
+    auto r = fifo_buffer_read(buffer);
+    if (r.IsEmpty())
         return 0;
 
-    size_t consumed = istream_invoke_data(istream, data, length);
+    size_t consumed = istream_invoke_data(istream, r.data, r.size);
     if (consumed > 0)
         fifo_buffer_consume(buffer, consumed);
-    return length - consumed;
+    return r.size - consumed;
 }
 
 /**
@@ -33,12 +33,11 @@ istream_buffer_consume(struct istream *istream, struct fifo_buffer *buffer)
 static inline size_t
 istream_buffer_send(struct istream *istream, struct fifo_buffer *buffer)
 {
-    size_t length;
-    const void *data = fifo_buffer_read(buffer, &length);
-    if (data == nullptr)
+    auto r = fifo_buffer_read(buffer);
+    if (r.IsEmpty())
         return 0;
 
-    size_t consumed = istream_invoke_data(istream, data, length);
+    size_t consumed = istream_invoke_data(istream, r.data, r.size);
     if (consumed > 0)
         fifo_buffer_consume(buffer, consumed);
     return consumed;

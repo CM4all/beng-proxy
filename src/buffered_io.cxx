@@ -6,6 +6,7 @@
 
 #include "buffered_io.hxx"
 #include "fifo_buffer.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <assert.h>
 #include <unistd.h>
@@ -36,20 +37,19 @@ read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
 ssize_t
 write_from_buffer(int fd, struct fifo_buffer *buffer)
 {
-    size_t length;
-    const void *data = fifo_buffer_read(buffer, &length);
-    if (data == nullptr)
+    auto r = fifo_buffer_read(buffer);
+    if (r.IsEmpty())
         return -2;
 
-    ssize_t nbytes = write(fd, data, length);
+    ssize_t nbytes = write(fd, r.data, r.size);
     if (nbytes < 0 && errno != EAGAIN)
         return -1;
 
     if (nbytes <= 0)
-        return length;
+        return r.size;
 
     fifo_buffer_consume(buffer, (size_t)nbytes);
-    return (ssize_t)length - nbytes;
+    return (ssize_t)r.size - nbytes;
 }
 
 ssize_t
@@ -76,18 +76,17 @@ recv_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
 ssize_t
 send_from_buffer(int fd, struct fifo_buffer *buffer)
 {
-    size_t length;
-    const void *data = fifo_buffer_read(buffer, &length);
-    if (data == nullptr)
+    auto r = fifo_buffer_read(buffer);
+    if (r.IsEmpty())
         return -2;
 
-    ssize_t nbytes = send(fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    ssize_t nbytes = send(fd, r.data, r.size, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0 && errno != EAGAIN)
         return -1;
 
     if (nbytes <= 0)
-        return length;
+        return r.size;
 
     fifo_buffer_consume(buffer, (size_t)nbytes);
-    return (ssize_t)length - nbytes;
+    return (ssize_t)r.size - nbytes;
 }
