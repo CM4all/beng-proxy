@@ -334,7 +334,7 @@ ssl_factory::EnableSNI(GError **error_r)
     return true;
 }
 
-SSL *
+inline SSL *
 ssl_factory::Make()
 {
     SSL *ssl = SSL_new(ssl_ctx);
