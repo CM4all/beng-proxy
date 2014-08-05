@@ -2,6 +2,7 @@ cm4all-beng-proxy (5.0.12) unstable; urgency=low
 
   * merge release 4.13
   * http_cache: fix memcached crash bug
+  * lb: SIGHUP flushes the SSL session cache
 
  --   
 

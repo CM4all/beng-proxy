@@ -64,3 +64,11 @@ lb_listener::~lb_listener()
     if (ssl_factory != nullptr)
         ssl_factory_free(ssl_factory);
 }
+
+unsigned
+lb_listener::FlushSSLSessionCache(long tm)
+{
+    return ssl_factory != nullptr
+        ? ssl_factory_flush(*ssl_factory, tm)
+        : 0;
+}

@@ -85,6 +85,15 @@ all_listeners_event_del(struct lb_instance *instance)
         listener.RemoveEvent();
 }
 
+unsigned
+lb_instance::FlushSSLSessionCache(long tm)
+{
+    unsigned n = 0;
+    for (auto &listener : listeners)
+        n += listener.FlushSSLSessionCache(tm);
+    return n;
+}
+
 bool
 init_all_controls(struct lb_instance *instance, GError **error_r)
 {

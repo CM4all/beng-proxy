@@ -193,11 +193,13 @@ static void
 reload_event_callback(int fd gcc_unused, short event gcc_unused,
                       void *ctx)
 {
-    struct instance *instance = (struct instance*)ctx;
-
-    (void)instance;
+    struct lb_instance *instance = (struct lb_instance *)ctx;
 
     daemonize_reopen_logfile();
+
+    unsigned n_ssl_sessions = instance->FlushSSLSessionCache(LONG_MAX);
+    daemon_log(3, "flushed %u SSL sessions\n", n_ssl_sessions);
+
     fb_pool_compress();
 }
 

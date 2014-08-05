@@ -63,6 +63,8 @@ struct ssl_factory {
     bool EnableSNI(Error &error);
 
     SSL *Make();
+
+    unsigned Flush(long tm);
 };
 
 static int
@@ -342,6 +344,15 @@ ssl_factory::Make()
     return ssl;
 }
 
+inline unsigned
+ssl_factory::Flush(long tm)
+{
+    unsigned before = SSL_CTX_sess_number(ssl_ctx);
+    SSL_CTX_flush_sessions(ssl_ctx, tm);
+    unsigned after = SSL_CTX_sess_number(ssl_ctx);
+    return after < before ? before - after : 0;
+}
+
 /**
  * Enable Elliptic curve Diffie-Hellman (ECDH) for perfect forward
  * secrecy.  By default, it OpenSSL disables it.
@@ -422,4 +433,10 @@ SSL *
 ssl_factory_make(ssl_factory &factory)
 {
     return factory.Make();
+}
+
+unsigned
+ssl_factory_flush(struct ssl_factory &factory, long tm)
+{
+    return factory.Flush(tm);
 }

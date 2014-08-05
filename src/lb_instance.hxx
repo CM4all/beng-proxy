@@ -46,6 +46,8 @@ struct lb_instance {
     struct tcp_balancer *tcp_balancer;
 
     struct stock *pipe_stock;
+
+    unsigned FlushSSLSessionCache(long tm);
 };
 
 struct client_connection;

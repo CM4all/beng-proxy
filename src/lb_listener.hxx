@@ -25,6 +25,8 @@ public:
 
     bool Setup(Error &error);
 
+    unsigned FlushSSLSessionCache(long tm);
+
 protected:
     void OnAccept(SocketDescriptor &&fd, SocketAddress address) override;
     void OnAcceptError(Error &&error) override;

@@ -22,4 +22,12 @@ ssl_factory_free(struct ssl_factory *factory);
 struct ssl_st *
 ssl_factory_make(struct ssl_factory &factory);
 
+/**
+ * Flush expired sessions from the session cache.
+ *
+ * @return the number of expired sessions
+ */
+unsigned
+ssl_factory_flush(struct ssl_factory &factory, long tm);
+
 #endif
