@@ -11,6 +11,7 @@
 #include "fifo_buffer.hxx"
 #include "tpool.h"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <algorithm>
 
@@ -60,13 +61,12 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
         /* copy gb to buffer */
 
         if (gb != nullptr) {
-            size_t max_length;
-            void *dest = fifo_buffer_write(buffer, &max_length);
-            if (dest != nullptr) {
+            auto w = fifo_buffer_write(buffer);
+            if (!w.IsEmpty()) {
                 auto src = reader.Read();
                 if (!src.IsNull()) {
-                    size_t nbytes = std::min(src.size, max_length);
-                    memcpy(dest, src.data, nbytes);
+                    size_t nbytes = std::min(src.size, w.size);
+                    memcpy(w.data, src.data, nbytes);
                     fifo_buffer_append(buffer, nbytes);
                     reader.Consume(nbytes);
                 } else

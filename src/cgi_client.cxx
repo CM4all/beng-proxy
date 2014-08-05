@@ -18,6 +18,7 @@
 #include "http_response.hxx"
 #include "fb_pool.hxx"
 #include "util/Cast.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <string.h>
 #include <stdlib.h>
@@ -135,14 +136,13 @@ CGIClient::FeedHeaders(const void *data, size_t length)
 {
     assert(!parser.AreHeadersFinished());
 
-    size_t max_length;
-    void *dest = fifo_buffer_write(buffer, &max_length);
-    assert(dest != nullptr);
+    auto w = fifo_buffer_write(buffer);
+    assert(!w.IsEmpty());
 
-    if (length > max_length)
-        length = max_length;
+    if (length > w.size)
+        length = w.size;
 
-    memcpy(dest, data, length);
+    memcpy(w.data, data, length);
     fifo_buffer_append(buffer, length);
 
     GError *error = nullptr;

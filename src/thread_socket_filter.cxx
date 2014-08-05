@@ -12,6 +12,7 @@
 #include "thread_queue.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include "gerrno.h"
 
@@ -323,20 +324,19 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
 
     pthread_mutex_lock(&f->mutex);
 
-    size_t max_length;
-    void *p = fifo_buffer_write(f->encrypted_input, &max_length);
-    if (p == nullptr) {
+    auto w = fifo_buffer_write(f->encrypted_input);
+    if (w.IsEmpty()) {
         pthread_mutex_unlock(&f->mutex);
         return BufferedResult::BLOCKING;
     }
 
     BufferedResult result = BufferedResult::OK;
-    if (length > max_length) {
-        length = max_length;
+    if (length > w.size) {
+        length = w.size;
         result = BufferedResult::PARTIAL;
     }
 
-    memcpy(p, data, length);
+    memcpy(w.data, data, length);
     fifo_buffer_append(f->encrypted_input, length);
     pthread_mutex_unlock(&f->mutex);
 
@@ -421,17 +421,17 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
     pthread_mutex_lock(&f->mutex);
 
     ssize_t nbytes = WRITE_BLOCKING;
-    size_t max_length;
-    void *p = fifo_buffer_write(f->plain_output, &max_length);
-    if (p != nullptr) {
-        nbytes = std::min(length, max_length);
-        memcpy(p, data, nbytes);
+
+    auto w = fifo_buffer_write(f->plain_output);
+    if (!w.IsEmpty()) {
+        nbytes = std::min(length, w.size);
+        memcpy(w.data, data, nbytes);
         fifo_buffer_append(f->plain_output, nbytes);
     }
 
     pthread_mutex_unlock(&f->mutex);
 
-    if (p != nullptr) {
+    if (!w.IsEmpty()) {
         f->socket->InternalUndrained();
         thread_socket_filter_schedule(*f);
     }

@@ -6,6 +6,7 @@
 #include "istream_buffer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <iconv.h>
 
@@ -39,14 +40,13 @@ static size_t
 iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
 {
     const char *src = data;
-    size_t dest_left, ret, nbytes;
 
     do {
-        char *const buffer = (char *)fifo_buffer_write(ic->buffer, &dest_left);
-        if (buffer == nullptr) {
+        auto w = fifo_buffer_write(ic->buffer);
+        if (w.IsEmpty()) {
             /* no space left in the buffer: attempt to flush it */
 
-            nbytes = istream_buffer_send(&ic->output, ic->buffer);
+            size_t nbytes = istream_buffer_send(&ic->output, ic->buffer);
             if (nbytes == 0) {
                 if (ic->buffer == nullptr)
                     return 0;
@@ -58,14 +58,18 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
             continue;
         }
 
+        char *const buffer = (char *)w.data;
         char *dest = buffer;
+        size_t dest_left = w.size;
 
-        ret = deconst_iconv(ic->iconv, &src, &length, &dest, &dest_left);
+        size_t ret = deconst_iconv(ic->iconv, &src, &length, &dest, &dest_left);
         if (dest > buffer)
             fifo_buffer_append(ic->buffer, dest - buffer);
 
         if (ret == (size_t)-1) {
             switch (errno) {
+                size_t nbytes;
+
             case EILSEQ:
                 /* invalid sequence: skip this byte */
                 ++src;

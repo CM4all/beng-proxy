@@ -12,6 +12,7 @@
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -341,10 +342,9 @@ was_control_start(struct was_control *control, enum was_command cmd,
 {
     assert(!control->done);
 
-    size_t max_length;
-    struct was_header *header = (struct was_header *)
-        fifo_buffer_write(control->output.buffer, &max_length);
-    if (header == nullptr || max_length < sizeof(*header) + payload_length) {
+    auto w = fifo_buffer_write(control->output.buffer);
+    struct was_header *header = (struct was_header *)w.data;
+    if (w.size < sizeof(*header) + payload_length) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "control output is too large");

@@ -14,6 +14,7 @@
 #include "gerrno.h"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -63,14 +64,13 @@ copy_fifo_buffer(struct fifo_buffer *dest, struct fifo_buffer *src)
     if (r.IsEmpty())
         return;
 
-    size_t max_length;
-    void *d = fifo_buffer_write(dest, &max_length);
-    if (d == NULL)
+    auto w = fifo_buffer_write(dest);
+    if (w.IsEmpty())
         return;
 
-    size_t nbytes = std::min(r.size, max_length);
+    size_t nbytes = std::min(r.size, w.size);
 
-    memcpy(d, r.data, nbytes);
+    memcpy(w.data, r.data, nbytes);
     fifo_buffer_append(dest, nbytes);
     fifo_buffer_consume(src, nbytes);
 }
@@ -94,12 +94,11 @@ static void
 copy_bio_to_fifo_buffer(fifo_buffer *dest, BIO *src)
 {
     while (true) {
-        size_t max_length;
-        void *data = fifo_buffer_write(dest, &max_length);
-        if (data == nullptr)
+        auto w = fifo_buffer_write(dest);
+        if (w.IsEmpty())
             return;
 
-        int nbytes = BIO_read(src, data, max_length);
+        int nbytes = BIO_read(src, w.data, w.size);
         if (nbytes <= 0)
             return;
 
@@ -175,12 +174,11 @@ ssl_decrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
        data (or until the buffer is full) */
 
     while (true) {
-        size_t length;
-        void *data = fifo_buffer_write(buffer, &length);
-        if (data == NULL)
-            return true;
+        auto w = fifo_buffer_write(buffer);
+        if (w.IsEmpty())
+            return 0;
 
-        int result = SSL_read(ssl, data, length);
+        int result = SSL_read(ssl, w.data, w.size);
         if (result <= 0)
             return result == 0 || check_ssl_error(ssl, result, error_r);
 

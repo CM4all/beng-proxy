@@ -10,6 +10,7 @@
 #include "nfs_client.hxx"
 #include "fifo_buffer.hxx"
 #include "util/Cast.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -116,11 +117,10 @@ istream_nfs_feed(struct istream_nfs *n, const void *data, size_t length)
         buffer = n->buffer = fifo_buffer_new(n->base.pool, buffer_size);
     }
 
-    size_t max;
-    void *p = fifo_buffer_write(buffer, &max);
-    assert(max >= length);
+    auto w = fifo_buffer_write(buffer);
+    assert(w.size >= length);
 
-    memcpy(p, data, length);
+    memcpy(w.data, data, length);
     fifo_buffer_append(buffer, length);
 }
 

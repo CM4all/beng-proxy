@@ -9,6 +9,7 @@
 #include "thread_socket_filter.hxx"
 #include "fifo_buffer.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <string.h>
 
@@ -22,14 +23,13 @@ copy(struct fifo_buffer *dest, struct fifo_buffer *src)
     if (r.IsEmpty())
         return;
 
-    size_t max_length;
-    void *d = fifo_buffer_write(dest, &max_length);
-    if (d == nullptr)
+    auto w = fifo_buffer_write(dest);
+    if (w.IsEmpty())
         return;
 
-    size_t nbytes = std::min(r.size, max_length);
+    size_t nbytes = std::min(r.size, w.size);
 
-    memcpy(d, r.data, nbytes);
+    memcpy(w.data, r.data, nbytes);
     fifo_buffer_append(dest, nbytes);
     fifo_buffer_consume(src, nbytes);
 }

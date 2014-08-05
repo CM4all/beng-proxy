@@ -7,6 +7,7 @@
 #include "buffered_io.hxx"
 #include "fifo_buffer.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <assert.h>
 #include <unistd.h>
@@ -19,15 +20,14 @@ read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
     assert(fd >= 0);
     assert(buffer != nullptr);
 
-    size_t max_length;
-    void *dest = fifo_buffer_write(buffer, &max_length);
-    if (dest == nullptr)
+    auto w = fifo_buffer_write(buffer);
+    if (w.IsEmpty())
         return -2;
 
-    if (length > max_length)
-        length = max_length;
+    if (length > w.size)
+        length = w.size;
 
-    ssize_t nbytes = read(fd, dest, length);
+    ssize_t nbytes = read(fd, w.data, length);
     if (nbytes > 0)
         fifo_buffer_append(buffer, (size_t)nbytes);
 
@@ -58,15 +58,14 @@ recv_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
     assert(fd >= 0);
     assert(buffer != nullptr);
 
-    size_t max_length;
-    void *dest = fifo_buffer_write(buffer, &max_length);
-    if (dest == nullptr)
+    auto w = fifo_buffer_write(buffer);
+    if (w.IsEmpty())
         return -2;
 
-    if (length > max_length)
-        length = max_length;
+    if (length > w.size)
+        length = w.size;
 
-    ssize_t nbytes = recv(fd, dest, length, MSG_DONTWAIT);
+    ssize_t nbytes = recv(fd, w.data, length, MSG_DONTWAIT);
     if (nbytes > 0)
         fifo_buffer_append(buffer, (size_t)nbytes);
 

@@ -20,6 +20,7 @@
 #include "fifo_buffer.hxx"
 #include "pool.h"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -116,25 +117,22 @@ fifo_buffer_move(struct fifo_buffer *buffer)
     buffer->start = 0;
 }
 
-void *
-fifo_buffer_write(struct fifo_buffer *buffer, size_t *max_length_r)
+WritableBuffer<void>
+fifo_buffer_write(struct fifo_buffer *buffer)
 {
     assert(buffer != nullptr);
     assert(buffer->size > 0);
     assert(buffer->end <= buffer->size);
-    assert(max_length_r != nullptr);
 
     if (buffer->end == buffer->size) {
         fifo_buffer_move(buffer);
-        if (buffer->end == buffer->size)
-            return nullptr;
     } else if (buffer->start > 0 && buffer->start == buffer->end) {
         buffer->start = 0;
         buffer->end = 0;
     }
 
-    *max_length_r = buffer->size - buffer->end;
-    return buffer->buffer + buffer->end;
+    return WritableBuffer<void>(buffer->buffer + buffer->end,
+                                buffer->size - buffer->end);
 }
 
 void

@@ -27,6 +27,7 @@
 struct pool;
 struct fifo_buffer;
 template<typename T> struct ConstBuffer;
+template<typename T> struct WritableBuffer;
 
 /**
  * Initialize a #fifo_buffer object that was allocated by the caller.
@@ -58,8 +59,9 @@ fifo_buffer_read(const struct fifo_buffer *buffer);
 void
 fifo_buffer_consume(struct fifo_buffer *buffer, size_t length);
 
-void *
-fifo_buffer_write(struct fifo_buffer *buffer, size_t *max_length_r);
+gcc_pure
+WritableBuffer<void>
+fifo_buffer_write(struct fifo_buffer *buffer);
 
 void
 fifo_buffer_append(struct fifo_buffer *buffer, size_t length);

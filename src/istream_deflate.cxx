@@ -8,6 +8,7 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -122,18 +123,14 @@ deflate_try_write(struct istream_deflate *defl)
  * @return a pointer to the writable buffer, or nullptr if there is no
  * room (our istream handler blocks) or if the stream was closed
  */
-static void *
-deflate_buffer_write(struct istream_deflate *defl, size_t *max_length_r)
+static WritableBuffer<void>
+deflate_buffer_write(struct istream_deflate *defl)
 {
-    void *data = fifo_buffer_write(defl->buffer, max_length_r);
-    if (data != nullptr)
-        return data;
+    auto w = fifo_buffer_write(defl->buffer);
+    if (w.IsEmpty() && deflate_try_write(defl) > 0)
+        w = fifo_buffer_write(defl->buffer);
 
-    size_t nbytes = deflate_try_write(defl);
-    if (nbytes == 0)
-        return nullptr;
-
-    return fifo_buffer_write(defl->buffer, max_length_r);
+    return w;
 }
 
 static void
@@ -141,13 +138,12 @@ deflate_try_flush(struct istream_deflate *defl)
 {
     assert(!defl->z_stream_end);
 
-    size_t max_length;
-    void *dest_buffer = deflate_buffer_write(defl, &max_length);
-    if (dest_buffer == nullptr)
+    auto w = deflate_buffer_write(defl);
+    if (w.IsEmpty())
         return;
 
-    defl->z.next_out = (Bytef *)dest_buffer;
-    defl->z.avail_out = (uInt)max_length;
+    defl->z.next_out = (Bytef *)w.data;
+    defl->z.avail_out = (uInt)w.size;
 
     defl->z.next_in = nullptr;
     defl->z.avail_in = 0;
@@ -161,7 +157,7 @@ deflate_try_flush(struct istream_deflate *defl)
         return;
     }
 
-    fifo_buffer_append(defl->buffer, max_length - (size_t)defl->z.avail_out);
+    fifo_buffer_append(defl->buffer, w.size - (size_t)defl->z.avail_out);
 
     if (!fifo_buffer_empty(defl->buffer))
         deflate_try_write(defl);
@@ -205,13 +201,12 @@ deflate_try_finish(struct istream_deflate *defl)
 {
     assert(!defl->z_stream_end);
 
-    size_t max_length;
-    void *dest_buffer = deflate_buffer_write(defl, &max_length);
-    if (dest_buffer == nullptr)
+    auto w = deflate_buffer_write(defl);
+    if (w.IsEmpty())
         return;
 
-    defl->z.next_out = (Bytef *)dest_buffer;
-    defl->z.avail_out = (uInt)max_length;
+    defl->z.next_out = (Bytef *)w.data;
+    defl->z.avail_out = (uInt)w.size;
 
     defl->z.next_in = nullptr;
     defl->z.avail_in = 0;
@@ -227,7 +222,7 @@ deflate_try_finish(struct istream_deflate *defl)
         return;
     }
 
-    fifo_buffer_append(defl->buffer, max_length - (size_t)defl->z.avail_out);
+    fifo_buffer_append(defl->buffer, w.size - (size_t)defl->z.avail_out);
 
     if (defl->z_stream_end && fifo_buffer_empty(defl->buffer)) {
         deflate_close(defl);
@@ -249,9 +244,8 @@ deflate_input_data(const void *data, size_t length, void *ctx)
 
     assert(defl->input != nullptr);
 
-    size_t max_length;
-    void *dest_buffer = deflate_buffer_write(defl, &max_length);
-    if (dest_buffer == nullptr || max_length < 64) /* reserve space for end-of-stream marker */
+    auto w = deflate_buffer_write(defl);
+    if (w.size < 64) /* reserve space for end-of-stream marker */
         return 0;
 
     int err = deflate_initialize_z(defl);
@@ -260,8 +254,8 @@ deflate_input_data(const void *data, size_t length, void *ctx)
 
     defl->had_input = true;
 
-    defl->z.next_out = (Bytef *)dest_buffer;
-    defl->z.avail_out = (uInt)max_length;
+    defl->z.next_out = (Bytef *)w.data;
+    defl->z.avail_out = (uInt)w.size;
 
     defl->z.next_in = (Bytef *)const_cast<void *>(data);
     defl->z.avail_in = (uInt)length;
@@ -276,7 +270,7 @@ deflate_input_data(const void *data, size_t length, void *ctx)
             return 0;
         }
 
-        size_t nbytes = max_length - (size_t)defl->z.avail_out;
+        size_t nbytes = w.size - (size_t)defl->z.avail_out;
         if (nbytes > 0) {
             defl->had_output = true;
             fifo_buffer_append(defl->buffer, nbytes);
@@ -293,12 +287,12 @@ deflate_input_data(const void *data, size_t length, void *ctx)
         } else
             break;
 
-        dest_buffer = deflate_buffer_write(defl, &max_length);
-        if (dest_buffer == nullptr || max_length < 64) /* reserve space for end-of-stream marker */
+        w = deflate_buffer_write(defl);
+        if (w.size < 64) /* reserve space for end-of-stream marker */
             break;
 
-        defl->z.next_out = (Bytef *)dest_buffer;
-        defl->z.avail_out = (uInt)max_length;
+        defl->z.next_out = (Bytef *)w.data;
+        defl->z.avail_out = (uInt)w.size;
     } while (defl->z.avail_in > 0);
 
     return length - (size_t)defl->z.avail_in;
