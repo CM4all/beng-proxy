@@ -25,6 +25,10 @@ struct event2 {
     const struct timeval *tv;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void
 event2_init(struct event2 *event, int fd,
             void (*callback)(int, short, void *arg), void *ctx,
@@ -32,6 +36,10 @@ event2_init(struct event2 *event, int fd,
 
 void
 event2_commit(struct event2 *event);
+
+#ifdef __cplusplus
+}
+#endif
 
 static inline void
 event2_lock(struct event2 *event)
