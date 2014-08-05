@@ -13,7 +13,7 @@
 #include "fd_util.h"
 #include "fd-util.h"
 #include "fifo-buffer.h"
-#include "buffered_io.h"
+#include "buffered_io.hxx"
 #include "pevent.h"
 #include "gerrno.h"
 #include "util/Cast.hxx"

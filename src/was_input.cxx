@@ -10,7 +10,7 @@
 #include "direct.h"
 #include "istream-internal.h"
 #include "fifo-buffer.h"
-#include "buffered_io.h"
+#include "buffered_io.hxx"
 #include "fd-util.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"

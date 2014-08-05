@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "buffered_io.h"
+#include "buffered_io.hxx"
 #include "fifo-buffer.h"
 
 #include <assert.h>
@@ -15,21 +15,18 @@
 ssize_t
 read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
 {
-    void *dest;
-    size_t max_length;
-    ssize_t nbytes;
-
     assert(fd >= 0);
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
 
-    dest = fifo_buffer_write(buffer, &max_length);
-    if (dest == NULL)
+    size_t max_length;
+    void *dest = fifo_buffer_write(buffer, &max_length);
+    if (dest == nullptr)
         return -2;
 
     if (length > max_length)
         length = max_length;
 
-    nbytes = read(fd, dest, length);
+    ssize_t nbytes = read(fd, dest, length);
     if (nbytes > 0)
         fifo_buffer_append(buffer, (size_t)nbytes);
 
@@ -39,15 +36,12 @@ read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
 ssize_t
 write_from_buffer(int fd, struct fifo_buffer *buffer)
 {
-    const void *data;
     size_t length;
-    ssize_t nbytes;
-
-    data = fifo_buffer_read(buffer, &length);
-    if (data == NULL)
+    const void *data = fifo_buffer_read(buffer, &length);
+    if (data == nullptr)
         return -2;
 
-    nbytes = write(fd, data, length);
+    ssize_t nbytes = write(fd, data, length);
     if (nbytes < 0 && errno != EAGAIN)
         return -1;
 
@@ -61,21 +55,18 @@ write_from_buffer(int fd, struct fifo_buffer *buffer)
 ssize_t
 recv_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
 {
-    void *dest;
-    size_t max_length;
-    ssize_t nbytes;
-
     assert(fd >= 0);
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
 
-    dest = fifo_buffer_write(buffer, &max_length);
-    if (dest == NULL)
+    size_t max_length;
+    void *dest = fifo_buffer_write(buffer, &max_length);
+    if (dest == nullptr)
         return -2;
 
     if (length > max_length)
         length = max_length;
 
-    nbytes = recv(fd, dest, length, MSG_DONTWAIT);
+    ssize_t nbytes = recv(fd, dest, length, MSG_DONTWAIT);
     if (nbytes > 0)
         fifo_buffer_append(buffer, (size_t)nbytes);
 
@@ -85,15 +76,12 @@ recv_to_buffer(int fd, struct fifo_buffer *buffer, size_t length)
 ssize_t
 send_from_buffer(int fd, struct fifo_buffer *buffer)
 {
-    const void *data;
     size_t length;
-    ssize_t nbytes;
-
-    data = fifo_buffer_read(buffer, &length);
-    if (data == NULL)
+    const void *data = fifo_buffer_read(buffer, &length);
+    if (data == nullptr)
         return -2;
 
-    nbytes = send(fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
+    ssize_t nbytes = send(fd, data, length, MSG_DONTWAIT|MSG_NOSIGNAL);
     if (nbytes < 0 && errno != EAGAIN)
         return -1;
 

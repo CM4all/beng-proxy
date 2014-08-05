@@ -11,7 +11,6 @@
 #include "thread_socket_filter.hxx"
 #include "pool.hxx"
 #include "fifo-buffer.h"
-#include "buffered_io.h"
 #include "gerrno.h"
 #include "fb_pool.hxx"
 

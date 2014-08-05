@@ -16,7 +16,6 @@
 #include "direct.h"
 #include "istream-internal.h"
 #include "fifo-buffer.h"
-#include "buffered_io.h"
 #include "fd-util.h"
 #include "strmap.hxx"
 #include "pool.hxx"
