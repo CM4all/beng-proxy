@@ -2,6 +2,8 @@ cm4all-beng-proxy (4.13) unstable; urgency=low
 
   * thread_worker: smaller thread stack (64 kB)
   * ssl_factory: enable ECDH for perfect forward secrecy
+  * thread_socket_filter: reinvoke writing after recovering from full
+    output buffer
 
  --   
 
