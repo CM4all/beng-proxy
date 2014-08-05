@@ -269,12 +269,8 @@ istream_file_available(struct istream *istream, bool partial)
     else
         available = 0;
 
-    if (file->buffer != nullptr) {
-        size_t length;
-        const void *data = fifo_buffer_read(file->buffer, &length);
-        if (data != nullptr)
-            available += length;
-    }
+    if (file->buffer != nullptr)
+        available += fifo_buffer_available(file->buffer);
 
     return available;
 }
