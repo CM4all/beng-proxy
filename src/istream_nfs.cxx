@@ -8,7 +8,7 @@
 #include "istream-internal.h"
 #include "istream_buffer.hxx"
 #include "nfs_client.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>

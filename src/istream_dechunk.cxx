@@ -6,7 +6,7 @@
 
 #include "istream_dechunk.hxx"
 #include "istream-internal.h"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2007 Max Kellermann <max@duempel.org>
+ * Copyright (C) 2004-2014 Max Kellermann <max@duempel.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -17,7 +17,7 @@
  * 02110-1301 USA
  */
 
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "pool.h"
 
 #include <assert.h>
@@ -31,7 +31,7 @@ struct fifo_buffer {
 void
 fifo_buffer_init(struct fifo_buffer *buffer, size_t size)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     assert(size >= sizeof(*buffer));
 
     buffer->size = size + sizeof(buffer->buffer) - sizeof(*buffer);
@@ -42,11 +42,10 @@ fifo_buffer_init(struct fifo_buffer *buffer, size_t size)
 struct fifo_buffer *
 fifo_buffer_new(struct pool *pool, size_t size)
 {
-    struct fifo_buffer *buffer;
-
     assert(size > 0);
 
-    buffer = p_malloc(pool, sizeof(*buffer) - sizeof(buffer->buffer) + size);
+    struct fifo_buffer *buffer = (struct fifo_buffer *)
+        p_malloc(pool, sizeof(*buffer) - sizeof(buffer->buffer) + size);
     buffer->size = size;
     buffer->start = 0;
     buffer->end = 0;
@@ -57,7 +56,7 @@ fifo_buffer_new(struct pool *pool, size_t size)
 void
 fifo_buffer_clear(struct fifo_buffer *buffer)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     buffer->start = 0;
     buffer->end = 0;
 }
@@ -65,7 +64,7 @@ fifo_buffer_clear(struct fifo_buffer *buffer)
 size_t
 fifo_buffer_space(const struct fifo_buffer *buffer)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     assert(buffer->end >= buffer->start);
 
     return buffer->start == buffer->end
@@ -76,7 +75,7 @@ fifo_buffer_space(const struct fifo_buffer *buffer)
 size_t
 fifo_buffer_available(const struct fifo_buffer *buffer)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     assert(buffer->end >= buffer->start);
 
     return buffer->end - buffer->start;
@@ -85,12 +84,12 @@ fifo_buffer_available(const struct fifo_buffer *buffer)
 const void *
 fifo_buffer_read(const struct fifo_buffer *buffer, size_t *length_r)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     assert(buffer->end >= buffer->start);
-    assert(length_r != NULL);
+    assert(length_r != nullptr);
 
     if (buffer->start == buffer->end)
-        return NULL;
+        return nullptr;
 
     *length_r = buffer->end - buffer->start;
     return buffer->buffer + buffer->start;
@@ -99,7 +98,7 @@ fifo_buffer_read(const struct fifo_buffer *buffer, size_t *length_r)
 void
 fifo_buffer_consume(struct fifo_buffer *buffer, size_t length)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     assert(buffer->end >= buffer->start);
     assert(buffer->start + length <= buffer->end);
 
@@ -123,15 +122,15 @@ fifo_buffer_move(struct fifo_buffer *buffer)
 void *
 fifo_buffer_write(struct fifo_buffer *buffer, size_t *max_length_r)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     assert(buffer->size > 0);
     assert(buffer->end <= buffer->size);
-    assert(max_length_r != NULL);
+    assert(max_length_r != nullptr);
 
     if (buffer->end == buffer->size) {
         fifo_buffer_move(buffer);
         if (buffer->end == buffer->size)
-            return NULL;
+            return nullptr;
     } else if (buffer->start > 0 && buffer->start == buffer->end) {
         buffer->start = 0;
         buffer->end = 0;
@@ -144,7 +143,7 @@ fifo_buffer_write(struct fifo_buffer *buffer, size_t *max_length_r)
 void
 fifo_buffer_append(struct fifo_buffer *buffer, size_t length)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     assert(buffer->size > 0);
     assert(buffer->end >= buffer->start);
     assert(buffer->end + length <= buffer->size);
@@ -155,7 +154,7 @@ fifo_buffer_append(struct fifo_buffer *buffer, size_t length)
 int
 fifo_buffer_empty(struct fifo_buffer *buffer)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     assert(buffer->size > 0);
 
     return buffer->start == buffer->end;
@@ -164,7 +163,7 @@ fifo_buffer_empty(struct fifo_buffer *buffer)
 int
 fifo_buffer_full(struct fifo_buffer *buffer)
 {
-    assert(buffer != NULL);
+    assert(buffer != nullptr);
     assert(buffer->size > 0);
 
     return buffer->start == 0 && buffer->end == buffer->size;

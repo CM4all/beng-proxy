@@ -8,7 +8,7 @@
 #include "strutil.h"
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "tpool.h"
 #include "util/ConstBuffer.hxx"
 

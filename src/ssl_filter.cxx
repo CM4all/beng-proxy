@@ -10,7 +10,7 @@
 #include "ssl_quark.hxx"
 #include "thread_socket_filter.hxx"
 #include "pool.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "gerrno.h"
 #include "fb_pool.hxx"
 

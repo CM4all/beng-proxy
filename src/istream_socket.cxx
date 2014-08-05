@@ -8,7 +8,7 @@
 #include "istream-internal.h"
 #include "istream_buffer.hxx"
 #include "pool.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "buffered_io.hxx"
 #include "pevent.h"
 #include "gerrno.h"

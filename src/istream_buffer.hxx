@@ -8,7 +8,7 @@
 #define BENG_PROXY_ISTREAM_BUFFER_HXX
 
 #include "istream-internal.h"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 
 /**
  * @return the number of bytes still in the buffer

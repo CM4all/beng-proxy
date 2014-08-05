@@ -6,7 +6,7 @@
  */
 
 #include "filtered_socket.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 
 #include <utility>
 

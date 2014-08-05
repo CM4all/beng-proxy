@@ -9,7 +9,7 @@
 #include "http_response.hxx"
 #include "http_upgrade.hxx"
 #include "http_util.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "strutil.h"
 #include "header_parser.hxx"
 #include "header_writer.hxx"

@@ -5,7 +5,7 @@
  */
 
 #include "buffered_io.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 
 #include <assert.h>
 #include <unistd.h>

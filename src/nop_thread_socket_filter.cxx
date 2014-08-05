@@ -7,7 +7,7 @@
 
 #include "nop_thread_socket_filter.hxx"
 #include "thread_socket_filter.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 
 #include <string.h>
 

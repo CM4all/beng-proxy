@@ -600,7 +600,7 @@ libutil_a_SOURCES = \
 
 libputil_a_SOURCES = \
 	src/expansible-buffer.c src/expansible-buffer.h \
-	src/fifo-buffer.c src/fifo-buffer.h \
+	src/fifo_buffer.cxx src/fifo_buffer.hxx \
 	src/growing_buffer.cxx src/growing_buffer.hxx \
 	src/hashmap.cxx src/hashmap.hxx \
 	src/please.hxx \

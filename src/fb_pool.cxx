@@ -7,7 +7,7 @@
 
 #include "fb_pool.hxx"
 #include "slice.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "cleanup_timer.hxx"
 
 #include <assert.h>

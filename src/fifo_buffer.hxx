@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2007 Max Kellermann <max@duempel.org>
+ * Copyright (C) 2004-2014 Max Kellermann <max@duempel.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -17,8 +17,8 @@
  * 02110-1301 USA
  */
 
-#ifndef __FIFO_BUFFER_H
-#define __FIFO_BUFFER_H
+#ifndef FIFO_BUFFER_HXX
+#define FIFO_BUFFER_HXX
 
 #include <inline/compiler.h>
 
@@ -26,10 +26,6 @@
 
 struct pool;
 struct fifo_buffer;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Initialize a #fifo_buffer object that was allocated by the caller.
@@ -73,10 +69,5 @@ fifo_buffer_empty(struct fifo_buffer *buffer);
 gcc_pure
 int
 fifo_buffer_full(struct fifo_buffer *buffer);
-
-#ifdef __cplusplus
-}
-#endif
-
 
 #endif

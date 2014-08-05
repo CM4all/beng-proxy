@@ -9,7 +9,7 @@
 #include "pevent.h"
 #include "direct.h"
 #include "istream-internal.h"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "buffered_io.hxx"
 #include "fd-util.h"
 #include "pool.hxx"

@@ -9,7 +9,7 @@
 #include "cgi_parser.hxx"
 #include "pool.hxx"
 #include "istream-internal.h"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "async.hxx"
 #include "header_parser.hxx"
 #include "strutil.h"

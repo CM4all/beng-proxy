@@ -7,7 +7,7 @@
 
 #include "thread_socket_filter.hxx"
 #include "filtered_socket.hxx"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "fb_pool.hxx"
 #include "thread_queue.hxx"
 #include "pool.hxx"

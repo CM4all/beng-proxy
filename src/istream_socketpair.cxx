@@ -12,7 +12,7 @@
 #include "istream_buffer.hxx"
 #include "fd_util.h"
 #include "fd-util.h"
-#include "fifo-buffer.h"
+#include "fifo_buffer.hxx"
 #include "buffered_io.hxx"
 #include "pevent.h"
 #include "gerrno.h"
