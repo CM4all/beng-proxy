@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.13) unstable; urgency=low
 
-  * 
+  * thread_worker: smaller thread stack (64 kB)
 
  --   
 

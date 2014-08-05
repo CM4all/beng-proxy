@@ -28,5 +28,13 @@ thread_worker_create(struct thread_worker *w, struct thread_queue *q)
 {
     w->queue = q;
 
-    return pthread_create(&w->thread, NULL, thread_worker_run, w) == 0;
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+
+    /* 64 kB stack ought to be enough */
+    pthread_attr_setstacksize(&attr, 65536);
+
+    bool success = pthread_create(&w->thread, &attr, thread_worker_run, w) == 0;
+    pthread_attr_destroy(&attr);
+    return success;
 }
