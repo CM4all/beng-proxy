@@ -396,6 +396,14 @@ ssl_factory_new(const ssl_config &config,
         return NULL;
     }
 
+    long mode = SSL_MODE_ENABLE_PARTIAL_WRITE
+        | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER;
+#ifdef SSL_MODE_RELEASE_BUFFERS
+    /* requires libssl 1.0.0 */
+    mode |= SSL_MODE_RELEASE_BUFFERS;
+#endif
+    SSL_CTX_set_mode(ssl_ctx, mode);
+
     if (server && !enable_ecdh(ssl_ctx, error)) {
         SSL_CTX_free(ssl_ctx);
         return nullptr;
