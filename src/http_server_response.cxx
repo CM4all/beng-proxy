@@ -116,7 +116,7 @@ http_server_response_stream_eof(void *ctx)
         GError *error =
             g_error_new_literal(http_server_quark(), 0,
                                 "request body discarded");
-        connection->request.body_reader.DeinitAbort(error);
+        connection->request_body_reader.DeinitAbort(error);
         if (!connection->IsValid())
             return;
     }

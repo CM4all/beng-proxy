@@ -18,7 +18,7 @@ http_server_connection::FeedRequestBody(const void *data, size_t length)
     assert(request.request->body != nullptr);
     assert(!response.pending_drained);
 
-    /* checking request.request->body and not request.body_reader,
+    /* checking request.request->body and not request_body_reader,
        because the dechunker might be attached to the
        http_body_reader */
     if (!istream_has_handler(request.request->body))
@@ -27,7 +27,7 @@ http_server_connection::FeedRequestBody(const void *data, size_t length)
 
     const ScopePoolRef ref(*pool TRACE_ARGS);
 
-    size_t nbytes = request.body_reader.FeedBody(data, length);
+    size_t nbytes = request_body_reader.FeedBody(data, length);
     if (nbytes == 0) {
         return socket.IsValid()
             ? BufferedResult::BLOCKING
@@ -37,14 +37,14 @@ http_server_connection::FeedRequestBody(const void *data, size_t length)
     request.bytes_received += nbytes;
     socket.Consumed(nbytes);
 
-    if (request.read_state == Request::BODY && request.body_reader.IsEOF()) {
+    if (request.read_state == Request::BODY && request_body_reader.IsEOF()) {
         request.read_state = Request::END;
 
         /* re-enable the event, to detect client disconnect while
            we're processing the request */
         socket.ScheduleReadNoTimeout(false);
 
-        request.body_reader.DeinitEOF();
+        request_body_reader.DeinitEOF();
         if (!IsValid())
             return BufferedResult::CLOSED;
     }
@@ -58,8 +58,7 @@ static inline struct http_server_connection *
 response_stream_to_connection(struct istream *istream)
 {
     auto &body = HttpBodyReader::FromStream(*istream);
-    return ContainerCast(&body, struct http_server_connection,
-                         request.body_reader);
+    return &ContainerCast2(body, &http_server_connection::request_body_reader);
 }
 
 static off_t
@@ -71,7 +70,7 @@ http_server_request_stream_available(struct istream *istream, bool partial)
     assert(connection->request.read_state == http_server_connection::Request::BODY);
     assert(!connection->response.pending_drained);
 
-    return connection->request.body_reader.GetAvailable(connection->socket,
+    return connection->request_body_reader.GetAvailable(connection->socket,
                                                         partial);
 }
 
@@ -82,7 +81,7 @@ http_server_request_stream_read(struct istream *istream)
 
     assert(connection->IsValid());
     assert(connection->request.read_state == http_server_connection::Request::BODY);
-    assert(istream_has_handler(&connection->request.body_reader.GetStream()));
+    assert(istream_has_handler(&connection->request_body_reader.GetStream()));
     assert(connection->request.request->body != nullptr);
     assert(istream_has_handler(connection->request.request->body));
     assert(!connection->response.pending_drained);
@@ -94,7 +93,7 @@ http_server_request_stream_read(struct istream *istream)
     if (!connection->MaybeSend100Continue())
         return;
 
-    connection->socket.Read(connection->request.body_reader.RequireMore());
+    connection->socket.Read(connection->request_body_reader.RequireMore());
 }
 
 static void
@@ -106,7 +105,7 @@ http_server_request_stream_close(struct istream *istream)
         return;
 
     assert(connection->request.read_state == http_server_connection::Request::BODY);
-    assert(!connection->request.body_reader.IsEOF());
+    assert(!connection->request_body_reader.IsEOF());
     assert(!connection->response.pending_drained);
 
     if (!connection->socket.IsValid() ||
@@ -134,7 +133,7 @@ http_server_request_stream_close(struct istream *istream)
            to finish sending the request body */
         connection->keep_alive = false;
 
-    connection->request.body_reader.Deinit();
+    connection->request_body_reader.Deinit();
 }
 
 const struct istream_class http_server_request_stream = {

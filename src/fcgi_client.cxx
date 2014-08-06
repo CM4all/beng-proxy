@@ -113,8 +113,6 @@ struct fcgi_client {
 
         struct strmap *headers;
 
-        struct istream body;
-
         off_t available;
 
         /**
@@ -138,6 +136,8 @@ struct fcgi_client {
          */
         bool stderr;
     } response;
+
+    struct istream response_body;
 
     size_t content_length, skip_length;
 };
@@ -225,7 +225,7 @@ fcgi_client_abort_response_body(struct fcgi_client *client, GError *error)
     if (client->request.istream != nullptr)
         istream_free_handler(&client->request.istream);
 
-    istream_deinit_abort(&client->response.body, error);
+    istream_deinit_abort(&client->response_body, error);
     fcgi_client_release(client, false);
 }
 
@@ -263,7 +263,7 @@ fcgi_client_close_response_body(struct fcgi_client *client)
     if (client->request.istream != nullptr)
         istream_free_handler(&client->request.istream);
 
-    istream_deinit(&client->response.body);
+    istream_deinit(&client->response_body);
     fcgi_client_release(client, false);
 }
 
@@ -383,7 +383,7 @@ fcgi_client_feed(struct fcgi_client *client,
             /* TODO: emit an error when that happens */
             length = client->response.available;
 
-        consumed = istream_invoke_data(&client->response.body, data, length);
+        consumed = istream_invoke_data(&client->response_body, data, length);
         if (consumed > 0 && client->response.available >= 0) {
             assert((off_t)consumed <= client->response.available);
             client->response.available -= consumed;
@@ -438,7 +438,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
     client->async.Finished();
 
     fcgi_client_response_body_init(client);
-    struct istream *body = body = istream_struct_cast(&client->response.body);
+    struct istream *body = body = istream_struct_cast(&client->response_body);
 
     const ScopePoolRef ref(*client->caller_pool TRACE_ARGS);
 
@@ -483,7 +483,7 @@ fcgi_client_handle_end(struct fcgi_client *client)
         fcgi_client_abort_response_body(client, error);
         return;
     } else
-        istream_deinit_eof(&client->response.body);
+        istream_deinit_eof(&client->response_body);
 
     fcgi_client_release(client, false);
 }
@@ -723,7 +723,7 @@ static constexpr struct istream_handler fcgi_request_stream_handler = {
 static inline struct fcgi_client *
 response_stream_to_client(struct istream *istream)
 {
-    return ContainerCast(istream, struct fcgi_client, response.body);
+    return &ContainerCast2(*istream, &fcgi_client::response_body);
 }
 
 static off_t
@@ -770,7 +770,7 @@ static constexpr struct istream_class fcgi_client_response_body = {
 static void
 fcgi_client_response_body_init(struct fcgi_client *client)
 {
-    istream_init(&client->response.body, &fcgi_client_response_body,
+    istream_init(&client->response_body, &fcgi_client_response_body,
                  client->pool);
 }
 

@@ -244,11 +244,11 @@ http_server_headers_finished(struct http_server_connection *connection)
 
     /* istream_deinit() used poison_noaccess() - make it writable now
        for re-use */
-    poison_undefined(&connection->request.body_reader,
-                     sizeof(connection->request.body_reader));
+    poison_undefined(&connection->request_body_reader,
+                     sizeof(connection->request_body_reader));
 
     request->body =
-        &connection->request.body_reader.Init(http_server_request_stream,
+        &connection->request_body_reader.Init(http_server_request_stream,
                                               *connection->pool,
                                               *request->pool,
                                               content_length, chunked);
@@ -382,7 +382,7 @@ http_server_connection::Feed(const void *data, size_t length)
             (request.read_state == Request::BODY ||
              request.read_state == Request::END)) {
             if (request.read_state == Request::BODY)
-                result = request.body_reader.RequireMore()
+                result = request_body_reader.RequireMore()
                     ? BufferedResult::AGAIN_EXPECT
                     : BufferedResult::AGAIN_OPTIONAL;
 
@@ -430,7 +430,7 @@ http_server_connection::TryRequestBodyDirect(int fd,
     if (!MaybeSend100Continue())
         return DirectResult::CLOSED;
 
-    ssize_t nbytes = request.body_reader.TryDirect(fd, fd_type);
+    ssize_t nbytes = request_body_reader.TryDirect(fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
         return DirectResult::BLOCKING;
@@ -452,9 +452,9 @@ http_server_connection::TryRequestBodyDirect(int fd,
 
     request.bytes_received += nbytes;
 
-    if (request.body_reader.IsEOF()) {
+    if (request_body_reader.IsEOF()) {
         request.read_state = Request::END;
-        request.body_reader.DeinitEOF();
+        request_body_reader.DeinitEOF();
         return IsValid()
             ? DirectResult::OK
             : DirectResult::CLOSED;

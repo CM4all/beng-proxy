@@ -83,8 +83,9 @@ struct http_client {
         bool got_data;
 
         struct http_response_handler_ref handler;
-        struct async_operation async;
     } request;
+
+    struct async_operation request_async;
 
     /* response */
     struct response {
@@ -117,8 +118,9 @@ struct http_client {
         http_status_t status;
         struct strmap *headers;
         struct istream *body;
-        HttpBodyReader body_reader;
     } response;
+
+    HttpBodyReader response_body_reader;
 
     /* connection settings */
     bool keep_alive;
@@ -136,12 +138,11 @@ struct http_client {
 
     static struct http_client &FromResponseBody(struct istream &istream) {
         auto &body = HttpBodyReader::FromStream(istream);
-        return *ContainerCast(&body, struct http_client,
-                              response.body_reader);
+        return ContainerCast2(body, &http_client::response_body_reader);
     }
 
     static struct http_client &FromAsync(struct async_operation &ao) {
-        return *ContainerCast(&ao, struct http_client, request.async);
+        return ContainerCast2(ao, &http_client::request_async);
     }
 
     gcc_pure
@@ -154,7 +155,7 @@ struct http_client {
         assert(socket.GetType() == ISTREAM_NONE || socket.IsConnected());
         assert(response.read_state == response::READ_BODY);
 
-        return response.body_reader.CheckDirect(socket.GetType());
+        return response_body_reader.CheckDirect(socket.GetType());
     }
 
     void ScheduleWrite() {
@@ -288,7 +289,7 @@ http_client::AbortResponseBody(GError *error)
         istream_close_handler(request.istream);
 
     PrefixError(&error);
-    response.body_reader.DeinitAbort(error);
+    response_body_reader.DeinitAbort(error);
     Release(false);
 }
 
@@ -318,11 +319,11 @@ http_client::AbortResponse(GError *error)
 inline off_t
 http_client::GetAvailable(bool partial) const
 {
-    assert(!socket.ended || response.body_reader.IsSocketDone(socket));
+    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
     assert(request.handler.IsUsed());
 
-    return response.body_reader.GetAvailable(socket, partial);
+    return response_body_reader.GetAvailable(socket, partial);
 }
 
 static off_t
@@ -336,9 +337,9 @@ http_client_response_stream_available(struct istream *istream, bool partial)
 inline void
 http_client::Read()
 {
-    assert(!socket.ended || response.body_reader.IsSocketDone(socket));
+    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
-    assert(istream_has_handler(&response.body_reader.GetStream()));
+    assert(istream_has_handler(&response_body_reader.GetStream()));
     assert(request.handler.IsUsed());
 
     if (response.in_handler)
@@ -349,7 +350,7 @@ http_client::Read()
     if (socket.IsConnected())
         socket.base.direct = CheckDirect();
 
-    socket.Read(response.body_reader.RequireMore());
+    socket.Read(response_body_reader.RequireMore());
 }
 
 static void
@@ -363,21 +364,21 @@ http_client_response_stream_read(struct istream *istream)
 inline int
 http_client::AsFD()
 {
-    assert(!socket.ended || response.body_reader.IsSocketDone(socket));
+    assert(!socket.ended || response_body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
     assert(request.handler.IsUsed());
 
     if (!socket.IsConnected() ||
         keep_alive ||
         /* must not be chunked */
-        &response.body_reader.GetStream() != response.body)
+        &response_body_reader.GetStream() != response.body)
         return -1;
 
     int fd = socket.AsFD();
     if (fd < 0)
         return -1;
 
-    response.body_reader.Deinit();
+    response_body_reader.Deinit();
     Release(false);
     return fd;
 }
@@ -395,14 +396,14 @@ http_client::Close()
 {
     assert(response.read_state == response::READ_BODY);
     assert(request.handler.IsUsed());
-    assert(!response.body_reader.IsEOF());
+    assert(!response_body_reader.IsEOF());
 
     stopwatch_event(stopwatch, "close");
 
     if (request.istream != nullptr)
         istream_close_handler(request.istream);
 
-    response.body_reader.Deinit();
+    response_body_reader.Deinit();
     Release(false);
 }
 
@@ -556,7 +557,7 @@ http_client::HeadersFinished()
         chunked = true;
     }
 
-    response.body = &response.body_reader.Init(http_client_response_stream,
+    response.body = &response_body_reader.Init(http_client_response_stream,
                                                *pool,
                                                *pool,
                                                content_length,
@@ -648,7 +649,7 @@ http_client::ResponseBodyEOF()
 {
     assert(response.read_state == response::READ_BODY);
     assert(request.handler.IsUsed());
-    assert(response.body_reader.IsEOF());
+    assert(response_body_reader.IsEOF());
 
     /* this pointer must be cleared before forwarding the EOF event to
        our response body handler.  If we forget that, the handler
@@ -658,7 +659,7 @@ http_client::ResponseBodyEOF()
        response body is already finished  */
     response.body = nullptr;
 
-    response.body_reader.DeinitEOF();
+    response_body_reader.DeinitEOF();
 
     http_client_response_finished(this);
 }
@@ -668,7 +669,7 @@ http_client::FeedBody(const void *data, size_t length)
 {
     assert(response.read_state == response::READ_BODY);
 
-    size_t nbytes = response.body_reader.FeedBody(data, length);
+    size_t nbytes = response_body_reader.FeedBody(data, length);
     if (nbytes == 0)
         return socket.IsValid()
             ? BufferedResult::BLOCKING
@@ -676,7 +677,7 @@ http_client::FeedBody(const void *data, size_t length)
 
     socket.Consumed(nbytes);
 
-    if (response.body_reader.IsEOF()) {
+    if (response_body_reader.IsEOF()) {
         ResponseBodyEOF();
         return BufferedResult::CLOSED;
     }
@@ -684,7 +685,7 @@ http_client::FeedBody(const void *data, size_t length)
     if (nbytes < length)
         return BufferedResult::PARTIAL;
 
-    if (response.body_reader.RequireMore())
+    if (response_body_reader.RequireMore())
         return BufferedResult::MORE;
 
     return BufferedResult::OK;
@@ -749,7 +750,7 @@ http_client::FeedHeaders(const void *data, size_t length)
     }
 
     if ((response.body == nullptr ||
-         response.body_reader.IsSocketDone(socket)) &&
+         response_body_reader.IsSocketDone(socket)) &&
         socket.IsConnected())
         /* we don't need the socket anymore, we've got everything we
            need in the input buffer */
@@ -776,7 +777,7 @@ http_client::FeedHeaders(const void *data, size_t length)
     }
 
     /* now do the response body */
-    return response.body_reader.RequireMore()
+    return response_body_reader.RequireMore()
         ? BufferedResult::AGAIN_EXPECT
         : BufferedResult::AGAIN_OPTIONAL;
 }
@@ -788,7 +789,7 @@ http_client::TryResponseDirect(int fd, enum istream_direct fd_type)
     assert(response.read_state == response::READ_BODY);
     assert(CheckDirect());
 
-    ssize_t nbytes = response.body_reader.TryDirect(fd, fd_type);
+    ssize_t nbytes = response_body_reader.TryDirect(fd, fd_type);
     if (nbytes == ISTREAM_RESULT_BLOCKING)
         /* the destination fd blocks */
         return DirectResult::BLOCKING;
@@ -810,12 +811,12 @@ http_client::TryResponseDirect(int fd, enum istream_direct fd_type)
         if (request.istream != nullptr)
             istream_close_handler(request.istream);
 
-        response.body_reader.SocketEOF(0);
+        response_body_reader.SocketEOF(0);
         Release(false);
         return DirectResult::CLOSED;
    }
 
-    if (response.body_reader.IsEOF()) {
+    if (response_body_reader.IsEOF()) {
         ResponseBodyEOF();
         return DirectResult::CLOSED;
     }
@@ -834,7 +835,7 @@ http_client::Feed(const void *data, size_t length)
     case response::READ_BODY:
         assert(response.body != nullptr);
 
-        if (socket.IsConnected() && response.body_reader.IsSocketDone(socket))
+        if (socket.IsConnected() && response_body_reader.IsSocketDone(socket))
             /* we don't need the socket anymore, we've got everything
                we need in the input buffer */
             ReleaseSocket(keep_alive);
@@ -894,7 +895,7 @@ http_client_socket_remaining(size_t remaining, void *ctx)
         /* this information comes too early, we can't use it */
         return true;
 
-    if (client->response.body_reader.SocketEOF(remaining)) {
+    if (client->response_body_reader.SocketEOF(remaining)) {
         /* there's data left in the buffer: continue serving the
            buffer */
         return true;
@@ -1137,8 +1138,8 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
     pool_ref(caller_pool);
     request.handler.Set(handler, ctx);
 
-    request.async.Init(http_client_async_operation);
-    async_ref.Set(request.async);
+    request_async.Init(http_client_async_operation);
+    async_ref.Set(request_async);
 
     /* request line */
 

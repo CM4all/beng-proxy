@@ -79,14 +79,14 @@ struct http_server_connection {
 
         struct http_server_request *request;
 
-        /** the request body reader; this variable is only valid if
-            read_state==READ_BODY */
-        HttpBodyReader body_reader;
-
         struct async_operation_ref async_ref;
 
         uint64_t bytes_received;
     } request;
+
+    /** the request body reader; this variable is only valid if
+        read_state==READ_BODY */
+    HttpBodyReader request_body_reader;
 
     /** the response; this struct is only valid if
         read_state==READ_BODY||read_state==READ_END */

@@ -60,8 +60,9 @@ struct ajp_client {
         bool got_data;
 
         struct http_response_handler_ref handler;
-        struct async_operation async;
     } request;
+
+    struct async_operation request_async;
 
     /* response */
     struct Response {
@@ -105,7 +106,6 @@ struct ajp_client {
          */
         struct strmap *headers;
 
-        struct istream body;
         size_t chunk_length, junk_length;
 
         /**
@@ -113,6 +113,8 @@ struct ajp_client {
          */
         off_t remaining;
     } response;
+
+    struct istream response_body;
 };
 
 static const struct timeval ajp_client_timeout = {
@@ -177,7 +179,7 @@ ajp_client_abort_response_headers(struct ajp_client *client, GError *error)
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
     client->response.read_state = ajp_client::Response::READ_END;
-    client->request.async.Finished();
+    client->request_async.Finished();
     client->request.handler.InvokeAbort(error);
 
     ajp_client_release(client, false);
@@ -195,7 +197,7 @@ ajp_client_abort_response_body(struct ajp_client *client, GError *error)
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
     client->response.read_state = ajp_client::Response::READ_END;
-    istream_deinit_abort(&client->response.body, error);
+    istream_deinit_abort(&client->response_body, error);
 
     ajp_client_release(client, false);
 }
@@ -231,7 +233,7 @@ ajp_client_abort_response(struct ajp_client *client, GError *error)
 static inline struct ajp_client *
 istream_to_ajp(struct istream *istream)
 {
-    return ContainerCast(istream, struct ajp_client, response.body);
+    return &ContainerCast2(*istream, &ajp_client::response_body);
 }
 
 static off_t
@@ -276,7 +278,7 @@ istream_ajp_close(struct istream *istream)
     client->response.read_state = ajp_client::Response::READ_END;
 
     ajp_client_release(client, false);
-    istream_deinit(&client->response.body);
+    istream_deinit(&client->response_body);
 }
 
 static const struct istream_class ajp_response_body = {
@@ -361,13 +363,13 @@ ajp_consume_send_headers(struct ajp_client *client,
     } else
         client->response.remaining = -1;
 
-    istream_init(&client->response.body, &ajp_response_body, client->pool);
-    body = istream_struct_cast(&client->response.body);
+    istream_init(&client->response_body, &ajp_response_body, client->pool);
+    body = istream_struct_cast(&client->response_body);
     client->response.read_state = ajp_client::Response::READ_BODY;
     client->response.chunk_length = 0;
     client->response.junk_length = 0;
 
-    client->request.async.Finished();
+    client->request_async.Finished();
 
     client->response.in_handler = true;
     client->request.handler.InvokeResponse(status, headers, body);
@@ -413,7 +415,7 @@ ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
 
             client->response.read_state = ajp_client::Response::READ_END;
             ajp_client_release(client, true);
-            istream_deinit_eof(&client->response.body);
+            istream_deinit_eof(&client->response_body);
         } else if (client->response.read_state == ajp_client::Response::READ_NO_BODY) {
             client->response.read_state = ajp_client::Response::READ_END;
             ajp_client_release(client, client->socket.IsEmpty());
@@ -477,7 +479,7 @@ ajp_consume_body_chunk(struct ajp_client *client,
     if (length > client->response.chunk_length)
         length = client->response.chunk_length;
 
-    size_t nbytes = istream_invoke_data(&client->response.body, data, length);
+    size_t nbytes = istream_invoke_data(&client->response_body, data, length);
     if (nbytes > 0) {
         client->response.chunk_length -= nbytes;
         client->response.remaining -= nbytes;
@@ -828,7 +830,7 @@ static constexpr BufferedSocketHandler ajp_client_socket_handler = {
 static struct ajp_client *
 async_to_ajp_connection(struct async_operation *ao)
 {
-    return ContainerCast(ao, struct ajp_client, request.async);
+    return &ContainerCast2(*ao, &ajp_client::request_async);
 }
 
 static void
@@ -1018,8 +1020,8 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
 
     client->request.handler.Set(*handler, handler_ctx);
 
-    client->request.async.Init(ajp_client_request_async_operation);
-    async_ref->Set(client->request.async);
+    client->request_async.Init(ajp_client_request_async_operation);
+    async_ref->Set(client->request_async);
 
     /* XXX append request body */
 
