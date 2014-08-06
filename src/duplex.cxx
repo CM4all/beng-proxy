@@ -9,11 +9,11 @@
 
 #include "duplex.hxx"
 #include "fd-util.h"
-#include "fifo_buffer.hxx"
 #include "event2.h"
 #include "buffered_io.hxx"
 #include "fd_util.h"
 #include "pool.hxx"
+#include "util/StaticFifoBuffer.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -30,8 +30,8 @@ struct duplex {
     int write_fd;
     int sock_fd;
     bool sock_eof;
-    struct fifo_buffer *from_read;
-    struct fifo_buffer *to_write;
+
+    StaticFifoBuffer<uint8_t, 4096> from_read, to_write;
 
     struct event2 read_event, write_event, sock_event;
 };
@@ -70,8 +70,8 @@ static bool
 duplex_check_close(struct duplex *duplex)
 {
     if (duplex->read_fd < 0 && duplex->sock_eof &&
-        fifo_buffer_empty(duplex->from_read) &&
-        fifo_buffer_empty(duplex->to_write)) {
+        duplex->from_read.IsEmpty() &&
+        duplex->to_write.IsEmpty()) {
         duplex_close(duplex);
         return true;
     } else
@@ -104,7 +104,7 @@ read_event_callback(int fd, short event gcc_unused, void *ctx)
     if (nbytes > 0)
         event2_or(&duplex->sock_event, EV_WRITE);
 
-    if (duplex->read_fd >= 0 && !fifo_buffer_full(duplex->from_read))
+    if (duplex->read_fd >= 0 && !duplex->from_read.IsFull())
         event2_or(&duplex->read_event, EV_READ);
 }
 
@@ -126,7 +126,7 @@ write_event_callback(int fd, short event gcc_unused, void *ctx)
     if (nbytes > 0 && !duplex->sock_eof)
         event2_or(&duplex->sock_event, EV_READ);
 
-    if (!fifo_buffer_empty(duplex->to_write))
+    if (!duplex->to_write.IsEmpty())
         event2_or(&duplex->write_event, EV_WRITE);
 }
 
@@ -155,7 +155,7 @@ sock_event_callback(int fd, short event, void *ctx)
         if (likely(nbytes > 0))
             event2_or(&duplex->write_event, EV_WRITE);
 
-        if (!fifo_buffer_full(duplex->to_write))
+        if (!duplex->to_write.IsFull())
             event2_or(&duplex->sock_event, EV_READ);
     }
 
@@ -169,7 +169,7 @@ sock_event_callback(int fd, short event, void *ctx)
         if (nbytes > 0 && duplex->read_fd >= 0)
             event2_or(&duplex->read_event, EV_READ);
 
-        if (!fifo_buffer_empty(duplex->from_read))
+        if (!duplex->from_read.IsEmpty())
             event2_or(&duplex->sock_event, EV_WRITE);
     }
 
@@ -199,8 +199,6 @@ duplex_new(struct pool *pool, int read_fd, int write_fd)
     duplex->read_fd = read_fd;
     duplex->write_fd = write_fd;
     duplex->sock_fd = fds[0];
-    duplex->from_read = fifo_buffer_new(pool, 4096);
-    duplex->to_write = fifo_buffer_new(pool, 4096);
     duplex->sock_eof = false;
 
     event2_init(&duplex->read_event, read_fd,

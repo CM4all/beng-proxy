@@ -5,13 +5,12 @@
  */
 
 #include "header_parser.hxx"
+#include "pool.hxx"
 #include "strutil.h"
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
-#include "fifo_buffer.hxx"
-#include "tpool.h"
 #include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
+#include "util/StaticFifoBuffer.hxx"
 
 #include <algorithm>
 
@@ -50,24 +49,21 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
     assert(headers != nullptr);
     assert(gb != nullptr);
 
-    struct pool_mark_state mark;
-    pool_mark(tpool, &mark);
-
     GrowingBufferReader reader(*gb);
 
-    struct fifo_buffer *buffer = fifo_buffer_new(tpool, 4096);
+    StaticFifoBuffer<char, 4096> buffer;
 
     while (true) {
         /* copy gb to buffer */
 
         if (gb != nullptr) {
-            auto w = fifo_buffer_write(buffer);
+            auto w = buffer.Write();
             if (!w.IsEmpty()) {
                 auto src = reader.Read();
                 if (!src.IsNull()) {
                     size_t nbytes = std::min(src.size, w.size);
                     memcpy(w.data, src.data, nbytes);
-                    fifo_buffer_append(buffer, nbytes);
+                    buffer.Append(nbytes);
                     reader.Consume(nbytes);
                 } else
                     gb = nullptr;
@@ -76,7 +72,7 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
 
         /* parse lines from the buffer */
 
-        auto r = fifo_buffer_read(buffer);
+        auto r = buffer.Read();
         if (r.IsEmpty() && gb == nullptr)
             break;
 
@@ -103,8 +99,6 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
             p = eol + 1;
         }
 
-        fifo_buffer_consume(buffer, p - src);
+        buffer.Consume(p - src);
     }
-
-    pool_rewind(tpool, &mark);
 }

@@ -21,6 +21,10 @@ struct fifo_buffer;
 ssize_t
 read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length);
 
+template<typename B>
+ssize_t
+read_to_buffer(int fd, B &buffer, size_t length);
+
 /**
  * Writes data from the buffer to the file.
  *
@@ -30,6 +34,10 @@ read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length);
  */
 ssize_t
 write_from_buffer(int fd, struct fifo_buffer *buffer);
+
+template<typename B>
+ssize_t
+write_from_buffer(int fd, B &buffer);
 
 /**
  * Appends data from a socket to the buffer.
@@ -41,6 +49,10 @@ write_from_buffer(int fd, struct fifo_buffer *buffer);
 ssize_t
 recv_to_buffer(int fd, struct fifo_buffer *buffer, size_t length);
 
+template<typename B>
+ssize_t
+recv_to_buffer(int fd, B &buffer, size_t length);
+
 /**
  * Sends data from the buffer to the socket.
  *
@@ -50,5 +62,9 @@ recv_to_buffer(int fd, struct fifo_buffer *buffer, size_t length);
  */
 ssize_t
 send_from_buffer(int fd, struct fifo_buffer *buffer);
+
+template<typename B>
+ssize_t
+send_from_buffer(int fd, B &buffer);
 
 #endif

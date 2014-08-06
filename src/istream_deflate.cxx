@@ -4,11 +4,11 @@
 
 #include "istream_deflate.hxx"
 #include "istream-internal.h"
-#include "fifo_buffer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
+#include "util/StaticFifoBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -19,10 +19,10 @@
 struct istream_deflate {
     struct istream output;
     struct istream *input;
-    struct fifo_buffer *buffer;
     bool z_initialized, z_stream_end;
     z_stream z;
     bool had_input, had_output;
+    StaticFifoBuffer<uint8_t, 4096> buffer;
 };
 
 gcc_const
@@ -99,14 +99,14 @@ deflate_initialize_z(struct istream_deflate *defl)
 static size_t
 deflate_try_write(struct istream_deflate *defl)
 {
-    auto r = fifo_buffer_read(defl->buffer);
+    auto r = defl->buffer.Read();
     assert(!r.IsEmpty());
 
     size_t nbytes = istream_invoke_data(&defl->output, r.data, r.size);
     if (nbytes == 0)
         return 0;
 
-    fifo_buffer_consume(defl->buffer, nbytes);
+    defl->buffer.Consume(nbytes);
 
     if (nbytes == r.size && defl->input == nullptr && defl->z_stream_end) {
         deflate_close(defl);
@@ -126,11 +126,11 @@ deflate_try_write(struct istream_deflate *defl)
 static WritableBuffer<void>
 deflate_buffer_write(struct istream_deflate *defl)
 {
-    auto w = fifo_buffer_write(defl->buffer);
+    auto w = defl->buffer.Write();
     if (w.IsEmpty() && deflate_try_write(defl) > 0)
-        w = fifo_buffer_write(defl->buffer);
+        w = defl->buffer.Write();
 
-    return w;
+    return w.ToVoid();
 }
 
 static void
@@ -157,9 +157,9 @@ deflate_try_flush(struct istream_deflate *defl)
         return;
     }
 
-    fifo_buffer_append(defl->buffer, w.size - (size_t)defl->z.avail_out);
+    defl->buffer.Append(w.size - (size_t)defl->z.avail_out);
 
-    if (!fifo_buffer_empty(defl->buffer))
+    if (!defl->buffer.IsEmpty())
         deflate_try_write(defl);
 }
 
@@ -222,9 +222,9 @@ deflate_try_finish(struct istream_deflate *defl)
         return;
     }
 
-    fifo_buffer_append(defl->buffer, w.size - (size_t)defl->z.avail_out);
+    defl->buffer.Append(w.size - (size_t)defl->z.avail_out);
 
-    if (defl->z_stream_end && fifo_buffer_empty(defl->buffer)) {
+    if (defl->z_stream_end && defl->buffer.IsEmpty()) {
         deflate_close(defl);
         istream_deinit_eof(&defl->output);
     } else
@@ -273,7 +273,7 @@ deflate_input_data(const void *data, size_t length, void *ctx)
         size_t nbytes = w.size - (size_t)defl->z.avail_out;
         if (nbytes > 0) {
             defl->had_output = true;
-            fifo_buffer_append(defl->buffer, nbytes);
+            defl->buffer.Append(nbytes);
 
             pool_ref(defl->output.pool);
             deflate_try_write(defl);
@@ -349,7 +349,7 @@ istream_deflate_read(struct istream *istream)
 {
     struct istream_deflate *defl = istream_to_deflate(istream);
 
-    if (!fifo_buffer_empty(defl->buffer))
+    if (!defl->buffer.IsEmpty())
         deflate_try_write(defl);
     else if (defl->input == nullptr)
         deflate_try_finish(defl);
@@ -389,7 +389,7 @@ istream_deflate_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    defl->buffer = fifo_buffer_new(pool, 4096);
+    defl->buffer.Clear();
     defl->z_initialized = false;
     defl->z_stream_end = false;
 
