@@ -23,12 +23,6 @@
 
 #include <event.h>
 
-#ifndef O_CLOEXEC
-enum {
-    O_CLOEXEC = 0,
-};
-#endif
-
 /**
  * If EAGAIN occurs (on NFS), we try again after 100ms.  We can't
  * check EV_READ, because the kernel always indicates VFS files as
