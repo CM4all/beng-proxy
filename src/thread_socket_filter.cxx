@@ -28,9 +28,7 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
                                        void *_ctx)
     :pool(_pool), queue(_queue),
      handler(_handler), handler_ctx(_ctx),
-     encrypted_input(fb_pool_get()),
      decrypted_input(fb_pool_get()),
-     plain_output(fb_pool_get()),
      encrypted_output(fb_pool_get())
 {
     pool_ref(&pool);
@@ -46,9 +44,9 @@ ThreadSocketFilter::~ThreadSocketFilter()
 
     defer_event_deinit(&defer_event);
 
-    encrypted_input.Free(fb_pool_get());
+    encrypted_input.FreeIfDefined(fb_pool_get());
     decrypted_input.Free(fb_pool_get());
-    plain_output.Free(fb_pool_get());
+    plain_output.FreeIfDefined(fb_pool_get());
     encrypted_output.Free(fb_pool_get());
 
     if (error != nullptr)
@@ -129,7 +127,7 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
 static bool
 thread_socket_filter_check_read(ThreadSocketFilter *f)
 {
-    if (!f->want_read || f->encrypted_input.IsFull() ||
+    if (!f->want_read || f->encrypted_input.IsDefinedAndFull() ||
         !f->connected || f->read_scheduled)
         return true;
 
@@ -144,7 +142,7 @@ thread_socket_filter_check_read(ThreadSocketFilter *f)
 static bool
 thread_socket_filter_check_write(ThreadSocketFilter *f)
 {
-    if (!f->want_write || f->plain_output.IsFull())
+    if (!f->want_write || f->plain_output.IsDefinedAndFull())
         return true;
 
     pthread_mutex_unlock(&f->mutex);
@@ -277,7 +275,7 @@ ThreadSocketFilter::Done()
     if (connected) {
         // TODO: timeouts?
 
-        if (!encrypted_input.IsFull())
+        if (!encrypted_input.IsDefinedAndFull())
             socket->InternalScheduleRead(expect_more, nullptr);
 
         if (!encrypted_output.IsEmpty())
@@ -290,6 +288,9 @@ ThreadSocketFilter::Done()
     const bool drained2 = connected && drained &&
         plain_output.IsEmpty() &&
         encrypted_output.IsEmpty();
+
+    encrypted_input.FreeIfEmpty(fb_pool_get());
+    plain_output.FreeIfEmpty(fb_pool_get());
 
     pthread_mutex_unlock(&mutex);
 
@@ -320,6 +321,8 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
     f->read_scheduled = false;
 
     pthread_mutex_lock(&f->mutex);
+
+    f->encrypted_input.AllocateIfNull(fb_pool_get());
 
     auto w = f->encrypted_input.Write();
     if (w.IsEmpty()) {
@@ -415,6 +418,8 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
     pthread_mutex_lock(&f->mutex);
 
     ssize_t nbytes = WRITE_BLOCKING;
+
+    f->plain_output.AllocateIfNull(fb_pool_get());
 
     auto w = f->plain_output.Write();
     if (!w.IsEmpty()) {

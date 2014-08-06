@@ -1,6 +1,6 @@
 cm4all-beng-proxy (5.0.13) unstable; urgency=low
 
-  * 
+  * ssl_filter: reduce memory usage
 
  --   
 

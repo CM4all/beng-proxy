@@ -23,6 +23,25 @@ public:
 
     void Allocate(struct slice_pool &pool);
     void Free(struct slice_pool &pool);
+
+    bool IsDefinedAndFull() const {
+        return IsDefined() && IsFull();
+    }
+
+    void AllocateIfNull(struct slice_pool &pool) {
+        if (IsNull())
+            Allocate(pool);
+    }
+
+    void FreeIfDefined(struct slice_pool &pool) {
+        if (IsDefined())
+            Free(pool);
+    }
+
+    void FreeIfEmpty(struct slice_pool &pool) {
+        if (IsEmpty())
+            FreeIfDefined(pool);
+    }
 };
 
 #endif
