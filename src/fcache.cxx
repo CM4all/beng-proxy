@@ -19,7 +19,7 @@
 #include "resource_loader.hxx"
 #include "istream.h"
 #include "rubber.hxx"
-#include "slice.hxx"
+#include "SlicePool.hxx"
 #include "istream_rubber.hxx"
 #include "sink_rubber.hxx"
 #include "istream_tee.h"

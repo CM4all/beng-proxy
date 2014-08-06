@@ -12,7 +12,7 @@
 #include "istream.h"
 #include "rubber.hxx"
 #include "istream_rubber.hxx"
-#include "slice.hxx"
+#include "SlicePool.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

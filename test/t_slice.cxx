@@ -1,4 +1,4 @@
-#include "slice.hxx"
+#include "SlicePool.hxx"
 
 #include <inline/compiler.h>
 

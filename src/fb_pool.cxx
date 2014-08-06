@@ -6,7 +6,7 @@
  */
 
 #include "fb_pool.hxx"
-#include "slice.hxx"
+#include "SlicePool.hxx"
 #include "fifo_buffer.hxx"
 #include "cleanup_timer.hxx"
 

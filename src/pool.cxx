@@ -5,7 +5,7 @@
  */
 
 #include "pool.hxx"
-#include "slice.hxx"
+#include "SlicePool.hxx"
 
 #include <inline/poison.h>
 #include <inline/list.h>

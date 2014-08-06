@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "slice.hxx"
+#include "SlicePool.hxx"
 #include "mmap.h"
 
 #include <boost/intrusive/list.hpp>

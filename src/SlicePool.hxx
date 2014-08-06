@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_SLICE_HXX
-#define BENG_PROXY_SLICE_HXX
+#ifndef BENG_PROXY_SLICE_POOL_HXX
+#define BENG_PROXY_SLICE_POOL_HXX
 
 #include <inline/compiler.h>
 
