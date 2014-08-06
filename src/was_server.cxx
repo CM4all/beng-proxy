@@ -14,7 +14,6 @@
 #include "pevent.h"
 #include "direct.h"
 #include "istream-internal.h"
-#include "fifo_buffer.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"
 #include "pool.hxx"

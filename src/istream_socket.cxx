@@ -8,11 +8,11 @@
 #include "istream-internal.h"
 #include "istream_buffer.hxx"
 #include "pool.hxx"
-#include "fifo_buffer.hxx"
 #include "buffered_io.hxx"
 #include "pevent.h"
 #include "gerrno.h"
 #include "fb_pool.hxx"
+#include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
 
 #include <event.h>
@@ -32,7 +32,7 @@ struct istream_socket {
     const struct istream_socket_handler *handler;
     void *handler_ctx;
 
-    struct fifo_buffer *buffer;
+    SliceFifoBuffer buffer;
 
     struct event event;
 };
@@ -49,7 +49,7 @@ static void
 socket_schedule_read(struct istream_socket *s)
 {
     assert(socket_valid(s));
-    assert(s->buffer == nullptr || !fifo_buffer_full(s->buffer));
+    assert(!s->buffer.IsFull());
 
     p_event_add(&s->event, nullptr, s->output.pool, "istream_socket");
 }
@@ -62,9 +62,9 @@ static bool
 socket_buffer_consume(struct istream_socket *s)
 {
     assert(socket_valid(s));
-    assert(s->buffer != nullptr);
+    assert(s->buffer.IsDefined());
 
-    if (gcc_likely(!fifo_buffer_full(s->buffer) ||
+    if (gcc_likely(!s->buffer.IsFull() ||
                    s->handler->full == nullptr))
         /* quick path without an additional pool reference */
         return istream_buffer_consume(&s->output, s->buffer) > 0;
@@ -72,8 +72,7 @@ socket_buffer_consume(struct istream_socket *s)
     pool_ref(s->output.pool);
     const bool full = istream_buffer_send(&s->output, s->buffer) == 0 &&
         socket_valid(s);
-    const bool empty = !full && socket_valid(s) &&
-        fifo_buffer_empty(s->buffer);
+    const bool empty = !full && socket_valid(s) && s->buffer.IsEmpty();
     pool_unref(s->output.pool);
 
     if (gcc_unlikely(full && !s->handler->full(s->handler_ctx)))
@@ -91,9 +90,9 @@ static bool
 socket_buffer_send(struct istream_socket *s)
 {
     assert(socket_valid(s));
-    assert(s->buffer != nullptr);
+    assert(s->buffer.IsDefined());
 
-    if (gcc_likely(!fifo_buffer_full(s->buffer) ||
+    if (gcc_likely(!s->buffer.IsFull() ||
                    s->handler->full == nullptr))
         /* quick path without an additional pool reference */
         return istream_buffer_send(&s->output, s->buffer) > 0;
@@ -114,12 +113,11 @@ socket_try_direct(struct istream_socket *s)
 {
     assert(socket_valid(s));
 
-    if (s->buffer != nullptr) {
+    if (s->buffer.IsDefined()) {
         if (socket_buffer_consume(s))
             return;
 
-        fb_pool_free(s->buffer);
-        s->buffer = nullptr;
+        s->buffer.Free(fb_pool_get());
     }
 
     ssize_t nbytes = istream_invoke_direct(&s->output, s->fd_type, s->fd,
@@ -158,12 +156,12 @@ socket_try_buffered(struct istream_socket *s)
 {
     assert(socket_valid(s));
 
-    if (s->buffer == nullptr)
-        s->buffer = fb_pool_alloc();
+    if (s->buffer.IsNull())
+        s->buffer.Allocate(fb_pool_get());
     else if (socket_buffer_consume(s))
         return;
 
-    assert(!fifo_buffer_full(s->buffer));
+    assert(!s->buffer.IsFull());
 
     ssize_t nbytes = recv_to_buffer(s->fd, s->buffer, G_MAXINT);
     if (G_LIKELY(nbytes > 0)) {
@@ -172,7 +170,7 @@ socket_try_buffered(struct istream_socket *s)
     } else if (nbytes == 0) {
         if (s->handler->depleted(s->handler_ctx) &&
             s->handler->finished(s->handler_ctx)) {
-            fb_pool_free(s->buffer);
+            s->buffer.Free(fb_pool_get());
             s->fd = -1;
             istream_deinit_eof(&s->output);
         }
@@ -181,8 +179,7 @@ socket_try_buffered(struct istream_socket *s)
     } else {
         const int e = errno;
 
-        fb_pool_free(s->buffer);
-        s->buffer = nullptr;
+        s->buffer.Free(fb_pool_get());
 
         if (!s->handler->error(e, s->handler_ctx))
             return;
@@ -220,10 +217,10 @@ istream_socket_available(struct istream *istream, bool partial)
 
     assert(socket_valid(s));
 
-    if (s->buffer == nullptr || (!partial && s->fd >= 0))
+    if (s->buffer.IsNull() || (!partial && s->fd >= 0))
         return -1;
 
-    return fifo_buffer_available(s->buffer);
+    return s->buffer.GetAvailable();
 }
 
 static void
@@ -243,10 +240,8 @@ istream_socket_close(struct istream *istream)
 
     assert(socket_valid(s));
 
-    if (s->buffer != nullptr) {
-        fb_pool_free(s->buffer);
-        s->buffer = nullptr;
-    }
+    if (s->buffer.IsDefined())
+        s->buffer.Free(fb_pool_get());
 
     p_event_del(&s->event, s->output.pool);
     s->fd = -1;
@@ -302,7 +297,7 @@ istream_socket_new(struct pool *pool, int fd, enum istream_direct fd_type,
     s->handler = handler;
     s->handler_ctx = ctx;
 
-    s->buffer = nullptr;
+    s->buffer.SetNull();
 
     event_set(&s->event, fd, EV_READ, socket_event_callback, s);
     socket_schedule_read(s);

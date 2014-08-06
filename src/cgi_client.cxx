@@ -9,7 +9,6 @@
 #include "cgi_parser.hxx"
 #include "pool.hxx"
 #include "istream-internal.h"
-#include "fifo_buffer.hxx"
 #include "async.hxx"
 #include "header_parser.hxx"
 #include "strutil.h"
@@ -17,8 +16,8 @@
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "fb_pool.hxx"
+#include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include <string.h>
 #include <stdlib.h>
@@ -29,7 +28,7 @@ struct CGIClient {
     struct stopwatch *const stopwatch;
 
     struct istream *input;
-    struct fifo_buffer *const buffer;
+    SliceFifoBuffer buffer;
 
     CGIParser parser;
 
@@ -104,7 +103,7 @@ CGIClient::ReturnResponse()
         stopwatch_event(stopwatch, "empty");
         stopwatch_dump(stopwatch);
 
-        fb_pool_free(buffer);
+        buffer.Free(fb_pool_get());
         istream_free_handler(&input);
         handler.InvokeResponse(status, &headers, nullptr);
         pool_unref(output.pool);
@@ -115,7 +114,7 @@ CGIClient::ReturnResponse()
         stopwatch_event(stopwatch, "empty");
         stopwatch_dump(stopwatch);
 
-        fb_pool_free(buffer);
+        buffer.Free(fb_pool_get());
         istream_free_handler(&input);
         handler.InvokeResponse(status, &headers,
                                istream_null_new(output.pool));
@@ -136,23 +135,23 @@ CGIClient::FeedHeaders(const void *data, size_t length)
 {
     assert(!parser.AreHeadersFinished());
 
-    auto w = fifo_buffer_write(buffer);
+    auto w = buffer.Write();
     assert(!w.IsEmpty());
 
     if (length > w.size)
         length = w.size;
 
     memcpy(w.data, data, length);
-    fifo_buffer_append(buffer, length);
+    buffer.Append(length);
 
     GError *error = nullptr;
-    enum completion c = parser.FeedHeaders(*output.pool, *buffer, &error);
+    enum completion c = parser.FeedHeaders(*output.pool, buffer, &error);
     switch (c) {
     case C_DONE:
         /* the C_DONE status can only be triggered by new data that
            was just received; therefore, the amount of data still in
            the buffer (= response body) must be smaller */
-        assert(fifo_buffer_available(buffer) < length);
+        assert(buffer.GetAvailable() < length);
 
         if (!ReturnResponse())
             return 0;
@@ -160,13 +159,13 @@ CGIClient::FeedHeaders(const void *data, size_t length)
         /* don't consider data still in the buffer (= response body)
            as "consumed"; the caller will attempt to submit it to the
            response body handler */
-        return length - fifo_buffer_available(buffer);
+        return length - buffer.GetAvailable();
 
     case C_MORE:
         return length;
 
     case C_ERROR:
-        fb_pool_free(buffer);
+        buffer.Free(fb_pool_get());
         istream_free_handler(&input);
         handler.InvokeAbort(error);
         pool_unref(output.pool);
@@ -225,7 +224,7 @@ CGIClient::FeedBody(const char *data, size_t length)
         stopwatch_event(stopwatch, "malformed");
         stopwatch_dump(stopwatch);
 
-        fb_pool_free(buffer);
+        buffer.Free(fb_pool_get());
         istream_free_handler(&input);
 
         GError *error =
@@ -242,7 +241,7 @@ CGIClient::FeedBody(const char *data, size_t length)
         stopwatch_event(stopwatch, "end");
         stopwatch_dump(stopwatch);
 
-        fb_pool_free(buffer);
+        buffer.Free(fb_pool_get());
         istream_free_handler(&input);
         istream_deinit_eof(&output);
         return 0;
@@ -316,7 +315,7 @@ cgi_input_direct(enum istream_direct type, int fd, size_t max_length,
         stopwatch_event(cgi->stopwatch, "end");
         stopwatch_dump(cgi->stopwatch);
 
-        fb_pool_free(cgi->buffer);
+        cgi->buffer.Free(fb_pool_get());
         istream_close_handler(cgi->input);
         istream_deinit_eof(&cgi->output);
         return ISTREAM_RESULT_CLOSED;
@@ -338,7 +337,7 @@ cgi_input_eof(void *ctx)
 
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
 
-        fb_pool_free(cgi->buffer);
+        cgi->buffer.Free(fb_pool_get());
 
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
@@ -349,7 +348,7 @@ cgi_input_eof(void *ctx)
         stopwatch_event(cgi->stopwatch, "malformed");
         stopwatch_dump(cgi->stopwatch);
 
-        fb_pool_free(cgi->buffer);
+        cgi->buffer.Free(fb_pool_get());
 
         GError *error =
             g_error_new_literal(cgi_quark(), 0,
@@ -359,7 +358,7 @@ cgi_input_eof(void *ctx)
         stopwatch_event(cgi->stopwatch, "end");
         stopwatch_dump(cgi->stopwatch);
 
-        fb_pool_free(cgi->buffer);
+        cgi->buffer.Free(fb_pool_get());
         istream_deinit_eof(&cgi->output);
     }
 }
@@ -379,14 +378,14 @@ cgi_input_abort(GError *error, void *ctx)
            handler */
         assert(!istream_has_handler(istream_struct_cast(&cgi->output)));
 
-        fb_pool_free(cgi->buffer);
+        cgi->buffer.Free(fb_pool_get());
 
         g_prefix_error(&error, "CGI request body failed: ");
         cgi->handler.InvokeAbort(error);
         pool_unref(cgi->output.pool);
     } else {
         /* response has been sent: abort only the output stream */
-        fb_pool_free(cgi->buffer);
+        cgi->buffer.Free(fb_pool_get());
         istream_deinit_abort(&cgi->output, error);
     }
 }
@@ -461,7 +460,7 @@ istream_cgi_close(struct istream *istream)
 {
     CGIClient *cgi = istream_to_cgi(istream);
 
-    fb_pool_free(cgi->buffer);
+    cgi->buffer.Free(fb_pool_get());
 
     if (cgi->input != nullptr)
         istream_free_handler(&cgi->input);
@@ -486,7 +485,7 @@ CGIClient::Abort()
 {
     assert(input != nullptr);
 
-    fb_pool_free(buffer);
+    buffer.Free(fb_pool_get());
     istream_close_handler(input);
     pool_unref(output.pool);
 }
@@ -504,7 +503,7 @@ CGIClient::CGIClient(struct pool &pool, struct stopwatch *_stopwatch,
                      void *handler_ctx,
                      struct async_operation_ref &async_ref)
     :stopwatch(_stopwatch),
-     buffer(fb_pool_alloc()),
+     buffer(fb_pool_get()),
      parser(pool)
 {
     istream_init(&output, &istream_cgi, &pool);

@@ -10,11 +10,9 @@
 #include "ssl_quark.hxx"
 #include "thread_socket_filter.hxx"
 #include "pool.hxx"
-#include "fifo_buffer.hxx"
 #include "gerrno.h"
 #include "fb_pool.hxx"
-#include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
+#include "SliceFifoBuffer.hxx"
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -28,7 +26,7 @@ struct ssl_filter {
      * holding locks.  These will be copied to/from the accordding
      * #thread_socket_filter buffers.
      */
-    struct fifo_buffer *decrypted_input, *plain_output;
+    SliceFifoBuffer decrypted_input, plain_output;
 
     /**
      * Memory BIOs for passing data to/from OpenSSL.
@@ -55,46 +53,46 @@ ssl_set_error(GError **error_r)
 }
 
 /**
- * Copy data from #src to #dest.
+ * Move data from #src to #dest.
  */
 static void
-copy_fifo_buffer(struct fifo_buffer *dest, struct fifo_buffer *src)
+Move(ForeignFifoBuffer<uint8_t> &dest, ForeignFifoBuffer<uint8_t> &src)
 {
-    auto r = fifo_buffer_read(src);
+    auto r = src.Read();
     if (r.IsEmpty())
         return;
 
-    auto w = fifo_buffer_write(dest);
+    auto w = dest.Write();
     if (w.IsEmpty())
         return;
 
     size_t nbytes = std::min(r.size, w.size);
 
     memcpy(w.data, r.data, nbytes);
-    fifo_buffer_append(dest, nbytes);
-    fifo_buffer_consume(src, nbytes);
+    dest.Append(nbytes);
+    src.Consume(nbytes);
 }
 
 /**
- * Copy data from #src to #dest.
+ * Move data from #src to #dest.
  */
 static void
-copy_fifo_buffer_to_bio(BIO *dest, fifo_buffer *src)
+Move(BIO *dest, ForeignFifoBuffer<uint8_t> &src)
 {
-    auto r = fifo_buffer_read(src);
+    auto r = src.Read();
     if (r.IsEmpty())
         return;
 
     int nbytes = BIO_write(dest, r.data, r.size);
     if (nbytes > 0)
-        fifo_buffer_consume(src, nbytes);
+        src.Consume(nbytes);
 }
 
 static void
-copy_bio_to_fifo_buffer(fifo_buffer *dest, BIO *src)
+Move(ForeignFifoBuffer<uint8_t> &dest, BIO *src)
 {
     while (true) {
-        auto w = fifo_buffer_write(dest);
+        auto w = dest.Write();
         if (w.IsEmpty())
             return;
 
@@ -102,7 +100,7 @@ copy_bio_to_fifo_buffer(fifo_buffer *dest, BIO *src)
         if (nbytes <= 0)
             return;
 
-        fifo_buffer_append(dest, nbytes);
+        dest.Append(nbytes);
     }
 }
 
@@ -168,13 +166,13 @@ check_ssl_error(SSL *ssl, int result, GError **error_r)
  * @return false on error
  */
 static bool
-ssl_decrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
+ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 {
     /* SSL_read() must be called repeatedly until there is no more
        data (or until the buffer is full) */
 
     while (true) {
-        auto w = fifo_buffer_write(buffer);
+        auto w = buffer.Write();
         if (w.IsEmpty())
             return 0;
 
@@ -182,8 +180,7 @@ ssl_decrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
         if (result <= 0)
             return result == 0 || check_ssl_error(ssl, result, error_r);
 
-        if (result > 0)
-            fifo_buffer_append(buffer, result);
+        buffer.Append(result);
     }
 }
 
@@ -191,9 +188,9 @@ ssl_decrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
  * @return false on error
  */
 static bool
-ssl_encrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
+ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 {
-    auto r = fifo_buffer_read(buffer);
+    auto r = buffer.Read();
     if (r.IsEmpty())
         return true;
 
@@ -202,7 +199,7 @@ ssl_encrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
         return false;
 
     if (result > 0)
-        fifo_buffer_consume(buffer, result);
+        buffer.Consume(result);
 
     return true;
 }
@@ -221,10 +218,10 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
     /* copy input (and output to make room for more output) */
 
     pthread_mutex_lock(&f.mutex);
-    copy_fifo_buffer(f.decrypted_input, ssl->decrypted_input);
-    copy_fifo_buffer(ssl->plain_output, f.plain_output);
-    copy_fifo_buffer_to_bio(ssl->encrypted_input, f.encrypted_input);
-    copy_bio_to_fifo_buffer(f.encrypted_output, ssl->encrypted_output);
+    Move(f.decrypted_input, ssl->decrypted_input);
+    Move(ssl->plain_output, f.plain_output);
+    Move(ssl->encrypted_input, f.encrypted_input);
+    Move(f.encrypted_output, ssl->encrypted_output);
     pthread_mutex_unlock(&f.mutex);
 
     /* let OpenSSL work */
@@ -257,9 +254,9 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
     /* copy output */
 
     pthread_mutex_lock(&f.mutex);
-    copy_fifo_buffer(f.decrypted_input, ssl->decrypted_input);
-    copy_bio_to_fifo_buffer(f.encrypted_output, ssl->encrypted_output);
-    f.drained = fifo_buffer_empty(ssl->plain_output) &&
+    Move(f.decrypted_input, ssl->decrypted_input);
+    Move(f.encrypted_output, ssl->encrypted_output);
+    f.drained = ssl->plain_output.IsEmpty() &&
         BIO_eof(ssl->encrypted_output);
     pthread_mutex_unlock(&f.mutex);
 
@@ -274,8 +271,8 @@ ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
     if (ssl->ssl != NULL)
         SSL_free(ssl->ssl);
 
-    fb_pool_free(ssl->decrypted_input);
-    fb_pool_free(ssl->plain_output);
+    ssl->decrypted_input.Free(fb_pool_get());
+    ssl->plain_output.Free(fb_pool_get());
 
     free(ssl->peer_subject);
     free(ssl->peer_issuer_subject);
@@ -305,8 +302,8 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
         return NULL;
     }
 
-    ssl->decrypted_input = fb_pool_alloc();
-    ssl->plain_output = fb_pool_alloc();
+    ssl->decrypted_input.Allocate(fb_pool_get());
+    ssl->plain_output.Allocate(fb_pool_get());
     ssl->encrypted_input = BIO_new(BIO_s_mem());
     ssl->encrypted_output = BIO_new(BIO_s_mem());
 

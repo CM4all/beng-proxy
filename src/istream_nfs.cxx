@@ -8,9 +8,9 @@
 #include "istream-internal.h"
 #include "istream_buffer.hxx"
 #include "nfs_client.hxx"
-#include "fifo_buffer.hxx"
+#include "pool.hxx"
 #include "util/Cast.hxx"
-#include "util/WritableBuffer.hxx"
+#include "util/ForeignFifoBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -45,7 +45,7 @@ struct istream_nfs {
      */
     size_t discard_read;
 
-    struct fifo_buffer *buffer;
+    ForeignFifoBuffer<uint8_t> buffer;
 };
 
 extern const struct nfs_client_read_file_handler istream_nfs_read_handler;
@@ -60,8 +60,8 @@ istream_nfs_schedule_read(struct istream_nfs *n)
 {
     assert(n->pending_read == 0);
 
-    const size_t max = n->buffer != nullptr
-        ? fifo_buffer_space(n->buffer)
+    const size_t max = n->buffer.IsDefined()
+        ? n->buffer.Write().size
         : NFS_BUFFER_SIZE;
     size_t nbytes = n->remaining > max
         ? max
@@ -86,7 +86,7 @@ istream_nfs_schedule_read(struct istream_nfs *n)
 static void
 istream_nfs_schedule_read_or_eof(struct istream_nfs *n)
 {
-    assert(n->buffer == nullptr || fifo_buffer_empty(n->buffer));
+    assert(n->buffer.IsEmpty());
 
     if (n->pending_read > 0)
         return;
@@ -108,26 +108,27 @@ istream_nfs_feed(struct istream_nfs *n, const void *data, size_t length)
 {
     assert(length > 0);
 
-    struct fifo_buffer *buffer = n->buffer;
-    if (buffer == nullptr) {
+    auto &buffer = n->buffer;
+    if (buffer.IsNull()) {
         const uint64_t total_size = n->remaining + length;
         const size_t buffer_size = total_size > NFS_BUFFER_SIZE
             ? NFS_BUFFER_SIZE
             : (size_t)total_size;
-        buffer = n->buffer = fifo_buffer_new(n->base.pool, buffer_size);
+        buffer.SetBuffer(PoolAlloc<uint8_t>(*n->base.pool, buffer_size),
+                         buffer_size);
     }
 
-    auto w = fifo_buffer_write(buffer);
+    auto w = buffer.Write();
     assert(w.size >= length);
 
     memcpy(w.data, data, length);
-    fifo_buffer_append(buffer, length);
+    buffer.Append(length);
 }
 
 static void
 istream_nfs_read_from_buffer(struct istream_nfs *n)
 {
-    assert(n->buffer != nullptr);
+    assert(n->buffer.IsDefined());
 
     size_t remaining = istream_buffer_consume(&n->base, n->buffer);
     if (remaining == 0 && n->pending_read == 0)
@@ -196,11 +197,8 @@ istream_nfs_available(struct istream *istream, bool partial gcc_unused)
 {
     struct istream_nfs *n = istream_to_nfs(istream);
 
-    uint64_t available = n->remaining + n->pending_read - n->discard_read;
-    if (n->buffer != nullptr)
-        available += fifo_buffer_available(n->buffer);
-
-    return available;
+    return n->remaining + n->pending_read - n->discard_read +
+        n->buffer.GetAvailable();
 }
 
 static off_t
@@ -213,12 +211,12 @@ istream_nfs_skip(struct istream *istream, off_t _length)
 
     uint64_t result = 0;
 
-    if (n->buffer != nullptr) {
-        const uint64_t buffer_available = fifo_buffer_available(n->buffer);
+    if (n->buffer.IsDefined()) {
+        const uint64_t buffer_available = n->buffer.GetAvailable();
         const uint64_t consume = length < buffer_available
             ? length
             : buffer_available;
-        fifo_buffer_consume(n->buffer, consume);
+        n->buffer.Consume(consume);
         result += consume;
         length -= consume;
     }
@@ -247,7 +245,7 @@ istream_nfs_read(struct istream *istream)
 {
     struct istream_nfs *n = istream_to_nfs(istream);
 
-    if (n->buffer != nullptr && !fifo_buffer_empty(n->buffer))
+    if (!n->buffer.IsEmpty())
         istream_nfs_read_from_buffer(n);
     else
         istream_nfs_schedule_read_or_eof(n);
@@ -289,7 +287,7 @@ istream_nfs_new(struct pool *pool, struct nfs_file_handle *handle,
     n->remaining = end - start;
     n->pending_read = 0;
     n->discard_read = 0;
-    n->buffer = nullptr;
+    n->buffer.SetNull();
 
     return istream_struct_cast(&n->base);
 }

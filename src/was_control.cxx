@@ -6,13 +6,12 @@
 
 #include "was_control.hxx"
 #include "was_quark.h"
-#include "fifo_buffer.hxx"
 #include "buffered_io.hxx"
 #include "pevent.h"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
+#include "util/ForeignFifoBuffer.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -24,6 +23,9 @@
 #include <unistd.h>
 
 struct was_control {
+    static constexpr size_t INPUT_BUFFER_SIZE = 4096;
+    static constexpr size_t OUTPUT_BUFFER_SIZE = 4096;
+
     struct pool *pool;
 
     int fd;
@@ -35,14 +37,21 @@ struct was_control {
 
     struct {
         struct event event;
-        struct fifo_buffer *buffer;
     } input;
 
     struct {
         struct event event;
-        struct fifo_buffer *buffer;
         unsigned bulk;
     } output;
+
+    ForeignFifoBuffer<uint8_t> input_buffer, output_buffer;
+
+    was_control(struct pool &_pool)
+        :pool(&_pool),
+         input_buffer(PoolAlloc<uint8_t>(*pool, INPUT_BUFFER_SIZE),
+                      INPUT_BUFFER_SIZE),
+         output_buffer(PoolAlloc<uint8_t>(*pool, OUTPUT_BUFFER_SIZE),
+                       OUTPUT_BUFFER_SIZE) {}
 };
 
 static const struct timeval was_control_timeout = {
@@ -56,7 +65,7 @@ was_control_schedule_read(struct was_control *control)
     assert(control->fd >= 0);
 
     p_event_add(&control->input.event,
-                fifo_buffer_empty(control->input.buffer)
+                control->input_buffer.IsEmpty()
                 ? nullptr : &was_control_timeout,
                 control->pool, "was_control_input");
 }
@@ -122,7 +131,7 @@ was_control_consume_input(struct was_control *control)
     const struct was_header *header;
 
     while (true) {
-        auto r = fifo_buffer_read(control->input.buffer);
+        auto r = control->input_buffer.Read().ToVoid();
         if (r.size < sizeof(*header))
             /* not enough data yet */
             return was_control_drained(control);
@@ -131,7 +140,7 @@ was_control_consume_input(struct was_control *control)
         if (r.size < sizeof(*header) + header->length) {
             /* not enough data yet */
 
-            if (fifo_buffer_full(control->input.buffer)) {
+            if (control->input_buffer.IsFull()) {
                 GError *error = g_error_new(was_quark(), 0,
                                             "control header too long (%u)",
                                             header->length);
@@ -148,8 +157,7 @@ was_control_consume_input(struct was_control *control)
         PoolNotify notify(*control->pool);
 #endif
 
-        fifo_buffer_consume(control->input.buffer,
-                            sizeof(*header) + header->length);
+        control->input_buffer.Consume(sizeof(*header) + header->length);
 
         if (!control->handler->packet(was_command(header->command),
                                       payload, header->length,
@@ -169,7 +177,7 @@ was_control_consume_input(struct was_control *control)
 static void
 was_control_try_read(struct was_control *control)
 {
-    ssize_t nbytes = recv_to_buffer(control->fd, control->input.buffer,
+    ssize_t nbytes = recv_to_buffer(control->fd, control->input_buffer,
                                     0xffff);
     assert(nbytes != -2);
 
@@ -195,7 +203,7 @@ was_control_try_read(struct was_control *control)
     }
 
     if (was_control_consume_input(control)) {
-        assert(!fifo_buffer_full(control->input.buffer));
+        assert(!control->input_buffer.IsFull());
         was_control_schedule_read(control);
     }
 }
@@ -203,7 +211,7 @@ was_control_try_read(struct was_control *control)
 static bool
 was_control_try_write(struct was_control *control)
 {
-    ssize_t nbytes = send_from_buffer(control->fd, control->output.buffer);
+    ssize_t nbytes = send_from_buffer(control->fd, control->output_buffer);
     assert(nbytes != -2);
 
     if (nbytes < 0) {
@@ -219,7 +227,7 @@ was_control_try_write(struct was_control *control)
         return false;
     }
 
-    if (!fifo_buffer_empty(control->output.buffer))
+    if (!control->output_buffer.IsEmpty())
         was_control_schedule_write(control);
     else if (control->done) {
         was_control_eof((struct was_control *)control->handler_ctx);
@@ -272,7 +280,7 @@ was_control_output_event_callback(int fd gcc_unused, short event, void *ctx)
     struct was_control *control = (struct was_control *)ctx;
 
     assert(control->fd >= 0);
-    assert(!fifo_buffer_empty(control->output.buffer));
+    assert(!control->output_buffer.IsEmpty());
 
     p_event_consumed(&control->output.event, control->pool);
 
@@ -306,8 +314,7 @@ was_control_new(struct pool *pool, int fd,
     assert(handler->eof != nullptr);
     assert(handler->abort != nullptr);
 
-    auto control = NewFromPool<struct was_control>(*pool);
-    control->pool = pool;
+    auto control = NewFromPool<struct was_control>(*pool, *pool);
     control->fd = fd;
     control->done = false;
 
@@ -316,11 +323,10 @@ was_control_new(struct pool *pool, int fd,
 
     event_set(&control->input.event, control->fd, EV_READ|EV_TIMEOUT,
               was_control_input_event_callback, control);
-    control->input.buffer = fifo_buffer_new(pool, 4096);
 
     event_set(&control->output.event, control->fd, EV_WRITE|EV_TIMEOUT,
               was_control_output_event_callback, control);
-    control->output.buffer = fifo_buffer_new(pool, 8192);
+
     control->output.bulk = 0;
 
     was_control_schedule_read(control);
@@ -342,7 +348,7 @@ was_control_start(struct was_control *control, enum was_command cmd,
 {
     assert(!control->done);
 
-    auto w = fifo_buffer_write(control->output.buffer);
+    auto w = control->output_buffer.Write().ToVoid();
     struct was_header *header = (struct was_header *)w.data;
     if (w.size < sizeof(*header) + payload_length) {
         GError *error =
@@ -363,8 +369,7 @@ was_control_finish(struct was_control *control, size_t payload_length)
 {
     assert(!control->done);
 
-    fifo_buffer_append(control->output.buffer,
-                       sizeof(struct was_header) + payload_length);
+    control->output_buffer.Append(sizeof(struct was_header) + payload_length);
     return control->output.bulk > 0 || was_control_try_write(control);
 }
 
@@ -456,7 +461,7 @@ was_control_done(struct was_control *control)
 
     control->done = true;
 
-    if (!fifo_buffer_empty(control->input.buffer)) {
+    if (!control->input_buffer.IsEmpty()) {
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "received too much control data");
@@ -464,13 +469,12 @@ was_control_done(struct was_control *control)
         return;
     }
 
-    if (fifo_buffer_empty(control->output.buffer))
+    if (control->output_buffer.IsEmpty())
         was_control_eof(control);
 }
 
 bool
 was_control_is_empty(struct was_control *control)
 {
-    return fifo_buffer_empty(control->input.buffer) &&
-        fifo_buffer_empty(control->output.buffer);
+    return control->input_buffer.IsEmpty() && control->output_buffer.IsEmpty();
 }

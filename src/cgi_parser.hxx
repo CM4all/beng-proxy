@@ -15,9 +15,10 @@
 #include <assert.h>
 #include <stddef.h>
 #include <sys/types.h>
+#include <stdint.h>
 
 struct pool;
-struct fifo_buffer;
+template<typename T> class ForeignFifoBuffer;
 
 /**
  * A parser for the CGI response.
@@ -69,7 +70,8 @@ struct CGIParser {
      * contains the response body); C_PARTIAL or C_NONE when more header
      * data is expected; C_ERROR on error
      */
-    enum completion FeedHeaders(struct pool &pool, struct fifo_buffer &buffer,
+    enum completion FeedHeaders(struct pool &pool,
+                                ForeignFifoBuffer<uint8_t> &buffer,
                                 GError **error_r);
 
     http_status_t GetStatus() const {
@@ -125,7 +127,8 @@ struct CGIParser {
     }
 
 private:
-    enum completion Finish(struct fifo_buffer &buffer, GError **error_r);
+    enum completion Finish(ForeignFifoBuffer<uint8_t> &buffer,
+                           GError **error_r);
 };
 
 #endif

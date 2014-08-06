@@ -10,6 +10,7 @@
 
 #include "thread_job.hxx"
 #include "defer_event.h"
+#include "SliceFifoBuffer.hxx"
 
 #include <pthread.h>
 
@@ -124,25 +125,25 @@ struct ThreadSocketFilter : ThreadJob {
      * buffer because buffered_socket is not thread-safe, while this
      * buffer is protected by the #mutex.
      */
-    struct fifo_buffer *encrypted_input;
+    SliceFifoBuffer encrypted_input;
 
     /**
      * A buffer of input data that was handled by the filter.  It will
      * be passed to the handler.
      */
-    struct fifo_buffer *decrypted_input;
+    SliceFifoBuffer decrypted_input;
 
     /**
      * A buffer of output data that was not yet handled by the filter.
      * Once it was filtered, it will be written to #encrypted_output.
      */
-    struct fifo_buffer *plain_output;
+    SliceFifoBuffer plain_output;
 
     /**
      * A buffer of output data that has been filtered already, and
      * will be written to the socket.
      */
-    struct fifo_buffer *encrypted_output;
+    SliceFifoBuffer encrypted_output;
 
     ThreadSocketFilter(struct pool &pool,
                        ThreadQueue &queue,

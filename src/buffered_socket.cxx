@@ -6,7 +6,6 @@
  */
 
 #include "buffered_socket.hxx"
-#include "fifo_buffer.hxx"
 #include "fb_pool.hxx"
 #include "pool.hxx"
 #include "gerrno.h"
@@ -48,7 +47,7 @@ buffered_socket_input_empty(const BufferedSocket *s)
     assert(s != nullptr);
     assert(!s->ended);
 
-    return s->input == nullptr || fifo_buffer_empty(s->input);
+    return s->input.IsEmpty();
 }
 
 static bool
@@ -57,7 +56,7 @@ buffered_socket_input_full(const BufferedSocket *s)
     assert(s != nullptr);
     assert(!s->ended);
 
-    return s->input != nullptr && fifo_buffer_full(s->input);
+    return s->input.IsFull();
 }
 
 int
@@ -76,18 +75,15 @@ BufferedSocket::GetAvailable() const
 {
     assert(!ended);
 
-    return input != nullptr
-        ? fifo_buffer_available(input)
-        : 0;
+    return input.GetAvailable();
 }
 
 void
-BufferedSocket::Consumed( size_t nbytes)
+BufferedSocket::Consumed(size_t nbytes)
 {
     assert(!ended);
-    assert(input != nullptr);
 
-    fifo_buffer_consume(input, nbytes);
+    input.Consume(nbytes);
 }
 
 /**
@@ -102,7 +98,7 @@ buffered_socket_invoke_data(BufferedSocket *s)
     bool local_expect_more = false;
 
     while (true) {
-        auto r = fifo_buffer_read(s->input);
+        auto r = s->input.Read();
         if (r.IsEmpty())
             return s->expect_more || local_expect_more
                 ? BufferedResult::MORE
@@ -147,7 +143,7 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
 
     switch (result) {
     case BufferedResult::OK:
-        assert(fifo_buffer_empty(s->input));
+        assert(s->input.IsEmpty());
         assert(!s->expect_more);
 
         if (!s->IsConnected()) {
@@ -163,7 +159,7 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
         return true;
 
     case BufferedResult::PARTIAL:
-        assert(!fifo_buffer_empty(s->input));
+        assert(!s->input.IsEmpty());
 
         if (!s->IsConnected())
             return false;
@@ -263,11 +259,12 @@ buffered_socket_fill_buffer(BufferedSocket *s)
 {
     assert(s->IsConnected());
 
-    struct fifo_buffer *buffer = s->input;
-    if (buffer == nullptr)
-        buffer = s->input = fb_pool_alloc();
+    if (s->input.IsNull())
+        s->input.Allocate(fb_pool_get());
 
-    ssize_t nbytes = s->base.ReadToBuffer(*buffer, INT_MAX);
+    auto &buffer = s->input;
+
+    ssize_t nbytes = s->base.ReadToBuffer(buffer, INT_MAX);
     if (gcc_likely(nbytes > 0)) {
         /* success: data was added to the buffer */
         s->expect_more = false;
@@ -286,7 +283,7 @@ buffered_socket_fill_buffer(BufferedSocket *s)
 
         assert(s->handler->closed != nullptr);
 
-        const size_t remaining = fifo_buffer_available(buffer);
+        const size_t remaining = buffer.GetAvailable();
 
         if (!s->handler->closed(s->handler_ctx) ||
             (s->handler->remaining != nullptr &&
@@ -294,10 +291,9 @@ buffered_socket_fill_buffer(BufferedSocket *s)
             return false;
 
         assert(!s->IsConnected());
-        assert(s->input == buffer);
-        assert(remaining == fifo_buffer_available(buffer));
+        assert(remaining == buffer.GetAvailable());
 
-        if (fifo_buffer_empty(buffer)) {
+        if (buffer.IsEmpty()) {
             buffered_socket_ended(s);
             return false;
         }
@@ -490,7 +486,7 @@ BufferedSocket::Init(struct pool &_pool,
 
     handler = &_handler;
     handler_ctx = _ctx;
-    input = nullptr;
+    input.SetNull();
     direct = false;
     expect_more = false;
 
@@ -524,8 +520,7 @@ BufferedSocket::Init(struct pool &_pool,
     handler_ctx = _ctx;
 
     /* steal the input buffer (after we already stole the socket) */
-    input = src.input;
-    src.input = nullptr;
+    input = std::move(src.input);
 
     direct = false;
     expect_more = false;
@@ -544,9 +539,9 @@ BufferedSocket::Destroy()
     assert(!base.IsValid());
     assert(!destroyed);
 
-    if (input != nullptr) {
-        fb_pool_free(input);
-        input = nullptr;
+    if (input.IsDefined()) {
+        input.Free(fb_pool_get());
+        input.SetNull();
     }
 
 #ifndef NDEBUG
@@ -559,7 +554,7 @@ BufferedSocket::IsEmpty() const
 {
     assert(!ended);
 
-    return input == nullptr || fifo_buffer_empty(input);
+    return input.IsEmpty();
 }
 
 bool
@@ -646,7 +641,7 @@ BufferedSocket::ScheduleReadTimeout(bool _expect_more,
 
     read_timeout = timeout;
 
-    if (input != nullptr && !fifo_buffer_empty(input))
+    if (!input.IsEmpty())
         /* deferred call to Read() to deliver data from the buffer */
         defer_event_add(&defer_read);
     else

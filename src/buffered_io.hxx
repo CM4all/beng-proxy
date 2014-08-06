@@ -8,8 +8,9 @@
 #define BENG_PROXY_BUFFERED_IO_HXX
 
 #include <sys/types.h>
+#include <stdint.h>
 
-struct fifo_buffer;
+template<typename T> class ForeignFifoBuffer;
 
 /**
  * Appends data from a file to the buffer.
@@ -18,9 +19,6 @@ struct fifo_buffer;
  * @param buffer the destination buffer
  * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
  */
-ssize_t
-read_to_buffer(int fd, struct fifo_buffer *buffer, size_t length);
-
 template<typename B>
 ssize_t
 read_to_buffer(int fd, B &buffer, size_t length);
@@ -32,9 +30,6 @@ read_to_buffer(int fd, B &buffer, size_t length);
  * @param buffer the source buffer
  * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
  */
-ssize_t
-write_from_buffer(int fd, struct fifo_buffer *buffer);
-
 template<typename B>
 ssize_t
 write_from_buffer(int fd, B &buffer);
@@ -46,9 +41,6 @@ write_from_buffer(int fd, B &buffer);
  * @param buffer the destination buffer
  * @return -1 on error, -2 if the buffer is full, or the amount appended to the buffer
  */
-ssize_t
-recv_to_buffer(int fd, struct fifo_buffer *buffer, size_t length);
-
 template<typename B>
 ssize_t
 recv_to_buffer(int fd, B &buffer, size_t length);
@@ -60,9 +52,6 @@ recv_to_buffer(int fd, B &buffer, size_t length);
  * @param buffer the source buffer
  * @return -1 on error, -2 if the buffer is empty, or the rest left in the buffer
  */
-ssize_t
-send_from_buffer(int fd, struct fifo_buffer *buffer);
-
 template<typename B>
 ssize_t
 send_from_buffer(int fd, B &buffer);

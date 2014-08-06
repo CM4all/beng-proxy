@@ -114,11 +114,11 @@ SocketWrapper::AsFD()
 }
 
 ssize_t
-SocketWrapper::ReadToBuffer(struct fifo_buffer &buffer, size_t length)
+SocketWrapper::ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer, size_t length)
 {
     assert(IsValid());
 
-    return recv_to_buffer(fd, &buffer, length);
+    return recv_to_buffer(fd, buffer, length);
 }
 
 void

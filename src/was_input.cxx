@@ -9,12 +9,11 @@
 #include "pevent.h"
 #include "direct.h"
 #include "istream-internal.h"
-#include "fifo_buffer.hxx"
 #include "buffered_io.hxx"
 #include "fd-util.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/ForeignFifoBuffer.hxx"
 
 #include <daemon/log.h>
 #include <was/protocol.h>
@@ -23,6 +22,8 @@
 #include <string.h>
 
 struct was_input {
+    static constexpr size_t BUFFER_SIZE = 4096;
+
     struct istream output;
 
     int fd;
@@ -31,7 +32,7 @@ struct was_input {
     const struct was_input_handler *handler;
     void *handler_ctx;
 
-    struct fifo_buffer *buffer;
+    ForeignFifoBuffer<uint8_t> buffer;
 
     uint64_t received, guaranteed, length;
 
@@ -43,6 +44,8 @@ struct was_input {
      * premature().  Only defined if known_length is true.
      */
     bool premature;
+
+    was_input():buffer(nullptr) {}
 };
 
 static const struct timeval was_input_timeout = {
@@ -54,7 +57,7 @@ static void
 was_input_schedule_read(struct was_input *input)
 {
     assert(input->fd >= 0);
-    assert(input->buffer == nullptr || !fifo_buffer_full(input->buffer));
+    assert(!input->buffer.IsFull());
 
     p_event_add(&input->event,
                 input->timeout ? &was_input_timeout : nullptr,
@@ -101,7 +104,7 @@ static bool
 was_input_check_eof(struct was_input *input)
 {
     if (input->known_length && input->received >= input->length &&
-        (input->buffer == nullptr || fifo_buffer_empty(input->buffer))) {
+        input->buffer.IsEmpty()) {
         was_input_eof(input);
         return true;
     } else
@@ -115,9 +118,7 @@ was_input_check_eof(struct was_input *input)
 static bool
 was_input_consume_buffer(struct was_input *input)
 {
-    assert(input->buffer != nullptr);
-
-    auto r = fifo_buffer_read(input->buffer);
+    auto r = input->buffer.Read();
     if (r.IsEmpty())
         return true;
 
@@ -125,7 +126,7 @@ was_input_consume_buffer(struct was_input *input)
     if (nbytes == 0)
         return false;
 
-    fifo_buffer_consume(input->buffer, nbytes);
+    input->buffer.Consume(nbytes);
 
     if (was_input_check_eof(input))
         return false;
@@ -142,8 +143,10 @@ was_input_consume_buffer(struct was_input *input)
 static bool
 was_input_try_buffered(struct was_input *input)
 {
-    if (input->buffer == nullptr)
-        input->buffer = fifo_buffer_new(input->output.pool, 4096);
+    if (input->buffer.IsNull())
+        input->buffer.SetBuffer(PoolAlloc<uint8_t>(*input->output.pool,
+                                                   was_input::BUFFER_SIZE),
+                                was_input::BUFFER_SIZE);
 
     size_t max_length = 4096;
     if (input->known_length) {
@@ -180,7 +183,7 @@ was_input_try_buffered(struct was_input *input)
     input->received += nbytes;
 
     if (was_input_consume_buffer(input)) {
-        assert(!fifo_buffer_full(input->buffer));
+        assert(!input->buffer.IsFull());
         was_input_schedule_read(input);
     }
 
@@ -190,7 +193,7 @@ was_input_try_buffered(struct was_input *input)
 static bool
 was_input_try_direct(struct was_input *input)
 {
-    assert(input->buffer == nullptr || fifo_buffer_empty(input->buffer));
+    assert(input->buffer.IsEmpty());
 
     size_t max_length = 0x1000000;
     if (input->known_length) {
@@ -232,7 +235,7 @@ static void
 was_input_try_read(struct was_input *input)
 {
     if (istream_check_direct(&input->output, ISTREAM_PIPE)) {
-        if (input->buffer == nullptr || was_input_consume_buffer(input))
+        if (was_input_consume_buffer(input))
             was_input_try_direct(input);
     } else {
         was_input_try_buffered(input);
@@ -299,7 +302,7 @@ was_input_istream_read(struct istream *istream)
 
     p_event_del(&input->event, input->output.pool);
 
-    if (input->buffer == nullptr || was_input_consume_buffer(input))
+    if (was_input_consume_buffer(input))
         was_input_try_read(input);
 }
 
@@ -350,8 +353,6 @@ was_input_new(struct pool *pool, int fd,
 
     input->handler = handler;
     input->handler_ctx = handler_ctx;
-
-    input->buffer = nullptr;
 
     input->received = 0;
     input->guaranteed = 0;

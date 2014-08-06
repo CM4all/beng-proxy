@@ -580,6 +580,7 @@ libutil_a_SOURCES = \
 	src/util/djbhash.c src/util/djbhash.h \
 	src/util/WritableBuffer.hxx \
 	src/util/StaticFifoBuffer.hxx \
+	src/util/ForeignFifoBuffer.hxx \
 	src/kvlist.hxx \
 	src/format.c format.h \
 	src/date.c src/date.h \
@@ -619,6 +620,7 @@ libmemory_a_SOURCES = \
 	src/mmap.h \
 	src/fb_pool.cxx src/fb_pool.hxx \
 	src/SlicePool.cxx src/SlicePool.hxx \
+	src/SliceFifoBuffer.cxx src/SliceFifoBuffer.hxx \
 	src/rubber.cxx src/rubber.hxx
 
 libpool_a_SOURCES = \
@@ -1398,7 +1400,7 @@ test_format_http_date_LDADD = $(AM_LDADD) libutil.a
 
 test_request_translation_SOURCES = test/request_translation.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx \
-	c src/buffered_io.cxx src/direct.c \
+	src/buffered_io.cxx src/direct.c \
 	src/cleanup_timer.cxx \
 	src/translate_client.cxx src/tstock.cxx \
 	src/translate_response.cxx \

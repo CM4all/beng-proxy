@@ -8,7 +8,6 @@
 #define __BENG_HTTP_SERVER_INTERNAL_H
 
 #include "http_server.hxx"
-#include "fifo_buffer.hxx"
 #include "http_body.hxx"
 #include "async.hxx"
 #include "filtered_socket.hxx"

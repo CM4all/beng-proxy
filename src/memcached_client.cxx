@@ -11,7 +11,6 @@
 #include "async.hxx"
 #include "pevent.h"
 #include "istream-internal.h"
-#include "fifo_buffer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

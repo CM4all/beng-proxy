@@ -6,11 +6,10 @@
 
 #include "cgi_parser.hxx"
 #include "cgi_quark.h"
-#include "fifo_buffer.hxx"
 #include "strmap.hxx"
 #include "header_parser.hxx"
 #include "strutil.h"
-#include "util/ConstBuffer.hxx"
+#include "util/ForeignFifoBuffer.hxx"
 
 #include <string.h>
 #include <stdlib.h>
@@ -30,7 +29,7 @@ CGIParser::CGIParser(struct pool &pool)
  * by an empty line.
  */
 inline enum completion
-CGIParser::Finish(struct fifo_buffer &buffer, GError **error_r)
+CGIParser::Finish(ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 {
     /* parse the status */
     const char *p = headers->Remove("status");
@@ -56,7 +55,7 @@ CGIParser::Finish(struct fifo_buffer &buffer, GError **error_r)
             remaining = -1;
     }
 
-    if (IsTooMuch(fifo_buffer_available(&buffer))) {
+    if (IsTooMuch(buffer.GetAvailable())) {
         g_set_error(error_r, cgi_quark(), 0, "too much data from CGI script");
         return C_ERROR;
     }
@@ -68,12 +67,12 @@ CGIParser::Finish(struct fifo_buffer &buffer, GError **error_r)
 }
 
 enum completion
-CGIParser::FeedHeaders(struct pool &pool, struct fifo_buffer &buffer,
+CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
                        GError **error_r)
 {
     assert(!AreHeadersFinished());
 
-    auto r = fifo_buffer_read(&buffer);
+    auto r = buffer.Read();
     if (r.IsEmpty())
         return C_MORE;
 
@@ -93,7 +92,7 @@ CGIParser::FeedHeaders(struct pool &pool, struct fifo_buffer &buffer,
         if (line_length == 0) {
             /* found an empty line, which is the separator between
                headers and body */
-            fifo_buffer_consume(&buffer, next - data);
+            buffer.Consume(next - data);
             return Finish(buffer, error_r);
         }
 
@@ -103,11 +102,11 @@ CGIParser::FeedHeaders(struct pool &pool, struct fifo_buffer &buffer,
     }
 
     if (next != nullptr) {
-        fifo_buffer_consume(&buffer, next - data);
+        buffer.Consume(next - data);
         return C_MORE;
     }
 
-    if (fifo_buffer_full(&buffer)) {
+    if (buffer.IsFull()) {
         /* the buffer is full, and no header could be parsed: this
            means the current header is too large for the buffer; bail
            out */

@@ -13,6 +13,7 @@
 #include "pevent.h"
 #include "gerrno.h"
 #include "fb_pool.hxx"
+#include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
 
 #ifdef __linux
@@ -33,7 +34,8 @@ struct fork {
     struct istream output;
     int output_fd;
     struct event output_event;
-    struct fifo_buffer *buffer;
+
+    SliceFifoBuffer buffer;
 
     struct istream *input;
     int input_fd;
@@ -71,11 +73,8 @@ fork_close(struct fork *f)
 static void
 fork_free_buffer(struct fork *f)
 {
-    if (f->buffer == nullptr)
-        return;
-
-    fb_pool_free(f->buffer);
-    f->buffer = nullptr;
+    if (f->buffer.IsDefined())
+        f->buffer.Free(fb_pool_get());
 }
 
 /**
@@ -87,13 +86,13 @@ fork_free_buffer(struct fork *f)
 static bool
 fork_buffer_send(struct fork *f)
 {
-    assert(f->buffer != nullptr);
+    assert(f->buffer.IsDefined());
 
     if (istream_buffer_send(&f->output, f->buffer) == 0)
         return false;
 
     if (f->output_fd < 0) {
-        if (fifo_buffer_empty(f->buffer)) {
+        if (f->buffer.IsEmpty()) {
             fork_free_buffer(f);
             istream_deinit_eof(&f->output);
         }
@@ -227,10 +226,11 @@ fork_read_from_output(struct fork *f)
     assert(f->output_fd >= 0);
 
     if (!fork_check_direct(f)) {
-        if (f->buffer == nullptr)
-            f->buffer = fb_pool_alloc();
+        if (f->buffer.IsNull())
+            f->buffer.Allocate(fb_pool_get());
 
-        ssize_t nbytes = read_to_buffer(f->output_fd, f->buffer, INT_MAX);
+        ForeignFifoBuffer<uint8_t> &buffer = f->buffer;
+        ssize_t nbytes = read_to_buffer(f->output_fd, buffer, INT_MAX);
         if (nbytes == -2) {
             /* XXX should not happen */
         } else if (nbytes > 0) {
@@ -240,7 +240,7 @@ fork_read_from_output(struct fork *f)
         } else if (nbytes == 0) {
             fork_close(f);
 
-            if (fifo_buffer_empty(f->buffer)) {
+            if (f->buffer.IsEmpty()) {
                 fork_free_buffer(f);
                 istream_deinit_eof(&f->output);
             }
@@ -259,8 +259,7 @@ fork_read_from_output(struct fork *f)
             istream_deinit_abort(&f->output, error);
         }
     } else {
-        if (f->buffer != nullptr &&
-            istream_buffer_consume(&f->output, f->buffer) > 0)
+        if (istream_buffer_consume(&f->output, f->buffer) > 0)
             /* there's data left in the buffer, which must be consumed
                before we can switch to "direct" transfer */
             return;
@@ -348,7 +347,7 @@ istream_fork_read(struct istream *istream)
 {
     struct fork *f = istream_to_fork(istream);
 
-    if (f->buffer == nullptr || fifo_buffer_empty(f->buffer) ||
+    if (f->buffer.IsEmpty() ||
         fork_buffer_send(f))
         fork_read_from_output(f);
 }
@@ -531,7 +530,7 @@ beng_fork(struct pool *pool, const char *name,
         f->output_fd = c.stdout_pipe[0];
         event_set(&f->output_event, f->output_fd, EV_READ,
                   fork_output_event_callback, f);
-        f->buffer = nullptr;
+        f->buffer.SetNull();
 
         f->pid = pid;
         f->callback = callback;

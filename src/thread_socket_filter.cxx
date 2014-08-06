@@ -7,12 +7,9 @@
 
 #include "thread_socket_filter.hxx"
 #include "filtered_socket.hxx"
-#include "fifo_buffer.hxx"
 #include "fb_pool.hxx"
 #include "thread_queue.hxx"
 #include "pool.hxx"
-#include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
 
 #include "gerrno.h"
 
@@ -31,10 +28,10 @@ ThreadSocketFilter::ThreadSocketFilter(struct pool &_pool,
                                        void *_ctx)
     :pool(_pool), queue(_queue),
      handler(_handler), handler_ctx(_ctx),
-     encrypted_input(fb_pool_alloc()),
-     decrypted_input(fb_pool_alloc()),
-     plain_output(fb_pool_alloc()),
-     encrypted_output(fb_pool_alloc())
+     encrypted_input(fb_pool_get()),
+     decrypted_input(fb_pool_get()),
+     plain_output(fb_pool_get()),
+     encrypted_output(fb_pool_get())
 {
     pool_ref(&pool);
 
@@ -49,10 +46,10 @@ ThreadSocketFilter::~ThreadSocketFilter()
 
     defer_event_deinit(&defer_event);
 
-    fb_pool_free(encrypted_input);
-    fb_pool_free(decrypted_input);
-    fb_pool_free(plain_output);
-    fb_pool_free(encrypted_output);
+    encrypted_input.Free(fb_pool_get());
+    decrypted_input.Free(fb_pool_get());
+    plain_output.Free(fb_pool_get());
+    encrypted_output.Free(fb_pool_get());
 
     if (error != nullptr)
         g_error_free(error);
@@ -90,7 +87,7 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
     while (true) {
         pthread_mutex_lock(&f->mutex);
 
-        auto r = fifo_buffer_read(f->decrypted_input);
+        auto r = f->decrypted_input.Read();
         if (r.IsEmpty()) {
             pthread_mutex_unlock(&f->mutex);
             return true;
@@ -132,7 +129,7 @@ thread_socket_filter_submit_decrypted_input(ThreadSocketFilter *f)
 static bool
 thread_socket_filter_check_read(ThreadSocketFilter *f)
 {
-    if (!f->want_read || fifo_buffer_full(f->encrypted_input) ||
+    if (!f->want_read || f->encrypted_input.IsFull() ||
         !f->connected || f->read_scheduled)
         return true;
 
@@ -147,7 +144,7 @@ thread_socket_filter_check_read(ThreadSocketFilter *f)
 static bool
 thread_socket_filter_check_write(ThreadSocketFilter *f)
 {
-    if (!f->want_write || fifo_buffer_full(f->plain_output))
+    if (!f->want_write || f->plain_output.IsFull())
         return true;
 
     pthread_mutex_unlock(&f->mutex);
@@ -230,9 +227,9 @@ ThreadSocketFilter::Done()
         return;
     }
 
-    if (postponed_end && fifo_buffer_empty(encrypted_input)) {
+    if (postponed_end && encrypted_input.IsEmpty()) {
         if (postponed_remaining) {
-            if (!fifo_buffer_empty(decrypted_input)) {
+            if (!decrypted_input.IsEmpty()) {
                 /* before we actually deliver the "remaining" event,
                    we should give the handler a chance to process the
                    data */
@@ -245,7 +242,7 @@ ThreadSocketFilter::Done()
                 pthread_mutex_lock(&mutex);
             }
 
-            const size_t available = fifo_buffer_available(decrypted_input);
+            const size_t available = decrypted_input.GetAvailable();
             pthread_mutex_unlock(&mutex);
 
             if (available == 0 && expect_more) {
@@ -261,7 +258,7 @@ ThreadSocketFilter::Done()
             pthread_mutex_lock(&mutex);
         }
 
-        if (fifo_buffer_empty(decrypted_input)) {
+        if (decrypted_input.IsEmpty()) {
             pthread_mutex_unlock(&mutex);
 
             if (expect_more) {
@@ -280,10 +277,10 @@ ThreadSocketFilter::Done()
     if (connected) {
         // TODO: timeouts?
 
-        if (!fifo_buffer_full(encrypted_input))
+        if (!encrypted_input.IsFull())
             socket->InternalScheduleRead(expect_more, nullptr);
 
-        if (!fifo_buffer_empty(encrypted_output))
+        if (!encrypted_output.IsEmpty())
             socket->InternalScheduleWrite();
     }
 
@@ -291,8 +288,8 @@ ThreadSocketFilter::Done()
         return;
 
     const bool drained2 = connected && drained &&
-        fifo_buffer_empty(plain_output) &&
-        fifo_buffer_empty(encrypted_output);
+        plain_output.IsEmpty() &&
+        encrypted_output.IsEmpty();
 
     pthread_mutex_unlock(&mutex);
 
@@ -324,7 +321,7 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
 
     pthread_mutex_lock(&f->mutex);
 
-    auto w = fifo_buffer_write(f->encrypted_input);
+    auto w = f->encrypted_input.Write();
     if (w.IsEmpty()) {
         pthread_mutex_unlock(&f->mutex);
         return BufferedResult::BLOCKING;
@@ -337,7 +334,7 @@ thread_socket_filter_data(const void *data, size_t length, void *ctx)
     }
 
     memcpy(w.data, data, length);
-    fifo_buffer_append(f->encrypted_input, length);
+    f->encrypted_input.Append(length);
     pthread_mutex_unlock(&f->mutex);
 
     f->socket->InternalConsumed(length);
@@ -352,8 +349,7 @@ thread_socket_filter_is_empty(void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    return f->decrypted_input == nullptr ||
-        fifo_buffer_empty(f->decrypted_input);
+    return f->decrypted_input.IsEmpty();
 }
 
 static bool
@@ -361,8 +357,7 @@ thread_socket_filter_is_full(void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    return f->decrypted_input != nullptr &&
-        fifo_buffer_full(f->decrypted_input);
+    return f->decrypted_input.IsFull();
 }
 
 static size_t
@@ -371,7 +366,7 @@ thread_socket_filter_available(void *ctx)
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
     pthread_mutex_lock(&f->mutex);
-    size_t result = fifo_buffer_available(f->decrypted_input);
+    size_t result = f->decrypted_input.GetAvailable();
     pthread_mutex_unlock(&f->mutex);
     return result;
 }
@@ -380,19 +375,18 @@ static void
 thread_socket_filter_consumed(size_t nbytes, void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
-    assert(f->decrypted_input != nullptr);
+    assert(f->decrypted_input.IsDefined());
 
     bool schedule = false;
 
     pthread_mutex_lock(&f->mutex);
 
-    if (!fifo_buffer_empty(f->encrypted_input) ||
-        fifo_buffer_full(f->decrypted_input))
+    if (!f->encrypted_input.IsEmpty() || f->decrypted_input.IsFull())
         /* just in case the filter has stalled because the
            decrypted_input buffer was full: try again */
         schedule = true;
 
-    fifo_buffer_consume(f->decrypted_input, nbytes);
+    f->decrypted_input.Consume(nbytes);
 
     pthread_mutex_unlock(&f->mutex);
 
@@ -422,11 +416,11 @@ thread_socket_filter_write(const void *data, size_t length, void *ctx)
 
     ssize_t nbytes = WRITE_BLOCKING;
 
-    auto w = fifo_buffer_write(f->plain_output);
+    auto w = f->plain_output.Write();
     if (!w.IsEmpty()) {
         nbytes = std::min(length, w.size);
         memcpy(w.data, data, nbytes);
-        fifo_buffer_append(f->plain_output, nbytes);
+        f->plain_output.Append(nbytes);
     }
 
     pthread_mutex_unlock(&f->mutex);
@@ -501,7 +495,7 @@ thread_socket_filter_internal_write(void *ctx)
 
     pthread_mutex_lock(&f->mutex);
 
-    auto r = fifo_buffer_read(f->encrypted_output);
+    auto r = f->encrypted_output.Read();
     if (r.IsEmpty()) {
         pthread_mutex_unlock(&f->mutex);
         f->socket->InternalUnscheduleWrite();
@@ -516,11 +510,10 @@ thread_socket_filter_internal_write(void *ctx)
     ssize_t nbytes = f->socket->InternalWrite(copy, r.size);
     if (nbytes > 0) {
         pthread_mutex_lock(&f->mutex);
-        const bool add = fifo_buffer_full(f->encrypted_output);
-        fifo_buffer_consume(f->encrypted_output, nbytes);
-        const bool empty = fifo_buffer_empty(f->encrypted_output);
-        const bool drained = empty && f->drained &&
-            fifo_buffer_empty(f->plain_output);
+        const bool add = f->encrypted_output.IsFull();
+        f->encrypted_output.Consume(nbytes);
+        const bool empty = f->encrypted_output.IsEmpty();
+        const bool drained = empty && f->drained && f->plain_output.IsEmpty();
         pthread_mutex_unlock(&f->mutex);
 
         if (add)
@@ -585,9 +578,8 @@ thread_socket_filter_remaining(size_t remaining, void *ctx)
     if (remaining == 0) {
         pthread_mutex_lock(&f->mutex);
 
-        if (!f->busy && !f->done_pending &&
-            fifo_buffer_empty(f->encrypted_input)) {
-            const size_t available = fifo_buffer_available(f->decrypted_input);
+        if (!f->busy && !f->done_pending && f->encrypted_input.IsEmpty()) {
+            const size_t available = f->decrypted_input.GetAvailable();
             pthread_mutex_unlock(&f->mutex);
 
             /* forward the call */
@@ -615,9 +607,8 @@ thread_socket_filter_end(void *ctx)
         /* see if we can commit the "remaining" call now */
         pthread_mutex_lock(&f->mutex);
 
-        if (!f->busy && !f->done_pending &&
-            fifo_buffer_empty(f->encrypted_input)) {
-            const size_t available = fifo_buffer_available(f->decrypted_input);
+        if (!f->busy && !f->done_pending && f->encrypted_input.IsEmpty()) {
+            const size_t available = f->decrypted_input.GetAvailable();
             pthread_mutex_unlock(&f->mutex);
 
             f->postponed_remaining = false;
@@ -635,8 +626,8 @@ thread_socket_filter_end(void *ctx)
        becomes empty */
 
     pthread_mutex_lock(&f->mutex);
-    assert(fifo_buffer_empty(f->encrypted_input));
-    const bool empty = fifo_buffer_empty(f->decrypted_input);
+    assert(f->encrypted_input.IsEmpty());
+    const bool empty = f->decrypted_input.IsEmpty();
     pthread_mutex_unlock(&f->mutex);
 
     if (empty)

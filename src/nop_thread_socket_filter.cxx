@@ -7,31 +7,29 @@
 
 #include "nop_thread_socket_filter.hxx"
 #include "thread_socket_filter.hxx"
-#include "fifo_buffer.hxx"
-#include "util/ConstBuffer.hxx"
-#include "util/WritableBuffer.hxx"
+#include "util/ForeignFifoBuffer.hxx"
 
 #include <string.h>
 
 /**
- * Copy data from #src to #dest.
+ * Move data from #src to #dest.
  */
 static void
-copy(struct fifo_buffer *dest, struct fifo_buffer *src)
+Move(ForeignFifoBuffer<uint8_t> &dest, ForeignFifoBuffer<uint8_t> &src)
 {
-    auto r = fifo_buffer_read(src);
+    auto r = src.Read();
     if (r.IsEmpty())
         return;
 
-    auto w = fifo_buffer_write(dest);
+    auto w = dest.Write();
     if (w.IsEmpty())
         return;
 
     size_t nbytes = std::min(r.size, w.size);
 
     memcpy(w.data, r.data, nbytes);
-    fifo_buffer_append(dest, nbytes);
-    fifo_buffer_consume(src, nbytes);
+    dest.Append(nbytes);
+    src.Consume(nbytes);
 }
 
 /*
@@ -45,8 +43,8 @@ nop_thread_socket_filter_run(ThreadSocketFilter &f,
                              gcc_unused void *ctx)
 {
     pthread_mutex_lock(&f.mutex);
-    copy(f.decrypted_input, f.encrypted_input);
-    copy(f.encrypted_output, f.plain_output);
+    Move(f.decrypted_input, f.encrypted_input);
+    Move(f.encrypted_output, f.plain_output);
     pthread_mutex_unlock(&f.mutex);
     return true;
 }

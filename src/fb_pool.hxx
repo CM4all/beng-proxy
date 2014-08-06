@@ -22,6 +22,10 @@ fb_pool_init(bool auto_cleanup);
 void
 fb_pool_deinit(void);
 
+gcc_const
+struct slice_pool &
+fb_pool_get();
+
 /**
  * Disable the cleanup timer.  Do this during shutdown, to let
  * libevent quit the main loop.
@@ -36,13 +40,5 @@ fb_pool_disable(void);
  */
 void
 fb_pool_compress(void);
-
-gcc_malloc
-struct fifo_buffer *
-fb_pool_alloc(void);
-
-gcc_nonnull_all
-void
-fb_pool_free(struct fifo_buffer *buffer);
 
 #endif

@@ -10,6 +10,7 @@
 #include "fd_util.h"
 #include "gerrno.h"
 #include "fb_pool.hxx"
+#include "SliceFifoBuffer.hxx"
 #include "util/Cast.hxx"
 
 #include <assert.h>
@@ -45,7 +46,7 @@ struct file {
     struct event event;
 
     off_t rest;
-    struct fifo_buffer *buffer;
+    SliceFifoBuffer buffer;
     const char *path;
 };
 
@@ -65,10 +66,8 @@ file_destroy(struct file *file)
 {
     file_close(file);
 
-    if (file->buffer != nullptr) {
-        fb_pool_free(file->buffer);
-        file->buffer = nullptr;
-    }
+    if (!file->buffer.IsNull())
+        file->buffer.Free(fb_pool_get());
 }
 
 static void
@@ -112,11 +111,11 @@ istream_file_try_data(struct file *file)
 {
     size_t rest = 0;
 
-    if (file->buffer == nullptr) {
+    if (file->buffer.IsNull()) {
         if (file->rest != 0)
-            file->buffer = fb_pool_alloc();
+            file->buffer.Allocate(fb_pool_get());
     } else {
-        const size_t available = fifo_buffer_available(file->buffer);
+        const size_t available = file->buffer.GetAvailable();
         if (available > 0) {
             rest = istream_file_invoke_data(file);
             if (rest == available)
@@ -132,7 +131,8 @@ istream_file_try_data(struct file *file)
         return;
     }
 
-    ssize_t nbytes = read_to_buffer(file->fd, file->buffer,
+    ForeignFifoBuffer<uint8_t> &buffer = file->buffer;
+    ssize_t nbytes = read_to_buffer(file->fd, buffer,
                                     istream_file_max_read(file));
     if (nbytes == 0) {
         if (file->rest == (off_t)-1) {
@@ -158,7 +158,7 @@ istream_file_try_data(struct file *file)
         assert(file->rest >= 0);
     }
 
-    assert(!fifo_buffer_empty(file->buffer));
+    assert(!file->buffer.IsEmpty());
 
     rest = istream_file_invoke_data(file);
     if (rest == 0 && file->rest == 0)
@@ -171,7 +171,7 @@ istream_file_try_direct(struct file *file)
     assert(file->stream.handler->direct != nullptr);
 
     /* first consume the rest of the buffer */
-    if (file->buffer != nullptr && istream_file_invoke_data(file) > 0)
+    if (istream_file_invoke_data(file) > 0)
         return;
 
     if (file->rest == 0) {
@@ -263,9 +263,7 @@ istream_file_available(struct istream *istream, bool partial)
     else
         available = 0;
 
-    if (file->buffer != nullptr)
-        available += fifo_buffer_available(file->buffer);
-
+    available += file->buffer.GetAvailable();
     return available;
 }
 
@@ -282,10 +280,9 @@ istream_file_skip(struct istream *istream, off_t length)
     if (length == 0)
         return 0;
 
-    if (file->buffer != nullptr)
-        /* clear the buffer; later we could optimize this function by
-           flushing only the skipped number of bytes */
-        fifo_buffer_clear(file->buffer);
+    /* clear the buffer; later we could optimize this function by
+       flushing only the skipped number of bytes */
+    file->buffer.Clear();
 
     if (length >= file->rest) {
         /* skip beyond EOF */
@@ -365,7 +362,7 @@ istream_file_fd_new(struct pool *pool, const char *path,
     file->fd = fd;
     file->fd_type = fd_type;
     file->rest = length;
-    file->buffer = nullptr;
+    file->buffer.SetNull();
     file->path = path;
 
     evtimer_set(&file->event, file_event_callback, file);
@@ -445,7 +442,7 @@ istream_file_set_range(struct istream *istream, off_t start, off_t end)
     struct file *file = istream_to_file(istream);
     assert(file->fd >= 0);
     assert(file->rest >= 0);
-    assert(file->buffer == nullptr);
+    assert(file->buffer.IsNull());
     assert(end <= file->rest);
 
     if (start > 0 && lseek(file->fd, start, SEEK_CUR) < 0)

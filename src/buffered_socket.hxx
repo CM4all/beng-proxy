@@ -8,11 +8,10 @@
 #define BENG_PROXY_BUFFERED_SOCKET_HXX
 
 #include "socket_wrapper.hxx"
+#include "SliceFifoBuffer.hxx"
 #include "defer_event.h"
 
 #include <glib.h>
-
-struct fifo_buffer;
 
 enum class BufferedResult {
     /**
@@ -267,7 +266,7 @@ struct BufferedSocket {
     const BufferedSocketHandler *handler;
     void *handler_ctx;
 
-    struct fifo_buffer *input;
+    SliceFifoBuffer input;
 
     /**
      * Attempt to do "direct" transfers?
@@ -349,7 +348,7 @@ struct BufferedSocket {
            buffer that may have more data; in the latter case, the socket
            may be closed already because no more data is needed from
            there */
-        return base.IsValid() || input != nullptr;
+        return base.IsValid() || input.IsDefined();
     }
 
     /**

@@ -10,13 +10,14 @@
 
 #include "istream-internal.h"
 #include "istream_buffer.hxx"
+#include "pool.hxx"
 #include "fd_util.h"
 #include "fd-util.h"
-#include "fifo_buffer.hxx"
 #include "buffered_io.hxx"
 #include "pevent.h"
 #include "gerrno.h"
 #include "util/Cast.hxx"
+#include "util/ForeignFifoBuffer.hxx"
 
 #include <daemon/log.h>
 
@@ -35,7 +36,7 @@ struct istream_socketpair {
 
     struct event recv_event, send_event;
 
-    struct fifo_buffer *buffer;
+    ForeignFifoBuffer<uint8_t> buffer;
 };
 
 
@@ -280,7 +281,8 @@ istream_socketpair_new(struct pool *pool, struct istream *input, int *fd_r)
     sp->fd = fds[0];
     *fd_r = fds[1];
 
-    sp->buffer = fifo_buffer_new(pool, 4096);
+    constexpr size_t BUFFER_SIZE = 4096;
+    sp->buffer.SetBuffer(PoolAlloc<uint8_t>(*pool, BUFFER_SIZE), BUFFER_SIZE);
 
     event_set(&sp->recv_event, sp->fd, EV_READ, socketpair_recv_callback, sp);
     p_event_add(&sp->recv_event, nullptr,

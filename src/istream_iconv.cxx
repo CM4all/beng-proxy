@@ -6,7 +6,7 @@
 #include "istream_buffer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
-#include "util/WritableBuffer.hxx"
+#include "util/ForeignFifoBuffer.hxx"
 
 #include <iconv.h>
 
@@ -17,7 +17,7 @@ struct istream_iconv {
     struct istream output;
     struct istream *input;
     iconv_t iconv;
-    struct fifo_buffer *buffer;
+    ForeignFifoBuffer<uint8_t> buffer;
 };
 
 gcc_const
@@ -42,18 +42,18 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
     const char *src = data;
 
     do {
-        auto w = fifo_buffer_write(ic->buffer);
+        auto w = ic->buffer.Write();
         if (w.IsEmpty()) {
             /* no space left in the buffer: attempt to flush it */
 
             size_t nbytes = istream_buffer_send(&ic->output, ic->buffer);
             if (nbytes == 0) {
-                if (ic->buffer == nullptr)
+                if (ic->buffer.IsNull())
                     return 0;
                 break;
             }
 
-            assert(ic->buffer != nullptr);
+            assert(ic->buffer.IsDefined());
 
             continue;
         }
@@ -64,7 +64,7 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
 
         size_t ret = deconst_iconv(ic->iconv, &src, &length, &dest, &dest_left);
         if (dest > buffer)
-            fifo_buffer_append(ic->buffer, dest - buffer);
+            ic->buffer.Append(dest - buffer);
 
         if (ret == (size_t)-1) {
             switch (errno) {
@@ -100,7 +100,7 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
                 /* output buffer is full: flush dest */
                 nbytes = istream_buffer_send(&ic->output, ic->buffer);
                 if (nbytes == 0) {
-                    if (ic->buffer == nullptr)
+                    if (ic->buffer.IsNull())
                         return 0;
 
                     /* reset length to 0, to make the loop quit
@@ -110,14 +110,14 @@ iconv_feed(struct istream_iconv *ic, const char *data, size_t length)
                     break;
                 }
 
-                assert(ic->buffer != nullptr);
+                assert(ic->buffer.IsDefined());
                 break;
             }
         }
     } while (length > 0);
 
     istream_buffer_send(&ic->output, ic->buffer);
-    if (ic->buffer == nullptr)
+    if (ic->buffer.IsNull())
         return 0;
 
     return src - data;
@@ -148,8 +148,8 @@ iconv_input_eof(void *ctx)
     assert(ic->input != nullptr);
     ic->input = nullptr;
 
-    if (fifo_buffer_empty(ic->buffer)) {
-        ic->buffer = nullptr;
+    if (ic->buffer.IsEmpty()) {
+        ic->buffer.SetNull();
         iconv_close(ic->iconv);
         istream_deinit_eof(&ic->output);
     }
@@ -162,7 +162,7 @@ iconv_input_abort(GError *error, void *ctx)
 
     assert(ic->input != nullptr);
 
-    ic->buffer = nullptr;
+    ic->buffer.SetNull();
 
     iconv_close(ic->iconv);
     istream_deinit_abort(&ic->output, error);
@@ -207,7 +207,7 @@ istream_iconv_close(struct istream *istream)
 {
     struct istream_iconv *ic = istream_to_iconv(istream);
 
-    ic->buffer = nullptr;
+    ic->buffer.SetNull();
 
     if (ic->input != nullptr)
         istream_close_handler(ic->input);
@@ -241,7 +241,8 @@ istream_iconv_new(struct pool *pool, struct istream *input,
         return nullptr;
     }
 
-    ic->buffer = fifo_buffer_new(pool, 1024);
+    constexpr size_t BUFFER_SIZE = 1024;
+    ic->buffer.SetBuffer(PoolAlloc<uint8_t>(*pool, BUFFER_SIZE), BUFFER_SIZE);
 
     istream_assign_handler(&ic->input, input,
                            &iconv_input_handler, ic,

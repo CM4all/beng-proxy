@@ -13,11 +13,13 @@
 #include <inline/compiler.h>
 
 #include <event.h>
+
 #include <sys/types.h>
 #include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 
-struct fifo_buffer;
+template<typename T> class ForeignFifoBuffer;
 
 struct socket_handler {
     /**
@@ -151,7 +153,7 @@ public:
         return event_pending(&write_event, EV_WRITE, nullptr);
     }
 
-    ssize_t ReadToBuffer(struct fifo_buffer &buffer, size_t length);
+    ssize_t ReadToBuffer(ForeignFifoBuffer<uint8_t> &buffer, size_t length);
 
     void SetCork(bool cork);
 

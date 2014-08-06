@@ -8,22 +8,24 @@
 #define BENG_PROXY_ISTREAM_BUFFER_HXX
 
 #include "istream-internal.h"
-#include "fifo_buffer.hxx"
-#include "util/ConstBuffer.hxx"
+#include "util/ForeignFifoBuffer.hxx"
+
+#include <stdint.h>
 
 /**
  * @return the number of bytes still in the buffer
  */
 static inline size_t
-istream_buffer_consume(struct istream *istream, struct fifo_buffer *buffer)
+istream_buffer_consume(struct istream *istream,
+                       ForeignFifoBuffer<uint8_t> &buffer)
 {
-    auto r = fifo_buffer_read(buffer);
+    auto r = buffer.Read();
     if (r.IsEmpty())
         return 0;
 
     size_t consumed = istream_invoke_data(istream, r.data, r.size);
     if (consumed > 0)
-        fifo_buffer_consume(buffer, consumed);
+        buffer.Consume(consumed);
     return r.size - consumed;
 }
 
@@ -31,15 +33,16 @@ istream_buffer_consume(struct istream *istream, struct fifo_buffer *buffer)
  * @return the number of bytes consumed
  */
 static inline size_t
-istream_buffer_send(struct istream *istream, struct fifo_buffer *buffer)
+istream_buffer_send(struct istream *istream,
+                    ForeignFifoBuffer<uint8_t> &buffer)
 {
-    auto r = fifo_buffer_read(buffer);
+    auto r = buffer.Read();
     if (r.IsEmpty())
         return 0;
 
     size_t consumed = istream_invoke_data(istream, r.data, r.size);
     if (consumed > 0)
-        fifo_buffer_consume(buffer, consumed);
+        buffer.Consume(consumed);
     return consumed;
 }
 
