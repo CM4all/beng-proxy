@@ -23,7 +23,7 @@
 struct ssl_filter {
     /**
      * Buffers which can be accessed from within the thread without
-     * holding locks.  These will be copied to/from the accordding
+     * holding locks.  These will be copied to/from the according
      * #thread_socket_filter buffers.
      */
     SliceFifoBuffer decrypted_input, plain_output;
