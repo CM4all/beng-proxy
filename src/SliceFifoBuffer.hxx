@@ -47,6 +47,21 @@ public:
         if (IsEmpty())
             FreeIfDefined(pool);
     }
+
+    /**
+     * Move as much data as possible from the specified buffer.  If
+     * the destination buffer is empty, the buffers are swapped.  Care
+     * is taken that neither buffer suddenly becomes nulled
+     * afterwards, because some callers may not be prepared for this.
+     */
+    void MoveFrom(SliceFifoBuffer &src) {
+        if (IsEmpty() && !IsNull() && !src.IsNull())
+            /* optimized special case: swap buffer pointers instead of
+               copying data */
+            Swap(src);
+        else
+            ForeignFifoBuffer<uint8_t>::MoveFrom(src);
+    }
 };
 
 #endif
