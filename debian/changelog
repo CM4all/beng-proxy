@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.14) unstable; urgency=low
 
-  * 
+  * ssl_filter: fix error check
 
  --   
 

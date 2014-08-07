@@ -145,6 +145,11 @@ gcc_pure
 static bool
 is_ssl_error(SSL *ssl, int ret)
 {
+    if (ret == 0)
+        /* this is always an error according to the documentation of
+           SSL_read(), SSL_write() and SSL_do_handshake() */
+        return true;
+
     switch (SSL_get_error(ssl, ret)) {
     case SSL_ERROR_NONE:
     case SSL_ERROR_WANT_READ:
@@ -185,7 +190,7 @@ ssl_decrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
 
         int result = SSL_read(ssl, data, length);
         if (result <= 0)
-            return result == 0 || check_ssl_error(ssl, result, error_r);
+            return check_ssl_error(ssl, result, error_r);
 
         if (result > 0)
             fifo_buffer_append(buffer, result);
@@ -204,12 +209,10 @@ ssl_encrypt(SSL *ssl, struct fifo_buffer *buffer, GError **error_r)
         return true;
 
     int result = SSL_write(ssl, data, length);
-    if (result < 0 && !check_ssl_error(ssl, result, error_r))
-        return false;
+    if (result <= 0)
+        return check_ssl_error(ssl, result, error_r);
 
-    if (result > 0)
-        fifo_buffer_consume(buffer, result);
-
+    fifo_buffer_consume(buffer, result);
     return true;
 }
 
@@ -248,9 +251,6 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
                 ssl->peer_issuer_subject = format_issuer_subject_name(cert);
                 X509_free(cert);
             }
-        } else if (result == 0) {
-            ssl_set_error(error_r);
-            return false;
         } else if (!check_ssl_error(ssl->ssl, result, error_r))
             return false;
     }
