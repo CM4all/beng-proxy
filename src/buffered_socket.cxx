@@ -42,15 +42,6 @@ buffered_socket_ended(BufferedSocket *s)
 }
 
 static bool
-buffered_socket_input_empty(const BufferedSocket *s)
-{
-    assert(s != nullptr);
-    assert(!s->ended);
-
-    return s->input.IsEmpty();
-}
-
-static bool
 buffered_socket_input_full(const BufferedSocket *s)
 {
     assert(s != nullptr);
@@ -62,7 +53,7 @@ buffered_socket_input_full(const BufferedSocket *s)
 int
 BufferedSocket::AsFD()
 {
-    if (!buffered_socket_input_empty(this))
+    if (!IsEmpty())
         /* can switch to the raw socket descriptor only if the input
            buffer is empty */
         return -1;
@@ -93,7 +84,7 @@ BufferedSocket::Consumed(size_t nbytes)
 static BufferedResult
 buffered_socket_invoke_data(BufferedSocket *s)
 {
-    assert(!buffered_socket_input_empty(s));
+    assert(!s->IsEmpty());
 
     bool local_expect_more = false;
 
@@ -132,7 +123,7 @@ buffered_socket_invoke_data(BufferedSocket *s)
 static bool
 buffered_socket_submit_from_buffer(BufferedSocket *s)
 {
-    if (buffered_socket_input_empty(s))
+    if (s->IsEmpty())
         return true;
 
     const bool old_expect_more = s->expect_more;
@@ -212,7 +203,7 @@ static bool
 buffered_socket_submit_direct(BufferedSocket *s)
 {
     assert(s->IsConnected());
-    assert(buffered_socket_input_empty(s));
+    assert(s->IsEmpty());
 
     const bool old_expect_more = s->expect_more;
     s->expect_more = false;
@@ -334,7 +325,7 @@ buffered_socket_try_read2(BufferedSocket *s)
     assert(s->reading);
 
     if (!s->IsConnected()) {
-        assert(!buffered_socket_input_empty(s));
+        assert(!s->IsEmpty());
 
         buffered_socket_submit_from_buffer(s);
         return false;
@@ -348,7 +339,7 @@ buffered_socket_try_read2(BufferedSocket *s)
                handler - try again */
             return buffered_socket_try_read2(s);
 
-        if (!buffered_socket_input_empty(s)) {
+        if (!s->IsEmpty()) {
             /* there's still data in the buffer, but our handler isn't
                ready for consuming it - stop reading from the
                socket */
@@ -571,8 +562,7 @@ BufferedSocket::Read(bool _expect_more)
     assert(!ended);
 
     if (_expect_more) {
-        if (!IsConnected() &&
-            buffered_socket_input_empty(this)) {
+        if (!IsConnected() && IsEmpty()) {
             buffered_socket_closed_prematurely(this);
             return false;
         }
