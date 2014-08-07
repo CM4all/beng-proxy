@@ -41,15 +41,6 @@ buffered_socket_ended(BufferedSocket *s)
         s->handler->end(s->handler_ctx);
 }
 
-static bool
-buffered_socket_input_full(const BufferedSocket *s)
-{
-    assert(s != nullptr);
-    assert(!s->ended);
-
-    return s->input.IsFull();
-}
-
 int
 BufferedSocket::AsFD()
 {
@@ -551,7 +542,9 @@ BufferedSocket::IsEmpty() const
 bool
 BufferedSocket::IsFull() const
 {
-    return buffered_socket_input_full(this);
+    assert(!ended);
+
+    return input.IsFull();
 }
 
 bool
