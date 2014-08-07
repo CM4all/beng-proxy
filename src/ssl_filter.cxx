@@ -114,7 +114,7 @@ format_issuer_subject_name(X509 *cert)
     return format_name(X509_get_issuer_name(cert));
 }
 
-gcc_const
+gcc_pure
 static bool
 is_ssl_error(SSL *ssl, int ret)
 {
