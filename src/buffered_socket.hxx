@@ -253,7 +253,7 @@ struct BufferedSocketHandler {
  *
  * - destroyed (after buffered_socket_destroy())
  */
-struct BufferedSocket {
+class BufferedSocket {
     SocketWrapper base;
 
     const struct timeval *read_timeout, *write_timeout;
@@ -290,6 +290,7 @@ struct BufferedSocket {
     BufferedResult last_buffered_result;
 #endif
 
+public:
     void Init(struct pool &_pool,
               int _fd, enum istream_direct _fd_type,
               const struct timeval *_read_timeout,
@@ -351,6 +352,12 @@ struct BufferedSocket {
         return base.IsValid() || input.IsDefined();
     }
 
+#ifndef NDEBUG
+    bool HasEnded() const {
+        return ended;
+    }
+#endif
+
     /**
      * Is the socket still connected?  This does not actually check
      * whether the socket is connected, just whether it is known to be
@@ -360,6 +367,14 @@ struct BufferedSocket {
         assert(!destroyed);
 
         return base.IsValid();
+    }
+
+    istream_direct GetType() const {
+        return base.GetType();
+    }
+
+    void SetDirect(bool _direct) {
+        direct = _direct;
     }
 
     /**

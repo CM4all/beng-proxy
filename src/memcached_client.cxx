@@ -97,7 +97,7 @@ memcached_client_check_direct(const struct memcached_client *client)
     assert(client->response.read_state == memcached_client::ReadState::VALUE);
 
     return istream_check_direct(&client->response_value,
-                                client->socket.base.GetType());
+                                client->socket.GetType());
 }
 
 static void
@@ -248,7 +248,7 @@ istream_memcached_read(struct istream *istream)
         return;
 
     if (client->socket.IsConnected())
-        client->socket.direct = memcached_client_check_direct(client);
+        client->socket.SetDirect(memcached_client_check_direct(client));
 
     client->socket.Read(true);
 }
@@ -328,7 +328,7 @@ memcached_submit_response(struct memcached_client *client)
         valid = memcached_connection_valid(client);
 
         if (valid && client->socket.IsConnected())
-            client->socket.direct = memcached_client_check_direct(client);
+            client->socket.SetDirect(memcached_client_check_direct(client));
 
         pool_unref(client->pool);
 

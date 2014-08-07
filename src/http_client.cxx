@@ -347,7 +347,7 @@ http_client::Read()
         return;
 
     if (socket.IsConnected())
-        socket.base.direct = CheckDirect();
+        socket.base.SetDirect(CheckDirect());
 
     socket.Read(response_body_reader.RequireMore());
 }
@@ -563,7 +563,7 @@ http_client::HeadersFinished()
                                                chunked);
 
     response.read_state = response::READ_BODY;
-    socket.base.direct = CheckDirect();
+    socket.base.SetDirect(CheckDirect());
     return true;
 }
 

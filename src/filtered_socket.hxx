@@ -142,7 +142,7 @@ struct FilteredSocket {
 
     enum istream_direct GetType() const {
         return filter == nullptr
-            ? base.base.GetType()
+            ? base.GetType()
             /* can't do splice() with a filter */
             : ISTREAM_NONE;
     }
@@ -154,7 +154,7 @@ struct FilteredSocket {
     void Close() {
 #ifndef NDEBUG
         /* work around bogus assertion failure */
-        if (filter != nullptr && base.ended)
+        if (filter != nullptr && base.HasEnded())
             return;
 #endif
 
@@ -169,7 +169,7 @@ struct FilteredSocket {
     void Abandon() {
 #ifndef NDEBUG
         /* work around bogus assertion failure */
-        if (filter != nullptr && base.ended)
+        if (filter != nullptr && base.HasEnded())
             return;
 #endif
 
@@ -201,7 +201,7 @@ struct FilteredSocket {
     bool IsConnected() const {
 #ifndef NDEBUG
         /* work around bogus assertion failure */
-        if (filter != nullptr && base.ended)
+        if (filter != nullptr && base.HasEnded())
             return false;
 #endif
 
@@ -420,7 +420,7 @@ struct FilteredSocket {
     void InvokeEnd() {
         assert(filter != nullptr);
         assert(!ended);
-        assert(base.ended);
+        assert(base.HasEnded());
 
 #ifndef NDEBUG
         ended = true;
