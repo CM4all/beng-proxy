@@ -76,6 +76,14 @@ public:
         return address->sa_family;
     }
 
+    /**
+     * Does the object have a well-defined address?  Check !IsNull()
+     * before calling this method.
+     */
+    bool IsDefined() const {
+        return GetFamily() != AF_UNSPEC;
+    }
+
     void Clear() {
         free(address);
         address = nullptr;
