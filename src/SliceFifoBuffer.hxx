@@ -21,6 +21,11 @@ public:
         Allocate(pool);
     }
 
+    void Swap(SliceFifoBuffer &other) {
+        ForeignFifoBuffer<uint8_t>::Swap(other);
+        std::swap(area, other.area);
+    }
+
     void Allocate(struct slice_pool &pool);
     void Free(struct slice_pool &pool);
 
