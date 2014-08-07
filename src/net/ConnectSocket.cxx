@@ -190,7 +190,8 @@ client_socket_new(struct pool &pool,
         }
     }
 
-    if (!bind_address.IsNull() && !fd.Bind(bind_address)) {
+    if (!bind_address.IsNull() && bind_address.IsDefined() &&
+        !fd.Bind(bind_address)) {
         GError *error = new_error_errno();
         handler.error(error, ctx);
         return;
