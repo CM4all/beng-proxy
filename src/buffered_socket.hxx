@@ -472,6 +472,22 @@ struct BufferedSocket {
 
         base.UnscheduleWrite();
     }
+
+private:
+    void ClosedPrematurely();
+    void Ended();
+
+    BufferedResult InvokeData();
+    bool SubmitFromBuffer();
+    bool SubmitDirect();
+    bool FillBuffer();
+    bool TryRead2();
+    bool TryRead();
+
+    static bool OnWrite(void *ctx);
+    static bool OnRead(void *ctx);
+    static bool OnTimeout(void *ctx);
+    static const struct socket_handler buffered_socket_handler;
 };
 
 gcc_const

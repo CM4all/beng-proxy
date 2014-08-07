@@ -16,29 +16,29 @@
 #include <limits.h>
 #include <errno.h>
 
-static void
-buffered_socket_closed_prematurely(BufferedSocket *s)
+void
+BufferedSocket::ClosedPrematurely()
 {
     GError *error =
         g_error_new_literal(buffered_socket_quark(), 0,
                             "Peer closed the socket prematurely");
-    s->handler->error(error, s->handler_ctx);
+    handler->error(error, handler_ctx);
 }
 
-static void
-buffered_socket_ended(BufferedSocket *s)
+void
+BufferedSocket::Ended()
 {
-    assert(!s->IsConnected());
-    assert(!s->ended);
+    assert(!IsConnected());
+    assert(!ended);
 
 #ifndef NDEBUG
-    s->ended = true;
+    ended = true;
 #endif
 
-    if (s->handler->end == nullptr)
-        buffered_socket_closed_prematurely(s);
+    if (handler->end == nullptr)
+        ClosedPrematurely();
     else
-        s->handler->end(s->handler_ctx);
+        handler->end(handler_ctx);
 }
 
 int
@@ -72,33 +72,32 @@ BufferedSocket::Consumed(size_t nbytes)
  * Invokes the data handler, and takes care for
  * #BufferedResult::AGAIN_OPTIONAL and #BufferedResult::AGAIN_EXPECT.
  */
-static BufferedResult
-buffered_socket_invoke_data(BufferedSocket *s)
+inline BufferedResult
+BufferedSocket::InvokeData()
 {
-    assert(!s->IsEmpty());
+    assert(!IsEmpty());
 
     bool local_expect_more = false;
 
     while (true) {
-        auto r = s->input.Read();
+        auto r = input.Read();
         if (r.IsEmpty())
-            return s->expect_more || local_expect_more
+            return expect_more || local_expect_more
                 ? BufferedResult::MORE
                 : BufferedResult::OK;
 
 #ifndef NDEBUG
-        PoolNotify notify(s->base.GetPool());
+        PoolNotify notify(base.GetPool());
 #endif
 
-        BufferedResult result =
-            s->handler->data(r.data, r.size, s->handler_ctx);
+        BufferedResult result = handler->data(r.data, r.size, handler_ctx);
 
 #ifndef NDEBUG
         if (notify.Denotify()) {
             assert(result == BufferedResult::CLOSED);
         } else {
-            s->last_buffered_result = result;
-            assert((result == BufferedResult::CLOSED) == !s->IsValid());
+            last_buffered_result = result;
+            assert((result == BufferedResult::CLOSED) == !IsValid());
         }
 #endif
 
@@ -111,56 +110,56 @@ buffered_socket_invoke_data(BufferedSocket *s)
     }
 }
 
-static bool
-buffered_socket_submit_from_buffer(BufferedSocket *s)
+bool
+BufferedSocket::SubmitFromBuffer()
 {
-    if (s->IsEmpty())
+    if (IsEmpty())
         return true;
 
-    const bool old_expect_more = s->expect_more;
-    s->expect_more = false;
+    const bool old_expect_more = expect_more;
+    expect_more = false;
 
-    BufferedResult result = buffered_socket_invoke_data(s);
-    assert((result == BufferedResult::CLOSED) || s->IsValid());
+    BufferedResult result = InvokeData();
+    assert((result == BufferedResult::CLOSED) || IsValid());
 
     switch (result) {
     case BufferedResult::OK:
-        assert(s->input.IsEmpty());
-        assert(!s->expect_more);
+        assert(input.IsEmpty());
+        assert(!expect_more);
 
-        if (!s->IsConnected()) {
-            buffered_socket_ended(s);
+        if (!IsConnected()) {
+            Ended();
             return false;
         }
 
-        if (!s->base.IsReadPending())
+        if (!base.IsReadPending())
             /* try to refill the buffer, now that it's become empty
                (but don't refresh the pending timeout) */
-            s->base.ScheduleRead(s->read_timeout);
+            base.ScheduleRead(read_timeout);
 
         return true;
 
     case BufferedResult::PARTIAL:
-        assert(!s->input.IsEmpty());
+        assert(!input.IsEmpty());
 
-        if (!s->IsConnected())
+        if (!IsConnected())
             return false;
 
         return true;
 
     case BufferedResult::MORE:
-        s->expect_more = true;
+        expect_more = true;
 
-        if (!s->IsConnected()) {
-            buffered_socket_closed_prematurely(s);
+        if (!IsConnected()) {
+            ClosedPrematurely();
             return false;
         }
 
-        if (s->IsFull()) {
+        if (IsFull()) {
             GError *error =
                 g_error_new_literal(buffered_socket_quark(), 0,
                                     "Input buffer overflow");
-            s->handler->error(error, s->handler_ctx);
+            handler->error(error, handler_ctx);
             return false;
         }
 
@@ -168,13 +167,12 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
 
     case BufferedResult::AGAIN_OPTIONAL:
     case BufferedResult::AGAIN_EXPECT:
-        /* unreachable, has been handled by
-           buffered_socket_invoke_data() */
+        /* unreachable, has been handled by InvokeData() */
         assert(false);
         gcc_unreachable();
 
     case BufferedResult::BLOCKING:
-        s->expect_more = old_expect_more;
+        expect_more = old_expect_more;
         return false;
 
     case BufferedResult::CLOSED:
@@ -190,45 +188,45 @@ buffered_socket_submit_from_buffer(BufferedSocket *s)
 /**
  * @return true if more data should be read from the socket
  */
-static bool
-buffered_socket_submit_direct(BufferedSocket *s)
+inline bool
+BufferedSocket::SubmitDirect()
 {
-    assert(s->IsConnected());
-    assert(s->IsEmpty());
+    assert(IsConnected());
+    assert(IsEmpty());
 
-    const bool old_expect_more = s->expect_more;
-    s->expect_more = false;
+    const bool old_expect_more = expect_more;
+    expect_more = false;
 
     const DirectResult result =
-        s->handler->direct(s->base.GetFD(), s->base.GetType(), s->handler_ctx);
+        handler->direct(base.GetFD(), base.GetType(), handler_ctx);
     switch (result) {
     case DirectResult::OK:
         /* some data was transferred: refresh the read timeout */
-        s->base.ScheduleRead(s->read_timeout);
+        base.ScheduleRead(read_timeout);
         return true;
 
     case DirectResult::BLOCKING:
-        s->expect_more = old_expect_more;
-        s->base.UnscheduleRead();
-        defer_event_cancel(&s->defer_read);
+        expect_more = old_expect_more;
+        base.UnscheduleRead();
+        defer_event_cancel(&defer_read);
         return false;
 
     case DirectResult::EMPTY:
         /* schedule read, but don't refresh timeout of old scheduled
            read */
-        if (!s->base.IsReadPending())
-            s->base.ScheduleRead(s->read_timeout);
+        if (!base.IsReadPending())
+            base.ScheduleRead(read_timeout);
         return true;
 
     case DirectResult::END:
-        buffered_socket_ended(s);
+        Ended();
         return false;
 
     case DirectResult::CLOSED:
         return false;
 
     case DirectResult::ERRNO:
-        s->handler->error(new_error_errno(), s->handler_ctx);
+        handler->error(new_error_errno(), handler_ctx);
         return false;
     }
 
@@ -236,21 +234,19 @@ buffered_socket_submit_direct(BufferedSocket *s)
     gcc_unreachable();
 }
 
-static bool
-buffered_socket_fill_buffer(BufferedSocket *s)
+inline bool
+BufferedSocket::FillBuffer()
 {
-    assert(s->IsConnected());
+    assert(IsConnected());
 
-    if (s->input.IsNull())
-        s->input.Allocate(fb_pool_get());
+    if (input.IsNull())
+        input.Allocate(fb_pool_get());
 
-    auto &buffer = s->input;
-
-    ssize_t nbytes = s->base.ReadToBuffer(buffer, INT_MAX);
+    ssize_t nbytes = base.ReadToBuffer(input, INT_MAX);
     if (gcc_likely(nbytes > 0)) {
         /* success: data was added to the buffer */
-        s->expect_more = false;
-        s->got_data = true;
+        expect_more = false;
+        got_data = true;
 
         return true;
     }
@@ -258,25 +254,25 @@ buffered_socket_fill_buffer(BufferedSocket *s)
     if (nbytes == 0) {
         /* socket closed */
 
-        if (s->expect_more) {
-            buffered_socket_closed_prematurely(s);
+        if (expect_more) {
+            ClosedPrematurely();
             return false;
         }
 
-        assert(s->handler->closed != nullptr);
+        assert(handler->closed != nullptr);
 
-        const size_t remaining = buffer.GetAvailable();
+        const size_t remaining = input.GetAvailable();
 
-        if (!s->handler->closed(s->handler_ctx) ||
-            (s->handler->remaining != nullptr &&
-             !s->handler->remaining(remaining, s->handler_ctx)))
+        if (!handler->closed(handler_ctx) ||
+            (handler->remaining != nullptr &&
+             !handler->remaining(remaining, handler_ctx)))
             return false;
 
-        assert(!s->IsConnected());
-        assert(remaining == buffer.GetAvailable());
+        assert(!IsConnected());
+        assert(remaining == input.GetAvailable());
 
-        if (buffer.IsEmpty()) {
-            buffered_socket_ended(s);
+        if (input.IsEmpty()) {
+            Ended();
             return false;
         }
 
@@ -285,8 +281,8 @@ buffered_socket_fill_buffer(BufferedSocket *s)
 
     if (nbytes == -2) {
         /* input buffer is full */
-        s->base.UnscheduleRead();
-        defer_event_cancel(&s->defer_read);
+        base.UnscheduleRead();
+        defer_event_cancel(&defer_read);
         return true;
     }
 
@@ -294,12 +290,12 @@ buffered_socket_fill_buffer(BufferedSocket *s)
         if (errno == EAGAIN) {
             /* schedule read, but don't refresh timeout of old
                scheduled read */
-            if (!s->base.IsReadPending())
-                s->base.ScheduleRead(s->read_timeout);
+            if (!base.IsReadPending())
+                base.ScheduleRead(read_timeout);
             return true;
         } else {
             GError *error = new_error_errno_msg("recv() failed");
-            s->handler->error(error, s->handler_ctx);
+            handler->error(error, handler_ctx);
             return false;
         }
     }
@@ -307,74 +303,74 @@ buffered_socket_fill_buffer(BufferedSocket *s)
     return true;
 }
 
-static bool
-buffered_socket_try_read2(BufferedSocket *s)
+inline bool
+BufferedSocket::TryRead2()
 {
-    assert(s->IsValid());
-    assert(!s->destroyed);
-    assert(!s->ended);
-    assert(s->reading);
+    assert(IsValid());
+    assert(!destroyed);
+    assert(!ended);
+    assert(reading);
 
-    if (!s->IsConnected()) {
-        assert(!s->IsEmpty());
+    if (!IsConnected()) {
+        assert(!IsEmpty());
 
-        buffered_socket_submit_from_buffer(s);
+        SubmitFromBuffer();
         return false;
-    } else if (s->direct) {
+    } else if (direct) {
         /* empty the remaining buffer before doing direct transfer */
-        if (!buffered_socket_submit_from_buffer(s))
+        if (!SubmitFromBuffer())
             return false;
 
-        if (!s->direct)
+        if (!direct)
             /* meanwhile, the "direct" flag was reverted by the
                handler - try again */
-            return buffered_socket_try_read2(s);
+            return TryRead2();
 
-        if (!s->IsEmpty()) {
+        if (!IsEmpty()) {
             /* there's still data in the buffer, but our handler isn't
                ready for consuming it - stop reading from the
                socket */
-            s->base.UnscheduleRead();
-            defer_event_cancel(&s->defer_read);
+            base.UnscheduleRead();
+            defer_event_cancel(&defer_read);
             return true;
         }
 
-        return buffered_socket_submit_direct(s);
+        return SubmitDirect();
     } else {
-        s->got_data = false;
+        got_data = false;
 
-        if (!buffered_socket_fill_buffer(s))
+        if (!FillBuffer())
             return false;
 
-        if (!buffered_socket_submit_from_buffer(s))
+        if (!SubmitFromBuffer())
             return false;
 
-        if (s->got_data)
+        if (got_data)
             /* refresh the timeout each time data was received */
-            s->base.ScheduleRead(s->read_timeout);
+            base.ScheduleRead(read_timeout);
         return true;
     }
 }
 
-static bool
-buffered_socket_try_read(BufferedSocket *s)
+bool
+BufferedSocket::TryRead()
 {
-    assert(s->IsValid());
-    assert(!s->destroyed);
-    assert(!s->ended);
-    assert(!s->reading);
+    assert(IsValid());
+    assert(!destroyed);
+    assert(!ended);
+    assert(!reading);
 
 #ifndef NDEBUG
-    PoolNotify notify(s->base.GetPool());
-    s->reading = true;
+    PoolNotify notify(base.GetPool());
+    reading = true;
 #endif
 
-    const bool result = buffered_socket_try_read2(s);
+    const bool result = TryRead2();
 
 #ifndef NDEBUG
     if (!notify.Denotify()) {
-        assert(s->reading);
-        s->reading = false;
+        assert(reading);
+        reading = false;
     }
 #endif
 
@@ -386,8 +382,8 @@ buffered_socket_try_read(BufferedSocket *s)
  *
  */
 
-static bool
-buffered_socket_wrapper_write(void *ctx)
+bool
+BufferedSocket::OnWrite(void *ctx)
 {
     BufferedSocket *s = (BufferedSocket *)ctx;
     assert(!s->destroyed);
@@ -396,18 +392,18 @@ buffered_socket_wrapper_write(void *ctx)
     return s->handler->write(s->handler_ctx);
 }
 
-static bool
-buffered_socket_wrapper_read(void *ctx)
+bool
+BufferedSocket::OnRead(void *ctx)
 {
     BufferedSocket *s = (BufferedSocket *)ctx;
     assert(!s->destroyed);
     assert(!s->ended);
 
-    return buffered_socket_try_read(s);
+    return s->TryRead();
 }
 
-static bool
-buffered_socket_wrapper_timeout(void *ctx)
+bool
+BufferedSocket::OnTimeout(void *ctx)
 {
     BufferedSocket *s = (BufferedSocket *)ctx;
     assert(!s->destroyed);
@@ -422,10 +418,10 @@ buffered_socket_wrapper_timeout(void *ctx)
     return false;
 }
 
-static const struct socket_handler buffered_socket_handler = {
-    .read = buffered_socket_wrapper_read,
-    .write = buffered_socket_wrapper_write,
-    .timeout = buffered_socket_wrapper_timeout,
+const struct socket_handler BufferedSocket::buffered_socket_handler = {
+    .read = OnRead,
+    .write = OnWrite,
+    .timeout = OnTimeout,
 };
 
 /*
@@ -556,14 +552,14 @@ BufferedSocket::Read(bool _expect_more)
 
     if (_expect_more) {
         if (!IsConnected() && IsEmpty()) {
-            buffered_socket_closed_prematurely(this);
+            ClosedPrematurely();
             return false;
         }
 
         expect_more = true;
     }
 
-    return buffered_socket_try_read(this);
+    return TryRead();
 }
 
 ssize_t
