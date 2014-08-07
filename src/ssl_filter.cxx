@@ -56,27 +56,6 @@ ssl_set_error(GError **error_r)
  * Move data from #src to #dest.
  */
 static void
-Move(ForeignFifoBuffer<uint8_t> &dest, ForeignFifoBuffer<uint8_t> &src)
-{
-    auto r = src.Read();
-    if (r.IsEmpty())
-        return;
-
-    auto w = dest.Write();
-    if (w.IsEmpty())
-        return;
-
-    size_t nbytes = std::min(r.size, w.size);
-
-    memcpy(w.data, r.data, nbytes);
-    dest.Append(nbytes);
-    src.Consume(nbytes);
-}
-
-/**
- * Move data from #src to #dest.
- */
-static void
 Move(BIO *dest, ForeignFifoBuffer<uint8_t> &src)
 {
     auto r = src.Read();
@@ -218,8 +197,8 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
     /* copy input (and output to make room for more output) */
 
     pthread_mutex_lock(&f.mutex);
-    Move(f.decrypted_input, ssl->decrypted_input);
-    Move(ssl->plain_output, f.plain_output);
+    f.decrypted_input.MoveFrom(ssl->decrypted_input);
+    ssl->plain_output.MoveFrom(f.plain_output);
     Move(ssl->encrypted_input, f.encrypted_input);
     Move(f.encrypted_output, ssl->encrypted_output);
     pthread_mutex_unlock(&f.mutex);
@@ -254,7 +233,7 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
     /* copy output */
 
     pthread_mutex_lock(&f.mutex);
-    Move(f.decrypted_input, ssl->decrypted_input);
+    f.decrypted_input.MoveFrom(ssl->decrypted_input);
     Move(f.encrypted_output, ssl->encrypted_output);
     f.drained = ssl->plain_output.IsEmpty() &&
         BIO_eof(ssl->encrypted_output);
