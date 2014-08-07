@@ -104,7 +104,7 @@ struct lb_node_config {
 
     lb_node_config(lb_node_config &&src)
         :name(std::move(src.name)), address(std::move(src.address)),
-         jvm_route(std::move(jvm_route)) {}
+         jvm_route(std::move(src.jvm_route)) {}
 };
 
 struct lb_member_config {
