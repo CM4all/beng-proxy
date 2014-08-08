@@ -39,6 +39,11 @@ const struct timeval http_server_write_timeout = {
 void
 http_server_log(struct http_server_connection *connection)
 {
+    if (connection->handler == nullptr)
+        /* this can happen when called via
+           http_server_connection_close() (during daemon shutdown) */
+        return;
+
     if (connection->handler->log == nullptr)
         return;
 
@@ -313,6 +318,8 @@ http_server_request_close(struct http_server_connection *connection)
 {
     assert(connection->request.read_state != http_server_connection::Request::START);
     assert(connection->request.request != nullptr);
+
+    http_server_log(connection);
 
     struct pool *pool = connection->request.request->pool;
     pool_trash(pool);
