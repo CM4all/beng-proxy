@@ -36,6 +36,20 @@ const struct timeval http_server_write_timeout = {
     .tv_usec = 0,
 };
 
+void
+http_server_log(struct http_server_connection *connection)
+{
+    if (connection->handler->log == nullptr)
+        return;
+
+    connection->handler->log(connection->request.request,
+                             connection->response.status,
+                             connection->response.length,
+                             connection->request.bytes_received,
+                             connection->response.bytes_sent,
+                             connection->handler_ctx);
+}
+
 struct http_server_request *
 http_server_request_new(struct http_server_connection *connection)
 {

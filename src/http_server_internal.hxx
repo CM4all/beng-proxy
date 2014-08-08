@@ -153,6 +153,9 @@ http_server_schedule_write(struct http_server_connection *connection)
     filtered_socket_schedule_write(&connection->socket);
 }
 
+void
+http_server_log(struct http_server_connection *connection);
+
 /**
  * A fatal error has occurred, and the connection should be closed
  * immediately, without sending any further information to the client.
