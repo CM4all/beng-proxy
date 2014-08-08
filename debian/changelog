@@ -3,7 +3,7 @@ cm4all-beng-proxy (5.0.13) unstable; urgency=low
   * merge release 4.14
   * ssl_filter: reduce memory usage
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 08 Aug 2014 17:45:33 -0000
 
 cm4all-beng-proxy (5.0.12) unstable; urgency=low
 
