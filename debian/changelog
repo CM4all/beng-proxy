@@ -2,6 +2,7 @@ cm4all-beng-proxy (4.14) unstable; urgency=low
 
   * ssl_filter: fix error check
   * http_server: log failed requests
+  * lb_http: reduce verbosity of ECONNRESET log message
 
  --   
 
