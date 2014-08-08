@@ -37,6 +37,25 @@ const struct timeval http_server_write_timeout = {
     .tv_usec = 0,
 };
 
+void
+http_server_connection::Log()
+{
+    if (handler == nullptr)
+        /* this can happen when called via
+           http_server_connection_close() (during daemon shutdown) */
+        return;
+
+    if (handler->log == nullptr)
+        return;
+
+    handler->log(request.request,
+                 response.status,
+                 response.length,
+                 request.bytes_received,
+                 response.bytes_sent,
+                 handler_ctx);
+}
+
 struct http_server_request *
 http_server_request_new(struct http_server_connection *connection)
 {
@@ -296,6 +315,8 @@ http_server_request_close(struct http_server_connection *connection)
 {
     assert(connection->request.read_state != http_server_connection::Request::START);
     assert(connection->request.request != nullptr);
+
+    connection->Log();
 
     struct pool *pool = connection->request.request->pool;
     pool_trash(pool);

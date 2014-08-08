@@ -120,6 +120,8 @@ struct http_server_connection {
         return socket.IsValid() && socket.IsConnected();
     }
 
+    void Log();
+
     /**
      * @return false if the connection has been closed
      */

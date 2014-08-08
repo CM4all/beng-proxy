@@ -34,6 +34,7 @@
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "istream.h"
+#include "gerrno.h"
 
 #include <http/status.h>
 #include <daemon/log.h>
@@ -443,6 +444,11 @@ static void
 lb_http_connection_error(GError *error, void *ctx)
 {
     struct lb_connection *connection = (struct lb_connection *)ctx;
+
+    int level = 2;
+
+    if (error->domain == errno_quark() && error->code == ECONNRESET)
+        level = 4;
 
     lb_connection_log_gerror(2, connection, "Error", error);
     g_error_free(error);

@@ -96,13 +96,7 @@ http_server_response_stream_eof(void *ctx)
 
     connection->socket.UnscheduleWrite();
 
-    if (connection->handler->log != nullptr)
-        connection->handler->log(connection->request.request,
-                                 connection->response.status,
-                                 connection->response.length,
-                                 connection->request.bytes_received,
-                                 connection->response.bytes_sent,
-                                 connection->handler_ctx);
+    connection->Log();
 
     if (connection->request.read_state == http_server_connection::Request::BODY &&
         !connection->request.expect_100_continue) {
