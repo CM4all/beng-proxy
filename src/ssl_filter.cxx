@@ -238,6 +238,10 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
         std::unique_lock<std::mutex> lock(f.mutex);
 
         f.decrypted_input.MoveFrom(ssl->decrypted_input);
+
+        /* let the main thread free our plain_output buffer */
+        ssl->plain_output.SwapIfNull(f.plain_output);
+
         Move(f.encrypted_output, ssl->encrypted_output);
         f.drained = ssl->plain_output.IsEmpty() &&
             BIO_eof(ssl->encrypted_output);

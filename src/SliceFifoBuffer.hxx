@@ -75,6 +75,15 @@ public:
         else
             ForeignFifoBuffer<uint8_t>::MoveFrom(src);
     }
+
+    /**
+     * Swaps the two buffers if #src is nulled.  This is useful when
+     * #src can be freed, but this object cannot.
+     */
+    void SwapIfNull(SliceFifoBuffer &src) {
+        if (src.IsNull() && IsEmpty() && !IsNull())
+            Swap(src);
+    }
 };
 
 #endif
