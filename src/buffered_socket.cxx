@@ -467,11 +467,11 @@ BufferedSocket::Init(struct pool &_pool,
     input.SetNull();
     direct = false;
     expect_more = false;
+    destroyed = false;
 
 #ifndef NDEBUG
     reading = false;
     ended = false;
-    destroyed = false;
     last_buffered_result = BufferedResult(-1);
 #endif
 }
@@ -502,11 +502,11 @@ BufferedSocket::Init(struct pool &_pool,
 
     direct = false;
     expect_more = false;
+    destroyed = false;
 
 #ifndef NDEBUG
     reading = false;
     ended = false;
-    destroyed = false;
     last_buffered_result = BufferedResult(-1);
 #endif
 }
@@ -519,9 +519,7 @@ BufferedSocket::Destroy()
 
     input.FreeIfDefined(fb_pool_get());
 
-#ifndef NDEBUG
     destroyed = true;
-#endif
 }
 
 bool

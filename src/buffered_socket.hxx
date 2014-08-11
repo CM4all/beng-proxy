@@ -284,8 +284,10 @@ class BufferedSocket {
      */
     bool got_data;
 
+    bool destroyed;
+
 #ifndef NDEBUG
-    bool reading, ended, destroyed;
+    bool reading, ended;
 
     BufferedResult last_buffered_result;
 #endif
@@ -341,15 +343,11 @@ public:
     void Destroy();
 
     /**
-     * Is the object still usable?  The socket may be closed already, but
-     * the input buffer may still have data.
+     * Is the object still usable?  That is, was Destroy() NOT called
+     * yet?  The socket may be closed already, though.
      */
     bool IsValid() const {
-        /* the object is valid if there is either a valid socket or a
-           buffer that may have more data; in the latter case, the socket
-           may be closed already because no more data is needed from
-           there */
-        return base.IsValid() || input.IsDefined();
+        return !destroyed;
     }
 
 #ifndef NDEBUG
