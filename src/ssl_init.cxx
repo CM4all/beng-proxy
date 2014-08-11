@@ -11,22 +11,20 @@
 #include <openssl/ssl.h>
 #include <openssl/crypto.h>
 
+#include <mutex>
+
 #include <pthread.h>
 
-#ifndef NDEBUG
-static unsigned num_locks;
-#endif
-
-static pthread_mutex_t *ssl_mutexes;
+static std::mutex *ssl_mutexes;
 
 static void
 locking_function(int mode, int n,
                  gcc_unused const char *file, gcc_unused int line)
 {
     if (mode & CRYPTO_LOCK)
-        pthread_mutex_lock(&ssl_mutexes[n]);
+        ssl_mutexes[n].lock();
     else
-        pthread_mutex_unlock(&ssl_mutexes[n]);
+        ssl_mutexes[n].unlock();
 }
 
 static unsigned long
@@ -45,13 +43,7 @@ ssl_global_init(void)
        SSL_CTX object is shared among all threads, which need to
        modify it in a safe manner */
 
-#ifdef NDEBUG
-    unsigned num_locks;
-#endif
-    num_locks = CRYPTO_num_locks();
-    ssl_mutexes = new pthread_mutex_t[num_locks];
-    for (unsigned i = 0; i < num_locks; ++i)
-        pthread_mutex_init(&ssl_mutexes[i], NULL);
+    ssl_mutexes = new std::mutex[CRYPTO_num_locks()];
 
     CRYPTO_set_locking_callback(locking_function);
     CRYPTO_set_id_callback(id_function);
@@ -63,11 +55,5 @@ ssl_global_deinit(void)
     CRYPTO_set_id_callback(NULL);
     CRYPTO_set_locking_callback(NULL);
 
-#ifdef NDEBUG
-    const unsigned num_locks = CRYPTO_num_locks();
-#endif
-
-    for (unsigned i = 0; i < num_locks; ++i)
-        pthread_mutex_destroy(&ssl_mutexes[i]);
     delete[] ssl_mutexes;
 }
