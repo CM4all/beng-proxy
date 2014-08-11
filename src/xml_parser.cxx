@@ -9,6 +9,7 @@
 #include "html-chars.h"
 #include "expansible-buffer.h"
 #include "istream.h"
+#include "util/CharUtil.hxx"
 
 #include <inline/poison.h>
 
@@ -198,7 +199,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                         break;
                     }
 
-                    parser->tag_name[parser->tag_name_length++] = char_to_lower(*buffer++);
+                    parser->tag_name[parser->tag_name_length++] = ToLowerASCII(*buffer++);
                 } else if (*buffer == '/' && parser->tag_name_length == 0) {
                     parser->tag.type = TAG_CLOSE;
                     ++buffer;
@@ -206,7 +207,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     /* start of processing instruction */
                     parser->tag.type = TAG_PI;
                     ++buffer;
-                } else if ((char_is_whitespace(*buffer) || *buffer == '/' ||
+                } else if ((IsWhitespaceOrNull(*buffer) || *buffer == '/' ||
                             *buffer == '?' || *buffer == '>') &&
                            parser->tag_name_length > 0) {
                     bool interesting;
@@ -235,7 +236,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
         case PARSER_ELEMENT_TAG:
             do {
-                if (char_is_whitespace(*buffer)) {
+                if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else if (*buffer == '/' && parser->tag.type == TAG_OPEN) {
                     parser->tag.type = TAG_SHORT;
@@ -302,8 +303,8 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                         break;
                     }
 
-                    parser->attr_name[parser->attr_name_length++] = char_to_lower(*buffer++);
-                } else if (*buffer == '=' || char_is_whitespace(*buffer)) {
+                    parser->attr_name[parser->attr_name_length++] = ToLowerASCII(*buffer++);
+                } else if (*buffer == '=' || IsWhitespaceOrNull(*buffer)) {
                     parser->state = PARSER_AFTER_ATTR_NAME;
                     break;
                 } else {
@@ -322,7 +323,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     parser->state = PARSER_BEFORE_ATTR_VALUE;
                     ++buffer;
                     break;
-                } else if (char_is_whitespace(*buffer)) {
+                } else if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else {
                     parser_invoke_attr_finished(parser);
@@ -341,7 +342,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                     ++buffer;
                     parser->attr.value_start = parser->position + (off_t)(buffer - start);
                     break;
-                } else if (char_is_whitespace(*buffer)) {
+                } else if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else {
                     parser->state = PARSER_ATTR_VALUE_COMPAT;
@@ -383,7 +384,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         case PARSER_ATTR_VALUE_COMPAT:
             /* wait till the value is finished */
             do {
-                if (!char_is_whitespace(*buffer) && *buffer != '>') {
+                if (!IsWhitespaceOrNull(*buffer) && *buffer != '>') {
                     if (!expansible_buffer_write_buffer(parser->attr_value,
                                                         buffer, 1)) {
                         parser->state = PARSER_ELEMENT_TAG;
@@ -404,7 +405,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
 
         case PARSER_SHORT:
             do {
-                if (char_is_whitespace(*buffer)) {
+                if (IsWhitespaceOrNull(*buffer)) {
                     ++buffer;
                 } else if (*buffer == '>') {
                     parser->state = PARSER_NONE;
@@ -446,7 +447,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
         case PARSER_DECLARATION_NAME:
             /* copy declaration element name */
             while (buffer < end) {
-                if (char_is_alphanumeric(*buffer) || *buffer == ':' ||
+                if (IsAlphaNumericASCII(*buffer) || *buffer == ':' ||
                     *buffer == '-' || *buffer == '_' || *buffer == '[') {
                     if (parser->tag_name_length == sizeof(parser->tag_name)) {
                         /* name buffer overflowing */
@@ -454,7 +455,7 @@ parser_feed(struct parser *parser, const char *start, size_t length)
                         break;
                     }
 
-                    parser->tag_name[parser->tag_name_length++] = char_to_lower(*buffer++);
+                    parser->tag_name[parser->tag_name_length++] = ToLowerASCII(*buffer++);
 
                     if (parser->tag_name_length == 7 &&
                         memcmp(parser->tag_name, "[cdata[", 7) == 0) {

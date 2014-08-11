@@ -9,7 +9,6 @@
 #include "http_response.hxx"
 #include "http_upgrade.hxx"
 #include "http_util.hxx"
-#include "strutil.h"
 #include "header_parser.hxx"
 #include "header_writer.hxx"
 #include "pevent.h"
@@ -27,6 +26,7 @@
 #include "filtered_socket.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
+#include "util/CharUtil.hxx"
 
 #include <inline/compiler.h>
 #include <inline/poison.h>
@@ -443,8 +443,8 @@ http_client::ParseStatusLine(const char *line, size_t length)
     length = line + length - space - 1;
     line = space + 1;
 
-    if (unlikely(length < 3 || !char_is_digit(line[0]) ||
-                 !char_is_digit(line[1]) || !char_is_digit(line[2]))) {
+    if (unlikely(length < 3 || !IsDigitASCII(line[0]) ||
+                 !IsDigitASCII(line[1]) || !IsDigitASCII(line[2]))) {
         stopwatch_event(stopwatch, "malformed");
 
         GError *error =
@@ -622,7 +622,7 @@ http_client::ParseHeaders(const void *_data, size_t length)
 
         /* strip the line */
         --end;
-        while (end >= start && char_is_whitespace(*end))
+        while (end >= start && IsWhitespaceOrNull(*end))
             --end;
 
         /* handle this line */

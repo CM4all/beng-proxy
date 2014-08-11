@@ -8,8 +8,8 @@
 #include "fcgi_protocol.h"
 #include "growing_buffer.hxx"
 #include "strmap.hxx"
-#include "strutil.h"
 #include "util/ConstBuffer.hxx"
+#include "util/CharUtil.hxx"
 
 #include <glib.h>
 
@@ -148,10 +148,10 @@ fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,
         size_t i;
 
         for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
-            if (char_is_minuscule_letter(pair.key[i]))
+            if (IsLowerAlphaASCII(pair.key[i]))
                 buffer[5 + i] = (char)(pair.key[i] - 'a' + 'A');
-            else if (char_is_capital_letter(pair.key[i]) ||
-                     char_is_digit(pair.key[i]))
+            else if (IsUpperAlphaASCII(pair.key[i]) ||
+                     IsDigitASCII(pair.key[i]))
                 buffer[5 + i] = pair.key[i];
             else
                 buffer[5 + i] = '_';

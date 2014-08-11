@@ -14,10 +14,10 @@
 #include "fd_util.h"
 #include "istream.h"
 #include "strmap.hxx"
-#include "strutil.h"
 #include "tpool.h"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/CharUtil.hxx"
 
 #include <inline/compiler.h>
 
@@ -131,7 +131,7 @@ handle_fcgi_param(struct pool *pool, struct fcgi_request *r,
         for (char *q = p; *q != 0; ++q) {
             if (*q == '_')
                 *q = '-';
-            else if (char_is_capital_letter(*q))
+            else if (IsUpperAlphaASCII(*q))
                 *q += 'a' - 'A';
         }
 

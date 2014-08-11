@@ -8,8 +8,8 @@
 #include "cgi_quark.h"
 #include "strmap.hxx"
 #include "header_parser.hxx"
-#include "strutil.h"
 #include "util/ForeignFifoBuffer.hxx"
+#include "util/CharUtil.hxx"
 
 #include <string.h>
 #include <stdlib.h>
@@ -85,7 +85,7 @@ CGIParser::FeedHeaders(struct pool &pool, ForeignFifoBuffer<uint8_t> &buffer,
                                        data_end - start)) != nullptr) {
         next = end + 1;
         --end;
-        while (end >= start && char_is_whitespace(*end))
+        while (end >= start && IsWhitespaceOrNull(*end))
             --end;
 
         const size_t line_length = end - start + 1;

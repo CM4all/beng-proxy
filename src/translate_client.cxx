@@ -28,6 +28,7 @@
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"
+#include "util/CharUtil.hxx"
 
 #include <daemon/log.h>
 #include <socket/address.h>
@@ -552,7 +553,7 @@ parse_address_string(struct pool *pool, struct address_list *list,
 static bool
 valid_view_name_char(char ch)
 {
-    return char_is_alphanumeric(ch) || ch == '_' || ch == '-';
+    return IsAlphaNumericASCII(ch) || ch == '_' || ch == '-';
 }
 
 static bool

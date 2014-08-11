@@ -15,7 +15,6 @@
 #include "istream-internal.h"
 #include "istream_gb.hxx"
 #include "please.hxx"
-#include "strutil.h"
 #include "header_parser.hxx"
 #include "pevent.h"
 #include "direct.h"
@@ -25,6 +24,7 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/CharUtil.hxx"
 
 #include <glib.h>
 
@@ -331,7 +331,7 @@ fcgi_client_parse_headers(struct fcgi_client *client,
     while ((eol = (const char *)memchr(p, '\n', data_end - p)) != nullptr) {
         next = eol + 1;
         --eol;
-        while (eol >= p && char_is_whitespace(*eol))
+        while (eol >= p && IsWhitespaceOrNull(*eol))
             --eol;
 
         finished = fcgi_client_handle_line(client, p, eol - p + 1);

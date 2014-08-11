@@ -8,12 +8,12 @@
 #include "cgi_address.hxx"
 #include "istream.h"
 #include "fork.hxx"
-#include "strutil.h"
 #include "strmap.hxx"
 #include "sigutil.h"
 #include "product.h"
 #include "exec.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/CharUtil.hxx"
 
 #include <daemon/log.h>
 
@@ -106,10 +106,10 @@ cgi_run(const struct jail_params *jail,
             char buffer[512] = "HTTP_";
             size_t i;
             for (i = 0; 5 + i < sizeof(buffer) - 1 && pair.key[i] != 0; ++i) {
-                if (char_is_minuscule_letter(pair.key[i]))
+                if (IsLowerAlphaASCII(pair.key[i]))
                     buffer[5 + i] = (char)(pair.key[i] - 'a' + 'A');
-                else if (char_is_capital_letter(pair.key[i]) ||
-                         char_is_digit(pair.key[i]))
+                else if (IsUpperAlphaASCII(pair.key[i]) ||
+                         IsDigitASCII(pair.key[i]))
                     buffer[5 + i] = pair.key[i];
                 else
                     buffer[5 + i] = '_';

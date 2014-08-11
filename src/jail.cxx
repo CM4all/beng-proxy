@@ -5,9 +5,9 @@
  */
 
 #include "jail.hxx"
-#include "strutil.h"
 #include "exec.hxx"
 #include "pool.hxx"
+#include "util/CharUtil.hxx"
 
 #include <glib.h>
 
@@ -25,7 +25,7 @@ jail_quark(void)
 static char *
 next_word(char *p)
 {
-    while (*p != 0 && !char_is_whitespace(*p))
+    while (!IsWhitespaceOrNull(*p))
         ++p;
 
     if (*p == 0)
@@ -33,7 +33,7 @@ next_word(char *p)
 
     *p++ = 0;
 
-    while (*p != 0 && char_is_whitespace(*p))
+    while (IsWhitespaceNotNull(*p))
         ++p;
 
     if (*p == 0)
@@ -55,7 +55,7 @@ jail_config_load(struct jail_config *config, const char *path,
 
     char line[4096], *p, *q;
     while ((p = fgets(line, sizeof(line), file)) != nullptr) {
-        while (*p != 0 && char_is_whitespace(*p))
+        while (IsWhitespaceNotNull(*p))
             ++p;
 
         if (*p == 0 || *p == '#')

@@ -39,6 +39,7 @@
 #include "istream_tee.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"
+#include "util/CharUtil.hxx"
 
 #include <daemon/log.h>
 
@@ -960,7 +961,7 @@ find_underscore(const char *p, const char *end)
         if (p == nullptr)
             return nullptr;
 
-        if (char_is_whitespace(p[-1]) &&
+        if (IsWhitespaceOrNull(p[-1]) &&
             is_underscore_prefix(p, end))
             return p;
     }
@@ -1365,7 +1366,7 @@ header_name_valid(const char *name, size_t length)
 
     /* the rest must be letters, digits or dash */
     for (size_t i = 2; i < length;  ++i)
-        if (!char_is_alphanumeric(name[i]) && name[i] != '-')
+        if (!IsAlphaNumericASCII(name[i]) && name[i] != '-')
             return false;
 
     return true;

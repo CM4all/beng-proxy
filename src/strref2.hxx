@@ -12,12 +12,12 @@
 #define BENG_PROXY_STRREF2_HXX
 
 #include "strref.h"
-#include "strutil.h"
+#include "util/CharUtil.hxx"
 
 static gcc_always_inline void
 strref_ltrim(struct strref *s)
 {
-    while (s->length > 0 && char_is_whitespace(s->data[0])) {
+    while (s->length > 0 && IsWhitespaceOrNull(s->data[0])) {
         ++s->data;
         --s->length;
     }
@@ -26,7 +26,7 @@ strref_ltrim(struct strref *s)
 static gcc_always_inline void
 strref_rtrim(struct strref *s)
 {
-    while (s->length > 0 && char_is_whitespace(strref_last(s)))
+    while (s->length > 0 && IsWhitespaceOrNull(strref_last(s)))
         --s->length;
 }
 
@@ -51,7 +51,7 @@ strref_lower_cmp(const struct strref *s, const char *p, size_t length)
         return 1; /* XXX -1 or 1? */
 
     for (i = 0; i < length; ++i) {
-        char ch = char_to_lower(s->data[i]);
+        char ch = ToLowerASCII(s->data[i]);
         if (ch < p[i])
             return -1;
         if (ch > p[i])

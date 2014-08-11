@@ -8,7 +8,7 @@
 #include "css_syntax.hxx"
 #include "pool.hxx"
 #include "istream.h"
-#include "strutil.h"
+#include "util/CharUtil.hxx"
 
 enum css_parser_state {
     CSS_PARSER_NONE,
@@ -65,7 +65,7 @@ struct css_parser {
 static const char *
 skip_whitespace(const char *p, const char *end)
 {
-    while (p < end && char_is_whitespace(*p))
+    while (p < end && IsWhitespaceOrNull(*p))
         ++p;
 
     return p;
@@ -78,7 +78,7 @@ at_url_start(const char *p, size_t length)
     return length >= 4 && memcmp(p + length - 4, "url(", 4) == 0 &&
         (/* just url(): */ length == 4 ||
          /* url() after another token: */
-         char_is_whitespace(p[length - 5]));
+         IsWhitespaceOrNull(p[length - 5]));
 }
 
 static size_t
@@ -439,7 +439,7 @@ css_parser_feed(struct css_parser *parser, const char *start, size_t length)
 
         case CSS_PARSER_PRE_IMPORT:
             do {
-                if (!char_is_whitespace(*buffer)) {
+                if (!IsWhitespaceOrNull(*buffer)) {
                     if (*buffer == '"') {
                         ++buffer;
                         parser->state = CSS_PARSER_IMPORT;

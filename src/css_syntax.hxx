@@ -7,25 +7,25 @@
 #ifndef BENG_PROXY_CSS_SYNTAX_HXX
 #define BENG_PROXY_CSS_SYNTAX_HXX
 
-#include "strutil.h"
+#include "util/CharUtil.hxx"
 
 static inline constexpr bool
 is_css_nonascii(char ch)
 {
-    return (ch & 0x80) != 0;
+    return !IsASCII(ch);
 }
 
 static inline bool
 is_css_nmstart(char ch)
 {
-    return ch == '_' || char_is_letter(ch) || is_css_nonascii(ch) ||
+    return ch == '_' || IsAlphaASCII(ch) || is_css_nonascii(ch) ||
         ch == '\\';
 }
 
 static inline bool
 is_css_nmchar(char ch)
 {
-    return is_css_nmstart(ch) || char_is_digit(ch) || ch == '-';
+    return is_css_nmstart(ch) || IsDigitASCII(ch) || ch == '-';
 }
 
 static inline bool

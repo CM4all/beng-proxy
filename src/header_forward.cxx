@@ -15,7 +15,7 @@
 #include "growing_buffer.hxx"
 #include "pool.hxx"
 #include "product.h"
-#include "strutil.h"
+#include "util/CharUtil.hxx"
 
 #ifndef NDEBUG
 #include <daemon/log.h>
@@ -279,7 +279,7 @@ compare_set_cookie_name(const char *set_cookie, const char *name)
 {
     const size_t name_length = strlen(name);
     return memcmp(set_cookie, name, name_length) == 0 &&
-        !char_is_alphanumeric(set_cookie[name_length]);
+        !IsAlphaNumericASCII(set_cookie[name_length]);
 }
 
 /**

@@ -10,10 +10,10 @@
 #include "http_upgrade.hxx"
 #include "http_util.hxx"
 #include "pool.hxx"
-#include "strutil.h"
 #include "strmap.hxx"
 #include "header_parser.hxx"
 #include "istream-internal.h"
+#include "util/CharUtil.hxx"
 
 #include <inline/poison.h>
 #include <daemon/log.h>
@@ -312,7 +312,7 @@ http_server_feed_headers(struct http_server_connection *connection,
                                        buffer_end - start)) != nullptr) {
         next = end + 1;
         --end;
-        while (end >= start && char_is_whitespace(*end))
+        while (end >= start && IsWhitespaceOrNull(*end))
             --end;
 
         if (!http_server_handle_line(connection, start, end - start + 1))

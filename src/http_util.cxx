@@ -8,6 +8,7 @@
 #include "strutil.h"
 #include "strref.h"
 #include "pool.hxx"
+#include "util/CharUtil.hxx"
 
 #include <string.h>
 
@@ -22,7 +23,7 @@ http_list_split(struct pool *pool, const char *p)
         const char *comma, *end;
 
         /* skip whitespace */
-        while (*p != 0 && char_is_whitespace(*p))
+        while (IsWhitespaceNotNull(*p))
             ++p;
 
         if (*p == 0)
@@ -35,7 +36,7 @@ http_list_split(struct pool *pool, const char *p)
             end = p + strlen(p);
 
         /* delete trailing whitespace */
-        while (end > p && char_is_whitespace(end[-1]))
+        while (end > p && IsWhitespaceFast(end[-1]))
             --end;
 
         /* append new list item */
@@ -63,10 +64,10 @@ http_trim(const char **pp, size_t *length_p)
 
     /* trim whitespace */
 
-    while (length > 0 && char_is_whitespace(p[length - 1]))
+    while (length > 0 && IsWhitespaceOrNull(p[length - 1]))
         --length;
 
-    while (length > 0 && char_is_whitespace(p[0])) {
+    while (length > 0 && IsWhitespaceOrNull(p[0])) {
         ++p;
         --length;
     }
@@ -119,10 +120,10 @@ http_equals_i(const char *a, size_t a_length, const char *b, size_t b_length)
 {
     /* trim */
 
-    while (a_length > 0 && char_is_whitespace(a[a_length - 1]))
+    while (a_length > 0 && IsWhitespaceOrNull(a[a_length - 1]))
         --a_length;
 
-    while (a_length > 0 && char_is_whitespace(a[0])) {
+    while (a_length > 0 && IsWhitespaceOrNull(a[0])) {
         ++a;
         --a_length;
     }
@@ -171,7 +172,7 @@ http_header_param(struct strref *dest, const char *value, const char *name)
 
     ++p;
 
-    while (*p != 0 && char_is_whitespace(*p))
+    while (IsWhitespaceNotNull(*p))
         ++p;
 
     q = strchr(p, '=');

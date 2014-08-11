@@ -5,16 +5,17 @@
  */
 
 #include "uri_escape.hxx"
-#include "strutil.h"
 #include "format.h"
 #include "pool.hxx"
+#include "util/CharUtil.hxx"
 
 #include <string.h>
 
+constexpr
 static inline bool
 uri_harmless_char(char ch)
 {
-    return char_is_alphanumeric(ch) ||
+    return IsAlphaNumericASCII(ch) ||
         ch == '_' || ch == '-' || ch == '.';
 }
 
@@ -50,7 +51,7 @@ uri_escape_dup(struct pool *pool, const char *src, size_t src_length,
 static int
 parse_hexdigit(char ch)
 {
-    if (char_is_digit(ch))
+    if (IsDigitASCII(ch))
         return ch - '0';
     else if (ch >= 'a' && ch <= 'f')
         return ch - 'a' + 0xa;

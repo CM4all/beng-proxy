@@ -11,7 +11,6 @@
 #include "tpool.h"
 #include "istream.h"
 #include "istream_replace.hxx"
-#include "strutil.h"
 
 #include <glib.h>
 

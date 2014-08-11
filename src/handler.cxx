@@ -31,13 +31,13 @@
 #include "uri-edit.h"
 #include "uri_escape.hxx"
 #include "uri-verify.h"
-#include "strutil.h"
 #include "strmap.hxx"
 #include "istream.h"
 #include "translate_client.hxx"
 #include "ua_classification.h"
 #include "beng-proxy/translation.h"
 #include "util/Cast.hxx"
+#include "util/CharUtil.hxx"
 
 #include <daemon/log.h>
 
@@ -326,10 +326,10 @@ do_content_type_lookup(request &request, const TranslateResponse &response)
     char *buffer = p_strdup(request.request->pool, suffix);
     for (char *p = buffer; *p != 0; ++p) {
         const char ch = *p;
-        if (char_is_capital_letter(ch))
+        if (IsUpperAlphaASCII(ch))
             /* convert to lower case */
             *p += 'a' - 'A';
-        else if (!char_is_minuscule_letter(ch) && !char_is_digit(ch))
+        else if (!IsLowerAlphaASCII(ch) && !IsDigitASCII(ch))
             /* no, we won't look this up */
             return false;
     }

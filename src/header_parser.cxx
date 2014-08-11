@@ -11,6 +11,7 @@
 #include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/StaticFifoBuffer.hxx"
+#include "util/CharUtil.hxx"
 
 #include <algorithm>
 
@@ -30,7 +31,7 @@ header_parse_line(struct pool *pool, struct strmap *headers,
     ++colon;
     if (likely(colon < line + length && *colon == ' '))
         ++colon;
-    while (colon < line + length && char_is_whitespace(*colon))
+    while (colon < line + length && IsWhitespaceOrNull(*colon))
         ++colon;
 
     char *key = p_strndup(pool, line, key_end - line);
@@ -81,7 +82,7 @@ header_parse_buffer(struct pool *pool, struct strmap *headers,
         const size_t length = r.size;
 
         while (true) {
-            while (p < src + length && char_is_whitespace(*p))
+            while (p < src + length && IsWhitespaceOrNull(*p))
                 ++p;
 
             const char *eol = (const char *)memchr(p, '\n', src + length - p);
