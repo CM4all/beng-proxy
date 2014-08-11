@@ -366,10 +366,8 @@ thread_socket_filter_available(void *ctx)
 {
     ThreadSocketFilter *f = (ThreadSocketFilter *)ctx;
 
-    f->mutex.lock();
-    size_t result = f->decrypted_input.GetAvailable();
-    f->mutex.unlock();
-    return result;
+    std::lock_guard<std::mutex> lock(f->mutex);
+    return f->decrypted_input.GetAvailable();
 }
 
 static void
