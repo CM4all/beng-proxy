@@ -199,12 +199,14 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
 
     /* copy input (and output to make room for more output) */
 
-    f.mutex.lock();
-    f.decrypted_input.MoveFrom(ssl->decrypted_input);
-    ssl->plain_output.MoveFrom(f.plain_output);
-    Move(ssl->encrypted_input, f.encrypted_input);
-    Move(f.encrypted_output, ssl->encrypted_output);
-    f.mutex.unlock();
+    {
+        std::unique_lock<std::mutex> lock(f.mutex);
+
+        f.decrypted_input.MoveFrom(ssl->decrypted_input);
+        ssl->plain_output.MoveFrom(f.plain_output);
+        Move(ssl->encrypted_input, f.encrypted_input);
+        Move(f.encrypted_output, ssl->encrypted_output);
+    }
 
     /* let OpenSSL work */
 
@@ -232,12 +234,14 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
 
     /* copy output */
 
-    f.mutex.lock();
-    f.decrypted_input.MoveFrom(ssl->decrypted_input);
-    Move(f.encrypted_output, ssl->encrypted_output);
-    f.drained = ssl->plain_output.IsEmpty() &&
-        BIO_eof(ssl->encrypted_output);
-    f.mutex.unlock();
+    {
+        std::unique_lock<std::mutex> lock(f.mutex);
+
+        f.decrypted_input.MoveFrom(ssl->decrypted_input);
+        Move(f.encrypted_output, ssl->encrypted_output);
+        f.drained = ssl->plain_output.IsEmpty() &&
+            BIO_eof(ssl->encrypted_output);
+    }
 
     return true;
 }
