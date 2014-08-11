@@ -167,7 +167,7 @@ struct slice_pool {
     gcc_pure
     struct slice_area *FindNonFullArea();
 
-    struct slice_area *GetArea();
+    SliceAllocation Alloc();
 };
 
 /*
@@ -432,24 +432,6 @@ slice_pool::FindNonFullArea()
     return nullptr;
 }
 
-inline struct slice_area *
-slice_pool::GetArea()
-{
-    struct slice_area *area = FindNonFullArea();
-    if (area == nullptr) {
-        area = slice_area::New(*this);
-        areas.push_front(*area);
-    }
-
-    return area;
-}
-
-struct slice_area *
-slice_pool_get_area(struct slice_pool *pool)
-{
-    return pool->GetArea();
-}
-
 inline void *
 slice_area::Alloc(struct slice_pool &pool)
 {
@@ -465,13 +447,24 @@ slice_area::Alloc(struct slice_pool &pool)
     return GetSlice(pool, i);
 }
 
-void *
-slice_alloc(struct slice_pool *pool, struct slice_area *area)
+SliceAllocation
+slice_pool::Alloc()
+{
+    struct slice_area *area = FindNonFullArea();
+    if (area == nullptr) {
+        area = slice_area::New(*this);
+        areas.push_front(*area);
+    }
+
+    return { area, area->Alloc(*this), slice_size };
+}
+
+SliceAllocation
+slice_alloc(struct slice_pool *pool)
 {
     assert(pool != nullptr);
-    assert(area != nullptr);
 
-    return area->Alloc(*pool);
+    return pool->Alloc();
 }
 
 void

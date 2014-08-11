@@ -44,16 +44,18 @@ public:
         slice_pool *pool = slice_pool_new(slice_size, per_area);
         CPPUNIT_ASSERT(pool != NULL);
 
-        slice_area *area0 = slice_pool_get_area(pool);
+        auto allocation0 = slice_alloc(pool);
+        slice_area *area0 = allocation0.area;
         CPPUNIT_ASSERT(area0 != NULL);
+        slice_free(pool, area0, allocation0.data);
 
         void *allocations[per_area];
 
         for (unsigned i = 0; i < per_area; ++i) {
-            slice_area *area = slice_pool_get_area(pool);
-            CPPUNIT_ASSERT_EQUAL(area, area0);
+            auto allocation = slice_alloc(pool);
+            CPPUNIT_ASSERT_EQUAL(allocation.area, area0);
 
-            allocations[i] = slice_alloc(pool, area);
+            allocations[i] = allocation.data;
             CPPUNIT_ASSERT(allocations[i] != NULL);
             CPPUNIT_ASSERT(i <= 0 || allocations[i] != allocations[0]);
             CPPUNIT_ASSERT(i <= 1 || allocations[i] != allocations[1]);
@@ -68,8 +70,10 @@ public:
         } more[per_area];
 
         for (unsigned i = 0; i < per_area; ++i) {
-            more[i].area = slice_pool_get_area(pool);
-            more[i].p = slice_alloc(pool, more[i].area);
+            auto allocation = slice_alloc(pool);
+
+            more[i].area = allocation.area;
+            more[i].p = allocation.data;
             CPPUNIT_ASSERT(more[i].p != NULL);
 
             Fill(more[i].p, slice_size, per_area + i);
@@ -95,16 +99,18 @@ public:
         slice_pool *pool = slice_pool_new(slice_size, per_area);
         CPPUNIT_ASSERT(pool != NULL);
 
-        slice_area *area0 = slice_pool_get_area(pool);
+        auto allocation0 = slice_alloc(pool);
+        slice_area *area0 = allocation0.area;
         CPPUNIT_ASSERT(area0 != NULL);
+        slice_free(pool, area0, allocation0.data);
 
         void *allocations[per_area];
 
         for (unsigned i = 0; i < per_area; ++i) {
-            slice_area *area = slice_pool_get_area(pool);
-            CPPUNIT_ASSERT_EQUAL(area, area0);
+            auto allocation = slice_alloc(pool);
+            CPPUNIT_ASSERT_EQUAL(allocation.area, area0);
 
-            allocations[i] = slice_alloc(pool, area);
+            allocations[i] = allocation.data;
             CPPUNIT_ASSERT(allocations[i] != NULL);
             CPPUNIT_ASSERT(i <= 0 || allocations[i] != allocations[0]);
             CPPUNIT_ASSERT(i <= 1 || allocations[i] != allocations[1]);
@@ -120,8 +126,10 @@ public:
         } more[per_area];
 
         for (unsigned i = 0; i < per_area; ++i) {
-            more[i].area = slice_pool_get_area(pool);
-            more[i].p = slice_alloc(pool, more[i].area);
+            auto allocation = slice_alloc(pool);
+
+            more[i].area = allocation.area;
+            more[i].p = allocation.data;
             CPPUNIT_ASSERT(more[i].p != NULL);
 
             Fill(more[i].p, slice_size, per_area + i);
@@ -145,16 +153,18 @@ public:
         slice_pool *pool = slice_pool_new(slice_size, per_area);
         CPPUNIT_ASSERT(pool != NULL);
 
-        slice_area *area0 = slice_pool_get_area(pool);
+        auto allocation0 = slice_alloc(pool);
+        slice_area *area0 = allocation0.area;
         CPPUNIT_ASSERT(area0 != NULL);
+        slice_free(pool, area0, allocation0.data);
 
         void *allocations[per_area];
 
         for (unsigned i = 0; i < per_area; ++i) {
-            slice_area *area = slice_pool_get_area(pool);
-            CPPUNIT_ASSERT_EQUAL(area, area0);
+            auto allocation = slice_alloc(pool);
+            CPPUNIT_ASSERT_EQUAL(allocation.area, area0);
 
-            allocations[i] = slice_alloc(pool, area);
+            allocations[i] = allocation.data;
             CPPUNIT_ASSERT(allocations[i] != NULL);
             CPPUNIT_ASSERT(i <= 0 || allocations[i] != allocations[0]);
             CPPUNIT_ASSERT(i <= 1 || allocations[i] != allocations[1]);
@@ -170,8 +180,10 @@ public:
         } more[per_area];
 
         for (unsigned i = 0; i < per_area; ++i) {
-            more[i].area = slice_pool_get_area(pool);
-            more[i].p = slice_alloc(pool, more[i].area);
+            auto allocation = slice_alloc(pool);
+
+            more[i].area = allocation.area;
+            more[i].p = allocation.data;
             CPPUNIT_ASSERT(more[i].p != NULL);
 
             Fill(more[i].p, slice_size, per_area + i);

@@ -10,11 +10,9 @@ SliceFifoBuffer::Allocate(struct slice_pool &pool)
 {
     assert(IsNull());
 
-    area = slice_pool_get_area(&pool);
-    assert(area != nullptr);
-
-    SetBuffer((uint8_t *)slice_alloc(&pool, area),
-              slice_pool_get_slice_size(&pool));
+    auto allocation = slice_alloc(&pool);
+    area = allocation.area;
+    SetBuffer((uint8_t *)allocation.data, allocation.size);
 }
 
 void

@@ -376,17 +376,14 @@ static struct linear_pool_area *
 pool_new_slice_area(struct slice_pool *slice_pool,
                     struct linear_pool_area *prev)
 {
-    struct slice_area *slice_area = slice_pool_get_area(slice_pool);
-    assert(slice_area != nullptr);
+    auto allocation = slice_alloc(slice_pool);
 
-    struct linear_pool_area *area = (struct linear_pool_area *)
-        slice_alloc(slice_pool, slice_area);
+    struct linear_pool_area *area = (struct linear_pool_area *)allocation.data;
     assert(area != nullptr);
 
     area->prev = prev;
-    area->slice_area = slice_area;
-    area->size = slice_pool_get_slice_size(slice_pool)
-        - LINEAR_POOL_AREA_HEADER;
+    area->slice_area = allocation.area;
+    area->size = allocation.size - LINEAR_POOL_AREA_HEADER;
     area->used = 0;
 
     poison_noaccess(area->data, area->size);

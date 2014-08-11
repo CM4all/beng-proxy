@@ -12,6 +12,13 @@
 
 #include <stddef.h>
 
+struct SliceAllocation {
+    struct slice_area *area;
+
+    void *data;
+    size_t size;
+};
+
 struct slice_pool;
 
 struct slice_pool *
@@ -29,13 +36,9 @@ gcc_nonnull_all
 void
 slice_pool_compress(struct slice_pool *pool);
 
-gcc_pure gcc_nonnull_all
-struct slice_area *
-slice_pool_get_area(struct slice_pool *pool);
-
-gcc_malloc gcc_nonnull_all
-void *
-slice_alloc(struct slice_pool *pool, struct slice_area *area);
+gcc_nonnull_all
+SliceAllocation
+slice_alloc(struct slice_pool *pool);
 
 gcc_nonnull_all
 void
