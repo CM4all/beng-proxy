@@ -34,7 +34,7 @@ struct cache {
                                                          &cache_item::sorted_siblings>,
                            boost::intrusive::constant_time_size<false>> sorted_items;
 
-    struct cleanup_timer cleanup_timer;
+    CleanupTimer cleanup_timer;
 
     cache(struct pool &_pool, const struct cache_class &_cls,
           unsigned hashtable_capacity, size_t _max_size)

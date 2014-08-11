@@ -15,7 +15,7 @@ static constexpr size_t FB_SIZE = 8192;
 
 static struct slice_pool *fb_pool;
 static bool fb_auto_cleanup;
-static struct cleanup_timer fb_cleanup_timer;
+static CleanupTimer fb_cleanup_timer;
 
 static bool
 fb_pool_cleanup(gcc_unused void *ctx)

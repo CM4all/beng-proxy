@@ -15,14 +15,14 @@ static void
 cleanup_timer_event_callback(gcc_unused int fd, gcc_unused short event,
                              void *ctx)
 {
-    struct cleanup_timer *t = (struct cleanup_timer *)ctx;
+    CleanupTimer *t = (CleanupTimer *)ctx;
 
     if (t->callback(t->callback_ctx))
         cleanup_timer_enable(t);
 }
 
 void
-cleanup_timer_init(struct cleanup_timer *t, unsigned delay_s,
+cleanup_timer_init(CleanupTimer *t, unsigned delay_s,
                    bool (*callback)(void *ctx), void *ctx)
 {
     evtimer_set(&t->event, cleanup_timer_event_callback, t);
@@ -35,14 +35,14 @@ cleanup_timer_init(struct cleanup_timer *t, unsigned delay_s,
 }
 
 void
-cleanup_timer_enable(struct cleanup_timer *t)
+cleanup_timer_enable(CleanupTimer *t)
 {
     if (!evtimer_pending(&t->event, NULL))
         event_add(&t->event, &t->delay);
 }
 
 void
-cleanup_timer_disable(struct cleanup_timer *t)
+cleanup_timer_disable(CleanupTimer *t)
 {
     event_del(&t->event);
 }

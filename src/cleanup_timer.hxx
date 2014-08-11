@@ -10,7 +10,8 @@
 
 #include <event.h>
 
-struct cleanup_timer {
+class CleanupTimer {
+public:
     struct event event;
 
     struct timeval delay;
@@ -23,17 +24,17 @@ struct cleanup_timer {
 };
 
 void
-cleanup_timer_init(struct cleanup_timer *t, unsigned delay_s,
+cleanup_timer_init(CleanupTimer *t, unsigned delay_s,
                    bool (*callback)(void *ctx), void *ctx);
 
 void
-cleanup_timer_enable(struct cleanup_timer *t);
+cleanup_timer_enable(CleanupTimer *t);
 
 void
-cleanup_timer_disable(struct cleanup_timer *t);
+cleanup_timer_disable(CleanupTimer *t);
 
 static inline void
-cleanup_timer_deinit(struct cleanup_timer *t)
+cleanup_timer_deinit(CleanupTimer *t)
 {
     cleanup_timer_disable(t);
 }
