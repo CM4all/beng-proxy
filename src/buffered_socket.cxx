@@ -127,6 +127,8 @@ BufferedSocket::SubmitFromBuffer()
         assert(input.IsEmpty());
         assert(!expect_more);
 
+        input.Free(fb_pool_get());
+
         if (!IsConnected()) {
             Ended();
             return false;
@@ -535,7 +537,7 @@ BufferedSocket::IsFull() const
 {
     assert(!ended);
 
-    return input.IsFull();
+    return input.IsDefinedAndFull();
 }
 
 bool

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (5.0.14) unstable; urgency=low
 
-  * 
+  * buffered_socket: reduce memory usage
 
  --   
 
