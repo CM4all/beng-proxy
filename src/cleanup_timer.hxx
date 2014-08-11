@@ -11,7 +11,6 @@
 #include <event.h>
 
 class CleanupTimer {
-public:
     struct event event;
 
     struct timeval delay;
@@ -22,6 +21,7 @@ public:
     bool (*callback)(void *ctx);
     void *callback_ctx;
 
+public:
     void Init(unsigned delay_s,
               bool (*callback)(void *ctx), void *ctx);
     void Deinit() {
