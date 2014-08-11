@@ -203,7 +203,7 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
         std::unique_lock<std::mutex> lock(f.mutex);
 
         f.decrypted_input.MoveFrom(ssl->decrypted_input);
-        ssl->plain_output.MoveFrom(f.plain_output);
+        ssl->plain_output.MoveFromAllowNull(f.plain_output);
         Move(ssl->encrypted_input, f.encrypted_input);
         Move(f.encrypted_output, ssl->encrypted_output);
     }
@@ -255,7 +255,7 @@ ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
         SSL_free(ssl->ssl);
 
     ssl->decrypted_input.Free(fb_pool_get());
-    ssl->plain_output.Free(fb_pool_get());
+    ssl->plain_output.FreeIfDefined(fb_pool_get());
 
     free(ssl->peer_subject);
     free(ssl->peer_issuer_subject);
@@ -286,7 +286,6 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
     }
 
     ssl->decrypted_input.Allocate(fb_pool_get());
-    ssl->plain_output.Allocate(fb_pool_get());
     ssl->encrypted_input = BIO_new(BIO_s_mem());
     ssl->encrypted_output = BIO_new(BIO_s_mem());
 
