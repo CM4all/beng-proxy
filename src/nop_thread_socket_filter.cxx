@@ -21,10 +21,10 @@ nop_thread_socket_filter_run(ThreadSocketFilter &f,
                              gcc_unused GError **error_r,
                              gcc_unused void *ctx)
 {
-    pthread_mutex_lock(&f.mutex);
+    f.mutex.lock();
     f.decrypted_input.MoveFrom(f.encrypted_input);
     f.encrypted_output.MoveFrom(f.plain_output);
-    pthread_mutex_unlock(&f.mutex);
+    f.mutex.unlock();
     return true;
 }
 

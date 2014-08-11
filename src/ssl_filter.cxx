@@ -199,12 +199,12 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
 
     /* copy input (and output to make room for more output) */
 
-    pthread_mutex_lock(&f.mutex);
+    f.mutex.lock();
     f.decrypted_input.MoveFrom(ssl->decrypted_input);
     ssl->plain_output.MoveFrom(f.plain_output);
     Move(ssl->encrypted_input, f.encrypted_input);
     Move(f.encrypted_output, ssl->encrypted_output);
-    pthread_mutex_unlock(&f.mutex);
+    f.mutex.unlock();
 
     /* let OpenSSL work */
 
@@ -232,12 +232,12 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
 
     /* copy output */
 
-    pthread_mutex_lock(&f.mutex);
+    f.mutex.lock();
     f.decrypted_input.MoveFrom(ssl->decrypted_input);
     Move(f.encrypted_output, ssl->encrypted_output);
     f.drained = ssl->plain_output.IsEmpty() &&
         BIO_eof(ssl->encrypted_output);
-    pthread_mutex_unlock(&f.mutex);
+    f.mutex.unlock();
 
     return true;
 }

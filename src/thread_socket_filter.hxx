@@ -12,7 +12,7 @@
 #include "defer_event.h"
 #include "SliceFifoBuffer.hxx"
 
-#include <pthread.h>
+#include <mutex>
 
 typedef struct _GError GError;
 struct SocketFilter;
@@ -108,7 +108,7 @@ struct ThreadSocketFilter : ThreadJob {
     struct timeval read_timeout_buffer;
     const struct timeval *read_timeout = nullptr;
 
-    pthread_mutex_t mutex;
+    std::mutex mutex;
 
     /**
      * If this is set, an error was caught inside the thread, and
