@@ -21,22 +21,18 @@ public:
      */
     bool (*callback)(void *ctx);
     void *callback_ctx;
+
+    void Init(unsigned delay_s,
+              bool (*callback)(void *ctx), void *ctx);
+    void Deinit() {
+        Disable();
+    }
+
+    void Enable();
+    void Disable();
+
+private:
+    static void Callback(int fd, short event, void *ctx);
 };
-
-void
-cleanup_timer_init(CleanupTimer *t, unsigned delay_s,
-                   bool (*callback)(void *ctx), void *ctx);
-
-void
-cleanup_timer_enable(CleanupTimer *t);
-
-void
-cleanup_timer_disable(CleanupTimer *t);
-
-static inline void
-cleanup_timer_deinit(CleanupTimer *t)
-{
-    cleanup_timer_disable(t);
-}
 
 #endif

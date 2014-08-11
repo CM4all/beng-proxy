@@ -41,8 +41,7 @@ struct cache {
         :pool(_pool), cls(_cls),
          max_size(_max_size), size(0),
          items(hashmap_new(&_pool, hashtable_capacity)) {
-         cleanup_timer_init(&cleanup_timer, 60,
-                            ExpireCallback, this);
+        cleanup_timer.Init(60, ExpireCallback, this);
     }
 
     ~cache();
@@ -73,7 +72,7 @@ cache_new(struct pool &pool, const struct cache_class *cls,
 inline
 cache::~cache()
 {
-    cleanup_timer_deinit(&cleanup_timer);
+    cleanup_timer.Deinit();
 
     Check();
 
@@ -160,7 +159,7 @@ cache::ItemRemoved(struct cache_item *item)
         item->removed = true;
 
     if (size == 0)
-        cleanup_timer_disable(&cleanup_timer);
+        cleanup_timer.Disable();
 }
 
 static bool
@@ -324,7 +323,7 @@ cache_add(struct cache *cache, const char *key,
 
     cache->Check();
 
-    cleanup_timer_enable(&cache->cleanup_timer);
+    cache->cleanup_timer.Enable();
 }
 
 void
@@ -360,7 +359,7 @@ cache_put(struct cache *cache, const char *key,
 
     cache->Check();
 
-    cleanup_timer_enable(&cache->cleanup_timer);
+    cache->cleanup_timer.Enable();
 }
 
 void
@@ -567,11 +566,11 @@ void
 cache_event_add(struct cache *cache)
 {
     if (cache->size > 0)
-        cleanup_timer_enable(&cache->cleanup_timer);
+        cache->cleanup_timer.Enable();
 }
 
 void
 cache_event_del(struct cache *cache)
 {
-    cleanup_timer_disable(&cache->cleanup_timer);
+    cache->cleanup_timer.Disable();
 }

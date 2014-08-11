@@ -34,7 +34,7 @@ fb_pool_init(bool auto_cleanup)
     fb_pool = slice_pool_new(FB_SIZE, 1024);
     assert(fb_pool != nullptr);
 
-    cleanup_timer_init(&fb_cleanup_timer, 600, fb_pool_cleanup, nullptr);
+    fb_cleanup_timer.Init(600, fb_pool_cleanup, nullptr);
 }
 
 void
@@ -42,7 +42,7 @@ fb_pool_deinit(void)
 {
     assert(fb_pool != nullptr);
 
-    cleanup_timer_disable(&fb_cleanup_timer);
+    fb_cleanup_timer.Deinit();
     slice_pool_free(fb_pool);
 }
 
@@ -57,7 +57,7 @@ fb_pool_disable(void)
 {
     assert(fb_pool != nullptr);
 
-    cleanup_timer_disable(&fb_cleanup_timer);
+    fb_cleanup_timer.Disable();
 }
 
 void
@@ -66,5 +66,5 @@ fb_pool_compress(void)
     assert(fb_pool != nullptr);
 
     slice_pool_compress(fb_pool);
-    cleanup_timer_disable(&fb_cleanup_timer);
+    fb_cleanup_timer.Disable();
 }

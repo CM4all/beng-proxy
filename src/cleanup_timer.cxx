@@ -11,38 +11,36 @@
 
 #include <stddef.h>
 
-static void
-cleanup_timer_event_callback(gcc_unused int fd, gcc_unused short event,
-                             void *ctx)
+void
+CleanupTimer::Callback(gcc_unused int fd, gcc_unused short event, void *ctx)
 {
     CleanupTimer *t = (CleanupTimer *)ctx;
 
     if (t->callback(t->callback_ctx))
-        cleanup_timer_enable(t);
+        t->Enable();
 }
 
 void
-cleanup_timer_init(CleanupTimer *t, unsigned delay_s,
-                   bool (*callback)(void *ctx), void *ctx)
+CleanupTimer::Init(unsigned delay_s, bool (*_callback)(void *ctx), void *_ctx)
 {
-    evtimer_set(&t->event, cleanup_timer_event_callback, t);
+    evtimer_set(&event, Callback, this);
 
-    t->delay.tv_sec = delay_s;
-    t->delay.tv_usec = 0;
+    delay.tv_sec = delay_s;
+    delay.tv_usec = 0;
 
-    t->callback = callback;
-    t->callback_ctx = ctx;
+    callback = _callback;
+    callback_ctx = _ctx;
 }
 
 void
-cleanup_timer_enable(CleanupTimer *t)
+CleanupTimer::Enable()
 {
-    if (!evtimer_pending(&t->event, NULL))
-        event_add(&t->event, &t->delay);
+    if (!evtimer_pending(&event, nullptr))
+        event_add(&event, &delay);
 }
 
 void
-cleanup_timer_disable(CleanupTimer *t)
+CleanupTimer::Disable()
 {
-    event_del(&t->event);
+    event_del(&event);
 }
