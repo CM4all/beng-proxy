@@ -517,10 +517,7 @@ BufferedSocket::Destroy()
     assert(!base.IsValid());
     assert(!destroyed);
 
-    if (input.IsDefined()) {
-        input.Free(fb_pool_get());
-        input.SetNull();
-    }
+    input.FreeIfDefined(fb_pool_get());
 
 #ifndef NDEBUG
     destroyed = true;
