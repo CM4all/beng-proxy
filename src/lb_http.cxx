@@ -158,7 +158,7 @@ generate_cookie(const struct address_list *list)
         assert(i >= 1 && i <= list->GetSize());
         const struct address_envelope *envelope =
             list->addresses[i % list->GetSize()];
-        if (!failure_check(&envelope->address, envelope->length) &&
+        if (failure_get_status(&envelope->address, envelope->length) == FAILURE_OK &&
             bulldog_check(&envelope->address, envelope->length) &&
             !bulldog_is_fading(&envelope->address, envelope->length))
             return i;
