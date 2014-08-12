@@ -21,7 +21,7 @@
 #include <sys/resource.h>
 #include <event.h>
 
-struct child {
+struct ChildProcess {
     struct list_head siblings;
 
     pid_t pid;
@@ -64,16 +64,16 @@ static struct event sigchld_event;
  */
 static struct defer_event defer_event;
 
-static struct child *
+static ChildProcess *
 find_child_by_pid(pid_t pid)
 {
     assert(list_empty(&children) == (num_children == 0));
 
-    struct child *child;
+    ChildProcess *child;
 
-    for (child = (struct child*)children.next;
+    for (child = (ChildProcess *)children.next;
          &child->siblings != &children;
-         child = (struct child*)child->siblings.next)
+         child = (ChildProcess *)child->siblings.next)
         if (child->pid == pid)
             return child;
 
@@ -81,14 +81,14 @@ find_child_by_pid(pid_t pid)
 }
 
 static void
-child_free(struct child *child)
+child_free(ChildProcess *child)
 {
     p_free(pool, child->name);
     p_free(pool, child);
 }
 
 static void
-child_remove(struct child *child)
+child_remove(ChildProcess *child)
 {
     assert(num_children > 0);
     --num_children;
@@ -103,7 +103,7 @@ child_remove(struct child *child)
 }
 
 static void
-child_abandon(struct child *child)
+child_abandon(ChildProcess *child)
 {
     child_remove(child);
     child_free(child);
@@ -117,7 +117,7 @@ timeval_to_double(const struct timeval *tv)
 }
 
 static void
-child_done(struct child *child, int status, const struct rusage *rusage)
+child_done(ChildProcess *child, int status, const struct rusage *rusage)
 {
     const int exit_status = WEXITSTATUS(status);
     if (WIFSIGNALED(status)) {
@@ -156,7 +156,7 @@ static void
 child_kill_timeout_callback(gcc_unused int fd, gcc_unused short event,
                             void *ctx)
 {
-    struct child *child = (struct child *)ctx;
+    ChildProcess *child = (ChildProcess *)ctx;
 
     daemon_log(3, "sending SIGKILL to child process '%s' (pid %d) due to timeout\n",
                child->name, (int)child->pid);
@@ -180,7 +180,7 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
         if (daemonize_child_exited(pid, status))
             continue;
 
-        struct child *child = find_child_by_pid(pid);
+        ChildProcess *child = find_child_by_pid(pid);
         if (child != nullptr)
             child_done(child, status, &rusage);
     }
@@ -249,7 +249,7 @@ child_register(pid_t pid, const char *name,
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
 
-    auto child = NewFromPool<struct child>(*pool);
+    auto child = NewFromPool<ChildProcess>(*pool);
 
     child->pid = pid;
     child->name = p_strdup(pool, name);
@@ -266,7 +266,7 @@ child_register(pid_t pid, const char *name,
 void
 child_kill_signal(pid_t pid, int signo)
 {
-    struct child *child = find_child_by_pid(pid);
+    ChildProcess *child = find_child_by_pid(pid);
 
     assert(child != nullptr);
     assert(child->callback != nullptr);
