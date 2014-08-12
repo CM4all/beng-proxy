@@ -23,7 +23,7 @@ struct stock_get_handler;
 
 gcc_malloc
 struct mstock *
-mstock_new(struct pool *pool, struct hstock *hstock);
+mstock_new(struct hstock *hstock);
 
 void
 mstock_free(struct mstock *mstock);

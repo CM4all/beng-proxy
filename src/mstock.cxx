@@ -135,31 +135,24 @@ class MultiStock : public mstock {
 
         MultiStock &stock;
 
-        struct pool *pool;
-
         typedef boost::intrusive::list<Item,
                                        boost::intrusive::constant_time_size<false>> ItemList;
         ItemList items;
 
     public:
-        Domain(MultiStock &_stock, struct pool *_pool)
-            :stock(_stock), pool(_pool) {
+        Domain(MultiStock &_stock)
+            :stock(_stock) {
         }
 
         Domain(Domain &&other)
-            :stock(other.stock), pool(other.pool) {
+            :stock(other.stock) {
             assert(other.items.empty());
-
-            other.pool = nullptr;
         }
 
         Domain(const Domain &) = delete;
 
         ~Domain() {
             assert(items.empty());
-
-            if (pool != nullptr)
-                pool_unref(pool);
         }
 
         Item *FindUsableItem() {
@@ -196,22 +189,18 @@ class MultiStock : public mstock {
         }
     };
 
-    struct pool *pool;
-
     DomainMap domains;
 
     struct hstock *hstock;
 
 public:
-    MultiStock(struct pool *_pool, struct hstock *_hstock)
-        :pool(pool_new_libc(_pool, "mstock")),
-         hstock(_hstock) {}
+    explicit MultiStock(struct hstock *_hstock)
+        :hstock(_hstock) {}
 
     MultiStock(const MultiStock &) = delete;
 
     ~MultiStock() {
         hstock_free(hstock);
-        pool_unref(pool);
     }
 
     void AddStats(stock_stats &data) const {
@@ -261,9 +250,7 @@ MultiStock::GetNow(struct pool *caller_pool, const char *uri, void *info,
                    struct lease_ref &lease_ref,
                    GError **error_r)
 {
-    struct pool *domain_pool = pool_new_libc(pool, "mstock_domain");
-    auto di = domains.insert(std::make_pair(uri, Domain(*this, domain_pool)))
-        .first;
+    auto di = domains.insert(std::make_pair(uri, Domain(*this))).first;
     return di->second.GetNow(di, caller_pool, uri, info, max_leases,
                              lease_ref, error_r);
 }
@@ -274,9 +261,9 @@ MultiStock::GetNow(struct pool *caller_pool, const char *uri, void *info,
  */
 
 struct mstock *
-mstock_new(struct pool *pool, struct hstock *hstock)
+mstock_new(struct hstock *hstock)
 {
-    return new MultiStock(pool, hstock);
+    return new MultiStock(hstock);
 }
 
 void
