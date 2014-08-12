@@ -1091,6 +1091,7 @@ test_t_balancer_SOURCES = test/t_balancer.cxx \
 	src/clock.c
 test_t_balancer_CPPFLAGS = $(AM_CPPFLAGS) $(CPPUNIT_CFLAGS)
 test_t_balancer_LDADD = $(AM_LDADD) \
+	libnet.a \
 	libputil.a \
 	libpool.a libmemory.a \
 	libutil.a \
@@ -1509,6 +1510,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 test_run_processor_LDADD = $(AM_LDADD) \
 	libputil.a \
 	libistream.a libpool.a libmemory.a \
+	libnet.a \
 	libraddress.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
@@ -1536,6 +1538,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_t_processor_LDADD = $(AM_LDADD) \
+	libnet.a \
 	libraddress.a \
 	libputil.a \
 	libistream.a libpool.a libmemory.a \

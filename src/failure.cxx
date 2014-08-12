@@ -6,20 +6,20 @@
 
 #include "failure.hxx"
 #include "expiry.h"
-#include "address_envelope.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 #include "util/djbhash.h"
 
 #include <daemon/log.h>
 
 #include <assert.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 struct Failure {
     Failure *next;
+
+    const AllocatedSocketAddress address;
 
     time_t expires;
 
@@ -27,7 +27,8 @@ struct Failure {
 
     enum failure_status status;
 
-    struct address_envelope envelope;
+    Failure(SocketAddress _address)
+        :address(_address) {}
 
     bool CanExpire() const {
         return status != FAILURE_MONITOR;
@@ -77,7 +78,7 @@ failure_deinit(void)
             Failure *failure = i;
             i = failure->next;
 
-            free(failure);
+            delete failure;
         }
     }
 }
@@ -118,10 +119,9 @@ Hash(SocketAddress address)
 
 gcc_pure
 static bool
-Compare(const struct address_envelope &a, SocketAddress b)
+Compare(SocketAddress a, SocketAddress b)
 {
-    return a.length == b.GetSize() &&
-        memcmp(&a.address, b.GetAddress(), a.length) == 0;
+    return a == b;
 }
 
 void
@@ -136,7 +136,7 @@ failure_set(SocketAddress address,
     const unsigned slot = Hash(address) % FAILURE_SLOTS;
     for (Failure *failure = fl.slots[slot]; failure != nullptr;
          failure = failure->next) {
-        if (Compare(failure->envelope, address)) {
+        if (Compare(failure->address, address)) {
             failure->OverrideStatus(now, status, duration);
             return;
         }
@@ -144,18 +144,11 @@ failure_set(SocketAddress address,
 
     /* insert new failure object into the linked list */
 
-    Failure *failure = (Failure *)
-        malloc(sizeof(*failure)
-               - sizeof(failure->envelope.address) + address.GetSize());
-    if (failure == nullptr)
-        return;
+    Failure *failure = new Failure(address);
 
     failure->expires = now + duration;
     failure->fade_expires = 0;
     failure->status = status;
-    failure->envelope.length = address.GetSize();
-    memcpy(&failure->envelope.address, address.GetAddress(),
-           address.GetSize());
 
     failure->next = fl.slots[slot];
     fl.slots[slot] = failure;
@@ -192,7 +185,7 @@ failure_unset2(Failure **failure_r,
         failure.fade_expires = 0;
     } else {
         *failure_r = failure.next;
-        free(&failure);
+        delete &failure;
     }
 }
 
@@ -207,7 +200,7 @@ failure_unset(SocketAddress address, enum failure_status status)
     for (failure_r = &fl.slots[slot], failure = *failure_r;
          failure != nullptr;
          failure_r = &failure->next, failure = *failure_r) {
-        if (Compare(failure->envelope, address)) {
+        if (Compare(failure->address, address)) {
             /* found it: remove it */
             failure_unset2(failure_r, *failure, status);
             return;
@@ -226,7 +219,7 @@ failure_get_status(SocketAddress address)
     assert(address != nullptr);
 
     for (failure = fl.slots[slot]; failure != nullptr; failure = failure->next)
-        if (Compare(failure->envelope, address))
+        if (Compare(failure->address, address))
             return failure->GetStatus();
 
     return FAILURE_OK;
