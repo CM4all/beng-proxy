@@ -13,11 +13,13 @@
 
 #include <daemon/log.h>
 
+#include <boost/intrusive/unordered_set.hpp>
+
 #include <assert.h>
 #include <time.h>
 
-struct Failure {
-    Failure *next;
+struct Failure
+    : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     const AllocatedSocketAddress address;
 
@@ -58,15 +60,51 @@ struct Failure {
 
     bool OverrideStatus(time_t now, enum failure_status new_status,
                         unsigned duration);
+
+    struct Hash {
+        gcc_pure
+        size_t operator()(const SocketAddress a) const {
+            assert(!a.IsNull());
+
+            return djb_hash(a.GetAddress(), a.GetSize());
+        }
+
+        gcc_pure
+        size_t operator()(const Failure &f) const {
+            return djb_hash(f.address.GetAddress(), f.address.GetSize());
+        }
+    };
+
+    struct Equal {
+        gcc_pure
+        bool operator()(const SocketAddress a, const SocketAddress b) const {
+            return a == b;
+        }
+
+        gcc_pure
+        bool operator()(const SocketAddress a, const Failure &b) const {
+            return a == b.address;
+        }
+    };
+
+    struct Disposer {
+        void operator()(Failure *f) {
+            delete f;
+        }
+    };
 };
 
-#define FAILURE_SLOTS 64
+typedef boost::intrusive::unordered_set<Failure,
+                                        boost::intrusive::hash<Failure::Hash>,
+                                        boost::intrusive::equal<Failure::Equal>,
+                                        boost::intrusive::constant_time_size<false>> FailureSet;
 
-struct FailureList {
-    Failure *slots[FAILURE_SLOTS];
-};
+static constexpr size_t N_FAILURE_BUCKETS = 97;
 
-static FailureList fl;
+static FailureSet::bucket_type failure_buckets[N_FAILURE_BUCKETS];
+
+static FailureSet failures(FailureSet::bucket_traits(failure_buckets,
+                                                     N_FAILURE_BUCKETS));
 
 void
 failure_init()
@@ -76,14 +114,7 @@ failure_init()
 void
 failure_deinit(void)
 {
-    for (auto &i : fl.slots) {
-        while (i != nullptr) {
-            Failure *failure = i;
-            i = failure->next;
-
-            delete failure;
-        }
-    }
+    failures.clear_and_dispose(Failure::Disposer());
 }
 
 bool
@@ -111,22 +142,6 @@ Failure::OverrideStatus(time_t now, enum failure_status new_status,
     return true;
 }
 
-gcc_pure
-static unsigned
-Hash(SocketAddress address)
-{
-    assert(!address.IsNull());
-
-    return djb_hash(address.GetAddress(), address.GetSize());
-}
-
-gcc_pure
-static bool
-Compare(SocketAddress a, SocketAddress b)
-{
-    return a == b;
-}
-
 void
 failure_set(SocketAddress address,
             enum failure_status status, unsigned duration)
@@ -136,21 +151,16 @@ failure_set(SocketAddress address,
 
     const unsigned now = now_s();
 
-    const unsigned slot = Hash(address) % FAILURE_SLOTS;
-    for (Failure *failure = fl.slots[slot]; failure != nullptr;
-         failure = failure->next) {
-        if (Compare(failure->address, address)) {
-            failure->OverrideStatus(now, status, duration);
-            return;
-        }
+    FailureSet::insert_commit_data hint;
+    auto result = failures.insert_check(address, Failure::Hash(),
+                                        Failure::Equal(), hint);
+    if (result.second) {
+        Failure *failure = new Failure(address, status, now + duration);
+        failures.insert_commit(*failure, hint);
+    } else {
+        Failure &failure = *result.first;
+        failure.OverrideStatus(now, status, duration);
     }
-
-    /* insert new failure object into the linked list */
-
-    Failure *failure = new Failure(address, status, now + duration);
-
-    failure->next = fl.slots[slot];
-    fl.slots[slot] = failure;
 }
 
 void
@@ -167,8 +177,7 @@ match_status(enum failure_status current, enum failure_status match)
 }
 
 static void
-failure_unset2(Failure **failure_r,
-               Failure &failure, enum failure_status status)
+failure_unset2(Failure &failure, enum failure_status status)
 {
     if (status == FAILURE_FADE)
         failure.fade_expires = 0;
@@ -183,8 +192,8 @@ failure_unset2(Failure **failure_r,
         failure.expires = failure.fade_expires;
         failure.fade_expires = 0;
     } else {
-        *failure_r = failure.next;
-        delete &failure;
+        failures.erase_and_dispose(failures.iterator_to(failure),
+                                   Failure::Disposer());
     }
 }
 
@@ -193,18 +202,9 @@ failure_unset(SocketAddress address, enum failure_status status)
 {
     assert(!address.IsNull());
 
-    unsigned slot = Hash(address) % FAILURE_SLOTS;
-    Failure **failure_r, *failure;
-
-    for (failure_r = &fl.slots[slot], failure = *failure_r;
-         failure != nullptr;
-         failure_r = &failure->next, failure = *failure_r) {
-        if (Compare(failure->address, address)) {
-            /* found it: remove it */
-            failure_unset2(failure_r, *failure, status);
-            return;
-        }
-    }
+    auto i = failures.find(address, Failure::Hash(), Failure::Equal());
+    if (i != failures.end())
+        failure_unset2(*i, status);
 }
 
 enum failure_status
@@ -212,14 +212,9 @@ failure_get_status(SocketAddress address)
 {
     assert(!address.IsNull());
 
-    unsigned slot = Hash(address) % FAILURE_SLOTS;
-    Failure *failure;
+    auto i = failures.find(address, Failure::Hash(), Failure::Equal());
+    if (i == failures.end())
+        return FAILURE_OK;
 
-    assert(address != nullptr);
-
-    for (failure = fl.slots[slot]; failure != nullptr; failure = failure->next)
-        if (Compare(failure->address, address))
-            return failure->GetStatus();
-
-    return FAILURE_OK;
+    return i->GetStatus();
 }
