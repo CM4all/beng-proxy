@@ -81,21 +81,21 @@ find_child_by_pid(pid_t pid)
 }
 
 static void
-child_free(ChildProcess *child)
+child_free(ChildProcess &child)
 {
-    p_free(pool, child->name);
-    p_free(pool, child);
+    p_free(pool, child.name);
+    p_free(pool, &child);
 }
 
 static void
-child_remove(ChildProcess *child)
+child_remove(ChildProcess &child)
 {
     assert(num_children > 0);
     --num_children;
 
-    evtimer_del(&child->kill_timeout_event);
+    evtimer_del(&child.kill_timeout_event);
 
-    list_remove(&child->siblings);
+    list_remove(&child.siblings);
     if (shutdown_flag && list_empty(&children)) {
         assert(num_children == 0);
         children_event_del();
@@ -103,7 +103,7 @@ child_remove(ChildProcess *child)
 }
 
 static void
-child_abandon(ChildProcess *child)
+child_abandon(ChildProcess &child)
 {
     child_remove(child);
     child_free(child);
@@ -117,7 +117,7 @@ timeval_to_double(const struct timeval *tv)
 }
 
 static void
-child_done(ChildProcess *child, int status, const struct rusage *rusage)
+child_done(ChildProcess &child, int status, const struct rusage *rusage)
 {
     const int exit_status = WEXITSTATUS(status);
     if (WIFSIGNALED(status)) {
@@ -127,19 +127,19 @@ child_done(ChildProcess *child, int status, const struct rusage *rusage)
 
         daemon_log(level,
                    "child process '%s' (pid %d) died from signal %d%s\n",
-                   child->name, (int)child->pid,
+                   child.name, (int)child.pid,
                    WTERMSIG(status),
                    WCOREDUMP(status) ? " (core dumped)" : "");
     } else if (exit_status == 0)
         daemon_log(5, "child process '%s' (pid %d) exited with success\n",
-                   child->name, (int)child->pid);
+                   child.name, (int)child.pid);
     else
         daemon_log(2, "child process '%s' (pid %d) exited with status %d\n",
-                   child->name, (int)child->pid, exit_status);
+                   child.name, (int)child.pid, exit_status);
 
     daemon_log(6, "stats on '%s' (pid %d): %1.3fs elapsed, %1.3fs user, %1.3fs sys, %ld/%ld faults, %ld/%ld switches\n",
-               child->name, (int)child->pid,
-               (now_us() - child->start_us) / 1000000.,
+               child.name, (int)child.pid,
+               (now_us() - child.start_us) / 1000000.,
                timeval_to_double(&rusage->ru_utime),
                timeval_to_double(&rusage->ru_stime),
                rusage->ru_minflt, rusage->ru_majflt,
@@ -147,8 +147,8 @@ child_done(ChildProcess *child, int status, const struct rusage *rusage)
 
     child_remove(child);
 
-    if (child->callback != nullptr)
-        child->callback(status, child->callback_ctx);
+    if (child.callback != nullptr)
+        child.callback(status, child.callback_ctx);
     child_free(child);
 }
 
@@ -156,14 +156,14 @@ static void
 child_kill_timeout_callback(gcc_unused int fd, gcc_unused short event,
                             void *ctx)
 {
-    ChildProcess *child = (ChildProcess *)ctx;
+    ChildProcess &child = *(ChildProcess *)ctx;
 
     daemon_log(3, "sending SIGKILL to child process '%s' (pid %d) due to timeout\n",
-               child->name, (int)child->pid);
+               child.name, (int)child.pid);
 
-    if (kill(child->pid, SIGKILL) < 0)
+    if (kill(child.pid, SIGKILL) < 0)
         daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",
-                   child->name, (int)child->pid, strerror(errno));
+                   child.name, (int)child.pid, strerror(errno));
 }
 
 static void
@@ -182,7 +182,7 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
 
         ChildProcess *child = find_child_by_pid(pid);
         if (child != nullptr)
-            child_done(child, status, &rusage);
+            child_done(*child, status, &rusage);
     }
 
     pool_commit();
@@ -283,7 +283,7 @@ child_kill_signal(pid_t pid, int signo)
         /* if we can't kill the process, we can't do much, so let's
            just ignore the process from now on and don't let it delay
            the shutdown */
-        child_abandon(child);
+        child_abandon(*child);
         return;
     }
 
