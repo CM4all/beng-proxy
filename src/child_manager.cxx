@@ -26,18 +26,18 @@
 struct ChildProcess {
     struct list_head siblings;
 
-    pid_t pid;
+    const pid_t pid;
 
-    std::string name;
+    const std::string name;
 
     /**
      * The monotonic clock when this child process was started
      * (registered in this library).
      */
-    uint64_t start_us;
+    const uint64_t start_us;
 
     child_callback_t callback;
-    void *callback_ctx;
+    void *const callback_ctx;
 
     /**
      * This timer is set up by child_kill_signal().  If the child
@@ -45,6 +45,12 @@ struct ChildProcess {
      * SIGKILL.
      */
     struct event kill_timeout_event;
+
+    ChildProcess(pid_t _pid, const char *_name,
+                 child_callback_t _callback, void *_ctx)
+        :pid(_pid), name(_name),
+         start_us(now_us()),
+         callback(_callback), callback_ctx(_ctx) {}
 };
 
 static const struct timeval child_kill_timeout = {
@@ -242,13 +248,8 @@ child_register(pid_t pid, const char *name,
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
 
-    auto child = new ChildProcess();
+    auto child = new ChildProcess(pid, name, callback, ctx);
 
-    child->pid = pid;
-    child->name = name;
-    child->start_us = now_us();
-    child->callback = callback;
-    child->callback_ctx = ctx;
     list_add(&child->siblings, &children);
     ++num_children;
 
