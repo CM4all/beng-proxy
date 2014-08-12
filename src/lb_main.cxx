@@ -125,7 +125,7 @@ launch_worker_callback(int fd gcc_unused, short event gcc_unused,
         event_reinit(instance->event_base);
         init_signals(instance);
 
-        children_init(instance->pool);
+        children_init();
         all_listeners_event_add(instance);
 
         enable_all_controls(instance);
@@ -273,7 +273,7 @@ int main(int argc, char **argv)
 
     init_signals(&instance);
 
-    children_init(instance.pool);
+    children_init();
 
     instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.pool,

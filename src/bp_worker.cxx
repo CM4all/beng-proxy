@@ -192,7 +192,7 @@ worker_new(struct instance *instance)
             close_connection((struct client_connection*)instance->connections.next);
 
         init_signals(instance);
-        children_init(instance->pool);
+        children_init();
 
         session_manager_event_del();
 

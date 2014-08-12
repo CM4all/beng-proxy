@@ -11,12 +11,10 @@
 
 #include <sys/types.h>
 
-struct pool;
-
 typedef void (*child_callback_t)(int status, void *ctx);
 
 void
-children_init(struct pool *pool);
+children_init();
 
 /**
  * Begin shutdown of this subsystem: wait for all children to exit,

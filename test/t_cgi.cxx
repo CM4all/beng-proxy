@@ -743,7 +743,7 @@ run_test(struct pool *pool, void (*test)(struct pool *pool, struct context *c)) 
 
     memset(&c, 0, sizeof(c));
 
-    children_init(pool);
+    children_init();
 
     pool = pool_new_linear(pool, "test", 16384);
     test(pool, &c);

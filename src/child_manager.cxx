@@ -14,6 +14,8 @@
 #include <daemon/daemonize.h>
 #include <inline/list.h>
 
+#include <string>
+
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
@@ -26,7 +28,7 @@ struct ChildProcess {
 
     pid_t pid;
 
-    const char *name;
+    std::string name;
 
     /**
      * The monotonic clock when this child process was started
@@ -51,7 +53,6 @@ static const struct timeval child_kill_timeout = {
 };
 
 static bool shutdown_flag = false;
-static struct pool *pool;
 static struct list_head children;
 static unsigned num_children;
 static struct event sigchld_event;
@@ -81,13 +82,6 @@ find_child_by_pid(pid_t pid)
 }
 
 static void
-child_free(ChildProcess &child)
-{
-    p_free(pool, child.name);
-    p_free(pool, &child);
-}
-
-static void
 child_remove(ChildProcess &child)
 {
     assert(num_children > 0);
@@ -106,7 +100,7 @@ static void
 child_abandon(ChildProcess &child)
 {
     child_remove(child);
-    child_free(child);
+    delete &child;
 }
 
 gcc_pure
@@ -127,18 +121,18 @@ child_done(ChildProcess &child, int status, const struct rusage *rusage)
 
         daemon_log(level,
                    "child process '%s' (pid %d) died from signal %d%s\n",
-                   child.name, (int)child.pid,
+                   child.name.c_str(), (int)child.pid,
                    WTERMSIG(status),
                    WCOREDUMP(status) ? " (core dumped)" : "");
     } else if (exit_status == 0)
         daemon_log(5, "child process '%s' (pid %d) exited with success\n",
-                   child.name, (int)child.pid);
+                   child.name.c_str(), (int)child.pid);
     else
         daemon_log(2, "child process '%s' (pid %d) exited with status %d\n",
-                   child.name, (int)child.pid, exit_status);
+                   child.name.c_str(), (int)child.pid, exit_status);
 
     daemon_log(6, "stats on '%s' (pid %d): %1.3fs elapsed, %1.3fs user, %1.3fs sys, %ld/%ld faults, %ld/%ld switches\n",
-               child.name, (int)child.pid,
+               child.name.c_str(), (int)child.pid,
                (now_us() - child.start_us) / 1000000.,
                timeval_to_double(&rusage->ru_utime),
                timeval_to_double(&rusage->ru_stime),
@@ -149,7 +143,7 @@ child_done(ChildProcess &child, int status, const struct rusage *rusage)
 
     if (child.callback != nullptr)
         child.callback(status, child.callback_ctx);
-    child_free(child);
+    delete &child;
 }
 
 static void
@@ -159,11 +153,11 @@ child_kill_timeout_callback(gcc_unused int fd, gcc_unused short event,
     ChildProcess &child = *(ChildProcess *)ctx;
 
     daemon_log(3, "sending SIGKILL to child process '%s' (pid %d) due to timeout\n",
-               child.name, (int)child.pid);
+               child.name.c_str(), (int)child.pid);
 
     if (kill(child.pid, SIGKILL) < 0)
         daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",
-                   child.name, (int)child.pid, strerror(errno));
+                   child.name.c_str(), (int)child.pid, strerror(errno));
 }
 
 static void
@@ -189,11 +183,9 @@ child_event_callback(int fd gcc_unused, short event gcc_unused,
 }
 
 void
-children_init(struct pool *_pool)
+children_init()
 {
     assert(!shutdown_flag);
-
-    pool = _pool;
 
     list_init(&children);
     num_children = 0;
@@ -246,13 +238,14 @@ child_register(pid_t pid, const char *name,
 {
     assert(!shutdown_flag);
     assert(list_empty(&children) == (num_children == 0));
+    assert(name != nullptr);
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
 
-    auto child = NewFromPool<ChildProcess>(*pool);
+    auto child = new ChildProcess();
 
     child->pid = pid;
-    child->name = p_strdup(pool, name);
+    child->name = name;
     child->start_us = now_us();
     child->callback = callback;
     child->callback_ctx = ctx;
@@ -272,13 +265,13 @@ child_kill_signal(pid_t pid, int signo)
     assert(child->callback != nullptr);
 
     daemon_log(5, "sending %s to child process '%s' (pid %d)\n",
-               strsignal(signo), child->name, (int)pid);
+               strsignal(signo), child->name.c_str(), (int)pid);
 
     child->callback = nullptr;
 
     if (kill(pid, signo) < 0) {
         daemon_log(1, "failed to kill child process '%s' (pid %d): %s\n",
-                   child->name, (int)pid, strerror(errno));
+                   child->name.c_str(), (int)pid, strerror(errno));
 
         /* if we can't kill the process, we can't do much, so let's
            just ignore the process from now on and don't let it delay

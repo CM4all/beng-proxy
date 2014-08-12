@@ -310,7 +310,7 @@ int main(int argc, char **argv)
 
     init_signals(&instance);
 
-    children_init(instance.pool);
+    children_init();
 
     if (!crash_global_init()) {
         fprintf(stderr, "crash_global_init() failed\n");
