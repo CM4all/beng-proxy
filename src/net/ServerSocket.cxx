@@ -27,6 +27,12 @@
 #include <string.h>
 #include <fcntl.h>
 
+static bool
+IsTCP(SocketAddress address)
+{
+    return address.GetFamily() == AF_INET || address.GetFamily() == AF_INET6;
+}
+
 inline void
 ServerSocket::Callback()
 {
@@ -41,7 +47,8 @@ ServerSocket::Callback()
         return;
     }
 
-    if (!socket_set_nodelay(remote_fd.Get(), true)) {
+    if (IsTCP(remote_address) &&
+        !socket_set_nodelay(remote_fd.Get(), true)) {
         error.SetErrno("setsockopt(TCP_NODELAY) failed");
         OnAcceptError(std::move(error));
         return;
