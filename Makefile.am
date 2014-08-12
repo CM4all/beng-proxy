@@ -582,6 +582,7 @@ libutil_a_SOURCES = \
 	src/util/WritableBuffer.hxx \
 	src/util/StaticFifoBuffer.hxx \
 	src/util/ForeignFifoBuffer.hxx \
+	src/util/DynamicFifoBuffer.hxx \
 	src/kvlist.hxx \
 	src/format.c format.h \
 	src/date.c src/date.h \
@@ -715,6 +716,7 @@ pkgconfig_DATA = libcm4all-beng-proxy.pc
 if TEST
 
 noinst_PROGRAMS = \
+	test/TrafoExample \
 	test/run_css_parser \
 	test/run_ping \
 	test/run_was \
@@ -821,6 +823,25 @@ TESTS = test/t_hashmap test/t_cache test/t_tcache \
 	test/t_widget_registry \
 	test/t_widget_resolver \
 	test/t_wembed test/t_widget_http
+
+test_TrafoExample_SOURCES = \
+	src/trafo/Server.cxx src/trafo/Server.hxx \
+	src/trafo/Listener.cxx src/trafo/Listener.hxx \
+	src/trafo/Connection.cxx src/trafo/Connection.hxx \
+	src/trafo/Request.hxx \
+	src/trafo/AllocatedRequest.cxx src/trafo/AllocatedRequest.hxx \
+	src/trafo/Response.cxx src/trafo/Response.hxx \
+	src/trafo/Event.cxx src/trafo/Event.hxx \
+	test/TrafoExample.cxx
+test_TrafoExample_LDADD = \
+	libnet.a \
+	libpool.a libmemory.a \
+	libutil.a \
+	$(LIBCM4ALL_INLINE_LIBS) \
+	$(LIBCM4ALL_HTTP_LIBS) \
+	$(LIBCM4ALL_SOCKET_LIBS) \
+	$(LIBCM4ALL_DAEMON_LIBS) \
+	$(LIBEVENT_LIBS)
 
 test_run_ping_SOURCES = test/run_ping.cxx \
 	src/ping.cxx \
