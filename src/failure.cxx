@@ -27,8 +27,11 @@ struct Failure {
 
     enum failure_status status;
 
-    Failure(SocketAddress _address)
-        :address(_address) {}
+    Failure(SocketAddress _address, enum failure_status _status,
+            time_t _expires)
+        :address(_address),
+         expires(_expires), fade_expires(0),
+         status(_status) {}
 
     bool CanExpire() const {
         return status != FAILURE_MONITOR;
@@ -144,11 +147,7 @@ failure_set(SocketAddress address,
 
     /* insert new failure object into the linked list */
 
-    Failure *failure = new Failure(address);
-
-    failure->expires = now + duration;
-    failure->fade_expires = 0;
-    failure->status = status;
+    Failure *failure = new Failure(address, status, now + duration);
 
     failure->next = fl.slots[slot];
     fl.slots[slot] = failure;
