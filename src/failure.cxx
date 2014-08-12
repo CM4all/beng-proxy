@@ -146,24 +146,23 @@ match_status(enum failure_status current, enum failure_status match)
 
 static void
 failure_unset2(struct pool *pool, Failure **failure_r,
-               Failure *failure, enum failure_status status)
+               Failure &failure, enum failure_status status)
 {
     if (status == FAILURE_FADE)
-        failure->fade_expires = 0;
+        failure.fade_expires = 0;
 
-    if (!match_status(failure->status, status) &&
-        !failure->IsExpired())
+    if (!match_status(failure.status, status) && !failure.IsExpired())
         /* don't update if the current status is more serious than the
            one to be removed */
         return;
 
-    if (status != FAILURE_OK && failure->IsFade()) {
-        failure->status = FAILURE_FADE;
-        failure->expires = failure->fade_expires;
-        failure->fade_expires = 0;
+    if (status != FAILURE_OK && failure.IsFade()) {
+        failure.status = FAILURE_FADE;
+        failure.expires = failure.fade_expires;
+        failure.fade_expires = 0;
     } else {
-        *failure_r = failure->next;
-        p_free(pool, failure);
+        *failure_r = failure.next;
+        p_free(pool, &failure);
     }
 }
 
@@ -182,7 +181,7 @@ failure_unset(const struct sockaddr *addr, size_t addrlen,
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
             /* found it: remove it */
-            failure_unset2(fl.pool, failure_r, failure, status);
+            failure_unset2(fl.pool, failure_r, *failure, status);
             return;
         }
     }
