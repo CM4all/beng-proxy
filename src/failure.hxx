@@ -72,14 +72,4 @@ gcc_pure
 enum failure_status
 failure_get_status(const struct sockaddr *address, size_t length);
 
-/**
- * Returns true if the specified address has failed.
- */
-gcc_pure
-static inline bool
-failure_check(const struct sockaddr *address, size_t length)
-{
-    return failure_get_status(address, length) != FAILURE_OK;
-}
-
 #endif
