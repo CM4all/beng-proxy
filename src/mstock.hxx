@@ -4,15 +4,13 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_MSTOCK_H
-#define BENG_PROXY_MSTOCK_H
+#ifndef BENG_PROXY_MSTOCK_HXX
+#define BENG_PROXY_MSTOCK_HXX
+
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
 #include <inline/list.h>
-
-#include <glib.h>
-
-#include <stdbool.h>
 
 struct pool;
 struct async_operation_ref;
@@ -22,10 +20,6 @@ struct lease_ref;
 struct stock_item;
 struct stock_stats;
 struct stock_get_handler;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 gcc_malloc
 struct mstock *
@@ -55,9 +49,5 @@ mstock_get_now(struct mstock *mstock, struct pool *caller_pool,
                struct lease_ref *lease_ref,
                GError **error_r);
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

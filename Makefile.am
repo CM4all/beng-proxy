@@ -224,7 +224,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/static_headers.cxx src/static_headers.hxx \
 	src/stock.cxx src/stock.hxx \
 	src/hstock.cxx src/hstock.hxx \
-	src/mstock.cxx src/mstock.h \
+	src/mstock.cxx src/mstock.hxx \
 	src/strref-dpool.h \
 	src/suffix_registry.cxx src/suffix_registry.hxx \
 	src/tcache.cxx src/tcache.hxx \

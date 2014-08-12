@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "mstock.h"
+#include "mstock.hxx"
 #include "hstock.hxx"
 #include "stock.hxx"
 #include "hashmap.hxx"

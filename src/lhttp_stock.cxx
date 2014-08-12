@@ -9,7 +9,7 @@
 #include "lhttp_launch.hxx"
 #include "lhttp_address.hxx"
 #include "hstock.hxx"
-#include "mstock.h"
+#include "mstock.hxx"
 #include "stock.hxx"
 #include "lease.hxx"
 #include "child_stock.hxx"
