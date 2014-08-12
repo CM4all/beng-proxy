@@ -13,7 +13,7 @@
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
 
-#include <boost/intrusive/list.hpp>
+#include <boost/intrusive/set.hpp>
 
 #include <string>
 
@@ -25,7 +25,7 @@
 #include <event.h>
 
 struct ChildProcess
-    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+    : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     const pid_t pid;
 
@@ -52,6 +52,20 @@ struct ChildProcess
         :pid(_pid), name(_name),
          start_us(now_us()),
          callback(_callback), callback_ctx(_ctx) {}
+
+    struct Compare {
+        bool operator()(const ChildProcess &a, const ChildProcess &b) const {
+            return a.pid < b.pid;
+        }
+
+        bool operator()(const ChildProcess &a, pid_t b) const {
+            return a.pid < b;
+        }
+
+        bool operator()(pid_t a, const ChildProcess &b) const {
+            return a < b.pid;
+        }
+    };
 };
 
 static const struct timeval child_kill_timeout = {
@@ -60,8 +74,9 @@ static const struct timeval child_kill_timeout = {
 };
 
 static bool shutdown_flag = false;
-static boost::intrusive::list<ChildProcess,
-                              boost::intrusive::constant_time_size<true>> children;
+static boost::intrusive::set<ChildProcess,
+                             boost::intrusive::compare<ChildProcess::Compare>,
+                             boost::intrusive::constant_time_size<true>> children;
 static struct event sigchld_event;
 
 /**
@@ -75,11 +90,11 @@ static struct defer_event defer_event;
 static ChildProcess *
 find_child_by_pid(pid_t pid)
 {
-    for (auto &child : children)
-        if (child.pid == pid)
-            return &child;
+    auto i = children.find(pid, ChildProcess::Compare());
+    if (i == children.end())
+        return nullptr;
 
-    return nullptr;
+    return &*i;
 }
 
 static void
