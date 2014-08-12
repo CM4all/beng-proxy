@@ -56,7 +56,7 @@ public:
         return address == nullptr;
     }
 
-    size_t GetSize() const {
+    socklen_t GetSize() const {
         return size;
     }
 
