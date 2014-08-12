@@ -37,7 +37,7 @@ enum failure_status {
 
     /**
      * The failure was submitted by a "monitor", and will not expire
-     * until the monitor
+     * until the monitor detects recovery.
      */
     FAILURE_MONITOR,
 };
