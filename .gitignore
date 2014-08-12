@@ -5,15 +5,16 @@
 *.a
 *.bc
 *.s
-src/cm4all-beng-proxy
-src/cm4all-beng-proxy-delegate-helper
-src/cm4all-beng-proxy-delegate-jail
-src/cm4all-beng-proxy-log-cat
-src/cm4all-beng-proxy-log-split
-src/cm4all-beng-proxy-log-forward
-src/cm4all-beng-proxy-log-exec
-src/cm4all-beng-proxy-log-traffic
-src/cm4all-beng-lb
+
+/cm4all-beng-proxy
+/cm4all-beng-proxy-delegate-helper
+/cm4all-beng-proxy-delegate-jail
+/cm4all-beng-proxy-log-cat
+/cm4all-beng-proxy-log-split
+/cm4all-beng-proxy-log-forward
+/cm4all-beng-proxy-log-exec
+/cm4all-beng-proxy-log-traffic
+/cm4all-beng-lb
 
 test/benchmark-gmtime
 test/format-http-date

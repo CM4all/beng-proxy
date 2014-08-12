@@ -12,7 +12,7 @@
 #include <unistd.h>
 #include <string.h>
 
-static const char helper_path[] = "./src/cm4all-beng-proxy-delegate-helper";
+static const char helper_path[] = "./cm4all-beng-proxy-delegate-helper";
 static struct hstock *delegate_stock;
 static struct pool *pool;
 

@@ -65,16 +65,16 @@ endif
 # Programs
 #
 
-bin_PROGRAMS = src/cm4all-beng-proxy \
-	src/cm4all-beng-lb \
-	src/cm4all-beng-proxy-log-cat \
-	src/cm4all-beng-proxy-log-traffic \
-	src/cm4all-beng-proxy-log-split \
-	src/cm4all-beng-proxy-log-forward \
-	src/cm4all-beng-proxy-log-exec \
-	src/cm4all-beng-proxy-delegate-helper
+bin_PROGRAMS = cm4all-beng-proxy \
+	cm4all-beng-lb \
+	cm4all-beng-proxy-log-cat \
+	cm4all-beng-proxy-log-traffic \
+	cm4all-beng-proxy-log-split \
+	cm4all-beng-proxy-log-forward \
+	cm4all-beng-proxy-log-exec \
+	cm4all-beng-proxy-delegate-helper
 
-src_cm4all_beng_proxy_SOURCES = \
+cm4all_beng_proxy_SOURCES = \
 	include/beng-proxy/headers.h \
 	include/beng-proxy/translation.h \
 	src/product.h \
@@ -324,7 +324,7 @@ src_cm4all_beng_proxy_SOURCES = \
 	src/bp_instance.cxx src/bp_instance.hxx \
 	src/shutdown_listener.c src/shutdown_listener.h \
 	src/bp_main.cxx
-src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
+cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	-lcap \
 	libistream.a libpool.a libmemory.a \
 	libnet.a \
@@ -342,7 +342,7 @@ src_cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	$(LIBZ_LIBS)
 
 if HAVE_LIBNFS
-src_cm4all_beng_proxy_SOURCES += \
+cm4all_beng_proxy_SOURCES += \
 	src/nfs_handler.cxx src/nfs_handler.hxx \
 	src/istream_nfs.cxx src/istream_nfs.hxx \
 	src/nfs_stock.cxx src/nfs_stock.hxx \
@@ -351,7 +351,7 @@ src_cm4all_beng_proxy_SOURCES += \
 	src/nfs_request.cxx src/nfs_request.hxx
 endif
 
-src_cm4all_beng_lb_SOURCES = \
+cm4all_beng_lb_SOURCES = \
 	src/isolate.cxx src/isolate.hxx \
 	src/abort_close.cxx src/abort_close.hxx \
 	src/capabilities.cxx src/capabilities.hxx \
@@ -461,7 +461,7 @@ src_cm4all_beng_lb_SOURCES = \
 	src/lb_hmonitor.hxx \
 	src/lb_hmonitor.cxx \
 	src/lb_main.cxx
-src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
+cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	-lcap \
 	libistream.a libpool.a libmemory.a \
 	libnet.a \
@@ -475,39 +475,39 @@ src_cm4all_beng_lb_LDADD = $(AM_LDADD) \
 	$(LIBSSL_LIBS) \
 	$(LIBEVENT_LIBS)
 
-src_cm4all_beng_proxy_log_cat_SOURCES = \
+cm4all_beng_proxy_log_cat_SOURCES = \
 	src/log-server.c \
 	src/log-cat.c
-src_cm4all_beng_proxy_log_cat_LDADD = \
+cm4all_beng_proxy_log_cat_LDADD = \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(GLIB_LIBS)
 
-src_cm4all_beng_proxy_log_traffic_SOURCES = \
+cm4all_beng_proxy_log_traffic_SOURCES = \
 	src/log-server.c \
 	src/log-traffic.c
-src_cm4all_beng_proxy_log_traffic_LDADD = \
+cm4all_beng_proxy_log_traffic_LDADD = \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(GLIB_LIBS)
 
-src_cm4all_beng_proxy_log_split_SOURCES = \
+cm4all_beng_proxy_log_split_SOURCES = \
 	src/log-server.c \
 	src/log-split.c
-src_cm4all_beng_proxy_log_split_LDADD = \
+cm4all_beng_proxy_log_split_LDADD = \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(GLIB_LIBS)
 
-src_cm4all_beng_proxy_log_forward_SOURCES = \
+cm4all_beng_proxy_log_forward_SOURCES = \
 	src/fd_util.c \
 	src/log-forward.c
-src_cm4all_beng_proxy_log_forward_LDADD = \
+cm4all_beng_proxy_log_forward_LDADD = \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-src_cm4all_beng_proxy_log_exec_SOURCES = \
+cm4all_beng_proxy_log_exec_SOURCES = \
 	src/log-exec.c
-src_cm4all_beng_proxy_log_exec_LDADD = \
+cm4all_beng_proxy_log_exec_LDADD = \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-src_cm4all_beng_proxy_delegate_helper_SOURCES = src/delegate_helper.c
+cm4all_beng_proxy_delegate_helper_SOURCES = src/delegate_helper.c
 
 # LLVM
 
@@ -516,13 +516,13 @@ if LLVM
 llvmdir = $(libdir)/llvm
 llvm_DATA = cm4all-beng-proxy.bc
 
-src_cm4all_beng_proxy_CSOURCES = $(filter-out %.h,$(src_cm4all_beng_proxy_SOURCES))
-src_cm4all_beng_proxy_BC = $(src_cm4all_beng_proxy_CSOURCES:.c=.bc)
+cm4all_beng_proxy_CSOURCES = $(filter-out %.h,$(cm4all_beng_proxy_SOURCES))
+cm4all_beng_proxy_BC = $(cm4all_beng_proxy_CSOURCES:.c=.bc)
 
-$(src_cm4all_beng_proxy_BC): %.bc: %.c
+$(cm4all_beng_proxy_BC): %.bc: %.c
 	$(CLANG) -c -o $@ $< -emit-llvm $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 
-cm4all-beng-proxy-unoptimized.bc: $(src_cm4all_beng_proxy_BC)
+cm4all-beng-proxy-unoptimized.bc: $(cm4all_beng_proxy_BC)
 	$(LLVM_LINK) -o $@ $^
 
 cm4all-beng-proxy.bc: cm4all-beng-proxy-unoptimized.bc
@@ -532,15 +532,15 @@ cm4all-beng-proxy.s: cm4all-beng-proxy.bc
 	$(LLVM_LLC) -o $@ $< -O3
 
 cm4all-beng-proxy: cm4all-beng-proxy.s
-	$(CLANG) -o $@ $^ $(src_cm4all_beng_proxy_LDFLAGS) $(src_cm4all_beng_proxy_LDADD)
+	$(CLANG) -o $@ $^ $(cm4all_beng_proxy_LDFLAGS) $(cm4all_beng_proxy_LDADD)
 
-src_cm4all_beng_lb_CSOURCES = $(filter-out %.h,$(src_cm4all_beng_lb_SOURCES))
-src_cm4all_beng_lb_BC = $(src_cm4all_beng_lb_CSOURCES:.c=.bc)
+cm4all_beng_lb_CSOURCES = $(filter-out %.h,$(cm4all_beng_lb_SOURCES))
+cm4all_beng_lb_BC = $(cm4all_beng_lb_CSOURCES:.c=.bc)
 
-$(src_cm4all_beng_lb_BC): %.bc: %.c
+$(cm4all_beng_lb_BC): %.bc: %.c
 	$(CLANG) -c -o $@ $< -emit-llvm $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 
-cm4all-beng-lb-unoptimized.bc: $(src_cm4all_beng_lb_BC)
+cm4all-beng-lb-unoptimized.bc: $(cm4all_beng_lb_BC)
 	$(LLVM_LINK) -o $@ $^
 
 cm4all-beng-lb.bc: cm4all-beng-lb-unoptimized.bc
@@ -550,11 +550,11 @@ cm4all-beng-lb.s: cm4all-beng-lb.bc
 	$(LLVM_LLC) -o $@ $< -O3
 
 cm4all-beng-lb: cm4all-beng-lb.s
-	$(CLANG) -o $@ $^ $(src_cm4all_beng_lb_LDFLAGS) $(src_cm4all_beng_lb_LDADD)
+	$(CLANG) -o $@ $^ $(cm4all_beng_lb_LDFLAGS) $(cm4all_beng_lb_LDADD)
 
 CLEANFILES = \
-	cm4all-beng-lb-unoptimized.bc cm4all-beng-lb.bc cm4all-beng-lb.s cm4all-beng-lb $(src_cm4all_beng_lb_BC) \
-	cm4all-beng-proxy-unoptimized.bc cm4all-beng-proxy.bc cm4all-beng-proxy.s cm4all-beng-proxy $(src_cm4all_beng_proxy_BC)
+	cm4all-beng-lb-unoptimized.bc cm4all-beng-lb.bc cm4all-beng-lb.s cm4all-beng-lb $(cm4all_beng_lb_BC) \
+	cm4all-beng-proxy-unoptimized.bc cm4all-beng-proxy.bc cm4all-beng-proxy.s cm4all-beng-proxy $(cm4all_beng_proxy_BC)
 
 endif
 
@@ -1841,7 +1841,7 @@ SPARSE_FLAGS += -D__SCHAR_MAX__=127 -D__SHRT_MAX__=32767 \
 	-D__INT_MAX__=2147483647 -D__LONG_MAX__=2147483647
 
 sparse-check:
-	sparse $(SPARSE_FLAGS) $(src_cm4all_beng_proxy_SOURCES)
+	sparse $(SPARSE_FLAGS) $(cm4all_beng_proxy_SOURCES)
 
 .PHONY: sparse-check
 
@@ -1877,7 +1877,7 @@ pythont_DATA = \
 
 DEBUG_ARGS = -vvvvvD
 
-debug: src/cm4all-beng-proxy
+debug: cm4all-beng-proxy
 	LD_LIBRARY_PATH=/usr/lib/debug:$(LD_LIBRARY_PATH) gdb -x gdbrun --args $< $(DEBUG_ARGS)
 
 VALGRIND_FLAGS = --leak-check=yes --show-reachable=yes
@@ -1885,16 +1885,16 @@ VALGRIND_FLAGS += --track-fds=yes --track-origins=yes
 VALGRIND_FLAGS += --suppressions=valgrind.suppressions
 
 valgrind: export G_SLICE=always-malloc
-valgrind: src/cm4all-beng-proxy
-	valgrind $(VALGRIND_FLAGS) ./src/cm4all-beng-proxy $(DEBUG_ARGS)
+valgrind: cm4all-beng-proxy
+	valgrind $(VALGRIND_FLAGS) $< $(DEBUG_ARGS)
 
-perf: src/cm4all-beng-proxy
+perf: cm4all-beng-proxy
 	perf record -f $< -D -u max -p 8080
 
 # -DNO_DATE_HEADER -DNO_XATTR -DNO_LAST_MODIFIED_HEADER
 benchmark: AM_CPPFLAGS += -DNDEBUG -DALWAYS_INLINE -DNO_ACCESS_LOG -DNO_XATTR
-benchmark: src/cm4all-beng-proxy
-	./src/cm4all-beng-proxy -D -u max -p 8080 -w 4
+benchmark: cm4all-beng-proxy
+	./cm4all-beng-proxy -D -u max -p 8080 -w 4
 
 .PHONY: debug valgrind perf benchmark
 

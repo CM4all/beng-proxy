@@ -67,18 +67,18 @@ debian/stamp-configure-toi: debian/stamp-autogen
 
 debian/stamp-build-debug: debian/stamp-configure-debug
 	$(MAKE) -C build/debug \
-		src/cm4all-beng-lb \
-		src/cm4all-beng-proxy \
-		src/cm4all-beng-proxy-delegate-helper \
+		cm4all-beng-lb \
+		cm4all-beng-proxy \
+		cm4all-beng-proxy-delegate-helper \
 		doc/beng.pdf doc/lb.pdf
 
 debian/stamp-build-optimized: debian/stamp-configure-optimized
 	$(MAKE) -C build/optimized \
-		src/cm4all-beng-proxy
+		cm4all-beng-proxy
 
 debian/stamp-build-toi: debian/stamp-configure-toi
 	$(MAKE) -C build/toi \
-		src/cm4all-beng-proxy
+		cm4all-beng-proxy
 
 build: debian/stamp-build-debug debian/stamp-build-optimized debian/stamp-build-toi
 

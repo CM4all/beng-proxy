@@ -1,4 +1,4 @@
-build/debug/src/cm4all-beng-lb usr/sbin
+build/debug/cm4all-beng-lb usr/sbin
 debian/lb.conf etc/cm4all/beng
 systemd/cm4all-beng-lb.service lib/systemd/system
 systemd/lb/run.sh usr/lib/cm4all/beng-lb/systemd
