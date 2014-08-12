@@ -31,6 +31,10 @@ class AllocatedSocketAddress {
 public:
     AllocatedSocketAddress():address(nullptr), size(0) {}
 
+    explicit AllocatedSocketAddress(SocketAddress _address);
+
+    AllocatedSocketAddress(const AllocatedSocketAddress &) = delete;
+
     AllocatedSocketAddress(AllocatedSocketAddress &&src)
         :address(src.address), size(src.size) {
         src.address = nullptr;

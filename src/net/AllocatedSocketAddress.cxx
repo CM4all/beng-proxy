@@ -14,6 +14,15 @@
 #include <netdb.h>
 #include <string.h>
 
+AllocatedSocketAddress::AllocatedSocketAddress(SocketAddress _address)
+    :AllocatedSocketAddress()
+{
+    assert(!_address.IsNull());
+
+    SetSize(_address.GetSize());
+    memcpy(address, _address.GetAddress(), size);
+}
+
 void
 AllocatedSocketAddress::SetSize(size_t new_size)
 {
