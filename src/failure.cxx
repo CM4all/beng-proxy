@@ -27,6 +27,32 @@ struct Failure {
     enum failure_status status;
 
     struct address_envelope envelope;
+
+    bool CanExpire() const {
+        return status != FAILURE_MONITOR;
+    }
+
+    gcc_pure
+    bool IsExpired() const {
+        return CanExpire() && is_expired(expires);
+    }
+
+    gcc_pure
+    bool IsFade() const {
+        return fade_expires > 0 && !is_expired(fade_expires);
+    }
+
+    enum failure_status GetStatus() const {
+        if (!IsExpired())
+            return status;
+        else if (IsFade())
+            return FAILURE_FADE;
+        else
+            return FAILURE_OK;
+    }
+
+    bool OverrideStatus(time_t now, enum failure_status new_status,
+                        unsigned duration);
 };
 
 #define FAILURE_SLOTS 64
@@ -52,55 +78,28 @@ failure_deinit(void)
     pool_unref(fl.pool);
 }
 
-gcc_const
-static inline bool
-failure_status_can_expire(enum failure_status status)
+bool
+Failure::OverrideStatus(time_t now, enum failure_status new_status,
+                        unsigned duration)
 {
-    return status != FAILURE_MONITOR;
-}
-
-gcc_pure
-static inline bool
-failure_is_expired(const Failure *failure)
-{
-    assert(failure != nullptr);
-
-    return failure_status_can_expire(failure->status) &&
-        is_expired(failure->expires);
-}
-
-gcc_pure
-static inline bool
-failure_is_fade(const Failure *failure)
-{
-    assert(failure != nullptr);
-
-    return failure->fade_expires > 0 &&
-        !is_expired(failure->fade_expires);
-}
-
-static bool
-failure_override_status(Failure *failure, time_t now,
-                        enum failure_status status, unsigned duration)
-{
-    if (failure_is_expired(failure)) {
+    if (IsExpired()) {
         /* expired: override in any case */
-    } else if (status == failure->status) {
+    } else if (new_status == status) {
         /* same status: update expiry */
-    } else if (status == FAILURE_FADE) {
+    } else if (new_status == FAILURE_FADE) {
         /* store "fade" expiry in special attribute, until the other
            failure status expires */
-        failure->fade_expires = now + duration;
+        fade_expires = now + duration;
         return true;
-    } else if (failure->status == FAILURE_FADE) {
+    } else if (status == FAILURE_FADE) {
         /* copy the "fade" expiry to the special attribute, and
            overwrite the FAILURE_FADE status */
-        failure->fade_expires = failure->expires;
-    } else if (status < failure->status)
+        fade_expires = expires;
+    } else if (new_status < status)
         return false;
 
-    failure->expires = now + duration;
-    failure->status = status;
+    expires = now + duration;
+    status = new_status;
     return true;
 }
 
@@ -118,7 +117,7 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
          failure = failure->next) {
         if (failure->envelope.length == addrlen &&
             memcmp(&failure->envelope.address, addr, addrlen) == 0) {
-            failure_override_status(failure, now, status, duration);
+            failure->OverrideStatus(now, status, duration);
             return;
         }
     }
@@ -153,12 +152,12 @@ failure_unset2(struct pool *pool, Failure **failure_r,
         failure->fade_expires = 0;
 
     if (!match_status(failure->status, status) &&
-        !failure_is_expired(failure))
+        !failure->IsExpired())
         /* don't update if the current status is more serious than the
            one to be removed */
         return;
 
-    if (status != FAILURE_OK && failure_is_fade(failure)) {
+    if (status != FAILURE_OK && failure->IsFade()) {
         failure->status = FAILURE_FADE;
         failure->expires = failure->fade_expires;
         failure->fade_expires = 0;
@@ -189,18 +188,6 @@ failure_unset(const struct sockaddr *addr, size_t addrlen,
     }
 }
 
-gcc_pure
-static enum failure_status
-failure_get_status2(const Failure *failure)
-{
-    if (!failure_is_expired(failure))
-        return failure->status;
-    else if (failure_is_fade(failure))
-        return FAILURE_FADE;
-    else
-        return FAILURE_OK;
-}
-
 enum failure_status
 failure_get_status(const struct sockaddr *address, size_t length)
 {
@@ -213,7 +200,7 @@ failure_get_status(const struct sockaddr *address, size_t length)
     for (failure = fl.slots[slot]; failure != nullptr; failure = failure->next)
         if (failure->envelope.length == length &&
             memcmp(&failure->envelope.address, address, length) == 0)
-            return failure_get_status2(failure);
+            return failure->GetStatus();
 
     return FAILURE_OK;
 }
