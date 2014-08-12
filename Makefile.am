@@ -1886,7 +1886,7 @@ VALGRIND_FLAGS += --suppressions=valgrind.suppressions
 
 valgrind: export G_SLICE=always-malloc
 valgrind: cm4all-beng-proxy
-	valgrind $(VALGRIND_FLAGS) $< $(DEBUG_ARGS)
+	valgrind $(VALGRIND_FLAGS) ./cm4all-beng-proxy $(DEBUG_ARGS)
 
 perf: cm4all-beng-proxy
 	perf record -f $< -D -u max -p 8080
