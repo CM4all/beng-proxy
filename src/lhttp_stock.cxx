@@ -27,8 +27,15 @@
 #include <string.h>
 
 struct lhttp_stock {
-    struct hstock *hstock;
-    struct mstock *child_stock;
+    struct hstock *const hstock;
+    struct mstock *const child_stock;
+
+    lhttp_stock(struct pool &pool, unsigned limit, unsigned max_idle);
+
+    ~lhttp_stock() {
+        hstock_free(hstock);
+        mstock_free(child_stock);
+    }
 };
 
 struct lhttp_connection {
@@ -212,24 +219,21 @@ static const struct stock_class lhttp_stock_class = {
  *
  */
 
+inline
+lhttp_stock::lhttp_stock(struct pool &pool, unsigned limit, unsigned max_idle)
+    :hstock(hstock_new(&pool, &lhttp_stock_class, this, limit, max_idle)),
+     child_stock(mstock_new(child_stock_new(&pool, limit, max_idle,
+                                            &lhttp_child_stock_class))) {}
+
 struct lhttp_stock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    auto ls = new lhttp_stock();
-
-    struct hstock *child_stock = child_stock_new(pool, limit, max_idle,
-                                                 &lhttp_child_stock_class);
-    ls->child_stock = mstock_new(child_stock);
-    ls->hstock = hstock_new(pool, &lhttp_stock_class, ls, limit, max_idle);
-
-    return ls;
+    return new lhttp_stock(*pool, limit, max_idle);
 }
 
 void
 lhttp_stock_free(struct lhttp_stock *ls)
 {
-    hstock_free(ls->hstock);
-    mstock_free(ls->child_stock);
     delete ls;
 }
 
