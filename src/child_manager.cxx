@@ -12,7 +12,8 @@
 
 #include <daemon/log.h>
 #include <daemon/daemonize.h>
-#include <inline/list.h>
+
+#include <boost/intrusive/list.hpp>
 
 #include <string>
 
@@ -23,8 +24,8 @@
 #include <sys/resource.h>
 #include <event.h>
 
-struct ChildProcess {
-    struct list_head siblings;
+struct ChildProcess
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
 
     const pid_t pid;
 
@@ -59,8 +60,8 @@ static const struct timeval child_kill_timeout = {
 };
 
 static bool shutdown_flag = false;
-static struct list_head children;
-static unsigned num_children;
+static boost::intrusive::list<ChildProcess,
+                              boost::intrusive::constant_time_size<true>> children;
 static struct event sigchld_event;
 
 /**
@@ -74,15 +75,9 @@ static struct defer_event defer_event;
 static ChildProcess *
 find_child_by_pid(pid_t pid)
 {
-    assert(list_empty(&children) == (num_children == 0));
-
-    ChildProcess *child;
-
-    for (child = (ChildProcess *)children.next;
-         &child->siblings != &children;
-         child = (ChildProcess *)child->siblings.next)
-        if (child->pid == pid)
-            return child;
+    for (auto &child : children)
+        if (child.pid == pid)
+            return &child;
 
     return nullptr;
 }
@@ -90,16 +85,13 @@ find_child_by_pid(pid_t pid)
 static void
 child_remove(ChildProcess &child)
 {
-    assert(num_children > 0);
-    --num_children;
+    assert(!children.empty());
 
     evtimer_del(&child.kill_timeout_event);
 
-    list_remove(&child.siblings);
-    if (shutdown_flag && list_empty(&children)) {
-        assert(num_children == 0);
+    children.erase(children.iterator_to(child));
+    if (shutdown_flag && children.empty())
         children_event_del();
-    }
 }
 
 static void
@@ -170,8 +162,6 @@ static void
 child_event_callback(int fd gcc_unused, short event gcc_unused,
                      void *ctx gcc_unused)
 {
-    assert(list_empty(&children) == (num_children == 0));
-
     pid_t pid;
     int status;
 
@@ -193,9 +183,6 @@ children_init()
 {
     assert(!shutdown_flag);
 
-    list_init(&children);
-    num_children = 0;
-
     defer_event_init(&defer_event, child_event_callback, nullptr);
     children_event_add();
 }
@@ -203,13 +190,11 @@ children_init()
 void
 children_shutdown(void)
 {
-    assert(list_empty(&children) == (num_children == 0));
-
     defer_event_deinit(&defer_event);
 
     shutdown_flag = true;
 
-    if (list_empty(&children))
+    if (children.empty())
         children_event_del();
 }
 
@@ -243,15 +228,13 @@ child_register(pid_t pid, const char *name,
                child_callback_t callback, void *ctx)
 {
     assert(!shutdown_flag);
-    assert(list_empty(&children) == (num_children == 0));
     assert(name != nullptr);
 
     daemon_log(5, "added child process '%s' (pid %d)\n", name, (int)pid);
 
     auto child = new ChildProcess(pid, name, callback, ctx);
 
-    list_add(&child->siblings, &children);
-    ++num_children;
+    children.push_front(*child);
 
     evtimer_set(&child->kill_timeout_event,
                 child_kill_timeout_callback, child);
@@ -293,5 +276,5 @@ child_kill(pid_t pid)
 unsigned
 child_get_count(void)
 {
-    return num_children;
+    return children.size();
 }
