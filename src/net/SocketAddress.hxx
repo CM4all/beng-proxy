@@ -53,6 +53,8 @@ public:
     bool IsDefined() const {
         return GetFamily() != AF_UNSPEC;
     }
+
+    bool operator==(SocketAddress other) const;
 };
 
 #endif
