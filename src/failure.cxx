@@ -14,9 +14,9 @@
 #include <daemon/log.h>
 
 #include <assert.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <errno.h>
 
 struct Failure {
     Failure *next;
@@ -59,24 +59,27 @@ struct Failure {
 #define FAILURE_SLOTS 64
 
 struct FailureList {
-    struct pool *pool;
-
     Failure *slots[FAILURE_SLOTS];
 };
 
 static FailureList fl;
 
 void
-failure_init(struct pool *pool)
+failure_init()
 {
-    fl.pool = pool_new_libc(pool, "failure_list");
-    memset(fl.slots, 0, sizeof(fl.slots));
 }
 
 void
 failure_deinit(void)
 {
-    pool_unref(fl.pool);
+    for (auto &i : fl.slots) {
+        while (i != nullptr) {
+            Failure *failure = i;
+            i = failure->next;
+
+            free(failure);
+        }
+    }
 }
 
 bool
@@ -142,8 +145,11 @@ failure_set(SocketAddress address,
     /* insert new failure object into the linked list */
 
     Failure *failure = (Failure *)
-        p_malloc(fl.pool, sizeof(*failure)
-                 - sizeof(failure->envelope.address) + address.GetSize());
+        malloc(sizeof(*failure)
+               - sizeof(failure->envelope.address) + address.GetSize());
+    if (failure == nullptr)
+        return;
+
     failure->expires = now + duration;
     failure->fade_expires = 0;
     failure->status = status;
@@ -169,7 +175,7 @@ match_status(enum failure_status current, enum failure_status match)
 }
 
 static void
-failure_unset2(struct pool *pool, Failure **failure_r,
+failure_unset2(Failure **failure_r,
                Failure &failure, enum failure_status status)
 {
     if (status == FAILURE_FADE)
@@ -186,7 +192,7 @@ failure_unset2(struct pool *pool, Failure **failure_r,
         failure.fade_expires = 0;
     } else {
         *failure_r = failure.next;
-        p_free(pool, &failure);
+        free(&failure);
     }
 }
 
@@ -203,7 +209,7 @@ failure_unset(SocketAddress address, enum failure_status status)
          failure_r = &failure->next, failure = *failure_r) {
         if (Compare(failure->envelope, address)) {
             /* found it: remove it */
-            failure_unset2(fl.pool, failure_r, *failure, status);
+            failure_unset2(failure_r, *failure, status);
             return;
         }
     }

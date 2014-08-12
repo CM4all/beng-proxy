@@ -11,7 +11,6 @@
 
 #include <stddef.h>
 
-struct pool;
 class SocketAddress;
 
 enum failure_status {
@@ -43,7 +42,7 @@ enum failure_status {
 };
 
 void
-failure_init(struct pool *pool);
+failure_init();
 
 void
 failure_deinit(void);

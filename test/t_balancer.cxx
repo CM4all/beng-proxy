@@ -23,7 +23,7 @@ class FailureTest : public PoolTest {
 public:
     virtual void setUp() {
         PoolTest::setUp();
-        failure_init(GetPool());
+        failure_init();
     }
 
     virtual void tearDown() {

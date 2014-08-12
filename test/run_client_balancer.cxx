@@ -95,7 +95,7 @@ main(int argc, char **argv)
     struct pool *root_pool = pool_new_libc(nullptr, "root");
     struct pool *pool = pool_new_linear(root_pool, "test", 8192);
 
-    failure_init(pool);
+    failure_init();
 
     struct context ctx;
     ctx.result = context::TIMEOUT;

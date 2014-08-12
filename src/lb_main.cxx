@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 
     instance.pipe_stock = pipe_stock_new(instance.pool);
 
-    failure_init(instance.pool);
+    failure_init();
     bulldog_init(instance.cmdline.bulldog_path);
 
     global_tcp_stock = instance.tcp_stock;

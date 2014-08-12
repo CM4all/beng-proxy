@@ -396,7 +396,7 @@ int main(int argc, char **argv)
                                              instance.config.filter_cache_size,
                                              instance.resource_loader);
 
-    failure_init(instance.pool);
+    failure_init();
     bulldog_init(instance.config.bulldog_path);
 
     global_translate_cache = instance.translate_cache;
