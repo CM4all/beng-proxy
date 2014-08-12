@@ -94,8 +94,7 @@ FailureGet(const char *host_and_port)
     if (result != 0)
         return FAILURE_FAILED;
 
-    enum failure_status status = failure_get_status(ai->ai_addr,
-                                                    ai->ai_addrlen);
+    enum failure_status status = failure_get_status({ai->ai_addr, ai->ai_addrlen});
     freeaddrinfo(ai);
     return status;
 }
@@ -109,7 +108,7 @@ FailureAdd(const char *host_and_port,
     if (result != 0)
         return false;
 
-    failure_set(ai->ai_addr, ai->ai_addrlen, status, duration);
+    failure_set({ai->ai_addr, ai->ai_addrlen}, status, duration);
     freeaddrinfo(ai);
     return true;
 }
@@ -123,7 +122,7 @@ FailureRemove(const char *host_and_port,
     if (result != 0)
         return false;
 
-    failure_unset(ai->ai_addr, ai->ai_addrlen, status);
+    failure_unset({ai->ai_addr, ai->ai_addrlen}, status);
     freeaddrinfo(ai);
     return true;
 }

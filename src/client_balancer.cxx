@@ -79,9 +79,7 @@ client_balancer_socket_success(SocketDescriptor &&fd, void *ctx)
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
 
-    failure_unset(&request->current_address->address,
-                  request->current_address->length,
-                  FAILURE_FAILED);
+    failure_unset(*request->current_address, FAILURE_FAILED);
 
     request->handler->success(std::move(fd), request->handler_ctx);
 }
@@ -92,8 +90,7 @@ client_balancer_socket_timeout(void *ctx)
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
 
-    failure_add(&request->current_address->address,
-                request->current_address->length);
+    failure_add(*request->current_address);
 
     if (request->retries-- > 0)
         /* try again, next address */
@@ -109,8 +106,7 @@ client_balancer_socket_error(GError *error, void *ctx)
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
 
-    failure_add(&request->current_address->address,
-                request->current_address->length);
+    failure_add(*request->current_address);
 
     if (request->retries-- > 0) {
         /* try again, next address */

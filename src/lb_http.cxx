@@ -158,7 +158,7 @@ generate_cookie(const struct address_list *list)
         assert(i >= 1 && i <= list->GetSize());
         const struct address_envelope *envelope =
             list->addresses[i % list->GetSize()];
-        if (failure_get_status(&envelope->address, envelope->length) == FAILURE_OK &&
+        if (failure_get_status(*envelope) == FAILURE_OK &&
             bulldog_check(&envelope->address, envelope->length) &&
             !bulldog_is_fading(&envelope->address, envelope->length))
             return i;
@@ -240,9 +240,7 @@ my_response_abort(GError *error, void *ctx)
     const struct lb_connection *connection = request2->connection;
 
     if (is_server_failure(error))
-        failure_add(&request2->current_address->address,
-                    request2->current_address->length);
-
+        failure_add(*request2->current_address);
 
     lb_connection_log_gerror(2, connection, "Error", error);
 

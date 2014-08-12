@@ -8,6 +8,7 @@
 #include "expiry.h"
 #include "address_envelope.hxx"
 #include "pool.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/djbhash.h"
 
 #include <daemon/log.h>
@@ -103,20 +104,36 @@ Failure::OverrideStatus(time_t now, enum failure_status new_status,
     return true;
 }
 
+gcc_pure
+static unsigned
+Hash(SocketAddress address)
+{
+    assert(!address.IsNull());
+
+    return djb_hash(address.GetAddress(), address.GetSize());
+}
+
+gcc_pure
+static bool
+Compare(const struct address_envelope &a, SocketAddress b)
+{
+    return a.length == b.GetSize() &&
+        memcmp(&a.address, b.GetAddress(), a.length) == 0;
+}
+
 void
-failure_set(const struct sockaddr *addr, size_t addrlen,
+failure_set(SocketAddress address,
             enum failure_status status, unsigned duration)
 {
-    assert(addr != nullptr);
+    assert(!address.IsNull());
     assert(status > FAILURE_OK);
 
     const unsigned now = now_s();
 
-    const unsigned slot = djb_hash(addr, addrlen) % FAILURE_SLOTS;
+    const unsigned slot = Hash(address) % FAILURE_SLOTS;
     for (Failure *failure = fl.slots[slot]; failure != nullptr;
          failure = failure->next) {
-        if (failure->envelope.length == addrlen &&
-            memcmp(&failure->envelope.address, addr, addrlen) == 0) {
+        if (Compare(failure->envelope, address)) {
             failure->OverrideStatus(now, status, duration);
             return;
         }
@@ -126,15 +143,22 @@ failure_set(const struct sockaddr *addr, size_t addrlen,
 
     Failure *failure = (Failure *)
         p_malloc(fl.pool, sizeof(*failure)
-                 - sizeof(failure->envelope.address) + addrlen);
+                 - sizeof(failure->envelope.address) + address.GetSize());
     failure->expires = now + duration;
     failure->fade_expires = 0;
     failure->status = status;
-    failure->envelope.length = addrlen;
-    memcpy(&failure->envelope.address, addr, addrlen);
+    failure->envelope.length = address.GetSize();
+    memcpy(&failure->envelope.address, address.GetAddress(),
+           address.GetSize());
 
     failure->next = fl.slots[slot];
     fl.slots[slot] = failure;
+}
+
+void
+failure_add(SocketAddress address)
+{
+    failure_set(address, FAILURE_FAILED, 20);
 }
 
 static bool
@@ -167,19 +191,17 @@ failure_unset2(struct pool *pool, Failure **failure_r,
 }
 
 void
-failure_unset(const struct sockaddr *addr, size_t addrlen,
-              enum failure_status status)
+failure_unset(SocketAddress address, enum failure_status status)
 {
-    unsigned slot = djb_hash(addr, addrlen) % FAILURE_SLOTS;
-    Failure **failure_r, *failure;
+    assert(!address.IsNull());
 
-    assert(addr != nullptr);
+    unsigned slot = Hash(address) % FAILURE_SLOTS;
+    Failure **failure_r, *failure;
 
     for (failure_r = &fl.slots[slot], failure = *failure_r;
          failure != nullptr;
          failure_r = &failure->next, failure = *failure_r) {
-        if (failure->envelope.length == addrlen &&
-            memcmp(&failure->envelope.address, addr, addrlen) == 0) {
+        if (Compare(failure->envelope, address)) {
             /* found it: remove it */
             failure_unset2(fl.pool, failure_r, *failure, status);
             return;
@@ -188,17 +210,17 @@ failure_unset(const struct sockaddr *addr, size_t addrlen,
 }
 
 enum failure_status
-failure_get_status(const struct sockaddr *address, size_t length)
+failure_get_status(SocketAddress address)
 {
-    unsigned slot = djb_hash(address, length) % FAILURE_SLOTS;
+    assert(!address.IsNull());
+
+    unsigned slot = Hash(address) % FAILURE_SLOTS;
     Failure *failure;
 
     assert(address != nullptr);
-    assert(length >= sizeof(failure->envelope.address));
 
     for (failure = fl.slots[slot]; failure != nullptr; failure = failure->next)
-        if (failure->envelope.length == length &&
-            memcmp(&failure->envelope.address, address, length) == 0)
+        if (Compare(failure->envelope, address))
             return failure->GetStatus();
 
     return FAILURE_OK;

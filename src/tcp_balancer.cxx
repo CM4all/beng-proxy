@@ -95,9 +95,7 @@ tcp_balancer_stock_ready(struct stock_item *item, void *ctx)
 
     last_address = request->current_address;
 
-    failure_unset(&request->current_address->address,
-                  request->current_address->length,
-                  FAILURE_FAILED);
+    failure_unset(*request->current_address, FAILURE_FAILED);
 
     request->handler->ready(item, request->handler_ctx);
 }
@@ -107,8 +105,7 @@ tcp_balancer_stock_error(GError *error, void *ctx)
 {
     struct tcp_balancer_request *request = (struct tcp_balancer_request *)ctx;
 
-    failure_add(&request->current_address->address,
-                request->current_address->length);
+    failure_add(*request->current_address);
 
     if (request->retries-- > 0) {
         /* try again, next address */

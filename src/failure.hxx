@@ -12,7 +12,7 @@
 #include <stddef.h>
 
 struct pool;
-struct sockaddr;
+class SocketAddress;
 
 enum failure_status {
     /**
@@ -49,14 +49,11 @@ void
 failure_deinit(void);
 
 void
-failure_set(const struct sockaddr *address, size_t length,
+failure_set(SocketAddress address,
             enum failure_status status, unsigned duration);
 
-static inline void
-failure_add(const struct sockaddr *address, size_t length)
-{
-    failure_set(address, length, FAILURE_FAILED, 20);
-}
+void
+failure_add(SocketAddress address);
 
 /**
  * Unset a failure status.
@@ -65,11 +62,10 @@ failure_add(const struct sockaddr *address, size_t length)
  * status that matches everything
  */
 void
-failure_unset(const struct sockaddr *address, size_t length,
-              enum failure_status status);
+failure_unset(SocketAddress address, enum failure_status status);
 
 gcc_pure
 enum failure_status
-failure_get_status(const struct sockaddr *address, size_t length);
+failure_get_status(SocketAddress address);
 
 #endif

@@ -8,6 +8,7 @@
 #include "cache.hxx"
 #include "address_list.hxx"
 #include "address_envelope.hxx"
+#include "net/SocketAddress.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
 #include "pool.hxx"
@@ -40,8 +41,7 @@ struct balancer {
 static bool
 check_failure(const struct address_envelope &envelope, bool allow_fade)
 {
-    enum failure_status status = failure_get_status(&envelope.address,
-                                                    envelope.length);
+    enum failure_status status = failure_get_status(envelope);
     if (status == FAILURE_FADE && allow_fade)
         status = FAILURE_OK;
     return status == FAILURE_OK;

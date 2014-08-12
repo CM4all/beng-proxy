@@ -70,11 +70,11 @@ lb_monitor::Success()
 
     state = true;
 
-    failure_unset(address, address.GetSize(), FAILURE_MONITOR);
+    failure_unset(address, FAILURE_MONITOR);
 
     if (fade) {
         fade = false;
-        failure_unset(address, address.GetSize(), FAILURE_FADE);
+        failure_unset(address, FAILURE_FADE);
     }
 
     evtimer_add(&interval_event, &interval);
@@ -92,7 +92,7 @@ lb_monitor::Fade()
         daemon_log(6, "monitor still fade: %s\n", name);
 
     fade = true;
-    failure_set(address, address.GetSize(), FAILURE_FADE, 300);
+    failure_set(address, FAILURE_FADE, 300);
 
     evtimer_add(&interval_event, &interval);
 }
@@ -106,7 +106,7 @@ lb_monitor::Timeout()
     daemon_log(state ? 3 : 6, "monitor timeout: %s\n", name);
 
     state = false;
-    failure_set(address, address.GetSize(), FAILURE_MONITOR, 0);
+    failure_set(address, FAILURE_MONITOR, 0);
 
     evtimer_add(&interval_event, &interval);
 }
@@ -126,7 +126,7 @@ lb_monitor::Error(GError *error)
     g_error_free(error);
 
     state = false;
-    failure_set(address, address.GetSize(), FAILURE_MONITOR, 0);
+    failure_set(address, FAILURE_MONITOR, 0);
 
     evtimer_add(&interval_event, &interval);
 }
@@ -164,8 +164,7 @@ lb_monitor_timeout_callback(gcc_unused int fd, gcc_unused short event,
     monitor->async_ref.Clear();
 
     monitor->state = false;
-    failure_set(monitor->address, monitor->address.GetSize(),
-                FAILURE_MONITOR, 0);
+    failure_set(monitor->address, FAILURE_MONITOR, 0);
 
     evtimer_add(&monitor->interval_event, &monitor->interval);
 }

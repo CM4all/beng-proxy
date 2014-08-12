@@ -60,7 +60,7 @@ enable_node(const struct lb_instance *instance,
                              node->address.GetSize());
     daemon_log(4, "enabling node %s (%s)\n", node_name, buffer);
 
-    failure_unset(with_port, node->address.GetSize(), FAILURE_OK);
+    failure_unset({with_port, node->address.GetSize()}, FAILURE_OK);
 }
 
 static void
@@ -103,7 +103,7 @@ fade_node(const struct lb_instance *instance,
     daemon_log(4, "fading node %s (%s)\n", node_name, buffer);
 
     /* set status "FADE" for 3 hours */
-    failure_set(with_port, node->address.GetSize(), FAILURE_FADE, 3 * 3600);
+    failure_set({with_port, node->address.GetSize()}, FAILURE_FADE, 3 * 3600);
 }
 
 G_GNUC_CONST
@@ -197,7 +197,7 @@ query_node_status(struct lb_control *control,
                              node->address.GetSize());
 
     enum failure_status status =
-        failure_get_status(with_port, node->address.GetSize());
+        failure_get_status({with_port, node->address.GetSize()});
     const char *s = failure_status_to_string(status);
 
     GError *error = NULL;
