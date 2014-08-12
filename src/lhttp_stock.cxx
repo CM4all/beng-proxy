@@ -215,22 +215,22 @@ static const struct stock_class lhttp_stock_class = {
 struct lhttp_stock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    auto lhttp_stock = NewFromPool<struct lhttp_stock>(*pool);
+    auto ls = new lhttp_stock();
 
     struct hstock *child_stock = child_stock_new(pool, limit, max_idle,
                                                  &lhttp_child_stock_class);
-    lhttp_stock->child_stock = mstock_new(child_stock);
-    lhttp_stock->hstock = hstock_new(pool, &lhttp_stock_class, lhttp_stock,
-                                     limit, max_idle);
+    ls->child_stock = mstock_new(child_stock);
+    ls->hstock = hstock_new(pool, &lhttp_stock_class, ls, limit, max_idle);
 
-    return lhttp_stock;
+    return ls;
 }
 
 void
-lhttp_stock_free(struct lhttp_stock *lhttp_stock)
+lhttp_stock_free(struct lhttp_stock *ls)
 {
-    hstock_free(lhttp_stock->hstock);
-    mstock_free(lhttp_stock->child_stock);
+    hstock_free(ls->hstock);
+    mstock_free(ls->child_stock);
+    delete ls;
 }
 
 struct stock_item *
