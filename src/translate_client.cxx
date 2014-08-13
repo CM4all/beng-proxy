@@ -126,7 +126,7 @@ struct TranslateClient {
     struct lhttp_address *lhttp_address;
 
     /** the current address list being edited */
-    struct address_list *address_list;
+    AddressList *address_list;
 
     /**
      * Default port for #TRANSLATE_ADDRESS_STRING.
@@ -507,7 +507,7 @@ translate_add_transformation(TranslateClient *client)
 }
 
 static bool
-parse_address_string(struct pool *pool, struct address_list *list,
+parse_address_string(struct pool *pool, AddressList *list,
                      const char *p, int default_port)
 {
     if (*p == '/' || *p == '@') {

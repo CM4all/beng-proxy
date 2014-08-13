@@ -160,7 +160,7 @@ struct lb_cluster_config {
     /**
      * A list of node addresses.
      */
-    struct address_list address_list;
+    AddressList address_list;
 
     lb_cluster_config(const char *_name)
         :name(_name),

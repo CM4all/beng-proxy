@@ -1,5 +1,5 @@
 /*
- * Load balancer for struct address_list.
+ * Load balancer for AddressList.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
@@ -11,7 +11,7 @@
 
 struct pool;
 struct balancer;
-struct address_list;
+struct AddressList;
 struct sockaddr;
 
 struct balancer *
@@ -29,7 +29,7 @@ balancer_free(struct balancer *balancer);
  * address if stickiness is enabled; 0 if there is no session
  */
 const struct address_envelope &
-balancer_get(struct balancer &balancer, const struct address_list &list,
+balancer_get(struct balancer &balancer, const AddressList &list,
              unsigned session);
 
 void

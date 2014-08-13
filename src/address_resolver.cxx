@@ -13,7 +13,7 @@
 #include <netdb.h>
 
 bool
-address_list_resolve(struct pool *pool, struct address_list *address_list,
+address_list_resolve(struct pool *pool, AddressList *address_list,
                      const char *host_and_port, int default_port,
                      const struct addrinfo *hints,
                      GError **error_r)
@@ -39,13 +39,13 @@ address_list_resolve(struct pool *pool, struct address_list *address_list,
     return true;
 }
 
-struct address_list *
+AddressList *
 address_list_resolve_new(struct pool *pool,
                          const char *host_and_port, int default_port,
                          const struct addrinfo *hints,
                          GError **error_r)
 {
-    auto address_list = NewFromPool<struct address_list>(*pool);
+    auto address_list = NewFromPool<AddressList>(*pool);
     address_list->Init();
     if (!address_list_resolve(pool, address_list,
                               host_and_port, default_port, hints, error_r)) {

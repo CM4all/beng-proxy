@@ -55,7 +55,7 @@ struct http_address {
      */
     const char *expand_path;
 
-    struct address_list addresses;
+    AddressList addresses;
 
     /**
      * Build the absolute URI from this object, but use the specified path

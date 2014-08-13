@@ -1,5 +1,5 @@
 /*
- * Load balancer for struct address_list.
+ * Load balancer for AddressList.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
@@ -25,7 +25,7 @@ struct balancer_item {
     /** the index of the item that will be returned next */
     unsigned next;
 
-    struct address_list addresses;
+    AddressList addresses;
 };
 
 struct balancer {
@@ -64,7 +64,7 @@ check_envelope(const struct address_envelope &envelope, bool allow_fade)
 }
 
 static const struct address_envelope &
-next_failover_address(const struct address_list &list)
+next_failover_address(const AddressList &list)
 {
     assert(list.GetSize() > 0);
 
@@ -110,7 +110,7 @@ next_address_checked(struct balancer_item *item, bool allow_fade)
 }
 
 static const struct address_envelope &
-next_sticky_address_checked(const struct address_list &al, unsigned session)
+next_sticky_address_checked(const AddressList &al, unsigned session)
 {
     assert(al.GetSize() >= 2);
 
@@ -180,7 +180,7 @@ balancer_free(struct balancer *balancer)
 }
 
 const struct address_envelope &
-balancer_get(struct balancer &balancer, const struct address_list &list,
+balancer_get(struct balancer &balancer, const AddressList &list,
              unsigned session)
 {
     struct balancer_item *item;

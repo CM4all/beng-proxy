@@ -367,7 +367,7 @@ static constexpr ConnectSocketHandler lb_tcp_client_socket_handler = {
 
 gcc_pure
 static unsigned
-lb_tcp_sticky(const struct address_list &address_list,
+lb_tcp_sticky(const AddressList &address_list,
               const struct sockaddr *remote_address)
 {
     switch (address_list.sticky_mode) {
@@ -394,7 +394,7 @@ lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            bool transparent_source,
-           const struct address_list &address_list,
+           const AddressList &address_list,
            struct balancer &balancer,
            const struct lb_tcp_handler *handler, void *ctx,
            lb_tcp **tcp_r)

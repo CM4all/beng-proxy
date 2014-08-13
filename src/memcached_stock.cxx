@@ -24,12 +24,12 @@
 struct memcached_stock {
     struct tcp_balancer *tcp_balancer;
 
-    const struct address_list *address;
+    const AddressList *address;
 };
 
 struct memcached_stock *
 memcached_stock_new(struct pool &pool, struct tcp_balancer *tcp_balancer,
-                    const struct address_list *address)
+                    const AddressList *address)
 {
     auto stock = PoolAlloc<memcached_stock>(pool);
 

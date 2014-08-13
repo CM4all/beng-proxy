@@ -14,7 +14,7 @@
 #include <string.h>
 
 void
-address_list::CopyFrom(struct pool *pool, const struct address_list &src)
+AddressList::CopyFrom(struct pool *pool, const AddressList &src)
 {
     Init();
     sticky_mode = src.sticky_mode;
@@ -24,8 +24,8 @@ address_list::CopyFrom(struct pool *pool, const struct address_list &src)
 }
 
 bool
-address_list::Add(struct pool *pool,
-                  const struct sockaddr *address, size_t length)
+AddressList::Add(struct pool *pool,
+                 const struct sockaddr *address, size_t length)
 {
     if (addresses.full())
         return false;
@@ -40,7 +40,7 @@ address_list::Add(struct pool *pool,
 }
 
 const struct address_envelope *
-address_list::GetFirst() const
+AddressList::GetFirst() const
 {
     if (addresses.empty())
         return nullptr;
@@ -49,7 +49,7 @@ address_list::GetFirst() const
 }
 
 const char *
-address_list::GetKey() const
+AddressList::GetKey() const
 {
     static char buffer[2048];
     size_t length = 0;

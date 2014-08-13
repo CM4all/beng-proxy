@@ -78,7 +78,7 @@ int main(int argc, char **argv) {
     tpool_init(root_pool);
     ctx.pool = pool_new_linear(root_pool, "test", 8192);
 
-    struct address_list address_list;
+    AddressList address_list;
     address_list.Init();
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;

@@ -42,7 +42,7 @@ struct tcp_balancer_request {
      */
     unsigned retries;
 
-    const struct address_list *address_list;
+    const AddressList *address_list;
     const struct address_envelope *current_address;
 
     const struct stock_get_handler *handler;
@@ -142,7 +142,7 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  bool ip_transparent,
                  SocketAddress bind_address,
                  unsigned session_sticky,
-                 const struct address_list *address_list,
+                 const AddressList *address_list,
                  unsigned timeout,
                  const struct stock_get_handler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)

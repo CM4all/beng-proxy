@@ -147,7 +147,7 @@ send_fallback(struct http_server_request *request,
  * failure.
  */
 static unsigned
-generate_cookie(const struct address_list *list)
+generate_cookie(const AddressList *list)
 {
     assert(list->GetSize() >= 2);
 

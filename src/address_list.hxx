@@ -19,7 +19,7 @@
 struct pool;
 struct sockaddr;
 
-struct address_list {
+struct AddressList {
     static constexpr size_t MAX_ADDRESSES = 16;
 
     enum sticky_mode sticky_mode;
@@ -35,7 +35,7 @@ struct address_list {
         addresses.clear();
     }
 
-    void CopyFrom(struct pool *pool, const struct address_list &src);
+    void CopyFrom(struct pool *pool, const AddressList &src);
 
     void SetStickyMode(enum sticky_mode _sticky_mode) {
         sticky_mode = _sticky_mode;

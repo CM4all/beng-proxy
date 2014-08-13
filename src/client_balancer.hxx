@@ -9,7 +9,7 @@
 
 struct pool;
 struct balancer;
-struct address_list;
+struct AddressList;
 struct ConnectSocketHandler;
 struct async_operation_ref;
 class SocketAddress;
@@ -26,7 +26,7 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         bool ip_transparent,
                         SocketAddress bind_address,
                         unsigned session_sticky,
-                        const struct address_list *address_list,
+                        const AddressList *address_list,
                         unsigned timeout,
                         const ConnectSocketHandler *handler, void *ctx,
                         struct async_operation_ref *async_ref);

@@ -47,20 +47,20 @@ public:
         return balancer;
     }
 
-    const struct address_envelope &Get(const struct address_list &al,
+    const struct address_envelope &Get(const AddressList &al,
                                        unsigned session=0) {
         return balancer_get(*balancer, al, session);
     }
 };
 
-class AddressListBuilder : public address_list {
+class AddressListBuilder : public AddressList {
     struct pool *pool;
 
 public:
     AddressListBuilder(struct pool *_pool,
                        enum sticky_mode _sticky=STICKY_NONE)
         :pool(_pool) {
-        address_list::Init();
+        AddressList::Init();
         sticky_mode = _sticky;
     }
 
@@ -70,7 +70,7 @@ public:
         if (result != 0)
             return false;
 
-        bool success = address_list::Add(pool, ai->ai_addr, ai->ai_addrlen);
+        bool success = AddressList::Add(pool, ai->ai_addr, ai->ai_addrlen);
         freeaddrinfo(ai);
         return success;
     }

@@ -14,6 +14,7 @@
 #include <stddef.h>
 
 struct pool;
+struct AddressList;
 
 #ifdef NDEBUG
 static const bool debug_mode = false;
@@ -52,7 +53,7 @@ struct config {
 
     const char *access_logger;
 
-    struct address_list *memcached_server;
+    AddressList *memcached_server;
 
     /**
      * The Bulldog data path.

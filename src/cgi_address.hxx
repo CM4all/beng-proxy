@@ -68,7 +68,7 @@ struct cgi_address {
      * of the addresses instead of spawning a new child
      * process.
      */
-    struct address_list address_list;
+    AddressList address_list;
 
     gcc_pure
     const char *GetURI(struct pool *pool) const;

@@ -102,7 +102,7 @@ main(int argc, char **argv)
 
     ctx.balancer = balancer_new(*pool);
 
-    struct address_list address_list;
+    AddressList address_list;
     address_list.Init();
 
     struct addrinfo hints;
