@@ -38,6 +38,10 @@ StaticSocketAddress::SetLocal(const char *path)
     sun.sun_family = AF_LOCAL;
     memcpy(sun.sun_path, path, path_length + 1);
 
+    if (sun.sun_path[0] == '@')
+        /* abstract socket address */
+        sun.sun_path[0] = 0;
+
     size = SUN_LEN(&sun);
 }
 

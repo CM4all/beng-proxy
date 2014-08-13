@@ -44,6 +44,10 @@ AllocatedSocketAddress::SetLocal(const char *path)
     sun = (struct sockaddr_un *)address;
     sun->sun_family = AF_UNIX;
     memcpy(sun->sun_path, path, path_length + 1);
+
+    if (sun->sun_path[0] == '@')
+        /* abstract socket address */
+        sun->sun_path[0] = 0;
 }
 
 bool
