@@ -116,8 +116,6 @@ ServerSocket::ListenTCP(unsigned port, Error &error)
 bool
 ServerSocket::ListenPath(const char *path, Error &error)
 {
-    unlink(path);
-
     StaticSocketAddress address;
     address.SetLocal(path);
 
