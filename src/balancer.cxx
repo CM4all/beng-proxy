@@ -39,9 +39,9 @@ struct balancer {
 };
 
 static bool
-check_failure(const struct address_envelope &envelope, bool allow_fade)
+check_failure(const SocketAddress address, bool allow_fade)
 {
-    enum failure_status status = failure_get_status(envelope);
+    enum failure_status status = failure_get_status(address);
     if (status == FAILURE_FADE && allow_fade)
         status = FAILURE_OK;
     return status == FAILURE_OK;
@@ -49,18 +49,18 @@ check_failure(const struct address_envelope &envelope, bool allow_fade)
 
 gcc_pure
 static bool
-check_bulldog(const struct address_envelope &envelope, bool allow_fade)
+check_bulldog(const SocketAddress address, bool allow_fade)
 {
-    return bulldog_check(&envelope.address, envelope.length) &&
+    return bulldog_check(address.GetAddress(), address.GetSize()) &&
         (allow_fade ||
-         !bulldog_is_fading(&envelope.address, envelope.length));
+         !bulldog_is_fading(address.GetAddress(), address.GetSize()));
 }
 
 static bool
-check_envelope(const struct address_envelope &envelope, bool allow_fade)
+CheckAddress(const SocketAddress address, bool allow_fade)
 {
-    return check_failure(envelope, allow_fade) &&
-        check_bulldog(envelope, allow_fade);
+    return check_failure(address, allow_fade) &&
+        check_bulldog(address, allow_fade);
 }
 
 static const struct address_envelope &
@@ -70,7 +70,7 @@ next_failover_address(const AddressList &list)
 
     for (unsigned i = 0; i < list.GetSize(); ++i) {
         const struct address_envelope &envelope = list[i];
-        if (check_envelope(envelope, true))
+        if (CheckAddress(envelope, true))
             return envelope;
     }
 
@@ -99,7 +99,7 @@ next_address_checked(struct balancer_item *item, bool allow_fade)
     const struct address_envelope &first = next_address(item);
     const struct address_envelope *ret = &first;
     do {
-        if (check_envelope(*ret, allow_fade))
+        if (CheckAddress(*ret, allow_fade))
             return *ret;
 
         ret = &next_address(item);
@@ -120,7 +120,7 @@ next_sticky_address_checked(const AddressList &al, unsigned session)
     const struct address_envelope &first = al[i];
     const struct address_envelope *ret = &first;
     do {
-        if (check_envelope(*ret, allow_fade))
+        if (CheckAddress(*ret, allow_fade))
             return *ret;
 
         /* only the first iteration is allowed to override
