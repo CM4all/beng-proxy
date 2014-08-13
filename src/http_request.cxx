@@ -18,7 +18,6 @@
 #include "lease.hxx"
 #include "abort_close.hxx"
 #include "failure.hxx"
-#include "address_envelope.hxx"
 #include "istream.h"
 #include "filtered_socket.hxx"
 #include "pool.hxx"

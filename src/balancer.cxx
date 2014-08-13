@@ -7,7 +7,6 @@
 #include "balancer.hxx"
 #include "cache.hxx"
 #include "address_list.hxx"
-#include "address_envelope.hxx"
 #include "net/SocketAddress.hxx"
 #include "failure.hxx"
 #include "bulldog.h"
@@ -63,41 +62,39 @@ CheckAddress(const SocketAddress address, bool allow_fade)
         check_bulldog(address, allow_fade);
 }
 
-static const struct address_envelope &
+static SocketAddress
 next_failover_address(const AddressList &list)
 {
     assert(list.GetSize() > 0);
 
-    for (unsigned i = 0; i < list.GetSize(); ++i) {
-        const struct address_envelope &envelope = list[i];
-        if (CheckAddress(envelope, true))
-            return envelope;
-    }
+    for (auto i : list)
+        if (CheckAddress(i, true))
+            return i;
 
     /* none available - return first node as last resort */
     return list[0];
 }
 
-static const struct address_envelope &
+static const SocketAddress &
 next_address(struct balancer_item *item)
 {
     assert(item->addresses.GetSize() >= 2);
     assert(item->next < item->addresses.GetSize());
 
-    const struct address_envelope &envelope = item->addresses[item->next];
+    const SocketAddress &address = item->addresses[item->next];
 
     ++item->next;
     if (item->next >= item->addresses.GetSize())
         item->next = 0;
 
-    return envelope;
+    return address;
 }
 
-static const struct address_envelope &
+static const SocketAddress &
 next_address_checked(struct balancer_item *item, bool allow_fade)
 {
-    const struct address_envelope &first = next_address(item);
-    const struct address_envelope *ret = &first;
+    const SocketAddress &first = next_address(item);
+    const SocketAddress *ret = &first;
     do {
         if (CheckAddress(*ret, allow_fade))
             return *ret;
@@ -109,7 +106,7 @@ next_address_checked(struct balancer_item *item, bool allow_fade)
     return first;
 }
 
-static const struct address_envelope &
+static const SocketAddress &
 next_sticky_address_checked(const AddressList &al, unsigned session)
 {
     assert(al.GetSize() >= 2);
@@ -117,8 +114,8 @@ next_sticky_address_checked(const AddressList &al, unsigned session)
     unsigned i = session % al.GetSize();
     bool allow_fade = true;
 
-    const struct address_envelope &first = al[i];
-    const struct address_envelope *ret = &first;
+    const SocketAddress &first = al[i];
+    const SocketAddress *ret = &first;
     do {
         if (CheckAddress(*ret, allow_fade))
             return *ret;
@@ -179,7 +176,7 @@ balancer_free(struct balancer *balancer)
     cache_close(balancer->cache);
 }
 
-const struct address_envelope &
+SocketAddress
 balancer_get(struct balancer &balancer, const AddressList &list,
              unsigned session)
 {

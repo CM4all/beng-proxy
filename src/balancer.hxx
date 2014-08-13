@@ -12,7 +12,7 @@
 struct pool;
 struct balancer;
 struct AddressList;
-struct sockaddr;
+class SocketAddress;
 
 struct balancer *
 balancer_new(struct pool &pool);
@@ -28,7 +28,7 @@ balancer_free(struct balancer *balancer);
  * @param session a portion of the session id used to select an
  * address if stickiness is enabled; 0 if there is no session
  */
-const struct address_envelope &
+SocketAddress
 balancer_get(struct balancer &balancer, const AddressList &list,
              unsigned session);
 

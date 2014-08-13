@@ -7,7 +7,6 @@
 #include "tcp_balancer.hxx"
 #include "tcp_stock.hxx"
 #include "stock.hxx"
-#include "address_envelope.hxx"
 #include "address_list.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
@@ -58,17 +57,17 @@ extern const struct stock_get_handler tcp_balancer_stock_handler;
 static void
 tcp_balancer_next(struct tcp_balancer_request *request)
 {
-    const struct address_envelope &envelope =
+    const SocketAddress address =
         balancer_get(*request->tcp_balancer->balancer,
                      *request->address_list,
                      request->session_sticky);
 
-    /* we need to copy this address_envelope because it may come from
+    /* we need to copy this address because it may come from
        the balancer's cache, and the according cache item may be
        flushed at any time */
     const struct sockaddr *new_address = (const struct sockaddr *)
-        p_memdup(request->pool, &envelope.address, envelope.length);
-    request->current_address = { new_address, envelope.length };
+        p_memdup(request->pool, address.GetAddress(), address.GetSize());
+    request->current_address = { new_address, address.GetSize() };
 
     tcp_stock_get(request->tcp_balancer->tcp_stock, request->pool,
                   nullptr,

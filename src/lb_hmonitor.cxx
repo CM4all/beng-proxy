@@ -13,7 +13,6 @@
 #include "pool.hxx"
 #include "tpool.h"
 #include "hashmap.hxx"
-#include "address_envelope.hxx"
 #include "address_edit.h"
 #include "net/SocketAddress.hxx"
 

@@ -6,7 +6,6 @@
 
 #include "client_balancer.hxx"
 #include "net/ConnectSocket.hxx"
-#include "address_envelope.hxx"
 #include "address_list.hxx"
 #include "balancer.hxx"
 #include "failure.hxx"
@@ -40,7 +39,7 @@ struct client_balancer_request {
     unsigned retries;
 
     const AddressList *address_list;
-    const struct address_envelope *current_address;
+    SocketAddress current_address;
 
     const ConnectSocketHandler *handler;
     void *handler_ctx;
@@ -53,16 +52,16 @@ extern const ConnectSocketHandler client_balancer_socket_handler;
 static void
 client_balancer_next(struct client_balancer_request *request)
 {
-    const struct address_envelope &envelope =
+    const SocketAddress address =
         balancer_get(*request->balancer, *request->address_list,
                      request->session_sticky);
-    request->current_address = &envelope;
+    request->current_address = address;
 
     client_socket_new(*request->pool,
-                      envelope.address.sa_family, SOCK_STREAM, 0,
+                      address.GetFamily(), SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address,
-                      SocketAddress(&envelope.address, envelope.length),
+                      address,
                       request->timeout,
                       client_balancer_socket_handler, request,
                       *request->async_ref);
@@ -79,7 +78,7 @@ client_balancer_socket_success(SocketDescriptor &&fd, void *ctx)
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
 
-    failure_unset(*request->current_address, FAILURE_FAILED);
+    failure_unset(request->current_address, FAILURE_FAILED);
 
     request->handler->success(std::move(fd), request->handler_ctx);
 }
@@ -90,7 +89,7 @@ client_balancer_socket_timeout(void *ctx)
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
 
-    failure_add(*request->current_address);
+    failure_add(request->current_address);
 
     if (request->retries-- > 0)
         /* try again, next address */
@@ -106,7 +105,7 @@ client_balancer_socket_error(GError *error, void *ctx)
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
 
-    failure_add(*request->current_address);
+    failure_add(request->current_address);
 
     if (request->retries-- > 0) {
         /* try again, next address */

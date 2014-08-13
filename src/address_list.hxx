@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_ADDRESS_LIST_HXX
 #define BENG_PROXY_ADDRESS_LIST_HXX
 
+#include "net/SocketAddress.hxx"
 #include "util/TrivialArray.hxx"
 #include "util/DereferenceIterator.hxx"
 #include "sticky.h"
@@ -24,9 +25,8 @@ struct AddressList {
 
     enum sticky_mode sticky_mode;
 
-    typedef TrivialArray<struct address_envelope *, MAX_ADDRESSES> Array;
-    typedef DereferenceIterator<Array::const_iterator,
-                                struct address_envelope> const_iterator;
+    typedef TrivialArray<SocketAddress, MAX_ADDRESSES> Array;
+    typedef Array::const_iterator const_iterator;
 
     Array addresses;
 
@@ -71,14 +71,14 @@ struct AddressList {
      */
     bool Add(struct pool *pool, SocketAddress address);
 
-    const struct address_envelope &operator[](unsigned n) const {
-        const struct address_envelope *envelope = addresses[n];
-        assert(envelope != nullptr);
-        return *envelope;
+    const SocketAddress &operator[](unsigned n) const {
+        assert(addresses[n].IsDefined());
+
+        return addresses[n];
     }
 
     gcc_pure
-    const struct address_envelope *GetFirst() const;
+    const SocketAddress *GetFirst() const;
 
     /**
      * Generates a unique string which identifies this object in a hash

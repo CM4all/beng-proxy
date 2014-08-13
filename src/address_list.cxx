@@ -5,7 +5,6 @@
  */
 
 #include "address_list.hxx"
-#include "address_envelope.hxx"
 #include "pool.hxx"
 
 #include <socket/address.h>
@@ -20,7 +19,7 @@ AddressList::CopyFrom(struct pool *pool, const AddressList &src)
     sticky_mode = src.sticky_mode;
 
     for (const auto &i : src)
-        Add(pool, { &i.address, i.length });
+        Add(pool, i);
 }
 
 bool
@@ -29,23 +28,19 @@ AddressList::Add(struct pool *pool, const SocketAddress address)
     if (addresses.full())
         return false;
 
-    struct address_envelope *envelope = (struct address_envelope *)
-        p_malloc(pool, sizeof(*envelope) - sizeof(envelope->address)
-                 + address.GetSize());
-    envelope->length = address.GetSize();
-    memcpy(&envelope->address, address.GetAddress(), address.GetSize());
-
-    addresses.append(envelope);
+    const struct sockaddr *new_address = (const struct sockaddr *)
+        p_memdup(pool, address.GetAddress(), address.GetSize());
+    addresses.push_back({new_address, address.GetSize()});
     return true;
 }
 
-const struct address_envelope *
+const SocketAddress *
 AddressList::GetFirst() const
 {
     if (addresses.empty())
         return nullptr;
 
-    return addresses[0];
+    return &addresses.front();
 }
 
 const char *
@@ -61,7 +56,7 @@ AddressList::GetKey() const
 
         success = socket_address_to_string(buffer + length,
                                            sizeof(buffer) - length,
-                                           &i.address, i.length);
+                                           i.GetAddress(), i.GetSize());
         if (success)
             length += strlen(buffer + length);
     }

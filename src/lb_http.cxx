@@ -14,7 +14,6 @@
 #include "lb_headers.hxx"
 #include "lb_log.hxx"
 #include "ssl_filter.hxx"
-#include "address_envelope.hxx"
 #include "address_sticky.h"
 #include "http_server.hxx"
 #include "http_client.hxx"
@@ -156,11 +155,10 @@ generate_cookie(const AddressList *list)
     unsigned i = first;
     do {
         assert(i >= 1 && i <= list->GetSize());
-        const struct address_envelope *envelope =
-            list->addresses[i % list->GetSize()];
-        if (failure_get_status(*envelope) == FAILURE_OK &&
-            bulldog_check(&envelope->address, envelope->length) &&
-            !bulldog_is_fading(&envelope->address, envelope->length))
+        const SocketAddress address = list->addresses[i % list->GetSize()];
+        if (failure_get_status(address) == FAILURE_OK &&
+            bulldog_check(address.GetAddress(), address.GetSize()) &&
+            !bulldog_is_fading(address.GetAddress(), address.GetSize()))
             return i;
 
         i = lb_cookie_next(list->GetSize(), i);

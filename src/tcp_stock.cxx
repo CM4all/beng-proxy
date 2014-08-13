@@ -9,7 +9,6 @@
 #include "stock.hxx"
 #include "async.hxx"
 #include "address_list.hxx"
-#include "address_envelope.hxx"
 #include "pevent.h"
 #include "gerrno.h"
 #include "pool.hxx"
