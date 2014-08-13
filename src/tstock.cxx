@@ -10,7 +10,7 @@
 #include "tcp_stock.hxx"
 #include "lease.hxx"
 #include "pool.hxx"
-#include "net/SocketAddress.hxx"
+#include "net/AllocatedSocketAddress.hxx"
 
 #include <daemon/log.h>
 
@@ -21,8 +21,7 @@
 struct tstock {
     struct hstock *tcp_stock;
 
-    struct sockaddr_un address;
-    socklen_t address_size;
+    AllocatedSocketAddress address;
 
     const char *address_string;
 };
@@ -105,20 +104,7 @@ tstock_new(struct pool *pool, struct hstock *tcp_stock, const char *socket_path)
     assert(socket_path != nullptr);
 
     stock->tcp_stock = tcp_stock;
-
-    size_t socket_path_length = strlen(socket_path);
-    if (socket_path_length >= sizeof(stock->address.sun_path))
-        socket_path_length = sizeof(stock->address.sun_path) - 1;
-
-    stock->address.sun_family = AF_UNIX;
-    memcpy(stock->address.sun_path, socket_path, socket_path_length);
-    stock->address.sun_path[socket_path_length] = 0;
-
-    stock->address_size = SUN_LEN(&stock->address);
-
-    if (socket_path[0] == '@')
-        stock->address.sun_path[0] = 0;
-
+    stock->address.SetLocal(socket_path);
     stock->address_string = socket_path;
 
     return stock;
@@ -141,7 +127,7 @@ tstock_translate(struct tstock *stock, struct pool *pool,
 
     tcp_stock_get(stock->tcp_stock, pool, stock->address_string,
                   false, SocketAddress::Null(),
-                  { (const struct sockaddr *)&stock->address, stock->address_size },
+                  stock->address,
                   10,
                   &tstock_stock_handler, r,
                   async_ref);
