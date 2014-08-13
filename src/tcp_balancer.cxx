@@ -43,7 +43,7 @@ struct tcp_balancer_request {
     unsigned retries;
 
     const AddressList *address_list;
-    const struct address_envelope *current_address;
+    SocketAddress current_address;
 
     const struct stock_get_handler *handler;
     void *handler_ctx;
@@ -51,7 +51,7 @@ struct tcp_balancer_request {
     struct async_operation_ref *async_ref;
 };
 
-static const struct address_envelope *last_address;
+static SocketAddress last_address;
 
 extern const struct stock_get_handler tcp_balancer_stock_handler;
 
@@ -66,18 +66,15 @@ tcp_balancer_next(struct tcp_balancer_request *request)
     /* we need to copy this address_envelope because it may come from
        the balancer's cache, and the according cache item may be
        flushed at any time */
-    request->current_address = (const struct address_envelope *)
-        p_memdup(request->pool, &envelope,
-                 sizeof(envelope)
-                 - sizeof(envelope.address)
-                 + envelope.length);
+    const struct sockaddr *new_address = (const struct sockaddr *)
+        p_memdup(request->pool, &envelope.address, envelope.length);
+    request->current_address = { new_address, envelope.length };
 
     tcp_stock_get(request->tcp_balancer->tcp_stock, request->pool,
                   nullptr,
                   request->ip_transparent,
                   request->bind_address,
-                  SocketAddress(&request->current_address->address,
-                                request->current_address->length),
+                  request->current_address,
                   request->timeout,
                   &tcp_balancer_stock_handler, request,
                   request->async_ref);
@@ -95,7 +92,7 @@ tcp_balancer_stock_ready(struct stock_item *item, void *ctx)
 
     last_address = request->current_address;
 
-    failure_unset(*request->current_address, FAILURE_FAILED);
+    failure_unset(request->current_address, FAILURE_FAILED);
 
     request->handler->ready(item, request->handler_ctx);
 }
@@ -105,7 +102,7 @@ tcp_balancer_stock_error(GError *error, void *ctx)
 {
     struct tcp_balancer_request *request = (struct tcp_balancer_request *)ctx;
 
-    failure_add(*request->current_address);
+    failure_add(request->current_address);
 
     if (request->retries-- > 0) {
         /* try again, next address */
@@ -179,8 +176,8 @@ tcp_balancer_put(struct tcp_balancer *tcp_balancer, struct stock_item *item,
     tcp_stock_put(tcp_balancer->tcp_stock, item, destroy);
 }
 
-const struct address_envelope *
-tcp_balancer_get_last(void)
+SocketAddress
+tcp_balancer_get_last()
 {
     return last_address;
 }

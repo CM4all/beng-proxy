@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_TCP_BALANCER_HXX
 #define BENG_PROXY_TCP_BALANCER_HXX
 
+#include <inline/compiler.h>
+
 struct hstock;
 struct pool;
 struct balancer;
@@ -55,7 +57,8 @@ tcp_balancer_put(struct tcp_balancer *tcp_balancer, struct stock_item *item,
  * successfully.  This is a dirty hack to allow the #tcp_stock's
  * #stock_handler to find this out.
  */
-const struct address_envelope *
-tcp_balancer_get_last(void);
+gcc_pure
+SocketAddress
+tcp_balancer_get_last();
 
 #endif

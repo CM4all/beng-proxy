@@ -55,7 +55,7 @@ struct lb_request {
     struct async_operation_ref *async_ref;
 
     struct stock_item *stock_item;
-    const struct address_envelope *current_address;
+    SocketAddress current_address;
 
     unsigned new_cookie;
 };
@@ -240,7 +240,7 @@ my_response_abort(GError *error, void *ctx)
     const struct lb_connection *connection = request2->connection;
 
     if (is_server_failure(error))
-        failure_add(*request2->current_address);
+        failure_add(request2->current_address);
 
     lb_connection_log_gerror(2, connection, "Error", error);
 
