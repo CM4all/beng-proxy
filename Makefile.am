@@ -303,7 +303,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/sigutil.h \
 	src/address_quark.h \
 	src/address_resolver.cxx src/address_resolver.hxx \
-	src/address_string.cxx src/address_string.hxx \
 	src/dhashmap.c \
 	src/istream_unlock.cxx \
 	src/ua_classification.c src/ua_classification.h \
@@ -367,9 +366,7 @@ cm4all_beng_lb_SOURCES = \
 	src/balancer.cxx \
 	src/address.c \
 	src/address_list.cxx \
-	src/address_envelope.hxx \
 	src/address_resolver.cxx src/address_resolver.hxx \
-	src/address_string.cxx src/address_string.hxx \
 	src/address_edit.h \
 	src/address_edit.c \
 	src/address_sticky.c src/address_sticky.h \
@@ -844,8 +841,7 @@ test_TrafoExample_LDADD = \
 	$(LIBEVENT_LIBS)
 
 test_run_ping_SOURCES = test/run_ping.cxx \
-	src/ping.cxx \
-	src/address_string.cxx
+	src/ping.cxx
 test_run_ping_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libnet.a \
