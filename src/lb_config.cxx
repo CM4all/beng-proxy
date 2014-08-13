@@ -1316,7 +1316,7 @@ lb_cluster_config_finish(struct pool *pool, lb_cluster_config &config,
                                 member.port)
             : node_address;
 
-        if (!config.address_list.Add(pool, address, node_address.GetSize()))
+        if (!config.address_list.Add(pool, {address, node_address.GetSize()}))
             return _throw(error_r, "Too many members");
     }
 

@@ -27,6 +27,7 @@
 #include "beng-proxy/translation.h"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "net/SocketAddress.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"
 
@@ -522,13 +523,13 @@ parse_address_string(struct pool *pool, AddressList *list,
         sun.sun_family = AF_UNIX;
         memcpy(sun.sun_path, p, path_length + 1);
 
-        size_t size = SUN_LEN(&sun);
+        socklen_t size = SUN_LEN(&sun);
 
         if (*p == '@')
             /* abstract socket */
             sun.sun_path[0] = 0;
 
-        list->Add(pool, (const struct sockaddr *)&sun, size);
+        list->Add(pool, { (const struct sockaddr *)&sun, size });
         return true;
     }
 
@@ -544,7 +545,7 @@ parse_address_string(struct pool *pool, AddressList *list,
         return false;
 
     for (const struct addrinfo *i = ai; i != nullptr; i = i->ai_next)
-        list->Add(pool, i->ai_addr, i->ai_addrlen);
+        list->Add(pool, {i->ai_addr, i->ai_addrlen});
 
     freeaddrinfo(ai);
     return true;
@@ -2053,8 +2054,8 @@ translate_handle_packet(TranslateClient *client,
         }
 
         client->address_list->Add(client->pool,
-                                  (const struct sockaddr *)_payload,
-                                  payload_length);
+                                  SocketAddress((const struct sockaddr *)_payload,
+                                                payload_length));
         return true;
 
 

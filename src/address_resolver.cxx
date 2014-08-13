@@ -6,6 +6,7 @@
 #include "address_list.hxx"
 #include "address_quark.h"
 #include "pool.hxx"
+#include "net/SocketAddress.hxx"
 
 #include <socket/resolver.h>
 
@@ -32,7 +33,7 @@ address_list_resolve(struct pool *pool, AddressList *address_list,
     }
 
     for (const struct addrinfo *i = ai; i != NULL; i = i->ai_next)
-        address_list->Add(pool, i->ai_addr, i->ai_addrlen);
+        address_list->Add(pool, { i->ai_addr, i->ai_addrlen });
 
     freeaddrinfo(ai);
 

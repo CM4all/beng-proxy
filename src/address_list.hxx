@@ -17,7 +17,7 @@
 #include <assert.h>
 
 struct pool;
-struct sockaddr;
+class SocketAddress;
 
 struct AddressList {
     static constexpr size_t MAX_ADDRESSES = 16;
@@ -69,7 +69,7 @@ struct AddressList {
     /**
      * @return false if the list is full
      */
-    bool Add(struct pool *pool, const struct sockaddr *address, size_t length);
+    bool Add(struct pool *pool, SocketAddress address);
 
     const struct address_envelope &operator[](unsigned n) const {
         const struct address_envelope *envelope = addresses[n];

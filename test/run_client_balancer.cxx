@@ -121,7 +121,7 @@ main(int argc, char **argv)
         }
 
         for (struct addrinfo *j = ai; j != nullptr; j = j->ai_next)
-            address_list.Add(pool, ai->ai_addr, ai->ai_addrlen);
+            address_list.Add(pool, {ai->ai_addr, ai->ai_addrlen});
 
         freeaddrinfo(ai);
     }

@@ -20,20 +20,20 @@ AddressList::CopyFrom(struct pool *pool, const AddressList &src)
     sticky_mode = src.sticky_mode;
 
     for (const auto &i : src)
-        Add(pool, &i.address, i.length);
+        Add(pool, { &i.address, i.length });
 }
 
 bool
-AddressList::Add(struct pool *pool,
-                 const struct sockaddr *address, size_t length)
+AddressList::Add(struct pool *pool, const SocketAddress address)
 {
     if (addresses.full())
         return false;
 
     struct address_envelope *envelope = (struct address_envelope *)
-        p_malloc(pool, sizeof(*envelope) - sizeof(envelope->address) + length);
-    envelope->length = length;
-    memcpy(&envelope->address, address, length);
+        p_malloc(pool, sizeof(*envelope) - sizeof(envelope->address)
+                 + address.GetSize());
+    envelope->length = address.GetSize();
+    memcpy(&envelope->address, address.GetAddress(), address.GetSize());
 
     addresses.append(envelope);
     return true;
