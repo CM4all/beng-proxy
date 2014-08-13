@@ -1048,7 +1048,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
         if (parser->config.FindListener(listener->name) != nullptr)
             return _throw(error_r, "Duplicate listener name");
 
-        if (listener->envelope == NULL)
+        if (listener->bind_address.IsNull())
             return _throw(error_r, "Listener has no destination");
 
         if (listener->ssl && !listener->ssl_config.IsValid())
@@ -1073,10 +1073,7 @@ config_parser_feed_listener(struct config_parser *parser, char *p,
         if (!expect_eol(p))
             return syntax_error(error_r);
 
-        listener->envelope = address_envelope_parse(parser->pool,
-                                                    address, 80, true,
-                                                    error_r);
-        if (listener->envelope == NULL)
+        if (!listener->bind_address.Parse(address, 80, true, error_r))
             return false;
 
         return true;

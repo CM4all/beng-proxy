@@ -9,7 +9,6 @@
 #include "lb_connection.hxx"
 #include "lb_config.hxx"
 #include "ssl_factory.hxx"
-#include "address_envelope.hxx"
 #include "util/Error.hxx"
 #include "net/SocketDescriptor.hxx"
 #include "net/SocketAddress.hxx"
@@ -52,10 +51,8 @@ lb_listener::Setup(Error &error)
             return false;
     }
 
-    const struct address_envelope *envelope = config.envelope;
-
-    return Listen(envelope->address.sa_family, SOCK_STREAM, 0,
-                  SocketAddress(&envelope->address, envelope->length),
+    return Listen(config.bind_address.GetFamily(), SOCK_STREAM, 0,
+                  config.bind_address,
                   error);
 }
 

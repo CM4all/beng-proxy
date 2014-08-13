@@ -338,7 +338,7 @@ lb_goto::GetName() const
 struct lb_listener_config {
     std::string name;
 
-    const struct address_envelope *envelope;
+    AllocatedSocketAddress bind_address;
 
     lb_goto destination;
 
@@ -350,7 +350,6 @@ struct lb_listener_config {
 
     lb_listener_config(const char *_name)
         :name(_name),
-         envelope(nullptr),
          ssl(false) {
     }
 };
