@@ -1613,7 +1613,8 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_EXPAND_REDIRECT:
-        if (client->response.redirect == nullptr ||
+        if (client->response.regex == nullptr ||
+            client->response.redirect == nullptr ||
             client->response.expand_redirect != nullptr) {
             translate_client_error(client, "misplaced EXPAND_REDIRECT packet");
             return false;
@@ -2344,7 +2345,8 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (client->resource_address == nullptr) {
+        if (client->response.regex == nullptr ||
+            client->resource_address == nullptr) {
             translate_client_error(client,
                                    "misplaced EXPAND_APPEND packet");
             return false;
@@ -2394,6 +2396,12 @@ translate_handle_packet(TranslateClient *client,
         }
 
     case TRANSLATE_EXPAND_PAIR:
+        if (client->response.regex == nullptr) {
+            translate_client_error(client,
+                                   "misplaced EXPAND_PAIR packet");
+            return false;
+        }
+
         if (client->cgi_address != nullptr) {
             const auto type = client->resource_address->type;
             struct param_array &p = type == RESOURCE_ADDRESS_CGI
@@ -2932,6 +2940,12 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_EXPAND_TEST_PATH:
+        if (client->response.regex == nullptr) {
+            translate_client_error(client,
+                                   "misplaced EXPAND_TEST_PATH packet");
+            return false;
+        }
+
         if (payload_length == 0 || has_null_byte(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed EXPAND_TEST_PATH packet");
@@ -2995,6 +3009,12 @@ translate_handle_packet(TranslateClient *client,
         }
 
     case TRANSLATE_EXPAND_SETENV:
+        if (client->response.regex == nullptr) {
+            translate_client_error(client,
+                                   "misplaced EXPAND_SETENV packet");
+            return false;
+        }
+
         if (client->cgi_address != nullptr) {
             return translate_client_expand_pair(client,
                                                 client->cgi_address->env,
@@ -3012,7 +3032,8 @@ translate_handle_packet(TranslateClient *client,
         }
 
     case TRANSLATE_EXPAND_URI:
-        if (client->response.uri == nullptr ||
+        if (client->response.regex == nullptr ||
+            client->response.uri == nullptr ||
             client->response.expand_uri != nullptr) {
             translate_client_error(client, "misplaced EXPAND_URI packet");
             return false;
@@ -3027,7 +3048,8 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_EXPAND_SITE:
-        if (client->response.site == nullptr ||
+        if (client->response.regex == nullptr ||
+            client->response.site == nullptr ||
             client->response.expand_site != nullptr) {
             translate_client_error(client, "misplaced EXPAND_SITE packet");
             return false;
@@ -3051,6 +3073,12 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_EXPAND_REQUEST_HEADER:
+        if (client->response.regex == nullptr) {
+            translate_client_error(client,
+                                   "misplaced EXPAND_REQUEST_HEADERS packet");
+            return false;
+        }
+
         if (!parse_header(client->pool,
                           client->response.expand_request_headers,
                           "EXPAND_REQUEST_HEADER", payload, payload_length,
