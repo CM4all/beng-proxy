@@ -159,12 +159,13 @@ was_control_consume_input(struct was_control *control)
 
         control->input_buffer.Consume(sizeof(*header) + header->length);
 
-        if (!control->handler->packet(was_command(header->command),
-                                      payload, header->length,
-                                      control->handler_ctx))
-            return false;
+        bool success = control->handler->packet(was_command(header->command),
+                                                payload, header->length,
+                                                control->handler_ctx);
+        assert(!notify.Denotify() || !success);
 
-        assert(!notify.Denotify());
+        if (!success)
+            return false;
     }
 }
 
