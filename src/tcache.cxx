@@ -655,10 +655,8 @@ tcache_expand_response(struct pool *pool, TranslateResponse *response,
     assert(pool != nullptr);
     assert(response != nullptr);
     assert(item != nullptr);
+    assert(item->regex != nullptr);
     assert(uri != nullptr);
-
-    if (item->regex == nullptr)
-        return true;
 
     assert(response->regex != nullptr);
     assert(response->base != nullptr);
