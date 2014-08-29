@@ -29,6 +29,11 @@ access_log(struct http_server_request *request, const char *site,
            uint64_t bytes_received, uint64_t bytes_sent,
            uint64_t duration)
 {
+    assert(request != nullptr);
+    assert(http_method_is_valid(request->method));
+    assert(http_status_is_valid(status));
+    assert(content_length >= 0);
+
     if (log_global_enabled()) {
         log_http_request(time(nullptr) * 1000000,
                          request->method, request->uri,
