@@ -249,7 +249,7 @@ child_register(pid_t pid, const char *name,
 
     auto child = new ChildProcess(pid, name, callback, ctx);
 
-    children.push_front(*child);
+    children.insert(*child);
 
     evtimer_set(&child->kill_timeout_event,
                 child_kill_timeout_callback, child);
