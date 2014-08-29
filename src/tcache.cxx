@@ -362,11 +362,6 @@ struct TranslateCacheRequest {
     TranslateCacheRequest(TranslateCacheRequest &) = delete;
 };
 
-static const GRegexCompileFlags default_regex_compile_flags =
-    GRegexCompileFlags(G_REGEX_MULTILINE|G_REGEX_DOTALL|
-                       G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
-                       G_REGEX_OPTIMIZE);
-
 #ifdef CACHE_LOG
 #include <daemon/log.h>
 #define cache_log(...) daemon_log(__VA_ARGS__)
@@ -1130,15 +1125,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     cache_log(4, "translate_cache: store %s\n", key);
 
     if (response.regex != nullptr) {
-        GRegexCompileFlags compile_flags = default_regex_compile_flags;
-        if (response.IsExpandable())
-            /* enable capturing if we need the match groups */
-            compile_flags = GRegexCompileFlags(compile_flags &
-                                               ~G_REGEX_NO_AUTO_CAPTURE);
-
-        item->regex = g_regex_new(response.regex,
-                                  compile_flags,
-                                  GRegexMatchFlags(0), error_r);
+        item->regex = response.CompileRegex(error_r);
         if (item->regex == nullptr) {
             DeleteUnrefTrashPool(*pool, item);
             g_prefix_error(error_r,
@@ -1150,9 +1137,7 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     }
 
     if (response.inverse_regex != nullptr) {
-        item->inverse_regex = g_regex_new(response.inverse_regex,
-                                          default_regex_compile_flags,
-                                          GRegexMatchFlags(0), error_r);
+        item->inverse_regex = response.CompileInverseRegex(error_r);
         if (item->inverse_regex == nullptr) {
             DeleteUnrefTrashPool(*pool, item);
             g_prefix_error(error_r,

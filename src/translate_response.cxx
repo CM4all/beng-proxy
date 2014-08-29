@@ -13,6 +13,8 @@
 #include "uri_escape.hxx"
 #include "regex.hxx"
 
+#include <glib.h>
+
 #include <string.h>
 
 void
@@ -293,6 +295,34 @@ TranslateResponse::CacheLoad(struct pool *pool, const TranslateResponse &src,
     }
 
     return true;
+}
+
+static constexpr GRegexCompileFlags default_regex_compile_flags =
+    GRegexCompileFlags(G_REGEX_MULTILINE|G_REGEX_DOTALL|
+                       G_REGEX_RAW|G_REGEX_NO_AUTO_CAPTURE|
+                       G_REGEX_OPTIMIZE);
+
+GRegex *
+TranslateResponse::CompileRegex(GError **error_r) const
+{
+    assert(regex != nullptr);
+
+    GRegexCompileFlags compile_flags = default_regex_compile_flags;
+    if (IsExpandable())
+        /* enable capturing if we need the match groups */
+        compile_flags = GRegexCompileFlags(compile_flags &
+                                           ~G_REGEX_NO_AUTO_CAPTURE);
+
+    return g_regex_new(regex, compile_flags, GRegexMatchFlags(0), error_r);
+}
+
+GRegex *
+TranslateResponse::CompileInverseRegex(GError **error_r) const
+{
+    assert(inverse_regex != nullptr);
+
+    return g_regex_new(inverse_regex, default_regex_compile_flags,
+                       GRegexMatchFlags(0), error_r);
 }
 
 bool
