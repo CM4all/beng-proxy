@@ -2998,7 +2998,7 @@ translate_handle_packet(TranslateClient *client,
         if (client->cgi_address != nullptr) {
             return translate_client_expand_pair(client,
                                                 client->cgi_address->env,
-                                                "SETENV",
+                                                "EXPAND_SETENV",
                                                 payload, payload_length);
         } else if (client->lhttp_address != nullptr) {
             return translate_client_expand_pair(client,
