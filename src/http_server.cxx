@@ -61,6 +61,8 @@ http_server_request_new(struct http_server_connection *connection)
 {
     assert(connection != nullptr);
 
+    connection->response.status = http_status_t(0);
+
     struct pool *pool = pool_new_linear(connection->pool,
                                         "http_server_request", 32768);
     pool_set_major(pool);
@@ -316,7 +318,9 @@ http_server_request_close(struct http_server_connection *connection)
     assert(connection->request.read_state != http_server_connection::Request::START);
     assert(connection->request.request != nullptr);
 
-    connection->Log();
+    if (connection->response.status != http_status_t(0) &&
+        connection->response.length >= 0)
+        connection->Log();
 
     struct pool *pool = connection->request.request->pool;
     pool_trash(pool);
