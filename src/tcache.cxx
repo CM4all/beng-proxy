@@ -1145,6 +1145,8 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
                            "translate_cache: ");
             return nullptr;
         }
+    } else {
+        assert(!response.IsExpandable());
     }
 
     if (response.inverse_regex != nullptr) {
