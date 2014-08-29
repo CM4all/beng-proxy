@@ -330,7 +330,7 @@ istream_as_fd(struct istream *istream)
     int fd = istream->cls->as_fd(istream);
 
 #ifndef NDEBUG
-    assert(!pool_denotify(&notify) || fd >= 0);
+    assert(!pool_denotify(&notify) || fd < 0);
 
     if (fd < 0)
         istream->reading = false;
