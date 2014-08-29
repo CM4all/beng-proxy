@@ -57,7 +57,7 @@ static void
 was_input_schedule_read(struct was_input *input)
 {
     assert(input->fd >= 0);
-    assert(!input->buffer.IsFull());
+    assert(!input->buffer.IsDefined() || !input->buffer.IsFull());
 
     p_event_add(&input->event,
                 input->timeout ? &was_input_timeout : nullptr,
@@ -183,7 +183,7 @@ was_input_try_buffered(struct was_input *input)
     input->received += nbytes;
 
     if (was_input_consume_buffer(input)) {
-        assert(!input->buffer.IsFull());
+        assert(!input->buffer.IsDefined() || !input->buffer.IsFull());
         was_input_schedule_read(input);
     }
 
