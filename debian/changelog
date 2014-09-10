@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.16) unstable; urgency=low
 
-  * 
+  * was_client: fix assertion failure
 
  --   
 

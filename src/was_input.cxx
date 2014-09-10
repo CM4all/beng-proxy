@@ -68,9 +68,9 @@ was_input_abort(struct was_input *input, GError *error)
        istream handler */
     input->closed = true;
 
-    istream_deinit_abort(&input->output, error);
-
     input->handler->abort(input->handler_ctx);
+
+    istream_deinit_abort(&input->output, error);
 }
 
 static void
@@ -82,16 +82,16 @@ was_input_eof(struct was_input *input)
     p_event_del(&input->event, input->output.pool);
 
     if (input->premature) {
+        input->handler->premature(input->handler_ctx);
+
         GError *error =
             g_error_new_literal(was_quark(), 0,
                                 "premature end of WAS response");
         istream_deinit_abort(&input->output, error);
-
-        input->handler->premature(input->handler_ctx);
     } else {
-        istream_deinit_eof(&input->output);
-
         input->handler->eof(input->handler_ctx);
+
+        istream_deinit_eof(&input->output);
     }
 }
 
@@ -313,9 +313,9 @@ was_input_istream_close(struct istream *istream)
        istream handler */
     input->closed = true;
 
-    istream_deinit(&input->output);
-
     input->handler->abort(input->handler_ctx);
+
+    istream_deinit(&input->output);
 }
 
 static const struct istream_class was_input_stream = {
