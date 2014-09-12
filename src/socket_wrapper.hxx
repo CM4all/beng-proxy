@@ -58,6 +58,14 @@ public:
               int _fd, enum istream_direct _fd_type,
               const struct socket_handler *_handler, void *_ctx);
 
+    /**
+     * Shut down the socket gracefully, allowing the TCP stack to
+     * complete all pending transfers.  If you call Close() without
+     * Shutdown(), it may reset the connection and discard pending
+     * data.
+     */
+    void Shutdown();
+
     void Close();
 
     /**
