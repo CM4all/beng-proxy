@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.18) unstable; urgency=low
 
-  * 
+  * http_server: fix missing response (Keep-Alive disabled)
 
  --   
 
