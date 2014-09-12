@@ -297,6 +297,10 @@ struct BufferedSocket {
               const struct timeval *_write_timeout,
               const BufferedSocketHandler *_handler, void *_ctx);
 
+    void Shutdown() {
+        base.Shutdown();
+    }
+
     /**
      * Close the physical socket, but do not destroy the input buffer.  To
      * do the latter, call buffered_socket_destroy().
