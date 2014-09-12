@@ -117,6 +117,10 @@ struct filtered_socket {
      * drained() will be invoked.
      */
     bool drained;
+
+    void Shutdown() {
+        base.Shutdown();
+    }
 };
 
 gcc_const
