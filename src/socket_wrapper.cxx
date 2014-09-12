@@ -80,6 +80,15 @@ SocketWrapper::Init(struct pool &_pool,
 }
 
 void
+SocketWrapper::Shutdown()
+{
+    if (fd < 0)
+        return;
+
+    shutdown(fd, SHUT_RDWR);
+}
+
+void
 SocketWrapper::Close()
 {
     if (fd < 0)

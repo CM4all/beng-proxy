@@ -348,6 +348,10 @@ http_server_connection::Done()
     assert(handler->free != nullptr);
     assert(request.read_state == Request::START);
 
+    /* shut down the socket gracefully to allow the TCP stack to
+       transfer remaining response data */
+    socket.Shutdown();
+
     http_server_socket_destroy(this);
 
     const struct http_server_connection_handler *_handler = handler;

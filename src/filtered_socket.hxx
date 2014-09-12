@@ -147,6 +147,10 @@ struct FilteredSocket {
             : ISTREAM_NONE;
     }
 
+    void Shutdown() {
+        base.Shutdown();
+    }
+
     /**
      * Close the physical socket, but do not destroy the input buffer.  To
      * do the latter, call filtered_socket_destroy().
