@@ -158,7 +158,7 @@ ssl_decrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
     while (true) {
         auto w = buffer.Write();
         if (w.IsEmpty())
-            return 0;
+            return true;
 
         int result = SSL_read(ssl, w.data, w.size);
         if (result <= 0)
