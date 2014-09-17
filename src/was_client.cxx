@@ -445,6 +445,8 @@ was_client_control_drained(void *ctx)
     client->async.Finished();
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
+    const ScopePoolRef caller_ref(*client->caller_pool TRACE_ARGS);
+
     client->handler.InvokeResponse(client->response.status, headers, body);
     if (client->control == nullptr)
         /* closed, must return false */
