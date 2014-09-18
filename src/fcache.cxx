@@ -168,7 +168,14 @@ filter_cache_request_release(struct FilterCacheRequest *request)
 
     evtimer_del(&request->timeout);
 
-    DeleteUnrefTrashPool(*request->pool, request);
+    /* DeleteUnrefTrashPool() poisons the object and trashes the pool,
+       which breaks the istream_read() call in
+       filter_cache_response_response() and causes an assertion
+       failure when the sink_rubber closes the stream */
+    //DeleteUnrefTrashPool(*request->pool, request);
+    request->~FilterCacheRequest();
+    pool_unref(request->pool);
+    /* TODO: eliminate the above workaround */
 }
 
 /**

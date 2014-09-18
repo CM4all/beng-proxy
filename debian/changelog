@@ -1,6 +1,6 @@
 cm4all-beng-proxy (5.8) unstable; urgency=low
 
-  * 
+  * fcache: work around assertion failure
 
  --   
 
