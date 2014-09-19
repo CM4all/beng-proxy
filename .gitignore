@@ -14,6 +14,7 @@
 /cm4all-beng-proxy-log-forward
 /cm4all-beng-proxy-log-exec
 /cm4all-beng-proxy-log-traffic
+/cm4all-beng-proxy-log-tee
 /cm4all-beng-lb
 
 test/benchmark-gmtime

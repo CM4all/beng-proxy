@@ -72,6 +72,7 @@ bin_PROGRAMS = cm4all-beng-proxy \
 	cm4all-beng-proxy-log-split \
 	cm4all-beng-proxy-log-forward \
 	cm4all-beng-proxy-log-exec \
+	cm4all-beng-proxy-log-tee \
 	cm4all-beng-proxy-delegate-helper
 
 cm4all_beng_proxy_SOURCES = \
@@ -502,6 +503,14 @@ cm4all_beng_proxy_log_forward_LDADD = \
 cm4all_beng_proxy_log_exec_SOURCES = \
 	src/log-exec.c
 cm4all_beng_proxy_log_exec_LDADD = \
+	$(LIBCM4ALL_SOCKET_LIBS)
+
+cm4all_beng_proxy_log_tee_SOURCES = \
+	src/fd_util.c \
+	src/log-launch.c \
+	src/log_tee.cxx
+cm4all_beng_proxy_log_tee_LDADD = \
+	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 cm4all_beng_proxy_delegate_helper_SOURCES = src/delegate_helper.c
