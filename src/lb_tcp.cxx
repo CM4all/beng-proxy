@@ -250,6 +250,8 @@ outbound_buffered_socket_end(void *ctx)
 
     tcp->outbound.Destroy();
 
+    tcp->inbound.UnscheduleWrite();
+
     if (tcp->inbound.IsDrained()) {
         /* all output buffers to "inbound" are drained; close the
            connection, because there's nothing left to do */
