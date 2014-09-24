@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.19) unstable; urgency=low
 
-  * 
+  * lb/tcp: fix assertion failure
 
  --   
 

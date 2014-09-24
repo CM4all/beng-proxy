@@ -247,6 +247,8 @@ outbound_buffered_socket_end(void *ctx)
 
     tcp->outbound.Destroy();
 
+    filtered_socket_unschedule_write(&tcp->inbound);
+
     if (filtered_socket_is_drained(&tcp->inbound)) {
         /* all output buffers to "inbound" are drained; close the
            connection, because there's nothing left to do */
