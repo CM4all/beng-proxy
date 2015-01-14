@@ -145,6 +145,7 @@ void
 proxy_handler(request &request2)
 {
     struct http_server_request *request = request2.request;
+    struct pool &pool = *request->pool;
     const TranslateResponse &tr = *request2.translate.response;
     const struct resource_address *address = request2.translate.address;
 
@@ -157,7 +158,7 @@ proxy_handler(request &request2)
     if (request2.translate.response->transparent &&
         (!strref_is_empty(&request2.uri.args) ||
          !strref_is_empty(&request2.uri.path_info)))
-        address = resource_address_insert_args(*request->pool, address,
+        address = resource_address_insert_args(pool, address,
                                                request2.uri.args.data,
                                                request2.uri.args.length,
                                                request2.uri.path_info.data,
@@ -165,13 +166,13 @@ proxy_handler(request &request2)
 
     if (!request2.processor_focus)
         /* forward query string */
-        address = resource_address_insert_query_string_from(*request->pool,
+        address = resource_address_insert_query_string_from(pool,
                                                             address,
                                                             request->uri);
 
     if (resource_address_is_cgi_alike(address) &&
         address->u.cgi->uri == nullptr) {
-        struct resource_address *copy = resource_address_dup(*request->pool,
+        struct resource_address *copy = resource_address_dup(pool,
                                                              address);
         struct cgi_address *cgi = resource_address_get_cgi(copy);
 
@@ -193,14 +194,14 @@ proxy_handler(request &request2)
 
 #ifdef SPLICE
     if (forward.body != nullptr)
-        forward.body = istream_pipe_new(request->pool, forward.body,
+        forward.body = istream_pipe_new(&pool, forward.body,
                                         global_pipe_stock);
 #endif
 
     for (const auto &i : tr.request_headers)
         forward.headers->Add(i.key, i.value);
 
-    http_cache_request(*global_http_cache, *request->pool,
+    http_cache_request(*global_http_cache, pool,
                        session_id_low(request2.session_id),
                        forward.method, *address,
                        forward.headers, forward.body,
