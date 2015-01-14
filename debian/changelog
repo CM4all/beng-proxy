@@ -1,6 +1,6 @@
 cm4all-beng-proxy (5.10) unstable; urgency=low
 
-  * 
+  * fix cookie mangling in CGI handlers
 
  --   
 

@@ -119,20 +119,10 @@ proxy_handler(request &request2)
            address->type == RESOURCE_ADDRESS_NFS ||
            resource_address_is_cgi_alike(address));
 
-    const char *host_and_port = nullptr, *uri_p = nullptr;
-    if (address->type == RESOURCE_ADDRESS_HTTP ||
-        address->type == RESOURCE_ADDRESS_AJP) {
-        host_and_port = address->u.http->host_and_port;
-        uri_p = address->u.http->path;
-    } else if (address->type == RESOURCE_ADDRESS_LHTTP) {
-        host_and_port = address->u.lhttp->host_and_port;
-        uri_p = address->u.lhttp->uri;
-    }
-
     struct forward_request forward;
     request_forward(forward, request2,
                     tr.request_header_forward,
-                    host_and_port, uri_p,
+                    GetCookieHost(request2), GetCookieURI(request2),
                     address->type == RESOURCE_ADDRESS_HTTP ||
                     address->type == RESOURCE_ADDRESS_LHTTP);
 
