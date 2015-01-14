@@ -21,6 +21,18 @@
 #include "istream-impl.h"
 #include "lhttp_address.hxx"
 
+gcc_pure
+static const char *
+GetCookieHost(const request &r)
+{
+    const TranslateResponse &t = *r.translate.response;
+    if (t.cookie_host != nullptr)
+        return t.cookie_host;
+
+    const struct resource_address &address = *r.translate.address;
+    return resource_address_host_and_port(&address);
+}
+
 static void
 proxy_collect_cookies(request &request2, const struct strmap *headers)
 {
@@ -36,9 +48,7 @@ proxy_collect_cookies(request &request2, const struct strmap *headers)
             return;
     }
 
-    const char *host_and_port = request2.translate.response->cookie_host;
-    if (host_and_port == nullptr)
-        host_and_port = resource_address_host_and_port(&address);
+    const char *host_and_port = GetCookieHost(request2);
     if (host_and_port == nullptr)
         return;
 
