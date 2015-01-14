@@ -54,7 +54,7 @@ create_test(struct pool *pool, struct istream *input)
     global_translate_cache = (struct tcache *)(size_t)1;
 
     uri = "/beng.html";
-    ret = uri_parse(&parsed_uri, uri);
+    ret = parsed_uri.Parse(uri);
     if (!ret)
         abort();
 

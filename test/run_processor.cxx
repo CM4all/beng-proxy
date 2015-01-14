@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     pool = pool_new_libc(nullptr, "root");
 
     uri = "/beng.html";
-    ret = uri_parse(&parsed_uri, uri);
+    ret = parsed_uri.Parse(uri);
     if (!ret) {
         fprintf(stderr, "uri_parse() failed\n");
         exit(2);

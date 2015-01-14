@@ -35,13 +35,12 @@ struct parsed_uri {
      * The query string (without the question mark).
      */
     struct strref query;
-};
 
-/**
- * Split the URI into its parts.  The result contains pointers into
- * the original string.
- */
-bool
-uri_parse(struct parsed_uri *dest, const char *src);
+    /**
+     * Split the URI into its parts.  The result contains pointers
+     * into the original string.
+     */
+    bool Parse(const char *src);
+};
 
 #endif

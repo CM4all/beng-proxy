@@ -118,7 +118,7 @@ test_proxy_abort(struct pool *pool)
 
     struct parsed_uri parsed_uri;
     const char *uri = "/beng.html";
-    success = uri_parse(&parsed_uri, uri);
+    success = parsed_uri.Parse(uri);
     assert(success);
 
     struct widget widget;

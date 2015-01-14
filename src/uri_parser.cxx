@@ -10,7 +10,7 @@
 #include <string.h>
 
 bool
-uri_parse(struct parsed_uri *dest, const char *src)
+parsed_uri::Parse(const char *src)
 {
     const char *qmark = strchr(src, '?');
 
@@ -20,40 +20,40 @@ uri_parse(struct parsed_uri *dest, const char *src)
     else
         semicolon = (const char *)memchr(src, ';', qmark - src);
 
-    dest->base.data = src;
+    base.data = src;
     if (semicolon != nullptr)
-        dest->base.length = semicolon - src;
+        base.length = semicolon - src;
     else if (qmark != nullptr)
-        dest->base.length = qmark - src;
+        base.length = qmark - src;
     else
-        dest->base.length = strlen(src);
+        base.length = strlen(src);
 
-    if (!uri_path_verify(dest->base.data, dest->base.length))
+    if (!uri_path_verify(base.data, base.length))
         return false;
 
     if (semicolon == nullptr) {
-        strref_clear(&dest->args);
-        strref_clear(&dest->path_info);
+        strref_clear(&args);
+        strref_clear(&path_info);
     } else {
         /* XXX second semicolon for stuff being forwared? */
-        dest->args.data = semicolon + 1;
+        args.data = semicolon + 1;
         if (qmark == nullptr)
-            dest->args.length = strlen(dest->args.data);
+            args.length = strlen(args.data);
         else
-            dest->args.length = qmark - dest->args.data;
+            args.length = qmark - args.data;
 
-        const char *slash = strref_chr(&dest->args, '/');
+        const char *slash = strref_chr(&args, '/');
         if (slash != nullptr) {
-            strref_set2(&dest->path_info, slash, strref_end(&dest->args));
-            dest->args.length = slash - dest->args.data;
+            strref_set2(&path_info, slash, strref_end(&args));
+            args.length = slash - args.data;
         } else
-            strref_clear(&dest->path_info);
+            strref_clear(&path_info);
     }
 
     if (qmark == nullptr)
-        strref_clear(&dest->query);
+        strref_clear(&query);
     else
-        strref_set_c(&dest->query, qmark + 1);
+        strref_set_c(&query, qmark + 1);
 
     return true;
 }

@@ -658,7 +658,7 @@ request_uri_parse(request &request2, parsed_uri &dest)
     const http_server_request &request = *request2.request;
 
     if (!uri_path_verify_quick(request.uri) ||
-        !uri_parse(&dest, request.uri)) {
+        !dest.Parse(request.uri)) {
         /* response_dispatch() assumes that we have a translation
            response, and will dereference it - at this point, the
            translation server hasn't been queried yet, so we just

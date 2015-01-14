@@ -107,7 +107,7 @@ test_abort_resolver(struct pool *pool)
     pool = pool_new_linear(pool, "test", 4096);
 
     uri = "/beng.html";
-    ret = uri_parse(&parsed_uri, uri);
+    ret = parsed_uri.Parse(uri);
     if (!ret) {
         fprintf(stderr, "uri_parse() failed\n");
         exit(2);
