@@ -33,11 +33,17 @@ GetCookieHost(const request &r)
     return resource_address_host_and_port(&address);
 }
 
+gcc_pure
+static const char *
+GetCookieURI(const request &r)
+{
+    const struct resource_address &address = *r.translate.address;
+    return resource_address_uri_path(&address);
+}
+
 static void
 proxy_collect_cookies(request &request2, const struct strmap *headers)
 {
-    const struct resource_address &address = *request2.translate.address;
-
     if (headers == nullptr)
         return;
 
@@ -52,7 +58,7 @@ proxy_collect_cookies(request &request2, const struct strmap *headers)
     if (host_and_port == nullptr)
         return;
 
-    const char *path = resource_address_uri_path(&address);
+    const char *path = GetCookieURI(request2);
     if (path == nullptr)
         return;
 
