@@ -155,13 +155,6 @@ proxy_handler(request &request2)
            address->type == RESOURCE_ADDRESS_NFS ||
            resource_address_is_cgi_alike(address));
 
-    struct forward_request forward;
-    request_forward(forward, request2,
-                    tr.request_header_forward,
-                    GetCookieHost(request2), GetCookieURI(request2),
-                    address->type == RESOURCE_ADDRESS_HTTP ||
-                    address->type == RESOURCE_ADDRESS_LHTTP);
-
     if (request2.translate.response->transparent &&
         (!strref_is_empty(&request2.uri.args) ||
          !strref_is_empty(&request2.uri.path_info)))
@@ -189,6 +182,13 @@ proxy_handler(request &request2)
 
         address = copy;
     }
+
+    struct forward_request forward;
+    request_forward(forward, request2,
+                    tr.request_header_forward,
+                    GetCookieHost(request2), GetCookieURI(request2),
+                    address->type == RESOURCE_ADDRESS_HTTP ||
+                    address->type == RESOURCE_ADDRESS_LHTTP);
 
 #ifdef SPLICE
     if (forward.body != nullptr)
