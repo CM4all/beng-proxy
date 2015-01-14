@@ -5,7 +5,7 @@
 #include "widget_class.hxx"
 #include "widget_resolver.hxx"
 #include "widget_request.hxx"
-#include "uri-parser.h"
+#include "uri_parser.hxx"
 #include "sink_gstring.hxx"
 #include "tpool.h"
 #include "async.hxx"

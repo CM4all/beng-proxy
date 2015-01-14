@@ -600,7 +600,7 @@ libutil_a_SOURCES = \
 	src/strref2.hxx \
 	src/strutil.c src/strutil.h \
 	src/trace.h \
-	src/uri-parser.c src/uri-parser.h \
+	src/uri_parser.cxx src/uri_parser.hxx \
 	src/uri-verify.c src/uri-verify.h \
 	src/uri-string.h \
 	src/uset.h \

@@ -4,12 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_URI_PARSER_H
-#define __BENG_URI_PARSER_H
+#ifndef BENG_PROXY_URI_PARSER_HXX
+#define BENG_PROXY_URI_PARSER_HXX
 
 #include "strref.h"
-
-#include <stdbool.h>
 
 /**
  * A splitted URI.
@@ -39,19 +37,11 @@ struct parsed_uri {
     struct strref query;
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Split the URI into its parts.  The result contains pointers into
  * the original string.
  */
 bool
 uri_parse(struct parsed_uri *dest, const char *src);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
