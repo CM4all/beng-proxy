@@ -21,6 +21,42 @@
 #include "istream-impl.h"
 #include "lhttp_address.hxx"
 
+/**
+ * Return a copy of the URI for forwarding to the next server.  This
+ * omits the beng-proxy request "arguments".
+ */
+gcc_pure
+static const char *
+ForwardURI(struct pool &pool, const parsed_uri &uri)
+{
+    if (strref_is_empty(&uri.query))
+        return strref_dup(&pool, &uri.base);
+    else
+        return p_strncat(&pool,
+                         uri.base.data, uri.base.length,
+                         "?", (size_t)1,
+                         uri.query.data, uri.query.length,
+                         nullptr);
+}
+
+/**
+ * Return a copy of the original request URI for forwarding to the
+ * next server.  This omits the beng-proxy request "arguments" (unless
+ * the translation server declared the "transparent" mode).
+ */
+gcc_pure
+static const char *
+ForwardURI(const request &r)
+{
+    const TranslateResponse &t = *r.translate.response;
+    if (t.transparent || strref_is_empty(&r.uri.args))
+        /* transparent or no args: return the full URI as-is */
+        return r.request->uri;
+    else
+        /* remove the "args" part */
+        return ForwardURI(*r.request->pool, r.uri);
+}
+
 gcc_pure
 static const char *
 GetCookieHost(const request &r)
@@ -149,19 +185,7 @@ proxy_handler(request &request2)
 
         /* pass the "real" request URI to the CGI (but without the
            "args", unless the request is "transparent") */
-        if (request2.translate.response->transparent ||
-            strref_is_empty(&request2.uri.args))
-            cgi->uri = request->uri;
-        else if (strref_is_empty(&request2.uri.query))
-            cgi->uri = strref_dup(request->pool, &request2.uri.base);
-        else
-            cgi->uri = p_strncat(request->pool,
-                                 request2.uri.base.data,
-                                 request2.uri.base.length,
-                                 "?", (size_t)1,
-                                 request2.uri.query.data,
-                                 request2.uri.query.length,
-                                 nullptr);
+        cgi->uri = ForwardURI(request2);
 
         address = copy;
     }
