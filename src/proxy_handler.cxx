@@ -73,8 +73,7 @@ gcc_pure
 static const char *
 GetCookieURI(const request &r)
 {
-    const struct resource_address &address = *r.translate.address;
-    return resource_address_uri_path(&address);
+    return r.cookie_uri;
 }
 
 static void
@@ -182,6 +181,8 @@ proxy_handler(request &request2)
 
         address = copy;
     }
+
+    request2.cookie_uri = resource_address_uri_path(address);
 
     struct forward_request forward;
     request_forward(forward, request2,

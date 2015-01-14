@@ -112,6 +112,12 @@ struct request {
     } translate;
 
     /**
+     * The URI used for the cookie jar.  This is only used by
+     * proxy_handler().
+     */
+    const char *cookie_uri;
+
+    /**
      * The product token (RFC 2616 3.8) being forwarded; nullptr if
      * beng-proxy shall generate one.
      */
