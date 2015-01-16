@@ -401,9 +401,8 @@ ssl_factory_new(const ssl_config &config,
         return nullptr;
     }
 
-    if (!server)
-        /* disable protocols that are known to be insecure */
-        SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
+    /* disable protocols that are known to be insecure */
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
 
     ssl_factory *factory = new ssl_factory(ssl_ctx, server);
 

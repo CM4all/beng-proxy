@@ -1,5 +1,6 @@
 cm4all-beng-proxy (4.20) unstable; urgency=low
 
+  * ssl_server: disable SSLv2 and SSLv3 because they are insecure
   * ssl_client: enable TLS versions newer than 1.1
 
  --   
