@@ -13,7 +13,7 @@
 #include "async.hxx"
 #include "net/ConnectSocket.hxx"
 #include "child_options.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 

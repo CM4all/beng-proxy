@@ -12,7 +12,7 @@
 #include "http_response.hxx"
 #include "async.hxx"
 #include "please.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "direct.h"
 #include "istream-internal.h"
 #include "fd-util.h"

@@ -9,7 +9,7 @@
 #include "stock.hxx"
 #include "async.hxx"
 #include "address_list.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "net/ConnectSocket.hxx"

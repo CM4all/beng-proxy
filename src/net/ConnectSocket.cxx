@@ -10,7 +10,7 @@
 #include "async.hxx"
 #include "fd_util.h"
 #include "stopwatch.h"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "gerrno.h"
 #include "util/Cast.hxx"
 #include "pool.hxx"

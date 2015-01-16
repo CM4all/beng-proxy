@@ -11,7 +11,7 @@
 #include "http_util.hxx"
 #include "header_parser.hxx"
 #include "header_writer.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "http_body.hxx"
 #include "istream-internal.h"
 #include "istream_gb.hxx"

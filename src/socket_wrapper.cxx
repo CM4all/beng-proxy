@@ -10,7 +10,7 @@
 #include "fd-util.h"
 #include "fd_util.h"
 #include "pool.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 
 #include <socket/util.h>
 

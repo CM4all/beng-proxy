@@ -6,7 +6,7 @@
 
 #include "sink_fd.hxx"
 #include "pool.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "direct.h"
 #include "fd-util.h"
 #include "istream.h"

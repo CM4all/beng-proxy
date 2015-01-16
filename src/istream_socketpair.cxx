@@ -14,7 +14,7 @@
 #include "fd_util.h"
 #include "fd-util.h"
 #include "buffered_io.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "gerrno.h"
 #include "util/Cast.hxx"
 #include "util/ForeignFifoBuffer.hxx"

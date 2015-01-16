@@ -9,7 +9,7 @@
 #include "buffered_socket.hxx"
 #include "please.hxx"
 #include "async.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "istream-internal.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"

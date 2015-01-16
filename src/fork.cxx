@@ -10,7 +10,7 @@
 #include "buffered_io.hxx"
 #include "fd-util.h"
 #include "direct.h"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "gerrno.h"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"

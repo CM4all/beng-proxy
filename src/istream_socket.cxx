@@ -9,7 +9,7 @@
 #include "istream_buffer.hxx"
 #include "pool.hxx"
 #include "buffered_io.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "gerrno.h"
 #include "fb_pool.hxx"
 #include "SliceFifoBuffer.hxx"

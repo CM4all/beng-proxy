@@ -12,7 +12,7 @@
 #include "child_stock.hxx"
 #include "child_manager.hxx"
 #include "child_options.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"

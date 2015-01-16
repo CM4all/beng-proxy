@@ -7,7 +7,7 @@
 #include "was_control.hxx"
 #include "was_quark.h"
 #include "buffered_io.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "strmap.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"

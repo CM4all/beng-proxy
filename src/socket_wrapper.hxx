@@ -8,7 +8,7 @@
 #define BENG_PROXY_SOCKET_WRAPPER_HXX
 
 #include "istream-direct.h"
-#include "pevent.h"
+#include "pevent.hxx"
 
 #include <inline/compiler.h>
 

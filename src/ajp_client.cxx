@@ -11,7 +11,7 @@
 #include "http_response.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "format.h"
 #include "istream-internal.h"
 #include "istream_gb.hxx"

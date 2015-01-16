@@ -9,7 +9,7 @@
 #include "async.hxx"
 #include "failure.hxx"
 #include "fd_util.h"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "exec.hxx"
 #include "child_options.hxx"
 #include "gerrno.h"

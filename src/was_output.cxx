@@ -6,7 +6,7 @@
 
 #include "was_output.hxx"
 #include "was_quark.h"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "direct.h"
 #include "fd-util.h"
 #include "istream.h"

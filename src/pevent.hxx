@@ -5,22 +5,23 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_PEVENT_H
-#define BENG_PROXY_PEVENT_H
+#ifndef BENG_PROXY_PEVENT_HXX
+#define BENG_PROXY_PEVENT_HXX
 
 #include "pool.h"
 
-#include <assert.h>
 #include <event.h>
+
+#include <assert.h>
 
 static inline void
 p_event_add(struct event *ev, const struct timeval *timeout,
             struct pool *pool, const char *name)
 {
-    assert(ev != NULL);
-    assert(pool != NULL);
+    assert(ev != nullptr);
+    assert(pool != nullptr);
     assert(pool_contains(pool, ev, sizeof(*ev)));
-    assert(name != NULL);
+    assert(name != nullptr);
 
     pool_attach_checked(pool, ev, name);
 
@@ -30,8 +31,8 @@ p_event_add(struct event *ev, const struct timeval *timeout,
 static inline void
 p_event_del(struct event *ev, struct pool *pool)
 {
-    assert(ev != NULL);
-    assert(pool != NULL);
+    assert(ev != nullptr);
+    assert(pool != nullptr);
     assert(pool_contains(pool, ev, sizeof(*ev)));
 
     pool_detach_checked(pool, ev);
@@ -41,8 +42,8 @@ p_event_del(struct event *ev, struct pool *pool)
 static inline void
 p_event_consumed(struct event *ev, struct pool *pool)
 {
-    assert(ev != NULL);
-    assert(pool != NULL);
+    assert(ev != nullptr);
+    assert(pool != nullptr);
     assert(pool_contains(pool, ev, sizeof(*ev)));
 
     pool_detach(pool, ev);

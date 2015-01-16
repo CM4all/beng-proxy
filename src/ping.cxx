@@ -6,7 +6,7 @@
 
 #include "ping.hxx"
 #include "pool.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "async.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/Cast.hxx"

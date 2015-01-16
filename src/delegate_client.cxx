@@ -10,7 +10,7 @@
 #include "async.hxx"
 #include "please.hxx"
 #include "fd_util.h"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"

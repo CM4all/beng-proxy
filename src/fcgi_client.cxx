@@ -16,7 +16,7 @@
 #include "istream_gb.hxx"
 #include "please.hxx"
 #include "header_parser.hxx"
-#include "pevent.h"
+#include "pevent.hxx"
 #include "direct.h"
 #include "fd-util.h"
 #include "strmap.hxx"
