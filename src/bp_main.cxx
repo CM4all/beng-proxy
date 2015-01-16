@@ -8,7 +8,7 @@
 #include "direct.h"
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"
-#include "worker.h"
+#include "bp_worker.hxx"
 #include "crash.h"
 #include "fb_pool.hxx"
 #include "session_manager.hxx"

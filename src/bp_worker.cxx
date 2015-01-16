@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "worker.h"
+#include "bp_worker.hxx"
 #include "http_server.hxx"
 #include "pool.hxx"
 #include "bp_instance.hxx"
