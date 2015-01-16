@@ -386,9 +386,13 @@ ssl_factory_new(const ssl_config &config,
 {
     assert(!config.cert_key.empty() || !server);
 
+    /* don't be fooled - we want TLS, not SSL - but TLSv1_method()
+       will only allow TLSv1.0 and will refuse TLSv1.1 and TLSv1.2;
+       only SSLv23_method() supports all (future) TLS protocol
+       versions, even if we don't want any SSL at all */
     auto method = server
         ? SSLv23_server_method()
-        : TLSv1_client_method();
+        : SSLv23_client_method();
 
     SSL_CTX *ssl_ctx = SSL_CTX_new(method);
     if (ssl_ctx == NULL) {
@@ -408,6 +412,9 @@ ssl_factory_new(const ssl_config &config,
         SSL_CTX_free(ssl_ctx);
         return nullptr;
     }
+
+    /* disable protocols that are known to be insecure */
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
 
     ssl_factory *factory = new ssl_factory(ssl_ctx, server);
 
