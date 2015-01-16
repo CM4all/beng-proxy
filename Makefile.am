@@ -610,7 +610,7 @@ libutil_a_SOURCES = \
 	src/escape_css.c src/escape_css.h
 
 libputil_a_SOURCES = \
-	src/expansible-buffer.c src/expansible-buffer.h \
+	src/expansible_buffer.cxx src/expansible_buffer.hxx \
 	src/growing_buffer.cxx src/growing_buffer.hxx \
 	src/hashmap.cxx src/hashmap.hxx \
 	src/please.hxx \

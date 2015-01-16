@@ -26,7 +26,7 @@
 #include "strref2.hxx"
 #include "strref_pool.hxx"
 #include "global.h"
-#include "expansible-buffer.h"
+#include "expansible_buffer.hxx"
 #include "escape_class.h"
 #include "escape_html.h"
 #include "strmap.hxx"

@@ -6,9 +6,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "expansible-buffer.h"
+#include "expansible_buffer.hxx"
 #include "strref.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <inline/poison.h>
 
@@ -29,10 +29,10 @@ expansible_buffer_new(struct pool *pool, size_t initial_size,
     assert(initial_size > 0);
     assert(hard_limit >= initial_size);
 
-    struct expansible_buffer *eb = p_malloc(pool, sizeof(*eb));
+    auto eb = NewFromPool<struct expansible_buffer>(*pool);
 
     eb->pool = pool;
-    eb->buffer = p_malloc(pool, initial_size);
+    eb->buffer = (char *)p_malloc(pool, initial_size);
     eb->hard_limit = hard_limit;
     eb->max_size = initial_size;
     eb->size = 0;
@@ -63,13 +63,13 @@ expansible_buffer_length(const struct expansible_buffer *eb)
 static bool
 expansible_buffer_resize(struct expansible_buffer *eb, size_t max_size)
 {
-    assert(eb != NULL);
+    assert(eb != nullptr);
     assert(max_size > eb->max_size);
 
     if (max_size > eb->hard_limit)
         return false;
 
-    char *buffer = p_malloc(eb->pool, max_size);
+    char *buffer = (char *)p_malloc(eb->pool, max_size);
     memcpy(buffer, eb->buffer, eb->size);
 
     p_free(eb->pool, eb->buffer);
@@ -85,7 +85,7 @@ expansible_buffer_write(struct expansible_buffer *eb, size_t length)
     size_t new_size = eb->size + length;
     if (new_size > eb->max_size &&
         !expansible_buffer_resize(eb, ((new_size - 1) | 0x3ff) + 1))
-        return NULL;
+        return nullptr;
 
     char *dest = eb->buffer + eb->size;
     eb->size = new_size;
@@ -98,7 +98,7 @@ expansible_buffer_write_buffer(struct expansible_buffer *eb,
                                const void *p, size_t length)
 {
     void *q = expansible_buffer_write(eb, length);
-    if (q == NULL)
+    if (q == nullptr)
         return false;
 
     memcpy(q, p, length);
@@ -154,7 +154,7 @@ void
 expansible_buffer_read_strref(const struct expansible_buffer *eb,
                               struct strref *s)
 {
-    s->data = expansible_buffer_read(eb, &s->length);
+    s->data = (const char *)expansible_buffer_read(eb, &s->length);
 }
 
 void *
@@ -166,7 +166,7 @@ expansible_buffer_dup(const struct expansible_buffer *eb, struct pool *pool)
 char *
 expansible_buffer_strdup(const struct expansible_buffer *eb, struct pool *pool)
 {
-    char *p = p_malloc(pool, eb->size + 1);
+    char *p = (char *)p_malloc(pool, eb->size + 1);
     memcpy(p, eb->buffer, eb->size);
     p[eb->size] = 0;
     return p;
