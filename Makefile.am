@@ -648,7 +648,7 @@ libraddress_a_SOURCES = \
 	src/regex.cxx src/regex.hxx \
 	src/param_array.hxx src/param_array.cxx \
 	src/namespace_options.cxx src/namespace_options.hxx \
-	src/mount_list.c src/mount_list.h \
+	src/mount_list.cxx src/mount_list.hxx \
 	src/bind_mount.c src/bind_mount.h \
 	src/jail.cxx src/jail.hxx \
 	src/child_options.cxx src/child_options.hxx \

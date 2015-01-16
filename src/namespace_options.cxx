@@ -3,7 +3,7 @@
  */
 
 #include "namespace_options.hxx"
-#include "mount_list.h"
+#include "mount_list.hxx"
 #include "pool.hxx"
 #include "pivot_root.h"
 #include "bind_mount.h"
