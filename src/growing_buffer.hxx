@@ -14,6 +14,7 @@
 struct pool;
 struct GrowingBuffer;
 template<typename T> struct ConstBuffer;
+template<typename T> struct WritableBuffer;
 
 class GrowingBufferReader {
 #ifndef NDEBUG
@@ -78,8 +79,7 @@ growing_buffer_size(const GrowingBuffer *gb);
  * Duplicates the whole buffer (including all chunks) to one
  * contiguous buffer.
  */
-void *
-growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool,
-                   size_t *length_r);
+WritableBuffer<void>
+growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool);
 
 #endif

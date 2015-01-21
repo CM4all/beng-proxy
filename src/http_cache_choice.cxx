@@ -21,6 +21,7 @@
 #include "pool.hxx"
 #include "util/djbhash.h"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <inline/compiler.h>
 
@@ -265,7 +266,8 @@ http_cache_choice_prepare(struct pool &pool, const char *uri,
     serialize_uint64(gb, info.expires);
     serialize_strmap(gb, vary);
 
-    choice->data.data = growing_buffer_dup(gb, &pool, &choice->data.size);
+    auto data = growing_buffer_dup(gb, &pool);
+    choice->data = { data.data, data.size };
 
     return choice;
 }

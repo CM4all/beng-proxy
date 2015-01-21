@@ -7,6 +7,7 @@
 #include "growing_buffer.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/WritableBuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -265,19 +266,17 @@ growing_buffer_copy(void *dest0, const GrowingBuffer *gb)
     return dest;
 }
 
-void *
-growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool,
-                   size_t *length_r)
+WritableBuffer<void>
+growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool)
 {
     size_t length;
 
     length = growing_buffer_size(gb);
-    *length_r = length;
     if (length == 0)
         return nullptr;
 
     void *dest = p_malloc(pool, length);
     growing_buffer_copy(dest, gb);
 
-    return dest;
+    return { dest, length };
 }
