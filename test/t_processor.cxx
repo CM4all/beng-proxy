@@ -8,6 +8,7 @@
 #include "rewrite_uri.hxx"
 #include "async.hxx"
 #include "istream.h"
+#include "istream_block.hxx"
 
 #include <glib.h>
 
@@ -136,7 +137,7 @@ test_proxy_abort(struct pool *pool)
                              HTTP_METHOD_GET, nullptr);
 
     struct async_operation_ref async_ref;
-    processor_lookup_widget(pool, istream_block_new(pool),
+    processor_lookup_widget(pool, istream_block_new(*pool),
                             &widget, "foo", &env, PROCESSOR_CONTAINER,
                             &my_widget_lookup_handler, nullptr,
                             &async_ref);

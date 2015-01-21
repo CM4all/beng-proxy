@@ -674,7 +674,7 @@ libistream_a_SOURCES = \
 	src/istream-memory.c \
 	src/istream_null.cxx src/istream_null.hxx \
 	src/istream-zero.c \
-	src/istream-block.c \
+	src/istream_block.cxx src/istream_block.hxx \
 	src/istream-string.c \
 	src/istream_file.cxx src/istream_file.hxx \
 	src/istream-chunked.c \

@@ -2,6 +2,7 @@
 #include "async.hxx"
 #include "lease.hxx"
 #include "istream.h"
+#include "istream_block.hxx"
 #include "istream_null.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
@@ -1076,7 +1077,7 @@ test_close_100(struct pool *pool, struct context *c)
 static void
 test_no_body_while_sending(struct pool *pool, struct context *c)
 {
-    struct istream *request_body = istream_block_new(pool);
+    struct istream *request_body = istream_block_new(*pool);
 
     c->connection = connect_null();
     client_request(pool, c->connection, &my_lease, c,
@@ -1104,7 +1105,7 @@ test_no_body_while_sending(struct pool *pool, struct context *c)
 static void
 test_hold(struct pool *pool, struct context *c)
 {
-    struct istream *request_body = istream_block_new(pool);
+    struct istream *request_body = istream_block_new(*pool);
 
     c->connection = connect_hold();
     client_request(pool, c->connection, &my_lease, c,

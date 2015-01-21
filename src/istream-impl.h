@@ -26,9 +26,6 @@ struct istream *
 istream_zero_new(struct pool *pool);
 
 struct istream *
-istream_block_new(struct pool *pool);
-
-struct istream *
 istream_fail_new(struct pool *pool, GError *error);
 
 struct istream *

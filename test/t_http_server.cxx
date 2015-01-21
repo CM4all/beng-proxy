@@ -4,6 +4,7 @@
 #include "direct.h"
 #include "pool.hxx"
 #include "istream.h"
+#include "istream_block.hxx"
 #include "istream_socketpair.hxx"
 #include "istream-catch.h"
 #include "fb_pool.hxx"
@@ -65,7 +66,7 @@ test_catch(struct pool *pool)
         istream_cat_new(pool,
                         istream_string_new(pool,
                                            "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo"),
-                        istream_block_new(pool),
+                        istream_block_new(*pool),
                         NULL);
     struct istream *sock = istream_socketpair_new(pool, request, &fd);
     sink_null_new(sock);
