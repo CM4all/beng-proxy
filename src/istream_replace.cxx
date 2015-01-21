@@ -16,14 +16,16 @@
 
 #include <assert.h>
 
+struct ReplaceIstream;
+
 struct substitution {
     struct substitution *next;
-    struct istream_replace *replace;
+    ReplaceIstream *replace;
     off_t start, end;
     struct istream *istream;
 };
 
-struct istream_replace {
+struct ReplaceIstream {
     struct istream output;
     struct istream *input;
 
@@ -47,7 +49,7 @@ struct istream_replace {
     off_t last_substitution_end;
 #endif
 
-    explicit istream_replace(struct pool &p);
+    explicit ReplaceIstream(struct pool &p);
 };
 
 static GQuark
@@ -60,7 +62,7 @@ replace_quark(void)
  * Is the buffer at the end-of-file position?
  */
 static inline bool
-replace_buffer_eof(const struct istream_replace *replace)
+replace_buffer_eof(const ReplaceIstream *replace)
 {
     return replace->position == replace->source_length;
 }
@@ -69,7 +71,7 @@ replace_buffer_eof(const struct istream_replace *replace)
  * Is the object at end-of-file?
  */
 static inline bool
-replace_is_eof(const struct istream_replace *replace)
+replace_is_eof(const ReplaceIstream *replace)
 {
     return replace->input == nullptr && replace->finished &&
         replace->first_substitution == nullptr &&
@@ -83,7 +85,7 @@ replace_is_eof(const struct istream_replace *replace)
 static inline bool
 substitution_is_active(const struct substitution *s)
 {
-    const struct istream_replace *replace = s->replace;
+    const ReplaceIstream *replace = s->replace;
 
     assert(replace != nullptr);
     assert(replace->first_substitution != nullptr);
@@ -95,13 +97,13 @@ substitution_is_active(const struct substitution *s)
 }
 
 static void
-replace_read(struct istream_replace *replace);
+replace_read(ReplaceIstream *replace);
 
 /**
  * Activate the next substitution object after s.
  */
 static void
-replace_to_next_substitution(struct istream_replace *replace, struct substitution *s)
+replace_to_next_substitution(ReplaceIstream *replace, struct substitution *s)
 {
     assert(replace->first_substitution == s);
     assert(substitution_is_active(s));
@@ -136,7 +138,7 @@ replace_to_next_substitution(struct istream_replace *replace, struct substitutio
 }
 
 static void
-replace_destroy(struct istream_replace *replace);
+replace_destroy(ReplaceIstream *replace);
 
 
 /*
@@ -148,7 +150,7 @@ static size_t
 replace_substitution_data(const void *data, size_t length, void *ctx)
 {
     struct substitution *s = (struct substitution *)ctx;
-    struct istream_replace *replace = s->replace;
+    ReplaceIstream *replace = s->replace;
 
     if (substitution_is_active(s)) {
         replace->had_output = true;
@@ -161,7 +163,7 @@ static void
 replace_substitution_eof(void *ctx)
 {
     struct substitution *s = (struct substitution *)ctx;
-    struct istream_replace *replace = s->replace;
+    ReplaceIstream *replace = s->replace;
 
     s->istream = nullptr;
 
@@ -173,7 +175,7 @@ static void
 replace_substitution_abort(GError *error, void *ctx)
 {
     struct substitution *s = (struct substitution *)ctx;
-    struct istream_replace *replace = s->replace;
+    ReplaceIstream *replace = s->replace;
 
     s->istream = nullptr;
 
@@ -198,7 +200,7 @@ static const struct istream_handler replace_substitution_handler = {
  */
 
 static void
-replace_destroy(struct istream_replace *replace)
+replace_destroy(ReplaceIstream *replace)
 {
     assert(replace != nullptr);
     assert(replace->source_length != (off_t)-1);
@@ -225,7 +227,7 @@ replace_destroy(struct istream_replace *replace)
  * Read data from substitution objects.
  */
 static bool
-replace_read_substitution(struct istream_replace *replace)
+replace_read_substitution(ReplaceIstream *replace)
 {
     while (replace->first_substitution != nullptr &&
            substitution_is_active(replace->first_substitution)) {
@@ -256,7 +258,7 @@ replace_read_substitution(struct istream_replace *replace)
  * bytes remaining in the buffer if it is blocking
  */
 static size_t
-replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
+replace_read_from_buffer(ReplaceIstream *replace, size_t max_length)
 {
     assert(replace != nullptr);
     assert(max_length > 0);
@@ -285,7 +287,7 @@ replace_read_from_buffer(struct istream_replace *replace, size_t max_length)
 }
 
 static size_t
-replace_read_from_buffer_loop(struct istream_replace *replace, off_t end)
+replace_read_from_buffer_loop(ReplaceIstream *replace, off_t end)
 {
     size_t max_length, rest;
 
@@ -322,7 +324,7 @@ replace_read_from_buffer_loop(struct istream_replace *replace, off_t end)
  * bytes remaining in the buffer if it is blocking
  */
 static size_t
-replace_try_read_from_buffer(struct istream_replace *replace)
+replace_try_read_from_buffer(ReplaceIstream *replace)
 {
     off_t end;
     size_t rest;
@@ -358,7 +360,7 @@ replace_try_read_from_buffer(struct istream_replace *replace)
 }
 
 static void
-replace_read(struct istream_replace *replace)
+replace_read(ReplaceIstream *replace)
 {
     bool blocking;
     size_t rest;
@@ -378,7 +380,7 @@ replace_read(struct istream_replace *replace)
 }
 
 static void
-replace_read_check_empty(struct istream_replace *replace)
+replace_read_check_empty(ReplaceIstream *replace)
 {
     assert(replace != nullptr);
     assert(replace->finished);
@@ -401,7 +403,7 @@ replace_read_check_empty(struct istream_replace *replace)
 static size_t
 replace_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_replace *replace = (struct istream_replace *)ctx;
+    ReplaceIstream *replace = (ReplaceIstream *)ctx;
 
     replace->had_input = true;
 
@@ -435,7 +437,7 @@ replace_input_data(const void *data, size_t length, void *ctx)
 static void
 replace_input_eof(void *ctx)
 {
-    struct istream_replace *replace = (struct istream_replace *)ctx;
+    ReplaceIstream *replace = (ReplaceIstream *)ctx;
 
     replace->input = nullptr;
 
@@ -446,7 +448,7 @@ replace_input_eof(void *ctx)
 static void
 replace_input_abort(GError *error, void *ctx)
 {
-    struct istream_replace *replace = (struct istream_replace *)ctx;
+    ReplaceIstream *replace = (ReplaceIstream *)ctx;
 
     replace_destroy(replace);
     replace->input = nullptr;
@@ -465,16 +467,16 @@ static const struct istream_handler replace_input_handler = {
  *
  */
 
-static inline struct istream_replace *
+static inline ReplaceIstream *
 istream_to_replace(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_replace::output);
+    return &ContainerCast2(*istream, &ReplaceIstream::output);
 }
 
 static off_t
 istream_replace_available(struct istream *istream, bool partial)
 {
-    struct istream_replace *replace = istream_to_replace(istream);
+    ReplaceIstream *replace = istream_to_replace(istream);
     const struct substitution *subst;
     off_t length, position = 0, l;
 
@@ -527,7 +529,7 @@ istream_replace_available(struct istream *istream, bool partial)
 static void
 istream_replace_read(struct istream *istream)
 {
-    struct istream_replace *replace = istream_to_replace(istream);
+    ReplaceIstream *replace = istream_to_replace(istream);
 
     const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
 
@@ -548,7 +550,7 @@ istream_replace_read(struct istream *istream)
 static void
 istream_replace_close(struct istream *istream)
 {
-    struct istream_replace *replace = istream_to_replace(istream);
+    ReplaceIstream *replace = istream_to_replace(istream);
 
     replace_destroy(replace);
 
@@ -570,7 +572,7 @@ static const struct istream_class istream_replace = {
  *
  */
 
-inline istream_replace::istream_replace(struct pool &p)
+inline ReplaceIstream::ReplaceIstream(struct pool &p)
     :buffer(growing_buffer_new(&p, 4096)),
      reader(*buffer)
 {
@@ -583,7 +585,7 @@ istream_replace_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *replace = NewFromPool<struct istream_replace>(*pool, *pool);
+    auto *replace = NewFromPool<ReplaceIstream>(*pool, *pool);
 
     istream_assign_handler(&replace->input, input,
                            &replace_input_handler, replace,
@@ -610,7 +612,7 @@ void
 istream_replace_add(struct istream *istream, off_t start, off_t end,
                     struct istream *contents)
 {
-    struct istream_replace *replace = istream_to_replace(istream);
+    ReplaceIstream *replace = istream_to_replace(istream);
 
     assert(!replace->finished);
     assert(start >= 0);
@@ -647,7 +649,7 @@ istream_replace_add(struct istream *istream, off_t start, off_t end,
 }
 
 static struct substitution *
-replace_get_last_substitution(struct istream_replace *replace)
+replace_get_last_substitution(ReplaceIstream *replace)
 {
     struct substitution *substitution = replace->first_substitution;
     assert(substitution != nullptr);
@@ -665,7 +667,7 @@ istream_replace_extend(struct istream *istream, gcc_unused off_t start, off_t en
 {
     assert(istream != nullptr);
 
-    struct istream_replace *replace = istream_to_replace(istream);
+    ReplaceIstream *replace = istream_to_replace(istream);
     assert(!replace->finished);
 
     struct substitution *substitution = replace_get_last_substitution(replace);
@@ -684,7 +686,7 @@ istream_replace_extend(struct istream *istream, gcc_unused off_t start, off_t en
 void
 istream_replace_settle(struct istream *istream, off_t offset)
 {
-    struct istream_replace *replace = istream_to_replace(istream);
+    ReplaceIstream *replace = istream_to_replace(istream);
 
     assert(!replace->finished);
     assert(offset >= replace->settled_position);
@@ -695,7 +697,7 @@ istream_replace_settle(struct istream *istream, off_t offset)
 void
 istream_replace_finish(struct istream *istream)
 {
-    struct istream_replace *replace = istream_to_replace(istream);
+    ReplaceIstream *replace = istream_to_replace(istream);
 
     assert(!replace->finished);
 
