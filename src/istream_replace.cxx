@@ -50,7 +50,7 @@ struct ReplaceIstream {
     off_t last_substitution_end = 0;
 #endif
 
-    explicit ReplaceIstream(struct pool &p);
+    explicit ReplaceIstream(struct pool &p, struct istream &_input);
 };
 
 static GQuark
@@ -573,11 +573,15 @@ static const struct istream_class istream_replace = {
  *
  */
 
-inline ReplaceIstream::ReplaceIstream(struct pool &p)
+inline ReplaceIstream::ReplaceIstream(struct pool &p, struct istream &_input)
     :buffer(growing_buffer_new(&p, 4096)),
      reader(*buffer)
 {
     istream_init(&output, &::istream_replace, &p);
+
+    istream_assign_handler(&input, &_input,
+                           &replace_input_handler, this,
+                           0);
 }
 
 struct istream *
@@ -586,11 +590,7 @@ istream_replace_new(struct pool *pool, struct istream *input)
     assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    auto *replace = NewFromPool<ReplaceIstream>(*pool, *pool);
-
-    istream_assign_handler(&replace->input, input,
-                           &replace_input_handler, replace,
-                           0);
+    auto *replace = NewFromPool<ReplaceIstream>(*pool, *pool, *input);
 
     return istream_struct_cast(&replace->output);
 }
