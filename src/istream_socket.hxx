@@ -9,8 +9,6 @@
 
 #include "istream-direct.h"
 
-struct growing_buffer;
-
 struct istream_socket_handler {
     /**
      * Called when the buffer is full, but the handler method did not

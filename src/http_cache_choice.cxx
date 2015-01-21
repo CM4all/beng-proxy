@@ -260,7 +260,7 @@ http_cache_choice_prepare(struct pool &pool, const char *uri,
     choice->pool = &pool;
     choice->uri = uri;
 
-    struct growing_buffer *gb = growing_buffer_new(tpool, 1024);
+    GrowingBuffer *gb = growing_buffer_new(tpool, 1024);
     serialize_uint32(gb, CHOICE_MAGIC);
     serialize_uint64(gb, info.expires);
     serialize_strmap(gb, vary);

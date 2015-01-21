@@ -14,7 +14,7 @@
 #include <string.h>
 
 void
-header_write_begin(struct growing_buffer *gb, const char *name)
+header_write_begin(GrowingBuffer *gb, const char *name)
 {
     assert(gb != nullptr);
     assert(name != nullptr);
@@ -30,7 +30,7 @@ header_write_begin(struct growing_buffer *gb, const char *name)
 }
 
 void
-header_write_finish(struct growing_buffer *gb)
+header_write_finish(GrowingBuffer *gb)
 {
     assert(gb != nullptr);
 
@@ -38,7 +38,7 @@ header_write_finish(struct growing_buffer *gb)
 }
 
 void
-header_write(struct growing_buffer *gb, const char *key, const char *value)
+header_write(GrowingBuffer *gb, const char *key, const char *value)
 {
     size_t key_length, value_length;
 
@@ -63,7 +63,7 @@ header_write(struct growing_buffer *gb, const char *key, const char *value)
 }
 
 void
-headers_copy_one(const struct strmap *in, struct growing_buffer *out,
+headers_copy_one(const struct strmap *in, GrowingBuffer *out,
                  const char *key)
 {
     assert(in != nullptr);
@@ -75,7 +75,7 @@ headers_copy_one(const struct strmap *in, struct growing_buffer *out,
 }
 
 void
-headers_copy(const struct strmap *in, struct growing_buffer *out,
+headers_copy(const struct strmap *in, GrowingBuffer *out,
              const char *const* keys)
 {
     const char *value;
@@ -88,7 +88,7 @@ headers_copy(const struct strmap *in, struct growing_buffer *out,
 }
 
 void
-headers_copy_all(const struct strmap *in, struct growing_buffer *out)
+headers_copy_all(const struct strmap *in, GrowingBuffer *out)
 {
     assert(in != nullptr);
     assert(out != nullptr);
@@ -98,7 +98,7 @@ headers_copy_all(const struct strmap *in, struct growing_buffer *out)
 }
 
 void
-headers_copy_most(const struct strmap *in, struct growing_buffer *out)
+headers_copy_most(const struct strmap *in, GrowingBuffer *out)
 {
     assert(in != nullptr);
     assert(out != nullptr);
@@ -108,10 +108,10 @@ headers_copy_most(const struct strmap *in, struct growing_buffer *out)
             header_write(out, i.key, i.value);
 }
 
-struct growing_buffer *
+GrowingBuffer *
 headers_dup(struct pool *pool, const struct strmap *in)
 {
-    struct growing_buffer *out = growing_buffer_new(pool, 2048);
+    GrowingBuffer *out = growing_buffer_new(pool, 2048);
     headers_copy_most(in, out);
     return out;
 }

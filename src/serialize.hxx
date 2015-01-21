@@ -10,30 +10,30 @@
 #include <stdint.h>
 
 struct pool;
-struct growing_buffer;
+struct GrowingBuffer;
 struct strmap;
 template<typename T> struct ConstBuffer;
 
 void
-serialize_uint16(struct growing_buffer *gb, uint16_t value);
+serialize_uint16(GrowingBuffer *gb, uint16_t value);
 
 void
-serialize_uint32(struct growing_buffer *gb, uint32_t value);
+serialize_uint32(GrowingBuffer *gb, uint32_t value);
 
 void
-serialize_uint64(struct growing_buffer *gb, uint64_t value);
+serialize_uint64(GrowingBuffer *gb, uint64_t value);
 
 void
-serialize_string(struct growing_buffer *gb, const char *value);
+serialize_string(GrowingBuffer *gb, const char *value);
 
 void
-serialize_string_null(struct growing_buffer *gb, const char *value);
+serialize_string_null(GrowingBuffer *gb, const char *value);
 
 void
-serialize_strmap(struct growing_buffer *gb, const struct strmap &map);
+serialize_strmap(GrowingBuffer *gb, const struct strmap &map);
 
 void
-serialize_strmap(struct growing_buffer *gb, const struct strmap *map);
+serialize_strmap(GrowingBuffer *gb, const struct strmap *map);
 
 uint16_t
 deserialize_uint16(ConstBuffer<void> &input);

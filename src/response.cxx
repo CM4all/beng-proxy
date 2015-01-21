@@ -406,7 +406,7 @@ response_invoke_text_processor(request &request2,
  * Append response headers set by the translation server.
  */
 static void
-translation_response_headers(struct growing_buffer &headers,
+translation_response_headers(GrowingBuffer &headers,
                              const TranslateResponse &tr)
 {
     if (tr.www_authenticate != nullptr)
@@ -425,7 +425,7 @@ translation_response_headers(struct growing_buffer &headers,
 static void
 more_response_headers(const request &request2, HttpHeaders &headers)
 {
-    struct growing_buffer &headers2 =
+    GrowingBuffer &headers2 =
         headers.MakeBuffer(*request2.request->pool, 256);
 
     /* RFC 2616 3.8: Product Tokens */
@@ -447,7 +447,7 @@ more_response_headers(const request &request2, HttpHeaders &headers)
  * Generate the Set-Cookie response header for the given request.
  */
 static void
-response_generate_set_cookie(request &request2, struct growing_buffer &headers)
+response_generate_set_cookie(request &request2, GrowingBuffer &headers)
 {
     assert(!request2.stateless);
     assert(request2.session_cookie != nullptr);

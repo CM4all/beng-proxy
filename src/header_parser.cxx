@@ -44,7 +44,7 @@ header_parse_line(struct pool *pool, struct strmap *headers,
 
 void
 header_parse_buffer(struct pool *pool, struct strmap *headers,
-                    const struct growing_buffer *gb)
+                    const GrowingBuffer *gb)
 {
     assert(pool != nullptr);
     assert(headers != nullptr);

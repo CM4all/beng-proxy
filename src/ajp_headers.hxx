@@ -8,7 +8,7 @@
 #define BENG_PROXY_AJP_HEADERS_HXX
 
 struct pool;
-struct growing_buffer;
+struct GrowingBuffer;
 struct strmap;
 template<typename T> struct ConstBuffer;
 
@@ -18,7 +18,7 @@ template<typename T> struct ConstBuffer;
  * @return the number of headers which were written
  */
 unsigned
-serialize_ajp_headers(struct growing_buffer *gb, struct strmap *headers);
+serialize_ajp_headers(GrowingBuffer *gb, struct strmap *headers);
 
 void
 deserialize_ajp_headers(struct pool *pool, struct strmap *headers,

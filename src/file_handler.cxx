@@ -47,7 +47,7 @@ file_dispatch(struct request &request2, const struct stat &st,
         override_content_type = address.content_type;
 
     HttpHeaders headers;
-    struct growing_buffer &headers2 = headers.MakeBuffer(*request.pool, 2048);
+    GrowingBuffer &headers2 = headers.MakeBuffer(*request.pool, 2048);
     file_response_headers(&headers2, override_content_type,
                           istream_file_fd(body), &st,
                           tr.expires_relative,
@@ -126,7 +126,7 @@ file_dispatch_compressed(struct request &request2, const struct stat &st,
         override_content_type = address.content_type;
 
     HttpHeaders headers;
-    struct growing_buffer &headers2 = headers.MakeBuffer(*request.pool, 2048);
+    GrowingBuffer &headers2 = headers.MakeBuffer(*request.pool, 2048);
     file_response_headers(&headers2, override_content_type,
                           istream_file_fd(&body), &st,
                           tr.expires_relative,

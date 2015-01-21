@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-struct growing_buffer;
+struct GrowingBuffer;
 struct strmap;
 template<typename T> struct ConstBuffer;
 
@@ -17,17 +17,17 @@ template<typename T> struct ConstBuffer;
  * @param request_id the FastCGI request id in network byte order
  */
 void
-fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...);
+fcgi_serialize_params(GrowingBuffer *gb, uint16_t request_id, ...);
 
 /**
  * @param request_id the FastCGI request id in network byte order
  */
 void
-fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
+fcgi_serialize_vparams(GrowingBuffer *gb, uint16_t request_id,
                        ConstBuffer<const char *> params);
 
 void
-fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,
+fcgi_serialize_headers(GrowingBuffer *gb, uint16_t request_id,
                        const struct strmap *headers);
 
 #endif

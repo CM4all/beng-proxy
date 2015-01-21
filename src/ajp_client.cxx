@@ -897,7 +897,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     p_lease_ref_set(client->lease_ref, *lease, lease_ctx,
                     *pool, "ajp_client_lease");
 
-    struct growing_buffer *gb = growing_buffer_new(pool, 256);
+    GrowingBuffer *gb = growing_buffer_new(pool, 256);
 
     struct ajp_header *header = (struct ajp_header *)
         growing_buffer_write(gb, sizeof(*header));
@@ -939,7 +939,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
     serialize_ajp_integer(gb, server_port);
     serialize_ajp_bool(gb, is_ssl);
 
-    struct growing_buffer *headers_buffer = nullptr;
+    GrowingBuffer *headers_buffer = nullptr;
     unsigned num_headers = 0;
     if (headers != nullptr) {
         /* serialize the request headers - note that

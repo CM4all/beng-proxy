@@ -436,7 +436,7 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
 
     const char *key = http_cache_choice_vary_key(pool, uri, &vary);
 
-    struct growing_buffer *gb = growing_buffer_new(&pool, 1024);
+    GrowingBuffer *gb = growing_buffer_new(&pool, 1024);
 
     /* type */
     serialize_uint32(gb, TYPE_DOCUMENT);

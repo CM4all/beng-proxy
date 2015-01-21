@@ -98,7 +98,7 @@ http_server_response(const struct http_server_request *request,
                              format_status_line(connection->response.status_buffer,
                                                 status));
 
-    struct growing_buffer &headers2 = headers.MakeBuffer(*request->pool, 256);
+    GrowingBuffer &headers2 = headers.MakeBuffer(*request->pool, 256);
 
     /* how will we transfer the body?  determine length and
        transfer-encoding */
@@ -134,7 +134,7 @@ http_server_response(const struct http_server_request *request,
     } else if (!connection->keep_alive && !connection->request.http_1_0)
         header_write(&headers2, "connection", "close");
 
-    struct growing_buffer &headers3 = headers.ToBuffer(*request->pool);
+    GrowingBuffer &headers3 = headers.ToBuffer(*request->pool);
     growing_buffer_write_buffer(&headers3, "\r\n", 2);
     struct istream *header_stream = istream_gb_new(request->pool, &headers3);
 
@@ -159,7 +159,7 @@ http_server_send_message(const struct http_server_request *request,
                          http_status_t status, const char *msg)
 {
     HttpHeaders headers;
-    struct growing_buffer &headers2 = headers.MakeBuffer(*request->pool, 256);
+    GrowingBuffer &headers2 = headers.MakeBuffer(*request->pool, 256);
 
     header_write(&headers2, "content-type", "text/plain");
 
@@ -184,7 +184,7 @@ http_server_send_redirect(const struct http_server_request *request,
         msg = "redirection";
 
     HttpHeaders headers;
-    struct growing_buffer &headers2 = headers.MakeBuffer(*request->pool, 1024);
+    GrowingBuffer &headers2 = headers.MakeBuffer(*request->pool, 1024);
 
     header_write(&headers2, "content-type", "text/plain");
     header_write(&headers2, "location", location);

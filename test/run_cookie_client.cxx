@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     struct strmap *headers = strmap_new(pool);
     cookie_jar_http_header(jar, "foo.bar", "/x", headers, pool);
 
-    const struct growing_buffer *gb = headers_dup(pool, headers);
+    const GrowingBuffer *gb = headers_dup(pool, headers);
     GrowingBufferReader reader(*gb);
 
     ConstBuffer<void> src;

@@ -8,9 +8,9 @@
 #define BENG_PROXY_ISTREAM_GB_HXX
 
 struct pool;
-struct growing_buffer;
+struct GrowingBuffer;
 
 struct istream *
-istream_gb_new(struct pool *pool, const struct growing_buffer *gb);
+istream_gb_new(struct pool *pool, const GrowingBuffer *gb);
 
 #endif

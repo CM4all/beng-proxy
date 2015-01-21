@@ -7,14 +7,14 @@
 
 struct pool;
 struct TranslateResponse;
-struct growing_buffer;
+struct GrowingBuffer;
 
 struct strmap *
 add_translation_vary_header(struct pool *pool, struct strmap *headers,
                             const TranslateResponse *response);
 
 void
-write_translation_vary_header(struct growing_buffer *headers,
+write_translation_vary_header(GrowingBuffer *headers,
                               const TranslateResponse *response);
 
 #endif

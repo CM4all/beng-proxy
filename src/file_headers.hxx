@@ -9,7 +9,7 @@
 
 #include <sys/types.h>
 
-struct growing_buffer;
+struct GrowingBuffer;
 struct request;
 struct stat;
 
@@ -32,12 +32,12 @@ file_evaluate_request(struct request &request2,
                       struct file_request *file_request);
 
 void
-file_cache_headers(struct growing_buffer *headers,
+file_cache_headers(GrowingBuffer *headers,
                    int fd, const struct stat *st,
                    unsigned expires_relative);
 
 void
-file_response_headers(struct growing_buffer *headers,
+file_response_headers(GrowingBuffer *headers,
                       const char *override_content_type,
                       int fd, const struct stat *st,
                       unsigned expires_relative,

@@ -18,7 +18,7 @@ struct istream_gb {
 
     GrowingBufferReader reader;
 
-    istream_gb(struct pool &pool, const struct growing_buffer &gb);
+    istream_gb(struct pool &pool, const GrowingBuffer &gb);
 };
 
 static off_t
@@ -71,13 +71,13 @@ static const struct istream_class istream_gb = {
 };
 
 inline
-istream_gb::istream_gb(struct pool &pool, const struct growing_buffer &gb)
+istream_gb::istream_gb(struct pool &pool, const GrowingBuffer &gb)
     :output(::istream_gb, pool), reader(gb)
 {
 }
 
 struct istream *
-istream_gb_new(struct pool *pool, const struct growing_buffer *gb)
+istream_gb_new(struct pool *pool, const GrowingBuffer *gb)
 {
     assert(gb != nullptr);
 

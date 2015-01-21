@@ -20,7 +20,7 @@
 class HttpHeaders {
     struct strmap *map;
 
-    struct growing_buffer *buffer;
+    GrowingBuffer *buffer;
 
 public:
     HttpHeaders()
@@ -32,7 +32,7 @@ public:
     explicit HttpHeaders(struct strmap &_map)
         :map(&_map), buffer(nullptr) {}
 
-    explicit HttpHeaders(struct growing_buffer &_buffer)
+    explicit HttpHeaders(GrowingBuffer &_buffer)
         :map(nullptr), buffer(&_buffer) {}
 
     HttpHeaders(HttpHeaders &&) = default;
@@ -60,7 +60,7 @@ public:
         return strmap_get_checked(map, key);
     }
 
-    struct growing_buffer &MakeBuffer(struct pool &pool,
+    GrowingBuffer &MakeBuffer(struct pool &pool,
                                       size_t initial_size=1024) {
         if (buffer == nullptr)
             buffer = growing_buffer_new(&pool, initial_size);
@@ -86,9 +86,9 @@ public:
                 MoveToBuffer(pool, *names);
     }
 
-    struct growing_buffer &ToBuffer(struct pool &pool,
+    GrowingBuffer &ToBuffer(struct pool &pool,
                                     size_t initial_size=2048) {
-        struct growing_buffer &gb = MakeBuffer(pool, initial_size);
+        GrowingBuffer &gb = MakeBuffer(pool, initial_size);
         if (map != nullptr)
             headers_copy_most(map, &gb);
         return gb;

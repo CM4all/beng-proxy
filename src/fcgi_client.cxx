@@ -966,7 +966,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     client->content_length = 0;
     client->skip_length = 0;
 
-    struct growing_buffer *buffer = growing_buffer_new(pool, 1024);
+    GrowingBuffer *buffer = growing_buffer_new(pool, 1024);
     header.type = FCGI_BEGIN_REQUEST;
     header.content_length = htons(sizeof(begin_request));
     growing_buffer_write_buffer(buffer, &header, sizeof(header));

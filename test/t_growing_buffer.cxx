@@ -137,7 +137,7 @@ run_istream(struct pool *pool, struct istream *istream)
 static struct istream *
 create_test(struct pool *pool)
 {
-    struct growing_buffer *gb = growing_buffer_new(pool, 64);
+    GrowingBuffer *gb = growing_buffer_new(pool, 64);
     growing_buffer_write_string(gb, "foo");
     return istream_gb_new(pool, gb);
 }
@@ -145,7 +145,7 @@ create_test(struct pool *pool)
 static struct istream *
 create_empty(struct pool *pool)
 {
-    struct growing_buffer *gb = growing_buffer_new(pool, 64);
+    GrowingBuffer *gb = growing_buffer_new(pool, 64);
     return istream_gb_new(pool, gb);
 }
 
@@ -184,7 +184,7 @@ static void
 test_first_empty(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    struct growing_buffer *buffer = growing_buffer_new(pool, 16);
+    GrowingBuffer *buffer = growing_buffer_new(pool, 16);
     GrowingBufferReader reader(*buffer);
 
     growing_buffer_write_string(buffer, "0123456789abcdefg");
@@ -205,7 +205,7 @@ static void
 test_skip(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    struct growing_buffer *buffer = growing_buffer_new(pool, 3);
+    GrowingBuffer *buffer = growing_buffer_new(pool, 3);
     GrowingBufferReader reader(*buffer);
 
     growing_buffer_write_string(buffer, "0123");
@@ -240,7 +240,7 @@ static void
 test_concurrent_rw(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    struct growing_buffer *buffer = growing_buffer_new(pool, 3);
+    GrowingBuffer *buffer = growing_buffer_new(pool, 3);
     GrowingBufferReader reader(*buffer);
 
     growing_buffer_write_string(buffer, "0123");

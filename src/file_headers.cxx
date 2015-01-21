@@ -120,7 +120,7 @@ file_evaluate_request(struct request &request2,
             time_t t = http_date_parse(p);
             if (t != (time_t)-1 && st->st_mtime <= t) {
                 HttpHeaders headers;
-                struct growing_buffer &headers2 =
+                GrowingBuffer &headers2 =
                     headers.MakeBuffer(*request->pool, 512);
 
                 if (fd >= 0)
@@ -202,7 +202,7 @@ read_xattr_max_age(int fd)
 }
 
 static void
-generate_expires(struct growing_buffer *headers, unsigned max_age)
+generate_expires(GrowingBuffer *headers, unsigned max_age)
 {
     if (max_age > 365 * 24 * 3600)
         /* limit max_age to approximately one year */
@@ -214,7 +214,7 @@ generate_expires(struct growing_buffer *headers, unsigned max_age)
 }
 
 void
-file_cache_headers(struct growing_buffer *headers,
+file_cache_headers(GrowingBuffer *headers,
                    int fd, const struct stat *st,
                    unsigned max_age)
 {
@@ -255,7 +255,7 @@ file_cache_headers(struct growing_buffer *headers,
 }
 
 void
-file_response_headers(struct growing_buffer *headers,
+file_response_headers(GrowingBuffer *headers,
                       const char *override_content_type,
                       int fd, const struct stat *st,
                       unsigned expires_relative,

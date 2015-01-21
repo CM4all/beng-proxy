@@ -1150,7 +1150,7 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
 
     /* headers */
 
-    struct growing_buffer &headers2 = headers.MakeBuffer(_pool);
+    GrowingBuffer &headers2 = headers.MakeBuffer(_pool);
 
     const bool upgrade = body != nullptr && http_is_upgrade(headers);
     if (upgrade) {
@@ -1184,7 +1184,7 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
     } else
         request.body = nullptr;
 
-    struct growing_buffer &headers3 = headers.ToBuffer(_pool);
+    GrowingBuffer &headers3 = headers.ToBuffer(_pool);
     growing_buffer_write_buffer(&headers3, "\r\n", 2);
 
     struct istream *header_stream = istream_gb_new(pool, &headers3);

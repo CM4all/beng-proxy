@@ -8,7 +8,6 @@
 
 int main(int argc gcc_unused, char **argv gcc_unused) {
     struct pool *pool;
-    struct growing_buffer *gb;
     char buffer[16];
     ssize_t nbytes;
     struct strmap *headers;
@@ -16,7 +15,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     pool = pool_new_libc(nullptr, "root");
     tpool_init(pool);
 
-    gb = growing_buffer_new(pool, sizeof(buffer));
+    GrowingBuffer *gb = growing_buffer_new(pool, sizeof(buffer));
 
     /* read input from stdin */
 

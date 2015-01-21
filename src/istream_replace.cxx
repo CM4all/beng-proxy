@@ -30,7 +30,7 @@ struct istream_replace {
     bool finished, read_locked;
     bool had_input, had_output;
 
-    struct growing_buffer *buffer;
+    GrowingBuffer *buffer;
     off_t source_length, position;
 
     /**

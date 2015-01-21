@@ -17,7 +17,7 @@ struct buffer {
     char data[sizeof(size_t)];
 };
 
-struct growing_buffer {
+struct GrowingBuffer {
     struct pool *pool;
 
 #ifndef NDEBUG
@@ -28,10 +28,10 @@ struct growing_buffer {
     struct buffer *current, *tail, first;
 };
 
-struct growing_buffer *gcc_malloc
+GrowingBuffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size)
 {
-    struct growing_buffer *gb = (struct growing_buffer *)
+    GrowingBuffer *gb = (GrowingBuffer *)
         p_malloc(pool, sizeof(*gb) - sizeof(gb->first.data) + initial_size);
 
     gb->pool = pool;
@@ -50,7 +50,7 @@ growing_buffer_new(struct pool *pool, size_t initial_size)
 }
 
 static void
-growing_buffer_append_buffer(struct growing_buffer *gb, struct buffer *buffer)
+growing_buffer_append_buffer(GrowingBuffer *gb, struct buffer *buffer)
 {
     assert(gb != nullptr);
     assert(buffer != nullptr);
@@ -61,7 +61,7 @@ growing_buffer_append_buffer(struct growing_buffer *gb, struct buffer *buffer)
 }
 
 void *
-growing_buffer_write(struct growing_buffer *gb, size_t length)
+growing_buffer_write(GrowingBuffer *gb, size_t length)
 {
     struct buffer *buffer = gb->tail;
     void *ret;
@@ -89,19 +89,19 @@ growing_buffer_write(struct growing_buffer *gb, size_t length)
 }
 
 void
-growing_buffer_write_buffer(struct growing_buffer *gb, const void *p, size_t length)
+growing_buffer_write_buffer(GrowingBuffer *gb, const void *p, size_t length)
 {
     memcpy(growing_buffer_write(gb, length), p, length);
 }
 
 void
-growing_buffer_write_string(struct growing_buffer *gb, const char *p)
+growing_buffer_write_string(GrowingBuffer *gb, const char *p)
 {
     growing_buffer_write_buffer(gb, p, strlen(p));
 }
 
 void
-growing_buffer_cat(struct growing_buffer *dest, struct growing_buffer *src)
+growing_buffer_cat(GrowingBuffer *dest, GrowingBuffer *src)
 {
     dest->tail->next = &src->first;
     dest->tail = src->tail;
@@ -109,7 +109,7 @@ growing_buffer_cat(struct growing_buffer *dest, struct growing_buffer *src)
 }
 
 size_t
-growing_buffer_size(const struct growing_buffer *gb)
+growing_buffer_size(const GrowingBuffer *gb)
 {
     size_t size = 0;
 
@@ -120,7 +120,7 @@ growing_buffer_size(const struct growing_buffer *gb)
     return size;
 }
 
-GrowingBufferReader::GrowingBufferReader(const struct growing_buffer &gb)
+GrowingBufferReader::GrowingBufferReader(const GrowingBuffer &gb)
 #ifndef NDEBUG
     :growing_buffer(&gb)
 #endif
@@ -252,7 +252,7 @@ GrowingBufferReader::Skip(size_t length)
 }
 
 static void *
-growing_buffer_copy(void *dest0, const struct growing_buffer *gb)
+growing_buffer_copy(void *dest0, const GrowingBuffer *gb)
 {
     unsigned char *dest = (unsigned char *)dest0;
 
@@ -266,7 +266,7 @@ growing_buffer_copy(void *dest0, const struct growing_buffer *gb)
 }
 
 void *
-growing_buffer_dup(const struct growing_buffer *gb, struct pool *pool,
+growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool,
                    size_t *length_r)
 {
     size_t length;
@@ -283,8 +283,8 @@ growing_buffer_dup(const struct growing_buffer *gb, struct pool *pool,
 }
 
 void *
-growing_buffer_dup2(const struct growing_buffer *a,
-                    const struct growing_buffer *b,
+growing_buffer_dup2(const GrowingBuffer *a,
+                    const GrowingBuffer *b,
                     struct pool *pool, size_t *length_r)
 {
     size_t length;

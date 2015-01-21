@@ -19,7 +19,7 @@
 #include <stdarg.h>
 
 static size_t
-fcgi_serialize_length(struct growing_buffer *gb, size_t length)
+fcgi_serialize_length(GrowingBuffer *gb, size_t length)
 {
     if (length < 0x80) {
         uint8_t buffer = (uint8_t)length;
@@ -34,7 +34,7 @@ fcgi_serialize_length(struct growing_buffer *gb, size_t length)
 }
 
 static size_t
-fcgi_serialize_pair(struct growing_buffer *gb, const char *name,
+fcgi_serialize_pair(GrowingBuffer *gb, const char *name,
                     const char *value)
 {
     size_t size, name_length, value_length;
@@ -56,7 +56,7 @@ fcgi_serialize_pair(struct growing_buffer *gb, const char *name,
 }
 
 static size_t
-fcgi_serialize_pair1(struct growing_buffer *gb, const char *name_and_value)
+fcgi_serialize_pair1(GrowingBuffer *gb, const char *name_and_value)
 {
     assert(name_and_value != nullptr);
 
@@ -82,7 +82,7 @@ fcgi_serialize_pair1(struct growing_buffer *gb, const char *name_and_value)
 }
 
 void
-fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...)
+fcgi_serialize_params(GrowingBuffer *gb, uint16_t request_id, ...)
 {
     size_t content_length = 0;
 
@@ -109,7 +109,7 @@ fcgi_serialize_params(struct growing_buffer *gb, uint16_t request_id, ...)
 }
 
 void
-fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
+fcgi_serialize_vparams(GrowingBuffer *gb, uint16_t request_id,
                        ConstBuffer<const char *> params)
 {
     assert(!params.IsEmpty());
@@ -130,7 +130,7 @@ fcgi_serialize_vparams(struct growing_buffer *gb, uint16_t request_id,
 }
 
 void
-fcgi_serialize_headers(struct growing_buffer *gb, uint16_t request_id,
+fcgi_serialize_headers(GrowingBuffer *gb, uint16_t request_id,
                        const struct strmap *headers)
 {
     struct fcgi_record_header *header = (struct fcgi_record_header *)

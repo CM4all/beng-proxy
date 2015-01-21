@@ -12,18 +12,19 @@
 #include <stddef.h>
 
 struct pool;
+struct GrowingBuffer;
 template<typename T> struct ConstBuffer;
 
 class GrowingBufferReader {
 #ifndef NDEBUG
-    const struct growing_buffer *growing_buffer;
+    const GrowingBuffer *growing_buffer;
 #endif
 
     const struct buffer *buffer;
     size_t position;
 
 public:
-    explicit GrowingBufferReader(const struct growing_buffer &gb);
+    explicit GrowingBufferReader(const GrowingBuffer &gb);
 
     /**
      * Update the reader object after data has been appended to the
@@ -52,42 +53,42 @@ public:
     void Skip(size_t length);
 };
 
-struct growing_buffer *gcc_malloc
+GrowingBuffer *gcc_malloc
 growing_buffer_new(struct pool *pool, size_t initial_size);
 
 void *
-growing_buffer_write(struct growing_buffer *gb, size_t length);
+growing_buffer_write(GrowingBuffer *gb, size_t length);
 
 void
-growing_buffer_write_buffer(struct growing_buffer *gb, const void *p, size_t length);
+growing_buffer_write_buffer(GrowingBuffer *gb, const void *p, size_t length);
 
 void
-growing_buffer_write_string(struct growing_buffer *gb, const char *p);
+growing_buffer_write_string(GrowingBuffer *gb, const char *p);
 
 void
-growing_buffer_cat(struct growing_buffer *dest, struct growing_buffer *src);
+growing_buffer_cat(GrowingBuffer *dest, GrowingBuffer *src);
 
 /**
  * Returns the total size of the buffer.
  */
 size_t
-growing_buffer_size(const struct growing_buffer *gb);
+growing_buffer_size(const GrowingBuffer *gb);
 
 /**
  * Duplicates the whole buffer (including all chunks) to one
  * contiguous buffer.
  */
 void *
-growing_buffer_dup(const struct growing_buffer *gb, struct pool *pool,
+growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool,
                    size_t *length_r);
 
 /**
  * Similar to growing_buffer_dup(), but concatenates two
- * #growing_buffer objects.
+ * #GrowingBuffer objects.
  */
 void *
-growing_buffer_dup2(const struct growing_buffer *a,
-                    const struct growing_buffer *b,
+growing_buffer_dup2(const GrowingBuffer *a,
+                    const GrowingBuffer *b,
                     struct pool *pool, size_t *length_r);
 
 #endif

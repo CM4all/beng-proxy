@@ -89,7 +89,7 @@ add_translation_vary_header(struct pool *pool, struct strmap *headers,
 }
 
 void
-write_translation_vary_header(struct growing_buffer *headers,
+write_translation_vary_header(GrowingBuffer *headers,
                               const TranslateResponse *response)
 {
     assert(headers != nullptr);

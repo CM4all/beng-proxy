@@ -154,7 +154,7 @@ struct TranslateClient {
         return &ContainerCast2(*ao, &TranslateClient::async);
     }
 
-    explicit TranslateClient(const struct growing_buffer &_request)
+    explicit TranslateClient(const GrowingBuffer &_request)
         :request(_request) {}
 };
 
@@ -233,7 +233,7 @@ translate_client_error(TranslateClient *client, const char *fmt,
  */
 
 static bool
-write_packet_n(struct growing_buffer *gb, uint16_t command,
+write_packet_n(GrowingBuffer *gb, uint16_t command,
                const void *payload, size_t length, GError **error_r)
 {
     static struct beng_translation_header header;
@@ -256,7 +256,7 @@ write_packet_n(struct growing_buffer *gb, uint16_t command,
 }
 
 static bool
-write_packet(struct growing_buffer *gb, uint16_t command,
+write_packet(GrowingBuffer *gb, uint16_t command,
              const char *payload, GError **error_r)
 {
     return write_packet_n(gb, command, payload,
@@ -266,7 +266,7 @@ write_packet(struct growing_buffer *gb, uint16_t command,
 
 template<typename T>
 static bool
-write_buffer(growing_buffer *gb, uint16_t command,
+write_buffer(GrowingBuffer *gb, uint16_t command,
              ConstBuffer<T> buffer, GError **error_r)
 {
     auto b = buffer.ToVoid();
@@ -277,7 +277,7 @@ write_buffer(growing_buffer *gb, uint16_t command,
  * Forward the command to write_packet() only if #payload is not nullptr.
  */
 static bool
-write_optional_packet(struct growing_buffer *gb, uint16_t command,
+write_optional_packet(GrowingBuffer *gb, uint16_t command,
                       const char *payload, GError **error_r)
 {
     if (payload == nullptr)
@@ -288,21 +288,21 @@ write_optional_packet(struct growing_buffer *gb, uint16_t command,
 
 template<typename T>
 static bool
-write_optional_buffer(growing_buffer *gb, uint16_t command,
+write_optional_buffer(GrowingBuffer *gb, uint16_t command,
                       ConstBuffer<T> buffer, GError **error_r)
 {
     return buffer.IsNull() || write_buffer(gb, command, buffer, error_r);
 }
 
 static bool
-write_short(struct growing_buffer *gb,
+write_short(GrowingBuffer *gb,
             uint16_t command, uint16_t payload, GError **error_r)
 {
     return write_packet_n(gb, command, &payload, sizeof(payload), error_r);
 }
 
 static bool
-write_sockaddr(struct growing_buffer *gb,
+write_sockaddr(GrowingBuffer *gb,
                uint16_t command, uint16_t command_string,
                const struct sockaddr *address, size_t address_length,
                GError **error_r)
@@ -319,7 +319,7 @@ write_sockaddr(struct growing_buffer *gb,
 }
 
 static bool
-write_optional_sockaddr(struct growing_buffer *gb,
+write_optional_sockaddr(GrowingBuffer *gb,
                         uint16_t command, uint16_t command_string,
                         const struct sockaddr *address, size_t address_length,
                         GError **error_r)
@@ -332,11 +332,11 @@ write_optional_sockaddr(struct growing_buffer *gb,
         : true;
 }
 
-static struct growing_buffer *
+static GrowingBuffer *
 marshal_request(struct pool *pool, const TranslateRequest *request,
                 GError **error_r)
 {
-    struct growing_buffer *gb;
+    GrowingBuffer *gb;
     bool success;
 
     gb = growing_buffer_new(pool, 512);
@@ -3276,7 +3276,7 @@ translate(struct pool *pool, int fd,
     assert(handler->error != nullptr);
 
     GError *error = nullptr;
-    struct growing_buffer *gb = marshal_request(pool, request, &error);
+    GrowingBuffer *gb = marshal_request(pool, request, &error);
     if (gb == nullptr) {
         lease->Release(lease_ctx, true);
 

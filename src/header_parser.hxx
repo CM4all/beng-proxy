@@ -11,7 +11,7 @@
 
 struct pool;
 struct strmap;
-struct growing_buffer;
+struct GrowingBuffer;
 
 void
 header_parse_line(struct pool *pool, struct strmap *headers,
@@ -19,6 +19,6 @@ header_parse_line(struct pool *pool, struct strmap *headers,
 
 void
 header_parse_buffer(struct pool *pool, struct strmap *headers,
-                    const struct growing_buffer *gb);
+                    const GrowingBuffer *gb);
 
 #endif

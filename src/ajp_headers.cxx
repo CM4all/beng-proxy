@@ -17,7 +17,7 @@
 #include <assert.h>
 
 static bool
-serialize_ajp_header_name(struct growing_buffer *gb, const char *name)
+serialize_ajp_header_name(GrowingBuffer *gb, const char *name)
 {
     enum ajp_header_code code;
 
@@ -34,7 +34,7 @@ serialize_ajp_header_name(struct growing_buffer *gb, const char *name)
 }
 
 unsigned
-serialize_ajp_headers(struct growing_buffer *gb, struct strmap *headers)
+serialize_ajp_headers(GrowingBuffer *gb, struct strmap *headers)
 {
     unsigned n = 0;
 

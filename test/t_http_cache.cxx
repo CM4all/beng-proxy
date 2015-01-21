@@ -150,7 +150,7 @@ http_cache_memcached_remove_uri_match(gcc_unused struct memcached_stock &stock,
 static struct strmap *
 parse_headers(struct pool *pool, const char *raw)
 {
-    struct growing_buffer *gb;
+    GrowingBuffer *gb;
 
     if (raw == NULL)
         return NULL;
@@ -214,7 +214,7 @@ resource_loader_request(gcc_unused struct resource_loader *rl, struct pool *pool
         istream_close_unused(body);
 
     if (request->response_headers != NULL) {
-        struct growing_buffer *gb = growing_buffer_new(pool, 512);
+        GrowingBuffer *gb = growing_buffer_new(pool, 512);
         growing_buffer_write_string(gb, request->response_headers);
 
         response_headers = strmap_new(pool);
@@ -329,7 +329,7 @@ run_cache_test(struct pool *root_pool, unsigned num, bool cached)
     current_request = num;
 
     if (request->request_headers != NULL) {
-        struct growing_buffer *gb = growing_buffer_new(pool, 512);
+        GrowingBuffer *gb = growing_buffer_new(pool, 512);
 
         headers = strmap_new(pool);
         growing_buffer_write_string(gb, request->request_headers);

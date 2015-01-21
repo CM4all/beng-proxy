@@ -59,7 +59,7 @@ nfs_handler_cache_response(struct nfs_cache_handle *handle,
         override_content_type = request2.translate.address->u.nfs->content_type;
 
     HttpHeaders headers;
-    struct growing_buffer &headers2 = headers.MakeBuffer(*pool, 2048);
+    GrowingBuffer &headers2 = headers.MakeBuffer(*pool, 2048);
     header_write(&headers2, "cache-control", "max-age=60");
 
     file_response_headers(&headers2,
