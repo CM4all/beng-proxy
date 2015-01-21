@@ -29,24 +29,25 @@ struct ReplaceIstream {
     struct istream output;
     struct istream *input;
 
-    bool finished, read_locked;
+    bool finished = false, read_locked = false;
     bool had_input, had_output;
 
     GrowingBuffer *buffer;
-    off_t source_length, position;
+    off_t source_length = 0, position = 0;
 
     /**
      * The offset given by istream_replace_settle() or the end offset
      * of the last substitution (whichever is bigger).
      */
-    off_t settled_position;
+    off_t settled_position = 0;
 
     GrowingBufferReader reader;
 
-    struct substitution *first_substitution, **append_substitution_p;
+    struct substitution *first_substitution = nullptr,
+        **append_substitution_p = &first_substitution;
 
 #ifndef NDEBUG
-    off_t last_substitution_end;
+    off_t last_substitution_end = 0;
 #endif
 
     explicit ReplaceIstream(struct pool &p);
@@ -590,20 +591,6 @@ istream_replace_new(struct pool *pool, struct istream *input)
     istream_assign_handler(&replace->input, input,
                            &replace_input_handler, replace,
                            0);
-
-    replace->finished = false;
-    replace->read_locked = false;
-
-    replace->source_length = 0;
-    replace->position = 0;
-    replace->settled_position = 0;
-
-    replace->first_substitution = nullptr;
-    replace->append_substitution_p = &replace->first_substitution;
-
-#ifndef NDEBUG
-    replace->last_substitution_end = 0;
-#endif
 
     return istream_struct_cast(&replace->output);
 }
