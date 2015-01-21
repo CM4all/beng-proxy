@@ -23,9 +23,6 @@ extern "C" {
 #endif
 
 struct istream *
-istream_null_new(struct pool *pool);
-
-struct istream *
 istream_zero_new(struct pool *pool);
 
 struct istream *

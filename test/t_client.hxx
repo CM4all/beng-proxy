@@ -2,6 +2,7 @@
 #include "async.hxx"
 #include "lease.hxx"
 #include "istream.h"
+#include "istream_null.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
 #include "util/Cast.hxx"

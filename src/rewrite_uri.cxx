@@ -17,6 +17,7 @@
 #include "istream-escape.h"
 #include "strmap.hxx"
 #include "istream.h"
+#include "istream_null.hxx"
 #include "session.hxx"
 #include "inline_widget.hxx"
 #include "pool.hxx"

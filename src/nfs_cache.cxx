@@ -13,6 +13,7 @@
 #include "pool.hxx"
 #include "rubber.hxx"
 #include "sink_rubber.hxx"
+#include "istream_null.hxx"
 #include "istream_rubber.hxx"
 #include "istream_tee.h"
 #include "cache.hxx"

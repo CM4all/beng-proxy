@@ -4,6 +4,7 @@
 #include "sink_rubber.hxx"
 #include "pool.hxx"
 #include "istream-impl.h"
+#include "istream_null.hxx"
 #include "istream.h"
 
 #include <inline/compiler.h>

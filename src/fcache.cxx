@@ -18,6 +18,7 @@
 #include "resource_address.hxx"
 #include "resource_loader.hxx"
 #include "istream.h"
+#include "istream_null.hxx"
 #include "rubber.hxx"
 #include "SlicePool.hxx"
 #include "istream_rubber.hxx"

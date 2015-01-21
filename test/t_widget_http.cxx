@@ -18,6 +18,7 @@
 #include "transformation.hxx"
 #include "crash.h"
 #include "istream.h"
+#include "istream_null.hxx"
 #include "session_manager.hxx"
 #include "session.hxx"
 
