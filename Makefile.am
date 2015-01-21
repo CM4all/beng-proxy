@@ -684,7 +684,7 @@ libistream_a_SOURCES = \
 	src/istream_pipe.cxx \
 	src/istream_delayed.cxx \
 	src/istream-hold.c \
-	src/istream-optional.c \
+	src/istream_optional.cxx src/istream_optional.hxx \
 	src/istream_deflate.cxx src/istream_deflate.hxx \
 	src/istream-subst.c \
 	src/istream-byte.c \

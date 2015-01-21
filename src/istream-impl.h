@@ -87,9 +87,6 @@ istream_delayed_set_abort(struct istream *istream_delayed, GError *error);
 struct istream *
 istream_hold_new(struct pool *pool, struct istream *input);
 
-struct istream *
-istream_optional_new(struct pool *pool, struct istream *input);
-
 /**
  * Allows the istream to resume, but does not trigger reading.
  */
