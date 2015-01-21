@@ -82,13 +82,4 @@ void *
 growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool,
                    size_t *length_r);
 
-/**
- * Similar to growing_buffer_dup(), but concatenates two
- * #GrowingBuffer objects.
- */
-void *
-growing_buffer_dup2(const GrowingBuffer *a,
-                    const GrowingBuffer *b,
-                    struct pool *pool, size_t *length_r);
-
 #endif

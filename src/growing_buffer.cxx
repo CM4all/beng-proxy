@@ -281,21 +281,3 @@ growing_buffer_dup(const GrowingBuffer *gb, struct pool *pool,
 
     return dest;
 }
-
-void *
-growing_buffer_dup2(const GrowingBuffer *a,
-                    const GrowingBuffer *b,
-                    struct pool *pool, size_t *length_r)
-{
-    size_t length;
-
-    length = growing_buffer_size(a) + growing_buffer_size(b);
-    *length_r = length;
-    if (length == 0)
-        return nullptr;
-
-    void *dest = p_malloc(pool, length);
-    growing_buffer_copy(growing_buffer_copy(dest, a), b);
-
-    return dest;
-}
