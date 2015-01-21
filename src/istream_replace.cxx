@@ -46,6 +46,8 @@ struct istream_replace {
 #ifndef NDEBUG
     off_t last_substitution_end;
 #endif
+
+    explicit istream_replace(struct pool &p);
 };
 
 static GQuark
@@ -568,13 +570,20 @@ static const struct istream_class istream_replace = {
  *
  */
 
+inline istream_replace::istream_replace(struct pool &p)
+    :buffer(growing_buffer_new(&p, 4096)),
+     reader(*buffer)
+{
+    istream_init(&output, &::istream_replace, &p);
+}
+
 struct istream *
 istream_replace_new(struct pool *pool, struct istream *input)
 {
-    struct istream_replace *replace = istream_new_macro(pool, replace);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
+
+    auto *replace = NewFromPool<struct istream_replace>(*pool, *pool);
 
     istream_assign_handler(&replace->input, input,
                            &replace_input_handler, replace,
@@ -583,12 +592,9 @@ istream_replace_new(struct pool *pool, struct istream *input)
     replace->finished = false;
     replace->read_locked = false;
 
-    replace->buffer = growing_buffer_new(replace->output.pool, 4096);
     replace->source_length = 0;
     replace->position = 0;
     replace->settled_position = 0;
-
-    ::new(&replace->reader) GrowingBufferReader(*replace->buffer);
 
     replace->first_substitution = nullptr;
     replace->append_substitution_p = &replace->first_substitution;
