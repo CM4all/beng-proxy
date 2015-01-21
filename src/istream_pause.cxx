@@ -4,8 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream_pause.h"
+#include "istream_pause.hxx"
 #include "istream-internal.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -22,42 +23,48 @@ struct istream_pause {
  *
  */
 
+static inline struct istream_pause &
+istream_to_pause(struct istream *istream)
+{
+    return ContainerCast2(*istream, &istream_pause::output);
+}
+
 static off_t
 istream_pause_available(struct istream *istream, bool partial)
 {
-    struct istream_pause *pause = (struct istream_pause *)istream;
+    struct istream_pause &pause = istream_to_pause(istream);
 
-    return istream_available(pause->input, partial);
+    return istream_available(pause.input, partial);
 }
 
 static off_t
 istream_pause_skip(struct istream *istream, off_t length)
 {
-    struct istream_pause *pause = (struct istream_pause *)istream;
+    struct istream_pause &pause = istream_to_pause(istream);
 
-    return istream_skip(pause->input, length);
+    return istream_skip(pause.input, length);
 }
 
 static void
 istream_pause_read(struct istream *istream)
 {
-    struct istream_pause *pause = (struct istream_pause *)istream;
+    struct istream_pause &pause = istream_to_pause(istream);
 
-    istream_handler_set_direct(pause->input,
-                               pause->output.handler_direct);
+    istream_handler_set_direct(pause.input,
+                               pause.output.handler_direct);
 
-    if (pause->resumed)
-        istream_read(pause->input);
+    if (pause.resumed)
+        istream_read(pause.input);
 }
 
 static int
 istream_pause_as_fd(struct istream *istream)
 {
-    struct istream_pause *pause = (struct istream_pause *)istream;
+    struct istream_pause &pause = istream_to_pause(istream);
 
-    int fd = istream_as_fd(pause->input);
+    int fd = istream_as_fd(pause.input);
     if (fd >= 0)
-        istream_deinit(&pause->output);
+        istream_deinit(&pause.output);
 
     return fd;
 }
@@ -65,13 +72,13 @@ istream_pause_as_fd(struct istream *istream)
 static void
 istream_pause_close(struct istream *istream)
 {
-    struct istream_pause *pause = (struct istream_pause *)istream;
+    struct istream_pause &pause = istream_to_pause(istream);
 
-    istream_close(pause->input);
-    istream_deinit(&pause->output);
+    istream_close(pause.input);
+    istream_deinit(&pause.output);
 }
 
-static const struct istream_class istream_pause = {
+static constexpr struct istream_class istream_pause = {
     .available = istream_pause_available,
     .skip = istream_pause_skip,
     .read = istream_pause_read,
@@ -103,7 +110,7 @@ istream_pause_new(struct pool *pool, struct istream *input)
 void
 istream_pause_resume(struct istream *istream)
 {
-    assert(istream != NULL);
+    assert(istream != nullptr);
     assert(istream->cls == &istream_pause);
 
     struct istream_pause *pause = (struct istream_pause *)istream;

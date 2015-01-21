@@ -22,7 +22,7 @@
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "istream.h"
-#include "istream_pause.h"
+#include "istream_pause.hxx"
 #include "session.hxx"
 #include "pool.hxx"
 
