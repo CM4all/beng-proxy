@@ -121,7 +121,7 @@ AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_LDFLAGS)
 
 AM_CFLAGS=""
-AM_CXXFLAGS="-std=gnu++0x"
+AM_CXXFLAGS="-std=gnu++0x -fno-exceptions -fno-threadsafe-statics -fmerge-all-constants"
 AM_CPPFLAGS="-D_REENTRANT -D_GNU_SOURCE"
 AM_LDFLAGS="-Wl,--as-needed"
 
