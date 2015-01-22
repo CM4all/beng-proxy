@@ -53,7 +53,7 @@ static constexpr struct timeval http_client_timeout = {
     .tv_usec = 0,
 };
 
-struct http_client {
+struct HttpClient {
     struct pool *const pool, *const caller_pool;
 
     const char *const peer_name;
@@ -125,24 +125,24 @@ struct http_client {
     /* connection settings */
     bool keep_alive;
 
-    http_client(struct pool &_caller_pool, struct pool &_pool,
-                int fd, enum istream_direct fd_type,
-                const struct lease &lease, void *lease_ctx,
-                const SocketFilter *filter, void *filter_ctx,
-                http_method_t method, const char *uri,
-                HttpHeaders &&headers,
-                struct istream *body, bool expect_100,
-                const struct http_response_handler &handler,
-                void *ctx,
-                struct async_operation_ref &async_ref);
+    HttpClient(struct pool &_caller_pool, struct pool &_pool,
+               int fd, enum istream_direct fd_type,
+               const struct lease &lease, void *lease_ctx,
+               const SocketFilter *filter, void *filter_ctx,
+               http_method_t method, const char *uri,
+               HttpHeaders &&headers,
+               struct istream *body, bool expect_100,
+               const struct http_response_handler &handler,
+               void *ctx,
+               struct async_operation_ref &async_ref);
 
-    static struct http_client &FromResponseBody(struct istream &istream) {
+    static HttpClient &FromResponseBody(struct istream &istream) {
         auto &body = HttpBodyReader::FromStream(istream);
-        return ContainerCast2(body, &http_client::response_body_reader);
+        return ContainerCast2(body, &HttpClient::response_body_reader);
     }
 
-    static struct http_client &FromAsync(struct async_operation &ao) {
-        return ContainerCast2(ao, &http_client::request_async);
+    static HttpClient &FromAsync(struct async_operation &ao) {
+        return ContainerCast2(ao, &HttpClient::request_async);
     }
 
     gcc_pure
@@ -260,7 +260,7 @@ get_peer_name(int fd)
  * Abort receiving the response status/headers from the HTTP server.
  */
 void
-http_client::AbortResponseHeaders(GError *error)
+HttpClient::AbortResponseHeaders(GError *error)
 {
     assert(response.read_state == response::READ_STATUS ||
            response.read_state == response::READ_HEADERS);
@@ -280,7 +280,7 @@ http_client::AbortResponseHeaders(GError *error)
  * Abort receiving the response status/headers from the HTTP server.
  */
 void
-http_client::AbortResponseBody(GError *error)
+HttpClient::AbortResponseBody(GError *error)
 {
     assert(response.read_state == response::READ_BODY);
     assert(response.body != nullptr);
@@ -298,7 +298,7 @@ http_client::AbortResponseBody(GError *error)
  * server.
  */
 void
-http_client::AbortResponse(GError *error)
+HttpClient::AbortResponse(GError *error)
 {
     assert(response.read_state == response::READ_STATUS ||
            response.read_state == response::READ_HEADERS ||
@@ -317,7 +317,7 @@ http_client::AbortResponse(GError *error)
  */
 
 inline off_t
-http_client::GetAvailable(bool partial) const
+HttpClient::GetAvailable(bool partial) const
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
@@ -329,13 +329,13 @@ http_client::GetAvailable(bool partial) const
 static off_t
 http_client_response_stream_available(struct istream *istream, bool partial)
 {
-    struct http_client &client = http_client::FromResponseBody(*istream);
+    HttpClient &client = HttpClient::FromResponseBody(*istream);
 
     return client.GetAvailable(partial);
 }
 
 inline void
-http_client::Read()
+HttpClient::Read()
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
@@ -356,13 +356,13 @@ http_client::Read()
 static void
 http_client_response_stream_read(struct istream *istream)
 {
-    struct http_client &client = http_client::FromResponseBody(*istream);
+    HttpClient &client = HttpClient::FromResponseBody(*istream);
 
     client.Read();
 }
 
 inline int
-http_client::AsFD()
+HttpClient::AsFD()
 {
     assert(!socket.ended || response_body_reader.IsSocketDone(socket));
     assert(response.read_state == response::READ_BODY);
@@ -386,13 +386,13 @@ http_client::AsFD()
 static int
 http_client_response_stream_as_fd(struct istream *istream)
 {
-    struct http_client &client = http_client::FromResponseBody(*istream);
+    HttpClient &client = HttpClient::FromResponseBody(*istream);
 
     return client.AsFD();
 }
 
 inline void
-http_client::Close()
+HttpClient::Close()
 {
     assert(response.read_state == response::READ_BODY);
     assert(request.handler.IsUsed());
@@ -410,7 +410,7 @@ http_client::Close()
 static void
 http_client_response_stream_close(struct istream *istream)
 {
-    struct http_client &client = http_client::FromResponseBody(*istream);
+    HttpClient &client = HttpClient::FromResponseBody(*istream);
 
     client.Close();
 }
@@ -423,7 +423,7 @@ static const struct istream_class http_client_response_stream = {
 };
 
 inline bool
-http_client::ParseStatusLine(const char *line, size_t length)
+HttpClient::ParseStatusLine(const char *line, size_t length)
 {
     assert(response.read_state == response::READ_STATUS);
 
@@ -473,7 +473,7 @@ http_client::ParseStatusLine(const char *line, size_t length)
 }
 
 inline bool
-http_client::HeadersFinished()
+HttpClient::HeadersFinished()
 {
     stopwatch_event(stopwatch, "headers");
 
@@ -569,7 +569,7 @@ http_client::HeadersFinished()
 }
 
 inline bool
-http_client::HandleLine(const char *line, size_t length)
+HttpClient::HandleLine(const char *line, size_t length)
 {
     assert(response.read_state == response::READ_STATUS ||
            response.read_state == response::READ_HEADERS);
@@ -585,9 +585,9 @@ http_client::HandleLine(const char *line, size_t length)
 }
 
 static void
-http_client_response_finished(struct http_client *client)
+http_client_response_finished(HttpClient *client)
 {
-    assert(client->response.read_state == http_client::response::READ_BODY);
+    assert(client->response.read_state == HttpClient::response::READ_BODY);
     assert(client->request.handler.IsUsed());
 
     stopwatch_event(client->stopwatch, "end");
@@ -605,7 +605,7 @@ http_client_response_finished(struct http_client *client)
 }
 
 inline BufferedResult
-http_client::ParseHeaders(const void *_data, size_t length)
+HttpClient::ParseHeaders(const void *_data, size_t length)
 {
     assert(response.read_state == response::READ_STATUS ||
            response.read_state == response::READ_HEADERS);
@@ -645,7 +645,7 @@ http_client::ParseHeaders(const void *_data, size_t length)
 }
 
 void
-http_client::ResponseBodyEOF()
+HttpClient::ResponseBodyEOF()
 {
     assert(response.read_state == response::READ_BODY);
     assert(request.handler.IsUsed());
@@ -665,7 +665,7 @@ http_client::ResponseBodyEOF()
 }
 
 inline BufferedResult
-http_client::FeedBody(const void *data, size_t length)
+HttpClient::FeedBody(const void *data, size_t length)
 {
     assert(response.read_state == response::READ_BODY);
 
@@ -692,7 +692,7 @@ http_client::FeedBody(const void *data, size_t length)
 }
 
 BufferedResult
-http_client::FeedHeaders(const void *data, size_t length)
+HttpClient::FeedHeaders(const void *data, size_t length)
 {
     assert(response.read_state == response::READ_STATUS ||
            response.read_state == response::READ_HEADERS);
@@ -732,7 +732,7 @@ http_client::FeedHeaders(const void *data, size_t length)
                                                 "Peer closed the socket prematurely after status 100");
 #ifndef NDEBUG
             /* assertion workaround */
-            response.read_state = http_client::response::READ_STATUS;
+            response.read_state = HttpClient::response::READ_STATUS;
 #endif
             AbortResponseHeaders(error);
             return BufferedResult::CLOSED;
@@ -783,7 +783,7 @@ http_client::FeedHeaders(const void *data, size_t length)
 }
 
 inline DirectResult
-http_client::TryResponseDirect(int fd, enum istream_direct fd_type)
+HttpClient::TryResponseDirect(int fd, enum istream_direct fd_type)
 {
     assert(socket.IsConnected());
     assert(response.read_state == response::READ_BODY);
@@ -825,7 +825,7 @@ http_client::TryResponseDirect(int fd, enum istream_direct fd_type)
 }
 
 inline BufferedResult
-http_client::Feed(const void *data, size_t length)
+HttpClient::Feed(const void *data, size_t length)
 {
     switch (response.read_state) {
     case response::READ_STATUS:
@@ -855,7 +855,7 @@ http_client::Feed(const void *data, size_t length)
 static BufferedResult
 http_client_socket_data(const void *buffer, size_t size, void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
     return client->Feed(buffer, size);
@@ -864,7 +864,7 @@ http_client_socket_data(const void *buffer, size_t size, void *ctx)
 static DirectResult
 http_client_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
     return client->TryResponseDirect(fd, fd_type);
 
@@ -873,7 +873,7 @@ http_client_socket_direct(int fd, enum istream_direct fd_type, void *ctx)
 static bool
 http_client_socket_closed(void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
     stopwatch_event(client->stopwatch, "end");
 
@@ -889,9 +889,9 @@ http_client_socket_closed(void *ctx)
 static bool
 http_client_socket_remaining(size_t remaining, void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
-    if (client->response.read_state < http_client::response::READ_BODY)
+    if (client->response.read_state < HttpClient::response::READ_BODY)
         /* this information comes too early, we can't use it */
         return true;
 
@@ -909,7 +909,7 @@ http_client_socket_remaining(size_t remaining, void *ctx)
 static bool
 http_client_socket_write(void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
     const ScopePoolRef ref(*client->pool TRACE_ARGS);
 
@@ -931,7 +931,7 @@ http_client_socket_write(void *ctx)
 static enum write_result
 http_client_socket_broken(void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
     /* the server has closed the connection, probably because he's not
        interested in our request body - that's ok; now we wait for his
@@ -950,7 +950,7 @@ http_client_socket_broken(void *ctx)
 static void
 http_client_socket_error(GError *error, void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
     stopwatch_event(client->stopwatch, "error");
     client->AbortResponse(error);
@@ -975,7 +975,7 @@ static constexpr BufferedSocketHandler http_client_socket_handler = {
 static size_t
 http_client_request_stream_data(const void *data, size_t length, void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
     assert(client->socket.IsConnected());
 
@@ -1005,7 +1005,7 @@ static ssize_t
 http_client_request_stream_direct(istream_direct type, int fd,
                                   size_t max_length, void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
     assert(client->socket.IsConnected());
 
@@ -1031,7 +1031,7 @@ http_client_request_stream_direct(istream_direct type, int fd,
 static void
 http_client_request_stream_eof(void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
     stopwatch_event(client->stopwatch, "request");
 
@@ -1045,17 +1045,17 @@ http_client_request_stream_eof(void *ctx)
 static void
 http_client_request_stream_abort(GError *error, void *ctx)
 {
-    struct http_client *client = (struct http_client *)ctx;
+    HttpClient *client = (HttpClient *)ctx;
 
-    assert(client->response.read_state == http_client::response::READ_STATUS ||
-           client->response.read_state == http_client::response::READ_HEADERS ||
-           client->response.read_state == http_client::response::READ_BODY);
+    assert(client->response.read_state == HttpClient::response::READ_STATUS ||
+           client->response.read_state == HttpClient::response::READ_HEADERS ||
+           client->response.read_state == HttpClient::response::READ_BODY);
 
     stopwatch_event(client->stopwatch, "abort");
 
     client->request.istream = nullptr;
 
-    if (client->response.read_state != http_client::response::READ_BODY)
+    if (client->response.read_state != HttpClient::response::READ_BODY)
         client->AbortResponseHeaders(error);
     else if (client->response.body != nullptr)
         client->AbortResponseBody(error);
@@ -1077,7 +1077,7 @@ static const struct istream_handler http_client_request_stream_handler = {
  */
 
 inline void
-http_client::Abort()
+HttpClient::Abort()
 {
     stopwatch_event(stopwatch, "abort");
 
@@ -1095,7 +1095,7 @@ http_client::Abort()
 static void
 http_client_request_abort(struct async_operation *ao)
 {
-    struct http_client &client = http_client::FromAsync(*ao);
+    HttpClient &client = HttpClient::FromAsync(*ao);
 
     client.Abort();
 }
@@ -1111,16 +1111,16 @@ static const struct async_operation_class http_client_async_operation = {
  */
 
 inline
-http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
-                         int fd, enum istream_direct fd_type,
-                         const struct lease &lease, void *lease_ctx,
-                         const SocketFilter *filter, void *filter_ctx,
-                         http_method_t method, const char *uri,
-                         HttpHeaders &&headers,
-                         struct istream *body, bool expect_100,
-                         const struct http_response_handler &handler,
-                         void *ctx,
-                         struct async_operation_ref &async_ref)
+HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
+                       int fd, enum istream_direct fd_type,
+                       const struct lease &lease, void *lease_ctx,
+                       const SocketFilter *filter, void *filter_ctx,
+                       http_method_t method, const char *uri,
+                       HttpHeaders &&headers,
+                       struct istream *body, bool expect_100,
+                       const struct http_response_handler &handler,
+                       void *ctx,
+                       struct async_operation_ref &async_ref)
     :pool(&_pool), caller_pool(&_caller_pool),
      peer_name(p_strdup(pool, get_peer_name(fd))),
      stopwatch(stopwatch_fd_new(pool, fd, uri))
@@ -1132,7 +1132,7 @@ http_client::http_client(struct pool &_caller_pool, struct pool &_pool,
     p_lease_ref_set(lease_ref, lease, lease_ctx,
                     *pool, "http_client_lease");
 
-    response.read_state = http_client::response::READ_STATUS;
+    response.read_state = HttpClient::response::READ_STATUS;
     response.no_body = http_method_is_empty(method);
 
     pool_ref(caller_pool);
@@ -1236,11 +1236,11 @@ http_client_request(struct pool &caller_pool,
     struct pool *pool =
         pool_new_linear(&caller_pool, "http_client_request", 8192);
 
-    NewFromPool<struct http_client>(*pool, caller_pool, *pool,
-                                    fd, fd_type,
-                                    lease, lease_ctx,
-                                    filter, filter_ctx,
-                                    method, uri,
-                                    std::move(headers), body, expect_100,
-                                    handler, ctx, async_ref);
+    NewFromPool<HttpClient>(*pool, caller_pool, *pool,
+                            fd, fd_type,
+                            lease, lease_ctx,
+                            filter, filter_ctx,
+                            method, uri,
+                            std::move(headers), body, expect_100,
+                            handler, ctx, async_ref);
 }
