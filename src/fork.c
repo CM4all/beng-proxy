@@ -456,6 +456,7 @@ beng_fork(struct pool *pool, const char *name,
         if (pipe_cloexec(c.stdin_pipe) < 0) {
             g_set_error(error_r, fork_quark(), errno,
                         "pipe_cloexec() failed: %s", strerror(errno));
+            istream_close_unused(input);
             return -1;
         }
 
@@ -464,6 +465,7 @@ beng_fork(struct pool *pool, const char *name,
                         "fcntl(O_NONBLOCK) failed: %s", strerror(errno));
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
+            istream_close_unused(input);
             return -1;
         }
     }
@@ -475,9 +477,9 @@ beng_fork(struct pool *pool, const char *name,
         if (input != NULL) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
+            istream_close_unused(input);
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
-
         return -1;
     }
 
@@ -488,6 +490,7 @@ beng_fork(struct pool *pool, const char *name,
         if (input != NULL) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
+            istream_close_unused(input);
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
 
@@ -506,6 +509,7 @@ beng_fork(struct pool *pool, const char *name,
         if (input != NULL) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
+            istream_close_unused(input);
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
 

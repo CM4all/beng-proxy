@@ -150,8 +150,6 @@ pipe_filter(struct pool *pool, const char *path,
                           pipe_child_callback, nullptr, &error);
     if (pid < 0) {
         leave_signal_section(&c.signals);
-
-        istream_close_unused(body);
         http_response_handler_direct_abort(handler, handler_ctx, error);
         return;
     }

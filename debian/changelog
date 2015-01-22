@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.21) unstable; urgency=low
 
-  * 
+  * cgi, pipe: fix crash after fork failure when input is a regular file
 
  --   
 
