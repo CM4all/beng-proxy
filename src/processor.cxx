@@ -36,7 +36,7 @@
 #include "istream-internal.h"
 #include "istream_replace.hxx"
 #include "istream-catch.h"
-#include "istream_tee.h"
+#include "istream_tee.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 #include "util/CharUtil.hxx"

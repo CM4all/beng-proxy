@@ -19,7 +19,7 @@
 #include "escape_css.h"
 #include "istream.h"
 #include "istream_replace.hxx"
-#include "istream_tee.h"
+#include "istream_tee.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>

@@ -4,16 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ISTREAM_TEE_H
-#define BENG_PROXY_ISTREAM_TEE_H
-
-#include <stdbool.h>
+#ifndef BENG_PROXY_ISTREAM_TEE_HXX
+#define BENG_PROXY_ISTREAM_TEE_HXX
 
 struct pool;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Create two new streams fed from one input.
@@ -34,9 +28,5 @@ istream_tee_new(struct pool *pool, struct istream *input,
 
 struct istream *
 istream_tee_second(struct istream *istream);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

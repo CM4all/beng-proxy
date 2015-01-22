@@ -696,7 +696,7 @@ libistream_a_SOURCES = \
 	src/istream-catch.c istream-catch.h \
 	src/istream-later.c \
 	src/istream-head.c \
-	src/istream_tee.c src/istream_tee.h \
+	src/istream_tee.cxx src/istream_tee.hxx \
 	src/istream_replace.cxx src/istream_replace.hxx \
 	src/istream_socket.cxx src/istream_socket.hxx \
 	src/istream_socketpair.cxx src/istream_socketpair.hxx \
