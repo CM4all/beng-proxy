@@ -21,9 +21,11 @@ struct istream;
  *
  * @param name a symbolic name for the process to be used in log
  * messages
+ * @param input a stream which will be passed as standard input to the
+ * new process; will be consumed or closed by this function in any
+ * case
  * @return 0 in the child process, the child pid in the parent
- * process, or -1 on failure (in this case, #input has not been
- * consumed/closed)
+ * process, or -1 on failure
  */
 pid_t
 beng_fork(struct pool *pool, const char *name,

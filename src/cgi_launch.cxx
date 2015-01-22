@@ -238,13 +238,6 @@ cgi_launch(struct pool *pool, http_method_t method,
                           cgi_child_callback, nullptr, error_r);
     if (pid < 0) {
         leave_signal_section(&c.signals);
-
-        if (body != nullptr)
-            /* beng_fork() left the request body open - free this
-               resource, because our caller always assume that we have
-               consumed it */
-            istream_close_unused(body);
-
         return nullptr;
     }
 

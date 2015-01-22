@@ -455,6 +455,7 @@ beng_fork(struct pool *pool, const char *name,
     if (input != nullptr) {
         if (pipe_cloexec(c.stdin_pipe) < 0) {
             set_error_errno_msg(error_r, "pipe_cloexec() failed");
+            istream_close_unused(input);
             return -1;
         }
 
@@ -462,6 +463,7 @@ beng_fork(struct pool *pool, const char *name,
             set_error_errno_msg(error_r, "fcntl(O_NONBLOCK) failed");
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
+            istream_close_unused(input);
             return -1;
         }
     }
@@ -472,9 +474,9 @@ beng_fork(struct pool *pool, const char *name,
         if (input != nullptr) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
+            istream_close_unused(input);
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
-
         return -1;
     }
 
@@ -484,6 +486,7 @@ beng_fork(struct pool *pool, const char *name,
         if (input != nullptr) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
+            istream_close_unused(input);
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
 
@@ -501,6 +504,7 @@ beng_fork(struct pool *pool, const char *name,
         if (input != nullptr) {
             close(c.stdin_pipe[0]);
             close(c.stdin_pipe[1]);
+            istream_close_unused(input);
         } else if (c.stdin_fd >= 0)
             close(c.stdin_fd);
 
