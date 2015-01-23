@@ -24,7 +24,7 @@ enum istream_dechunk_state {
     EOF_DETECTED
 };
 
-struct istream_dechunk {
+struct DechunkIstream {
     struct istream output;
 
     struct istream *input;
@@ -34,8 +34,11 @@ struct istream_dechunk {
     size_t size;
     bool had_input, had_output;
 
-    void (*eof_callback)(void *ctx);
-    void *callback_ctx;
+    void (*const eof_callback)(void *ctx);
+    void *const callback_ctx;
+
+    DechunkIstream(struct pool &p, struct istream &_input,
+                   void (*_eof_callback)(void *ctx), void *_callback_ctx);
 };
 
 static GQuark
@@ -45,7 +48,7 @@ dechunk_quark(void)
 }
 
 static void
-dechunk_abort(struct istream_dechunk *dechunk, GError *error)
+dechunk_abort(DechunkIstream *dechunk, GError *error)
 {
     assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
     assert(dechunk->input != nullptr);
@@ -61,7 +64,7 @@ dechunk_abort(struct istream_dechunk *dechunk, GError *error)
  * (by a callback)
  */
 static bool
-dechunk_eof_detected(struct istream_dechunk *dechunk)
+dechunk_eof_detected(DechunkIstream *dechunk)
 {
     assert(dechunk->input != nullptr);
     assert(dechunk->state == TRAILER);
@@ -99,7 +102,7 @@ dechunk_eof_detected(struct istream_dechunk *dechunk)
 }
 
 static size_t
-dechunk_feed(struct istream_dechunk *dechunk, const void *data0, size_t length)
+dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
 {
     const char *data = (const char *)data0;
     size_t position = 0, digit, size, nbytes;
@@ -219,7 +222,7 @@ dechunk_feed(struct istream_dechunk *dechunk, const void *data0, size_t length)
 static size_t
 dechunk_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_dechunk *dechunk = (struct istream_dechunk *)ctx;
+    DechunkIstream *dechunk = (DechunkIstream *)ctx;
 
     const ScopePoolRef ref(*dechunk->output.pool TRACE_ARGS);
     return dechunk_feed(dechunk, data, length);
@@ -228,7 +231,7 @@ dechunk_input_data(const void *data, size_t length, void *ctx)
 static void
 dechunk_input_eof(void *ctx)
 {
-    struct istream_dechunk *dechunk = (struct istream_dechunk *)ctx;
+    DechunkIstream *dechunk = (DechunkIstream *)ctx;
 
     assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
 
@@ -245,7 +248,7 @@ dechunk_input_eof(void *ctx)
 static void
 dechunk_input_abort(GError *error, void *ctx)
 {
-    struct istream_dechunk *dechunk = (struct istream_dechunk *)ctx;
+    DechunkIstream *dechunk = (DechunkIstream *)ctx;
 
     dechunk->input = nullptr;
 
@@ -269,16 +272,16 @@ static const struct istream_handler dechunk_input_handler = {
  *
  */
 
-static inline struct istream_dechunk *
+static inline DechunkIstream *
 istream_to_dechunk(struct istream *istream)
 {
-    return &ContainerCast2(*istream, &istream_dechunk::output);
+    return &ContainerCast2(*istream, &DechunkIstream::output);
 }
 
 static off_t
 istream_dechunk_available(struct istream *istream, bool partial)
 {
-    struct istream_dechunk *dechunk = istream_to_dechunk(istream);
+    DechunkIstream *dechunk = istream_to_dechunk(istream);
 
     if (partial && dechunk->state == DATA)
         return (off_t)dechunk->size;
@@ -289,7 +292,7 @@ istream_dechunk_available(struct istream *istream, bool partial)
 static void
 istream_dechunk_read(struct istream *istream)
 {
-    struct istream_dechunk *dechunk = istream_to_dechunk(istream);
+    DechunkIstream *dechunk = istream_to_dechunk(istream);
 
     pool_ref(dechunk->output.pool);
 
@@ -307,7 +310,7 @@ istream_dechunk_read(struct istream *istream)
 static void
 istream_dechunk_close(struct istream *istream)
 {
-    struct istream_dechunk *dechunk = istream_to_dechunk(istream);
+    DechunkIstream *dechunk = istream_to_dechunk(istream);
 
     assert(dechunk->state != EOF_DETECTED);
 
@@ -329,23 +332,28 @@ static const struct istream_class istream_dechunk = {
  *
  */
 
+inline DechunkIstream::DechunkIstream(struct pool &p, struct istream &_input,
+                                      void (*_eof_callback)(void *ctx),
+                                      void *_callback_ctx)
+    :state(NONE),
+     eof_callback(_eof_callback), callback_ctx(_callback_ctx)
+{
+    istream_init(&output, &istream_dechunk, &p);
+
+    istream_assign_handler(&input, &_input,
+                           &dechunk_input_handler, this,
+                           0);
+}
+
 struct istream *
 istream_dechunk_new(struct pool *pool, struct istream *input,
                     void (*eof_callback)(void *ctx), void *callback_ctx)
 {
-    struct istream_dechunk *dechunk = istream_new_macro(pool, dechunk);
-
     assert(input != nullptr);
     assert(!istream_has_handler(input));
     assert(eof_callback != nullptr);
 
-    dechunk->state = NONE;
-    dechunk->eof_callback = eof_callback;
-    dechunk->callback_ctx = callback_ctx;
-
-    istream_assign_handler(&dechunk->input, input,
-                           &dechunk_input_handler, dechunk,
-                           0);
-
-    return istream_struct_cast(&dechunk->output);
+    auto *dechunk = NewFromPool<DechunkIstream>(*pool, *pool, *input,
+                                                eof_callback, callback_ctx);
+    return &dechunk->output;
 }
