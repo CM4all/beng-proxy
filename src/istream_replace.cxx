@@ -22,8 +22,9 @@ struct ReplaceIstream;
 struct ReplaceIstream {
     struct Substitution {
         Substitution *next;
-        ReplaceIstream *replace;
-        off_t start, end;
+        ReplaceIstream &replace;
+        const off_t start;
+        off_t end;
         IstreamPointer istream;
 
         Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
@@ -39,7 +40,7 @@ struct ReplaceIstream {
     bool finished = false, read_locked = false;
     bool had_input, had_output;
 
-    GrowingBuffer *buffer;
+    GrowingBuffer *const buffer;
     off_t source_length = 0, position = 0;
 
     /**
@@ -124,11 +125,11 @@ replace_quark(void)
 bool
 ReplaceIstream::Substitution::IsActive() const
 {
-    assert(replace->first_substitution != nullptr);
-    assert(replace->first_substitution->start <= start);
-    assert(start >= replace->position);
+    assert(replace.first_substitution != nullptr);
+    assert(replace.first_substitution->start <= start);
+    assert(start >= replace.position);
 
-    return this == replace->first_substitution && replace->position == start;
+    return this == replace.first_substitution && replace.position == start;
 }
 
 void
@@ -174,11 +175,11 @@ static size_t
 replace_substitution_data(const void *data, size_t length, void *ctx)
 {
     auto *s = (ReplaceIstream::Substitution *)ctx;
-    ReplaceIstream *replace = s->replace;
+    ReplaceIstream &replace = s->replace;
 
     if (s->IsActive()) {
-        replace->had_output = true;
-        return istream_invoke_data(&replace->output, data, length);
+        replace.had_output = true;
+        return istream_invoke_data(&replace.output, data, length);
     } else
         return 0;
 }
@@ -187,28 +188,28 @@ static void
 replace_substitution_eof(void *ctx)
 {
     auto *s = (ReplaceIstream::Substitution *)ctx;
-    ReplaceIstream *replace = s->replace;
+    ReplaceIstream &replace = s->replace;
 
     s->istream.Clear();
 
     if (s->IsActive())
-        replace->ToNextSubstitution(s);
+        replace.ToNextSubstitution(s);
 }
 
 static void
 replace_substitution_abort(GError *error, void *ctx)
 {
     auto *s = (ReplaceIstream::Substitution *)ctx;
-    ReplaceIstream *replace = s->replace;
+    ReplaceIstream &replace = s->replace;
 
     s->istream.Clear();
 
-    replace->Destroy();
+    replace.Destroy();
 
-    if (replace->input.IsDefined())
-        replace->input.ClearHandlerAndClose();
+    if (replace.input.IsDefined())
+        replace.input.ClearHandlerAndClose();
 
-    istream_deinit_abort(&replace->output, error);
+    istream_deinit_abort(&replace.output, error);
 }
 
 static const struct istream_handler replace_substitution_handler = {
@@ -575,7 +576,7 @@ ReplaceIstream::Substitution::Substitution(ReplaceIstream &_replace,
                                            off_t _start, off_t _end,
                                            struct istream *_stream)
     :next(nullptr),
-     replace(&_replace),
+     replace(_replace),
      start(_start), end(_end),
      istream(_stream, replace_substitution_handler, this) {
 }
