@@ -700,8 +700,7 @@ libistream_a_SOURCES = \
 	src/istream_replace.cxx src/istream_replace.hxx \
 	src/istream_socket.cxx src/istream_socket.hxx \
 	src/istream_socketpair.cxx src/istream_socketpair.hxx \
-	src/istream-notify.h \
-	src/istream-notify.c \
+	src/istream_notify.cxx src/istream_notify.hxx \
 	src/sink-null.c \
 	src/sink_buffer.cxx \
 	src/sink_header.cxx \

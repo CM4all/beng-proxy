@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_ISTREAM_NOTIFY_H
-#define BENG_PROXY_ISTREAM_NOTIFY_H
+#ifndef BENG_PROXY_ISTREAM_NOTIFY_HXX
+#define BENG_PROXY_ISTREAM_NOTIFY_HXX
 
 struct pool;
 struct istream;
@@ -17,16 +17,8 @@ struct istream_notify_handler {
     void (*close)(void *ctx);
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct istream *
-istream_notify_new(struct pool *pool, struct istream *input,
-                   const struct istream_notify_handler *handler, void *ctx);
-
-#ifdef __cplusplus
-}
-#endif
+istream_notify_new(struct pool &pool, struct istream &input,
+                   const istream_notify_handler &handler, void *ctx);
 
 #endif

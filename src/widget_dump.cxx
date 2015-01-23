@@ -6,7 +6,7 @@
 
 #include "widget_dump.hxx"
 #include "widget.hxx"
-#include "istream-notify.h"
+#include "istream_notify.hxx"
 
 #include <daemon/log.h>
 
@@ -31,7 +31,7 @@ widget_dump_callback(void *ctx)
     dump_widget_tree(0, widget);
 }
 
-static const struct istream_notify_handler widget_dump_handler = {
+static constexpr struct istream_notify_handler widget_dump_handler = {
     .eof = widget_dump_callback,
     .abort = widget_dump_callback,
     .close = widget_dump_callback,
@@ -43,6 +43,6 @@ widget_dump_tree_after_istream(struct pool *pool, struct istream *istream,
 {
     assert(widget != nullptr);
 
-    return istream_notify_new(pool, istream,
-                              &widget_dump_handler, widget);
+    return istream_notify_new(*pool, *istream,
+                              widget_dump_handler, widget);
 }
