@@ -28,6 +28,9 @@ struct ReplaceIstream {
 
         Substitution(ReplaceIstream &_replace, off_t _start, off_t _end,
                      struct istream *_stream);
+
+        gcc_pure
+        bool IsActive() const;
     };
 
     struct istream output;
@@ -55,6 +58,57 @@ struct ReplaceIstream {
 #endif
 
     explicit ReplaceIstream(struct pool &p, struct istream &_input);
+
+    void Destroy();
+
+    /**
+     * Is the buffer at the end-of-file position?
+     */
+    bool IsBufferAtEOF() const {
+        return position == source_length;
+    }
+
+    /**
+     * Is the object at end-of-file?
+     */
+    bool IsEOF() const {
+        return !input.IsDefined() && finished &&
+            first_substitution == nullptr &&
+            IsBufferAtEOF();
+    }
+
+    /**
+     * Copy the next chunk from the source buffer to the istream
+     * handler.
+     *
+     * @return 0 if the istream handler is not blocking; the number of
+     * bytes remaining in the buffer if it is blocking
+     */
+    size_t TryReadFromBuffer();
+
+    /**
+     * Copy data from the source buffer to the istream handler.
+     *
+     * @return 0 if the istream handler is not blocking; the number of
+     * bytes remaining in the buffer if it is blocking
+     */
+    size_t ReadFromBuffer(size_t max_length);
+
+    size_t ReadFromBufferLoop(off_t end);
+
+    void Read();
+
+    void ReadCheckEmpty();
+
+    /**
+     * Read data from substitution objects.
+     */
+    bool ReadSubstitution();
+
+    /**
+     * Activate the next substitution object after s.
+     */
+    void ToNextSubstitution(ReplaceIstream::Substitution *s);
 };
 
 static GQuark
@@ -64,87 +118,52 @@ replace_quark(void)
 }
 
 /**
- * Is the buffer at the end-of-file position?
- */
-static inline bool
-replace_buffer_eof(const ReplaceIstream *replace)
-{
-    return replace->position == replace->source_length;
-}
-
-/**
- * Is the object at end-of-file?
- */
-static inline bool
-replace_is_eof(const ReplaceIstream *replace)
-{
-    return !replace->input.IsDefined() && replace->finished &&
-        replace->first_substitution == nullptr &&
-        replace_buffer_eof(replace);
-}
-
-/**
  * Is this substitution object is active, i.e. its data is the next
  * being written?
  */
-static inline bool
-substitution_is_active(const ReplaceIstream::Substitution *s)
+bool
+ReplaceIstream::Substitution::IsActive() const
 {
-    const ReplaceIstream *replace = s->replace;
-
-    assert(replace != nullptr);
     assert(replace->first_substitution != nullptr);
-    assert(replace->first_substitution->start <= s->start);
-    assert(s->start >= replace->position);
+    assert(replace->first_substitution->start <= start);
+    assert(start >= replace->position);
 
-    return s == replace->first_substitution &&
-        replace->position == s->start;
+    return this == replace->first_substitution && replace->position == start;
 }
 
-static void
-replace_read(ReplaceIstream *replace);
-
-/**
- * Activate the next substitution object after s.
- */
-static void
-replace_to_next_substitution(ReplaceIstream *replace, ReplaceIstream::Substitution *s)
+void
+ReplaceIstream::ToNextSubstitution(ReplaceIstream::Substitution *s)
 {
-    assert(replace->first_substitution == s);
-    assert(substitution_is_active(s));
+    assert(first_substitution == s);
+    assert(s->IsActive());
     assert(!s->istream.IsDefined());
     assert(s->start <= s->end);
 
-    replace->reader.Skip(s->end - s->start);
-    replace->position = s->end;
+    reader.Skip(s->end - s->start);
+    position = s->end;
 
-    replace->first_substitution = s->next;
-    if (replace->first_substitution == nullptr) {
-        assert(replace->append_substitution_p == &s->next);
-        replace->append_substitution_p = &replace->first_substitution;
+    first_substitution = s->next;
+    if (first_substitution == nullptr) {
+        assert(append_substitution_p == &s->next);
+        append_substitution_p = &first_substitution;
     }
 
-    p_free(replace->output.pool, s);
+    p_free(output.pool, s);
 
-    assert(replace->first_substitution == nullptr ||
-           replace->first_substitution->start >= replace->position);
+    assert(first_substitution == nullptr ||
+           first_substitution->start >= position);
 
-    if (replace_is_eof(replace)) {
-        istream_deinit_eof(&replace->output);
+    if (IsEOF()) {
+        istream_deinit_eof(&output);
         return;
     }
 
-    /* don't recurse if we're being called
-       replace_read_substitution() */
-    if (!replace->read_locked) {
-        const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
-        replace_read(replace);
+    /* don't recurse if we're being called from ReadSubstitution() */
+    if (!read_locked) {
+        const ScopePoolRef ref(*output.pool TRACE_ARGS);
+        Read();
     }
 }
-
-static void
-replace_destroy(ReplaceIstream *replace);
-
 
 /*
  * istream handler
@@ -157,7 +176,7 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
     auto *s = (ReplaceIstream::Substitution *)ctx;
     ReplaceIstream *replace = s->replace;
 
-    if (substitution_is_active(s)) {
+    if (s->IsActive()) {
         replace->had_output = true;
         return istream_invoke_data(&replace->output, data, length);
     } else
@@ -172,8 +191,8 @@ replace_substitution_eof(void *ctx)
 
     s->istream.Clear();
 
-    if (substitution_is_active(s))
-        replace_to_next_substitution(replace, s);
+    if (s->IsActive())
+        replace->ToNextSubstitution(s);
 }
 
 static void
@@ -184,7 +203,7 @@ replace_substitution_abort(GError *error, void *ctx)
 
     s->istream.Clear();
 
-    replace_destroy(replace);
+    replace->Destroy();
 
     if (replace->input.IsDefined())
         replace->input.ClearHandlerAndClose();
@@ -200,22 +219,21 @@ static const struct istream_handler replace_substitution_handler = {
 
 
 /*
- * destructor
+ * misc methods
  *
  */
 
-static void
-replace_destroy(ReplaceIstream *replace)
+void
+ReplaceIstream::Destroy()
 {
-    assert(replace != nullptr);
-    assert(replace->source_length != (off_t)-1);
+    assert(source_length != (off_t)-1);
 
     /* source_length -1 is the "destroyed" marker */
-    replace->source_length = (off_t)-1;
+    source_length = (off_t)-1;
 
-    while (replace->first_substitution != nullptr) {
-        auto *s = replace->first_substitution;
-        replace->first_substitution = s->next;
+    while (first_substitution != nullptr) {
+        auto *s = first_substitution;
+        first_substitution = s->next;
 
         if (s->istream.IsDefined())
             s->istream.ClearHandlerAndClose();
@@ -223,91 +241,73 @@ replace_destroy(ReplaceIstream *replace)
 }
 
 
-/*
- * misc methods
- *
- */
-
-/**
- * Read data from substitution objects.
- */
-static bool
-replace_read_substitution(ReplaceIstream *replace)
+bool
+ReplaceIstream::ReadSubstitution()
 {
-    while (replace->first_substitution != nullptr &&
-           substitution_is_active(replace->first_substitution)) {
-        auto *s = replace->first_substitution;
+    while (first_substitution != nullptr && first_substitution->IsActive()) {
+        auto *s = first_substitution;
 
-        replace->read_locked = true;
+        read_locked = true;
 
         if (s->istream.IsDefined())
             s->istream.Read();
         else
-            replace_to_next_substitution(replace, s);
+            ToNextSubstitution(s);
 
-        replace->read_locked = false;
+        read_locked = false;
 
         /* we assume the substitution object is blocking if it hasn't
            reached EOF with this one call */
-        if (s == replace->first_substitution)
+        if (s == first_substitution)
             return true;
     }
 
     return false;
 }
 
-/**
- * Copy data from the source buffer to the istream handler.
- *
- * @return 0 if the istream handler is not blocking; the number of
- * bytes remaining in the buffer if it is blocking
- */
-static size_t
-replace_read_from_buffer(ReplaceIstream *replace, size_t max_length)
+inline size_t
+ReplaceIstream::ReadFromBuffer(size_t max_length)
 {
-    assert(replace != nullptr);
     assert(max_length > 0);
 
-    auto src = replace->reader.Read();
+    auto src = reader.Read();
     assert(!src.IsNull());
     assert(!src.IsEmpty());
 
     if (src.size > max_length)
         src.size = max_length;
 
-    replace->had_output = true;
-    size_t nbytes = istream_invoke_data(&replace->output, src.data, src.size);
+    had_output = true;
+    size_t nbytes = istream_invoke_data(&output, src.data, src.size);
     assert(nbytes <= src.size);
 
     if (nbytes == 0)
         /* istream_replace has been closed */
         return src.size;
 
-    replace->reader.Consume(nbytes);
-    replace->position += nbytes;
+    reader.Consume(nbytes);
+    position += nbytes;
 
-    assert(replace->position <= replace->source_length);
+    assert(position <= source_length);
 
     return src.size - nbytes;
 }
 
-static size_t
-replace_read_from_buffer_loop(ReplaceIstream *replace, off_t end)
+inline size_t
+ReplaceIstream::ReadFromBufferLoop(off_t end)
 {
-    size_t max_length, rest;
+    assert(end > position);
+    assert(end <= source_length);
 
-    assert(replace != nullptr);
-    assert(end > replace->position);
-    assert(end <= replace->source_length);
-
-    /* this loop is required to cross the growing_buffer borders */
+    /* this loop is required to cross the GrowingBuffer borders */
+    size_t rest;
     do {
 #ifndef NDEBUG
-        PoolNotify notify(*replace->output.pool);
+        PoolNotify notify(*output.pool);
 #endif
 
-        max_length = (size_t)(end - replace->position);
-        rest = replace_read_from_buffer(replace, max_length);
+        size_t max_length = (size_t)(end - position);
+        rest = ReadFromBuffer(max_length);
 
 #ifndef NDEBUG
         if (notify.Denotify()) {
@@ -316,86 +316,71 @@ replace_read_from_buffer_loop(ReplaceIstream *replace, off_t end)
         }
 #endif
 
-        assert(replace->position <= end);
-    } while (rest == 0 && replace->position < end);
+        assert(position <= end);
+    } while (rest == 0 && position < end);
 
     return rest;
 }
 
-/**
- * Copy the next chunk from the source buffer to the istream handler.
- *
- * @return 0 if the istream handler is not blocking; the number of
- * bytes remaining in the buffer if it is blocking
- */
-static size_t
-replace_try_read_from_buffer(ReplaceIstream *replace)
+size_t
+ReplaceIstream::TryReadFromBuffer()
 {
     off_t end;
-    size_t rest;
-
-    assert(replace != nullptr);
-
-    if (replace->first_substitution == nullptr) {
-        if (replace->finished)
-            end = replace->source_length;
-        else if (replace->position < replace->settled_position)
-            end = replace->settled_position;
+    if (first_substitution == nullptr) {
+        if (finished)
+            end = source_length;
+        else if (position < settled_position)
+            end = settled_position;
         else
             /* block after the last substitution, unless the caller
                has already set the "finished" flag */
             return 1;
 
-        assert(replace->position < replace->source_length);
+        assert(position < source_length);
     } else {
-        end = replace->first_substitution->start;
-        assert(end >= replace->position);
+        end = first_substitution->start;
+        assert(end >= position);
 
-        if (end == replace->position)
+        if (end == position)
             return 0;
     }
 
-    rest = replace_read_from_buffer_loop(replace, end);
-    if (rest == 0 && replace->position == replace->source_length &&
-        replace->first_substitution == nullptr &&
-        !replace->input.IsDefined())
-        istream_deinit_eof(&replace->output);
+    size_t rest = ReadFromBufferLoop(end);
+    if (rest == 0 && position == source_length &&
+        first_substitution == nullptr &&
+        !input.IsDefined())
+        istream_deinit_eof(&output);
 
     return rest;
 }
 
-static void
-replace_read(ReplaceIstream *replace)
+void
+ReplaceIstream::Read()
 {
-    bool blocking;
-    size_t rest;
-
-    assert(replace != nullptr);
-    assert(replace->position <= replace->source_length);
+    assert(position <= source_length);
 
     /* read until someone (input or output) blocks */
+    size_t rest;
     do {
-        blocking = replace_read_substitution(replace);
-        if (blocking || replace_buffer_eof(replace) ||
-            replace->source_length == (off_t)-1)
+        bool blocking = ReadSubstitution();
+        if (blocking || IsBufferAtEOF() || source_length == (off_t)-1)
             break;
 
-        rest = replace_try_read_from_buffer(replace);
-    } while (rest == 0 && replace->first_substitution != nullptr);
+        rest = TryReadFromBuffer();
+    } while (rest == 0 && first_substitution != nullptr);
 }
 
-static void
-replace_read_check_empty(ReplaceIstream *replace)
+void
+ReplaceIstream::ReadCheckEmpty()
 {
-    assert(replace != nullptr);
-    assert(replace->finished);
-    assert(!replace->input.IsDefined());
+    assert(finished);
+    assert(!input.IsDefined());
 
-    if (replace_is_eof(replace))
-        istream_deinit_eof(&replace->output);
+    if (IsEOF())
+        istream_deinit_eof(&output);
     else {
-        const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
-        replace_read(replace);
+        const ScopePoolRef ref(*output.pool TRACE_ARGS);
+        Read();
     }
 }
 
@@ -414,7 +399,7 @@ replace_input_data(const void *data, size_t length, void *ctx)
 
     if (replace->source_length >= 8 * 1024 * 1024) {
         replace->input.ClearHandlerAndClose();
-        replace_destroy(replace);
+        replace->Destroy();
 
         GError *error =
             g_error_new_literal(replace_quark(), 0,
@@ -430,7 +415,7 @@ replace_input_data(const void *data, size_t length, void *ctx)
 
     const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
 
-    replace_try_read_from_buffer(replace);
+    replace->TryReadFromBuffer();
     if (!replace->input.IsDefined())
         /* the istream API mandates that we must return 0 if the
            stream is finished */
@@ -447,7 +432,7 @@ replace_input_eof(void *ctx)
     replace->input.Clear();
 
     if (replace->finished)
-        replace_read_check_empty(replace);
+        replace->ReadCheckEmpty();
 }
 
 static void
@@ -455,7 +440,7 @@ replace_input_abort(GError *error, void *ctx)
 {
     ReplaceIstream *replace = (ReplaceIstream *)ctx;
 
-    replace_destroy(replace);
+    replace->Destroy();
     replace->input.Clear();
     istream_deinit_abort(&replace->output, error);
 }
@@ -538,7 +523,7 @@ istream_replace_read(struct istream *istream)
 
     const ScopePoolRef ref(*replace->output.pool TRACE_ARGS);
 
-    replace_read(replace);
+    replace->Read();
 
     if (!replace->input.IsDefined())
         return;
@@ -557,7 +542,7 @@ istream_replace_close(struct istream *istream)
 {
     ReplaceIstream *replace = istream_to_replace(istream);
 
-    replace_destroy(replace);
+    replace->Destroy();
 
     if (replace->input.IsDefined())
         replace->input.ClearHandlerAndClose();
@@ -692,5 +677,5 @@ istream_replace_finish(struct istream *istream)
     replace->finished = true;
 
     if (!replace->input.IsDefined())
-        replace_read_check_empty(replace);
+        replace->ReadCheckEmpty();
 }
