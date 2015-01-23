@@ -18,14 +18,14 @@
 
 struct ReplaceIstream;
 
-struct substitution {
-    struct substitution *next;
-    ReplaceIstream *replace;
-    off_t start, end;
-    struct istream *istream;
-};
-
 struct ReplaceIstream {
+    struct Substitution {
+        Substitution *next;
+        ReplaceIstream *replace;
+        off_t start, end;
+        struct istream *istream;
+    };
+
     struct istream output;
     struct istream *input;
 
@@ -43,7 +43,7 @@ struct ReplaceIstream {
 
     GrowingBufferReader reader;
 
-    struct substitution *first_substitution = nullptr,
+    Substitution *first_substitution = nullptr,
         **append_substitution_p = &first_substitution;
 
 #ifndef NDEBUG
@@ -84,7 +84,7 @@ replace_is_eof(const ReplaceIstream *replace)
  * being written?
  */
 static inline bool
-substitution_is_active(const struct substitution *s)
+substitution_is_active(const ReplaceIstream::Substitution *s)
 {
     const ReplaceIstream *replace = s->replace;
 
@@ -104,7 +104,7 @@ replace_read(ReplaceIstream *replace);
  * Activate the next substitution object after s.
  */
 static void
-replace_to_next_substitution(ReplaceIstream *replace, struct substitution *s)
+replace_to_next_substitution(ReplaceIstream *replace, ReplaceIstream::Substitution *s)
 {
     assert(replace->first_substitution == s);
     assert(substitution_is_active(s));
@@ -150,7 +150,7 @@ replace_destroy(ReplaceIstream *replace);
 static size_t
 replace_substitution_data(const void *data, size_t length, void *ctx)
 {
-    struct substitution *s = (struct substitution *)ctx;
+    auto *s = (ReplaceIstream::Substitution *)ctx;
     ReplaceIstream *replace = s->replace;
 
     if (substitution_is_active(s)) {
@@ -163,7 +163,7 @@ replace_substitution_data(const void *data, size_t length, void *ctx)
 static void
 replace_substitution_eof(void *ctx)
 {
-    struct substitution *s = (struct substitution *)ctx;
+    auto *s = (ReplaceIstream::Substitution *)ctx;
     ReplaceIstream *replace = s->replace;
 
     s->istream = nullptr;
@@ -175,7 +175,7 @@ replace_substitution_eof(void *ctx)
 static void
 replace_substitution_abort(GError *error, void *ctx)
 {
-    struct substitution *s = (struct substitution *)ctx;
+    auto *s = (ReplaceIstream::Substitution *)ctx;
     ReplaceIstream *replace = s->replace;
 
     s->istream = nullptr;
@@ -210,7 +210,7 @@ replace_destroy(ReplaceIstream *replace)
     replace->source_length = (off_t)-1;
 
     while (replace->first_substitution != nullptr) {
-        struct substitution *s = replace->first_substitution;
+        auto *s = replace->first_substitution;
         replace->first_substitution = s->next;
 
         if (s->istream != nullptr)
@@ -232,7 +232,7 @@ replace_read_substitution(ReplaceIstream *replace)
 {
     while (replace->first_substitution != nullptr &&
            substitution_is_active(replace->first_substitution)) {
-        struct substitution *s = replace->first_substitution;
+        auto *s = replace->first_substitution;
 
         replace->read_locked = true;
 
@@ -478,7 +478,6 @@ static off_t
 istream_replace_available(struct istream *istream, bool partial)
 {
     ReplaceIstream *replace = istream_to_replace(istream);
-    const struct substitution *subst;
     off_t length, position = 0, l;
 
     if (!partial && !replace->finished)
@@ -503,7 +502,8 @@ istream_replace_available(struct istream *istream, bool partial)
 
     position = replace->position;
 
-    for (subst = replace->first_substitution; subst != nullptr; subst = subst->next) {
+    for (auto subst = replace->first_substitution;
+         subst != nullptr; subst = subst->next) {
         assert(position <= subst->start);
 
         length += subst->start - position;
@@ -610,7 +610,7 @@ istream_replace_add(struct istream *istream, off_t start, off_t end,
     if (contents == nullptr && start == end)
         return;
 
-    auto s = NewFromPool<struct substitution>(*replace->output.pool);
+    auto s = NewFromPool<ReplaceIstream::Substitution>(*replace->output.pool);
     s->next = nullptr;
     s->replace = replace;
 
@@ -635,10 +635,10 @@ istream_replace_add(struct istream *istream, off_t start, off_t end,
     replace->append_substitution_p = &s->next;
 }
 
-static struct substitution *
+static ReplaceIstream::Substitution *
 replace_get_last_substitution(ReplaceIstream *replace)
 {
-    struct substitution *substitution = replace->first_substitution;
+    auto *substitution = replace->first_substitution;
     assert(substitution != nullptr);
 
     while (substitution->next != nullptr)
@@ -657,7 +657,7 @@ istream_replace_extend(struct istream *istream, gcc_unused off_t start, off_t en
     ReplaceIstream *replace = istream_to_replace(istream);
     assert(!replace->finished);
 
-    struct substitution *substitution = replace_get_last_substitution(replace);
+    auto *substitution = replace_get_last_substitution(replace);
     assert(substitution->start == start);
     assert(substitution->end == replace->settled_position);
     assert(substitution->end == replace->last_substitution_end);
