@@ -7,6 +7,7 @@
 
 #include "istream_notify.hxx"
 #include "istream-internal.h"
+#include "istream_pointer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
@@ -15,7 +16,7 @@
 struct NotifyIstream {
     struct istream output;
 
-    struct istream *input;
+    IstreamPointer input;
 
     const struct istream_notify_handler &handler;
     void *const handler_ctx;
@@ -74,7 +75,7 @@ istream_notify_available(struct istream *istream, bool partial)
 {
     NotifyIstream &notify = istream_to_notify(istream);
 
-    return istream_available(notify.input, partial);
+    return notify.input.GetAvailable(partial);
 }
 
 static void
@@ -82,8 +83,8 @@ istream_notify_read(struct istream *istream)
 {
     NotifyIstream &notify = istream_to_notify(istream);
 
-    istream_handler_set_direct(notify.input, notify.output.handler_direct);
-    istream_read(notify.input);
+    notify.input.SetDirect(notify.output);
+    notify.input.Read();
 }
 
 static void
@@ -93,7 +94,7 @@ istream_notify_close(struct istream *istream)
 
     notify.handler.close(notify.handler_ctx);
 
-    istream_close_handler(notify.input);
+    notify.input.CloseHandler();
     istream_deinit(&notify.output);
 }
 
@@ -111,13 +112,10 @@ static constexpr struct istream_class istream_notify = {
 
 inline NotifyIstream::NotifyIstream(struct pool &p, struct istream &_input,
                                     const struct istream_notify_handler &_handler, void *_ctx)
-    :handler(_handler), handler_ctx(_ctx)
+    :input(_input, notify_input_handler, this),
+           handler(_handler), handler_ctx(_ctx)
 {
     istream_init(&output, &istream_notify, &p);
-
-    istream_assign_handler(&input, &_input,
-                           &notify_input_handler, this,
-                           0);
 }
 
 struct istream *

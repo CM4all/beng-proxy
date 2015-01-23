@@ -6,6 +6,7 @@
 
 #include "istream_dechunk.hxx"
 #include "istream-internal.h"
+#include "istream_pointer.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
@@ -27,7 +28,7 @@ enum istream_dechunk_state {
 struct DechunkIstream {
     struct istream output;
 
-    struct istream *input;
+    IstreamPointer input;
 
     enum istream_dechunk_state state;
 
@@ -51,11 +52,11 @@ static void
 dechunk_abort(DechunkIstream *dechunk, GError *error)
 {
     assert(dechunk->state != EOF_DETECTED && dechunk->state != CLOSED);
-    assert(dechunk->input != nullptr);
+    assert(dechunk->input.IsDefined());
 
     dechunk->state = CLOSED;
 
-    istream_free_handler(&dechunk->input);
+    dechunk->input.ClearAndClose();
     istream_deinit_abort(&dechunk->output, error);
 }
 
@@ -66,7 +67,7 @@ dechunk_abort(DechunkIstream *dechunk, GError *error)
 static bool
 dechunk_eof_detected(DechunkIstream *dechunk)
 {
-    assert(dechunk->input != nullptr);
+    assert(dechunk->input.IsDefined());
     assert(dechunk->state == TRAILER);
     assert(dechunk->size == 0);
 
@@ -74,14 +75,14 @@ dechunk_eof_detected(DechunkIstream *dechunk)
 
     dechunk->eof_callback(dechunk->callback_ctx);
 
-    assert(dechunk->input != nullptr);
+    assert(dechunk->input.IsDefined());
     assert(dechunk->state == EOF_DETECTED);
 
     pool_ref(dechunk->output.pool);
     istream_deinit_eof(&dechunk->output);
 
     if (dechunk->state == CLOSED) {
-        assert(dechunk->input == nullptr);
+        assert(!dechunk->input.IsDefined());
 
         pool_unref(dechunk->output.pool);
         return false;
@@ -92,10 +93,9 @@ dechunk_eof_detected(DechunkIstream *dechunk)
            early, we wouldn't receive that event, and
            dechunk_input_data() couldn't change its return value to
            0 */
-        assert(dechunk->input != nullptr);
+        assert(dechunk->input.IsDefined());
 
-        istream_handler_clear(dechunk->input);
-        dechunk->input = nullptr;
+        dechunk->input.ClearHandler();
         pool_unref(dechunk->output.pool);
         return true;
     }
@@ -107,7 +107,7 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
     const char *data = (const char *)data0;
     size_t position = 0, digit, size, nbytes;
 
-    assert(dechunk->input != nullptr);
+    assert(dechunk->input.IsDefined());
 
     dechunk->had_input = true;
 
@@ -237,7 +237,7 @@ dechunk_input_eof(void *ctx)
 
     dechunk->state = CLOSED;
 
-    dechunk->input = nullptr;
+    dechunk->input.Clear();
 
     GError *error =
         g_error_new_literal(dechunk_quark(), 0,
@@ -250,7 +250,7 @@ dechunk_input_abort(GError *error, void *ctx)
 {
     DechunkIstream *dechunk = (DechunkIstream *)ctx;
 
-    dechunk->input = nullptr;
+    dechunk->input.Clear();
 
     if (dechunk->state != EOF_DETECTED)
         istream_deinit_abort(&dechunk->output, error);
@@ -300,8 +300,8 @@ istream_dechunk_read(struct istream *istream)
 
     do {
         dechunk->had_input = false;
-        istream_read(dechunk->input);
-    } while (dechunk->input != nullptr && dechunk->had_input &&
+        dechunk->input.Read();
+    } while (dechunk->input.IsDefined() && dechunk->had_input &&
              !dechunk->had_output);
 
     pool_unref(dechunk->output.pool);
@@ -316,7 +316,7 @@ istream_dechunk_close(struct istream *istream)
 
     dechunk->state = CLOSED;
 
-    istream_free_handler(&dechunk->input);
+    dechunk->input.ClearHandlerAndClose();
     istream_deinit(&dechunk->output);
 }
 
@@ -335,14 +335,11 @@ static const struct istream_class istream_dechunk = {
 inline DechunkIstream::DechunkIstream(struct pool &p, struct istream &_input,
                                       void (*_eof_callback)(void *ctx),
                                       void *_callback_ctx)
-    :state(NONE),
+    :input(_input, dechunk_input_handler, this),
+     state(NONE),
      eof_callback(_eof_callback), callback_ctx(_callback_ctx)
 {
     istream_init(&output, &istream_dechunk, &p);
-
-    istream_assign_handler(&input, &_input,
-                           &dechunk_input_handler, this,
-                           0);
 }
 
 struct istream *
