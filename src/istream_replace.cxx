@@ -24,6 +24,8 @@ struct ReplaceIstream {
         ReplaceIstream *replace;
         off_t start, end;
         struct istream *istream;
+
+        Substitution(ReplaceIstream &_replace, off_t _start, off_t _end);
     };
 
     struct istream output;
@@ -584,6 +586,14 @@ inline ReplaceIstream::ReplaceIstream(struct pool &p, struct istream &_input)
                            0);
 }
 
+inline
+ReplaceIstream::Substitution::Substitution(ReplaceIstream &_replace,
+                                           off_t _start, off_t _end)
+    :next(nullptr),
+     replace(&_replace),
+     start(_start), end(_end) {
+}
+
 struct istream *
 istream_replace_new(struct pool *pool, struct istream *input)
 {
@@ -610,12 +620,9 @@ istream_replace_add(struct istream *istream, off_t start, off_t end,
     if (contents == nullptr && start == end)
         return;
 
-    auto s = NewFromPool<ReplaceIstream::Substitution>(*replace->output.pool);
-    s->next = nullptr;
-    s->replace = replace;
-
-    s->start = start;
-    s->end = end;
+    auto s =
+        NewFromPool<ReplaceIstream::Substitution>(*replace->output.pool,
+                                                  *replace, start, end);
 
     replace->settled_position = end;
 
