@@ -489,9 +489,9 @@ has_null_byte(const void *p, size_t size)
 
 gcc_pure
 static bool
-has_null_byte(ConstBuffer<void> buffer)
+is_valid_absolute_path(const char *p, size_t size)
 {
-    return has_null_byte(buffer.data, buffer.size);
+    return size > 1 && *p == '/' && !has_null_byte(p, size);
 }
 
 static Transformation *
@@ -845,9 +845,9 @@ translate_client_expand_pair(TranslateClient *client,
 
 static bool
 translate_client_pivot_root(TranslateClient *client,
-                            const char *payload)
+                            const char *payload, size_t payload_length)
 {
-    if (*payload != '/') {
+    if (!is_valid_absolute_path(payload, payload_length)) {
         translate_client_error(client, "malformed PIVOT_ROOT packet");
         return false;
     }
@@ -867,9 +867,9 @@ translate_client_pivot_root(TranslateClient *client,
 
 static bool
 translate_client_home(TranslateClient *client,
-                      const char *payload)
+                      const char *payload, size_t payload_length)
 {
-    if (*payload != '/') {
+    if (!is_valid_absolute_path(payload, payload_length)) {
         translate_client_error(client, "malformed HOME packet");
         return false;
     }
@@ -942,9 +942,9 @@ translate_client_mount_tmp_tmpfs(TranslateClient *client,
 
 static bool
 translate_client_mount_home(TranslateClient *client,
-                            const char *payload)
+                            const char *payload, size_t payload_length)
 {
-    if (*payload != '/') {
+    if (!is_valid_absolute_path(payload, payload_length)) {
         translate_client_error(client, "malformed MOUNT_HOME packet");
         return false;
     }
@@ -1247,7 +1247,7 @@ translate_client_stderr_path(TranslateClient &client,
                              ConstBuffer<void> payload)
 {
     const char *path = (const char *)payload.data;
-    if (*path != '/' || has_null_byte(payload)) {
+    if (!is_valid_absolute_path(path, payload.size)) {
         translate_client_error(&client, "malformed STDERR_PATH packet");
         return false;
     }
@@ -1385,8 +1385,7 @@ translate_handle_packet(TranslateClient *client,
 
     case TRANSLATE_PATH:
         if (client->nfs_address != nullptr && *client->nfs_address->path == 0) {
-            if (payload_length == 0 || *payload != '/' ||
-                has_null_byte(payload, payload_length)) {
+            if (!is_valid_absolute_path(payload, payload_length)) {
                 translate_client_error(client,
                                        "malformed PATH packet");
                 return false;
@@ -1967,7 +1966,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_HOME:
-        return translate_client_home(client, payload);
+        return translate_client_home(client, payload, payload_length);
 
     case TRANSLATE_INTERPRETER:
         if (client->resource_address == nullptr ||
@@ -2027,7 +2026,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_DOCUMENT_ROOT:
-        if (*payload != '/') {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client, "malformed DOCUMENT_ROOT packet");
             return false;
         }
@@ -2735,8 +2734,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || *payload != '/' ||
-            has_null_byte(payload, payload_length)) {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client, "malformed LHTTP_PATH packet");
             return false;
         }
@@ -2881,13 +2879,13 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_PIVOT_ROOT:
-        return translate_client_pivot_root(client, payload);
+        return translate_client_pivot_root(client, payload, payload_length);
 
     case TRANSLATE_MOUNT_PROC:
         return translate_client_mount_proc(client, payload_length);
 
     case TRANSLATE_MOUNT_HOME:
-        return translate_client_mount_home(client, payload);
+        return translate_client_mount_home(client, payload, payload_length);
 
     case TRANSLATE_BIND_MOUNT:
         return translate_client_bind_mount(client, payload, payload_length);
@@ -2923,8 +2921,7 @@ translate_handle_packet(TranslateClient *client,
 
 
     case TRANSLATE_TEST_PATH:
-        if (payload_length == 0 || has_null_byte(payload, payload_length) ||
-            *payload != '/') {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed TEST_PATH packet");
             return false;
