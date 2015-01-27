@@ -1492,7 +1492,7 @@ translate_handle_packet(TranslateClient *client,
         }
 
     case TRANSLATE_DEFLATED:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client, "malformed DEFLATED packet");
             return false;
         }
@@ -1509,7 +1509,7 @@ translate_handle_packet(TranslateClient *client,
         }
 
     case TRANSLATE_GZIPPED:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client, "malformed GZIPPED packet");
             return false;
         }
@@ -1854,7 +1854,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0) {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client, "malformed CGI packet");
             return false;
         }
@@ -1878,7 +1878,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0) {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed FASTCGI packet");
             return false;
@@ -2289,7 +2289,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed DELEGATE packet");
             return false;
@@ -2519,7 +2519,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed WAS packet");
             return false;
