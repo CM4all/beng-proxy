@@ -1947,7 +1947,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || *payload != '/') {
+        if (!is_valid_absolute_path(payload, payload_length)) {
             translate_client_error(client, "malformed NFS_EXPORT packet");
             return false;
         }
