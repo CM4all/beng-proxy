@@ -489,6 +489,13 @@ has_null_byte(const void *p, size_t size)
 
 gcc_pure
 static bool
+is_valid_nonempty_string(const char *p, size_t size)
+{
+    return size > 0 && !has_null_byte(p, size);
+}
+
+gcc_pure
+static bool
 is_valid_absolute_path(const char *p, size_t size)
 {
     return size > 1 && *p == '/' && !has_null_byte(p, size);
@@ -1533,7 +1540,7 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_SITE:
         assert(client->resource_address != nullptr);
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed SITE packet");
             return false;
         }
@@ -1550,7 +1557,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_CONTENT_TYPE:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed CONTENT_TYPE packet");
             return false;
         }
@@ -1581,7 +1588,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed HTTP packet");
             return false;
         }
@@ -1605,7 +1612,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_REDIRECT:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed REDIRECT packet");
             return false;
         }
@@ -1621,7 +1628,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed EXPAND_REDIRECT packet");
             return false;
         }
@@ -1630,7 +1637,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_BOUNCE:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed BOUNCE packet");
             return false;
         }
@@ -1695,7 +1702,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_GROUP_CONTAINER:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed GROUP_CONTAINER packet");
             return false;
@@ -1713,7 +1720,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_WIDGET_GROUP:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed WIDGET_GROUP packet");
             return false;
@@ -1723,8 +1730,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_UNTRUSTED:
-        if (payload_length == 0 || *payload == '.' ||
-            has_null_byte(payload, payload_length) ||
+        if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
             payload[payload_length - 1] == '.') {
             translate_client_error(client,
                                    "malformed UNTRUSTED packet");
@@ -1742,8 +1748,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_UNTRUSTED_PREFIX:
-        if (payload_length == 0 || *payload == '.' ||
-            has_null_byte(payload, payload_length) ||
+        if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
             payload[payload_length - 1] == '.') {
             translate_client_error(client,
                                    "malformed UNTRUSTED_PREFIX packet");
@@ -1761,8 +1766,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_UNTRUSTED_SITE_SUFFIX:
-        if (payload_length == 0 || *payload == '.' ||
-            has_null_byte(payload, payload_length) ||
+        if (!is_valid_nonempty_string(payload, payload_length) || *payload == '.' ||
             payload[payload_length - 1] == '.') {
             daemon_log(2, "malformed UNTRUSTED_SITE_SUFFIX packet\n");
             return false;
@@ -2011,7 +2015,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_EXPAND_SCRIPT_NAME:
-        if (has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed EXPAND_SCRIPT_NAME packet");
             return false;
         }
@@ -2215,7 +2219,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed REGEX packet");
             return false;
         }
@@ -2234,7 +2238,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed INVERSE_REGEX packet");
             return false;
         }
@@ -2303,7 +2307,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_APPEND:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed APPEND packet");
             return false;
@@ -2340,7 +2344,7 @@ translate_handle_packet(TranslateClient *client,
         }
 
     case TRANSLATE_EXPAND_APPEND:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed EXPAND_APPEND packet");
             return false;
@@ -2445,7 +2449,7 @@ translate_handle_packet(TranslateClient *client,
                                    payload, payload_length);
 
     case TRANSLATE_WWW_AUTHENTICATE:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed WWW_AUTHENTICATE packet");
             return false;
@@ -2455,7 +2459,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_AUTHENTICATION_INFO:
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed AUTHENTICATION_INFO packet");
             return false;
@@ -2484,7 +2488,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed COOKIE_DOMAIN packet");
             return false;
@@ -2565,7 +2569,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed COOKIE_HOST packet");
             return false;
@@ -2775,7 +2779,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed EXPAND_LHTTP_URI packet");
             return false;
@@ -2792,7 +2796,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed LHTTP_HOST packet");
             return false;
         }
@@ -2943,7 +2947,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed EXPAND_TEST_PATH packet");
             return false;
@@ -3036,7 +3040,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed EXPAND_URI packet");
             return false;
         }
@@ -3052,7 +3056,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
+        if (!is_valid_nonempty_string(payload, payload_length)) {
             translate_client_error(client, "malformed EXPAND_SITE packet");
             return false;
         }
