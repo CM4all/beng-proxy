@@ -1391,13 +1391,13 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_PATH:
-        if (client->nfs_address != nullptr && *client->nfs_address->path == 0) {
-            if (!is_valid_absolute_path(payload, payload_length)) {
-                translate_client_error(client,
-                                       "malformed PATH packet");
-                return false;
-            }
+        if (!is_valid_absolute_path(payload, payload_length)) {
+            translate_client_error(client,
+                                   "malformed PATH packet");
+            return false;
+        }
 
+        if (client->nfs_address != nullptr && *client->nfs_address->path == 0) {
             client->nfs_address->path = payload;
             return true;
         }
@@ -1405,11 +1405,6 @@ translate_handle_packet(TranslateClient *client,
         if (client->resource_address == nullptr ||
             client->resource_address->type != RESOURCE_ADDRESS_NONE) {
             translate_client_error(client, "misplaced PATH packet");
-            return false;
-        }
-
-        if (payload_length == 0 || has_null_byte(payload, payload_length)) {
-            translate_client_error(client, "malformed PATH packet");
             return false;
         }
 
