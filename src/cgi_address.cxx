@@ -146,6 +146,8 @@ cgi_address_copy(struct pool *pool, struct cgi_address *dest,
     dest->expand_path = p_strdup_checked(pool, src->expand_path);
     dest->expand_path_info =
         p_strdup_checked(pool, src->expand_path_info);
+    dest->expand_document_root =
+        p_strdup_checked(pool, src->expand_document_root);
     dest->query_string =
         p_strdup_checked(pool, src->query_string);
     dest->document_root =
@@ -280,6 +282,13 @@ cgi_address::Expand(struct pool *pool, const GMatchInfo *match_info,
         path_info = expand_string_unescaped(pool, expand_path_info,
                                             match_info, error_r);
         if (path_info == nullptr)
+            return false;
+    }
+
+    if (expand_document_root != nullptr) {
+        document_root = expand_string_unescaped(pool, expand_document_root,
+                                                match_info, error_r);
+        if (document_root == nullptr)
             return false;
     }
 

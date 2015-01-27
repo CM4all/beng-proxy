@@ -2046,6 +2046,21 @@ translate_handle_packet(TranslateClient *client,
             client->response.document_root = payload;
         return true;
 
+    case TRANSLATE_EXPAND_DOCUMENT_ROOT:
+        if (!is_valid_nonempty_string(payload, payload_length)) {
+            translate_client_error(client, "malformed EXPAND_DOCUMENT_ROOT packet");
+            return false;
+        }
+
+        if (client->cgi_address != nullptr)
+            client->cgi_address->expand_document_root = payload;
+        else if (client->file_address != nullptr &&
+                 client->file_address->delegate != nullptr)
+            client->file_address->expand_document_root = payload;
+        else
+            client->response.expand_document_root = payload;
+        return true;
+
     case TRANSLATE_ADDRESS:
         if (client->address_list == nullptr) {
             translate_client_error(client,

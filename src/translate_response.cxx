@@ -51,7 +51,7 @@ TranslateResponse::Clear()
     base = nullptr;
     regex = inverse_regex = nullptr;
     site = expand_site = nullptr;
-    document_root = nullptr;
+    document_root = expand_document_root = nullptr;
 
     redirect = expand_redirect = nullptr;
     bounce = nullptr;
@@ -141,6 +141,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     site = p_strdup_checked(pool, src.site);
     expand_site = p_strdup_checked(pool, src.expand_site);
     document_root = p_strdup_checked(pool, src.document_root);
+    expand_document_root = p_strdup_checked(pool, src.expand_document_root);
     redirect = p_strdup_checked(pool, src.redirect);
     expand_redirect = p_strdup_checked(pool, src.expand_redirect);
     bounce = p_strdup_checked(pool, src.bounce);
@@ -331,6 +332,7 @@ TranslateResponse::IsExpandable() const
     return regex != nullptr &&
         (expand_redirect != nullptr ||
          expand_site != nullptr ||
+         expand_document_root != nullptr ||
          expand_uri != nullptr ||
          expand_test_path != nullptr ||
          !expand_request_headers.IsEmpty() ||
@@ -356,6 +358,13 @@ TranslateResponse::Expand(struct pool *pool,
     if (expand_site != nullptr) {
         site = expand_string_unescaped(pool, expand_site, match_info, error_r);
         if (site == nullptr)
+            return false;
+    }
+
+    if (expand_document_root != nullptr) {
+        document_root = expand_string_unescaped(pool, expand_document_root,
+                                                match_info, error_r);
+        if (document_root == nullptr)
             return false;
     }
 

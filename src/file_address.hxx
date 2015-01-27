@@ -32,6 +32,12 @@ struct file_address {
     const char *expand_path;
 
     /**
+     * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
+     * translation cache.
+     */
+    const char *expand_document_root;
+
+    /**
      * Options for the delegate process.
      */
     struct child_options child_options;
@@ -57,7 +63,8 @@ struct file_address {
      */
     gcc_pure
     bool IsExpandable() const {
-        return expand_path != nullptr;
+        return expand_path != nullptr ||
+            expand_document_root != nullptr;
     }
 
     bool Expand(struct pool *pool, const GMatchInfo *match_info,

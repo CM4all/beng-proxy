@@ -560,6 +560,11 @@ enum beng_translation_command {
      * the "regular" path.
      */
     TRANSLATE_AUTO_GZIPPED = 140,
+
+    /**
+     * Expansion for #TRANSLATE_DOCUMENT_ROOT.
+     */
+    TRANSLATE_EXPAND_DOCUMENT_ROOT = 141,
 };
 
 struct beng_translation_header {

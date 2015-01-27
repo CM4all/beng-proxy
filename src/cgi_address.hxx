@@ -63,6 +63,12 @@ struct cgi_address {
     const char *expand_path_info;
 
     /**
+     * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
+     * translation cache.
+     */
+    const char *expand_document_root;
+
+    /**
      * An optional list of addresses to connect to.  If given
      * for a FastCGI resource, then beng-proxy connects to one
      * of the addresses instead of spawning a new child
@@ -113,6 +119,7 @@ struct cgi_address {
         return expand_path != nullptr ||
             expand_script_name != nullptr ||
             expand_path_info != nullptr ||
+            expand_document_root != nullptr ||
             args.IsExpandable() ||
             env.IsExpandable() ||
             params.IsExpandable();

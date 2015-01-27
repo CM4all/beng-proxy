@@ -57,6 +57,13 @@ struct TranslateResponse {
     const char *site;
     const char *expand_site;
     const char *document_root;
+
+    /**
+     * The value of #TRANSLATE_EXPAND_DOCUMENT_ROOT.  Only used by the
+     * translation cache.
+     */
+    const char *expand_document_root;
+
     const char *redirect;
     const char *expand_redirect;
     const char *bounce;

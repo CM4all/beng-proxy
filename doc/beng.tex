@@ -1558,6 +1558,13 @@ process \\
 
 \hline
 
+\verb|EXPAND_DOCUMENT_ROOT| & Override the \verb|DOCUMENT_ROOT| with
+the given value.  Backslash references are expanded to the value of
+the match group of \verb|REGEX|.
+\scriptsize{(Since version 6.0)} \\
+
+\hline
+
 \verb|INTERPRETER| & run a CGI script with the specified
 interpreter: invokes the specified interpreter with the mapped file
 path added as a command-line argument.  This can be used to run Perl
