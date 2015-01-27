@@ -494,6 +494,13 @@ is_valid_absolute_path(const char *p, size_t size)
     return size > 1 && *p == '/' && !has_null_byte(p, size);
 }
 
+gcc_pure
+static bool
+is_valid_absolute_uri(const char *p, size_t size)
+{
+    return is_valid_absolute_path(p, size);
+}
+
 static Transformation *
 translate_add_transformation(TranslateClient *client)
 {
@@ -1790,7 +1797,7 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_URI:
-        if (payload_length == 0 || *payload != '/') {
+        if (!is_valid_absolute_uri(payload, payload_length)) {
             translate_client_error(client, "malformed URI packet");
             return false;
         }
@@ -2148,8 +2155,8 @@ translate_handle_packet(TranslateClient *client,
         return true;
 
     case TRANSLATE_BASE:
-        if (*payload != '/' || payload[payload_length - 1] != '/' ||
-            has_null_byte(payload, payload_length)) {
+        if (!is_valid_absolute_uri(payload, payload_length) ||
+            payload[payload_length - 1] != '/') {
             translate_client_error(client, "malformed BASE packet");
             return false;
         }
@@ -2579,7 +2586,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (*payload != '/' || has_null_byte(payload, payload_length)) {
+        if (!is_valid_absolute_uri(payload, payload_length)) {
             translate_client_error(client,
                                    "malformed COOKIE_PATH packet");
             return false;
@@ -2687,8 +2694,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 ||
-            has_null_byte(payload, payload_length) ||
+        if (!is_valid_absolute_uri(payload, payload_length) ||
             payload[payload_length - 1] != '/') {
             translate_client_error(client,
                                    "malformed LOCAL_URI packet");
@@ -2756,8 +2762,7 @@ translate_handle_packet(TranslateClient *client,
             return false;
         }
 
-        if (payload_length == 0 || *payload != '/' ||
-            has_null_byte(payload, payload_length)) {
+        if (!is_valid_absolute_uri(payload, payload_length)) {
             translate_client_error(client, "malformed LHTTP_URI packet");
             return false;
         }
