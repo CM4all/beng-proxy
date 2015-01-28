@@ -234,6 +234,60 @@ request::CheckHandleRedirectBounceStatus(const TranslateResponse &response)
 }
 
 gcc_pure
+static bool
+ProbeOnePathSuffix(const char *prefix, const char *suffix)
+{
+    const size_t prefix_length = strlen(prefix);
+    const size_t suffix_length = strlen(suffix);
+
+    char path[PATH_MAX];
+    if (prefix_length + suffix_length >= sizeof(path))
+        /* path too long */
+        return false;
+
+    memcpy(path, prefix, prefix_length);
+    memcpy(path + prefix_length, suffix, suffix_length);
+    path[prefix_length + suffix_length] = 0;
+
+    struct stat st;
+    return stat(path, &st) == 0 && S_ISREG(st.st_mode);
+}
+
+gcc_pure
+static const char *
+ProbePathSuffixes(const char *prefix, const ConstBuffer<const char *> suffixes)
+{
+    assert(!suffixes.IsNull());
+    assert(!suffixes.IsEmpty());
+
+    for (const char *current_suffix : suffixes) {
+        if (ProbeOnePathSuffix(prefix, current_suffix))
+            return current_suffix;
+    }
+
+    return nullptr;
+}
+
+inline bool
+request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
+{
+    if (response.probe_path_suffixes.IsNull())
+        return false;
+
+    assert(response.test_path != nullptr);
+    const char *prefix = response.test_path;
+
+    ConstBuffer<const char *> probe_suffixes(&response.probe_suffixes.front(),
+                                             response.probe_suffixes.size());
+    const char *found = ProbePathSuffixes(prefix, probe_suffixes);
+
+    translate.request.probe_path_suffixes = response.probe_path_suffixes;
+    translate.request.probe_suffix = found;
+    SubmitTranslateRequest();
+    return true;
+}
+
+gcc_pure
 static const char *
 get_suffix(const char *path)
 {
@@ -589,6 +643,9 @@ request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 void
 request::OnTranslateResponse2(const TranslateResponse &response)
 {
+    if (CheckHandleProbePathSuffixes(response))
+        return;
+
     /* check ENOTDIR */
     if (!response.enotdir.IsNull() && !check_file_enotdir(*this, response))
         return;

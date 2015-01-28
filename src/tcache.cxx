@@ -33,6 +33,7 @@
 #define MAX_CACHE_CHECK 256
 #define MAX_CACHE_WFU 256
 static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
+static constexpr size_t MAX_PROBE_PATH_SUFFIXES = 256;
 static constexpr size_t MAX_FILE_NOT_FOUND = 256;
 static constexpr size_t MAX_DIRECTORY_INDEX = 256;
 
@@ -483,6 +484,8 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
                http_status_t status,
                ConstBuffer<void> check,
                ConstBuffer<void> want_full_uri,
+               ConstBuffer<void> probe_path_suffixes,
+               const char *probe_suffix,
                ConstBuffer<void> directory_index,
                ConstBuffer<void> file_not_found,
                bool want)
@@ -523,6 +526,25 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
 
     if (want)
         key = p_strcat(&pool, "|W_", key, nullptr);
+
+    if (!probe_path_suffixes.IsNull()) {
+        char buffer[MAX_PROBE_PATH_SUFFIXES * 3];
+        size_t length = uri_escape(buffer,
+                                   (const char *)probe_path_suffixes.data,
+                                   probe_path_suffixes.size);
+
+        key = p_strncat(&pool,
+                        buffer, length,
+                        "=PPS", (size_t)4,
+                        ":", size_t(probe_suffix != nullptr ? 1 : 0),
+                        probe_suffix != nullptr ? probe_suffix : "",
+                        probe_suffix != nullptr ? strlen(probe_suffix) : 0,
+                        "]", (size_t)1,
+                        key, strlen(key),
+                        nullptr);
+    } else {
+        assert(probe_suffix == nullptr);
+    }
 
     if (!file_not_found.IsNull()) {
         char buffer[MAX_FILE_NOT_FOUND * 3];
@@ -584,6 +606,7 @@ tcache_request_key(struct pool &pool, const TranslateRequest &request)
         ? tcache_uri_key(pool, request.uri, request.host,
                          request.error_document_status,
                          request.check, request.want_full_uri,
+                         request.probe_path_suffixes, request.probe_suffix,
                          request.directory_index,
                          request.file_not_found,
                          !request.want.IsEmpty())
@@ -599,6 +622,7 @@ tcache_request_evaluate(const TranslateRequest *request)
         request->auth.IsNull() &&
         request->check.size < MAX_CACHE_CHECK &&
         request->want_full_uri.size <= MAX_CACHE_WFU &&
+        request->probe_path_suffixes.size <= MAX_PROBE_PATH_SUFFIXES &&
         request->file_not_found.size <= MAX_FILE_NOT_FOUND &&
         request->directory_index.size <= MAX_DIRECTORY_INDEX &&
         request->authorization == nullptr;
@@ -695,6 +719,7 @@ tcache_store_response(struct pool &pool, TranslateResponse &dest,
         ? tcache_uri_key(pool, dest.base, request.host,
                          request.error_document_status,
                          request.check, request.want_full_uri,
+                         request.probe_path_suffixes, request.probe_suffix,
                          request.directory_index,
                          request.file_not_found,
                          !request.want.IsEmpty())

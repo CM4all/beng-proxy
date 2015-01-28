@@ -8,6 +8,7 @@
 #define BENG_PROXY_TRANSLATE_RESPONSE_HXX
 
 #include "util/ConstBuffer.hxx"
+#include "util/TrivialArray.hxx"
 #include "util/kvlist.hxx"
 #include "resource_address.hxx"
 #include "header_forward.hxx"
@@ -197,6 +198,13 @@ struct TranslateResponse {
     ConstBuffer<void> directory_index;
 
     ConstBuffer<void> error_document;
+
+    /**
+     * From #TRANSLATE_PROBE_PATH_SUFFIXES.
+     */
+    ConstBuffer<void> probe_path_suffixes;
+
+    TrivialArray<const char *, 16> probe_suffixes;
 
     struct {
         uint64_t mtime;

@@ -193,6 +193,7 @@ struct request {
      */
     struct session *ApplyTranslateSession(const TranslateResponse &response);
 
+    bool CheckHandleProbePathSuffixes(const TranslateResponse &response);
     bool CheckHandleRedirect(const TranslateResponse &response);
     bool CheckHandleBounce(const TranslateResponse &response);
     bool CheckHandleStatus(const TranslateResponse &response);

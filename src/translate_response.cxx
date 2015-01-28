@@ -115,9 +115,22 @@ TranslateResponse::Clear()
     enotdir = nullptr;
     directory_index = nullptr;
     error_document = nullptr;
+    probe_path_suffixes = nullptr;
+    probe_suffixes.clear();
 
     validate_mtime.mtime = 0;
     validate_mtime.path = nullptr;
+}
+
+template<unsigned N>
+static void
+CopyArray(struct pool &pool, TrivialArray<const char *, N> &dest,
+          const TrivialArray<const char *, N> &src)
+{
+    const size_t size = src.size();
+    dest.resize(size);
+    for (size_t i = 0; i < size; ++i)
+        dest[i] = p_strdup(&pool, src[i]);
 }
 
 void
@@ -214,6 +227,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     enotdir = DupBuffer(pool, src.enotdir);
     directory_index = DupBuffer(pool, src.directory_index);
     error_document = DupBuffer(pool, src.error_document);
+    probe_path_suffixes = DupBuffer(pool, src.probe_path_suffixes);
+    CopyArray(*pool, probe_suffixes, src.probe_suffixes);
 
     validate_mtime.mtime = src.validate_mtime.mtime;
     validate_mtime.path =

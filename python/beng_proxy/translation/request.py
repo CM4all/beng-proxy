@@ -61,6 +61,8 @@ class Request:
         self.suffix = None
         self.error_document = False
         self.error_document_payload = None
+        self.probe_path_suffixes = None
+        self.probe_suffix = None
 
     def __getattr__(self, name):
         if name == 'uri':
@@ -132,6 +134,10 @@ class Request:
         elif packet.command == TRANSLATE_ERROR_DOCUMENT:
             self.error_document = True
             self.error_document_payload = packet.payload
+        elif packet.command == TRANSLATE_PROBE_PATH_SUFFIXES:
+            self.probe_path_suffixes = packet.payload
+        elif packet.command == TRANSLATE_PROBE_SUFFIX:
+            self.probe_suffix = packet.payload
         elif packet.command != TRANSLATE_LOCAL_ADDRESS:
             print "Invalid command:", packet.command
         return False

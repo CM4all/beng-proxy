@@ -391,6 +391,12 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
                               request->directory_index, error_r) &&
         write_optional_packet(gb, TRANSLATE_PARAM, request->param,
                               error_r) &&
+        write_optional_buffer(gb, TRANSLATE_PROBE_PATH_SUFFIXES,
+                              request->probe_path_suffixes,
+                              error_r) &&
+        write_optional_packet(gb, TRANSLATE_PROBE_SUFFIX,
+                              request->probe_suffix,
+                              error_r) &&
         write_packet(gb, TRANSLATE_END, nullptr, error_r);
     if (!success)
         return nullptr;
@@ -1278,6 +1284,13 @@ translate_client_stderr_path(TranslateClient &client,
 
     client.child_options->stderr_path = path;
     return true;
+}
+
+static bool
+CheckProbeSuffix(const char *payload, size_t length)
+{
+    return memchr(payload, '/', length) == nullptr &&
+        !has_null_byte(payload, length);
 }
 
 /**
@@ -3126,6 +3139,36 @@ translate_handle_packet(TranslateClient *client,
             translate_client_error(client, "misplaced AUTO_GZIPPED packet");
             return false;
         }
+
+    case TRANSLATE_PROBE_PATH_SUFFIXES:
+        if (!client->response.probe_path_suffixes.IsNull() ||
+            (client->response.test_path == nullptr &&
+             client->response.expand_test_path == nullptr)) {
+            translate_client_error(client, "misplaced PROBE_PATH_SUFFIXES packet");
+            return false;
+        }
+
+        client->response.probe_path_suffixes = { payload, payload_length };
+        return true;
+
+    case TRANSLATE_PROBE_SUFFIX:
+        if (client->response.probe_path_suffixes.IsNull()) {
+            translate_client_error(client, "misplaced PROBE_SUFFIX packet");
+            return false;
+        }
+
+        if (client->response.probe_suffixes.full()) {
+            translate_client_error(client, "too many PROBE_SUFFIX packets");
+            return false;
+        }
+
+        if (!CheckProbeSuffix(payload, payload_length)) {
+            translate_client_error(client, "malformed PROBE_SUFFIX packets");
+            return false;
+        }
+
+        client->response.probe_suffixes.push_back(payload);
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

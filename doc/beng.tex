@@ -774,6 +774,14 @@ is followed by the packets \verb|URI| and \verb|STATUS|.  See
 
 \hline
 
+\verb|PROBE_PATH_SUFFIXES| & Result of \verb|PROBE_PATH_SUFFIXES|.
+This is an echo of the \verb|PROBE_PATH_SUFFIXES| from the previous
+translation response.  If a file with one of the given suffixes
+exists, then \verb|PROBE_SUFFIX| specifies the first existing suffix.
+If no \verb|PROBE_SUFFIX| follows, then no file was found.  \\
+
+\hline
+
 \verb|FILE_NOT_FOUND| & The specified file does not exist.  The
 translation server is asked to provide an alterate translation.  This
 is an echo of the \verb|FILE_NOT_FOUND| from the previous translation
@@ -1297,6 +1305,15 @@ willing to look up \texttt{Content-Type} by file name suffix.  See
 \verb|ERROR_DOCUMENT| & Indicates that the translation server is
 willing to provide a custom error document.  See \ref{errdoc} for a
 detailed description. \\
+
+\hline
+
+\verb|PROBE_PATH_SUFFIXES| & Check if the \verb|TEST_PATH| (or
+\verb|EXPAND_TEST_PATH|) plus one of the suffixes from
+\verb|PROBE_SUFFIX| exists (regular files only).  \emph{beng-proxy}
+will send another translation request, echoing this packet and echoing
+the \verb|PROBE_SUFFIX| that was found.  This packet must be followed
+by at least two \verb|PROBE_SUFFIX| packets.  \\
 
 \hline
 

@@ -146,6 +146,42 @@ class Translation(Protocol):
             response.packet(TRANSLATE_ENOTDIR, 'foo')
             response.packet(TRANSLATE_DIRECTORY_INDEX, 'foo')
 
+    def _handle_probe(self, request, response, base, uri,
+                      document_root='/var/www'):
+        response.packet(TRANSLATE_BASE, base)
+        response.packet(TRANSLATE_DOCUMENT_ROOT, document_root)
+
+        if request.probe_path_suffixes is None:
+            response.packet(TRANSLATE_REGEX, r'^(.*)$')
+            response.packet(TRANSLATE_REGEX_TAIL)
+            response.packet(TRANSLATE_EXPAND_TEST_PATH, document_root + r'/\1')
+            response.packet(TRANSLATE_PROBE_PATH_SUFFIXES, 'pps')
+            response.packet(TRANSLATE_PROBE_SUFFIX, '.py')
+            response.packet(TRANSLATE_PROBE_SUFFIX, '.php')
+            response.packet(TRANSLATE_PROBE_SUFFIX, '.cls')
+            response.packet(TRANSLATE_PROBE_SUFFIX, '.html')
+            response.packet(TRANSLATE_PROBE_SUFFIX, '.txt')
+        else:
+            if request.probe_suffix is None:
+                response.status(404)
+            else:
+                response.packet(TRANSLATE_REGEX, r'^(.*)$')
+                response.packet(TRANSLATE_REGEX_TAIL)
+
+                path = document_root + uri + request.probe_suffix
+                if request.probe_suffix == '.py':
+                    response.packet(TRANSLATE_CGI, path)
+                    response.packet(TRANSLATE_INTERPRETER, '/usr/bin/python')
+                elif request.probe_suffix == '.php':
+                    response.packet(TRANSLATE_FASTCGI, path)
+                    response.packet(TRANSLATE_ACTION, '/usr/bin/php5-cgi')
+                elif request.probe_suffix == '.cls':
+                    response.packet(TRANSLATE_FASTCGI, path)
+                    response.packet(TRANSLATE_ACTION, coma_fastcgi)
+                else:
+                    response.packet(TRANSLATE_PATH, path)
+                response.packet(TRANSLATE_EXPAND_PATH, document_root + r'/\1' + request.probe_suffix)
+
     def _handle_local_file(self, path, response, delegate=False, jail=False, fastcgi=True, error_document=False):
         response.packet(TRANSLATE_DOCUMENT_ROOT, "/var/www")
         if error_document:
@@ -596,6 +632,8 @@ class Translation(Protocol):
             response.packet(TRANSLATE_CONTENT_TYPE_LOOKUP, 'xyz')
         elif raw_uri[:9] == '/hosting/':
             self._handle_hosting(request, response, '/hosting/', raw_uri[9:])
+        elif raw_uri[:7] == '/probe/':
+            self._handle_probe(request, response, '/probe/', raw_uri[7:])
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

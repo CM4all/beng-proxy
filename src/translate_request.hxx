@@ -71,6 +71,9 @@ struct TranslateRequest {
 
     http_status_t error_document_status;
 
+    ConstBuffer<void> probe_path_suffixes;
+    const char *probe_suffix;
+
     void Clear() {
         local_address = nullptr;
         local_address_length = 0;
@@ -97,6 +100,8 @@ struct TranslateRequest {
         directory_index = nullptr;
         error_document = nullptr;
         error_document_status = http_status_t(0);
+        probe_path_suffixes = nullptr;
+        probe_suffix = nullptr;
     }
 };
 

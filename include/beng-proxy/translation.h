@@ -565,6 +565,23 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_DOCUMENT_ROOT.
      */
     TRANSLATE_EXPAND_DOCUMENT_ROOT = 141,
+
+    /**
+     * Check if the #TRANSLATE_TEST_PATH (or
+     * #TRANSLATE_EXPAND_TEST_PATH) plus one of the suffixes from
+     * #TRANSLATE_PROBE_SUFFIX exists (regular files only).
+     * beng-proxy will send another translation request, echoing this
+     * packet and echoing the #TRANSLATE_PROBE_SUFFIX that was found.
+     *
+     * This packet must be followed by at least two
+     * #TRANSLATE_PROBE_SUFFIX packets.
+     */
+    TRANSLATE_PROBE_PATH_SUFFIXES = 142,
+
+    /**
+     * @see #TRANSLATE_PROBE_PATH_SUFFIXES
+     */
+    TRANSLATE_PROBE_SUFFIX = 143,
 };
 
 struct beng_translation_header {
