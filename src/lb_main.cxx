@@ -13,7 +13,6 @@
 #include "tcp_balancer.hxx"
 #include "hstock.hxx"
 #include "stock.hxx"
-#include "global.h"
 #include "failure.hxx"
 #include "bulldog.h"
 #include "balancer.hxx"
@@ -285,9 +284,6 @@ int main(int argc, char **argv)
 
     failure_init();
     bulldog_init(instance.cmdline.bulldog_path);
-
-    global_tcp_stock = instance.tcp_stock;
-    global_pipe_stock = instance.pipe_stock;
 
     if (!init_all_controls(&instance, &error)) {
         fprintf(stderr, "%s\n", error->message);

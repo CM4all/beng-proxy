@@ -423,7 +423,6 @@ cm4all_beng_lb_SOURCES = \
 	src/nop_thread_socket_filter.cxx src/nop_thread_socket_filter.hxx \
 	src/ping.cxx src/ping.hxx \
 	src/shutdown_listener.c src/shutdown_listener.h \
-	src/lb_global.cxx \
 	src/lb_cmdline.hxx \
 	src/lb_cmdline.cxx \
 	src/lb_stats.cxx src/lb_stats.hxx \
