@@ -14,7 +14,7 @@
 #include "widget_approval.hxx"
 #include "widget_request.hxx"
 #include "async.hxx"
-#include "global.h"
+#include "bp_global.hxx"
 #include "http_util.hxx"
 #include "http_response.hxx"
 #include "strref_pool.hxx"

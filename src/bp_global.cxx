@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "global.h"
+#include "bp_global.hxx"
 
 struct tcache *global_translate_cache;
 

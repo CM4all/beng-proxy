@@ -25,7 +25,7 @@
 #include "rewrite_uri.hxx"
 #include "strref2.hxx"
 #include "strref_pool.hxx"
-#include "global.h"
+#include "bp_global.hxx"
 #include "expansible_buffer.hxx"
 #include "escape_class.h"
 #include "escape_html.h"

@@ -12,7 +12,7 @@
 #include "http_response.hxx"
 #include "http_address.hxx"
 #include "cgi_address.hxx"
-#include "global.h"
+#include "bp_global.hxx"
 #include "cookie_client.hxx"
 #include "uri-extract.h"
 #include "strref_pool.hxx"

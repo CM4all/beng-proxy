@@ -14,7 +14,7 @@
 #include "tpool.h"
 #include "async.hxx"
 #include "rewrite_uri.hxx"
-#include "global.h"
+#include "bp_global.hxx"
 #include "expansible_buffer.hxx"
 #include "escape_css.h"
 #include "istream.h"

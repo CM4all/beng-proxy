@@ -15,7 +15,7 @@
 #include "http_util.hxx"
 #include "http_headers.hxx"
 #include "http_server.hxx"
-#include "global.h"
+#include "bp_global.hxx"
 #include "istream_file.hxx"
 #include "istream.h"
 #include "tvary.hxx"

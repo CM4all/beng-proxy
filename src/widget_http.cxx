@@ -25,7 +25,7 @@
 #include "header_writer.hxx"
 #include "header_forward.hxx"
 #include "transformation.hxx"
-#include "global.h"
+#include "bp_global.hxx"
 #include "resource_tag.hxx"
 #include "uri-extract.h"
 #include "strmap.hxx"

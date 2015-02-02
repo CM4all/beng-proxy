@@ -149,7 +149,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/file_handler.cxx src/file_handler.hxx \
 	src/fork.cxx src/fork.hxx \
 	src/get.cxx src/get.hxx \
-	src/global.c src/global.h \
+	src/bp_global.cxx src/bp_global.hxx \
 	src/handler.cxx src/handler.hxx \
 	src/auth.cxx \
 	src/file_not_found.cxx src/file_not_found.hxx \
@@ -1077,7 +1077,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/widget_view.cxx \
 	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
-	src/global.c src/transformation.cxx \
+	src/bp_global.cxx src/transformation.cxx \
 	src/clock.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_processor_LDADD = $(AM_LDADD) \
@@ -1378,7 +1378,7 @@ test_t_wembed_SOURCES = test/t_wembed.cxx \
 	src/inline_widget.cxx \
 	src/istream-escape.c src/istream-html-escape.c \
 	src/http_util.cxx \
-	src/global.c
+	src/bp_global.cxx
 test_t_wembed_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libputil.a \

@@ -14,7 +14,7 @@
 #include "widget_resolver.hxx"
 #include "widget_lookup.hxx"
 #include "widget_request.hxx"
-#include "global.h"
+#include "bp_global.hxx"
 #include "http_response.hxx"
 #include "istream.h"
 #include "session.hxx"

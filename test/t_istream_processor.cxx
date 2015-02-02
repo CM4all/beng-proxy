@@ -7,7 +7,7 @@
 #include "session_manager.hxx"
 #include "inline_widget.hxx"
 #include "widget_registry.hxx"
-#include "global.h"
+#include "bp_global.hxx"
 #include "crash.h"
 #include "session.hxx"
 
