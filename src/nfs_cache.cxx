@@ -352,6 +352,12 @@ nfs_cache_free(struct nfs_cache *cache)
 }
 
 void
+nfs_cache_fork_cow(struct nfs_cache *cache, bool inherit)
+{
+    rubber_fork_cow(cache->rubber, inherit);
+}
+
+void
 nfs_cache_request(struct pool *pool, struct nfs_cache *cache,
                   const char *server, const char *_export, const char *path,
                   const struct nfs_cache_handler *handler, void *ctx,

@@ -34,6 +34,9 @@ void
 nfs_cache_free(struct nfs_cache *cache);
 
 void
+nfs_cache_fork_cow(struct nfs_cache *cache, bool inherit);
+
+void
 nfs_cache_request(struct pool *pool, struct nfs_cache *cache,
                   const char *server, const char *export_name,
                   const char *path,
