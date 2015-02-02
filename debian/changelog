@@ -2,7 +2,7 @@ cm4all-beng-proxy (6.0.2) unstable; urgency=low
 
   * translate_client: allow BASE="/" (regression fix)
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 02 Feb 2015 11:32:01 -0000
 
 cm4all-beng-proxy (6.0.1) unstable; urgency=low
 
