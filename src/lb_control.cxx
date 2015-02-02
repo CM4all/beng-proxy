@@ -237,6 +237,7 @@ lb_control_packet(enum beng_control_command command,
     switch (command) {
     case CONTROL_NOP:
     case CONTROL_TCACHE_INVALIDATE:
+    case CONTROL_FADE_CHILDREN:
         break;
 
     case CONTROL_ENABLE_NODE:

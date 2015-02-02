@@ -83,6 +83,11 @@ struct instance {
     struct resource_loader *resource_loader;
 
     void ForkCow(bool inherit);
+
+    /**
+     * Handler for #CONTROL_FADE_CHILDREN
+     */
+    void FadeChildren();
 };
 
 struct client_connection;

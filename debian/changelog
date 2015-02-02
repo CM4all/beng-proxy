@@ -1,6 +1,7 @@
 cm4all-beng-proxy (6.0.11) unstable; urgency=low
 
   * translation: add packet EXPAND_READ_FILE
+  * control: add command CONTROL_FADE_CHILDREN
 
  --   
 

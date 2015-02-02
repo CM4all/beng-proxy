@@ -111,3 +111,6 @@ class Client:
         assert verbose <= 0xff
 
         self.send(CONTROL_VERBOSE, struct.pack('B', verbose))
+
+    def send_fade_children(self):
+        self.send(CONTROL_FADE_CHILDREN)

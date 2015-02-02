@@ -218,6 +218,10 @@ handle_control_packet(struct instance *instance, struct control_server *server,
         if (payload_length == 1)
             daemon_log_config.verbose = *(const uint8_t *)payload;
         break;
+
+    case CONTROL_FADE_CHILDREN:
+        instance->FadeChildren();
+        break;
     }
 }
 
