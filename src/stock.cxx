@@ -58,9 +58,7 @@ struct Stock {
     struct list_head idle;
 
     unsigned num_busy;
-#ifndef NDEBUG
     struct list_head busy;
-#endif
 
     unsigned num_create;
 
@@ -364,9 +362,7 @@ stock_new(struct pool *pool, const StockClass *cls,
     list_init(&stock->idle);
 
     stock->num_busy = 0;
-#ifndef NDEBUG
     list_init(&stock->busy);
-#endif
 
     stock->num_create = 0;
 
@@ -463,8 +459,8 @@ stock_get_idle(Stock *stock,
         if (stock->cls->borrow(stock->class_ctx, item)) {
 #ifndef NDEBUG
             item->is_idle = false;
-            list_add(&item->siblings, &stock->busy);
 #endif
+            list_add(&item->siblings, &stock->busy);
             ++stock->num_busy;
 
             handler->ready(item, handler_ctx);
@@ -606,9 +602,7 @@ stock_item_available(StockItem *item)
     assert(stock->num_create > 0);
     --stock->num_create;
 
-#ifndef NDEBUG
     list_add(&item->siblings, &stock->busy);
-#endif
     ++stock->num_busy;
 
     item->handler->ready(item, item->handler_ctx);
@@ -658,9 +652,7 @@ stock_put(StockItem *item, bool destroy)
     assert(stock != nullptr);
     assert(pool_contains(item->pool, item, stock->cls->item_size));
 
-#ifndef NDEBUG
     list_remove(&item->siblings);
-#endif
     --stock->num_busy;
 
     if (destroy) {
