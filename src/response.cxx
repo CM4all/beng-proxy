@@ -33,6 +33,7 @@
 #include "css_processor.h"
 #include "text_processor.hxx"
 #include "istream.h"
+#include "istream_pipe.hxx"
 #include "tvary.hxx"
 #include "date.h"
 #include "product.h"

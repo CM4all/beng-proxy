@@ -1,5 +1,6 @@
 #include "nfs_client.hxx"
 #include "istream_nfs.hxx"
+#include "istream_pipe.hxx"
 #include "shutdown_listener.h"
 #include "async.hxx"
 #include "pool.hxx"

@@ -43,11 +43,6 @@ istream_memory_new(struct pool *pool, const void *data, size_t length);
 struct istream *gcc_malloc
 istream_string_new(struct pool *pool, const char *s);
 
-#ifdef __linux
-struct istream *
-istream_pipe_new(struct pool *pool, struct istream *input, struct stock *pipe_stock);
-#endif
-
 struct istream *
 istream_chunked_new(struct pool *pool, struct istream *input);
 

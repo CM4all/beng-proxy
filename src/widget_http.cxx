@@ -30,6 +30,7 @@
 #include "uri-extract.h"
 #include "strmap.hxx"
 #include "istream.h"
+#include "istream_pipe.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"
 

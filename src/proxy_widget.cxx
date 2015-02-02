@@ -21,6 +21,7 @@
 #include "bp_global.hxx"
 #include "istream-impl.h"
 #include "istream.h"
+#include "istream_pipe.hxx"
 #include "tvary.hxx"
 #include "pool.hxx"
 #include "util/Cast.hxx"

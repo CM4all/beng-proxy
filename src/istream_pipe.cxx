@@ -6,6 +6,7 @@
 
 #ifdef __linux
 
+#include "istream_pipe.hxx"
 #include "istream-internal.h"
 #include "fd_util.h"
 #include "direct.h"

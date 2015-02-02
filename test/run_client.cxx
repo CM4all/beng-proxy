@@ -8,6 +8,7 @@
 #include "lease.hxx"
 #include "direct.h"
 #include "istream_file.hxx"
+#include "istream_pipe.hxx"
 #include "istream.h"
 #include "sink_fd.hxx"
 #include "direct.h"
