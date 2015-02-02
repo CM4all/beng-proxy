@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_FCGI_STOCK_HXX
 #define BENG_PROXY_FCGI_STOCK_HXX
 
-#include <glib.h>
+#include "glibfwd.hxx"
 
 struct pool;
 struct stock_item;
