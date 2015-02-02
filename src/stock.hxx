@@ -14,7 +14,8 @@
 #include "glibfwd.hxx"
 
 #include <inline/compiler.h>
-#include <inline/list.h>
+
+#include <boost/intrusive/list.hpp>
 
 #include <stddef.h>
 
@@ -36,8 +37,9 @@ struct StockGetHandler {
     void (*error)(GError *error, void *ctx);
 };
 
-struct StockItem {
-    struct list_head siblings;
+struct StockItem
+    : boost::intrusive::list_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
     Stock *stock;
     struct pool *pool;
 
