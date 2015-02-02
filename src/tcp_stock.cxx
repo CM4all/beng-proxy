@@ -171,6 +171,18 @@ static constexpr ConnectSocketHandler tcp_stock_socket_handler = {
  *
  */
 
+static struct tcp_stock_connection &
+StockItemToTcpStockConnection(StockItem &item)
+{
+    return ContainerCast2(item, &tcp_stock_connection::stock_item);
+}
+
+static const struct tcp_stock_connection &
+StockItemToTcpStockConnection(const StockItem &item)
+{
+    return ContainerCast2(item, &tcp_stock_connection::stock_item);
+}
+
 static struct pool *
 tcp_stock_pool(void *ctx gcc_unused, struct pool *parent,
                const char *uri gcc_unused)
@@ -186,8 +198,7 @@ tcp_stock_create(void *ctx, StockItem *item,
 {
     (void)ctx;
 
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)item;
+    auto *connection = &StockItemToTcpStockConnection(*item);
     struct tcp_stock_request *request = (struct tcp_stock_request *)info;
 
     assert(uri != nullptr);
@@ -212,8 +223,7 @@ tcp_stock_create(void *ctx, StockItem *item,
 static bool
 tcp_stock_borrow(void *ctx gcc_unused, StockItem *item)
 {
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)item;
+    auto *connection = &StockItemToTcpStockConnection(*item);
 
     p_event_del(&connection->event, item->pool);
     return true;
@@ -222,8 +232,7 @@ tcp_stock_borrow(void *ctx gcc_unused, StockItem *item)
 static void
 tcp_stock_release(void *ctx gcc_unused, StockItem *item)
 {
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)item;
+    auto *connection = &StockItemToTcpStockConnection(*item);
     static const struct timeval tv = {
         .tv_sec = 60,
         .tv_usec = 0,
@@ -235,8 +244,7 @@ tcp_stock_release(void *ctx gcc_unused, StockItem *item)
 static void
 tcp_stock_destroy(void *ctx gcc_unused, StockItem *item)
 {
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)item;
+    auto *connection = &StockItemToTcpStockConnection(*item);
 
     if (connection->client_socket.IsDefined())
         connection->client_socket.Abort();
@@ -307,8 +315,7 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
 void
 tcp_stock_put(struct hstock *tcp_stock, StockItem *item, bool destroy)
 {
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)item;
+    auto *connection = &StockItemToTcpStockConnection(*item);
 
     hstock_put(tcp_stock, connection->uri, item, destroy);
 }
@@ -316,8 +323,7 @@ tcp_stock_put(struct hstock *tcp_stock, StockItem *item, bool destroy)
 int
 tcp_stock_item_get(const StockItem *item)
 {
-    const struct tcp_stock_connection *connection =
-        (const struct tcp_stock_connection *)item;
+    auto *connection = &StockItemToTcpStockConnection(*item);
 
     assert(item != nullptr);
 
@@ -327,8 +333,7 @@ tcp_stock_item_get(const StockItem *item)
 int
 tcp_stock_item_get_domain(const StockItem *item)
 {
-    const struct tcp_stock_connection *connection =
-        (const struct tcp_stock_connection *)item;
+    auto *connection = &StockItemToTcpStockConnection(*item);
 
     assert(item != nullptr);
     assert(connection->fd >= 0);
