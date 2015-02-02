@@ -504,7 +504,7 @@ gcc_pure
 static bool
 is_valid_absolute_path(const char *p, size_t size)
 {
-    return size > 1 && *p == '/' && !has_null_byte(p, size);
+    return size > 0 && *p == '/' && !has_null_byte(p, size);
 }
 
 gcc_pure
