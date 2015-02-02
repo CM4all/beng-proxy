@@ -7,10 +7,10 @@
 #ifndef BENG_DELEGATE_STOCK_HXX
 #define BENG_DELEGATE_STOCK_HXX
 
-#include "stock.hxx"
-
 struct pool;
 struct child_options;
+struct hstock;
+struct stock_get_handler;
 
 struct hstock *
 delegate_stock_new(struct pool *pool);
