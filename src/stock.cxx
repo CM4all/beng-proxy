@@ -464,6 +464,17 @@ stock_add_stats(const Stock &stock, StockStats &data)
     data.idle += stock.idle.size();
 }
 
+void
+stock_fade_all(Stock &stock)
+{
+    for (auto &i : stock.busy)
+        i.fade = true;
+
+    stock.ClearIdle();
+
+    // TODO: restart the "num_create" list?
+}
+
 bool
 Stock::GetIdle(const StockGetHandler &get_handler, void *get_handler_ctx)
 {
@@ -508,6 +519,8 @@ Stock::GetCreate(struct pool &caller_pool, void *info,
     item->pool = item_pool;
     item->handler = &get_handler;
     item->handler_ctx = get_handler_ctx;
+
+    item->fade = false;
 
 #ifndef NDEBUG
     item->is_idle = false;
@@ -666,7 +679,7 @@ stock_put(StockItem &item, bool destroy)
 
     stock.busy.erase(stock.busy.iterator_to(item));
 
-    if (destroy) {
+    if (destroy || item.fade) {
         stock.DestroyItem(item);
         stock.ScheduleCheckEmpty();
     } else {

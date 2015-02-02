@@ -46,6 +46,11 @@ struct StockItem
     const StockGetHandler *handler;
     void *handler_ctx;
 
+    /**
+     * If true, then this object will never be reused.
+     */
+    bool fade;
+
 #ifndef NDEBUG
     bool is_idle;
 #endif
@@ -109,6 +114,13 @@ stock_is_empty(const Stock &stock);
 gcc_pure
 void
 stock_add_stats(const Stock &stock, StockStats &data);
+
+/**
+ * Destroy all idle items and don't reuse any of the current busy
+ * items.
+ */
+void
+stock_fade_all(Stock &stock);
 
 void
 stock_get(Stock &stock, struct pool &pool, void *info,
