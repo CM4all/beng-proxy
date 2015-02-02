@@ -451,7 +451,7 @@ int main(int argc, char **argv)
                 break;
         }
     } else {
-        instance_fork_cow(&instance, false);
+        instance.ForkCow(false);
     }
 
     /* main loop */
