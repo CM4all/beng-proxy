@@ -503,11 +503,12 @@ stock_get_create(Stock &stock, struct pool &caller_pool, void *info,
     auto item = (StockItem *)p_malloc(pool, stock.cls.item_size);
     item->stock = &stock;
     item->pool = pool;
+    item->handler = &handler;
+    item->handler_ctx = handler_ctx;
+
 #ifndef NDEBUG
     item->is_idle = false;
 #endif
-    item->handler = &handler;
-    item->handler_ctx = handler_ctx;
 
     ++stock.num_create;
 

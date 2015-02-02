@@ -43,12 +43,12 @@ struct StockItem
     Stock *stock;
     struct pool *pool;
 
+    const StockGetHandler *handler;
+    void *handler_ctx;
+
 #ifndef NDEBUG
     bool is_idle;
 #endif
-
-    const StockGetHandler *handler;
-    void *handler_ctx;
 };
 
 struct StockClass {
