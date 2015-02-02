@@ -37,7 +37,7 @@ struct http_request {
     const SocketFilter *filter;
     void *filter_ctx;
 
-    struct stock_item *stock_item;
+    StockItem *stock_item;
     SocketAddress current_address;
 
     http_method_t method;
@@ -62,7 +62,7 @@ is_server_failure(GError *error)
         error->code != HTTP_CLIENT_UNSPECIFIED;
 }
 
-extern const struct stock_get_handler http_request_stock_handler;
+extern const StockGetHandler http_request_stock_handler;
 
 /*
  * HTTP response handler
@@ -140,7 +140,7 @@ static const struct lease http_socket_lease = {
  */
 
 static void
-http_request_stock_ready(struct stock_item *item, void *ctx)
+http_request_stock_ready(StockItem *item, void *ctx)
 {
     struct http_request *hr = (struct http_request *)ctx;
 
@@ -173,7 +173,7 @@ http_request_stock_error(GError *error, void *ctx)
     hr->handler.InvokeAbort(error);
 }
 
-const struct stock_get_handler http_request_stock_handler = {
+constexpr StockGetHandler http_request_stock_handler = {
     .ready = http_request_stock_ready,
     .error = http_request_stock_error,
 };

@@ -10,10 +10,10 @@
 static unsigned num_create, num_fail, num_borrow, num_release, num_destroy;
 static bool next_fail;
 static bool got_item;
-static struct stock_item *last_item;
+static StockItem *last_item;
 
 struct my_stock_item {
-    struct stock_item base;
+    StockItem base;
 
     void *info;
 };
@@ -37,7 +37,7 @@ my_stock_pool(gcc_unused void *ctx, struct pool *parent,
 }
 
 static void
-my_stock_create(void *ctx gcc_unused, struct stock_item *_item,
+my_stock_create(void *ctx gcc_unused, StockItem *_item,
                 gcc_unused const char *uri, void *info,
                 gcc_unused struct pool *caller_pool,
                 gcc_unused struct async_operation_ref *async_ref)
@@ -59,7 +59,7 @@ my_stock_create(void *ctx gcc_unused, struct stock_item *_item,
 
 static bool
 my_stock_borrow(gcc_unused void *ctx,
-                gcc_unused struct stock_item *item)
+                gcc_unused StockItem *item)
 {
     ++num_borrow;
     return true;
@@ -67,19 +67,19 @@ my_stock_borrow(gcc_unused void *ctx,
 
 static void
 my_stock_release(gcc_unused void *ctx,
-                 gcc_unused struct stock_item *item)
+                 gcc_unused StockItem *item)
 {
     ++num_release;
 }
 
 static void
 my_stock_destroy(gcc_unused void *ctx,
-                 gcc_unused struct stock_item *_item)
+                 gcc_unused StockItem *_item)
 {
     ++num_destroy;
 }
 
-static const struct stock_class my_stock_class = {
+static constexpr StockClass my_stock_class = {
     .item_size = sizeof(struct my_stock_item),
     .pool = my_stock_pool,
     .create = my_stock_create,
@@ -89,7 +89,7 @@ static const struct stock_class my_stock_class = {
 };
 
 static void
-my_stock_ready(struct stock_item *item, gcc_unused void *ctx)
+my_stock_ready(StockItem *item, gcc_unused void *ctx)
 {
     assert(!got_item);
 
@@ -107,7 +107,7 @@ my_stock_error(GError *error, gcc_unused void *ctx)
     last_item = nullptr;
 }
 
-static const struct stock_get_handler my_stock_handler = {
+static constexpr StockGetHandler my_stock_handler = {
     .ready = my_stock_ready,
     .error = my_stock_error,
 };
@@ -116,9 +116,9 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 {
     struct event_base *event_base;
     struct pool *pool;
-    struct stock *stock;
+    Stock *stock;
     struct async_operation_ref async_ref;
-    struct stock_item *item, *second, *third;
+    StockItem *item, *second, *third;
 
     event_base = event_init();
     pool = pool_new_libc(nullptr, "root");

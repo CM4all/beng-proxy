@@ -13,8 +13,8 @@ struct hstock;
 struct pool;
 struct balancer;
 struct AddressList;
-struct stock_get_handler;
-struct stock_item;
+struct StockGetHandler;
+struct StockItem;
 struct async_operation_ref;
 class SocketAddress;
 
@@ -45,11 +45,11 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  unsigned session_sticky,
                  const AddressList *address_list,
                  unsigned timeout,
-                 const struct stock_get_handler *handler, void *handler_ctx,
+                 const StockGetHandler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref);
 
 void
-tcp_balancer_put(struct tcp_balancer *tcp_balancer, struct stock_item *item,
+tcp_balancer_put(struct tcp_balancer *tcp_balancer, StockItem *item,
                  bool destroy);
 
 /**

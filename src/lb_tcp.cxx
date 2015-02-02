@@ -21,7 +21,7 @@
 
 struct lb_tcp {
     struct pool *pool;
-    struct stock *pipe_stock;
+    Stock *pipe_stock;
 
     const struct lb_tcp_handler *handler;
     void *handler_ctx;
@@ -391,7 +391,7 @@ lb_tcp_sticky(const AddressList &address_list,
 }
 
 void
-lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
+lb_tcp_new(struct pool *pool, Stock *pipe_stock,
            int fd, enum istream_direct fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,

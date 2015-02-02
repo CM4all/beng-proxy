@@ -128,11 +128,12 @@ filter_cache_request(gcc_unused struct filter_cache *cache,
     handler->InvokeAbort(handler_ctx, error);
 }
 
-struct stock *global_pipe_stock;
+struct Stock;
+Stock *global_pipe_stock;
 
 struct istream *
 istream_pipe_new(gcc_unused struct pool *pool, struct istream *input,
-                 gcc_unused struct stock *pipe_stock)
+                 gcc_unused Stock *pipe_stock)
 {
     return input;
 }

@@ -27,4 +27,4 @@ struct hstock *global_delegate_stock;
 struct nfs_stock *global_nfs_stock;
 struct nfs_cache *global_nfs_cache;
 
-struct stock *global_pipe_stock;
+Stock *global_pipe_stock;

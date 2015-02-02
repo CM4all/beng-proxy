@@ -35,7 +35,7 @@ struct delegate_info {
 };
 
 struct delegate_process {
-    struct stock_item stock_item;
+    StockItem stock_item;
 
     const char *uri;
 
@@ -116,7 +116,7 @@ delegate_stock_pool(void *ctx gcc_unused, struct pool *parent,
 }
 
 static void
-delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
+delegate_stock_create(void *ctx gcc_unused, StockItem *item,
                       const char *uri, void *_info,
                       struct pool *caller_pool gcc_unused,
                       struct async_operation_ref *async_ref gcc_unused)
@@ -165,7 +165,7 @@ delegate_stock_create(void *ctx gcc_unused, struct stock_item *item,
 }
 
 static bool
-delegate_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
+delegate_stock_borrow(void *ctx gcc_unused, StockItem *item)
 {
     struct delegate_process *process =
         (struct delegate_process *)item;
@@ -175,7 +175,7 @@ delegate_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
 }
 
 static void
-delegate_stock_release(void *ctx gcc_unused, struct stock_item *item)
+delegate_stock_release(void *ctx gcc_unused, StockItem *item)
 {
     struct delegate_process *process =
         (struct delegate_process *)item;
@@ -189,7 +189,7 @@ delegate_stock_release(void *ctx gcc_unused, struct stock_item *item)
 }
 
 static void
-delegate_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
+delegate_stock_destroy(void *ctx gcc_unused, StockItem *item)
 {
     struct delegate_process *process = (struct delegate_process *)item;
 
@@ -197,7 +197,7 @@ delegate_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
     close(process->fd);
 }
 
-static const struct stock_class delegate_stock_class = {
+static constexpr StockClass delegate_stock_class = {
     .item_size = sizeof(struct delegate_process),
     .pool = delegate_stock_pool,
     .create = delegate_stock_create,
@@ -222,7 +222,7 @@ void
 delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
                    const char *helper,
                    const struct child_options *options,
-                   const struct stock_get_handler *handler, void *handler_ctx,
+                   const StockGetHandler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
     assert(options != NULL);
@@ -244,7 +244,7 @@ delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
 
 void
 delegate_stock_put(struct hstock *delegate_stock,
-                   struct stock_item *item, bool destroy)
+                   StockItem *item, bool destroy)
 {
     struct delegate_process *process = (struct delegate_process *)item;
 
@@ -252,7 +252,7 @@ delegate_stock_put(struct hstock *delegate_stock,
 }
 
 int
-delegate_stock_item_get(struct stock_item *item)
+delegate_stock_item_get(StockItem *item)
 {
     struct delegate_process *process = (struct delegate_process *)item;
 

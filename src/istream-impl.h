@@ -13,7 +13,6 @@
 
 struct pool;
 struct async_operation;
-struct stock;
 struct cache;
 struct cache_item;
 struct stopwatch;

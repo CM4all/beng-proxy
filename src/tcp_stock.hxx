@@ -9,8 +9,8 @@
 
 struct pool;
 struct balancer;
-struct stock_item;
-struct stock_get_handler;
+struct StockItem;
+struct StockGetHandler;
 struct async_operation_ref;
 class SocketAddress;
 
@@ -35,16 +35,16 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               SocketAddress bind_address,
               SocketAddress address,
               unsigned timeout,
-              const struct stock_get_handler *handler, void *handler_ctx,
+              const StockGetHandler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 
 void
-tcp_stock_put(struct hstock *tcp_stock, struct stock_item *item, bool destroy);
+tcp_stock_put(struct hstock *tcp_stock, StockItem *item, bool destroy);
 
 int
-tcp_stock_item_get(const struct stock_item *item);
+tcp_stock_item_get(const StockItem *item);
 
 int
-tcp_stock_item_get_domain(const struct stock_item *item);
+tcp_stock_item_get_domain(const StockItem *item);
 
 #endif

@@ -1,6 +1,6 @@
 /*
  * A wrapper for hstock/stock that allows multiple users of one
- * stock_item.
+ * StockItem.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
@@ -65,7 +65,7 @@ class MultiStock : public mstock {
 
             const unsigned max_leases;
 
-            stock_item &item;
+            StockItem &item;
 
             boost::intrusive::list<Lease, Lease::SiblingsListMemberHook,
                                    boost::intrusive::constant_time_size<true>> leases;
@@ -74,7 +74,7 @@ class MultiStock : public mstock {
 
         public:
             Item(DomainMap::iterator _domain, unsigned _max_leases,
-                 stock_item &_item)
+                 StockItem &_item)
                 :domain(_domain), max_leases(_max_leases), item(_item),
                  reuse(true) {
             }
@@ -103,7 +103,7 @@ class MultiStock : public mstock {
             }
 
         public:
-            void AddLease(const stock_get_handler &handler, void *ctx,
+            void AddLease(const StockGetHandler &handler, void *ctx,
                           struct lease_ref &lease_ref) {
                 Lease &lease = AddLease();
                 lease_ref.Set(Lease::lease, &lease);
@@ -111,7 +111,7 @@ class MultiStock : public mstock {
                 handler.ready(&item, ctx);
             }
 
-            stock_item *AddLease(struct lease_ref &lease_ref) {
+            StockItem *AddLease(struct lease_ref &lease_ref) {
                 Lease &lease = AddLease();
                 lease_ref.Set(Lease::lease, &lease);
                 return &item;
@@ -165,7 +165,7 @@ class MultiStock : public mstock {
 
         Item &AddItem(DomainMap::iterator di,
                       unsigned max_leases,
-                      stock_item &si) {
+                      StockItem &si) {
             assert(&di->second == this);
 
             Item *item = new Item(di, max_leases, si);
@@ -173,18 +173,18 @@ class MultiStock : public mstock {
             return *item;
         }
 
-        stock_item *GetNow(DomainMap::iterator di,
-                           struct pool *caller_pool,
-                           const char *uri, void *info,
-                           unsigned max_leases,
-                           struct lease_ref &lease_ref,
-                           GError **error_r);
+        StockItem *GetNow(DomainMap::iterator di,
+                          struct pool *caller_pool,
+                          const char *uri, void *info,
+                          unsigned max_leases,
+                          struct lease_ref &lease_ref,
+                          GError **error_r);
 
         void DeleteItem(Item &i) {
             items.erase_and_dispose(items.iterator_to(i), Item::Dispose);
         }
 
-        void Put(const char *uri, stock_item &item, bool reuse) {
+        void Put(const char *uri, StockItem &item, bool reuse) {
             stock.Put(uri, item, reuse);
         }
     };
@@ -203,16 +203,16 @@ public:
         hstock_free(hstock);
     }
 
-    void AddStats(stock_stats &data) const {
+    void AddStats(StockStats &data) const {
         hstock_add_stats(hstock, &data);
     }
 
-    stock_item *GetNow(struct pool *caller_pool, const char *uri, void *info,
-                       unsigned max_leases,
-                       struct lease_ref &lease_ref,
-                       GError **error_r);
+    StockItem *GetNow(struct pool *caller_pool, const char *uri, void *info,
+                      unsigned max_leases,
+                      struct lease_ref &lease_ref,
+                      GError **error_r);
 
-    void Put(const char *uri, stock_item &item, bool reuse) {
+    void Put(const char *uri, StockItem &item, bool reuse) {
         hstock_put(hstock, uri, &item, !reuse);
     }
 };
@@ -221,7 +221,7 @@ const lease MultiStock::Domain::Item::Lease::lease = {
     Release,
 };
 
-stock_item *
+StockItem *
 MultiStock::Domain::GetNow(DomainMap::iterator di,
                            struct pool *caller_pool,
                            const char *uri, void *info,
@@ -231,7 +231,7 @@ MultiStock::Domain::GetNow(DomainMap::iterator di,
 {
     auto i = FindUsableItem();
     if (i == nullptr) {
-        stock_item *item =
+        StockItem *item =
             hstock_get_now(stock.hstock, caller_pool, uri, info,
                            error_r);
         if (item == nullptr)
@@ -244,7 +244,7 @@ MultiStock::Domain::GetNow(DomainMap::iterator di,
     return i->AddLease(lease_ref);
 }
 
-inline stock_item *
+inline StockItem *
 MultiStock::GetNow(struct pool *caller_pool, const char *uri, void *info,
                    unsigned max_leases,
                    struct lease_ref &lease_ref,
@@ -274,13 +274,13 @@ mstock_free(struct mstock *_m)
 }
 
 void
-mstock_add_stats(const struct mstock *_m, stock_stats *data)
+mstock_add_stats(const struct mstock *_m, StockStats *data)
 {
     const MultiStock &m = *(const MultiStock *)_m;
     m.AddStats(*data);
 }
 
-struct stock_item *
+StockItem *
 mstock_get_now(struct mstock *_m, struct pool *caller_pool,
                const char *uri, void *info, unsigned max_leases,
                struct lease_ref *lease_ref,

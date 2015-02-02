@@ -20,7 +20,7 @@
 #include <sched.h>
 
 struct child_stock_item {
-    struct stock_item base;
+    StockItem base;
 
     const char *key;
 
@@ -120,7 +120,7 @@ child_stock_pool(void *ctx gcc_unused, struct pool *parent,
 }
 
 static void
-child_stock_create(void *stock_ctx, struct stock_item *_item,
+child_stock_create(void *stock_ctx, StockItem *_item,
                    const char *key, void *info,
                    gcc_unused struct pool *caller_pool,
                    gcc_unused struct async_operation_ref *async_ref)
@@ -173,7 +173,7 @@ child_stock_create(void *stock_ctx, struct stock_item *_item,
 }
 
 static bool
-child_stock_borrow(gcc_unused void *ctx, struct stock_item *_item)
+child_stock_borrow(gcc_unused void *ctx, StockItem *_item)
 {
     struct child_stock_item *item = (struct child_stock_item *)_item;
 
@@ -184,7 +184,7 @@ child_stock_borrow(gcc_unused void *ctx, struct stock_item *_item)
 }
 
 static void
-child_stock_release(gcc_unused void *ctx, struct stock_item *_item)
+child_stock_release(gcc_unused void *ctx, StockItem *_item)
 {
     struct child_stock_item *item = (struct child_stock_item *)_item;
 
@@ -198,7 +198,7 @@ child_stock_release(gcc_unused void *ctx, struct stock_item *_item)
 }
 
 static void
-child_stock_destroy(void *ctx gcc_unused, struct stock_item *_item)
+child_stock_destroy(void *ctx gcc_unused, StockItem *_item)
 {
     struct child_stock_item *item = (struct child_stock_item *)_item;
 
@@ -211,7 +211,7 @@ child_stock_destroy(void *ctx gcc_unused, struct stock_item *_item)
         item->cls->free(item->cls_ctx);
 }
 
-static const struct stock_class child_stock_class = {
+static constexpr StockClass child_stock_class = {
     .item_size = sizeof(struct child_stock_item),
     .pool = child_stock_pool,
     .create = child_stock_create,
@@ -244,7 +244,7 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
 }
 
 const char *
-child_stock_item_key(const struct stock_item *_item)
+child_stock_item_key(const StockItem *_item)
 {
     const struct child_stock_item *item =
         (const struct child_stock_item *)_item;
@@ -252,7 +252,7 @@ child_stock_item_key(const struct stock_item *_item)
 }
 
 int
-child_stock_item_connect(const struct stock_item *_item, GError **error_r)
+child_stock_item_connect(const StockItem *_item, GError **error_r)
 {
     const struct child_stock_item *item =
         (const struct child_stock_item *)_item;
@@ -260,7 +260,7 @@ child_stock_item_connect(const struct stock_item *_item, GError **error_r)
 }
 
 void
-child_stock_put(struct hstock *hstock, struct stock_item *_item,
+child_stock_put(struct hstock *hstock, StockItem *_item,
                 bool destroy)
 {
     struct child_stock_item *item = (struct child_stock_item *)_item;

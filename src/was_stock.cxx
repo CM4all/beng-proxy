@@ -41,7 +41,7 @@ struct was_child_params {
 };
 
 struct was_child {
-    struct stock_item base;
+    StockItem base;
 
     const char *key;
 
@@ -120,7 +120,7 @@ was_stock_pool(gcc_unused void *ctx, struct pool *parent,
 }
 
 static void
-was_stock_create(gcc_unused void *ctx, struct stock_item *item,
+was_stock_create(gcc_unused void *ctx, StockItem *item,
                  const char *key, void *info,
                  struct pool *caller_pool,
                  struct async_operation_ref *async_ref)
@@ -170,7 +170,7 @@ was_stock_create(gcc_unused void *ctx, struct stock_item *item,
 }
 
 static bool
-was_stock_borrow(gcc_unused void *ctx, struct stock_item *item)
+was_stock_borrow(gcc_unused void *ctx, StockItem *item)
 {
     struct was_child *child = (struct was_child *)item;
 
@@ -179,7 +179,7 @@ was_stock_borrow(gcc_unused void *ctx, struct stock_item *item)
 }
 
 static void
-was_stock_release(gcc_unused void *ctx, struct stock_item *item)
+was_stock_release(gcc_unused void *ctx, StockItem *item)
 {
     struct was_child *child = (struct was_child *)item;
     static const struct timeval tv = {
@@ -191,7 +191,7 @@ was_stock_release(gcc_unused void *ctx, struct stock_item *item)
 }
 
 static void
-was_stock_destroy(gcc_unused void *ctx, struct stock_item *item)
+was_stock_destroy(gcc_unused void *ctx, StockItem *item)
 {
     struct was_child *child =
         (struct was_child *)item;
@@ -208,7 +208,7 @@ was_stock_destroy(gcc_unused void *ctx, struct stock_item *item)
     close(child->process.output_fd);
 }
 
-static const struct stock_class was_stock_class = {
+static constexpr StockClass was_stock_class = {
     .item_size = sizeof(struct was_child),
     .pool = was_stock_pool,
     .create = was_stock_create,
@@ -235,7 +235,7 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
               const char *executable_path,
               ConstBuffer<const char *> args,
               ConstBuffer<const char *> env,
-              const struct stock_get_handler *handler, void *handler_ctx,
+              const StockGetHandler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
     GError *error = nullptr;
@@ -255,7 +255,7 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
 }
 
 const struct was_process *
-was_stock_item_get(const struct stock_item *item)
+was_stock_item_get(const StockItem *item)
 {
     const struct was_child *child = (const struct was_child *)item;
 
@@ -263,8 +263,8 @@ was_stock_item_get(const struct stock_item *item)
 }
 
 const char *
-was_stock_translate_path(const struct stock_item *item,
-                          const char *path, struct pool *pool)
+was_stock_translate_path(const StockItem *item,
+                         const char *path, struct pool *pool)
 {
     const struct was_child *child = (const struct was_child *)item;
 
@@ -280,7 +280,7 @@ was_stock_translate_path(const struct stock_item *item,
 }
 
 void
-was_stock_put(struct hstock *hstock, struct stock_item *item, bool destroy)
+was_stock_put(struct hstock *hstock, StockItem *item, bool destroy)
 {
     struct was_child *child = (struct was_child *)item;
 

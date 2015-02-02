@@ -10,7 +10,8 @@
 struct pool;
 struct child_options;
 struct hstock;
-struct stock_get_handler;
+struct StockGetHandler;
+struct StockItem;
 
 struct hstock *
 delegate_stock_new(struct pool *pool);
@@ -19,14 +20,14 @@ void
 delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
                    const char *path,
                    const struct child_options *options,
-                   const struct stock_get_handler *handler, void *handler_ctx,
+                   const StockGetHandler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref);
 
 void
 delegate_stock_put(struct hstock *delegate_stock,
-                   struct stock_item *item, bool destroy);
+                   StockItem *item, bool destroy);
 
 int
-delegate_stock_item_get(struct stock_item *item);
+delegate_stock_item_get(StockItem *item);
 
 #endif

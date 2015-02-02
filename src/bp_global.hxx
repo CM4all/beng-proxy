@@ -7,6 +7,8 @@
 #ifndef __BENG_GLOBAL_H
 #define __BENG_GLOBAL_H
 
+struct Stock;
+
 extern struct tcache *global_translate_cache;
 
 extern struct hstock *global_tcp_stock;
@@ -28,6 +30,6 @@ extern struct hstock *global_delegate_stock;
 extern struct nfs_stock *global_nfs_stock;
 extern struct nfs_cache *global_nfs_cache;
 
-extern struct stock *global_pipe_stock;
+extern Stock *global_pipe_stock;
 
 #endif

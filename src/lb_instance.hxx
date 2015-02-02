@@ -18,6 +18,8 @@
 
 #include <forward_list>
 
+struct Stock;
+
 struct lb_instance {
     struct pool *pool;
 
@@ -45,7 +47,7 @@ struct lb_instance {
     struct hstock *tcp_stock;
     struct tcp_balancer *tcp_balancer;
 
-    struct stock *pipe_stock;
+    Stock *pipe_stock;
 
     unsigned FlushSSLSessionCache(long tm);
 };

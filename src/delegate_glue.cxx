@@ -25,7 +25,7 @@ struct delegate_glue {
     const char *path;
 
     struct hstock *stock;
-    struct stock_item *item;
+    StockItem *item;
 
     const struct delegate_handler *handler;
     void *handler_ctx;
@@ -45,7 +45,7 @@ static const struct lease delegate_socket_lease = {
 };
 
 static void
-delegate_stock_ready(struct stock_item *item, void *_ctx)
+delegate_stock_ready(StockItem *item, void *_ctx)
 {
     struct delegate_glue *glue = (struct delegate_glue *)_ctx;
 
@@ -65,7 +65,7 @@ delegate_stock_error(GError *error, void *ctx)
     glue->handler->error(error, glue->handler_ctx);
 }
 
-static const struct stock_get_handler delegate_stock_handler = {
+static constexpr StockGetHandler delegate_stock_handler = {
     .ready = delegate_stock_ready,
     .error = delegate_stock_error,
 };

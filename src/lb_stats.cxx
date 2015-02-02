@@ -16,7 +16,7 @@ void
 lb_get_stats(const struct lb_instance *instance,
              struct beng_control_stats *data)
 {
-    struct stock_stats tcp_stock_stats = {
+    StockStats tcp_stock_stats = {
         .busy = 0,
         .idle = 0,
     };

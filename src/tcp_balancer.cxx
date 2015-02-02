@@ -44,7 +44,7 @@ struct tcp_balancer_request {
     const AddressList *address_list;
     SocketAddress current_address;
 
-    const struct stock_get_handler *handler;
+    const StockGetHandler *handler;
     void *handler_ctx;
 
     struct async_operation_ref *async_ref;
@@ -52,7 +52,7 @@ struct tcp_balancer_request {
 
 static SocketAddress last_address;
 
-extern const struct stock_get_handler tcp_balancer_stock_handler;
+extern const StockGetHandler tcp_balancer_stock_handler;
 
 static void
 tcp_balancer_next(struct tcp_balancer_request *request)
@@ -85,7 +85,7 @@ tcp_balancer_next(struct tcp_balancer_request *request)
  */
 
 static void
-tcp_balancer_stock_ready(struct stock_item *item, void *ctx)
+tcp_balancer_stock_ready(StockItem *item, void *ctx)
 {
     struct tcp_balancer_request *request = (struct tcp_balancer_request *)ctx;
 
@@ -113,7 +113,7 @@ tcp_balancer_stock_error(GError *error, void *ctx)
         request->handler->error(error, request->handler_ctx);
 }
 
-const struct stock_get_handler tcp_balancer_stock_handler = {
+const StockGetHandler tcp_balancer_stock_handler = {
     .ready = tcp_balancer_stock_ready,
     .error = tcp_balancer_stock_error,
 };
@@ -140,7 +140,7 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  unsigned session_sticky,
                  const AddressList *address_list,
                  unsigned timeout,
-                 const struct stock_get_handler *handler, void *handler_ctx,
+                 const StockGetHandler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
     auto request = NewFromPool<struct tcp_balancer_request>(*pool);
@@ -169,7 +169,7 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
 }
 
 void
-tcp_balancer_put(struct tcp_balancer *tcp_balancer, struct stock_item *item,
+tcp_balancer_put(struct tcp_balancer *tcp_balancer, StockItem *item,
                  bool destroy)
 {
     tcp_stock_put(tcp_balancer->tcp_stock, item, destroy);

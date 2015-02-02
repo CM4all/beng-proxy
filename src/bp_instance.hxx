@@ -17,6 +17,8 @@
 
 #include <event.h>
 
+struct Stock;
+
 struct instance {
     struct pool *pool;
 
@@ -75,7 +77,7 @@ struct instance {
     struct nfs_stock *nfs_stock;
     struct nfs_cache *nfs_cache;
 
-    struct stock *pipe_stock;
+    Stock *pipe_stock;
 
     struct resource_loader *resource_loader;
 

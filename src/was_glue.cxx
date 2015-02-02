@@ -30,7 +30,7 @@ struct was_request {
 
     struct hstock *was_stock;
     const char *action;
-    struct stock_item *stock_item;
+    StockItem *stock_item;
 
     http_method_t method;
     const char *uri;
@@ -71,7 +71,7 @@ static const struct lease was_socket_lease = {
  */
 
 static void
-was_stock_ready(struct stock_item *item, void *ctx)
+was_stock_ready(StockItem *item, void *ctx)
 {
     struct was_request *request = (struct was_request *)ctx;
 
@@ -102,7 +102,7 @@ was_stock_error(GError *error, void *ctx)
         istream_close_unused(request->body);
 }
 
-static const struct stock_get_handler was_stock_handler = {
+static constexpr StockGetHandler was_stock_handler = {
     .ready = was_stock_ready,
     .error = was_stock_error,
 };

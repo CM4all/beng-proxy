@@ -48,7 +48,7 @@ struct memcached_stock_request {
     struct pool *pool;
 
     struct memcached_stock *stock;
-    struct stock_item *item;
+    StockItem *item;
 
     enum memcached_opcode opcode;
 
@@ -90,7 +90,7 @@ static const struct lease memcached_socket_lease = {
  */
 
 static void
-memcached_stock_ready(struct stock_item *item, void *ctx)
+memcached_stock_ready(StockItem *item, void *ctx)
 {
     memcached_stock_request *request = (memcached_stock_request *)ctx;
 
@@ -119,7 +119,7 @@ memcached_stock_error(GError *error, void *ctx)
         istream_close_unused(request->value);
 }
 
-static const struct stock_get_handler memcached_stock_handler = {
+static constexpr StockGetHandler memcached_stock_handler = {
     .ready = memcached_stock_ready,
     .error = memcached_stock_error,
 };

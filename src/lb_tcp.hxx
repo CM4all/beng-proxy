@@ -11,7 +11,7 @@
 
 typedef struct _GError GError;
 struct pool;
-struct stock;
+struct Stock;
 struct SocketFilter;
 struct AddressList;
 struct balancer;
@@ -29,7 +29,7 @@ struct lb_tcp_handler {
  * @param transparent_source see #lb_cluster_config::transparent_source
  */
 void
-lb_tcp_new(struct pool *pool, struct stock *pipe_stock,
+lb_tcp_new(struct pool *pool, Stock *pipe_stock,
            int fd, enum istream_direct fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,

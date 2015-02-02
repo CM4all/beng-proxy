@@ -45,13 +45,13 @@ struct fcgi_child_params {
 };
 
 struct fcgi_connection {
-    struct stock_item base;
+    StockItem base;
 
     struct jail_params jail_params;
 
     struct jail_config jail_config;
 
-    struct stock_item *child;
+    StockItem *child;
 
     int fd;
     struct event event;
@@ -179,7 +179,7 @@ fcgi_stock_pool(void *ctx gcc_unused, struct pool *parent,
 }
 
 static void
-fcgi_stock_create(void *ctx, struct stock_item *item,
+fcgi_stock_create(void *ctx, StockItem *item,
                   const char *key, void *info,
                   gcc_unused struct pool *caller_pool,
                   gcc_unused struct async_operation_ref *async_ref)
@@ -238,7 +238,7 @@ fcgi_stock_create(void *ctx, struct stock_item *item,
 }
 
 static bool
-fcgi_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
+fcgi_stock_borrow(void *ctx gcc_unused, StockItem *item)
 {
     struct fcgi_connection *connection = (struct fcgi_connection *)item;
 
@@ -267,7 +267,7 @@ fcgi_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
 }
 
 static void
-fcgi_stock_release(void *ctx gcc_unused, struct stock_item *item)
+fcgi_stock_release(void *ctx gcc_unused, StockItem *item)
 {
     struct fcgi_connection *connection = (struct fcgi_connection *)item;
     static const struct timeval tv = {
@@ -282,7 +282,7 @@ fcgi_stock_release(void *ctx gcc_unused, struct stock_item *item)
 }
 
 static void
-fcgi_stock_destroy(void *ctx, struct stock_item *item)
+fcgi_stock_destroy(void *ctx, StockItem *item)
 {
     struct fcgi_stock *fcgi_stock = (struct fcgi_stock *)ctx;
     struct fcgi_connection *connection =
@@ -295,7 +295,7 @@ fcgi_stock_destroy(void *ctx, struct stock_item *item)
                     connection->kill);
 }
 
-static const struct stock_class fcgi_stock_class = {
+static constexpr StockClass fcgi_stock_class = {
     .item_size = sizeof(struct fcgi_connection),
     .pool = fcgi_stock_pool,
     .create = fcgi_stock_create,
@@ -329,7 +329,7 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock)
     hstock_free(fcgi_stock->child_stock);
 }
 
-struct stock_item *
+StockItem *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct child_options *options,
                const char *executable_path,
@@ -352,7 +352,7 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
 }
 
 int
-fcgi_stock_item_get_domain(const struct stock_item *item)
+fcgi_stock_item_get_domain(const StockItem *item)
 {
     (void)item;
 
@@ -360,7 +360,7 @@ fcgi_stock_item_get_domain(const struct stock_item *item)
 }
 
 int
-fcgi_stock_item_get(const struct stock_item *item)
+fcgi_stock_item_get(const StockItem *item)
 {
     const struct fcgi_connection *connection =
         (const struct fcgi_connection *)item;
@@ -371,7 +371,7 @@ fcgi_stock_item_get(const struct stock_item *item)
 }
 
 const char *
-fcgi_stock_translate_path(const struct stock_item *item,
+fcgi_stock_translate_path(const StockItem *item,
                           const char *path, struct pool *pool)
 {
     const struct fcgi_connection *connection =
@@ -389,7 +389,7 @@ fcgi_stock_translate_path(const struct stock_item *item,
 }
 
 void
-fcgi_stock_put(struct fcgi_stock *fcgi_stock, struct stock_item *item,
+fcgi_stock_put(struct fcgi_stock *fcgi_stock, StockItem *item,
                bool destroy)
 {
     struct fcgi_connection *connection = (struct fcgi_connection *)item;
@@ -406,7 +406,7 @@ fcgi_stock_put(struct fcgi_stock *fcgi_stock, struct stock_item *item,
 }
 
 void
-fcgi_stock_aborted(struct stock_item *item)
+fcgi_stock_aborted(StockItem *item)
 {
     struct fcgi_connection *connection = (struct fcgi_connection *)item;
 

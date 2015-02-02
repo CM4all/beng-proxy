@@ -17,9 +17,9 @@ struct async_operation_ref;
 struct hstock;
 struct lease;
 struct lease_ref;
-struct stock_item;
-struct stock_stats;
-struct stock_get_handler;
+struct StockItem;
+struct StockStats;
+struct StockGetHandler;
 
 gcc_malloc
 struct mstock *
@@ -33,7 +33,7 @@ mstock_free(struct mstock *mstock);
  */
 gcc_pure
 void
-mstock_add_stats(const struct mstock *stock, struct stock_stats *data);
+mstock_add_stats(const struct mstock *stock, StockStats *data);
 
 /**
  * Obtains an item from the mstock without going through the callback.
@@ -43,7 +43,7 @@ mstock_add_stats(const struct mstock *stock, struct stock_stats *data);
  * @param max_leases the maximum number of leases per stock_item
  */
 gcc_pure
-struct stock_item *
+StockItem *
 mstock_get_now(struct mstock *mstock, struct pool *caller_pool,
                const char *uri, void *info, unsigned max_leases,
                struct lease_ref *lease_ref,

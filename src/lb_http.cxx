@@ -53,7 +53,7 @@ struct lb_request {
 
     struct async_operation_ref *async_ref;
 
-    struct stock_item *stock_item;
+    StockItem *stock_item;
     SocketAddress current_address;
 
     unsigned new_cookie;
@@ -266,7 +266,7 @@ static const struct http_response_handler my_response_handler = {
  */
 
 static void
-my_stock_ready(struct stock_item *item, void *ctx)
+my_stock_ready(StockItem *item, void *ctx)
 {
     struct lb_request *request2 = (struct lb_request *)ctx;
     struct http_server_request *request = request2->request;
@@ -323,7 +323,7 @@ my_stock_error(GError *error, void *ctx)
     g_error_free(error);
 }
 
-static const struct stock_get_handler my_stock_handler = {
+static const StockGetHandler my_stock_handler = {
     .ready = my_stock_ready,
     .error = my_stock_error,
 };

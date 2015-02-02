@@ -19,7 +19,7 @@ struct lhttp_request {
     struct pool *pool;
 
     struct lhttp_stock *lhttp_stock;
-    struct stock_item *stock_item;
+    StockItem *stock_item;
 };
 
 /*
@@ -65,7 +65,7 @@ lhttp_request(struct pool &pool, struct lhttp_stock &lhttp_stock,
     request->pool = &pool;
     request->lhttp_stock = &lhttp_stock;
 
-    struct stock_item *stock_item =
+    StockItem *stock_item =
         lhttp_stock_get(&lhttp_stock, &pool, &address,
                         &error);
     if (stock_item == nullptr) {

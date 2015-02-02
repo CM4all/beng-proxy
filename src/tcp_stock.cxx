@@ -36,7 +36,7 @@ struct tcp_stock_request {
 };
 
 struct tcp_stock_connection {
-    struct stock_item stock_item;
+    StockItem stock_item;
     const char *uri;
 
     struct async_operation create_operation;
@@ -179,7 +179,7 @@ tcp_stock_pool(void *ctx gcc_unused, struct pool *parent,
 }
 
 static void
-tcp_stock_create(void *ctx, struct stock_item *item,
+tcp_stock_create(void *ctx, StockItem *item,
                  const char *uri, void *info,
                  struct pool *caller_pool,
                  struct async_operation_ref *async_ref)
@@ -210,7 +210,7 @@ tcp_stock_create(void *ctx, struct stock_item *item,
 }
 
 static bool
-tcp_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
+tcp_stock_borrow(void *ctx gcc_unused, StockItem *item)
 {
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
@@ -220,7 +220,7 @@ tcp_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
 }
 
 static void
-tcp_stock_release(void *ctx gcc_unused, struct stock_item *item)
+tcp_stock_release(void *ctx gcc_unused, StockItem *item)
 {
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
@@ -233,7 +233,7 @@ tcp_stock_release(void *ctx gcc_unused, struct stock_item *item)
 }
 
 static void
-tcp_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
+tcp_stock_destroy(void *ctx gcc_unused, StockItem *item)
 {
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
@@ -246,7 +246,7 @@ tcp_stock_destroy(void *ctx gcc_unused, struct stock_item *item)
     }
 }
 
-static const struct stock_class tcp_stock_class = {
+static constexpr StockClass tcp_stock_class = {
     .item_size = sizeof(struct tcp_stock_connection),
     .pool = tcp_stock_pool,
     .create = tcp_stock_create,
@@ -273,7 +273,7 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               SocketAddress bind_address,
               SocketAddress address,
               unsigned timeout,
-              const struct stock_get_handler *handler, void *handler_ctx,
+              const StockGetHandler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref)
 {
     assert(!address.IsNull());
@@ -305,7 +305,7 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
 }
 
 void
-tcp_stock_put(struct hstock *tcp_stock, struct stock_item *item, bool destroy)
+tcp_stock_put(struct hstock *tcp_stock, StockItem *item, bool destroy)
 {
     struct tcp_stock_connection *connection =
         (struct tcp_stock_connection *)item;
@@ -314,7 +314,7 @@ tcp_stock_put(struct hstock *tcp_stock, struct stock_item *item, bool destroy)
 }
 
 int
-tcp_stock_item_get(const struct stock_item *item)
+tcp_stock_item_get(const StockItem *item)
 {
     const struct tcp_stock_connection *connection =
         (const struct tcp_stock_connection *)item;
@@ -325,7 +325,7 @@ tcp_stock_item_get(const struct stock_item *item)
 }
 
 int
-tcp_stock_item_get_domain(const struct stock_item *item)
+tcp_stock_item_get_domain(const StockItem *item)
 {
     const struct tcp_stock_connection *connection =
         (const struct tcp_stock_connection *)item;

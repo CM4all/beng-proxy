@@ -30,7 +30,7 @@ struct fcgi_remote_request {
 
     struct tcp_balancer *tcp_balancer;
 
-    struct stock_item *stock_item;
+    StockItem *stock_item;
 
     http_method_t method;
     const char *uri;
@@ -76,7 +76,7 @@ static const struct lease fcgi_socket_lease = {
  */
 
 static void
-fcgi_remote_stock_ready(struct stock_item *item, void *ctx)
+fcgi_remote_stock_ready(StockItem *item, void *ctx)
 {
     struct fcgi_remote_request *request = (struct fcgi_remote_request *)ctx;
 
@@ -110,7 +110,7 @@ fcgi_remote_stock_error(GError *error, void *ctx)
     request->handler.InvokeAbort(error);
 }
 
-static const struct stock_get_handler fcgi_remote_stock_handler = {
+static constexpr StockGetHandler fcgi_remote_stock_handler = {
     .ready = fcgi_remote_stock_ready,
     .error = fcgi_remote_stock_error,
 };

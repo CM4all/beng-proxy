@@ -29,7 +29,7 @@ struct fcgi_request {
     struct pool *pool;
 
     struct fcgi_stock *fcgi_stock;
-    struct stock_item *stock_item;
+    StockItem *stock_item;
 
     struct async_operation async;
     struct async_operation_ref async_ref;
@@ -118,7 +118,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     request->pool = pool;
     request->fcgi_stock = fcgi_stock;
 
-    struct stock_item *stock_item =
+    StockItem *stock_item =
         fcgi_stock_get(fcgi_stock, pool, options,
                        action,
                        args, env,

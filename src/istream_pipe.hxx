@@ -9,11 +9,11 @@
 
 struct pool;
 struct istream;
-struct stock;
+struct Stock;
 
 #ifdef __linux
 struct istream *
-istream_pipe_new(struct pool *pool, struct istream *input, struct stock *pipe_stock);
+istream_pipe_new(struct pool *pool, struct istream *input, Stock *pipe_stock);
 #endif
 
 #endif

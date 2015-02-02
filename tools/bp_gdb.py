@@ -326,7 +326,7 @@ class FindChildStockClient(gdb.Command):
             print "Not found"
             return
 
-        stock_type = gdb.lookup_type('struct stock').pointer()
+        stock_type = gdb.lookup_type('struct Stock').pointer()
         child_stock_item_type = gdb.lookup_type('struct child_stock_item').pointer()
         child_stock_item = child['callback_ctx'].cast(child_stock_item_type)
 

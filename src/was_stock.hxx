@@ -13,8 +13,8 @@
 
 struct pool;
 struct hstock;
-struct stock_item;
-struct stock_get_handler;
+struct StockItem;
+struct StockGetHandler;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 
@@ -30,7 +30,7 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
               const char *executable_path,
               ConstBuffer<const char *> args,
               ConstBuffer<const char *> env,
-              const struct stock_get_handler *handler, void *handler_ctx,
+              const StockGetHandler *handler, void *handler_ctx,
               struct async_operation_ref *async_ref);
 
 /**
@@ -38,20 +38,20 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
  */
 gcc_pure
 const struct was_process *
-was_stock_item_get(const struct stock_item *item);
+was_stock_item_get(const StockItem *item);
 
 /**
  * Translates a path into the application's namespace.
  */
 gcc_pure
 const char *
-was_stock_translate_path(const struct stock_item *item,
+was_stock_translate_path(const StockItem *item,
                          const char *path, struct pool *pool);
 
 /**
  * Wrapper for hstock_put().
  */
 void
-was_stock_put(struct hstock *hstock, struct stock_item *item, bool destroy);
+was_stock_put(struct hstock *hstock, StockItem *item, bool destroy);
 
 #endif

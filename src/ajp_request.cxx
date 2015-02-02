@@ -29,7 +29,7 @@ struct ajp_request {
     struct pool *pool;
 
     struct tcp_balancer *tcp_balancer;
-    struct stock_item *stock_item;
+    StockItem *stock_item;
 
     const char *protocol;
     const char *remote_addr;
@@ -71,7 +71,7 @@ static const struct lease ajp_socket_lease = {
  */
 
 static void
-ajp_request_stock_ready(struct stock_item *item, void *ctx)
+ajp_request_stock_ready(StockItem *item, void *ctx)
 {
     struct ajp_request *hr = (struct ajp_request *)ctx;
 
@@ -101,7 +101,7 @@ ajp_request_stock_error(GError *error, void *ctx)
         istream_close_unused(hr->body);
 }
 
-static const struct stock_get_handler ajp_request_stock_handler = {
+static constexpr StockGetHandler ajp_request_stock_handler = {
     .ready = ajp_request_stock_ready,
     .error = ajp_request_stock_error,
 };

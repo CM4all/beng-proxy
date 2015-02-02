@@ -8,13 +8,13 @@
 #define BENG_PROXY_PIPE_STOCK_HXX
 
 struct pool;
-struct stock;
-struct stock_item;
+struct Stock;
+struct StockItem;
 
-struct stock *
+Stock *
 pipe_stock_new(struct pool *pool);
 
 void
-pipe_stock_item_get(struct stock_item *item, int fds[2]);
+pipe_stock_item_get(StockItem *item, int fds[2]);
 
 #endif

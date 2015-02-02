@@ -39,9 +39,9 @@ struct lhttp_stock {
 };
 
 struct lhttp_connection {
-    struct stock_item base;
+    StockItem base;
 
-    struct stock_item *child;
+    StockItem *child;
 
     struct lease_ref lease_ref;
 
@@ -130,7 +130,7 @@ lhttp_stock_pool(void *ctx gcc_unused, struct pool *parent,
 }
 
 static void
-lhttp_stock_create(void *ctx, struct stock_item *item,
+lhttp_stock_create(void *ctx, StockItem *item,
                    const char *key, void *info,
                    gcc_unused struct pool *caller_pool,
                    gcc_unused struct async_operation_ref *async_ref)
@@ -172,7 +172,7 @@ lhttp_stock_create(void *ctx, struct stock_item *item,
 }
 
 static bool
-lhttp_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
+lhttp_stock_borrow(void *ctx gcc_unused, StockItem *item)
 {
     struct lhttp_connection *connection = (struct lhttp_connection *)item;
 
@@ -181,7 +181,7 @@ lhttp_stock_borrow(void *ctx gcc_unused, struct stock_item *item)
 }
 
 static void
-lhttp_stock_release(void *ctx gcc_unused, struct stock_item *item)
+lhttp_stock_release(void *ctx gcc_unused, StockItem *item)
 {
     struct lhttp_connection *connection = (struct lhttp_connection *)item;
     static const struct timeval tv = {
@@ -194,7 +194,7 @@ lhttp_stock_release(void *ctx gcc_unused, struct stock_item *item)
 }
 
 static void
-lhttp_stock_destroy(gcc_unused void *ctx, struct stock_item *item)
+lhttp_stock_destroy(gcc_unused void *ctx, StockItem *item)
 {
     struct lhttp_connection *connection = (struct lhttp_connection *)item;
 
@@ -204,7 +204,7 @@ lhttp_stock_destroy(gcc_unused void *ctx, struct stock_item *item)
     connection->lease_ref.Release(true);
 }
 
-static const struct stock_class lhttp_stock_class = {
+static constexpr StockClass lhttp_stock_class = {
     .item_size = sizeof(struct lhttp_connection),
     .pool = lhttp_stock_pool,
     .create = lhttp_stock_create,
@@ -237,7 +237,7 @@ lhttp_stock_free(struct lhttp_stock *ls)
     delete ls;
 }
 
-struct stock_item *
+StockItem *
 lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
                 const struct lhttp_address *address,
                 GError **error_r)
@@ -260,7 +260,7 @@ lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
 }
 
 int
-lhttp_stock_item_get_socket(const struct stock_item *item)
+lhttp_stock_item_get_socket(const StockItem *item)
 {
     const struct lhttp_connection *connection =
         (const struct lhttp_connection *)item;
@@ -271,13 +271,13 @@ lhttp_stock_item_get_socket(const struct stock_item *item)
 }
 
 enum istream_direct
-lhttp_stock_item_get_type(gcc_unused const struct stock_item *item)
+lhttp_stock_item_get_type(gcc_unused const StockItem *item)
 {
     return ISTREAM_SOCKET;
 }
 
 void
-lhttp_stock_put(struct lhttp_stock *lhttp_stock, struct stock_item *item,
+lhttp_stock_put(struct lhttp_stock *lhttp_stock, StockItem *item,
                 bool destroy)
 {
     struct lhttp_connection *connection = (struct lhttp_connection *)item;

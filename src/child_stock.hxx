@@ -16,8 +16,7 @@
 
 struct pool;
 struct hstock;
-struct stock_item;
-struct stock_get_handler;
+struct StockItem;
 struct async_operation_ref;
 
 struct child_stock_class {
@@ -39,7 +38,7 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
                 const struct child_stock_class *cls);
 
 const char *
-child_stock_item_key(const struct stock_item *item);
+child_stock_item_key(const StockItem *item);
 
 /**
  * Connect a socket to the given child process.  The socket must be
@@ -48,12 +47,12 @@ child_stock_item_key(const struct stock_item *item);
  * @return a socket descriptor or -1 on error
  */
 int
-child_stock_item_connect(const struct stock_item *item,
+child_stock_item_connect(const StockItem *item,
                          GError **error_r);
 
 gcc_pure
 static inline enum istream_direct
-child_stock_item_get_type(gcc_unused const struct stock_item *item)
+child_stock_item_get_type(gcc_unused const StockItem *item)
 {
     return ISTREAM_SOCKET;
 }
@@ -62,7 +61,7 @@ child_stock_item_get_type(gcc_unused const struct stock_item *item)
  * Wrapper for hstock_put().
  */
 void
-child_stock_put(struct hstock *hstock, struct stock_item *item,
+child_stock_put(struct hstock *hstock, StockItem *item,
                 bool destroy);
 
 #endif

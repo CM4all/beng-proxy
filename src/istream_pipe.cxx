@@ -26,8 +26,8 @@
 struct istream_pipe {
     struct istream output;
     struct istream *input;
-    struct stock *stock;
-    struct stock_item *stock_item;
+    Stock *stock;
+    StockItem *stock_item;
     int fds[2];
     size_t piped;
 };
@@ -356,7 +356,7 @@ static const struct istream_class istream_pipe = {
 
 struct istream *
 istream_pipe_new(struct pool *pool, struct istream *input,
-                 struct stock *pipe_stock)
+                 Stock *pipe_stock)
 {
     struct istream_pipe *p = istream_new_macro(pool, pipe);
 

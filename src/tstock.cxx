@@ -30,7 +30,7 @@ struct tstock_request {
     struct pool *pool;
 
     struct tstock *stock;
-    struct stock_item *item;
+    StockItem *item;
 
     const TranslateRequest *request;
 
@@ -65,7 +65,7 @@ static const struct lease tstock_socket_lease = {
  */
 
 static void
-tstock_stock_ready(struct stock_item *item, void *ctx)
+tstock_stock_ready(StockItem *item, void *ctx)
 {
     tstock_request *r = (tstock_request *)ctx;
 
@@ -84,7 +84,7 @@ tstock_stock_error(GError *error, void *ctx)
     r->handler->error(error, r->handler_ctx);
 }
 
-static const struct stock_get_handler tstock_stock_handler = {
+static constexpr StockGetHandler tstock_stock_handler = {
     .ready = tstock_stock_ready,
     .error = tstock_stock_error,
 };

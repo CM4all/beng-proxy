@@ -10,8 +10,8 @@
 #include "glibfwd.hxx"
 
 struct pool;
-struct stock_item;
-struct stock_get_handler;
+struct StockItem;
+struct StockGetHandler;
 struct child_options;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
@@ -25,7 +25,7 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock);
 /**
  * @param args command-line arguments
  */
-struct stock_item *
+StockItem *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
                const struct child_options *options,
                const char *executable_path,
@@ -37,23 +37,23 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
  * Returns the socket descriptor of the specified stock item.
  */
 int
-fcgi_stock_item_get(const struct stock_item *item);
+fcgi_stock_item_get(const StockItem *item);
 
 int
-fcgi_stock_item_get_domain(const struct stock_item *item);
+fcgi_stock_item_get_domain(const StockItem *item);
 
 /**
  * Translates a path into the application's namespace.
  */
 const char *
-fcgi_stock_translate_path(const struct stock_item *item,
+fcgi_stock_translate_path(const StockItem *item,
                           const char *path, struct pool *pool);
 
 /**
  * Wrapper for fcgi_stock_put().
  */
 void
-fcgi_stock_put(struct fcgi_stock *fcgi_stock, struct stock_item *item,
+fcgi_stock_put(struct fcgi_stock *fcgi_stock, StockItem *item,
                bool destroy);
 
 /**
@@ -64,6 +64,6 @@ fcgi_stock_put(struct fcgi_stock *fcgi_stock, struct stock_item *item,
  * after this function.
  */
 void
-fcgi_stock_aborted(struct stock_item *item);
+fcgi_stock_aborted(StockItem *item);
 
 #endif
