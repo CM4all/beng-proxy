@@ -42,7 +42,7 @@ struct instance {
 
     /**
      * The configured control channel server (see --control-listen),
-     * NULL if none was configured.
+     * nullptr if none was configured.
      */
     struct control_server *control_server;
 
