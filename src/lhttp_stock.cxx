@@ -17,6 +17,7 @@
 #include "pevent.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -88,6 +89,18 @@ lhttp_connection_event_callback(int fd, gcc_unused short event, void *ctx)
  *
  */
 
+static constexpr struct lhttp_connection &
+ToLhttpConnection(StockItem &item)
+{
+    return ContainerCast2(item, &lhttp_connection::base);
+}
+
+static const constexpr struct lhttp_connection &
+ToLhttpConnection(const StockItem &item)
+{
+    return ContainerCast2(item, &lhttp_connection::base);
+}
+
 static int
 lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
                               gcc_unused void *ctx)
@@ -138,7 +151,7 @@ lhttp_stock_create(void *ctx, StockItem *item,
     auto lhttp_stock = (struct lhttp_stock *)ctx;
     struct pool *pool = item->pool;
     const auto *address = (const struct lhttp_address *)info;
-    struct lhttp_connection *connection = (struct lhttp_connection *)item;
+    auto *connection = &ToLhttpConnection(*item);
 
     assert(key != nullptr);
     assert(address != nullptr);
@@ -174,7 +187,7 @@ lhttp_stock_create(void *ctx, StockItem *item,
 static bool
 lhttp_stock_borrow(void *ctx gcc_unused, StockItem *item)
 {
-    struct lhttp_connection *connection = (struct lhttp_connection *)item;
+    auto *connection = &ToLhttpConnection(*item);
 
     p_event_del(&connection->event, connection->base.pool);
     return true;
@@ -183,7 +196,7 @@ lhttp_stock_borrow(void *ctx gcc_unused, StockItem *item)
 static void
 lhttp_stock_release(void *ctx gcc_unused, StockItem *item)
 {
-    struct lhttp_connection *connection = (struct lhttp_connection *)item;
+    auto *connection = &ToLhttpConnection(*item);
     static const struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
@@ -196,7 +209,7 @@ lhttp_stock_release(void *ctx gcc_unused, StockItem *item)
 static void
 lhttp_stock_destroy(gcc_unused void *ctx, StockItem *item)
 {
-    struct lhttp_connection *connection = (struct lhttp_connection *)item;
+    auto *connection = &ToLhttpConnection(*item);
 
     p_event_del(&connection->event, connection->base.pool);
     close(connection->fd);
@@ -262,8 +275,7 @@ lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
 int
 lhttp_stock_item_get_socket(const StockItem *item)
 {
-    const struct lhttp_connection *connection =
-        (const struct lhttp_connection *)item;
+    const auto *connection = &ToLhttpConnection(*item);
 
     assert(connection->fd >= 0);
 
@@ -280,7 +292,7 @@ void
 lhttp_stock_put(struct lhttp_stock *lhttp_stock, StockItem *item,
                 bool destroy)
 {
-    struct lhttp_connection *connection = (struct lhttp_connection *)item;
+    auto *connection = &ToLhttpConnection(*item);
 
     hstock_put(lhttp_stock->hstock, child_stock_item_key(connection->child),
                item, destroy);
