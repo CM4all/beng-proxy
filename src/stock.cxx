@@ -81,6 +81,14 @@ struct Stock {
             :pool(_pool), info(_info),
              handler(_handler), handler_ctx(_handler_ctx),
              async_ref(_async_ref) {}
+
+        ~Waiting() {
+            pool_unref(&pool);
+        }
+
+        void Destroy() {
+            DeleteFromPool(pool, this);
+        }
     };
 
     struct list_head waiting;
@@ -191,7 +199,7 @@ stock_wait_abort(struct async_operation *ao)
     auto *waiting = async_to_waiting(ao);
 
     list_remove(&waiting->siblings);
-    pool_unref(&waiting->pool);
+    waiting->Destroy();
 }
 
 static const struct async_operation_class stock_wait_operation = {
@@ -230,7 +238,7 @@ stock_retry_waiting(Stock &stock)
         list_remove(&waiting->siblings);
 
         if (stock_get_idle(stock, waiting->handler, waiting->handler_ctx))
-            pool_unref(&waiting->pool);
+            waiting->Destroy();
         else
             /* didn't work (probably because borrowing the item has
                failed) - re-add to "waiting" list */
@@ -251,7 +259,7 @@ stock_retry_waiting(Stock &stock)
         stock_get_create(stock, waiting->pool, waiting->info,
                          waiting->handler, waiting->handler_ctx,
                          waiting->async_ref);
-        pool_unref(&waiting->pool);
+        waiting->Destroy();
     }
 }
 
