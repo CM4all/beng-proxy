@@ -17,26 +17,26 @@
 #include <assert.h>
 
 struct Stock {
-    struct pool *pool;
-    const StockClass *cls;
-    void *class_ctx;
-    const char *uri;
+    struct pool &pool;
+    const StockClass &cls;
+    void *const class_ctx;
+    const char *const uri;
 
     /**
      * The maximum number of items in this stock.  If any more items
      * are requested, they are put into the #waiting list, which gets
      * checked as soon as stock_put() is called.
      */
-    unsigned limit;
+    const unsigned limit;
 
     /**
      * The maximum number of permanent idle items.  If there are more
      * than that, a timer will incrementally kill excess items.
      */
-    unsigned max_idle;
+    const unsigned max_idle;
 
-    const StockHandler *handler;
-    void *handler_ctx;
+    const StockHandler *const handler;
+    void *const handler_ctx;
 
     /**
      * This event is used to move the "retry waiting" code out of the
@@ -102,7 +102,7 @@ struct Stock {
     ~Stock();
 
     void Destroy() {
-        DeleteFromPool(*pool, this);
+        DeleteFromPool(pool, this);
     }
 };
 
@@ -355,8 +355,8 @@ inline Stock::Stock(struct pool &_pool,
                     const StockClass &_cls, void *_class_ctx,
                     const char *_uri, unsigned _limit, unsigned _max_idle,
                     const StockHandler *_handler, void *_handler_ctx)
-    :pool(&_pool), cls(&_cls), class_ctx(_class_ctx),
-     uri(p_strdup_checked(pool, _uri)),
+    :pool(_pool), cls(_cls), class_ctx(_class_ctx),
+     uri(p_strdup_checked(&pool, _uri)),
      limit(_limit), max_idle(_max_idle),
      handler(_handler), handler_ctx(_handler_ctx)
 {
@@ -395,7 +395,7 @@ inline Stock::~Stock()
 
     stock_clear_idle(*this);
 
-    pool_unref(pool);
+    pool_unref(&pool);
 }
 
 Stock *
@@ -421,10 +421,10 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 static void
 stock_item_free(Stock &stock, StockItem &item)
 {
-    assert(pool_contains(item.pool, &item, stock.cls->item_size));
+    assert(pool_contains(item.pool, &item, stock.cls.item_size));
 
-    if (item.pool == stock.pool)
-        p_free(stock.pool, &item);
+    if (item.pool == &stock.pool)
+        p_free(&stock.pool, &item);
     else {
         pool_trash(item.pool);
         pool_unref(item.pool);
@@ -434,9 +434,9 @@ stock_item_free(Stock &stock, StockItem &item)
 static void
 destroy_item(Stock &stock, StockItem &item)
 {
-    assert(pool_contains(item.pool, &item, stock.cls->item_size));
+    assert(pool_contains(item.pool, &item, stock.cls.item_size));
 
-    stock.cls->destroy(stock.class_ctx, item);
+    stock.cls.destroy(stock.class_ctx, item);
     stock_item_free(stock, item);
 }
 
@@ -484,7 +484,7 @@ stock_get_idle(Stock &stock,
         if (stock.num_idle == stock.max_idle)
             stock_unschedule_cleanup(stock);
 
-        if (stock.cls->borrow(stock.class_ctx, item)) {
+        if (stock.cls.borrow(stock.class_ctx, item)) {
 #ifndef NDEBUG
             item.is_idle = false;
 #endif
@@ -507,10 +507,10 @@ stock_get_create(Stock &stock, struct pool &caller_pool, void *info,
                  const StockGetHandler &handler, void *handler_ctx,
                  struct async_operation_ref &async_ref)
 {
-    struct pool *pool = stock.cls->pool(stock.class_ctx,
-                                        *stock.pool, stock.uri);
+    struct pool *pool = stock.cls.pool(stock.class_ctx,
+                                       stock.pool, stock.uri);
 
-    auto item = (StockItem *)p_malloc(pool, stock.cls->item_size);
+    auto item = (StockItem *)p_malloc(pool, stock.cls.item_size);
     item->stock = &stock;
     item->pool = pool;
 #ifndef NDEBUG
@@ -521,8 +521,8 @@ stock_get_create(Stock &stock, struct pool &caller_pool, void *info,
 
     ++stock.num_create;
 
-    stock.cls->create(stock.class_ctx, *item, stock.uri, info,
-                      caller_pool, async_ref);
+    stock.cls.create(stock.class_ctx, *item, stock.uri, info,
+                     caller_pool, async_ref);
 }
 
 void
@@ -671,7 +671,7 @@ stock_put(StockItem &item, bool destroy)
 
     assert(stock.num_busy > 0);
 
-    assert(pool_contains(item.pool, &item, stock.cls->item_size));
+    assert(pool_contains(item.pool, &item, stock.cls.item_size));
 
     list_remove(&item.siblings);
     --stock.num_busy;
@@ -690,7 +690,7 @@ stock_put(StockItem &item, bool destroy)
         list_add(&item.siblings, &stock.idle);
         ++stock.num_idle;
 
-        stock.cls->release(stock.class_ctx, item);
+        stock.cls.release(stock.class_ctx, item);
     }
 
     stock_schedule_retry_waiting(stock);
@@ -705,7 +705,7 @@ stock_del(StockItem &item)
 
     assert(stock.num_idle > 0);
     assert(!list_empty(&stock.idle));
-    assert(pool_contains(item.pool, &item, stock.cls->item_size));
+    assert(pool_contains(item.pool, &item, stock.cls.item_size));
     assert(item.siblings.next->prev == &item.siblings);
     assert(item.siblings.prev->next == &item.siblings);
 
