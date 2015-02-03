@@ -74,6 +74,13 @@ struct Stock {
         void *handler_ctx;
 
         struct async_operation_ref *async_ref;
+
+        Waiting(struct pool &_pool, void *_info,
+                const StockGetHandler &_handler, void *_handler_ctx,
+                struct async_operation_ref &_async_ref)
+            :pool(&_pool), info(_info),
+             handler(&_handler), handler_ctx(_handler_ctx),
+             async_ref(&_async_ref) {}
     };
 
     struct list_head waiting;
@@ -506,14 +513,12 @@ stock_get(Stock &stock, struct pool &caller_pool, void *info,
     if (stock.limit > 0 &&
         stock.num_busy + stock.num_create >= stock.limit) {
         /* item limit reached: wait for an item to return */
-        auto waiting = NewFromPool<Stock::Waiting>(caller_pool);
+        auto waiting = NewFromPool<Stock::Waiting>(caller_pool,
+                                                   caller_pool, info,
+                                                   handler, handler_ctx,
+                                                   async_ref);
 
         pool_ref(&caller_pool);
-        waiting->pool = &caller_pool;
-        waiting->info = info;
-        waiting->handler = &handler;
-        waiting->handler_ctx = handler_ctx;
-        waiting->async_ref = &async_ref;
 
         waiting->operation.Init(stock_wait_operation);
         async_ref.Set(waiting->operation);
