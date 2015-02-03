@@ -40,6 +40,7 @@
 #include <errno.h>
 #include <string.h>
 #include <netdb.h>
+#include <pthread.h>
 
 #ifdef __linux
 #include <sys/prctl.h>
@@ -271,6 +272,9 @@ int main(int argc, char **argv)
     list_init(&instance.controls);
 
     init_signals(&instance);
+
+    /* reduce glibc's thread cancellation overhead */
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
 
     children_init();
 

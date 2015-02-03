@@ -54,6 +54,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <netdb.h>
+#include <pthread.h>
 
 #include <event.h>
 
@@ -310,6 +311,9 @@ int main(int argc, char **argv)
     list_init(&instance.workers);
 
     init_signals(&instance);
+
+    /* reduce glibc's thread cancellation overhead */
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
 
     children_init();
 

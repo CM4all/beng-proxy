@@ -11,6 +11,9 @@
 static void *
 thread_worker_run(void *ctx)
 {
+    /* reduce glibc's thread cancellation overhead */
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr);
+
     struct thread_worker &w = *(struct thread_worker *)ctx;
     ThreadQueue &q = *w.queue;
 

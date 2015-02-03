@@ -2,6 +2,7 @@ cm4all-beng-proxy (6.0.3) unstable; urgency=low
 
   * support response header X-CM4all-View for all responses
   * reduce fork overhead by dropping NFS cache
+  * reduce I/O multi-threading overhead
 
  --   
 
