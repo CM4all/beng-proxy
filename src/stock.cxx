@@ -64,23 +64,23 @@ struct Stock {
 
     unsigned num_create;
 
+    struct Waiting {
+        struct list_head siblings;
+
+        struct async_operation operation;
+
+        struct pool *pool;
+        void *info;
+
+        const StockGetHandler *handler;
+        void *handler_ctx;
+
+        struct async_operation_ref *async_ref;
+    };
+
     struct list_head waiting;
 
     bool may_clear;
-};
-
-struct WaitingStock {
-    struct list_head siblings;
-
-    struct async_operation operation;
-
-    struct pool *pool;
-    void *info;
-
-    const StockGetHandler *handler;
-    void *handler_ctx;
-
-    struct async_operation_ref *async_ref;
 };
 
 static void
@@ -174,16 +174,16 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
  *
  */
 
-static WaitingStock *
+static Stock::Waiting *
 async_to_waiting(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &WaitingStock::operation);
+    return &ContainerCast2(*ao, &Stock::Waiting::operation);
 }
 
 static void
 stock_wait_abort(struct async_operation *ao)
 {
-    WaitingStock *waiting = async_to_waiting(ao);
+    auto *waiting = async_to_waiting(ao);
 
     list_remove(&waiting->siblings);
     pool_unref(waiting->pool);
@@ -216,7 +216,7 @@ stock_retry_waiting(Stock *stock)
     /* first try to serve existing idle items */
 
     while (stock->num_idle > 0) {
-        auto *waiting = (WaitingStock *)stock->waiting.next;
+        auto *waiting = (Stock::Waiting *)stock->waiting.next;
 
         if (list_empty(&stock->waiting))
             return;
@@ -236,7 +236,7 @@ stock_retry_waiting(Stock *stock)
 
     for (unsigned i = stock->limit - stock->num_busy - stock->num_create;
          stock->num_busy + stock->num_create < stock->limit && i > 0; --i) {
-        auto *waiting = (WaitingStock *)stock->waiting.next;
+        auto *waiting = (Stock::Waiting *)stock->waiting.next;
 
         if (list_empty(&stock->waiting))
             return;
@@ -517,7 +517,7 @@ stock_get(Stock *stock, struct pool *caller_pool, void *info,
     if (stock->limit > 0 &&
         stock->num_busy + stock->num_create >= stock->limit) {
         /* item limit reached: wait for an item to return */
-        auto waiting = NewFromPool<WaitingStock>(*caller_pool);
+        auto waiting = NewFromPool<Stock::Waiting>(*caller_pool);
 
         pool_ref(caller_pool);
         waiting->pool = caller_pool;
