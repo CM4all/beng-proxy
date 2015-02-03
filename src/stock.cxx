@@ -67,20 +67,20 @@ struct Stock {
 
         struct async_operation operation;
 
-        struct pool *pool;
-        void *info;
+        struct pool &pool;
+        void *const info;
 
-        const StockGetHandler *handler;
-        void *handler_ctx;
+        const StockGetHandler &handler;
+        void *const handler_ctx;
 
-        struct async_operation_ref *async_ref;
+        struct async_operation_ref &async_ref;
 
         Waiting(struct pool &_pool, void *_info,
                 const StockGetHandler &_handler, void *_handler_ctx,
                 struct async_operation_ref &_async_ref)
-            :pool(&_pool), info(_info),
-             handler(&_handler), handler_ctx(_handler_ctx),
-             async_ref(&_async_ref) {}
+            :pool(_pool), info(_info),
+             handler(_handler), handler_ctx(_handler_ctx),
+             async_ref(_async_ref) {}
     };
 
     struct list_head waiting;
@@ -191,7 +191,7 @@ stock_wait_abort(struct async_operation *ao)
     auto *waiting = async_to_waiting(ao);
 
     list_remove(&waiting->siblings);
-    pool_unref(waiting->pool);
+    pool_unref(&waiting->pool);
 }
 
 static const struct async_operation_class stock_wait_operation = {
@@ -229,8 +229,8 @@ stock_retry_waiting(Stock &stock)
         waiting->operation.Finished();
         list_remove(&waiting->siblings);
 
-        if (stock_get_idle(stock, *waiting->handler, waiting->handler_ctx))
-            pool_unref(waiting->pool);
+        if (stock_get_idle(stock, waiting->handler, waiting->handler_ctx))
+            pool_unref(&waiting->pool);
         else
             /* didn't work (probably because borrowing the item has
                failed) - re-add to "waiting" list */
@@ -248,10 +248,10 @@ stock_retry_waiting(Stock &stock)
 
         waiting->operation.Finished();
         list_remove(&waiting->siblings);
-        stock_get_create(stock, *waiting->pool, waiting->info,
-                         *waiting->handler, waiting->handler_ctx,
-                         *waiting->async_ref);
-        pool_unref(waiting->pool);
+        stock_get_create(stock, waiting->pool, waiting->info,
+                         waiting->handler, waiting->handler_ctx,
+                         waiting->async_ref);
+        pool_unref(&waiting->pool);
     }
 }
 
