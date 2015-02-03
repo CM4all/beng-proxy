@@ -4,7 +4,7 @@ cm4all-beng-proxy (6.0.3) unstable; urgency=low
   * reduce fork overhead by dropping NFS cache
   * reduce I/O multi-threading overhead
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 03 Feb 2015 14:50:27 -0000
 
 cm4all-beng-proxy (6.0.2) unstable; urgency=low
 
