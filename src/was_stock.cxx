@@ -16,6 +16,7 @@
 #include "pevent.hxx"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -112,6 +113,18 @@ was_child_event_callback(int fd, gcc_unused short event, void *ctx)
  *
  */
 
+static constexpr struct was_child &
+ToWasChild(StockItem &item)
+{
+    return ContainerCast2(item, &was_child::base);
+}
+
+static constexpr const struct was_child &
+ToWasChild(const StockItem &item)
+{
+    return ContainerCast2(item, &was_child::base);
+}
+
 static struct pool *
 was_stock_pool(gcc_unused void *ctx, struct pool *parent,
                gcc_unused const char *uri)
@@ -127,7 +140,7 @@ was_stock_create(gcc_unused void *ctx, StockItem *item,
 {
     struct pool *pool = item->pool;
     struct was_child_params *params = (struct was_child_params *)info;
-    struct was_child *child = (struct was_child *)item;
+    auto *child = &ToWasChild(*item);
 
     (void)caller_pool;
     (void)async_ref;
@@ -172,7 +185,7 @@ was_stock_create(gcc_unused void *ctx, StockItem *item,
 static bool
 was_stock_borrow(gcc_unused void *ctx, StockItem *item)
 {
-    struct was_child *child = (struct was_child *)item;
+    auto *child = &ToWasChild(*item);
 
     p_event_del(&child->event, child->base.pool);
     return true;
@@ -181,7 +194,7 @@ was_stock_borrow(gcc_unused void *ctx, StockItem *item)
 static void
 was_stock_release(gcc_unused void *ctx, StockItem *item)
 {
-    struct was_child *child = (struct was_child *)item;
+    auto *child = &ToWasChild(*item);
     static const struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
@@ -257,7 +270,7 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
 const struct was_process *
 was_stock_item_get(const StockItem *item)
 {
-    const struct was_child *child = (const struct was_child *)item;
+    auto *child = &ToWasChild(*item);
 
     return &child->process;
 }
@@ -266,7 +279,7 @@ const char *
 was_stock_translate_path(const StockItem *item,
                          const char *path, struct pool *pool)
 {
-    const struct was_child *child = (const struct was_child *)item;
+    auto *child = &ToWasChild(*item);
 
     if (!child->jail_params.enabled)
         /* no JailCGI - application's namespace is the same as ours,
@@ -282,7 +295,7 @@ was_stock_translate_path(const StockItem *item,
 void
 was_stock_put(struct hstock *hstock, StockItem *item, bool destroy)
 {
-    struct was_child *child = (struct was_child *)item;
+    auto *child = &ToWasChild(*item);
 
     hstock_put(hstock, child->key, item, destroy);
 }
