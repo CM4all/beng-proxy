@@ -9,6 +9,7 @@
 #include "fd_util.h"
 #include "pool.hxx"
 #include "gerrno.h"
+#include "util/Cast.hxx"
 
 #include <daemon/log.h>
 
@@ -37,6 +38,12 @@ valid_fd(int fd)
  *
  */
 
+static constexpr struct pipe_stock_item &
+ToPipeStockItem(StockItem &item)
+{
+    return ContainerCast2(item, &pipe_stock_item::base);
+}
+
 static struct pool *
 pipe_stock_pool(gcc_unused void *ctx, struct pool *parent,
                 gcc_unused const char *uri)
@@ -50,7 +57,7 @@ pipe_stock_create(void *ctx gcc_unused, StockItem *_item,
                   gcc_unused struct pool *caller_pool,
                   gcc_unused struct async_operation_ref *async_ref)
 {
-    struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
+    auto *item = &ToPipeStockItem(*_item);
     int ret;
 
     ret = pipe_cloexec_nonblock(item->fds);
@@ -66,7 +73,7 @@ pipe_stock_create(void *ctx gcc_unused, StockItem *_item,
 static bool
 pipe_stock_borrow(gcc_unused void *ctx, StockItem *_item)
 {
-    struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
+    auto *item = &ToPipeStockItem(*_item);
     (void)item;
 
     assert(valid_fd(item->fds[0]));
@@ -78,7 +85,7 @@ pipe_stock_borrow(gcc_unused void *ctx, StockItem *_item)
 static void
 pipe_stock_release(gcc_unused void *ctx, StockItem *_item)
 {
-    struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
+    auto *item = &ToPipeStockItem(*_item);
     (void)item;
 
     assert(valid_fd(item->fds[0]));
@@ -88,7 +95,7 @@ pipe_stock_release(gcc_unused void *ctx, StockItem *_item)
 static void
 pipe_stock_destroy(gcc_unused void *ctx, StockItem *_item)
 {
-    struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
+    auto *item = &ToPipeStockItem(*_item);
 
     assert(valid_fd(item->fds[0]));
     assert(valid_fd(item->fds[1]));
@@ -121,9 +128,7 @@ pipe_stock_new(struct pool *pool)
 void
 pipe_stock_item_get(StockItem *_item, int fds[2])
 {
-    struct pipe_stock_item *item = (struct pipe_stock_item *)_item;
-
-    assert(item != nullptr);
+    auto *item = &ToPipeStockItem(*_item);
 
     fds[0] = item->fds[0];
     fds[1] = item->fds[1];
