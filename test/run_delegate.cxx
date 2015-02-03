@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 
     delegate_stock_open(delegate_stock, pool, helper_path, NULL,
                         argv[1],
-                        &my_delegate_handler, NULL, &my_async_ref);
+                        &my_delegate_handler, NULL, my_async_ref);
 
     event_dispatch();
 

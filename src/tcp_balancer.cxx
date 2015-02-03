@@ -85,7 +85,7 @@ tcp_balancer_next(struct tcp_balancer_request *request)
  */
 
 static void
-tcp_balancer_stock_ready(StockItem *item, void *ctx)
+tcp_balancer_stock_ready(StockItem &item, void *ctx)
 {
     struct tcp_balancer_request *request = (struct tcp_balancer_request *)ctx;
 
@@ -169,7 +169,7 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
 }
 
 void
-tcp_balancer_put(struct tcp_balancer *tcp_balancer, StockItem *item,
+tcp_balancer_put(struct tcp_balancer *tcp_balancer, StockItem &item,
                  bool destroy)
 {
     tcp_stock_put(tcp_balancer->tcp_stock, item, destroy);

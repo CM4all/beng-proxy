@@ -71,7 +71,7 @@ delegate_stock_event(int fd, short event, void *ctx)
             daemon_log(2, "unexpected data from idle delegate process\n");
     }
 
-    stock_del(&process->stock_item);
+    stock_del(process->stock_item);
     pool_commit();
 }
 
@@ -115,19 +115,19 @@ ToDelegateProcess(StockItem &item)
 }
 
 static struct pool *
-delegate_stock_pool(void *ctx gcc_unused, struct pool *parent,
+delegate_stock_pool(void *ctx gcc_unused, struct pool &parent,
                     const char *uri gcc_unused)
 {
-    return pool_new_linear(parent, "delegate_stock", 512);
+    return pool_new_linear(&parent, "delegate_stock", 512);
 }
 
 static void
-delegate_stock_create(void *ctx gcc_unused, StockItem *item,
+delegate_stock_create(gcc_unused void *ctx, StockItem &item,
                       const char *uri, void *_info,
-                      struct pool *caller_pool gcc_unused,
-                      struct async_operation_ref *async_ref gcc_unused)
+                      gcc_unused struct pool &caller_pool,
+                      gcc_unused struct async_operation_ref &async_ref)
 {
-    auto *process = &ToDelegateProcess(*item);
+    auto *process = &ToDelegateProcess(item);
     struct delegate_info *const info = (struct delegate_info *)_info;
     const struct child_options *const options = info->options;
 
@@ -167,22 +167,22 @@ delegate_stock_create(void *ctx gcc_unused, StockItem *item,
     event_set(&process->event, process->fd, EV_READ|EV_TIMEOUT,
               delegate_stock_event, process);
 
-    stock_item_available(&process->stock_item);
+    stock_item_available(process->stock_item);
 }
 
 static bool
-delegate_stock_borrow(void *ctx gcc_unused, StockItem *item)
+delegate_stock_borrow(gcc_unused void *ctx, StockItem &item)
 {
-    auto *process = &ToDelegateProcess(*item);
+    auto *process = &ToDelegateProcess(item);
 
     p_event_del(&process->event, process->stock_item.pool);
     return true;
 }
 
 static void
-delegate_stock_release(void *ctx gcc_unused, StockItem *item)
+delegate_stock_release(gcc_unused void *ctx, StockItem &item)
 {
-    auto *process = &ToDelegateProcess(*item);
+    auto *process = &ToDelegateProcess(item);
     static const struct timeval tv = {
         .tv_sec = 60,
         .tv_usec = 0,
@@ -193,9 +193,9 @@ delegate_stock_release(void *ctx gcc_unused, StockItem *item)
 }
 
 static void
-delegate_stock_destroy(void *ctx gcc_unused, StockItem *item)
+delegate_stock_destroy(gcc_unused void *ctx, StockItem &item)
 {
-    auto *process = &ToDelegateProcess(*item);
+    auto *process = &ToDelegateProcess(item);
 
     p_event_del(&process->event, process->stock_item.pool);
     close(process->fd);
@@ -226,8 +226,8 @@ void
 delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
                    const char *helper,
                    const struct child_options *options,
-                   const StockGetHandler *handler, void *handler_ctx,
-                   struct async_operation_ref *async_ref)
+                   const StockGetHandler &handler, void *handler_ctx,
+                   struct async_operation_ref &async_ref)
 {
     assert(options != nullptr);
 
@@ -248,17 +248,17 @@ delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
 
 void
 delegate_stock_put(struct hstock *delegate_stock,
-                   StockItem *item, bool destroy)
+                   StockItem &item, bool destroy)
 {
-    auto *process = &ToDelegateProcess(*item);
+    auto *process = &ToDelegateProcess(item);
 
     hstock_put(delegate_stock, process->uri, item, destroy);
 }
 
 int
-delegate_stock_item_get(StockItem *item)
+delegate_stock_item_get(StockItem &item)
 {
-    auto *process = &ToDelegateProcess(*item);
+    auto *process = &ToDelegateProcess(item);
 
     return process->fd;
 }

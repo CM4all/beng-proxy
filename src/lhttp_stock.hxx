@@ -35,16 +35,16 @@ lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
  */
 gcc_pure
 int
-lhttp_stock_item_get_socket(const StockItem *item);
+lhttp_stock_item_get_socket(const StockItem &item);
 
 gcc_pure
 enum istream_direct
-lhttp_stock_item_get_type(const StockItem *item);
+lhttp_stock_item_get_type(const StockItem &item);
 
 /**
  * Wrapper for hstock_put().
  */
 void
-lhttp_stock_put(struct lhttp_stock *stock, StockItem *item, bool destroy);
+lhttp_stock_put(struct lhttp_stock *stock, StockItem &item, bool destroy);
 
 #endif

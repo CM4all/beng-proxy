@@ -191,7 +191,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                                    file->path,
                                    file->content_type,
                                    handler, handler_ctx,
-                                   async_ref);
+                                   *async_ref);
             return;
         }
 

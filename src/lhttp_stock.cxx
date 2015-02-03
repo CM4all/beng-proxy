@@ -80,7 +80,7 @@ lhttp_connection_event_callback(int fd, gcc_unused short event, void *ctx)
             daemon_log(2, "unexpected data from idle LHTTP connection\n");
     }
 
-    stock_del(&connection->base);
+    stock_del(connection->base);
     pool_commit();
 }
 
@@ -136,22 +136,22 @@ static const struct child_stock_class lhttp_child_stock_class = {
  */
 
 static struct pool *
-lhttp_stock_pool(void *ctx gcc_unused, struct pool *parent,
-               const char *uri gcc_unused)
+lhttp_stock_pool(gcc_unused void *ctx, struct pool &parent,
+                 gcc_unused const char *uri)
 {
-    return pool_new_linear(parent, "lhttp_connection", 2048);
+    return pool_new_linear(&parent, "lhttp_connection", 2048);
 }
 
 static void
-lhttp_stock_create(void *ctx, StockItem *item,
+lhttp_stock_create(void *ctx, StockItem &item,
                    const char *key, void *info,
-                   gcc_unused struct pool *caller_pool,
-                   gcc_unused struct async_operation_ref *async_ref)
+                   gcc_unused struct pool &caller_pool,
+                   gcc_unused struct async_operation_ref &async_ref)
 {
     auto lhttp_stock = (struct lhttp_stock *)ctx;
-    struct pool *pool = item->pool;
+    struct pool *pool = item.pool;
     const auto *address = (const struct lhttp_address *)info;
-    auto *connection = &ToLhttpConnection(*item);
+    auto *connection = &ToLhttpConnection(item);
 
     assert(key != nullptr);
     assert(address != nullptr);
@@ -181,22 +181,22 @@ lhttp_stock_create(void *ctx, StockItem *item,
     event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
               lhttp_connection_event_callback, connection);
 
-    stock_item_available(&connection->base);
+    stock_item_available(connection->base);
 }
 
 static bool
-lhttp_stock_borrow(void *ctx gcc_unused, StockItem *item)
+lhttp_stock_borrow(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &ToLhttpConnection(*item);
+    auto *connection = &ToLhttpConnection(item);
 
     p_event_del(&connection->event, connection->base.pool);
     return true;
 }
 
 static void
-lhttp_stock_release(void *ctx gcc_unused, StockItem *item)
+lhttp_stock_release(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &ToLhttpConnection(*item);
+    auto *connection = &ToLhttpConnection(item);
     static const struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
@@ -207,9 +207,9 @@ lhttp_stock_release(void *ctx gcc_unused, StockItem *item)
 }
 
 static void
-lhttp_stock_destroy(gcc_unused void *ctx, StockItem *item)
+lhttp_stock_destroy(gcc_unused void *ctx, StockItem &item)
 {
-    auto *connection = &ToLhttpConnection(*item);
+    auto *connection = &ToLhttpConnection(item);
 
     p_event_del(&connection->event, connection->base.pool);
     close(connection->fd);
@@ -273,9 +273,9 @@ lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
 }
 
 int
-lhttp_stock_item_get_socket(const StockItem *item)
+lhttp_stock_item_get_socket(const StockItem &item)
 {
-    const auto *connection = &ToLhttpConnection(*item);
+    const auto *connection = &ToLhttpConnection(item);
 
     assert(connection->fd >= 0);
 
@@ -283,16 +283,16 @@ lhttp_stock_item_get_socket(const StockItem *item)
 }
 
 enum istream_direct
-lhttp_stock_item_get_type(gcc_unused const StockItem *item)
+lhttp_stock_item_get_type(gcc_unused const StockItem &item)
 {
     return ISTREAM_SOCKET;
 }
 
 void
-lhttp_stock_put(struct lhttp_stock *lhttp_stock, StockItem *item,
+lhttp_stock_put(struct lhttp_stock *lhttp_stock, StockItem &item,
                 bool destroy)
 {
-    auto *connection = &ToLhttpConnection(*item);
+    auto *connection = &ToLhttpConnection(item);
 
     hstock_put(lhttp_stock->hstock, child_stock_item_key(connection->child),
                item, destroy);

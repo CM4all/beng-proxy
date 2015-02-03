@@ -37,21 +37,21 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
  * Returns the socket descriptor of the specified stock item.
  */
 gcc_pure
-const struct was_process *
-was_stock_item_get(const StockItem *item);
+const struct was_process &
+was_stock_item_get(const StockItem &item);
 
 /**
  * Translates a path into the application's namespace.
  */
 gcc_pure
 const char *
-was_stock_translate_path(const StockItem *item,
+was_stock_translate_path(const StockItem &item,
                          const char *path, struct pool *pool);
 
 /**
  * Wrapper for hstock_put().
  */
 void
-was_stock_put(struct hstock *hstock, StockItem *item, bool destroy);
+was_stock_put(struct hstock *hstock, StockItem &item, bool destroy);
 
 #endif

@@ -57,7 +57,7 @@ was_socket_release(bool reuse, void *ctx)
 {
     struct was_request *request = (struct was_request *)ctx;
 
-    was_stock_put(request->was_stock, request->stock_item, !reuse);
+    was_stock_put(request->was_stock, *request->stock_item, !reuse);
 }
 
 static const struct lease was_socket_lease = {
@@ -71,16 +71,16 @@ static const struct lease was_socket_lease = {
  */
 
 static void
-was_stock_ready(StockItem *item, void *ctx)
+was_stock_ready(StockItem &item, void *ctx)
 {
     struct was_request *request = (struct was_request *)ctx;
 
-    request->stock_item = item;
+    request->stock_item = &item;
 
-    const struct was_process *process = was_stock_item_get(item);
+    const struct was_process &process = was_stock_item_get(item);
 
-    was_client_request(request->pool, process->control_fd,
-                       process->input_fd, process->output_fd,
+    was_client_request(request->pool, process.control_fd,
+                       process.input_fd, process.output_fd,
                        &was_socket_lease, request,
                        request->method, request->uri,
                        request->script_name, request->path_info,

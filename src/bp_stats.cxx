@@ -27,7 +27,7 @@ bp_get_stats(const struct instance *instance,
         .idle = 0,
     };
 
-    hstock_add_stats(instance->tcp_stock, &tcp_stock_stats);
+    hstock_add_stats(instance->tcp_stock, tcp_stock_stats);
 
     struct cache_stats tcache_stats, http_cache_stats, fcache_stats;
     translate_cache_get_stats(instance->translate_cache, &tcache_stats);

@@ -37,23 +37,23 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
  * Returns the socket descriptor of the specified stock item.
  */
 int
-fcgi_stock_item_get(const StockItem *item);
+fcgi_stock_item_get(const StockItem &item);
 
 int
-fcgi_stock_item_get_domain(const StockItem *item);
+fcgi_stock_item_get_domain(const StockItem &item);
 
 /**
  * Translates a path into the application's namespace.
  */
 const char *
-fcgi_stock_translate_path(const StockItem *item,
+fcgi_stock_translate_path(const StockItem &item,
                           const char *path, struct pool *pool);
 
 /**
  * Wrapper for fcgi_stock_put().
  */
 void
-fcgi_stock_put(struct fcgi_stock *fcgi_stock, StockItem *item,
+fcgi_stock_put(struct fcgi_stock *fcgi_stock, StockItem &item,
                bool destroy);
 
 /**
@@ -64,6 +64,6 @@ fcgi_stock_put(struct fcgi_stock *fcgi_stock, StockItem *item,
  * after this function.
  */
 void
-fcgi_stock_aborted(StockItem *item);
+fcgi_stock_aborted(StockItem &item);
 
 #endif

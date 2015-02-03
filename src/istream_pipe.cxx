@@ -38,7 +38,7 @@ pipe_close(struct istream_pipe *p)
     if (p->stock != nullptr) {
         if (p->stock_item != nullptr)
             /* reuse the pipe only if it's empty */
-            stock_put(p->stock_item, p->piped > 0);
+            stock_put(*p->stock_item, p->piped > 0);
     } else {
         if (p->fds[0] >= 0) {
             close(p->fds[0]);
@@ -92,7 +92,7 @@ pipe_consume(struct istream_pipe *p)
             /* if the pipe was drained, return it to the stock, to
                make it available to other streams */
 
-            stock_put(p->stock_item, false);
+            stock_put(*p->stock_item, false);
             p->stock_item = nullptr;
             p->fds[0] = -1;
             p->fds[1] = -1;
@@ -149,7 +149,8 @@ pipe_create(struct istream_pipe *p)
         assert(p->stock_item == nullptr);
 
         GError *error = nullptr;
-        p->stock_item = stock_get_now(p->stock, p->output.pool, nullptr, &error);
+        p->stock_item = stock_get_now(*p->stock, *p->output.pool, nullptr,
+                                      &error);
         if (p->stock_item == nullptr) {
             daemon_log(1, "%s\n", error->message);
             g_error_free(error);

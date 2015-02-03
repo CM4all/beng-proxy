@@ -39,12 +39,12 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               struct async_operation_ref *async_ref);
 
 void
-tcp_stock_put(struct hstock *tcp_stock, StockItem *item, bool destroy);
+tcp_stock_put(struct hstock *tcp_stock, StockItem &item, bool destroy);
 
 int
-tcp_stock_item_get(const StockItem *item);
+tcp_stock_item_get(const StockItem &item);
 
 int
-tcp_stock_item_get_domain(const StockItem *item);
+tcp_stock_item_get_domain(const StockItem &item);
 
 #endif

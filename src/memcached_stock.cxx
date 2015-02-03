@@ -76,7 +76,7 @@ memcached_socket_release(bool reuse, void *ctx)
 {
     memcached_stock_request *request = (memcached_stock_request *)ctx;
 
-    tcp_balancer_put(request->stock->tcp_balancer, request->item, !reuse);
+    tcp_balancer_put(request->stock->tcp_balancer, *request->item, !reuse);
 }
 
 static const struct lease memcached_socket_lease = {
@@ -90,11 +90,11 @@ static const struct lease memcached_socket_lease = {
  */
 
 static void
-memcached_stock_ready(StockItem *item, void *ctx)
+memcached_stock_ready(StockItem &item, void *ctx)
 {
     memcached_stock_request *request = (memcached_stock_request *)ctx;
 
-    request->item = item;
+    request->item = &item;
 
     memcached_client_invoke(request->pool, tcp_stock_item_get(item),
                             tcp_stock_item_get_domain(item) == AF_LOCAL

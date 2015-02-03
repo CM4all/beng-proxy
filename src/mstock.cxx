@@ -108,7 +108,7 @@ class MultiStock : public mstock {
                 Lease &lease = AddLease();
                 lease_ref.Set(Lease::lease, &lease);
 
-                handler.ready(&item, ctx);
+                handler.ready(item, ctx);
             }
 
             StockItem *AddLease(struct lease_ref &lease_ref) {
@@ -204,7 +204,7 @@ public:
     }
 
     void AddStats(StockStats &data) const {
-        hstock_add_stats(hstock, &data);
+        hstock_add_stats(hstock, data);
     }
 
     StockItem *GetNow(struct pool *caller_pool, const char *uri, void *info,
@@ -213,7 +213,7 @@ public:
                       GError **error_r);
 
     void Put(const char *uri, StockItem &item, bool reuse) {
-        hstock_put(hstock, uri, &item, !reuse);
+        hstock_put(hstock, uri, item, !reuse);
     }
 };
 

@@ -21,7 +21,7 @@ lb_get_stats(const struct lb_instance *instance,
         .idle = 0,
     };
 
-    hstock_add_stats(instance->tcp_stock, &tcp_stock_stats);
+    hstock_add_stats(instance->tcp_stock, tcp_stock_stats);
 
     data->incoming_connections = GUINT32_TO_BE(instance->connections.size());
     data->outgoing_connections = GUINT32_TO_BE(tcp_stock_stats.busy

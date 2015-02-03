@@ -42,7 +42,7 @@ child_stock_child_callback(int status gcc_unused, void *ctx)
     item->pid = -1;
 
     if (!item->busy)
-        stock_del(&item->base);
+        stock_del(item->base);
 }
 
 struct child_stock_args {
@@ -126,22 +126,22 @@ ToChildStockItem(const StockItem &item)
 }
 
 static struct pool *
-child_stock_pool(void *ctx gcc_unused, struct pool *parent,
+child_stock_pool(void *ctx gcc_unused, struct pool &parent,
                  const char *uri gcc_unused)
 {
-    return pool_new_linear(parent, "child_stock_child", 2048);
+    return pool_new_linear(&parent, "child_stock_child", 2048);
 }
 
 static void
-child_stock_create(void *stock_ctx, StockItem *_item,
+child_stock_create(void *stock_ctx, StockItem &_item,
                    const char *key, void *info,
-                   gcc_unused struct pool *caller_pool,
-                   gcc_unused struct async_operation_ref *async_ref)
+                   gcc_unused struct pool &caller_pool,
+                   gcc_unused struct async_operation_ref &async_ref)
 {
     const struct child_stock_class *cls =
         (const struct child_stock_class *)stock_ctx;
-    struct pool *pool = _item->pool;
-    auto *item = &ToChildStockItem(*_item);
+    struct pool *pool = _item.pool;
+    auto *item = &ToChildStockItem(_item);
 
     item->key = key = p_strdup(pool, key);
     item->cls = cls;
@@ -182,13 +182,13 @@ child_stock_create(void *stock_ctx, StockItem *_item,
     child_register(pid, key, child_stock_child_callback, item);
 
     item->busy = true;
-    stock_item_available(&item->base);
+    stock_item_available(item->base);
 }
 
 static bool
-child_stock_borrow(gcc_unused void *ctx, StockItem *_item)
+child_stock_borrow(gcc_unused void *ctx, StockItem &_item)
 {
-    auto *item = &ToChildStockItem(*_item);
+    auto *item = &ToChildStockItem(_item);
 
     assert(!item->busy);
     item->busy = true;
@@ -197,9 +197,9 @@ child_stock_borrow(gcc_unused void *ctx, StockItem *_item)
 }
 
 static void
-child_stock_release(gcc_unused void *ctx, StockItem *_item)
+child_stock_release(gcc_unused void *ctx, StockItem &_item)
 {
-    auto *item = &ToChildStockItem(*_item);
+    auto *item = &ToChildStockItem(_item);
 
     assert(item->busy);
     item->busy = false;
@@ -211,9 +211,9 @@ child_stock_release(gcc_unused void *ctx, StockItem *_item)
 }
 
 static void
-child_stock_destroy(void *ctx gcc_unused, StockItem *_item)
+child_stock_destroy(void *ctx gcc_unused, StockItem &_item)
 {
-    auto *item = &ToChildStockItem(*_item);
+    auto *item = &ToChildStockItem(_item);
 
     if (item->pid >= 0)
         child_kill_signal(item->pid, item->cls->shutdown_signal);
@@ -278,5 +278,5 @@ child_stock_put(struct hstock *hstock, StockItem *_item,
 {
     auto *item = &ToChildStockItem(*_item);
 
-    hstock_put(hstock, item->key, &item->base, destroy);
+    hstock_put(hstock, item->key, item->base, destroy);
 }

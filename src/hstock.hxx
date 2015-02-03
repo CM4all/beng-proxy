@@ -33,13 +33,13 @@ hstock_free(struct hstock *hstock);
  */
 gcc_pure
 void
-hstock_add_stats(const struct hstock *stock, StockStats *data);
+hstock_add_stats(const struct hstock *stock, StockStats &data);
 
 void
 hstock_get(struct hstock *hstock, struct pool *pool,
            const char *uri, void *info,
-           const StockGetHandler *handler, void *handler_ctx,
-           struct async_operation_ref *async_ref);
+           const StockGetHandler &handler, void *handler_ctx,
+           struct async_operation_ref &async_ref);
 
 /**
  * Obtains an item from the hstock without going through the callback.
@@ -53,7 +53,7 @@ hstock_get_now(struct hstock *hstock, struct pool *pool,
                GError **error_r);
 
 void
-hstock_put(struct hstock *hstock, const char *uri, StockItem *item,
+hstock_put(struct hstock *hstock, const char *uri, StockItem &item,
            bool destroy);
 
 

@@ -51,7 +51,7 @@ tstock_socket_release(bool reuse, void *ctx)
 {
     tstock_request *r = (tstock_request *)ctx;
 
-    tcp_stock_put(r->stock->tcp_stock, r->item, !reuse);
+    tcp_stock_put(r->stock->tcp_stock, *r->item, !reuse);
 }
 
 static const struct lease tstock_socket_lease = {
@@ -65,11 +65,11 @@ static const struct lease tstock_socket_lease = {
  */
 
 static void
-tstock_stock_ready(StockItem *item, void *ctx)
+tstock_stock_ready(StockItem &item, void *ctx)
 {
     tstock_request *r = (tstock_request *)ctx;
 
-    r->item = item;
+    r->item = &item;
     translate(r->pool, tcp_stock_item_get(item),
               &tstock_socket_lease, r,
               r->request, r->handler, r->handler_ctx,

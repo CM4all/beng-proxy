@@ -49,7 +49,7 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  struct async_operation_ref *async_ref);
 
 void
-tcp_balancer_put(struct tcp_balancer *tcp_balancer, StockItem *item,
+tcp_balancer_put(struct tcp_balancer *tcp_balancer, StockItem &item,
                  bool destroy);
 
 /**

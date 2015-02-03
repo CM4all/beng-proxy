@@ -104,7 +104,7 @@ was_child_event_callback(int fd, gcc_unused short event, void *ctx)
             daemon_log(2, "unexpected data from idle WAS control connection\n");
     }
 
-    stock_del(&child->base);
+    stock_del(child->base);
     pool_commit();
 }
 
@@ -126,21 +126,21 @@ ToWasChild(const StockItem &item)
 }
 
 static struct pool *
-was_stock_pool(gcc_unused void *ctx, struct pool *parent,
+was_stock_pool(gcc_unused void *ctx, struct pool &parent,
                gcc_unused const char *uri)
 {
-    return pool_new_linear(parent, "was_child", 2048);
+    return pool_new_linear(&parent, "was_child", 2048);
 }
 
 static void
-was_stock_create(gcc_unused void *ctx, StockItem *item,
+was_stock_create(gcc_unused void *ctx, StockItem &item,
                  const char *key, void *info,
-                 struct pool *caller_pool,
-                 struct async_operation_ref *async_ref)
+                 struct pool &caller_pool,
+                 struct async_operation_ref &async_ref)
 {
-    struct pool *pool = item->pool;
+    struct pool *pool = item.pool;
     struct was_child_params *params = (struct was_child_params *)info;
-    auto *child = &ToWasChild(*item);
+    auto *child = &ToWasChild(item);
 
     (void)caller_pool;
     (void)async_ref;
@@ -179,22 +179,22 @@ was_stock_create(gcc_unused void *ctx, StockItem *item,
     event_set(&child->event, child->process.control_fd, EV_READ|EV_TIMEOUT,
               was_child_event_callback, child);
 
-    stock_item_available(&child->base);
+    stock_item_available(child->base);
 }
 
 static bool
-was_stock_borrow(gcc_unused void *ctx, StockItem *item)
+was_stock_borrow(gcc_unused void *ctx, StockItem &item)
 {
-    auto *child = &ToWasChild(*item);
+    auto *child = &ToWasChild(item);
 
     p_event_del(&child->event, child->base.pool);
     return true;
 }
 
 static void
-was_stock_release(gcc_unused void *ctx, StockItem *item)
+was_stock_release(gcc_unused void *ctx, StockItem &item)
 {
-    auto *child = &ToWasChild(*item);
+    auto *child = &ToWasChild(item);
     static const struct timeval tv = {
         .tv_sec = 300,
         .tv_usec = 0,
@@ -204,10 +204,9 @@ was_stock_release(gcc_unused void *ctx, StockItem *item)
 }
 
 static void
-was_stock_destroy(gcc_unused void *ctx, StockItem *item)
+was_stock_destroy(gcc_unused void *ctx, StockItem &item)
 {
-    struct was_child *child =
-        (struct was_child *)item;
+    auto *child = &ToWasChild(item);
 
     if (child->process.pid >= 0)
         child_kill(child->process.pid);
@@ -264,15 +263,15 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
     params->options = options;
 
     hstock_get(hstock, pool, was_stock_key(pool, params), params,
-               handler, handler_ctx, async_ref);
+               *handler, handler_ctx, *async_ref);
 }
 
-const struct was_process *
-was_stock_item_get(const StockItem *item)
+const struct was_process &
+was_stock_item_get(const StockItem &item)
 {
-    auto *child = &ToWasChild(*item);
+    auto *child = &ToWasChild(item);
 
-    return &child->process;
+    return child->process;
 }
 
 const char *
@@ -293,9 +292,9 @@ was_stock_translate_path(const StockItem *item,
 }
 
 void
-was_stock_put(struct hstock *hstock, StockItem *item, bool destroy)
+was_stock_put(struct hstock *hstock, StockItem &item, bool destroy)
 {
-    auto *child = &ToWasChild(*item);
+    auto *child = &ToWasChild(item);
 
     hstock_put(hstock, child->key, item, destroy);
 }

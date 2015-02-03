@@ -62,7 +62,7 @@ fcgi_socket_release(bool reuse, void *ctx)
 {
     struct fcgi_remote_request *request = (struct fcgi_remote_request *)ctx;
 
-    tcp_balancer_put(request->tcp_balancer, request->stock_item, !reuse);
+    tcp_balancer_put(request->tcp_balancer, *request->stock_item, !reuse);
 }
 
 static const struct lease fcgi_socket_lease = {
@@ -76,11 +76,11 @@ static const struct lease fcgi_socket_lease = {
  */
 
 static void
-fcgi_remote_stock_ready(StockItem *item, void *ctx)
+fcgi_remote_stock_ready(StockItem &item, void *ctx)
 {
     struct fcgi_remote_request *request = (struct fcgi_remote_request *)ctx;
 
-    request->stock_item = item;
+    request->stock_item = &item;
 
     fcgi_client_request(request->pool, tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL

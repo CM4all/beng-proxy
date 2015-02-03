@@ -68,7 +68,7 @@ tcp_create_abort(struct async_operation *ao)
     assert(connection->client_socket.IsDefined());
 
     connection->client_socket.Abort();
-    stock_item_aborted(&connection->stock_item);
+    stock_item_aborted(connection->stock_item);
 }
 
 static const struct async_operation_class tcp_create_operation = {
@@ -105,7 +105,7 @@ tcp_stock_event(int fd, short event, void *ctx)
             daemon_log(2, "unexpected data in idle idle_socket\n");
     }
 
-    stock_del(&connection->stock_item);
+    stock_del(connection->stock_item);
     pool_commit();
 }
 
@@ -128,7 +128,7 @@ tcp_stock_socket_success(SocketDescriptor &&fd, void *ctx)
     event_set(&connection->event, connection->fd, EV_READ|EV_TIMEOUT,
               tcp_stock_event, connection);
 
-    stock_item_available(&connection->stock_item);
+    stock_item_available(connection->stock_item);
 }
 
 static void
@@ -143,7 +143,7 @@ tcp_stock_socket_timeout(void *ctx)
     GError *error = g_error_new(errno_quark(), ETIMEDOUT,
                                 "failed to connect to '%s': timeout",
                                 connection->uri);
-    stock_item_failed(&connection->stock_item, error);
+    stock_item_failed(connection->stock_item, error);
 }
 
 static void
@@ -156,7 +156,7 @@ tcp_stock_socket_error(GError *error, void *ctx)
     connection->create_operation.Finished();
 
     g_prefix_error(&error, "failed to connect to '%s': ", connection->uri);
-    stock_item_failed(&connection->stock_item, error);
+    stock_item_failed(connection->stock_item, error);
 }
 
 static constexpr ConnectSocketHandler tcp_stock_socket_handler = {
@@ -184,21 +184,19 @@ StockItemToTcpStockConnection(const StockItem &item)
 }
 
 static struct pool *
-tcp_stock_pool(void *ctx gcc_unused, struct pool *parent,
-               const char *uri gcc_unused)
+tcp_stock_pool(gcc_unused void *ctx, struct pool &parent,
+               gcc_unused const char *uri)
 {
-    return pool_new_linear(parent, "tcp_stock", 2048);
+    return pool_new_linear(&parent, "tcp_stock", 2048);
 }
 
 static void
-tcp_stock_create(void *ctx, StockItem *item,
+tcp_stock_create(gcc_unused void *ctx, StockItem &item,
                  const char *uri, void *info,
-                 struct pool *caller_pool,
-                 struct async_operation_ref *async_ref)
+                 struct pool &caller_pool,
+                 struct async_operation_ref &async_ref)
 {
-    (void)ctx;
-
-    auto *connection = &StockItemToTcpStockConnection(*item);
+    auto *connection = &StockItemToTcpStockConnection(item);
     struct tcp_stock_request *request = (struct tcp_stock_request *)info;
 
     assert(uri != nullptr);
@@ -206,12 +204,12 @@ tcp_stock_create(void *ctx, StockItem *item,
     connection->client_socket.Clear();
 
     connection->create_operation.Init(tcp_create_operation);
-    async_ref->Set(connection->create_operation);
+    async_ref.Set(connection->create_operation);
 
     connection->uri = uri;
 
     connection->domain = request->address.GetFamily();
-    client_socket_new(*caller_pool, connection->domain, SOCK_STREAM, 0,
+    client_socket_new(caller_pool, connection->domain, SOCK_STREAM, 0,
                       request->ip_transparent,
                       request->bind_address,
                       request->address,
@@ -221,35 +219,35 @@ tcp_stock_create(void *ctx, StockItem *item,
 }
 
 static bool
-tcp_stock_borrow(void *ctx gcc_unused, StockItem *item)
+tcp_stock_borrow(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(*item);
+    auto *connection = &StockItemToTcpStockConnection(item);
 
-    p_event_del(&connection->event, item->pool);
+    p_event_del(&connection->event, item.pool);
     return true;
 }
 
 static void
-tcp_stock_release(void *ctx gcc_unused, StockItem *item)
+tcp_stock_release(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(*item);
+    auto *connection = &StockItemToTcpStockConnection(item);
     static const struct timeval tv = {
         .tv_sec = 60,
         .tv_usec = 0,
     };
 
-    p_event_add(&connection->event, &tv, item->pool, "tcp_stock_event");
+    p_event_add(&connection->event, &tv, item.pool, "tcp_stock_event");
 }
 
 static void
-tcp_stock_destroy(void *ctx gcc_unused, StockItem *item)
+tcp_stock_destroy(void *ctx gcc_unused, StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(*item);
+    auto *connection = &StockItemToTcpStockConnection(item);
 
     if (connection->client_socket.IsDefined())
         connection->client_socket.Abort();
     else if (connection->fd >= 0) {
-        p_event_del(&connection->event, item->pool);
+        p_event_del(&connection->event, item.pool);
         close(connection->fd);
     }
 }
@@ -309,33 +307,30 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
     }
 
     hstock_get(tcp_stock, pool, name, request,
-               handler, handler_ctx, async_ref);
+               *handler, handler_ctx, *async_ref);
 }
 
 void
-tcp_stock_put(struct hstock *tcp_stock, StockItem *item, bool destroy)
+tcp_stock_put(struct hstock *tcp_stock, StockItem &item, bool destroy)
 {
-    auto *connection = &StockItemToTcpStockConnection(*item);
+    auto *connection = &StockItemToTcpStockConnection(item);
 
     hstock_put(tcp_stock, connection->uri, item, destroy);
 }
 
 int
-tcp_stock_item_get(const StockItem *item)
+tcp_stock_item_get(const StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(*item);
-
-    assert(item != nullptr);
+    auto *connection = &StockItemToTcpStockConnection(item);
 
     return connection->fd;
 }
 
 int
-tcp_stock_item_get_domain(const StockItem *item)
+tcp_stock_item_get_domain(const StockItem &item)
 {
-    auto *connection = &StockItemToTcpStockConnection(*item);
+    auto *connection = &StockItemToTcpStockConnection(item);
 
-    assert(item != nullptr);
     assert(connection->fd >= 0);
 
     return connection->domain;

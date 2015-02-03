@@ -32,7 +32,7 @@ lhttp_socket_release(bool reuse, void *ctx)
 {
     struct lhttp_request *request = (struct lhttp_request *)ctx;
 
-    lhttp_stock_put(request->lhttp_stock, request->stock_item, !reuse);
+    lhttp_stock_put(request->lhttp_stock, *request->stock_item, !reuse);
 }
 
 static const struct lease lhttp_socket_lease = {
@@ -82,8 +82,8 @@ lhttp_request(struct pool &pool, struct lhttp_stock &lhttp_stock,
         headers.Write(pool, "host", address.host_and_port);
 
     http_client_request(pool,
-                        lhttp_stock_item_get_socket(stock_item),
-                        lhttp_stock_item_get_type(stock_item),
+                        lhttp_stock_item_get_socket(*stock_item),
+                        lhttp_stock_item_get_type(*stock_item),
                         lhttp_socket_lease, request,
                         nullptr, nullptr,
                         method, address.uri, std::move(headers), body, true,

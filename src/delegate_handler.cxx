@@ -121,5 +121,5 @@ delegate_handler(request &request2)
                         &address.child_options,
                         address.path,
                         &delegate_handler_handler, &request2,
-                        &request2.async_ref);
+                        request2.async_ref);
 }

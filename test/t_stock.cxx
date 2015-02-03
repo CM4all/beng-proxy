@@ -30,19 +30,19 @@ test_quark(void)
  */
 
 static struct pool *
-my_stock_pool(gcc_unused void *ctx, struct pool *parent,
+my_stock_pool(gcc_unused void *ctx, struct pool &parent,
               gcc_unused const char *uri)
 {
-    return pool_new_linear(parent, "my_stock", 512);
+    return pool_new_linear(&parent, "my_stock", 512);
 }
 
 static void
-my_stock_create(void *ctx gcc_unused, StockItem *_item,
+my_stock_create(void *ctx gcc_unused, StockItem &_item,
                 gcc_unused const char *uri, void *info,
-                gcc_unused struct pool *caller_pool,
-                gcc_unused struct async_operation_ref *async_ref)
+                gcc_unused struct pool &caller_pool,
+                gcc_unused struct async_operation_ref &async_ref)
 {
-    struct my_stock_item *item = (struct my_stock_item *)_item;
+    struct my_stock_item *item = (struct my_stock_item *)&_item;
 
     item->info = info;
 
@@ -50,16 +50,16 @@ my_stock_create(void *ctx gcc_unused, StockItem *_item,
         ++num_fail;
 
         GError *error = g_error_new_literal(test_quark(), 0, "next_fail");
-        stock_item_failed(&item->base, error);
+        stock_item_failed(item->base, error);
     } else {
         ++num_create;
-        stock_item_available(&item->base);
+        stock_item_available(item->base);
     }
 }
 
 static bool
 my_stock_borrow(gcc_unused void *ctx,
-                gcc_unused StockItem *item)
+                gcc_unused StockItem &item)
 {
     ++num_borrow;
     return true;
@@ -67,14 +67,14 @@ my_stock_borrow(gcc_unused void *ctx,
 
 static void
 my_stock_release(gcc_unused void *ctx,
-                 gcc_unused StockItem *item)
+                 gcc_unused StockItem &item)
 {
     ++num_release;
 }
 
 static void
 my_stock_destroy(gcc_unused void *ctx,
-                 gcc_unused StockItem *_item)
+                 gcc_unused StockItem &_item)
 {
     ++num_destroy;
 }
@@ -89,12 +89,12 @@ static constexpr StockClass my_stock_class = {
 };
 
 static void
-my_stock_ready(StockItem *item, gcc_unused void *ctx)
+my_stock_ready(StockItem &item, gcc_unused void *ctx)
 {
     assert(!got_item);
 
     got_item = true;
-    last_item = item;
+    last_item = &item;
 }
 
 static void
@@ -123,11 +123,12 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     event_base = event_init();
     pool = pool_new_libc(nullptr, "root");
 
-    stock = stock_new(pool, &my_stock_class, nullptr, nullptr, 3, 8, nullptr, nullptr);
+    stock = stock_new(*pool, my_stock_class, nullptr, nullptr, 3, 8,
+                      nullptr, nullptr);
 
     /* create first item */
 
-    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
+    stock_get(*stock, *pool, nullptr, my_stock_handler, nullptr, async_ref);
     assert(got_item);
     assert(last_item != nullptr);
     assert(num_create == 1 && num_fail == 0);
@@ -136,7 +137,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     /* release first item */
 
-    stock_put(item, false);
+    stock_put(*item, false);
     event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 1 && num_fail == 0);
     assert(num_borrow == 0 && num_release == 1 && num_destroy == 0);
@@ -145,7 +146,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
+    stock_get(*stock, *pool, nullptr, my_stock_handler, nullptr, async_ref);
     assert(got_item);
     assert(last_item == item);
     assert(num_create == 1 && num_fail == 0);
@@ -155,7 +156,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
+    stock_get(*stock, *pool, nullptr, my_stock_handler, nullptr, async_ref);
     assert(got_item);
     assert(last_item != nullptr);
     assert(last_item != item);
@@ -168,7 +169,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     next_fail = true;
     got_item = false;
     last_item = nullptr;
-    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
+    stock_get(*stock, *pool, nullptr, my_stock_handler, nullptr, async_ref);
     assert(got_item);
     assert(last_item == nullptr);
     assert(num_create == 2 && num_fail == 1);
@@ -179,7 +180,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
     next_fail = false;
     got_item = false;
     last_item = nullptr;
-    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
+    stock_get(*stock, *pool, nullptr, my_stock_handler, nullptr, async_ref);
     assert(got_item);
     assert(last_item != nullptr);
     assert(num_create == 3 && num_fail == 1);
@@ -190,21 +191,21 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
+    stock_get(*stock, *pool, nullptr, my_stock_handler, nullptr, async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
 
     /* fifth item waiting */
 
-    stock_get(stock, pool, nullptr, &my_stock_handler, nullptr, &async_ref);
+    stock_get(*stock, *pool, nullptr, my_stock_handler, nullptr, async_ref);
     assert(!got_item);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 1 && num_release == 1 && num_destroy == 0);
 
     /* return third item */
 
-    stock_put(third, false);
+    stock_put(*third, false);
     event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 3 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 0);
@@ -215,7 +216,7 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     got_item = false;
     last_item = nullptr;
-    stock_put(second, true);
+    stock_put(*second, true);
     event_loop(EVLOOP_NONBLOCK);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 1);
@@ -225,19 +226,19 @@ int main(gcc_unused int argc, gcc_unused char **argv)
 
     /* destroy first item */
 
-    stock_put(item, true);
+    stock_put(*item, true);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 2);
 
     /* destroy second item */
 
-    stock_put(second, true);
+    stock_put(*second, true);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 3);
 
     /* destroy third item */
 
-    stock_put(third, true);
+    stock_put(*third, true);
     assert(num_create == 4 && num_fail == 1);
     assert(num_borrow == 2 && num_release == 2 && num_destroy == 4);
 

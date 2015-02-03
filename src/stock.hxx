@@ -28,11 +28,11 @@ struct StockHandler {
      * The stock has become empty.  It is safe to delete it from
      * within this method.
      */
-    void (*empty)(Stock *stock, const char *uri, void *ctx);
+    void (*empty)(Stock &stock, const char *uri, void *ctx);
 };
 
 struct StockGetHandler {
-    void (*ready)(StockItem *item, void *ctx);
+    void (*ready)(StockItem &item, void *ctx);
     void (*error)(GError *error, void *ctx);
 };
 
@@ -52,14 +52,14 @@ struct StockItem {
 struct StockClass {
     size_t item_size;
 
-    struct pool *(*pool)(void *ctx, struct pool *parent, const char *uri);
-    void (*create)(void *ctx, StockItem *item,
+    struct pool *(*pool)(void *ctx, struct pool &parent, const char *uri);
+    void (*create)(void *ctx, StockItem &item,
                    const char *uri, void *info,
-                   struct pool *caller_pool,
-                   struct async_operation_ref *async_ref);
-    bool (*borrow)(void *ctx, StockItem *item);
-    void (*release)(void *ctx, StockItem *item);
-    void (*destroy)(void *ctx, StockItem *item);
+                   struct pool &caller_pool,
+                   struct async_operation_ref &async_ref);
+    bool (*borrow)(void *ctx, StockItem &item);
+    void (*release)(void *ctx, StockItem &item);
+    void (*destroy)(void *ctx, StockItem &item);
 };
 
 struct StockStats {
@@ -70,16 +70,28 @@ struct StockStats {
  * @param handler optional handler class
  */
 Stock *
-stock_new(struct pool *pool, const StockClass *_class,
+stock_new(struct pool &pool, const StockClass &_class,
           void *class_ctx, const char *uri, unsigned limit, unsigned max_idle,
           const StockHandler *handler, void *handler_ctx);
+
+/**
+ * @param handler optional handler class
+ */
+static inline Stock *
+stock_new(struct pool &pool, const StockClass &_class,
+          void *class_ctx, const char *uri, unsigned limit, unsigned max_idle,
+          const StockHandler &handler, void *handler_ctx)
+{
+    return stock_new(pool, _class, class_ctx, uri, limit, max_idle,
+                     &handler, handler_ctx);
+}
 
 void
 stock_free(Stock *stock);
 
 gcc_pure
 const char *
-stock_get_uri(Stock *stock);
+stock_get_uri(Stock &stock);
 
 /**
  * Returns true if there are no items in the stock - neither idle nor
@@ -87,19 +99,19 @@ stock_get_uri(Stock *stock);
  */
 gcc_pure
 bool
-stock_is_empty(const Stock *stock);
+stock_is_empty(const Stock &stock);
 
 /**
  * Obtain statistics.
  */
 gcc_pure
 void
-stock_add_stats(const Stock *stock, StockStats *data);
+stock_add_stats(const Stock &stock, StockStats &data);
 
 void
-stock_get(Stock *stock, struct pool *pool, void *info,
-          const StockGetHandler *handler, void *handler_ctx,
-          struct async_operation_ref *async_ref);
+stock_get(Stock &stock, struct pool &pool, void *info,
+          const StockGetHandler &handler, void *handler_ctx,
+          struct async_operation_ref &async_ref);
 
 /**
  * Obtains an item from the stock without going through the callback.
@@ -108,21 +120,21 @@ stock_get(Stock *stock, struct pool *pool, void *info,
  */
 gcc_pure
 StockItem *
-stock_get_now(Stock *stock, struct pool *pool, void *info, GError **error_r);
+stock_get_now(Stock &stock, struct pool &pool, void *info, GError **error_r);
 
 void
-stock_item_available(StockItem *item);
+stock_item_available(StockItem &item);
 
 void
-stock_item_failed(StockItem *item, GError *error);
+stock_item_failed(StockItem &item, GError *error);
 
 void
-stock_item_aborted(StockItem *item);
+stock_item_aborted(StockItem &item);
 
 void
-stock_put(StockItem *item, bool destroy);
+stock_put(StockItem &item, bool destroy);
 
 void
-stock_del(StockItem *item);
+stock_del(StockItem &item);
 
 #endif

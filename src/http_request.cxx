@@ -126,7 +126,7 @@ http_socket_release(bool reuse, void *ctx)
 {
     struct http_request *hr = (struct http_request *)ctx;
 
-    tcp_balancer_put(hr->tcp_balancer, hr->stock_item, !reuse);
+    tcp_balancer_put(hr->tcp_balancer, *hr->stock_item, !reuse);
 }
 
 static const struct lease http_socket_lease = {
@@ -140,11 +140,11 @@ static const struct lease http_socket_lease = {
  */
 
 static void
-http_request_stock_ready(StockItem *item, void *ctx)
+http_request_stock_ready(StockItem &item, void *ctx)
 {
     struct http_request *hr = (struct http_request *)ctx;
 
-    hr->stock_item = item;
+    hr->stock_item = &item;
     hr->current_address = tcp_balancer_get_last();
 
     http_client_request(*hr->pool,

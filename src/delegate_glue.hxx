@@ -18,6 +18,6 @@ delegate_stock_open(struct hstock *stock, struct pool *pool,
                     const struct child_options *options,
                     const char *path,
                     const struct delegate_handler *handler, void *ctx,
-                    struct async_operation_ref *async_ref);
+                    struct async_operation_ref &async_ref);
 
 #endif

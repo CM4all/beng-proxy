@@ -190,7 +190,7 @@ my_socket_release(bool reuse, void *ctx)
     struct lb_request *request2 = (struct lb_request *)ctx;
 
     tcp_balancer_put(request2->balancer,
-                     request2->stock_item, !reuse);
+                     *request2->stock_item, !reuse);
 }
 
 static const struct lease my_socket_lease = {
@@ -266,12 +266,12 @@ static const struct http_response_handler my_response_handler = {
  */
 
 static void
-my_stock_ready(StockItem *item, void *ctx)
+my_stock_ready(StockItem &item, void *ctx)
 {
     struct lb_request *request2 = (struct lb_request *)ctx;
     struct http_server_request *request = request2->request;
 
-    request2->stock_item = item;
+    request2->stock_item = &item;
     request2->current_address = tcp_balancer_get_last();
 
     const char *peer_subject = request2->connection->ssl_filter != nullptr

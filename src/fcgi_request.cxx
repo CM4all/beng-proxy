@@ -45,7 +45,7 @@ fcgi_socket_release(bool reuse, void *ctx)
 {
     struct fcgi_request *request = (struct fcgi_request *)ctx;
 
-    fcgi_stock_put(request->fcgi_stock, request->stock_item, !reuse);
+    fcgi_stock_put(request->fcgi_stock, *request->stock_item, !reuse);
     request->stock_item = nullptr;
 }
 
@@ -65,7 +65,7 @@ fcgi_request_abort(struct async_operation *ao)
     struct fcgi_request &request = ContainerCast2(*ao, &fcgi_request::async);
 
     if (request.stock_item != nullptr)
-        fcgi_stock_aborted(request.stock_item);
+        fcgi_stock_aborted(*request.stock_item);
 
     request.async_ref.Abort();
 }
@@ -140,13 +140,13 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
     async_ref->Set(request->async);
     async_ref = &request->async_ref;
 
-    const char *script_filename = fcgi_stock_translate_path(stock_item, path,
+    const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
                                                             request->pool);
-    document_root = fcgi_stock_translate_path(stock_item, document_root,
+    document_root = fcgi_stock_translate_path(*stock_item, document_root,
                                               request->pool);
 
-    fcgi_client_request(request->pool, fcgi_stock_item_get(stock_item),
-                        fcgi_stock_item_get_domain(stock_item) == AF_LOCAL
+    fcgi_client_request(request->pool, fcgi_stock_item_get(*stock_item),
+                        fcgi_stock_item_get_domain(*stock_item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         &fcgi_socket_lease, request,
                         method, uri,
