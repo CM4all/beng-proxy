@@ -146,11 +146,11 @@ child_stock_create(void *stock_ctx, StockItem *_item,
     item->key = key = p_strdup(pool, key);
     item->cls = cls;
 
-    GError *error = NULL;
-    void *cls_ctx = NULL;
-    if (cls->prepare != NULL) {
+    GError *error = nullptr;
+    void *cls_ctx = nullptr;
+    if (cls->prepare != nullptr) {
         cls_ctx = cls->prepare(pool, key, info, &error);
-        if (cls_ctx == NULL) {
+        if (cls_ctx == nullptr) {
             stock_item_failed(_item, error);
             return;
         }
@@ -160,20 +160,20 @@ child_stock_create(void *stock_ctx, StockItem *_item,
 
     int fd = child_socket_create(&item->socket, &error);
     if (fd < 0) {
-        if (cls_ctx != NULL)
+        if (cls_ctx != nullptr)
             cls->free(cls_ctx);
         stock_item_failed(_item, error);
         return;
     }
 
     int clone_flags = SIGCHLD;
-    if (cls->clone_flags != NULL)
+    if (cls->clone_flags != nullptr)
         clone_flags = cls->clone_flags(key, info, clone_flags, cls_ctx);
 
     pid_t pid = item->pid = child_stock_start(pool, key, info, clone_flags,
                                               cls, cls_ctx, fd, &error);
     if (pid < 0) {
-        if (cls_ctx != NULL)
+        if (cls_ctx != nullptr)
             cls->free(cls_ctx);
         stock_item_failed(_item, error);
         return;
@@ -220,7 +220,7 @@ child_stock_destroy(void *ctx gcc_unused, StockItem *_item)
 
     child_socket_unlink(&item->socket);
 
-    if (item->cls_ctx != NULL)
+    if (item->cls_ctx != nullptr)
         item->cls->free(item->cls_ctx);
 }
 
@@ -243,10 +243,10 @@ struct hstock *
 child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
                 const struct child_stock_class *cls)
 {
-    assert(cls != NULL);
-    assert((cls->prepare == NULL) == (cls->free == NULL));
+    assert(cls != nullptr);
+    assert((cls->prepare == nullptr) == (cls->free == nullptr));
     assert(cls->shutdown_signal != 0);
-    assert(cls->run != NULL);
+    assert(cls->run != nullptr);
 
     union {
         const struct child_stock_class *in;
