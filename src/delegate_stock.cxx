@@ -98,7 +98,7 @@ delegate_stock_fn(void *ctx)
     close(info->fds[1]);
 
     Exec e;
-    jail_wrapper_insert(e, &info->options->jail, NULL);
+    jail_wrapper_insert(e, &info->options->jail, nullptr);
     e.Append(info->helper);
     e.DoExec();
 }
@@ -219,7 +219,7 @@ static constexpr StockClass delegate_stock_class = {
 struct hstock *
 delegate_stock_new(struct pool *pool)
 {
-    return hstock_new(pool, &delegate_stock_class, NULL, 0, 16);
+    return hstock_new(pool, &delegate_stock_class, nullptr, 0, 16);
 }
 
 void
@@ -229,14 +229,14 @@ delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
                    const StockGetHandler *handler, void *handler_ctx,
                    struct async_operation_ref *async_ref)
 {
-    assert(options != NULL);
+    assert(options != nullptr);
 
     const char *uri = helper;
 
     char options_buffer[4096];
     *options->MakeId(options_buffer) = 0;
     if (*options_buffer != 0)
-        uri = p_strcat(pool, helper, "|", options_buffer, NULL);
+        uri = p_strcat(pool, helper, "|", options_buffer, nullptr);
 
     auto info = NewFromPool<struct delegate_info>(*pool);
     info->helper = helper;
@@ -259,8 +259,6 @@ int
 delegate_stock_item_get(StockItem *item)
 {
     auto *process = &ToDelegateProcess(*item);
-
-    assert(item != NULL);
 
     return process->fd;
 }
