@@ -94,6 +94,16 @@ struct Stock {
     struct list_head waiting;
 
     bool may_clear;
+
+    Stock(struct pool &_pool, const StockClass &cls, void *class_ctx,
+          const char *uri, unsigned limit, unsigned max_idle,
+          const StockHandler *handler, void *handler_ctx);
+
+    ~Stock();
+
+    void Destroy() {
+        DeleteFromPool(*pool, this);
+    }
 };
 
 static void
@@ -341,6 +351,53 @@ stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
  *
  */
 
+inline Stock::Stock(struct pool &_pool,
+                    const StockClass &_cls, void *_class_ctx,
+                    const char *_uri, unsigned _limit, unsigned _max_idle,
+                    const StockHandler *_handler, void *_handler_ctx)
+    :pool(&_pool), cls(&_cls), class_ctx(_class_ctx),
+     uri(p_strdup_checked(pool, _uri)),
+     limit(_limit), max_idle(_max_idle),
+     handler(_handler), handler_ctx(_handler_ctx)
+{
+    defer_event_init(&retry_event, stock_retry_event_callback, this);
+    defer_event_init(&empty_event, stock_empty_event_callback, this);
+    evtimer_set(&cleanup_event, stock_cleanup_event_callback, this);
+    evtimer_set(&clear_event, stock_clear_event_callback, this);
+
+    num_idle = 0;
+    list_init(&idle);
+
+    num_busy = 0;
+    list_init(&busy);
+
+    num_create = 0;
+
+    if (limit > 0)
+        list_init(&waiting);
+
+    may_clear = false;
+    stock_schedule_clear(*this);
+}
+
+inline Stock::~Stock()
+{
+    assert(num_busy == 0);
+    assert(num_create == 0);
+
+    /* must not call stock_free() when there are busy items left */
+    assert(list_empty(&busy));
+
+    defer_event_deinit(&retry_event);
+    defer_event_deinit(&empty_event);
+    evtimer_del(&cleanup_event);
+    evtimer_del(&clear_event);
+
+    stock_clear_idle(*this);
+
+    pool_unref(pool);
+}
+
 Stock *
 stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
           const char *uri, unsigned limit, unsigned max_idle,
@@ -356,38 +413,10 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 
     struct pool *pool = pool_new_linear(&_pool, "stock", 1024);
 
-    auto stock = NewFromPool<Stock>(*pool);
-    stock->pool = pool;
-    stock->cls = &cls;
-    stock->class_ctx = class_ctx;
-    stock->uri = uri == nullptr ? nullptr : p_strdup(pool, uri);
-    stock->limit = limit;
-    stock->max_idle = max_idle;
-    stock->handler = handler;
-    stock->handler_ctx = handler_ctx;
-
-    defer_event_init(&stock->retry_event, stock_retry_event_callback, stock);
-    defer_event_init(&stock->empty_event, stock_empty_event_callback, stock);
-    evtimer_set(&stock->cleanup_event, stock_cleanup_event_callback, stock);
-    evtimer_set(&stock->clear_event, stock_clear_event_callback, stock);
-
-    stock->num_idle = 0;
-    list_init(&stock->idle);
-
-    stock->num_busy = 0;
-    list_init(&stock->busy);
-
-    stock->num_create = 0;
-
-    if (limit > 0)
-        list_init(&stock->waiting);
-
-    stock->may_clear = false;
-    stock_schedule_clear(*stock);
-
-    return stock;
+    return NewFromPool<Stock>(*pool, *pool, cls, class_ctx,
+                              uri, limit, max_idle,
+                              handler, handler_ctx);
 }
-
 
 static void
 stock_item_free(Stock &stock, StockItem &item)
@@ -415,20 +444,8 @@ void
 stock_free(Stock *stock)
 {
     assert(stock != nullptr);
-    assert(stock->num_busy == 0);
-    assert(stock->num_create == 0);
 
-    /* must not call stock_free() when there are busy items left */
-    assert(list_empty(&stock->busy));
-
-    defer_event_deinit(&stock->retry_event);
-    defer_event_deinit(&stock->empty_event);
-    evtimer_del(&stock->cleanup_event);
-    evtimer_del(&stock->clear_event);
-
-    stock_clear_idle(*stock);
-
-    pool_unref(stock->pool);
+    stock->Destroy();
 }
 
 const char *
