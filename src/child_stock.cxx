@@ -12,6 +12,7 @@
 #include "gerrno.h"
 #include "sigutil.h"
 #include "pool.hxx"
+#include "util/Cast.hxx"
 
 #include <glib.h>
 
@@ -36,7 +37,7 @@ struct child_stock_item {
 static void
 child_stock_child_callback(int status gcc_unused, void *ctx)
 {
-    struct child_stock_item *item = (struct child_stock_item *)ctx;
+    auto *item = (struct child_stock_item *)ctx;
 
     item->pid = -1;
 
@@ -112,6 +113,18 @@ child_stock_start(struct pool *pool, const char *key, void *info,
  *
  */
 
+static constexpr struct child_stock_item &
+ToChildStockItem(StockItem &item)
+{
+    return ContainerCast2(item, &child_stock_item::base);
+}
+
+static constexpr const struct child_stock_item &
+ToChildStockItem(const StockItem &item)
+{
+    return ContainerCast2(item, &child_stock_item::base);
+}
+
 static struct pool *
 child_stock_pool(void *ctx gcc_unused, struct pool *parent,
                  const char *uri gcc_unused)
@@ -128,7 +141,7 @@ child_stock_create(void *stock_ctx, StockItem *_item,
     const struct child_stock_class *cls =
         (const struct child_stock_class *)stock_ctx;
     struct pool *pool = _item->pool;
-    struct child_stock_item *item = (struct child_stock_item *)_item;
+    auto *item = &ToChildStockItem(*_item);
 
     item->key = key = p_strdup(pool, key);
     item->cls = cls;
@@ -175,7 +188,7 @@ child_stock_create(void *stock_ctx, StockItem *_item,
 static bool
 child_stock_borrow(gcc_unused void *ctx, StockItem *_item)
 {
-    struct child_stock_item *item = (struct child_stock_item *)_item;
+    auto *item = &ToChildStockItem(*_item);
 
     assert(!item->busy);
     item->busy = true;
@@ -186,7 +199,7 @@ child_stock_borrow(gcc_unused void *ctx, StockItem *_item)
 static void
 child_stock_release(gcc_unused void *ctx, StockItem *_item)
 {
-    struct child_stock_item *item = (struct child_stock_item *)_item;
+    auto *item = &ToChildStockItem(*_item);
 
     assert(item->busy);
     item->busy = false;
@@ -200,7 +213,7 @@ child_stock_release(gcc_unused void *ctx, StockItem *_item)
 static void
 child_stock_destroy(void *ctx gcc_unused, StockItem *_item)
 {
-    struct child_stock_item *item = (struct child_stock_item *)_item;
+    auto *item = &ToChildStockItem(*_item);
 
     if (item->pid >= 0)
         child_kill_signal(item->pid, item->cls->shutdown_signal);
@@ -246,16 +259,16 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
 const char *
 child_stock_item_key(const StockItem *_item)
 {
-    const struct child_stock_item *item =
-        (const struct child_stock_item *)_item;
+    const auto *item = &ToChildStockItem(*_item);
+
     return item->key;
 }
 
 int
 child_stock_item_connect(const StockItem *_item, GError **error_r)
 {
-    const struct child_stock_item *item =
-        (const struct child_stock_item *)_item;
+    const auto *item = &ToChildStockItem(*_item);
+
     return child_socket_connect(&item->socket, error_r);
 }
 
@@ -263,6 +276,7 @@ void
 child_stock_put(struct hstock *hstock, StockItem *_item,
                 bool destroy)
 {
-    struct child_stock_item *item = (struct child_stock_item *)_item;
+    auto *item = &ToChildStockItem(*_item);
+
     hstock_put(hstock, item->key, &item->base, destroy);
 }
