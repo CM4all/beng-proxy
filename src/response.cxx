@@ -729,6 +729,26 @@ response_response(http_status_t status, struct strmap *headers,
     assert(body == nullptr || !istream_has_handler(body));
 
     if (http_status_is_success(status)) {
+        if (!request2.transformed) {
+            /* handle the response header "x-cm4all-view" */
+            const char *view_name = headers->Get("x-cm4all-view");
+            if (view_name != nullptr) {
+                const WidgetView *view =
+                    widget_view_lookup(request2.translate.response->views,
+                                       view_name);
+                if (view == nullptr) {
+                    /* the view specified in the response header does not
+                       exist, bail out */
+
+                    response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
+                                              "No such view");
+                    return;
+                }
+
+                request2.translate.transformation = view->transformation;
+            }
+        }
+
         const Transformation *transformation = request2.PopTransformation();
         if (transformation != nullptr) {
             response_apply_transformation(request2, status, headers, body,

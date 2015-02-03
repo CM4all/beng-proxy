@@ -634,6 +634,22 @@ class Translation(Protocol):
             self._handle_hosting(request, response, '/hosting/', raw_uri[9:])
         elif raw_uri[:7] == '/probe/':
             self._handle_probe(request, response, '/probe/', raw_uri[7:])
+        elif raw_uri[:6] == '/view/':
+            response.packet(TRANSLATE_BASE, '/view/')
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'view.py'))
+            response.packet(TRANSLATE_PATH_INFO, '/')
+            response.packet(TRANSLATE_FILTER)
+            response.pipe(os.path.join(cgi_path, 'pipe.sed'))
+            response.view('foo')
+            response.packet(TRANSLATE_FILTER)
+            response.pipe(os.path.join(cgi_path, 'pipe2.sed'))
+            response.view('bar')
+            response.packet(TRANSLATE_FILTER)
+            response.pipe(os.path.join(cgi_path, 'pipe.sed'))
+            response.packet(TRANSLATE_FILTER)
+            response.pipe(os.path.join(cgi_path, 'pipe2.sed'))
+            response.view('raw')
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

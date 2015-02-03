@@ -1150,7 +1150,7 @@ forward all requests of a session to the same worker. \\
 of the view (ASCII letters, digits, underscore, dash only).  Each view
 can have different address/processor/filter settings.  The first view
 (the one before the first \verb|VIEW| packet) is the default and has
-no name.  The root template has only the default view. \\
+no name. \\
 
 \hline
 
@@ -2482,6 +2482,12 @@ this point, a ``partial'' request for a child widget may be discarded
 already when the previous view did not declare the widget as a
 ``container''.  Due to these side effects, this feature should be
 avoided if possible; it is better to select the view in the request.
+
+\subsubsection{Generic Views}
+
+Regular HTTP resources can have views, too.  Usually, only the default
+view is used.  There is only one way to select a different view: by
+using the \texttt{X-CM4all-View} response header.
 
 \section{The Beng Template Language}
 \label{processor}
