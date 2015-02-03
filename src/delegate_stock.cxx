@@ -108,6 +108,12 @@ delegate_stock_fn(void *ctx)
  *
  */
 
+static constexpr struct delegate_process &
+ToDelegateProcess(StockItem &item)
+{
+    return ContainerCast2(item, &delegate_process::stock_item);
+}
+
 static struct pool *
 delegate_stock_pool(void *ctx gcc_unused, struct pool *parent,
                     const char *uri gcc_unused)
@@ -121,7 +127,7 @@ delegate_stock_create(void *ctx gcc_unused, StockItem *item,
                       struct pool *caller_pool gcc_unused,
                       struct async_operation_ref *async_ref gcc_unused)
 {
-    struct delegate_process *process = (struct delegate_process *)item;
+    auto *process = &ToDelegateProcess(*item);
     struct delegate_info *const info = (struct delegate_info *)_info;
     const struct child_options *const options = info->options;
 
@@ -167,8 +173,7 @@ delegate_stock_create(void *ctx gcc_unused, StockItem *item,
 static bool
 delegate_stock_borrow(void *ctx gcc_unused, StockItem *item)
 {
-    struct delegate_process *process =
-        (struct delegate_process *)item;
+    auto *process = &ToDelegateProcess(*item);
 
     p_event_del(&process->event, process->stock_item.pool);
     return true;
@@ -177,8 +182,7 @@ delegate_stock_borrow(void *ctx gcc_unused, StockItem *item)
 static void
 delegate_stock_release(void *ctx gcc_unused, StockItem *item)
 {
-    struct delegate_process *process =
-        (struct delegate_process *)item;
+    auto *process = &ToDelegateProcess(*item);
     static const struct timeval tv = {
         .tv_sec = 60,
         .tv_usec = 0,
@@ -191,7 +195,7 @@ delegate_stock_release(void *ctx gcc_unused, StockItem *item)
 static void
 delegate_stock_destroy(void *ctx gcc_unused, StockItem *item)
 {
-    struct delegate_process *process = (struct delegate_process *)item;
+    auto *process = &ToDelegateProcess(*item);
 
     p_event_del(&process->event, process->stock_item.pool);
     close(process->fd);
@@ -246,7 +250,7 @@ void
 delegate_stock_put(struct hstock *delegate_stock,
                    StockItem *item, bool destroy)
 {
-    struct delegate_process *process = (struct delegate_process *)item;
+    auto *process = &ToDelegateProcess(*item);
 
     hstock_put(delegate_stock, process->uri, item, destroy);
 }
@@ -254,7 +258,7 @@ delegate_stock_put(struct hstock *delegate_stock,
 int
 delegate_stock_item_get(StockItem *item)
 {
-    struct delegate_process *process = (struct delegate_process *)item;
+    auto *process = &ToDelegateProcess(*item);
 
     assert(item != NULL);
 
