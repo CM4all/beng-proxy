@@ -10,7 +10,6 @@
 #include "glibfwd.hxx"
 
 #include <inline/compiler.h>
-#include <inline/list.h>
 
 struct pool;
 struct async_operation_ref;
