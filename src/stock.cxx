@@ -239,37 +239,35 @@ stock_retry_waiting(Stock &stock)
     /* first try to serve existing idle items */
 
     while (stock.num_idle > 0) {
-        auto *waiting = (Stock::Waiting *)stock.waiting.next;
-
         if (list_empty(&stock.waiting))
             return;
 
-        waiting->operation.Finished();
-        list_remove(&waiting->siblings);
+        auto &waiting = *(Stock::Waiting *)stock.waiting.next;
+        waiting.operation.Finished();
+        list_remove(&waiting.siblings);
 
-        if (stock_get_idle(stock, waiting->handler, waiting->handler_ctx))
-            waiting->Destroy();
+        if (stock_get_idle(stock, waiting.handler, waiting.handler_ctx))
+            waiting.Destroy();
         else
             /* didn't work (probably because borrowing the item has
                failed) - re-add to "waiting" list */
-            list_add(&waiting->siblings, &stock.waiting);
+            list_add(&waiting.siblings, &stock.waiting);
     }
 
     /* if we're below the limit, create a bunch of new items */
 
     for (unsigned i = stock.limit - stock.num_busy - stock.num_create;
          stock.num_busy + stock.num_create < stock.limit && i > 0; --i) {
-        auto *waiting = (Stock::Waiting *)stock.waiting.next;
-
         if (list_empty(&stock.waiting))
             return;
 
-        waiting->operation.Finished();
-        list_remove(&waiting->siblings);
-        stock_get_create(stock, waiting->pool, waiting->info,
-                         waiting->handler, waiting->handler_ctx,
-                         waiting->async_ref);
-        waiting->Destroy();
+        auto &waiting = *(Stock::Waiting *)stock.waiting.next;
+        waiting.operation.Finished();
+        list_remove(&waiting.siblings);
+        stock_get_create(stock, waiting.pool, waiting.info,
+                         waiting.handler, waiting.handler_ctx,
+                         waiting.async_ref);
+        waiting.Destroy();
     }
 }
 
