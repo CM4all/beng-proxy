@@ -30,6 +30,29 @@ struct StockMap {
     unsigned max_idle;
 
     struct hashmap *stocks;
+
+    StockMap(struct pool &_pool, const StockClass &_cls, void *_class_ctx,
+             unsigned _limit, unsigned _max_idle)
+        :pool(pool_new_linear(&_pool, "hstock", 4096)),
+         cls(&_cls), class_ctx(_class_ctx),
+         limit(_limit), max_idle(_max_idle),
+         stocks(hashmap_new(pool, 64)) {}
+
+    ~StockMap() {
+        hashmap_rewind(stocks);
+        const struct hashmap_pair *pair;
+        while ((pair = hashmap_next(stocks)) != nullptr) {
+            Stock *stock = (Stock *)pair->value;
+
+            stock_free(stock);
+        }
+
+        pool_unref(pool);
+    }
+
+    void Destroy() {
+        DeleteFromPool(*pool, this);
+    }
 };
 
 /*
@@ -54,7 +77,7 @@ static constexpr StockHandler hstock_stock_handler = {
 };
 
 StockMap *
-hstock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
+hstock_new(struct pool &pool, const StockClass &cls, void *class_ctx,
            unsigned limit, unsigned max_idle)
 {
     assert(cls.item_size > sizeof(StockItem));
@@ -64,35 +87,14 @@ hstock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
     assert(cls.destroy != nullptr);
     assert(max_idle > 0);
 
-    auto *pool = pool_new_linear(&_pool, "hstock", 4096);
-
-    auto hstock = NewFromPool<StockMap>(*pool);
-    hstock->pool = pool;
-    hstock->cls = &cls;
-    hstock->class_ctx = class_ctx;
-    hstock->limit = limit;
-    hstock->max_idle = max_idle;
-    hstock->stocks = hashmap_new(pool, 64);
-
-    return hstock;
+    return NewFromPool<StockMap>(pool, pool, cls, class_ctx,
+                                 limit, max_idle);
 }
 
 void
 hstock_free(StockMap *hstock)
 {
-    const struct hashmap_pair *pair;
-
-    assert(hstock != nullptr);
-
-    hashmap_rewind(hstock->stocks);
-
-    while ((pair = hashmap_next(hstock->stocks)) != nullptr) {
-        Stock *stock = (Stock *)pair->value;
-
-        stock_free(stock);
-    }
-
-    pool_unref(hstock->pool);
+    hstock->Destroy();
 }
 
 void
