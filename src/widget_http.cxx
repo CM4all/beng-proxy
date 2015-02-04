@@ -494,6 +494,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
             /* the view specified in the response header does not
                exist, bail out */
 
+            daemon_log(4, "No such view: %s\n", view_name);
             g_set_error(error_r, widget_quark(), WIDGET_ERROR_NO_SUCH_VIEW,
                         "No such view: %s", view_name);
             return false;

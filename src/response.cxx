@@ -743,6 +743,7 @@ response_response(http_status_t status, struct strmap *headers,
                     if (body != nullptr)
                         istream_close_unused(body);
 
+                    daemon_log(4, "No such view: %s\n", view_name);
                     response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                               "No such view");
                     return;
