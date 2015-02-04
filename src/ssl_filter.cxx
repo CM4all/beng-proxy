@@ -255,8 +255,7 @@ ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
 {
     auto *const ssl = (SslFilter *)ctx;
 
-    if (ssl->ssl != nullptr)
-        SSL_free(ssl->ssl);
+    SSL_free(ssl->ssl);
 
     ssl->decrypted_input.Free(fb_pool_get());
     ssl->plain_output.FreeIfDefined(fb_pool_get());
@@ -281,13 +280,15 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
 {
     assert(pool != nullptr);
 
-    auto *ssl = NewFromPool<SslFilter>(*pool);
-
-    ssl->ssl = ssl_factory_make(factory);
-    if (ssl->ssl == nullptr) {
+    auto *_ssl = ssl_factory_make(factory);
+    if (_ssl == nullptr) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed");
         return nullptr;
     }
+
+    auto *ssl = NewFromPool<SslFilter>(*pool);
+
+    ssl->ssl = _ssl;
 
     ssl->decrypted_input.Allocate(fb_pool_get());
     ssl->encrypted_input = BIO_new(BIO_s_mem());
