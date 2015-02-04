@@ -3014,7 +3014,7 @@ translate_handle_packet(TranslateClient *client,
                                             { _payload, payload_length });
 
     case TRANSLATE_AUTH:
-        if (!client->response.auth.IsNull()) {
+        if (client->response.HasAuth()) {
             translate_client_error(client,
                                    "duplicate AUTH packet");
             return false;

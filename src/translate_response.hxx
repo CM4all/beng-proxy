@@ -224,6 +224,11 @@ struct TranslateResponse {
         return vary.Contains(cmd);
     }
 
+    gcc_pure
+    bool HasAuth() const {
+        return !auth.IsNull();
+    }
+
     void CopyFrom(struct pool *pool, const TranslateResponse &src);
 
     /**
