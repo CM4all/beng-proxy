@@ -319,20 +319,12 @@ Stock::ClearIdle()
                (const void *)this, uri,
                idle.size(), busy.size());
 
-    auto i = idle.begin();
-    const auto end = idle.end();
-    while (i != end) {
-        StockItem &item = *i;
+    if (idle.size() > max_idle)
+        stock_unschedule_cleanup(*this);
 
-        i = idle.erase(i);
-
-        if (idle.size() == max_idle)
-            stock_unschedule_cleanup(*this);
-
-        DestroyItem(item);
-    }
-
-    assert(idle.empty());
+    idle.clear_and_dispose([this](StockItem *item){
+            DestroyItem(*item);
+        });
 }
 
 static void
