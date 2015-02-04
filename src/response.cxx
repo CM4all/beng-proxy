@@ -740,6 +740,9 @@ response_response(http_status_t status, struct strmap *headers,
                     /* the view specified in the response header does not
                        exist, bail out */
 
+                    if (body != nullptr)
+                        istream_close_unused(body);
+
                     response_dispatch_message(request2, HTTP_STATUS_NOT_FOUND,
                                               "No such view");
                     return;
