@@ -28,7 +28,7 @@
 #include <string.h>
 
 struct lhttp_stock {
-    struct hstock *const hstock;
+    StockMap *const hstock;
     struct mstock *const child_stock;
 
     lhttp_stock(struct pool &pool, unsigned limit, unsigned max_idle);

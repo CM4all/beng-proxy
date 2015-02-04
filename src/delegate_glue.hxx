@@ -9,11 +9,11 @@
 #define BENG_DELEGATE_GLUE_HXX
 
 struct async_operation_ref;
-struct hstock;
 struct child_options;
+struct StockMap;
 
 void
-delegate_stock_open(struct hstock *stock, struct pool *pool,
+delegate_stock_open(StockMap *stock, struct pool *pool,
                     const char *helper,
                     const struct child_options *options,
                     const char *path,

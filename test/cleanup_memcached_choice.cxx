@@ -58,7 +58,6 @@ int main(int argc, char **argv) {
     struct event_base *event_base;
     struct pool *root_pool;
     static struct context ctx;
-    struct hstock *tcp_stock;
     struct memcached_stock *stock;
 
     if (argc != 3) {
@@ -90,7 +89,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    tcp_stock = tcp_stock_new(ctx.pool, 0);
+    auto *tcp_stock = tcp_stock_new(ctx.pool, 0);
     struct tcp_balancer *tcp_balancer = tcp_balancer_new(ctx.pool, tcp_stock,
                                                          balancer_new(*ctx.pool));
     stock = memcached_stock_new(*ctx.pool, tcp_balancer, &address_list);

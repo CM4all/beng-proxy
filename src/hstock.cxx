@@ -1,6 +1,6 @@
 /*
- * The 'hstock' class is a hash table of any number of 'stock'
- * objects, each with a different URI.
+ * The StockMap class is a hash table of any number of Stock objects,
+ * each with a different URI.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
@@ -14,7 +14,7 @@
 
 #include <assert.h>
 
-struct hstock {
+struct StockMap {
     struct pool *pool;
     const StockClass *cls;
     void *class_ctx;
@@ -40,7 +40,7 @@ struct hstock {
 static void
 hstock_stock_empty(Stock &stock, const char *uri, void *ctx)
 {
-    struct hstock *hstock = (struct hstock *)ctx;
+    StockMap *hstock = (StockMap *)ctx;
 
     daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
                (const void *)hstock, (const void *)&stock, uri);
@@ -53,7 +53,7 @@ static constexpr StockHandler hstock_stock_handler = {
     .empty = hstock_stock_empty,
 };
 
-struct hstock *
+StockMap *
 hstock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
            unsigned limit, unsigned max_idle)
 {
@@ -66,7 +66,7 @@ hstock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 
     auto *pool = pool_new_linear(&_pool, "hstock", 4096);
 
-    auto hstock = NewFromPool<struct hstock>(*pool);
+    auto hstock = NewFromPool<StockMap>(*pool);
     hstock->pool = pool;
     hstock->cls = &cls;
     hstock->class_ctx = class_ctx;
@@ -78,7 +78,7 @@ hstock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
 }
 
 void
-hstock_free(struct hstock *hstock)
+hstock_free(StockMap *hstock)
 {
     const struct hashmap_pair *pair;
 
@@ -96,7 +96,7 @@ hstock_free(struct hstock *hstock)
 }
 
 void
-hstock_fade_all(struct hstock &hstock)
+hstock_fade_all(StockMap &hstock)
 {
     hashmap_rewind(hstock.stocks);
 
@@ -108,7 +108,7 @@ hstock_fade_all(struct hstock &hstock)
 }
 
 void
-hstock_add_stats(const struct hstock &stock, StockStats &data)
+hstock_add_stats(const StockMap &stock, StockStats &data)
 {
     struct hashmap *h = stock.stocks;
     hashmap_rewind(h);
@@ -121,7 +121,7 @@ hstock_add_stats(const struct hstock &stock, StockStats &data)
 }
 
 static Stock &
-hstock_get_stock(struct hstock &hstock, const char *uri)
+hstock_get_stock(StockMap &hstock, const char *uri)
 {
     Stock *stock = (Stock *)hashmap_get(hstock.stocks, uri);
     if (stock == nullptr) {
@@ -135,7 +135,7 @@ hstock_get_stock(struct hstock &hstock, const char *uri)
 }
 
 void
-hstock_get(struct hstock &hstock, struct pool &pool,
+hstock_get(StockMap &hstock, struct pool &pool,
            const char *uri, void *info,
            const StockGetHandler &handler, void *handler_ctx,
            struct async_operation_ref &async_ref)
@@ -145,7 +145,7 @@ hstock_get(struct hstock &hstock, struct pool &pool,
 }
 
 StockItem *
-hstock_get_now(struct hstock &hstock, struct pool &pool,
+hstock_get_now(StockMap &hstock, struct pool &pool,
                const char *uri, void *info,
                GError **error_r)
 {
@@ -154,7 +154,7 @@ hstock_get_now(struct hstock &hstock, struct pool &pool,
 }
 
 void
-hstock_put(gcc_unused struct hstock &hstock, gcc_unused const char *uri,
+hstock_put(gcc_unused StockMap &hstock, gcc_unused const char *uri,
            StockItem &object, bool destroy)
 {
 #ifndef NDEBUG

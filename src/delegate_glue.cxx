@@ -17,14 +17,14 @@
 #include <errno.h>
 
 struct async_operation_ref;
-struct hstock;
+struct StockMap;
 
 struct delegate_glue {
     struct pool *pool;
 
     const char *path;
 
-    struct hstock *stock;
+    StockMap *stock;
     StockItem *item;
 
     const struct delegate_handler *handler;
@@ -72,7 +72,7 @@ static constexpr StockGetHandler delegate_stock_handler = {
 
 
 void
-delegate_stock_open(struct hstock *stock, struct pool *pool,
+delegate_stock_open(StockMap *stock, struct pool *pool,
                     const char *helper,
                     const struct child_options *options,
                     const char *path,

@@ -132,7 +132,6 @@ int main(int argc, char **argv) {
         .uri = "/foo/index.html",
     };
     struct pool *pool;
-    struct hstock *tcp_stock;
     struct tstock *translate_stock;
     struct async_operation_ref async_ref;
 
@@ -144,7 +143,7 @@ int main(int argc, char **argv) {
 
     pool = pool_new_libc(nullptr, "root");
 
-    tcp_stock = tcp_stock_new(pool, 0);
+    auto *tcp_stock = tcp_stock_new(pool, 0);
     translate_stock = tstock_new(pool, tcp_stock, "/tmp/beng-proxy-translate");
 
     tstock_translate(translate_stock, pool,

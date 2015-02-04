@@ -13,15 +13,15 @@
 
 struct pool;
 struct async_operation_ref;
-struct hstock;
 struct lease_ref;
+struct StockMap;
 struct StockItem;
 struct StockStats;
 struct StockGetHandler;
 
 gcc_malloc
 struct mstock *
-mstock_new(struct hstock &hstock);
+mstock_new(StockMap &hstock);
 
 void
 mstock_free(struct mstock *mstock);

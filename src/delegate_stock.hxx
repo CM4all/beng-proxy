@@ -9,22 +9,22 @@
 
 struct pool;
 struct child_options;
-struct hstock;
+struct StockMap;
 struct StockGetHandler;
 struct StockItem;
 
-struct hstock *
+StockMap *
 delegate_stock_new(struct pool *pool);
 
 void
-delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
+delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *path,
                    const struct child_options *options,
                    const StockGetHandler &handler, void *handler_ctx,
                    struct async_operation_ref &async_ref);
 
 void
-delegate_stock_put(struct hstock *delegate_stock,
+delegate_stock_put(StockMap *delegate_stock,
                    StockItem &item, bool destroy);
 
 int

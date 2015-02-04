@@ -28,7 +28,7 @@
 struct was_request {
     struct pool *pool;
 
-    struct hstock *was_stock;
+    StockMap *was_stock;
     const char *action;
     StockItem *stock_item;
 
@@ -114,7 +114,7 @@ static constexpr StockGetHandler was_stock_handler = {
  */
 
 void
-was_request(struct pool *pool, struct hstock *was_stock,
+was_request(struct pool *pool, StockMap *was_stock,
             const struct child_options *options,
             const char *action,
             const char *path,

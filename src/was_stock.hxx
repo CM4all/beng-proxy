@@ -12,20 +12,20 @@
 #include <inline/compiler.h>
 
 struct pool;
-struct hstock;
+struct StockMap;
 struct StockItem;
 struct StockGetHandler;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 
-struct hstock *
+StockMap *
 was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 
 /**
  * @param args command-line arguments
  */
 void
-was_stock_get(struct hstock *hstock, struct pool *pool,
+was_stock_get(StockMap *hstock, struct pool *pool,
               const struct child_options *options,
               const char *executable_path,
               ConstBuffer<const char *> args,
@@ -52,6 +52,6 @@ was_stock_translate_path(const StockItem &item,
  * Wrapper for hstock_put().
  */
 void
-was_stock_put(struct hstock *hstock, StockItem &item, bool destroy);
+was_stock_put(StockMap *hstock, StockItem &item, bool destroy);
 
 #endif

@@ -12,7 +12,7 @@
 struct pool;
 struct istream;
 struct was_stock;
-struct hstock;
+struct StockMap;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
@@ -24,7 +24,7 @@ template<typename T> struct ConstBuffer;
  * @param args command-line arguments
  */
 void
-was_request(struct pool *pool, struct hstock *was_stock,
+was_request(struct pool *pool, StockMap *was_stock,
             const struct child_options *options,
             const char *action,
             const char *path,

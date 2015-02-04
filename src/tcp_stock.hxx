@@ -9,6 +9,7 @@
 
 struct pool;
 struct balancer;
+struct StockMap;
 struct StockItem;
 struct StockGetHandler;
 struct async_operation_ref;
@@ -21,7 +22,7 @@ class SocketAddress;
  * @param limit the maximum number of connections per host
  * @return the new TCP connections stock (this function cannot fail)
  */
-struct hstock *
+StockMap *
 tcp_stock_new(struct pool *pool, unsigned limit);
 
 /**
@@ -30,7 +31,7 @@ tcp_stock_new(struct pool *pool, unsigned limit);
  * @param timeout the connect timeout in seconds
  */
 void
-tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
+tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
               bool ip_transparent,
               SocketAddress bind_address,
               SocketAddress address,
@@ -39,7 +40,7 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
               struct async_operation_ref *async_ref);
 
 void
-tcp_stock_put(struct hstock *tcp_stock, StockItem &item, bool destroy);
+tcp_stock_put(StockMap *tcp_stock, StockItem &item, bool destroy);
 
 int
 tcp_stock_item_get(const StockItem &item);

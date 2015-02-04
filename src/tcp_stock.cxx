@@ -267,14 +267,14 @@ static constexpr StockClass tcp_stock_class = {
  *
  */
 
-struct hstock *
+StockMap *
 tcp_stock_new(struct pool *pool, unsigned limit)
 {
     return hstock_new(*pool, tcp_stock_class, nullptr, limit, 16);
 }
 
 void
-tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
+tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
               bool ip_transparent,
               SocketAddress bind_address,
               SocketAddress address,
@@ -311,7 +311,7 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
 }
 
 void
-tcp_stock_put(struct hstock *tcp_stock, StockItem &item, bool destroy)
+tcp_stock_put(StockMap *tcp_stock, StockItem &item, bool destroy)
 {
     auto *connection = &StockItemToTcpStockConnection(item);
 

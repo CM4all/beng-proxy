@@ -9,10 +9,10 @@
 
 #include <inline/compiler.h>
 
-struct hstock;
 struct pool;
 struct balancer;
 struct AddressList;
+struct StockMap;
 struct StockGetHandler;
 struct StockItem;
 struct async_operation_ref;
@@ -30,7 +30,7 @@ struct tcp_balancer;
  * @return the new TCP connections stock (this function cannot fail)
  */
 struct tcp_balancer *
-tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
+tcp_balancer_new(struct pool *pool, StockMap *tcp_stock,
                  struct balancer *balancer);
 
 /**

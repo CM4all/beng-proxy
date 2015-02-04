@@ -13,7 +13,7 @@
 #include <string.h>
 
 static const char helper_path[] = "./cm4all-beng-proxy-delegate-helper";
-static struct hstock *delegate_stock;
+static StockMap *delegate_stock;
 static struct pool *pool;
 
 static void

@@ -19,6 +19,7 @@
 #include <forward_list>
 
 struct Stock;
+struct StockMap;
 
 struct lb_instance {
     struct pool *pool;
@@ -44,7 +45,7 @@ struct lb_instance {
 
     /* stock */
     struct balancer *balancer;
-    struct hstock *tcp_stock;
+    StockMap *tcp_stock;
     struct tcp_balancer *tcp_balancer;
 
     Stock *pipe_stock;

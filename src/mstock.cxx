@@ -191,10 +191,10 @@ class MultiStock : public mstock {
 
     DomainMap domains;
 
-    struct hstock &hstock;
+    StockMap &hstock;
 
 public:
-    explicit MultiStock(struct hstock &_hstock)
+    explicit MultiStock(StockMap &_hstock)
         :hstock(_hstock) {}
 
     MultiStock(const MultiStock &) = delete;
@@ -261,7 +261,7 @@ MultiStock::GetNow(struct pool &caller_pool, const char *uri, void *info,
  */
 
 struct mstock *
-mstock_new(struct hstock &hstock)
+mstock_new(StockMap &hstock)
 {
     return new MultiStock(hstock);
 }

@@ -235,14 +235,14 @@ static constexpr StockClass was_stock_class = {
  *
  */
 
-struct hstock *
+StockMap *
 was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
     return hstock_new(*pool, was_stock_class, nullptr, limit, max_idle);
 }
 
 void
-was_stock_get(struct hstock *hstock, struct pool *pool,
+was_stock_get(StockMap *hstock, struct pool *pool,
               const struct child_options *options,
               const char *executable_path,
               ConstBuffer<const char *> args,
@@ -292,7 +292,7 @@ was_stock_translate_path(const StockItem *item,
 }
 
 void
-was_stock_put(struct hstock *hstock, StockItem &item, bool destroy)
+was_stock_put(StockMap *hstock, StockItem &item, bool destroy)
 {
     auto &child = ToWasChild(item);
 

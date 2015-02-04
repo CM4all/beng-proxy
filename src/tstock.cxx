@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 
 struct tstock {
-    struct hstock *tcp_stock;
+    StockMap *tcp_stock;
 
     AllocatedSocketAddress address;
 
@@ -96,7 +96,7 @@ static constexpr StockGetHandler tstock_stock_handler = {
  */
 
 struct tstock *
-tstock_new(struct pool *pool, struct hstock *tcp_stock, const char *socket_path)
+tstock_new(struct pool *pool, StockMap *tcp_stock, const char *socket_path)
 {
     auto stock = NewFromPool<tstock>(*pool);
 

@@ -239,7 +239,7 @@ static constexpr StockClass child_stock_class = {
  *
  */
 
-struct hstock *
+StockMap *
 child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
                 const struct child_stock_class *cls)
 {
@@ -273,7 +273,7 @@ child_stock_item_connect(const StockItem *_item, GError **error_r)
 }
 
 void
-child_stock_put(struct hstock *hstock, StockItem *_item,
+child_stock_put(StockMap *hstock, StockItem *_item,
                 bool destroy)
 {
     auto *item = &ToChildStockItem(*_item);

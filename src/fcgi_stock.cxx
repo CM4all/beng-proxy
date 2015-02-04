@@ -32,8 +32,8 @@
 #endif
 
 struct fcgi_stock {
-    struct hstock *hstock;
-    struct hstock *child_stock;
+    StockMap *hstock;
+    StockMap *child_stock;
 };
 
 struct fcgi_child_params {

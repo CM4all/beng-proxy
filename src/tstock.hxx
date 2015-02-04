@@ -9,13 +9,13 @@
 
 struct pool;
 struct tstock;
-struct hstock;
+struct StockMap;
 struct TranslateHandler;
 struct TranslateRequest;
 struct async_operation_ref;
 
 struct tstock *
-tstock_new(struct pool *pool, struct hstock *tcp_stock, const char *socket_path);
+tstock_new(struct pool *pool, StockMap *tcp_stock, const char *socket_path);
 
 void
 tstock_translate(struct tstock *stock, struct pool *pool,

@@ -15,7 +15,7 @@
 #include <sys/socket.h>
 
 struct pool;
-struct hstock;
+struct StockMap;
 struct StockItem;
 struct async_operation_ref;
 
@@ -33,7 +33,7 @@ struct child_stock_class {
     void (*free)(void *ctx);
 };
 
-struct hstock *
+StockMap *
 child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
                 const struct child_stock_class *cls);
 
@@ -61,7 +61,7 @@ child_stock_item_get_type(gcc_unused const StockItem *item)
  * Wrapper for hstock_put().
  */
 void
-child_stock_put(struct hstock *hstock, StockItem *item,
+child_stock_put(StockMap *hstock, StockItem *item,
                 bool destroy);
 
 #endif

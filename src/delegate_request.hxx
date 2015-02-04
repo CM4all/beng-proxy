@@ -9,13 +9,13 @@
 #define BENG_PROXY_DELEGATE_REQUEST_HXX
 
 struct pool;
-struct hstock;
+struct StockMap;
 struct http_response_handler;
 struct async_operation_ref;
 struct child_options;
 
 void
-delegate_stock_request(struct hstock *stock, struct pool *pool,
+delegate_stock_request(StockMap *stock, struct pool *pool,
                        const char *helper,
                        const struct child_options *options,
                        const char *path, const char *content_type,

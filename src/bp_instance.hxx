@@ -18,6 +18,7 @@
 #include <event.h>
 
 struct Stock;
+struct StockMap;
 
 struct instance {
     struct pool *pool;
@@ -58,7 +59,7 @@ struct instance {
     /* stock */
     struct tcache *translate_cache;
     struct balancer *balancer;
-    struct hstock *tcp_stock;
+    StockMap *tcp_stock;
     struct tcp_balancer *tcp_balancer;
     struct memcached_stock *memcached_stock;
 
@@ -70,9 +71,9 @@ struct instance {
     struct lhttp_stock *lhttp_stock;
     struct fcgi_stock *fcgi_stock;
 
-    struct hstock *was_stock;
+    StockMap *was_stock;
 
-    struct hstock *delegate_stock;
+    StockMap *delegate_stock;
 
     struct nfs_stock *nfs_stock;
     struct nfs_cache *nfs_cache;

@@ -14,7 +14,7 @@
 struct pool;
 struct istream;
 struct http_cache;
-struct hstock;
+struct StockMap;
 struct lhttp_stock;
 struct fcgi_stock;
 struct nfs_cache;
@@ -43,8 +43,8 @@ resource_get(struct http_cache *cache,
              struct tcp_balancer *tcp_balancer,
              struct lhttp_stock *lhttp_stock,
              struct fcgi_stock *fcgi_stock,
-             struct hstock *was_stock,
-             struct hstock *delegate_stock,
+             StockMap *was_stock,
+             StockMap *delegate_stock,
              struct nfs_cache *nfs_cache,
              struct pool *pool,
              unsigned session_sticky,

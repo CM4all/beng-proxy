@@ -216,14 +216,14 @@ static constexpr StockClass delegate_stock_class = {
  *
  */
 
-struct hstock *
+StockMap *
 delegate_stock_new(struct pool *pool)
 {
     return hstock_new(*pool, delegate_stock_class, nullptr, 0, 16);
 }
 
 void
-delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
+delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *helper,
                    const struct child_options *options,
                    const StockGetHandler &handler, void *handler_ctx,
@@ -247,7 +247,7 @@ delegate_stock_get(struct hstock *delegate_stock, struct pool *pool,
 }
 
 void
-delegate_stock_put(struct hstock *delegate_stock,
+delegate_stock_put(StockMap *delegate_stock,
                    StockItem &item, bool destroy)
 {
     auto *process = &ToDelegateProcess(item);

@@ -16,7 +16,7 @@
 #include <glib.h>
 
 struct tcp_balancer {
-    struct hstock *tcp_stock;
+    StockMap *tcp_stock;
 
     struct balancer *balancer;
 };
@@ -124,7 +124,7 @@ const StockGetHandler tcp_balancer_stock_handler = {
  */
 
 struct tcp_balancer *
-tcp_balancer_new(struct pool *pool, struct hstock *tcp_stock,
+tcp_balancer_new(struct pool *pool, StockMap *tcp_stock,
                  struct balancer *balancer)
 {
     auto tcp_balancer = NewFromPool<struct tcp_balancer>(*pool);

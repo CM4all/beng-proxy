@@ -82,7 +82,7 @@ static const struct delegate_handler delegate_get_handler = {
  */
 
 void
-delegate_stock_request(struct hstock *stock, struct pool *pool,
+delegate_stock_request(StockMap *stock, struct pool *pool,
                        const char *helper,
                        const struct child_options *options,
                        const char *path, const char *content_type,

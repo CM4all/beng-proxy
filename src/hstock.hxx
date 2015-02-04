@@ -1,6 +1,6 @@
 /*
- * The 'hstock' class is a hash table of any number of 'stock'
- * objects, each with a different URI.
+ * The StockMap class is a hash table of any number of Stock objects,
+ * each with a different URI.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
@@ -18,31 +18,32 @@ struct StockClass;
 struct StockItem;
 struct StockStats;
 struct StockGetHandler;
+struct StockMap;
 
 gcc_malloc
-struct hstock *
+StockMap *
 hstock_new(struct pool &pool,
            const StockClass &_class, void *class_ctx,
            unsigned limit, unsigned max_idle);
 
 void
-hstock_free(struct hstock *hstock);
+hstock_free(StockMap *hstock);
 
 /**
  * @see stock_fade_all()
  */
 void
-hstock_fade_all(struct hstock &hstock);
+hstock_fade_all(StockMap &hstock);
 
 /**
  * Obtain statistics.
  */
 gcc_pure
 void
-hstock_add_stats(const struct hstock &stock, StockStats &data);
+hstock_add_stats(const StockMap &stock, StockStats &data);
 
 void
-hstock_get(struct hstock &hstock, struct pool &pool,
+hstock_get(StockMap &hstock, struct pool &pool,
            const char *uri, void *info,
            const StockGetHandler &handler, void *handler_ctx,
            struct async_operation_ref &async_ref);
@@ -54,12 +55,12 @@ hstock_get(struct hstock &hstock, struct pool &pool,
  */
 gcc_pure
 StockItem *
-hstock_get_now(struct hstock &hstock, struct pool &pool,
+hstock_get_now(StockMap &hstock, struct pool &pool,
                const char *uri, void *info,
                GError **error_r);
 
 void
-hstock_put(struct hstock &hstock, const char *uri, StockItem &item,
+hstock_put(StockMap &hstock, const char *uri, StockItem &item,
            bool destroy);
 
 

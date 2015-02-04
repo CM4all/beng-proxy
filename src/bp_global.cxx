@@ -8,7 +8,7 @@
 
 struct tcache *global_translate_cache;
 
-struct hstock *global_tcp_stock;
+StockMap *global_tcp_stock;
 struct tcp_balancer *global_tcp_balancer;
 
 struct memcached_stock *global_memcached_stock;
@@ -18,11 +18,11 @@ struct http_cache *global_http_cache;
 struct lhttp_stock *global_lhttp_stock;
 struct fcgi_stock *global_fcgi_stock;
 
-struct hstock *global_was_stock;
+StockMap *global_was_stock;
 
 struct filter_cache *global_filter_cache;
 
-struct hstock *global_delegate_stock;
+StockMap *global_delegate_stock;
 
 struct nfs_stock *global_nfs_stock;
 struct nfs_cache *global_nfs_cache;
