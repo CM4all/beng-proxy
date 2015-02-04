@@ -17,17 +17,17 @@
 struct StockMap {
     struct pool &pool;
     const StockClass &cls;
-    void *class_ctx;
+    void *const class_ctx;
 
     /**
      * The maximum number of items in each stock.
      */
-    unsigned limit;
+    const unsigned limit;
 
     /**
      * The maximum number of permanent idle items in each stock.
      */
-    unsigned max_idle;
+    const unsigned max_idle;
 
     struct hashmap &stocks;
 
