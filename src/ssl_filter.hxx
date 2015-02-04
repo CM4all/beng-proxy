@@ -15,7 +15,7 @@ struct pool;
 struct ssl_factory;
 struct notify;
 struct ssl_config;
-struct ssl_filter;
+struct SslFilter;
 
 /**
  * A module for #thread_socket_filter that encrypts all data with
@@ -30,16 +30,16 @@ extern const struct ThreadSocketFilterHandler ssl_thread_socket_filter;
  * @param plain_fd the plain-text side of the filter (socketpair
  * to local service)
  */
-struct ssl_filter *
+SslFilter *
 ssl_filter_new(struct pool *pool, ssl_factory &factory,
                GError **error_r);
 
 gcc_pure
 const char *
-ssl_filter_get_peer_subject(struct ssl_filter *ssl);
+ssl_filter_get_peer_subject(SslFilter *ssl);
 
 gcc_pure
 const char *
-ssl_filter_get_peer_issuer_subject(struct ssl_filter *ssl);
+ssl_filter_get_peer_issuer_subject(SslFilter *ssl);
 
 #endif

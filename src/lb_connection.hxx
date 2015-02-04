@@ -13,6 +13,7 @@
 
 struct pool;
 struct ssl_factory;
+struct SslFilter;
 class SocketAddress;
 
 struct lb_connection
@@ -25,7 +26,7 @@ struct lb_connection
     const struct lb_listener_config *listener;
 
     const struct config *config;
-    struct ssl_filter *ssl_filter;
+    SslFilter *ssl_filter;
     struct http_server_connection *http;
 
     /**

@@ -20,7 +20,7 @@
 #include <assert.h>
 #include <string.h>
 
-struct ssl_filter {
+struct SslFilter {
     /**
      * Buffers which can be accessed from within the thread without
      * holding locks.  These will be copied to/from the according
@@ -195,7 +195,7 @@ static bool
 ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
                              void *ctx)
 {
-    struct ssl_filter *ssl = (struct ssl_filter *)ctx;
+    auto *const ssl = (SslFilter *)ctx;
 
     /* copy input (and output to make room for more output) */
 
@@ -253,7 +253,7 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
 static void
 ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
 {
-    struct ssl_filter *ssl = (struct ssl_filter *)ctx;
+    auto *const ssl = (SslFilter *)ctx;
 
     if (ssl->ssl != nullptr)
         SSL_free(ssl->ssl);
@@ -275,13 +275,13 @@ const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
  *
  */
 
-struct ssl_filter *
+SslFilter *
 ssl_filter_new(struct pool *pool, ssl_factory &factory,
                GError **error_r)
 {
     assert(pool != nullptr);
 
-    ssl_filter *ssl = NewFromPool<ssl_filter>(*pool);
+    auto *ssl = NewFromPool<SslFilter>(*pool);
 
     ssl->ssl = ssl_factory_make(factory);
     if (ssl->ssl == nullptr) {
@@ -303,7 +303,7 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
 }
 
 const char *
-ssl_filter_get_peer_subject(struct ssl_filter *ssl)
+ssl_filter_get_peer_subject(SslFilter *ssl)
 {
     assert(ssl != nullptr);
 
@@ -311,7 +311,7 @@ ssl_filter_get_peer_subject(struct ssl_filter *ssl)
 }
 
 const char *
-ssl_filter_get_peer_issuer_subject(struct ssl_filter *ssl)
+ssl_filter_get_peer_issuer_subject(SslFilter *ssl)
 {
     assert(ssl != nullptr);
 
