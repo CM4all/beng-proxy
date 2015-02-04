@@ -4,7 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "pool.h"
+#include "pool.hxx"
+
+#include <algorithm>
 
 #include <assert.h>
 #include <string.h>
@@ -24,13 +26,13 @@ char *
 p_strdup_impl(struct pool *pool, const char *src
               TRACE_ARGS_DECL)
 {
-    return p_memdup_fwd(pool, src, strlen(src) + 1);
+    return (char *)p_memdup_fwd(pool, src, strlen(src) + 1);
 }
 
 char *
 p_strndup_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL)
 {
-    char *dest = p_malloc_fwd(pool, length + 1);
+    char *dest = (char *)p_malloc_fwd(pool, length + 1);
     memcpy(dest, src, length);
     dest[length] = 0;
     return dest;
@@ -39,19 +41,15 @@ p_strndup_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL
 char * gcc_malloc
 p_sprintf(struct pool *pool, const char *fmt, ...)
 {
-    size_t length;
-    int gcc_unused length2;
     va_list ap;
-    char *p;
-
     va_start(ap, fmt);
-    length = (size_t)vsnprintf(NULL, 0, fmt, ap) + 1;
+    size_t length = (size_t)vsnprintf(nullptr, 0, fmt, ap) + 1;
     va_end(ap);
 
-    p = p_malloc(pool, length);
+    char *p = (char *)p_malloc(pool, length);
 
     va_start(ap, fmt);
-    length2 = vsnprintf(p, length, fmt, ap);
+    gcc_unused int length2 = vsnprintf(p, length, fmt, ap);
     va_end(ap);
 
     assert((size_t)length2 + 1 == length);
@@ -62,20 +60,19 @@ p_sprintf(struct pool *pool, const char *fmt, ...)
 char * gcc_malloc
 p_strcat(struct pool *pool, const char *first, ...)
 {
-    size_t length = 1;
     va_list ap;
-    const char *s;
-    char *ret, *p;
 
+    size_t length = 1;
     va_start(ap, first);
-    for (s = first; s != NULL; s = va_arg(ap, const char*))
+    for (const char *s = first; s != nullptr; s = va_arg(ap, const char *))
         length += strlen(s);
     va_end(ap);
 
-    ret = p = p_malloc(pool, length);
+    char *result = (char *)p_malloc(pool, length);
 
     va_start(ap, first);
-    for (s = first; s != NULL; s = va_arg(ap, const char*)) {
+    char *p = result;
+    for (const char *s = first; s != nullptr; s = va_arg(ap, const char *)) {
         length = strlen(s);
         memcpy(p, s, length);
         p += length;
@@ -84,29 +81,30 @@ p_strcat(struct pool *pool, const char *first, ...)
 
     *p = 0;
 
-    return ret;
+    return result;
 }
 
 char * gcc_malloc
 p_strncat(struct pool *pool, const char *first, size_t first_length, ...)
 {
-    size_t length = first_length + 1;
     va_list ap;
-    const char *s;
-    char *ret, *p;
 
+    size_t length = first_length + 1;
     va_start(ap, first_length);
-    for (s = va_arg(ap, const char*); s != NULL; s = va_arg(ap, const char*))
+    for (const char *s = va_arg(ap, const char *); s != nullptr;
+         s = va_arg(ap, const char *))
         length += va_arg(ap, size_t);
     va_end(ap);
 
-    ret = p = p_malloc(pool, length);
+    char *result = (char *)p_malloc(pool, length);
 
+    char *p = result;
     memcpy(p, first, first_length);
     p += first_length;
 
     va_start(ap, first_length);
-    for (s = va_arg(ap, const char*); s != NULL; s = va_arg(ap, const char*)) {
+    for (const char *s = va_arg(ap, const char *); s != nullptr;
+         s = va_arg(ap, const char *)) {
         length = va_arg(ap, size_t);
         memcpy(p, s, length);
         p += length;
@@ -115,5 +113,5 @@ p_strncat(struct pool *pool, const char *first, size_t first_length, ...)
 
     *p = 0;
 
-    return ret;
+    return result;
 }
