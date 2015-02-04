@@ -25,4 +25,12 @@ DupBuffer(pool *p, ConstBuffer<T> src)
     return ConstBuffer<T>::FromVoid(dest_v);
 }
 
+/**
+ * Allocate a new buffer with data concatenated from the given source
+ * buffers.  If one is empty, this may return a pointer to the other
+ * buffer.
+ */
+ConstBuffer<void>
+LazyCatBuffer(struct pool &pool, ConstBuffer<void> a, ConstBuffer<void> b);
+
 #endif

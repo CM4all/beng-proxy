@@ -631,7 +631,7 @@ libmemory_a_SOURCES = \
 	src/rubber.cxx src/rubber.hxx
 
 libpool_a_SOURCES = \
-	src/pbuffer.hxx \
+	src/pbuffer.cxx src/pbuffer.hxx \
 	src/pstring.cxx \
 	src/pool.cxx src/pool.hxx src/pool.h
 
