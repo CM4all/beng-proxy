@@ -15,8 +15,8 @@
 #include <assert.h>
 
 struct StockMap {
-    struct pool *pool;
-    const StockClass *cls;
+    struct pool &pool;
+    const StockClass &cls;
     void *class_ctx;
 
     /**
@@ -29,29 +29,29 @@ struct StockMap {
      */
     unsigned max_idle;
 
-    struct hashmap *stocks;
+    struct hashmap &stocks;
 
     StockMap(struct pool &_pool, const StockClass &_cls, void *_class_ctx,
              unsigned _limit, unsigned _max_idle)
-        :pool(pool_new_linear(&_pool, "hstock", 4096)),
-         cls(&_cls), class_ctx(_class_ctx),
+        :pool(*pool_new_linear(&_pool, "hstock", 4096)),
+         cls(_cls), class_ctx(_class_ctx),
          limit(_limit), max_idle(_max_idle),
-         stocks(hashmap_new(pool, 64)) {}
+         stocks(*hashmap_new(&pool, 64)) {}
 
     ~StockMap() {
-        hashmap_rewind(stocks);
+        hashmap_rewind(&stocks);
         const struct hashmap_pair *pair;
-        while ((pair = hashmap_next(stocks)) != nullptr) {
+        while ((pair = hashmap_next(&stocks)) != nullptr) {
             Stock *stock = (Stock *)pair->value;
 
             stock_free(stock);
         }
 
-        pool_unref(pool);
+        pool_unref(&pool);
     }
 
     void Destroy() {
-        DeleteFromPool(*pool, this);
+        DeleteFromPool(pool, this);
     }
 };
 
@@ -67,7 +67,7 @@ hstock_stock_empty(Stock &stock, const char *uri, void *ctx)
 
     daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
                (const void *)hstock, (const void *)&stock, uri);
-    hashmap_remove_existing(hstock->stocks, uri, &stock);
+    hashmap_remove_existing(&hstock->stocks, uri, &stock);
 
     stock_free(&stock);
 }
@@ -100,10 +100,10 @@ hstock_free(StockMap *hstock)
 void
 hstock_fade_all(StockMap &hstock)
 {
-    hashmap_rewind(hstock.stocks);
+    hashmap_rewind(&hstock.stocks);
 
     const struct hashmap_pair *pair;
-    while ((pair = hashmap_next(hstock.stocks)) != nullptr) {
+    while ((pair = hashmap_next(&hstock.stocks)) != nullptr) {
         Stock &stock = *(Stock *)pair->value;
         stock_fade_all(stock);
     }
@@ -112,7 +112,7 @@ hstock_fade_all(StockMap &hstock)
 void
 hstock_add_stats(const StockMap &stock, StockStats &data)
 {
-    struct hashmap *h = stock.stocks;
+    struct hashmap *h = &stock.stocks;
     hashmap_rewind(h);
 
     const struct hashmap_pair *p;
@@ -125,12 +125,12 @@ hstock_add_stats(const StockMap &stock, StockStats &data)
 static Stock &
 hstock_get_stock(StockMap &hstock, const char *uri)
 {
-    Stock *stock = (Stock *)hashmap_get(hstock.stocks, uri);
+    Stock *stock = (Stock *)hashmap_get(&hstock.stocks, uri);
     if (stock == nullptr) {
-        stock = stock_new(*hstock.pool, *hstock.cls, hstock.class_ctx,
+        stock = stock_new(hstock.pool, hstock.cls, hstock.class_ctx,
                           uri, hstock.limit, hstock.max_idle,
                           hstock_stock_handler, &hstock);
-        hashmap_set(hstock.stocks, stock_get_uri(*stock), stock);
+        hashmap_set(&hstock.stocks, stock_get_uri(*stock), stock);
     }
 
     return *stock;
@@ -160,7 +160,7 @@ hstock_put(gcc_unused StockMap &hstock, gcc_unused const char *uri,
            StockItem &object, bool destroy)
 {
 #ifndef NDEBUG
-    Stock *stock = (Stock *)hashmap_get(hstock.stocks, uri);
+    Stock *stock = (Stock *)hashmap_get(&hstock.stocks, uri);
 
     assert(stock != nullptr);
     assert(stock == object.stock);
