@@ -43,7 +43,7 @@ struct ssl_filter {
 static void
 ssl_set_error(GError **error_r)
 {
-    if (error_r == NULL)
+    if (error_r == nullptr)
         return;
 
     unsigned long error = ERR_get_error();
@@ -86,12 +86,12 @@ Move(ForeignFifoBuffer<uint8_t> &dest, BIO *src)
 static char *
 format_name(X509_NAME *name)
 {
-    if (name == NULL)
-        return NULL;
+    if (name == nullptr)
+        return nullptr;
 
     BIO *bio = BIO_new(BIO_s_mem());
-    if (bio == NULL)
-        return NULL;
+    if (bio == nullptr)
+        return nullptr;
 
     X509_NAME_print_ex(bio, name, 0,
                        ASN1_STRFLGS_UTF8_CONVERT | XN_FLAG_SEP_COMMA_PLUS);
@@ -255,7 +255,7 @@ ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
 {
     struct ssl_filter *ssl = (struct ssl_filter *)ctx;
 
-    if (ssl->ssl != NULL)
+    if (ssl->ssl != nullptr)
         SSL_free(ssl->ssl);
 
     ssl->decrypted_input.Free(fb_pool_get());
@@ -279,14 +279,14 @@ struct ssl_filter *
 ssl_filter_new(struct pool *pool, ssl_factory &factory,
                GError **error_r)
 {
-    assert(pool != NULL);
+    assert(pool != nullptr);
 
     ssl_filter *ssl = NewFromPool<ssl_filter>(*pool);
 
     ssl->ssl = ssl_factory_make(factory);
-    if (ssl->ssl == NULL) {
+    if (ssl->ssl == nullptr) {
         g_set_error(error_r, ssl_quark(), 0, "SSL_new() failed");
-        return NULL;
+        return nullptr;
     }
 
     ssl->decrypted_input.Allocate(fb_pool_get());
@@ -295,8 +295,8 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
 
     SSL_set_bio(ssl->ssl, ssl->encrypted_input, ssl->encrypted_output);
 
-    ssl->peer_subject = NULL;
-    ssl->peer_issuer_subject = NULL;
+    ssl->peer_subject = nullptr;
+    ssl->peer_issuer_subject = nullptr;
     ssl->handshaking = true;
 
     return ssl;
@@ -305,7 +305,7 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
 const char *
 ssl_filter_get_peer_subject(struct ssl_filter *ssl)
 {
-    assert(ssl != NULL);
+    assert(ssl != nullptr);
 
     return ssl->peer_subject;
 }
@@ -313,7 +313,7 @@ ssl_filter_get_peer_subject(struct ssl_filter *ssl)
 const char *
 ssl_filter_get_peer_issuer_subject(struct ssl_filter *ssl)
 {
-    assert(ssl != NULL);
+    assert(ssl != nullptr);
 
     return ssl->peer_issuer_subject;
 }
