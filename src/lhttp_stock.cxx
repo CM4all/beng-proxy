@@ -158,9 +158,9 @@ lhttp_stock_create(void *ctx, StockItem &item,
     assert(address->path != nullptr);
 
     GError *error = nullptr;
-    connection->child = mstock_get_now(lhttp_stock->child_stock, pool,
+    connection->child = mstock_get_now(*lhttp_stock->child_stock, *pool,
                                        key, info, address->concurrency,
-                                       &connection->lease_ref,
+                                       connection->lease_ref,
                                        &error);
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to launch LHTTP server '%s': ", key);
@@ -235,8 +235,8 @@ static constexpr StockClass lhttp_stock_class = {
 inline
 lhttp_stock::lhttp_stock(struct pool &pool, unsigned limit, unsigned max_idle)
     :hstock(hstock_new(pool, lhttp_stock_class, this, limit, max_idle)),
-     child_stock(mstock_new(child_stock_new(&pool, limit, max_idle,
-                                            &lhttp_child_stock_class))) {}
+     child_stock(mstock_new(*child_stock_new(&pool, limit, max_idle,
+                                             &lhttp_child_stock_class))) {}
 
 struct lhttp_stock *
 lhttp_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
