@@ -463,6 +463,7 @@ stock_fade_all(Stock &stock)
         i.fade = true;
 
     stock.ClearIdle();
+    stock.ScheduleCheckEmpty();
 
     // TODO: restart the "num_create" list?
 }
