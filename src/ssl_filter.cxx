@@ -31,13 +31,31 @@ struct SslFilter {
     /**
      * Memory BIOs for passing data to/from OpenSSL.
      */
-    BIO *encrypted_input, *encrypted_output;
+    BIO *const encrypted_input, *const encrypted_output;
 
-    SSL *ssl;
+    SSL *const ssl;
 
-    bool handshaking;
+    bool handshaking = true;
 
-    char *peer_subject, *peer_issuer_subject;
+    char *peer_subject = nullptr, *peer_issuer_subject = nullptr;
+
+    SslFilter(SSL *_ssl)
+        :encrypted_input(BIO_new(BIO_s_mem())),
+         encrypted_output(BIO_new(BIO_s_mem())),
+         ssl(_ssl) {
+        decrypted_input.Allocate(fb_pool_get());
+        SSL_set_bio(ssl, encrypted_input, encrypted_output);
+    }
+
+    ~SslFilter() {
+        SSL_free(ssl);
+
+        decrypted_input.Free(fb_pool_get());
+        plain_output.FreeIfDefined(fb_pool_get());
+
+        free(peer_subject);
+        free(peer_issuer_subject);
+    }
 };
 
 static void
@@ -255,13 +273,7 @@ ssl_thread_socket_filter_destroy(gcc_unused ThreadSocketFilter &f, void *ctx)
 {
     auto *const ssl = (SslFilter *)ctx;
 
-    SSL_free(ssl->ssl);
-
-    ssl->decrypted_input.Free(fb_pool_get());
-    ssl->plain_output.FreeIfDefined(fb_pool_get());
-
-    free(ssl->peer_subject);
-    free(ssl->peer_issuer_subject);
+    ssl->~SslFilter();
 }
 
 const struct ThreadSocketFilterHandler ssl_thread_socket_filter = {
@@ -286,21 +298,7 @@ ssl_filter_new(struct pool *pool, ssl_factory &factory,
         return nullptr;
     }
 
-    auto *ssl = NewFromPool<SslFilter>(*pool);
-
-    ssl->ssl = _ssl;
-
-    ssl->decrypted_input.Allocate(fb_pool_get());
-    ssl->encrypted_input = BIO_new(BIO_s_mem());
-    ssl->encrypted_output = BIO_new(BIO_s_mem());
-
-    SSL_set_bio(ssl->ssl, ssl->encrypted_input, ssl->encrypted_output);
-
-    ssl->peer_subject = nullptr;
-    ssl->peer_issuer_subject = nullptr;
-    ssl->handshaking = true;
-
-    return ssl;
+    return NewFromPool<SslFilter>(*pool, _ssl);
 }
 
 const char *
