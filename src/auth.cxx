@@ -11,6 +11,7 @@
 #include "http_server.hxx"
 #include "pool.hxx"
 #include "translate_client.hxx"
+#include "load_file.hxx"
 #include "http_quark.h"
 #include "expiry.h"
 
@@ -75,7 +76,23 @@ request::HandleAuth(const TranslateResponse &response)
 {
     struct pool *const pool = request->pool;
 
-    assert(!response.auth.IsNull());
+    assert(response.HasAuth());
+
+    ConstBuffer<void> auth = response.auth;
+    if (auth.IsNull()) {
+        /* load #TRANSLATE_AUTH_FILE */
+        assert(response.auth_file != nullptr);
+
+        GError *error = nullptr;
+        auth = LoadFile(*pool, response.auth_file, 64, &error);
+        if (auth.IsNull()) {
+            response_dispatch_error(*this, error);
+            g_error_free(error);
+            return;
+        }
+    } else {
+        assert(response.auth_file == nullptr);
+    }
 
     /* we need to validate the session realm early */
     ApplyTranslateRealm(response);
@@ -95,7 +112,7 @@ request::HandleAuth(const TranslateResponse &response)
 
     auto t = NewFromPool<TranslateRequest>(*pool);
     t->Clear();
-    t->auth = response.auth;
+    t->auth = auth;
     t->uri = request->uri;
     t->host = translate.request.host;
     t->session = translate.request.session;

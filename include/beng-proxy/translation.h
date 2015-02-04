@@ -582,6 +582,16 @@ enum beng_translation_command {
      * @see #TRANSLATE_PROBE_PATH_SUFFIXES
      */
     TRANSLATE_PROBE_SUFFIX = 143,
+
+    /**
+     * Load #TRANSLATE_AUTH from a file.
+     */
+    TRANSLATE_AUTH_FILE = 144,
+
+    /**
+     * Expansion for #TRANSLATE_AUTH_FILE.
+     */
+    TRANSLATE_EXPAND_AUTH_FILE = 145,
 };
 
 struct beng_translation_header {

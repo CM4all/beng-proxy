@@ -596,7 +596,7 @@ request::OnTranslateResponse(const TranslateResponse &response)
        assigns the real response */
     install_error_response(*this);
 
-    if (!response.auth.IsNull())
+    if (response.HasAuth())
         HandleAuth(response);
     else
         OnTranslateResponseAfterAuth(response);

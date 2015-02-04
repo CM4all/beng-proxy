@@ -86,6 +86,7 @@ TranslateResponse::Clear()
     session = nullptr;
     check = nullptr;
     auth = nullptr;
+    auth_file = expand_auth_file = nullptr;
     want_full_uri = nullptr;
 
     user = nullptr;
@@ -184,6 +185,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     widget_group = p_strdup_checked(pool, src.widget_group);
     test_path = p_strdup_checked(pool, src.test_path);
     expand_test_path = p_strdup_checked(pool, src.expand_test_path);
+    auth_file = p_strdup_checked(pool, src.auth_file);
+    expand_auth_file = p_strdup_checked(pool, src.expand_auth_file);
 
     strset_init(&container_groups);
     strset_copy(pool, &container_groups, &src.container_groups);
@@ -350,6 +353,7 @@ TranslateResponse::IsExpandable() const
          expand_document_root != nullptr ||
          expand_uri != nullptr ||
          expand_test_path != nullptr ||
+         expand_auth_file != nullptr ||
          !expand_request_headers.IsEmpty() ||
          resource_address_is_expandable(&address) ||
          widget_view_any_is_expandable(views));
@@ -393,6 +397,13 @@ TranslateResponse::Expand(struct pool *pool,
         test_path = expand_string_unescaped(pool, expand_test_path,
                                             match_info, error_r);
         if (test_path == nullptr)
+            return false;
+    }
+
+    if (expand_auth_file != nullptr) {
+        auth_file = expand_string_unescaped(pool, expand_auth_file,
+                                            match_info, error_r);
+        if (auth_file == nullptr)
             return false;
     }
 

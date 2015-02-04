@@ -18,6 +18,7 @@
 #include "tpool.h"
 #include "pbuffer.hxx"
 #include "SlicePool.hxx"
+#include "load_file.hxx"
 #include "util/djbhash.h"
 #include "beng-proxy/translation.h"
 

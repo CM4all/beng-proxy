@@ -152,6 +152,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/bp_global.cxx src/bp_global.hxx \
 	src/handler.cxx src/handler.hxx \
 	src/auth.cxx \
+	src/load_file.cxx src/load_file.hxx \
 	src/file_not_found.cxx src/file_not_found.hxx \
 	src/file_enotdir.cxx src/file_enotdir.hxx \
 	src/file_directory_index.cxx src/file_directory_index.hxx \

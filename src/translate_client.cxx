@@ -3169,6 +3169,36 @@ translate_handle_packet(TranslateClient *client,
 
         client->response.probe_suffixes.push_back(payload);
         return true;
+
+    case TRANSLATE_AUTH_FILE:
+        if (client->response.HasAuth()) {
+            translate_client_error(client,
+                                   "duplicate AUTH_FILE packet");
+            return false;
+        }
+
+        if (!is_valid_absolute_path(payload, payload_length)) {
+            translate_client_error(client, "malformed AUTH_FILE packet");
+            return false;
+        }
+
+        client->response.auth_file = payload;
+        return true;
+
+    case TRANSLATE_EXPAND_AUTH_FILE:
+        if (client->response.HasAuth()) {
+            translate_client_error(client,
+                                   "duplicate EXPAND_AUTH_FILE packet");
+            return false;
+        }
+
+        if (!is_valid_nonempty_string(payload, payload_length)) {
+            translate_client_error(client, "malformed EXPAND_AUTH_FILE packet");
+            return false;
+        }
+
+        client->response.expand_auth_file = payload;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

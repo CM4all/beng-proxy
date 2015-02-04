@@ -135,6 +135,11 @@ struct TranslateResponse {
     ConstBuffer<void> auth;
 
     /**
+     * @see #TRANSLATE_AUTH_FILE, #TRANSLATE_EXPAND_AUTH_FILE
+     */
+    const char *auth_file, *expand_auth_file;
+
+    /**
      * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
      * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
      * was received.
@@ -226,7 +231,8 @@ struct TranslateResponse {
 
     gcc_pure
     bool HasAuth() const {
-        return !auth.IsNull();
+        return !auth.IsNull() ||
+            auth_file != nullptr || expand_auth_file != nullptr;
     }
 
     void CopyFrom(struct pool *pool, const TranslateResponse &src);
