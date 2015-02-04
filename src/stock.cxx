@@ -110,25 +110,45 @@ struct Stock {
     void Destroy() {
         DeleteFromPool(pool, this);
     }
-};
 
-static void
-destroy_item(Stock &stock, StockItem &item);
+    gcc_pure
+    bool IsEmpty() const {
+        return idle.empty() && busy.empty() && num_create == 0;
+    }
+
+    /**
+     * Check if the stock has become empty, and invoke the handler.
+     */
+    void CheckEmpty();
+    void ScheduleCheckEmpty();
+
+    void FreeItem(StockItem &item);
+    void DestroyItem(StockItem &item);
+
+    void ClearIdle();
+
+    bool GetIdle(const StockGetHandler &handler, void *handler_ctx);
+    void GetCreate(struct pool &caller_pool, void *info,
+                   const StockGetHandler &get_handler, void *get_handler_ctx,
+                   struct async_operation_ref &async_ref);
+
+    /**
+     * Retry the waiting requests.  This is called after the number of
+     * busy items was reduced.
+     */
+    void RetryWaiting();
+};
 
 /*
  * The "empty()" handler method.
  *
  */
 
-/**
- * Check if the stock has become empty, and invoke the handler.
- */
-static void
-stock_check_empty(Stock &stock)
+void
+Stock::CheckEmpty()
 {
-    if (stock_is_empty(stock) && stock.handler != nullptr &&
-        stock.handler->empty != nullptr)
-        stock.handler->empty(stock, stock.uri, stock.handler_ctx);
+    if (IsEmpty() && handler != nullptr && handler->empty != nullptr)
+        handler->empty(*this, uri, handler_ctx);
 }
 
 static void
@@ -137,15 +157,14 @@ stock_empty_event_callback(gcc_unused int fd, short event gcc_unused,
 {
     Stock &stock = *(Stock *)ctx;
 
-    stock_check_empty(stock);
+    stock.CheckEmpty();
 }
 
-static void
-stock_schedule_check_empty(Stock &stock)
+void
+Stock::ScheduleCheckEmpty()
 {
-    if (stock_is_empty(stock) && stock.handler != nullptr &&
-        stock.handler->empty != nullptr)
-        defer_event_add(&stock.empty_event);
+    if (IsEmpty() && handler != nullptr && handler->empty != nullptr)
+        defer_event_add(&empty_event);
 }
 
 
@@ -180,7 +199,7 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 
     for (unsigned i = (stock.idle.size() - stock.max_idle + 2) / 3; i > 0; --i)
         stock.idle.pop_front_and_dispose([&stock](StockItem *item){
-                destroy_item(stock, *item);
+                stock.DestroyItem(*item);
             });
 
     /* schedule next cleanup */
@@ -188,7 +207,7 @@ stock_cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
     if (stock.idle.size() > stock.max_idle)
         stock_schedule_cleanup(stock);
     else
-        stock_check_empty(stock);
+        stock.CheckEmpty();
 }
 
 
@@ -217,61 +236,48 @@ static const struct async_operation_class stock_wait_operation = {
     .abort = stock_wait_abort,
 };
 
-static bool
-stock_get_idle(Stock &stock,
-               const StockGetHandler &handler, void *handler_ctx);
-
-static void
-stock_get_create(Stock &stock, struct pool &caller_pool, void *info,
-                 const StockGetHandler &handler, void *handler_ctx,
-                 struct async_operation_ref &async_ref);
-
-/**
- * Retry the waiting requests.  This is called after the number of
- * busy items was reduced.
- */
-static void
-stock_retry_waiting(Stock &stock)
+inline void
+Stock::RetryWaiting()
 {
-    if (stock.limit == 0)
+    if (limit == 0)
         /* no limit configured, no waiters possible */
         return;
 
     /* first try to serve existing idle items */
 
-    while (stock.idle.size() > 0) {
-        const auto i = stock.waiting.begin();
-        if (i == stock.waiting.end())
+    while (idle.size() > 0) {
+        const auto i = waiting.begin();
+        if (i == waiting.end())
             return;
 
-        auto &waiting = *i;
+        auto &w = *i;
 
-        waiting.operation.Finished();
-        stock.waiting.erase(i);
+        w.operation.Finished();
+        waiting.erase(i);
 
-        if (stock_get_idle(stock, waiting.handler, waiting.handler_ctx))
-            waiting.Destroy();
+        if (GetIdle(w.handler, w.handler_ctx))
+            w.Destroy();
         else
             /* didn't work (probably because borrowing the item has
                failed) - re-add to "waiting" list */
-            stock.waiting.push_front(waiting);
+            waiting.push_front(w);
     }
 
     /* if we're below the limit, create a bunch of new items */
 
-    auto wi = stock.waiting.begin();
-    const auto end = stock.waiting.end();
-    for (unsigned i = stock.limit - stock.busy.size() - stock.num_create;
-         stock.busy.size() + stock.num_create < stock.limit && i > 0 && wi != end;
+    auto wi = waiting.begin();
+    const auto end = waiting.end();
+    for (unsigned i = limit - busy.size() - num_create;
+         busy.size() + num_create < limit && i > 0 && wi != end;
          --i) {
-        auto &waiting = *wi;
+        auto &w = *wi;
 
-        waiting.operation.Finished();
-        wi = stock.waiting.erase(wi);
-        stock_get_create(stock, waiting.pool, waiting.info,
-                         waiting.handler, waiting.handler_ctx,
-                         waiting.async_ref);
-        waiting.Destroy();
+        w.operation.Finished();
+        wi = waiting.erase(wi);
+        GetCreate(w.pool, w.info,
+                  w.handler, w.handler_ctx,
+                  w.async_ref);
+        w.Destroy();
     }
 }
 
@@ -281,7 +287,7 @@ stock_retry_event_callback(gcc_unused int fd, gcc_unused short event,
 {
     Stock &stock = *(Stock *)ctx;
 
-    stock_retry_waiting(stock);
+    stock.RetryWaiting();
 }
 
 static void
@@ -306,27 +312,27 @@ stock_schedule_clear(Stock &stock)
     evtimer_add(&stock.clear_event, &tv);
 }
 
-static void
-stock_clear_idle(Stock &stock)
+void
+Stock::ClearIdle()
 {
-    daemon_log(5, "stock_clear_idle(%p, '%s') num_idle=%zu num_busy=%zu\n",
-               (const void *)&stock, stock.uri,
-               stock.idle.size(), stock.busy.size());
+    daemon_log(5, "Stock::ClearIdle(%p, '%s') num_idle=%zu num_busy=%zu\n",
+               (const void *)this, uri,
+               idle.size(), busy.size());
 
-    auto i = stock.idle.begin();
-    const auto end = stock.idle.end();
+    auto i = idle.begin();
+    const auto end = idle.end();
     while (i != end) {
         StockItem &item = *i;
 
-        i = stock.idle.erase(i);
+        i = idle.erase(i);
 
-        if (stock.idle.size() == stock.max_idle)
-            stock_unschedule_cleanup(stock);
+        if (idle.size() == max_idle)
+            stock_unschedule_cleanup(*this);
 
-        destroy_item(stock, item);
+        DestroyItem(item);
     }
 
-    assert(stock.idle.empty());
+    assert(idle.empty());
 }
 
 static void
@@ -339,11 +345,11 @@ stock_clear_event_callback(int fd gcc_unused, short event gcc_unused,
                (const void *)&stock, stock.uri, stock.may_clear);
 
     if (stock.may_clear)
-        stock_clear_idle(stock);
+        stock.ClearIdle();
 
     stock.may_clear = true;
     stock_schedule_clear(stock);
-    stock_check_empty(stock);
+    stock.CheckEmpty();
 }
 
 
@@ -384,7 +390,7 @@ inline Stock::~Stock()
     evtimer_del(&cleanup_event);
     evtimer_del(&clear_event);
 
-    stock_clear_idle(*this);
+    ClearIdle();
 
     pool_unref(&pool);
 }
@@ -409,26 +415,26 @@ stock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
                               handler, handler_ctx);
 }
 
-static void
-stock_item_free(Stock &stock, StockItem &item)
+void
+Stock::FreeItem(StockItem &item)
 {
-    assert(pool_contains(item.pool, &item, stock.cls.item_size));
+    assert(pool_contains(item.pool, &item, cls.item_size));
 
-    if (item.pool == &stock.pool)
-        p_free(&stock.pool, &item);
+    if (item.pool == &pool)
+        p_free(&pool, &item);
     else {
         pool_trash(item.pool);
         pool_unref(item.pool);
     }
 }
 
-static void
-destroy_item(Stock &stock, StockItem &item)
+void
+Stock::DestroyItem(StockItem &item)
 {
-    assert(pool_contains(item.pool, &item, stock.cls.item_size));
+    assert(pool_contains(item.pool, &item, cls.item_size));
 
-    stock.cls.destroy(stock.class_ctx, item);
-    stock_item_free(stock, item);
+    cls.destroy(class_ctx, item);
+    FreeItem(item);
 }
 
 void
@@ -448,8 +454,7 @@ stock_get_uri(Stock &stock)
 bool
 stock_is_empty(const Stock &stock)
 {
-    return stock.idle.size() == 0 && stock.busy.empty() &&
-        stock.num_create == 0;
+    return stock.IsEmpty();
 }
 
 void
@@ -459,61 +464,58 @@ stock_add_stats(const Stock &stock, StockStats &data)
     data.idle += stock.idle.size();
 }
 
-static bool
-stock_get_idle(Stock &stock,
-               const StockGetHandler &handler, void *handler_ctx)
+bool
+Stock::GetIdle(const StockGetHandler &get_handler, void *get_handler_ctx)
 {
-    auto i = stock.idle.begin();
-    const auto end = stock.idle.end();
+    auto i = idle.begin();
+    const auto end = idle.end();
     while (i != end) {
         StockItem &item = *i;
         assert(item.is_idle);
 
-        i = stock.idle.erase(i);
+        i = idle.erase(i);
 
-        if (stock.idle.size() == stock.max_idle)
-            stock_unschedule_cleanup(stock);
+        if (idle.size() == max_idle)
+            stock_unschedule_cleanup(*this);
 
-        if (stock.cls.borrow(stock.class_ctx, item)) {
+        if (cls.borrow(class_ctx, item)) {
 #ifndef NDEBUG
             item.is_idle = false;
 #endif
 
-            stock.busy.push_front(item);
+            busy.push_front(item);
 
-            handler.ready(item, handler_ctx);
+            get_handler.ready(item, get_handler_ctx);
             return true;
         }
 
-        destroy_item(stock, item);
+        DestroyItem(item);
     }
 
-    stock_schedule_check_empty(stock);
+    ScheduleCheckEmpty();
     return false;
 }
 
-static void
-stock_get_create(Stock &stock, struct pool &caller_pool, void *info,
-                 const StockGetHandler &handler, void *handler_ctx,
+void
+Stock::GetCreate(struct pool &caller_pool, void *info,
+                 const StockGetHandler &get_handler, void *get_handler_ctx,
                  struct async_operation_ref &async_ref)
 {
-    struct pool *pool = stock.cls.pool(stock.class_ctx,
-                                       stock.pool, stock.uri);
+    struct pool *item_pool = cls.pool(class_ctx, pool, uri);
 
-    auto item = (StockItem *)p_malloc(pool, stock.cls.item_size);
-    item->stock = &stock;
-    item->pool = pool;
-    item->handler = &handler;
-    item->handler_ctx = handler_ctx;
+    auto item = (StockItem *)p_malloc(item_pool, cls.item_size);
+    item->stock = this;
+    item->pool = item_pool;
+    item->handler = &get_handler;
+    item->handler_ctx = get_handler_ctx;
 
 #ifndef NDEBUG
     item->is_idle = false;
 #endif
 
-    ++stock.num_create;
+    ++num_create;
 
-    stock.cls.create(stock.class_ctx, *item, stock.uri, info,
-                     caller_pool, async_ref);
+    cls.create(class_ctx, *item, uri, info, caller_pool, async_ref);
 }
 
 void
@@ -523,7 +525,7 @@ stock_get(Stock &stock, struct pool &caller_pool, void *info,
 {
     stock.may_clear = false;
 
-    if (stock_get_idle(stock, handler, handler_ctx))
+    if (stock.GetIdle(handler, handler_ctx))
         return;
 
     if (stock.limit > 0 &&
@@ -543,8 +545,7 @@ stock_get(Stock &stock, struct pool &caller_pool, void *info,
         return;
     }
 
-    stock_get_create(stock, caller_pool, info,
-                     handler, handler_ctx, async_ref);
+    stock.GetCreate(caller_pool, info, handler, handler_ctx, async_ref);
 }
 
 struct now_data {
@@ -631,8 +632,8 @@ stock_item_failed(StockItem &item, GError *error)
     --stock.num_create;
 
     item.handler->error(error, item.handler_ctx);
-    stock_item_free(stock, item);
-    stock_schedule_check_empty(stock);
+    stock.FreeItem(item);
+    stock.ScheduleCheckEmpty();
 
     stock_schedule_retry_waiting(stock);
 }
@@ -645,8 +646,8 @@ stock_item_aborted(StockItem &item)
     assert(stock.num_create > 0);
     --stock.num_create;
 
-    stock_item_free(stock, item);
-    stock_schedule_check_empty(stock);
+    stock.FreeItem(item);
+    stock.ScheduleCheckEmpty();
 
     stock_schedule_retry_waiting(stock);
 }
@@ -666,8 +667,8 @@ stock_put(StockItem &item, bool destroy)
     stock.busy.erase(stock.busy.iterator_to(item));
 
     if (destroy) {
-        destroy_item(stock, item);
-        stock_schedule_check_empty(stock);
+        stock.DestroyItem(item);
+        stock.ScheduleCheckEmpty();
     } else {
 #ifndef NDEBUG
         item.is_idle = true;
@@ -699,6 +700,6 @@ stock_del(StockItem &item)
     if (stock.idle.size() == stock.max_idle)
         stock_unschedule_cleanup(stock);
 
-    destroy_item(stock, item);
-    stock_schedule_check_empty(stock);
+    stock.DestroyItem(item);
+    stock.ScheduleCheckEmpty();
 }
