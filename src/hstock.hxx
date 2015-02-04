@@ -21,8 +21,8 @@ struct StockGetHandler;
 
 gcc_malloc
 struct hstock *
-hstock_new(struct pool *pool,
-           const StockClass *_class, void *class_ctx,
+hstock_new(struct pool &pool,
+           const StockClass &_class, void *class_ctx,
            unsigned limit, unsigned max_idle);
 
 void
@@ -39,10 +39,10 @@ hstock_fade_all(struct hstock &hstock);
  */
 gcc_pure
 void
-hstock_add_stats(const struct hstock *stock, StockStats &data);
+hstock_add_stats(const struct hstock &stock, StockStats &data);
 
 void
-hstock_get(struct hstock *hstock, struct pool *pool,
+hstock_get(struct hstock &hstock, struct pool &pool,
            const char *uri, void *info,
            const StockGetHandler &handler, void *handler_ctx,
            struct async_operation_ref &async_ref);
@@ -54,12 +54,12 @@ hstock_get(struct hstock *hstock, struct pool *pool,
  */
 gcc_pure
 StockItem *
-hstock_get_now(struct hstock *hstock, struct pool *pool,
+hstock_get_now(struct hstock &hstock, struct pool &pool,
                const char *uri, void *info,
                GError **error_r);
 
 void
-hstock_put(struct hstock *hstock, const char *uri, StockItem &item,
+hstock_put(struct hstock &hstock, const char *uri, StockItem &item,
            bool destroy);
 
 

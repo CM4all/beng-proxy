@@ -234,7 +234,7 @@ static constexpr StockClass lhttp_stock_class = {
 
 inline
 lhttp_stock::lhttp_stock(struct pool &pool, unsigned limit, unsigned max_idle)
-    :hstock(hstock_new(&pool, &lhttp_stock_class, this, limit, max_idle)),
+    :hstock(hstock_new(pool, lhttp_stock_class, this, limit, max_idle)),
      child_stock(mstock_new(child_stock_new(&pool, limit, max_idle,
                                             &lhttp_child_stock_class))) {}
 
@@ -267,7 +267,7 @@ lhttp_stock_get(struct lhttp_stock *lhttp_stock, struct pool *pool,
         void *out;
     } deconst = { .in = address };
 
-    return hstock_get_now(lhttp_stock->hstock, pool,
+    return hstock_get_now(*lhttp_stock->hstock, *pool,
                           lhttp_stock_key(pool, address),
                           deconst.out, error_r);
 }
@@ -294,6 +294,6 @@ lhttp_stock_put(struct lhttp_stock *lhttp_stock, StockItem &item,
 {
     auto *connection = &ToLhttpConnection(item);
 
-    hstock_put(lhttp_stock->hstock, child_stock_item_key(connection->child),
+    hstock_put(*lhttp_stock->hstock, child_stock_item_key(connection->child),
                item, destroy);
 }

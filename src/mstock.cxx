@@ -204,7 +204,7 @@ public:
     }
 
     void AddStats(StockStats &data) const {
-        hstock_add_stats(hstock, data);
+        hstock_add_stats(*hstock, data);
     }
 
     StockItem *GetNow(struct pool *caller_pool, const char *uri, void *info,
@@ -213,7 +213,7 @@ public:
                       GError **error_r);
 
     void Put(const char *uri, StockItem &item, bool reuse) {
-        hstock_put(hstock, uri, item, !reuse);
+        hstock_put(*hstock, uri, item, !reuse);
     }
 };
 
@@ -232,7 +232,7 @@ MultiStock::Domain::GetNow(DomainMap::iterator di,
     auto i = FindUsableItem();
     if (i == nullptr) {
         StockItem *item =
-            hstock_get_now(stock.hstock, caller_pool, uri, info,
+            hstock_get_now(*stock.hstock, *caller_pool, uri, info,
                            error_r);
         if (item == nullptr)
             return nullptr;

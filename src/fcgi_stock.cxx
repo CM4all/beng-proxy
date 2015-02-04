@@ -221,7 +221,7 @@ fcgi_stock_create(void *ctx, StockItem &item,
         connection->jail_params.enabled = false;
 
     GError *error = nullptr;
-    connection->child = hstock_get_now(fcgi_stock->child_stock, pool,
+    connection->child = hstock_get_now(*fcgi_stock->child_stock, *pool,
                                        key, params, &error);
     if (connection->child == nullptr) {
         g_prefix_error(&error, "failed to start to FastCGI server '%s': ",
@@ -328,7 +328,7 @@ fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
     auto fcgi_stock = NewFromPool<struct fcgi_stock>(*pool);
     fcgi_stock->child_stock = child_stock_new(pool, limit, max_idle,
                                               &fcgi_child_stock_class);
-    fcgi_stock->hstock = hstock_new(pool, &fcgi_stock_class, fcgi_stock,
+    fcgi_stock->hstock = hstock_new(*pool, fcgi_stock_class, fcgi_stock,
                                     limit, max_idle);
 
     return fcgi_stock;
@@ -358,7 +358,7 @@ fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
     params->env = env;
     params->options = options;
 
-    return hstock_get_now(fcgi_stock->hstock, pool,
+    return hstock_get_now(*fcgi_stock->hstock, *pool,
                           fcgi_stock_key(pool, params), params,
                           error_r);
 }
@@ -409,7 +409,7 @@ fcgi_stock_put(struct fcgi_stock *fcgi_stock, StockItem &item,
            completely */
         connection->kill = true;
 
-    hstock_put(fcgi_stock->hstock, child_stock_item_key(connection->child),
+    hstock_put(*fcgi_stock->hstock, child_stock_item_key(connection->child),
                item, destroy);
 }
 

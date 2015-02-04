@@ -54,23 +54,21 @@ static constexpr StockHandler hstock_stock_handler = {
 };
 
 struct hstock *
-hstock_new(struct pool *pool, const StockClass *cls, void *class_ctx,
+hstock_new(struct pool &_pool, const StockClass &cls, void *class_ctx,
            unsigned limit, unsigned max_idle)
 {
-    assert(pool != nullptr);
-    assert(cls != nullptr);
-    assert(cls->item_size > sizeof(StockItem));
-    assert(cls->create != nullptr);
-    assert(cls->borrow != nullptr);
-    assert(cls->release != nullptr);
-    assert(cls->destroy != nullptr);
+    assert(cls.item_size > sizeof(StockItem));
+    assert(cls.create != nullptr);
+    assert(cls.borrow != nullptr);
+    assert(cls.release != nullptr);
+    assert(cls.destroy != nullptr);
     assert(max_idle > 0);
 
-    pool = pool_new_linear(pool, "hstock", 4096);
+    auto *pool = pool_new_linear(&_pool, "hstock", 4096);
 
     auto hstock = NewFromPool<struct hstock>(*pool);
     hstock->pool = pool;
-    hstock->cls = cls;
+    hstock->cls = &cls;
     hstock->class_ctx = class_ctx;
     hstock->limit = limit;
     hstock->max_idle = max_idle;
@@ -110,9 +108,9 @@ hstock_fade_all(struct hstock &hstock)
 }
 
 void
-hstock_add_stats(const struct hstock *stock, StockStats &data)
+hstock_add_stats(const struct hstock &stock, StockStats &data)
 {
-    struct hashmap *h = stock->stocks;
+    struct hashmap *h = stock.stocks;
     hashmap_rewind(h);
 
     const struct hashmap_pair *p;
@@ -123,50 +121,44 @@ hstock_add_stats(const struct hstock *stock, StockStats &data)
 }
 
 static Stock &
-hstock_get_stock(struct hstock *hstock, const char *uri)
+hstock_get_stock(struct hstock &hstock, const char *uri)
 {
-    assert(hstock != nullptr);
-
-    Stock *stock = (Stock *)hashmap_get(hstock->stocks, uri);
+    Stock *stock = (Stock *)hashmap_get(hstock.stocks, uri);
     if (stock == nullptr) {
-        stock = stock_new(*hstock->pool, *hstock->cls, hstock->class_ctx,
-                          uri, hstock->limit, hstock->max_idle,
-                          hstock_stock_handler, hstock);
-        hashmap_set(hstock->stocks, stock_get_uri(*stock), stock);
+        stock = stock_new(*hstock.pool, *hstock.cls, hstock.class_ctx,
+                          uri, hstock.limit, hstock.max_idle,
+                          hstock_stock_handler, &hstock);
+        hashmap_set(hstock.stocks, stock_get_uri(*stock), stock);
     }
 
     return *stock;
 }
 
 void
-hstock_get(struct hstock *hstock, struct pool *pool,
+hstock_get(struct hstock &hstock, struct pool &pool,
            const char *uri, void *info,
            const StockGetHandler &handler, void *handler_ctx,
            struct async_operation_ref &async_ref)
 {
-    assert(hstock != nullptr);
-
     auto &stock = hstock_get_stock(hstock, uri);
-    stock_get(stock, *pool, info, handler, handler_ctx, async_ref);
+    stock_get(stock, pool, info, handler, handler_ctx, async_ref);
 }
 
 StockItem *
-hstock_get_now(struct hstock *hstock, struct pool *pool,
+hstock_get_now(struct hstock &hstock, struct pool &pool,
                const char *uri, void *info,
                GError **error_r)
 {
-    assert(hstock != nullptr);
-
     Stock &stock = hstock_get_stock(hstock, uri);
-    return stock_get_now(stock, *pool, info, error_r);
+    return stock_get_now(stock, pool, info, error_r);
 }
 
 void
-hstock_put(struct hstock *hstock gcc_unused, const char *uri gcc_unused,
+hstock_put(gcc_unused struct hstock &hstock, gcc_unused const char *uri,
            StockItem &object, bool destroy)
 {
 #ifndef NDEBUG
-    Stock *stock = (Stock *)hashmap_get(hstock->stocks, uri);
+    Stock *stock = (Stock *)hashmap_get(hstock.stocks, uri);
 
     assert(stock != nullptr);
     assert(stock == object.stock);

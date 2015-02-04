@@ -270,7 +270,7 @@ static constexpr StockClass tcp_stock_class = {
 struct hstock *
 tcp_stock_new(struct pool *pool, unsigned limit)
 {
-    return hstock_new(pool, &tcp_stock_class, nullptr, limit, 16);
+    return hstock_new(*pool, tcp_stock_class, nullptr, limit, 16);
 }
 
 void
@@ -306,7 +306,7 @@ tcp_stock_get(struct hstock *tcp_stock, struct pool *pool, const char *name,
             name = p_strdup(pool, buffer);
     }
 
-    hstock_get(tcp_stock, pool, name, request,
+    hstock_get(*tcp_stock, *pool, name, request,
                *handler, handler_ctx, *async_ref);
 }
 
@@ -315,7 +315,7 @@ tcp_stock_put(struct hstock *tcp_stock, StockItem &item, bool destroy)
 {
     auto *connection = &StockItemToTcpStockConnection(item);
 
-    hstock_put(tcp_stock, connection->uri, item, destroy);
+    hstock_put(*tcp_stock, connection->uri, item, destroy);
 }
 
 int

@@ -253,7 +253,7 @@ child_stock_new(struct pool *pool, unsigned limit, unsigned max_idle,
         void *out;
     } u = { .in = cls };
 
-    return hstock_new(pool, &child_stock_class, u.out, limit, max_idle);
+    return hstock_new(*pool, child_stock_class, u.out, limit, max_idle);
 }
 
 const char *
@@ -278,5 +278,5 @@ child_stock_put(struct hstock *hstock, StockItem *_item,
 {
     auto *item = &ToChildStockItem(*_item);
 
-    hstock_put(hstock, item->key, item->base, destroy);
+    hstock_put(*hstock, item->key, item->base, destroy);
 }

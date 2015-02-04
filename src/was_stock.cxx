@@ -238,7 +238,7 @@ static constexpr StockClass was_stock_class = {
 struct hstock *
 was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 {
-    return hstock_new(pool, &was_stock_class, nullptr, limit, max_idle);
+    return hstock_new(*pool, was_stock_class, nullptr, limit, max_idle);
 }
 
 void
@@ -262,7 +262,7 @@ was_stock_get(struct hstock *hstock, struct pool *pool,
     params->env = env;
     params->options = options;
 
-    hstock_get(hstock, pool, was_stock_key(pool, params), params,
+    hstock_get(*hstock, *pool, was_stock_key(pool, params), params,
                *handler, handler_ctx, *async_ref);
 }
 
@@ -294,7 +294,7 @@ was_stock_translate_path(const StockItem *item,
 void
 was_stock_put(struct hstock *hstock, StockItem &item, bool destroy)
 {
-    auto *child = &ToWasChild(item);
+    auto &child = ToWasChild(item);
 
-    hstock_put(hstock, child->key, item, destroy);
+    hstock_put(*hstock, child.key, item, destroy);
 }
