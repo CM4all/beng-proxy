@@ -13,6 +13,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+static char *
+Copy(char *dest, const char *src, size_t n)
+{
+    return (char *)mempcpy(dest, src, n);
+}
+
 void *
 p_memdup_impl(struct pool *pool, const void *src, size_t length
               TRACE_ARGS_DECL)
@@ -33,8 +39,7 @@ char *
 p_strndup_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL)
 {
     char *dest = (char *)p_malloc_fwd(pool, length + 1);
-    memcpy(dest, src, length);
-    dest[length] = 0;
+    *Copy(dest, src, length) = 0;
     return dest;
 }
 
@@ -72,11 +77,8 @@ p_strcat(struct pool *pool, const char *first, ...)
 
     va_start(ap, first);
     char *p = result;
-    for (const char *s = first; s != nullptr; s = va_arg(ap, const char *)) {
-        length = strlen(s);
-        memcpy(p, s, length);
-        p += length;
-    }
+    for (const char *s = first; s != nullptr; s = va_arg(ap, const char *))
+        p = Copy(p, s, strlen(s));
     va_end(ap);
 
     *p = 0;
@@ -99,16 +101,12 @@ p_strncat(struct pool *pool, const char *first, size_t first_length, ...)
     char *result = (char *)p_malloc(pool, length);
 
     char *p = result;
-    memcpy(p, first, first_length);
-    p += first_length;
+    p = Copy(p, first, first_length);
 
     va_start(ap, first_length);
     for (const char *s = va_arg(ap, const char *); s != nullptr;
-         s = va_arg(ap, const char *)) {
-        length = va_arg(ap, size_t);
-        memcpy(p, s, length);
-        p += length;
-    }
+         s = va_arg(ap, const char *))
+        p = Copy(p, s, va_arg(ap, size_t));
     va_end(ap);
 
     *p = 0;
