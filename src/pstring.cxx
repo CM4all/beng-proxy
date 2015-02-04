@@ -17,7 +17,7 @@
 static char *
 Copy(char *dest, const char *src, size_t n)
 {
-    return (char *)mempcpy(dest, src, n);
+    return std::copy_n(src, n, dest);
 }
 
 static char *
