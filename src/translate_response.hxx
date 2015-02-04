@@ -140,6 +140,16 @@ struct TranslateResponse {
     const char *auth_file, *expand_auth_file;
 
     /**
+     * @see #TRANSLATE_APPEND_AUTH
+     */
+    ConstBuffer<void> append_auth;
+
+    /**
+     * @see #TRANSLATE_EXPAND_APPEND_AUTH
+     */
+    const char *expand_append_auth;
+
+    /**
      * The payload of the #TRANSLATE_WANT_FULL_URI packet.  If
      * ConstBuffer::IsNull(), then no #TRANSLATE_WANT_FULL_URI packet
      * was received.

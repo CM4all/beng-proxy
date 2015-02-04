@@ -10,6 +10,7 @@
 #include "tcache.hxx"
 #include "http_server.hxx"
 #include "pool.hxx"
+#include "pbuffer.hxx"
 #include "translate_client.hxx"
 #include "load_file.hxx"
 #include "http_quark.h"
@@ -92,6 +93,12 @@ request::HandleAuth(const TranslateResponse &response)
         }
     } else {
         assert(response.auth_file == nullptr);
+    }
+
+    if (!response.append_auth.IsNull()) {
+        assert(!auth.IsNull());
+
+        auth = LazyCatBuffer(*pool, auth, response.append_auth);
     }
 
     /* we need to validate the session realm early */

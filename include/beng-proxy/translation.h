@@ -592,6 +592,16 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_AUTH_FILE.
      */
     TRANSLATE_EXPAND_AUTH_FILE = 145,
+
+    /**
+     * Append the payload to #TRANSLATE_AUTH_FILE data.
+     */
+    TRANSLATE_APPEND_AUTH = 146,
+
+    /**
+     * Expansion for #TRANSLATE_APPEND_AUTH.
+     */
+    TRANSLATE_EXPAND_APPEND_AUTH = 147,
 };
 
 struct beng_translation_header {

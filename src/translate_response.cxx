@@ -87,6 +87,9 @@ TranslateResponse::Clear()
     check = nullptr;
     auth = nullptr;
     auth_file = expand_auth_file = nullptr;
+    append_auth = nullptr;
+    expand_append_auth = nullptr;
+
     want_full_uri = nullptr;
 
     user = nullptr;
@@ -187,6 +190,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     expand_test_path = p_strdup_checked(pool, src.expand_test_path);
     auth_file = p_strdup_checked(pool, src.auth_file);
     expand_auth_file = p_strdup_checked(pool, src.expand_auth_file);
+    append_auth = DupBuffer(pool, src.append_auth);
+    expand_append_auth = p_strdup_checked(pool, src.expand_append_auth);
 
     strset_init(&container_groups);
     strset_copy(pool, &container_groups, &src.container_groups);
@@ -354,6 +359,7 @@ TranslateResponse::IsExpandable() const
          expand_uri != nullptr ||
          expand_test_path != nullptr ||
          expand_auth_file != nullptr ||
+         expand_append_auth != nullptr ||
          !expand_request_headers.IsEmpty() ||
          resource_address_is_expandable(&address) ||
          widget_view_any_is_expandable(views));
@@ -405,6 +411,15 @@ TranslateResponse::Expand(struct pool *pool,
                                             match_info, error_r);
         if (auth_file == nullptr)
             return false;
+    }
+
+    if (expand_append_auth != nullptr) {
+        const char *value = expand_string_unescaped(pool, expand_append_auth,
+                                                    match_info, error_r);
+        if (auth_file == nullptr)
+            return false;
+
+        append_auth = { value, strlen(value) };
     }
 
     for (const auto &i : expand_request_headers) {

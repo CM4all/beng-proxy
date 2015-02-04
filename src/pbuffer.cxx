@@ -16,9 +16,11 @@ LazyCatBuffer(struct pool &pool, ConstBuffer<void> a, ConstBuffer<void> b)
     assert(!b.IsNull());
 
     if (a.size == 0)
+        /* no need to allocate a new buffer */
         return b;
 
     if (b.size == 0)
+        /* no need to allocate a new buffer */
         return a;
 
     size_t size = a.size + b.size;

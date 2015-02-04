@@ -2,7 +2,8 @@ cm4all-beng-proxy (6.0.4) unstable; urgency=low
 
   * hstock: fix memory leak
   * response: fix crash on invalid X-CM4all-View header
-  * translation: add packets AUTH_FILE, EXPAND_AUTH_FILE
+  * translation: add packets AUTH_FILE, EXPAND_AUTH_FILE,
+    APPEND_AUTH, EXPAND_APPEND_AUTH
   * log unknown view names in X-CM4all-View
 
  --   

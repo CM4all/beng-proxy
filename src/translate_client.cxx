@@ -3199,6 +3199,35 @@ translate_handle_packet(TranslateClient *client,
 
         client->response.expand_auth_file = payload;
         return true;
+
+    case TRANSLATE_APPEND_AUTH:
+        if (!client->response.HasAuth() ||
+            !client->response.append_auth.IsNull() ||
+            client->response.expand_append_auth != nullptr) {
+            translate_client_error(client,
+                                   "misplaced APPEND_AUTH packet");
+            return false;
+        }
+
+        client->response.append_auth = { payload, payload_length };
+        return true;
+
+    case TRANSLATE_EXPAND_APPEND_AUTH:
+        if (!client->response.HasAuth() ||
+            !client->response.append_auth.IsNull() ||
+            client->response.expand_append_auth != nullptr) {
+            translate_client_error(client,
+                                   "misplaced EXPAND_APPEND_AUTH packet");
+            return false;
+        }
+
+        if (!is_valid_nonempty_string(payload, payload_length)) {
+            translate_client_error(client, "malformed EXPAND_APPEND_AUTH packet");
+            return false;
+        }
+
+        client->response.expand_append_auth = payload;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,
