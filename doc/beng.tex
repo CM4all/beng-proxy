@@ -2441,6 +2441,11 @@ Note the two \verb|MAX_AGE| packets.  The first one disables caching
 for the whole translation response (mandatory, see above) and the
 second one enforces revalidation every 5 minutes.
 
+An alternative to \verb|AUTH| is the packet \verb|AUTH_FILE| which
+specifies the path to a file containing the \verb|AUTH| payload (no
+more than 64 bytes).  This path can be specified dynamically using
+\verb|EXPAND_AUTH_FILE|.
+
 
 \subsection{Referrer}
 
