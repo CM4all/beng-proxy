@@ -6,7 +6,7 @@ cm4all-beng-proxy (6.0.4) unstable; urgency=low
     APPEND_AUTH, EXPAND_APPEND_AUTH
   * log unknown view names in X-CM4all-View
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 04 Feb 2015 22:16:07 -0000
 
 cm4all-beng-proxy (6.0.3) unstable; urgency=low
 
