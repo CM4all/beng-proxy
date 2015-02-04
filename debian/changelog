@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.0.4) unstable; urgency=low
 
-  * 
+  * hstock: fix memory leak
 
  --   
 

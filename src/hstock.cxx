@@ -33,7 +33,7 @@ struct StockMap {
 
     StockMap(struct pool &_pool, const StockClass &_cls, void *_class_ctx,
              unsigned _limit, unsigned _max_idle)
-        :pool(*pool_new_linear(&_pool, "hstock", 4096)),
+        :pool(*pool_new_libc(&_pool, "hstock")),
          cls(_cls), class_ctx(_class_ctx),
          limit(_limit), max_idle(_max_idle),
          stocks(*hashmap_new(&pool, 64)) {}
