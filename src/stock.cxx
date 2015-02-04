@@ -85,12 +85,8 @@ struct Stock {
              handler(_handler), handler_ctx(_handler_ctx),
              async_ref(_async_ref) {}
 
-        ~Waiting() {
-            pool_unref(&pool);
-        }
-
         void Destroy() {
-            DeleteFromPool(pool, this);
+            DeleteUnrefPool(pool, this);
         }
     };
 
@@ -108,7 +104,7 @@ struct Stock {
     ~Stock();
 
     void Destroy() {
-        DeleteFromPool(pool, this);
+        DeleteUnrefPool(pool, this);
     }
 
     gcc_pure
@@ -383,8 +379,6 @@ inline Stock::~Stock()
     evtimer_del(&clear_event);
 
     ClearIdle();
-
-    pool_unref(&pool);
 }
 
 Stock *

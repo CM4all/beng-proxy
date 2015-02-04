@@ -46,12 +46,10 @@ struct StockMap {
 
             stock_free(stock);
         }
-
-        pool_unref(&pool);
     }
 
     void Destroy() {
-        DeleteFromPool(pool, this);
+        DeleteUnrefPool(pool, this);
     }
 };
 
