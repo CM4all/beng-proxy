@@ -98,6 +98,18 @@ hstock_free(struct hstock *hstock)
 }
 
 void
+hstock_fade_all(struct hstock &hstock)
+{
+    hashmap_rewind(hstock.stocks);
+
+    const struct hashmap_pair *pair;
+    while ((pair = hashmap_next(hstock.stocks)) != nullptr) {
+        Stock &stock = *(Stock *)pair->value;
+        stock_fade_all(stock);
+    }
+}
+
+void
 hstock_add_stats(const struct hstock *stock, StockStats &data)
 {
     struct hashmap *h = stock->stocks;

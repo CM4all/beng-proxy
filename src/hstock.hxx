@@ -29,6 +29,12 @@ void
 hstock_free(struct hstock *hstock);
 
 /**
+ * @see stock_fade_all()
+ */
+void
+hstock_fade_all(struct hstock &hstock);
+
+/**
  * Obtain statistics.
  */
 gcc_pure
