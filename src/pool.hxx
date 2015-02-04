@@ -93,6 +93,13 @@ PoolAlloc(pool &p, size_t n)
     return (T *)p_malloc(&p, sizeof(T) * n);
 }
 
+template<>
+inline void *
+PoolAlloc<void>(pool &p, size_t n)
+{
+    return p_malloc(&p, n);
+}
+
 template<typename T, typename... Args>
 T *
 NewFromPool(pool &p, Args&&... args)
