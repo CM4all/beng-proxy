@@ -274,6 +274,14 @@ request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
     if (response.probe_path_suffixes.IsNull())
         return false;
 
+    if (++translate.n_probe_path_suffixes > 2) {
+        daemon_log(2, "got too many consecutive PROBE_PATH_SUFFIXES packets\n");
+        response_dispatch_message(*this,
+                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                  "Internal server error");
+        return true;
+    }
+
     assert(response.test_path != nullptr);
     const char *prefix = response.test_path;
 
@@ -775,6 +783,7 @@ ask_translation_server(struct request *request2)
     request2->translate.n_checks = 0;
     request2->translate.n_file_not_found = 0;
     request2->translate.n_directory_index = 0;
+    request2->translate.n_probe_path_suffixes = 0;
     request2->translate.enotdir_uri = nullptr;
     request2->translate.enotdir_path_info = nullptr;
 

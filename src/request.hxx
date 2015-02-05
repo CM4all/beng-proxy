@@ -101,6 +101,8 @@ struct request {
          */
         unsigned n_directory_index;
 
+        unsigned n_probe_path_suffixes;
+
         /**
          * The Content-Type returned by suffix_registry_lookup().
          */
