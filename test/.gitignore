@@ -34,6 +34,7 @@ run_nfs_client
 /t_widget_resolver
 /t_istream_processor
 /t_istream_dechunk
+/t_istream_dechunk_verbatim?
 /t_istream_chunked
 /t_istream_fcgi
 /t_istream_hold

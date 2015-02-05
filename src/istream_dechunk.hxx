@@ -20,4 +20,16 @@ struct istream *
 istream_dechunk_new(struct pool *pool, struct istream *input,
                     void (*eof_callback)(void *ctx), void *callback_ctx);
 
+/**
+ * Check if the parameter is an istream_dechunk, and if so, switch to
+ * "verbatim" mode and return true.  May only be called on a pristine
+ * object.
+ *
+ * In "verbatim" mode, this istream's output is still chunked, but
+ * verified, and its end-of-file is detected.  This is useful when we
+ * need to output chunked data (e.g. proxying to another client).
+ */
+bool
+istream_dechunk_check_verbatim(struct istream *i);
+
 #endif

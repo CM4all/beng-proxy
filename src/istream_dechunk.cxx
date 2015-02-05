@@ -10,6 +10,8 @@
 #include "pool.hxx"
 #include "util/Cast.hxx"
 
+#include <algorithm>
+
 #include <assert.h>
 #include <string.h>
 
@@ -34,6 +36,25 @@ struct DechunkIstream {
 
     size_t size;
     bool had_input, had_output;
+
+    /**
+     * Copy chunked data verbatim to handler?
+     *
+     * @see istream_dechunk_check_verbatim()
+     */
+    bool verbatim = false;
+
+    /**
+     * Was the end-of-file chunk seen at the end of #pending_verbatim?
+     */
+    bool eof_verbatim;
+
+    /**
+     * Number of bytes to be passed to handler verbatim, which have
+     * already been parsed but have not yet been consumed by the
+     * handler.
+     */
+    size_t pending_verbatim;
 
     void (*const eof_callback)(void *ctx);
     void *const callback_ctx;
@@ -108,6 +129,12 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
     size_t position = 0, digit, size, nbytes;
 
     assert(dechunk->input.IsDefined());
+    assert(!dechunk->verbatim || !dechunk->eof_verbatim);
+
+    if (dechunk->verbatim)
+        /* skip the part that has already been parsed in the last
+           invocation, but could not be consumed by the handler */
+        position = dechunk->pending_verbatim;
 
     dechunk->had_input = true;
 
@@ -161,12 +188,20 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
             size = length - position;
             if (size > dechunk->size)
                 size = dechunk->size;
-            dechunk->had_output = true;
-            nbytes = istream_invoke_data(&dechunk->output, data + position, size);
-            assert(nbytes <= size);
 
-            if (nbytes == 0)
-                return dechunk->state == CLOSED ? 0 : position;
+            if (dechunk->verbatim) {
+                /* postpone this data chunk; try to send it all later
+                   in one big block */
+                nbytes = size;
+            } else {
+                dechunk->had_output = true;
+                nbytes = istream_invoke_data(&dechunk->output,
+                                             data + position, size);
+                assert(nbytes <= size);
+
+                if (nbytes == 0)
+                    return dechunk->state == CLOSED ? 0 : position;
+            }
 
             dechunk->size -= nbytes;
             if (dechunk->size == 0)
@@ -190,7 +225,27 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
 
         case TRAILER:
             if (data[position] == '\n') {
-                return dechunk_eof_detected(dechunk) ? position + 1 : 0;
+                ++position;
+
+                if (dechunk->verbatim) {
+                    /* in "verbatim" mode, we need to send all data
+                       before handling the EOF chunk */
+                    dechunk->had_output = true;
+                    nbytes = istream_invoke_data(&dechunk->output,
+                                                 data, position);
+                    if (dechunk->state == CLOSED)
+                        return 0;
+
+                    dechunk->pending_verbatim = position - nbytes;
+                    if (dechunk->pending_verbatim > 0) {
+                        /* not everything could be sent; postpone to
+                           next call */
+                        dechunk->eof_verbatim = true;
+                        return nbytes;
+                    }
+                }
+
+                return dechunk_eof_detected(dechunk) ? position : 0;
             } else if (data[position] == '\r') {
                 ++position;
             } else {
@@ -210,6 +265,19 @@ dechunk_feed(DechunkIstream *dechunk, const void *data0, size_t length)
         }
     }
 
+    if (dechunk->verbatim && position > 0) {
+        /* send all chunks in one big block */
+        dechunk->had_output = true;
+        nbytes = istream_invoke_data(&dechunk->output, data, position);
+        if (dechunk->state == CLOSED)
+            return 0;
+
+        /* postpone the rest that was not handled; it will not be
+           parsed again */
+        dechunk->pending_verbatim = position - nbytes;
+        return nbytes;
+    }
+
     return position;
 }
 
@@ -223,6 +291,32 @@ static size_t
 dechunk_input_data(const void *data, size_t length, void *ctx)
 {
     DechunkIstream *dechunk = (DechunkIstream *)ctx;
+
+    assert(!dechunk->verbatim || length >= dechunk->pending_verbatim);
+
+    if (dechunk->verbatim && dechunk->eof_verbatim) {
+        /* during the last call, the EOF chunk was parsed, but we
+           could not handle it yet, because the handler did not
+           consume all data yet; try to send the remaining pre-EOF
+           data again and then handle the EOF chunk */
+
+        assert(dechunk->pending_verbatim > 0);
+
+        assert(length >= dechunk->pending_verbatim);
+
+        dechunk->had_output = true;
+        size_t nbytes = istream_invoke_data(&dechunk->output,
+                                            data, dechunk->pending_verbatim);
+        if (nbytes == 0)
+            return 0;
+
+        dechunk->pending_verbatim -= nbytes;
+        if (dechunk->pending_verbatim > 0)
+            /* more data needed */
+            return nbytes;
+
+        return dechunk_eof_detected(dechunk) ? nbytes : 0;
+    }
 
     const ScopePoolRef ref(*dechunk->output.pool TRACE_ARGS);
     return dechunk_feed(dechunk, data, length);
@@ -353,4 +447,18 @@ istream_dechunk_new(struct pool *pool, struct istream *input,
     auto *dechunk = NewFromPool<DechunkIstream>(*pool, *pool, *input,
                                                 eof_callback, callback_ctx);
     return &dechunk->output;
+}
+
+bool
+istream_dechunk_check_verbatim(struct istream *i)
+{
+    if (i->cls != &istream_dechunk)
+        /* not an istream_dechunk instance */
+        return false;
+
+    auto *dechunk = istream_to_dechunk(i);
+    dechunk->verbatim = true;
+    dechunk->eof_verbatim = false;
+    dechunk->pending_verbatim = 0;
+    return true;
 }
