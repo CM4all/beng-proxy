@@ -803,6 +803,13 @@ translate_response_finish(TranslateResponse *response,
     response->request_headers.Reverse();
     response->response_headers.Reverse();
 
+    if (!response->probe_path_suffixes.IsNull() &&
+        response->probe_suffixes.empty()) {
+        g_set_error(error_r, translate_quark(), 0,
+                    "PROBE_PATH_SUFFIX without PROBE_SUFFIX");
+        return nullptr;
+    }
+
     return true;
 }
 
