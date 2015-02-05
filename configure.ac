@@ -121,20 +121,21 @@ AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_LDFLAGS)
 
 AM_CFLAGS=""
-AM_CXXFLAGS="-std=gnu++0x -fno-exceptions -fno-threadsafe-statics -fmerge-all-constants"
+AM_CXXFLAGS="-std=gnu++0x"
 AM_CPPFLAGS="-D_REENTRANT -D_GNU_SOURCE"
 AM_LDFLAGS="-Wl,--as-needed"
 
 if test "$am_cv_CC_dependencies_compiler_type" = "gcc3"; then
 	AM_CFLAGS="$AM_CFLAGS -Wall -Wextra -Wmissing-prototypes -Wwrite-strings -Wcast-qual -Wfloat-equal -Wshadow -Wpointer-arith -Wbad-function-cast -Wsign-compare -Waggregate-return -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute -Wredundant-decls -Wnested-externs -Wno-long-long -Wstrict-prototypes -Wundef -pedantic"
 
+	AM_CXXFLAGS="$AM_CXXFLAGS -fno-exceptions"
+	AM_CXXFLAGS="$AM_CXXFLAGS -fno-threadsafe-statics -fmerge-all-constants"
 	AM_CXXFLAGS="$AM_CXXFLAGS -Wall -Wextra"
 	AM_CXXFLAGS="$AM_CXXFLAGS -Wwrite-strings -Wcast-qual -Wcast-align -Wfloat-equal"
 	AM_CXXFLAGS="$AM_CXXFLAGS -Wshadow -Wpointer-arith -Wsign-compare"
 	AM_CXXFLAGS="$AM_CXXFLAGS -Wmissing-declarations -Wmissing-noreturn -Wmissing-format-attribute"
 	AM_CXXFLAGS="$AM_CXXFLAGS -Wredundant-decls -Wno-long-long -Wundef"
 	AM_CXXFLAGS="$AM_CXXFLAGS -Wno-variadic-macros"
-	AM_CXXFLAGS="$AM_CXXFLAGS"
 fi
 
 dnl
