@@ -20,6 +20,11 @@
 #include <assert.h>
 #include <string.h>
 
+/**
+ * Throttle if a #BIO grows larger than this number of bytes.
+ */
+static constexpr int SSL_THROTTLE_THRESHOLD = 16384;
+
 struct ssl_filter {
     /**
      * Buffers which can be accessed from within the thread without
@@ -53,6 +58,16 @@ ssl_set_error(GError **error_r)
 }
 
 /**
+ * Is the #BIO full, i.e. above the #SSL_THROTTLE_THRESHOLD?
+ */
+gcc_pure
+static bool
+IsFull(BIO *bio)
+{
+    return BIO_pending(bio) >= SSL_THROTTLE_THRESHOLD;
+}
+
+/**
  * Move data from #src to #dest.
  */
 static void
@@ -60,6 +75,10 @@ Move(BIO *dest, ForeignFifoBuffer<uint8_t> &src)
 {
     auto r = src.Read();
     if (r.IsEmpty())
+        return;
+
+    if (IsFull(dest))
+        /* throttle */
         return;
 
     int nbytes = BIO_write(dest, r.data, r.size);
@@ -189,7 +208,8 @@ ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
 static bool
 ssl_encrypt(struct ssl_filter &ssl, GError **error_r)
 {
-    return ssl_encrypt(ssl.ssl, ssl.plain_output, error_r);
+    return IsFull(ssl.encrypted_output) || /* throttle? */
+        ssl_encrypt(ssl.ssl, ssl.plain_output, error_r);
 }
 
 /*

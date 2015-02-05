@@ -1,6 +1,6 @@
 cm4all-beng-proxy (5.13) unstable; urgency=low
 
-  * 
+  * ssl: throttle when OpenSSL buffer grows too large
 
  --   
 
