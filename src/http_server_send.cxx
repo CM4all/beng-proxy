@@ -12,6 +12,7 @@
 #include "format.h"
 #include "date.h"
 #include "growing_buffer.hxx"
+#include "istream_dechunk.hxx"
 #include "istream_gb.hxx"
 
 #include <string.h>
@@ -113,7 +114,12 @@ http_server_response(const struct http_server_request *request,
             /* keep-alive is enabled, which means that we have to
                enable chunking */
             header_write(&headers2, "transfer-encoding", "chunked");
-            body = istream_chunked_new(request->pool, body);
+
+            /* optimized code path: if an istream_dechunked shall get
+               chunked via istream_chunk, let's just skip both to
+               reduce the amount of work and I/O we have to do */
+            if (!istream_dechunk_check_verbatim(body))
+                body = istream_chunked_new(request->pool, body);
         }
     } else if (http_status_is_empty(status)) {
         assert(content_length == 0);

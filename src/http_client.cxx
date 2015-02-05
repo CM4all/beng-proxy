@@ -16,6 +16,7 @@
 #include "istream-internal.h"
 #include "istream_gb.hxx"
 #include "istream_optional.hxx"
+#include "istream_dechunk.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"
 #include "please.hxx"
@@ -1163,7 +1164,12 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
         off_t content_length = istream_available(body, false);
         if (content_length == (off_t)-1) {
             header_write(&headers2, "transfer-encoding", "chunked");
-            body = istream_chunked_new(pool, body);
+
+            /* optimized code path: if an istream_dechunked shall get
+               chunked via istream_chunk, let's just skip both to
+               reduce the amount of work and I/O we have to do */
+            if (!istream_dechunk_check_verbatim(body))
+                body = istream_chunked_new(pool, body);
         } else {
             snprintf(request.content_length_buffer,
                      sizeof(request.content_length_buffer),
