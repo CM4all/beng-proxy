@@ -186,6 +186,12 @@ ssl_encrypt(SSL *ssl, ForeignFifoBuffer<uint8_t> &buffer, GError **error_r)
     return true;
 }
 
+static bool
+ssl_encrypt(struct ssl_filter &ssl, GError **error_r)
+{
+    return ssl_encrypt(ssl.ssl, ssl.plain_output, error_r);
+}
+
 /*
  * thread_socket_filter_handler
  *
@@ -228,7 +234,7 @@ ssl_thread_socket_filter_run(ThreadSocketFilter &f, GError **error_r,
     }
 
     if (gcc_likely(!ssl->handshaking) &&
-        (!ssl_encrypt(ssl->ssl, ssl->plain_output, error_r) ||
+        (!ssl_encrypt(*ssl, error_r) ||
          !ssl_decrypt(ssl->ssl, ssl->decrypted_input, error_r)))
         return false;
 
