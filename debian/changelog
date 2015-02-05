@@ -4,7 +4,7 @@ cm4all-beng-proxy (6.0.5) unstable; urgency=low
   * translate_client: check for PROBE_PATH_SUFFIXES without PROBE_SUFFIX
   * fix stack overflow on PROBE_SUFFIXES loop
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Thu, 05 Feb 2015 13:30:21 -0000
 
 cm4all-beng-proxy (6.0.4) unstable; urgency=low
 
