@@ -14,18 +14,26 @@
 struct escape_class;
 struct strref;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Unescape the given string into a global static buffer.  Returns
  * NULL when the string is too long for the buffer.
  */
 gcc_pure
 const char *
-unescape_static(const struct escape_class *class,
+unescape_static(const struct escape_class *cls,
                 const char *p, size_t length);
 
 gcc_pure
 const char *
-escape_static(const struct escape_class *class,
+escape_static(const struct escape_class *cls,
               const char *p, size_t length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
