@@ -2,7 +2,7 @@ cm4all-beng-proxy (6.0.6) unstable; urgency=low
 
   * http_server, http_client: reduce overhead of proxying chunked body
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 06 Feb 2015 07:44:17 -0000
 
 cm4all-beng-proxy (6.0.5) unstable; urgency=low
 
