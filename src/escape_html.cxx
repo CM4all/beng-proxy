@@ -161,23 +161,23 @@ html_escape(const char *p, size_t length, char *q)
         char ch = *p++;
         switch (ch) {
         case '&':
-            q = mempcpy(q, "&amp;", 5);
+            q = (char *)mempcpy(q, "&amp;", 5);
             break;
 
         case '"':
-            q = mempcpy(q, "&quot;", 6);
+            q = (char *)mempcpy(q, "&quot;", 6);
             break;
 
         case '\'':
-            q = mempcpy(q, "&apos;", 6);
+            q = (char *)mempcpy(q, "&apos;", 6);
             break;
 
         case '<':
-            q = mempcpy(q, "&lt;", 4);
+            q = (char *)mempcpy(q, "&lt;", 4);
             break;
 
         case '>':
-            q = mempcpy(q, "&gt;", 4);
+            q = (char *)mempcpy(q, "&gt;", 4);
             break;
 
         default:
