@@ -286,7 +286,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/widget_dump.cxx src/widget_dump.hxx \
 	src/escape_pool.c src/escape_pool.h \
 	src/istream-escape.c src/istream-escape.h \
-	src/istream-html-escape.c \
+	src/istream_html_escape.cxx src/istream_html_escape.hxx \
 	src/pheaders.cxx src/pheaders.hxx \
 	src/css_syntax.hxx \
 	src/css_util.hxx \
@@ -1066,7 +1066,7 @@ test_t_istream_replace2_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_html_escape_SOURCES = \
 	src/istream-escape.c \
-	src/istream-html-escape.c \
+	src/istream_html_escape.cxx \
 	test/t_istream_html_escape.cxx $(T_ISTREAM_FILTER_SRC)
 test_t_istream_html_escape_LDADD = $(T_ISTREAM_FILTER_LIB)
 
@@ -1075,7 +1075,7 @@ test_t_istream_fcgi_LDADD = $(T_ISTREAM_FILTER_LIB)
 
 test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/istream-escape.c \
-	src/istream-html-escape.c \
+	src/istream_html_escape.cxx \
 	src/exec.cxx \
 	src/random.c \
 	src/crash.c \
@@ -1345,7 +1345,7 @@ test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
 	src/exec.cxx \
 	src/escape_pool.c \
 	src/istream-escape.c \
-	src/istream-html-escape.c \
+	src/istream_html_escape.cxx \
 	src/rewrite_uri.cxx src/widget_uri.cxx src/widget.cxx \
 	src/widget_init.cxx src/widget_view.cxx src/transformation.cxx \
 	src/sink_gstring.cxx \
@@ -1391,7 +1391,7 @@ test_t_wembed_SOURCES = test/t_wembed.cxx \
 	src/widget_init.cxx \
 	src/widget_approval.cxx \
 	src/inline_widget.cxx \
-	src/istream-escape.c src/istream-html-escape.c \
+	src/istream-escape.c src/istream_html_escape.cxx \
 	src/http_util.cxx \
 	src/bp_global.cxx
 test_t_wembed_LDADD = $(AM_LDADD) \
@@ -1533,7 +1533,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
 	src/tpool.c \
-	src/istream-html-escape.c src/istream-escape.c \
+	src/istream-escape.c src/istream_html_escape.cxx \
 	src/header_writer.cxx src/args.cxx src/buffered_io.cxx \
 	src/fd_util.c \
 	src/header_parser.cxx \
@@ -1564,7 +1564,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
 	src/exec.cxx \
 	src/tpool.c \
-	src/istream-html-escape.c src/istream-escape.c \
+	src/istream-escape.c src/istream_html_escape.cxx \
 	src/header_writer.cxx src/args.cxx src/buffered_io.cxx \
 	src/fd_util.c \
 	src/header_parser.cxx \

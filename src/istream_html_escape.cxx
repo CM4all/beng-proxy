@@ -5,6 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_html_escape.hxx"
 #include "istream-internal.h"
 #include "istream-escape.h"
 #include "escape_html.h"
