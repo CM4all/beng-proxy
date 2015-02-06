@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "escape_html.h"
+#include "escape_html.hxx"
 #include "escape_class.h"
 #include "strref.h"
 #include "strutil.h"
@@ -15,7 +15,7 @@
 static const char *
 html_unescape_find(const char *p, size_t length)
 {
-    return memchr(p, '&', length);
+    return (const char *)memchr(p, '&', length);
 }
 
 static const char *
@@ -30,7 +30,7 @@ find_semicolon(const char *p, const char *end)
         ++p;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 static size_t
@@ -39,7 +39,7 @@ html_unescape(const char *p, size_t length, char *q)
     const char *p_end = p + length, *q_start = q;
 
     const char *amp;
-    while ((amp = memchr(p, '&', p_end - p)) != NULL) {
+    while ((amp = (const char *)memchr(p, '&', p_end - p)) != nullptr) {
         memmove(q, p, amp - p);
         q += amp - p;
 
@@ -47,7 +47,7 @@ html_unescape(const char *p, size_t length, char *q)
         entity.data = amp + 1;
 
         const char *semicolon = find_semicolon(entity.data, p_end);
-        if (semicolon == NULL) {
+        if (semicolon == nullptr) {
             *q++ = '&';
             p = amp + 1;
             continue;
@@ -124,7 +124,7 @@ html_escape_find(const char *p, size_t length)
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 static const char *
@@ -148,7 +148,7 @@ html_escape_char(char ch)
 
     default:
         assert(false);
-        return NULL;
+        return nullptr;
     }
 }
 

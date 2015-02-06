@@ -10,7 +10,7 @@
 #include "tpool.h"
 #include "async.hxx"
 #include "escape_pool.h"
-#include "escape_html.h"
+#include "escape_html.hxx"
 #include "istream.h"
 #include "penv.hxx"
 #include "inline_widget.hxx"

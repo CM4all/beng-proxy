@@ -8,7 +8,7 @@
 #include "istream_html_escape.hxx"
 #include "istream-internal.h"
 #include "istream-escape.h"
-#include "escape_html.h"
+#include "escape_html.hxx"
 
 struct istream *
 istream_html_escape_new(struct pool *pool, struct istream *input)

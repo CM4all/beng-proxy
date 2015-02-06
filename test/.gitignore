@@ -5,6 +5,8 @@ run_nfs_client
 /run_cookie_server
 /run_client_balancer
 /run_header_parser
+/run_html_escape
+/run_html_unescape
 /run_parser_cdata
 /run_subst
 /request_translation
@@ -12,6 +14,7 @@ run_nfs_client
 /t_expansible_buffer
 /t_growing_buffer
 /t_hashmap
+/t_html_escape
 /t_http_util
 /t_stock
 /t_tcache

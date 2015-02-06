@@ -28,7 +28,7 @@
 #include "bp_global.hxx"
 #include "expansible_buffer.hxx"
 #include "escape_class.h"
-#include "escape_html.h"
+#include "escape_html.hxx"
 #include "strmap.hxx"
 #include "css_syntax.hxx"
 #include "css_util.hxx"

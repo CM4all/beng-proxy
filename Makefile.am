@@ -606,7 +606,7 @@ libutil_a_SOURCES = \
 	src/uset.h \
 	src/crc.h \
 	src/escape_class.h \
-	src/escape_html.c src/escape_html.h \
+	src/escape_html.cxx src/escape_html.hxx \
 	src/escape_css.c src/escape_css.h
 
 libputil_a_SOURCES = \
@@ -733,7 +733,7 @@ noinst_PROGRAMS = \
 	test/run_cookie_client \
 	test/run_cookie_server \
 	test/run_header_parser \
-	test/run-html-unescape test/run-html-escape \
+	test/run_html_unescape test/run_html_escape \
 	test/run_processor \
 	test/run_client_balancer \
 	test/run_client \
@@ -772,7 +772,7 @@ check_PROGRAMS = \
 	test/t_cgi_address \
 	test/t-uri-verify \
 	test/t_uri_relative \
-	test/t-html-escape \
+	test/t_html_escape \
 	test/t-escape-css \
 	test/t_expansible_buffer \
 	$(FILTER_TESTS) \
@@ -807,7 +807,7 @@ TESTS = test/t_hashmap test/t_cache test/t_tcache \
 	test/t_cgi_address \
 	test/t-uri-verify \
 	test/t_uri_relative \
-	test/t-html-escape \
+	test/t_html_escape \
 	test/t-escape-css \
 	test/t_expansible_buffer \
 	$(FILTER_TESTS) \
@@ -1509,17 +1509,17 @@ test_run_header_parser_LDADD = $(AM_LDADD) \
 
 test_run_html_unescape_SOURCES = \
 	src/escape_static.c \
-	test/run-html-unescape.c
+	test/run_html_unescape.cxx
 test_run_html_unescape_LDADD = $(AM_LDADD) libutil.a
 
 test_run_html_escape_SOURCES = \
 	src/escape_static.c \
-	test/run-html-escape.c
+	test/run_html_escape.cxx
 test_run_html_escape_LDADD = $(AM_LDADD) libutil.a
 
 test_t_html_escape_SOURCES = \
 	src/escape_static.c \
-	test/t-html-escape.c
+	test/t_html_escape.cxx
 test_t_html_escape_LDADD = $(AM_LDADD) libutil.a
 
 test_t_escape_css_SOURCES = \

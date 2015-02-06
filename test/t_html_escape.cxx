@@ -1,4 +1,4 @@
-#include "escape_html.h"
+#include "escape_html.hxx"
 #include "escape_class.h"
 #include "escape_static.h"
 #include "strref.h"
@@ -7,7 +7,7 @@
 static const char *
 unescape2(struct strref *s)
 {
-    if (unescape_find(&html_escape_class, s->data, s->length) == NULL)
+    if (unescape_find(&html_escape_class, s->data, s->length) == nullptr)
         return 0;
 
     assert(s->length > 0);

@@ -22,9 +22,6 @@ test/format-http-date
 test/run_css_parser
 test/run_httpd_hello
 test/run_ua_parser
-test/run-html-unescape
-test/run-html-escape
-test/t-html-escape
 test/t-escape-css
 test/run_http_server
 test/run-google-gadget
