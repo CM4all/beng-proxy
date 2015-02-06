@@ -73,6 +73,7 @@ struct TranslateCacheItem {
         const char *param;
         ConstBuffer<void> session;
 
+        const char *listener_tag;
         SocketAddress local_address;
 
         const char *remote_host;
@@ -838,6 +839,10 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
         return tcache_buffer_match(request.session,
                                    other_request.session, strict);
 
+    case TRANSLATE_LISTENER_TAG:
+        return tcache_string_match(request.listener_tag,
+                                   other_request.listener_tag, strict);
+
     case TRANSLATE_LOCAL_ADDRESS:
     case TRANSLATE_LOCAL_ADDRESS_STRING:
         return tcache_address_match(request.local_address,
@@ -1101,6 +1106,10 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
     item->request.session =
         tcache_vary_copy(pool, tcr.request.session,
                          response, TRANSLATE_SESSION);
+
+    item->request.listener_tag =
+        tcache_vary_copy(pool, tcr.request.listener_tag,
+                         response, TRANSLATE_LISTENER_TAG);
 
     item->request.local_address =
         !tcr.request.local_address.IsNull() &&

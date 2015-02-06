@@ -348,6 +348,8 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
         (request->error_document_status == 0 ||
          write_short(gb, TRANSLATE_STATUS,
                      request->error_document_status, error_r)) &&
+        write_optional_packet(gb, TRANSLATE_LISTENER_TAG,
+                              request->listener_tag, error_r) &&
         write_optional_sockaddr(gb, TRANSLATE_LOCAL_ADDRESS,
                                 TRANSLATE_LOCAL_ADDRESS_STRING,
                                 request->local_address, error_r) &&
@@ -1391,6 +1393,7 @@ translate_handle_packet(TranslateClient *client,
     case TRANSLATE_AUTHORIZATION:
     case TRANSLATE_UA_CLASS:
     case TRANSLATE_SUFFIX:
+    case TRANSLATE_LISTENER_TAG:
         translate_client_error(client,
                                "misplaced translate request packet");
         return false;

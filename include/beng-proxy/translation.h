@@ -602,6 +602,11 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_APPEND_AUTH.
      */
     TRANSLATE_EXPAND_APPEND_AUTH = 147,
+
+    /**
+     * Indicates which listener accepted the connection.
+     */
+    TRANSLATE_LISTENER_TAG = 148,
 };
 
 struct beng_translation_header {

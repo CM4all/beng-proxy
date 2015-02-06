@@ -605,6 +605,16 @@ class Translation(Protocol):
             response.packet(TRANSLATE_SCRIPT_NAME, uri)
             if ua_class is not None:
                 response.packet(TRANSLATE_PATH_INFO, ua_class)
+        elif raw_uri == '/listener_tag':
+            if want is None or TRANSLATE_LISTENER_TAG not in want:
+                response.want(TRANSLATE_LISTENER_TAG)
+                return
+
+            response.vary(TRANSLATE_LISTENER_TAG)
+            response.packet(TRANSLATE_CGI, os.path.join(cgi_path, 'env.py'))
+            response.packet(TRANSLATE_SCRIPT_NAME, uri)
+            if request.listener_tag is not None:
+                response.packet(TRANSLATE_PATH_INFO, request.listener_tag)
         elif uri[:16] == '/file_not_found/':
             if file_not_found is not None:
                 assert file_not_found == 'hansi'

@@ -45,6 +45,7 @@ class Request:
         self.auth = None
         self.want_full_uri = None
         self.param = None
+        self.listener_tag = None
         self.local_address = None
         self.local_port = None
         self.remote_host = None
@@ -102,6 +103,8 @@ class Request:
             self.want_full_uri = packet.payload
         elif packet.command == TRANSLATE_PARAM:
             self.param = packet.payload
+        elif packet.command == TRANSLATE_LISTENER_TAG:
+            self.listener_tag = packet.payload
         elif packet.command == TRANSLATE_LOCAL_ADDRESS_STRING:
             self.local_address = packet.payload
             self.local_port = _parse_port(self.local_address)

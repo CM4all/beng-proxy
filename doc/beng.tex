@@ -697,6 +697,14 @@ described here is 1. \\
 
 \hline
 
+\verb|LISTENER_TAG| & The ``tag'' of the listener that accepted the
+connection.  The can can be specified in the \texttt{--listen}
+setting, for example: \texttt{--listen TAG=192.168.1.99:80} (This
+packet optional and is only submitted if requested via \verb|WANT|,
+see page \pageref{want}) \\
+
+\hline
+
 \verb|LOCAL_ADDRESS| & The local socket address the request was
 received on.  The payload is a \texttt{struct sockaddr}.
 (This packet optional and is only submitted if requested via
@@ -810,6 +818,7 @@ response. \\
 request again, with this packet echoed plus the requested packets.
 The payload is an array of 16-bit integers with requested packet ids.
 The following packets are allowed/supported here:
+\verb|LISTENER_TAG|,
 \verb|LOCAL_ADDRESS|, \verb|REMOTE_HOST|, \verb|USER_AGENT|,
 \verb|UA_CLASS|, \verb|LANGUAGE|, \verb|ARGS|, \verb|QUERY_STRING| \\
 
@@ -1173,7 +1182,7 @@ this response depends upon.
 The following request packets are currently supported:
 \verb|PARAM|,
 \verb|SESSION|,
-\verb|LOCAL_ADDRESS|,
+\verb|LISTENER_TAG|, \verb|LOCAL_ADDRESS|,
 \verb|REMOTE_HOST|, \verb|HOST|, \verb|LANGUAGE|,
 \verb|USER_AGENT|, \verb|UA_CLASS|, \verb|QUERY_STRING|,
 \verb|ENOTDIR|.

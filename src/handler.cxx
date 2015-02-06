@@ -450,6 +450,13 @@ uri_without_query_string(struct pool *pool, const char *uri)
 }
 
 static void
+fill_translate_request_listener_tag(TranslateRequest &t,
+                                    const request &r)
+{
+    t.listener_tag = r.connection->listener_tag;
+}
+
+static void
 fill_translate_request_local_address(TranslateRequest &t,
                                      const http_server_request &r)
 {
@@ -533,6 +540,10 @@ repeat_translation(struct request &request, const TranslateResponse &response)
         /* handle WANT */
 
         request.translate.request.want = response.want;
+
+        if (response.Wants(TRANSLATE_LISTENER_TAG))
+            fill_translate_request_listener_tag(request.translate.request,
+                                                request);
 
         if (response.Wants(TRANSLATE_LOCAL_ADDRESS))
             fill_translate_request_local_address(request.translate.request,

@@ -12,7 +12,7 @@
 void
 BPListener::OnAccept(SocketDescriptor &&fd, SocketAddress address)
 {
-    new_connection(&instance, std::move(fd), address);
+    new_connection(&instance, std::move(fd), address, tag);
 }
 
 void

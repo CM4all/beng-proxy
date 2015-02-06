@@ -225,14 +225,14 @@ deinit_signals(struct instance *instance)
 }
 
 static void
-add_listener(struct instance *instance, struct addrinfo *ai)
+add_listener(struct instance *instance, struct addrinfo *ai, const char *tag)
 {
     Error error;
 
     assert(ai != NULL);
 
     do {
-        instance->listeners.emplace_front(*instance);
+        instance->listeners.emplace_front(*instance, tag);
         auto &listener = instance->listeners.front();
 
         if (!listener.Listen(ai->ai_family, ai->ai_socktype,
@@ -248,11 +248,11 @@ add_listener(struct instance *instance, struct addrinfo *ai)
 }
 
 static void
-add_tcp_listener(struct instance *instance, int port)
+add_tcp_listener(struct instance *instance, int port, const char *tag)
 {
     Error error;
 
-    instance->listeners.emplace_front(*instance);
+    instance->listeners.emplace_front(*instance, tag);
     auto &listener = instance->listeners.front();
     if (!listener.ListenTCP(port, error)) {
         fprintf(stderr, "%s\n", error.GetMessage());
@@ -333,10 +333,10 @@ int main(int argc, char **argv)
     session_save_init(instance.config.session_save_path);
 
     for (auto i : instance.config.ports)
-        add_tcp_listener(&instance, i);
+        add_tcp_listener(&instance, i, nullptr);
 
     for (auto i : instance.config.listen)
-        add_listener(&instance, i.address);
+        add_listener(&instance, i.address, i.tag);
 
     if (!global_control_handler_init(instance.pool, &instance))
         exit(2);

@@ -23,6 +23,9 @@ struct client_connection {
     struct instance *instance;
     struct pool *pool;
     const struct config *config;
+
+    const char *listener_tag;
+
     struct http_server_connection *http;
 
     /**
@@ -42,7 +45,8 @@ struct client_connection {
 
 void
 new_connection(struct instance *instance,
-               SocketDescriptor &&fd, SocketAddress address);
+               SocketDescriptor &&fd, SocketAddress address,
+               const char *listener_tag);
 
 void
 close_connection(struct client_connection *connection);

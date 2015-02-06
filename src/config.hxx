@@ -24,6 +24,9 @@ extern bool debug_mode;
 
 struct ListenerConfig {
     struct addrinfo *address;
+
+    // TODO: free this string
+    char *tag;
 };
 
 struct config {

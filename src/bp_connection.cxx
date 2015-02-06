@@ -126,7 +126,8 @@ static const struct http_server_connection_handler my_http_server_connection_han
 
 void
 new_connection(struct instance *instance,
-               SocketDescriptor &&fd, SocketAddress address)
+               SocketDescriptor &&fd, SocketAddress address,
+               const char *listener_tag)
 {
     struct pool *pool;
 
@@ -150,6 +151,7 @@ new_connection(struct instance *instance,
     connection->instance = instance;
     connection->pool = pool;
     connection->config = &instance->config;
+    connection->listener_tag = listener_tag;
     connection->site_name = nullptr;
 
     list_add(&connection->siblings, &instance->connections);

@@ -16,6 +16,8 @@
 #include <stdint.h>
 
 struct TranslateRequest {
+    const char *listener_tag;
+
     SocketAddress local_address;
 
     const char *remote_host;
@@ -75,6 +77,7 @@ struct TranslateRequest {
     const char *probe_suffix;
 
     void Clear() {
+        listener_tag = nullptr;
         local_address = nullptr;
         remote_host = nullptr;
         host = nullptr;

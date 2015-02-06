@@ -13,8 +13,11 @@
 class BPListener final : public ServerSocket {
     struct instance &instance;
 
+    const char *const tag;
+
 public:
-    BPListener(struct instance &_instance):instance(_instance) {}
+    BPListener(struct instance &_instance, const char *_tag)
+        :instance(_instance), tag(_tag) {}
 
 protected:
     void OnAccept(SocketDescriptor &&fd, SocketAddress address) override;

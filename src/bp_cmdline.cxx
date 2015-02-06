@@ -79,7 +79,7 @@ static void usage(void) {
 #endif
          " -p PORT        the TCP port beng-proxy listens on\n"
 #ifdef __GLIBC__
-         " --listen IP:PORT\n"
+         " --listen [TAG=]IP:PORT\n"
 #endif
          " -L IP:PORT     listen on this IP address\n"
 #ifdef __GLIBC__
@@ -155,6 +155,14 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 static void
 ParseListenerConfig(const char *argv0, ListenerConfig &config, const char *s)
 {
+    config.tag = nullptr;
+
+    const char *equals = strchr(s, '=');
+    if (equals != nullptr) {
+        config.tag = strndup(s, equals - s);
+        s = equals + 1;
+    }
+
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
     hints.ai_socktype = SOCK_STREAM;
