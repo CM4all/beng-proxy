@@ -47,7 +47,7 @@ StaticSocketAddress::SetLocal(const char *path)
 
 bool
 StaticSocketAddress::Lookup(const char *host, int default_port, int socktype,
-                      Error &error)
+                            Error &error)
 {
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
