@@ -126,10 +126,9 @@ lb_connection_new(struct lb_instance *instance,
         http_server_connection_new(pool, fd.Steal(), fd_type,
                                    filter, filter_ctx,
                                    local_address.IsDefined()
-                                   ? local_address.GetAddress()
+                                   ? (SocketAddress)local_address
                                    : nullptr,
-                                   local_address.GetSize(),
-                                   address, address.GetSize(),
+                                   address,
                                    false,
                                    &lb_http_connection_handler,
                                    connection,

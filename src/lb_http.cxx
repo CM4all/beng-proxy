@@ -359,8 +359,7 @@ lb_http_connection_request(struct http_server_request *request,
     SocketAddress bind_address = SocketAddress::Null();
     const bool transparent_source = cluster->transparent_source;
     if (transparent_source) {
-        bind_address = SocketAddress(request->remote_address,
-                                     request->remote_address_length);
+        bind_address = request->remote_address;
 
         /* reset the port to 0 to allow the kernel to choose one */
         if (bind_address.GetFamily() == AF_INET) {

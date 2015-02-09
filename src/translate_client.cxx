@@ -304,30 +304,28 @@ write_short(GrowingBuffer *gb,
 static bool
 write_sockaddr(GrowingBuffer *gb,
                uint16_t command, uint16_t command_string,
-               const struct sockaddr *address, size_t address_length,
+               SocketAddress address,
                GError **error_r)
 {
+    assert(!address.IsNull());
+
     char address_string[1024];
-
-    assert(address != nullptr);
-    assert(address_length > 0);
-
-    return write_packet_n(gb, command, address, address_length, error_r) &&
+    return write_packet_n(gb, command,
+                          address.GetAddress(), address.GetSize(),
+                          error_r) &&
         (!socket_address_to_string(address_string, sizeof(address_string),
-                                   address, address_length) ||
+                                   address.GetAddress(), address.GetSize()) ||
          write_packet(gb, command_string, address_string, error_r));
 }
 
 static bool
 write_optional_sockaddr(GrowingBuffer *gb,
                         uint16_t command, uint16_t command_string,
-                        const struct sockaddr *address, size_t address_length,
+                        SocketAddress address,
                         GError **error_r)
 {
-    assert((address == nullptr) == (address_length == 0));
-
-    return address != nullptr
-        ? write_sockaddr(gb, command, command_string, address, address_length,
+    return !address.IsNull()
+        ? write_sockaddr(gb, command, command_string, address,
                          error_r)
         : true;
 }
@@ -352,8 +350,7 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
                      request->error_document_status, error_r)) &&
         write_optional_sockaddr(gb, TRANSLATE_LOCAL_ADDRESS,
                                 TRANSLATE_LOCAL_ADDRESS_STRING,
-                                request->local_address,
-                                request->local_address_length, error_r) &&
+                                request->local_address, error_r) &&
         write_optional_packet(gb, TRANSLATE_REMOTE_HOST,
                               request->remote_host, error_r) &&
         write_optional_packet(gb, TRANSLATE_HOST, request->host, error_r) &&

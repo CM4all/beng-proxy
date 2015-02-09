@@ -33,11 +33,7 @@ struct http_server_connection {
 
     /* info */
 
-    const struct sockaddr *local_address;
-    size_t local_address_length;
-
-    const struct sockaddr *remote_address;
-    size_t remote_address_length;
+    SocketAddress local_address, remote_address;
 
     const char *local_host_and_port;
     const char *remote_host_and_port, *remote_host;

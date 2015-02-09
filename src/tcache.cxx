@@ -17,6 +17,7 @@
 #include "uri_escape.hxx"
 #include "tpool.h"
 #include "pbuffer.hxx"
+#include "paddress.hxx"
 #include "SlicePool.hxx"
 #include "load_file.hxx"
 #include "util/djbhash.h"
@@ -72,8 +73,7 @@ struct TranslateCacheItem {
         const char *param;
         ConstBuffer<void> session;
 
-        const struct sockaddr *local_address;
-        size_t local_address_length;
+        SocketAddress local_address;
 
         const char *remote_host;
         const char *host;
@@ -793,6 +793,14 @@ tcache_buffer_match(ConstBuffer<void> a, ConstBuffer<void> b, bool strict)
     return a.size == b.size && memcmp(a.data, b.data, a.size) == 0;
 }
 
+static bool
+tcache_address_match(SocketAddress a, SocketAddress b, bool strict)
+{
+    return tcache_buffer_match(a.GetAddress(), a.GetSize(),
+                               b.GetAddress(), b.GetSize(),
+                               strict);
+}
+
 /**
  * @param strict in strict mode, nullptr values are a mismatch
  */
@@ -832,11 +840,9 @@ TranslateCacheItem::VaryMatch(const TranslateRequest &other_request,
 
     case TRANSLATE_LOCAL_ADDRESS:
     case TRANSLATE_LOCAL_ADDRESS_STRING:
-        return tcache_buffer_match(request.local_address,
-                                   request.local_address_length,
-                                   other_request.local_address,
-                                   other_request.local_address_length,
-                                   strict);
+        return tcache_address_match(request.local_address,
+                                    other_request.local_address,
+                                    strict);
 
     case TRANSLATE_REMOTE_HOST:
         return tcache_string_match(request.remote_host,
@@ -1097,15 +1103,11 @@ tcache_store(TranslateCacheRequest &tcr, const TranslateResponse &response,
                          response, TRANSLATE_SESSION);
 
     item->request.local_address =
-        tcr.request.local_address != nullptr &&
+        !tcr.request.local_address.IsNull() &&
         (response.VaryContains(TRANSLATE_LOCAL_ADDRESS) ||
          response.VaryContains(TRANSLATE_LOCAL_ADDRESS_STRING))
-        ? (const struct sockaddr *)
-        p_memdup(pool, tcr.request.local_address,
-                 tcr.request.local_address_length)
+        ? DupAddress(*pool, tcr.request.local_address)
         : nullptr;
-    item->request.local_address_length =
-        tcr.request.local_address_length;
 
     tcache_vary_copy(pool, tcr.request.remote_host,
                      response, TRANSLATE_REMOTE_HOST);

@@ -10,6 +10,7 @@
 #include "address_string.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
+#include "paddress.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>
@@ -71,9 +72,7 @@ http_server_request_new(struct http_server_connection *connection)
     request->pool = pool;
     request->connection = connection;
     request->local_address = connection->local_address;
-    request->local_address_length = connection->local_address_length;
     request->remote_address = connection->remote_address;
-    request->remote_address_length = connection->remote_address_length;
     request->local_host_and_port = connection->local_host_and_port;
     request->remote_host_and_port = connection->remote_host_and_port;
     request->remote_host = connection->remote_host;
@@ -221,14 +220,29 @@ http_server_timeout_callback(int fd gcc_unused, short event gcc_unused,
     pool_commit();
 }
 
+static const char *
+AddressToStringChecked(struct pool &pool, SocketAddress address)
+{
+    return address.IsNull()
+        ? nullptr
+        : address_to_string(&pool, address.GetAddress(), address.GetSize());
+}
+
+static const char *
+AddressToHostStringChecked(struct pool &pool, SocketAddress address)
+{
+    return address.IsNull()
+        ? nullptr
+        : address_to_host_string(&pool, address.GetAddress(),
+                                 address.GetSize());
+}
+
 void
 http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_type,
                            const SocketFilter *filter,
                            void *filter_ctx,
-                           const struct sockaddr *local_address,
-                           size_t local_address_length,
-                           const struct sockaddr *remote_address,
-                           size_t remote_address_length,
+                           SocketAddress local_address,
+                           SocketAddress remote_address,
                            bool date_header,
                            const struct http_server_connection_handler *handler,
                            void *ctx,
@@ -239,7 +253,6 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     assert(handler->request != nullptr);
     assert(handler->error != nullptr);
     assert(handler->free != nullptr);
-    assert((local_address == nullptr) == (local_address_length == 0));
 
     auto connection = NewFromPool<struct http_server_connection>(*pool);
     connection->pool = pool;
@@ -252,27 +265,15 @@ http_server_connection_new(struct pool *pool, int fd, enum istream_direct fd_typ
     connection->handler = handler;
     connection->handler_ctx = ctx;
 
-    connection->local_address = local_address != nullptr
-        ? (const struct sockaddr *)p_memdup(pool, local_address,
-                                            local_address_length)
-        : nullptr;
-    connection->local_address_length = local_address_length;
+    connection->local_address = DupAddress(*pool, local_address);
+    connection->remote_address = DupAddress(*pool, remote_address);
 
-    connection->remote_address = remote_address != nullptr
-        ? (const struct sockaddr *)p_memdup(pool, remote_address,
-                                            remote_address_length)
-        : nullptr;
-    connection->remote_address_length = remote_address_length;
-
-    connection->local_host_and_port = local_address != nullptr
-        ? address_to_string(pool, local_address, local_address_length)
-        : nullptr;
-    connection->remote_host_and_port = remote_address != nullptr
-        ? address_to_string(pool, remote_address, remote_address_length)
-        : nullptr;
-    connection->remote_host = remote_address != nullptr
-        ? address_to_host_string(pool, remote_address, remote_address_length)
-        : nullptr;
+    connection->local_host_and_port =
+        AddressToStringChecked(*pool, local_address);
+    connection->remote_host_and_port =
+        AddressToStringChecked(*pool, remote_address);
+    connection->remote_host =
+        AddressToHostStringChecked(*pool, remote_address);
     connection->date_header = date_header;
     connection->request.read_state = http_server_connection::Request::START;
     connection->request.request = nullptr;

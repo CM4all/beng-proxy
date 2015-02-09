@@ -8,6 +8,7 @@
 #define __BENG_HTTP_SERVER_H
 
 #include "istream-direct.h"
+#include "net/SocketAddress.hxx"
 
 #include <http/method.h>
 #include <http/status.h>
@@ -57,11 +58,7 @@ struct http_server_request {
     struct pool *pool;
     struct http_server_connection *connection;
 
-    const struct sockaddr *local_address;
-    size_t local_address_length;
-
-    const struct sockaddr *remote_address;
-    size_t remote_address_length;
+    SocketAddress local_address, remote_address;
 
     /**
      * The local address (host and port) that was connected to.
@@ -125,10 +122,8 @@ http_server_connection_new(struct pool *pool,
                            int fd, enum istream_direct fd_type,
                            const SocketFilter *filter,
                            void *filter_ctx,
-                           const struct sockaddr *local_address,
-                           size_t local_address_length,
-                           const struct sockaddr *remote_address,
-                           size_t remote_address_length,
+                           SocketAddress local_address,
+                           SocketAddress remote_address,
                            bool date_header,
                            const struct http_server_connection_handler *handler,
                            void *ctx,

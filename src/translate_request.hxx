@@ -7,6 +7,7 @@
 #ifndef BENG_PROXY_TRANSLATE_REQUEST_HXX
 #define BENG_PROXY_TRANSLATE_REQUEST_HXX
 
+#include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <http/status.h>
@@ -15,8 +16,7 @@
 #include <stdint.h>
 
 struct TranslateRequest {
-    const struct sockaddr *local_address;
-    size_t local_address_length;
+    SocketAddress local_address;
 
     const char *remote_host;
     const char *host;
@@ -76,7 +76,6 @@ struct TranslateRequest {
 
     void Clear() {
         local_address = nullptr;
-        local_address_length = 0;
         remote_host = nullptr;
         host = nullptr;
         user_agent = nullptr;

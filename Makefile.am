@@ -632,6 +632,7 @@ libmemory_a_SOURCES = \
 
 libpool_a_SOURCES = \
 	src/pbuffer.cxx src/pbuffer.hxx \
+	src/paddress.hxx \
 	src/pstring.cxx \
 	src/pool.cxx src/pool.hxx src/pool.h
 

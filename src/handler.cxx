@@ -454,7 +454,6 @@ fill_translate_request_local_address(TranslateRequest &t,
                                      const http_server_request &r)
 {
     t.local_address = r.local_address;
-    t.local_address_length = r.local_address_length;
 }
 
 static void

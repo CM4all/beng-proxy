@@ -157,10 +157,9 @@ new_connection(struct instance *instance,
 
     http_server_connection_new(pool, fd.Steal(), ISTREAM_TCP, nullptr, nullptr,
                                local_address.IsDefined()
-                               ? local_address
+                               ? (SocketAddress)local_address
                                : nullptr,
-                               local_address.GetSize(),
-                               address, address.GetSize(),
+                               address,
                                true,
                                &my_http_server_connection_handler,
                                connection,
