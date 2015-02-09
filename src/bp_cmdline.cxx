@@ -153,7 +153,7 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 }
 
 static void
-ParseListenerConfig(const char *argv0, struct addrinfo *&address, const char *s)
+ParseListenerConfig(const char *argv0, ListenerConfig &config, const char *s)
 {
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
@@ -163,7 +163,7 @@ ParseListenerConfig(const char *argv0, struct addrinfo *&address, const char *s)
     int result = socket_resolve_host_port(s,
                                           debug_mode ? 8080 : 80,
                                           &hints,
-                                          &address);
+                                          &config.address);
     if (result != 0)
         arg_error(argv0, "failed to resolve %s", s);
 }

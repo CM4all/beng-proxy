@@ -336,7 +336,7 @@ int main(int argc, char **argv)
         add_tcp_listener(&instance, i);
 
     for (auto i : instance.config.listen)
-        add_listener(&instance, i);
+        add_listener(&instance, i.address);
 
     if (!global_control_handler_init(instance.pool, &instance))
         exit(2);

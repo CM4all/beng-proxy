@@ -22,6 +22,10 @@ static const bool debug_mode = false;
 extern bool debug_mode;
 #endif
 
+struct ListenerConfig {
+    struct addrinfo *address;
+};
+
 struct config {
     static constexpr unsigned MAX_PORTS = 32;
     static constexpr unsigned MAX_LISTEN = 32;
@@ -35,7 +39,7 @@ struct config {
 
     TrivialArray<unsigned, MAX_PORTS> ports;
 
-    TrivialArray<struct addrinfo *, MAX_LISTEN> listen;
+    TrivialArray<ListenerConfig, MAX_LISTEN> listen;
 
     const char *session_cookie;
 
