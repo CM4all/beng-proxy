@@ -7,6 +7,8 @@
 #ifndef SOCKET_ADDRESS_HXX
 #define SOCKET_ADDRESS_HXX
 
+#include <cstddef>
+
 #include <sys/socket.h>
 
 struct sockaddr;
@@ -18,6 +20,8 @@ class SocketAddress {
 
 public:
     SocketAddress() = default;
+
+    constexpr SocketAddress(std::nullptr_t):address(nullptr), size(0) {}
 
     constexpr SocketAddress(const struct sockaddr *_address, socklen_t _size)
         :address(_address), size(_size) {}
