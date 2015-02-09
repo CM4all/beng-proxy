@@ -152,6 +152,22 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
     exit(1);
 }
 
+static void
+ParseListenerConfig(const char *argv0, struct addrinfo *&address, const char *s)
+{
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    int result = socket_resolve_host_port(s,
+                                          debug_mode ? 8080 : 80,
+                                          &hints,
+                                          &address);
+    if (result != 0)
+        arg_error(argv0, "failed to resolve %s", s);
+}
+
 static bool http_cache_size_set = false;
 
 static void
@@ -462,16 +478,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             if (config->listen.full())
                 arg_error(argv[0], "too many listeners");
 
-            memset(&hints, 0, sizeof(hints));
-            hints.ai_socktype = SOCK_STREAM;
-            hints.ai_flags = AI_PASSIVE;
-
-            ret = socket_resolve_host_port(optarg,
-                                           debug_mode ? 8080 : 80,
-                                           &hints,
-                                           &config->listen.append());
-            if (ret != 0)
-                arg_error(argv[0], "failed to resolve %s", optarg);
+            ParseListenerConfig(argv[0], config->listen.append(), optarg);
             break;
 
         case 'c':
