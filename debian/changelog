@@ -2,7 +2,7 @@ cm4all-beng-proxy (6.0.7) unstable; urgency=low
 
   * translation: add packet LISTENER_TAG
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Mon, 09 Feb 2015 11:02:06 -0000
 
 cm4all-beng-proxy (6.0.6) unstable; urgency=low
 
