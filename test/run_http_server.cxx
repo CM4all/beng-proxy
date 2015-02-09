@@ -62,7 +62,7 @@ my_abort(struct async_operation *ao)
 {
     struct context *ctx = (struct context *)ao;
 
-    if (ctx->request_body != NULL)
+    if (ctx->request_body != nullptr)
         istream_close_unused(ctx->request_body);
 
     evtimer_del(&ctx->timer);
@@ -88,7 +88,7 @@ my_request(struct http_server_request *request, void *_ctx,
         static char data[0x100];
 
     case context::Mode::MODE_NULL:
-        if (request->body != NULL)
+        if (request->body != nullptr)
             sink_null_new(request->body);
 
         http_server_response(request, HTTP_STATUS_NO_CONTENT,
@@ -97,14 +97,14 @@ my_request(struct http_server_request *request, void *_ctx,
 
     case context::Mode::MIRROR:
         http_server_response(request,
-                             request->body == NULL
+                             request->body == nullptr
                              ? HTTP_STATUS_NO_CONTENT : HTTP_STATUS_OK,
                              HttpHeaders(),
                              request->body);
         break;
 
     case context::Mode::DUMMY:
-        if (request->body != NULL)
+        if (request->body != nullptr)
             sink_null_new(request->body);
 
         body = istream_head_new(request->pool,
@@ -117,7 +117,7 @@ my_request(struct http_server_request *request, void *_ctx,
         break;
 
     case context::Mode::FIXED:
-        if (request->body != NULL)
+        if (request->body != nullptr)
             sink_null_new(request->body);
 
         http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
@@ -125,9 +125,9 @@ my_request(struct http_server_request *request, void *_ctx,
         break;
 
     case context::Mode::HOLD:
-        ctx->request_body = request->body != NULL
+        ctx->request_body = request->body != nullptr
             ? istream_hold_new(request->pool, request->body)
-            : NULL;
+            : nullptr;
 
         body = istream_delayed_new(request->pool);
         ctx->operation.Init(my_operation);
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
 
     if (strcmp(argv[1], "accept") == 0) {
         const int listen_fd = atoi(argv[2]);
-        in_fd = out_fd = accept(listen_fd, NULL, 0);
+        in_fd = out_fd = accept(listen_fd, nullptr, 0);
         if (in_fd < 0) {
             perror("accept() failed");
             return EXIT_FAILURE;
@@ -201,7 +201,7 @@ int main(int argc, char **argv) {
     shutdown_listener_init(&ctx.shutdown_listener, shutdown_callback, &ctx);
     evtimer_set(&ctx.timer, timer_callback, &ctx);
 
-    struct pool *pool = pool_new_libc(NULL, "root");
+    struct pool *pool = pool_new_libc(nullptr, "root");
 
     int sockfd;
     if (in_fd != out_fd) {
@@ -229,8 +229,8 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    http_server_connection_new(pool, sockfd, ISTREAM_SOCKET, NULL, NULL,
-                               NULL, 0, NULL, 0,
+    http_server_connection_new(pool, sockfd, ISTREAM_SOCKET, nullptr, nullptr,
+                               nullptr, 0, nullptr, 0,
                                true, &handler, &ctx,
                                &ctx.connection);
 

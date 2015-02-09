@@ -18,7 +18,7 @@ catch_callback(GError *error, gcc_unused void *ctx)
 {
     fprintf(stderr, "%s\n", error->message);
     g_error_free(error);
-    return NULL;
+    return nullptr;
 }
 
 static void
@@ -29,7 +29,7 @@ catch_close_request(struct http_server_request *request, void *ctx,
 
     http_server_response(request, HTTP_STATUS_OK, HttpHeaders(),
                          istream_catch_new(request->pool, request->body,
-                                           catch_callback, NULL));
+                                           catch_callback, nullptr));
     http_server_connection_close(request->connection);
 }
 
@@ -67,13 +67,13 @@ test_catch(struct pool *pool)
                         istream_string_new(pool,
                                            "POST / HTTP/1.1\r\nContent-Length: 1024\r\n\r\nfoo"),
                         istream_block_new(*pool),
-                        NULL);
+                        nullptr);
     struct istream *sock = istream_socketpair_new(pool, request, &fd);
     sink_null_new(sock);
 
-    http_server_connection_new(pool, fd, ISTREAM_SOCKET, NULL, NULL,
-                               NULL, 0, NULL, 0,
-                               true, &catch_close_handler, NULL,
+    http_server_connection_new(pool, fd, ISTREAM_SOCKET, nullptr, nullptr,
+                               nullptr, 0, nullptr, 0,
+                               true, &catch_close_handler, nullptr,
                                &connection);
     pool_unref(pool);
 
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
     event_base = event_init();
     fb_pool_init(false);
 
-    pool = pool_new_libc(NULL, "root");
+    pool = pool_new_libc(nullptr, "root");
 
     test_catch(pool);
 
