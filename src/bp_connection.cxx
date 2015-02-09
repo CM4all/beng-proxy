@@ -26,11 +26,11 @@
 static void
 remove_connection(client_connection &connection)
 {
-    assert(connection.http != NULL);
-    assert(connection.instance != NULL);
+    assert(connection.http != nullptr);
+    assert(connection.instance != nullptr);
     assert(connection.instance->num_connections > 0);
 
-    connection.http = NULL;
+    connection.http = nullptr;
 
     list_remove(&connection.siblings);
     --connection.instance->num_connections;
@@ -84,7 +84,7 @@ my_http_server_connection_log(struct http_server_request *request,
                status, length,
                bytes_received, bytes_sent,
                now_us() - connection.request_start_time);
-    connection.site_name = NULL;
+    connection.site_name = nullptr;
 }
 
 static void
@@ -150,15 +150,15 @@ new_connection(struct instance *instance,
     connection->instance = instance;
     connection->pool = pool;
     connection->config = &instance->config;
-    connection->site_name = NULL;
+    connection->site_name = nullptr;
 
     list_add(&connection->siblings, &instance->connections);
     ++connection->instance->num_connections;
 
-    http_server_connection_new(pool, fd.Steal(), ISTREAM_TCP, NULL, NULL,
+    http_server_connection_new(pool, fd.Steal(), ISTREAM_TCP, nullptr, nullptr,
                                local_address.IsDefined()
                                ? local_address
-                               : NULL,
+                               : nullptr,
                                local_address.GetSize(),
                                address, address.GetSize(),
                                true,
