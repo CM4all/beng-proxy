@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "address.h"
-#include "pool.h"
+#include "address_string.hxx"
+#include "pool.hxx"
 
 #include <socket/address.h>
 
@@ -18,7 +18,7 @@ address_to_string(struct pool *pool,
 
     success = socket_address_to_string(host, sizeof(host), addr, addrlen);
     if (!success)
-        return NULL;
+        return nullptr;
 
     return p_strdup(pool, host);
 }
@@ -33,7 +33,7 @@ address_to_host_string(struct pool *pool, const struct sockaddr *address,
     success = socket_host_to_string(host, sizeof(host),
                                     address, address_length);
     if (!success)
-        return NULL;
+        return nullptr;
 
     return p_strdup(pool, host);
 }

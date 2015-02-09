@@ -86,7 +86,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/abort_flag.hxx \
 	src/abort_unref.cxx src/abort_unref.hxx \
 	src/access_log.cxx src/access_log.hxx \
-	src/address.c src/address.h \
+	src/address_string.cxx src/address_string.hxx \
 	src/ajp_client.cxx src/ajp_client.hxx \
 	src/ajp_headers.cxx src/ajp_headers.hxx \
 	src/ajp-protocol.c src/ajp-protocol.h \
@@ -366,7 +366,7 @@ cm4all_beng_lb_SOURCES = \
 	src/pipe_stock.cxx \
 	src/failure.cxx \
 	src/balancer.cxx \
-	src/address.c \
+	src/address_string.cxx src/address_string.hxx \
 	src/address_list.cxx \
 	src/address_resolver.cxx src/address_resolver.hxx \
 	src/address_edit.h \
@@ -1169,7 +1169,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
 	src/cleanup_timer.cxx \
-	src/address.c \
+	src/address_string.cxx \
 	src/buffered_io.cxx \
 	src/header_writer.cxx \
 	src/istream_gb.cxx \
@@ -1193,7 +1193,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/http_server.cxx src/http_server_send.cxx src/http_server_request.cxx \
 	src/http_server_read.cxx src/http_server_response.cxx \
 	src/socket_wrapper.cxx src/buffered_socket.cxx src/filtered_socket.cxx \
-	src/address.c \
+	src/address_string.cxx \
 	src/duplex.cxx src/duplex.hxx \
 	src/buffered_io.cxx \
 	src/header_writer.cxx \

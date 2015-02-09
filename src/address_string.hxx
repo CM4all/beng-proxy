@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_ADDRESS_H
-#define __BENG_ADDRESS_H
+#ifndef BENG_ADDRESS_STRING_HXX
+#define BENG_ADDRESS_STRING_HXX
 
 #include <inline/compiler.h>
 
@@ -13,10 +13,6 @@
 
 struct pool;
 struct sockaddr;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Converts a sockaddr into a human-readable string in the form
@@ -35,9 +31,5 @@ gcc_pure
 const char *
 address_to_host_string(struct pool *pool, const struct sockaddr *address,
                        size_t address_length);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

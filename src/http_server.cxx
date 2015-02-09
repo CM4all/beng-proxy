@@ -7,7 +7,7 @@
 #include "http_server_internal.hxx"
 #include "istream-internal.h"
 #include "strmap.hxx"
-#include "address.h"
+#include "address_string.hxx"
 #include "gerrno.h"
 #include "pool.hxx"
 
