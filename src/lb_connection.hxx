@@ -14,6 +14,7 @@
 struct pool;
 struct ssl_factory;
 struct SslFilter;
+class SocketDescriptor;
 class SocketAddress;
 
 struct lb_connection
@@ -42,7 +43,7 @@ struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
                   struct ssl_factory *ssl_factory,
-                  int fd, SocketAddress address);
+                  SocketDescriptor &&fd, SocketAddress address);
 
 void
 lb_connection_remove(struct lb_connection *connection);

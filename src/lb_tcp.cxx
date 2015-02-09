@@ -392,7 +392,7 @@ lb_tcp_sticky(const AddressList &address_list,
 
 void
 lb_tcp_new(struct pool *pool, Stock *pipe_stock,
-           int fd, enum istream_direct fd_type,
+           SocketDescriptor &&fd, enum istream_direct fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            bool transparent_source,
@@ -407,7 +407,7 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
     tcp->handler = handler;
     tcp->handler_ctx = ctx;
 
-    tcp->inbound.Init(*pool, fd, fd_type,
+    tcp->inbound.Init(*pool, fd.Steal(), fd_type,
                       nullptr, &write_timeout,
                       filter, filter_ctx,
                       inbound_buffered_socket_handler, tcp);

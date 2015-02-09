@@ -18,6 +18,7 @@
 #include "thread_socket_filter.hxx"
 #include "thread_pool.hxx"
 #include "net/SocketAddress.hxx"
+#include "net/StaticSocketAddress.hxx"
 
 #include <assert.h>
 #include <unistd.h>
@@ -80,14 +81,10 @@ struct lb_connection *
 lb_connection_new(struct lb_instance *instance,
                   const struct lb_listener_config *listener,
                   struct ssl_factory *ssl_factory,
-                  int fd, SocketAddress address)
+                  SocketDescriptor &&fd, SocketAddress address)
 {
     /* determine the local socket address */
-    struct sockaddr_storage local_address;
-    socklen_t local_address_length = sizeof(local_address);
-    if (getsockname(fd, (struct sockaddr *)&local_address,
-                    &local_address_length) < 0)
-        local_address_length = 0;
+    StaticSocketAddress local_address = fd.GetLocalAddress();
 
     struct pool *pool = pool_new_linear(instance->pool, "client_connection",
                                         2048);
@@ -108,7 +105,6 @@ lb_connection_new(struct lb_instance *instance,
         connection->ssl_filter = ssl_filter_new(pool, *ssl_factory,
                                                 &error);
         if (connection->ssl_filter == nullptr) {
-            close(fd);
             lb_connection_log_gerror(1, connection, "SSL", error);
             g_error_free(error);
             pool_unref(pool);
@@ -127,11 +123,12 @@ lb_connection_new(struct lb_instance *instance,
 
     switch (listener->destination.GetProtocol()) {
     case LB_PROTOCOL_HTTP:
-        http_server_connection_new(pool, fd, fd_type, filter, filter_ctx,
-                                   local_address_length > 0
-                                   ? (const struct sockaddr *)&local_address
+        http_server_connection_new(pool, fd.Steal(), fd_type,
+                                   filter, filter_ctx,
+                                   local_address.IsDefined()
+                                   ? local_address.GetAddress()
                                    : nullptr,
-                                   local_address_length,
+                                   local_address.GetSize(),
                                    address, address.GetSize(),
                                    false,
                                    &lb_http_connection_handler,
@@ -141,7 +138,7 @@ lb_connection_new(struct lb_instance *instance,
 
     case LB_PROTOCOL_TCP:
         lb_tcp_new(connection->pool, instance->pipe_stock,
-                   fd, fd_type, filter, filter_ctx, address,
+                   std::move(fd), fd_type, filter, filter_ctx, address,
                    listener->destination.cluster->transparent_source,
                    listener->destination.cluster->address_list,
                    *connection->instance->balancer,

@@ -16,6 +16,7 @@ struct SocketFilter;
 struct AddressList;
 struct balancer;
 struct lb_tcp;
+class SocketDescriptor;
 class SocketAddress;
 
 struct lb_tcp_handler {
@@ -30,7 +31,7 @@ struct lb_tcp_handler {
  */
 void
 lb_tcp_new(struct pool *pool, Stock *pipe_stock,
-           int fd, enum istream_direct fd_type,
+           SocketDescriptor &&fd, enum istream_direct fd_type,
            const SocketFilter *filter, void *filter_ctx,
            SocketAddress remote_address,
            bool transparent_source,
