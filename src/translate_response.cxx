@@ -100,7 +100,7 @@ TranslateResponse::Clear()
     www_authenticate = nullptr;
     authentication_info = nullptr;
 
-    cookie_domain = cookie_host = cookie_path = nullptr;
+    cookie_domain = cookie_host = expand_cookie_host = cookie_path = nullptr;
 
     request_headers.Clear();
     expand_request_headers.Clear();
@@ -215,6 +215,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     authentication_info = p_strdup_checked(pool, src.authentication_info);
     cookie_domain = p_strdup_checked(pool, src.cookie_domain);
     cookie_host = p_strdup_checked(pool, src.cookie_host);
+    expand_cookie_host = p_strdup_checked(pool, src.expand_cookie_host);
     cookie_path = p_strdup_checked(pool, src.cookie_path);
 
     request_headers = KeyValueList(PoolAllocator(*pool), src.request_headers);
@@ -360,6 +361,7 @@ TranslateResponse::IsExpandable() const
          expand_test_path != nullptr ||
          expand_auth_file != nullptr ||
          expand_append_auth != nullptr ||
+         expand_cookie_host != nullptr ||
          !expand_request_headers.IsEmpty() ||
          resource_address_is_expandable(&address) ||
          widget_view_any_is_expandable(views));
@@ -420,6 +422,13 @@ TranslateResponse::Expand(struct pool *pool,
             return false;
 
         append_auth = { value, strlen(value) };
+    }
+
+    if (expand_cookie_host != nullptr) {
+        cookie_host = expand_string_unescaped(pool, expand_cookie_host,
+                                              match_info, error_r);
+        if (cookie_host == nullptr)
+            return false;
     }
 
     for (const auto &i : expand_request_headers) {

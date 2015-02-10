@@ -174,7 +174,7 @@ struct TranslateResponse {
     const char *authentication_info;
 
     const char *cookie_domain;
-    const char *cookie_host;
+    const char *cookie_host, *expand_cookie_host;
     const char *cookie_path;
 
     KeyValueList request_headers;

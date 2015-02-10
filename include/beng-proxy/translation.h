@@ -607,6 +607,11 @@ enum beng_translation_command {
      * Indicates which listener accepted the connection.
      */
     TRANSLATE_LISTENER_TAG = 148,
+
+    /**
+     * Expansion for #TRANSLATE_COOKIE_HOST.
+     */
+    TRANSLATE_EXPAND_COOKIE_HOST = 149,
 };
 
 struct beng_translation_header {

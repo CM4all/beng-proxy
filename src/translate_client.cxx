@@ -3235,6 +3235,23 @@ translate_handle_packet(TranslateClient *client,
 
         client->response.expand_append_auth = payload;
         return true;
+
+    case TRANSLATE_EXPAND_COOKIE_HOST:
+        if (client->resource_address == nullptr ||
+            client->resource_address->type == RESOURCE_ADDRESS_NONE) {
+            translate_client_error(client,
+                                   "misplaced EXPAND_COOKIE_HOST packet");
+            return false;
+        }
+
+        if (!is_valid_nonempty_string(payload, payload_length)) {
+            translate_client_error(client,
+                                   "malformed EXPAND_COOKIE_HOST packet");
+            return false;
+        }
+
+        client->response.expand_cookie_host = payload;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,
