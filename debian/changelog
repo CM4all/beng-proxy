@@ -4,7 +4,7 @@ cm4all-beng-proxy (6.0.8) unstable; urgency=low
   * init: change default translation server address to @translation
   * translation: add packet EXPAND_COOKIE_HOST
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 10 Feb 2015 12:24:22 -0000
 
 cm4all-beng-proxy (6.0.7) unstable; urgency=low
 
