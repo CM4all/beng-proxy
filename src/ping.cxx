@@ -80,11 +80,7 @@ in_cksum(const u_short *addr, register int len, u_short csum)
 static void *
 deconst_address(const struct sockaddr *address)
 {
-    union {
-        const struct sockaddr *in;
-        void *out;
-    } u = { .in = address };
-    return u.out;
+    return const_cast<struct sockaddr *>(address);
 }
 
 static bool
