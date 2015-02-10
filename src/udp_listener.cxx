@@ -120,7 +120,7 @@ udp_listener_new(SocketAddress address,
 
     if (address.GetFamily() == AF_UNIX) {
         const struct sockaddr_un *sun = (const struct sockaddr_un *)
-            (const struct sockaddr *)address;
+            address.GetAddress();
         if (sun->sun_path[0] != '\0')
             /* delete non-abstract socket files before reusing them */
             unlink(sun->sun_path);
@@ -130,11 +130,11 @@ udp_listener_new(SocketAddress address,
         setsockopt(udp->fd, SOL_SOCKET, SO_PASSCRED, &value, sizeof(value));
     }
 
-    if (bind(udp->fd, address, address.GetSize()) < 0) {
+    if (bind(udp->fd, address.GetAddress(), address.GetSize()) < 0) {
         char buffer[256];
         const char *address_string =
             socket_address_to_string(buffer, sizeof(buffer),
-                                     address, address.GetSize())
+                                     address.GetAddress(), address.GetSize())
             ? buffer
             : "?";
 
@@ -248,7 +248,7 @@ udp_listener_reply(struct udp_listener *udp,
 
     ssize_t nbytes = sendto(udp->fd, data, data_length,
                             MSG_DONTWAIT|MSG_NOSIGNAL,
-                            address, address.GetSize());
+                            address.GetAddress(), address.GetSize());
     if (G_UNLIKELY(nbytes < 0)) {
         set_error_errno_msg(error_r, "Failed to send UDP packet");
         return false;

@@ -73,7 +73,7 @@ ServerSocket::Listen(int family, int socktype, int protocol,
                      Error &error)
 {
     if (address.GetFamily() == AF_UNIX) {
-        const struct sockaddr_un *sun = (const struct sockaddr_un *)(const struct sockaddr *)address;
+        const struct sockaddr_un *sun = (const struct sockaddr_un *)address.GetAddress();
         if (sun->sun_path[0] != '\0')
             /* delete non-abstract socket files before reusing them */
             unlink(sun->sun_path);

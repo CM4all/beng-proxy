@@ -20,8 +20,7 @@ StaticSocketAddress::operator=(const SocketAddress &src)
     assert(src.GetSize() <= sizeof(address));
 
     size = src.GetSize();
-    const struct sockaddr *src2 = src;
-    memcpy(&address, src2, size);
+    memcpy(&address, src.GetAddress(), size);
 
     return *this;
 }

@@ -252,7 +252,7 @@ ping(struct pool *pool, SocketAddress address,
     };
 
     struct msghdr m = {
-        .msg_name = deconst_address(address),
+        .msg_name = deconst_address(address.GetAddress()),
         .msg_namelen = socklen_t(address.GetSize()),
         .msg_iov = &iov,
         .msg_iovlen = 1,

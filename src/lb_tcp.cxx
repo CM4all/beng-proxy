@@ -417,7 +417,8 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
         (ISTREAM_TO_TCP & ISTREAM_PIPE) != 0;
     */
 
-    unsigned session_sticky = lb_tcp_sticky(address_list, remote_address);
+    unsigned session_sticky = lb_tcp_sticky(address_list,
+                                            remote_address.GetAddress());
 
     SocketAddress bind_address = SocketAddress::Null();
 
@@ -426,16 +427,16 @@ lb_tcp_new(struct pool *pool, Stock *pipe_stock,
 
         /* reset the port to 0 to allow the kernel to choose one */
         if (bind_address.GetFamily() == AF_INET) {
-            const struct sockaddr *src = bind_address;
             struct sockaddr_in *s_in = (struct sockaddr_in *)
-                p_memdup(pool, src, bind_address.GetSize());
+                p_memdup(pool, bind_address.GetAddress(),
+                         bind_address.GetSize());
             s_in->sin_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
                                          bind_address.GetSize());
         } else if (bind_address.GetFamily() == AF_INET6) {
-            const struct sockaddr *src = bind_address;
             struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
-                p_memdup(pool, src, bind_address.GetSize());
+                p_memdup(pool, bind_address.GetAddress(),
+                         bind_address.GetSize());
             s_in->sin6_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
                                          bind_address.GetSize());

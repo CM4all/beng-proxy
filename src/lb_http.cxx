@@ -363,16 +363,16 @@ lb_http_connection_request(struct http_server_request *request,
 
         /* reset the port to 0 to allow the kernel to choose one */
         if (bind_address.GetFamily() == AF_INET) {
-            const struct sockaddr *src = bind_address;
             struct sockaddr_in *s_in = (struct sockaddr_in *)
-                p_memdup(request->pool, src, bind_address.GetSize());
+                p_memdup(request->pool, bind_address.GetAddress(),
+                         bind_address.GetSize());
             s_in->sin_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
                                          bind_address.GetSize());
         } else if (bind_address.GetFamily() == AF_INET6) {
-            const struct sockaddr *src = bind_address;
             struct sockaddr_in6 *s_in = (struct sockaddr_in6 *)
-                p_memdup(request->pool, src, bind_address.GetSize());
+                p_memdup(request->pool, bind_address.GetAddress(),
+                         bind_address.GetSize());
             s_in->sin6_port = 0;
             bind_address = SocketAddress((const struct sockaddr *)s_in,
                                          bind_address.GetSize());
@@ -386,7 +386,7 @@ lb_http_connection_request(struct http_server_request *request,
         break;
 
     case STICKY_SOURCE_IP:
-        session_sticky = socket_address_sticky(request->remote_address);
+        session_sticky = socket_address_sticky(request->remote_address.GetAddress());
         break;
 
     case STICKY_SESSION_MODULO:

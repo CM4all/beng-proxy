@@ -293,13 +293,14 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
     if (name == nullptr) {
         char buffer[1024];
         if (!socket_address_to_string(buffer, sizeof(buffer),
-                                      address, address.GetSize()))
+                                      address.GetAddress(), address.GetSize()))
             buffer[0] = 0;
 
         if (!bind_address.IsNull()) {
             char bind_buffer[1024];
             if (!socket_address_to_string(bind_buffer, sizeof(bind_buffer),
-                                          bind_address, bind_address.GetSize()))
+                                          bind_address.GetAddress(),
+                                          bind_address.GetSize()))
                 bind_buffer[0] = 0;
             name = p_strcat(pool, bind_buffer, ">", buffer, nullptr);
         } else

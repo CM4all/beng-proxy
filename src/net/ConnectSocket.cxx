@@ -199,7 +199,8 @@ client_socket_new(struct pool &pool,
 
 #ifdef ENABLE_STOPWATCH
     struct stopwatch *stopwatch =
-        stopwatch_sockaddr_new(&pool, address, address.GetSize(), nullptr);
+        stopwatch_sockaddr_new(&pool, address.GetAddress(), address.GetSize(),
+                               nullptr);
 #endif
 
     if (fd.Connect(address)) {
