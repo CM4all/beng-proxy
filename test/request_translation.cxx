@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     pool = pool_new_libc(nullptr, "root");
 
     auto *tcp_stock = tcp_stock_new(pool, 0);
-    translate_stock = tstock_new(pool, tcp_stock, "/tmp/beng-proxy-translate");
+    translate_stock = tstock_new(pool, tcp_stock, "@translation");
 
     tstock_translate(translate_stock, pool,
                      &request, &my_translate_handler, nullptr, &async_ref);

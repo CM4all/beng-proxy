@@ -1,6 +1,7 @@
 cm4all-beng-proxy (6.0.8) unstable; urgency=low
 
   * debian: remove translation server demo packages
+  * init: change default translation server address to @translation
 
  --   
 

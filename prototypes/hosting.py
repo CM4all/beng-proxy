@@ -105,7 +105,7 @@ if __name__ == '__main__':
     if len(argv) >= 2:
         path = argv[1]
     else:
-        path = '/tmp/beng-proxy-translate'
+        path = '\0translation'
 
     observer = log.PythonLoggingObserver()
     observer.start()
