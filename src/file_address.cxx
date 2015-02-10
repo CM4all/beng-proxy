@@ -111,5 +111,8 @@ file_address::Expand(struct pool *pool, const GMatchInfo *match_info,
             return false;
     }
 
+    if (!child_options.Expand(*pool, match_info, error_r))
+        return false;
+
     return true;
 }

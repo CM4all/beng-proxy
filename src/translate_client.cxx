@@ -991,7 +991,8 @@ translate_client_mount_home(TranslateClient *client,
 
 static bool
 translate_client_bind_mount(TranslateClient *client,
-                            const char *payload, size_t payload_length)
+                            const char *payload, size_t payload_length,
+                            bool expand)
 {
     if (*payload != '/') {
         client->Fail("malformed BIND_MOUNT packet");
@@ -1012,7 +1013,8 @@ translate_client_bind_mount(TranslateClient *client,
     auto *m = NewFromPool<MountList>(*client->pool,
                                      /* skip the slash to make it relative */
                                      payload + 1,
-                                     separator + 1);
+                                     separator + 1,
+                                     expand);
     *client->mount_list = m;
     client->mount_list = &m->next;
     return true;
@@ -2833,7 +2835,8 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
         return translate_client_mount_home(this, payload, payload_length);
 
     case TRANSLATE_BIND_MOUNT:
-        return translate_client_bind_mount(this, payload, payload_length);
+        return translate_client_bind_mount(this, payload, payload_length,
+                                           false);
 
     case TRANSLATE_MOUNT_TMP_TMPFS:
         return translate_client_mount_tmp_tmpfs(this, payload_length);
@@ -3149,6 +3152,9 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
 
         response.expand_cookie_host = payload;
         return true;
+
+    case TRANSLATE_EXPAND_BIND_MOUNT:
+        return translate_client_bind_mount(this, payload, payload_length, true);
     }
 
     error = g_error_new(translate_quark(), 0,

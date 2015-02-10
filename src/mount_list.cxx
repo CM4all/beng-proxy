@@ -5,6 +5,7 @@
 #include "mount_list.hxx"
 #include "bind_mount.h"
 #include "pool.hxx"
+#include "regex.hxx"
 
 #include <sys/mount.h>
 #include <unistd.h>
@@ -16,7 +17,8 @@ inline
 MountList::MountList(struct pool &pool, const MountList &src)
     :next(nullptr),
      source(p_strdup(&pool, src.source)),
-     target(p_strdup(&pool, src.target)) {}
+     target(p_strdup(&pool, src.target)),
+     expand_source(src.expand_source) {}
 
 MountList *
 MountList::CloneAll(struct pool &pool, const MountList *src)
@@ -30,6 +32,32 @@ MountList::CloneAll(struct pool &pool, const MountList *src)
     }
 
     return head;
+}
+
+bool
+MountList::Expand(struct pool &pool, const GMatchInfo *match_info,
+                  GError **error_r)
+{
+    if (expand_source) {
+        expand_source = false;
+
+        source = expand_string_unescaped(&pool, source, match_info, error_r);
+        if (source == nullptr)
+            return false;
+    }
+
+    return true;
+}
+
+bool
+MountList::ExpandAll(struct pool &pool, MountList *m,
+                     const GMatchInfo *match_info, GError **error_r)
+{
+    for (; m != nullptr; m = m->next)
+        if (!m->Expand(pool, match_info, error_r))
+            return false;
+
+    return true;
 }
 
 inline void

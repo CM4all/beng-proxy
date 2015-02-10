@@ -89,6 +89,19 @@ NamespaceOptions::CopyFrom(struct pool &pool, const NamespaceOptions &src)
     hostname = p_strdup_checked(&pool, src.hostname);
 }
 
+bool
+NamespaceOptions::IsExpandable() const
+{
+    return MountList::IsAnyExpandable(mounts);
+}
+
+bool
+NamespaceOptions::Expand(struct pool &pool, const GMatchInfo *match_info,
+                         GError **error_r)
+{
+    return MountList::ExpandAll(pool, mounts, match_info, error_r);
+}
+
 int
 NamespaceOptions::GetCloneFlags(int flags) const
 {

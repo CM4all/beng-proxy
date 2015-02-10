@@ -62,7 +62,8 @@ static bool
 Equals(const MountList &a, const MountList &b)
 {
     return strcmp(a.source, b.source) == 0 &&
-        strcmp(a.target, b.target) == 0;
+        strcmp(a.target, b.target) == 0 &&
+        a.expand_source == b.expand_source;
 }
 
 static bool
@@ -2375,6 +2376,98 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
                     &my_translate_handler, nullptr, &async_ref);
 }
 
+static void
+test_expand_bind_mount(struct pool *pool, struct tcache *cache)
+{
+    struct async_operation_ref async_ref;
+
+    /* add to cache */
+
+    static constexpr TranslateRequest request1 = {
+        .uri = "/expand_bind_mount/foo",
+    };
+
+    MountList mlbn("/home/\\1", "/mnt", true);
+    MountList mlan("/etc", "/etc", false);
+    mlan.next = &mlbn;
+
+    struct cgi_address cgi1n = {
+        .path = "/usr/lib/cgi-bin/foo.cgi",
+    };
+    cgi1n.options.ns.mounts = &mlan;
+
+    TranslateResponse response1n = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = &cgi1n,
+            },
+        },
+        .base = "/expand_bind_mount/",
+        .regex = "^/expand_bind_mount/(.+)$",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    MountList mlbe("/home/foo", "/mnt", false);
+    MountList mlae("/etc", "/etc", false);
+    mlae.next = &mlbe;
+
+    struct cgi_address cgi1e = {
+        .path = "/usr/lib/cgi-bin/foo.cgi",
+    };
+    cgi1e.options.ns.mounts = &mlae;
+
+    TranslateResponse response1e = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = &cgi1e,
+            },
+        },
+        .base = "/expand_bind_mount/",
+        .regex = "^/expand_bind_mount/(.+)$",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    next_response = &response1n;
+    expected_response = &response1e;
+    translate_cache(pool, cache, &request1,
+                    &my_translate_handler, nullptr, &async_ref);
+
+    MountList ml2be("/home/bar", "/mnt", false);
+    MountList ml2ae("/etc", "/etc", false);
+    ml2ae.next = &ml2be;
+
+    struct cgi_address cgi2e = {
+        .path = "/usr/lib/cgi-bin/foo.cgi",
+    };
+    cgi2e.options.ns.mounts = &ml2ae;
+
+    TranslateResponse response2e = {
+        .address = {
+            .type = RESOURCE_ADDRESS_CGI,
+            .u = {
+                .cgi = &cgi2e,
+            },
+        },
+        .base = "/expand_bind_mount/",
+        .regex = "^/expand_bind_mount/(.+)$",
+        .max_age = unsigned(-1),
+        .user_max_age = unsigned(-1),
+    };
+
+    static constexpr TranslateRequest request2 = {
+        .uri = "/expand_bind_mount/bar",
+    };
+
+    next_response = nullptr;
+    expected_response = &response2e;
+    translate_cache(pool, cache, &request2,
+                    &my_translate_handler, nullptr, &async_ref);
+}
+
 int
 main(gcc_unused int argc, gcc_unused char **argv)
 {
@@ -2415,6 +2508,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     test_base_wfu(pool, cache);
     test_unsafe_base(pool, cache);
     test_expand_unsafe_base(pool, cache);
+    test_expand_bind_mount(pool, cache);
 
     /* cleanup */
 

@@ -110,7 +110,8 @@ struct lhttp_address {
      */
     gcc_pure
     bool IsExpandable() const {
-        return expand_uri != nullptr ||
+        return options.IsExpandable() ||
+            expand_uri != nullptr ||
             args.IsExpandable();
     }
 

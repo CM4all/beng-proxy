@@ -116,7 +116,8 @@ struct cgi_address {
      */
     gcc_pure
     bool IsExpandable() const {
-        return expand_path != nullptr ||
+        return options.IsExpandable() ||
+            expand_path != nullptr ||
             expand_script_name != nullptr ||
             expand_path_info != nullptr ||
             expand_document_root != nullptr ||

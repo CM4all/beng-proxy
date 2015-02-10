@@ -215,6 +215,9 @@ lhttp_address::Expand(struct pool *pool, const GMatchInfo *match_info,
     assert(pool != NULL);
     assert(match_info != NULL);
 
+    if (!options.Expand(*pool, match_info, error_r))
+        return false;
+
     if (expand_uri != NULL) {
         uri = expand_string(pool, expand_uri, match_info, error_r);
         if (uri == NULL)

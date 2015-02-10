@@ -36,6 +36,15 @@ struct ChildOptions {
 
     void CopyFrom(struct pool *pool, const ChildOptions *src);
 
+    bool IsExpandable() const {
+        return ns.IsExpandable();
+    }
+
+    bool Expand(struct pool &pool, const GMatchInfo *match_info,
+                GError **error_r) {
+        return ns.Expand(pool, match_info, error_r);
+    }
+
     char *MakeId(char *p) const;
 
     int OpenStderrPath() const;

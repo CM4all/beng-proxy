@@ -1840,6 +1840,9 @@ within the old root) and the target directory (absolute path within
 the new root), separated by a null byte.  The new mount will have the
 options \texttt{ro,noexec,nosuid,nodev}.
 
+\verb|EXPAND_BIND_MOUNT| is the same as \verb|BIND_MOUNT|, but the
+source directory is expanded using \verb|REGEX| results.
+
 \verb|PIVOT_ROOT| depends on user namespaces.  \verb|MOUNT_PROC|,
 \verb|MOUNT_HOME| and \verb|MOUNT_TMP_TMPFS| depend on
 \verb|PIVOT_ROOT|, user namespaces and PID namespaces.

@@ -1818,9 +1818,9 @@ test_run_delegate_SOURCES = test/run_delegate.cxx \
 	src/defer.cxx \
 	src/fd_util.c
 test_run_delegate_LDADD = $(AM_LDADD) \
-	libputil.a \
-	libpool.a libmemory.a \
 	libraddress.a \
+	libpool.a libmemory.a \
+	libputil.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 

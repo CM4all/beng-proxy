@@ -64,7 +64,8 @@ struct file_address {
     gcc_pure
     bool IsExpandable() const {
         return expand_path != nullptr ||
-            expand_document_root != nullptr;
+            expand_document_root != nullptr ||
+            child_options.IsExpandable();
     }
 
     bool Expand(struct pool *pool, const GMatchInfo *match_info,

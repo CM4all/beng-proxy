@@ -612,6 +612,11 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_COOKIE_HOST.
      */
     TRANSLATE_EXPAND_COOKIE_HOST = 149,
+
+    /**
+     * Expansion for #TRANSLATE_BIND_MOUNT.
+     */
+    TRANSLATE_EXPAND_BIND_MOUNT = 150,
 };
 
 struct beng_translation_header {

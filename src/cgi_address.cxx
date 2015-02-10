@@ -265,6 +265,9 @@ cgi_address::Expand(struct pool *pool, const GMatchInfo *match_info,
     assert(pool != nullptr);
     assert(match_info != nullptr);
 
+    if (!options.Expand(*pool, match_info, error_r))
+        return false;
+
     if (expand_path != nullptr) {
         path = expand_string_unescaped(pool, expand_path, match_info, error_r);
         if (path == nullptr)
