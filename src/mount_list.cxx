@@ -12,12 +12,16 @@
 #include <stdio.h>
 #include <errno.h>
 
+inline
+MountList::MountList(struct pool &pool, const MountList &src)
+    :next(nullptr),
+     source(p_strdup(&pool, src.source)),
+     target(p_strdup(&pool, src.target)) {}
+
 static MountList *
 mount_list_dup_one(struct pool *pool, const MountList *src)
 {
-    return NewFromPool<MountList>(*pool,
-                                  p_strdup(pool, src->source),
-                                  p_strdup(pool, src->target));
+    return NewFromPool<MountList>(*pool, *pool, *src);
 }
 
 MountList *

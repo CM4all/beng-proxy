@@ -15,6 +15,8 @@ struct MountList {
 
     MountList(const char *_source, const char *_target)
         :next(nullptr), source(_source), target(_target) {}
+
+    MountList(struct pool &pool, const MountList &src);
 };
 
 MountList *
