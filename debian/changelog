@@ -3,7 +3,7 @@ cm4all-beng-proxy (6.0.9) unstable; urgency=low
   * namespace_options: improved PIVOT_ROOT error message
   * translation: add packet EXPAND_BIND_MOUNT
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Wed, 11 Feb 2015 11:36:51 -0000
 
 cm4all-beng-proxy (6.0.8) unstable; urgency=low
 
