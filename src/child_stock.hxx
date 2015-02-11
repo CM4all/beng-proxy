@@ -28,6 +28,7 @@ struct child_stock_class {
 
     void *(*prepare)(struct pool *pool, const char *key, void *info,
                      GError **error_r);
+    int (*socket_type)(const char *key, void *info, void *ctx);
     int (*clone_flags)(const char *key, void *info, int flags, void *ctx);
     int (*run)(struct pool *pool, const char *key, void *info, void *ctx);
     void (*free)(void *ctx);

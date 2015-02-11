@@ -23,7 +23,7 @@ make_child_socket_path(struct sockaddr_un *address)
 }
 
 int
-child_socket_create(struct child_socket *cs, GError **error_r)
+child_socket_create(struct child_socket *cs, int socket_type, GError **error_r)
 {
     if (!make_child_socket_path(&cs->address)) {
         set_error_errno_msg(error_r, "mktemp() failed");
@@ -32,7 +32,7 @@ child_socket_create(struct child_socket *cs, GError **error_r)
 
     unlink(cs->address.sun_path);
 
-    const int fd = socket(PF_UNIX, SOCK_STREAM, 0);
+    const int fd = socket(PF_UNIX, socket_type, 0);
     if (fd < 0) {
         set_error_errno_msg(error_r, "failed to create local socket");
         return -1;

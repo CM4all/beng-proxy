@@ -158,7 +158,11 @@ child_stock_create(void *stock_ctx, StockItem &_item,
 
     item->cls_ctx = cls_ctx;
 
-    int fd = child_socket_create(&item->socket, &error);
+    int socket_type = cls->socket_type != nullptr
+        ? cls->socket_type(key, info, cls_ctx)
+        : SOCK_STREAM;
+
+    int fd = child_socket_create(&item->socket, socket_type, &error);
     if (fd < 0) {
         if (cls_ctx != nullptr)
             cls->free(cls_ctx);

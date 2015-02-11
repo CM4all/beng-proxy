@@ -20,7 +20,7 @@ struct child_socket {
  * @return the listener socket descriptor or -1 on error
  */
 int
-child_socket_create(struct child_socket *cs, GError **error_r);
+child_socket_create(struct child_socket *cs, int socket_type, GError **error_r);
 
 void
 child_socket_unlink(struct child_socket *cs);
