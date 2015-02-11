@@ -107,7 +107,7 @@ lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
 {
     auto address = (struct lhttp_address *)info;
 
-    return namespace_options_clone_flags(&address->options.ns, flags);
+    return address->options.ns.GetCloneFlags(flags);
 }
 
 static int
@@ -118,7 +118,7 @@ lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
 
     address->options.SetupStderr(true);
 
-    namespace_options_setup(&address->options.ns);
+    address->options.ns.Setup();
     rlimit_options_apply(&address->options.rlimits);
 
     lhttp_run(address, 0);

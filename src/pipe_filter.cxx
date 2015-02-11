@@ -44,7 +44,7 @@ pipe_fn(void *ctx)
     leave_signal_section(&c->signals);
 
     c->options.SetupStderr();
-    namespace_options_setup(&c->options.ns);
+    c->options.ns.Setup();
     rlimit_options_apply(&c->options.rlimits);
 
     c->exec.DoExec();
@@ -143,8 +143,7 @@ pipe_filter(struct pool *pool, const char *path,
     for (auto i : env)
         c.exec.PutEnv(i);
 
-    const int clone_flags =
-        namespace_options_clone_flags(&options.ns, SIGCHLD);
+    const int clone_flags = options.ns.GetCloneFlags(SIGCHLD);
 
     /* avoid race condition due to libevent signal handler in child
        process */

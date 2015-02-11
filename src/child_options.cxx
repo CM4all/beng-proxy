@@ -28,7 +28,7 @@ ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
     stderr_path = p_strdup_checked(pool, src->stderr_path);
 
     rlimit_options_copy(&rlimits, &src->rlimits);
-    namespace_options_copy(pool, &ns, &src->ns);
+    ns.CopyFrom(*pool, src->ns);
     jail_params_copy(pool, &jail, &src->jail);
 }
 
@@ -39,7 +39,7 @@ ChildOptions::MakeId(char *p) const
         p += sprintf(p, ";e%08x", djb_hash_string(stderr_path));
 
     p = rlimit_options_id(&rlimits, p);
-    p = namespace_options_id(&ns, p);
+    p = ns.MakeId(p);
     p = jail_params_id(&jail, p);
     return p;
 }

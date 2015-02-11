@@ -47,7 +47,7 @@ was_run(void *ctx)
     leave_signal_section(&args->signals);
 
     args->options->SetupStderr();
-    namespace_options_setup(&args->options->ns);
+    args->options->ns.Setup();
     rlimit_options_apply(&args->options->rlimits);
 
     dup2(args->input_fd, 0);
@@ -108,7 +108,7 @@ was_launch(struct was_process *process,
     };
 
     int clone_flags = SIGCHLD;
-    clone_flags = namespace_options_clone_flags(&options.ns, clone_flags);
+    clone_flags = options.ns.GetCloneFlags(clone_flags);
 
     /* avoid race condition due to libevent signal handler in child
        process */

@@ -45,22 +45,6 @@ namespace_options_global_init(void)
     prctl(PR_SET_DUMPABLE, 1, 0, 0, 0);
 }
 
-void
-namespace_options_init(NamespaceOptions *options)
-{
-    options->enable_user = false;
-    options->enable_pid = false;
-    options->enable_network = false;
-    options->enable_mount = false;
-    options->mount_proc = false;
-    options->mount_tmp_tmpfs = false;
-    options->pivot_root = nullptr;
-    options->home = nullptr;
-    options->mount_home = nullptr;
-    options->mounts = nullptr;
-    options->hostname = nullptr;
-}
-
 NamespaceOptions::NamespaceOptions(struct pool *pool,
                                    const NamespaceOptions &src)
         :enable_user(src.enable_user),
@@ -78,41 +62,54 @@ NamespaceOptions::NamespaceOptions(struct pool *pool,
 }
 
 void
-namespace_options_copy(struct pool *pool, NamespaceOptions *dest,
-                       const NamespaceOptions *src)
+NamespaceOptions::Init()
 {
-    *dest = *src;
-
-    dest->pivot_root = p_strdup_checked(pool, src->pivot_root);
-    dest->home = p_strdup_checked(pool, src->home);
-    dest->mount_home = p_strdup_checked(pool, src->mount_home);
-    dest->mounts = mount_list_dup(pool, src->mounts);
-    dest->hostname = p_strdup_checked(pool, src->hostname);
+    enable_user = false;
+    enable_pid = false;
+    enable_network = false;
+    enable_mount = false;
+    mount_proc = false;
+    mount_tmp_tmpfs = false;
+    pivot_root = nullptr;
+    home = nullptr;
+    mount_home = nullptr;
+    mounts = nullptr;
+    hostname = nullptr;
 }
 
-gcc_pure
-int
-namespace_options_clone_flags(const NamespaceOptions *options,
-                              int flags)
+void
+NamespaceOptions::CopyFrom(struct pool &pool, const NamespaceOptions &src)
 {
-    if (options->enable_user)
+    *this = src;
+
+    pivot_root = p_strdup_checked(&pool, src.pivot_root);
+    home = p_strdup_checked(&pool, src.home);
+    mount_home = p_strdup_checked(&pool, src.mount_home);
+    mounts = mount_list_dup(&pool, src.mounts);
+    hostname = p_strdup_checked(&pool, src.hostname);
+}
+
+int
+NamespaceOptions::GetCloneFlags(int flags) const
+{
+    if (enable_user)
         flags |= CLONE_NEWUSER;
-    if (options->enable_pid)
+    if (enable_pid)
         flags |= CLONE_NEWPID;
-    if (options->enable_network)
+    if (enable_network)
         flags |= CLONE_NEWNET;
-    if (options->enable_mount)
+    if (enable_mount)
         flags |= CLONE_NEWNS;
-    if (options->hostname != nullptr)
+    if (hostname != nullptr)
         flags |= CLONE_NEWUTS;
 
     return flags;
 }
 
 void
-namespace_options_unshare(const NamespaceOptions *options)
+NamespaceOptions::Unshare() const
 {
-    int unshare_flags = namespace_options_clone_flags(options, 0);
+    int unshare_flags = GetCloneFlags(0);
 
     if (unshare_flags != 0 && unshare(unshare_flags) < 0) {
         fprintf(stderr, "unshare(0x%x) failed: %s\n",
@@ -157,19 +154,19 @@ setup_gid_map(void)
 }
 
 void
-namespace_options_setup(const NamespaceOptions *options)
+NamespaceOptions::Setup() const
 {
     /* set up UID/GID mapping in the old /proc */
-    if (options->enable_user) {
+    if (enable_user) {
         setup_gid_map();
         setup_uid_map();
     }
 
-    if (options->enable_mount)
+    if (enable_mount)
         /* convert all "shared" mounts to "private" mounts */
         mount(nullptr, "/", nullptr, MS_PRIVATE|MS_REC, nullptr);
 
-    const char *const new_root = options->pivot_root;
+    const char *const new_root = pivot_root;
     const char *const put_old = "mnt";
 
     if (new_root != nullptr) {
@@ -195,14 +192,14 @@ namespace_options_setup(const NamespaceOptions *options)
         }
     }
 
-    if (options->mount_proc &&
+    if (mount_proc &&
         mount("none", "/proc", "proc", MS_NOEXEC|MS_NOSUID|MS_NODEV|MS_RDONLY, nullptr) < 0) {
         fprintf(stderr, "mount('/proc') failed: %s\n",
                 strerror(errno));
         _exit(2);
     }
 
-    if (options->mount_home != nullptr || options->mounts != nullptr) {
+    if (mount_home != nullptr || mounts != nullptr) {
         /* go to /mnt so we can refer to the old directories with a
            relative path */
 
@@ -214,17 +211,16 @@ namespace_options_setup(const NamespaceOptions *options)
         }
     }
 
-    if (options->mount_home != nullptr) {
-        assert(options->home != nullptr);
-        assert(*options->home == '/');
+    if (mount_home != nullptr) {
+        assert(home != nullptr);
+        assert(*home == '/');
 
-        bind_mount(options->home + 1, options->mount_home, MS_NOSUID|MS_NODEV);
+        bind_mount(home + 1, mount_home, MS_NOSUID|MS_NODEV);
     }
 
-    mount_list_apply(options->mounts);
+    mount_list_apply(mounts);
 
-    if (new_root != nullptr && (options->mount_home != nullptr ||
-                             options->mounts != nullptr)) {
+    if (new_root != nullptr && (mount_home != nullptr || mounts != nullptr)) {
         /* back to the new root */
         if (chdir("/") < 0) {
             fprintf(stderr, "chdir('/') failed: %s\n", strerror(errno));
@@ -241,7 +237,7 @@ namespace_options_setup(const NamespaceOptions *options)
         }
     }
 
-    if (options->mount_tmp_tmpfs &&
+    if (mount_tmp_tmpfs &&
         mount("none", "/tmp", "tmpfs", MS_NODEV|MS_NOEXEC|MS_NOSUID,
               "size=16M,nr_inodes=256,mode=1777") < 0) {
         fprintf(stderr, "mount('/tmp') failed: %s\n",
@@ -249,50 +245,50 @@ namespace_options_setup(const NamespaceOptions *options)
         _exit(2);
     }
 
-    if (options->hostname != nullptr &&
-        sethostname(options->hostname, strlen(options->hostname)) < 0) {
+    if (hostname != nullptr &&
+        sethostname(hostname, strlen(hostname)) < 0) {
         fprintf(stderr, "sethostname() failed: %s", strerror(errno));
         _exit(2);
     }
 }
 
 char *
-namespace_options_id(const NamespaceOptions *options, char *p)
+NamespaceOptions::MakeId(char *p) const
 {
-    if (options->enable_user)
+    if (enable_user)
         p = (char *)mempcpy(p, ";uns", 4);
 
-    if (options->enable_pid)
+    if (enable_pid)
         p = (char *)mempcpy(p, ";pns", 4);
 
-    if (options->enable_network)
+    if (enable_network)
         p = (char *)mempcpy(p, ";nns", 4);
 
-    if (options->enable_mount) {
+    if (enable_mount) {
         p = (char *)(char *)mempcpy(p, ";mns", 4);
 
-        if (options->pivot_root != nullptr) {
+        if (pivot_root != nullptr) {
             p = (char *)mempcpy(p, ";pvr=", 5);
-            p = stpcpy(p, options->pivot_root);
+            p = stpcpy(p, pivot_root);
         }
 
-        if (options->mount_proc)
+        if (mount_proc)
             p = (char *)mempcpy(p, ";proc", 5);
 
-        if (options->mount_proc)
+        if (mount_proc)
             p = (char *)mempcpy(p, ";tmpfs", 6);
 
-        if (options->mount_home != nullptr) {
+        if (mount_home != nullptr) {
             p = (char *)mempcpy(p, ";h:", 3);
-            p = stpcpy(p, options->home);
+            p = stpcpy(p, home);
             *p++ = '=';
-            p = stpcpy(p, options->mount_home);
+            p = stpcpy(p, mount_home);
         }
     }
 
-    if (options->hostname != nullptr) {
+    if (hostname != nullptr) {
         p = (char *)mempcpy(p, ";uts=", 5);
-        p = stpcpy(p, options->hostname);
+        p = stpcpy(p, hostname);
     }
 
     return p;

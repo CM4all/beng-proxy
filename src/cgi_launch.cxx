@@ -160,7 +160,7 @@ cgi_fn(void *ctx)
 
     address->options.SetupStderr();
 
-    namespace_options_setup(&address->options.ns);
+    address->options.ns.Setup();
     rlimit_options_apply(&address->options.rlimits);
 
     cgi_run(&address->options.jail,
@@ -224,8 +224,7 @@ cgi_launch(struct pool *pool, http_method_t method,
         .headers = headers,
     };
 
-    const int clone_flags =
-        namespace_options_clone_flags(&address->options.ns, SIGCHLD);
+    const int clone_flags = address->options.ns.GetCloneFlags(SIGCHLD);
 
     /* avoid race condition due to libevent signal handler in child
        process */

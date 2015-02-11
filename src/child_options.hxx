@@ -30,7 +30,7 @@ struct ChildOptions {
     void Init() {
         stderr_path = nullptr;
         rlimit_options_init(&rlimits);
-        namespace_options_init(&ns);
+        ns.Init();
         jail_params_init(&jail);
     }
 

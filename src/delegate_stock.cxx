@@ -90,7 +90,7 @@ delegate_stock_fn(void *ctx)
 
     info->options->SetupStderr(true);
 
-    namespace_options_setup(&info->options->ns);
+    info->options->ns.Setup();
     rlimit_options_apply(&info->options->rlimits);
 
     dup2(info->fds[1], STDIN_FILENO);
@@ -138,7 +138,7 @@ delegate_stock_create(gcc_unused void *ctx, StockItem &item,
     }
 
     int clone_flags = SIGCHLD;
-    clone_flags = namespace_options_clone_flags(&options->ns, clone_flags);
+    clone_flags = options->ns.GetCloneFlags(clone_flags);
 
     /* avoid race condition due to libevent signal handler in child
        process */

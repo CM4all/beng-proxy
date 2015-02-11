@@ -56,6 +56,18 @@ struct NamespaceOptions {
 
     NamespaceOptions() = default;
     NamespaceOptions(struct pool *pool, const NamespaceOptions &src);
+
+    void Init();
+
+    void CopyFrom(struct pool &pool, const NamespaceOptions &src);
+
+    gcc_pure
+    int GetCloneFlags(int flags) const;
+
+    void Unshare() const;
+    void Setup() const;
+
+    char *MakeId(char *p) const;
 };
 
 /**
@@ -63,26 +75,5 @@ struct NamespaceOptions {
  */
 void
 namespace_options_global_init(void);
-
-void
-namespace_options_init(NamespaceOptions *options);
-
-void
-namespace_options_copy(struct pool *pool, NamespaceOptions *dest,
-                       const NamespaceOptions *src);
-
-gcc_pure
-int
-namespace_options_clone_flags(const NamespaceOptions *options,
-                              int flags);
-
-void
-namespace_options_unshare(const NamespaceOptions *options);
-
-void
-namespace_options_setup(const NamespaceOptions *options);
-
-char *
-namespace_options_id(const NamespaceOptions *options, char *p);
 
 #endif

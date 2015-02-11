@@ -141,7 +141,7 @@ fcgi_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
         (const struct fcgi_child_params *)info;
     const ChildOptions *const options = params->options;
 
-    return namespace_options_clone_flags(&options->ns, flags);
+    return options->ns.GetCloneFlags(flags);
 }
 
 static int
@@ -155,7 +155,7 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
     options->SetupStderr(true);
 
     rlimit_options_apply(&options->rlimits);
-    namespace_options_setup(&options->ns);
+    options->ns.Setup();
 
     fcgi_run(&options->jail, params->executable_path,
              params->args, params->env);
