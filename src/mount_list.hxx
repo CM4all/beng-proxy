@@ -17,12 +17,11 @@ struct MountList {
         :next(nullptr), source(_source), target(_target) {}
 
     MountList(struct pool &pool, const MountList &src);
+
+    void Apply() const;
+
+    static MountList *CloneAll(struct pool &pool, const MountList *src);
+    static void ApplyAll(const MountList *m);
 };
-
-MountList *
-mount_list_dup(struct pool *pool, const MountList *src);
-
-void
-mount_list_apply(const MountList *m);
 
 #endif

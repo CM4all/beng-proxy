@@ -18,19 +18,13 @@ MountList::MountList(struct pool &pool, const MountList &src)
      source(p_strdup(&pool, src.source)),
      target(p_strdup(&pool, src.target)) {}
 
-static MountList *
-mount_list_dup_one(struct pool *pool, const MountList *src)
-{
-    return NewFromPool<MountList>(*pool, *pool, *src);
-}
-
 MountList *
-mount_list_dup(struct pool *pool, const MountList *src)
+MountList::CloneAll(struct pool &pool, const MountList *src)
 {
     MountList *head = nullptr, **tail = &head;
 
     for (; src != nullptr; src = src->next) {
-        MountList *dest = mount_list_dup_one(pool, src);
+        MountList *dest = NewFromPool<MountList>(pool, pool, *src);
         *tail = dest;
         tail = &dest->next;
     }
@@ -38,15 +32,15 @@ mount_list_dup(struct pool *pool, const MountList *src)
     return head;
 }
 
-static void
-mount_list_apply_one(const MountList *m)
+inline void
+MountList::Apply() const
 {
-    bind_mount(m->source, m->target, MS_NOEXEC|MS_NOSUID|MS_NODEV|MS_RDONLY);
+    bind_mount(source, target, MS_NOEXEC|MS_NOSUID|MS_NODEV|MS_RDONLY);
 }
 
 void
-mount_list_apply(const MountList *m)
+MountList::ApplyAll(const MountList *m)
 {
     for (; m != nullptr; m = m->next)
-        mount_list_apply_one(m);
+        m->Apply();
 }

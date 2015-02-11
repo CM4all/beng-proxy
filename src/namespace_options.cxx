@@ -56,7 +56,7 @@ NamespaceOptions::NamespaceOptions(struct pool *pool,
          pivot_root(p_strdup_checked(pool, src.pivot_root)),
          home(p_strdup_checked(pool, src.home)),
          mount_home(p_strdup_checked(pool, src.mount_home)),
-         mounts(mount_list_dup(pool, src.mounts)),
+         mounts(MountList::CloneAll(*pool, src.mounts)),
          hostname(p_strdup_checked(pool, src.hostname))
 {
 }
@@ -85,7 +85,7 @@ NamespaceOptions::CopyFrom(struct pool &pool, const NamespaceOptions &src)
     pivot_root = p_strdup_checked(&pool, src.pivot_root);
     home = p_strdup_checked(&pool, src.home);
     mount_home = p_strdup_checked(&pool, src.mount_home);
-    mounts = mount_list_dup(&pool, src.mounts);
+    mounts = MountList::CloneAll(pool, src.mounts);
     hostname = p_strdup_checked(&pool, src.hostname);
 }
 
@@ -218,7 +218,7 @@ NamespaceOptions::Setup() const
         bind_mount(home + 1, mount_home, MS_NOSUID|MS_NODEV);
     }
 
-    mount_list_apply(mounts);
+    MountList::ApplyAll(mounts);
 
     if (new_root != nullptr && (mount_home != nullptr || mounts != nullptr)) {
         /* back to the new root */
