@@ -1312,8 +1312,6 @@ translate_handle_packet(TranslateClient *client,
 
     const char *const payload = (const char *)_payload;
 
-    Transformation *transformation;
-
     if (command == TRANSLATE_BEGIN) {
         if (client->response.status != (http_status_t)-1) {
             GError *error =
@@ -1335,6 +1333,8 @@ translate_handle_packet(TranslateClient *client,
     GError *error = nullptr;
 
     switch (command) {
+        Transformation *transformation;
+
     case TRANSLATE_END:
         stopwatch_event(client->stopwatch, "end");
 
