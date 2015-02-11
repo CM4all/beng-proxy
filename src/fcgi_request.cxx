@@ -82,7 +82,7 @@ static const struct async_operation_class fcgi_request_async_operation = {
 
 void
 fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
-             const ChildOptions *options,
+             const ChildOptions &options,
              const char *action,
              const char *path,
              ConstBuffer<const char *> args,
@@ -100,7 +100,7 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
              struct async_operation_ref *async_ref)
 {
     GError *error = nullptr;
-    if (!jail_params_check(&options->jail, &error)) {
+    if (!jail_params_check(&options.jail, &error)) {
         if (body != nullptr)
             istream_close_unused(body);
 

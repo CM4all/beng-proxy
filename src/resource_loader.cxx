@@ -254,7 +254,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
         if (cgi->address_list.IsEmpty())
             fcgi_request(pool, rl->fcgi_stock,
-                         &cgi->options,
+                         cgi->options,
                          cgi->action,
                          cgi->path,
                          { cgi->args.values, cgi->args.n },

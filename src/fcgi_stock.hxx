@@ -27,7 +27,7 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock);
  */
 StockItem *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
-               const ChildOptions *options,
+               const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args,
                ConstBuffer<const char *> env,

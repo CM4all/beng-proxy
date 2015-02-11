@@ -343,20 +343,20 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock)
 
 StockItem *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
-               const ChildOptions *options,
+               const ChildOptions &options,
                const char *executable_path,
                ConstBuffer<const char *> args,
                ConstBuffer<const char *> env,
                GError **error_r)
 {
-    if (!jail_params_check(&options->jail, error_r))
+    if (!jail_params_check(&options.jail, error_r))
         return nullptr;
 
     auto params = NewFromPool<struct fcgi_child_params>(*pool);
     params->executable_path = executable_path;
     params->args = args;
     params->env = env;
-    params->options = options;
+    params->options = &options;
 
     return hstock_get_now(*fcgi_stock->hstock, *pool,
                           fcgi_stock_key(pool, params), params,
