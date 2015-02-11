@@ -143,8 +143,10 @@ jail_params_copy(struct pool *pool, struct jail_params *dest,
 char *
 jail_params_id(const struct jail_params *params, char *p)
 {
-    if (params->enabled)
-        p = (char *)mempcpy(p, ";j", 2);
+    if (params->enabled) {
+        p = (char *)mempcpy(p, ";j=", 2);
+        p = stpcpy(p, params->home_directory);
+    }
 
     return p;
 }
