@@ -26,6 +26,7 @@ lhttp_address_init(struct lhttp_address *address, const char *path)
     address->env.Init();
     address->options.Init();
     address->concurrency = 1;
+    address->blocking = true;
 }
 
 struct lhttp_address *
@@ -84,6 +85,7 @@ lhttp_address_copy(struct pool *pool, struct lhttp_address *dest,
     dest->expand_uri = p_strdup_checked(pool, src->expand_uri);
 
     dest->concurrency = src->concurrency;
+    dest->blocking = src->blocking;
 }
 
 struct lhttp_address *

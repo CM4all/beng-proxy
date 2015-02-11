@@ -50,6 +50,12 @@ struct lhttp_address {
     unsigned concurrency;
 
     /**
+     * Pass a blocking listener socket to the child process?  The
+     * default is true; sets SOCK_NONBLOCK if false.
+     */
+    bool blocking;
+
+    /**
      * Generates a string identifying the server process.  This can be
      * used as a key in a hash table.  The string will be allocated by
      * the specified pool.

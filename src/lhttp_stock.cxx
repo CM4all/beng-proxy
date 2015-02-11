@@ -90,6 +90,19 @@ lhttp_connection_event_callback(int fd, gcc_unused short event, void *ctx)
  */
 
 static int
+lhttp_child_stock_socket_type(gcc_unused const char *key, void *info,
+                              gcc_unused void *ctx)
+{
+    const auto &address = *(const struct lhttp_address *)info;
+
+    int type = SOCK_STREAM;
+    if (!address.blocking)
+        type |= SOCK_NONBLOCK;
+
+    return type;
+}
+
+static int
 lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
                               gcc_unused void *ctx)
 {
@@ -114,6 +127,7 @@ lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
 
 static const struct child_stock_class lhttp_child_stock_class = {
     .shutdown_signal = SIGTERM,
+    .socket_type = lhttp_child_stock_socket_type,
     .clone_flags = lhttp_child_stock_clone_flags,
     .run = lhttp_child_stock_run,
 };
