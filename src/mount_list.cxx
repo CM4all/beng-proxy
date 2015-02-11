@@ -15,11 +15,9 @@
 static MountList *
 mount_list_dup_one(struct pool *pool, const MountList *src)
 {
-    auto *dest = NewFromPool<MountList>(*pool);
-    dest->next = nullptr;
-    dest->source = p_strdup(pool, src->source);
-    dest->target = p_strdup(pool, src->target);
-    return dest;
+    return NewFromPool<MountList>(*pool,
+                                  p_strdup(pool, src->source),
+                                  p_strdup(pool, src->target));
 }
 
 MountList *

@@ -1009,10 +1009,10 @@ translate_client_bind_mount(TranslateClient *client,
         return false;
     }
 
-    auto *m = NewFromPool<MountList>(*client->pool);
-    m->next = nullptr;
-    m->source = payload + 1; /* skip the slash to make it relative */
-    m->target = separator + 1;
+    auto *m = NewFromPool<MountList>(*client->pool,
+                                     /* skip the slash to make it relative */
+                                     payload + 1,
+                                     separator + 1);
     *client->mount_list = m;
     client->mount_list = &m->next;
     return true;
