@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.0.9) unstable; urgency=low
 
-  * 
+  * namespace_options: improved PIVOT_ROOT error message
 
  --   
 

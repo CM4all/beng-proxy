@@ -187,9 +187,10 @@ namespace_options_setup(const struct namespace_options *options)
         }
 
         /* enter the new root */
-        if (my_pivot_root(new_root, put_old) < 0) {
+        int result = my_pivot_root(new_root, put_old);
+        if (result < 0) {
             fprintf(stderr, "pivot_root('%s') failed: %s\n",
-                    new_root, strerror(errno));
+                    new_root, strerror(-result));
             _exit(2);
         }
     }
