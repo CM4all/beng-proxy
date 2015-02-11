@@ -42,7 +42,7 @@ struct fcgi_child_params {
     ConstBuffer<const char *> args;
     ConstBuffer<const char *> env;
 
-    const struct child_options *options;
+    const ChildOptions *options;
 };
 
 struct fcgi_connection {
@@ -139,7 +139,7 @@ fcgi_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
 {
     const struct fcgi_child_params *params =
         (const struct fcgi_child_params *)info;
-    const struct child_options *const options = params->options;
+    const ChildOptions *const options = params->options;
 
     return namespace_options_clone_flags(&options->ns, flags);
 }
@@ -150,7 +150,7 @@ fcgi_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
 {
     const struct fcgi_child_params *params =
         (const struct fcgi_child_params *)info;
-    const struct child_options *const options = params->options;
+    const ChildOptions *const options = params->options;
 
     options->SetupStderr(true);
 
@@ -206,7 +206,7 @@ fcgi_stock_create(void *ctx, StockItem &item,
     assert(params != nullptr);
     assert(params->executable_path != nullptr);
 
-    const struct child_options *const options = params->options;
+    const ChildOptions *const options = params->options;
     if (options->jail.enabled) {
         jail_params_copy(pool, &connection->jail_params, &options->jail);
 
@@ -343,7 +343,7 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock)
 
 StockItem *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
-               const struct child_options *options,
+               const ChildOptions *options,
                const char *executable_path,
                ConstBuffer<const char *> args,
                ConstBuffer<const char *> env,

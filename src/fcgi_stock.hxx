@@ -12,7 +12,7 @@
 struct pool;
 struct StockItem;
 struct StockGetHandler;
-struct child_options;
+struct ChildOptions;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 
@@ -27,7 +27,7 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock);
  */
 StockItem *
 fcgi_stock_get(struct fcgi_stock *fcgi_stock, struct pool *pool,
-               const struct child_options *options,
+               const ChildOptions *options,
                const char *executable_path,
                ConstBuffer<const char *> args,
                ConstBuffer<const char *> env,

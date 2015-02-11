@@ -38,7 +38,7 @@ struct was_child_params {
     ConstBuffer<const char *> args;
     ConstBuffer<const char *> env;
 
-    const struct child_options *options;
+    const ChildOptions *options;
 };
 
 struct was_child {
@@ -151,7 +151,7 @@ was_stock_create(gcc_unused void *ctx, StockItem &item,
 
     child->key = p_strdup(pool, key);
 
-    const struct child_options *const options = params->options;
+    const ChildOptions *const options = params->options;
     if (options->jail.enabled) {
         jail_params_copy(pool, &child->jail_params, &options->jail);
 
@@ -243,7 +243,7 @@ was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle)
 
 void
 was_stock_get(StockMap *hstock, struct pool *pool,
-              const struct child_options *options,
+              const ChildOptions *options,
               const char *executable_path,
               ConstBuffer<const char *> args,
               ConstBuffer<const char *> env,

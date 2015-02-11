@@ -8,7 +8,7 @@
 #define BENG_DELEGATE_STOCK_HXX
 
 struct pool;
-struct child_options;
+struct ChildOptions;
 struct StockMap;
 struct StockGetHandler;
 struct StockItem;
@@ -19,7 +19,7 @@ delegate_stock_new(struct pool *pool);
 void
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *path,
-                   const struct child_options *options,
+                   const ChildOptions *options,
                    const StockGetHandler &handler, void *handler_ctx,
                    struct async_operation_ref &async_ref);
 

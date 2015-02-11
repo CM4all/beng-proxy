@@ -82,7 +82,7 @@ static const struct async_operation_class fcgi_request_async_operation = {
 
 void
 fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
-             const struct child_options *options,
+             const ChildOptions *options,
              const char *action,
              const char *path,
              ConstBuffer<const char *> args,

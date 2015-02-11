@@ -103,7 +103,7 @@ struct TranslateClient {
     struct jail_params *jail;
 
     /** the current child process options being edited */
-    struct child_options *child_options;
+    ChildOptions *child_options;
 
     /** the current namespace options being edited */
     NamespaceOptions *ns_options;

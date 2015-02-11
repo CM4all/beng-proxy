@@ -15,6 +15,7 @@ struct pool;
 struct StockMap;
 struct StockItem;
 struct StockGetHandler;
+struct ChildOptions;
 struct async_operation_ref;
 template<typename T> struct ConstBuffer;
 
@@ -26,7 +27,7 @@ was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
  */
 void
 was_stock_get(StockMap *hstock, struct pool *pool,
-              const struct child_options *options,
+              const ChildOptions *options,
               const char *executable_path,
               ConstBuffer<const char *> args,
               ConstBuffer<const char *> env,

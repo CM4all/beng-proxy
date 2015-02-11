@@ -115,7 +115,7 @@ static constexpr StockGetHandler was_stock_handler = {
 
 void
 was_request(struct pool *pool, StockMap *was_stock,
-            const struct child_options *options,
+            const ChildOptions *options,
             const char *action,
             const char *path,
             ConstBuffer<const char *> args,

@@ -15,7 +15,7 @@ struct fcgi_stock;
 struct strmap;
 struct http_response_handler;
 struct async_operation_ref;
-struct child_options;
+struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -24,7 +24,7 @@ template<typename T> struct ConstBuffer;
  */
 void
 fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
-             const struct child_options *options,
+             const ChildOptions *options,
              const char *action,
              const char *path,
              ConstBuffer<const char *> args,

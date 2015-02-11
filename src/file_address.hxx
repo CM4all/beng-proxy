@@ -40,7 +40,7 @@ struct file_address {
     /**
      * Options for the delegate process.
      */
-    struct child_options child_options;
+    ChildOptions child_options;
 
     bool auto_gzipped;
 

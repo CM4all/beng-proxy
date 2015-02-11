@@ -11,7 +11,7 @@
 
 #include <sys/types.h>
 
-struct child_options;
+struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
 struct was_process {
@@ -24,7 +24,7 @@ was_launch(struct was_process *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
            ConstBuffer<const char *> env,
-           const struct child_options *options,
+           const ChildOptions *options,
            GError **error_r);
 
 #endif

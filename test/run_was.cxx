@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
     struct event_base *event_base = event_init();
     fb_pool_init(false);
 
-    struct child_options child_options;
+    ChildOptions child_options;
     child_options.Init();
 
     static struct context context;

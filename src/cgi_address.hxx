@@ -35,7 +35,7 @@ struct cgi_address {
      */
     struct param_array params;
 
-    struct child_options options;
+    ChildOptions options;
 
     const char *interpreter;
     const char *action;

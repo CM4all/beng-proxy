@@ -13,7 +13,7 @@ struct pool;
 struct istream;
 struct strmap;
 struct http_response_handler;
-struct child_options;
+struct ChildOptions;
 template<typename T> struct ConstBuffer;
 
 /**
@@ -24,7 +24,7 @@ void
 pipe_filter(struct pool *pool, const char *path,
             ConstBuffer<const char *> args,
             ConstBuffer<const char *> env,
-            const struct child_options &options,
+            const ChildOptions &options,
             http_status_t status, struct strmap *headers, struct istream *body,
             const struct http_response_handler *handler,
             void *handler_ctx);

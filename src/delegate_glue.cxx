@@ -70,11 +70,10 @@ static constexpr StockGetHandler delegate_stock_handler = {
     .error = delegate_stock_error,
 };
 
-
 void
 delegate_stock_open(StockMap *stock, struct pool *pool,
                     const char *helper,
-                    const struct child_options *options,
+                    const ChildOptions *options,
                     const char *path,
                     const struct delegate_handler *handler, void *ctx,
                     struct async_operation_ref &async_ref)

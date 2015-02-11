@@ -28,7 +28,7 @@
 struct was_run_args {
     sigset_t signals;
 
-    const struct child_options *options;
+    const ChildOptions *options;
 
     int control_fd, input_fd, output_fd;
 
@@ -71,7 +71,7 @@ was_launch(struct was_process *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
            ConstBuffer<const char *> env,
-           const struct child_options *options,
+           const ChildOptions *options,
            GError **error_r)
 {
     int control_fds[2], input_fds[2], output_fds[2];

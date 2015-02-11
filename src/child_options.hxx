@@ -12,7 +12,7 @@
 /**
  * Options for launching a child process.
  */
-struct child_options {
+struct ChildOptions {
     /**
      * An absolute path where STDERR output will be appended.
      */
@@ -24,8 +24,8 @@ struct child_options {
 
     struct jail_params jail;
 
-    child_options() = default;
-    child_options(struct pool *pool, const struct child_options &src);
+    ChildOptions() = default;
+    ChildOptions(struct pool *pool, const ChildOptions &src);
 
     void Init() {
         stderr_path = nullptr;
@@ -34,7 +34,7 @@ struct child_options {
         jail_params_init(&jail);
     }
 
-    void CopyFrom(struct pool *pool, const struct child_options *src);
+    void CopyFrom(struct pool *pool, const ChildOptions *src);
 
     char *MakeId(char *p) const;
 

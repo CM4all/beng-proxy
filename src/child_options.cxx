@@ -13,8 +13,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-child_options::child_options(struct pool *pool,
-                             const struct child_options &src)
+ChildOptions::ChildOptions(struct pool *pool,
+                           const ChildOptions &src)
     :stderr_path(p_strdup_checked(pool, src.stderr_path)),
      rlimits(src.rlimits),
      ns(pool, src.ns),
@@ -23,7 +23,7 @@ child_options::child_options(struct pool *pool,
 }
 
 void
-child_options::CopyFrom(struct pool *pool, const struct child_options *src)
+ChildOptions::CopyFrom(struct pool *pool, const ChildOptions *src)
 {
     stderr_path = p_strdup_checked(pool, src->stderr_path);
 
@@ -33,7 +33,7 @@ child_options::CopyFrom(struct pool *pool, const struct child_options *src)
 }
 
 char *
-child_options::MakeId(char *p) const
+ChildOptions::MakeId(char *p) const
 {
     if (stderr_path != nullptr)
         p += sprintf(p, ";e%08x", djb_hash_string(stderr_path));
@@ -45,7 +45,7 @@ child_options::MakeId(char *p) const
 }
 
 int
-child_options::OpenStderrPath() const
+ChildOptions::OpenStderrPath() const
 {
     assert(stderr_path != nullptr);
 
@@ -54,7 +54,7 @@ child_options::OpenStderrPath() const
 }
 
 void
-child_options::SetupStderr(bool stdout) const
+ChildOptions::SetupStderr(bool stdout) const
 {
     if (stderr_path == nullptr)
         return;

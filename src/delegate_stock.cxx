@@ -28,7 +28,7 @@
 struct delegate_info {
     const char *helper;
 
-    const struct child_options *options;
+    const ChildOptions *options;
 
     int fds[2];
     sigset_t signals;
@@ -129,7 +129,7 @@ delegate_stock_create(gcc_unused void *ctx, StockItem &item,
 {
     auto *process = &ToDelegateProcess(item);
     struct delegate_info *const info = (struct delegate_info *)_info;
-    const struct child_options *const options = info->options;
+    const auto *const options = info->options;
 
     if (socketpair_cloexec(AF_UNIX, SOCK_STREAM, 0, info->fds) < 0) {
         GError *error = new_error_errno_msg("socketpair() failed: %s");
@@ -225,7 +225,7 @@ delegate_stock_new(struct pool *pool)
 void
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *helper,
-                   const struct child_options *options,
+                   const ChildOptions *options,
                    const StockGetHandler &handler, void *handler_ctx,
                    struct async_operation_ref &async_ref)
 {

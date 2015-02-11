@@ -29,7 +29,7 @@ struct lhttp_address {
      */
     struct param_array env;
 
-    struct child_options options;
+    ChildOptions options;
 
     /**
      * The host part of the URI (including the port, if any).
