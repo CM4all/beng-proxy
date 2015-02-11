@@ -71,7 +71,7 @@ was_launch(struct was_process *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
            ConstBuffer<const char *> env,
-           const ChildOptions *options,
+           const ChildOptions &options,
            GError **error_r)
 {
     int control_fds[2], input_fds[2], output_fds[2];
@@ -98,7 +98,7 @@ was_launch(struct was_process *process,
     }
 
     struct was_run_args run_args = {
-        .options = options,
+        .options = &options,
         .control_fd = control_fds[1],
         .output_fd = input_fds[1],
         .input_fd = output_fds[0],
@@ -108,7 +108,7 @@ was_launch(struct was_process *process,
     };
 
     int clone_flags = SIGCHLD;
-    clone_flags = namespace_options_clone_flags(&options->ns, clone_flags);
+    clone_flags = namespace_options_clone_flags(&options.ns, clone_flags);
 
     /* avoid race condition due to libevent signal handler in child
        process */

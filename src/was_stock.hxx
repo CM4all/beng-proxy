@@ -27,7 +27,7 @@ was_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
  */
 void
 was_stock_get(StockMap *hstock, struct pool *pool,
-              const ChildOptions *options,
+              const ChildOptions &options,
               const char *executable_path,
               ConstBuffer<const char *> args,
               ConstBuffer<const char *> env,

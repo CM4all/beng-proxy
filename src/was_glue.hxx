@@ -25,7 +25,7 @@ template<typename T> struct ConstBuffer;
  */
 void
 was_request(struct pool *pool, StockMap *was_stock,
-            const ChildOptions *options,
+            const ChildOptions &options,
             const char *action,
             const char *path,
             ConstBuffer<const char *> args,

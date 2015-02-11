@@ -115,7 +115,7 @@ static constexpr StockGetHandler was_stock_handler = {
 
 void
 was_request(struct pool *pool, StockMap *was_stock,
-            const ChildOptions *options,
+            const ChildOptions &options,
             const char *action,
             const char *path,
             ConstBuffer<const char *> args,
@@ -130,7 +130,7 @@ was_request(struct pool *pool, StockMap *was_stock,
             struct async_operation_ref *async_ref)
 {
     GError *error = nullptr;
-    if (!jail_params_check(&options->jail, &error)) {
+    if (!jail_params_check(&options.jail, &error)) {
         if (body != nullptr)
             istream_close_unused(body);
 

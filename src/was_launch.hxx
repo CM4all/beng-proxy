@@ -24,7 +24,7 @@ was_launch(struct was_process *process,
            const char *executable_path,
            ConstBuffer<const char *> args,
            ConstBuffer<const char *> env,
-           const ChildOptions *options,
+           const ChildOptions &options,
            GError **error_r);
 
 #endif

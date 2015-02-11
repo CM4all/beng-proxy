@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
 
     static struct context context;
     if (!was_launch(&context.process, argv[1], nullptr, nullptr,
-                    &child_options,
+                    child_options,
                     &error)) {
         g_printerr("%s\n", error->message);
         g_error_free(error);

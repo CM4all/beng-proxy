@@ -287,7 +287,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     case RESOURCE_ADDRESS_WAS:
         cgi = address->u.cgi;
-        was_request(pool, rl->was_stock, &cgi->options,
+        was_request(pool, rl->was_stock, cgi->options,
                     cgi->action,
                     cgi->path,
                     { cgi->args.values, cgi->args.n },
