@@ -102,7 +102,7 @@ static int
 lhttp_child_stock_run(gcc_unused struct pool *pool, gcc_unused const char *key,
                       void *info, gcc_unused void *ctx)
 {
-    auto address = (struct lhttp_address *)info;
+    auto address = (const struct lhttp_address *)info;
 
     address->options.SetupStderr(true);
 
