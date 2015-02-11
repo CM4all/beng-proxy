@@ -7,17 +7,17 @@
 
 struct pool;
 
-struct mount_list {
-    struct mount_list *next;
+struct MountList {
+    MountList *next;
 
     const char *source;
     const char *target;
 };
 
-struct mount_list *
-mount_list_dup(struct pool *pool, const struct mount_list *src);
+MountList *
+mount_list_dup(struct pool *pool, const MountList *src);
 
 void
-mount_list_apply(const struct mount_list *m);
+mount_list_apply(const MountList *m);
 
 #endif

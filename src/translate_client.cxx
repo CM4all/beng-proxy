@@ -109,7 +109,7 @@ struct TranslateClient {
     struct namespace_options *ns_options;
 
     /** the tail of the current mount_list */
-    struct mount_list **mount_list;
+    MountList **mount_list;
 
     /** the current local file address being edited */
     struct file_address *file_address;
@@ -1009,7 +1009,7 @@ translate_client_bind_mount(TranslateClient *client,
         return false;
     }
 
-    mount_list *m = NewFromPool<mount_list>(*client->pool);
+    auto *m = NewFromPool<MountList>(*client->pool);
     m->next = nullptr;
     m->source = payload + 1; /* skip the slash to make it relative */
     m->target = separator + 1;

@@ -8,6 +8,7 @@
 #include <inline/compiler.h>
 
 struct pool;
+struct MountList;
 
 struct namespace_options {
     /**
@@ -46,7 +47,7 @@ struct namespace_options {
      */
     const char *mount_home;
 
-    struct mount_list *mounts;
+    MountList *mounts;
 
     /**
      * The hostname of the new UTS namespace.
