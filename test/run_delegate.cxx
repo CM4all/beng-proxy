@@ -1,6 +1,7 @@
 #include "delegate_glue.hxx"
 #include "delegate_client.hxx"
 #include "delegate_stock.hxx"
+#include "child_options.hxx"
 #include "hstock.hxx"
 #include "async.hxx"
 #include "defer.hxx"
@@ -61,7 +62,10 @@ int main(int argc, char **argv)
     delegate_stock = delegate_stock_new(root_pool);
     pool = pool_new_linear(root_pool, "test", 8192);
 
-    delegate_stock_open(delegate_stock, pool, helper_path, NULL,
+    ChildOptions child_options;
+    child_options.Init();
+
+    delegate_stock_open(delegate_stock, pool, helper_path, child_options,
                         argv[1],
                         &my_delegate_handler, NULL, my_async_ref);
 

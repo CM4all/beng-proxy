@@ -118,7 +118,7 @@ delegate_handler(request &request2)
 
     delegate_stock_open(global_delegate_stock, request.pool,
                         address.delegate,
-                        &address.child_options,
+                        address.child_options,
                         address.path,
                         &delegate_handler_handler, &request2,
                         request2.async_ref);

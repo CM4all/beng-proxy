@@ -17,7 +17,7 @@ struct ChildOptions;
 void
 delegate_stock_request(StockMap *stock, struct pool *pool,
                        const char *helper,
-                       const ChildOptions *options,
+                       const ChildOptions &options,
                        const char *path, const char *content_type,
                        const struct http_response_handler *handler, void *ctx,
                        struct async_operation_ref &async_ref);

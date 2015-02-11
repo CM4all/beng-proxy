@@ -225,22 +225,20 @@ delegate_stock_new(struct pool *pool)
 void
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *helper,
-                   const ChildOptions *options,
+                   const ChildOptions &options,
                    const StockGetHandler &handler, void *handler_ctx,
                    struct async_operation_ref &async_ref)
 {
-    assert(options != nullptr);
-
     const char *uri = helper;
 
     char options_buffer[4096];
-    *options->MakeId(options_buffer) = 0;
+    *options.MakeId(options_buffer) = 0;
     if (*options_buffer != 0)
         uri = p_strcat(pool, helper, "|", options_buffer, nullptr);
 
     auto info = NewFromPool<struct delegate_info>(*pool);
     info->helper = helper;
-    info->options = options;
+    info->options = &options;
 
     hstock_get(*delegate_stock, *pool, uri, info,
                handler, handler_ctx, async_ref);

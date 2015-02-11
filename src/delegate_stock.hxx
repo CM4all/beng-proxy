@@ -19,7 +19,7 @@ delegate_stock_new(struct pool *pool);
 void
 delegate_stock_get(StockMap *delegate_stock, struct pool *pool,
                    const char *path,
-                   const ChildOptions *options,
+                   const ChildOptions &options,
                    const StockGetHandler &handler, void *handler_ctx,
                    struct async_operation_ref &async_ref);
 
