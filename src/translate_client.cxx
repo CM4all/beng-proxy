@@ -2029,6 +2029,11 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
             return false;
         }
 
+        if (response.regex == nullptr) {
+            Fail("misplaced EXPAND_DOCUMENT_ROOT packet");
+            return false;
+        }
+
         if (cgi_address != nullptr)
             cgi_address->expand_document_root = payload;
         else if (file_address != nullptr &&
@@ -2053,7 +2058,6 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
                           SocketAddress((const struct sockaddr *)_payload,
                                         payload_length));
         return true;
-
 
     case TRANSLATE_ADDRESS_STRING:
         if (address_list == nullptr) {
@@ -3094,6 +3098,11 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
             return false;
         }
 
+        if (response.regex == nullptr) {
+            Fail("misplaced EXPAND_AUTH_FILE packet");
+            return false;
+        }
+
         response.expand_auth_file = payload;
         return true;
 
@@ -3109,7 +3118,8 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_EXPAND_APPEND_AUTH:
-        if (!response.HasAuth() ||
+        if (response.regex == nullptr ||
+            !response.HasAuth() ||
             !response.append_auth.IsNull() ||
             response.expand_append_auth != nullptr) {
             Fail("misplaced EXPAND_APPEND_AUTH packet");
@@ -3125,7 +3135,8 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
         return true;
 
     case TRANSLATE_EXPAND_COOKIE_HOST:
-        if (resource_address == nullptr ||
+        if (response.regex == nullptr ||
+            resource_address == nullptr ||
             resource_address->type == RESOURCE_ADDRESS_NONE) {
             Fail("misplaced EXPAND_COOKIE_HOST packet");
             return false;
