@@ -10,6 +10,8 @@
 #include "http_address.hxx"
 #include "file_address.hxx"
 #include "cgi_address.hxx"
+#include "mount_list.hxx"
+#include "namespace_options.hxx"
 #include "pool.hxx"
 #include "tpool.h"
 
@@ -57,6 +59,35 @@ buffer_equals(ConstBuffer<T> a, ConstBuffer<T> b)
 }
 
 static bool
+Equals(const MountList &a, const MountList &b)
+{
+    return strcmp(a.source, b.source) == 0 &&
+        strcmp(a.target, b.target) == 0;
+}
+
+static bool
+Equals(const MountList *a, const MountList *b)
+{
+    for (; a != nullptr; a = a->next, b = b->next)
+        if (b == nullptr || !Equals(*a, *b))
+            return false;
+
+    return b == nullptr;
+}
+
+static bool
+Equals(const NamespaceOptions &a, const NamespaceOptions &b)
+{
+    return Equals(a.mounts, b.mounts);
+}
+
+static bool
+Equals(const ChildOptions &a, const ChildOptions &b)
+{
+    return Equals(a.ns, b.ns);
+}
+
+static bool
 http_address_equals(const struct http_address *a,
                     const struct http_address *b)
 {
@@ -88,13 +119,15 @@ resource_address_equals(const struct resource_address *a,
             string_equals(a->u.file->gzipped, b->u.file->gzipped) &&
             string_equals(a->u.file->content_type, b->u.file->content_type) &&
             string_equals(a->u.file->delegate, b->u.file->delegate) &&
-            string_equals(a->u.file->document_root, b->u.file->document_root);
+            string_equals(a->u.file->document_root, b->u.file->document_root) &&
+            Equals(a->u.file->child_options, b->u.file->child_options);
 
     case RESOURCE_ADDRESS_CGI:
         assert(a->u.cgi->path != nullptr);
         assert(b->u.cgi->path != nullptr);
 
-        return string_equals(a->u.cgi->path, b->u.cgi->path) &&
+        return Equals(a->u.cgi->options, b->u.cgi->options) &&
+            string_equals(a->u.cgi->path, b->u.cgi->path) &&
             string_equals(a->u.cgi->interpreter, b->u.cgi->interpreter) &&
             string_equals(a->u.cgi->action, b->u.cgi->action) &&
             string_equals(a->u.cgi->uri, b->u.cgi->uri) &&
