@@ -1,6 +1,6 @@
 cm4all-beng-proxy (4.22) unstable; urgency=low
 
-  * 
+  * fcgi: fix wrong child process reuse with different JailCGI homes
 
  --   
 
