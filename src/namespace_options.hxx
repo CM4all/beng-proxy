@@ -10,7 +10,7 @@
 struct pool;
 struct MountList;
 
-struct namespace_options {
+struct NamespaceOptions {
     /**
      * Start the child process in a new user namespace?
      */
@@ -54,8 +54,8 @@ struct namespace_options {
      */
     const char *hostname;
 
-    namespace_options() = default;
-    namespace_options(struct pool *pool, const namespace_options &src);
+    NamespaceOptions() = default;
+    NamespaceOptions(struct pool *pool, const NamespaceOptions &src);
 };
 
 /**
@@ -65,24 +65,24 @@ void
 namespace_options_global_init(void);
 
 void
-namespace_options_init(struct namespace_options *options);
+namespace_options_init(NamespaceOptions *options);
 
 void
-namespace_options_copy(struct pool *pool, struct namespace_options *dest,
-                       const struct namespace_options *src);
+namespace_options_copy(struct pool *pool, NamespaceOptions *dest,
+                       const NamespaceOptions *src);
 
 gcc_pure
 int
-namespace_options_clone_flags(const struct namespace_options *options,
+namespace_options_clone_flags(const NamespaceOptions *options,
                               int flags);
 
 void
-namespace_options_unshare(const struct namespace_options *options);
+namespace_options_unshare(const NamespaceOptions *options);
 
 void
-namespace_options_setup(const struct namespace_options *options);
+namespace_options_setup(const NamespaceOptions *options);
 
 char *
-namespace_options_id(const struct namespace_options *options, char *p);
+namespace_options_id(const NamespaceOptions *options, char *p);
 
 #endif

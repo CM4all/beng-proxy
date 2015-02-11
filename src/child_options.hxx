@@ -20,7 +20,7 @@ struct child_options {
 
     struct rlimit_options rlimits;
 
-    struct namespace_options ns;
+    NamespaceOptions ns;
 
     struct jail_params jail;
 

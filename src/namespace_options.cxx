@@ -46,7 +46,7 @@ namespace_options_global_init(void)
 }
 
 void
-namespace_options_init(struct namespace_options *options)
+namespace_options_init(NamespaceOptions *options)
 {
     options->enable_user = false;
     options->enable_pid = false;
@@ -61,8 +61,8 @@ namespace_options_init(struct namespace_options *options)
     options->hostname = nullptr;
 }
 
-namespace_options::namespace_options(struct pool *pool,
-                                     const namespace_options &src)
+NamespaceOptions::NamespaceOptions(struct pool *pool,
+                                   const NamespaceOptions &src)
         :enable_user(src.enable_user),
          enable_pid(src.enable_pid),
          enable_network(src.enable_network),
@@ -78,8 +78,8 @@ namespace_options::namespace_options(struct pool *pool,
 }
 
 void
-namespace_options_copy(struct pool *pool, struct namespace_options *dest,
-                       const struct namespace_options *src)
+namespace_options_copy(struct pool *pool, NamespaceOptions *dest,
+                       const NamespaceOptions *src)
 {
     *dest = *src;
 
@@ -92,7 +92,7 @@ namespace_options_copy(struct pool *pool, struct namespace_options *dest,
 
 gcc_pure
 int
-namespace_options_clone_flags(const struct namespace_options *options,
+namespace_options_clone_flags(const NamespaceOptions *options,
                               int flags)
 {
     if (options->enable_user)
@@ -110,7 +110,7 @@ namespace_options_clone_flags(const struct namespace_options *options,
 }
 
 void
-namespace_options_unshare(const struct namespace_options *options)
+namespace_options_unshare(const NamespaceOptions *options)
 {
     int unshare_flags = namespace_options_clone_flags(options, 0);
 
@@ -157,7 +157,7 @@ setup_gid_map(void)
 }
 
 void
-namespace_options_setup(const struct namespace_options *options)
+namespace_options_setup(const NamespaceOptions *options)
 {
     /* set up UID/GID mapping in the old /proc */
     if (options->enable_user) {
@@ -257,7 +257,7 @@ namespace_options_setup(const struct namespace_options *options)
 }
 
 char *
-namespace_options_id(const struct namespace_options *options, char *p)
+namespace_options_id(const NamespaceOptions *options, char *p)
 {
     if (options->enable_user)
         p = (char *)mempcpy(p, ";uns", 4);

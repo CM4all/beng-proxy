@@ -106,7 +106,7 @@ struct TranslateClient {
     struct child_options *child_options;
 
     /** the current namespace options being edited */
-    struct namespace_options *ns_options;
+    NamespaceOptions *ns_options;
 
     /** the tail of the current mount_list */
     MountList **mount_list;
@@ -883,7 +883,7 @@ translate_client_pivot_root(TranslateClient *client,
         return false;
     }
 
-    struct namespace_options *ns = client->ns_options;
+    NamespaceOptions *ns = client->ns_options;
 
     if (ns == nullptr || ns->pivot_root != nullptr) {
         client->Fail("misplaced PIVOT_ROOT packet");
@@ -904,7 +904,7 @@ translate_client_home(TranslateClient *client,
         return false;
     }
 
-    struct namespace_options *ns = client->ns_options;
+    NamespaceOptions *ns = client->ns_options;
     struct jail_params *jail = client->jail;
 
     bool ok = false;
@@ -934,7 +934,7 @@ translate_client_mount_proc(TranslateClient *client,
         return false;
     }
 
-    struct namespace_options *ns = client->ns_options;
+    NamespaceOptions *ns = client->ns_options;
 
     if (ns == nullptr || ns->mount_proc) {
         client->Fail("misplaced MOUNT_PROC packet");
@@ -955,7 +955,7 @@ translate_client_mount_tmp_tmpfs(TranslateClient *client,
         return false;
     }
 
-    struct namespace_options *ns = client->ns_options;
+    NamespaceOptions *ns = client->ns_options;
 
     if (ns == nullptr || ns->mount_tmp_tmpfs) {
         client->Fail("misplaced MOUNT_TMP_TMPFS packet");
@@ -976,7 +976,7 @@ translate_client_mount_home(TranslateClient *client,
         return false;
     }
 
-    struct namespace_options *ns = client->ns_options;
+    NamespaceOptions *ns = client->ns_options;
 
     if (ns == nullptr || ns->home == nullptr ||
         ns->mount_home != nullptr) {
@@ -1027,7 +1027,7 @@ translate_client_uts_namespace(TranslateClient *client,
         return false;
     }
 
-    struct namespace_options *ns = client->ns_options;
+    NamespaceOptions *ns = client->ns_options;
 
     if (ns == nullptr || ns->hostname != nullptr) {
         client->Fail("misplaced MOUNT_UTS_NAMESPACE packet");
