@@ -622,6 +622,11 @@ enum beng_translation_command {
      * Pass non-blocking socket to child process?
      */
     TRANSLATE_NON_BLOCKING = 151,
+
+    /**
+     * Read a file and return its contents to the translation server.
+     */
+    TRANSLATE_READ_FILE = 152,
 };
 
 struct beng_translation_header {

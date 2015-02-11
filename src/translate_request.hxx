@@ -76,6 +76,11 @@ struct TranslateRequest {
     ConstBuffer<void> probe_path_suffixes;
     const char *probe_suffix;
 
+    /**
+     * File contents.
+     */
+    ConstBuffer<void> read_file;
+
     void Clear() {
         listener_tag = nullptr;
         local_address = nullptr;
@@ -104,6 +109,7 @@ struct TranslateRequest {
         error_document_status = http_status_t(0);
         probe_path_suffixes = nullptr;
         probe_suffix = nullptr;
+        read_file = nullptr;
     }
 };
 

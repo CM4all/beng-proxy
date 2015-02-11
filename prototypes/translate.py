@@ -660,6 +660,12 @@ class Translation(Protocol):
             response.packet(TRANSLATE_FILTER)
             response.pipe(os.path.join(cgi_path, 'pipe2.sed'))
             response.view('raw')
+        elif raw_uri[:11] == '/read_file/':
+            if request.read_file is None:
+                response.packet(TRANSLATE_BASE, '/read_file/')
+                response.packet(TRANSLATE_READ_FILE, '/tmp/foo')
+            else:
+                response.path('/var/www/' + request.read_file)
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

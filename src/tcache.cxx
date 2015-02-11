@@ -38,6 +38,7 @@ static constexpr size_t MAX_CONTENT_TYPE_LOOKUP = 256;
 static constexpr size_t MAX_PROBE_PATH_SUFFIXES = 256;
 static constexpr size_t MAX_FILE_NOT_FOUND = 256;
 static constexpr size_t MAX_DIRECTORY_INDEX = 256;
+static constexpr size_t MAX_READ_FILE = 256;
 
 struct TranslateCachePerHost;
 struct TranslateCachePerSite;
@@ -490,6 +491,7 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
                const char *probe_suffix,
                ConstBuffer<void> directory_index,
                ConstBuffer<void> file_not_found,
+               ConstBuffer<void> read_file,
                bool want)
 {
     const char *key = status != 0
@@ -572,6 +574,18 @@ tcache_uri_key(struct pool &pool, const char *uri, const char *host,
                         nullptr);
     }
 
+    if (!read_file.IsNull()) {
+        char buffer[MAX_READ_FILE * 3];
+        size_t length = uri_escape(buffer, (const char *)read_file.data,
+                                   read_file.size);
+
+        key = p_strncat(&pool,
+                        buffer, length,
+                        "=RF]", (size_t)4,
+                        key, strlen(key),
+                        nullptr);
+    }
+
     return key;
 }
 
@@ -611,6 +625,7 @@ tcache_request_key(struct pool &pool, const TranslateRequest &request)
                          request.probe_path_suffixes, request.probe_suffix,
                          request.directory_index,
                          request.file_not_found,
+                         request.read_file,
                          !request.want.IsEmpty())
         : request.widget_type;
 }
@@ -627,6 +642,7 @@ tcache_request_evaluate(const TranslateRequest *request)
         request->probe_path_suffixes.size <= MAX_PROBE_PATH_SUFFIXES &&
         request->file_not_found.size <= MAX_FILE_NOT_FOUND &&
         request->directory_index.size <= MAX_DIRECTORY_INDEX &&
+        request->read_file.size <= MAX_READ_FILE &&
         request->authorization == nullptr;
 }
 
@@ -724,6 +740,7 @@ tcache_store_response(struct pool &pool, TranslateResponse &dest,
                          request.probe_path_suffixes, request.probe_suffix,
                          request.directory_index,
                          request.file_not_found,
+                         request.read_file,
                          !request.want.IsEmpty())
         /* no BASE, cache key unmodified */
         : nullptr;

@@ -845,6 +845,14 @@ can be used to implement authentication (see \ref{authentication}). \\
 
 \hline
 
+\verb|READ_FILE| & This is a repeated translation in reply to a
+translation response with a \verb|READ_FILE| packet.  The payload is
+the file contents or empty if the file does not exist (or if there was
+another problem reading the file).  This packet is implicitly on
+``vary''.  \\
+
+\hline
+
 \end{longtable}
 
 \subsection{Response}
@@ -1397,6 +1405,12 @@ the absolute path to a regular file (symlinks not supported).  The
 translation fails when the file does not exist or is inaccessible.
 The special value 0 matches only when the file does not exist; as soon
 as the file appears, the cached response will be discarded. \\
+
+\hline
+
+\verb|READ_FILE| & Asks \emph{beng-proxy} to read the specified
+(small) file and submit another translation request with the file
+contents in another \verb|READ_FILE| packet. \\
 
 \hline
 

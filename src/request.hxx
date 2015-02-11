@@ -89,6 +89,8 @@ struct request {
          */
         unsigned n_checks;
 
+        unsigned n_read_file;
+
         /**
          * Number of FILE_NOT_FOUND packets followed so far.  This
          * variable is used for loop detection.
@@ -195,6 +197,7 @@ struct request {
      */
     struct session *ApplyTranslateSession(const TranslateResponse &response);
 
+    bool CheckHandleReadFile(const TranslateResponse &response);
     bool CheckHandleProbePathSuffixes(const TranslateResponse &response);
     bool CheckHandleRedirect(const TranslateResponse &response);
     bool CheckHandleBounce(const TranslateResponse &response);

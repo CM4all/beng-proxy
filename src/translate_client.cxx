@@ -401,6 +401,9 @@ marshal_request(struct pool *pool, const TranslateRequest *request,
         write_optional_packet(gb, TRANSLATE_PROBE_SUFFIX,
                               request->probe_suffix,
                               error_r) &&
+        write_optional_buffer(gb, TRANSLATE_READ_FILE,
+                              request->read_file,
+                              error_r) &&
         write_packet(gb, TRANSLATE_END, nullptr, error_r);
     if (!success)
         return nullptr;
@@ -3169,6 +3172,20 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
             Fail("misplaced NON_BLOCKING packet");
             return false;
         }
+
+    case TRANSLATE_READ_FILE:
+        if (response.read_file != nullptr) {
+            Fail("duplicate READ_FILE packet");
+            return false;
+        }
+
+        if (!is_valid_absolute_path(payload, payload_length)) {
+            Fail("malformed READ_FILE packet");
+            return false;
+        }
+
+        response.read_file = payload;
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,

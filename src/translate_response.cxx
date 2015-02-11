@@ -121,6 +121,7 @@ TranslateResponse::Clear()
     error_document = nullptr;
     probe_path_suffixes = nullptr;
     probe_suffixes.clear();
+    read_file = nullptr;
 
     validate_mtime.mtime = 0;
     validate_mtime.path = nullptr;
@@ -238,6 +239,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     error_document = DupBuffer(pool, src.error_document);
     probe_path_suffixes = DupBuffer(pool, src.probe_path_suffixes);
     CopyArray(*pool, probe_suffixes, src.probe_suffixes);
+    read_file = p_strdup_checked(pool, src.read_file);
 
     validate_mtime.mtime = src.validate_mtime.mtime;
     validate_mtime.path =

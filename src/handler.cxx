@@ -8,6 +8,7 @@
 #include "config.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
+#include "load_file.hxx"
 #include "file_not_found.hxx"
 #include "file_enotdir.hxx"
 #include "file_directory_index.hxx"
@@ -661,6 +662,9 @@ request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 void
 request::OnTranslateResponse2(const TranslateResponse &response)
 {
+    if (CheckHandleReadFile(response))
+        return;
+
     if (CheckHandleProbePathSuffixes(response))
         return;
 
@@ -679,6 +683,31 @@ request::OnTranslateResponse2(const TranslateResponse &response)
         return;
 
     handle_translated_request(*this, response);
+}
+
+inline bool
+request::CheckHandleReadFile(const TranslateResponse &response)
+{
+    if (response.read_file == nullptr)
+        return false;
+
+    if (++translate.n_read_file > 2) {
+        daemon_log(2, "got too many consecutive READ_FILE packets\n");
+        response_dispatch_message(*this,
+                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                  "Internal server error");
+        return true;
+    }
+
+    auto contents = LoadFile(*request->pool, response.read_file, 256, nullptr);
+    if (contents.IsNull())
+        /* special case: if the file does not exist, return an empty
+           READ_FILE packet to the translation server */
+        contents.data = "";
+
+    translate.request.read_file = contents;
+    SubmitTranslateRequest();
+    return true;
 }
 
 static void
@@ -794,6 +823,7 @@ ask_translation_server(struct request *request2)
     request2->translate.n_file_not_found = 0;
     request2->translate.n_directory_index = 0;
     request2->translate.n_probe_path_suffixes = 0;
+    request2->translate.n_read_file = 0;
     request2->translate.enotdir_uri = nullptr;
     request2->translate.enotdir_path_info = nullptr;
 
