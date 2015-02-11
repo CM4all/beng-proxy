@@ -3287,7 +3287,7 @@ translate_connection_abort(struct async_operation *ao)
     TranslateClient *client = TranslateClient::FromAsync(ao);
 
     stopwatch_event(client->stopwatch, "abort");
-    client->ReleaseSocket(false);
+    client->Release(false);
 }
 
 static const struct async_operation_class translate_operation = {
