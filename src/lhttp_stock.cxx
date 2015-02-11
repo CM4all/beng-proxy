@@ -89,18 +89,6 @@ lhttp_connection_event_callback(int fd, gcc_unused short event, void *ctx)
  *
  */
 
-static constexpr struct lhttp_connection &
-ToLhttpConnection(StockItem &item)
-{
-    return ContainerCast2(item, &lhttp_connection::base);
-}
-
-static const constexpr struct lhttp_connection &
-ToLhttpConnection(const StockItem &item)
-{
-    return ContainerCast2(item, &lhttp_connection::base);
-}
-
 static int
 lhttp_child_stock_clone_flags(gcc_unused const char *key, void *info, int flags,
                               gcc_unused void *ctx)
@@ -134,6 +122,18 @@ static const struct child_stock_class lhttp_child_stock_class = {
  * stock class
  *
  */
+
+static constexpr struct lhttp_connection &
+ToLhttpConnection(StockItem &item)
+{
+    return ContainerCast2(item, &lhttp_connection::base);
+}
+
+static const constexpr struct lhttp_connection &
+ToLhttpConnection(const StockItem &item)
+{
+    return ContainerCast2(item, &lhttp_connection::base);
+}
 
 static struct pool *
 lhttp_stock_pool(gcc_unused void *ctx, struct pool &parent,
