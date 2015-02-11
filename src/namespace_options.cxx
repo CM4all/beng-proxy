@@ -54,11 +54,11 @@ namespace_options_init(struct namespace_options *options)
     options->enable_mount = false;
     options->mount_proc = false;
     options->mount_tmp_tmpfs = false;
-    options->pivot_root = NULL;
-    options->home = NULL;
-    options->mount_home = NULL;
-    options->mounts = NULL;
-    options->hostname = NULL;
+    options->pivot_root = nullptr;
+    options->home = nullptr;
+    options->mount_home = nullptr;
+    options->mounts = nullptr;
+    options->hostname = nullptr;
 }
 
 namespace_options::namespace_options(struct pool *pool,
@@ -103,7 +103,7 @@ namespace_options_clone_flags(const struct namespace_options *options,
         flags |= CLONE_NEWNET;
     if (options->enable_mount)
         flags |= CLONE_NEWNS;
-    if (options->hostname != NULL)
+    if (options->hostname != nullptr)
         flags |= CLONE_NEWUTS;
 
     return flags;
@@ -167,12 +167,12 @@ namespace_options_setup(const struct namespace_options *options)
 
     if (options->enable_mount)
         /* convert all "shared" mounts to "private" mounts */
-        mount(NULL, "/", NULL, MS_PRIVATE|MS_REC, NULL);
+        mount(nullptr, "/", nullptr, MS_PRIVATE|MS_REC, nullptr);
 
     const char *const new_root = options->pivot_root;
     const char *const put_old = "mnt";
 
-    if (new_root != NULL) {
+    if (new_root != nullptr) {
         /* first bind-mount the new root onto itself to "unlock" the
            kernel's mount object (flag MNT_LOCKED) in our namespace;
            without this, the kernel would not allow an unprivileged
@@ -196,17 +196,17 @@ namespace_options_setup(const struct namespace_options *options)
     }
 
     if (options->mount_proc &&
-        mount("none", "/proc", "proc", MS_NOEXEC|MS_NOSUID|MS_NODEV|MS_RDONLY, NULL) < 0) {
+        mount("none", "/proc", "proc", MS_NOEXEC|MS_NOSUID|MS_NODEV|MS_RDONLY, nullptr) < 0) {
         fprintf(stderr, "mount('/proc') failed: %s\n",
                 strerror(errno));
         _exit(2);
     }
 
-    if (options->mount_home != NULL || options->mounts != NULL) {
+    if (options->mount_home != nullptr || options->mounts != nullptr) {
         /* go to /mnt so we can refer to the old directories with a
            relative path */
 
-        const char *path = new_root != NULL ? "/mnt" : "/";
+        const char *path = new_root != nullptr ? "/mnt" : "/";
 
         if (chdir(path) < 0) {
             fprintf(stderr, "chdir('%s') failed: %s\n", path, strerror(errno));
@@ -214,8 +214,8 @@ namespace_options_setup(const struct namespace_options *options)
         }
     }
 
-    if (options->mount_home != NULL) {
-        assert(options->home != NULL);
+    if (options->mount_home != nullptr) {
+        assert(options->home != nullptr);
         assert(*options->home == '/');
 
         bind_mount(options->home + 1, options->mount_home, MS_NOSUID|MS_NODEV);
@@ -223,8 +223,8 @@ namespace_options_setup(const struct namespace_options *options)
 
     mount_list_apply(options->mounts);
 
-    if (new_root != NULL && (options->mount_home != NULL ||
-                             options->mounts != NULL)) {
+    if (new_root != nullptr && (options->mount_home != nullptr ||
+                             options->mounts != nullptr)) {
         /* back to the new root */
         if (chdir("/") < 0) {
             fprintf(stderr, "chdir('/') failed: %s\n", strerror(errno));
@@ -232,7 +232,7 @@ namespace_options_setup(const struct namespace_options *options)
         }
     }
 
-    if (new_root != NULL) {
+    if (new_root != nullptr) {
         /* get rid of the old root */
         if (umount2(put_old, MNT_DETACH) < 0) {
             fprintf(stderr, "umount('%s') failed: %s",
@@ -249,7 +249,7 @@ namespace_options_setup(const struct namespace_options *options)
         _exit(2);
     }
 
-    if (options->hostname != NULL &&
+    if (options->hostname != nullptr &&
         sethostname(options->hostname, strlen(options->hostname)) < 0) {
         fprintf(stderr, "sethostname() failed: %s", strerror(errno));
         _exit(2);
@@ -271,7 +271,7 @@ namespace_options_id(const struct namespace_options *options, char *p)
     if (options->enable_mount) {
         p = (char *)(char *)mempcpy(p, ";mns", 4);
 
-        if (options->pivot_root != NULL) {
+        if (options->pivot_root != nullptr) {
             p = (char *)mempcpy(p, ";pvr=", 5);
             p = stpcpy(p, options->pivot_root);
         }
@@ -282,7 +282,7 @@ namespace_options_id(const struct namespace_options *options, char *p)
         if (options->mount_proc)
             p = (char *)mempcpy(p, ";tmpfs", 6);
 
-        if (options->mount_home != NULL) {
+        if (options->mount_home != nullptr) {
             p = (char *)mempcpy(p, ";h:", 3);
             p = stpcpy(p, options->home);
             *p++ = '=';
@@ -290,7 +290,7 @@ namespace_options_id(const struct namespace_options *options, char *p)
         }
     }
 
-    if (options->hostname != NULL) {
+    if (options->hostname != nullptr) {
         p = (char *)mempcpy(p, ";uts=", 5);
         p = stpcpy(p, options->hostname);
     }
