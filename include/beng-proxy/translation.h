@@ -617,6 +617,11 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_BIND_MOUNT.
      */
     TRANSLATE_EXPAND_BIND_MOUNT = 150,
+
+    /**
+     * Pass non-blocking socket to child process?
+     */
+    TRANSLATE_NON_BLOCKING = 151,
 };
 
 struct beng_translation_header {

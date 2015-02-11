@@ -3155,6 +3155,20 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
 
     case TRANSLATE_EXPAND_BIND_MOUNT:
         return translate_client_bind_mount(this, payload, payload_length, true);
+
+    case TRANSLATE_NON_BLOCKING:
+        if (payload_length > 0) {
+            Fail("malformed NON_BLOCKING packet");
+            return false;
+        }
+
+        if (lhttp_address != nullptr) {
+            lhttp_address->blocking = false;
+            return true;
+        } else {
+            Fail("misplaced NON_BLOCKING packet");
+            return false;
+        }
     }
 
     error = g_error_new(translate_quark(), 0,
