@@ -225,9 +225,6 @@ deinit_signals(struct lb_instance *instance)
 
 int main(int argc, char **argv)
 {
-    Error error2;
-    int ret;
-    int gcc_unused ref;
     struct lb_instance instance;
 
 #ifdef HAVE_OLD_GTHREAD
@@ -290,16 +287,19 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (!init_all_listeners(instance, error2)) {
-        deinit_all_controls(&instance);
-        fprintf(stderr, "%s\n", error2.GetMessage());
-        return EXIT_FAILURE;
+
+    {
+        Error error2;
+        if (!init_all_listeners(instance, error2)) {
+            deinit_all_controls(&instance);
+            fprintf(stderr, "%s\n", error2.GetMessage());
+            return EXIT_FAILURE;
+        }
     }
 
     /* daemonize */
 
-    ret = daemonize();
-    if (ret < 0)
+    if (daemonize() < 0)
         exit(2);
 
     /* launch the access logger */
@@ -360,7 +360,7 @@ int main(int argc, char **argv)
     tpool_deinit();
     delete instance.config;
 
-    ref = pool_unref(instance.pool);
+    gcc_unused int ref = pool_unref(instance.pool);
     assert(ref == 0);
     pool_commit();
 
