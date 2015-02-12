@@ -11,6 +11,8 @@
 
 #include <daemon/user.h>
 
+#include <string.h>
+
 struct pool;
 
 struct ListenerConfig {
@@ -26,24 +28,28 @@ struct lb_cmdline {
     /**
      * The configuration file.
      */
-    const char *config_path;
+    const char *config_path = "/etc/cm4all/beng/lb.conf";
 
-    const char *access_logger;
+    const char *access_logger = nullptr;
 
     /**
      * The Bulldog data path.
      */
-    const char *bulldog_path;
+    const char *bulldog_path = nullptr;
 
-    unsigned tcp_stock_limit;
+    unsigned tcp_stock_limit = 256;
 
-    bool watchdog;
+    bool watchdog = false;
 
     /**
      * If true, then the environment (e.g. the configuration file) is
      * checked, and the process exits.
      */
-    bool check;
+    bool check = false;
+
+    lb_cmdline() {
+        memset(&user, 0, sizeof(user));
+    }
 };
 
 void
