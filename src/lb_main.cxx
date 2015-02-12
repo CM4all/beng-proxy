@@ -175,13 +175,13 @@ shutdown_callback(void *ctx)
 
     pool_commit();
 
-    if (instance->tcp_stock != NULL)
+    if (instance->tcp_stock != nullptr)
         hstock_free(instance->tcp_stock);
 
-    if (instance->balancer != NULL)
+    if (instance->balancer != nullptr)
         balancer_free(instance->balancer);
 
-    if (instance->pipe_stock != NULL)
+    if (instance->pipe_stock != nullptr)
         stock_free(instance->pipe_stock);
 
     fb_pool_disable();
@@ -213,7 +213,7 @@ init_signals(struct lb_instance *instance)
 
     event_set(&instance->sighup_event, SIGHUP, EV_SIGNAL|EV_PERSIST,
               reload_event_callback, instance);
-    event_add(&instance->sighup_event, NULL);
+    event_add(&instance->sighup_event, nullptr);
 }
 
 void
@@ -232,21 +232,21 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_OLD_GTHREAD
     /* deprecated in GLib 2.32 */
-    g_thread_init(NULL);
+    g_thread_init(nullptr);
 #endif
 
-    instance.pool = pool_new_libc(NULL, "global");
+    instance.pool = pool_new_libc(nullptr, "global");
     tpool_init(instance.pool);
 
     /* configuration */
 
     parse_cmdline(&instance.cmdline, instance.pool, argc, argv);
 
-    GError *error = NULL;
+    GError *error = nullptr;
     instance.config = lb_config_load(instance.pool,
                                      instance.cmdline.config_path,
                                      &error);
-    if (instance.config == NULL) {
+    if (instance.config == nullptr) {
         fprintf(stderr, "%s\n", error->message);
         g_error_free(error);
         return EXIT_FAILURE;
