@@ -38,26 +38,26 @@ struct lb_monitor_config {
     /**
      * Time in seconds between two monitor checks.
      */
-    unsigned interval;
+    unsigned interval = 10;
 
     /**
      * If the monitor does not produce a result after this timeout
      * [seconds], it is assumed to be negative.
      */
-    unsigned timeout;
+    unsigned timeout = 0;
 
     enum class Type {
         NONE,
         PING,
         CONNECT,
         TCP_EXPECT,
-    } type;
+    } type = Type::NONE;
 
     /**
      * The timeout for establishing a connection.  Only applicable for
      * #Type::TCP_EXPECT.  0 means no special setting present.
      */
-    unsigned connect_timeout;
+    unsigned connect_timeout = 0;
 
     /**
      * For #Type::TCP_EXPECT: a string that is sent to the peer
@@ -79,10 +79,7 @@ struct lb_monitor_config {
     std::string fade_expect;
 
     explicit lb_monitor_config(const char *_name)
-        :name(_name),
-         interval(10), timeout(0),
-         type(Type::NONE),
-         connect_timeout(0) {}
+        :name(_name) {}
 };
 
 struct lb_node_config {
@@ -108,11 +105,9 @@ struct lb_node_config {
 };
 
 struct lb_member_config {
-    const struct lb_node_config *node;
+    const struct lb_node_config *node = nullptr;
 
-    unsigned port;
-
-    lb_member_config():node(nullptr), port(0) {}
+    unsigned port = 0;
 };
 
 struct lb_fallback_config {
@@ -136,24 +131,24 @@ struct lb_cluster_config {
     /**
      * The protocol that is spoken on this cluster.
      */
-    enum lb_protocol protocol;
+    enum lb_protocol protocol = LB_PROTOCOL_HTTP;
 
     /**
      * Use the client's source IP for the connection to the backend?
      * This is implemented using IP_TRANSPARENT and requires the
      * "tproxy" Linux kernel module.
      */
-    bool transparent_source;
+    bool transparent_source = false;
 
-    bool mangle_via;
+    bool mangle_via = false;
 
     struct lb_fallback_config fallback;
 
-    enum sticky_mode sticky_mode;
+    enum sticky_mode sticky_mode = STICKY_NONE;
 
-    std::string session_cookie;
+    std::string session_cookie = "beng_proxy_session";
 
-    const struct lb_monitor_config *monitor;
+    const struct lb_monitor_config *monitor = nullptr;
 
     std::vector<lb_member_config> members;
 
@@ -163,14 +158,7 @@ struct lb_cluster_config {
     AddressList address_list;
 
     explicit lb_cluster_config(const char *_name)
-        :name(_name),
-         protocol(LB_PROTOCOL_HTTP),
-         transparent_source(false),
-         mangle_via(false),
-         sticky_mode(STICKY_NONE),
-         session_cookie("beng_proxy_session"),
-         monitor(nullptr) {}
-
+        :name(_name) {}
 
     /**
      * Returns the member index of the node with the specified
@@ -197,11 +185,10 @@ struct lb_attribute_reference {
 struct lb_branch_config;
 
 struct lb_goto {
-    const lb_cluster_config *cluster;
-    const lb_branch_config *branch;
+    const lb_cluster_config *cluster = nullptr;
+    const lb_branch_config *branch = nullptr;
 
-    lb_goto()
-        :cluster(nullptr), branch(nullptr) {}
+    lb_goto() = default;
 
     explicit lb_goto(lb_cluster_config *_cluster)
         :cluster(_cluster), branch(nullptr) {}
@@ -233,12 +220,12 @@ struct lb_condition_config {
     bool negate;
 
     std::string string;
-    GRegex *regex;
+    GRegex *regex = nullptr;
 
     lb_condition_config(lb_attribute_reference &&a, bool _negate,
                         const char *_string)
         :attribute_reference(std::move(a)), op(Operator::EQUALS),
-         negate(_negate), string(_string), regex(nullptr) {}
+         negate(_negate), string(_string) {}
 
     lb_condition_config(lb_attribute_reference &&a, bool _negate,
                         GRegex *_regex)
@@ -344,14 +331,12 @@ struct lb_listener_config {
 
     bool verbose_response = false;
 
-    bool ssl;
+    bool ssl = false;
 
     struct ssl_config ssl_config;
 
     explicit lb_listener_config(const char *_name)
-        :name(_name),
-         ssl(false) {
-    }
+        :name(_name) {}
 };
 
 struct lb_config {
