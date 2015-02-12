@@ -228,7 +228,7 @@ int main(int argc, char **argv)
     Error error2;
     int ret;
     int gcc_unused ref;
-    static struct lb_instance instance;
+    struct lb_instance instance;
 
 #ifdef HAVE_OLD_GTHREAD
     /* deprecated in GLib 2.32 */
