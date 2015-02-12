@@ -78,7 +78,7 @@ struct lb_monitor_config {
      */
     std::string fade_expect;
 
-    lb_monitor_config(const char *_name)
+    explicit lb_monitor_config(const char *_name)
         :name(_name),
          interval(10), timeout(0),
          type(Type::NONE),
@@ -96,7 +96,7 @@ struct lb_node_config {
      */
     std::string jvm_route;
 
-    lb_node_config(const char *_name)
+    explicit lb_node_config(const char *_name)
         :name(_name) {}
 
     lb_node_config(const char *_name, AllocatedSocketAddress &&_address)
@@ -162,7 +162,7 @@ struct lb_cluster_config {
      */
     AddressList address_list;
 
-    lb_cluster_config(const char *_name)
+    explicit lb_cluster_config(const char *_name)
         :name(_name),
          protocol(LB_PROTOCOL_HTTP),
          transparent_source(false),
@@ -203,10 +203,10 @@ struct lb_goto {
     lb_goto()
         :cluster(nullptr), branch(nullptr) {}
 
-    lb_goto(lb_cluster_config *_cluster)
+    explicit lb_goto(lb_cluster_config *_cluster)
         :cluster(_cluster), branch(nullptr) {}
 
-    lb_goto(lb_branch_config *_branch)
+    explicit lb_goto(lb_branch_config *_branch)
         :cluster(nullptr), branch(_branch) {}
 
     bool IsDefined() const {
@@ -303,7 +303,7 @@ struct lb_branch_config {
 
     std::list<lb_goto_if_config> conditions;
 
-    lb_branch_config(const char *_name)
+    explicit lb_branch_config(const char *_name)
         :name(_name) {}
 
     bool HasFallback() const {
@@ -348,7 +348,7 @@ struct lb_listener_config {
 
     struct ssl_config ssl_config;
 
-    lb_listener_config(const char *_name)
+    explicit lb_listener_config(const char *_name)
         :name(_name),
          ssl(false) {
     }
