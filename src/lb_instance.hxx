@@ -30,7 +30,7 @@ struct lb_instance {
 
     struct event_base *event_base;
 
-    uint64_t http_request_counter;
+    uint64_t http_request_counter = 0;
 
     struct list_head controls;
 
@@ -39,7 +39,7 @@ struct lb_instance {
     boost::intrusive::list<struct lb_connection,
                            boost::intrusive::constant_time_size<true>> connections;
 
-    bool should_exit;
+    bool should_exit = false;
     struct shutdown_listener shutdown_listener;
     struct event sighup_event;
 
@@ -51,6 +51,10 @@ struct lb_instance {
     Stock *pipe_stock;
 
     unsigned FlushSSLSessionCache(long tm);
+
+    lb_instance() {
+        list_init(&controls);
+    }
 };
 
 struct client_connection;

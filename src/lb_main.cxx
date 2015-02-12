@@ -266,8 +266,6 @@ int main(int argc, char **argv)
     instance.event_base = event_init();
     fb_pool_init(true);
 
-    list_init(&instance.controls);
-
     init_signals(&instance);
 
     /* reduce glibc's thread cancellation overhead */
