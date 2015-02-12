@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "config.hxx"
+#include "lb_cmdline.hxx"
 #include "stopwatch.h"
 
 #include <daemon/daemonize.h>
@@ -110,7 +110,7 @@ static void arg_error(const char *argv0, const char *fmt, ...) {
 }
 
 static void
-handle_set2(struct config *config, const char *argv0,
+handle_set2(struct lb_cmdline *config, const char *argv0,
             const char *name, size_t name_length, const char *value)
 {
     static const char tcp_stock_limit[] = "tcp_stock_limit";
@@ -129,7 +129,7 @@ handle_set2(struct config *config, const char *argv0,
 }
 
 static void
-handle_set(struct config *config, const char *argv0, const char *p)
+handle_set(struct lb_cmdline *config, const char *argv0, const char *p)
 {
     const char *eq;
 
@@ -145,7 +145,8 @@ handle_set(struct config *config, const char *argv0, const char *p)
 
 /** read configuration options from the command line */
 void
-parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
+parse_cmdline(struct lb_cmdline *config, struct pool *pool,
+              int argc, char **argv)
 {
     int ret;
 #ifdef __GLIBC__
@@ -240,11 +241,7 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
             break;
 
         case 'W':
-            /* Abusing beng-proxy's "num_workers" attributes for the
-               watchdog; non-zero means watchdog is enabled.  That is
-               similar enough to beng-proxy's interpretation: 0 means
-               don't fork, no auto-restart. */
-            config->num_workers = 1;
+            config->watchdog = true;
             break;
 
         case 'B':

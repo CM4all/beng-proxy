@@ -330,7 +330,7 @@ int main(int argc, char **argv)
 
     /* main loop */
 
-    if (instance.cmdline.num_workers > 0) {
+    if (instance.cmdline.watchdog) {
         /* watchdog */
 
         all_listeners_event_del(&instance);

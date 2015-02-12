@@ -102,7 +102,7 @@ init_all_controls(struct lb_instance *instance, GError **error_r)
         if (control == NULL)
             return false;
 
-        if (instance->cmdline.num_workers > 0)
+        if (instance->cmdline.watchdog)
             /* disable the control channel in the "master" process, it
                shall only apply to the one worker */
             lb_control_disable(control);

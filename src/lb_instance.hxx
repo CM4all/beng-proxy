@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_LB_INSTANCE_H
 #define BENG_PROXY_LB_INSTANCE_H
 
-#include "config.hxx"
+#include "lb_cmdline.hxx"
 #include "shutdown_listener.h"
 #include "lb_connection.hxx"
 #include "lb_listener.hxx"
@@ -24,7 +24,7 @@ struct StockMap;
 struct lb_instance {
     struct pool *pool;
 
-    struct config cmdline;
+    struct lb_cmdline cmdline;
 
     struct lb_config *config;
 

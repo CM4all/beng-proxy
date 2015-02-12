@@ -35,11 +35,6 @@ struct config {
 
     struct daemon_user user;
 
-    /**
-     * The configuration file.  Only used by beng-lb.
-     */
-    const char *config_path;
-
     TrivialArray<unsigned, MAX_PORTS> ports;
 
     TrivialArray<ListenerConfig, MAX_LISTEN> listen;
@@ -89,12 +84,6 @@ struct config {
     unsigned was_stock_limit, was_stock_max_idle;
 
     unsigned cluster_size, cluster_node;
-
-    /**
-     * If true, then the environment (e.g. the configuration file) is
-     * checked, and the process exits.
-     */
-    bool check;
 
     /**
      * Dump widget trees to the log file?
