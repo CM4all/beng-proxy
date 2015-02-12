@@ -230,7 +230,6 @@ int main(int argc, char **argv)
     int gcc_unused ref;
     static struct lb_instance instance;
     instance.cmdline.config_path = "/etc/cm4all/beng/lb.conf";
-    instance.cmdline.max_connections = 8192;
     instance.cmdline.tcp_stock_limit = 256;
 
 #ifdef HAVE_OLD_GTHREAD

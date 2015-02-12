@@ -113,41 +113,17 @@ static void
 handle_set2(struct config *config, const char *argv0,
             const char *name, size_t name_length, const char *value)
 {
-    static const char max_connections[] = "max_connections";
     static const char tcp_stock_limit[] = "tcp_stock_limit";
-    static const char stopwatch[] = "stopwatch";
-    static const char dump_widget_tree[] = "dump_widget_tree";
     char *endptr;
     long l;
 
-    if (name_length == sizeof(max_connections) - 1 &&
-        memcmp(name, max_connections, sizeof(max_connections) - 1) == 0) {
-        l = strtol(value, &endptr, 10);
-        if (*endptr != 0 || l <= 0 || l >= 1024 * 1024)
-            arg_error(argv0, "Invalid value for max_connections");
-
-        config->max_connections = l;
-    } else if (name_length == sizeof(tcp_stock_limit) - 1 &&
-               memcmp(name, tcp_stock_limit,
-                      sizeof(tcp_stock_limit) - 1) == 0) {
+    if (name_length == sizeof(tcp_stock_limit) - 1 &&
+        memcmp(name, tcp_stock_limit, sizeof(tcp_stock_limit) - 1) == 0) {
         l = strtol(value, &endptr, 10);
         if (*endptr != 0 || l < 0)
             arg_error(argv0, "Invalid value for tcp_stock_limit");
 
         config->tcp_stock_limit = l;
-    } else if (name_length == sizeof(stopwatch) - 1 &&
-               memcmp(name, stopwatch, sizeof(stopwatch) - 1) == 0) {
-        if (strcmp(value, "yes") == 0)
-            stopwatch_enable();
-        else if (strcmp(value, "no") != 0)
-            arg_error(argv0, "Invalid value for stopwatch");
-    } else if (name_length == sizeof(dump_widget_tree) - 1 &&
-               memcmp(name, dump_widget_tree,
-                      sizeof(dump_widget_tree) - 1) == 0) {
-        if (strcmp(value, "yes") == 0)
-            config->dump_widget_tree = true;
-        else if (strcmp(value, "no") != 0)
-            arg_error(argv0, "Invalid value for dump_widget_tree");
     } else
         arg_error(argv0, "Unknown variable: %.*s", (int)name_length, name);
 }
@@ -261,22 +237,6 @@ parse_cmdline(struct config *config, struct pool *pool, int argc, char **argv)
 
         case 'U':
             daemon_user_by_name(&daemon_config.logger_user, optarg, NULL);
-            break;
-
-        case 'c':
-            config->control_listen = optarg;
-            break;
-
-        case 'm':
-            config->multicast_group = optarg;
-            break;
-
-        case 'r':
-            config->document_root = optarg;
-            break;
-
-        case 't':
-            config->translation_socket = optarg;
             break;
 
         case 'W':
