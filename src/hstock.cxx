@@ -51,6 +51,58 @@ struct StockMap {
     void Destroy() {
         DeleteUnrefPool(pool, this);
     }
+
+    void Erase(Stock &stock, const char *uri) {
+        hashmap_remove_existing(&stocks, uri, &stock);
+        stock_free(&stock);
+    }
+
+    void FadeAll() {
+        hashmap_rewind(&stocks);
+
+        const struct hashmap_pair *pair;
+        while ((pair = hashmap_next(&stocks)) != nullptr) {
+            Stock &stock = *(Stock *)pair->value;
+            stock_fade_all(stock);
+        }
+    }
+
+    void AddStats(StockStats &data) const {
+        hashmap_rewind(&stocks);
+
+        const struct hashmap_pair *p;
+        while ((p = hashmap_next(&stocks)) != nullptr) {
+            const Stock &s = *(const Stock *)p->value;
+            stock_add_stats(s, data);
+        }
+    }
+
+    Stock &GetStock(const char *uri);
+
+    void Get(struct pool &caller_pool,
+             const char *uri, void *info,
+             const StockGetHandler &handler, void *handler_ctx,
+             struct async_operation_ref &async_ref) {
+        Stock &stock = GetStock(uri);
+        stock_get(stock, caller_pool, info, handler, handler_ctx, async_ref);
+    }
+
+    StockItem *GetNow(struct pool &caller_pool, const char *uri, void *info,
+                      GError **error_r) {
+        Stock &stock = GetStock(uri);
+        return stock_get_now(stock, caller_pool, info, error_r);
+    }
+
+    void Put(gcc_unused const char *uri, StockItem &object, bool destroy) {
+#ifndef NDEBUG
+        Stock *stock = (Stock *)hashmap_get(&stocks, uri);
+
+        assert(stock != nullptr);
+        assert(stock == object.stock);
+#endif
+
+        stock_put(object, destroy);
+    }
 };
 
 /*
@@ -65,9 +117,8 @@ hstock_stock_empty(Stock &stock, const char *uri, void *ctx)
 
     daemon_log(5, "hstock(%p) remove empty stock(%p, '%s')\n",
                (const void *)hstock, (const void *)&stock, uri);
-    hashmap_remove_existing(&hstock->stocks, uri, &stock);
 
-    stock_free(&stock);
+    hstock->Erase(stock, uri);
 }
 
 static constexpr StockHandler hstock_stock_handler = {
@@ -98,37 +149,24 @@ hstock_free(StockMap *hstock)
 void
 hstock_fade_all(StockMap &hstock)
 {
-    hashmap_rewind(&hstock.stocks);
-
-    const struct hashmap_pair *pair;
-    while ((pair = hashmap_next(&hstock.stocks)) != nullptr) {
-        Stock &stock = *(Stock *)pair->value;
-        stock_fade_all(stock);
-    }
+    hstock.FadeAll();
 }
 
 void
 hstock_add_stats(const StockMap &stock, StockStats &data)
 {
-    struct hashmap *h = &stock.stocks;
-    hashmap_rewind(h);
-
-    const struct hashmap_pair *p;
-    while ((p = hashmap_next(h)) != nullptr) {
-        const Stock &s = *(const Stock *)p->value;
-        stock_add_stats(s, data);
-    }
+    stock.AddStats(data);
 }
 
-static Stock &
-hstock_get_stock(StockMap &hstock, const char *uri)
+inline Stock &
+StockMap::GetStock(const char *uri)
 {
-    Stock *stock = (Stock *)hashmap_get(&hstock.stocks, uri);
+    Stock *stock = (Stock *)hashmap_get(&stocks, uri);
     if (stock == nullptr) {
-        stock = stock_new(hstock.pool, hstock.cls, hstock.class_ctx,
-                          uri, hstock.limit, hstock.max_idle,
-                          hstock_stock_handler, &hstock);
-        hashmap_set(&hstock.stocks, stock_get_uri(*stock), stock);
+        stock = stock_new(pool, cls, class_ctx,
+                          uri, limit, max_idle,
+                          hstock_stock_handler, this);
+        hashmap_set(&stocks, stock_get_uri(*stock), stock);
     }
 
     return *stock;
@@ -140,8 +178,8 @@ hstock_get(StockMap &hstock, struct pool &pool,
            const StockGetHandler &handler, void *handler_ctx,
            struct async_operation_ref &async_ref)
 {
-    auto &stock = hstock_get_stock(hstock, uri);
-    stock_get(stock, pool, info, handler, handler_ctx, async_ref);
+    return hstock.Get(pool, uri, info,
+                      handler, handler_ctx, async_ref);
 }
 
 StockItem *
@@ -149,20 +187,11 @@ hstock_get_now(StockMap &hstock, struct pool &pool,
                const char *uri, void *info,
                GError **error_r)
 {
-    Stock &stock = hstock_get_stock(hstock, uri);
-    return stock_get_now(stock, pool, info, error_r);
+    return hstock.GetNow(pool, uri, info, error_r);
 }
 
 void
-hstock_put(gcc_unused StockMap &hstock, gcc_unused const char *uri,
-           StockItem &object, bool destroy)
+hstock_put(StockMap &hstock, const char *uri, StockItem &object, bool destroy)
 {
-#ifndef NDEBUG
-    Stock *stock = (Stock *)hashmap_get(&hstock.stocks, uri);
-
-    assert(stock != nullptr);
-    assert(stock == object.stock);
-#endif
-
-    stock_put(object, destroy);
+    hstock.Put(uri, object, destroy);
 }
