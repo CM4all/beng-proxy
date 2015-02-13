@@ -13,6 +13,7 @@
 #include <daemon/log.h>
 
 #include <assert.h>
+#include <string.h>
 
 #include <boost/intrusive/unordered_set.hpp>
 
