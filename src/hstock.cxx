@@ -7,14 +7,75 @@
 
 #include "hstock.hxx"
 #include "stock.hxx"
-#include "hashmap.hxx"
 #include "pool.hxx"
+#include "util/djbhash.h"
 
 #include <daemon/log.h>
 
 #include <assert.h>
 
+#include <boost/intrusive/unordered_set.hpp>
+
 struct StockMap {
+    struct Item
+        : boost::intrusive::unordered_set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+        const char *const uri;
+
+        Stock &stock;
+
+        Item(const char *_uri, Stock &_stock):uri(_uri), stock(_stock) {}
+
+        Item(const Item &) = delete;
+
+        ~Item() {
+            stock_free(&stock);
+        }
+
+        gcc_pure
+        static size_t KeyHasher(const char *key) {
+            assert(key != nullptr);
+
+            return djb_hash_string(key);
+        }
+
+        gcc_pure
+        static size_t ValueHasher(const Item &value) {
+            return KeyHasher(value.uri);
+        }
+
+        gcc_pure
+        static bool KeyValueEqual(const char *a, const Item &b) {
+            assert(a != nullptr);
+
+            return strcmp(a, b.uri) == 0;
+        }
+
+        struct Hash {
+            gcc_pure
+            size_t operator()(const Item &value) const {
+                return ValueHasher(value);
+            }
+        };
+
+        struct Equal {
+            gcc_pure
+            bool operator()(const Item &a, const Item &b) const {
+                return KeyValueEqual(a.uri, b);
+            }
+        };
+
+        struct Disposer {
+            void operator()(Item *item) const {
+                delete item;
+            }
+        };
+    };
+
+    typedef boost::intrusive::unordered_set<Item,
+                                            boost::intrusive::hash<Item::Hash>,
+                                            boost::intrusive::equal<Item::Equal>,
+                                            boost::intrusive::constant_time_size<false>> Map;
+
     struct pool &pool;
     const StockClass &cls;
     void *const class_ctx;
@@ -29,52 +90,45 @@ struct StockMap {
      */
     const unsigned max_idle;
 
-    struct hashmap &stocks;
+    Map map;
+
+    static constexpr size_t N_BUCKETS = 251;
+    Map::bucket_type buckets[N_BUCKETS];
 
     StockMap(struct pool &_pool, const StockClass &_cls, void *_class_ctx,
              unsigned _limit, unsigned _max_idle)
         :pool(*pool_new_libc(&_pool, "hstock")),
          cls(_cls), class_ctx(_class_ctx),
          limit(_limit), max_idle(_max_idle),
-         stocks(*hashmap_new(&pool, 64)) {}
+         map(Map::bucket_traits(buckets, N_BUCKETS)) {}
 
     ~StockMap() {
-        hashmap_rewind(&stocks);
-        const struct hashmap_pair *pair;
-        while ((pair = hashmap_next(&stocks)) != nullptr) {
-            Stock *stock = (Stock *)pair->value;
-
-            stock_free(stock);
-        }
+        map.clear_and_dispose(Item::Disposer());
     }
 
     void Destroy() {
         DeleteUnrefPool(pool, this);
     }
 
-    void Erase(Stock &stock, const char *uri) {
-        hashmap_remove_existing(&stocks, uri, &stock);
-        stock_free(&stock);
+    void Erase(gcc_unused Stock &stock, const char *uri) {
+#ifndef NDEBUG
+        auto i = map.find(uri, Item::KeyHasher, Item::KeyValueEqual);
+        assert(i != map.end());
+        assert(&i->stock == &stock);
+#endif
+
+        map.erase_and_dispose(uri, Item::KeyHasher, Item::KeyValueEqual,
+                              Item::Disposer());
     }
 
     void FadeAll() {
-        hashmap_rewind(&stocks);
-
-        const struct hashmap_pair *pair;
-        while ((pair = hashmap_next(&stocks)) != nullptr) {
-            Stock &stock = *(Stock *)pair->value;
-            stock_fade_all(stock);
-        }
+        for (auto &i : map)
+            stock_fade_all(i.stock);
     }
 
     void AddStats(StockStats &data) const {
-        hashmap_rewind(&stocks);
-
-        const struct hashmap_pair *p;
-        while ((p = hashmap_next(&stocks)) != nullptr) {
-            const Stock &s = *(const Stock *)p->value;
-            stock_add_stats(s, data);
-        }
+        for (const auto &i : map)
+            stock_add_stats(i.stock, data);
     }
 
     Stock &GetStock(const char *uri);
@@ -95,10 +149,9 @@ struct StockMap {
 
     void Put(gcc_unused const char *uri, StockItem &object, bool destroy) {
 #ifndef NDEBUG
-        Stock *stock = (Stock *)hashmap_get(&stocks, uri);
-
-        assert(stock != nullptr);
-        assert(stock == object.stock);
+        auto i = map.find(uri, Item::KeyHasher, Item::KeyValueEqual);
+        assert(i != map.end());
+        assert(&i->stock == object.stock);
 #endif
 
         stock_put(object, destroy);
@@ -161,15 +214,17 @@ hstock_add_stats(const StockMap &stock, StockStats &data)
 inline Stock &
 StockMap::GetStock(const char *uri)
 {
-    Stock *stock = (Stock *)hashmap_get(&stocks, uri);
-    if (stock == nullptr) {
-        stock = stock_new(pool, cls, class_ctx,
-                          uri, limit, max_idle,
-                          hstock_stock_handler, this);
-        hashmap_set(&stocks, stock_get_uri(*stock), stock);
-    }
+    Map::insert_commit_data hint;
+    auto i = map.insert_check(uri, Item::KeyHasher, Item::KeyValueEqual, hint);
+    if (i.second) {
+        auto *stock = stock_new(pool, cls, class_ctx,
+                                uri, limit, max_idle,
+                                hstock_stock_handler, this);
+        map.insert_commit(*new Item(stock_get_uri(*stock), *stock), hint);
+        return *stock;
+    } else
+        return i.first->stock;
 
-    return *stock;
 }
 
 void
