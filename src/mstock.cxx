@@ -203,6 +203,10 @@ public:
         hstock_free(&hstock);
     }
 
+    void FadeAll() {
+        hstock_fade_all(hstock);
+    }
+
     void AddStats(StockStats &data) const {
         hstock_add_stats(hstock, data);
     }
@@ -271,6 +275,13 @@ mstock_free(struct mstock *_m)
 {
     MultiStock *m = (MultiStock *)_m;
     delete m;
+}
+
+void
+mstock_fade_all(struct mstock &_m)
+{
+    MultiStock &m = (MultiStock &)_m;
+    m.FadeAll();
 }
 
 void

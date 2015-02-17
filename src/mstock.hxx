@@ -27,6 +27,12 @@ void
 mstock_free(struct mstock *mstock);
 
 /**
+ * @see stock_fade_all()
+ */
+void
+mstock_fade_all(struct mstock &mstock);
+
+/**
  * Obtain statistics.
  */
 gcc_pure
