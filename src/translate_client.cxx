@@ -3174,7 +3174,8 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
         }
 
     case TRANSLATE_READ_FILE:
-        if (response.read_file != nullptr) {
+        if (response.read_file != nullptr ||
+            response.expand_read_file != nullptr) {
             Fail("duplicate READ_FILE packet");
             return false;
         }
@@ -3185,6 +3186,21 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
         }
 
         response.read_file = payload;
+        return true;
+
+    case TRANSLATE_EXPAND_READ_FILE:
+        if (response.read_file != nullptr ||
+            response.expand_read_file != nullptr) {
+            Fail("duplicate EXPAND_READ_FILE packet");
+            return false;
+        }
+
+        if (!is_valid_nonempty_string(payload, payload_length)) {
+            Fail("malformed EXPAND_READ_FILE packet");
+            return false;
+        }
+
+        response.expand_read_file = payload;
         return true;
     }
 

@@ -221,7 +221,7 @@ struct TranslateResponse {
 
     TrivialArray<const char *, 16> probe_suffixes;
 
-    const char *read_file;
+    const char *read_file, *expand_read_file;
 
     struct {
         uint64_t mtime;

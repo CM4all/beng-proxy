@@ -627,6 +627,11 @@ enum beng_translation_command {
      * Read a file and return its contents to the translation server.
      */
     TRANSLATE_READ_FILE = 152,
+
+    /**
+     * Expansion for #TRANSLATE_READ_FILE.
+     */
+    TRANSLATE_EXPAND_READ_FILE = 153,
 };
 
 struct beng_translation_header {

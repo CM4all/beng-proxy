@@ -121,7 +121,7 @@ TranslateResponse::Clear()
     error_document = nullptr;
     probe_path_suffixes = nullptr;
     probe_suffixes.clear();
-    read_file = nullptr;
+    read_file = expand_read_file = nullptr;
 
     validate_mtime.mtime = 0;
     validate_mtime.path = nullptr;
@@ -240,6 +240,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     probe_path_suffixes = DupBuffer(pool, src.probe_path_suffixes);
     CopyArray(*pool, probe_suffixes, src.probe_suffixes);
     read_file = p_strdup_checked(pool, src.read_file);
+    expand_read_file = p_strdup_checked(pool, src.expand_read_file);
 
     validate_mtime.mtime = src.validate_mtime.mtime;
     validate_mtime.path =
@@ -362,6 +363,7 @@ TranslateResponse::IsExpandable() const
          expand_uri != nullptr ||
          expand_test_path != nullptr ||
          expand_auth_file != nullptr ||
+         expand_read_file != nullptr ||
          expand_append_auth != nullptr ||
          expand_cookie_host != nullptr ||
          !expand_request_headers.IsEmpty() ||
@@ -414,6 +416,13 @@ TranslateResponse::Expand(struct pool *pool,
         auth_file = expand_string_unescaped(pool, expand_auth_file,
                                             match_info, error_r);
         if (auth_file == nullptr)
+            return false;
+    }
+
+    if (expand_read_file != nullptr) {
+        read_file = expand_string_unescaped(pool, expand_read_file,
+                                            match_info, error_r);
+        if (read_file == nullptr)
             return false;
     }
 
