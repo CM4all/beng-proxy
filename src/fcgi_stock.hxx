@@ -22,6 +22,9 @@ fcgi_stock_new(struct pool *pool, unsigned limit, unsigned max_idle);
 void
 fcgi_stock_free(struct fcgi_stock *fcgi_stock);
 
+void
+fcgi_stock_fade_all(struct fcgi_stock &fs);
+
 /**
  * @param args command-line arguments
  */

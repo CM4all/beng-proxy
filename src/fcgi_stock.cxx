@@ -34,6 +34,11 @@
 struct fcgi_stock {
     StockMap *hstock;
     StockMap *child_stock;
+
+    void FadeAll() {
+        hstock_fade_all(*hstock);
+        hstock_fade_all(*child_stock);
+    }
 };
 
 struct fcgi_child_params {
@@ -339,6 +344,12 @@ fcgi_stock_free(struct fcgi_stock *fcgi_stock)
 {
     hstock_free(fcgi_stock->hstock);
     hstock_free(fcgi_stock->child_stock);
+}
+
+void
+fcgi_stock_fade_all(struct fcgi_stock &fs)
+{
+    fs.FadeAll();
 }
 
 StockItem *
