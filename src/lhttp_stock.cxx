@@ -37,6 +37,11 @@ struct lhttp_stock {
         hstock_free(hstock);
         mstock_free(child_stock);
     }
+
+    void FadeAll() {
+        hstock_fade_all(*hstock);
+        mstock_fade_all(*child_stock);
+    }
 };
 
 struct lhttp_connection {
@@ -262,6 +267,12 @@ void
 lhttp_stock_free(struct lhttp_stock *ls)
 {
     delete ls;
+}
+
+void
+lhttp_stock_fade_all(struct lhttp_stock &ls)
+{
+    ls.FadeAll();
 }
 
 StockItem *
