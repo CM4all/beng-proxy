@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.0.12) unstable; urgency=low
 
-  * 
+  * fcgi: don't redirect stderro to /dev/null
 
  --   
 
