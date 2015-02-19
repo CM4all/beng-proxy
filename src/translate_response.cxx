@@ -111,6 +111,7 @@ TranslateResponse::Clear()
     request_headers.Clear();
     expand_request_headers.Clear();
     response_headers.Clear();
+    expand_response_headers.Clear();
 
     views = nullptr;
     widget_group = nullptr;
@@ -229,6 +230,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     expand_request_headers = KeyValueList(PoolAllocator(*pool),
                                           src.expand_request_headers);
     response_headers = KeyValueList(PoolAllocator(*pool), src.response_headers);
+    expand_response_headers = KeyValueList(PoolAllocator(*pool),
+                                           src.expand_response_headers);
 
     views = src.views != nullptr
         ? widget_view_dup_chain(pool, src.views)
@@ -373,6 +376,7 @@ TranslateResponse::IsExpandable() const
          expand_append_auth != nullptr ||
          expand_cookie_host != nullptr ||
          !expand_request_headers.IsEmpty() ||
+         !expand_response_headers.IsEmpty() ||
          resource_address_is_expandable(&address) ||
          widget_view_any_is_expandable(views));
 }
@@ -455,6 +459,15 @@ TranslateResponse::Expand(struct pool *pool,
             return false;
 
         request_headers.Add(PoolAllocator(*pool), i.key, value);
+    }
+
+    for (const auto &i : expand_response_headers) {
+        const char *value = expand_string_unescaped(pool, i.value,
+                                                    match_info, error_r);
+        if (value == nullptr)
+            return false;
+
+        response_headers.Add(PoolAllocator(*pool), i.key, value);
     }
 
     return resource_address_expand(pool, &address, match_info, error_r) &&

@@ -632,6 +632,11 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_READ_FILE.
      */
     TRANSLATE_EXPAND_READ_FILE = 153,
+
+    /**
+     * Expansion for #TRANSLATE_HEADER.
+     */
+    TRANSLATE_EXPAND_HEADER = 154,
 };
 
 struct beng_translation_header {

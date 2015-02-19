@@ -181,6 +181,7 @@ struct TranslateResponse {
     KeyValueList expand_request_headers;
 
     KeyValueList response_headers;
+    KeyValueList expand_response_headers;
 
     WidgetView *views;
 

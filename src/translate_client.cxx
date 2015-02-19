@@ -3202,6 +3202,22 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
 
         response.expand_read_file = payload;
         return true;
+
+    case TRANSLATE_EXPAND_HEADER:
+        if (response.regex == nullptr) {
+            Fail("misplaced EXPAND_HEADER packet");
+            return false;
+        }
+
+        if (!parse_header(pool,
+                          response.expand_response_headers,
+                          "EXPAND_HEADER", payload, payload_length,
+                          &error)) {
+            Fail(error);
+            return false;
+        }
+
+        return true;
     }
 
     error = g_error_new(translate_quark(), 0,
