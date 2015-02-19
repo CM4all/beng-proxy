@@ -152,7 +152,11 @@ handle_translated_request2(request &request,
                                                request.request->pool);
 
     request.processor_focus = request.args != nullptr &&
-        request.IsProcessorEnabled() &&
+        /* the IsProcessorEnabled() check was disabled because the
+           response may include a X-CM4all-View header that enables
+           the processor; with this check, the request body would be
+           consumed already */
+        //request.IsProcessorEnabled() &&
         request.args->Get("focus") != nullptr;
 
     if (address.type == RESOURCE_ADDRESS_LOCAL) {
