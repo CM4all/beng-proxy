@@ -150,6 +150,16 @@ is_secure_header(const char *name)
     return memcmp(name, "x-cm4all-beng-", 14) == 0;
 }
 
+/**
+ * @see #HEADER_GROUP_TRANSFORMATION
+ */
+gcc_pure
+static bool
+is_transformation_header(const char *name)
+{
+    return memcmp(name, "x-cm4all-view", 13) == 0;
+}
+
 static void
 forward_basic_headers(struct strmap *dest, const struct strmap *src,
                       bool with_body)
@@ -165,6 +175,12 @@ forward_secure_headers(struct strmap *dest, const struct strmap *src)
     for (const auto &i : *src)
         if (is_secure_header(i.key))
             dest->Add(i.key, i.value);
+}
+
+static void
+forward_transformation_headers(struct strmap *dest, const struct strmap *src)
+{
+    header_copy_one(src, dest, "x-cm4all-view");
 }
 
 static void
@@ -402,6 +418,7 @@ forward_other_response_headers(struct strmap *dest, const struct strmap *src)
             !string_in_array(cors_response_headers, i.key) &&
             !string_in_array(exclude_response_headers, i.key) &&
             !is_secure_header(i.key) &&
+            !is_transformation_header(i.key) &&
             !http_header_is_hop_by_hop(i.key))
             dest->Add(i.key, i.value);
 }
@@ -460,6 +477,9 @@ forward_response_headers(struct pool &pool, http_status_t status,
     if (settings.modes[HEADER_GROUP_IDENTITY] != HEADER_FORWARD_NO)
         forward_via(pool, dest, src, local_host,
                     settings.modes[HEADER_GROUP_IDENTITY] == HEADER_FORWARD_MANGLE);
+
+    if (settings.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_YES)
+        forward_transformation_headers(dest, src);
 
     return dest;
 }

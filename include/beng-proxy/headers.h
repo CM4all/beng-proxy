@@ -96,6 +96,12 @@ enum beng_header_group {
     HEADER_GROUP_SECURE,
 
     /**
+     * Forward headers that affect the transformation, such as
+     * "x-cm4all-view".
+     */
+    HEADER_GROUP_TRANSFORMATION,
+
+    /**
      * Internal definition for estimating the size of an array.
      */
     HEADER_GROUP_MAX,

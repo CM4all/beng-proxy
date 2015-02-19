@@ -729,7 +729,8 @@ response_response(http_status_t status, struct strmap *headers,
     assert(body == nullptr || !istream_has_handler(body));
 
     if (http_status_is_success(status)) {
-        if (!request2.transformed) {
+        if (!request2.transformed &&
+            (request2.translate.response->response_header_forward.modes[HEADER_GROUP_TRANSFORMATION] == HEADER_FORWARD_MANGLE)) {
             /* handle the response header "x-cm4all-view" */
             const char *view_name = headers->Remove("x-cm4all-view");
             if (view_name != nullptr) {

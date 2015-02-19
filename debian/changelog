@@ -4,6 +4,7 @@ cm4all-beng-proxy (6.0.12) unstable; urgency=low
   * handler: reserve request body for focused widget even if processor
     disabled
   * remove the X-CM4all-View header after using it
+  * headers: add group "TRANSFORMATION"
 
  --   
 
