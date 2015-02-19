@@ -92,8 +92,6 @@ enum beng_header_group {
 
     /**
      * Forward "secure" headers such as "x-cm4all-beng-user".
-     *
-     * @see http://www.w3.org/TR/cors/#syntax
      */
     HEADER_GROUP_SECURE,
 
