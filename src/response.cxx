@@ -731,7 +731,7 @@ response_response(http_status_t status, struct strmap *headers,
     if (http_status_is_success(status)) {
         if (!request2.transformed) {
             /* handle the response header "x-cm4all-view" */
-            const char *view_name = headers->Get("x-cm4all-view");
+            const char *view_name = headers->Remove("x-cm4all-view");
             if (view_name != nullptr) {
                 const WidgetView *view =
                     widget_view_lookup(request2.translate.response->views,
