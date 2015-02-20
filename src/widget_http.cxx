@@ -484,7 +484,7 @@ widget_update_view(struct embed *embed, struct strmap *headers,
 {
     struct widget *widget = embed->widget;
 
-    const char *view_name = headers->Remove("x-cm4all-view");
+    const char *view_name = headers->Get("x-cm4all-view");
     if (view_name != nullptr) {
         /* yes, look it up in the class */
 
