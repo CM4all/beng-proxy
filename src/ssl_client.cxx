@@ -42,10 +42,10 @@ ssl_client_get_filter(void)
     return &thread_socket_filter;;
 }
 
-void *
-ssl_client_create(struct pool *pool,
-                  const char *hostname,
-                  GError **error_r)
+static void *
+ssl_client_create2(struct pool *pool,
+                   const char *hostname,
+                   GError **error_r)
 {
     (void)hostname; // TODO: use this parameter
 
@@ -56,4 +56,20 @@ ssl_client_create(struct pool *pool,
     auto &queue = thread_pool_get_queue();
     return thread_socket_filter_new(*pool, queue,
                                     ssl_thread_socket_filter, ssl);
+}
+
+void *
+ssl_client_create(struct pool *pool,
+                  const char *hostname,
+                  GError **error_r)
+{
+    /* create a new pool for the SSL filter; this is necessary because
+       thread_socket_filter_close() may need to invoke
+       pool_set_persistent(), which is only possible if nobody else
+       has "trashed" the pool yet */
+    pool = pool_new_linear(pool, "ssl_client", 1024);
+
+    void *result = ssl_client_create2(pool, hostname, error_r);
+    pool_unref(pool);
+    return result;
 }

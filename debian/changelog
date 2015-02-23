@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.0.14) unstable; urgency=low
 
-  * 
+  * merge release 5.15
 
  --   
 
@@ -99,6 +99,12 @@ cm4all-beng-proxy (6.0.1) unstable; urgency=low
   * translation: add packets EXPAND_DOCUMENT_ROOT, PROBE_PATH_SUFFIXES
 
  -- Max Kellermann <mk@cm4all.com>  Thu, 29 Jan 2015 22:32:02 -0000
+
+cm4all-beng-proxy (5.15) unstable; urgency=low
+
+  * ssl_client: fix crash on request with Keep-Alive disabled
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 23 Feb 2015 12:44:50 -0000
 
 cm4all-beng-proxy (5.14) unstable; urgency=low
 
