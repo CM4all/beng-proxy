@@ -650,8 +650,8 @@ embed::SendRequest()
 
     auto *headers =
         widget_request_headers(this, a_view,
-                               widget_address(&widget)->type == RESOURCE_ADDRESS_HTTP ||
-                               widget_address(&widget)->type == RESOURCE_ADDRESS_LHTTP,
+                               address->type == RESOURCE_ADDRESS_HTTP ||
+                               address->type == RESOURCE_ADDRESS_LHTTP,
                                request_body != nullptr);
 
     if (widget.cls->dump_headers) {
