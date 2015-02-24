@@ -87,6 +87,8 @@ struct embed {
          env(_env),
          lookup_handler(&_handler), lookup_handler_ctx(_handler_ctx) {}
 
+    void SendRequest();
+
     void Abort() {
         widget_cancel(&widget);
         async_ref.Abort();
@@ -625,6 +627,52 @@ const struct http_response_handler widget_response_handler = {
     .abort = widget_response_abort,
 };
 
+void
+embed::SendRequest()
+{
+    const WidgetView *a_view = widget_get_address_view(&widget);
+    assert(a_view != nullptr);
+
+    const WidgetView *t_view = widget_get_transformation_view(&widget);
+    assert(t_view != nullptr);
+
+    host_and_port = widget.cls->cookie_host != nullptr
+        ? widget.cls->cookie_host
+        : resource_address_host_and_port(&a_view->address);
+    transformation = t_view->transformation;
+
+    const auto *address = widget_address(&widget);
+    resource_tag = resource_address_id(address, &pool);
+
+    struct istream *request_body = widget.from_request.body;
+    widget.from_request.body = nullptr;
+
+    auto *headers =
+        widget_request_headers(this, a_view,
+                               widget_address(&widget)->type == RESOURCE_ADDRESS_HTTP ||
+                               widget_address(&widget)->type == RESOURCE_ADDRESS_LHTTP,
+                               request_body != nullptr);
+
+    if (widget.cls->dump_headers) {
+        daemon_log(4, "request headers for widget '%s'\n",
+                   widget.GetIdPath());
+
+        for (const auto &i : *headers)
+            daemon_log(4, "  %s: %s\n", i.key, i.value);
+    }
+
+    resource_get(global_http_cache, global_tcp_balancer,
+                 global_lhttp_stock,
+                 global_fcgi_stock, global_was_stock, global_delegate_stock,
+                 global_nfs_cache,
+                 &pool, session_id_low(env.session_id),
+                 widget.from_request.method,
+                 address,
+                 HTTP_STATUS_OK, headers,
+                 request_body,
+                 &widget_response_handler, this, &async_ref);
+}
+
 
 /*
  * constructor
@@ -640,53 +688,13 @@ widget_http_request(struct pool &pool, struct widget &widget,
 {
     assert(widget.cls != nullptr);
 
-    const WidgetView *a_view = widget_get_address_view(&widget);
-    assert(a_view != nullptr);
-
-    const WidgetView *t_view = widget_get_transformation_view(&widget);
-    assert(t_view != nullptr);
-
     auto embed = NewFromPool<struct embed>(pool, pool, widget, env,
                                            handler, handler_ctx);
-
-    embed->host_and_port = widget.cls->cookie_host != nullptr
-        ? widget.cls->cookie_host
-        : resource_address_host_and_port(&a_view->address);
-    embed->transformation = t_view->transformation;
-
-    auto *headers =
-        widget_request_headers(embed, a_view,
-                               widget_address(&embed->widget)->type == RESOURCE_ADDRESS_HTTP ||
-                               widget_address(&embed->widget)->type == RESOURCE_ADDRESS_LHTTP,
-                               widget.from_request.body != nullptr);
-
-    if (widget.cls->dump_headers) {
-        daemon_log(4, "request headers for widget '%s'\n",
-                   widget.GetIdPath());
-
-        for (const auto &i : *headers)
-            daemon_log(4, "  %s: %s\n", i.key, i.value);
-    }
 
     embed->operation.Init2<struct embed>();
     async_ref.Set(embed->operation);
 
-    const auto *address = widget_address(&widget);
-    embed->resource_tag = resource_address_id(address, &pool);
-
-    struct istream *request_body = widget.from_request.body;
-    widget.from_request.body = nullptr;
-
-    resource_get(global_http_cache, global_tcp_balancer,
-                 global_lhttp_stock,
-                 global_fcgi_stock, global_was_stock, global_delegate_stock,
-                 global_nfs_cache,
-                 &pool, session_id_low(embed->env.session_id),
-                 widget.from_request.method,
-                 address,
-                 HTTP_STATUS_OK, headers,
-                 request_body,
-                 &widget_response_handler, embed, &embed->async_ref);
+    embed->SendRequest();
 }
 
 void
@@ -702,43 +710,11 @@ widget_http_lookup(struct pool &pool, struct widget &widget, const char *id,
     assert(handler.not_found != nullptr);
     assert(handler.error != nullptr);
 
-    const WidgetView *a_view = widget_get_address_view(&widget);
-    assert(a_view != nullptr);
-
-    const WidgetView *t_view = widget_get_transformation_view(&widget);
-    assert(t_view != nullptr);
-
     auto embed = NewFromPool<struct embed>(pool, pool, widget, env,
                                            id, handler, handler_ctx);
-
-    embed->host_and_port = widget.cls->cookie_host != nullptr
-        ? widget.cls->cookie_host
-        : resource_address_host_and_port(&a_view->address);
-    embed->transformation = t_view->transformation;
-
-    auto *headers =
-        widget_request_headers(embed, a_view,
-                               widget_address(&embed->widget)->type == RESOURCE_ADDRESS_HTTP ||
-                               widget_address(&embed->widget)->type == RESOURCE_ADDRESS_LHTTP,
-                               widget.from_request.body != nullptr);
 
     embed->operation.Init2<struct embed>();
     async_ref.Set(embed->operation);
 
-    const auto *address = widget_address(&widget);
-    embed->resource_tag = resource_address_id(address, &pool);
-
-    struct istream *request_body = widget.from_request.body;
-    widget.from_request.body = nullptr;
-
-    resource_get(global_http_cache, global_tcp_balancer,
-                 global_lhttp_stock,
-                 global_fcgi_stock, global_was_stock, global_delegate_stock,
-                 global_nfs_cache,
-                 &pool, session_id_low(embed->env.session_id),
-                 widget.from_request.method,
-                 address,
-                 HTTP_STATUS_OK, headers,
-                 request_body,
-                 &widget_response_handler, embed, &embed->async_ref);
+    embed->SendRequest();
 }
