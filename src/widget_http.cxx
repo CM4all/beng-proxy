@@ -86,6 +86,11 @@ struct embed {
          lookup_id(_lookup_id),
          env(_env),
          lookup_handler(&_handler), lookup_handler_ctx(_handler_ctx) {}
+
+    void Abort() {
+        widget_cancel(&widget);
+        async_ref.Abort();
+    }
 };
 
 static struct session *
@@ -622,32 +627,6 @@ const struct http_response_handler widget_response_handler = {
 
 
 /*
- * async operation
- *
- */
-
-static struct embed *
-async_to_embed(struct async_operation *ao)
-{
-    return &ContainerCast2(*ao, &embed::operation);
-}
-
-static void
-widget_http_abort(struct async_operation *ao)
-{
-    struct embed *embed = async_to_embed(ao);
-
-    widget_cancel(&embed->widget);
-
-    embed->async_ref.Abort();
-}
-
-static const struct async_operation_class widget_http_operation = {
-    .abort = widget_http_abort,
-};
-
-
-/*
  * constructor
  *
  */
@@ -689,7 +668,7 @@ widget_http_request(struct pool &pool, struct widget &widget,
             daemon_log(4, "  %s: %s\n", i.key, i.value);
     }
 
-    embed->operation.Init(widget_http_operation);
+    embed->operation.Init2<struct embed>();
     async_ref.Set(embed->operation);
 
     const auto *address = widget_address(&widget);
@@ -743,7 +722,7 @@ widget_http_lookup(struct pool &pool, struct widget &widget, const char *id,
                                widget_address(&embed->widget)->type == RESOURCE_ADDRESS_LHTTP,
                                widget.from_request.body != nullptr);
 
-    embed->operation.Init(widget_http_operation);
+    embed->operation.Init2<struct embed>();
     async_ref.Set(embed->operation);
 
     const auto *address = widget_address(&widget);
