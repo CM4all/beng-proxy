@@ -72,20 +72,27 @@ struct embed {
     embed(struct pool &_pool, struct widget &_widget,
           struct processor_env &_env,
           const struct http_response_handler &_handler,
-          void *_handler_ctx)
+          void *_handler_ctx,
+          struct async_operation_ref &_async_ref)
         :pool(_pool), widget(_widget), env(_env) {
         handler_ref.Set(_handler, _handler_ctx);
+        operation.Init2<struct embed>();
+        _async_ref.Set(operation);
     }
 
     embed(struct pool &_pool, struct widget &_widget,
           struct processor_env &_env,
           const char *_lookup_id,
           const struct widget_lookup_handler &_handler,
-          void *_handler_ctx)
+          void *_handler_ctx,
+          struct async_operation_ref &_async_ref)
         :pool(_pool), widget(_widget),
          lookup_id(_lookup_id),
          env(_env),
-         lookup_handler(&_handler), lookup_handler_ctx(_handler_ctx) {}
+         lookup_handler(&_handler), lookup_handler_ctx(_handler_ctx) {
+        operation.Init2<struct embed>();
+        _async_ref.Set(operation);
+    }
 
     void SendRequest();
 
@@ -690,10 +697,8 @@ widget_http_request(struct pool &pool, struct widget &widget,
     assert(widget.cls != nullptr);
 
     auto embed = NewFromPool<struct embed>(pool, pool, widget, env,
-                                           handler, handler_ctx);
+                                           handler, handler_ctx, async_ref);
 
-    embed->operation.Init2<struct embed>();
-    async_ref.Set(embed->operation);
 
     embed->SendRequest();
 }
@@ -711,11 +716,8 @@ widget_http_lookup(struct pool &pool, struct widget &widget, const char *id,
     assert(handler.not_found != nullptr);
     assert(handler.error != nullptr);
 
-    auto embed = NewFromPool<struct embed>(pool, pool, widget, env,
-                                           id, handler, handler_ctx);
-
-    embed->operation.Init2<struct embed>();
-    async_ref.Set(embed->operation);
+    auto embed = NewFromPool<struct embed>(pool, pool, widget, env, id,
+                                           handler, handler_ctx, async_ref);
 
     embed->SendRequest();
 }
