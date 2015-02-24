@@ -7,6 +7,7 @@
 #include "uri_escape.hxx"
 #include "regex.hxx"
 #include "pool.hxx"
+#include "pbuffer.hxx"
 #include "translate_client.hxx"
 
 #include <assert.h>
@@ -17,7 +18,8 @@ nfs_address::nfs_address(struct pool *pool, const nfs_address &other)
      export_name(p_strdup(pool, other.export_name)),
      path(p_strdup(pool, other.path)),
      expand_path(p_strdup_checked(pool, other.expand_path)),
-     content_type(p_strdup_checked(pool, other.content_type)) {}
+     content_type(p_strdup_checked(pool, other.content_type)),
+     content_type_lookup(DupBuffer(pool, other.content_type_lookup)) {}
 
 struct nfs_address *
 nfs_address_new(struct pool &pool, const char *server,

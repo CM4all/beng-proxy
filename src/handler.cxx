@@ -318,32 +318,6 @@ get_suffix(const char *path)
     return dot + 1;
 }
 
-gcc_pure
-static const char *
-get_suffix(const resource_address &address)
-{
-    switch (address.type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_LHTTP:
-    case RESOURCE_ADDRESS_AJP:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-        return nullptr;
-
-    case RESOURCE_ADDRESS_LOCAL:
-        return get_suffix(address.u.file->path);
-
-    case RESOURCE_ADDRESS_NFS:
-        return get_suffix(address.u.nfs->path);
-    }
-
-    assert(false);
-    gcc_unreachable();
-}
-
 static void
 handler_suffix_registry_success(const char *content_type,
                                 const Transformation *transformations,
@@ -375,12 +349,38 @@ static constexpr SuffixRegistryHandler handler_suffix_registry_handler = {
 };
 
 static bool
-do_content_type_lookup(request &request, const TranslateResponse &response)
+do_content_type_lookup(request &request,
+                       const struct resource_address &address)
 {
-    if (response.content_type_lookup.IsNull())
+    ConstBuffer<void> content_type_lookup;
+    const char *path;
+
+    switch (address.type) {
+    case RESOURCE_ADDRESS_NONE:
+    case RESOURCE_ADDRESS_HTTP:
+    case RESOURCE_ADDRESS_LHTTP:
+    case RESOURCE_ADDRESS_AJP:
+    case RESOURCE_ADDRESS_PIPE:
+    case RESOURCE_ADDRESS_CGI:
+    case RESOURCE_ADDRESS_FASTCGI:
+    case RESOURCE_ADDRESS_WAS:
         return false;
 
-    const char *suffix = get_suffix(*request.translate.address);
+    case RESOURCE_ADDRESS_LOCAL:
+        content_type_lookup = address.u.file->content_type_lookup;
+        path = address.u.file->path;
+        break;
+
+    case RESOURCE_ADDRESS_NFS:
+        content_type_lookup = address.u.nfs->content_type_lookup;
+        path = address.u.nfs->path;
+        break;
+    }
+
+    if (content_type_lookup.IsNull())
+            return false;
+
+    const char *suffix = get_suffix(path);
     if (suffix == nullptr)
         return false;
 
@@ -403,7 +403,7 @@ do_content_type_lookup(request &request, const TranslateResponse &response)
 
     suffix_registry_lookup(request.request->pool,
                            *request.connection->instance->translate_cache,
-                           response.content_type_lookup, buffer,
+                           content_type_lookup, buffer,
                            handler_suffix_registry_handler, &request,
                            &request.async_ref);
     return true;
@@ -418,7 +418,7 @@ handle_translated_request(request &request, const TranslateResponse &response)
 
     apply_file_enotdir(request);
 
-    if (!do_content_type_lookup(request, response)) {
+    if (!do_content_type_lookup(request, response.address)) {
         request.translate.suffix_transformation = nullptr;
         handle_translated_request2(request, response);
     }

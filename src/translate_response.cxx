@@ -121,7 +121,6 @@ TranslateResponse::Clear()
     invalidate = nullptr;
     want = nullptr;
     file_not_found = nullptr;
-    content_type_lookup = nullptr;
     content_type = nullptr;
     enotdir = nullptr;
     directory_index = nullptr;
@@ -241,7 +240,6 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     invalidate = DupBuffer(pool, src.invalidate);
     want = DupBuffer(pool, src.want);
     file_not_found = DupBuffer(pool, src.file_not_found);
-    content_type_lookup = DupBuffer(pool, src.content_type_lookup);
     content_type = p_strdup_checked(pool, src.content_type);
     enotdir = DupBuffer(pool, src.enotdir);
     directory_index = DupBuffer(pool, src.directory_index);

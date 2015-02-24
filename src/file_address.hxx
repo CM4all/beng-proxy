@@ -7,6 +7,7 @@
 
 #include "child_options.hxx"
 #include "glibfwd.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
 
@@ -21,6 +22,9 @@ struct file_address {
     const char *gzipped;
 
     const char *content_type;
+
+    ConstBuffer<void> content_type_lookup = nullptr;
+
     const char *delegate;
     const char *document_root;
 

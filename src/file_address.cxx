@@ -7,6 +7,7 @@
 #include "uri_escape.hxx"
 #include "regex.hxx"
 #include "pool.hxx"
+#include "pbuffer.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -29,6 +30,7 @@ file_address::file_address(struct pool *pool, const file_address &src)
      deflated(p_strdup_checked(pool, src.deflated)),
      gzipped(p_strdup_checked(pool, src.gzipped)),
      content_type(p_strdup_checked(pool, src.content_type)),
+     content_type_lookup(DupBuffer(pool, src.content_type_lookup)),
      delegate(p_strdup_checked(pool, src.delegate)),
      document_root(p_strdup_checked(pool, src.document_root)),
      expand_path(p_strdup_checked(pool, src.expand_path)),

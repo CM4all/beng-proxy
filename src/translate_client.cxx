@@ -1124,53 +1124,35 @@ translate_client_file_not_found(TranslateClient *client,
     return true;
 }
 
-gcc_pure
-static bool
-has_content_type(const TranslateClient &client)
-{
-    if (client.file_address != nullptr)
-        return client.file_address->content_type != nullptr;
-    else if (client.nfs_address != nullptr)
-        return client.nfs_address->content_type != nullptr;
-    else
-        return false;
-}
-
 static bool
 translate_client_content_type_lookup(TranslateClient &client,
                                      ConstBuffer<void> payload)
 {
-    if (!client.response.content_type_lookup.IsNull()) {
+    const char *content_type;
+    ConstBuffer<void> *content_type_lookup;
+
+    if (client.file_address != nullptr) {
+        content_type = client.file_address->content_type;
+        content_type_lookup = &client.file_address->content_type_lookup;
+    } else if (client.nfs_address != nullptr) {
+        content_type = client.nfs_address->content_type;
+        content_type_lookup = &client.nfs_address->content_type_lookup;
+    } else {
+        client.Fail("misplaced CONTENT_TYPE_LOOKUP");
+        return false;
+    }
+
+    if (!content_type_lookup->IsNull()) {
         client.Fail("duplicate CONTENT_TYPE_LOOKUP");
         return false;
     }
 
-    if (has_content_type(client)) {
+    if (content_type != nullptr) {
         client.Fail("CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
         return false;
     }
 
-    switch (client.response.address.type) {
-    case RESOURCE_ADDRESS_NONE:
-        client.Fail("CONTENT_TYPE_LOOKUP without resource address");
-        return false;
-
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_LHTTP:
-    case RESOURCE_ADDRESS_AJP:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-        client.Fail("CONTENT_TYPE_LOOKUP not compatible with resource address");
-        return false;
-
-    case RESOURCE_ADDRESS_LOCAL:
-    case RESOURCE_ADDRESS_NFS:
-        break;
-    }
-
-    client.response.content_type_lookup = payload;
+    *content_type_lookup = payload;
     return true;
 }
 
@@ -1561,15 +1543,20 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
             return false;
         }
 
-        if (!response.content_type_lookup.IsNull()) {
-            Fail("CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
-            return false;
-        }
-
         if (file_address != nullptr) {
+            if (!file_address->content_type_lookup.IsNull()) {
+                Fail("CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
+                return false;
+            }
+
             file_address->content_type = payload;
             return true;
         } else if (nfs_address != nullptr) {
+            if (!nfs_address->content_type_lookup.IsNull()) {
+                Fail("CONTENT_TYPE/CONTENT_TYPE_LOOKUP conflict");
+                return false;
+            }
+
             nfs_address->content_type = payload;
             return true;
         } else if (from_request.content_type_lookup) {

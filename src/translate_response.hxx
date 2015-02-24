@@ -201,8 +201,6 @@ struct TranslateResponse {
 
     ConstBuffer<void> file_not_found;
 
-    ConstBuffer<void> content_type_lookup;
-
     /**
      * From #TRANSLATE_CONTENT_TYPE, but only in reply to
      * #TRANSLATE_CONTENT_TYPE_LOOKUP / #TRANSLATE_SUFFIX.

@@ -6,6 +6,7 @@
 #define BENG_PROXY_NFS_ADDRESS_HXX
 
 #include "glibfwd.hxx"
+#include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>
 
@@ -28,6 +29,8 @@ struct nfs_address {
     const char *expand_path;
 
     const char *content_type;
+
+    ConstBuffer<void> content_type_lookup = nullptr;
 
     nfs_address(const char *_server,
                 const char *_export_name, const char *_path)
