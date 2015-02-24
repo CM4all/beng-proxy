@@ -6,10 +6,9 @@
 #define BENG_PROXY_FILE_ADDRESS_HXX
 
 #include "child_options.hxx"
+#include "glibfwd.hxx"
 
 #include <inline/compiler.h>
-
-#include <glib.h>
 
 struct pool;
 
