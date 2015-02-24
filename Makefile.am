@@ -229,6 +229,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/mstock.cxx src/mstock.hxx \
 	src/strref-dpool.h \
 	src/suffix_registry.cxx src/suffix_registry.hxx \
+	src/address_suffix_registry.cxx src/address_suffix_registry.hxx \
 	src/tcache.cxx src/tcache.hxx \
 	src/tcp_stock.cxx src/tcp_stock.hxx \
 	src/tcp_balancer.cxx src/tcp_balancer.hxx \

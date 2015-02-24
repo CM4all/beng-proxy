@@ -21,6 +21,7 @@
 #include "session.hxx"
 #include "tcache.hxx"
 #include "suffix_registry.hxx"
+#include "address_suffix_registry.hxx"
 #include "header_writer.hxx"
 #include "strref_pool.hxx"
 #include "dpool.h"
@@ -300,24 +301,6 @@ request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
     return true;
 }
 
-gcc_pure
-static const char *
-get_suffix(const char *path)
-{
-    const char *slash = strrchr(path, '/');
-    if (slash != nullptr)
-        path = slash + 1;
-
-    while (*path == '.')
-        ++path;
-
-    const char *dot = strrchr(path, '.');
-    if (dot == nullptr || dot[1] == 0)
-        return nullptr;
-
-    return dot + 1;
-}
-
 static void
 handler_suffix_registry_success(const char *content_type,
                                 const Transformation *transformations,
@@ -352,61 +335,11 @@ static bool
 do_content_type_lookup(request &request,
                        const struct resource_address &address)
 {
-    ConstBuffer<void> content_type_lookup;
-    const char *path;
-
-    switch (address.type) {
-    case RESOURCE_ADDRESS_NONE:
-    case RESOURCE_ADDRESS_HTTP:
-    case RESOURCE_ADDRESS_LHTTP:
-    case RESOURCE_ADDRESS_AJP:
-    case RESOURCE_ADDRESS_PIPE:
-    case RESOURCE_ADDRESS_CGI:
-    case RESOURCE_ADDRESS_FASTCGI:
-    case RESOURCE_ADDRESS_WAS:
-        return false;
-
-    case RESOURCE_ADDRESS_LOCAL:
-        content_type_lookup = address.u.file->content_type_lookup;
-        path = address.u.file->path;
-        break;
-
-    case RESOURCE_ADDRESS_NFS:
-        content_type_lookup = address.u.nfs->content_type_lookup;
-        path = address.u.nfs->path;
-        break;
-    }
-
-    if (content_type_lookup.IsNull())
-            return false;
-
-    const char *suffix = get_suffix(path);
-    if (suffix == nullptr)
-        return false;
-
-    const size_t length = strlen(suffix);
-    if (length > 5)
-        return false;
-
-    /* duplicate the suffix, convert to lower case, check for
-       "illegal" characters (non-alphanumeric) */
-    char *buffer = p_strdup(request.request->pool, suffix);
-    for (char *p = buffer; *p != 0; ++p) {
-        const char ch = *p;
-        if (IsUpperAlphaASCII(ch))
-            /* convert to lower case */
-            *p += 'a' - 'A';
-        else if (!IsLowerAlphaASCII(ch) && !IsDigitASCII(ch))
-            /* no, we won't look this up */
-            return false;
-    }
-
-    suffix_registry_lookup(request.request->pool,
-                           *request.connection->instance->translate_cache,
-                           content_type_lookup, buffer,
-                           handler_suffix_registry_handler, &request,
-                           &request.async_ref);
-    return true;
+    return suffix_registry_lookup(*request.request->pool,
+                                  *request.connection->instance->translate_cache,
+                                  address,
+                                  handler_suffix_registry_handler, &request,
+                                  request.async_ref);
 }
 
 static void
