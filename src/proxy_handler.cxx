@@ -172,6 +172,7 @@ proxy_handler(request &request2)
                                                             request->uri);
 
     if (resource_address_is_cgi_alike(address) &&
+        address->u.cgi->script_name == nullptr &&
         address->u.cgi->uri == nullptr) {
         struct resource_address *copy = resource_address_dup(pool,
                                                              address);
