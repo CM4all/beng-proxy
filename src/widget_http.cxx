@@ -548,11 +548,6 @@ widget_update_view(struct embed *embed, struct strmap *headers,
                     widget_get_transformation_view(&widget)->name,
                     widget.class_name);
         return false;
-    } else {
-        const WidgetView *view = widget_get_transformation_view(&widget);
-        assert(view != nullptr);
-
-        embed->transformation = view->transformation;
     }
 
     return true;
@@ -645,9 +640,13 @@ embed::SendRequest()
     const WidgetView *a_view = widget_get_address_view(&widget);
     assert(a_view != nullptr);
 
+    const WidgetView *t_view = widget_get_transformation_view(&widget);
+    assert(t_view != nullptr);
+
     host_and_port = widget.cls->cookie_host != nullptr
         ? widget.cls->cookie_host
         : resource_address_host_and_port(&a_view->address);
+    transformation = t_view->transformation;
 
     const auto *address = widget_address(&widget);
     resource_tag = resource_address_id(address, &pool);
