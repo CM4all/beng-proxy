@@ -3,7 +3,7 @@ cm4all-beng-proxy (6.0.15) unstable; urgency=low
   * widget: support the CONTENT_TYPE_LOOKUP protocol
   * CGI: disable request URI forwarding if there's a SCRIPT_NAME
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 24 Feb 2015 16:44:37 -0000
 
 cm4all-beng-proxy (6.0.14) unstable; urgency=low
 
