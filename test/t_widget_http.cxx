@@ -21,6 +21,8 @@
 #include "istream_null.hxx"
 #include "session_manager.hxx"
 #include "session.hxx"
+#include "suffix_registry.hxx"
+#include "address_suffix_registry.hxx"
 
 #include <inline/compiler.h>
 
@@ -127,6 +129,19 @@ filter_cache_request(gcc_unused struct filter_cache *cache,
                                         "Test");
     handler->InvokeAbort(handler_ctx, error);
 }
+
+bool
+suffix_registry_lookup(gcc_unused struct pool &pool,
+                       gcc_unused struct tcache &translate_cache,
+                       gcc_unused const struct resource_address &address,
+                       gcc_unused const SuffixRegistryHandler &handler,
+                       gcc_unused void *ctx,
+                       gcc_unused struct async_operation_ref &async_ref)
+{
+    return false;
+}
+
+struct tcache *global_translate_cache;
 
 struct Stock;
 Stock *global_pipe_stock;

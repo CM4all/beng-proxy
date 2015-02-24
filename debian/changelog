@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.0.15) unstable; urgency=low
 
-  * 
+  * widget: support the CONTENT_TYPE_LOOKUP protocol
 
  --   
 

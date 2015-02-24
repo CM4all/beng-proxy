@@ -98,6 +98,10 @@ class _Lookup:
         if m:
             response.content_type(m.group(1))
             return
+        m = re.match(r'^content_type_lookup\s+"([-._\w]+)"$', line)
+        if m:
+            response.packet(TRANSLATE_CONTENT_TYPE_LOOKUP, m.group(1))
+            return
         m = re.match(r'^view\s+"([-_\w]+)"$', line)
         if m:
             response.view(m.group(1))

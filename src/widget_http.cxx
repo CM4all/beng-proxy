@@ -32,6 +32,8 @@
 #include "istream.h"
 #include "istream_pipe.hxx"
 #include "pool.hxx"
+#include "suffix_registry.hxx"
+#include "address_suffix_registry.hxx"
 #include "util/Cast.hxx"
 
 #include <daemon/log.h>
@@ -61,6 +63,11 @@ struct embed {
      * resources.
      */
     const char *resource_tag;
+
+    /**
+     * The Content-Type from the suffix registry.
+     */
+    const char *content_type = nullptr;
 
     const struct widget_lookup_handler *lookup_handler;
     void *lookup_handler_ctx;
@@ -94,6 +101,7 @@ struct embed {
         _async_ref.Set(operation);
     }
 
+    bool ContentTypeLookup();
     void SendRequest();
 
     void Abort() {
@@ -609,6 +617,13 @@ widget_response_response(http_status_t status, struct strmap *headers,
         }
     }
 
+    if (embed->content_type != nullptr) {
+        headers = headers != nullptr
+            ? strmap_dup(&embed->pool, headers)
+            : strmap_new(&embed->pool);
+        headers->Set("content-type", embed->content_type);
+    }
+
     if (widget.session_save_pending &&
         embed->transformation->HasProcessor()) {
         struct session *session = session_get(embed->env.session_id);
@@ -680,6 +695,40 @@ embed::SendRequest()
                  &widget_response_handler, this, &async_ref);
 }
 
+static void
+widget_suffix_registry_success(const char *content_type,
+                               // TODO: apply transformations
+                               gcc_unused const Transformation *transformations,
+                               void *ctx)
+{
+    struct embed &embed = *(struct embed *)ctx;
+
+    embed.content_type = content_type;
+    embed.SendRequest();
+}
+
+static void
+widget_suffix_registry_error(GError *error, void *ctx)
+{
+    struct embed &embed = *(struct embed *)ctx;
+
+    widget_cancel(&embed.widget);
+    widget_dispatch_error(&embed, error);
+}
+
+static constexpr SuffixRegistryHandler widget_suffix_registry_handler = {
+    .success = widget_suffix_registry_success,
+    .error = widget_suffix_registry_error,
+};
+
+bool
+embed::ContentTypeLookup()
+{
+    return suffix_registry_lookup(pool, *global_translate_cache,
+                                  *widget_address(&widget),
+                                  widget_suffix_registry_handler, this,
+                                  async_ref);
+}
 
 /*
  * constructor
@@ -699,7 +748,8 @@ widget_http_request(struct pool &pool, struct widget &widget,
                                            handler, handler_ctx, async_ref);
 
 
-    embed->SendRequest();
+    if (!embed->ContentTypeLookup())
+        embed->SendRequest();
 }
 
 void
@@ -718,5 +768,6 @@ widget_http_lookup(struct pool &pool, struct widget &widget, const char *id,
     auto embed = NewFromPool<struct embed>(pool, pool, widget, env, id,
                                            handler, handler_ctx, async_ref);
 
-    embed->SendRequest();
+    if (!embed->ContentTypeLookup())
+        embed->SendRequest();
 }
