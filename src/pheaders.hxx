@@ -11,6 +11,6 @@ struct pool;
  * Returns the processed response headers.
  */
 struct strmap *
-processor_header_forward(struct pool *pool, struct strmap *headers);
+processor_header_forward(struct pool *pool, const struct strmap *headers);
 
 #endif

@@ -9,7 +9,7 @@
 #include "strmap.hxx"
 
 struct strmap *
-processor_header_forward(struct pool *pool, struct strmap *headers)
+processor_header_forward(struct pool *pool, const struct strmap *headers)
 {
     struct strmap *headers2 = strmap_new(pool);
 
