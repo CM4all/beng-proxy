@@ -40,14 +40,14 @@
 #include <string.h>
 
 struct embed {
-    struct pool *pool;
+    struct pool *const pool;
 
-    unsigned num_redirects;
+    unsigned num_redirects = 0;
 
-    struct widget *widget;
-    const char *lookup_id;
+    struct widget *const widget;
+    const char *const lookup_id = nullptr;
 
-    struct processor_env *env;
+    struct processor_env *const env;
     const char *host_and_port;
 
     /**
@@ -68,6 +68,24 @@ struct embed {
     struct http_response_handler_ref handler_ref;
     struct async_operation operation;
     struct async_operation_ref async_ref;
+
+    embed(struct pool &_pool, struct widget &_widget,
+          struct processor_env &_env,
+          const struct http_response_handler &_handler,
+          void *_handler_ctx)
+        :pool(&_pool), widget(&_widget), env(&_env) {
+        handler_ref.Set(_handler, _handler_ctx);
+    }
+
+    embed(struct pool &_pool, struct widget &_widget,
+          struct processor_env &_env,
+          const char *_lookup_id,
+          const struct widget_lookup_handler &_handler,
+          void *_handler_ctx)
+        :pool(&_pool), widget(&_widget),
+         lookup_id(_lookup_id),
+         env(&_env),
+         lookup_handler(&_handler), lookup_handler_ctx(_handler_ctx) {}
 };
 
 static struct session *
@@ -652,13 +670,9 @@ widget_http_request(struct pool *pool, struct widget *widget,
     const WidgetView *t_view = widget_get_transformation_view(widget);
     assert(t_view != nullptr);
 
-    auto embed = NewFromPool<struct embed>(*pool);
-    embed->pool = pool;
+    auto embed = NewFromPool<struct embed>(*pool, *pool, *widget, *env,
+                                           *handler, handler_ctx);
 
-    embed->num_redirects = 0;
-    embed->widget = widget;
-    embed->lookup_id = nullptr;
-    embed->env = env;
     embed->host_and_port = widget->cls->cookie_host != nullptr
         ? widget->cls->cookie_host
         : resource_address_host_and_port(&a_view->address);
@@ -676,8 +690,6 @@ widget_http_request(struct pool *pool, struct widget *widget,
         for (const auto &i : *headers)
             daemon_log(4, "  %s: %s\n", i.key, i.value);
     }
-
-    embed->handler_ref.Set(*handler, handler_ctx);
 
     embed->operation.Init(widget_http_operation);
     async_ref->Set(embed->operation);
@@ -724,13 +736,9 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
     const WidgetView *t_view = widget_get_transformation_view(widget);
     assert(t_view != nullptr);
 
-    auto embed = NewFromPool<struct embed>(*pool);
-    embed->pool = pool;
+    auto embed = NewFromPool<struct embed>(*pool, *pool, *widget, *env,
+                                           id, *handler, handler_ctx);
 
-    embed->num_redirects = 0;
-    embed->widget = widget;
-    embed->lookup_id = id;
-    embed->env = env;
     embed->host_and_port = widget->cls->cookie_host != nullptr
         ? widget->cls->cookie_host
         : resource_address_host_and_port(&a_view->address);
@@ -740,9 +748,6 @@ widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_HTTP ||
                                      widget_address(embed->widget)->type == RESOURCE_ADDRESS_LHTTP,
                                      widget->from_request.body != nullptr);
-
-    embed->lookup_handler = handler;
-    embed->lookup_handler_ctx = handler_ctx;
 
     embed->operation.Init(widget_http_operation);
     async_ref->Set(embed->operation);
