@@ -50,15 +50,16 @@ widget_sync_session(struct widget *widget gcc_unused,
 }
 
 void
-widget_http_request(struct pool *pool gcc_unused, struct widget *widget gcc_unused,
-                    struct processor_env *env gcc_unused,
-                    const struct http_response_handler *handler,
+widget_http_request(gcc_unused struct pool &pool,
+                    gcc_unused struct widget &widget,
+                    gcc_unused struct processor_env &env,
+                    const struct http_response_handler &handler,
                     void *handler_ctx,
-                    struct async_operation_ref *async_ref gcc_unused)
+                    gcc_unused struct async_operation_ref &async_ref)
 {
     GError *error = g_error_new_literal(g_quark_from_static_string("test"), 0,
                                         "Test");
-    handler->InvokeAbort(handler_ctx, error);
+    handler.InvokeAbort(handler_ctx, error);
 }
 
 struct test_operation {

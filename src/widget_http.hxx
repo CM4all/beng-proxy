@@ -19,11 +19,11 @@ struct async_operation_ref;
  * return the result to the #http_response_handler.
  */
 void
-widget_http_request(struct pool *pool, struct widget *widget,
-                    struct processor_env *env,
-                    const struct http_response_handler *handler,
+widget_http_request(struct pool &pool, struct widget &widget,
+                    struct processor_env &env,
+                    const struct http_response_handler &handler,
                     void *handler_ctx,
-                    struct async_operation_ref *async_ref);
+                    struct async_operation_ref &async_ref);
 
 /**
  * Send a HTTP request to the widget server, process it, and look up
@@ -33,10 +33,10 @@ widget_http_request(struct pool *pool, struct widget *widget,
  * @param id the id of the widget to be looked up
  */
 void
-widget_http_lookup(struct pool *pool, struct widget *widget, const char *id,
-                   struct processor_env *env,
-                   const struct widget_lookup_handler *handler,
+widget_http_lookup(struct pool &pool, struct widget &widget, const char *id,
+                   struct processor_env &env,
+                   const struct widget_lookup_handler &handler,
                    void *handler_ctx,
-                   struct async_operation_ref *async_ref);
+                   struct async_operation_ref &async_ref);
 
 #endif

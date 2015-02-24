@@ -64,8 +64,8 @@ frame_top_widget(struct pool *pool, struct widget *widget,
             widget->session_sync_pending = false;
     }
 
-    widget_http_request(pool, widget, env,
-                        handler, handler_ctx, async_ref);
+    widget_http_request(*pool, *widget, *env,
+                        *handler, handler_ctx, *async_ref);
 }
 
 void
@@ -114,7 +114,7 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
             widget->session_sync_pending = false;
     }
 
-    widget_http_lookup(pool, widget, id, env,
-                       handler, handler_ctx,
-                       async_ref);
+    widget_http_lookup(*pool, *widget, id, *env,
+                       *handler, handler_ctx,
+                       *async_ref);
 }

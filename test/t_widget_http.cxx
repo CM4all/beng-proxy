@@ -299,9 +299,9 @@ test_cookie_client(struct pool *pool)
         got_request = false;
         got_response = false;
 
-        widget_http_request(pool, &widget, &env,
-                            &my_http_response_handler, nullptr,
-                            &async_ref);
+        widget_http_request(*pool, widget, env,
+                            my_http_response_handler, nullptr,
+                            async_ref);
 
         assert(got_request);
         assert(got_response);

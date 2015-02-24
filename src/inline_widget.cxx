@@ -248,9 +248,9 @@ inline_widget_set(struct inline_widget *iw)
             widget->session_sync_pending = false;
     }
 
-    widget_http_request(iw->pool, iw->widget, iw->env,
-                        &inline_widget_response_handler, iw,
-                        istream_delayed_async_ref(iw->delayed));
+    widget_http_request(*iw->pool, *iw->widget, *iw->env,
+                        inline_widget_response_handler, iw,
+                        *istream_delayed_async_ref(iw->delayed));
 }
 
 
