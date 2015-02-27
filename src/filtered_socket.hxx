@@ -125,6 +125,10 @@ struct FilteredSocket {
               const SocketFilter *filter, void *filter_ctx,
               const BufferedSocketHandler &handler, void *handler_ctx);
 
+    void Reinit(const struct timeval *read_timeout,
+                const struct timeval *write_timeout,
+                const BufferedSocketHandler &handler, void *handler_ctx);
+
     /**
      * Move the socket from another #BufferedSocket instance.  This
      * disables scheduled events, moves the input buffer and the

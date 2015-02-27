@@ -156,6 +156,26 @@ FilteredSocket::Init(struct pool &pool,
 }
 
 void
+FilteredSocket::Reinit(const struct timeval *read_timeout,
+                       const struct timeval *write_timeout,
+                       const BufferedSocketHandler &__handler,
+                       void *_handler_ctx)
+{
+    const BufferedSocketHandler *_handler = &__handler;
+
+    if (filter != nullptr) {
+        handler = _handler;
+        handler_ctx = _handler_ctx;
+
+        _handler = &filtered_socket_bs_handler;
+        _handler_ctx = this;
+    }
+
+    base.Reinit(read_timeout, write_timeout,
+                *_handler, _handler_ctx);
+}
+
+void
 FilteredSocket::Init(struct pool &pool,
                      FilteredSocket &&src,
                      const struct timeval *read_timeout,
