@@ -299,6 +299,10 @@ public:
               const struct timeval *_write_timeout,
               const BufferedSocketHandler &_handler, void *_ctx);
 
+    void Reinit(const struct timeval *_read_timeout,
+                const struct timeval *_write_timeout,
+                const BufferedSocketHandler &_handler, void *_ctx);
+
     /**
      * Move the socket from another #BufferedSocket instance.  This
      * disables scheduled events, moves the input buffer to this

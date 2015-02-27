@@ -479,6 +479,28 @@ BufferedSocket::Init(struct pool &_pool,
 }
 
 void
+BufferedSocket::Reinit(const struct timeval *_read_timeout,
+                       const struct timeval *_write_timeout,
+                       const BufferedSocketHandler &_handler, void *_ctx)
+{
+    assert(IsValid());
+    assert(IsConnected());
+    assert(!expect_more);
+    assert(_handler.data != nullptr);
+    /* handler method closed() is optional */
+    assert(_handler.write != nullptr);
+    assert(_handler.error != nullptr);
+
+    read_timeout = _read_timeout;
+    write_timeout = _write_timeout;
+
+    handler = &_handler;
+    handler_ctx = _ctx;
+
+    direct = false;
+}
+
+void
 BufferedSocket::Init(struct pool &_pool,
                      BufferedSocket &&src,
                      const struct timeval *_read_timeout,
