@@ -27,7 +27,7 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 
-struct tcp_stock_request {
+struct TcpStockRequest {
     bool ip_transparent;
 
     SocketAddress bind_address, address;
@@ -35,7 +35,7 @@ struct tcp_stock_request {
     unsigned timeout;
 };
 
-struct tcp_stock_connection {
+struct TcpStockConnection {
     StockItem stock_item;
     const char *uri;
 
@@ -53,16 +53,16 @@ struct tcp_stock_connection {
  *
  */
 
-static struct tcp_stock_connection *
+static TcpStockConnection *
 async_to_tcp_stock_connection(struct async_operation *ao)
 {
-    return &ContainerCast2(*ao, &tcp_stock_connection::create_operation);
+    return &ContainerCast2(*ao, &TcpStockConnection::create_operation);
 }
 
 static void
 tcp_create_abort(struct async_operation *ao)
 {
-    struct tcp_stock_connection *connection = async_to_tcp_stock_connection(ao);
+    TcpStockConnection *connection = async_to_tcp_stock_connection(ao);
 
     assert(connection != nullptr);
     assert(connection->client_socket.IsDefined());
@@ -84,8 +84,8 @@ static const struct async_operation_class tcp_create_operation = {
 static void
 tcp_stock_event(int fd, short event, void *ctx)
 {
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)ctx;
+    TcpStockConnection *connection =
+        (TcpStockConnection *)ctx;
 
     assert(fd == connection->fd);
 
@@ -118,8 +118,8 @@ tcp_stock_event(int fd, short event, void *ctx)
 static void
 tcp_stock_socket_success(SocketDescriptor &&fd, void *ctx)
 {
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)ctx;
+    TcpStockConnection *connection =
+        (TcpStockConnection *)ctx;
 
     connection->client_socket.Clear();
     connection->create_operation.Finished();
@@ -134,8 +134,8 @@ tcp_stock_socket_success(SocketDescriptor &&fd, void *ctx)
 static void
 tcp_stock_socket_timeout(void *ctx)
 {
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)ctx;
+    TcpStockConnection *connection =
+        (TcpStockConnection *)ctx;
 
     connection->client_socket.Clear();
     connection->create_operation.Finished();
@@ -149,8 +149,8 @@ tcp_stock_socket_timeout(void *ctx)
 static void
 tcp_stock_socket_error(GError *error, void *ctx)
 {
-    struct tcp_stock_connection *connection =
-        (struct tcp_stock_connection *)ctx;
+    TcpStockConnection *connection =
+        (TcpStockConnection *)ctx;
 
     connection->client_socket.Clear();
     connection->create_operation.Finished();
@@ -171,16 +171,16 @@ static constexpr ConnectSocketHandler tcp_stock_socket_handler = {
  *
  */
 
-static struct tcp_stock_connection &
+static TcpStockConnection &
 StockItemToTcpStockConnection(StockItem &item)
 {
-    return ContainerCast2(item, &tcp_stock_connection::stock_item);
+    return ContainerCast2(item, &TcpStockConnection::stock_item);
 }
 
-static const struct tcp_stock_connection &
+static const TcpStockConnection &
 StockItemToTcpStockConnection(const StockItem &item)
 {
-    return ContainerCast2(item, &tcp_stock_connection::stock_item);
+    return ContainerCast2(item, &TcpStockConnection::stock_item);
 }
 
 static struct pool *
@@ -197,7 +197,7 @@ tcp_stock_create(gcc_unused void *ctx, StockItem &item,
                  struct async_operation_ref &async_ref)
 {
     auto *connection = &StockItemToTcpStockConnection(item);
-    struct tcp_stock_request *request = (struct tcp_stock_request *)info;
+    TcpStockRequest *request = (TcpStockRequest *)info;
 
     assert(uri != nullptr);
 
@@ -253,7 +253,7 @@ tcp_stock_destroy(void *ctx gcc_unused, StockItem &item)
 }
 
 static constexpr StockClass tcp_stock_class = {
-    .item_size = sizeof(struct tcp_stock_connection),
+    .item_size = sizeof(TcpStockConnection),
     .pool = tcp_stock_pool,
     .create = tcp_stock_create,
     .borrow = tcp_stock_borrow,
@@ -284,7 +284,7 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
 {
     assert(!address.IsNull());
 
-    auto request = NewFromPool<struct tcp_stock_request>(*pool);
+    auto request = NewFromPool<TcpStockRequest>(*pool);
     request->ip_transparent = ip_transparent;
     request->bind_address = bind_address;
     request->address = address;
