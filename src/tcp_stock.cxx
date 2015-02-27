@@ -46,33 +46,13 @@ struct TcpStockConnection {
     int fd, domain;
 
     struct event event;
-};
 
-/*
- * async operation
- *
- */
+    void Abort() {
+        assert(client_socket.IsDefined());
 
-static TcpStockConnection *
-async_to_tcp_stock_connection(struct async_operation *ao)
-{
-    return &ContainerCast2(*ao, &TcpStockConnection::create_operation);
-}
-
-static void
-tcp_create_abort(struct async_operation *ao)
-{
-    TcpStockConnection *connection = async_to_tcp_stock_connection(ao);
-
-    assert(connection != nullptr);
-    assert(connection->client_socket.IsDefined());
-
-    connection->client_socket.Abort();
-    stock_item_aborted(connection->stock_item);
-}
-
-static const struct async_operation_class tcp_create_operation = {
-    .abort = tcp_create_abort,
+        client_socket.Abort();
+        stock_item_aborted(stock_item);
+    }
 };
 
 
@@ -203,7 +183,8 @@ tcp_stock_create(gcc_unused void *ctx, StockItem &item,
 
     connection->client_socket.Clear();
 
-    connection->create_operation.Init(tcp_create_operation);
+    connection->create_operation.Init2<TcpStockConnection,
+                                       &TcpStockConnection::create_operation>();
     async_ref.Set(connection->create_operation);
 
     connection->uri = uri;
