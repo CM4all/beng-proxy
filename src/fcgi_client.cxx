@@ -77,7 +77,7 @@ struct fcgi_client {
     int stderr_fd;
 
     struct http_response_handler_ref handler;
-    struct async_operation async;
+    struct async_operation operation;
 
     uint16_t id;
 
@@ -140,6 +140,8 @@ struct fcgi_client {
     struct istream response_body;
 
     size_t content_length, skip_length;
+
+    void Abort();
 };
 
 static constexpr struct timeval fcgi_client_timeout = {
@@ -197,7 +199,7 @@ fcgi_client_abort_response_headers(struct fcgi_client *client, GError *error)
     assert(client->response.read_state == fcgi_client::Response::READ_HEADERS ||
            client->response.read_state == fcgi_client::Response::READ_NO_BODY);
 
-    client->async.Finished();
+    client->operation.Finished();
 
     if (client->socket.IsConnected())
         fcgi_client_release_socket(client, false);
@@ -435,7 +437,7 @@ fcgi_client_submit_response(struct fcgi_client *client)
             client->response.available = l;
     }
 
-    client->async.Finished();
+    client->operation.Finished();
 
     fcgi_client_response_body_init(client);
     struct istream *body = body = istream_struct_cast(&client->response_body);
@@ -471,7 +473,7 @@ fcgi_client_handle_end(struct fcgi_client *client)
         istream_close_handler(client->request.istream);
 
     if (client->response.read_state == fcgi_client::Response::READ_NO_BODY) {
-        client->async.Finished();
+        client->operation.Finished();
         client->handler.InvokeResponse(client->response.status,
                                        client->response.headers,
                                        nullptr);
@@ -876,26 +878,19 @@ static constexpr BufferedSocketHandler fcgi_client_socket_handler = {
  *
  */
 
-static void
-fcgi_client_request_abort(struct async_operation *ao)
+void
+fcgi_client::Abort()
 {
-    struct fcgi_client &client = ContainerCast2(*ao, &fcgi_client::async);
-
     /* async_operation_ref::Abort() can only be used before the
        response was delivered to our callback */
-    assert(client.response.read_state == fcgi_client::Response::READ_HEADERS ||
-           client.response.read_state == fcgi_client::Response::READ_NO_BODY);
+    assert(response.read_state == Response::READ_HEADERS ||
+           response.read_state == Response::READ_NO_BODY);
 
-    if (client.request.istream != nullptr)
-        istream_close_handler(client.request.istream);
+    if (request.istream != nullptr)
+        istream_close_handler(request.istream);
 
-    fcgi_client_release(&client, false);
+    fcgi_client_release(this, false);
 }
-
-static constexpr struct async_operation_class fcgi_client_async_operation = {
-    .abort = fcgi_client_request_abort,
-};
-
 
 /*
  * constructor
@@ -955,8 +950,8 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     client->handler.Set(*handler, handler_ctx);
 
-    client->async.Init(fcgi_client_async_operation);
-    async_ref->Set(client->async);
+    client->operation.Init2<struct fcgi_client>();
+    async_ref->Set(client->operation);
 
     client->id = header.request_id;
 
