@@ -31,8 +31,15 @@ struct fcgi_request {
     struct fcgi_stock *fcgi_stock;
     StockItem *stock_item;
 
-    struct async_operation async;
+    struct async_operation operation;
     struct async_operation_ref async_ref;
+
+    void Abort() {
+        if (stock_item != nullptr)
+            fcgi_stock_aborted(*stock_item);
+
+        async_ref.Abort();
+    }
 };
 
 /*
@@ -51,27 +58,6 @@ fcgi_socket_release(bool reuse, void *ctx)
 
 static const struct lease fcgi_socket_lease = {
     .release = fcgi_socket_release,
-};
-
-
-/*
- * async operation
- *
- */
-
-static void
-fcgi_request_abort(struct async_operation *ao)
-{
-    struct fcgi_request &request = ContainerCast2(*ao, &fcgi_request::async);
-
-    if (request.stock_item != nullptr)
-        fcgi_stock_aborted(*request.stock_item);
-
-    request.async_ref.Abort();
-}
-
-static const struct async_operation_class fcgi_request_async_operation = {
-    .abort = fcgi_request_abort,
 };
 
 
@@ -136,8 +122,8 @@ fcgi_request(struct pool *pool, struct fcgi_stock *fcgi_stock,
 
     request->stock_item = stock_item;
 
-    request->async.Init(fcgi_request_async_operation);
-    async_ref->Set(request->async);
+    request->operation.Init2<struct fcgi_request>();
+    async_ref->Set(request->operation);
     async_ref = &request->async_ref;
 
     const char *script_filename = fcgi_stock_translate_path(*stock_item, path,
