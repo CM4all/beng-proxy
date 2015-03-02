@@ -477,7 +477,8 @@ repeat_translation(struct request &request, const TranslateResponse &response)
     if (response.protocol_version >= 1) {
         /* handle WANT */
 
-        request.translate.request.want = response.want;
+        if (!response.want.IsNull())
+            request.translate.request.want = response.want;
 
         if (response.Wants(TRANSLATE_LISTENER_TAG))
             fill_translate_request_listener_tag(request.translate.request,
