@@ -30,8 +30,8 @@ struct tcp_balancer;
  * @return the new TCP connections stock (this function cannot fail)
  */
 struct tcp_balancer *
-tcp_balancer_new(struct pool *pool, StockMap *tcp_stock,
-                 struct balancer *balancer);
+tcp_balancer_new(struct pool *pool, StockMap &tcp_stock,
+                 struct balancer &balancer);
 
 /**
  * @param session_sticky a portion of the session id that is used to

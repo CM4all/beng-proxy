@@ -273,8 +273,9 @@ int main(int argc, char **argv)
     instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.pool,
                                        instance.cmdline.tcp_stock_limit);
-    instance.tcp_balancer = tcp_balancer_new(instance.pool, instance.tcp_stock,
-                                             instance.balancer);
+    instance.tcp_balancer = tcp_balancer_new(instance.pool,
+                                             *instance.tcp_stock,
+                                             *instance.balancer);
 
     instance.pipe_stock = pipe_stock_new(instance.pool);
 

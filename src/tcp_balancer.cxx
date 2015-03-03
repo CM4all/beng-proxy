@@ -16,28 +16,28 @@
 #include <glib.h>
 
 struct tcp_balancer {
-    StockMap *tcp_stock;
+    StockMap &tcp_stock;
 
-    struct balancer *balancer;
+    struct balancer &balancer;
 
     tcp_balancer(StockMap &_tcp_stock,
                  struct balancer &_balancer)
-        :tcp_stock(&_tcp_stock), balancer(&_balancer) {}
+        :tcp_stock(_tcp_stock), balancer(_balancer) {}
 };
 
 struct tcp_balancer_request {
-    struct pool *pool;
-    struct tcp_balancer *tcp_balancer;
+    struct pool &pool;
+    struct tcp_balancer &tcp_balancer;
 
-    bool ip_transparent;
-    SocketAddress bind_address;
+    const bool ip_transparent;
+    const SocketAddress bind_address;
 
     /**
      * The "sticky id" of the incoming HTTP request.
      */
-    unsigned session_sticky;
+    const unsigned session_sticky;
 
-    unsigned timeout;
+    const unsigned timeout;
 
     /**
      * The number of remaining connection attempts.  We give up when
@@ -45,13 +45,13 @@ struct tcp_balancer_request {
      */
     unsigned retries;
 
-    const AddressList *address_list;
+    const AddressList &address_list;
     SocketAddress current_address;
 
-    const StockGetHandler *handler;
-    void *handler_ctx;
+    const StockGetHandler &handler;
+    void *const handler_ctx;
 
-    struct async_operation_ref *async_ref;
+    struct async_operation_ref &async_ref;
 
     tcp_balancer_request(struct pool &_pool,
                          struct tcp_balancer &_tcp_balancer,
@@ -62,14 +62,14 @@ struct tcp_balancer_request {
                          const AddressList &_address_list,
                          const StockGetHandler &_handler, void *_handler_ctx,
                          struct async_operation_ref &_async_ref)
-        :pool(&_pool), tcp_balancer(&_tcp_balancer),
+        :pool(_pool), tcp_balancer(_tcp_balancer),
          ip_transparent(_ip_transparent),
          bind_address(_bind_address),
          session_sticky(_session_sticky),
          timeout(_timeout),
-         address_list(&_address_list),
-         handler(&_handler), handler_ctx(_handler_ctx),
-         async_ref(&_async_ref) {}
+         address_list(_address_list),
+         handler(_handler), handler_ctx(_handler_ctx),
+         async_ref(_async_ref) {}
 };
 
 static SocketAddress last_address;
@@ -80,25 +80,25 @@ static void
 tcp_balancer_next(struct tcp_balancer_request *request)
 {
     const SocketAddress address =
-        balancer_get(*request->tcp_balancer->balancer,
-                     *request->address_list,
+        balancer_get(request->tcp_balancer.balancer,
+                     request->address_list,
                      request->session_sticky);
 
     /* we need to copy this address because it may come from
        the balancer's cache, and the according cache item may be
        flushed at any time */
     const struct sockaddr *new_address = (const struct sockaddr *)
-        p_memdup(request->pool, address.GetAddress(), address.GetSize());
+        p_memdup(&request->pool, address.GetAddress(), address.GetSize());
     request->current_address = { new_address, address.GetSize() };
 
-    tcp_stock_get(request->tcp_balancer->tcp_stock, request->pool,
+    tcp_stock_get(&request->tcp_balancer.tcp_stock, &request->pool,
                   nullptr,
                   request->ip_transparent,
                   request->bind_address,
                   request->current_address,
                   request->timeout,
                   &tcp_balancer_stock_handler, request,
-                  request->async_ref);
+                  &request->async_ref);
 }
 
 /*
@@ -115,7 +115,7 @@ tcp_balancer_stock_ready(StockItem &item, void *ctx)
 
     failure_unset(request->current_address, FAILURE_FAILED);
 
-    request->handler->ready(item, request->handler_ctx);
+    request->handler.ready(item, request->handler_ctx);
 }
 
 static void
@@ -132,7 +132,7 @@ tcp_balancer_stock_error(GError *error, void *ctx)
         tcp_balancer_next(request);
     } else
         /* give up */
-        request->handler->error(error, request->handler_ctx);
+        request->handler.error(error, request->handler_ctx);
 }
 
 const StockGetHandler tcp_balancer_stock_handler = {
@@ -146,10 +146,10 @@ const StockGetHandler tcp_balancer_stock_handler = {
  */
 
 struct tcp_balancer *
-tcp_balancer_new(struct pool *pool, StockMap *tcp_stock,
-                 struct balancer *balancer)
+tcp_balancer_new(struct pool *pool, StockMap &tcp_stock,
+                 struct balancer &balancer)
 {
-    return NewFromPool<struct tcp_balancer>(*pool, *tcp_stock, *balancer);
+    return NewFromPool<struct tcp_balancer>(*pool, tcp_stock, balancer);
 }
 
 void
@@ -186,7 +186,7 @@ void
 tcp_balancer_put(struct tcp_balancer *tcp_balancer, StockItem &item,
                  bool destroy)
 {
-    tcp_stock_put(tcp_balancer->tcp_stock, item, destroy);
+    tcp_stock_put(&tcp_balancer->tcp_stock, item, destroy);
 }
 
 SocketAddress
