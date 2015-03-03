@@ -128,55 +128,55 @@ shutdown_callback(void *ctx)
     session_save_deinit();
     session_manager_deinit();
 
-    if (instance->translate_cache != NULL)
+    if (instance->translate_cache != nullptr)
         translate_cache_close(instance->translate_cache);
 
-    if (instance->http_cache != NULL) {
+    if (instance->http_cache != nullptr) {
         http_cache_close(instance->http_cache);
-        instance->http_cache = NULL;
+        instance->http_cache = nullptr;
     }
 
-    if (instance->filter_cache != NULL) {
+    if (instance->filter_cache != nullptr) {
         filter_cache_close(instance->filter_cache);
-        instance->filter_cache = NULL;
+        instance->filter_cache = nullptr;
     }
 
-    if (instance->lhttp_stock != NULL) {
+    if (instance->lhttp_stock != nullptr) {
         lhttp_stock_free(instance->lhttp_stock);
-        instance->lhttp_stock = NULL;
+        instance->lhttp_stock = nullptr;
     }
 
-    if (instance->fcgi_stock != NULL) {
+    if (instance->fcgi_stock != nullptr) {
         fcgi_stock_free(instance->fcgi_stock);
-        instance->fcgi_stock = NULL;
+        instance->fcgi_stock = nullptr;
     }
 
-    if (instance->was_stock != NULL) {
+    if (instance->was_stock != nullptr) {
         hstock_free(instance->was_stock);
-        instance->was_stock = NULL;
+        instance->was_stock = nullptr;
     }
 
-    if (instance->memcached_stock != NULL)
+    if (instance->memcached_stock != nullptr)
         memcached_stock_free(instance->memcached_stock);
 
-    if (instance->tcp_stock != NULL)
+    if (instance->tcp_stock != nullptr)
         hstock_free(instance->tcp_stock);
 
-    if (instance->balancer != NULL)
+    if (instance->balancer != nullptr)
         balancer_free(instance->balancer);
 
-    if (instance->delegate_stock != NULL)
+    if (instance->delegate_stock != nullptr)
         hstock_free(instance->delegate_stock);
 
 #ifdef HAVE_LIBNFS
-    if (instance->nfs_cache != NULL)
+    if (instance->nfs_cache != nullptr)
         nfs_cache_free(instance->nfs_cache);
 
-    if (instance->nfs_stock != NULL)
+    if (instance->nfs_stock != nullptr)
         nfs_stock_free(instance->nfs_stock);
 #endif
 
-    if (instance->pipe_stock != NULL)
+    if (instance->pipe_stock != nullptr)
         stock_free(instance->pipe_stock);
 
     local_control_handler_deinit(instance);
@@ -214,7 +214,7 @@ init_signals(struct instance *instance)
 
     event_set(&instance->sighup_event, SIGHUP, EV_SIGNAL|EV_PERSIST,
               reload_event_callback, instance);
-    event_add(&instance->sighup_event, NULL);
+    event_add(&instance->sighup_event, nullptr);
 }
 
 void
@@ -229,7 +229,7 @@ add_listener(struct instance *instance, struct addrinfo *ai, const char *tag)
 {
     Error error;
 
-    assert(ai != NULL);
+    assert(ai != nullptr);
 
     do {
         instance->listeners.emplace_front(*instance, tag);
@@ -244,7 +244,7 @@ add_listener(struct instance *instance, struct addrinfo *ai, const char *tag)
         }
 
         ai = ai->ai_next;
-    } while (ai != NULL);
+    } while (ai != nullptr);
 }
 
 static void
@@ -285,7 +285,7 @@ int main(int argc, char **argv)
         debug_mode = true;
 #endif
 
-    instance.pool = pool_new_libc(NULL, "global");
+    instance.pool = pool_new_libc(nullptr, "global");
     tpool_init(instance.pool);
 
     /* configuration */
@@ -350,12 +350,12 @@ int main(int argc, char **argv)
     instance.tcp_balancer = tcp_balancer_new(instance.pool, instance.tcp_stock,
                                              instance.balancer);
 
-    if (instance.config.memcached_server != NULL)
+    if (instance.config.memcached_server != nullptr)
         instance.memcached_stock =
             memcached_stock_new(*instance.pool, instance.tcp_balancer,
                                 instance.config.memcached_server);
 
-    if (instance.config.translation_socket != NULL) {
+    if (instance.config.translation_socket != nullptr) {
         struct tstock *translate_stock =
             tstock_new(instance.pool, instance.tcp_stock,
                        instance.config.translation_socket);
