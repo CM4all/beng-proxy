@@ -19,6 +19,10 @@ struct tcp_balancer {
     StockMap *tcp_stock;
 
     struct balancer *balancer;
+
+    tcp_balancer(StockMap &_tcp_stock,
+                 struct balancer &_balancer)
+        :tcp_stock(&_tcp_stock), balancer(&_balancer) {}
 };
 
 struct tcp_balancer_request {
@@ -48,6 +52,24 @@ struct tcp_balancer_request {
     void *handler_ctx;
 
     struct async_operation_ref *async_ref;
+
+    tcp_balancer_request(struct pool &_pool,
+                         struct tcp_balancer &_tcp_balancer,
+                         bool _ip_transparent,
+                         SocketAddress _bind_address,
+                         unsigned _session_sticky,
+                         unsigned _timeout,
+                         const AddressList &_address_list,
+                         const StockGetHandler &_handler, void *_handler_ctx,
+                         struct async_operation_ref &_async_ref)
+        :pool(&_pool), tcp_balancer(&_tcp_balancer),
+         ip_transparent(_ip_transparent),
+         bind_address(_bind_address),
+         session_sticky(_session_sticky),
+         timeout(_timeout),
+         address_list(&_address_list),
+         handler(&_handler), handler_ctx(_handler_ctx),
+         async_ref(&_async_ref) {}
 };
 
 static SocketAddress last_address;
@@ -127,10 +149,7 @@ struct tcp_balancer *
 tcp_balancer_new(struct pool *pool, StockMap *tcp_stock,
                  struct balancer *balancer)
 {
-    auto tcp_balancer = NewFromPool<struct tcp_balancer>(*pool);
-    tcp_balancer->tcp_stock = tcp_stock;
-    tcp_balancer->balancer = balancer;
-    return tcp_balancer;
+    return NewFromPool<struct tcp_balancer>(*pool, *tcp_stock, *balancer);
 }
 
 void
@@ -143,13 +162,13 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
                  const StockGetHandler *handler, void *handler_ctx,
                  struct async_operation_ref *async_ref)
 {
-    auto request = NewFromPool<struct tcp_balancer_request>(*pool);
-    request->pool = pool;
-    request->tcp_balancer = tcp_balancer;
-    request->ip_transparent = ip_transparent;
-    request->bind_address = bind_address;
-    request->session_sticky = session_sticky;
-    request->timeout = timeout;
+    auto request =
+        NewFromPool<struct tcp_balancer_request>(*pool, *pool, *tcp_balancer,
+                                                 ip_transparent, bind_address,
+                                                 session_sticky, timeout,
+                                                 *address_list,
+                                                 *handler, handler_ctx,
+                                                 *async_ref);
 
     if (address_list->GetSize() <= 1)
         request->retries = 0;
@@ -159,11 +178,6 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
         request->retries = 2;
     else
         request->retries = 3;
-
-    request->address_list = address_list;
-    request->handler = handler;
-    request->handler_ctx = handler_ctx;
-    request->async_ref = async_ref;
 
     tcp_balancer_next(request);
 }
