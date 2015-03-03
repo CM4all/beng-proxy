@@ -146,10 +146,15 @@ const StockGetHandler tcp_balancer_stock_handler = {
  */
 
 struct tcp_balancer *
-tcp_balancer_new(struct pool *pool, StockMap &tcp_stock,
-                 struct balancer &balancer)
+tcp_balancer_new(StockMap &tcp_stock, struct balancer &balancer)
 {
-    return NewFromPool<struct tcp_balancer>(*pool, tcp_stock, balancer);
+    return new struct tcp_balancer(tcp_stock, balancer);
+}
+
+void
+tcp_balancer_free(struct tcp_balancer *tcp_balancer)
+{
+    delete tcp_balancer;
 }
 
 void

@@ -23,15 +23,15 @@ struct tcp_balancer;
 /**
  * Creates a new TCP connection stock.
  *
- * @param pool the memory pool
  * @param tcp_stock the underlying tcp_stock object
  * @param balancer the load balancer object
- * @param limit the maximum number of connections per host
  * @return the new TCP connections stock (this function cannot fail)
  */
 struct tcp_balancer *
-tcp_balancer_new(struct pool *pool, StockMap &tcp_stock,
-                 struct balancer &balancer);
+tcp_balancer_new(StockMap &tcp_stock, struct balancer &balancer);
+
+void
+tcp_balancer_free(struct tcp_balancer *tcp_balancer);
 
 /**
  * @param session_sticky a portion of the session id that is used to

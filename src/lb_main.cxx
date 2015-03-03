@@ -175,6 +175,9 @@ shutdown_callback(void *ctx)
 
     pool_commit();
 
+    if (instance->tcp_balancer != nullptr)
+        tcp_balancer_free(instance->tcp_balancer);
+
     if (instance->tcp_stock != nullptr)
         hstock_free(instance->tcp_stock);
 
@@ -273,8 +276,7 @@ int main(int argc, char **argv)
     instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.pool,
                                        instance.cmdline.tcp_stock_limit);
-    instance.tcp_balancer = tcp_balancer_new(instance.pool,
-                                             *instance.tcp_stock,
+    instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 
     instance.pipe_stock = pipe_stock_new(instance.pool);

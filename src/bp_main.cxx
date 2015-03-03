@@ -159,6 +159,9 @@ shutdown_callback(void *ctx)
     if (instance->memcached_stock != nullptr)
         memcached_stock_free(instance->memcached_stock);
 
+    if (instance->tcp_balancer != nullptr)
+        tcp_balancer_free(instance->tcp_balancer);
+
     if (instance->tcp_stock != nullptr)
         hstock_free(instance->tcp_stock);
 
@@ -347,8 +350,7 @@ int main(int argc, char **argv)
     instance.balancer = balancer_new(*instance.pool);
     instance.tcp_stock = tcp_stock_new(instance.pool,
                                        instance.config.tcp_stock_limit);
-    instance.tcp_balancer = tcp_balancer_new(instance.pool,
-                                             *instance.tcp_stock,
+    instance.tcp_balancer = tcp_balancer_new(*instance.tcp_stock,
                                              *instance.balancer);
 
     if (instance.config.memcached_server != nullptr)
