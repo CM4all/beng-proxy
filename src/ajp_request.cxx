@@ -57,7 +57,7 @@ ajp_socket_release(bool reuse, void *ctx)
 {
     struct ajp_request *hr = (struct ajp_request *)ctx;
 
-    tcp_balancer_put(hr->tcp_balancer, *hr->stock_item, !reuse);
+    tcp_balancer_put(*hr->tcp_balancer, *hr->stock_item, !reuse);
 }
 
 static const struct lease ajp_socket_lease = {
@@ -159,11 +159,11 @@ ajp_stock_request(struct pool *pool,
 
     hr->uri = uwa->path;
 
-    tcp_balancer_get(tcp_balancer, pool,
+    tcp_balancer_get(*tcp_balancer, *pool,
                      false, SocketAddress::Null(),
                      session_sticky,
-                     &uwa->addresses,
+                     uwa->addresses,
                      20,
-                     &ajp_request_stock_handler, hr,
-                     async_ref);
+                     ajp_request_stock_handler, hr,
+                     *async_ref);
 }

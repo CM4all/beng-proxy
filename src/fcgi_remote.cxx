@@ -62,7 +62,7 @@ fcgi_socket_release(bool reuse, void *ctx)
 {
     struct fcgi_remote_request *request = (struct fcgi_remote_request *)ctx;
 
-    tcp_balancer_put(request->tcp_balancer, *request->stock_item, !reuse);
+    tcp_balancer_put(*request->tcp_balancer, *request->stock_item, !reuse);
 }
 
 static const struct lease fcgi_socket_lease = {
@@ -162,9 +162,9 @@ fcgi_remote_request(struct pool *pool, struct tcp_balancer *tcp_balancer,
     } else
         request->body = nullptr;
 
-    tcp_balancer_get(tcp_balancer, pool,
+    tcp_balancer_get(*tcp_balancer, *pool,
                      false, SocketAddress::Null(),
-                     0, address_list, 20,
-                     &fcgi_remote_stock_handler, request,
-                     async_ref);
+                     0, *address_list, 20,
+                     fcgi_remote_stock_handler, request,
+                     *async_ref);
 }

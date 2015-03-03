@@ -189,7 +189,7 @@ my_socket_release(bool reuse, void *ctx)
 {
     struct lb_request *request2 = (struct lb_request *)ctx;
 
-    tcp_balancer_put(request2->balancer,
+    tcp_balancer_put(*request2->balancer,
                      *request2->stock_item, !reuse);
 }
 
@@ -407,16 +407,16 @@ lb_http_connection_request(struct http_server_request *request,
         break;
     }
 
-    tcp_balancer_get(request2->balancer, request->pool,
+    tcp_balancer_get(*request2->balancer, *request->pool,
                      transparent_source,
                      bind_address,
                      session_sticky,
-                     &cluster->address_list,
+                     cluster->address_list,
                      20,
-                     &my_stock_handler, request2,
-                     &async_optional_close_on_abort(*request->pool,
-                                                    request2->body,
-                                                    *async_ref));
+                     my_stock_handler, request2,
+                     async_optional_close_on_abort(*request->pool,
+                                                   request2->body,
+                                                   *async_ref));
 }
 
 static void

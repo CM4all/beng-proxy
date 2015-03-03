@@ -158,28 +158,28 @@ tcp_balancer_free(struct tcp_balancer *tcp_balancer)
 }
 
 void
-tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
+tcp_balancer_get(struct tcp_balancer &tcp_balancer, struct pool &pool,
                  bool ip_transparent,
                  SocketAddress bind_address,
                  unsigned session_sticky,
-                 const AddressList *address_list,
+                 const AddressList &address_list,
                  unsigned timeout,
-                 const StockGetHandler *handler, void *handler_ctx,
-                 struct async_operation_ref *async_ref)
+                 const StockGetHandler &handler, void *handler_ctx,
+                 struct async_operation_ref &async_ref)
 {
     auto request =
-        NewFromPool<struct tcp_balancer_request>(*pool, *pool, *tcp_balancer,
+        NewFromPool<struct tcp_balancer_request>(pool, pool, tcp_balancer,
                                                  ip_transparent, bind_address,
                                                  session_sticky, timeout,
-                                                 *address_list,
-                                                 *handler, handler_ctx,
-                                                 *async_ref);
+                                                 address_list,
+                                                 handler, handler_ctx,
+                                                 async_ref);
 
-    if (address_list->GetSize() <= 1)
+    if (address_list.GetSize() <= 1)
         request->retries = 0;
-    else if (address_list->GetSize() == 2)
+    else if (address_list.GetSize() == 2)
         request->retries = 1;
-    else if (address_list->GetSize() == 3)
+    else if (address_list.GetSize() == 3)
         request->retries = 2;
     else
         request->retries = 3;
@@ -188,10 +188,10 @@ tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
 }
 
 void
-tcp_balancer_put(struct tcp_balancer *tcp_balancer, StockItem &item,
+tcp_balancer_put(struct tcp_balancer &tcp_balancer, StockItem &item,
                  bool destroy)
 {
-    tcp_stock_put(&tcp_balancer->tcp_stock, item, destroy);
+    tcp_stock_put(&tcp_balancer.tcp_stock, item, destroy);
 }
 
 SocketAddress

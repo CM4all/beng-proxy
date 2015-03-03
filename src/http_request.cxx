@@ -95,13 +95,13 @@ http_request_response_abort(GError *error, void *ctx)
         g_error_free(error);
 
         --hr->retries;
-        tcp_balancer_get(hr->tcp_balancer, hr->pool,
+        tcp_balancer_get(*hr->tcp_balancer, *hr->pool,
                          false, SocketAddress::Null(),
                          hr->session_sticky,
-                         &hr->uwa->addresses,
+                         hr->uwa->addresses,
                          30,
-                         &http_request_stock_handler, hr,
-                         hr->async_ref);
+                         http_request_stock_handler, hr,
+                         *hr->async_ref);
     } else {
         if (is_server_failure(error))
             failure_set(hr->current_address, FAILURE_RESPONSE, 20);
@@ -126,7 +126,7 @@ http_socket_release(bool reuse, void *ctx)
 {
     struct http_request *hr = (struct http_request *)ctx;
 
-    tcp_balancer_put(hr->tcp_balancer, *hr->stock_item, !reuse);
+    tcp_balancer_put(*hr->tcp_balancer, *hr->stock_item, !reuse);
 }
 
 static const struct lease http_socket_lease = {
@@ -231,11 +231,11 @@ http_request(struct pool &pool,
     header_write(&headers2, "connection", "keep-alive");
 
     hr->retries = 2;
-    tcp_balancer_get(&tcp_balancer, &pool,
+    tcp_balancer_get(tcp_balancer, pool,
                      false, SocketAddress::Null(),
                      session_sticky,
-                     &uwa.addresses,
+                     uwa.addresses,
                      30,
-                     &http_request_stock_handler, hr,
-                     async_ref);
+                     http_request_stock_handler, hr,
+                     *async_ref);
 }

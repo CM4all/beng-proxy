@@ -39,17 +39,17 @@ tcp_balancer_free(struct tcp_balancer *tcp_balancer);
  * @param timeout the connect timeout for each attempt [seconds]
  */
 void
-tcp_balancer_get(struct tcp_balancer *tcp_balancer, struct pool *pool,
+tcp_balancer_get(struct tcp_balancer &tcp_balancer, struct pool &pool,
                  bool ip_transparent,
                  SocketAddress bind_address,
                  unsigned session_sticky,
-                 const AddressList *address_list,
+                 const AddressList &address_list,
                  unsigned timeout,
-                 const StockGetHandler *handler, void *handler_ctx,
-                 struct async_operation_ref *async_ref);
+                 const StockGetHandler &handler, void *handler_ctx,
+                 struct async_operation_ref &async_ref);
 
 void
-tcp_balancer_put(struct tcp_balancer *tcp_balancer, StockItem &item,
+tcp_balancer_put(struct tcp_balancer &tcp_balancer, StockItem &item,
                  bool destroy);
 
 /**

@@ -76,7 +76,7 @@ memcached_socket_release(bool reuse, void *ctx)
 {
     memcached_stock_request *request = (memcached_stock_request *)ctx;
 
-    tcp_balancer_put(request->stock->tcp_balancer, *request->item, !reuse);
+    tcp_balancer_put(*request->stock->tcp_balancer, *request->item, !reuse);
 }
 
 static const struct lease memcached_socket_lease = {
@@ -151,10 +151,10 @@ memcached_stock_invoke(struct pool *pool, struct memcached_stock *stock,
     request->handler_ctx = handler_ctx;
     request->async_ref = async_ref;
 
-    tcp_balancer_get(stock->tcp_balancer, pool,
+    tcp_balancer_get(*stock->tcp_balancer, *pool,
                      false, SocketAddress::Null(),
-                     0, stock->address,
+                     0, *stock->address,
                      10,
-                     &memcached_stock_handler, request,
-                     async_ref);
+                     memcached_stock_handler, request,
+                     *async_ref);
 }
