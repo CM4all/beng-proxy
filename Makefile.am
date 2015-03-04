@@ -373,6 +373,7 @@ cm4all_beng_lb_SOURCES = \
 	src/address_edit.h \
 	src/address_edit.c \
 	src/address_sticky.c src/address_sticky.h \
+	src/generic_balancer.hxx \
 	src/client_balancer.cxx src/client_balancer.hxx \
 	src/bulldog.c \
 	src/child_manager.cxx src/child_manager.hxx \

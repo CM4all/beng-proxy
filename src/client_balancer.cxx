@@ -5,66 +5,55 @@
  */
 
 #include "client_balancer.hxx"
+#include "generic_balancer.hxx"
 #include "net/ConnectSocket.hxx"
 #include "address_list.hxx"
 #include "balancer.hxx"
-#include "failure.hxx"
-#include "async.hxx"
-#include "pool.hxx"
 #include "net/StaticSocketAddress.hxx"
 
-#include <glib.h>
-
 struct client_balancer_request {
-    struct pool *pool;
-    struct balancer *balancer;
-
     bool ip_transparent;
     StaticSocketAddress bind_address;
-
-    /**
-     * The "sticky id" of the incoming HTTP request.
-     */
-    unsigned session_sticky;
 
     /**
      * The connect timeout for each attempt.
      */
     unsigned timeout;
 
-    /**
-     * The number of remaining connection attempts.  We give up when
-     * we get an error and this attribute is already zero.
-     */
-    unsigned retries;
-
-    const AddressList *address_list;
-    SocketAddress current_address;
-
     const ConnectSocketHandler *handler;
     void *handler_ctx;
 
-    struct async_operation_ref *async_ref;
+    client_balancer_request(bool _ip_transparent, SocketAddress _bind_address,
+                            unsigned _timeout,
+                            const ConnectSocketHandler &_handler,
+                            void *_handler_ctx)
+        :ip_transparent(_ip_transparent),
+         timeout(_timeout),
+         handler(&_handler), handler_ctx(_handler_ctx) {
+        if (_bind_address.IsNull())
+            bind_address.Clear();
+        else
+            bind_address = _bind_address;
+    }
+
+    void Send(struct pool &pool, SocketAddress address,
+              struct async_operation_ref &async_ref);
 };
 
 extern const ConnectSocketHandler client_balancer_socket_handler;
 
-static void
-client_balancer_next(struct client_balancer_request *request)
+inline void
+client_balancer_request::Send(struct pool &pool, SocketAddress address,
+                              struct async_operation_ref &async_ref)
 {
-    const SocketAddress address =
-        balancer_get(*request->balancer, *request->address_list,
-                     request->session_sticky);
-    request->current_address = address;
-
-    client_socket_new(*request->pool,
+    client_socket_new(pool,
                       address.GetFamily(), SOCK_STREAM, 0,
-                      request->ip_transparent,
-                      request->bind_address,
+                      ip_transparent,
+                      bind_address,
                       address,
-                      request->timeout,
-                      client_balancer_socket_handler, request,
-                      *request->async_ref);
+                      timeout,
+                      client_balancer_socket_handler, this,
+                      async_ref);
 }
 
 /*
@@ -78,7 +67,8 @@ client_balancer_socket_success(SocketDescriptor &&fd, void *ctx)
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
 
-    failure_unset(request->current_address, FAILURE_FAILED);
+    auto &base = BalancerRequest<struct client_balancer_request>::Cast(*request);
+    base.Success();
 
     request->handler->success(std::move(fd), request->handler_ctx);
 }
@@ -89,13 +79,8 @@ client_balancer_socket_timeout(void *ctx)
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
 
-    failure_add(request->current_address);
-
-    if (request->retries-- > 0)
-        /* try again, next address */
-        client_balancer_next(request);
-    else
-        /* give up */
+    auto &base = BalancerRequest<struct client_balancer_request>::Cast(*request);
+    if (!base.Failure())
         request->handler->timeout(request->handler_ctx);
 }
 
@@ -105,15 +90,8 @@ client_balancer_socket_error(GError *error, void *ctx)
     struct client_balancer_request *request =
         (struct client_balancer_request *)ctx;
 
-    failure_add(request->current_address);
-
-    if (request->retries-- > 0) {
-        /* try again, next address */
-        g_error_free(error);
-
-        client_balancer_next(request);
-    } else
-        /* give up */
+    auto &base = BalancerRequest<struct client_balancer_request>::Cast(*request);
+    if (!base.Failure())
         request->handler->error(error, request->handler_ctx);
 }
 
@@ -138,32 +116,13 @@ client_balancer_connect(struct pool *pool, struct balancer *balancer,
                         const ConnectSocketHandler *handler, void *ctx,
                         struct async_operation_ref *async_ref)
 {
-    auto request = NewFromPool<struct client_balancer_request>(*pool);
-    request->pool = pool;
-    request->balancer = balancer;
-    request->ip_transparent = ip_transparent;
-
-    if (bind_address.IsNull())
-        request->bind_address.Clear();
-    else
-        request->bind_address = bind_address;
-
-    request->session_sticky = session_sticky;
-    request->timeout = timeout;
-
-    if (address_list->GetSize() <= 1)
-        request->retries = 0;
-    else if (address_list->GetSize() == 2)
-        request->retries = 1;
-    else if (address_list->GetSize() == 3)
-        request->retries = 2;
-    else
-        request->retries = 3;
-
-    request->address_list = address_list;
-    request->handler = handler;
-    request->handler_ctx = ctx;
-    request->async_ref = async_ref;
-
-    client_balancer_next(request);
+    BalancerRequest<struct client_balancer_request>::Start(*pool,
+                                                           *balancer,
+                                                           *address_list,
+                                                           *async_ref,
+                                                           session_sticky,
+                                                           ip_transparent,
+                                                           bind_address,
+                                                           timeout,
+                                                           *handler, ctx);
 }
