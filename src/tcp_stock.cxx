@@ -317,3 +317,11 @@ tcp_stock_item_get_domain(const StockItem &item)
 
     return connection->domain;
 }
+
+const char *
+tcp_stock_item_get_name(const StockItem &item)
+{
+    auto *connection = &StockItemToTcpStockConnection(item);
+
+    return connection->uri;
+}
