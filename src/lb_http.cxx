@@ -293,6 +293,7 @@ my_stock_ready(StockItem &item, void *ctx)
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         my_socket_lease, request2,
+                        tcp_stock_item_get_name(item),
                         NULL, NULL,
                         request->method, request->uri,
                         std::move(headers), request2->body, true,

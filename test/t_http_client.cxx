@@ -30,6 +30,7 @@ client_request(struct pool *pool, struct connection *connection,
 {
     http_client_request(*pool, connection->fd, ISTREAM_SOCKET,
                         *lease, lease_ctx,
+                        "localhost",
                         nullptr, nullptr,
                         method, uri, HttpHeaders(headers), body, expect_100,
                         *handler, ctx, *async_ref);

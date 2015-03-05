@@ -172,6 +172,7 @@ http_request_stock_ready(StockItem &item, void *ctx)
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         http_socket_lease, hr,
+                        tcp_stock_item_get_name(item),
                         hr->filter, filter_ctx,
                         hr->method, hr->uwa->path, std::move(hr->headers),
                         hr->body, true,

@@ -84,6 +84,7 @@ http_client_quark(void)
 void
 http_client_request(struct pool &pool, int fd, enum istream_direct fd_type,
                     const struct lease &lease, void *lease_ctx,
+                    const char *peer_name,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,

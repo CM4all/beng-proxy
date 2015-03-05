@@ -33,7 +33,6 @@
 #include <inline/compiler.h>
 #include <inline/poison.h>
 #include <daemon/log.h>
-#include <socket/address.h>
 
 #include <assert.h>
 #include <limits.h>
@@ -129,6 +128,7 @@ struct HttpClient {
     HttpClient(struct pool &_caller_pool, struct pool &_pool,
                int fd, enum istream_direct fd_type,
                const struct lease &lease, void *lease_ctx,
+               const char *_peer_name,
                const SocketFilter *filter, void *filter_ctx,
                http_method_t method, const char *uri,
                HttpHeaders &&headers,
@@ -240,22 +240,6 @@ struct HttpClient {
 
     void Abort();
 };
-
-static const char *
-get_peer_name(int fd)
-{
-     struct sockaddr_storage address;
-     socklen_t address_length = sizeof(address);
-
-     static char buffer[64];
-     if (getpeername(fd, (struct sockaddr *)&address, &address_length) < 0 ||
-         !socket_address_to_string(buffer, sizeof(buffer),
-                                   (const struct sockaddr *)&address,
-                                   address_length))
-         return "unknown";
-
-     return buffer;
-}
 
 /**
  * Abort receiving the response status/headers from the HTTP server.
@@ -1115,6 +1099,7 @@ inline
 HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        int fd, enum istream_direct fd_type,
                        const struct lease &lease, void *lease_ctx,
+                       const char *_peer_name,
                        const SocketFilter *filter, void *filter_ctx,
                        http_method_t method, const char *uri,
                        HttpHeaders &&headers,
@@ -1123,7 +1108,7 @@ HttpClient::HttpClient(struct pool &_caller_pool, struct pool &_pool,
                        void *ctx,
                        struct async_operation_ref &async_ref)
     :pool(&_pool), caller_pool(&_caller_pool),
-     peer_name(p_strdup(pool, get_peer_name(fd))),
+     peer_name(_peer_name),
      stopwatch(stopwatch_fd_new(pool, fd, uri))
 {
     socket.Init(*pool, fd, fd_type,
@@ -1215,6 +1200,7 @@ void
 http_client_request(struct pool &caller_pool,
                     int fd, enum istream_direct fd_type,
                     const struct lease &lease, void *lease_ctx,
+                    const char *peer_name,
                     const SocketFilter *filter, void *filter_ctx,
                     http_method_t method, const char *uri,
                     HttpHeaders &&headers,
@@ -1245,6 +1231,7 @@ http_client_request(struct pool &caller_pool,
     NewFromPool<HttpClient>(*pool, caller_pool, *pool,
                             fd, fd_type,
                             lease, lease_ctx,
+                            peer_name,
                             filter, filter_ctx,
                             method, uri,
                             std::move(headers), body, expect_100,

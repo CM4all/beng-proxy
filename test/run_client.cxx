@@ -262,6 +262,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
     case parsed_url::HTTP:
         http_client_request(*c->pool, c->fd.Get(), ISTREAM_TCP,
                             ajp_socket_lease, c,
+                            "localhost",
                             nullptr, nullptr,
                             c->method, c->url.uri,
                             HttpHeaders(*headers),
@@ -291,6 +292,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
         auto filter = &ssl_client_get_filter();
         http_client_request(*c->pool, c->fd.Get(), ISTREAM_TCP,
                             ajp_socket_lease, c,
+                            "localhost",
                             filter, filter_ctx,
                             c->method, c->url.uri,
                             HttpHeaders(*headers),
