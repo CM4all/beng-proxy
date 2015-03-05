@@ -53,6 +53,11 @@ struct lhttp_connection {
 
     int fd;
     struct event event;
+
+    gcc_pure
+    const char *GetName() const {
+        return child_stock_item_key(child);
+    }
 };
 
 static const char *
@@ -318,7 +323,7 @@ lhttp_stock_item_get_name(const StockItem &item)
 {
     const auto &connection = ToLhttpConnection(item);
 
-    return child_stock_item_key(connection.child);
+    return connection.GetName();
 }
 
 void
