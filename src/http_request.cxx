@@ -49,6 +49,19 @@ struct http_request {
 
     struct http_response_handler_ref handler;
     struct async_operation_ref *async_ref;
+
+    void Dispose() {
+        if (body != nullptr)
+            istream_close_unused(body);
+
+        if (filter != nullptr)
+            filter->close(filter_ctx);
+    }
+
+    void Failed(GError *error) {
+        Dispose();
+        handler.InvokeAbort(error);
+    }
 };
 
 /**
@@ -164,13 +177,7 @@ http_request_stock_error(GError *error, void *ctx)
 {
     struct http_request *hr = (struct http_request *)ctx;
 
-    if (hr->body != nullptr)
-        istream_close_unused(hr->body);
-
-    if (hr->filter != nullptr)
-        hr->filter->close(hr->filter_ctx);
-
-    hr->handler.InvokeAbort(error);
+    hr->Failed(error);
 }
 
 constexpr StockGetHandler http_request_stock_handler = {
