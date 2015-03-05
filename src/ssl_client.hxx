@@ -18,7 +18,7 @@ ssl_client_init();
 void
 ssl_client_deinit();
 
-const SocketFilter *
+const SocketFilter &
 ssl_client_get_filter();
 
 void *

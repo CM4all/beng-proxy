@@ -313,7 +313,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
                 return;
             }
 
-            filter = ssl_client_get_filter();
+            filter = &ssl_client_get_filter();
         } else {
             filter = nullptr;
             filter_ctx = nullptr;

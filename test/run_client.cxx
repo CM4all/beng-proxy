@@ -288,7 +288,7 @@ my_client_socket_success(SocketDescriptor &&fd, void *ctx)
             return;
         }
 
-        const SocketFilter *filter = ssl_client_get_filter();
+        auto filter = &ssl_client_get_filter();
         http_client_request(*c->pool, c->fd.Get(), ISTREAM_TCP,
                             ajp_socket_lease, c,
                             filter, filter_ctx,

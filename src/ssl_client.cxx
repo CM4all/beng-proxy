@@ -36,10 +36,10 @@ ssl_client_deinit()
         ssl_factory_free(factory);
 }
 
-const SocketFilter *
+const SocketFilter &
 ssl_client_get_filter()
 {
-    return &thread_socket_filter;;
+    return thread_socket_filter;;
 }
 
 static void *
