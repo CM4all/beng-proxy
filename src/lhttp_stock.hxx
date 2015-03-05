@@ -44,6 +44,10 @@ gcc_pure
 enum istream_direct
 lhttp_stock_item_get_type(const StockItem &item);
 
+gcc_pure
+const char *
+lhttp_stock_item_get_name(const StockItem &item);
+
 /**
  * Wrapper for hstock_put().
  */

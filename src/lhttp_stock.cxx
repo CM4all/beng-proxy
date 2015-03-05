@@ -313,6 +313,14 @@ lhttp_stock_item_get_type(gcc_unused const StockItem &item)
     return ISTREAM_SOCKET;
 }
 
+const char *
+lhttp_stock_item_get_name(const StockItem &item)
+{
+    const auto &connection = ToLhttpConnection(item);
+
+    return child_stock_item_key(connection.child);
+}
+
 void
 lhttp_stock_put(struct lhttp_stock *lhttp_stock, StockItem &item,
                 bool destroy)
