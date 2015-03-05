@@ -7,6 +7,8 @@
 #ifndef BENG_PROXY_TCP_STOCK_HXX
 #define BENG_PROXY_TCP_STOCK_HXX
 
+#include <inline/compiler.h>
+
 struct pool;
 struct balancer;
 struct StockMap;
@@ -42,9 +44,11 @@ tcp_stock_get(StockMap *tcp_stock, struct pool *pool, const char *name,
 void
 tcp_stock_put(StockMap *tcp_stock, StockItem &item, bool destroy);
 
+gcc_pure
 int
 tcp_stock_item_get(const StockItem &item);
 
+gcc_pure
 int
 tcp_stock_item_get_domain(const StockItem &item);
 
