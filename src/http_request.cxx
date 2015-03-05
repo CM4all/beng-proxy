@@ -35,7 +35,7 @@ struct http_request {
     unsigned session_sticky;
 
     const SocketFilter *filter;
-    void *filter_ctx;
+    SocketFilterFactory *filter_factory;
 
     StockItem *stock_item;
     SocketAddress current_address;
@@ -53,9 +53,6 @@ struct http_request {
     void Dispose() {
         if (body != nullptr)
             istream_close_unused(body);
-
-        if (filter != nullptr)
-            filter->close(filter_ctx);
     }
 
     void Failed(GError *error) {
@@ -160,12 +157,22 @@ http_request_stock_ready(StockItem &item, void *ctx)
     hr->stock_item = &item;
     hr->current_address = tcp_balancer_get_last();
 
+    void *filter_ctx = nullptr;
+    if (hr->filter_factory != nullptr) {
+        GError *error = nullptr;
+        filter_ctx = hr->filter_factory->CreateFilter(&error);
+        if (filter_ctx == nullptr) {
+            hr->Failed(error);
+            return;
+        }
+    }
+
     http_client_request(*hr->pool,
                         tcp_stock_item_get(item),
                         tcp_stock_item_get_domain(item) == AF_LOCAL
                         ? ISTREAM_SOCKET : ISTREAM_TCP,
                         http_socket_lease, hr,
-                        hr->filter, hr->filter_ctx,
+                        hr->filter, filter_ctx,
                         hr->method, hr->uwa->path, std::move(hr->headers),
                         hr->body, true,
                         http_request_response_handler, hr,
@@ -195,7 +202,7 @@ void
 http_request(struct pool &pool,
              struct tcp_balancer &tcp_balancer,
              unsigned session_sticky,
-             const SocketFilter *filter, void *filter_ctx,
+             const SocketFilter *filter, SocketFilterFactory *filter_factory,
              http_method_t method,
              const struct http_address &uwa,
              HttpHeaders &&headers,
@@ -214,7 +221,7 @@ http_request(struct pool &pool,
     hr->tcp_balancer = &tcp_balancer;
     hr->session_sticky = session_sticky;
     hr->filter = filter;
-    hr->filter_ctx = filter_ctx;
+    hr->filter_factory = filter_factory;
     hr->method = method;
     hr->uwa = &uwa;
 

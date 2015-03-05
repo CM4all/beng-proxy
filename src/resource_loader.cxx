@@ -7,6 +7,7 @@
 
 #include "resource_loader.hxx"
 #include "resource_address.hxx"
+#include "filtered_socket.hxx"
 #include "http_request.hxx"
 #include "http_response.hxx"
 #include "file_request.hxx"
@@ -39,6 +40,20 @@
 
 #include <string.h>
 #include <stdlib.h>
+
+class SslSocketFilterFactory final : public SocketFilterFactory {
+    struct pool &pool;
+    const char *const host;
+
+public:
+    SslSocketFilterFactory(struct pool &_pool,
+                           const char *_host)
+        :pool(_pool), host(_host) {}
+
+    void *CreateFilter(GError **error_r) override {
+        return ssl_client_create(&pool, host, error_r);
+    }
+};
 
 struct resource_loader {
     struct tcp_balancer *tcp_balancer;
@@ -166,7 +181,7 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
         const char *server_name;
         unsigned server_port;
         const SocketFilter *filter;
-        void *filter_ctx;
+        SocketFilterFactory *filter_factory;
 
     case RESOURCE_ADDRESS_NONE:
         break;
@@ -303,24 +318,17 @@ resource_loader_request(struct resource_loader *rl, struct pool *pool,
 
     case RESOURCE_ADDRESS_HTTP:
         if (address->u.http->ssl) {
-            GError *error = nullptr;
-            filter_ctx = ssl_client_create(pool,
-                                           /* TODO: only host */
-                                           address->u.http->host_and_port,
-                                           &error);
-            if (filter_ctx == nullptr) {
-                handler->InvokeAbort(handler_ctx, error);
-                return;
-            }
-
             filter = &ssl_client_get_filter();
+            filter_factory = NewFromPool<SslSocketFilterFactory>(*pool, *pool,
+                                                                 /* TODO: only host */
+                                                                 address->u.http->host_and_port);
         } else {
             filter = nullptr;
-            filter_ctx = nullptr;
+            filter_factory = nullptr;
         }
 
         http_request(*pool, *rl->tcp_balancer, session_sticky,
-                     filter, filter_ctx,
+                     filter, filter_factory,
                      method, *address->u.http,
                      HttpHeaders(headers), body,
                      *handler, handler_ctx, *async_ref);

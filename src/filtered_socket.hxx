@@ -91,6 +91,11 @@ struct SocketFilter {
     void (*close)(void *ctx);
 };
 
+class SocketFilterFactory {
+public:
+    virtual void *CreateFilter(GError **error_r) = 0;
+};
+
 /**
  * A wrapper for #buffered_socket that can filter input and output.
  */

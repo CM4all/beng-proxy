@@ -13,6 +13,7 @@ struct pool;
 struct istream;
 struct tcp_balancer;
 struct SocketFilter;
+class SocketFilterFactory;
 struct http_address;
 struct http_response_handler;
 struct async_operation_ref;
@@ -26,7 +27,7 @@ void
 http_request(struct pool &pool,
              struct tcp_balancer &tcp_balancer,
              unsigned session_sticky,
-             const SocketFilter *filter, void *filter_ctx,
+             const SocketFilter *filter, SocketFilterFactory *filter_factory,
              http_method_t method,
              const struct http_address &address,
              HttpHeaders &&headers, struct istream *body,
