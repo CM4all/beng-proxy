@@ -19,7 +19,7 @@
 static ssl_factory *factory;
 
 void
-ssl_client_init(void)
+ssl_client_init()
 {
     ssl_config config;
 
@@ -30,14 +30,14 @@ ssl_client_init(void)
 }
 
 void
-ssl_client_deinit(void)
+ssl_client_deinit()
 {
     if (factory != nullptr)
         ssl_factory_free(factory);
 }
 
 const SocketFilter *
-ssl_client_get_filter(void)
+ssl_client_get_filter()
 {
     return &thread_socket_filter;;
 }
