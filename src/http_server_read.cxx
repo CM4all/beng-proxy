@@ -374,10 +374,10 @@ http_server_connection::Feed(const void *data, size_t length)
         BufferedResult result;
 
     case Request::START:
-    case Request::HEADERS:
         if (score == HTTP_SERVER_NEW)
             score = HTTP_SERVER_FIRST;
 
+    case Request::HEADERS:
         result = http_server_feed_headers(this, data, length);
         if ((result == BufferedResult::OK || result == BufferedResult::PARTIAL) &&
             (request.read_state == Request::BODY ||
