@@ -47,6 +47,7 @@ request_forward(struct forward_request &dest, struct request &request2,
                                            dest.body != nullptr,
                                            !request2.IsProcessorEnabled(),
                                            !request2.IsTransformationEnabled(),
+                                           !request2.IsTransformationEnabled(),
                                            header_forward,
                                            request2.session_cookie,
                                            session, host_and_port, uri);

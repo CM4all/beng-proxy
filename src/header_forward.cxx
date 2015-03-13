@@ -267,6 +267,7 @@ forward_other_headers(struct strmap *dest, const struct strmap *src)
             !string_in_array(cors_request_headers, i.key) &&
             !string_in_array(exclude_request_headers, i.key) &&
             !is_secure_header(i.key) &&
+            strcmp(i.key, "range") != 0 &&
             !http_header_is_hop_by_hop(i.key))
             dest->Add(i.key, i.value);
 }
@@ -318,6 +319,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
                         bool exclude_host,
                         bool with_body, bool forward_charset,
                         bool forward_encoding,
+                        bool forward_range,
                         const struct header_forward_settings &settings,
                         const char *session_cookie,
                         const struct session *session,
@@ -369,6 +371,12 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
     if (forward_encoding &&
         (p = strmap_get_checked(src, "accept-encoding")) != nullptr)
         dest->Add("accept-encoding", p);
+
+    if (forward_range) {
+        p = strmap_get_checked(src, "range");
+        if (p != nullptr)
+            dest->Add("range", p);
+    }
 
     if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {
         if (src != nullptr)

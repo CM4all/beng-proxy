@@ -70,7 +70,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* nullptr test */
     out = forward_request_headers(*pool, nullptr,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     assert(strcmp(out->Remove("user-agent"), PRODUCT_TOKEN) == 0);
@@ -81,7 +81,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     headers->Add("user-agent", "firesomething");
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -94,7 +94,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -105,7 +105,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* now accept-charset is forwarded */
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, true, false,
+                                  false, false, true, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=iso-8859-1;"
@@ -116,7 +116,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     /* with request body */
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, true, false, false,
+                                  false, true, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -130,7 +130,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_NO;
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -143,7 +143,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
     settings.modes[HEADER_GROUP_CAPABILITIES] = HEADER_FORWARD_MANGLE;
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     assert(strcmp(out->Remove("user-agent"), PRODUCT_TOKEN) == 0);
@@ -159,7 +159,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -173,7 +173,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -185,7 +185,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -198,7 +198,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -211,7 +211,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   "c", nullptr, nullptr, nullptr);
     check_strmap(out, "accept=text/*;accept-charset=utf-8;"
@@ -225,7 +225,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
@@ -238,7 +238,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
@@ -248,7 +248,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
@@ -262,7 +262,7 @@ main(gcc_unused int argc, gcc_unused char **argv)
 
     out = forward_request_headers(*pool, headers,
                                   "192.168.0.2", "192.168.0.3",
-                                  false, false, false, false,
+                                  false, false, false, false, false,
                                   settings,
                                   nullptr, nullptr, nullptr, nullptr);
     check_strmap(out, "abc=def;accept=text/*;accept-charset=utf-8;"
