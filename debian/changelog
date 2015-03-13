@@ -5,7 +5,7 @@ cm4all-beng-proxy (7.0.1) unstable; urgency=low
   * forward the request headers "Accept-Charset" and "Accept-Encoding" to
     frame widgets
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Fri, 13 Mar 2015 16:53:29 -0000
 
 cm4all-beng-proxy (6.1) unstable; urgency=low
 
