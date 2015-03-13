@@ -1,6 +1,8 @@
 cm4all-beng-proxy (6.3) unstable; urgency=low
 
   * forward the "Accept-Ranges" response header
+  * forward the request headers "Accept-Charset" and "Accept-Encoding" to
+    frame widgets
 
  --   
 
