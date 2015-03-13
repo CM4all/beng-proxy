@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.3) unstable; urgency=low
 
-  * 
+  * forward the "Accept-Ranges" response header
 
  --   
 
