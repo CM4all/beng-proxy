@@ -86,6 +86,7 @@ static const char *const basic_response_headers[] = {
     "content-language",
     "content-md5",
     "content-range",
+    "accept-ranges",
     "content-type",
     "content-disposition",
     "last-modified",
