@@ -22,6 +22,7 @@ struct session;
  * @param exclude_host suppress the "Host" header?  The "Host" request
  * header must not be forwarded to another HTTP server, because we
  * need to generate a new one
+ * @param forward_range forward the "Range" request header?
  */
 struct strmap *
 forward_request_headers(struct pool &pool, const struct strmap *src,
@@ -29,6 +30,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
                         bool exclude_host,
                         bool with_body, bool forward_charset,
                         bool forward_encoding,
+                        bool forward_range,
                         const struct header_forward_settings &settings,
                         const char *session_cookie,
                         const struct session *session,
