@@ -179,6 +179,8 @@ widget_view_allowed(struct widget *widget,
 static void
 proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
 {
+    assert(!widget->from_request.frame);
+
     struct request &request2 = *proxy->request;
     struct http_server_request *request = request2.request;
 
@@ -227,6 +229,8 @@ proxy_widget_continue(struct proxy_widget *proxy, struct widget *widget)
             widget->from_request.path_info =
                 p_strndup(request->pool, request2.uri.path_info.data + 1,
                           request2.uri.path_info.length - 1);
+
+        widget->from_request.frame = true;
 
         frame_top_widget(request->pool, widget,
                          &request2.env,
@@ -355,6 +359,7 @@ proxy_widget(struct request &request2,
              unsigned options)
 {
     assert(widget != nullptr);
+    assert(!widget->from_request.frame);
     assert(proxy_ref != nullptr);
 
     auto proxy = NewFromPool<struct proxy_widget>(*request2.request->pool);

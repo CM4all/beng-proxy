@@ -37,6 +37,7 @@ widget::Init(struct pool &_pool,
     from_request.body = nullptr;
     if (_cls != nullptr)
         from_request.view = view;
+    from_request.frame = false;
     from_request.unauthorized_view = false;
     for_focused.body = nullptr;
     lazy.path = nullptr;
