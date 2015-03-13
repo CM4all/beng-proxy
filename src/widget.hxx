@@ -157,6 +157,11 @@ struct widget {
         const WidgetView *view;
 
         /**
+         * Is this the "top frame" widget requested by the client?
+         */
+        bool frame;
+
+        /**
          * This flag is set when the view selected by the client is
          * unauthorized, and will only be allowed when the widget
          * response is not processable.  If it is, we might expose

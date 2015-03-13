@@ -31,6 +31,7 @@ frame_top_widget(struct pool *pool, struct widget *widget,
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
     assert(widget_has_default_view(widget));
+    assert(widget->from_request.frame);
     assert(env != nullptr);
 
     if (!widget_check_approval(widget)) {
@@ -78,6 +79,7 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
     assert(widget_has_default_view(widget));
+    assert(!widget->from_request.frame);
     assert(id != nullptr);
     assert(env != nullptr);
 
