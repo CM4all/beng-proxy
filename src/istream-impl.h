@@ -124,9 +124,6 @@ struct istream *
 istream_unlock_new(struct pool *pool, struct istream *input,
                    struct cache *cache, struct cache_item *item);
 
-void
-istream_ajp_body_request(struct istream *istream, size_t length);
-
 #ifdef ENABLE_STOPWATCH
 
 struct istream *
