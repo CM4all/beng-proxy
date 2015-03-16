@@ -8,8 +8,8 @@
 #include "serialize.hxx"
 #include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/ByteOrder.hxx"
 
-#include <netinet/in.h>
 #include <string.h>
 #include <assert.h>
 
@@ -24,7 +24,7 @@ serialize_ajp_string_n(GrowingBuffer *gb, const char *s, size_t length)
 
     void *v = growing_buffer_write(gb, 2 + length + 1);
     char *p = (char *)v;
-    *(uint16_t *)v = htons(length);
+    *(uint16_t *)v = ToBE16(length);
     memcpy(p + 2, s, length);
     p[2 + length] = 0;
 }

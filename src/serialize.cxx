@@ -8,8 +8,7 @@
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"
-
-#include <glib.h>
+#include "util/ByteOrder.hxx"
 
 #include <assert.h>
 #include <stdint.h>
@@ -19,21 +18,21 @@ void
 serialize_uint16(GrowingBuffer *gb, uint16_t value)
 {
     uint16_t *dest = (uint16_t *)growing_buffer_write(gb, sizeof(*dest));
-    *dest = g_htons(value);
+    *dest = ToBE16(value);
 }
 
 void
 serialize_uint32(GrowingBuffer *gb, uint32_t value)
 {
     uint32_t *dest = (uint32_t *)growing_buffer_write(gb, sizeof(*dest));
-    *dest = g_htonl(value);
+    *dest = ToBE32(value);
 }
 
 void
 serialize_uint64(GrowingBuffer *gb, uint64_t value)
 {
     uint64_t *dest = (uint64_t *)growing_buffer_write(gb, sizeof(*dest));
-    *dest = GUINT64_TO_BE(value);
+    *dest = ToBE64(value);
 }
 
 /*
@@ -104,7 +103,7 @@ deserialize_uint16(ConstBuffer<void> &input)
         return 0;
     }
 
-    value = g_ntohs(*(const uint16_t *)input.data);
+    value = FromBE16(*(const uint16_t *)input.data);
     SkipFront(input, sizeof(value));
 
     return value;
@@ -120,7 +119,7 @@ deserialize_uint32(ConstBuffer<void> &input)
         return 0;
     }
 
-    value = g_ntohl(*(const uint32_t *)input.data);
+    value = FromBE32(*(const uint32_t *)input.data);
     SkipFront(input, sizeof(value));
 
     return value;
@@ -136,7 +135,7 @@ deserialize_uint64(ConstBuffer<void> &input)
         return 0;
     }
 
-    value = GUINT64_FROM_BE(*(const uint64_t *)input.data);
+    value = FromBE64(*(const uint64_t *)input.data);
     SkipFront(input, sizeof(value));
 
     return value;

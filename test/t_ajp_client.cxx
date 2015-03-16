@@ -17,6 +17,7 @@
 #include "strmap.hxx"
 #include "strutil.h"
 #include "fb_pool.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <inline/compiler.h>
 
@@ -126,10 +127,10 @@ write_get_body_chunk(size_t length)
 {
     assert(length <= 0xffff);
 
-    const struct ajp_header header = {
+    static constexpr struct ajp_header header = {
         .a = 'A',
         .b = 'B',
-        .length = htons(3),
+        .length = ToBE16(3),
     };
 
     write_full(&header, sizeof(header));
@@ -143,7 +144,7 @@ read_ajp_request(struct pool *pool, struct ajp_request *r)
     struct ajp_header header;
     read_ajp_header(&header);
 
-    size_t remaining = ntohs(header.length);
+    size_t remaining = FromBE16(header.length);
 
     r->code = (ajp_code)read_byte(&remaining);
     if (r->code != AJP_CODE_FORWARD_REQUEST) {
@@ -217,7 +218,7 @@ read_ajp_request_body_chunk(struct ajp_request *r)
     struct ajp_header header;
     read_ajp_header(&header);
 
-    size_t packet_length = ntohs(header.length);
+    size_t packet_length = FromBE16(header.length);
     size_t chunk_length = read_short(&packet_length);
     if (chunk_length == 0 || chunk_length > packet_length ||
         chunk_length > remaining)
@@ -239,7 +240,7 @@ read_ajp_end_request_body_chunk(struct ajp_request *r)
 
     struct ajp_header header;
     read_ajp_header(&header);
-    size_t packet_length = ntohs(header.length);
+    size_t packet_length = FromBE16(header.length);
     if (packet_length == 0)
         return;
 
@@ -285,7 +286,7 @@ write_headers(http_status_t status, const struct strmap *headers)
     const struct ajp_header header = {
         .a = 'A',
         .b = 'B',
-        .length = htons(length),
+        .length = ToBE16(length),
     };
 
     write_full(&header, sizeof(header));
@@ -317,7 +318,7 @@ write_body_chunk(const void *value, size_t length, size_t junk)
     const struct ajp_header header = {
         .a = 'A',
         .b = 'B',
-        .length = htons(3 + length + junk),
+        .length = ToBE16(3 + length + junk),
     };
 
     write_full(&header, sizeof(header));
@@ -330,10 +331,10 @@ write_body_chunk(const void *value, size_t length, size_t junk)
 static void
 write_end(void)
 {
-    const struct ajp_header header = {
+    static constexpr struct ajp_header header = {
         .a = 'A',
         .b = 'B',
-        .length = htons(1),
+        .length = ToBE16(1),
     };
 
     write_full(&header, sizeof(header));
@@ -522,10 +523,10 @@ ajp_server_premature_close_headers(gcc_unused struct pool *pool)
     struct ajp_request request;
     read_ajp_request(pool, &request);
 
-    const struct ajp_header header = {
+    static constexpr struct ajp_header header = {
         .a = 'A',
         .b = 'B',
-        .length = htons(256),
+        .length = ToBE16(256),
     };
 
     write_full(&header, sizeof(header));
@@ -545,10 +546,10 @@ ajp_server_premature_close_body(gcc_unused struct pool *pool)
 
     write_headers(HTTP_STATUS_OK, nullptr);
 
-    const struct ajp_header header = {
+    static constexpr struct ajp_header header = {
         .a = 'A',
         .b = 'B',
-        .length = htons(256),
+        .length = ToBE16(256),
     };
 
     write_full(&header, sizeof(header));

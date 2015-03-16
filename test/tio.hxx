@@ -4,13 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "util/ByteOrder.hxx"
+
 #include <inline/compiler.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <netinet/in.h>
 
 static void
 read_full(void *_p, size_t length)
@@ -50,7 +51,7 @@ read_short(size_t *remaining_r)
 
     read_full(&value, sizeof(value));
     (*remaining_r) -= sizeof(value);
-    return ntohs(value);
+    return FromBE16(value);
 }
 
 gcc_unused
@@ -91,7 +92,7 @@ gcc_unused
 static void
 write_short(uint16_t value)
 {
-    const uint16_t buffer = htons(value);
+    const uint16_t buffer = ToBE16(value);
     write_full(&buffer, sizeof(buffer));
 }
 

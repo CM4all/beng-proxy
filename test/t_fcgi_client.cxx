@@ -18,6 +18,7 @@
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <inline/compiler.h>
 
@@ -92,7 +93,7 @@ read_fcgi_begin_request(struct fcgi_begin_request *begin, uint16_t *request_id)
     read_fcgi_header(&header);
 
     if (header.type != FCGI_BEGIN_REQUEST ||
-        ntohs(header.content_length) != sizeof(*begin))
+        FromBE16(header.content_length) != sizeof(*begin))
         abort();
 
     *request_id = header.request_id;
@@ -155,7 +156,7 @@ read_fcgi_params(struct pool *pool, struct fcgi_request *r)
             header.request_id != r->id)
             abort();
 
-        size_t remaining = ntohs(header.content_length);
+        size_t remaining = FromBE16(header.content_length);
         if (remaining == 0)
             break;
 
@@ -187,7 +188,7 @@ read_fcgi_request(struct pool *pool, struct fcgi_request *r)
 {
     struct fcgi_begin_request begin;
     read_fcgi_begin_request(&begin, &r->id);
-    if (ntohs(begin.role) != FCGI_RESPONDER)
+    if (FromBE16(begin.role) != FCGI_RESPONDER)
         abort();
 
     read_fcgi_params(pool, r);
@@ -221,7 +222,7 @@ discard_fcgi_request_body(struct fcgi_request *r)
             header.request_id != r->id)
             abort();
 
-        size_t length = ntohs(header.content_length);
+        size_t length = FromBE16(header.content_length);
         if (length == 0)
             break;
 
@@ -237,7 +238,7 @@ write_fcgi_stdout(const struct fcgi_request *r,
         .version = FCGI_VERSION_1,
         .type = FCGI_STDOUT,
         .request_id = r->id,
-        .content_length = htons(length),
+        .content_length = ToBE16(length),
         .padding_length = 0,
         .reserved = 0,
     };
@@ -440,7 +441,7 @@ fcgi_server_mirror(struct pool *pool)
 
             header.type = FCGI_STDOUT;
             write_full(&header, sizeof(header));
-            mirror_data(ntohs(header.content_length) + header.padding_length);
+            mirror_data(FromBE16(header.content_length) + header.padding_length);
         }
     }
 
@@ -482,7 +483,7 @@ fcgi_server_premature_close_headers(struct pool *pool)
         .version = FCGI_VERSION_1,
         .type = FCGI_STDOUT,
         .request_id = request.id,
-        .content_length = htons(1024),
+        .content_length = ToBE16(1024),
         .padding_length = 0,
         .reserved = 0,
     };
@@ -510,7 +511,7 @@ fcgi_server_premature_close_body(struct pool *pool)
         .version = FCGI_VERSION_1,
         .type = FCGI_STDOUT,
         .request_id = request.id,
-        .content_length = htons(1024),
+        .content_length = ToBE16(1024),
         .padding_length = 0,
         .reserved = 0,
     };

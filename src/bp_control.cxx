@@ -17,6 +17,7 @@
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <daemon/log.h>
 
@@ -97,9 +98,9 @@ decode_translation_packets(struct pool *pool, TranslateRequest *request,
         if (length < sizeof(*header))
             return 0;
 
-        size_t payload_length = GUINT16_FROM_BE(header->length);
+        size_t payload_length = FromBE16(header->length);
         beng_translation_command command =
-            beng_translation_command(GUINT16_FROM_BE(header->command));
+            beng_translation_command(FromBE16(header->command));
 
         data = header + 1;
         length -= sizeof(*header);

@@ -8,10 +8,10 @@
 #include "istream-internal.h"
 #include "fcgi_protocol.h"
 #include "util/Cast.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <assert.h>
 #include <string.h>
-#include <netinet/in.h>
 
 struct istream_fcgi {
     struct istream output;
@@ -50,7 +50,7 @@ fcgi_start_record(struct istream_fcgi *fcgi, size_t length)
         /* uint16_t's limit */
         length = 0xffff;
 
-    fcgi->header.content_length = htons(length);
+    fcgi->header.content_length = ToBE16(length);
     fcgi->header_sent = 0;
     fcgi->missing_from_current_record = length;
 }

@@ -26,12 +26,12 @@
 #include "strmap.hxx"
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/ByteOrder.hxx"
 #include "pool.hxx"
 
 #include <daemon/log.h>
 #include <socket/util.h>
 
-#include <netinet/in.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -448,7 +448,7 @@ ajp_consume_packet(struct ajp_client *client, enum ajp_code code,
         }
 
         istream_ajp_body_request(client->request.ajp_body,
-                                 ntohs(chunk->length));
+                                 FromBE16(chunk->length));
         ajp_client_schedule_write(client);
         return true;
 
@@ -565,7 +565,7 @@ ajp_client_feed(struct ajp_client *client,
             return BufferedResult::MORE;
 
         const struct ajp_header *header = (const struct ajp_header*)data;
-        size_t header_length = ntohs(header->length);
+        size_t header_length = FromBE16(header->length);
 
         if (header->a != 'A' || header->b != 'B' || header_length == 0) {
             GError *error =
@@ -595,7 +595,7 @@ ajp_client_feed(struct ajp_client *client,
                 /* we need the chunk length */
                 return BufferedResult::MORE;
 
-            client->response.chunk_length = ntohs(chunk->length);
+            client->response.chunk_length = FromBE16(chunk->length);
             if (sizeof(*chunk) + client->response.chunk_length > header_length) {
                 GError *error =
                     g_error_new_literal(ajp_client_quark(), 0,
@@ -1001,7 +1001,7 @@ ajp_client_request(struct pool *pool, int fd, enum istream_direct fd_type,
 
     /* XXX is this correct? */
 
-    header->length = htons(growing_buffer_size(gb) - sizeof(*header));
+    header->length = ToBE16(growing_buffer_size(gb) - sizeof(*header));
 
     struct istream *request = istream_gb_new(pool, gb);
     if (body != nullptr) {

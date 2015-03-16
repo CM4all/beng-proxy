@@ -8,8 +8,7 @@
 #include "udp_listener.hxx"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"
-
-#include <glib.h>
+#include "util/ByteOrder.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -34,7 +33,7 @@ control_server_decode(const void *data, size_t length,
 
     const uint32_t *magic = (const uint32_t *)data;
 
-    if (length < sizeof(*magic) || GUINT32_FROM_BE(*magic) != control_magic) {
+    if (length < sizeof(*magic) || FromBE32(*magic) != control_magic) {
         GError *error = g_error_new_literal(control_server_quark(), 0,
                                             "wrong magic");
         handler->error(error, handler_ctx);
@@ -63,9 +62,9 @@ control_server_decode(const void *data, size_t length,
             return;
         }
 
-        size_t payload_length = GUINT16_FROM_BE(header->length);
+        size_t payload_length = FromBE16(header->length);
         beng_control_command command = (beng_control_command)
-            GUINT16_FROM_BE(header->command);
+            FromBE16(header->command);
 
         data = header + 1;
         length -= sizeof(*header);
@@ -212,8 +211,8 @@ control_server_reply(struct control_server *cs, struct pool *pool,
 
     struct beng_control_header *header = (struct beng_control_header *)
         p_malloc(pool, sizeof(*header) + payload_length);
-    header->length = GUINT16_TO_BE(payload_length);
-    header->command = GUINT16_TO_BE(command);
+    header->length = ToBE16(payload_length);
+    header->command = ToBE16(command);
     memcpy(header + 1, payload, payload_length);
 
     return udp_listener_reply(cs->udp, address,

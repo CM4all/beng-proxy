@@ -21,6 +21,7 @@
 #include "istream.h"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <inline/compiler.h>
 
@@ -448,7 +449,7 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
     serialize_uint16(gb, status);
     serialize_strmap(gb, response_headers);
 
-    request->header_size = g_htonl(growing_buffer_size(gb));
+    request->header_size = ToBE32(growing_buffer_size(gb));
 
     /* append response body */
     value = istream_cat_new(&pool,
@@ -457,8 +458,8 @@ http_cache_memcached_put(struct pool &pool, struct memcached_stock &stock,
                             istream_gb_new(&pool, gb), value, nullptr);
 
     request->extras.set.flags = 0;
-    request->extras.set.expiration = info.expires > 0
-        ? g_htonl(info.expires) : g_htonl(3600);
+    request->extras.set.expiration =
+        ToBE32(info.expires > 0 ? info.expires : 3600);
 
     request->callback.put = callback;
     request->callback_ctx = callback_ctx;

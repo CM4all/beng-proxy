@@ -22,6 +22,7 @@
 #include "util/djbhash.h"
 #include "util/ConstBuffer.hxx"
 #include "util/WritableBuffer.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <inline/compiler.h>
 
@@ -321,7 +322,7 @@ http_cache_choice_prepend_response(enum memcached_response_status status,
         cache_log(5, "add '%s'\n", choice->key);
 
         choice->extras.flags = 0;
-        choice->extras.expiration = g_htonl(600); /* XXX */
+        choice->extras.expiration = ToBE32(600); /* XXX */
 
         value = istream_memory_new(choice->pool,
                                    choice->data.data, choice->data.size);
@@ -458,7 +459,7 @@ http_cache_choice_filter_buffer_done(void *data0, size_t length, void *ctx)
         /* XXX use CAS */
 
         choice->extras.flags = 0;
-        choice->extras.expiration = g_htonl(600); /* XXX */
+        choice->extras.expiration = ToBE32(600); /* XXX */
 
         memcached_stock_invoke(choice->pool, choice->stock,
                                MEMCACHED_OPCODE_REPLACE,

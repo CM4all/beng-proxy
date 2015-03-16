@@ -13,6 +13,7 @@
 #include "istream-internal.h"
 #include "pool.hxx"
 #include "util/Cast.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <daemon/log.h>
 
@@ -314,11 +315,11 @@ memcached_submit_response(struct memcached_client *client)
         pool_ref(client->caller_pool);
 
         client->response.in_handler = true;
-        client->request.handler->response((memcached_response_status)g_ntohs(client->response.header.status),
+        client->request.handler->response((memcached_response_status)FromBE16(client->response.header.status),
                                           client->response.extras,
                                           client->response.header.extras_length,
                                           client->response.key.buffer,
-                                          g_ntohs(client->response.header.key_length),
+                                          FromBE16(client->response.header.key_length),
                                           value, client->request.handler_ctx);
         client->response.in_handler = false;
 
@@ -342,11 +343,11 @@ memcached_submit_response(struct memcached_client *client)
 
         client->response.read_state = memcached_client::ReadState::END;
 
-        client->request.handler->response((memcached_response_status)g_ntohs(client->response.header.status),
+        client->request.handler->response((memcached_response_status)FromBE16(client->response.header.status),
                                           client->response.extras,
                                           client->response.header.extras_length,
                                           client->response.key.buffer,
-                                          g_ntohs(client->response.header.key_length),
+                                          FromBE16(client->response.header.key_length),
                                           nullptr, client->request.handler_ctx);
         pool_unref(client->caller_pool);
 
@@ -363,7 +364,7 @@ memcached_begin_key(struct memcached_client *client)
     client->response.read_state = memcached_client::ReadState::KEY;
 
     client->response.key.remaining =
-        g_ntohs(client->response.header.key_length);
+        FromBE16(client->response.header.key_length);
     if (client->response.key.remaining == 0) {
         client->response.key.buffer = nullptr;
         return memcached_submit_response(client);
@@ -392,9 +393,9 @@ memcached_feed_header(struct memcached_client *client,
 
     client->response.read_state = memcached_client::ReadState::EXTRAS;
 
-    client->response.remaining = g_ntohl(client->response.header.body_length);
+    client->response.remaining = FromBE32(client->response.header.body_length);
     if (client->response.header.magic != MEMCACHED_MAGIC_RESPONSE ||
-        g_ntohs(client->response.header.key_length) +
+        FromBE16(client->response.header.key_length) +
         client->response.header.extras_length > client->response.remaining) {
         /* protocol error: abort the connection */
         GError *error =
@@ -449,7 +450,7 @@ memcached_feed_key(struct memcached_client *client,
     client->response.key.tail += length;
     client->response.key.remaining -= length;
     client->response.remaining -=
-        g_ntohs(client->response.header.key_length);
+        FromBE16(client->response.header.key_length);
 
     client->socket.Consumed(length);
 

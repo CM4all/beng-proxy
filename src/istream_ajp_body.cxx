@@ -9,9 +9,9 @@
 #include "ajp-protocol.h"
 #include "direct.h"
 #include "util/Cast.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <assert.h>
-#include <netinet/in.h>
 
 struct istream_ajp_body {
     struct istream output;
@@ -46,8 +46,8 @@ ajp_body_start_packet(struct istream_ajp_body *ab, size_t length)
     ab->header.header.a = 0x12;
     ab->header.header.b = 0x34;
     ab->header.header.length =
-        htons(ab->packet_remaining + sizeof(ab->header.length));
-    ab->header.length = htons(ab->packet_remaining);
+        ToBE16(ab->packet_remaining + sizeof(ab->header.length));
+    ab->header.length = ToBE16(ab->packet_remaining);
     ab->header_sent = 0;
 }
 

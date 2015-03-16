@@ -1,16 +1,15 @@
 #include "beng-proxy/control.h"
+#include "util/ByteOrder.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
 
-#include <glib.h>
 #include <event.h>
 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -42,14 +41,14 @@ int main(int argc, char **argv) {
 
     freeaddrinfo(ai);
 
-    const struct {
+    static constexpr struct {
         uint32_t magic;
         struct beng_control_header header;
     } packet = {
-        .magic = GUINT32_TO_BE(control_magic),
+        .magic = ToBE32(control_magic),
         .header = {
-            .length = htons(0),
-            .command = htons(CONTROL_NOP),
+            .length = ToBE16(0),
+            .command = ToBE16(CONTROL_NOP),
         },
     };
 

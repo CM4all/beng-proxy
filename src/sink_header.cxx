@@ -11,6 +11,7 @@
 #include "istream-internal.h"
 #include "async.hxx"
 #include "util/Cast.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <glib.h>
 
@@ -96,7 +97,7 @@ header_consume_size(struct sink_header *header,
 
     const void *size_buffer = header->size_buffer;
         const uint32_t *size_p = (const uint32_t *)size_buffer;
-    header->size = g_ntohl(*size_p);
+    header->size = FromBE32(*size_p);
     if (header->size > 0x100000) {
         /* header too large */
         header->async_operation.Finished();

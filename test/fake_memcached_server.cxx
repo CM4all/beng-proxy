@@ -1,12 +1,9 @@
 #include "memcached_protocol.hxx"
-
-#include <glib.h>
+#include "util/ByteOrder.hxx"
 
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <netinet/in.h>
 
 static void
 read_full_or_abort(int fd, void *dest0, size_t length)
@@ -73,12 +70,12 @@ int main(int argc, char **argv)
     static char response_body2[8192];
     const struct memcached_response_header response_header = {
         .magic = MEMCACHED_MAGIC_RESPONSE,
-        .key_length = GUINT16_TO_BE(sizeof(response_key)),
+        .key_length = ToBE16(sizeof(response_key)),
         .extras_length = 0,
         .status = MEMCACHED_STATUS_NO_ERROR,
-        .body_length = GUINT32_TO_BE(sizeof(response_key) +
-                                     sizeof(response_body1) +
-                                     sizeof(response_body2)),
+        .body_length = ToBE32(sizeof(response_key) +
+                              sizeof(response_body1) +
+                              sizeof(response_body2)),
         .message_id = 0,
     };
 
@@ -93,7 +90,7 @@ int main(int argc, char **argv)
             return 2;
         }
 
-        read_discard(0, ntohl(request_header.body_length));
+        read_discard(0, FromBE16(request_header.body_length));
 
         write_full_or_abort(1, &response_header, sizeof(response_header));
         write_full_or_abort(1, response_key, sizeof(response_key));

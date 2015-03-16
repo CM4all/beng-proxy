@@ -8,8 +8,8 @@
 #include "istream.h"
 #include "istream_null.hxx"
 #include "pool.hxx"
+#include "util/ByteOrder.hxx"
 
-#include <glib.h>
 #include <string.h>
 
 struct istream *
@@ -28,12 +28,12 @@ memcached_request_packet(struct pool &pool, enum memcached_opcode opcode,
     auto header = PoolAlloc<memcached_request_header>(pool);
     header->magic = MEMCACHED_MAGIC_REQUEST;
     header->opcode = opcode;
-    header->key_length = g_htons(key_length);
+    header->key_length = ToBE16(key_length);
     header->extras_length = extras_length;
     header->data_type = 0;
     header->reserved = 0;
     header->body_length =
-        g_htonl(extras_length + key_length + value_length);
+        ToBE32(extras_length + key_length + value_length);
     header->message_id = message_id;
     memset(header->cas, 0, sizeof(header->cas));
 

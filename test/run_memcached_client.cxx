@@ -8,6 +8,7 @@
 #include "direct.h"
 #include "shutdown_listener.h"
 #include "fb_pool.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <socket/resolver.h>
 #include <socket/util.h>
@@ -215,7 +216,7 @@ int main(int argc, char **argv) {
 
     if (opcode == MEMCACHED_OPCODE_SET) {
         set_extras.flags = 0;
-        set_extras.expiration = htonl(300);
+        set_extras.expiration = ToBE32(300);
         extras = &set_extras;
         extras_length = sizeof(set_extras);
     } else {

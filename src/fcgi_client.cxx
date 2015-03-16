@@ -26,39 +26,16 @@
 #include "util/Cast.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"
+#include "util/ByteOrder.hxx"
 
 #include <glib.h>
 
-#include <netinet/in.h>
 #include <sys/socket.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-
-static inline constexpr uint16_t
-ByteSwap16(uint16_t value)
-{
-  return (value >> 8) | (value << 8);
-}
-
-/**
- * Converts a 16bit value from the system's byte order to big endian.
- */
-static inline constexpr uint16_t
-ToBE16(uint16_t value)
-{
-#if __BYTE_ORDER == __BIG_ENDIAN
-    return value;
-#else
-#if __BYTE_ORDER == __LITTLE_ENDIAN 
-  return ByteSwap16(value);
-#else
-#error Unknown byte order
-#endif
-#endif
-}
 
 #ifndef NDEBUG
 static LIST_HEAD(fcgi_clients);
@@ -292,7 +269,7 @@ fcgi_client_find_end_request(struct fcgi_client *client,
             /* reached the end of the given buffer: not found */
             return 0;
 
-        data += ntohs(header->content_length);
+        data += FromBE16(header->content_length);
         data += header->padding_length;
 
         if (header->request_id == client->id &&
@@ -500,7 +477,7 @@ static bool
 fcgi_client_handle_header(struct fcgi_client *client,
                           const struct fcgi_record_header *header)
 {
-    client->content_length = ntohs(header->content_length);
+    client->content_length = FromBE16(header->content_length);
     client->skip_length = header->padding_length;
 
     if (header->request_id != client->id) {
@@ -964,7 +941,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
 
     GrowingBuffer *buffer = growing_buffer_new(pool, 1024);
     header.type = FCGI_BEGIN_REQUEST;
-    header.content_length = htons(sizeof(begin_request));
+    header.content_length = ToBE16(sizeof(begin_request));
     growing_buffer_write_buffer(buffer, &header, sizeof(header));
     growing_buffer_write_buffer(buffer, &begin_request, sizeof(begin_request));
 
@@ -1013,7 +990,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
         fcgi_serialize_vparams(buffer, header.request_id, params);
 
     header.type = FCGI_PARAMS;
-    header.content_length = htons(0);
+    header.content_length = ToBE16(0);
     growing_buffer_write_buffer(buffer, &header, sizeof(header));
 
     struct istream *request;
@@ -1028,7 +1005,7 @@ fcgi_client_request(struct pool *caller_pool, int fd, enum istream_direct fd_typ
     else {
         /* no request body - append an empty STDIN packet */
         header.type = FCGI_STDIN;
-        header.content_length = htons(0);
+        header.content_length = ToBE16(0);
         growing_buffer_write_buffer(buffer, &header, sizeof(header));
 
         request = istream_gb_new(pool, buffer);

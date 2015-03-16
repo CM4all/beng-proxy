@@ -578,6 +578,7 @@ noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
 	libistream.a
 
 libutil_a_SOURCES = \
+	src/util/ByteOrder.hxx \
 	src/util/Cast.hxx \
 	src/util/CharUtil.hxx \
 	src/util/ConstBuffer.hxx \

@@ -14,7 +14,6 @@
 #include <string.h>
 #include <errno.h>
 #include <netdb.h>
-#include <netinet/in.h>
 
 struct config_parser {
     struct pool *pool;

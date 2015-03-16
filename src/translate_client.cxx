@@ -42,9 +42,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
