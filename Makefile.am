@@ -746,7 +746,7 @@ noinst_PROGRAMS = \
 	test/cleanup_memcached_choice \
 	test/fake-memcached-server \
 	test/run_delegate \
-	test/dump_udp test/dump_control test/send-control \
+	test/dump_udp test/dump_control test/send_control \
 	test/run_ua_parser \
 	test/run_parser_cdata
 
@@ -1845,7 +1845,7 @@ test_dump_control_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
 	$(LIBEVENT_LIBS)
 
-test_send_control_SOURCES = test/send-control.c
+test_send_control_SOURCES = test/send_control.cxx
 test_send_control_LDADD = $(LIBCM4ALL_SOCKET_LIBS)
 
 test_run_ua_parser_SOURCES = test/run_ua_parser.c \
