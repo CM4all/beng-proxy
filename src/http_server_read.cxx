@@ -69,6 +69,9 @@ http_server_parse_request_line(struct http_server_connection *connection,
         } else if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
             method = HTTP_METHOD_PUT;
             line += 4;
+        } else if (memcmp(line + 1, "ATCH ", 5) == 0) {
+            method = HTTP_METHOD_PATCH;
+            line += 6;
         } else if (memcmp(line + 1, "ROPFIND ", 8) == 0) {
             method = HTTP_METHOD_PROPFIND;
             line += 9;
