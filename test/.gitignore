@@ -63,5 +63,6 @@ run_nfs_client
 /t_cookie_server
 /t_cgi_address
 /send_control
+/fake_memcached_server
 
 *.trs

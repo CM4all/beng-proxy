@@ -51,7 +51,8 @@ connect_fake_server(void)
         dup2(sv[1], 1);
         close(sv[0]);
         close(sv[1]);
-        execl("./test/fake-memcached-server", "fake-memcached-server", NULL);
+        execl("./test/fake_memcached_server", "fake_memcached_server",
+              nullptr);
         perror("exec() failed");
         exit(EXIT_FAILURE);
     }

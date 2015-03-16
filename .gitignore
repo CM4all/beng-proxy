@@ -34,7 +34,6 @@ test/t_fcgi_client
 test/t-widget-stream
 test/t_http_address
 test/t-uri-verify
-test/fake-memcached-server
 test/t-processor
 test/was_mirror
 test/run_was

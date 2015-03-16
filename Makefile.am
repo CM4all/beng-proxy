@@ -744,7 +744,7 @@ noinst_PROGRAMS = \
 	test/run_http_cache \
 	test/dump_memcached_choice \
 	test/cleanup_memcached_choice \
-	test/fake-memcached-server \
+	test/fake_memcached_server \
 	test/run_delegate \
 	test/dump_udp test/dump_control test/send_control \
 	test/run_ua_parser \
@@ -1798,7 +1798,7 @@ test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
-test_fake_memcached_server_SOURCES = test/fake-memcached-server.c
+test_fake_memcached_server_SOURCES = test/fake_memcached_server.cxx
 
 test_t_memcached_client_SOURCES = test/t_memcached_client.cxx \
 	src/memcached_client.cxx src/memcached_packet.cxx \

@@ -11,7 +11,7 @@
 static void
 read_full_or_abort(int fd, void *dest0, size_t length)
 {
-    char *dest = dest0;
+    char *dest = (char *)dest0;
     ssize_t nbytes;
 
     while (length > 0) {
@@ -45,7 +45,7 @@ read_discard(int fd, size_t length)
 static void
 write_full_or_abort(int fd, const void *dest0, size_t length)
 {
-    const char *dest = dest0;
+    const char *dest = (const char *)dest0;
     ssize_t nbytes;
 
     while (length > 0) {
@@ -68,9 +68,9 @@ write_full_or_abort(int fd, const void *dest0, size_t length)
 int main(int argc, char **argv)
 {
     struct memcached_request_header request_header;
-    static const char response_key[3] = "foo";
-    static const char response_body1[1024];
-    static const char response_body2[8192];
+    static constexpr char response_key[3] = {'f','o','o'};
+    static char response_body1[1024];
+    static char response_body2[8192];
     const struct memcached_response_header response_header = {
         .magic = MEMCACHED_MAGIC_RESPONSE,
         .key_length = GUINT16_TO_BE(sizeof(response_key)),
