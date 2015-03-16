@@ -124,9 +124,6 @@ struct istream *
 istream_unlock_new(struct pool *pool, struct istream *input,
                    struct cache *cache, struct cache_item *item);
 
-struct istream *
-istream_ajp_body_new(struct pool *pool, struct istream *input);
-
 void
 istream_ajp_body_request(struct istream *istream, size_t length);
 

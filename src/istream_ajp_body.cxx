@@ -4,9 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_ajp_body.hxx"
 #include "istream-internal.h"
 #include "ajp-protocol.h"
 #include "direct.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <netinet/in.h>
@@ -120,7 +122,7 @@ ajp_body_make_packet(struct istream_ajp_body *ab, size_t length)
 static size_t
 ajp_body_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_ajp_body *ab = ctx;
+    auto *ab = (struct istream_ajp_body *)ctx;
     size_t nbytes;
 
     if (!ajp_body_make_packet(ab, length))
@@ -137,10 +139,10 @@ ajp_body_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-ajp_body_input_direct(istream_direct_t type, int fd, size_t max_length,
+ajp_body_input_direct(enum istream_direct type, int fd, size_t max_length,
                       void *ctx)
 {
-    struct istream_ajp_body *ab = ctx;
+    auto *ab = (struct istream_ajp_body *)ctx;
 
     if (ab->packet_remaining == 0) {
         if (ab->requested == 0)
@@ -192,7 +194,7 @@ static const struct istream_handler ajp_body_input_handler = {
 static inline struct istream_ajp_body *
 istream_to_ab(struct istream *istream)
 {
-    return (struct istream_ajp_body *)(((char*)istream) - offsetof(struct istream_ajp_body, output));
+    return &ContainerCast2(*istream, &istream_ajp_body::output);
 }
 
 static off_t
@@ -234,7 +236,7 @@ istream_ajp_body_close(struct istream *istream)
     istream_deinit(&ab->output);
 }
 
-static const struct istream_class istream_ajp_body = {
+static constexpr struct istream_class istream_ajp_body = {
     .available = istream_ajp_body_available,
     .read = istream_ajp_body_read,
     .close = istream_ajp_body_close,

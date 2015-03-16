@@ -301,7 +301,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/frame.cxx src/frame.hxx \
 	src/udp_listener.cxx src/udp_listener.hxx \
 	src/udp-distribute.c \
-	src/istream-ajp-body.c \
+	src/istream_ajp_body.cxx src/istream_ajp_body.hxx \
 	src/istream_gb.cxx src/istream_gb.hxx \
 	src/sigutil.h \
 	src/address_quark.h \
@@ -1662,7 +1662,7 @@ test_t_ajp_client_SOURCES = test/t_ajp_client.cxx \
 	src/buffered_io.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/istream_gb.cxx \
-	src/istream-ajp-body.c \
+	src/istream_ajp_body.cxx src/istream_ajp_body.hxx \
 	src/direct.c 
 test_t_ajp_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1693,7 +1693,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/buffered_io.cxx \
 	src/fd-util.c src/fd_util.c \
 	src/istream_gb.cxx \
-	src/istream-ajp-body.c \
+	src/istream_ajp_body.cxx src/istream_ajp_body.hxx \
 	src/stock.cxx src/pipe_stock.cxx \
 	src/shutdown_listener.c \
 	$(STOPWATCH_SRC) \

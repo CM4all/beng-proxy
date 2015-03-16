@@ -15,6 +15,7 @@
 #include "format.h"
 #include "istream-internal.h"
 #include "istream_gb.hxx"
+#include "istream_ajp_body.hxx"
 #include "ajp-protocol.h"
 #include "serialize.hxx"
 #include "strref.h"
