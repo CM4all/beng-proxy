@@ -3,6 +3,7 @@ cm4all-beng-proxy (5.16) unstable; urgency=low
   * net: fix crash due to parsing '@' twice
   * net: fix another off-by-one bug in local socket addresses
   * random: fix partial entropy collection
+  * http_server: support method PATCH (RFC 5789)
 
  --   
 
