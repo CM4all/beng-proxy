@@ -10,6 +10,7 @@
 #include "util/Cast.hxx"
 
 #include <assert.h>
+#include <stdint.h>
 
 struct istream_rubber {
     struct istream base;

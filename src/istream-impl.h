@@ -9,7 +9,6 @@
 #define __BENG_ISTREAM_IMPL_H
 
 #include <stdbool.h>
-#include <stdint.h>
 
 struct pool;
 struct async_operation;
@@ -44,12 +43,6 @@ istream_string_new(struct pool *pool, const char *s);
 
 struct istream *
 istream_chunked_new(struct pool *pool, struct istream *input);
-
-/**
- * @param request_id the FastCGI request id in network byte order
- */
-struct istream *
-istream_fcgi_new(struct pool *pool, struct istream *input, uint16_t request_id);
 
 struct istream *
 istream_cat_new(struct pool *pool, ...);

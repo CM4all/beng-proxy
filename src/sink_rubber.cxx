@@ -12,6 +12,7 @@
 #include "util/Cast.hxx"
 
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>

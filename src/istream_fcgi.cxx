@@ -4,8 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_fcgi.hxx"
 #include "istream-internal.h"
 #include "fcgi_protocol.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -103,7 +105,7 @@ fcgi_feed(struct istream_fcgi *fcgi, const char *data, size_t length)
 static size_t
 fcgi_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_fcgi *fcgi = ctx;
+    auto *fcgi = (struct istream_fcgi *)ctx;
     size_t nbytes;
 
     pool_ref(fcgi->output.pool);
@@ -116,7 +118,7 @@ fcgi_input_data(const void *data, size_t length, void *ctx)
 static void
 fcgi_input_eof(void *ctx)
 {
-    struct istream_fcgi *fcgi = ctx;
+    auto *fcgi = (struct istream_fcgi *)ctx;
 
     assert(fcgi->input != NULL);
     assert(fcgi->missing_from_current_record == 0);
@@ -150,7 +152,7 @@ static const struct istream_handler fcgi_input_handler = {
 static inline struct istream_fcgi *
 istream_to_fcgi(struct istream *istream)
 {
-    return (struct istream_fcgi *)(((char*)istream) - offsetof(struct istream_fcgi, output));
+    return &ContainerCast2(*istream, &istream_fcgi::output);
 }
 
 static void
