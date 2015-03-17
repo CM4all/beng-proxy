@@ -12,6 +12,7 @@
 #include <stdint.h>
 
 #ifdef SESSION_ID_SIZE
+#include <array>
 #include <string.h> /* for memcmp() */
 #endif
 
@@ -21,7 +22,7 @@
 
 struct SessionId {
 #ifdef SESSION_ID_SIZE
-    uint32_t data[SESSION_ID_WORDS];
+    std::array<uint32_t, SESSION_ID_WORDS> data;
 #else
     uint64_t value;
 
