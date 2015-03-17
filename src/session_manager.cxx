@@ -176,10 +176,7 @@ SessionManager::Cleanup()
             },
             [this](Session *session) {
                 assert(num_sessions > 0);
-
                 --num_sessions;
-                if (num_sessions == 0)
-                    evtimer_del(&session_cleanup_event);
 
                 session_destroy(session);
             });
