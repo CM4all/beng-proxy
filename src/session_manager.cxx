@@ -421,7 +421,7 @@ cluster_session_id(uint32_t id)
 static void
 session_generate_id(SessionId *id_r)
 {
-#ifdef SESSION_ID_WORDS
+#ifdef SESSION_ID_SIZE
     for (auto &i : id_r->data)
         i = g_rand_int(session_rand);
 

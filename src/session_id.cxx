@@ -12,7 +12,7 @@
 bool
 SessionId::Parse(const char *p)
 {
-#ifdef SESSION_ID_WORDS
+#ifdef SESSION_ID_SIZE
     if (strlen(p) != SESSION_ID_WORDS * 8)
         return false;
 
@@ -38,7 +38,7 @@ SessionId::Parse(const char *p)
 const char *
 SessionId::Format(struct session_id_string &string) const
 {
-#ifdef SESSION_ID_WORDS
+#ifdef SESSION_ID_SIZE
     for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
         format_uint32_hex_fixed(string.buffer + i * 8, data[i]);
 #else
