@@ -249,14 +249,13 @@ SessionManager::~SessionManager()
     for (auto &slot : sessions) {
         slot.clear_and_dispose([this](Session *session) {
                 assert(num_sessions > 0);
-
                 --num_sessions;
-                if (num_sessions == 0)
-                    evtimer_del(&session_cleanup_event);
 
                 session_destroy(session);
             });
     }
+
+    assert(num_sessions == 0);
 
     rwlock_wunlock(&lock);
     rwlock_destroy(&lock);
