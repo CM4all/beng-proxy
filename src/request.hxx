@@ -265,7 +265,7 @@ request_determine_session(struct request &request);
 static inline Session *
 request_get_session(const struct request &request)
 {
-    return session_id_is_defined(request.session_id)
+    return request.session_id.IsDefined()
         ? session_get(request.session_id)
         : nullptr;
 }

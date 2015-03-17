@@ -89,7 +89,7 @@ apply_translate_response_session(request &request,
     request.ApplyTranslateRealm(response);
 
     if (response.transparent) {
-        session_id_clear(&request.session_id);
+        request.session_id.Clear();
         request.stateless = true;
         request.args = nullptr;
     }
@@ -122,7 +122,7 @@ handle_translated_request2(request &request,
          response.response_header_forward.modes[HEADER_GROUP_COOKIE] != HEADER_FORWARD_BOTH)) {
         /* disable session management if cookies are not mangled by
            beng-proxy */
-        session_id_clear(&request.session_id);
+        request.session_id.Clear();
         request.stateless = true;
     }
 
@@ -873,7 +873,7 @@ handle_http_request(client_connection &connection,
 
     request2->args = nullptr;
     request2->cookies = nullptr;
-    session_id_clear(&request2->session_id);
+    request2->session_id.Clear();
     request2->send_session_cookie = false;
 #ifdef DUMP_WIDGET_TREE
     request2->dump_widget_tree = nullptr;

@@ -61,7 +61,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
 
         auto *session = session_get(session_id);
         assert(session != NULL);
-        assert(session_id_equals(session->id, session_id));
+        assert(session->id == session_id);
         session_put(session);
     }
 

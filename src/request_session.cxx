@@ -43,10 +43,10 @@ static Session *
 request_load_session(struct request &request, const char *session_id)
 {
     assert(!request.stateless);
-    assert(!session_id_is_defined(request.session_id));
+    assert(!request.session_id.IsDefined());
     assert(session_id != nullptr);
 
-    if (!session_id_parse(session_id, &request.session_id))
+    if (!request.session_id.Parse(session_id))
         return nullptr;
 
     auto *session = request_get_session(request);
@@ -182,8 +182,7 @@ request_make_session(struct request &request)
     if (request.args == nullptr)
         request.args = strmap_new(request.request->pool);
     request.args->Set("session",
-                      session_id_format(request.session_id,
-                                        &request.session_id_string));
+                      request.session_id.Format(request.session_id_string));
 
     return session;
 }
@@ -191,7 +190,7 @@ request_make_session(struct request &request)
 void
 request_ignore_session(struct request &request)
 {
-    if (!session_id_is_defined(request.session_id))
+    if (!request.session_id.IsDefined())
         return;
 
     assert(!request.stateless);
@@ -199,13 +198,13 @@ request_ignore_session(struct request &request)
     if (request.args != nullptr)
         request.args->Remove("session");
 
-    session_id_clear(&request.session_id);
+    request.session_id.Clear();
 }
 
 void
 request_discard_session(struct request &request)
 {
-    if (!session_id_is_defined(request.session_id))
+    if (!request.session_id.IsDefined())
         return;
 
     assert(!request.stateless);
@@ -214,7 +213,7 @@ request_discard_session(struct request &request)
         request.args->Remove("session");
 
     session_delete(request.session_id);
-    session_id_clear(&request.session_id);
+    request.session_id.Clear();
 }
 
 /**

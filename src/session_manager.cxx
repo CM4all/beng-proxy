@@ -84,11 +84,7 @@ struct SessionManager {
     void Abandon();
 
     List &Slot(SessionId id) {
-#ifdef SESSION_ID_WORDS
-        return sessions[id.data[0] % SESSION_SLOTS];
-#else
-        return sessions[id.value % SESSION_SLOTS];
-#endif
+        return sessions[id.Hash() % SESSION_SLOTS];
     }
 
     void Insert(Session *session);
@@ -539,7 +535,7 @@ session_find(SessionId id)
     assert(locked_session == nullptr);
 
     for (auto &session : session_manager->Slot(id)) {
-        if (session_id_equals(session.id, id)) {
+        if (session.id == id) {
 #ifndef NDEBUG
             locked_session = &session;
 #endif
@@ -613,11 +609,11 @@ session_put(Session *session)
         dpool_is_fragmented(session->pool))
         defragment = session->id;
     else
-        session_id_clear(&defragment);
+        defragment.Clear();
 
     session_put_internal(session);
 
-    if (session_id_is_defined(defragment)) {
+    if (defragment.IsDefined()) {
         /* the shared memory pool has become too fragmented;
            defragment the session by duplicating it into a new shared
            memory pool */

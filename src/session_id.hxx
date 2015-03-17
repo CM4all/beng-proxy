@@ -9,6 +9,7 @@
 
 #include <inline/compiler.h>
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef SESSION_ID_SIZE
@@ -30,6 +31,53 @@ struct SessionId {
 
     explicit constexpr SessionId(uint64_t _value):value(_value) {}
 #endif
+
+    gcc_pure
+    bool IsDefined() const {
+#ifdef SESSION_ID_WORDS
+        for (auto i : data)
+            if (i != 0)
+                return true;
+        return false;
+#else
+        return value != 0;
+#endif
+    }
+
+    void Clear() {
+#ifdef SESSION_ID_WORDS
+        std::fill(data.begin(), data.end(), 0);
+#else
+        value = 0;
+#endif
+    }
+
+    gcc_pure
+    bool operator==(const SessionId &other) const {
+#ifdef SESSION_ID_WORDS
+        return memcmp(this, &other, sizeof(other)) == 0;
+#else
+        return value == other.value;
+#endif
+    }
+
+    gcc_pure
+    size_t Hash() const {
+#ifdef SESSION_ID_WORDS
+        return data[0];
+#else
+        return value;
+#endif
+    }
+
+    /**
+     * Parse a session id from a string.
+     *
+     * @return true on success, false on error
+     */
+    bool Parse(const char *p);
+
+    const char *Format(struct session_id_string &buffer) const;
 };
 
 /**
@@ -41,61 +89,5 @@ struct session_id_string {
      */
     char buffer[sizeof(SessionId) * 2 + 1];
 };
-
-gcc_pure
-static inline bool
-session_id_is_defined(SessionId id)
-{
-#ifdef SESSION_ID_WORDS
-    for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
-        if (id.data[i] != 0)
-            return true;
-    return false;
-#else
-    return id.value != 0;
-#endif
-}
-
-static inline void
-session_id_clear(SessionId *id_p)
-{
-#ifdef SESSION_ID_WORDS
-    memset(id_p, 0, sizeof(*id_p));
-#else
-    id_p->value = 0;
-#endif
-}
-
-/**
- * Parse a session id from a string.
- *
- * @return true on success, false on error
- */
-bool
-session_id_parse(const char *p, SessionId *id_r);
-
-const char *
-session_id_format(SessionId id, struct session_id_string *string);
-
-static inline unsigned
-session_id_low(SessionId id)
-{
-#ifdef SESSION_ID_WORDS
-    return id.data[0];
-#else
-    return id.value;
-#endif
-}
-
-gcc_const
-static inline bool
-session_id_equals(const SessionId a, const SessionId b)
-{
-#ifdef SESSION_ID_WORDS
-    return memcmp(&a, &b, sizeof(a)) == 0;
-#else
-    return a.value == b.value;
-#endif
-}
 
 #endif

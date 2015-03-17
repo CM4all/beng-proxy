@@ -204,7 +204,7 @@ proxy_handler(request &request2)
         forward.headers->Add(i.key, i.value);
 
     http_cache_request(*global_http_cache, pool,
-                       session_id_low(request2.session_id),
+                       request2.session_id.Hash(),
                        forward.method, *address,
                        forward.headers, forward.body,
                        proxy_response_handler, &request2,

@@ -456,8 +456,7 @@ response_generate_set_cookie(request &request2, GrowingBuffer &headers)
         growing_buffer_write_string(&headers, request2.session_cookie);
         growing_buffer_write_buffer(&headers, "=", 1);
         growing_buffer_write_string(&headers,
-                                    session_id_format(request2.session_id,
-                                                      &request2.session_id_string));
+                                    request2.session_id.Format(request2.session_id_string));
         growing_buffer_write_string(&headers, "; HttpOnly; Path=");
 
         const char *cookie_path = request2.translate.response->cookie_path;
@@ -493,7 +492,7 @@ response_generate_set_cookie(request &request2, GrowingBuffer &headers)
             session_put(session);
         }
     } else if (request2.translate.response->discard_session &&
-               !session_id_is_defined(request2.session_id)) {
+               !request2.session_id.IsDefined()) {
         /* delete the cookie for the discarded session */
         header_write_begin(&headers, "set-cookie");
         growing_buffer_write_string(&headers, request2.session_cookie);
