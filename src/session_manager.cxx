@@ -358,11 +358,9 @@ session_manager_add(struct session *session)
     list_add(&session->hash_siblings, session_slot(session->id));
     ++session_manager->num_sessions;
 
-    const unsigned num_sessions = session_manager->num_sessions;
-
     rwlock_wunlock(&session_manager->lock);
 
-    if (num_sessions == 1)
+    if (!evtimer_pending(&session_cleanup_event, nullptr))
         evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
@@ -441,7 +439,7 @@ session_new_unsafe()
     lock_lock(&session->lock);
     rwlock_wunlock(&session_manager->lock);
 
-    if (num_sessions == 1)
+    if (!evtimer_pending(&session_cleanup_event, nullptr))
         evtimer_add(&session_cleanup_event, &cleanup_interval);
 
     return session;
