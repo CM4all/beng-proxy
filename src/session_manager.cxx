@@ -270,7 +270,7 @@ session_manager_deinit()
     assert(session_manager->shm != nullptr);
     assert(locked_session == nullptr);
 
-    event_del(&session_cleanup_event);
+    evtimer_del(&session_cleanup_event);
 
     struct shm *shm = session_manager->shm;
 
@@ -300,7 +300,7 @@ session_manager_abandon()
 {
     assert(session_manager != nullptr);
 
-    event_del(&session_cleanup_event);
+    evtimer_del(&session_cleanup_event);
 
     session_manager->Abandon();
     session_manager = nullptr;
@@ -316,7 +316,7 @@ session_manager_event_add()
 void
 session_manager_event_del()
 {
-    event_del(&session_cleanup_event);
+    evtimer_del(&session_cleanup_event);
 }
 
 unsigned
