@@ -83,18 +83,18 @@ struct SessionManager {
 
     void Abandon();
 
-    List &Slot(session_id_t id) {
+    List &Slot(SessionId id) {
 #ifdef SESSION_ID_WORDS
         return sessions[id.data[0] % SESSION_SLOTS];
 #else
-        return sessions[id % SESSION_SLOTS];
+        return sessions[id.value % SESSION_SLOTS];
 #endif
     }
 
     void Insert(Session *session);
 
     void EraseAndDispose(Session *session);
-    void EraseAndDispose(session_id_t id);
+    void EraseAndDispose(SessionId id);
 
     bool Cleanup();
 
@@ -423,7 +423,7 @@ cluster_session_id(uint32_t id)
 }
 
 static void
-session_generate_id(session_id_t *id_r)
+session_generate_id(SessionId *id_r)
 {
 #ifdef SESSION_ID_WORDS
     for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
@@ -432,8 +432,8 @@ session_generate_id(session_id_t *id_r)
     id_r->data[SESSION_ID_WORDS - 1] =
         cluster_session_id(id_r->data[SESSION_ID_WORDS - 1]);
 #else
-    *id_r = (session_id_t)cluster_session_id(g_rand_int(session_rand))
-        | (session_id_t)g_rand_int(session_rand) << 32;
+    id_r->value = (uint64_t)cluster_session_id(g_rand_int(session_rand))
+        | (uint64_t)g_rand_int(session_rand) << 32;
 #endif
 }
 
@@ -531,7 +531,7 @@ session_defragment(Session *src)
 }
 
 static Session *
-session_find(session_id_t id)
+session_find(SessionId id)
 {
     if (session_manager->abandoned)
         return nullptr;
@@ -556,7 +556,7 @@ session_find(session_id_t id)
 }
 
 Session *
-session_get(session_id_t id)
+session_get(SessionId id)
 {
     Session *session;
 
@@ -587,7 +587,7 @@ session_put_internal(Session *session)
 }
 
 static void
-session_defragment_id(session_id_t id)
+session_defragment_id(SessionId id)
 {
     assert(crash_in_unsafe());
 
@@ -608,7 +608,7 @@ session_defragment_id(session_id_t id)
 void
 session_put(Session *session)
 {
-    session_id_t defragment;
+    SessionId defragment;
 
     if ((session->counter % 1024) == 0 &&
         dpool_is_fragmented(session->pool))
@@ -632,7 +632,7 @@ session_put(Session *session)
 }
 
 void
-SessionManager::EraseAndDispose(session_id_t id)
+SessionManager::EraseAndDispose(SessionId id)
 {
     Session *session;
 
@@ -652,7 +652,7 @@ SessionManager::EraseAndDispose(session_id_t id)
 }
 
 void
-session_delete(session_id_t id)
+session_delete(SessionId id)
 {
     session_manager->EraseAndDispose(id);
 }

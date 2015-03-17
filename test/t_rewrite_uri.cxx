@@ -32,7 +32,7 @@ const WidgetClass root_widget_class = {
 };
 
 Session *
-session_get(gcc_unused session_id_t id)
+session_get(gcc_unused SessionId id)
 {
     return NULL;
 }
@@ -210,7 +210,7 @@ assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
                              nullptr, nullptr,
                              &external_uri,
                              nullptr,
-                             nullptr, 0,
+                             nullptr, SessionId(0),
                              HTTP_METHOD_GET,
                              nullptr);
 

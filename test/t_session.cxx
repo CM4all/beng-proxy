@@ -56,12 +56,12 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
         assert(WIFEXITED(status));
         assert(WEXITSTATUS(status) == 0);
 
-        session_id_t session_id;
+        SessionId session_id;
         (void)read(fds[0], &session_id, sizeof(session_id));
 
         auto *session = session_get(session_id);
         assert(session != NULL);
-        assert(session->id == session_id);
+        assert(session_id_equals(session->id, session_id));
         session_put(session);
     }
 

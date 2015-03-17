@@ -12,11 +12,11 @@
 #include <stdlib.h>
 
 bool
-session_id_parse(const char *p, session_id_t *id_r)
+session_id_parse(const char *p, SessionId *id_r)
 {
 #ifdef SESSION_ID_WORDS
     char segment[9];
-    session_id_t id;
+    SessionId id;
     char *endptr;
 
     if (strlen(p) != SESSION_ID_WORDS * 8)
@@ -39,20 +39,20 @@ session_id_parse(const char *p, session_id_t *id_r)
     if (id == 0 || *endptr != 0)
         return false;
 
-    *id_r = (session_id_t)id;
+    *id_r = (SessionId)id;
 #endif
 
     return true;
 }
 
 const char *
-session_id_format(session_id_t id, struct session_id_string *string)
+session_id_format(SessionId id, struct session_id_string *string)
 {
 #ifdef SESSION_ID_WORDS
     for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
         format_uint32_hex_fixed(string->buffer + i * 8, id.data[i]);
 #else
-    format_uint64_hex_fixed(string->buffer, id);
+    format_uint64_hex_fixed(string->buffer, id.value);
 #endif
     string->buffer[sizeof(string->buffer) - 1] = 0;
     return string->buffer;

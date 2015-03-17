@@ -17,16 +17,19 @@
 
 #ifdef SESSION_ID_SIZE
 #define SESSION_ID_WORDS (((SESSION_ID_SIZE) + 1) / 4)
-
-typedef struct {
-    uint32_t data[SESSION_ID_WORDS];
-} session_id_t;
-
-#else
-
-typedef uint64_t session_id_t;
-
 #endif
+
+struct SessionId {
+#ifdef SESSION_ID_SIZE
+    uint32_t data[SESSION_ID_WORDS];
+#else
+    uint64_t value;
+
+    SessionId() = default;
+
+    explicit constexpr SessionId(uint64_t _value):value(_value) {}
+#endif
+};
 
 /**
  * Buffer for the function session_id_format().
@@ -35,12 +38,12 @@ struct session_id_string {
     /**
      * Two hex characters per byte, plus the terminating zero.
      */
-    char buffer[sizeof(session_id_t) * 2 + 1];
+    char buffer[sizeof(SessionId) * 2 + 1];
 };
 
 gcc_pure
 static inline bool
-session_id_is_defined(session_id_t id)
+session_id_is_defined(SessionId id)
 {
 #ifdef SESSION_ID_WORDS
     for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
@@ -48,17 +51,17 @@ session_id_is_defined(session_id_t id)
             return true;
     return false;
 #else
-    return id != 0;
+    return id.value != 0;
 #endif
 }
 
 static inline void
-session_id_clear(session_id_t *id_p)
+session_id_clear(SessionId *id_p)
 {
 #ifdef SESSION_ID_WORDS
     memset(id_p, 0, sizeof(*id_p));
 #else
-    *id_p = 0;
+    id_p->value = 0;
 #endif
 }
 
@@ -68,29 +71,29 @@ session_id_clear(session_id_t *id_p)
  * @return true on success, false on error
  */
 bool
-session_id_parse(const char *p, session_id_t *id_r);
+session_id_parse(const char *p, SessionId *id_r);
 
 const char *
-session_id_format(session_id_t id, struct session_id_string *string);
+session_id_format(SessionId id, struct session_id_string *string);
 
 static inline unsigned
-session_id_low(session_id_t id)
+session_id_low(SessionId id)
 {
 #ifdef SESSION_ID_WORDS
     return id.data[0];
 #else
-    return (unsigned)id;
+    return id.value;
 #endif
 }
 
 gcc_const
 static inline bool
-session_id_equals(const session_id_t a, const session_id_t b)
+session_id_equals(const SessionId a, const SessionId b)
 {
 #ifdef SESSION_ID_WORDS
     return memcmp(&a, &b, sizeof(a)) == 0;
 #else
-    return a == b;
+    return a.value == b.value;
 #endif
 }
 

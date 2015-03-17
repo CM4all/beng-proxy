@@ -20,7 +20,7 @@ processor_env::processor_env(struct pool *_pool,
                              const struct parsed_uri *_uri,
                              struct strmap *_args,
                              const char *_session_cookie,
-                             session_id_t _session_id,
+                             SessionId _session_id,
                              http_method_t _method,
                              struct strmap *_request_headers)
     :pool(_pool),

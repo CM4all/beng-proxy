@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
                              &parsed_uri,
                              nullptr,
                              nullptr,
-                             0xdeadbeef,
+                             SessionId(0xdeadbeef),
                              HTTP_METHOD_GET, nullptr);
 
     struct istream *result =

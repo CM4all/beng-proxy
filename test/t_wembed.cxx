@@ -33,7 +33,7 @@ widget_check_host(const struct widget *widget gcc_unused,
 }
 
 Session *
-session_get(session_id_t id gcc_unused)
+session_get(gcc_unused SessionId id)
 {
     return NULL;
 }

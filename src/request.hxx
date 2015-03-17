@@ -35,7 +35,7 @@ struct request {
      */
     const char *session_cookie;
 
-    session_id_t session_id;
+    SessionId session_id;
     struct session_id_string session_id_string;
     bool send_session_cookie;
 

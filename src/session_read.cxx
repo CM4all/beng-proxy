@@ -65,7 +65,7 @@ read_buffer(FILE *file, void *data, size_t length)
 }
 
 static bool
-read_session_id(FILE *file, session_id_t *id)
+read_session_id(FILE *file, SessionId *id)
 {
     return read_buffer(file, id, sizeof(*id));
 }

@@ -49,7 +49,7 @@ write_buffer(FILE *file, const void *data, size_t length)
 }
 
 static bool
-write_session_id(FILE *file, const session_id_t *id)
+write_session_id(FILE *file, const SessionId *id)
 {
     return write_buffer(file, id, sizeof(*id));
 }

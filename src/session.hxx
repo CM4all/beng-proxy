@@ -62,7 +62,7 @@ struct Session {
     struct lock lock;
 
     /** identification number of this session */
-    session_id_t id;
+    SessionId id;
 
     /** when will this session expire? */
     time_t expires;
@@ -149,7 +149,7 @@ session_set_language(Session *session, const char *language);
  * locked, and must be unlocked with session_put().
  */
 Session *
-session_get(session_id_t id);
+session_get(SessionId id);
 
 /**
  * Unlocks the specified session.
@@ -162,7 +162,7 @@ session_put(Session *session);
  * must not hold a sssion lock.
  */
 void
-session_delete(session_id_t id);
+session_delete(SessionId id);
 
 gcc_malloc
 WidgetSession *
