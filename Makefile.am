@@ -251,7 +251,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/istream_rubber.cxx src/istream_rubber.hxx \
 	src/sink_rubber.cxx src/sink_rubber.hxx \
 	src/session.cxx src/session.hxx \
-	src/session_id.c src/session_id.h \
+	src/session_id.cxx src/session_id.hxx \
 	src/session_manager.cxx src/session_manager.hxx \
 	src/session_write.cxx src/session_write.hxx \
 	src/session_read.cxx src/session_read.hxx \
@@ -944,7 +944,7 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \
 	src/crash.c \
-	src/session_id.c \
+	src/session_id.cxx \
 	src/clock.c \
 	src/tpool.c
 test_t_header_forward_LDADD = $(AM_LDADD) \
@@ -1410,7 +1410,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/pheaders.cxx \
 	src/exec.cxx \
 	src/crash.c \
-	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.c \
+	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/random.c src/fd-util.c \
 	src/fd_util.c \

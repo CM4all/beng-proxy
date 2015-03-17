@@ -9,7 +9,6 @@
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef SESSION_ID_SIZE
@@ -63,10 +62,6 @@ session_id_clear(session_id_t *id_p)
 #endif
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Parse a session id from a string.
  *
@@ -77,10 +72,6 @@ session_id_parse(const char *p, session_id_t *id_r);
 
 const char *
 session_id_format(session_id_t id, struct session_id_string *string);
-
-#ifdef __cplusplus
-}
-#endif
 
 static inline unsigned
 session_id_low(session_id_t id)

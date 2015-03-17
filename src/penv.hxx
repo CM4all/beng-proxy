@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_PROCESSOR_ENV_H
 #define BENG_PROXY_PROCESSOR_ENV_H
 
-#include "session_id.h"
+#include "session_id.hxx"
 
 #include <http/method.h>
 

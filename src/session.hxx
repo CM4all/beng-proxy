@@ -8,7 +8,7 @@
 #define BENG_PROXY_SESSION_HXX
 
 #include "lock.h"
-#include "session_id.h"
+#include "session_id.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <inline/compiler.h>

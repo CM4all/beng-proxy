@@ -7,8 +7,6 @@
 #ifndef BENG_PROXY_CSS_REWRITE_HXX
 #define BENG_PROXY_CSS_REWRITE_HXX
 
-#include "session_id.h"
-
 #include <stddef.h>
 
 struct pool;

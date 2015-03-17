@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "session_id.h"
+#include "session_id.hxx"
 #include "format.h"
 
 #include <glib.h>
