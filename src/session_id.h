@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #ifdef SESSION_ID_SIZE
+#include <array>
 #include <string.h> /* for memcmp() */
 #endif
 

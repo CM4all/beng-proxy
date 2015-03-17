@@ -420,8 +420,8 @@ static void
 session_generate_id(session_id_t *id_r)
 {
 #ifdef SESSION_ID_WORDS
-    for (unsigned i = 0; i < SESSION_ID_WORDS; ++i)
-        id_r->data[i] = g_rand_int(session_rand);
+    for (auto &i : id_r->data)
+        i = g_rand_int(session_rand);
 
     id_r->data[SESSION_ID_WORDS - 1] =
         cluster_session_id(id_r->data[SESSION_ID_WORDS - 1]);
