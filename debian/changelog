@@ -4,6 +4,7 @@ cm4all-beng-proxy (6.3) unstable; urgency=low
   * forward the "Range" request header
   * forward the request headers "Accept-Charset" and "Accept-Encoding" to
     frame widgets
+  * session: fix STICKY selection
   * session: improve session cleanup reliability
 
  --   
