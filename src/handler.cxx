@@ -110,7 +110,7 @@ static void
 handle_translated_request2(request &request,
                            const TranslateResponse &response)
 {
-    const struct resource_address &address = *request.translate.address;
+    const auto &address = *request.translate.address;
 
     request.translate.transformation = response.views != nullptr
         ? response.views->transformation
@@ -139,8 +139,7 @@ handle_translated_request2(request &request,
 
     request.connection->site_name = response.site;
 
-    struct session *session =
-        apply_translate_response_session(request, response);
+    auto *session = apply_translate_response_session(request, response);
 
     /* always enforce sessions when the processor is enabled */
     if (request.IsProcessorEnabled() && session == nullptr)
@@ -306,7 +305,7 @@ handler_suffix_registry_success(const char *content_type,
                                 const Transformation *transformations,
                                 void *ctx)
 {
-    struct request &request = *(struct request *)ctx;
+    auto &request = *(struct request *)ctx;
 
     request.translate.content_type = content_type;
     request.translate.suffix_transformation = transformations;
@@ -317,7 +316,7 @@ handler_suffix_registry_success(const char *content_type,
 static void
 handler_suffix_registry_error(GError *error, void *ctx)
 {
-    struct request &request = *(struct request *)ctx;
+    auto &request = *(struct request *)ctx;
 
     daemon_log(1, "translation error on '%s': %s\n",
                request.request->uri, error->message);
@@ -587,8 +586,7 @@ request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 
         /* apply changes from this response, then resume the
            "previous" response */
-        struct session *session =
-            apply_translate_response_session(*this, response);
+        auto *session = apply_translate_response_session(*this, response);
         if (session != nullptr)
             session_put(session);
 
@@ -651,7 +649,7 @@ request::CheckHandleReadFile(const TranslateResponse &response)
 static void
 handler_translate_response(TranslateResponse *response, void *ctx)
 {
-    struct request &request = *(struct request *)ctx;
+    auto &request = *(struct request *)ctx;
 
     request.OnTranslateResponse(*response);
 }
@@ -659,7 +657,7 @@ handler_translate_response(TranslateResponse *response, void *ctx)
 static void
 handler_translate_error(GError *error, void *ctx)
 {
-    struct request &request = *(struct request *)ctx;
+    auto &request = *(struct request *)ctx;
 
     daemon_log(1, "translation error on '%s': %s\n",
                request.request->uri, error->message);
@@ -697,7 +695,7 @@ request::SubmitTranslateRequest()
 static bool
 request_uri_parse(request &request2, parsed_uri &dest)
 {
-    const http_server_request &request = *request2.request;
+    const auto &request = *request2.request;
 
     if (!uri_path_verify_quick(request.uri) ||
         !dest.Parse(request.uri)) {
@@ -774,9 +772,9 @@ static void
 serve_document_root_file(request &request2,
                          const struct config *config)
 {
-    http_server_request &request = *request2.request;
+    auto &request = *request2.request;
 
-    struct parsed_uri *uri = &request2.uri;
+    auto *uri = &request2.uri;
 
     auto tr = NewFromPool<TranslateResponse>(*request.pool);
     tr->Clear();
@@ -802,7 +800,7 @@ serve_document_root_file(request &request2,
                                  uri->base.length,
                                  index_file, (size_t)10,
                                  nullptr);
-    file_address *fa = NewFromPool<file_address>(*request.pool, path);
+    auto *fa = NewFromPool<file_address>(*request.pool, path);
 
     tr->address.type = RESOURCE_ADDRESS_LOCAL;
     tr->address.u.file = fa;
@@ -842,7 +840,7 @@ serve_document_root_file(request &request2,
 static void
 handler_abort(struct async_operation *ao)
 {
-    request &request2 = ContainerCast2(*ao, &request::operation);
+    auto &request2 = ContainerCast2(*ao, &request::operation);
 
     request_discard_body(request2);
 
@@ -864,7 +862,7 @@ handle_http_request(client_connection &connection,
                     http_server_request &request,
                     struct async_operation_ref &async_ref)
 {
-    struct request *request2 = NewFromPool<struct request>(*request.pool);
+    auto *request2 = NewFromPool<struct request>(*request.pool);
     request2->connection = &connection;
     request2->request = &request;
     request2->translate.content_type = nullptr;

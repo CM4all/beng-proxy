@@ -252,7 +252,7 @@ class_lookup_callback(void *ctx)
         const char *uri;
 
         if (rwu->widget->session_sync_pending) {
-            struct session *session = session_get(rwu->env->session_id);
+            auto *session = session_get(rwu->env->session_id);
             if (session != nullptr) {
                 widget_sync_session(rwu->widget, session);
                 session_put(session);

@@ -15,7 +15,7 @@ request_forward(struct forward_request &dest, struct request &request2,
                 const char *host_and_port, const char *uri,
                 bool exclude_host)
 {
-    struct http_server_request *request = request2.request;
+    auto *request = request2.request;
 
     assert(!http_server_request_has_body(request) ||
            request2.body != nullptr);

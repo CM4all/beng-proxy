@@ -186,7 +186,7 @@ response_invoke_processor(request &request2,
         strref_set_c(&request2.uri.base, request2.translate.response->uri);
 
     /* make sure we have a session */
-    struct session *session = request_make_session(request2);
+    auto *session = request_make_session(request2);
     if (session != nullptr) {
         if (widget->from_request.focus_ref == nullptr)
             /* drop the widget session and all descendants if there is
@@ -487,7 +487,7 @@ response_generate_set_cookie(request &request2, GrowingBuffer &headers)
            details */
         header_write(&headers, "p3p", "CP=\"CAO PSA OUR\"");
 
-        struct session *session = request_make_session(request2);
+        auto *session = request_make_session(request2);
         if (session != nullptr) {
             session->cookie_sent = true;
             session_put(session);

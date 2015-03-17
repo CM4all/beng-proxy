@@ -49,7 +49,7 @@ request_load_session(struct request &request, const char *session_id)
     if (!session_id_parse(session_id, &request.session_id))
         return nullptr;
 
-    struct session *session = request_get_session(request);
+    auto *session = request_get_session(request);
     if (session == nullptr)
         return nullptr;
 
@@ -98,7 +98,7 @@ request_get_cookie_session_id(struct request &request)
     assert(!request.stateless);
     assert(request.session_cookie != nullptr);
 
-    const struct strmap *cookies = request_get_cookies(request);
+    const auto *cookies = request_get_cookies(request);
 
     return strmap_get_checked(cookies, request.session_cookie);
 }
@@ -129,7 +129,7 @@ request_determine_session(struct request &request)
         cookie_received = true;
     }
 
-    struct session *session = request_load_session(request, session_id);
+    auto *session = request_load_session(request, session_id);
     if (session == nullptr) {
         if (!cookie_received && request.args != nullptr)
             /* remove invalid session id from URI args */
@@ -164,7 +164,7 @@ request_make_session(struct request &request)
     if (request.stateless)
         return nullptr;
 
-    struct session *session = request_get_session(request);
+    auto *session = request_get_session(request);
     if (session != nullptr)
         return session;
 
@@ -259,7 +259,7 @@ request::ApplyTranslateSession(const TranslateResponse &response)
         response.language == nullptr)
         return nullptr;
 
-    struct session *session = request_get_session(*this);
+    auto *session = request_get_session(*this);
 
     if (!response.session.IsNull()) {
         if (response.session.IsEmpty()) {

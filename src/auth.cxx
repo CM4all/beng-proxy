@@ -21,9 +21,9 @@
 static void
 auth_translate_response(TranslateResponse *response, void *ctx)
 {
-    struct request &request = *(struct request *)ctx;
+    auto &request = *(struct request *)ctx;
 
-    struct session *session = request.ApplyTranslateSession(*response);
+    auto *session = request.ApplyTranslateSession(*response);
     bool is_authenticated = false;
     if (session != nullptr) {
         is_authenticated = session->user != nullptr;
@@ -49,7 +49,7 @@ auth_translate_response(TranslateResponse *response, void *ctx)
 static void
 auth_translate_error(GError *error, void *ctx)
 {
-    struct request &request = *(struct request *)ctx;
+    auto &request = *(struct request *)ctx;
 
     daemon_log(1, "translation error on '%s': %s\n",
                request.request->uri, error->message);
@@ -75,11 +75,11 @@ static constexpr TranslateHandler auth_translate_handler = {
 void
 request::HandleAuth(const TranslateResponse &response)
 {
-    struct pool *const pool = request->pool;
+    auto *const pool = request->pool;
 
     assert(response.HasAuth());
 
-    ConstBuffer<void> auth = response.auth;
+    auto auth = response.auth;
     if (auth.IsNull()) {
         /* load #TRANSLATE_AUTH_FILE */
         assert(response.auth_file != nullptr);
@@ -104,7 +104,7 @@ request::HandleAuth(const TranslateResponse &response)
     /* we need to validate the session realm early */
     ApplyTranslateRealm(response);
 
-    struct session *session = request_get_session(*this);
+    auto *session = request_get_session(*this);
     if (session != nullptr) {
         bool is_authenticated = session->user != nullptr &&
             (session->user_expires == 0 ||

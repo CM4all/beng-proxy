@@ -57,7 +57,7 @@ frame_top_widget(struct pool *pool, struct widget *widget,
     }
 
     if (widget->session_sync_pending) {
-        struct session *session = session_get(env->session_id);
+        auto *session = session_get(env->session_id);
         if (session != nullptr) {
             widget_sync_session(widget, session);
             session_put(session);
@@ -108,7 +108,7 @@ frame_parent_widget(struct pool *pool, struct widget *widget, const char *id,
     }
 
     if (widget->session_sync_pending) {
-        struct session *session = session_get(env->session_id);
+        auto *session = session_get(env->session_id);
         if (session != nullptr) {
             widget_sync_session(widget, session);
             session_put(session);

@@ -98,7 +98,7 @@ proxy_collect_cookies(request &request2, const struct strmap *headers)
     if (path == nullptr)
         return;
 
-    struct session *session = request_make_session(request2);
+    auto *session = request_make_session(request2);
     if (session == nullptr)
         return;
 

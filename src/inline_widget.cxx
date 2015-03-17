@@ -240,7 +240,7 @@ inline_widget_set(struct inline_widget *iw)
     }
 
     if (widget->session_sync_pending) {
-        struct session *session = session_get(iw->env->session_id);
+        auto *session = session_get(iw->env->session_id);
         if (session != nullptr) {
             widget_sync_session(widget, session);
             session_put(session);
