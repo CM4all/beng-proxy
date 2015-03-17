@@ -26,11 +26,11 @@
 
 #define SHM_PAGE_SIZE 4096
 #define SHM_NUM_PAGES 32768
-#define SM_PAGES ((sizeof(struct session_manager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE)
+#define SM_PAGES ((sizeof(SessionManager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE)
 
 #define SESSION_SLOTS 16381
 
-struct session_manager {
+struct SessionManager {
     struct refcount ref;
 
     /**
@@ -60,9 +60,9 @@ struct session_manager {
     List sessions[SESSION_SLOTS];
     unsigned num_sessions;
 
-    session_manager(unsigned _idle_timeout,
-                    unsigned _cluster_size, unsigned _cluster_node,
-                    struct shm *_shm)
+    SessionManager(unsigned _idle_timeout,
+                   unsigned _cluster_size, unsigned _cluster_node,
+                   struct shm *_shm)
         :idle_timeout(_idle_timeout),
          cluster_size(_cluster_size),
          cluster_node(_cluster_node),
@@ -73,7 +73,7 @@ struct session_manager {
         rwlock_init(&lock);
     }
 
-    ~session_manager();
+    ~SessionManager();
 
     void Ref() {
         refcount_get(&ref);
@@ -82,7 +82,7 @@ struct session_manager {
 
     void Unref() {
         if (refcount_put(&ref))
-            this->~session_manager();
+            this->~SessionManager();
     }
 
     void Abandon();
@@ -121,7 +121,7 @@ static GRand *session_rand;
 
 /** the one and only session manager instance, allocated from shared
     memory */
-static struct session_manager *session_manager;
+static SessionManager *session_manager;
 
 /* this must be a separate variable, because session_manager is
    allocated from shared memory, and each process must manage its own
@@ -138,7 +138,7 @@ static const Session *locked_session;
 #endif
 
 void
-session_manager::EraseAndDispose(Session *session)
+SessionManager::EraseAndDispose(Session *session)
 {
     assert(crash_in_unsafe());
     assert(rwlock_is_wlocked(&lock));
@@ -155,7 +155,7 @@ session_manager::EraseAndDispose(Session *session)
 }
 
 inline bool
-session_manager::Cleanup()
+SessionManager::Cleanup()
 {
     bool non_empty;
 
@@ -206,7 +206,7 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
         evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
-static struct session_manager *
+static SessionManager *
 session_manager_new(unsigned idle_timeout,
                     unsigned cluster_size, unsigned cluster_node)
 {
@@ -216,10 +216,10 @@ session_manager_new(unsigned idle_timeout,
         abort();
     }
 
-    return NewFromShm<struct session_manager>(shm, SM_PAGES,
-                                              idle_timeout,
-                                              cluster_size, cluster_node,
-                                              shm);
+    return NewFromShm<SessionManager>(shm, SM_PAGES,
+                                      idle_timeout,
+                                      cluster_size, cluster_node,
+                                      shm);
 }
 
 bool
@@ -247,7 +247,7 @@ session_manager_init(unsigned idle_timeout,
 }
 
 inline
-session_manager::~session_manager()
+SessionManager::~SessionManager()
 {
     crash_unsafe_enter();
 
@@ -293,7 +293,7 @@ session_manager_deinit()
 }
 
 inline void
-session_manager::Abandon()
+SessionManager::Abandon()
 {
     assert(shm != nullptr);
 
@@ -340,7 +340,7 @@ session_manager_new_dpool()
 }
 
 bool
-session_manager::Purge()
+SessionManager::Purge()
 {
     /* collect at most 256 sessions */
     StaticArray<Session *, 256> purge_sessions;
@@ -385,7 +385,7 @@ session_manager::Purge()
 }
 
 inline void
-session_manager::Insert(Session *session)
+SessionManager::Insert(Session *session)
 {
     assert(session != nullptr);
 
@@ -596,8 +596,8 @@ session_defragment_id(session_id_t id)
         return;
 
     /* unlock the session, because session_defragment() may call
-       session_manager::EraseAndDispose(), and
-       session_manager::EraseAndDispose() expects the session to be
+       SessionManager::EraseAndDispose(), and
+       SessionManager::EraseAndDispose() expects the session to be
        unlocked.  This is ok, because we're holding the session
        manager lock at this point. */
     session_put_internal(session);
@@ -632,7 +632,7 @@ session_put(Session *session)
 }
 
 void
-session_manager::EraseAndDispose(session_id_t id)
+SessionManager::EraseAndDispose(session_id_t id)
 {
     Session *session;
 
@@ -658,8 +658,8 @@ session_delete(session_id_t id)
 }
 
 inline bool
-session_manager::Visit(bool (*callback)(const Session *session,
-                                        void *ctx), void *ctx)
+SessionManager::Visit(bool (*callback)(const Session *session,
+                                       void *ctx), void *ctx)
 {
     bool result = true;
 
