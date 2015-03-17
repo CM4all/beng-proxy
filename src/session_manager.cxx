@@ -24,9 +24,51 @@
 #include <string.h>
 #include <stdlib.h>
 
-struct SessionManager {
-    static constexpr unsigned SESSION_SLOTS = 16381;
+struct SessionHash {
+    gcc_pure
+    size_t operator()(const SessionId &id) const {
+        return id.Hash();
+    }
 
+    gcc_pure
+    size_t operator()(const Session &session) const {
+        return session.id.Hash();
+    }
+};
+
+struct SessionEqual {
+    gcc_pure
+    bool operator()(const Session &a, const Session &b) const {
+        return a.id == b.id;
+    }
+
+    gcc_pure
+    bool operator()(const SessionId &a, const Session &b) const {
+        return a == b.id;
+    }
+};
+
+struct SessionDisposer {
+    void operator()(Session *session) {
+        session_destroy(session);
+    }
+};
+
+template<typename Container, typename Pred, typename Disposer>
+static void
+EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
+{
+    for (auto i = container.begin(), end = container.end(); i != end;) {
+        const auto next = std::next(i);
+
+        if (pred(*i))
+            container.erase_and_dispose(i, disposer);
+
+        i = next;
+    }
+}
+
+struct SessionManager {
     struct refcount ref;
 
     /**
@@ -48,13 +90,17 @@ struct SessionManager {
      */
     bool abandoned;
 
-    typedef boost::intrusive::list<Session,
-                                   boost::intrusive::member_hook<Session,
-                                                                 Session::HashSiblingsHook,
-                                                                 &Session::hash_siblings>,
-                                   boost::intrusive::constant_time_size<false>> List;
-    List sessions[SESSION_SLOTS];
-    unsigned num_sessions;
+    typedef boost::intrusive::unordered_set<Session,
+                                            boost::intrusive::member_hook<Session,
+                                                                          Session::SetHook,
+                                                                          &Session::set_hook>,
+                                            boost::intrusive::hash<SessionHash>,
+                                            boost::intrusive::equal<SessionEqual>,
+                                            boost::intrusive::constant_time_size<true>> Set;
+    Set sessions;
+
+    static constexpr unsigned N_BUCKETS = 16381;
+    Set::bucket_type buckets[N_BUCKETS];
 
     SessionManager(unsigned _idle_timeout,
                    unsigned _cluster_size, unsigned _cluster_node,
@@ -64,7 +110,7 @@ struct SessionManager {
          cluster_node(_cluster_node),
          shm(_shm),
          abandoned(false),
-         num_sessions(0) {
+         sessions(Set::bucket_traits(buckets, N_BUCKETS)) {
         refcount_init(&ref);
         rwlock_init(&lock);
     }
@@ -82,10 +128,6 @@ struct SessionManager {
     }
 
     void Abandon();
-
-    List &Slot(SessionId id) {
-        return sessions[id.Hash() % SESSION_SLOTS];
-    }
 
     void Insert(Session *session);
 
@@ -136,16 +178,13 @@ SessionManager::EraseAndDispose(Session *session)
 {
     assert(crash_in_unsafe());
     assert(rwlock_is_wlocked(&lock));
-    assert(num_sessions > 0);
+    assert(!sessions.empty());
 
-    auto &slot = Slot(session->id);
-    slot.erase(slot.iterator_to(*session));
-    --num_sessions;
+    auto i = sessions.iterator_to(*session);
+    sessions.erase_and_dispose(i, SessionDisposer());
 
-    if (num_sessions == 0)
+    if (sessions.empty())
         evtimer_del(&session_cleanup_event);
-
-    session_destroy(session);
 }
 
 inline bool
@@ -168,19 +207,11 @@ SessionManager::Cleanup()
         return false;
     }
 
-    for (auto &slot : sessions) {
-        slot.remove_and_dispose_if([now](const Session &session) {
-                return now >= (unsigned)session.expires;
-            },
-            [this](Session *session) {
-                assert(num_sessions > 0);
-                --num_sessions;
+    EraseAndDisposeIf(sessions, [now](const Session &session){
+            return now >= unsigned(session.expires);
+        }, SessionDisposer());
 
-                session_destroy(session);
-            });
-    }
-
-    non_empty = num_sessions > 0;
+    non_empty = !sessions.empty();
 
     rwlock_wunlock(&lock);
     crash_unsafe_leave();
@@ -243,16 +274,7 @@ SessionManager::~SessionManager()
 
     rwlock_wlock(&lock);
 
-    for (auto &slot : sessions) {
-        slot.clear_and_dispose([this](Session *session) {
-                assert(num_sessions > 0);
-                --num_sessions;
-
-                session_destroy(session);
-            });
-    }
-
-    assert(num_sessions == 0);
+    sessions.clear_and_dispose(SessionDisposer());
 
     rwlock_wunlock(&lock);
     rwlock_destroy(&lock);
@@ -304,7 +326,7 @@ session_manager_abandon()
 void
 session_manager_event_add()
 {
-    if (session_manager->num_sessions > 0)
+    if (!session_manager->sessions.empty())
         evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
@@ -317,7 +339,7 @@ session_manager_event_del()
 unsigned
 session_manager_get_count()
 {
-    return session_manager->num_sessions;
+    return session_manager->sessions.size();
 }
 
 struct dpool *
@@ -338,17 +360,15 @@ SessionManager::Purge()
     crash_unsafe_enter();
     rwlock_wlock(&lock);
 
-    for (auto &slot : sessions) {
-        for (auto &session : slot) {
-            unsigned score = session_purge_score(&session);
-            if (score > highest_score) {
-                purge_sessions.clear();
-                highest_score = score;
-            }
-
-            if (score == highest_score)
-                purge_sessions.checked_append(&session);
+    for (auto &session : sessions) {
+        unsigned score = session_purge_score(&session);
+        if (score > highest_score) {
+            purge_sessions.clear();
+            highest_score = score;
         }
+
+        if (score == highest_score)
+            purge_sessions.checked_append(&session);
     }
 
     if (purge_sessions.empty()) {
@@ -378,8 +398,7 @@ SessionManager::Insert(Session *session)
 
     rwlock_wlock(&lock);
 
-    Slot(session->id).push_back(*session);
-    ++num_sessions;
+    sessions.insert(*session);
 
     rwlock_wunlock(&lock);
 
@@ -408,7 +427,6 @@ session_new_unsafe()
 {
     struct dpool *pool;
     Session *session;
-    unsigned num_sessions;
 
     assert(crash_in_unsafe());
     assert(locked_session == nullptr);
@@ -438,10 +456,7 @@ session_new_unsafe()
 
     rwlock_wlock(&session_manager->lock);
 
-    session_manager->Slot(session->id).push_back(*session);
-    ++session_manager->num_sessions;
-
-    num_sessions = session_manager->num_sessions;
+    session_manager->sessions.insert(*session);
 
 #ifndef NDEBUG
     locked_session = session;
@@ -489,9 +504,7 @@ session_defragment(Session *src)
         return src;
     }
 
-    session_manager->Slot(dest->id).push_back(*dest);
-    ++session_manager->num_sessions;
-
+    session_manager->sessions.insert(*dest);
     session_manager->EraseAndDispose(src);
     return dest;
 }
@@ -505,20 +518,20 @@ session_find(SessionId id)
     assert(crash_in_unsafe());
     assert(locked_session == nullptr);
 
-    for (auto &session : session_manager->Slot(id)) {
-        if (session.id == id) {
+    auto i = session_manager->sessions.find(id, SessionHash(), SessionEqual());
+    if (i == session_manager->sessions.end())
+        return nullptr;
+
+    Session &session = *i;
+
 #ifndef NDEBUG
-            locked_session = &session;
+    locked_session = &session;
 #endif
-            lock_lock(&session.lock);
+    lock_lock(&session.lock);
 
-            session.expires = expiry_touch(session_manager->idle_timeout);
-            ++session.counter;
-            return &session;
-        }
-    }
-
-    return nullptr;
+    session.expires = expiry_touch(session_manager->idle_timeout);
+    ++session.counter;
+    return &session;
 }
 
 Session *
@@ -640,21 +653,16 @@ SessionManager::Visit(bool (*callback)(const Session *session,
 
     const unsigned now = now_s();
 
-    for (auto &slot : sessions) {
-        for (auto &session : slot) {
-            if (now >= (unsigned)session.expires)
-                continue;
+    for (auto &session : sessions) {
+        if (now >= (unsigned)session.expires)
+            continue;
 
-            lock_lock(&session.lock);
-            result = callback(&session, ctx);
-            lock_unlock(&session.lock);
-
-            if (!result)
-                break;
-        }
+        lock_lock(&session.lock);
+        result = callback(&session, ctx);
+        lock_unlock(&session.lock);
 
         if (!result)
-               break;
+            break;
     }
 
     rwlock_runlock(&lock);

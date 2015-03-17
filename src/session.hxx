@@ -13,7 +13,7 @@
 
 #include <inline/compiler.h>
 
-#include <boost/intrusive/list.hpp>
+#include <boost/intrusive/unordered_set.hpp>
 
 #include <time.h>
 
@@ -47,8 +47,8 @@ struct WidgetSession {
 struct Session {
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
-    typedef boost::intrusive::list_member_hook<LinkMode> HashSiblingsHook;
-    HashSiblingsHook hash_siblings;
+    typedef boost::intrusive::unordered_set_member_hook<LinkMode> SetHook;
+    SetHook set_hook;
 
     struct dpool *pool;
 
