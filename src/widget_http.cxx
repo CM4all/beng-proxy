@@ -110,7 +110,7 @@ struct embed {
     }
 };
 
-static struct session *
+static Session *
 session_get_if_stateful(const struct embed *embed)
 {
     return embed->widget.cls->stateful

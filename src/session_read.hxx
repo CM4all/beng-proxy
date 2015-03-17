@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 struct dpool;
-struct session;
+struct Session;
 
 uint32_t
 session_read_magic(FILE *file);
@@ -19,7 +19,7 @@ session_read_magic(FILE *file);
 bool
 session_read_file_header(FILE *file);
 
-struct session *
+Session *
 session_read(FILE *file, struct dpool *pool);
 
 #endif

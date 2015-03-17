@@ -69,7 +69,7 @@ request_absolute_uri(const struct http_server_request &request,
  * @param ref the top window to drop; nullptr drops all widgets
  */
 static void
-session_drop_widgets(struct session &session, const char *uri,
+session_drop_widgets(Session &session, const char *uri,
                      const struct widget_ref *ref)
 {
     struct dhashmap *map = session.widgets;
@@ -80,7 +80,7 @@ session_drop_widgets(struct session &session, const char *uri,
             /* no such widget session (no children at all here) */
             return;
 
-        auto *ws = (struct widget_session *)dhashmap_get(map, id);
+        auto *ws = (WidgetSession *)dhashmap_get(map, id);
         if (ws == nullptr)
             /* no such widget session */
             return;

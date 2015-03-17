@@ -82,7 +82,7 @@ bounce_uri(struct pool &pool, const struct request &request,
  * the session object or nullptr.  The session must be freed by the
  * caller using session_put().
  */
-static struct session *
+static Session *
 apply_translate_response_session(request &request,
                                  const TranslateResponse &response)
 {

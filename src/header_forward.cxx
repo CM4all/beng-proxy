@@ -322,7 +322,7 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
                         bool forward_range,
                         const struct header_forward_settings &settings,
                         const char *session_cookie,
-                        const struct session *session,
+                        const Session *session,
                         const char *host_and_port, const char *uri)
 {
     const char *p;

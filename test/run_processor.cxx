@@ -50,9 +50,9 @@ embed_inline_widget(struct pool *pool,
     return istream_string_new(pool, s);
 }
 
-struct widget_session *
+WidgetSession *
 widget_get_session(gcc_unused struct widget *widget,
-                   gcc_unused struct session *session,
+                   gcc_unused Session *session,
                    gcc_unused bool create)
 {
     return nullptr;

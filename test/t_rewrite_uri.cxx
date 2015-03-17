@@ -31,20 +31,20 @@ const WidgetClass root_widget_class = {
     .stateful = false,
 };
 
-struct session *
+Session *
 session_get(gcc_unused session_id_t id)
 {
     return NULL;
 }
 
 void
-session_put(gcc_unused struct session *session)
+session_put(gcc_unused Session *session)
 {
 }
 
 void
 widget_sync_session(gcc_unused struct widget *widget,
-                    gcc_unused struct session *session)
+                    gcc_unused Session *session)
 {
 }
 

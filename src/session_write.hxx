@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-struct session;
+struct Session;
 
 bool
 session_write_magic(FILE *file, uint32_t magic);
@@ -22,6 +22,6 @@ bool
 session_write_file_tail(FILE *file);
 
 bool
-session_write(FILE *file, const struct session *session);
+session_write(FILE *file, const Session *session);
 
 #endif

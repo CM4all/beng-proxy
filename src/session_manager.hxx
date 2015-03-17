@@ -9,7 +9,7 @@
 
 #include <inline/compiler.h>
 
-struct session;
+struct Session;
 
 /**
  * Initialize the global session manager or increase the reference
@@ -74,7 +74,7 @@ session_manager_new_dpool();
  * locked).
  */
 void
-session_manager_add(struct session *session);
+session_manager_add(Session *session);
 
 /**
  * Create a new session with a random session id.
@@ -82,7 +82,7 @@ session_manager_add(struct session *session);
  * The returned session object is locked and must be unlocked with
  * session_put().
  */
-struct session * gcc_malloc
+Session * gcc_malloc
 session_new();
 
 /**
@@ -90,7 +90,7 @@ session_new();
  * manager will be locked during the callback.
  */
 bool
-session_manager_visit(bool (*callback)(const struct session *session,
+session_manager_visit(bool (*callback)(const Session *session,
                                        void *ctx), void *ctx);
 
 #endif

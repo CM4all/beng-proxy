@@ -187,19 +187,19 @@ session_read_magic(FILE *file)
 bool
 session_read_file_header(FILE *file)
 {
-    const struct session *session = nullptr;
+    const Session *session = nullptr;
 
     return expect_32(file, MAGIC_FILE) && expect_32(file, sizeof(*session));
 }
 
 static bool
-read_widget_sessions(FILE *file, struct session *session,
-                     struct widget_session *parent,
+read_widget_sessions(FILE *file, Session *session,
+                     WidgetSession *parent,
                      struct dhashmap **widgets_r);
 
 static bool
-do_read_widget_session(FILE *file, struct session *session,
-                       struct widget_session *ws)
+do_read_widget_session(FILE *file, Session *session,
+                       WidgetSession *ws)
 {
     struct dpool *pool = session->pool;
 
@@ -210,10 +210,10 @@ do_read_widget_session(FILE *file, struct session *session,
         expect_32(file, MAGIC_END_OF_RECORD);
 }
 
-static struct widget_session *
-read_widget_session(FILE *file, struct session *session)
+static WidgetSession *
+read_widget_session(FILE *file, Session *session)
 {
-    struct widget_session *ws = widget_session_allocate(session);
+    auto *ws = widget_session_allocate(session);
     if (ws == nullptr)
         return nullptr;
 
@@ -224,8 +224,8 @@ read_widget_session(FILE *file, struct session *session)
 }
 
 static bool
-read_widget_sessions(FILE *file, struct session *session,
-                     struct widget_session *parent,
+read_widget_sessions(FILE *file, Session *session,
+                     WidgetSession *parent,
                      struct dhashmap **widgets_r)
 {
     struct dhashmap *widgets = nullptr;
@@ -241,7 +241,7 @@ read_widget_sessions(FILE *file, struct session *session,
         } else if (magic != MAGIC_WIDGET_SESSION)
             return false;
 
-        struct widget_session *ws = read_widget_session(file, session);
+        auto *ws = read_widget_session(file, session);
         if (ws == nullptr)
             return false;
 
@@ -302,7 +302,7 @@ read_cookie_jar(FILE *file, struct dpool *pool, struct cookie_jar *jar)
 }
 
 static bool
-do_read_session(FILE *file, struct dpool *pool, struct session *session)
+do_read_session(FILE *file, struct dpool *pool, Session *session)
 {
     assert(session != nullptr);
 
@@ -326,10 +326,10 @@ do_read_session(FILE *file, struct dpool *pool, struct session *session)
         expect_32(file, MAGIC_END_OF_RECORD);
 }
 
-struct session *
+Session *
 session_read(FILE *file, struct dpool *pool)
 {
-    struct session *session = session_allocate(pool);
+    Session *session = session_allocate(pool);
     if (session == nullptr || !do_read_session(file, pool, session))
         return nullptr;
 

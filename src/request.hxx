@@ -195,7 +195,7 @@ struct request {
      * @return the session (to be released by the caller if not
      * nullptr)
      */
-    struct session *ApplyTranslateSession(const TranslateResponse &response);
+    Session *ApplyTranslateSession(const TranslateResponse &response);
 
     bool CheckHandleReadFile(const TranslateResponse &response);
     bool CheckHandleProbePathSuffixes(const TranslateResponse &response);
@@ -262,7 +262,7 @@ request_args_parse(struct request &request);
 void
 request_determine_session(struct request &request);
 
-static inline struct session *
+static inline Session *
 request_get_session(const struct request &request)
 {
     return session_id_is_defined(request.session_id)
@@ -270,7 +270,7 @@ request_get_session(const struct request &request)
         : nullptr;
 }
 
-struct session *
+Session *
 request_make_session(struct request &request);
 
 void

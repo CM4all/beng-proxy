@@ -17,7 +17,8 @@ struct pool;
 struct strmap;
 struct processor_env;
 struct parsed_uri;
-struct session;
+struct Session;
+struct WidgetSession;
 struct WidgetView;
 struct WidgetClass;
 
@@ -322,8 +323,8 @@ widget_get_transformation_view(const struct widget *widget)
  * Returns the widget's session object.  The passed session object
  * must be locked.
  */
-struct widget_session *
-widget_get_session(struct widget *widget, struct session *session,
+WidgetSession *
+widget_get_session(struct widget *widget, Session *session,
                    bool create);
 
 gcc_pure gcc_malloc

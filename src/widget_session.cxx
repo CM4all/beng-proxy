@@ -10,11 +10,10 @@
 
 #include <assert.h>
 
-struct widget_session *
-widget_get_session(struct widget *widget, struct session *session,
+WidgetSession *
+widget_get_session(struct widget *widget, Session *session,
                    bool create)
 {
-    struct widget_session *parent, *ws;
     struct pool_mark_state mark;
 
     assert(widget != NULL);
@@ -28,6 +27,8 @@ widget_get_session(struct widget *widget, struct session *session,
         return session_get_widget(session, widget->id, create);
 
     switch (widget->session) {
+        WidgetSession *parent, *ws;
+
     case widget::WIDGET_SESSION_RESOURCE:
         /* the session is bound to the resource: determine
            widget_session from the parent's session */

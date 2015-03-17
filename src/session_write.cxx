@@ -104,7 +104,7 @@ session_write_magic(FILE *file, uint32_t magic)
 bool
 session_write_file_header(FILE *file)
 {
-    const struct session *session = nullptr;
+    const Session *session = nullptr;
 
     return session_write_magic(file, MAGIC_FILE) &&
         write_32(file, sizeof(*session));
@@ -120,7 +120,7 @@ static bool
 write_widget_sessions(FILE *file, struct dhashmap *widgets);
 
 static bool
-write_widget_session(FILE *file, const struct widget_session *session)
+write_widget_session(FILE *file, const WidgetSession *session)
 {
     assert(session != nullptr);
 
@@ -140,8 +140,7 @@ write_widget_sessions(FILE *file, struct dhashmap *widgets)
     dhashmap_rewind(widgets);
     const struct dhashmap_pair *pair;
     while ((pair = dhashmap_next(widgets)) != nullptr) {
-        const struct widget_session *ws =
-            (const struct widget_session *)pair->value;
+        const auto *ws = (const WidgetSession *)pair->value;
         if (!session_write_magic(file, MAGIC_WIDGET_SESSION) ||
             !write_widget_session(file, ws))
             return false;
@@ -175,7 +174,7 @@ write_cookie_jar(FILE *file, const struct cookie_jar *jar)
 }
 
 bool
-session_write(FILE *file, const struct session *session)
+session_write(FILE *file, const Session *session)
 {
     return write_session_id(file, &session->id) &&
         write_64(file, session->expires) &&

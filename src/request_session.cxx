@@ -39,7 +39,7 @@ request_get_cookies(struct request &request)
     return request.cookies;
 }
 
-static struct session *
+static Session *
 request_load_session(struct request &request, const char *session_id)
 {
     assert(!request.stateless);
@@ -158,7 +158,7 @@ request_determine_session(struct request &request)
     session_put(session);
 }
 
-struct session *
+Session *
 request_make_session(struct request &request)
 {
     if (request.stateless)
@@ -252,7 +252,7 @@ request::ApplyTranslateRealm(const TranslateResponse &response)
     }
 }
 
-struct session *
+Session *
 request::ApplyTranslateSession(const TranslateResponse &response)
 {
     if (response.session.IsNull() && response.user == nullptr &&

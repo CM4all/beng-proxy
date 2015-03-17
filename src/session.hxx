@@ -24,14 +24,15 @@
 
 struct dpool;
 struct dhashmap;
+struct Session;
 
 /**
  * Session data associated with a widget instance (struct widget).
  */
-struct widget_session {
-    struct widget_session *parent;
+struct WidgetSession {
+    WidgetSession *parent;
 
-    struct session *session;
+    Session *session;
 
     /** local id of this widget; must not be nullptr since widgets
         without an id cannot have a session */
@@ -48,7 +49,7 @@ struct widget_session {
 /**
  * A session associated with a user.
  */
-struct session {
+struct Session {
     static constexpr auto link_mode = boost::intrusive::normal_link;
     typedef boost::intrusive::link_mode<link_mode> LinkMode;
     typedef boost::intrusive::list_member_hook<LinkMode> HashSiblingsHook;
@@ -100,61 +101,61 @@ struct session {
         by the translation server */
     const char *language;
 
-    /** a map of widget path to struct widget_session */
+    /** a map of widget path to WidgetSession */
     struct dhashmap *widgets;
 
     /** all cookies received by widget servers */
     struct cookie_jar *cookies;
 
-    session(struct dpool *_pool);
-    ~session();
+    explicit Session(struct dpool *_pool);
+    ~Session();
 };
 
 gcc_malloc
-struct session *
+Session *
 session_allocate(struct dpool *pool);
 
 gcc_malloc
-struct session *
-session_dup(struct dpool *pool, const struct session *src);
+Session *
+session_dup(struct dpool *pool, const Session *src);
 
 void
-session_destroy(struct session *session);
+session_destroy(Session *session);
 
 gcc_pure
 unsigned
-session_purge_score(const struct session *session);
+session_purge_score(const Session *session);
 
 void
-session_clear_translate(struct session *session);
+session_clear_translate(Session *session);
 
 void
-session_clear_user(struct session *session);
+session_clear_user(Session *session);
 
 void
-session_clear_language(struct session *session);
+session_clear_language(Session *session);
 
 bool
-session_set_translate(struct session *session, ConstBuffer<void> translate);
+session_set_translate(Session *session, ConstBuffer<void> translate);
 
 bool
-session_set_user(struct session *session, const char *user, unsigned max_age);
+session_set_user(Session *session, const char *user, unsigned max_age);
 
 bool
-session_set_language(struct session *session, const char *language);
+session_set_language(Session *session, const char *language);
 
 /**
  * Finds the session with the specified id.  The returned object is
  * locked, and must be unlocked with session_put().
  */
-struct session *
+Session *
 session_get(session_id_t id);
 
 /**
  * Unlocks the specified session.
  */
 void
-session_put(struct session *session);
+session_put(Session *session);
 
 /**
  * Deletes the session with the specified id.  The current process
@@ -164,22 +165,22 @@ void
 session_delete(session_id_t id);
 
 gcc_malloc
-struct widget_session *
-widget_session_allocate(struct session *session);
+WidgetSession *
+widget_session_allocate(Session *session);
 
 gcc_pure
-struct widget_session *
-session_get_widget(struct session *session, const char *id, bool create);
+WidgetSession *
+session_get_widget(Session *session, const char *id, bool create);
 
 gcc_pure
-struct widget_session *
-widget_session_get_child(struct widget_session *parent, const char *id,
+WidgetSession *
+widget_session_get_child(WidgetSession *parent, const char *id,
                          bool create);
 
 void
-widget_session_delete(struct dpool *pool, struct widget_session *ws);
+widget_session_delete(struct dpool *pool, WidgetSession *ws);
 
 void
-session_delete_widgets(struct session *session);
+session_delete_widgets(Session *session);
 
 #endif

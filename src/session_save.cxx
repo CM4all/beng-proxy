@@ -34,7 +34,7 @@ static const char *session_save_path;
 static struct event session_save_timer;
 
 static bool
-session_save_callback(const struct session *session, void *ctx)
+session_save_callback(const Session *session, void *ctx)
 {
     FILE *file = (FILE *)ctx;
     return session_write_magic(file, MAGIC_SESSION) &&
@@ -69,7 +69,7 @@ session_manager_load(FILE *file)
         if (pool == nullptr)
             return false;
 
-        struct session *session = session_read(file, pool);
+        Session *session = session_read(file, pool);
         if (session == nullptr) {
             dpool_destroy(pool);
             return false;

@@ -32,20 +32,20 @@ widget_check_host(const struct widget *widget gcc_unused,
     return true;
 }
 
-struct session *
+Session *
 session_get(session_id_t id gcc_unused)
 {
     return NULL;
 }
 
 void
-session_put(struct session *session gcc_unused)
+session_put(Session *session gcc_unused)
 {
 }
 
 void
 widget_sync_session(struct widget *widget gcc_unused,
-                    struct session *session gcc_unused)
+                    Session *session gcc_unused)
 {
 }
 

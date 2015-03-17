@@ -25,7 +25,7 @@
 #define SESSION_TTL_NEW 120
 
 inline
-session::session(struct dpool *_pool)
+Session::Session(struct dpool *_pool)
     :pool(_pool),
      expires(expiry_touch(SESSION_TTL_NEW)),
      counter(1),
@@ -43,19 +43,19 @@ session::session(struct dpool *_pool)
 }
 
 inline
-session::~session()
+Session::~Session()
 {
     lock_destroy(&lock);
 }
 
-struct session *
+Session *
 session_allocate(struct dpool *pool)
 {
-    return NewFromPool<struct session>(pool, pool);
+    return NewFromPool<Session>(pool, pool);
 }
 
 void
-session_destroy(struct session *session)
+session_destroy(Session *session)
 {
     DeleteDestroyPool(*session->pool, session);
 }
@@ -65,7 +65,7 @@ session_destroy(struct session *session)
  * more likely to be purged.
  */
 unsigned
-session_purge_score(const struct session *session)
+session_purge_score(const Session *session)
 {
     if (session->is_new)
         return 1000;
@@ -80,7 +80,7 @@ session_purge_score(const struct session *session)
 }
 
 void
-session_clear_translate(struct session *session)
+session_clear_translate(Session *session)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
@@ -92,7 +92,7 @@ session_clear_translate(struct session *session)
 }
 
 void
-session_clear_user(struct session *session)
+session_clear_user(Session *session)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
@@ -104,7 +104,7 @@ session_clear_user(struct session *session)
 }
 
 void
-session_clear_language(struct session *session)
+session_clear_language(Session *session)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
@@ -116,7 +116,7 @@ session_clear_language(struct session *session)
 }
 
 bool
-session_set_translate(struct session *session, ConstBuffer<void> translate)
+session_set_translate(Session *session, ConstBuffer<void> translate)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
@@ -135,7 +135,7 @@ session_set_translate(struct session *session, ConstBuffer<void> translate)
 }
 
 bool
-session_set_user(struct session *session, const char *user, unsigned max_age)
+session_set_user(Session *session, const char *user, unsigned max_age)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
@@ -162,7 +162,7 @@ session_set_user(struct session *session, const char *user, unsigned max_age)
 }
 
 bool
-session_set_language(struct session *session, const char *language)
+session_set_language(Session *session, const char *language)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
@@ -180,17 +180,18 @@ session_set_language(struct session *session, const char *language)
 
 static struct dhashmap * gcc_malloc
 widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
-                       struct session *session, struct widget_session *parent);
+                       Session *session, WidgetSession *parent);
 
-static struct widget_session * gcc_malloc
-widget_session_dup(struct dpool *pool, const struct widget_session *src,
-                   struct session *session)
+gcc_malloc
+static WidgetSession *
+widget_session_dup(struct dpool *pool, const WidgetSession *src,
+                   Session *session)
 {
     assert(crash_in_unsafe());
     assert(src != nullptr);
     assert(src->id != nullptr);
 
-    struct widget_session *dest = (struct widget_session *)d_malloc(pool, sizeof(*dest));
+    WidgetSession *dest = (WidgetSession *)d_malloc(pool, sizeof(*dest));
     if (dest == nullptr)
         return nullptr;
 
@@ -225,7 +226,7 @@ widget_session_dup(struct dpool *pool, const struct widget_session *src,
 
 static struct dhashmap * gcc_malloc
 widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
-                       struct session *session, struct widget_session *parent)
+                       Session *session, WidgetSession *parent)
 {
     assert(crash_in_unsafe());
 
@@ -238,9 +239,8 @@ widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
 
     dhashmap_rewind(src);
     while ((pair = dhashmap_next(src)) != nullptr) {
-        const struct widget_session *src_ws = (const struct widget_session *)
-            pair->value;
-        struct widget_session *dest_ws;
+        const auto *src_ws = (const WidgetSession *)pair->value;
+        WidgetSession *dest_ws;
 
         dest_ws = widget_session_dup(pool, src_ws, session);
         if (dest_ws == nullptr)
@@ -254,12 +254,12 @@ widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
     return dest;
 }
 
-struct session *
-session_dup(struct dpool *pool, const struct session *src)
+Session *
+session_dup(struct dpool *pool, const Session *src)
 {
     assert(crash_in_unsafe());
 
-    struct session *dest = (struct session *)d_malloc(pool, sizeof(*dest));
+    Session *dest = (Session *)d_malloc(pool, sizeof(*dest));
     if (dest == nullptr)
         return nullptr;
 
@@ -301,10 +301,10 @@ session_dup(struct dpool *pool, const struct session *src)
     return dest;
 }
 
-struct widget_session *
-widget_session_allocate(struct session *session)
+WidgetSession *
+widget_session_allocate(Session *session)
 {
-    struct widget_session *ws = (struct widget_session *)d_malloc(session->pool, sizeof(*ws));
+    WidgetSession *ws = (WidgetSession *)d_malloc(session->pool, sizeof(*ws));
     if (ws == nullptr)
         return nullptr;
 
@@ -312,8 +312,8 @@ widget_session_allocate(struct session *session)
     return ws;
 }
 
-static struct widget_session *
-hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
+static WidgetSession *
+hashmap_r_get_widget_session(Session *session, struct dhashmap **map_r,
                              const char *id, bool create)
 {
     struct dhashmap *map;
@@ -334,8 +334,7 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
         if (map == nullptr)
             return nullptr;
     } else {
-        struct widget_session *ws =
-            (struct widget_session *)dhashmap_get(map, id);
+        auto *ws = (WidgetSession *)dhashmap_get(map, id);
         if (ws != nullptr)
             return ws;
 
@@ -345,7 +344,7 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
 
     assert(create);
 
-    struct widget_session *ws = widget_session_allocate(session);
+    auto *ws = widget_session_allocate(session);
     if (ws == nullptr)
         return nullptr;
 
@@ -364,8 +363,8 @@ hashmap_r_get_widget_session(struct session *session, struct dhashmap **map_r,
     return ws;
 }
 
-struct widget_session *
-session_get_widget(struct session *session, const char *id, bool create)
+WidgetSession *
+session_get_widget(Session *session, const char *id, bool create)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);
@@ -375,8 +374,8 @@ session_get_widget(struct session *session, const char *id, bool create)
                                         create);
 }
 
-struct widget_session *
-widget_session_get_child(struct widget_session *parent,
+WidgetSession *
+widget_session_get_child(WidgetSession *parent,
                          const char *id,
                          bool create)
 {
@@ -390,7 +389,7 @@ widget_session_get_child(struct widget_session *parent,
 }
 
 static void
-widget_session_free(struct dpool *pool, struct widget_session *ws)
+widget_session_free(struct dpool *pool, WidgetSession *ws)
 {
     assert(crash_in_unsafe());
 
@@ -418,7 +417,7 @@ widget_session_clear_map(struct dpool *pool, struct dhashmap *map)
         if (pair == nullptr)
             break;
 
-        struct widget_session *ws = (struct widget_session *)pair->value;
+        auto *ws = (WidgetSession *)pair->value;
         dhashmap_remove(map, ws->id);
 
         widget_session_delete(pool, ws);
@@ -426,7 +425,7 @@ widget_session_clear_map(struct dpool *pool, struct dhashmap *map)
 }
 
 void
-widget_session_delete(struct dpool *pool, struct widget_session *ws)
+widget_session_delete(struct dpool *pool, WidgetSession *ws)
 {
     assert(crash_in_unsafe());
     assert(pool != nullptr);
@@ -439,7 +438,7 @@ widget_session_delete(struct dpool *pool, struct widget_session *ws)
 }
 
 void
-session_delete_widgets(struct session *session)
+session_delete_widgets(Session *session)
 {
     assert(crash_in_unsafe());
     assert(session != nullptr);

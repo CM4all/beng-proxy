@@ -20,7 +20,7 @@
 
 /** copy data from the widget to its associated session */
 static void
-widget_to_session(struct widget_session *ws, const struct widget *widget)
+widget_to_session(WidgetSession *ws, const struct widget *widget)
 {
     assert(widget != nullptr);
     assert(widget->cls != nullptr);
@@ -43,7 +43,7 @@ widget_to_session(struct widget_session *ws, const struct widget *widget)
 
 /** restore data from the session */
 static void
-session_to_widget(struct widget *widget, const struct widget_session *ws)
+session_to_widget(struct widget *widget, const WidgetSession *ws)
 {
     assert(widget->cls != nullptr);
     assert(widget->cls->stateful); /* cannot load state from stateless widgets */
@@ -146,7 +146,7 @@ widget_should_sync_session(const struct widget *widget)
 }
 
 void
-widget_sync_session(struct widget *widget, struct session *session)
+widget_sync_session(struct widget *widget, Session *session)
 {
     assert(widget != nullptr);
     assert(widget->parent != nullptr);
@@ -173,14 +173,14 @@ widget_sync_session(struct widget *widget, struct session *session)
     } else {
         /* get query string from session */
 
-        struct widget_session *ws = widget_get_session(widget, session, false);
+        WidgetSession *ws = widget_get_session(widget, session, false);
         if (ws != nullptr)
             session_to_widget(widget, ws);
     }
 }
 
 void
-widget_save_session(struct widget *widget, struct session *session)
+widget_save_session(struct widget *widget, Session *session)
 {
     assert(widget != nullptr);
     assert(widget->parent != nullptr);
@@ -195,13 +195,13 @@ widget_save_session(struct widget *widget, struct session *session)
         /* not stateful in this request */
         return;
 
-    struct widget_session *ws = widget_get_session(widget, session, true);
+    WidgetSession *ws = widget_get_session(widget, session, true);
     if (ws != nullptr)
         widget_to_session(ws, widget);
 }
 
 void
-widget_copy_from_location(struct widget *widget, struct session *session,
+widget_copy_from_location(struct widget *widget, Session *session,
                           const char *location, size_t location_length,
                           struct pool *pool)
 {
@@ -226,11 +226,9 @@ widget_copy_from_location(struct widget *widget, struct session *session,
     widget->lazy.address = nullptr;
 
     if (session != nullptr) {
-        struct widget_session *ws;
-
         assert(widget->cls->stateful);
 
-        ws = widget_get_session(widget, session, true);
+        auto *ws = widget_get_session(widget, session, true);
         if (ws != nullptr)
             widget_to_session(ws, widget);
     }

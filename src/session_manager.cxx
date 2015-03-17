@@ -52,10 +52,10 @@ struct session_manager {
      */
     bool abandoned;
 
-    typedef boost::intrusive::list<struct session,
-                                   boost::intrusive::member_hook<struct session,
-                                                                 session::HashSiblingsHook,
-                                                                 &session::hash_siblings>,
+    typedef boost::intrusive::list<Session,
+                                   boost::intrusive::member_hook<Session,
+                                                                 Session::HashSiblingsHook,
+                                                                 &Session::hash_siblings>,
                                    boost::intrusive::constant_time_size<false>> List;
     List sessions[SESSION_SLOTS];
     unsigned num_sessions;
@@ -95,9 +95,9 @@ struct session_manager {
 #endif
     }
 
-    void Insert(struct session *session);
+    void Insert(Session *session);
 
-    void EraseAndDispose(struct session *session);
+    void EraseAndDispose(Session *session);
     void EraseAndDispose(session_id_t id);
 
     bool Cleanup();
@@ -107,7 +107,7 @@ struct session_manager {
      */
     bool Purge();
 
-    bool Visit(bool (*callback)(const struct session *session,
+    bool Visit(bool (*callback)(const Session *session,
                                 void *ctx), void *ctx);
 };
 
@@ -134,11 +134,11 @@ static struct event session_cleanup_event;
  * risk deadlocking itself.  For the assertions in this source, this
  * variable holds a reference to the locked session.
  */
-static const struct session *locked_session;
+static const Session *locked_session;
 #endif
 
 void
-session_manager::EraseAndDispose(struct session *session)
+session_manager::EraseAndDispose(Session *session)
 {
     assert(crash_in_unsafe());
     assert(rwlock_is_wlocked(&lock));
@@ -175,10 +175,10 @@ session_manager::Cleanup()
     }
 
     for (auto &slot : sessions) {
-        slot.remove_and_dispose_if([now](const struct session &session) {
+        slot.remove_and_dispose_if([now](const Session &session) {
                 return now >= (unsigned)session.expires;
             },
-            [this](struct session *session) {
+            [this](Session *session) {
                 assert(num_sessions > 0);
 
                 --num_sessions;
@@ -254,7 +254,7 @@ session_manager::~session_manager()
     rwlock_wlock(&lock);
 
     for (auto &slot : sessions) {
-        slot.clear_and_dispose([this](struct session *session) {
+        slot.clear_and_dispose([this](Session *session) {
                 assert(num_sessions > 0);
 
                 --num_sessions;
@@ -343,7 +343,7 @@ bool
 session_manager::Purge()
 {
     /* collect at most 256 sessions */
-    StaticArray<struct session *, 256> purge_sessions;
+    StaticArray<Session *, 256> purge_sessions;
     unsigned highest_score = 0;
 
     assert(locked_session == nullptr);
@@ -385,7 +385,7 @@ session_manager::Purge()
 }
 
 inline void
-session_manager::Insert(struct session *session)
+session_manager::Insert(Session *session)
 {
     assert(session != nullptr);
 
@@ -403,7 +403,7 @@ session_manager::Insert(struct session *session)
 }
 
 void
-session_manager_add(struct session *session)
+session_manager_add(Session *session)
 {
     session_manager->Insert(session);
 }
@@ -437,11 +437,11 @@ session_generate_id(session_id_t *id_r)
 #endif
 }
 
-static struct session *
+static Session *
 session_new_unsafe()
 {
     struct dpool *pool;
-    struct session *session;
+    Session *session;
     unsigned num_sessions;
 
     assert(crash_in_unsafe());
@@ -489,11 +489,11 @@ session_new_unsafe()
     return session;
 }
 
-struct session *
+Session *
 session_new()
 {
     crash_unsafe_enter();
-    struct session *session = session_new_unsafe();
+    Session *session = session_new_unsafe();
     if (session == nullptr)
         crash_unsafe_leave();
     return session;
@@ -505,13 +505,13 @@ session_new()
  * and frees the old session instance.  Of course, this requires that
  * there is enough free shared memory.
  */
-static struct session * gcc_malloc
-session_defragment(struct session *src)
+static Session * gcc_malloc
+session_defragment(Session *src)
 {
     assert(crash_in_unsafe());
 
     struct dpool *pool;
-    struct session *dest;
+    Session *dest;
 
     pool = dpool_new(session_manager->shm);
     if (pool == nullptr)
@@ -530,7 +530,7 @@ session_defragment(struct session *src)
     return dest;
 }
 
-static struct session *
+static Session *
 session_find(session_id_t id)
 {
     if (session_manager->abandoned)
@@ -555,10 +555,10 @@ session_find(session_id_t id)
     return nullptr;
 }
 
-struct session *
+Session *
 session_get(session_id_t id)
 {
-    struct session *session;
+    Session *session;
 
     assert(locked_session == nullptr);
 
@@ -574,7 +574,7 @@ session_get(session_id_t id)
 }
 
 static void
-session_put_internal(struct session *session)
+session_put_internal(Session *session)
 {
     assert(crash_in_unsafe());
     assert(session == locked_session);
@@ -591,7 +591,7 @@ session_defragment_id(session_id_t id)
 {
     assert(crash_in_unsafe());
 
-    struct session *session = session_find(id);
+    Session *session = session_find(id);
     if (session == nullptr)
         return;
 
@@ -606,7 +606,7 @@ session_defragment_id(session_id_t id)
 }
 
 void
-session_put(struct session *session)
+session_put(Session *session)
 {
     session_id_t defragment;
 
@@ -634,7 +634,7 @@ session_put(struct session *session)
 void
 session_manager::EraseAndDispose(session_id_t id)
 {
-    struct session *session;
+    Session *session;
 
     assert(locked_session == nullptr);
 
@@ -658,7 +658,7 @@ session_delete(session_id_t id)
 }
 
 inline bool
-session_manager::Visit(bool (*callback)(const struct session *session,
+session_manager::Visit(bool (*callback)(const Session *session,
                                         void *ctx), void *ctx)
 {
     bool result = true;
@@ -698,7 +698,7 @@ session_manager::Visit(bool (*callback)(const struct session *session,
 }
 
 bool
-session_manager_visit(bool (*callback)(const struct session *session,
+session_manager_visit(bool (*callback)(const Session *session,
                                        void *ctx), void *ctx)
 {
     return session_manager->Visit(callback, ctx);
