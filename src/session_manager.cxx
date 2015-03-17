@@ -24,13 +24,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define SHM_PAGE_SIZE 4096
-#define SHM_NUM_PAGES 32768
-#define SM_PAGES ((sizeof(SessionManager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE)
-
-#define SESSION_SLOTS 16381
-
 struct SessionManager {
+    static constexpr unsigned SESSION_SLOTS = 16381;
+
     struct refcount ref;
 
     /**
@@ -110,6 +106,10 @@ struct SessionManager {
     bool Visit(bool (*callback)(const Session *session,
                                 void *ctx), void *ctx);
 };
+
+static constexpr size_t SHM_PAGE_SIZE = 4096;
+static constexpr unsigned SHM_NUM_PAGES = 32768;
+static constexpr unsigned SM_PAGES = (sizeof(SessionManager) + SHM_PAGE_SIZE - 1) / SHM_PAGE_SIZE;
 
 /** clean up expired sessions every 60 seconds */
 static const struct timeval cleanup_interval = {
