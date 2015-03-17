@@ -386,11 +386,9 @@ SessionManager::Insert(Session *session)
     Slot(session->id).push_back(*session);
     ++num_sessions;
 
-    const bool one_session = num_sessions == 1;
-
     rwlock_wunlock(&lock);
 
-    if (one_session)
+    if (!evtimer_pending(&session_cleanup_event, nullptr))
         evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
@@ -474,7 +472,7 @@ session_new_unsafe()
     lock_lock(&session->lock);
     rwlock_wunlock(&session_manager->lock);
 
-    if (num_sessions == 1)
+    if (!evtimer_pending(&session_cleanup_event, nullptr))
         evtimer_add(&session_cleanup_event, &cleanup_interval);
 
     return session;
