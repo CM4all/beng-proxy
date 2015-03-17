@@ -7,8 +7,6 @@
 #include "session_id.hxx"
 #include "format.h"
 
-#include <glib.h>
-
 #include <stdlib.h>
 
 bool
@@ -32,10 +30,8 @@ session_id_parse(const char *p, SessionId *id_r)
 
     *id_r = id;
 #else
-    guint64 id;
     char *endptr;
-
-    id = g_ascii_strtoull(p, &endptr, 16);
+    uint64_t id = strtoull(p, &endptr, 16);
     if (id == 0 || *endptr != 0)
         return false;
 
