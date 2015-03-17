@@ -47,8 +47,6 @@ parse_uri_mode(const struct strref *s)
 static const char *
 uri_replace_hostname(struct pool *pool, const char *uri, const char *hostname)
 {
-    const char *start, *end;
-
     assert(hostname != nullptr);
 
     if (*uri == '/')
@@ -56,12 +54,13 @@ uri_replace_hostname(struct pool *pool, const char *uri, const char *hostname)
                         "http://", hostname,
                         uri, nullptr);
 
-    start = strchr(uri, ':');
+    const char *start = strchr(uri, ':');
     if (start == nullptr || start[1] != '/' || start[1] != '/' || start[2] == '/')
         return uri;
 
     start += 2;
 
+    const char *end;
     for (end = start;
          *end != 0 && *end != ':' && *end != '/';
          ++end) {
@@ -156,7 +155,6 @@ do_rewrite_widget_uri(struct pool *pool, struct processor_env *env,
                          nullptr);
 
     const char *frame = nullptr;
-    const char *uri;
 
     switch (mode) {
     case URI_MODE_DIRECT:
@@ -184,10 +182,10 @@ do_rewrite_widget_uri(struct pool *pool, struct processor_env *env,
         gcc_unreachable();
     }
 
-    uri = widget_external_uri(pool, env->external_uri, env->args,
-                              widget, stateful,
-                              value,
-                              frame, view);
+    const char *uri = widget_external_uri(pool, env->external_uri, env->args,
+                                          widget, stateful,
+                                          value,
+                                          frame, view);
     if (uri == nullptr) {
         if (widget->id == nullptr)
             daemon_log(4, "Cannot rewrite URI for widget of type '%s': no id\n",
@@ -246,7 +244,6 @@ static void
 class_lookup_callback(void *ctx)
 {
     struct rewrite_widget_uri *rwu = (struct rewrite_widget_uri *)ctx;
-    struct istream *istream;
 
     const struct strref *value = rwu->value;
     bool escape = false;
@@ -288,6 +285,7 @@ class_lookup_callback(void *ctx)
         }
     }
 
+    struct istream *istream;
     if (value != nullptr) {
         istream = istream_memory_new(rwu->pool,
                                      value->data, value->length);

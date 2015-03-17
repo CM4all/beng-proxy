@@ -48,7 +48,6 @@ create_test(struct pool *pool, struct istream *input)
     const char *uri;
     static struct parsed_uri parsed_uri;
     static struct widget widget;
-    struct session *session;
 
     /* HACK, processor.c will ignore c:widget otherwise */
     global_translate_cache = (struct tcache *)(size_t)1;
@@ -63,7 +62,7 @@ create_test(struct pool *pool, struct istream *input)
     crash_global_init();
     session_manager_init(1200, 0, 0);
 
-    session = session_new();
+    auto *session = session_new();
 
     static struct processor_env env;
     env = processor_env(pool,

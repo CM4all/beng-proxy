@@ -133,23 +133,22 @@ widget_request_headers(struct embed *embed, const WidgetView *view,
                        bool exclude_host, bool with_body)
 {
     struct widget &widget = embed->widget;
-    struct strmap *headers;
-    struct session *session;
 
-    session = session_get(embed->env.session_id);
+    auto *session = session_get(embed->env.session_id);
 
-    headers = forward_request_headers(embed->pool, embed->env.request_headers,
-                                      embed->env.local_host,
-                                      embed->env.remote_host,
-                                      exclude_host, with_body,
-                                      widget.from_request.frame && !view->HasProcessor(),
-                                      widget.from_request.frame && view->transformation == nullptr,
-                                      widget.from_request.frame && view->transformation == nullptr,
-                                      view->request_header_forward,
-                                      embed->env.session_cookie,
-                                      session,
-                                      embed->host_and_port,
-                                      widget_uri(&widget));
+    auto *headers =
+        forward_request_headers(embed->pool, embed->env.request_headers,
+                                embed->env.local_host,
+                                embed->env.remote_host,
+                                exclude_host, with_body,
+                                widget.from_request.frame && !view->HasProcessor(),
+                                widget.from_request.frame && view->transformation == nullptr,
+                                widget.from_request.frame && view->transformation == nullptr,
+                                view->request_header_forward,
+                                embed->env.session_cookie,
+                                session,
+                                embed->host_and_port,
+                                widget_uri(&widget));
 
     if (session != nullptr)
         session_put(session);
@@ -182,12 +181,6 @@ widget_response_redirect(struct embed *embed, const char *location,
                          struct istream *body)
 {
     struct widget &widget = embed->widget;
-    const struct resource_address *address;
-    struct session *session;
-    struct strmap *headers;
-    struct strref strref_buffer;
-    const struct strref *p;
-    struct resource_address address_buffer;
 
     if (embed->num_redirects >= 8)
         return false;
@@ -199,13 +192,14 @@ widget_response_redirect(struct embed *embed, const char *location,
         /* a static or CGI widget cannot send redirects */
         return false;
 
-    p = widget_relative_uri(&embed->pool, &widget, true,
-                            location, strlen(location),
-                            &strref_buffer);
+    struct strref strref_buffer;
+    const auto *p = widget_relative_uri(&embed->pool, &widget, true,
+                                        location, strlen(location),
+                                        &strref_buffer);
     if (p == nullptr)
         return false;
 
-    session = session_get_if_stateful(embed);
+    auto *session = session_get_if_stateful(embed);
     widget_copy_from_location(&widget, session,
                               p->data, p->length, &embed->pool);
     if (session != nullptr)
@@ -213,19 +207,22 @@ widget_response_redirect(struct embed *embed, const char *location,
 
     ++embed->num_redirects;
 
-    address = resource_address_apply(&embed->pool, widget_address(&widget),
-                                     location, strlen(location),
-                                     &address_buffer);
+    struct resource_address address_buffer;
+    const auto *address =
+        resource_address_apply(&embed->pool, widget_address(&widget),
+                               location, strlen(location),
+                               &address_buffer);
     if (address == nullptr)
         return false;
 
     if (body != nullptr)
         istream_close_unused(body);
 
-    headers = widget_request_headers(embed, view,
-                                     address->type == RESOURCE_ADDRESS_HTTP ||
-                                     address->type == RESOURCE_ADDRESS_LHTTP,
-                                     false);
+    auto *headers =
+        widget_request_headers(embed, view,
+                               address->type == RESOURCE_ADDRESS_HTTP ||
+                               address->type == RESOURCE_ADDRESS_LHTTP,
+                               false);
 
     resource_get(global_http_cache, global_tcp_balancer,
                  global_lhttp_stock,
@@ -305,9 +302,7 @@ widget_response_process(struct embed *embed, http_status_t status,
 static bool
 css_processable(const struct strmap *headers)
 {
-    const char *content_type;
-
-    content_type = strmap_get_checked(headers, "content-type");
+    const char *content_type = strmap_get_checked(headers, "content-type");
     return content_type != nullptr &&
         strncmp(content_type, "text/css", 8) == 0;
 }
@@ -380,9 +375,8 @@ widget_response_apply_filter(struct embed *embed, http_status_t status,
                              struct strmap *headers, struct istream *body,
                              const struct resource_address *filter)
 {
-    const char *source_tag;
-    source_tag = resource_tag_append_etag(&embed->pool,
-                                          embed->resource_tag, headers);
+    const char *source_tag =
+        resource_tag_append_etag(&embed->pool, embed->resource_tag, headers);
     embed->resource_tag = source_tag != nullptr
         ? p_strcat(&embed->pool, source_tag, "|",
                    resource_address_id(filter, &embed->pool),
@@ -409,12 +403,10 @@ widget_response_transform(struct embed *embed, http_status_t status,
                           struct strmap *headers, struct istream *body,
                           const Transformation *transformation)
 {
-    const char *p;
-
     assert(transformation != nullptr);
     assert(embed->transformation == transformation->next);
 
-    p = strmap_get_checked(headers, "content-encoding");
+    const char *p = strmap_get_checked(headers, "content-encoding");
     if (p != nullptr && strcmp(p, "identity") != 0) {
         if (body != nullptr)
             istream_close_unused(body);
@@ -569,7 +561,6 @@ widget_response_response(http_status_t status, struct strmap *headers,
 {
     struct embed *embed = (struct embed *)ctx;
     struct widget &widget = embed->widget;
-    /*const char *translate;*/
 
     if (headers != nullptr) {
         if (widget.cls->dump_headers) {
@@ -581,7 +572,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
         }
 
         if (embed->host_and_port != nullptr) {
-            struct session *session = session_get(embed->env.session_id);
+            auto *session = session_get(embed->env.session_id);
             if (session != nullptr) {
                 widget_collect_cookies(session->cookies, headers,
                                        embed->host_and_port);
@@ -590,9 +581,9 @@ widget_response_response(http_status_t status, struct strmap *headers,
         }
 
         /*
-        translate = headers->Get("x-cm4all-beng-translate");
+        const char *translate = headers->Get("x-cm4all-beng-translate");
         if (translate != nullptr) {
-            struct session *session = session_get(embed->env.session_id);
+            auto *session = session_get(embed->env.session_id);
             if (session != nullptr)
                 session->translate = d_strdup(session->pool, translate);
             session_put(session);
@@ -628,7 +619,7 @@ widget_response_response(http_status_t status, struct strmap *headers,
 
     if (widget.session_save_pending &&
         embed->transformation->HasProcessor()) {
-        struct session *session = session_get(embed->env.session_id);
+        auto *session = session_get(embed->env.session_id);
         if (session != nullptr) {
             widget_save_session(&widget, session);
             session_put(session);

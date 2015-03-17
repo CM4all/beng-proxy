@@ -296,12 +296,11 @@ test_cookie_client(struct pool *pool)
         .dump_headers = false,
     };
     struct widget widget;
-    struct session *session;
-    struct processor_env env;
     struct async_operation_ref async_ref;
 
-    session = session_new();
+    auto *session = session_new();
 
+    struct processor_env env;
     env.local_host = "localhost";
     env.remote_host = "localhost";
     env.request_headers = strmap_new(pool);

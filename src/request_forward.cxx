@@ -16,7 +16,6 @@ request_forward(struct forward_request &dest, struct request &request2,
                 bool exclude_host)
 {
     struct http_server_request *request = request2.request;
-    struct session *session;
 
     assert(!http_server_request_has_body(request) ||
            request2.body != nullptr);
@@ -39,7 +38,7 @@ request_forward(struct forward_request &dest, struct request &request2,
 
     /* generate request headers */
 
-    session = request_get_session(request2);
+    auto *session = request_get_session(request2);
     dest.headers = forward_request_headers(*request->pool, request->headers,
                                            request->local_host_and_port,
                                            request->remote_host,

@@ -74,29 +74,27 @@ session_drop_widgets(struct session &session, const char *uri,
 {
     struct dhashmap *map = session.widgets;
     const char *id = uri;
-    widget_session *ws;
 
     while (true) {
         if (map == nullptr)
             /* no such widget session (no children at all here) */
             return;
 
-        ws = (widget_session *)dhashmap_get(map, id);
+        auto *ws = (struct widget_session *)dhashmap_get(map, id);
         if (ws == nullptr)
             /* no such widget session */
             return;
 
-        if (ref == nullptr)
+        if (ref == nullptr) {
             /* found the widget session */
-            break;
+            dhashmap_remove(map, id);
+            widget_session_delete(session.pool, ws);
+        }
 
         map = ws->children;
         id = ref->id;
         ref = ref->next;
     }
-
-    dhashmap_remove(map, id);
-    widget_session_delete(session.pool, ws);
 }
 
 
