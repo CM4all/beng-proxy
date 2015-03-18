@@ -19,25 +19,39 @@
 #include <sys/socket.h>
 
 struct tstock {
-    StockMap *tcp_stock;
+    StockMap &tcp_stock;
 
     AllocatedSocketAddress address;
 
-    const char *address_string;
+    const char *const address_string;
+
+    tstock(StockMap &_tcp_stock, const char *path)
+        :tcp_stock(_tcp_stock), address_string(path) {
+        address.SetLocal(path);
+    }
 };
 
 struct tstock_request {
-    struct pool *pool;
+    struct pool &pool;
 
-    struct tstock *stock;
+    struct tstock &stock;
     StockItem *item;
 
-    const TranslateRequest *request;
+    const TranslateRequest &request;
 
-    const TranslateHandler *handler;
+    const TranslateHandler &handler;
     void *handler_ctx;
 
-    struct async_operation_ref *async_ref;
+    struct async_operation_ref &async_ref;
+
+    tstock_request(struct tstock &_stock, struct pool &_pool,
+                   const TranslateRequest &_request,
+                   const TranslateHandler &_handler, void *_ctx,
+                   struct async_operation_ref &_async_ref)
+        :pool(_pool), stock(_stock),
+         request(_request),
+         handler(_handler), handler_ctx(_ctx),
+         async_ref(_async_ref) {}
 };
 
 
@@ -51,7 +65,7 @@ tstock_socket_release(bool reuse, void *ctx)
 {
     tstock_request *r = (tstock_request *)ctx;
 
-    tcp_stock_put(r->stock->tcp_stock, *r->item, !reuse);
+    tcp_stock_put(&r->stock.tcp_stock, *r->item, !reuse);
 }
 
 static const struct lease tstock_socket_lease = {
@@ -70,10 +84,10 @@ tstock_stock_ready(StockItem &item, void *ctx)
     tstock_request *r = (tstock_request *)ctx;
 
     r->item = &item;
-    translate(r->pool, tcp_stock_item_get(item),
+    translate(&r->pool, tcp_stock_item_get(item),
               &tstock_socket_lease, r,
-              r->request, r->handler, r->handler_ctx,
-              r->async_ref);
+              &r->request, &r->handler, r->handler_ctx,
+              &r->async_ref);
 }
 
 static void
@@ -81,7 +95,7 @@ tstock_stock_error(GError *error, void *ctx)
 {
     tstock_request *r = (tstock_request *)ctx;
 
-    r->handler->error(error, r->handler_ctx);
+    r->handler.error(error, r->handler_ctx);
 }
 
 static constexpr StockGetHandler tstock_stock_handler = {
@@ -98,13 +112,7 @@ static constexpr StockGetHandler tstock_stock_handler = {
 struct tstock *
 tstock_new(struct pool &pool, StockMap &tcp_stock, const char *socket_path)
 {
-    auto stock = NewFromPool<tstock>(pool);
-
-    stock->tcp_stock = &tcp_stock;
-    stock->address.SetLocal(socket_path);
-    stock->address_string = socket_path;
-
-    return stock;
+    return NewFromPool<tstock>(pool, tcp_stock, socket_path);
 }
 
 void
@@ -113,16 +121,10 @@ tstock_translate(struct tstock &stock, struct pool &pool,
                  const TranslateHandler &handler, void *ctx,
                  struct async_operation_ref &async_ref)
 {
-    auto r = NewFromPool<tstock_request>(pool);
+    auto r = NewFromPool<tstock_request>(pool, stock, pool, request,
+                                         handler, ctx, async_ref);
 
-    r->pool = &pool;
-    r->stock = &stock;
-    r->request = &request;
-    r->handler = &handler;
-    r->handler_ctx = ctx;
-    r->async_ref = &async_ref;
-
-    tcp_stock_get(stock.tcp_stock, &pool, stock.address_string,
+    tcp_stock_get(&stock.tcp_stock, &pool, stock.address_string,
                   false, SocketAddress::Null(),
                   stock.address,
                   10,
