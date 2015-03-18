@@ -1308,8 +1308,8 @@ tcache_miss(struct pool &pool, struct tcache &tcache,
 
     cache_log(4, "translate_cache: miss %s\n", key);
 
-    tstock_translate(&tcache.stock, &pool,
-                     &request, &tcache_handler, tcr, &async_ref);
+    tstock_translate(tcache.stock, pool,
+                     request, tcache_handler, tcr, async_ref);
 }
 
 gcc_pure
@@ -1475,7 +1475,7 @@ translate_cache(struct pool *pool, struct tcache *tcache,
                   ? request->widget_type
                   : request->uri);
 
-        tstock_translate(&tcache->stock, pool,
-                         request, handler, ctx, async_ref);
+        tstock_translate(tcache->stock, *pool,
+                         *request, *handler, ctx, *async_ref);
     }
 }

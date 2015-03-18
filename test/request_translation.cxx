@@ -132,7 +132,6 @@ int main(int argc, char **argv) {
         .uri = "/foo/index.html",
     };
     struct pool *pool;
-    struct tstock *translate_stock;
     struct async_operation_ref async_ref;
 
     (void)argc;
@@ -144,10 +143,10 @@ int main(int argc, char **argv) {
     pool = pool_new_libc(nullptr, "root");
 
     auto *tcp_stock = tcp_stock_new(pool, 0);
-    translate_stock = tstock_new(pool, tcp_stock, "@translation");
+    auto *translate_stock = tstock_new(*pool, *tcp_stock, "@translation");
 
-    tstock_translate(translate_stock, pool,
-                     &request, &my_translate_handler, nullptr, &async_ref);
+    tstock_translate(*translate_stock, *pool,
+                     request, my_translate_handler, nullptr, async_ref);
 
     event_dispatch();
     fb_pool_deinit();

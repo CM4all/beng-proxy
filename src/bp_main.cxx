@@ -360,7 +360,7 @@ int main(int argc, char **argv)
 
     if (instance.config.translation_socket != nullptr) {
         instance.translate_stock =
-            tstock_new(instance.pool, instance.tcp_stock,
+            tstock_new(*instance.pool, *instance.tcp_stock,
                        instance.config.translation_socket);
 
         instance.translate_cache = translate_cache_new(instance.pool, instance.translate_stock,

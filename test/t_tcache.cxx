@@ -22,21 +22,21 @@
 const TranslateResponse *next_response, *expected_response;
 
 void
-tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
-                 gcc_unused const TranslateRequest *request,
-                 const TranslateHandler *handler, void *ctx,
-                 gcc_unused struct async_operation_ref *async_ref)
+tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
+                 gcc_unused const TranslateRequest &request,
+                 const TranslateHandler &handler, void *ctx,
+                 gcc_unused struct async_operation_ref &async_ref)
 {
     if (next_response != nullptr) {
-        auto response = NewFromPool<TranslateResponse>(*pool);
-        response->CopyFrom(pool, *next_response);
+        auto response = NewFromPool<TranslateResponse>(pool);
+        response->CopyFrom(&pool, *next_response);
         response->max_age = next_response->max_age;
-        resource_address_copy(*pool, &response->address,
+        resource_address_copy(pool, &response->address,
                               &next_response->address);
         response->user = next_response->user;
-        handler->response(response, ctx);
+        handler.response(response, ctx);
     } else
-        handler->error(g_error_new(translate_quark(), 0, "Error"), ctx);
+        handler.error(g_error_new(translate_quark(), 0, "Error"), ctx);
 }
 
 static bool
