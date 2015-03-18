@@ -53,16 +53,7 @@ template<typename T>
 static size_t
 obtain_entropy(T *p, size_t size)
 {
-    /* read from /dev/random for strong entropy */
-
-    unsigned n = read_some_entropy("/dev/random", p, size);
-
-    /* fill the rest up with /dev/urandom */
-
-    if (n < size)
-        n += read_some_entropy("/dev/urandom", p + n, size - n);
-
-    return n;
+    return read_some_entropy("/dev/urandom", p, size);
 }
 
 void
