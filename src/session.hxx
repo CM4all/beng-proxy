@@ -103,6 +103,7 @@ struct Session {
     struct cookie_jar *cookies;
 
     explicit Session(struct dpool *_pool);
+    Session(struct dpool *_pool, const Session &src);
     ~Session();
 };
 
