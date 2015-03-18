@@ -16,6 +16,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <stdint.h>
+#include <stddef.h>
 
 static unsigned
 read_some_entropy(const char *path, guint32 *dest, unsigned max)
@@ -41,21 +43,26 @@ read_some_entropy(const char *path, guint32 *dest, unsigned max)
     return nbytes / sizeof(dest[0]);
 }
 
+static size_t
+obtain_entropy(uint32_t *p, size_t size)
+{
+    /* read from /dev/random for strong entropy */
+
+    unsigned n = read_some_entropy("/dev/random", p, size);
+
+    /* fill the rest up with /dev/urandom */
+
+    if (n < size)
+        n += read_some_entropy("/dev/urandom", p + n, size - n);
+
+    return n;
+}
+
 void
 obtain_entropy(GRand *r)
 {
     guint32 seed[64];
-
-    /* read from /dev/random for strong entropy */
-
-    unsigned n = read_some_entropy("/dev/random", seed, G_N_ELEMENTS(seed));
-
-    /* fill the rest up with /dev/urandom */
-
-    if (n < G_N_ELEMENTS(seed))
-        n += read_some_entropy("/dev/urandom", seed + n,
-                               G_N_ELEMENTS(seed) - n);
-
+    auto n = obtain_entropy(seed, G_N_ELEMENTS(seed));
     if (n < 8) {
         daemon_log(2, "Not enough entropy found\n");
         return;
