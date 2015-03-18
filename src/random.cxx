@@ -1,5 +1,5 @@
 /*
- * Provide entropy for the GLib PRNG.
+ * PRNG for session ids.
  *
  * author: Max Kellermann <mk@cm4all.com>
  */
@@ -10,6 +10,8 @@
 
 #include <daemon/log.h>
 
+#include <random>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -18,6 +20,9 @@
 #include <string.h>
 #include <stdint.h>
 #include <stddef.h>
+
+typedef std::mt19937 Prng;
+static Prng prng;
 
 template<typename T>
 static unsigned
@@ -60,14 +65,19 @@ obtain_entropy(uint32_t *p, size_t size)
 }
 
 void
-obtain_entropy(GRand *r)
+random_seed()
 {
-    guint32 seed[64];
-    auto n = obtain_entropy(seed, G_N_ELEMENTS(seed));
-    if (n < 8) {
-        daemon_log(2, "Not enough entropy found\n");
+    uint32_t seed[Prng::state_size];
+    auto n = obtain_entropy(seed, Prng::state_size);
+    if (n == 0)
         return;
-    }
 
-    g_rand_set_seed_array(r, seed, n);
+    std::seed_seq ss(seed, seed + n);
+    prng.seed(ss);
+}
+
+uint32_t
+random_uint32()
+{
+    return prng();
 }

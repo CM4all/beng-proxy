@@ -113,8 +113,6 @@ static const struct timeval cleanup_interval = {
     .tv_usec = 0,
 };
 
-static GRand *session_rand;
-
 /** the one and only session manager instance, allocated from shared
     memory */
 static SessionManager *session_manager;
@@ -222,8 +220,7 @@ session_manager_init(unsigned idle_timeout,
     assert((cluster_size == 0 && cluster_node == 0) ||
            cluster_node < cluster_size);
 
-    session_rand = g_rand_new();
-    obtain_entropy(session_rand);
+    random_seed();
 
     if (session_manager == nullptr) {
         session_manager = session_manager_new(idle_timeout,
@@ -280,8 +277,6 @@ session_manager_deinit()
     /* we always destroy the SHM section, because it is not used
        anymore by this process; other processes may still use it */
     shm_close(shm);
-
-    g_rand_free(session_rand);
 }
 
 inline void
@@ -417,12 +412,12 @@ session_generate_id(SessionId *id_r)
 {
 #ifdef SESSION_ID_SIZE
     for (auto &i : id_r->data)
-        i = g_rand_int(session_rand);
+        i = random_uint32();
 
     id_r->data[0] = cluster_session_id(id_r->data[0]);
 #else
-    id_r->value = (uint64_t)cluster_session_id(g_rand_int(session_rand))
-        | (uint64_t)g_rand_int(session_rand) << 32;
+    id_r->value = (uint64_t)cluster_session_id(random_uint32())
+        | (uint64_t)random_uint32() << 32;
 #endif
 }
 
