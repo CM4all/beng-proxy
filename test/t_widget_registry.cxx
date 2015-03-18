@@ -55,31 +55,31 @@ static const struct async_operation_class my_operation = {
  */
 
 void
-tstock_translate(gcc_unused struct tstock *stock, struct pool *pool,
-                 const TranslateRequest *request,
-                 const TranslateHandler *handler, void *ctx,
-                 struct async_operation_ref *async_ref)
+tstock_translate(gcc_unused struct tstock &stock, struct pool &pool,
+                 const TranslateRequest &request,
+                 const TranslateHandler &handler, void *ctx,
+                 struct async_operation_ref &async_ref)
 {
-    assert(request->remote_host == NULL);
-    assert(request->host == NULL);
-    assert(request->uri == NULL);
-    assert(request->widget_type != NULL);
-    assert(request->session.IsNull());
-    assert(request->param == NULL);
+    assert(request.remote_host == NULL);
+    assert(request.host == NULL);
+    assert(request.uri == NULL);
+    assert(request.widget_type != NULL);
+    assert(request.session.IsNull());
+    assert(request.param == NULL);
 
-    if (strcmp(request->widget_type, "sync") == 0) {
-        auto response = NewFromPool<TranslateResponse>(*pool);
+    if (strcmp(request.widget_type, "sync") == 0) {
+        auto response = NewFromPool<TranslateResponse>(pool);
         response->address.type = RESOURCE_ADDRESS_HTTP;
-        response->address.u.http = http_address_parse(pool, "http://foo/", NULL);
-        response->views = NewFromPool<WidgetView>(*pool);
+        response->address.u.http = http_address_parse(&pool, "http://foo/", NULL);
+        response->views = NewFromPool<WidgetView>(pool);
         response->views->Init(nullptr);
         response->views->address = response->address;
-        handler->response(response, ctx);
-    } else if (strcmp(request->widget_type, "block") == 0) {
-        async_operation *ao = NewFromPool<async_operation>(*pool);
+        handler.response(response, ctx);
+    } else if (strcmp(request.widget_type, "block") == 0) {
+        async_operation *ao = NewFromPool<async_operation>(pool);
 
         ao->Init(my_operation);
-        async_ref->Set(*ao);
+        async_ref.Set(*ao);
     } else
         assert(0);
 }
