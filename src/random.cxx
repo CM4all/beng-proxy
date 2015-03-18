@@ -49,8 +49,9 @@ read_some_entropy(const char *path, T *dest, unsigned max)
     return nbytes / sizeof(dest[0]);
 }
 
+template<typename T>
 static size_t
-obtain_entropy(uint32_t *p, size_t size)
+obtain_entropy(T *p, size_t size)
 {
     /* read from /dev/random for strong entropy */
 
