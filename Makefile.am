@@ -203,7 +203,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/processor.cxx src/processor.h \
 	src/penv.cxx src/penv.hxx \
 	src/proxy_widget.cxx src/proxy_widget.hxx \
-	src/random.c src/random.h \
+	src/random.cxx src/random.hxx \
 	src/refcount.h \
 	src/request_forward.cxx src/request_forward.hxx \
 	src/request.cxx src/request.hxx \
@@ -941,7 +941,8 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/cookie_server.cxx \
 	src/cookie_string.cxx \
 	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
-	src/random.c src/fd-util.c \
+	src/random.cxx src/random.hxx \
+	src/fd-util.c \
 	src/fd_util.c \
 	src/crash.c \
 	src/session_id.cxx \
@@ -1081,7 +1082,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/istream-escape.c \
 	src/istream_html_escape.cxx \
 	src/exec.cxx \
-	src/random.c \
+	src/random.cxx src/random.hxx \
 	src/crash.c \
 	src/session.cxx src/session_manager.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
@@ -1308,7 +1309,8 @@ test_t_dpool_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 test_t_session_SOURCES = test/t_session.cxx src/shm.c \
 	src/dpool.c src/dstring.c src/dhashmap.c \
 	src/clock.c \
-	src/random.c src/fd-util.c src/fd_util.c \
+	src/random.cxx src/random.hxx \
+	src/fd-util.c src/fd_util.c \
 	src/crash.c \
 	src/session.cxx src/session_manager.cxx
 test_t_session_LDADD = $(AM_LDADD) \
@@ -1412,7 +1414,8 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/crash.c \
 	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
-	src/random.c src/fd-util.c \
+	src/random.cxx src/random.hxx \
+	src/fd-util.c \
 	src/fd_util.c \
 	src/args.cxx \
 	src/resource_tag.cxx \

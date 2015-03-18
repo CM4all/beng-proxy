@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "random.h"
+#include "random.hxx"
 #include "fd_util.h"
 #include "fd-util.h"
 

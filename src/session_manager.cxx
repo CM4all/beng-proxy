@@ -10,7 +10,7 @@
 #include "dpool.h"
 #include "rwlock.h"
 #include "refcount.h"
-#include "random.h"
+#include "random.hxx"
 #include "expiry.h"
 #include "crash.h"
 #include "clock.h"
