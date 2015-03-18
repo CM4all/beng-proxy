@@ -64,11 +64,6 @@ AllocatedSocketAddress::Parse(const char *p, int default_port,
         /* abstract unix domain socket */
 
         SetLocal(p);
-
-        /* replace the '@' with a null byte to make it "abstract" */
-        struct sockaddr_un *sun = (struct sockaddr_un *)address;
-        assert(sun->sun_path[0] == '@');
-        sun->sun_path[0] = '\0';
         return true;
 #else
         /* Linux specific feature */
