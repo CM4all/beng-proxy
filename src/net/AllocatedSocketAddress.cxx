@@ -37,6 +37,8 @@ AllocatedSocketAddress::SetSize(size_t new_size)
 void
 AllocatedSocketAddress::SetLocal(const char *path)
 {
+    const bool is_abstract = *path == '@';
+
     const size_t path_length = strlen(path);
 
     struct sockaddr_un *sun;
@@ -45,8 +47,7 @@ AllocatedSocketAddress::SetLocal(const char *path)
     sun->sun_family = AF_UNIX;
     memcpy(sun->sun_path, path, path_length);
 
-    if (sun->sun_path[0] == '@')
-        /* abstract socket address */
+    if (is_abstract)
         sun->sun_path[0] = 0;
 }
 
