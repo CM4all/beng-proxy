@@ -19,8 +19,9 @@
 #include <stdint.h>
 #include <stddef.h>
 
+template<typename T>
 static unsigned
-read_some_entropy(const char *path, guint32 *dest, unsigned max)
+read_some_entropy(const char *path, T *dest, unsigned max)
 {
     int fd = open_cloexec(path, O_RDONLY, 0);
     if (fd < 0) {
