@@ -49,6 +49,14 @@ struct SessionId {
 #endif
     }
 
+    void Generate();
+
+    /**
+     * Manipulate the modulo of GetClusterHash() so that it results in
+     * the specified cluster node.
+     */
+    void SetClusterNode(unsigned cluster_size, unsigned cluster_node);
+
     gcc_pure
     bool operator==(const SessionId &other) const {
 #ifdef SESSION_ID_SIZE

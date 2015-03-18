@@ -393,32 +393,14 @@ session_manager_add(Session *session)
     session_manager->Insert(session);
 }
 
-static uint32_t
-cluster_session_id(uint32_t id)
-{
-    if (session_manager == nullptr || session_manager->cluster_size == 0)
-        return id;
-
-    uint32_t remainder = id % (uint32_t)session_manager->cluster_size;
-    assert(remainder < session_manager->cluster_size);
-
-    id -= remainder;
-    id += session_manager->cluster_node;
-    return id;
-}
-
 static void
 session_generate_id(SessionId *id_r)
 {
-#ifdef SESSION_ID_SIZE
-    for (auto &i : id_r->data)
-        i = random_uint32();
+    id_r->Generate();
 
-    id_r->data[0] = cluster_session_id(id_r->data[0]);
-#else
-    id_r->value = (uint64_t)cluster_session_id(random_uint32())
-        | (uint64_t)random_uint32() << 32;
-#endif
+    if (session_manager != nullptr && session_manager->cluster_size > 0)
+        id_r->SetClusterNode(session_manager->cluster_size,
+                             session_manager->cluster_node);
 }
 
 static Session *

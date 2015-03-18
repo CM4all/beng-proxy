@@ -1084,6 +1084,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/exec.cxx \
 	src/random.cxx src/random.hxx \
 	src/crash.c \
+	src/session_id.cxx \
 	src/session.cxx src/session_manager.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_string.cxx \
@@ -1309,6 +1310,7 @@ test_t_dpool_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 test_t_session_SOURCES = test/t_session.cxx src/shm.c \
 	src/dpool.c src/dstring.c src/dhashmap.c \
 	src/clock.c \
+	src/session_id.cxx \
 	src/random.cxx src/random.hxx \
 	src/fd-util.c src/fd_util.c \
 	src/crash.c \

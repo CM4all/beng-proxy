@@ -5,9 +5,49 @@
  */
 
 #include "session_id.hxx"
+#include "random.hxx"
 #include "format.h"
 
+#include <assert.h>
 #include <stdlib.h>
+
+void
+SessionId::Generate()
+{
+#ifdef SESSION_ID_SIZE
+    for (auto &i : data)
+        i = random_uint32();
+#else
+    value = (uint64_t)random_uint32() | (uint64_t)random_uint32() << 32;
+#endif
+}
+
+static uint32_t
+ToClusterNode(uint32_t id, unsigned cluster_size, unsigned cluster_node)
+{
+    uint32_t remainder = id % (uint32_t)cluster_size;
+    assert(remainder < cluster_size);
+
+    id -= remainder;
+    id += cluster_node;
+    return id;
+}
+
+void
+SessionId::SetClusterNode(unsigned cluster_size, unsigned cluster_node)
+{
+    assert(cluster_size > 0);
+    assert(cluster_node < cluster_size);
+
+    uint32_t old_hash = GetClusterHash();
+    uint32_t new_hash = ToClusterNode(old_hash, cluster_size, cluster_node);
+#ifdef SESSION_ID_SIZE
+    data[0] = new_hash;
+#else
+    value &= ~uint64_t(uint32_t(-1));
+    value |= new_hash;
+#endif
+}
 
 bool
 SessionId::Parse(const char *p)
