@@ -359,11 +359,11 @@ int main(int argc, char **argv)
                                 instance.config.memcached_server);
 
     if (instance.config.translation_socket != nullptr) {
-        struct tstock *translate_stock =
+        instance.translate_stock =
             tstock_new(instance.pool, instance.tcp_stock,
                        instance.config.translation_socket);
 
-        instance.translate_cache = translate_cache_new(instance.pool, translate_stock,
+        instance.translate_cache = translate_cache_new(instance.pool, instance.translate_stock,
                                                        instance.config.translate_cache_size);
     }
 
