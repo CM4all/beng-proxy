@@ -53,7 +53,8 @@ obtain_entropy(GRand *r)
     /* fill the rest up with /dev/urandom */
 
     if (n < G_N_ELEMENTS(seed))
-        n += read_some_entropy("/dev/urandom", seed, G_N_ELEMENTS(seed) - n);
+        n += read_some_entropy("/dev/urandom", seed + n,
+                               G_N_ELEMENTS(seed) - n);
 
     if (n < 8) {
         daemon_log(2, "Not enough entropy found\n");
