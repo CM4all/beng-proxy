@@ -271,22 +271,12 @@ session_dup(struct dpool *pool, const Session *src)
     dest->cookie_sent = src->cookie_sent;
     dest->cookie_received = src->cookie_received;
 
-    if (src->realm != nullptr)
-        dest->realm = d_strdup(pool, src->realm);
-    else
-        dest->realm = nullptr;
+    dest->realm = d_strdup_checked(pool, src->realm);
 
     dest->translate = DupBuffer(pool, src->translate);
 
-    if (src->user != nullptr)
-        dest->user = d_strdup(pool, src->user);
-    else
-        dest->user = nullptr;
-
-    if (src->language != nullptr)
-        dest->language = d_strdup(pool, src->language);
-    else
-        dest->language = nullptr;
+    dest->user = d_strdup_checked(pool, src->user);
+    dest->language = d_strdup_checked(pool, src->language);
 
     if (src->widgets != nullptr) {
         dest->widgets = widget_session_map_dup(pool, src->widgets, dest, nullptr);

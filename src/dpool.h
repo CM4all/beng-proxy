@@ -66,6 +66,12 @@ d_memdup(struct dpool *pool, const void *src, size_t length);
 char *
 d_strdup(struct dpool *pool, const char *src);
 
+static inline char *
+d_strdup_checked(struct dpool *pool, const char *src)
+{
+    return src != NULL ? d_strdup(pool, src) : NULL;
+}
+
 /**
  * Duplicate a string, allocating the new pointer from the pool.
  */
