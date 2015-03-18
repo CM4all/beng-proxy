@@ -57,6 +57,7 @@ struct instance {
     struct control_local *local_control_server;
 
     /* stock */
+    struct tstock *translate_stock;
     struct tcache *translate_cache;
     struct balancer *balancer;
     StockMap *tcp_stock;
