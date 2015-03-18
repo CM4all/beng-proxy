@@ -204,13 +204,16 @@ assert_rewrite_check3(struct pool *widget_pool, struct widget *widget,
                             result, strlen(result));
     }
 
+    SessionId session_id;
+    session_id.Clear();
+
     struct processor_env env(widget_pool,
                              nullptr, nullptr,
                              nullptr, nullptr,
                              nullptr, nullptr,
                              &external_uri,
                              nullptr,
-                             nullptr, SessionId(0),
+                             nullptr, session_id,
                              HTTP_METHOD_GET,
                              nullptr);
 
