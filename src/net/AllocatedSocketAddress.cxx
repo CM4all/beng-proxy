@@ -37,7 +37,11 @@ AllocatedSocketAddress::SetSize(size_t new_size)
 void
 AllocatedSocketAddress::SetLocal(const char *path)
 {
-    const size_t path_length = strlen(path);
+    const bool is_abstract = *path == '@';
+
+    /* sun_path must be null-terminated unless it's an abstract
+       socket */
+    const size_t path_length = strlen(path) + !is_abstract;
 
     struct sockaddr_un *sun;
     SetSize(sizeof(*sun) - sizeof(sun->sun_path) + path_length);
@@ -45,8 +49,7 @@ AllocatedSocketAddress::SetLocal(const char *path)
     sun->sun_family = AF_UNIX;
     memcpy(sun->sun_path, path, path_length);
 
-    if (sun->sun_path[0] == '@')
-        /* abstract socket address */
+    if (is_abstract)
         sun->sun_path[0] = 0;
 }
 
@@ -64,11 +67,6 @@ AllocatedSocketAddress::Parse(const char *p, int default_port,
         /* abstract unix domain socket */
 
         SetLocal(p);
-
-        /* replace the '@' with a null byte to make it "abstract" */
-        struct sockaddr_un *sun = (struct sockaddr_un *)address;
-        assert(sun->sun_path[0] == '@');
-        sun->sun_path[0] = '\0';
         return true;
 #else
         /* Linux specific feature */

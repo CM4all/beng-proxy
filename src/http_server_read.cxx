@@ -69,6 +69,9 @@ http_server_parse_request_line(struct http_server_connection *connection,
         } else if (line[1] == 'U' && line[2] == 'T' && line[3] == ' ') {
             method = HTTP_METHOD_PUT;
             line += 4;
+        } else if (memcmp(line + 1, "ATCH ", 5) == 0) {
+            method = HTTP_METHOD_PATCH;
+            line += 6;
         } else if (memcmp(line + 1, "ROPFIND ", 8) == 0) {
             method = HTTP_METHOD_PROPFIND;
             line += 9;
@@ -374,10 +377,10 @@ http_server_connection::Feed(const void *data, size_t length)
         BufferedResult result;
 
     case Request::START:
-    case Request::HEADERS:
         if (score == HTTP_SERVER_NEW)
             score = HTTP_SERVER_FIRST;
 
+    case Request::HEADERS:
         result = http_server_feed_headers(this, data, length);
         if ((result == BufferedResult::OK || result == BufferedResult::PARTIAL) &&
             (request.read_state == Request::BODY ||

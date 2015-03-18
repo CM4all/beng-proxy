@@ -317,7 +317,7 @@ session_manager_abandon()
 void
 session_manager_event_add()
 {
-    if (session_manager->num_sessions == 0)
+    if (session_manager->num_sessions > 0)
         evtimer_add(&session_cleanup_event, &cleanup_interval);
 }
 
