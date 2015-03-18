@@ -68,6 +68,15 @@ struct SessionId {
     }
 
     /**
+     * Returns a hash that can be used to determine the cluster node
+     * by calculating the modulo.
+     */
+    gcc_pure
+    uint32_t GetClusterHash() const {
+        return Hash();
+    }
+
+    /**
      * Parse a session id from a string.
      *
      * @return true on success, false on error
