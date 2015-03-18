@@ -13,18 +13,39 @@
 
 #include <inline/compiler.h>
 
+#include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 
+#include <string.h>
 #include <time.h>
 
 struct dpool;
-struct dhashmap;
 struct Session;
 
 /**
  * Session data associated with a widget instance (struct widget).
  */
-struct WidgetSession {
+struct WidgetSession
+    : boost::intrusive::set_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
+
+    struct Compare {
+        bool operator()(const WidgetSession &a, const WidgetSession &b) const {
+            return strcmp(a.id, b.id) < 0;
+        }
+
+        bool operator()(const WidgetSession &a, const char *b) const {
+            return strcmp(a.id, b) < 0;
+        }
+
+        bool operator()(const char *a, const WidgetSession &b) const {
+            return strcmp(a, b.id) < 0;
+        }
+    };
+
+    typedef boost::intrusive::set<WidgetSession,
+                                  boost::intrusive::compare<Compare>,
+                                  boost::intrusive::constant_time_size<false>> Set;
+
     WidgetSession *parent;
 
     Session *session;
@@ -32,7 +53,8 @@ struct WidgetSession {
     /** local id of this widget; must not be nullptr since widgets
         without an id cannot have a session */
     const char *id;
-    struct dhashmap *children;
+
+    Set children;
 
     /** last relative URI */
     char *path_info;
@@ -97,7 +119,7 @@ struct Session {
     const char *language;
 
     /** a map of widget path to WidgetSession */
-    struct dhashmap *widgets;
+    WidgetSession::Set widgets;
 
     /** all cookies received by widget servers */
     struct cookie_jar *cookies;

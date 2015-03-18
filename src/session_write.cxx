@@ -7,7 +7,6 @@
 #include "session_write.hxx"
 #include "session_file.h"
 #include "session.hxx"
-#include "dhashmap.h"
 #include "cookie_jar.hxx"
 
 #include <stdint.h>
@@ -117,7 +116,7 @@ session_write_file_tail(FILE *file)
 }
 
 static bool
-write_widget_sessions(FILE *file, struct dhashmap *widgets);
+write_widget_sessions(FILE *file, const WidgetSession::Set &widgets);
 
 static bool
 write_widget_session(FILE *file, const WidgetSession *session)
@@ -132,17 +131,11 @@ write_widget_session(FILE *file, const WidgetSession *session)
 }
 
 static bool
-write_widget_sessions(FILE *file, struct dhashmap *widgets)
+write_widget_sessions(FILE *file, const WidgetSession::Set &widgets)
 {
-    if (widgets == nullptr)
-        return session_write_magic(file, MAGIC_END_OF_LIST);
-
-    dhashmap_rewind(widgets);
-    const struct dhashmap_pair *pair;
-    while ((pair = dhashmap_next(widgets)) != nullptr) {
-        const auto *ws = (const WidgetSession *)pair->value;
+    for (const auto &ws : widgets) {
         if (!session_write_magic(file, MAGIC_WIDGET_SESSION) ||
-            !write_widget_session(file, ws))
+            !write_widget_session(file, &ws))
             return false;
     }
 
@@ -191,4 +184,3 @@ session_write(FILE *file, const Session *session)
         write_cookie_jar(file, session->cookies) &&
         session_write_magic(file, MAGIC_END_OF_RECORD);
 }
-

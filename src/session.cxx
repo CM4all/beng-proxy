@@ -7,7 +7,6 @@
 #include "session.hxx"
 #include "cookie_jar.hxx"
 #include "dpool.h"
-#include "dhashmap.h"
 #include "dbuffer.hxx"
 #include "lock.h"
 #include "expiry.h"
@@ -36,7 +35,6 @@ Session::Session(struct dpool *_pool)
      user(nullptr),
      user_expires(0),
      language(nullptr),
-     widgets(nullptr),
      cookies(cookie_jar_new(*_pool))
 {
     lock_init(&lock);
@@ -55,7 +53,6 @@ Session::Session(struct dpool *_pool, const Session &src)
      user(d_strdup_checked(pool, src.user)),
      user_expires(0),
      language(d_strdup_checked(pool, src.language)),
-     widgets(nullptr),
      cookies(src.cookies->Dup(*pool))
 {
     lock_init(&lock);
@@ -197,8 +194,8 @@ session_set_language(Session *session, const char *language)
     return session->language != nullptr;
 }
 
-static struct dhashmap * gcc_malloc
-widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
+static WidgetSession::Set
+widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
                        Session *session, WidgetSession *parent);
 
 gcc_malloc
@@ -218,13 +215,8 @@ widget_session_dup(struct dpool *pool, const WidgetSession *src,
     if (dest->id == nullptr)
         return nullptr;
 
-    if (src->children != nullptr) {
-        dest->children = widget_session_map_dup(pool, src->children,
-                                                session, dest);
-        if (dest->children == nullptr)
-            return nullptr;
-    } else
-        dest->children = nullptr;
+    dest->children = widget_session_map_dup(pool, src->children,
+                                            session, dest);
 
     if (src->path_info != nullptr) {
         dest->path_info = d_strdup(pool, src->path_info);
@@ -243,34 +235,26 @@ widget_session_dup(struct dpool *pool, const WidgetSession *src,
     return dest;
 }
 
-static struct dhashmap * gcc_malloc
-widget_session_map_dup(struct dpool *pool, struct dhashmap *src,
+static WidgetSession::Set
+widget_session_map_dup(struct dpool *pool, const WidgetSession::Set &src,
                        Session *session, WidgetSession *parent)
 {
     assert(crash_in_unsafe());
 
-    struct dhashmap *dest;
-    const struct dhashmap_pair *pair;
+    WidgetSession::Set dest;
 
-    dest = dhashmap_new(pool, 16);
-    if (dest == nullptr)
-        return nullptr;
-
-    dhashmap_rewind(src);
-    while ((pair = dhashmap_next(src)) != nullptr) {
-        const auto *src_ws = (const WidgetSession *)pair->value;
-        WidgetSession *dest_ws;
-
-        dest_ws = widget_session_dup(pool, src_ws, session);
+    for (const auto &src_ws : src) {
+        WidgetSession *dest_ws = widget_session_dup(pool, &src_ws, session);
         if (dest_ws == nullptr)
-            return nullptr;
+            break;
 
-        dhashmap_put(dest, dest_ws->id, dest_ws);
         dest_ws->parent = parent;
         dest_ws->session = session;
+
+        dest.insert(*dest_ws);
     }
 
-    return dest;
+    return std::move(dest);
 }
 
 Session *
@@ -282,14 +266,7 @@ session_dup(struct dpool *pool, const Session *src)
     if (dest == nullptr)
         return nullptr;
 
-    if (src->widgets != nullptr) {
-        dest->widgets = widget_session_map_dup(pool, src->widgets, dest, nullptr);
-        if (dest->widgets == nullptr) {
-            return nullptr;
-        }
-    } else
-        dest->widgets = nullptr;
-
+    dest->widgets = widget_session_map_dup(pool, src->widgets, dest, nullptr);
     return dest;
 }
 
@@ -305,36 +282,20 @@ widget_session_allocate(Session *session)
 }
 
 static WidgetSession *
-hashmap_r_get_widget_session(Session *session, struct dhashmap **map_r,
+hashmap_r_get_widget_session(Session *session, WidgetSession::Set &set,
                              const char *id, bool create)
 {
-    struct dhashmap *map;
-
     assert(crash_in_unsafe());
     assert(session != nullptr);
     assert(lock_is_locked(&session->lock));
-    assert(map_r != nullptr);
     assert(id != nullptr);
 
-    map = *map_r;
-    if (map == nullptr) {
-        if (!create)
-            return nullptr;
+    auto i = set.find(id, WidgetSession::Compare());
+    if (i != set.end())
+        return &*i;
 
-        /* lazy initialisation */
-        *map_r = map = dhashmap_new(session->pool, 16);
-        if (map == nullptr)
-            return nullptr;
-    } else {
-        auto *ws = (WidgetSession *)dhashmap_get(map, id);
-        if (ws != nullptr)
-            return ws;
-
-        if (!create)
-            return nullptr;
-    }
-
-    assert(create);
+    if (!create)
+        return nullptr;
 
     auto *ws = widget_session_allocate(session);
     if (ws == nullptr)
@@ -347,11 +308,10 @@ hashmap_r_get_widget_session(Session *session, struct dhashmap **map_r,
         return nullptr;
     }
 
-    ws->children = nullptr;
     ws->path_info = nullptr;
     ws->query_string = nullptr;
 
-    dhashmap_put(map, ws->id, ws);
+    set.insert(*ws);
     return ws;
 }
 
@@ -362,7 +322,7 @@ session_get_widget(Session *session, const char *id, bool create)
     assert(session != nullptr);
     assert(id != nullptr);
 
-    return hashmap_r_get_widget_session(session, &session->widgets, id,
+    return hashmap_r_get_widget_session(session, session->widgets, id,
                                         create);
 }
 
@@ -376,7 +336,7 @@ widget_session_get_child(WidgetSession *parent,
     assert(parent->session != nullptr);
     assert(id != nullptr);
 
-    return hashmap_r_get_widget_session(parent->session, &parent->children,
+    return hashmap_r_get_widget_session(parent->session, parent->children,
                                         id, create);
 }
 
@@ -397,23 +357,14 @@ widget_session_free(struct dpool *pool, WidgetSession *ws)
 }
 
 static void
-widget_session_clear_map(struct dpool *pool, struct dhashmap *map)
+widget_session_clear_map(struct dpool *pool, WidgetSession::Set &set)
 {
     assert(crash_in_unsafe());
     assert(pool != nullptr);
-    assert(map != nullptr);
 
-    while (true) {
-        dhashmap_rewind(map);
-        const struct dhashmap_pair *pair = dhashmap_next(map);
-        if (pair == nullptr)
-            break;
-
-        auto *ws = (WidgetSession *)pair->value;
-        dhashmap_remove(map, ws->id);
-
-        widget_session_delete(pool, ws);
-    }
+    set.clear_and_dispose([pool](WidgetSession *ws){
+            widget_session_delete(pool, ws);
+        });
 }
 
 void
@@ -423,8 +374,7 @@ widget_session_delete(struct dpool *pool, WidgetSession *ws)
     assert(pool != nullptr);
     assert(ws != nullptr);
 
-    if (ws->children != nullptr)
-        widget_session_clear_map(pool, ws->children);
+    widget_session_clear_map(pool, ws->children);
 
     widget_session_free(pool, ws);
 }
@@ -435,6 +385,5 @@ session_delete_widgets(Session *session)
     assert(crash_in_unsafe());
     assert(session != nullptr);
 
-    if (session->widgets != nullptr)
-        widget_session_clear_map(session->pool, session->widgets);
+    widget_session_clear_map(session->pool, session->widgets);
 }

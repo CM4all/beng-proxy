@@ -23,7 +23,6 @@
 #include "bp_global.hxx"
 #include "resource_tag.hxx"
 #include "hostname.h"
-#include "dhashmap.h"
 #include "errdoc.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
@@ -72,26 +71,24 @@ static void
 session_drop_widgets(Session &session, const char *uri,
                      const struct widget_ref *ref)
 {
-    struct dhashmap *map = session.widgets;
+    WidgetSession::Set *map = &session.widgets;
     const char *id = uri;
 
     while (true) {
-        if (map == nullptr)
-            /* no such widget session (no children at all here) */
-            return;
-
-        auto *ws = (WidgetSession *)dhashmap_get(map, id);
-        if (ws == nullptr)
+        auto i = map->find(id, WidgetSession::Compare());
+        if (i == map->end())
             /* no such widget session */
             return;
 
+        auto &ws = *i;
+
         if (ref == nullptr) {
             /* found the widget session */
-            dhashmap_remove(map, id);
-            widget_session_delete(session.pool, ws);
+            map->erase(i);
+            widget_session_delete(session.pool, &ws);
         }
 
-        map = ws->children;
+        map = &ws.children;
         id = ref->id;
         ref = ref->next;
     }

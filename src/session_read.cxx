@@ -7,7 +7,6 @@
 #include "session_read.hxx"
 #include "session_file.h"
 #include "session.hxx"
-#include "dhashmap.h"
 #include "dpool.h"
 #include "cookie_jar.hxx"
 
@@ -195,7 +194,7 @@ session_read_file_header(FILE *file)
 static bool
 read_widget_sessions(FILE *file, Session *session,
                      WidgetSession *parent,
-                     struct dhashmap **widgets_r);
+                     WidgetSession::Set &widgets);
 
 static bool
 do_read_widget_session(FILE *file, Session *session,
@@ -204,7 +203,7 @@ do_read_widget_session(FILE *file, Session *session,
     struct dpool *pool = session->pool;
 
     return read_string_const(file, pool, &ws->id) &&
-        read_widget_sessions(file, session, ws, &ws->children) &&
+        read_widget_sessions(file, session, ws, ws->children) &&
         read_string(file, pool, &ws->path_info) &&
         read_string(file, pool, &ws->query_string) &&
         expect_32(file, MAGIC_END_OF_RECORD);
@@ -226,17 +225,14 @@ read_widget_session(FILE *file, Session *session)
 static bool
 read_widget_sessions(FILE *file, Session *session,
                      WidgetSession *parent,
-                     struct dhashmap **widgets_r)
+                     WidgetSession::Set &widgets)
 {
-    struct dhashmap *widgets = nullptr;
-
     while (true) {
         uint32_t magic;
         if (!read_32(file, &magic))
             return false;
 
         if (magic == MAGIC_END_OF_LIST) {
-            *widgets_r = widgets;
             return true;
         } else if (magic != MAGIC_WIDGET_SESSION)
             return false;
@@ -247,13 +243,7 @@ read_widget_sessions(FILE *file, Session *session,
 
         ws->parent = parent;
 
-        if (widgets == nullptr) {
-            widgets = dhashmap_new(session->pool, 17);
-            if (widgets == nullptr)
-                return false;
-        }
-
-        dhashmap_put(widgets, ws->id, ws);
+        widgets.insert(*ws);
     }
 }
 
@@ -321,7 +311,7 @@ do_read_session(FILE *file, struct dpool *pool, Session *session)
         read_string_const(file, pool, &session->user) &&
         read_time(file, &session->user_expires) &&
         read_string_const(file, pool, &session->language) &&
-        read_widget_sessions(file, session, nullptr, &session->widgets) &&
+        read_widget_sessions(file, session, nullptr, session->widgets) &&
         read_cookie_jar(file, pool, session->cookies) &&
         expect_32(file, MAGIC_END_OF_RECORD);
 }
