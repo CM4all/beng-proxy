@@ -39,7 +39,9 @@ AllocatedSocketAddress::SetLocal(const char *path)
 {
     const bool is_abstract = *path == '@';
 
-    const size_t path_length = strlen(path);
+    /* sun_path must be null-terminated unless it's an abstract
+       socket */
+    const size_t path_length = strlen(path) + !is_abstract;
 
     struct sockaddr_un *sun;
     SetSize(sizeof(*sun) - sizeof(sun->sun_path) + path_length);
