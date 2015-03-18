@@ -96,14 +96,11 @@ static constexpr StockGetHandler tstock_stock_handler = {
  */
 
 struct tstock *
-tstock_new(struct pool *pool, StockMap *tcp_stock, const char *socket_path)
+tstock_new(struct pool &pool, StockMap &tcp_stock, const char *socket_path)
 {
-    auto stock = NewFromPool<tstock>(*pool);
+    auto stock = NewFromPool<tstock>(pool);
 
-    assert(tcp_stock != nullptr);
-    assert(socket_path != nullptr);
-
-    stock->tcp_stock = tcp_stock;
+    stock->tcp_stock = &tcp_stock;
     stock->address.SetLocal(socket_path);
     stock->address_string = socket_path;
 
@@ -111,24 +108,24 @@ tstock_new(struct pool *pool, StockMap *tcp_stock, const char *socket_path)
 }
 
 void
-tstock_translate(struct tstock *stock, struct pool *pool,
-                 const TranslateRequest *request,
-                 const TranslateHandler *handler, void *ctx,
-                 struct async_operation_ref *async_ref)
+tstock_translate(struct tstock &stock, struct pool &pool,
+                 const TranslateRequest &request,
+                 const TranslateHandler &handler, void *ctx,
+                 struct async_operation_ref &async_ref)
 {
-    auto r = NewFromPool<tstock_request>(*pool);
+    auto r = NewFromPool<tstock_request>(pool);
 
-    r->pool = pool;
-    r->stock = stock;
-    r->request = request;
-    r->handler = handler;
+    r->pool = &pool;
+    r->stock = &stock;
+    r->request = &request;
+    r->handler = &handler;
     r->handler_ctx = ctx;
-    r->async_ref = async_ref;
+    r->async_ref = &async_ref;
 
-    tcp_stock_get(stock->tcp_stock, pool, stock->address_string,
+    tcp_stock_get(stock.tcp_stock, &pool, stock.address_string,
                   false, SocketAddress::Null(),
-                  stock->address,
+                  stock.address,
                   10,
                   &tstock_stock_handler, r,
-                  async_ref);
+                  &async_ref);
 }

@@ -15,12 +15,12 @@ struct TranslateRequest;
 struct async_operation_ref;
 
 struct tstock *
-tstock_new(struct pool *pool, StockMap *tcp_stock, const char *socket_path);
+tstock_new(struct pool &pool, StockMap &tcp_stock, const char *socket_path);
 
 void
-tstock_translate(struct tstock *stock, struct pool *pool,
-                 const TranslateRequest *request,
-                 const TranslateHandler *handler, void *ctx,
-                 struct async_operation_ref *async_ref);
+tstock_translate(struct tstock &stock, struct pool &pool,
+                 const TranslateRequest &request,
+                 const TranslateHandler &handler, void *ctx,
+                 struct async_operation_ref &async_ref);
 
 #endif
