@@ -6,7 +6,6 @@
 
 #include "random.hxx"
 #include "fd_util.h"
-#include "fd-util.h"
 
 #include <daemon/log.h>
 
@@ -34,13 +33,10 @@ read_some_entropy(const char *path, T *dest, unsigned max)
         return 0;
     }
 
-    fd_set_nonblock(fd, true);
-
     ssize_t nbytes = read(fd, dest, max * sizeof(dest[0]));
     if (nbytes < 0) {
-        if (errno != EAGAIN)
-            daemon_log(2, "Failed to read from %s: %s\n",
-                       path, strerror(errno));
+        daemon_log(2, "Failed to read from %s: %s\n",
+                   path, strerror(errno));
         close(fd);
         return 0;
     }
