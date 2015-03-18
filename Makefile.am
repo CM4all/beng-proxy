@@ -121,7 +121,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/delegate_request.cxx src/delegate_request.hxx \
 	src/delegate_stock.cxx src/delegate_stock.hxx \
 	src/delegate_handler.cxx \
-	src/dhashmap.h \
 	src/direct.c src/direct.h \
 	src/dpool.c src/dpool.h \
 	src/drop.cxx src/drop.hxx \
@@ -306,7 +305,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/sigutil.h \
 	src/address_quark.h \
 	src/address_resolver.cxx src/address_resolver.hxx \
-	src/dhashmap.c \
 	src/istream_unlock.cxx \
 	src/ua_classification.c src/ua_classification.h \
 	src/log-client.c src/log-client.h \
@@ -940,7 +938,7 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_server.cxx \
 	src/cookie_string.cxx \
-	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
+	src/shm.c src/dpool.c src/dstring.c \
 	src/random.cxx src/random.hxx \
 	src/fd-util.c \
 	src/fd_util.c \
@@ -1097,7 +1095,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/widget_session.cxx src/xml_parser.cxx src/widget_class.cxx \
 	src/widget_view.cxx \
 	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
-	src/dhashmap.c src/dpool.c src/shm.c src/dstring.c \
+	src/dpool.c src/shm.c src/dstring.c \
 	src/bp_global.cxx src/transformation.cxx \
 	src/clock.c \
 	$(T_ISTREAM_FILTER_SRC)
@@ -1308,7 +1306,7 @@ test_t_dpool_SOURCES = test/t-dpool.c src/shm.c src/dpool.c
 test_t_dpool_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_session_SOURCES = test/t_session.cxx src/shm.c \
-	src/dpool.c src/dstring.c src/dhashmap.c \
+	src/dpool.c src/dstring.c \
 	src/clock.c \
 	src/session_id.cxx \
 	src/random.cxx src/random.hxx \
@@ -1430,7 +1428,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/http_upgrade.cxx \
 	src/istream-escape.c \
 	src/transformation.cxx \
-	src/dpool.c src/dstring.c src/dhashmap.c src/shm.c \
+	src/dpool.c src/dstring.c src/shm.c \
 	src/clock.c \
 	src/tpool.c
 test_t_widget_http_LDADD = $(AM_LDADD) \
@@ -1553,7 +1551,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/http_address.cxx src/cache.cxx \
 	src/cleanup_timer.cxx \
-	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
+	src/shm.c src/dpool.c src/dstring.c \
 	src/exec.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
@@ -1585,7 +1583,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/cache.cxx \
 	src/cleanup_timer.cxx \
-	src/shm.c src/dpool.c src/dstring.c src/dhashmap.c \
+	src/shm.c src/dpool.c src/dstring.c \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_t_processor_LDADD = $(AM_LDADD) \
