@@ -125,6 +125,9 @@ test_proxy_abort(struct pool *pool)
     struct widget widget;
     widget.Init(*pool, &root_widget_class);
 
+    SessionId session_id;
+    session_id.Generate();
+
     struct processor_env env(pool,
                              nullptr, nullptr,
                              "localhost:8080",
@@ -133,7 +136,7 @@ test_proxy_abort(struct pool *pool)
                              "http://localhost:8080/beng.html",
                              &parsed_uri,
                              nullptr,
-                             "bp_session", SessionId(0xdeadbeef),
+                             "bp_session", session_id,
                              HTTP_METHOD_GET, nullptr);
 
     struct async_operation_ref async_ref;

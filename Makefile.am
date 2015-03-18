@@ -1537,6 +1537,7 @@ test_t_escape_css_SOURCES = \
 test_t_escape_css_LDADD = $(AM_LDADD) libutil.a
 
 test_run_processor_SOURCES = test/run_processor.cxx \
+	src/session_id.cxx src/random.cxx \
 	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
@@ -1567,6 +1568,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_SOCKET_LIBS)
 
 test_t_processor_SOURCES = test/t_processor.cxx \
+	src/session_id.cxx src/random.cxx \
 	src/processor.cxx src/penv.cxx src/xml_parser.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \

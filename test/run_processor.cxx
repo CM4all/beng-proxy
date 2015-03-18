@@ -152,6 +152,9 @@ int main(int argc, char **argv) {
 
     widget.Init(*pool, &root_widget_class);
 
+    SessionId session_id;
+    session_id.Generate();
+
     struct processor_env env(pool,
                              nullptr, nullptr,
                              "localhost:8080",
@@ -161,7 +164,7 @@ int main(int argc, char **argv) {
                              &parsed_uri,
                              nullptr,
                              nullptr,
-                             SessionId(0xdeadbeef),
+                             session_id,
                              HTTP_METHOD_GET, nullptr);
 
     struct istream *result =
