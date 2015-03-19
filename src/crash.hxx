@@ -10,16 +10,14 @@
 
 #include <inline/compiler.h>
 
-#include <glib.h>
+#include <atomic>
 
 #include <assert.h>
 
 struct crash_shm {
-    volatile gint counter;
+    std::atomic_uint counter;
 
-    crash_shm() {
-        g_atomic_int_set(&counter, 0);
-    }
+    crash_shm():counter(0) {}
 };
 
 struct crash {
@@ -56,7 +54,7 @@ crash_is_safe(struct crash *crash)
     assert(crash != nullptr);
     assert(crash->shm != nullptr);
 
-    return g_atomic_int_get(&crash->shm->counter) == 0;
+    return crash->shm->counter == 0;
 }
 
 /**
@@ -68,7 +66,7 @@ crash_unsafe_enter(void)
 {
     assert(global_crash.shm != nullptr);
 
-    g_atomic_int_inc(&global_crash.shm->counter);
+    ++global_crash.shm->counter;
 }
 
 /**
@@ -81,7 +79,7 @@ crash_unsafe_leave(void)
     assert(global_crash.shm != nullptr);
     assert(!crash_is_safe(&global_crash));
 
-    (void)g_atomic_int_dec_and_test(&global_crash.shm->counter);
+    --global_crash.shm->counter;
 }
 
 /**
