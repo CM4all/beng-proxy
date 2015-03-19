@@ -8,7 +8,7 @@
 #include "session.hxx"
 #include "shm/shm.h"
 #include "shm/dpool.h"
-#include "shm/rwlock.h"
+#include "shm/rwlock.hxx"
 #include "refcount.h"
 #include "random.hxx"
 #include "expiry.h"

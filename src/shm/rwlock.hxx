@@ -5,8 +5,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef SHM_RWLOCK_H
-#define SHM_RWLOCK_H
+#ifndef SHM_RWLOCK_HXX
+#define SHM_RWLOCK_HXX
 
 #include "lock.h"
 
