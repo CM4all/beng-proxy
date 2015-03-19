@@ -1,7 +1,4 @@
 /*
- * Inter-process synchronization routines; rwlock emulation on
- * semaphores.
- *
  * author: Max Kellermann <mk@cm4all.com>
  */
 
@@ -12,85 +9,75 @@
 
 #include <glib.h>
 
-struct ShmRwLock {
+/**
+ * A reader/writer lock emulation using a semaphore.
+ */
+class ShmRwLock {
     struct lock write;
 
     /**
      * Counter for the number of readers.
      */
     volatile gint num_readers;
+
+public:
+    ShmRwLock() {
+        lock_init(&write);
+        g_atomic_int_set(&num_readers, 0);
+    }
+
+    ~ShmRwLock() {
+        lock_destroy(&write);
+    }
+
+    void ReadLock() {
+        g_atomic_int_inc(&num_readers);
+        if (!lock_is_locked(&write))
+            /* no writer is waiting - we're done */
+            return;
+
+        /* slow route: undo the increment, and retry the increment while
+           the write lock is held */
+
+        (void)g_atomic_int_dec_and_test(&num_readers);
+
+        lock_lock(&write);
+
+        assert(g_atomic_int_get(&num_readers) >= 0);
+        g_atomic_int_inc(&num_readers);
+
+        lock_unlock(&write);
+    }
+
+    void ReadUnlock() {
+        assert(g_atomic_int_get(&num_readers) > 0);
+
+        (void)g_atomic_int_dec_and_test(&num_readers);
+    }
+
+    gcc_pure
+    bool IsReadLocked() const {
+        return g_atomic_int_get(&num_readers) > 0;
+    }
+
+    void WriteLock() {
+        lock_lock(&write);
+
+        /* wait for all readers to finish; new readers cannot appear,
+           because write is locked */
+
+        while (IsReadLocked())
+            g_usleep(1);
+    }
+
+    void WriteUnlock() {
+        lock_unlock(&write);
+    }
+
+    gcc_pure
+    bool IsWriteLocked() {
+        return lock_is_locked(&write);
+    }
 };
-
-static inline void
-rwlock_init(ShmRwLock *lock)
-{
-    lock_init(&lock->write);
-    g_atomic_int_set(&lock->num_readers, 0);
-}
-
-static inline void
-rwlock_destroy(ShmRwLock *lock)
-{
-    lock_destroy(&lock->write);
-}
-
-static inline void
-rwlock_rlock(ShmRwLock *lock)
-{
-    g_atomic_int_inc(&lock->num_readers);
-    if (!lock_is_locked(&lock->write))
-        /* no writer is waiting - we're done */
-        return;
-
-    /* slow route: undo the increment, and retry the increment while
-       the write lock is held */
-
-    (void)g_atomic_int_dec_and_test(&lock->num_readers);
-
-    lock_lock(&lock->write);
-
-    assert(g_atomic_int_get(&lock->num_readers) >= 0);
-    g_atomic_int_inc(&lock->num_readers);
-
-    lock_unlock(&lock->write);
-}
-
-static inline void
-rwlock_runlock(ShmRwLock *lock)
-{
-    assert(g_atomic_int_get(&lock->num_readers) > 0);
-
-    (void)g_atomic_int_dec_and_test(&lock->num_readers);
-}
-
-static inline bool
-rwlock_is_rlocked(ShmRwLock *lock)
-{
-    return g_atomic_int_get(&lock->num_readers) > 0;
-}
-
-static inline void
-rwlock_wlock(ShmRwLock *lock)
-{
-    lock_lock(&lock->write);
-
-    /* wait for all readers to finish; new readers cannot appear,
-       because lock->write is locked */
-
-    while (rwlock_is_rlocked(lock))
-        g_usleep(1);
-}
-
-static inline void
-rwlock_wunlock(ShmRwLock *lock)
-{
-    lock_unlock(&lock->write);
-}
-
-static inline bool
-rwlock_is_wlocked(ShmRwLock *lock)
-{
-    return lock_is_locked(&lock->write);
-}
 
 #endif

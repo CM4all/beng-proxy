@@ -112,7 +112,6 @@ struct SessionManager {
          abandoned(false),
          sessions(Set::bucket_traits(buckets, N_BUCKETS)) {
         refcount_init(&ref);
-        rwlock_init(&lock);
     }
 
     ~SessionManager();
@@ -177,7 +176,7 @@ void
 SessionManager::EraseAndDispose(Session *session)
 {
     assert(crash_in_unsafe());
-    assert(rwlock_is_wlocked(&lock));
+    assert(lock.IsWriteLocked());
     assert(!sessions.empty());
 
     auto i = sessions.iterator_to(*session);
@@ -198,10 +197,10 @@ SessionManager::Cleanup()
     const unsigned now = now_s();
 
     crash_unsafe_enter();
-    rwlock_wlock(&lock);
+    lock.WriteLock();
 
     if (abandoned) {
-        rwlock_wunlock(&lock);
+        lock.WriteUnlock();
         crash_unsafe_leave();
         assert(!crash_in_unsafe());
         return false;
@@ -213,7 +212,7 @@ SessionManager::Cleanup()
 
     non_empty = !sessions.empty();
 
-    rwlock_wunlock(&lock);
+    lock.WriteUnlock();
     crash_unsafe_leave();
     assert(!crash_in_unsafe());
 
@@ -272,12 +271,11 @@ SessionManager::~SessionManager()
 {
     crash_unsafe_enter();
 
-    rwlock_wlock(&lock);
+    lock.WriteLock();
 
     sessions.clear_and_dispose(SessionDisposer());
 
-    rwlock_wunlock(&lock);
-    rwlock_destroy(&lock);
+    lock.WriteUnlock();
 
     crash_unsafe_leave();
 }
@@ -358,7 +356,7 @@ SessionManager::Purge()
     assert(locked_session == nullptr);
 
     crash_unsafe_enter();
-    rwlock_wlock(&lock);
+    lock.WriteLock();
 
     for (auto &session : sessions) {
         unsigned score = session_purge_score(&session);
@@ -372,7 +370,7 @@ SessionManager::Purge()
     }
 
     if (purge_sessions.empty()) {
-        rwlock_wunlock(&lock);
+        lock.WriteUnlock();
         crash_unsafe_leave();
         return false;
     }
@@ -385,7 +383,7 @@ SessionManager::Purge()
         EraseAndDispose(session);
     }
 
-    rwlock_wunlock(&lock);
+    lock.WriteUnlock();
     crash_unsafe_leave();
 
     return true;
@@ -396,11 +394,11 @@ SessionManager::Insert(Session *session)
 {
     assert(session != nullptr);
 
-    rwlock_wlock(&lock);
+    lock.WriteLock();
 
     sessions.insert(*session);
 
-    rwlock_wunlock(&lock);
+    lock.WriteUnlock();
 
     if (!evtimer_pending(&session_cleanup_event, nullptr))
         evtimer_add(&session_cleanup_event, &cleanup_interval);
@@ -454,7 +452,7 @@ session_new_unsafe()
 
     session_generate_id(&session->id);
 
-    rwlock_wlock(&session_manager->lock);
+    session_manager->lock.WriteLock();
 
     session_manager->sessions.insert(*session);
 
@@ -462,7 +460,7 @@ session_new_unsafe()
     locked_session = session;
 #endif
     lock_lock(&session->lock);
-    rwlock_wunlock(&session_manager->lock);
+    session_manager->lock.WriteUnlock();
 
     if (!evtimer_pending(&session_cleanup_event, nullptr))
         evtimer_add(&session_cleanup_event, &cleanup_interval);
@@ -542,9 +540,9 @@ session_get(SessionId id)
     assert(locked_session == nullptr);
 
     crash_unsafe_enter();
-    rwlock_rlock(&session_manager->lock);
+    session_manager->lock.ReadLock();
     session = session_find(id);
-    rwlock_runlock(&session_manager->lock);
+    session_manager->lock.ReadUnlock();
 
     if (session == nullptr)
         crash_unsafe_leave();
@@ -602,9 +600,9 @@ session_put(Session *session)
            defragment the session by duplicating it into a new shared
            memory pool */
 
-        rwlock_wlock(&session_manager->lock);
+        session_manager->lock.WriteLock();
         session_defragment_id(defragment);
-        rwlock_wunlock(&session_manager->lock);
+        session_manager->lock.WriteUnlock();
     }
 
     crash_unsafe_leave();
@@ -618,7 +616,7 @@ SessionManager::EraseAndDispose(SessionId id)
     assert(locked_session == nullptr);
 
     crash_unsafe_enter();
-    rwlock_wlock(&lock);
+    lock.WriteLock();
 
     session = session_find(id);
     if (session != nullptr) {
@@ -626,7 +624,7 @@ SessionManager::EraseAndDispose(SessionId id)
         EraseAndDispose(session);
     }
 
-    rwlock_wunlock(&lock);
+    lock.WriteUnlock();
     crash_unsafe_leave();
 }
 
@@ -643,10 +641,10 @@ SessionManager::Visit(bool (*callback)(const Session *session,
     bool result = true;
 
     crash_unsafe_enter();
-    rwlock_rlock(&lock);
+    lock.ReadLock();
 
     if (abandoned) {
-        rwlock_runlock(&lock);
+        lock.ReadUnlock();
         crash_unsafe_leave();
         return false;
     }
@@ -665,7 +663,7 @@ SessionManager::Visit(bool (*callback)(const Session *session,
             break;
     }
 
-    rwlock_runlock(&lock);
+    lock.ReadUnlock();
     crash_unsafe_leave();
 
     return result;
