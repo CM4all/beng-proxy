@@ -7,6 +7,8 @@
 
 #include "crash.hxx"
 
+#include <new>
+
 #include <sys/mman.h>
 
 struct crash global_crash;
@@ -23,8 +25,7 @@ crash_init(struct crash *crash)
     if (p == (struct crash_shm *)-1)
         return false;
 
-    crash->shm = (struct crash_shm *)p;
-    g_atomic_int_set(&crash->shm->counter, 0);
+    crash->shm = new(p) crash_shm();
     return true;
 }
 

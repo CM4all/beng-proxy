@@ -16,6 +16,10 @@
 
 struct crash_shm {
     volatile gint counter;
+
+    crash_shm() {
+        g_atomic_int_set(&counter, 0);
+    }
 };
 
 struct crash {
