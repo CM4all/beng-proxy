@@ -12,7 +12,7 @@
 
 #include <glib.h>
 
-struct rwlock {
+struct ShmRwLock {
     struct lock write;
 
     /**
@@ -22,20 +22,20 @@ struct rwlock {
 };
 
 static inline void
-rwlock_init(struct rwlock *lock)
+rwlock_init(ShmRwLock *lock)
 {
     lock_init(&lock->write);
     g_atomic_int_set(&lock->num_readers, 0);
 }
 
 static inline void
-rwlock_destroy(struct rwlock *lock)
+rwlock_destroy(ShmRwLock *lock)
 {
     lock_destroy(&lock->write);
 }
 
 static inline void
-rwlock_rlock(struct rwlock *lock)
+rwlock_rlock(ShmRwLock *lock)
 {
     g_atomic_int_inc(&lock->num_readers);
     if (!lock_is_locked(&lock->write))
@@ -56,7 +56,7 @@ rwlock_rlock(struct rwlock *lock)
 }
 
 static inline void
-rwlock_runlock(struct rwlock *lock)
+rwlock_runlock(ShmRwLock *lock)
 {
     assert(g_atomic_int_get(&lock->num_readers) > 0);
 
@@ -64,13 +64,13 @@ rwlock_runlock(struct rwlock *lock)
 }
 
 static inline bool
-rwlock_is_rlocked(struct rwlock *lock)
+rwlock_is_rlocked(ShmRwLock *lock)
 {
     return g_atomic_int_get(&lock->num_readers) > 0;
 }
 
 static inline void
-rwlock_wlock(struct rwlock *lock)
+rwlock_wlock(ShmRwLock *lock)
 {
     lock_lock(&lock->write);
 
@@ -82,13 +82,13 @@ rwlock_wlock(struct rwlock *lock)
 }
 
 static inline void
-rwlock_wunlock(struct rwlock *lock)
+rwlock_wunlock(ShmRwLock *lock)
 {
     lock_unlock(&lock->write);
 }
 
 static inline bool
-rwlock_is_wlocked(struct rwlock *lock)
+rwlock_is_wlocked(ShmRwLock *lock)
 {
     return lock_is_locked(&lock->write);
 }

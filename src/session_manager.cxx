@@ -81,7 +81,7 @@ struct SessionManager {
     struct shm *const shm;
 
     /** this lock protects the following hash table */
-    struct rwlock lock;
+    ShmRwLock lock;
 
     /**
      * Has the session manager been abandoned after the crash of one
