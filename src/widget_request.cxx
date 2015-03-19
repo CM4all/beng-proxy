@@ -12,7 +12,7 @@
 #include "penv.hxx"
 #include "uri_parser.hxx"
 #include "uri-relative.h"
-#include "shm/strref-dpool.h"
+#include "shm/strref_dpool.hxx"
 #include "pool.hxx"
 
 #include <string.h>

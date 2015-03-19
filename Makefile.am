@@ -634,7 +634,7 @@ libpool_a_SOURCES = \
 libshm_a_SOURCES = \
 	src/shm/lock.h \
 	src/shm/rwlock.hxx \
-	src/shm/strref-dpool.h \
+	src/shm/strref_dpool.hxx \
 	src/shm/dchunk.h \
 	src/shm/dpool.c src/shm/dpool.h \
 	src/shm/dstring.cxx \
