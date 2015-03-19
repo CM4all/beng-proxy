@@ -2,8 +2,8 @@
 #include "cookie_jar.hxx"
 #include "header_writer.hxx"
 #include "tpool.h"
-#include "shm.h"
-#include "dpool.h"
+#include "shm/shm.h"
+#include "shm/dpool.h"
 #include "strmap.hxx"
 
 #include <assert.h>

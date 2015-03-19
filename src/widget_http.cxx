@@ -19,7 +19,6 @@
 #include "session.hxx"
 #include "cookie_client.hxx"
 #include "async.hxx"
-#include "dpool.h"
 #include "get.hxx"
 #include "fcache.hxx"
 #include "header_writer.hxx"

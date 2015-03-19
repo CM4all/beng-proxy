@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_LOCK_H
-#define __BENG_LOCK_H
+#ifndef SHM_LOCK_H
+#define SHM_LOCK_H
 
 #include <inline/poison.h>
 

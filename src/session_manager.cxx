@@ -6,9 +6,9 @@
 
 #include "session_manager.hxx"
 #include "session.hxx"
-#include "shm.h"
-#include "dpool.h"
-#include "rwlock.h"
+#include "shm/shm.h"
+#include "shm/dpool.h"
+#include "shm/rwlock.h"
 #include "refcount.h"
 #include "random.hxx"
 #include "expiry.h"

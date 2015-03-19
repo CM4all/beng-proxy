@@ -7,8 +7,8 @@
 #include "session_read.hxx"
 #include "session_file.h"
 #include "session.hxx"
-#include "dpool.h"
 #include "cookie_jar.hxx"
+#include "shm/dpool.h"
 
 #include <stdint.h>
 

@@ -2,15 +2,14 @@
 #include "cookie_jar.hxx"
 #include "header_writer.hxx"
 #include "tpool.h"
-#include "shm.h"
-#include "dpool.h"
+#include "shm/shm.h"
+#include "shm/dpool.h"
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"
 
 #include <stdio.h>
 #include <unistd.h>
-#include <errno.h>
 #include <string.h>
 
 int main(int argc, char **argv) {

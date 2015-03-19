@@ -10,8 +10,8 @@
 #include "session_file.h"
 #include "session_manager.hxx"
 #include "session.hxx"
-#include "dpool.h"
 #include "clock.h"
+#include "shm/dpool.h"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>

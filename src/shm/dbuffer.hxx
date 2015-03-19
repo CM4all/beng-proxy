@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef DBUFFER_HXX
-#define DBUFFER_HXX
+#ifndef SHM_DBUFFER_HXX
+#define SHM_DBUFFER_HXX
 
 #include "dpool.h"
 #include "util/ConstBuffer.hxx"

@@ -632,14 +632,14 @@ libpool_a_SOURCES = \
 	src/pool.cxx src/pool.hxx src/pool.h
 
 libshm_a_SOURCES = \
-	src/lock.h \
-	src/rwlock.h \
-	src/strref-dpool.h \
-	src/dchunk.h \
-	src/dpool.c src/dpool.h \
-	src/dstring.c \
-	src/dbuffer.hxx \
-	src/shm.c src/shm.h
+	src/shm/lock.h \
+	src/shm/rwlock.h \
+	src/shm/strref-dpool.h \
+	src/shm/dchunk.h \
+	src/shm/dpool.c src/shm/dpool.h \
+	src/shm/dstring.c \
+	src/shm/dbuffer.hxx \
+	src/shm/shm.c src/shm/shm.h
 
 libnet_a_SOURCES = \
 	src/net/Error.cxx src/net/Error.hxx \

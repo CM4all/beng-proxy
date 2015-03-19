@@ -1,5 +1,5 @@
-#include "shm.h"
-#include "dpool.h"
+#include "shm/shm.h"
+#include "shm/dpool.h"
 
 #include <inline/compiler.h>
 

@@ -9,11 +9,11 @@
 #include "cookie_string.hxx"
 #include "strref2.hxx"
 #include "strref_pool.hxx"
-#include "strref-dpool.h"
 #include "strmap.hxx"
 #include "http_string.hxx"
 #include "tpool.h"
-#include "dpool.h"
+#include "shm/dpool.h"
+#include "shm/strref-dpool.h"
 #include "expiry.h"
 #include "clock.h"
 

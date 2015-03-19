@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_STRREF_DPOOL_H
-#define __BENG_STRREF_DPOOL_H
+#ifndef STRREF_DPOOL_H
+#define STRREF_DPOOL_H
 
 #include "strref.h"
 #include "dpool.h"

@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_DPOOL_H
-#define __BENG_DPOOL_H
+#ifndef SHM_DPOOL_H
+#define SHM_DPOOL_H
 
 #include <stddef.h>
 #include <stdbool.h>
