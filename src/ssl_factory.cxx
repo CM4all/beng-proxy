@@ -417,7 +417,7 @@ ssl_factory_new(const ssl_config &config,
     SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
 
     /* disable weak ciphers */
-    SSL_CTX_set_cipher_list(ssl_ctx, SSL_DEFAULT_CIPHER_LIST ":!EXPORT:!LOW");
+    SSL_CTX_set_cipher_list(ssl_ctx, "DEFAULT:!EXPORT:!LOW");
 
     ssl_factory *factory = new ssl_factory(ssl_ctx, server);
 
