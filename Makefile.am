@@ -112,7 +112,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/config.hxx \
 	src/bp_listener.cxx src/bp_listener.hxx \
 	src/bp_connection.cxx src/bp_connection.hxx \
-	src/dchunk.h \
 	src/defer.cxx src/defer.hxx \
 	src/defer_event.h \
 	src/delegate_client.cxx src/delegate_client.hxx \
@@ -122,7 +121,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/delegate_stock.cxx src/delegate_stock.hxx \
 	src/delegate_handler.cxx \
 	src/direct.c src/direct.h \
-	src/dpool.c src/dpool.h \
 	src/drop.cxx src/drop.hxx \
 	src/exec.cxx src/exec.hxx \
 	src/expiry.h \
@@ -188,7 +186,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/control_local.cxx src/control_local.hxx \
 	src/bp_stats.cxx src/bp_stats.hxx \
 	src/bp_control.cxx src/bp_control.hxx \
-	src/lock.h \
 	src/memcached_client.cxx src/memcached_client.hxx \
 	src/memcached_packet.hxx \
 	src/memcached_protocol.hxx \
@@ -212,9 +209,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/generate_response.cxx src/generate_response.hxx \
 	src/resource_tag.cxx src/resource_tag.hxx \
 	src/rewrite_uri.cxx src/rewrite_uri.hxx \
-	src/rwlock.h \
 	src/serialize.cxx src/serialize.hxx \
-	src/shm.c src/shm.h \
 	src/sink_gstring.cxx src/sink_gstring.hxx \
 	src/sink-impl.h \
 	src/socket_wrapper.cxx src/socket_wrapper.hxx \
@@ -226,7 +221,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/stock.cxx src/stock.hxx \
 	src/hstock.cxx src/hstock.hxx \
 	src/mstock.cxx src/mstock.hxx \
-	src/strref-dpool.h \
 	src/suffix_registry.cxx src/suffix_registry.hxx \
 	src/address_suffix_registry.cxx src/address_suffix_registry.hxx \
 	src/tcache.cxx src/tcache.hxx \
@@ -245,8 +239,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/crash.h \
 	src/crash.c \
 	src/bp_worker.cxx src/bp_worker.hxx \
-	src/dstring.c \
-	src/dbuffer.hxx \
 	src/istream_rubber.cxx src/istream_rubber.hxx \
 	src/sink_rubber.cxx src/sink_rubber.hxx \
 	src/session.cxx src/session.hxx \
@@ -327,6 +319,7 @@ cm4all_beng_proxy_SOURCES = \
 cm4all_beng_proxy_LDADD = $(AM_LDADD) \
 	-lcap \
 	libistream.a libpool.a libmemory.a \
+	libshm.a \
 	libnet.a \
 	libraddress.a \
 	libputil.a \
@@ -570,6 +563,7 @@ endif
 #
 
 noinst_LIBRARIES = libutil.a libmemory.a libpool.a \
+	libshm.a \
 	libnet.a \
 	libputil.a \
 	libraddress.a \
@@ -636,6 +630,16 @@ libpool_a_SOURCES = \
 	src/paddress.hxx \
 	src/pstring.cxx \
 	src/pool.cxx src/pool.hxx src/pool.h
+
+libshm_a_SOURCES = \
+	src/lock.h \
+	src/rwlock.h \
+	src/strref-dpool.h \
+	src/dchunk.h \
+	src/dpool.c src/dpool.h \
+	src/dstring.c \
+	src/dbuffer.hxx \
+	src/shm.c src/shm.h
 
 libnet_a_SOURCES = \
 	src/net/Error.cxx src/net/Error.hxx \
@@ -938,7 +942,6 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_server.cxx \
 	src/cookie_string.cxx \
-	src/shm.c src/dpool.c src/dstring.c \
 	src/random.cxx src/random.hxx \
 	src/fd-util.c \
 	src/fd_util.c \
@@ -949,6 +952,7 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 test_t_header_forward_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libputil.a \
+	libshm.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS)
@@ -1095,13 +1099,13 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/widget_session.cxx src/xml_parser.cxx src/widget_class.cxx \
 	src/widget_view.cxx \
 	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
-	src/dpool.c src/shm.c src/dstring.c \
 	src/bp_global.cxx src/transformation.cxx \
 	src/clock.c \
 	$(T_ISTREAM_FILTER_SRC)
 test_t_istream_processor_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libputil.a \
+	libshm.a \
 	libutil.a \
 	$(T_ISTREAM_FILTER_LIB) \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -1280,11 +1284,11 @@ test_t_cookie_client_SOURCES = test/t_cookie_client.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_string.cxx \
 	src/http_string.cxx \
-	src/header_writer.cxx \
-	src/shm.c src/dpool.c src/dstring.c
+	src/header_writer.cxx
 test_t_cookie_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libputil.a \
+	libshm.a \
 	libutil.a \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS)
@@ -1299,14 +1303,17 @@ test_t_cookie_server_LDADD = $(AM_LDADD) \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
-test_t_shm_SOURCES = test/t-shm.c src/shm.c
-test_t_shm_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
+test_t_shm_SOURCES = test/t-shm.c
+test_t_shm_LDADD = $(AM_LDADD) \
+	libshm.a \
+	$(LIBCM4ALL_DAEMON_LIBS)
 
-test_t_dpool_SOURCES = test/t-dpool.c src/shm.c src/dpool.c
-test_t_dpool_LDADD = $(AM_LDADD) $(LIBCM4ALL_DAEMON_LIBS)
+test_t_dpool_SOURCES = test/t-dpool.c
+test_t_dpool_LDADD = $(AM_LDADD) \
+	libshm.a \
+	$(LIBCM4ALL_DAEMON_LIBS)
 
-test_t_session_SOURCES = test/t_session.cxx src/shm.c \
-	src/dpool.c src/dstring.c \
+test_t_session_SOURCES = test/t_session.cxx \
 	src/clock.c \
 	src/session_id.cxx \
 	src/random.cxx src/random.hxx \
@@ -1314,6 +1321,7 @@ test_t_session_SOURCES = test/t_session.cxx src/shm.c \
 	src/crash.c \
 	src/session.cxx src/session_manager.cxx
 test_t_session_LDADD = $(AM_LDADD) \
+	libshm.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
@@ -1428,13 +1436,13 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/http_upgrade.cxx \
 	src/istream-escape.c \
 	src/transformation.cxx \
-	src/dpool.c src/dstring.c src/shm.c \
 	src/clock.c \
 	src/tpool.c
 test_t_widget_http_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libraddress.a \
 	libputil.a \
+	libshm.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -1487,11 +1495,11 @@ test_run_cookie_client_SOURCES = test/run_cookie_client.cxx \
 	src/cookie_string.cxx \
 	src/header_writer.cxx \
 	src/tpool.c \
-	src/shm.c src/dpool.c src/dstring.c \
 	src/clock.c
 test_run_cookie_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libputil.a \
+	libshm.a \
 	libutil.a \
 	$(LIBCM4ALL_HTTP_LIBS) \
 	$(LIBCM4ALL_DAEMON_LIBS)
@@ -1551,7 +1559,6 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/http_address.cxx src/cache.cxx \
 	src/cleanup_timer.cxx \
-	src/shm.c src/dpool.c src/dstring.c \
 	src/exec.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
@@ -1560,6 +1567,7 @@ test_run_processor_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libnet.a \
 	libraddress.a \
+	libshm.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
@@ -1583,7 +1591,6 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/failure.cxx src/bulldog.c \
 	src/balancer.cxx src/cache.cxx \
 	src/cleanup_timer.cxx \
-	src/shm.c src/dpool.c src/dstring.c \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_t_processor_LDADD = $(AM_LDADD) \
@@ -1591,6 +1598,7 @@ test_t_processor_LDADD = $(AM_LDADD) \
 	libraddress.a \
 	libputil.a \
 	libistream.a libpool.a libmemory.a \
+	libshm.a \
 	libutil.a \
 	$(LIBCM4ALL_DAEMON_LIBS) \
 	$(LIBCM4ALL_HTTP_LIBS) \
