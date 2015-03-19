@@ -637,7 +637,7 @@ libshm_a_SOURCES = \
 	src/shm/strref-dpool.h \
 	src/shm/dchunk.h \
 	src/shm/dpool.c src/shm/dpool.h \
-	src/shm/dstring.c \
+	src/shm/dstring.cxx \
 	src/shm/dbuffer.hxx \
 	src/shm/shm.c src/shm/shm.h
 
