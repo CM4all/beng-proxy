@@ -92,4 +92,14 @@ crash_in_unsafe(void)
     return !crash_is_safe(&global_crash);
 }
 
+struct ScopeCrashUnsafe {
+    ScopeCrashUnsafe() {
+        crash_unsafe_enter();
+    }
+
+    ~ScopeCrashUnsafe() {
+        crash_unsafe_leave();
+    }
+};
+
 #endif

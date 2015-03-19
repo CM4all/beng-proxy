@@ -196,12 +196,12 @@ SessionManager::Cleanup()
 
     const unsigned now = now_s();
 
-    crash_unsafe_enter();
+    const ScopeCrashUnsafe crash_unsafe;
+
     lock.WriteLock();
 
     if (abandoned) {
         lock.WriteUnlock();
-        crash_unsafe_leave();
         assert(!crash_in_unsafe());
         return false;
     }
@@ -213,7 +213,6 @@ SessionManager::Cleanup()
     non_empty = !sessions.empty();
 
     lock.WriteUnlock();
-    crash_unsafe_leave();
     assert(!crash_in_unsafe());
 
     return non_empty;
@@ -269,15 +268,13 @@ session_manager_init(unsigned idle_timeout,
 inline
 SessionManager::~SessionManager()
 {
-    crash_unsafe_enter();
+    const ScopeCrashUnsafe crash_unsafe;
 
     lock.WriteLock();
 
     sessions.clear_and_dispose(SessionDisposer());
 
     lock.WriteUnlock();
-
-    crash_unsafe_leave();
 }
 
 void
@@ -355,7 +352,7 @@ SessionManager::Purge()
 
     assert(locked_session == nullptr);
 
-    crash_unsafe_enter();
+    const ScopeCrashUnsafe crash_unsafe;
     lock.WriteLock();
 
     for (auto &session : sessions) {
@@ -371,7 +368,6 @@ SessionManager::Purge()
 
     if (purge_sessions.empty()) {
         lock.WriteUnlock();
-        crash_unsafe_leave();
         return false;
     }
 
@@ -384,7 +380,6 @@ SessionManager::Purge()
     }
 
     lock.WriteUnlock();
-    crash_unsafe_leave();
 
     return true;
 }
@@ -615,7 +610,7 @@ SessionManager::EraseAndDispose(SessionId id)
 
     assert(locked_session == nullptr);
 
-    crash_unsafe_enter();
+    const ScopeCrashUnsafe crash_unsafe;
     lock.WriteLock();
 
     session = session_find(id);
@@ -625,7 +620,6 @@ SessionManager::EraseAndDispose(SessionId id)
     }
 
     lock.WriteUnlock();
-    crash_unsafe_leave();
 }
 
 void
@@ -640,12 +634,11 @@ SessionManager::Visit(bool (*callback)(const Session *session,
 {
     bool result = true;
 
-    crash_unsafe_enter();
+    const ScopeCrashUnsafe crash_unsafe;
     lock.ReadLock();
 
     if (abandoned) {
         lock.ReadUnlock();
-        crash_unsafe_leave();
         return false;
     }
 
@@ -664,7 +657,6 @@ SessionManager::Visit(bool (*callback)(const Session *session,
     }
 
     lock.ReadUnlock();
-    crash_unsafe_leave();
 
     return result;
 }
