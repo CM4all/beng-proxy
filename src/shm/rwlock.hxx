@@ -7,7 +7,9 @@
 
 #include "lock.h"
 
-#include <glib.h>
+#include <atomic>
+
+#include <unistd.h>
 
 /**
  * A reader/writer lock emulation using a semaphore.
@@ -18,12 +20,11 @@ class ShmRwLock {
     /**
      * Counter for the number of readers.
      */
-    volatile gint num_readers;
+    std::atomic_uint n_readers;
 
 public:
-    ShmRwLock() {
+    ShmRwLock():n_readers(0) {
         lock_init(&write);
-        g_atomic_int_set(&num_readers, 0);
     }
 
     ~ShmRwLock() {
@@ -31,7 +32,8 @@ public:
     }
 
     void ReadLock() {
-        g_atomic_int_inc(&num_readers);
+        ++n_readers;
+
         if (!lock_is_locked(&write))
             /* no writer is waiting - we're done */
             return;
@@ -39,25 +41,24 @@ public:
         /* slow route: undo the increment, and retry the increment while
            the write lock is held */
 
-        (void)g_atomic_int_dec_and_test(&num_readers);
+        --n_readers;
 
         lock_lock(&write);
 
-        assert(g_atomic_int_get(&num_readers) >= 0);
-        g_atomic_int_inc(&num_readers);
+        ++n_readers;
 
         lock_unlock(&write);
     }
 
     void ReadUnlock() {
-        assert(g_atomic_int_get(&num_readers) > 0);
+        assert(n_readers > 0);
 
-        (void)g_atomic_int_dec_and_test(&num_readers);
+        --n_readers;
     }
 
     gcc_pure
     bool IsReadLocked() const {
-        return g_atomic_int_get(&num_readers) > 0;
+        return n_readers > 0;
     }
 
     void WriteLock() {
@@ -67,7 +68,7 @@ public:
            because write is locked */
 
         while (IsReadLocked())
-            g_usleep(1);
+            usleep(1);
     }
 
     void WriteUnlock() {
