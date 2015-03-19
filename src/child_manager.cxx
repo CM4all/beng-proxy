@@ -5,7 +5,7 @@
  */
 
 #include "child_manager.hxx"
-#include "crash.h"
+#include "crash.hxx"
 #include "pool.hxx"
 #include "defer_event.h"
 #include "clock.h"

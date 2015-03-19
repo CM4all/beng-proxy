@@ -5,14 +5,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_CRASH_H
-#define BENG_PROXY_CRASH_H
+#ifndef BENG_PROXY_CRASH_HXX
+#define BENG_PROXY_CRASH_HXX
 
 #include <inline/compiler.h>
 
 #include <glib.h>
+
 #include <assert.h>
-#include <stdbool.h>
 
 struct crash_shm {
     volatile gint counter;
@@ -23,10 +23,6 @@ struct crash {
 };
 
 extern struct crash global_crash;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 bool
 crash_init(struct crash *crash);
@@ -53,8 +49,8 @@ gcc_pure
 static inline bool
 crash_is_safe(struct crash *crash)
 {
-    assert(crash != NULL);
-    assert(crash->shm != NULL);
+    assert(crash != nullptr);
+    assert(crash->shm != nullptr);
 
     return g_atomic_int_get(&crash->shm->counter) == 0;
 }
@@ -66,7 +62,7 @@ crash_is_safe(struct crash *crash)
 static inline void
 crash_unsafe_enter(void)
 {
-    assert(global_crash.shm != NULL);
+    assert(global_crash.shm != nullptr);
 
     g_atomic_int_inc(&global_crash.shm->counter);
 }
@@ -78,7 +74,7 @@ crash_unsafe_enter(void)
 static inline void
 crash_unsafe_leave(void)
 {
-    assert(global_crash.shm != NULL);
+    assert(global_crash.shm != nullptr);
     assert(!crash_is_safe(&global_crash));
 
     (void)g_atomic_int_dec_and_test(&global_crash.shm->counter);
@@ -93,9 +89,5 @@ crash_in_unsafe(void)
 {
     return !crash_is_safe(&global_crash);
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

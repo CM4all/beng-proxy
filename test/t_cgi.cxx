@@ -4,7 +4,7 @@
 #include "http_response.hxx"
 #include "child_manager.hxx"
 #include "direct.h"
-#include "crash.h"
+#include "crash.hxx"
 #include "istream_file.hxx"
 #include "istream.h"
 #include "fb_pool.hxx"

@@ -12,7 +12,7 @@
 #include "refcount.h"
 #include "random.hxx"
 #include "expiry.h"
-#include "crash.h"
+#include "crash.hxx"
 #include "clock.h"
 #include "util/StaticArray.hxx"
 

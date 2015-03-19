@@ -16,7 +16,7 @@
 #include "async.hxx"
 #include "fcache.hxx"
 #include "transformation.hxx"
-#include "crash.h"
+#include "crash.hxx"
 #include "istream.h"
 #include "istream_null.hxx"
 #include "session_manager.hxx"

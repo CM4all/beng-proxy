@@ -7,7 +7,7 @@
 #ifndef BENG_PROXY_WORKER_HXX
 #define BENG_PROXY_WORKER_HXX
 
-#include "crash.h"
+#include "crash.hxx"
 
 #include <inline/list.h>
 

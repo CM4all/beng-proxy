@@ -9,7 +9,7 @@
 #include "shm/dpool.h"
 #include "shm/dbuffer.hxx"
 #include "expiry.h"
-#include "crash.h"
+#include "crash.hxx"
 #include "expiry.h"
 
 #include <daemon/log.h>

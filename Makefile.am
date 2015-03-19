@@ -236,8 +236,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/cleanup_timer.cxx src/cleanup_timer.hxx \
 	src/bp_cmdline.cxx \
 	src/completion.h \
-	src/crash.h \
-	src/crash.c \
+	src/crash.cxx src/crash.hxx \
 	src/bp_worker.cxx src/bp_worker.hxx \
 	src/istream_rubber.cxx src/istream_rubber.hxx \
 	src/sink_rubber.cxx src/sink_rubber.hxx \
@@ -945,7 +944,7 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/random.cxx src/random.hxx \
 	src/fd-util.c \
 	src/fd_util.c \
-	src/crash.c \
+	src/crash.cxx src/crash.hxx \
 	src/session_id.cxx \
 	src/clock.c \
 	src/tpool.c
@@ -1085,7 +1084,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/istream_html_escape.cxx \
 	src/exec.cxx \
 	src/random.cxx src/random.hxx \
-	src/crash.c \
+	src/crash.cxx src/crash.hxx \
 	src/session_id.cxx \
 	src/session.cxx src/session_manager.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx \
@@ -1161,7 +1160,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/header_parser.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/child_manager.cxx src/child_manager.hxx \
-	src/crash.c \
+	src/crash.cxx src/crash.hxx \
 	src/direct.c
 test_t_cgi_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1318,7 +1317,7 @@ test_t_session_SOURCES = test/t_session.cxx \
 	src/session_id.cxx \
 	src/random.cxx src/random.hxx \
 	src/fd-util.c src/fd_util.c \
-	src/crash.c \
+	src/crash.cxx src/crash.hxx \
 	src/session.cxx src/session_manager.cxx
 test_t_session_LDADD = $(AM_LDADD) \
 	libshm.a \
@@ -1419,7 +1418,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/widget_http.cxx src/widget_uri.cxx src/widget_request.cxx \
 	src/pheaders.cxx \
 	src/exec.cxx \
-	src/crash.c \
+	src/crash.cxx src/crash.hxx \
 	src/widget_session.cxx src/session.cxx src/session_manager.cxx src/session_id.cxx \
 	src/widget_view.cxx src/widget.cxx src/widget_init.cxx \
 	src/random.cxx src/random.hxx \

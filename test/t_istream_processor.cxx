@@ -8,7 +8,7 @@
 #include "inline_widget.hxx"
 #include "widget_registry.hxx"
 #include "bp_global.hxx"
-#include "crash.h"
+#include "crash.hxx"
 #include "session.hxx"
 
 #include <stdlib.h>

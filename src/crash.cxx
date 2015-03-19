@@ -5,7 +5,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "crash.h"
+#include "crash.hxx"
 
 #include <sys/mman.h>
 
@@ -14,15 +14,16 @@ struct crash global_crash;
 bool
 crash_init(struct crash *crash)
 {
-    assert(crash != NULL);
+    assert(crash != nullptr);
 
-    crash->shm = mmap(NULL, sizeof(*crash->shm),
-                      PROT_READ|PROT_WRITE,
-                      MAP_ANONYMOUS|MAP_SHARED,
-                      -1, 0);
-    if (crash->shm == (struct crash_shm *)-1)
+    void *p = mmap(nullptr, sizeof(*crash->shm),
+             PROT_READ|PROT_WRITE,
+             MAP_ANONYMOUS|MAP_SHARED,
+             -1, 0);
+    if (p == (struct crash_shm *)-1)
         return false;
 
+    crash->shm = (struct crash_shm *)p;
     g_atomic_int_set(&crash->shm->counter, 0);
     return true;
 }
@@ -30,8 +31,8 @@ crash_init(struct crash *crash)
 void
 crash_deinit(struct crash *crash)
 {
-    assert(crash != NULL);
-    assert(crash->shm != NULL);
+    assert(crash != nullptr);
+    assert(crash->shm != nullptr);
 
     munmap(crash->shm, sizeof(*crash->shm));
 }

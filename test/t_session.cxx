@@ -1,7 +1,7 @@
 #include "session.hxx"
 #include "session_manager.hxx"
 #include "cookie_jar.hxx"
-#include "crash.h"
+#include "crash.hxx"
 
 #include <inline/compiler.h>
 
