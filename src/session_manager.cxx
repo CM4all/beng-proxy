@@ -423,7 +423,8 @@ session_generate_id(session_id_t *id_r)
     for (auto &i : id_r->data)
         i = g_rand_int(session_rand);
 
-    id_r->data[0] = cluster_session_id(id_r->data[0]);
+    id_r->data[SESSION_ID_WORDS - 1] =
+        cluster_session_id(id_r->data[SESSION_ID_WORDS - 1]);
 #else
     *id_r = (session_id_t)cluster_session_id(g_rand_int(session_rand))
         | (session_id_t)g_rand_int(session_rand) << 32;
