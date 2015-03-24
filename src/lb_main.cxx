@@ -7,6 +7,7 @@
 #include "tpool.h"
 #include "direct.h"
 #include "lb_instance.hxx"
+#include "lb_check.hxx"
 #include "lb_setup.hxx"
 #include "lb_connection.hxx"
 #include "tcp_stock.hxx"
@@ -253,11 +254,22 @@ int main(int argc, char **argv)
     }
 
     if (instance.cmdline.check) {
+        int status = EXIT_SUCCESS;
+
+        ssl_global_init();
+
+        Error error2;
+        if (!lb_check(*instance.config, error2)) {
+            fprintf(stderr, "%s\n", error2.GetMessage());
+            status = EXIT_FAILURE;
+        }
+
         tpool_deinit();
         delete instance.config;
         pool_unref(instance.pool);
         pool_recycler_clear();
-        return EXIT_SUCCESS;
+        ssl_global_deinit();
+        return status;
     }
 
     /* initialize */
