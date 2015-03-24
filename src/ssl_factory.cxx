@@ -409,6 +409,12 @@ ssl_factory_new(const ssl_config &config,
     /* requires libssl 1.0.0 */
     mode |= SSL_MODE_RELEASE_BUFFERS;
 #endif
+
+    /* without this flag, OpenSSL attempts to verify the whole local
+       certificate chain for each connection, which is a waste of CPU
+       time */
+    mode |= SSL_MODE_NO_AUTO_CHAIN;
+
     SSL_CTX_set_mode(ssl_ctx, mode);
 
     if (server && !enable_ecdh(ssl_ctx, error)) {
