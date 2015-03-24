@@ -252,8 +252,13 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    if (instance.cmdline.check)
+    if (instance.cmdline.check) {
+        tpool_deinit();
+        delete instance.config;
+        pool_unref(instance.pool);
+        pool_recycler_clear();
         return EXIT_SUCCESS;
+    }
 
     /* initialize */
 
