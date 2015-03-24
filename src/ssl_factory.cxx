@@ -386,6 +386,8 @@ ssl_factory_new(const ssl_config &config,
 {
     assert(!config.cert_key.empty() || !server);
 
+    ERR_clear_error();
+
     /* don't be fooled - we want TLS, not SSL - but TLSv1_method()
        will only allow TLSv1.0 and will refuse TLSv1.1 and TLSv1.2;
        only SSLv23_method() supports all (future) TLS protocol
@@ -396,6 +398,7 @@ ssl_factory_new(const ssl_config &config,
 
     SSL_CTX *ssl_ctx = SSL_CTX_new(method);
     if (ssl_ctx == NULL) {
+        ERR_print_errors_fp(stderr);
         error.Format(ssl_domain, "SSL_CTX_new() failed");
         return NULL;
     }
