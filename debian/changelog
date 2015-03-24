@@ -10,7 +10,7 @@ cm4all-beng-proxy (6.3) unstable; urgency=low
   * lb: verify SSL certificates in --check
   * ssl: reduce CPU overhead during TLS handshake
 
- --   
+ -- Max Kellermann <mk@cm4all.com>  Tue, 24 Mar 2015 16:56:00 -0000
 
 cm4all-beng-proxy (6.2) unstable; urgency=low
 
