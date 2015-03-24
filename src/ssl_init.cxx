@@ -10,6 +10,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 
 #include <mutex>
 
@@ -52,6 +53,11 @@ ssl_global_init()
 void
 ssl_global_deinit()
 {
+    EVP_cleanup();
+    CRYPTO_cleanup_all_ex_data();
+    ERR_remove_thread_state(nullptr);
+    ERR_free_strings();
+
     CRYPTO_set_id_callback(nullptr);
     CRYPTO_set_locking_callback(nullptr);
 
