@@ -28,13 +28,13 @@ locking_function(int mode, int n,
 }
 
 static unsigned long
-id_function(void)
+id_function()
 {
     return pthread_self();
 }
 
 void
-ssl_global_init(void)
+ssl_global_init()
 {
     SSL_load_error_strings();
     SSL_library_init();
@@ -50,7 +50,7 @@ ssl_global_init(void)
 }
 
 void
-ssl_global_deinit(void)
+ssl_global_deinit()
 {
     CRYPTO_set_id_callback(nullptr);
     CRYPTO_set_locking_callback(nullptr);

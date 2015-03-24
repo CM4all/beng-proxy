@@ -8,9 +8,9 @@
 #define BENG_PROXY_SSL_INIT_H
 
 void
-ssl_global_init(void);
+ssl_global_init();
 
 void
-ssl_global_deinit(void);
+ssl_global_deinit();
 
 #endif
