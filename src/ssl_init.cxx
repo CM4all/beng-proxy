@@ -52,8 +52,8 @@ ssl_global_init(void)
 void
 ssl_global_deinit(void)
 {
-    CRYPTO_set_id_callback(NULL);
-    CRYPTO_set_locking_callback(NULL);
+    CRYPTO_set_id_callback(nullptr);
+    CRYPTO_set_locking_callback(nullptr);
 
     delete[] ssl_mutexes;
 }
