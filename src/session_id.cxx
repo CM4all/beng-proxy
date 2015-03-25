@@ -42,7 +42,7 @@ SessionId::SetClusterNode(unsigned cluster_size, unsigned cluster_node)
     uint32_t old_hash = GetClusterHash();
     uint32_t new_hash = ToClusterNode(old_hash, cluster_size, cluster_node);
 #ifdef SESSION_ID_SIZE
-    data[0] = new_hash;
+    data.back() = new_hash;
 #else
     value &= ~uint64_t(uint32_t(-1));
     value |= new_hash;

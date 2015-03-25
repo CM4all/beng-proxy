@@ -10,6 +10,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 
 #include <mutex>
 
@@ -28,13 +29,13 @@ locking_function(int mode, int n,
 }
 
 static unsigned long
-id_function(void)
+id_function()
 {
     return pthread_self();
 }
 
 void
-ssl_global_init(void)
+ssl_global_init()
 {
     SSL_load_error_strings();
     SSL_library_init();
@@ -50,10 +51,21 @@ ssl_global_init(void)
 }
 
 void
-ssl_global_deinit(void)
+ssl_global_deinit()
 {
-    CRYPTO_set_id_callback(NULL);
-    CRYPTO_set_locking_callback(NULL);
+    EVP_cleanup();
+    CRYPTO_cleanup_all_ex_data();
+
+#if OPENSSL_VERSION_NUMBER >= 0x10000000L
+    ERR_remove_thread_state(nullptr);
+#else
+    ERR_remove_state(0);
+#endif
+
+    ERR_free_strings();
+
+    CRYPTO_set_id_callback(nullptr);
+    CRYPTO_set_locking_callback(nullptr);
 
     delete[] ssl_mutexes;
 }

@@ -53,6 +53,15 @@ static const char *const cookie_request_headers[] = {
     nullptr,
 };
 
+static const char *const cache_request_headers[] = {
+    "if-modified-since",
+    "if-unmodified-since",
+    "if-match",
+    "if-none-match",
+    "if-range",
+    nullptr,
+};
+
 /**
  * @see http://www.w3.org/TR/cors/#syntax
  */
@@ -265,6 +274,7 @@ forward_other_headers(struct strmap *dest, const struct strmap *src)
             !string_in_array(language_request_headers, i.key) &&
             !string_in_array(cookie_request_headers, i.key) &&
             !string_in_array(cors_request_headers, i.key) &&
+            !string_in_array(cache_request_headers, i.key) &&
             !string_in_array(exclude_request_headers, i.key) &&
             !is_secure_header(i.key) &&
             strcmp(i.key, "range") != 0 &&
@@ -376,6 +386,9 @@ forward_request_headers(struct pool &pool, const struct strmap *src,
         p = strmap_get_checked(src, "range");
         if (p != nullptr)
             dest->Add("range", p);
+
+        // TODO: separate parameter for cache headers
+        header_copy_list(src, dest, cache_request_headers);
     }
 
     if (settings.modes[HEADER_GROUP_COOKIE] == HEADER_FORWARD_YES) {

@@ -386,6 +386,8 @@ ssl_factory_new(const ssl_config &config,
 {
     assert(!config.cert_key.empty() || !server);
 
+    ERR_clear_error();
+
     /* don't be fooled - we want TLS, not SSL - but TLSv1_method()
        will only allow TLSv1.0 and will refuse TLSv1.1 and TLSv1.2;
        only SSLv23_method() supports all (future) TLS protocol
@@ -396,6 +398,7 @@ ssl_factory_new(const ssl_config &config,
 
     SSL_CTX *ssl_ctx = SSL_CTX_new(method);
     if (ssl_ctx == NULL) {
+        ERR_print_errors_fp(stderr);
         error.Format(ssl_domain, "SSL_CTX_new() failed");
         return NULL;
     }
@@ -406,6 +409,12 @@ ssl_factory_new(const ssl_config &config,
     /* requires libssl 1.0.0 */
     mode |= SSL_MODE_RELEASE_BUFFERS;
 #endif
+
+    /* without this flag, OpenSSL attempts to verify the whole local
+       certificate chain for each connection, which is a waste of CPU
+       time */
+    mode |= SSL_MODE_NO_AUTO_CHAIN;
+
     SSL_CTX_set_mode(ssl_ctx, mode);
 
     if (server && !enable_ecdh(ssl_ctx, error)) {
@@ -417,7 +426,7 @@ ssl_factory_new(const ssl_config &config,
     SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
 
     /* disable weak ciphers */
-    SSL_CTX_set_cipher_list(ssl_ctx, SSL_DEFAULT_CIPHER_LIST ":!EXPORT:!LOW");
+    SSL_CTX_set_cipher_list(ssl_ctx, "DEFAULT:!EXPORT:!LOW");
 
     ssl_factory *factory = new ssl_factory(ssl_ctx, server);
 

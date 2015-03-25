@@ -81,8 +81,12 @@ struct SessionId {
      */
     gcc_pure
     uint32_t GetClusterHash() const {
-        return Hash();
-    }
+#ifdef SESSION_ID_SIZE
+        return data.back();
+#else
+        return value;
+#endif
+   }
 
     /**
      * Parse a session id from a string.

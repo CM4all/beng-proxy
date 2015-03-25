@@ -438,6 +438,7 @@ cm4all_beng_lb_SOURCES = \
 	src/lb_cookie.cxx \
 	src/lb_config.hxx \
 	src/lb_config.cxx \
+	src/lb_check.cxx src/lb_check.hxx \
 	src/lb_setup.hxx \
 	src/lb_setup.cxx \
 	src/lb_monitor.hxx \
