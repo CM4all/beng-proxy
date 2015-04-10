@@ -4,18 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_URI_EDIT_H
-#define BENG_URI_EDIT_H
+#ifndef BENG_URI_EDIT_HXX
+#define BENG_URI_EDIT_HXX
 
 #include <inline/compiler.h>
 
 #include <stddef.h>
 
 struct pool;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 gcc_pure gcc_malloc
 const char *
@@ -41,9 +37,5 @@ const char *
 uri_insert_args(struct pool *pool, const char *uri,
                 const char *args, size_t args_length,
                 const char *path, size_t path_length);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

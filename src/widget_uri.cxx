@@ -8,7 +8,7 @@
 #include "widget_class.hxx"
 #include "uri-relative.h"
 #include "uri_parser.hxx"
-#include "uri-edit.h"
+#include "uri_edit.hxx"
 #include "args.hxx"
 #include "tpool.h"
 #include "strref.h"

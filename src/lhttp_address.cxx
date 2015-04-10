@@ -4,7 +4,7 @@
 
 #include "lhttp_address.hxx"
 #include "pool.hxx"
-#include "uri-edit.h"
+#include "uri_edit.hxx"
 #include "uri_base.hxx"
 #include "uri-relative.h"
 #include "uri_escape.hxx"

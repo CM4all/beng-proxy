@@ -12,7 +12,7 @@
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
 #include "uri-relative.h"
-#include "uri-edit.h"
+#include "uri_edit.hxx"
 #include "uri-extract.h"
 #include "uri-verify.h"
 #include "uri_base.hxx"

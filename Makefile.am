@@ -613,7 +613,7 @@ libputil_a_SOURCES = \
 	src/strref_pool.hxx \
 	src/strset.c src/strset.h \
 	src/uri_base.cxx src/uri_base.hxx \
-	src/uri-edit.c src/uri-edit.h \
+	src/uri_edit.cxx src/uri_edit.hxx \
 	src/uri_escape.cxx src/uri_escape.hxx \
 	src/uri-extract.c src/uri-extract.h \
 	src/uri-relative.c src/uri-relative.h

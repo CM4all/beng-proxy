@@ -5,7 +5,7 @@
  */
 
 #include "http_address.hxx"
-#include "uri-edit.h"
+#include "uri_edit.hxx"
 #include "uri_base.hxx"
 #include "uri-relative.h"
 #include "uri-verify.h"

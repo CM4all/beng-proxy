@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri-edit.h"
-#include "pool.h"
+#include "uri_edit.hxx"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -14,44 +14,44 @@ const char *
 uri_insert_query_string(struct pool *pool, const char *uri,
                         const char *query_string)
 {
-    assert(pool != NULL);
-    assert(uri != NULL);
-    assert(query_string != NULL);
+    assert(pool != nullptr);
+    assert(uri != nullptr);
+    assert(query_string != nullptr);
 
     const char *qmark = strchr(uri, '?');
 
-    if (qmark != NULL) {
+    if (qmark != nullptr) {
         ++qmark;
         return p_strncat(pool, uri, qmark - uri,
                          query_string, strlen(query_string),
                          "&", (size_t)1,
                          qmark, strlen(qmark),
-                         NULL);
+                         nullptr);
     } else
-        return p_strcat(pool, uri, "?", query_string, NULL);
+        return p_strcat(pool, uri, "?", query_string, nullptr);
 }
 
 const char *
 uri_append_query_string_n(struct pool *pool, const char *uri,
                           const char *query_string, size_t length)
 {
-    assert(pool != NULL);
-    assert(uri != NULL);
-    assert(query_string != NULL);
+    assert(pool != nullptr);
+    assert(uri != nullptr);
+    assert(query_string != nullptr);
     assert(length > 0);
 
     return p_strncat(pool, uri, strlen(uri),
-                     strchr(uri, '?') == NULL ? "?" : "&", (size_t)1,
+                     strchr(uri, '?') == nullptr ? "?" : "&", (size_t)1,
                      query_string, length,
-                     NULL);
+                     nullptr);
 }
 
 static size_t
 query_string_begins_with(const char *query_string, const char *needle,
                          size_t needle_length)
 {
-    assert(query_string != NULL);
-    assert(needle != NULL);
+    assert(query_string != nullptr);
+    assert(needle != nullptr);
 
     if (memcmp(query_string, needle, needle_length) != 0)
         return 0;
@@ -69,20 +69,17 @@ const char *
 uri_delete_query_string(struct pool *pool, const char *uri,
                         const char *needle, size_t needle_length)
 {
-    assert(pool != NULL);
-    assert(uri != NULL);
-    assert(needle != NULL);
+    assert(pool != nullptr);
+    assert(uri != nullptr);
+    assert(needle != nullptr);
 
-    const char *p;
-    size_t delete_length;
-
-    p = strchr(uri, '?');
-    if (p == NULL)
+    const char *p = strchr(uri, '?');
+    if (p == nullptr)
         /* no query string, nothing to remove */
         return uri;
 
     ++p;
-    delete_length = query_string_begins_with(p, needle, needle_length);
+    size_t delete_length = query_string_begins_with(p, needle, needle_length);
     if (delete_length == 0)
         /* mismatch, return original URI */
         return uri;
@@ -95,7 +92,7 @@ uri_delete_query_string(struct pool *pool, const char *uri,
 
     return p_strncat(pool, uri, p - uri,
                      p + delete_length, strlen(p + delete_length),
-                     NULL);
+                     nullptr);
 }
 
 const char *
@@ -104,12 +101,12 @@ uri_insert_args(struct pool *pool, const char *uri,
                 const char *path, size_t path_length)
 {
     const char *q = strchr(uri, '?');
-    if (q == NULL)
+    if (q == nullptr)
         q = uri + strlen(uri);
 
     return p_strncat(pool, uri, q - uri,
                      ";", (size_t)1, args, args_length,
                      path, path_length,
                      q, strlen(q),
-                     NULL);
+                     nullptr);
 }
