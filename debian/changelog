@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.4) unstable; urgency=low
 
-  * 
+  * widget: fix "Range" request headers with non-default view
 
  --   
 
