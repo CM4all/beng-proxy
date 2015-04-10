@@ -11,7 +11,7 @@
 #include "session.hxx"
 #include "penv.hxx"
 #include "uri_parser.hxx"
-#include "uri-relative.h"
+#include "uri_relative.hxx"
 #include "shm/strref_dpool.hxx"
 #include "pool.hxx"
 

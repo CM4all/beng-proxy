@@ -4,58 +4,57 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri-relative.h"
+#include "uri_relative.hxx"
 #include "uri-extract.h"
 #include "strref.h"
-#include "pool.h"
+#include "pool.hxx"
 
 #include <string.h>
 
 const char *
 uri_compress(struct pool *pool, const char *uri)
 {
-    char *dest, *p;
-
-    assert(pool != NULL);
-    assert(uri != NULL);
+    assert(pool != nullptr);
+    assert(uri != nullptr);
 
     while (uri[0] == '.' && uri[1] == '/')
         uri += 2;
 
     if (uri[0] == '.' && uri[1] == '.' &&
         (uri[2] == '/' || uri[2] == 0))
-        return NULL;
+        return nullptr;
 
-    if (strstr(uri, "//") == NULL &&
-        strstr(uri, "/./") == NULL &&
-        strstr(uri, "/..") == NULL)
+    if (strstr(uri, "//") == nullptr &&
+        strstr(uri, "/./") == nullptr &&
+        strstr(uri, "/..") == nullptr)
         /* cheap route: the URI is already compressed, do not
            duplicate anything */
         return uri;
 
-    dest = p_strdup(pool, uri);
+    char *dest = p_strdup(pool, uri);
 
     /* eliminate "//" */
 
-    while ((p = strstr(dest, "//")) != NULL)
+    char *p;
+    while ((p = strstr(dest, "//")) != nullptr)
         /* strcpy() might be better here, but it does not allow
            overlapped arguments */
         memmove(p + 1, p + 2, strlen(p + 2) + 1);
 
     /* eliminate "/./" */
 
-    while ((p = strstr(dest, "/./")) != NULL)
+    while ((p = strstr(dest, "/./")) != nullptr)
         /* strcpy() might be better here, but it does not allow
            overlapped arguments */
         memmove(p + 1, p + 3, strlen(p + 3) + 1);
 
     /* eliminate "/../" with backtracking */
 
-    while ((p = strstr(dest, "/../")) != NULL) {
+    while ((p = strstr(dest, "/../")) != nullptr) {
         if (p == dest) {
             /* this ".." cannot be resolved - scream! */
             p_free(pool, dest);
-            return NULL;
+            return nullptr;
         }
 
         char *q = p;
@@ -75,20 +74,20 @@ uri_compress(struct pool *pool, const char *uri)
     /* eliminate trailing "/." and "/.." */
 
     p = strrchr(dest, '/');
-    if (p != NULL) {
+    if (p != nullptr) {
         if (p[1] == '.' && p[2] == 0)
             p[1] = 0;
         else if (p[1] == '.' && p[2] == '.' && p[3] == 0) {
             if (p == dest) {
                 /* refuse to delete the leading slash */
                 p_free(pool, dest);
-                return NULL;
+                return nullptr;
             }
 
             *p = 0;
 
             p = strrchr(dest, '/');
-            if (p == NULL) {
+            if (p == nullptr) {
                 /* if the string doesn't start with a slash, then an
                    empty return value is allowed */
                 p_free(pool, dest);
@@ -113,11 +112,11 @@ static const char *
 uri_after_last_slash(const char *uri)
 {
     const char *path = uri_path(uri);
-    if (path == NULL)
-        return NULL;
+    if (path == nullptr)
+        return nullptr;
 
     uri = strrchr(path, '/');
-    if (uri != NULL)
+    if (uri != nullptr)
         ++uri;
     return uri;
 }
@@ -125,11 +124,8 @@ uri_after_last_slash(const char *uri)
 const char *
 uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length)
 {
-    size_t base_length;
-    char *dest;
-
-    assert(base != NULL);
-    assert(uri != NULL || length == 0);
+    assert(base != nullptr);
+    assert(uri != nullptr || length == 0);
 
     if (length == 0)
         return base;
@@ -137,9 +133,10 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
     if (uri_has_protocol(uri, length))
         return p_strndup(pool, uri, length);
 
+    size_t base_length;
     if (uri[0] == '/' && uri[1] == '/') {
         const char *colon = strstr(base, "://");
-        if (colon != NULL)
+        if (colon != nullptr)
             base_length = colon + 1 - base;
         else {
             /* fallback, not much else we can do */
@@ -147,30 +144,28 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
             base_length = 5;
         }
     } else if (uri[0] == '/') {
-        const char *base_path;
-
         if (base[0] == '/')
             return p_strndup(pool, uri, length);
 
-        base_path = uri_path(base);
-        if (base_path == NULL)
+        const char *base_path = uri_path(base);
+        if (base_path == nullptr)
             return p_strncat(pool, base, strlen(base), "/", 1,
-                             uri, length, NULL);
+                             uri, length, nullptr);
 
         base_length = base_path - base;
     } else if (uri[0] == '?') {
         const char *qmark = strchr(base, '?');
-        base_length = qmark != NULL ? (size_t)(qmark - base) : strlen(base);
+        base_length = qmark != nullptr ? (size_t)(qmark - base) : strlen(base);
     } else {
         const char *base_end = uri_after_last_slash(base);
-        if (base_end == NULL)
+        if (base_end == nullptr)
             return p_strncat(pool, base, strlen(base), "/", 1,
-                             uri, length, NULL);
+                             uri, length, nullptr);
 
         base_length = base_end - base;
     }
 
-    dest = p_malloc(pool, base_length + length + 1);
+    char *dest = PoolAlloc<char>(*pool, base_length + length + 1);
     memcpy(dest, base, base_length);
     memcpy(dest + base_length, uri, length);
     dest[base_length + length] = 0;
@@ -180,9 +175,9 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
 const struct strref *
 uri_relative(const struct strref *base, struct strref *uri)
 {
-    if (base == NULL || strref_is_empty(base) ||
-        uri == NULL || strref_is_empty(uri))
-        return NULL;
+    if (base == nullptr || strref_is_empty(base) ||
+        uri == nullptr || strref_is_empty(uri))
+        return nullptr;
 
     if (uri->length >= base->length &&
         memcmp(uri->data, base->data, base->length) == 0) {
@@ -193,10 +188,10 @@ uri_relative(const struct strref *base, struct strref *uri)
     /* special case: http://hostname without trailing slash */
     if (uri->length == base->length - 1 &&
         memcmp(uri->data, base->data, base->length) &&
-        memchr(uri->data + 7, '/', uri->length - 7) == NULL) {
+        memchr(uri->data + 7, '/', uri->length - 7) == nullptr) {
         strref_clear(uri);
         return uri;
     }
 
-    return NULL;
+    return nullptr;
 }

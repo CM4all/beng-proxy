@@ -5,7 +5,7 @@
 #include "cgi_address.hxx"
 #include "pool.hxx"
 #include "uri_base.hxx"
-#include "uri-relative.h"
+#include "uri_relative.hxx"
 #include "uri_escape.hxx"
 #include "uri-extract.h"
 #include "regex.hxx"

@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_URI_H
-#define __BENG_URI_H
+#ifndef BENG_URI_RELATIVE_HXX
+#define BENG_URI_RELATIVE_HXX
 
 #include <inline/compiler.h>
 
@@ -13,10 +13,6 @@
 
 struct pool;
 struct strref;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Compresses an URI (eliminates all "/./" and "/../"), and returns
@@ -42,9 +38,5 @@ uri_absolute(struct pool *pool, const char *base, const char *uri, size_t length
  */
 const struct strref *
 uri_relative(const struct strref *base, struct strref *uri);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

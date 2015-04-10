@@ -1,4 +1,4 @@
-#include "uri-relative.h"
+#include "uri_relative.hxx"
 #include "pool.hxx"
 
 #include <inline/compiler.h>

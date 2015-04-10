@@ -11,7 +11,7 @@
 #include "http_address.hxx"
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
-#include "uri-relative.h"
+#include "uri_relative.hxx"
 #include "uri_edit.hxx"
 #include "uri-extract.h"
 #include "uri-verify.h"

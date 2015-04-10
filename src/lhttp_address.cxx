@@ -6,7 +6,7 @@
 #include "pool.hxx"
 #include "uri_edit.hxx"
 #include "uri_base.hxx"
-#include "uri-relative.h"
+#include "uri_relative.hxx"
 #include "uri_escape.hxx"
 #include "uri-extract.h"
 #include "regex.hxx"

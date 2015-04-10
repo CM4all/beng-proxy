@@ -6,7 +6,7 @@
 
 #include "widget.hxx"
 #include "widget_class.hxx"
-#include "uri-relative.h"
+#include "uri_relative.hxx"
 #include "uri_parser.hxx"
 #include "uri_edit.hxx"
 #include "args.hxx"
