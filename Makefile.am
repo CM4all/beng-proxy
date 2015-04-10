@@ -596,7 +596,7 @@ libutil_a_SOURCES = \
 	src/strutil.c src/strutil.h \
 	src/trace.h \
 	src/uri_parser.cxx src/uri_parser.hxx \
-	src/uri-verify.c src/uri-verify.h \
+	src/uri_verify.cxx src/uri_verify.hxx \
 	src/uri-string.h \
 	src/uset.h \
 	src/crc.h \
@@ -776,7 +776,7 @@ check_PROGRAMS = \
 	test/t_resource_address \
 	test/t_http_address \
 	test/t_cgi_address \
-	test/t-uri-verify \
+	test/t_uri_verify \
 	test/t_uri_relative \
 	test/t_html_escape \
 	test/t-escape-css \
@@ -811,7 +811,7 @@ TESTS = test/t_hashmap test/t_cache test/t_tcache \
 	test/t_resource_address \
 	test/t_http_address \
 	test/t_cgi_address \
-	test/t-uri-verify \
+	test/t_uri_verify \
 	test/t_uri_relative \
 	test/t_html_escape \
 	test/t-escape-css \
@@ -997,7 +997,7 @@ test_t_cgi_address_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS) $(LIBCM4ALL_SOCKET_LIBS) \
 	$(CPPUNIT_LIBS)
 
-test_t_uri_verify_SOURCES = test/t-uri-verify.c
+test_t_uri_verify_SOURCES = test/t_uri_verify.cxx
 test_t_uri_verify_LDADD = $(AM_LDADD) libutil.a
 
 test_t_uri_relative_SOURCES = test/t_uri_relative.cxx

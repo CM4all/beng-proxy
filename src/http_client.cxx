@@ -20,7 +20,7 @@
 #include "async.hxx"
 #include "growing_buffer.hxx"
 #include "please.hxx"
-#include "uri-verify.h"
+#include "uri_verify.hxx"
 #include "direct.h"
 #include "stopwatch.h"
 #include "strmap.hxx"

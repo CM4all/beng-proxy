@@ -4,17 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_URI_VERIFY_H
-#define BENG_PROXY_URI_VERIFY_H
+#ifndef BENG_PROXY_URI_VERIFY_HXX
+#define BENG_PROXY_URI_VERIFY_HXX
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
 #include <stddef.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * Verifies one path segment of an URI according to RFC 2396.
@@ -54,9 +49,5 @@ uri_path_verify_paranoid(const char *uri);
 gcc_pure
 bool
 uri_path_verify_quick(const char *uri);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

@@ -31,7 +31,7 @@
 #include "transformation.hxx"
 #include "uri_edit.hxx"
 #include "uri_escape.hxx"
-#include "uri-verify.h"
+#include "uri_verify.hxx"
 #include "strmap.hxx"
 #include "istream.h"
 #include "translate_client.hxx"

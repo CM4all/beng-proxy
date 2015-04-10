@@ -13,7 +13,7 @@
 #include "cache.hxx"
 #include "stock.hxx"
 #include "uri_base.hxx"
-#include "uri-verify.h"
+#include "uri_verify.hxx"
 #include "uri_escape.hxx"
 #include "tpool.h"
 #include "pbuffer.hxx"

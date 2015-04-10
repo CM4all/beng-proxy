@@ -20,7 +20,7 @@
 #include "serialize.hxx"
 #include "strref.h"
 #include "please.hxx"
-#include "uri-verify.h"
+#include "uri_verify.hxx"
 #include "direct.h"
 #include "fd-util.h"
 #include "strmap.hxx"

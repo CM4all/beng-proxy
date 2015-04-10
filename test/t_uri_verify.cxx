@@ -1,4 +1,4 @@
-#include "uri-verify.h"
+#include "uri_verify.hxx"
 
 #include <inline/compiler.h>
 

@@ -19,6 +19,7 @@ run_nfs_client
 /t_stock
 /t_tcache
 /t_uri_relative
+/t_uri_verify
 /t_widget_registry
 /dump_memcached_choice
 /dump_udp

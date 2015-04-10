@@ -14,7 +14,7 @@
 #include "uri_relative.hxx"
 #include "uri_edit.hxx"
 #include "uri_extract.hxx"
-#include "uri-verify.h"
+#include "uri_verify.hxx"
 #include "uri_base.hxx"
 #include "strref.h"
 #include "pool.hxx"

@@ -33,7 +33,6 @@ test/t_ajp_client
 test/t_fcgi_client
 test/t-widget-stream
 test/t_http_address
-test/t-uri-verify
 test/t-processor
 test/was_mirror
 test/run_was

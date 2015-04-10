@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri-verify.h"
+#include "uri_verify.hxx"
 #include "uri-string.h"
 
 #include <string.h>
@@ -33,8 +33,8 @@ uri_path_verify(const char *src, size_t length)
 
     ++src;
     while (src < end) {
-        slash = memchr(src, '/', end - src);
-        if (slash == NULL)
+        slash = (const char *)memchr(src, '/', end - src);
+        if (slash == nullptr)
             slash = end;
 
         if (!uri_segment_verify(src, slash))
