@@ -9,7 +9,7 @@
 #include "uri_base.hxx"
 #include "uri_relative.hxx"
 #include "uri-verify.h"
-#include "uri-extract.h"
+#include "uri_extract.hxx"
 #include "pool.hxx"
 #include "strref.h"
 #include "regex.hxx"

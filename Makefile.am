@@ -615,7 +615,7 @@ libputil_a_SOURCES = \
 	src/uri_base.cxx src/uri_base.hxx \
 	src/uri_edit.cxx src/uri_edit.hxx \
 	src/uri_escape.cxx src/uri_escape.hxx \
-	src/uri-extract.c src/uri-extract.h \
+	src/uri_extract.cxx src/uri_extract.hxx \
 	src/uri_relative.cxx src/uri_relative.hxx
 
 libmemory_a_SOURCES = \

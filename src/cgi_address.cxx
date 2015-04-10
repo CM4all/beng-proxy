@@ -7,7 +7,7 @@
 #include "uri_base.hxx"
 #include "uri_relative.hxx"
 #include "uri_escape.hxx"
-#include "uri-extract.h"
+#include "uri_extract.hxx"
 #include "regex.hxx"
 
 #include <string.h>

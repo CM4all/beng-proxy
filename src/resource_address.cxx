@@ -13,7 +13,7 @@
 #include "nfs_address.hxx"
 #include "uri_relative.hxx"
 #include "uri_edit.hxx"
-#include "uri-extract.h"
+#include "uri_extract.hxx"
 #include "uri-verify.h"
 #include "uri_base.hxx"
 #include "strref.h"

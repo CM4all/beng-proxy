@@ -11,7 +11,7 @@
 #include "widget_resolver.hxx"
 #include "widget_class.hxx"
 #include "strref_pool.hxx"
-#include "uri-extract.h"
+#include "uri_extract.hxx"
 #include "tpool.h"
 #include "escape_class.h"
 #include "istream-escape.h"

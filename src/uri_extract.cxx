@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "uri-extract.h"
-#include "pool.h"
+#include "uri_extract.hxx"
+#include "pool.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -13,25 +13,25 @@
 bool
 uri_has_protocol(const char *uri, size_t length)
 {
-    assert(uri != NULL);
+    assert(uri != nullptr);
 
-    const char *colon = memchr(uri, ':', length);
-    return colon != NULL && colon < uri + length - 2 &&
+    const char *colon = (const char *)memchr(uri, ':', length);
+    return colon != nullptr && colon < uri + length - 2 &&
         colon[1] == '/' && colon[2] == '/';
 }
 
 const char *
 uri_host_and_port(struct pool *pool, const char *uri)
 {
-    assert(pool != NULL);
-    assert(uri != NULL);
+    assert(pool != nullptr);
+    assert(uri != nullptr);
 
     if (memcmp(uri, "http://", 7) != 0 && memcmp(uri, "ajp://", 6) != 0)
-        return NULL;
+        return nullptr;
 
     uri += 6 + (uri[0] != 'a');
     const char *slash = strchr(uri, '/');
-    if (slash == NULL)
+    if (slash == nullptr)
         return uri;
 
     return p_strndup(pool, uri, slash - uri);
@@ -40,15 +40,15 @@ uri_host_and_port(struct pool *pool, const char *uri)
 const char *
 uri_path(const char *uri)
 {
-    assert(uri != NULL);
+    assert(uri != nullptr);
 
     const char *p = strchr(uri, ':');
-    if (p == NULL || p[1] != '/')
+    if (p == nullptr || p[1] != '/')
         return uri;
     if (p[2] != '/')
         return p + 1;
     p = strchr(p + 3, '/');
-    if (p == NULL)
+    if (p == nullptr)
         return "";
     return p;
 }
@@ -56,11 +56,11 @@ uri_path(const char *uri)
 const char *
 uri_query_string(const char *uri)
 {
-    assert(uri != NULL);
+    assert(uri != nullptr);
 
     const char *p = strchr(uri, '?');
-    if (p == NULL || *++p == 0)
-        return NULL;
+    if (p == nullptr || *++p == 0)
+        return nullptr;
 
     return p;
 }

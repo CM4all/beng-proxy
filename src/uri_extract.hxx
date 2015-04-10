@@ -4,19 +4,14 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_URI_EXTRACT_H
-#define BENG_PROXY_URI_EXTRACT_H
+#ifndef BENG_PROXY_URI_EXTRACT_HXX
+#define BENG_PROXY_URI_EXTRACT_HXX
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 gcc_pure
 bool
@@ -33,9 +28,5 @@ uri_path(const char *uri);
 gcc_pure
 const char *
 uri_query_string(const char *uri);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

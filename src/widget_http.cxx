@@ -26,7 +26,7 @@
 #include "transformation.hxx"
 #include "bp_global.hxx"
 #include "resource_tag.hxx"
-#include "uri-extract.h"
+#include "uri_extract.hxx"
 #include "strmap.hxx"
 #include "istream.h"
 #include "istream_pipe.hxx"

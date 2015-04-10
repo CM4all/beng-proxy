@@ -5,7 +5,7 @@
  */
 
 #include "uri_relative.hxx"
-#include "uri-extract.h"
+#include "uri_extract.hxx"
 #include "strref.h"
 #include "pool.hxx"
 

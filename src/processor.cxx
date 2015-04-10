@@ -11,7 +11,7 @@
 #include "penv.hxx"
 #include "xml_parser.hxx"
 #include "uri_escape.hxx"
-#include "uri-extract.h"
+#include "uri_extract.hxx"
 #include "widget.hxx"
 #include "widget_approval.hxx"
 #include "widget_request.hxx"

@@ -14,7 +14,7 @@
 #include "cgi_address.hxx"
 #include "bp_global.hxx"
 #include "cookie_client.hxx"
-#include "uri-extract.h"
+#include "uri_extract.hxx"
 #include "strref_pool.hxx"
 #include "strmap.hxx"
 #include "http_response.hxx"
