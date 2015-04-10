@@ -127,8 +127,13 @@ widget_uri(struct widget *widget)
     return resource_address_uri_path(address);
 }
 
+/**
+ * @param a_view the view that is used to determine the address
+ * @param t_view the view that is used to determine the transformations
+ */
 static struct strmap *
-widget_request_headers(struct embed *embed, const WidgetView *view,
+widget_request_headers(struct embed *embed, const WidgetView &a_view,
+                       const WidgetView &t_view,
                        bool exclude_host, bool with_body)
 {
     struct widget &widget = embed->widget;
@@ -140,10 +145,10 @@ widget_request_headers(struct embed *embed, const WidgetView *view,
                                 embed->env.local_host,
                                 embed->env.remote_host,
                                 exclude_host, with_body,
-                                widget.from_request.frame && !view->HasProcessor(),
-                                widget.from_request.frame && view->transformation == nullptr,
-                                widget.from_request.frame && view->transformation == nullptr,
-                                view->request_header_forward,
+                                widget.from_request.frame && !t_view.HasProcessor(),
+                                widget.from_request.frame && t_view.transformation == nullptr,
+                                widget.from_request.frame && t_view.transformation == nullptr,
+                                a_view.request_header_forward,
                                 embed->env.session_cookie,
                                 session,
                                 embed->host_and_port,
@@ -217,8 +222,11 @@ widget_response_redirect(struct embed *embed, const char *location,
     if (body != nullptr)
         istream_close_unused(body);
 
+    const WidgetView *t_view = widget_get_transformation_view(&widget);
+    assert(t_view != nullptr);
+
     auto *headers =
-        widget_request_headers(embed, view,
+        widget_request_headers(embed, *view, *t_view,
                                address->type == RESOURCE_ADDRESS_HTTP ||
                                address->type == RESOURCE_ADDRESS_LHTTP,
                                false);
@@ -662,7 +670,7 @@ embed::SendRequest()
     widget.from_request.body = nullptr;
 
     auto *headers =
-        widget_request_headers(this, a_view,
+        widget_request_headers(this, *a_view, *t_view,
                                address->type == RESOURCE_ADDRESS_HTTP ||
                                address->type == RESOURCE_ADDRESS_LHTTP,
                                request_body != nullptr);
