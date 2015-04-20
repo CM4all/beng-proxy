@@ -1,1 +1,8 @@
+/files
+/stamp-*
+/*.substvars
+/*.debhelper
+
 /cm4all-*/
+/libcm4all-*/
+/python-cm4all-*/
