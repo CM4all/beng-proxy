@@ -5,6 +5,14 @@ cm4all-beng-proxy (7.0.2) unstable; urgency=low
 
  --   
 
+cm4all-beng-proxy (6.5) unstable; urgency=low
+
+  * debian: improve clang build-dependency
+  * debian: migrate from python-central to dh_python2
+  * debian: add missing dependency on python-twisted-names
+
+ -- Max Kellermann <mk@cm4all.com>  Mon, 27 Apr 2015 15:27:10 -0000
+
 cm4all-beng-proxy (7.0.1) unstable; urgency=low
 
   * forward the "Accept-Ranges" response header

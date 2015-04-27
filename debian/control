@@ -3,7 +3,7 @@ Section: non-free/web
 Priority: extra
 Maintainer: Max Kellermann <mk@cm4all.com>
 Build-Depends: debhelper (>= 9), autoconf (>= 2.60), automake (>= 1.11),
- clang-3.6 | clang-3.5 | clang-3.4 | cm4all-thirdparty-clang (>= 3.4),
+ clang (>= 3.4) | cm4all-thirdparty-clang (>= 3.4),
  libc6-dev (>= 2.7),
  libboost-dev (>= 1.42),
  libcap-dev,
@@ -17,10 +17,8 @@ Build-Depends: debhelper (>= 9), autoconf (>= 2.60), automake (>= 1.11),
  libcm4all-socket-dev (>= 0.3.5), libcm4all-was-dev (>= 0.4),
  libcm4all-http-dev (>= 1.2.5),
  texlive, texlive-latex-extra,
- python-central (>= 0.5.6), valgrind,
+ python (>= 2.6.5), valgrind,
 Standards-Version: 3.9.1
-XS-Python-Standards-Version: 0.4
-XS-Python-Version: all
 Vcs-git: git.intern.cm-ag:/srv/git/master/beng-proxy.git
 
 Package: cm4all-beng-proxy
@@ -144,9 +142,8 @@ Package: python-cm4all-beng-proxy
 Architecture: all
 Section: non-free/python
 Provides: ${python:Provides}
-Depends: ${python:Depends}, python-twisted-core
+Depends: ${python:Depends}, python-twisted-core, python-twisted-names
 Recommends: cm4all-beng-proxy
-XB-Python-Version: ${python:Versions}
 Description: Python bindings for beng-proxy
  BENG proxy is an HTTP proxy server which includes a HTML template
  processor.
