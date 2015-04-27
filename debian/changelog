@@ -1,7 +1,6 @@
 cm4all-beng-proxy (7.0.2) unstable; urgency=low
 
   * merge release 6.5
-  * http_server: support method PATCH (RFC 5789)
 
  --   
 
