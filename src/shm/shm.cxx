@@ -6,7 +6,7 @@
 
 #include "shm.hxx"
 #include "lock.h"
-#include "refcount.h"
+#include "refcount.hxx"
 
 #include <inline/poison.h>
 #include <inline/list.h>

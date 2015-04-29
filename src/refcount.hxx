@@ -4,12 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_REFCOUNT_H
-#define __BENG_REFCOUNT_H
+#ifndef REFCOUNT_HXX
+#define REFCOUNT_HXX
 
 #include <glib.h>
 
-#include <stdbool.h>
 #include <assert.h>
 
 struct refcount {

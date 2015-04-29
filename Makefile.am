@@ -200,7 +200,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/penv.cxx src/penv.hxx \
 	src/proxy_widget.cxx src/proxy_widget.hxx \
 	src/random.cxx src/random.hxx \
-	src/refcount.h \
+	src/refcount.hxx \
 	src/request_forward.cxx src/request_forward.hxx \
 	src/request.cxx src/request.hxx \
 	src/request_session.cxx \

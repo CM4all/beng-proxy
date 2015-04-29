@@ -9,7 +9,7 @@
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
 #include "shm/rwlock.hxx"
-#include "refcount.h"
+#include "refcount.hxx"
 #include "random.hxx"
 #include "expiry.h"
 #include "crash.hxx"
