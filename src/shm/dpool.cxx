@@ -32,19 +32,14 @@ struct dpool {
 };
 
 dpool::dpool(struct shm *_shm)
-    :shm(_shm)
+    :shm(_shm),
+     first_chunk(shm_page_size(shm) - sizeof(*this) +
+                 sizeof(first_chunk.data))
 {
     assert(shm_page_size(shm) >= sizeof(*this));
 
     lock_init(&lock);
     list_init(&first_chunk.siblings);
-
-    first_chunk.size = shm_page_size(shm) - sizeof(*this) +
-        sizeof(first_chunk.data);
-    first_chunk.used = 0;
-
-    list_init(&first_chunk.all_allocations);
-    list_init(&first_chunk.free_allocations);
 }
 
 dpool::~dpool()

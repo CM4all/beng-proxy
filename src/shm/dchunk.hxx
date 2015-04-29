@@ -32,11 +32,18 @@ struct dpool_allocation {
 
 struct dpool_chunk {
     struct list_head siblings;
-    size_t size, used;
+    const size_t size;
+    size_t used = 0;
 
     struct list_head all_allocations, free_allocations;
 
     struct dpool_data data;
+
+    dpool_chunk(size_t _size)
+        :size(_size) {
+        list_init(&all_allocations);
+        list_init(&free_allocations);
+    }
 };
 
 static inline bool
@@ -70,15 +77,11 @@ dchunk_new(struct shm *shm, struct list_head *chunks_head)
     assert(shm != nullptr);
     assert(shm_page_size(shm) >= sizeof(struct dpool_chunk));
 
-    auto *chunk = NewFromShm<struct dpool_chunk>(shm, 1);
+    struct dpool_chunk *chunk;
+    const size_t size = shm_page_size(shm) - sizeof(*chunk) + sizeof(chunk->data);
+    chunk = NewFromShm<struct dpool_chunk>(shm, 1, size);
     if (chunk == nullptr)
         return nullptr;
-
-    chunk->size = shm_page_size(shm) - sizeof(*chunk) + sizeof(chunk->data);
-    chunk->used = 0;
-
-    list_init(&chunk->all_allocations);
-    list_init(&chunk->free_allocations);
 
     list_add(&chunk->siblings, chunks_head);
     return chunk;
