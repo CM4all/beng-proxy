@@ -23,10 +23,46 @@
 #endif
 
 struct dpool {
-    struct shm *shm;
+    struct shm *const shm;
     struct lock lock;
     struct dpool_chunk first_chunk;
+
+    explicit dpool(struct shm *_shm);
+    ~dpool();
 };
+
+dpool::dpool(struct shm *_shm)
+    :shm(_shm)
+{
+    assert(shm_page_size(shm) >= sizeof(*this));
+
+    lock_init(&lock);
+    list_init(&first_chunk.siblings);
+
+    first_chunk.size = shm_page_size(shm) - sizeof(*this) +
+        sizeof(first_chunk.data);
+    first_chunk.used = 0;
+
+    list_init(&first_chunk.all_allocations);
+    list_init(&first_chunk.free_allocations);
+}
+
+dpool::~dpool()
+{
+    assert(shm != nullptr);
+    assert(first_chunk.size == shm_page_size(shm) - sizeof(*this) +
+           sizeof(first_chunk.data));
+
+    struct dpool_chunk *chunk, *n;
+    for (chunk = (struct dpool_chunk *)first_chunk.siblings.next;
+         chunk != &first_chunk; chunk = n) {
+        n = (struct dpool_chunk *)chunk->siblings.next;
+
+        dchunk_free(shm, chunk);
+    }
+
+    lock_destroy(&lock);
+}
 
 static constexpr size_t
 align_size(size_t size)
@@ -37,43 +73,13 @@ align_size(size_t size)
 struct dpool *
 dpool_new(struct shm *shm)
 {
-    auto *pool = NewFromShm<struct dpool>(shm, 1);
-    if (pool == nullptr)
-        return nullptr;
-
-    assert(shm_page_size(shm) >= sizeof(*pool));
-
-    pool->shm = shm;
-    lock_init(&pool->lock);
-
-    list_init(&pool->first_chunk.siblings);
-    pool->first_chunk.size = shm_page_size(shm) - sizeof(*pool) +
-        sizeof(pool->first_chunk.data);
-    pool->first_chunk.used = 0;
-
-    list_init(&pool->first_chunk.all_allocations);
-    list_init(&pool->first_chunk.free_allocations);
-
-    return pool;
+    return NewFromShm<struct dpool>(shm, 1, shm);
 }
 
 void
 dpool_destroy(struct dpool *pool)
 {
     assert(pool != nullptr);
-    assert(pool->shm != nullptr);
-    assert(pool->first_chunk.size == shm_page_size(pool->shm) - sizeof(*pool) +
-           sizeof(pool->first_chunk.data));
-
-    struct dpool_chunk *chunk, *n;
-    for (chunk = (struct dpool_chunk *)pool->first_chunk.siblings.next;
-         chunk != &pool->first_chunk; chunk = n) {
-        n = (struct dpool_chunk *)chunk->siblings.next;
-
-        dchunk_free(pool->shm, chunk);
-    }
-
-    lock_destroy(&pool->lock);
 
     DeleteFromShm(pool->shm, pool);
 }
