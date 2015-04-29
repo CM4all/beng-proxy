@@ -47,10 +47,10 @@ struct dpool_chunk {
 };
 
 static inline bool
-dpool_chunk_contains(const struct dpool_chunk *chunk, const void *p)
+dpool_chunk_contains(const struct dpool_chunk &chunk, const void *p)
 {
-    return (const unsigned char*)p >= chunk->data.data &&
-        (const unsigned char*)p < chunk->data.data + chunk->used;
+    return (const unsigned char *)p >= chunk.data.data &&
+        (const unsigned char *)p < chunk.data.data + chunk.used;
 }
 
 static inline struct dpool_allocation *
@@ -72,25 +72,24 @@ dalloc_next_free(struct dpool_allocation *alloc)
 }
 
 static inline struct dpool_chunk *
-dchunk_new(struct shm *shm, struct list_head *chunks_head)
+dchunk_new(struct shm &shm, struct list_head &chunks_head)
 {
-    assert(shm != nullptr);
-    assert(shm_page_size(shm) >= sizeof(struct dpool_chunk));
+    assert(shm_page_size(&shm) >= sizeof(struct dpool_chunk));
 
     struct dpool_chunk *chunk;
-    const size_t size = shm_page_size(shm) - sizeof(*chunk) + sizeof(chunk->data);
-    chunk = NewFromShm<struct dpool_chunk>(shm, 1, size);
+    const size_t size = shm_page_size(&shm) - sizeof(*chunk) + sizeof(chunk->data);
+    chunk = NewFromShm<struct dpool_chunk>(&shm, 1, size);
     if (chunk == nullptr)
         return nullptr;
 
-    list_add(&chunk->siblings, chunks_head);
+    list_add(&chunk->siblings, &chunks_head);
     return chunk;
 }
 
 static inline void
-dchunk_free(struct shm *shm, struct dpool_chunk *chunk)
+dchunk_free(struct shm &shm, struct dpool_chunk *chunk)
 {
-    DeleteFromShm(shm, chunk);
+    DeleteFromShm(&shm, chunk);
 }
 
 #endif

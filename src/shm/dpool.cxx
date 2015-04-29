@@ -53,7 +53,7 @@ dpool::~dpool()
          chunk != &first_chunk; chunk = n) {
         n = (struct dpool_chunk *)chunk->siblings.next;
 
-        dchunk_free(shm, chunk);
+        dchunk_free(*shm, chunk);
     }
 
     lock_destroy(&lock);
@@ -197,7 +197,7 @@ d_malloc(struct dpool *pool, size_t size)
 
     assert(p == nullptr);
 
-    chunk = dchunk_new(pool->shm, &pool->first_chunk.siblings);
+    chunk = dchunk_new(*pool->shm, pool->first_chunk.siblings);
     if (chunk != nullptr) {
         p = dchunk_malloc(chunk, size);
         assert(p != nullptr);
@@ -211,13 +211,13 @@ d_malloc(struct dpool *pool, size_t size)
 static struct dpool_chunk *
 dpool_find_chunk(struct dpool *pool, const void *p)
 {
-    if (dpool_chunk_contains(&pool->first_chunk, p))
+    if (dpool_chunk_contains(pool->first_chunk, p))
         return &pool->first_chunk;
 
     for (auto *chunk = (struct dpool_chunk *)pool->first_chunk.siblings.next;
          chunk != &pool->first_chunk;
          chunk = (struct dpool_chunk *)chunk->siblings.next) {
-        if (dpool_chunk_contains(chunk, p))
+        if (dpool_chunk_contains(*chunk, p))
             return chunk;
     }
 
@@ -285,7 +285,7 @@ d_free(struct dpool *pool, const void *p)
             assert(list_empty(&chunk->free_allocations));
 
             list_remove(&chunk->siblings);
-            dchunk_free(pool->shm, chunk);
+            dchunk_free(*pool->shm, chunk);
         }
     }
 
