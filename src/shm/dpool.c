@@ -71,7 +71,7 @@ dpool_destroy(struct dpool *pool)
          chunk != &pool->first_chunk; chunk = n) {
         n = (struct dpool_chunk *)chunk->siblings.next;
 
-        shm_free(pool->shm, chunk);
+        dchunk_free(pool->shm, chunk);
     }
 
     lock_destroy(&pool->lock);
@@ -305,7 +305,7 @@ d_free(struct dpool *pool, const void *p)
             assert(list_empty(&chunk->free_allocations));
 
             list_remove(&chunk->siblings);
-            shm_free(pool->shm, chunk);
+            dchunk_free(pool->shm, chunk);
         }
     }
 

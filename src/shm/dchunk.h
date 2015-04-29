@@ -77,4 +77,10 @@ dchunk_new(struct shm *shm, struct list_head *chunks_head)
     return chunk;
 }
 
+static inline void
+dchunk_free(struct shm *shm, struct dpool_chunk *chunk)
+{
+    shm_free(shm, chunk);
+}
+
 #endif
