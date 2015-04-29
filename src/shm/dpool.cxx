@@ -27,7 +27,7 @@ struct dpool {
      */
     unsigned free_counter = 0;
 
-    struct list_head chunks;
+    DpoolChunk::List chunks;
 
     DpoolChunk first_chunk;
 
@@ -49,23 +49,17 @@ dpool::dpool(struct shm &_shm)
 {
     assert(shm_page_size(shm) >= sizeof(*this));
 
-    list_init(&chunks);
-    list_add(&first_chunk.siblings, &chunks);
+    chunks.push_front(first_chunk);
 }
 
 dpool::~dpool()
 {
     assert(shm != nullptr);
 
-    list_remove(&first_chunk.siblings);
+    assert(&chunks.back() == &first_chunk);
+    chunks.pop_back();
 
-    DpoolChunk *chunk, *n;
-    for (chunk = (DpoolChunk *)(void *)chunks.next;
-         &chunk->siblings != &chunks; chunk = n) {
-        n = (DpoolChunk *)(void *)chunk->siblings.next;
-
-        chunk->Destroy(*shm);
-    }
+    chunks.clear_and_dispose(DpoolChunk::Disposer(*shm));
 }
 
 struct dpool *
@@ -104,9 +98,8 @@ dpool::Allocate(size_t size) throw(std::bad_alloc)
 
     /* find a chunk with enough room */
 
-    for (auto *chunk = (DpoolChunk *)(void *)chunks.next;
-         &chunk->siblings != &chunks; chunk = (DpoolChunk *)(void *)chunk->siblings.next) {
-        void *p = chunk->Allocate(size);
+    for (auto &chunk : chunks) {
+        void *p = chunk.Allocate(size);
         if (p != nullptr)
             return p;
     }
@@ -117,7 +110,7 @@ dpool::Allocate(size_t size) throw(std::bad_alloc)
     if (chunk == nullptr)
         throw std::bad_alloc();
 
-    list_add(&chunk->siblings, &chunks);
+    chunks.push_front(*chunk);
 
     void *p = chunk->Allocate(size);
     assert(p != nullptr);
@@ -134,10 +127,9 @@ d_malloc(struct dpool &pool, size_t size)
 inline DpoolChunk *
 dpool::FindChunk(const void *p)
 {
-    for (auto *chunk = (DpoolChunk *)(void *)chunks.next;
-         &chunk->siblings != &chunks; chunk = (DpoolChunk *)(void *)chunk->siblings.next)
-        if (chunk->Contains(p))
-            return chunk;
+    for (auto &chunk : chunks)
+        if (chunk.Contains(p))
+            return &chunk;
 
     return nullptr;
 }
@@ -157,8 +149,8 @@ dpool::Free(const void *p)
     if (chunk->IsEmpty() && chunk != &first_chunk) {
         /* the chunk is completely empty; release it to the SHM
            object */
-        list_remove(&chunk->siblings);
-        chunk->Destroy(*shm);
+        chunks.erase_and_dispose(chunks.iterator_to(*chunk),
+                                 DpoolChunk::Disposer(*shm));
     }
 }
 

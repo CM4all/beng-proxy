@@ -10,15 +10,19 @@
 #include "shm.hxx"
 
 #include <inline/compiler.h>
-#include <inline/list.h>
 
 #include <boost/interprocess/managed_external_buffer.hpp>
+#include <boost/intrusive/list.hpp>
 
 #include <assert.h>
 #include <stddef.h>
 
 struct DpoolChunk {
-    struct list_head siblings;
+    static constexpr auto link_mode = boost::intrusive::normal_link;
+    typedef boost::intrusive::link_mode<link_mode> LinkMode;
+    typedef boost::intrusive::list_member_hook<LinkMode> SiblingsHook;
+
+    SiblingsHook siblings;
 
     boost::interprocess::managed_external_buffer m;
 
@@ -26,11 +30,12 @@ struct DpoolChunk {
         size_t data[1];
     } data;
 
-    /**
-     * @param total_size the size of the memory allocation this
-     * #DpoolChunk lives in; it is used to calculate the usable chunk
-     * size
-     */
+    typedef boost::intrusive::list<DpoolChunk,
+                                   boost::intrusive::member_hook<DpoolChunk,
+                                                                 DpoolChunk::SiblingsHook,
+                                                                 &DpoolChunk::siblings>,
+                                   boost::intrusive::constant_time_size<false>> List;
+
     explicit DpoolChunk(size_t total_size)
         :m(boost::interprocess::create_only, &data,
            total_size - sizeof(*this) + sizeof(data)) {
@@ -46,6 +51,17 @@ struct DpoolChunk {
     void Destroy(struct shm &shm) {
         DeleteFromShm(&shm, this);
     }
+
+    class Disposer {
+        struct shm &shm;
+
+    public:
+        explicit Disposer(struct shm &_shm):shm(_shm) {}
+
+        void operator()(DpoolChunk *chunk) {
+            chunk->Destroy(shm);
+        }
+    };
 
     bool IsEmpty() const {
         return const_cast<DpoolChunk *>(this)->m.all_memory_deallocated();
