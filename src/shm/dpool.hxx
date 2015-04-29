@@ -22,7 +22,7 @@ struct shm;
  * space
  */
 struct dpool *
-dpool_new(struct shm *shm);
+dpool_new(struct shm &shm);
 
 /**
  * Destroy the memory pool.  All allocated memory is freed.
@@ -31,7 +31,7 @@ void
 dpool_destroy(struct dpool *pool);
 
 bool
-dpool_is_fragmented(const struct dpool *pool);
+dpool_is_fragmented(const struct dpool &pool);
 
 /**
  * Allocate memory from the pool.

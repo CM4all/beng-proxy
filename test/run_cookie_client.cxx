@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
     tpool_init(pool);
 
     struct shm *shm = shm_new(1024, 512);
-    struct dpool *dpool = dpool_new(shm);
+    struct dpool *dpool = dpool_new(*shm);
 
     struct cookie_jar *jar = cookie_jar_new(*dpool);
 

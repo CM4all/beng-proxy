@@ -23,7 +23,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
     tpool_init(pool);
 
     shm = shm_new(1024, 512);
-    dpool = dpool_new(shm);
+    dpool = dpool_new(*shm);
 
     jar = cookie_jar_new(*dpool);
 

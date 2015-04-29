@@ -340,7 +340,7 @@ session_manager_get_count()
 struct dpool *
 session_manager_new_dpool()
 {
-    return dpool_new(session_manager->shm);
+    return dpool_new(*session_manager->shm);
 }
 
 bool
@@ -427,13 +427,13 @@ session_new_unsafe()
     if (session_manager->abandoned)
         return nullptr;
 
-    pool = dpool_new(session_manager->shm);
+    pool = dpool_new(*session_manager->shm);
     if (pool == nullptr) {
         if (!session_manager->Purge())
             return nullptr;
 
         /* at least one session has been purged: try again */
-        pool = dpool_new(session_manager->shm);
+        pool = dpool_new(*session_manager->shm);
         if (pool == nullptr)
             /* nope. fail. */
             return nullptr;
@@ -487,7 +487,7 @@ session_defragment(Session *src)
     struct dpool *pool;
     Session *dest;
 
-    pool = dpool_new(session_manager->shm);
+    pool = dpool_new(*session_manager->shm);
     if (pool == nullptr)
         return nullptr;
 
@@ -583,7 +583,7 @@ session_put(Session *session)
     SessionId defragment;
 
     if ((session->counter % 1024) == 0 &&
-        dpool_is_fragmented(session->pool))
+        dpool_is_fragmented(*session->pool))
         defragment = session->id;
     else
         defragment.Clear();
