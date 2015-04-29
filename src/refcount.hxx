@@ -9,6 +9,8 @@
 
 #include <glib.h>
 
+#include <type_traits>
+
 #include <assert.h>
 
 struct RefCount {
@@ -34,5 +36,7 @@ struct RefCount {
         return g_atomic_int_dec_and_test(&value);
     }
 };
+
+static_assert(std::is_trivial<RefCount>::value, "type is not trivial");
 
 #endif
