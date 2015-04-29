@@ -26,7 +26,7 @@ struct page {
 };
 
 struct shm {
-    struct refcount ref;
+    RefCount ref;
 
     size_t page_size;
     unsigned num_pages;

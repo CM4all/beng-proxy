@@ -11,7 +11,7 @@
 
 #include <assert.h>
 
-struct refcount {
+struct RefCount {
     volatile gint value;
 
     void Init() {

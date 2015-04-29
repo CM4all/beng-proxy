@@ -69,7 +69,7 @@ EraseAndDisposeIf(Container &container, Pred pred, Disposer disposer)
 }
 
 struct SessionManager {
-    struct refcount ref;
+    RefCount ref;
 
     /**
      * The idle timeout of sessions [seconds].
