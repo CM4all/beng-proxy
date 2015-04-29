@@ -1,6 +1,6 @@
 cm4all-beng-proxy (6.6) unstable; urgency=low
 
-  * 
+  * debian/rules: remove remaining python-central invocation
 
  --   
 
