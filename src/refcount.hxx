@@ -13,9 +13,10 @@
 
 #include <assert.h>
 
-struct RefCount {
+class RefCount {
     volatile gint value;
 
+public:
     void Init() {
         g_atomic_int_set(&value, 1);
     }
