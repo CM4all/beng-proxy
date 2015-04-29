@@ -11,6 +11,7 @@ run_nfs_client
 /run_subst
 /request_translation
 /t_cache
+/t_shm
 /t_dpool
 /t_expansible_buffer
 /t_growing_buffer

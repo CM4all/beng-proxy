@@ -6,7 +6,7 @@
 
 #include "dpool.hxx"
 #include "dchunk.hxx"
-#include "shm.h"
+#include "shm.hxx"
 #include "lock.h"
 
 #include <inline/compiler.h>

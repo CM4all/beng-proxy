@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "shm.h"
+#include "shm.hxx"
 #include "lock.h"
 #include "refcount.h"
 
@@ -68,12 +68,12 @@ shm_new(size_t page_size, unsigned num_pages)
     assert(num_pages > 0);
 
     const unsigned header_pages = calc_header_pages(page_size, num_pages);
-    uint8_t *p = mmap(NULL, page_size * (header_pages + num_pages),
-                      PROT_READ|PROT_WRITE,
-                      MAP_ANONYMOUS|MAP_SHARED,
-                      -1, 0);
-    if (p == (uint8_t *)-1)
-        return NULL;
+    void *p = mmap(nullptr, page_size * (header_pages + num_pages),
+                   PROT_READ|PROT_WRITE,
+                   MAP_ANONYMOUS|MAP_SHARED,
+                   -1, 0);
+    if (p == (void *)-1)
+        return nullptr;
 
     struct shm *shm = (struct shm *)p;
     refcount_init(&shm->ref);
@@ -99,7 +99,7 @@ shm_new(size_t page_size, unsigned num_pages)
 void
 shm_ref(struct shm *shm)
 {
-    assert(shm != NULL);
+    assert(shm != nullptr);
 
     refcount_get(&shm->ref);
 }
@@ -110,7 +110,7 @@ shm_close(struct shm *shm)
     unsigned header_pages;
     int ret;
 
-    assert(shm != NULL);
+    assert(shm != nullptr);
 
     if (refcount_put(&shm->ref))
         lock_destroy(&shm->lock);
@@ -136,7 +136,7 @@ shm_find_available(struct shm *shm, unsigned num_pages)
         if (page->num_pages >= num_pages)
             return page;
 
-    return NULL;
+    return nullptr;
 }
 
 static struct page *
@@ -161,9 +161,9 @@ shm_alloc(struct shm *shm, unsigned num_pages)
     lock_lock(&shm->lock);
 
     struct page *page = shm_find_available(shm, num_pages);
-    if (page == NULL) {
+    if (page == nullptr) {
         lock_unlock(&shm->lock);
-        return NULL;
+        return nullptr;
     }
 
     assert(page->num_pages >= num_pages);

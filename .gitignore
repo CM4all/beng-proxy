@@ -26,7 +26,6 @@ test/t-escape-css
 test/run_http_server
 test/run-google-gadget
 test/run-embed
-test/t-shm
 test/run_client
 test/t_ajp_client
 test/t_fcgi_client

@@ -7,7 +7,7 @@
 #ifndef SHM_DCHUNK_HXX
 #define SHM_DCHUNK_HXX
 
-#include "shm.h"
+#include "shm.hxx"
 #include "util/Cast.hxx"
 
 #include <inline/list.h>

@@ -1,4 +1,4 @@
-#include "shm/shm.h"
+#include "shm/shm.hxx"
 
 #include <inline/compiler.h>
 

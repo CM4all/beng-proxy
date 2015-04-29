@@ -4,20 +4,15 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_SHM_H
-#define __BENG_SHM_H
+#ifndef SHM_HXX
+#define SHM_HXX
 
 #include <stddef.h>
 
 struct shm;
 
-#ifdef __cplusplus
-
 #include <utility>
 #include <new>
-
-extern "C" {
-#endif
 
 struct shm *
 shm_new(size_t page_size, unsigned num_pages);
@@ -37,9 +32,6 @@ shm_alloc(struct shm *shm, unsigned num_pages);
 void
 shm_free(struct shm *shm, const void *p);
 
-#ifdef __cplusplus
-}
-
 template<typename T, typename... Args>
 T *
 NewFromShm(struct shm *shm, unsigned num_pages, Args&&... args)
@@ -58,7 +50,5 @@ DeleteFromShm(struct shm *shm, T *t)
     t->~T();
     shm_free(shm, t);
 }
-
-#endif
 
 #endif
