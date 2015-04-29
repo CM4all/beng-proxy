@@ -84,9 +84,9 @@ allocation_size(const struct dpool_chunk *chunk,
                 const struct dpool_allocation *alloc)
 {
     if (alloc->all_siblings.next == &chunk->all_allocations)
-        return chunk->data + chunk->used - alloc->data;
+        return chunk->data.data + chunk->used - alloc->data.data;
     else
-        return (const unsigned char *)alloc->all_siblings.next - alloc->data;
+        return (const unsigned char *)alloc->all_siblings.next - alloc->data.data;
 }
 
 bool
@@ -118,7 +118,7 @@ allocation_split(const struct dpool_chunk *chunk gcc_unused,
 
     assert(allocation_size(chunk, alloc) > size + sizeof(*alloc) * 2);
 
-    other = (struct dpool_allocation *)(alloc->data + size);
+    other = (struct dpool_allocation *)(alloc->data.data + size);
     list_add(&other->all_siblings, &alloc->all_siblings);
     list_add(&other->free_siblings, &alloc->free_siblings);
 }
@@ -135,7 +135,7 @@ allocation_alloc(const struct dpool_chunk *chunk,
 
     list_remove(&alloc->free_siblings);
     list_init(&alloc->free_siblings);
-    return alloc->data;
+    return &alloc->data;
 }
 
 static void *
@@ -153,13 +153,13 @@ dchunk_malloc(struct dpool_chunk *chunk, size_t size)
     if (sizeof(*alloc) - sizeof(alloc->data) + size > chunk->size - chunk->used)
         return NULL;
 
-    alloc = (struct dpool_allocation *)(chunk->data + chunk->used);
+    alloc = (struct dpool_allocation *)(chunk->data.data + chunk->used);
     chunk->used += sizeof(*alloc) - sizeof(alloc->data) + size;
 
     list_add(&alloc->all_siblings, chunk->all_allocations.prev);
     list_init(&alloc->free_siblings);
 
-    return alloc->data;
+    return &alloc->data;
 }
 
 void *
@@ -296,7 +296,7 @@ d_free(struct dpool *pool, const void *p)
         assert(alloc->free_siblings.next == &chunk->free_allocations);
         list_remove(&alloc->all_siblings);
         list_remove(&alloc->free_siblings);
-        chunk->used = (unsigned char*)alloc - chunk->data;
+        chunk->used = (unsigned char*)alloc - chunk->data.data;
 
         if (chunk->used == 0 && chunk != &pool->first_chunk) {
             /* the chunk is completely empty; release it to the SHM

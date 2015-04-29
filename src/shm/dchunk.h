@@ -15,10 +15,14 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+struct dpool_data {
+    unsigned char data[sizeof(size_t)];
+};
+
 struct dpool_allocation {
     struct list_head all_siblings, free_siblings;
 
-    unsigned char data[sizeof(size_t)];
+    struct dpool_data data;
 };
 
 struct dpool_chunk {
@@ -27,14 +31,14 @@ struct dpool_chunk {
 
     struct list_head all_allocations, free_allocations;
 
-    unsigned char data[sizeof(size_t)];
+    struct dpool_data data;
 };
 
 static inline bool
 dpool_chunk_contains(const struct dpool_chunk *chunk, const void *p)
 {
-    return (const unsigned char*)p >= chunk->data &&
-        (const unsigned char*)p < chunk->data + chunk->used;
+    return (const unsigned char*)p >= chunk->data.data &&
+        (const unsigned char*)p < chunk->data.data + chunk->used;
 }
 
 static inline struct dpool_allocation *
