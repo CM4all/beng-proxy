@@ -76,7 +76,7 @@ shm_new(size_t page_size, unsigned num_pages)
         return nullptr;
 
     struct shm *shm = (struct shm *)p;
-    refcount_init(&shm->ref);
+    shm->ref.Init();
     shm->page_size = page_size;
     shm->num_pages = num_pages;
 
@@ -101,7 +101,7 @@ shm_ref(struct shm *shm)
 {
     assert(shm != nullptr);
 
-    refcount_get(&shm->ref);
+    shm->ref.Get();
 }
 
 void
@@ -112,7 +112,7 @@ shm_close(struct shm *shm)
 
     assert(shm != nullptr);
 
-    if (refcount_put(&shm->ref))
+    if (shm->ref.Put())
         lock_destroy(&shm->lock);
 
     header_pages = calc_header_pages(shm->page_size, shm->num_pages);

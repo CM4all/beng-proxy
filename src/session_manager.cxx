@@ -111,18 +111,18 @@ struct SessionManager {
          shm(_shm),
          abandoned(false),
          sessions(Set::bucket_traits(buckets, N_BUCKETS)) {
-        refcount_init(&ref);
+        ref.Init();
     }
 
     ~SessionManager();
 
     void Ref() {
-        refcount_get(&ref);
+        ref.Get();
         shm_ref(shm);
     }
 
     void Unref() {
-        if (refcount_put(&ref))
+        if (ref.Put())
             this->~SessionManager();
     }
 
