@@ -7,7 +7,7 @@
 #include "session_manager.hxx"
 #include "session.hxx"
 #include "shm/shm.h"
-#include "shm/dpool.h"
+#include "shm/dpool.hxx"
 #include "shm/rwlock.hxx"
 #include "refcount.h"
 #include "random.hxx"

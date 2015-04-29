@@ -636,7 +636,7 @@ libshm_a_SOURCES = \
 	src/shm/rwlock.hxx \
 	src/shm/strref_dpool.hxx \
 	src/shm/dchunk.h \
-	src/shm/dpool.c src/shm/dpool.h \
+	src/shm/dpool.cxx src/shm/dpool.hxx \
 	src/shm/dstring.cxx \
 	src/shm/dbuffer.hxx \
 	src/shm/shm.c src/shm/shm.h
@@ -795,7 +795,7 @@ check_PROGRAMS = \
 	test/t_cookie_client \
 	test/t_cookie_server \
 	test/t_pool \
-	test/t-shm test/t-dpool test/t_session \
+	test/t-shm test/t_dpool test/t_session \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
 	test/t_rewrite_uri \
@@ -830,7 +830,7 @@ TESTS = test/t_hashmap test/t_cache test/t_tcache \
 	test/t_memcached_client \
 	test/t_cookie_client.py test/t_cookie_client \
 	test/t_cookie_server \
-	test/t-shm test/t-dpool test/t_session \
+	test/t-shm test/t_dpool test/t_session \
 	test/t_pool \
 	test/t_rubber test/t_sink_rubber \
 	test/t_slice \
@@ -1308,7 +1308,7 @@ test_t_shm_LDADD = $(AM_LDADD) \
 	libshm.a \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
-test_t_dpool_SOURCES = test/t-dpool.c
+test_t_dpool_SOURCES = test/t_dpool.cxx
 test_t_dpool_LDADD = $(AM_LDADD) \
 	libshm.a \
 	$(LIBCM4ALL_DAEMON_LIBS)

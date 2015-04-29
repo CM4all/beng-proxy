@@ -6,7 +6,7 @@
 
 #include "session.hxx"
 #include "cookie_jar.hxx"
-#include "shm/dpool.h"
+#include "shm/dpool.hxx"
 #include "shm/dbuffer.hxx"
 #include "expiry.h"
 #include "crash.hxx"

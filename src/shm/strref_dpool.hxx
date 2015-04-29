@@ -8,7 +8,7 @@
 #define STRREF_DPOOL_H
 
 #include "strref.h"
-#include "dpool.h"
+#include "dpool.hxx"
 
 #include <inline/poison.h>
 

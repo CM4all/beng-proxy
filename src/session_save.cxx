@@ -11,7 +11,7 @@
 #include "session_manager.hxx"
 #include "session.hxx"
 #include "clock.h"
-#include "shm/dpool.h"
+#include "shm/dpool.hxx"
 
 #include <inline/compiler.h>
 #include <daemon/log.h>

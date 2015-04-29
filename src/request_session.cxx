@@ -13,7 +13,7 @@
 #include "http_server.hxx"
 #include "cookie_server.hxx"
 #include "bot.h"
-#include "shm/dpool.h"
+#include "shm/dpool.hxx"
 #include "pbuffer.hxx"
 #include "strmap.hxx"
 #include "crc.h"

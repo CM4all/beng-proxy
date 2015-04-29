@@ -6,7 +6,7 @@
 
 #include "cookie_jar.hxx"
 #include "shm/strref_dpool.hxx"
-#include "shm/dpool.h"
+#include "shm/dpool.hxx"
 
 #include <string.h>
 

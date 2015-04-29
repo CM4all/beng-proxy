@@ -7,7 +7,7 @@
 #ifndef SHM_DBUFFER_HXX
 #define SHM_DBUFFER_HXX
 
-#include "dpool.h"
+#include "dpool.hxx"
 #include "util/ConstBuffer.hxx"
 
 template<typename T>

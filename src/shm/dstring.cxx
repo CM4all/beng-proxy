@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "dpool.h"
+#include "dpool.hxx"
 
 #include <assert.h>
 #include <string.h>

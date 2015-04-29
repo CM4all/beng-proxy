@@ -12,7 +12,7 @@
 #include "strmap.hxx"
 #include "http_string.hxx"
 #include "tpool.h"
-#include "shm/dpool.h"
+#include "shm/dpool.hxx"
 #include "shm/strref_dpool.hxx"
 #include "expiry.h"
 #include "clock.h"

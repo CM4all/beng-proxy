@@ -3,7 +3,7 @@
 #include "header_writer.hxx"
 #include "tpool.h"
 #include "shm/shm.h"
-#include "shm/dpool.h"
+#include "shm/dpool.hxx"
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"

@@ -4,16 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_DCHUNK_H
-#define __BENG_DCHUNK_H
+#ifndef SHM_DCHUNK_HXX
+#define SHM_DCHUNK_HXX
 
 #include "shm.h"
+#include "util/Cast.hxx"
 
 #include <inline/list.h>
 
 #include <assert.h>
 #include <stddef.h>
-#include <stdbool.h>
 
 struct dpool_data {
     unsigned char data[sizeof(size_t)];
@@ -23,6 +23,11 @@ struct dpool_allocation {
     struct list_head all_siblings, free_siblings;
 
     struct dpool_data data;
+
+    static constexpr struct dpool_allocation &FromPointer(const void *p) {
+        return ContainerCast2(*(struct dpool_data *)const_cast<void *>(p),
+                              &dpool_allocation::data);
+    }
 };
 
 struct dpool_chunk {
@@ -44,7 +49,7 @@ dpool_chunk_contains(const struct dpool_chunk *chunk, const void *p)
 static inline struct dpool_allocation *
 dpool_free_to_alloc(struct list_head *list)
 {
-    return (struct dpool_allocation *)(((char*)list) - offsetof(struct dpool_allocation, free_siblings));
+    return &ContainerCast2(*list, &dpool_allocation::free_siblings);
 }
 
 static inline struct dpool_allocation *
@@ -62,14 +67,12 @@ dalloc_next_free(struct dpool_allocation *alloc)
 static inline struct dpool_chunk *
 dchunk_new(struct shm *shm, struct list_head *chunks_head)
 {
-    struct dpool_chunk *chunk;
+    assert(shm != nullptr);
+    assert(shm_page_size(shm) >= sizeof(struct dpool_chunk));
 
-    assert(shm != NULL);
-    assert(shm_page_size(shm) >= sizeof(*chunk));
-
-    chunk = shm_alloc(shm, 1);
-    if (chunk == NULL)
-        return NULL;
+    auto *chunk = NewFromShm<struct dpool_chunk>(shm, 1);
+    if (chunk == nullptr)
+        return nullptr;
 
     chunk->size = shm_page_size(shm) - sizeof(*chunk) + sizeof(chunk->data);
     chunk->used = 0;
@@ -84,7 +87,7 @@ dchunk_new(struct shm *shm, struct list_head *chunks_head)
 static inline void
 dchunk_free(struct shm *shm, struct dpool_chunk *chunk)
 {
-    shm_free(shm, chunk);
+    DeleteFromShm(shm, chunk);
 }
 
 #endif

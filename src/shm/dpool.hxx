@@ -4,22 +4,16 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef SHM_DPOOL_H
-#define SHM_DPOOL_H
+#ifndef SHM_DPOOL_HXX
+#define SHM_DPOOL_HXX
 
 #include <stddef.h>
-#include <stdbool.h>
 
 struct dpool;
 struct shm;
 
-#ifdef __cplusplus
-
 #include <utility>
 #include <new>
-
-extern "C" {
-#endif
 
 /**
  * Create a new memory pool.
@@ -78,9 +72,6 @@ d_strdup_checked(struct dpool *pool, const char *src)
 char *
 d_strndup(struct dpool *pool, const char *src, size_t length);
 
-#ifdef __cplusplus
-}
-
 template<typename T, typename... Args>
 T *
 NewFromPool(struct dpool *pool, Args&&... args)
@@ -107,7 +98,5 @@ DeleteDestroyPool(struct dpool &pool, T *t)
     t->~T();
     dpool_destroy(&pool);
 }
-
-#endif
 
 #endif
