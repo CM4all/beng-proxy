@@ -7,24 +7,19 @@
 #ifndef REFCOUNT_HXX
 #define REFCOUNT_HXX
 
-#include <glib.h>
-
+#include <atomic>
 #include <type_traits>
 
-#include <assert.h>
-
 class RefCount {
-    volatile gint value;
+    std::atomic_uint value;
 
 public:
     void Init() {
-        g_atomic_int_set(&value, 1);
+        value = 1;
     }
 
     void Get() {
-        assert(g_atomic_int_get(&value) > 0);
-
-        g_atomic_int_inc(&value);
+        ++value;
     }
 
     /**
@@ -32,9 +27,7 @@ public:
      * has reached 0.
      */
     bool Put() {
-        assert(value > 0);
-
-        return g_atomic_int_dec_and_test(&value);
+        return --value == 0;
     }
 };
 
