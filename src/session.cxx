@@ -47,7 +47,7 @@ Session::Session(struct dpool *_pool, const Session &src)
      counter(1),
      is_new(src.is_new),
      cookie_sent(src.cookie_sent), cookie_received(src.cookie_received),
-     realm(d_strdup_checked(pool, src.realm)),
+     realm(d_strdup(pool, src.realm)),
      translate(DupBuffer(pool, src.translate)),
      user(d_strdup_checked(pool, src.user)),
      user_expires(0),
