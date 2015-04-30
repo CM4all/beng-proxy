@@ -62,7 +62,7 @@ create_test(struct pool *pool, struct istream *input)
     crash_global_init();
     session_manager_init(1200, 0, 0);
 
-    auto *session = session_new();
+    auto *session = session_new("");
 
     static struct processor_env env;
     env = processor_env(pool,

@@ -168,7 +168,7 @@ request_make_session(struct request &request)
     if (session != nullptr)
         return session;
 
-    session = session_new();
+    session = session_new(request.realm);
     if (session == nullptr) {
         daemon_log(1, "Failed to allocate a session\n");
         return nullptr;

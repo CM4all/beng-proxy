@@ -23,13 +23,15 @@
 #define SESSION_TTL_NEW 120
 
 inline
-Session::Session(struct dpool *_pool)
+Session::Session(struct dpool *_pool, const char *_realm)
     :pool(_pool),
      expires(expiry_touch(SESSION_TTL_NEW)),
      counter(1),
      is_new(true),
      cookie_sent(false), cookie_received(false),
-     realm(nullptr),
+     /* using "checked" for the realm even though it must never be
+        nullptr because the deserializer needs to pass nullptr here */
+     realm(d_strdup_checked(pool, _realm)),
      translate(nullptr),
      user(nullptr),
      user_expires(0),
@@ -64,9 +66,9 @@ Session::~Session()
 }
 
 Session *
-session_allocate(struct dpool *pool)
+session_allocate(struct dpool *pool, const char *realm)
 {
-    return NewFromPool<Session>(pool, pool);
+    return NewFromPool<Session>(pool, pool, realm);
 }
 
 void

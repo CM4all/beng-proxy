@@ -42,7 +42,7 @@ int main(int argc gcc_unused, char **argv gcc_unused) {
         event_base = event_init();
         session_manager_init(1200, 0, 0);
 
-        auto *session = session_new();
+        auto *session = session_new("");
         (void)write(fds[1], &session->id, sizeof(session->id));
         session_put(session);
     } else {

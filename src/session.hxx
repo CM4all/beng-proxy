@@ -124,14 +124,14 @@ struct Session {
     /** all cookies received by widget servers */
     struct cookie_jar *cookies;
 
-    explicit Session(struct dpool *_pool);
+    Session(struct dpool *_pool, const char *realm);
     Session(struct dpool *_pool, const Session &src);
     ~Session();
 };
 
 gcc_malloc
 Session *
-session_allocate(struct dpool *pool);
+session_allocate(struct dpool *pool, const char *realm);
 
 gcc_malloc
 Session *

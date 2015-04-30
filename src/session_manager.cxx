@@ -416,7 +416,7 @@ session_generate_id(SessionId *id_r)
 }
 
 static Session *
-session_new_unsafe()
+session_new_unsafe(const char *realm)
 {
     struct dpool *pool;
     Session *session;
@@ -439,7 +439,7 @@ session_new_unsafe()
             return nullptr;
     }
 
-    session = session_allocate(pool);
+    session = session_allocate(pool, realm);
     if (session == nullptr) {
         dpool_destroy(pool);
         return nullptr;
@@ -464,10 +464,10 @@ session_new_unsafe()
 }
 
 Session *
-session_new()
+session_new(const char *realm)
 {
     crash_unsafe_enter();
-    Session *session = session_new_unsafe();
+    Session *session = session_new_unsafe(realm);
     if (session == nullptr)
         crash_unsafe_leave();
     return session;

@@ -298,7 +298,7 @@ test_cookie_client(struct pool *pool)
     struct widget widget;
     struct async_operation_ref async_ref;
 
-    auto *session = session_new();
+    auto *session = session_new("");
 
     struct processor_env env;
     env.local_host = "localhost";

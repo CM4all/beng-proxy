@@ -319,7 +319,7 @@ do_read_session(FILE *file, struct dpool *pool, Session *session)
 Session *
 session_read(FILE *file, struct dpool *pool)
 {
-    Session *session = session_allocate(pool);
+    Session *session = session_allocate(pool, nullptr);
     if (session == nullptr || !do_read_session(file, pool, session))
         return nullptr;
 
