@@ -25,7 +25,7 @@ struct strset {
 };
 
 #define strset_for_each_item(item, s) \
-    for (const struct strset_item *item = s->head; item != nullptr; item = item->next)
+    for (const struct strset_item *item = (s)->head; item != nullptr; item = item->next)
 
 static inline void
 strset_init(struct strset *s)
