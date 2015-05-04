@@ -597,7 +597,7 @@ libutil_a_SOURCES = \
 	src/trace.h \
 	src/uri_parser.cxx src/uri_parser.hxx \
 	src/uri_verify.cxx src/uri_verify.hxx \
-	src/uri-string.h \
+	src/uri_chars.hxx \
 	src/uset.h \
 	src/crc.h \
 	src/escape_class.h \

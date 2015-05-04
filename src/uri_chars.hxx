@@ -4,12 +4,12 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_URI_STRING_H
-#define BENG_PROXY_URI_STRING_H
+#ifndef URI_CHARS_HXX
+#define URI_CHARS_HXX
 
 #include "strutil.h"
 
-static inline bool
+static constexpr inline bool
 char_is_uri_mark(char ch)
 {
     return ch == '-' || ch == '_' || ch == '.' || ch == '!' || ch == '~' ||

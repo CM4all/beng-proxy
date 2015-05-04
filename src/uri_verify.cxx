@@ -5,7 +5,7 @@
  */
 
 #include "uri_verify.hxx"
-#include "uri-string.h"
+#include "uri_chars.hxx"
 
 #include <string.h>
 
