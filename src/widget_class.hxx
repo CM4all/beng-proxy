@@ -100,16 +100,16 @@ widget_class_view_lookup(const WidgetClass *cls, const char *name)
 static inline bool
 widget_class_has_groups(const WidgetClass *cls)
 {
-    return !strset_is_empty(&cls->container_groups);
+    return !cls->container_groups.IsEmpty();
 }
 
 static inline bool
 widget_class_may_embed(const WidgetClass *container,
                        const WidgetClass *child)
 {
-    return strset_is_empty(&container->container_groups) ||
-        (child->group != NULL && strset_contains(&container->container_groups,
-                                                 child->group));
+    return container->container_groups.IsEmpty() ||
+        (child->group != NULL &&
+         container->container_groups.Contains(child->group));
 }
 
 #endif

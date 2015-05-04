@@ -8,9 +8,9 @@
 #include <string.h>
 
 bool
-strset_contains(const struct strset *s, const char *p)
+strset::Contains(const char *p) const
 {
-    strset_for_each_item(item, s)
+    strset_for_each_item(item, this)
         if (strcmp(item->value, p) == 0)
             return true;
 
@@ -18,17 +18,17 @@ strset_contains(const struct strset *s, const char *p)
 }
 
 void
-strset_add(struct pool *pool, struct strset *s, const char *p)
+strset::Add(struct pool &pool, const char *p)
 {
-    auto *item = NewFromPool<struct strset_item>(*pool);
+    auto *item = NewFromPool<struct strset_item>(pool);
     item->value = p;
-    item->next = s->head;
-    s->head = item;
+    item->next = head;
+    head = item;
 }
 
 void
-strset_copy(struct pool *pool, struct strset *d, const struct strset *s)
+strset::CopyFrom(struct pool &pool, const struct strset &s)
 {
-    strset_for_each_item(item, s)
-        strset_add(pool, d, p_strdup(pool, item->value));
+    strset_for_each_item(item, &s)
+        Add(pool, p_strdup(&pool, item->value));
 }

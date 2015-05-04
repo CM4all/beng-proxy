@@ -1696,7 +1696,7 @@ TranslateClient::HandlePacket(enum beng_translation_command command,
         }
 
         transformation->u.processor.options |= PROCESSOR_CONTAINER;
-        strset_add(pool, &response.container_groups, payload);
+        response.container_groups.Add(*pool, payload);
         return true;
 
     case TRANSLATE_WIDGET_GROUP:

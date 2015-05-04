@@ -115,7 +115,7 @@ TranslateResponse::Clear()
 
     views = nullptr;
     widget_group = nullptr;
-    strset_init(&container_groups);
+    container_groups.Init();
 
     vary = nullptr;
     invalidate = nullptr;
@@ -200,8 +200,8 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
     append_auth = DupBuffer(pool, src.append_auth);
     expand_append_auth = p_strdup_checked(pool, src.expand_append_auth);
 
-    strset_init(&container_groups);
-    strset_copy(pool, &container_groups, &src.container_groups);
+    container_groups.Init();
+    container_groups.CopyFrom(*pool, src.container_groups);
 
     anchor_absolute = src.anchor_absolute;
     dump_headers = src.dump_headers;
