@@ -60,7 +60,7 @@ struct WidgetClass {
      * widgets from any of the specified groups.  The
      * #TRANSLATE_SELF_CONTAINER flag adds an exception to this rule.
      */
-    struct strset container_groups;
+    StringSet container_groups;
 
     /**
      * Does this widget support new-style direct URI addressing?

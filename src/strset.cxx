@@ -8,7 +8,7 @@
 #include <string.h>
 
 bool
-strset::Contains(const char *p) const
+StringSet::Contains(const char *p) const
 {
     strset_for_each_item(item, this)
         if (strcmp(item->value, p) == 0)
@@ -18,7 +18,7 @@ strset::Contains(const char *p) const
 }
 
 void
-strset::Add(struct pool &pool, const char *p)
+StringSet::Add(struct pool &pool, const char *p)
 {
     auto *item = NewFromPool<Item>(pool);
     item->value = p;
@@ -27,7 +27,7 @@ strset::Add(struct pool &pool, const char *p)
 }
 
 void
-strset::CopyFrom(struct pool &pool, const struct strset &s)
+StringSet::CopyFrom(struct pool &pool, const StringSet &s)
 {
     strset_for_each_item(item, &s)
         Add(pool, p_strdup(&pool, item->value));

@@ -14,7 +14,7 @@ struct pool;
 /**
  * An unordered set of strings.
  */
-struct strset {
+struct StringSet {
     struct Item {
         Item *next;
 
@@ -48,10 +48,10 @@ struct strset {
      * Copy all strings from one set to this, creating duplicates of
      * all values from the specified pool.
      */
-    void CopyFrom(struct pool &pool, const struct strset &s);
+    void CopyFrom(struct pool &pool, const StringSet &s);
 };
 
 #define strset_for_each_item(item, s) \
-    for (const strset::Item *item = (s)->head; item != nullptr; item = item->next)
+    for (const StringSet::Item *item = (s)->head; item != nullptr; item = item->next)
 
 #endif

@@ -193,7 +193,7 @@ struct TranslateResponse {
     /**
      * From #TRANSLATE_GROUP_CONTAINER.
      */
-    struct strset container_groups;
+    StringSet container_groups;
 
     ConstBuffer<uint16_t> vary;
     ConstBuffer<uint16_t> invalidate;
