@@ -7,19 +7,19 @@
 #ifndef HTML_CHARS_HXX
 #define HTML_CHARS_HXX
 
-#include "strutil.h"
+#include "util/CharUtil.hxx"
 
-static inline bool
+static constexpr inline bool
 is_html_name_start_char(char ch)
 {
-    return char_is_letter(ch) ||
+    return IsAlphaASCII(ch) ||
         ch == ':' || ch == '_';
 }
 
-static inline bool
+static constexpr inline bool
 is_html_name_char(char ch)
 {
-    return is_html_name_start_char(ch) || char_is_digit(ch) ||
+    return is_html_name_start_char(ch) || IsDigitASCII(ch) ||
         ch == '-' || ch == '.';
 }
 
