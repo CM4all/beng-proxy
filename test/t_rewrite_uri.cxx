@@ -29,6 +29,7 @@ const WidgetClass root_widget_class = {
         },
     },
     .stateful = false,
+    .container_groups = StringSet(),
 };
 
 Session *
@@ -84,6 +85,7 @@ widget_resolver_new(gcc_unused struct pool *pool, gcc_unused struct pool *widget
                 },
             },
         },
+        .container_groups = StringSet(),
     };
 
     static struct http_address address2 = {
@@ -100,6 +102,7 @@ widget_resolver_new(gcc_unused struct pool *pool, gcc_unused struct pool *widget
                 },
             },
         },
+        .container_groups = StringSet(),
     };
 
     static struct http_address address3 = {
@@ -117,6 +120,7 @@ widget_resolver_new(gcc_unused struct pool *pool, gcc_unused struct pool *widget
                 },
             },
         },
+        .container_groups = StringSet(),
     };
 
     if (strcmp(widget->class_name, "1") == 0) {

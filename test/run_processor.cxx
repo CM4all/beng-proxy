@@ -33,6 +33,7 @@ const WidgetClass root_widget_class = {
         },
     },
     .stateful = false,
+    .container_groups = StringSet(),
 };
 
 struct tcache *global_translate_cache;

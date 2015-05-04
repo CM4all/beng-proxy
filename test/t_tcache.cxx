@@ -289,6 +289,7 @@ test_basic(struct pool *pool, struct tcache *cache)
                 .file = &file1,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -302,6 +303,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/foo/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -315,6 +317,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/foo/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -328,6 +331,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/foo/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -371,6 +375,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/foo/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -394,6 +399,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/cgi1/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -418,6 +424,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/cgi1/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -443,6 +450,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/cgi2/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -467,6 +475,7 @@ test_basic(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/cgi2/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -498,6 +507,7 @@ test_base_root(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/base_root/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -518,6 +528,7 @@ test_base_root(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/base_root/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -545,6 +556,7 @@ test_base_mismatch(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/different_base/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -575,6 +587,7 @@ test_base_uri(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/base_uri/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .uri = "/modified/foo",
@@ -596,6 +609,7 @@ test_base_uri(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/base_uri/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .uri = "/modified/hansi",
@@ -627,6 +641,7 @@ test_base_test_path(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/base_test_path/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .test_path = "/modified/foo",
@@ -648,6 +663,7 @@ test_base_test_path(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/base_test_path/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .test_path = "/modified/hansi",
@@ -679,6 +695,7 @@ test_easy_base(struct pool *pool, struct tcache *cache)
         },
         .base = "/easy/",
         .easy_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -693,6 +710,7 @@ test_easy_base(struct pool *pool, struct tcache *cache)
         },
         .base = "/easy/",
         .easy_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -707,6 +725,7 @@ test_easy_base(struct pool *pool, struct tcache *cache)
         },
         .base = "/easy/",
         .easy_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -749,6 +768,7 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
         },
         .base = "/easy_base_uri/",
         .easy_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .uri = "/modified/",
@@ -764,6 +784,7 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
         },
         .base = "/easy_base_uri/",
         .easy_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .uri = "/modified/foo",
@@ -787,6 +808,7 @@ test_easy_base_uri(struct pool *pool, struct tcache *cache)
         },
         .base = "/easy_base_uri/",
         .easy_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .uri = "/modified/hansi",
@@ -820,6 +842,7 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
         },
         .base = "/easy_base_test_path/",
         .easy_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .test_path = "/modified/",
@@ -835,6 +858,7 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
         },
         .base = "/easy_base_test_path/",
         .easy_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .test_path = "/modified/foo",
@@ -858,6 +882,7 @@ test_easy_base_test_path(struct pool *pool, struct tcache *cache)
         },
         .base = "/easy_base_test_path/",
         .easy_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .test_path = "/modified/hansi",
@@ -896,6 +921,7 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
                 .file = &file5a,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .vary = { response5_vary, sizeof(response5_vary) / sizeof(response5_vary[0]), },
@@ -909,6 +935,7 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
                 .file = &file5b,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .vary = { response5_vary, sizeof(response5_vary) / sizeof(response5_vary[0]), },
@@ -926,6 +953,7 @@ test_vary_invalidate(struct pool *pool, struct tcache *cache)
                 .file = &file5c,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .vary = { response5_vary, sizeof(response5_vary) / sizeof(response5_vary[0]), },
@@ -992,6 +1020,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
                 .file = &file1,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1011,6 +1040,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
                 .file = &file1,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1031,6 +1061,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
                 .file = &file3,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1052,6 +1083,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
                 .file = &file4,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1074,6 +1106,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
                 .file = &file4b,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1123,6 +1156,7 @@ test_invalidate_uri(struct pool *pool, struct tcache *cache)
                 .file = &file5,
             },
         },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .invalidate = { response5_invalidate, sizeof(response5_invalidate) / sizeof(response5_invalidate[0]) },
@@ -1164,6 +1198,7 @@ test_regex(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex/",
         .inverse_regex = "\\.(jpg|html)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1181,6 +1216,7 @@ test_regex(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex/",
         .inverse_regex = "\\.(jpg|html)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1198,6 +1234,7 @@ test_regex(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex/",
         .regex = "\\.jpg$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1215,6 +1252,7 @@ test_regex(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex/",
         .regex = "\\.html$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1232,6 +1270,7 @@ test_regex(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex/",
         .regex = "\\.jpg$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1249,6 +1288,7 @@ test_regex(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex/",
         .regex = "\\.html$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1305,6 +1345,7 @@ test_regex_error(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex/",
         .regex = "(",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1337,6 +1378,7 @@ test_regex_tail(struct pool *pool, struct tcache *cache)
         .base = "/regex_tail/",
         .regex = "^a/",
         .regex_tail = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1367,6 +1409,7 @@ test_regex_tail(struct pool *pool, struct tcache *cache)
         .base = "/regex_tail/",
         .regex = "^a/",
         .regex_tail = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1405,6 +1448,7 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
         .regex = "^a/",
         .regex_tail = true,
         .regex_unescape = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1436,6 +1480,7 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
         .regex = "^a/",
         .regex_tail = true,
         .regex_unescape = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1460,6 +1505,7 @@ test_regex_tail_unescape(struct pool *pool, struct tcache *cache)
         .regex = "^a/",
         .regex_tail = true,
         .regex_unescape = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1493,6 +1539,7 @@ test_expand(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand/",
         .regex = "^/regex-expand/(.+=.+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1510,6 +1557,7 @@ test_expand(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand/",
         .regex = "^/regex-expand/(.+=.+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1537,6 +1585,7 @@ test_expand(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand/",
         .regex = "^/regex-expand/(.+=.+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1568,6 +1617,7 @@ test_expand_local(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand2/",
         .regex = "^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1583,6 +1633,7 @@ test_expand_local(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand2/",
         .regex = "^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1607,6 +1658,7 @@ test_expand_local(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand2/",
         .regex = "^/regex-expand2/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1654,6 +1706,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand3/",
         .regex = "^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .views = &view1n,
@@ -1687,6 +1740,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand3/",
         .regex = "^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .views = &view1e,
@@ -1729,6 +1783,7 @@ test_expand_local_filter(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand3/",
         .regex = "^/regex-expand3/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .views = &view2,
@@ -1765,6 +1820,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand4/",
         .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1782,6 +1838,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand4/",
         .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1810,6 +1867,7 @@ test_expand_uri(struct pool *pool, struct tcache *cache)
         },
         .base = "/regex-expand4/",
         .regex = "^/regex-expand4/(.+\\.jpg)/([^/]+=[^/]+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1843,6 +1901,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
             },
         },
         .auto_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1854,6 +1913,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
             },
         },
         .auto_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1882,6 +1942,7 @@ test_auto_base(struct pool *pool, struct tcache *cache)
         },
         .base = "/auto-base/foo.cgi/",
         .auto_base = true,
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1911,6 +1972,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
         },
         .base = "/a/",
         .check = { "x", 1 },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1932,6 +1994,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/a/b/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1953,6 +2016,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/a/d/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -1975,6 +2039,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
         },
         .base = "/a/",
         .check = { "x", 1 },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2003,6 +2068,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/a/b/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2024,6 +2090,7 @@ test_base_check(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/a/d/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2064,6 +2131,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
         },
         .base = "/wfu/a/",
         .want_full_uri = { "x", 1 },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2086,6 +2154,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/wfu/a/b/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2107,6 +2176,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/wfu/a/d/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2129,6 +2199,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
         },
         .base = "/wfu/a/",
         .want_full_uri = { "x", 1 },
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2157,6 +2228,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/wfu/a/b/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2178,6 +2250,7 @@ test_base_wfu(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/wfu/a/d/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2220,6 +2293,7 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/unsafe_base1/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2240,6 +2314,7 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/unsafe_base2/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .unsafe_base = true,
@@ -2273,6 +2348,7 @@ test_unsafe_base(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/unsafe_base2/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .unsafe_base = true,
@@ -2308,6 +2384,7 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/expand_unsafe_base1/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .regex = "^/expand_unsafe_base1/(.*)$",
@@ -2328,6 +2405,7 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/expand_unsafe_base2/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .regex = "^/expand_unsafe_base2/(.*)$",
@@ -2364,6 +2442,7 @@ test_expand_unsafe_base(struct pool *pool, struct tcache *cache)
             },
         },
         .base = "/expand_unsafe_base2/",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
         .regex = "^/expand_unsafe_base2/(.*)$",
@@ -2405,6 +2484,7 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
         },
         .base = "/expand_bind_mount/",
         .regex = "^/expand_bind_mount/(.+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2427,6 +2507,7 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
         },
         .base = "/expand_bind_mount/",
         .regex = "^/expand_bind_mount/(.+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };
@@ -2454,6 +2535,7 @@ test_expand_bind_mount(struct pool *pool, struct tcache *cache)
         },
         .base = "/expand_bind_mount/",
         .regex = "^/expand_bind_mount/(.+)$",
+        .container_groups = StringSet(),
         .max_age = unsigned(-1),
         .user_max_age = unsigned(-1),
     };

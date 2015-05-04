@@ -7,6 +7,8 @@
 
 #include <inline/compiler.h>
 
+#include <boost/intrusive/slist.hpp>
+
 #include <stddef.h>
 
 struct pool;
@@ -15,13 +17,14 @@ struct pool;
  * An unordered set of strings.
  */
 struct StringSet {
-    struct Item {
-        Item *next;
-
+    struct Item : boost::intrusive::slist_base_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> {
         const char *value;
     };
 
-    Item *head;
+    typedef boost::intrusive::slist<Item,
+                                    boost::intrusive::constant_time_size<false>> List;
+
+    List list;
 
     StringSet() = default;
     StringSet(const StringSet &) = delete;
@@ -30,12 +33,12 @@ struct StringSet {
     StringSet &operator=(StringSet &&src) = default;
 
     void Init() {
-        head = nullptr;
+        list.clear();
     }
 
     gcc_pure
     bool IsEmpty() const {
-        return head == nullptr;
+        return list.empty();
     }
 
     gcc_pure
@@ -55,9 +58,34 @@ struct StringSet {
      * all values from the specified pool.
      */
     void CopyFrom(struct pool &pool, const StringSet &s);
-};
 
-#define strset_for_each_item(item, s) \
-    for (const StringSet::Item *item = (s)->head; item != nullptr; item = item->next)
+    class const_iterator {
+        List::const_iterator i;
+
+    public:
+        const_iterator(List::const_iterator _i):i(_i) {}
+
+        bool operator!=(const const_iterator &other) const {
+            return i != other.i;
+        }
+
+        const char *operator*() const {
+            return i->value;
+        }
+
+        const_iterator &operator++() {
+            ++i;
+            return *this;
+        }
+    };
+
+    const_iterator begin() const {
+        return list.begin();
+    }
+
+    const_iterator end() const {
+        return list.end();
+    }
+};
 
 #endif
