@@ -593,7 +593,6 @@ libutil_a_SOURCES = \
 	src/lease.hxx \
 	src/strref.h \
 	src/strref2.hxx \
-	src/strutil.c src/strutil.h \
 	src/trace.h \
 	src/uri_parser.cxx src/uri_parser.hxx \
 	src/uri_verify.cxx src/uri_verify.hxx \
