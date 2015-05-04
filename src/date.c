@@ -7,9 +7,9 @@
 #include "date.h"
 #include "gmtime.h"
 #include "format.h"
-#include "strutil.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 static const char wdays[8][4] = {
     "Sun,",
@@ -81,6 +81,12 @@ http_date_format(time_t t)
 {
     http_date_format_r(buffer, t);
     return buffer;
+}
+
+static gcc_always_inline bool
+char_is_digit(char ch)
+{
+    return ch >= '0' && ch <= '9';
 }
 
 static int
