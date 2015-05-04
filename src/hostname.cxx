@@ -5,15 +5,15 @@
  */
 
 #include "hostname.hxx"
-#include "strutil.h"
+#include "util/CharUtil.hxx"
 
-static bool
+static constexpr bool
 valid_hostname_char(char ch)
 {
     /* we are allowing ':' here because it is a valid character in the
        HTTP "Host" request header */
 
-    return char_is_alphanumeric(ch) || ch == '-' || ch == '.' || ch == ':';
+    return IsAlphaNumericASCII(ch) || ch == '-' || ch == '.' || ch == ':';
 }
 
 bool
