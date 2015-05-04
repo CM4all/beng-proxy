@@ -157,7 +157,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/header_parser.cxx src/header_parser.hxx \
 	src/header_writer.cxx src/header_writer.hxx \
 	src/header_copy.cxx src/header_copy.hxx \
-	src/hostname.c src/hostname.h \
+	src/hostname.cxx src/hostname.hxx \
 	src/http_body.cxx src/http_body.hxx \
 	src/http_cache.cxx src/http_cache.hxx \
 	src/http_cache_choice.cxx src/http_cache_choice.hxx \

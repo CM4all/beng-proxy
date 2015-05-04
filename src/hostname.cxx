@@ -1,4 +1,10 @@
-#include "hostname.h"
+/*
+ * Utilities for host names
+ *
+ * author: Max Kellermann <mk@cm4all.com>
+ */
+
+#include "hostname.hxx"
 #include "strutil.h"
 
 static bool

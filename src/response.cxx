@@ -22,7 +22,7 @@
 #include "growing_buffer.hxx"
 #include "bp_global.hxx"
 #include "resource_tag.hxx"
-#include "hostname.h"
+#include "hostname.hxx"
 #include "errdoc.hxx"
 #include "bp_connection.hxx"
 #include "bp_instance.hxx"
