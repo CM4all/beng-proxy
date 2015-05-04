@@ -4,10 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "escape_css.h"
+#include "escape_css.hxx"
 #include "escape_class.h"
 #include "strref.h"
-#include "strutil.h"
 
 #include <assert.h>
 #include <string.h>
@@ -15,10 +14,10 @@
 static const char *
 css_unescape_find(const char *p, size_t length)
 {
-    return memchr(p, '\\', length);
+    return (const char *)memchr(p, '\\', length);
 }
 
-static bool
+static constexpr bool
 need_simple_escape(char ch)
 {
     return ch == '\\' || ch == '"' || ch == '\'';
@@ -30,7 +29,7 @@ css_unescape(const char *p, size_t length, char *q)
     const char *p_end = p + length, *q_start = q;
 
     const char *bs;
-    while ((bs = memchr(p, '\\', p_end - p)) != NULL) {
+    while ((bs = (const char *)memchr(p, '\\', p_end - p)) != nullptr) {
         memmove(q, p, bs - p);
         q += bs - p;
 
@@ -78,7 +77,7 @@ css_escape_find(const char *p, size_t length)
         ++p;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 static const char *
@@ -96,7 +95,7 @@ css_escape_char(char ch)
 
     default:
         assert(false);
-        return NULL;
+        return nullptr;
     }
 }
 

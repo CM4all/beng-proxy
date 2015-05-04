@@ -602,7 +602,7 @@ libutil_a_SOURCES = \
 	src/crc.h \
 	src/escape_class.h \
 	src/escape_html.cxx src/escape_html.hxx \
-	src/escape_css.c src/escape_css.h
+	src/escape_css.cxx src/escape_css.hxx
 
 libputil_a_SOURCES = \
 	src/expansible_buffer.cxx src/expansible_buffer.hxx \
@@ -779,7 +779,7 @@ check_PROGRAMS = \
 	test/t_uri_verify \
 	test/t_uri_relative \
 	test/t_html_escape \
-	test/t-escape-css \
+	test/t_escape_css \
 	test/t_expansible_buffer \
 	$(FILTER_TESTS) \
 	test/t_istream_tee \
@@ -814,7 +814,7 @@ TESTS = test/t_hashmap test/t_cache test/t_tcache \
 	test/t_uri_verify \
 	test/t_uri_relative \
 	test/t_html_escape \
-	test/t-escape-css \
+	test/t_escape_css \
 	test/t_expansible_buffer \
 	$(FILTER_TESTS) \
 	test/t_istream_tee \
@@ -1539,7 +1539,7 @@ test_t_html_escape_LDADD = $(AM_LDADD) libutil.a
 
 test_t_escape_css_SOURCES = \
 	src/escape_static.c \
-	test/t-escape-css.c
+	test/t_escape_css.cxx
 test_t_escape_css_LDADD = $(AM_LDADD) libutil.a
 
 test_run_processor_SOURCES = test/run_processor.cxx \

@@ -1,4 +1,4 @@
-#include "escape_css.h"
+#include "escape_css.hxx"
 #include "escape_class.h"
 
 #include <string.h>
