@@ -7,24 +7,26 @@
 #include "escape_html.hxx"
 #include "escape_class.h"
 #include "strref.h"
-#include "strutil.h"
+#include "util/CharUtil.hxx"
 
 #include <assert.h>
 #include <string.h>
 
+gcc_pure
 static const char *
 html_unescape_find(const char *p, size_t length)
 {
     return (const char *)memchr(p, '&', length);
 }
 
+gcc_pure
 static const char *
 find_semicolon(const char *p, const char *end)
 {
     while (p < end) {
         if (*p == ';')
             return p;
-        else if (!char_is_letter(*p))
+        else if (!IsAlphaASCII(*p))
             break;
 
         ++p;
