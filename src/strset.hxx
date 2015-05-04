@@ -23,6 +23,12 @@ struct StringSet {
 
     Item *head;
 
+    StringSet() = default;
+    StringSet(const StringSet &) = delete;
+    StringSet(StringSet &&) = default;
+    StringSet &operator=(const StringSet &) = delete;
+    StringSet &operator=(StringSet &&src) = default;
+
     void Init() {
         head = nullptr;
     }

@@ -63,7 +63,7 @@ widget_translate_response(TranslateResponse *response, void *ctx)
         cls->untrusted_host = response->host;
     cls->cookie_host = response->cookie_host;
     cls->group = response->widget_group;
-    cls->container_groups = response->container_groups;
+    cls->container_groups = std::move(response->container_groups);
     cls->direct_addressing = response->direct_addressing;
     cls->stateful = response->stateful;
     cls->anchor_absolute = response->anchor_absolute;

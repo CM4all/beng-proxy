@@ -138,7 +138,7 @@ widget_registry_finish(struct data *data)
 
     data->registry.finished = true;
 
-    static const WidgetClass cls = WidgetClass();
+    static constexpr WidgetClass cls = {};
 
     data->registry.callback(&cls, data->registry.ctx);
 }
