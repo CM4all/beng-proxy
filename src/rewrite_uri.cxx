@@ -14,7 +14,7 @@
 #include "uri_extract.hxx"
 #include "tpool.h"
 #include "escape_class.h"
-#include "istream-escape.h"
+#include "istream_escape.hxx"
 #include "strmap.hxx"
 #include "istream.h"
 #include "istream_null.hxx"

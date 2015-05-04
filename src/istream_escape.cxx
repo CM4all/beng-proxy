@@ -4,9 +4,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "istream-escape.h"
+#include "istream_escape.hxx"
 #include "istream-internal.h"
 #include "escape_class.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -15,7 +16,7 @@ struct istream_escape {
     struct istream output;
     struct istream *input;
 
-    const struct escape_class *class;
+    const struct escape_class *cls;
 
     const char *escaped;
     size_t escaped_left;
@@ -39,7 +40,7 @@ escape_send_escaped(struct istream_escape *escape)
         return false;
     }
 
-    if (escape->input == NULL) {
+    if (escape->input == nullptr) {
         istream_invoke_eof(&escape->output);
         return false;
     }
@@ -55,24 +56,23 @@ escape_send_escaped(struct istream_escape *escape)
 static size_t
 escape_input_data(const void *data0, size_t length, void *ctx)
 {
-    struct istream_escape *escape = ctx;
-    const char *data = data0;
-    size_t total, nbytes;
+    auto *escape = (struct istream_escape *)ctx;
+    const char *data = (const char *)data0;
 
     if (escape->escaped_left > 0 && !escape_send_escaped(escape))
         return 0;
 
-    total = 0;
+    size_t total = 0;
 
     pool_ref(escape->output.pool);
 
     do {
         /* find the next control character */
-        const char *control = escape_find(escape->class, data, length);
-        if (control == NULL) {
+        const char *control = escape_find(escape->cls, data, length);
+        if (control == nullptr) {
             /* none found - just forward the data block to our sink */
-            nbytes = istream_invoke_data(&escape->output, data, length);
-            if (nbytes == 0 && escape->input == NULL)
+            size_t nbytes = istream_invoke_data(&escape->output, data, length);
+            if (nbytes == 0 && escape->input == nullptr)
                 total = 0;
             else
                 total += nbytes;
@@ -82,8 +82,8 @@ escape_input_data(const void *data0, size_t length, void *ctx)
         if (control > data) {
             /* forward the portion before the control character */
             const size_t n = control - data;
-            nbytes = istream_invoke_data(&escape->output, data, n);
-            if (nbytes == 0 && escape->input == NULL) {
+            size_t nbytes = istream_invoke_data(&escape->output, data, n);
+            if (nbytes == 0 && escape->input == nullptr) {
                 total = 0;
                 break;
             }
@@ -101,11 +101,11 @@ escape_input_data(const void *data0, size_t length, void *ctx)
 
         /* insert the entity into the stream */
 
-        escape->escaped = escape_char(escape->class, *control);
+        escape->escaped = escape_char(escape->cls, *control);
         escape->escaped_left = strlen(escape->escaped);
 
         if (!escape_send_escaped(escape)) {
-            if (escape->input == NULL)
+            if (escape->input == nullptr)
                 total = 0;
             break;
         }
@@ -128,10 +128,10 @@ static const struct istream_handler escape_input_handler = {
  *
  */
 
-static inline struct istream_escape *
+static constexpr struct istream_escape *
 istream_to_escape(struct istream *istream)
 {
-    return (struct istream_escape *)(((char*)istream) - offsetof(struct istream_escape, output));
+    return &ContainerCast2(*istream, &istream_escape::output);
 }
 
 static void
@@ -142,7 +142,7 @@ istream_escape_read(struct istream *istream)
     if (escape->escaped_left > 0 && !escape_send_escaped(escape))
         return;
 
-    assert(escape->input != NULL);
+    assert(escape->input != nullptr);
 
     istream_read(escape->input);
 }
@@ -152,7 +152,7 @@ istream_escape_close(struct istream *istream)
 {
     struct istream_escape *escape = istream_to_escape(istream);
 
-    if (escape->input != NULL)
+    if (escape->input != nullptr)
         istream_free_handler(&escape->input);
 
     istream_deinit(&escape->output);
@@ -171,13 +171,13 @@ static const struct istream_class istream_escape = {
 
 struct istream *
 istream_escape_new(struct pool *pool, struct istream *input,
-                   const struct escape_class *class)
+                   const struct escape_class *cls)
 {
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
-    assert(class != NULL);
-    assert(class->escape_find != NULL);
-    assert(class->escape_char != NULL);
+    assert(cls != nullptr);
+    assert(cls->escape_find != nullptr);
+    assert(cls->escape_char != nullptr);
 
     struct istream_escape *escape = istream_new_macro(pool, escape);
 
@@ -185,7 +185,7 @@ istream_escape_new(struct pool *pool, struct istream *input,
                            &escape_input_handler, escape,
                            0);
 
-    escape->class = class;
+    escape->cls = cls;
     escape->escaped_left = 0;
 
     return istream_struct_cast(&escape->output);
