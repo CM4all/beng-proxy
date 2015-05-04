@@ -7,7 +7,7 @@
 #ifndef URI_CHARS_HXX
 #define URI_CHARS_HXX
 
-#include "strutil.h"
+#include "util/CharUtil.hxx"
 
 static constexpr inline bool
 char_is_uri_mark(char ch)
@@ -19,16 +19,16 @@ char_is_uri_mark(char ch)
 /**
  * See RFC 2396 2.3.
  */
-static inline bool
+static constexpr inline bool
 char_is_uri_unreserved(char ch)
 {
-    return char_is_alphanumeric(ch) || char_is_uri_mark(ch);
+    return IsAlphaNumericASCII(ch) || char_is_uri_mark(ch);
 }
 
 /**
  * See RFC 2396 3.3.
  */
-static inline bool
+static constexpr inline bool
 char_is_uri_pchar(char ch)
 {
     return char_is_uri_unreserved(ch) ||
