@@ -2,8 +2,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "strset.h"
-#include "pool.h"
+#include "strset.hxx"
+#include "pool.hxx"
 
 #include <string.h>
 
@@ -20,7 +20,7 @@ strset_contains(const struct strset *s, const char *p)
 void
 strset_add(struct pool *pool, struct strset *s, const char *p)
 {
-    struct strset_item *item = p_malloc(pool, sizeof(*item));
+    auto *item = NewFromPool<struct strset_item>(*pool);
     item->value = p;
     item->next = s->head;
     s->head = item;

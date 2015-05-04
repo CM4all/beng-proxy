@@ -2,12 +2,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_STRSET_H
-#define BENG_PROXY_STRSET_H
+#ifndef BENG_PROXY_STRSET_HXX
+#define BENG_PROXY_STRSET_HXX
 
 #include <inline/compiler.h>
 
-#include <stdbool.h>
 #include <stddef.h>
 
 struct pool;
@@ -26,24 +25,20 @@ struct strset {
 };
 
 #define strset_for_each_item(item, s) \
-    for (const struct strset_item *item = s->head; item != NULL; item = item->next)
+    for (const struct strset_item *item = s->head; item != nullptr; item = item->next)
 
 static inline void
 strset_init(struct strset *s)
 {
-    s->head = NULL;
+    s->head = nullptr;
 }
 
 gcc_pure
 static inline bool
 strset_is_empty(const struct strset *s)
 {
-    return s->head == NULL;
+    return s->head == nullptr;
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 gcc_pure
 bool
@@ -65,9 +60,5 @@ strset_add(struct pool *pool, struct strset *s, const char *p);
  */
 void
 strset_copy(struct pool *pool, struct strset *d, const struct strset *s);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

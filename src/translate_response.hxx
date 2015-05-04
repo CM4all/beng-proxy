@@ -12,7 +12,7 @@
 #include "util/kvlist.hxx"
 #include "resource_address.hxx"
 #include "header_forward.hxx"
-#include "strset.h"
+#include "strset.hxx"
 #include "glibfwd.hxx"
 
 #include <http/status.h>

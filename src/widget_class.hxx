@@ -8,7 +8,7 @@
 #define BENG_PROXY_WIDGET_CLASS_HXX
 
 #include "widget_view.hxx"
-#include "strset.h"
+#include "strset.hxx"
 
 /**
  * A widget class is a server which provides a widget.
