@@ -20,7 +20,7 @@ strset::Contains(const char *p) const
 void
 strset::Add(struct pool &pool, const char *p)
 {
-    auto *item = NewFromPool<struct strset_item>(pool);
+    auto *item = NewFromPool<Item>(pool);
     item->value = p;
     item->next = head;
     head = item;

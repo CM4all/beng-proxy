@@ -11,17 +11,17 @@
 
 struct pool;
 
-struct strset_item {
-    struct strset_item *next;
-
-    const char *value;
-};
-
 /**
  * An unordered set of strings.
  */
 struct strset {
-    struct strset_item *head;
+    struct Item {
+        Item *next;
+
+        const char *value;
+    };
+
+    Item *head;
 
     void Init() {
         head = nullptr;
@@ -52,6 +52,6 @@ struct strset {
 };
 
 #define strset_for_each_item(item, s) \
-    for (const struct strset_item *item = (s)->head; item != nullptr; item = item->next)
+    for (const strset::Item *item = (s)->head; item != nullptr; item = item->next)
 
 #endif
