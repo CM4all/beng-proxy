@@ -5,6 +5,7 @@
  */
 
 #include "pool.hxx"
+#include "util/CharUtil.hxx"
 
 #include <algorithm>
 
@@ -17,6 +18,12 @@ static char *
 Copy(char *dest, const char *src, size_t n)
 {
     return (char *)mempcpy(dest, src, n);
+}
+
+static char *
+CopyLower(char *dest, const char *src, size_t n)
+{
+    return std::transform(src, src + n, dest, ToLowerASCII);
 }
 
 void *
@@ -36,10 +43,26 @@ p_strdup_impl(struct pool *pool, const char *src
 }
 
 char *
+p_strdup_lower_impl(struct pool *pool, const char *src
+                    TRACE_ARGS_DECL)
+{
+    return p_strndup_lower_fwd(pool, src, strlen(src));
+}
+
+char *
 p_strndup_impl(struct pool *pool, const char *src, size_t length TRACE_ARGS_DECL)
 {
     char *dest = (char *)p_malloc_fwd(pool, length + 1);
     *Copy(dest, src, length) = 0;
+    return dest;
+}
+
+char *
+p_strndup_lower_impl(struct pool *pool, const char *src, size_t length
+                     TRACE_ARGS_DECL)
+{
+    char *dest = (char *)p_malloc_fwd(pool, length + 1);
+    *CopyLower(dest, src, length) = 0;
     return dest;
 }
 

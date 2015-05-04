@@ -15,7 +15,6 @@
 #include "fd_util.h"
 #include "istream.h"
 #include "strmap.hxx"
-#include "strutil.h"
 #include "fb_pool.hxx"
 #include "util/ByteOrder.hxx"
 
@@ -174,8 +173,7 @@ read_ajp_request(struct pool *pool, struct ajp_request *r)
             if (name2 == nullptr)
                 exit(EXIT_FAILURE);
 
-            str_to_lower(name2);
-            name = name2;
+            name = p_strndup_lower(pool, name2, name_length);
         }
 
         const char *value = read_string(pool, &remaining);

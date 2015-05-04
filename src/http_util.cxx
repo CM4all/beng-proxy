@@ -5,7 +5,6 @@
  */
 
 #include "http_util.hxx"
-#include "strutil.h"
 #include "strref.h"
 #include "pool.hxx"
 #include "util/CharUtil.hxx"
@@ -40,8 +39,7 @@ http_list_split(struct pool *pool, const char *p)
             --end;
 
         /* append new list item */
-        tmp[num] = p_strndup(pool, p, end - p);
-        str_to_lower(tmp[num++]);
+        tmp[num++] = p_strndup_lower(pool, p, end - p);
 
         if (comma == nullptr)
             /* this was the last element */

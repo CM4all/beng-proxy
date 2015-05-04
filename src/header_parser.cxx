@@ -6,7 +6,6 @@
 
 #include "header_parser.hxx"
 #include "pool.hxx"
-#include "strutil.h"
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "util/ConstBuffer.hxx"
@@ -34,10 +33,8 @@ header_parse_line(struct pool *pool, struct strmap *headers,
     while (colon < line + length && IsWhitespaceOrNull(*colon))
         ++colon;
 
-    char *key = p_strndup(pool, line, key_end - line);
+    char *key = p_strndup_lower(pool, line, key_end - line);
     char *value = p_strndup(pool, colon, line + length - colon);
-
-    str_to_lower(key);
 
     headers->Add(key, value);
 }

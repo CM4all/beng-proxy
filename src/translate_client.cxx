@@ -21,7 +21,6 @@
 #include "cgi_address.hxx"
 #include "nfs_address.hxx"
 #include "mount_list.hxx"
-#include "strutil.h"
 #include "strmap.hxx"
 #include "stopwatch.h"
 #include "beng-proxy/translation.h"
@@ -718,10 +717,8 @@ parse_header(struct pool *pool,
         return false;
     }
 
-    char *name = p_strndup(pool, payload, value - payload);
+    const char *name = p_strndup_lower(pool, payload, value - payload);
     ++value;
-
-    str_to_lower(name);
 
     if (!http_header_name_valid(name)) {
         g_set_error(error_r, translate_quark(), 0,

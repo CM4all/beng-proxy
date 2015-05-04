@@ -10,7 +10,6 @@
 #include "serialize.hxx"
 #include "growing_buffer.hxx"
 #include "strmap.hxx"
-#include "strutil.h"
 #include "pool.hxx"
 #include "util/ConstBuffer.hxx"
 
@@ -92,8 +91,7 @@ deserialize_ajp_headers(struct pool *pool, struct strmap *headers,
 
         assert(name != nullptr);
 
-        lname = p_strdup(pool, name);
-        str_to_lower(lname);
+        lname = p_strdup_lower(pool, name);
 
         headers->Add(lname, p_strdup(pool, value));
     }
@@ -134,8 +132,7 @@ deserialize_ajp_response_headers(struct pool *pool, struct strmap *headers,
 
         assert(name != nullptr);
 
-        lname = p_strdup(pool, name);
-        str_to_lower(lname);
+        lname = p_strdup_lower(pool, name);
 
         headers->Add(lname, p_strdup(pool, value));
     }

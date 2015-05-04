@@ -19,7 +19,6 @@
 #include "crc.h"
 #include "format.h"
 #include "expiry.h"
-#include "strutil.h"
 
 #include <daemon/log.h>
 
@@ -228,11 +227,8 @@ get_request_realm(struct pool *pool, const struct strmap *request_headers,
         return response.realm;
 
     const char *host = strmap_get_checked(request_headers, "host");
-    if (host != nullptr) {
-        char *p = p_strdup(pool, host);
-        str_to_lower(p);
-        return p;
-    }
+    if (host != nullptr)
+        return p_strdup_lower(pool, host);
 
     /* fall back to empty string as the default realm if there is no
        "Host" header */
