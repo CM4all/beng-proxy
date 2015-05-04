@@ -6,7 +6,7 @@
 
 #include "xml_parser.hxx"
 #include "pool.hxx"
-#include "html-chars.h"
+#include "html_chars.hxx"
 #include "expansible_buffer.hxx"
 #include "istream.h"
 #include "util/CharUtil.hxx"

@@ -588,7 +588,7 @@ libutil_a_SOURCES = \
 	src/format.c format.h \
 	src/date.c src/date.h \
 	src/gmtime.c src/gmtime.h \
-	src/html-chars.h \
+	src/html_chars.hxx \
 	src/async.hxx \
 	src/lease.hxx \
 	src/strref.h \

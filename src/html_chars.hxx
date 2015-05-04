@@ -4,8 +4,8 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef BENG_PROXY_HTML_CHARS_H
-#define BENG_PROXY_HTML_CHARS_H
+#ifndef HTML_CHARS_HXX
+#define HTML_CHARS_HXX
 
 #include "strutil.h"
 
