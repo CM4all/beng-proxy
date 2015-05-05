@@ -1,5 +1,6 @@
 #include "direct.h"
 #include "istream.h"
+#include "istream_byte.hxx"
 
 #include <glib.h>
 #include <event.h>

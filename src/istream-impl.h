@@ -81,9 +81,6 @@ struct istream *
 istream_html_escape_new(struct pool *pool, struct istream *input);
 
 struct istream *
-istream_byte_new(struct pool *pool, struct istream *input);
-
-struct istream *
 istream_four_new(struct pool *pool, struct istream *input);
 
 struct istream *

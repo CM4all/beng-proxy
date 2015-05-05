@@ -5,6 +5,7 @@
 #include "pool.hxx"
 #include "istream-impl.h"
 #include "istream_null.hxx"
+#include "istream_byte.hxx"
 #include "istream.h"
 
 #include <inline/compiler.h>

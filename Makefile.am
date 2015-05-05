@@ -692,7 +692,7 @@ libistream_a_SOURCES = \
 	src/istream_optional.cxx src/istream_optional.hxx \
 	src/istream_deflate.cxx src/istream_deflate.hxx \
 	src/istream_subst.cxx src/istream_subst.hxx \
-	src/istream-byte.c \
+	src/istream_byte.cxx src/istream_byte.hxx \
 	src/istream-four.c \
 	src/istream_iconv.cxx src/istream_iconv.hxx \
 	src/istream-trace.c \

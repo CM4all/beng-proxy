@@ -3,6 +3,7 @@
 #include "duplex.hxx"
 #include "direct.h"
 #include "sink-impl.h"
+#include "istream_byte.hxx"
 #include "istream.h"
 #include "pool.hxx"
 #include "async.hxx"

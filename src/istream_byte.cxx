@@ -5,7 +5,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_byte.hxx"
 #include "istream-internal.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 
@@ -21,21 +23,18 @@ struct istream_byte {
  */
 
 static size_t
-byte_input_data(const void *data, size_t length, void *ctx)
+byte_input_data(const void *data, gcc_unused size_t length, void *ctx)
 {
-    struct istream_byte *byte = ctx;
-
-    (void)length;
+    auto *byte = (struct istream_byte *)ctx;
 
     return istream_invoke_data(&byte->output, data, 1);
 }
 
 static ssize_t
-byte_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+byte_input_direct(enum istream_direct type, int fd,
+                  gcc_unused size_t max_length, void *ctx)
 {
-    struct istream_byte *byte = ctx;
-
-    (void)max_length;
+    auto *byte = (struct istream_byte *)ctx;
 
     return istream_invoke_direct(&byte->output, type, fd, 1);
 }
@@ -56,7 +55,7 @@ static const struct istream_handler byte_input_handler = {
 static inline struct istream_byte *
 istream_to_byte(struct istream *istream)
 {
-    return (struct istream_byte *)(((char*)istream) - offsetof(struct istream_byte, output));
+    return &ContainerCast2(*istream, &istream_byte::output);
 }
 
 static void
@@ -74,7 +73,7 @@ istream_byte_close(struct istream *istream)
 {
     struct istream_byte *byte = istream_to_byte(istream);
 
-    assert(byte->input != NULL);
+    assert(byte->input != nullptr);
 
     istream_close_handler(byte->input);
     istream_deinit(&byte->output);
@@ -94,9 +93,9 @@ static const struct istream_class istream_byte = {
 struct istream *
 istream_byte_new(struct pool *pool, struct istream *input)
 {
-    struct istream_byte *byte = istream_new_macro(pool, byte);
+    auto *byte = istream_new_macro(pool, byte);
 
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
     istream_assign_handler(&byte->input, input,

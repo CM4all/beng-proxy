@@ -3,6 +3,7 @@
 #include "lease.hxx"
 #include "istream.h"
 #include "istream_block.hxx"
+#include "istream_byte.hxx"
 #include "istream_null.hxx"
 #include "strmap.hxx"
 #include "fb_pool.hxx"
