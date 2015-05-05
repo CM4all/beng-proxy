@@ -11,7 +11,7 @@ create_input(struct pool *pool)
 static struct istream *
 create_test(struct pool *pool, struct istream *input)
 {
-    return istream_cat_new(pool, input, NULL);
+    return istream_byte_new(pool, input);
 }
 
-#include "t-istream-filter.h"
+#include "t_istream_filter.hxx"

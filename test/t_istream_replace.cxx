@@ -19,4 +19,4 @@ create_test(struct pool *pool, struct istream *input)
     return istream;
 }
 
-#include "t-istream-filter.h"
+#include "t_istream_filter.hxx"

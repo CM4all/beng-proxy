@@ -107,4 +107,4 @@ test_custom(struct pool *pool)
     pool_commit();
 }
 
-#include "t-istream-filter.h"
+#include "t_istream_filter.hxx"

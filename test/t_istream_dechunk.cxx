@@ -22,4 +22,4 @@ create_test(struct pool *pool, struct istream *input)
     return istream_dechunk_new(pool, input, dechunk_eof, nullptr);
 }
 
-#include "t-istream-filter.h"
+#include "t_istream_filter.hxx"

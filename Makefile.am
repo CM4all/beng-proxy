@@ -1011,6 +1011,7 @@ test_t_expansible_buffer_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 T_ISTREAM_FILTER_SRC = \
+	test/t_istream_filter.hxx \
 	src/direct.c \
 	src/buffered_io.cxx \
 	src/pipe_stock.cxx src/stock.cxx \

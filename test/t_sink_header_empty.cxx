@@ -61,4 +61,4 @@ create_test(struct pool *pool, struct istream *input)
 #define NO_GOT_DATA_ASSERT
 #define NO_ABORT_ISTREAM
 
-#include "t-istream-filter.h"
+#include "t_istream_filter.hxx"

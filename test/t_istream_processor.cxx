@@ -89,4 +89,4 @@ cleanup(void)
 
 #define FILTER_CLEANUP
 
-#include "t-istream-filter.h"
+#include "t_istream_filter.hxx"
