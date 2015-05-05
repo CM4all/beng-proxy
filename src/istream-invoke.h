@@ -8,6 +8,8 @@
 #ifndef __BENG_ISTREAM_INVOKE_H
 #define __BENG_ISTREAM_INVOKE_H
 
+#include "istream.h"
+
 #include <glib.h>
 
 static inline size_t
