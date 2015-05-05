@@ -15,7 +15,7 @@
 #include "serialize.hxx"
 #include "sink_header.hxx"
 #include "strmap.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "background.hxx"
 #include "istream_gb.hxx"
 #include "istream.h"

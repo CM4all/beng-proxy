@@ -1,7 +1,7 @@
 #include "cookie_client.hxx"
 #include "cookie_jar.hxx"
 #include "header_writer.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "shm/shm.hxx"
 #include "shm/dpool.hxx"
 #include "strmap.hxx"

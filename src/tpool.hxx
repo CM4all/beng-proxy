@@ -4,25 +4,17 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#ifndef __BENG_TPOOL_H
-#define __BENG_TPOOL_H
+#ifndef BENG_PROXY_TPOOL_HXX
+#define BENG_PROXY_TPOOL_HXX
 
 #include "pool.h"
 
 extern struct pool *tpool;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void
 tpool_init(struct pool *parent);
 
 void
-tpool_deinit(void);
-
-#ifdef __cplusplus
-}
-#endif
+tpool_deinit();
 
 #endif

@@ -11,7 +11,7 @@
 #include "widget_class.hxx"
 #include "transformation.hxx"
 #include "pool.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 
 #include <string.h>
 #include <event.h>

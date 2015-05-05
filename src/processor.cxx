@@ -19,7 +19,7 @@
 #include "widget_class.hxx"
 #include "widget-quark.h"
 #include "growing_buffer.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "inline_widget.hxx"
 #include "async.hxx"
 #include "rewrite_uri.hxx"

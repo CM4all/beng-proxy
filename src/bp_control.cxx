@@ -12,7 +12,7 @@
 #include "bp_instance.hxx"
 #include "tcache.hxx"
 #include "translate_request.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "beng-proxy/translation.h"
 #include "pool.hxx"
 #include "net/SocketAddress.hxx"

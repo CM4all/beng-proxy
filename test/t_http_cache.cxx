@@ -8,7 +8,7 @@
 #include "strmap.hxx"
 #include "http_response.hxx"
 #include "async.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "istream.h"
 
 #include <inline/compiler.h>

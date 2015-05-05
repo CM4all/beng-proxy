@@ -10,7 +10,7 @@
 #include "async.hxx"
 #include "strref.h"
 #include "strmap.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "sink-impl.h"
 #include "direct.h"
 #include "fb_pool.hxx"

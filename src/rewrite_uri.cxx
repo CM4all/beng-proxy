@@ -12,7 +12,7 @@
 #include "widget_class.hxx"
 #include "strref_pool.hxx"
 #include "uri_extract.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "escape_class.h"
 #include "istream_escape.hxx"
 #include "strmap.hxx"

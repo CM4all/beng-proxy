@@ -13,7 +13,7 @@
 #include "date.h"
 #include "strref.h"
 #include "abort_unref.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "http_util.hxx"
 #include "resource_address.hxx"
 #include "resource_loader.hxx"

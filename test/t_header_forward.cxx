@@ -1,5 +1,5 @@
 #include "header_forward.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "strmap.hxx"
 #include "product.h"
 

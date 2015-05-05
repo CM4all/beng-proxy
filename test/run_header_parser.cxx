@@ -1,4 +1,4 @@
-#include "tpool.h"
+#include "tpool.hxx"
 #include "header_parser.hxx"
 #include "growing_buffer.hxx"
 #include "strmap.hxx"

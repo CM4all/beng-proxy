@@ -4,7 +4,7 @@
 #include "async.hxx"
 #include "fd-util.h"
 #include "strmap.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "serialize.hxx"
 #include "sink_buffer.hxx"
 #include "istream.h"

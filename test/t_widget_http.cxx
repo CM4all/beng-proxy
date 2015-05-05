@@ -6,7 +6,7 @@
 #include "strmap.hxx"
 #include "growing_buffer.hxx"
 #include "header_parser.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "get.hxx"
 #include "http_response.hxx"
 #include "processor.h"

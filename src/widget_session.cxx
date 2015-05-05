@@ -6,7 +6,7 @@
 
 #include "widget.hxx"
 #include "session.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 
 #include <assert.h>
 

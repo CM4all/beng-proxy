@@ -14,7 +14,7 @@
 #include "fd_util.h"
 #include "istream.h"
 #include "strmap.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "fb_pool.hxx"
 #include "util/ConstBuffer.hxx"
 #include "util/CharUtil.hxx"

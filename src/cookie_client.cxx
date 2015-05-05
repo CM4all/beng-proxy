@@ -11,7 +11,7 @@
 #include "strref_pool.hxx"
 #include "strmap.hxx"
 #include "http_string.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "shm/dpool.hxx"
 #include "shm/strref_dpool.hxx"
 #include "expiry.h"

@@ -7,7 +7,7 @@
 #include "widget_request.hxx"
 #include "uri_parser.hxx"
 #include "sink_gstring.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "async.hxx"
 #include "escape_pool.h"
 #include "escape_html.hxx"

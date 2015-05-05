@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tpool.h"
+#include "tpool.hxx"
 #include "direct.h"
 #include "lb_instance.hxx"
 #include "lb_check.hxx"

@@ -10,7 +10,7 @@
 #include "uri_parser.hxx"
 #include "uri_edit.hxx"
 #include "args.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "strref.h"
 #include "strref_pool.hxx"
 #include "http_address.hxx"

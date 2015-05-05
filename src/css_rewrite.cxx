@@ -8,7 +8,7 @@
 #include "css_parser.hxx"
 #include "rewrite_uri.hxx"
 #include "pool.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "istream.h"
 #include "istream_replace.hxx"
 

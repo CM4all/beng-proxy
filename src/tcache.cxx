@@ -15,7 +15,7 @@
 #include "uri_base.hxx"
 #include "uri_verify.hxx"
 #include "uri_escape.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "pbuffer.hxx"
 #include "paddress.hxx"
 #include "SlicePool.hxx"

@@ -195,7 +195,7 @@ cm4all_beng_proxy_SOURCES = \
 	src/pevent.hxx \
 	src/pipe_stock.cxx src/pipe_stock.hxx \
 	src/pipe_filter.cxx src/pipe_filter.hxx \
-	src/tpool.c \
+	src/tpool.cxx src/tpool.hxx \
 	src/processor.cxx src/processor.h \
 	src/penv.cxx src/penv.hxx \
 	src/proxy_widget.cxx src/proxy_widget.hxx \
@@ -226,7 +226,6 @@ cm4all_beng_proxy_SOURCES = \
 	src/tcache.cxx src/tcache.hxx \
 	src/tcp_stock.cxx src/tcp_stock.hxx \
 	src/tcp_balancer.cxx src/tcp_balancer.hxx \
-	src/tpool.h \
 	src/transformation.cxx src/transformation.hxx \
 	src/tstock.cxx src/tstock.hxx \
 	src/udp-distribute.h \
@@ -349,7 +348,7 @@ cm4all_beng_lb_SOURCES = \
 	src/capabilities.cxx src/capabilities.hxx \
 	src/clock.c src/clock.h \
 	src/cleanup_timer.cxx src/cleanup_timer.hxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/stock.cxx src/stock.hxx \
 	src/hstock.cxx \
 	src/tcp_stock.cxx \
@@ -922,7 +921,7 @@ test_t_tcache_SOURCES = test/t_tcache.cxx src/tcache.cxx src/cache.cxx \
 	src/widget_view.cxx \
 	src/cleanup_timer.cxx \
 	src/clock.c \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/transformation.cxx
 test_t_tcache_LDADD = $(AM_LDADD) \
 	libraddress.a \
@@ -947,7 +946,7 @@ test_t_header_forward_SOURCES = test/t_header_forward.cxx \
 	src/crash.cxx src/crash.hxx \
 	src/session_id.cxx \
 	src/clock.c \
-	src/tpool.c
+	src/tpool.cxx
 test_t_header_forward_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libputil.a \
@@ -1097,7 +1096,7 @@ test_t_istream_processor_SOURCES = test/t_istream_processor.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_ref.cxx src/widget_uri.cxx src/args.cxx \
 	src/widget_session.cxx src/xml_parser.cxx src/widget_class.cxx \
 	src/widget_view.cxx \
-	src/tpool.c src/rewrite_uri.cxx src/widget_resolver.cxx \
+	src/tpool.cxx src/rewrite_uri.cxx src/widget_resolver.cxx \
 	src/bp_global.cxx src/transformation.cxx \
 	src/clock.c \
 	$(T_ISTREAM_FILTER_SRC)
@@ -1155,7 +1154,7 @@ test_t_cgi_SOURCES = test/t_cgi.cxx \
 	src/exec.cxx \
 	src/cleanup_timer.cxx \
 	src/regex.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/buffered_io.cxx \
 	src/header_parser.cxx \
 	src/fd_util.c src/fd-util.c \
@@ -1185,7 +1184,7 @@ test_t_http_server_SOURCES = test/t_http_server.cxx \
 	src/http_body.cxx \
 	src/fd_util.c src/fd-util.c \
 	src/header_parser.cxx \
-	src/tpool.c
+	src/tpool.cxx
 test_t_http_server_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libputil.a \
@@ -1212,7 +1211,7 @@ test_run_http_server_SOURCES = test/run_http_server.cxx \
 	src/cleanup_timer.cxx \
 	src/shutdown_listener.c \
 	src/header_parser.cxx \
-	src/tpool.c src/event2.c
+	src/tpool.cxx src/event2.c
 test_run_http_server_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libputil.a \
@@ -1234,7 +1233,7 @@ test_t_http_client_SOURCES = test/t_http_client.cxx \
 	src/direct.c \
 	src/http_body.cxx src/header_parser.cxx \
 	src/buffered_io.cxx src/fd_util.c src/fd-util.c \
-	src/tpool.c
+	src/tpool.cxx
 test_t_http_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libputil.a \
@@ -1253,7 +1252,7 @@ test_t_http_util_LDADD = $(AM_LDADD) \
 	$(LIBCM4ALL_DAEMON_LIBS)
 
 test_t_http_cache_SOURCES = test/t_http_cache.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/sink_rubber.cxx \
 	src/exec.cxx \
 	src/cleanup_timer.cxx \
@@ -1278,7 +1277,7 @@ test_t_http_cache_LDADD = $(AM_LDADD) \
 	$(GLIB_LIBS)
 
 test_t_cookie_client_SOURCES = test/t_cookie_client.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/clock.c \
 	src/cookie_client.cxx src/cookie_jar.cxx \
 	src/cookie_string.cxx \
@@ -1353,7 +1352,7 @@ test_t_slice_LDADD = $(AM_LDADD) \
 	$(CPPUNIT_LIBS)
 
 test_t_rewrite_uri_SOURCES = test/t_rewrite_uri.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/penv.cxx \
 	src/exec.cxx \
 	src/escape_pool.c \
@@ -1380,7 +1379,7 @@ test_t_widget_registry_SOURCES = test/t_widget_registry.cxx \
 	src/widget_view.cxx \
 	src/exec.cxx \
 	src/abort_unref.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/clock.c
 test_t_widget_registry_LDADD = $(AM_LDADD) \
 	libraddress.a \
@@ -1437,7 +1436,7 @@ test_t_widget_http_SOURCES = test/t_widget_http.cxx \
 	src/istream_escape.cxx \
 	src/transformation.cxx \
 	src/clock.c \
-	src/tpool.c
+	src/tpool.cxx
 test_t_widget_http_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
 	libraddress.a \
@@ -1494,7 +1493,7 @@ test_run_cookie_client_SOURCES = test/run_cookie_client.cxx \
 	src/cookie_client.cxx src/cookie_jar.cxx src/http_string.cxx \
 	src/cookie_string.cxx \
 	src/header_writer.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/clock.c
 test_run_cookie_client_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
@@ -1515,7 +1514,7 @@ test_run_cookie_server_LDADD = $(AM_LDADD) \
 
 test_run_header_parser_SOURCES = test/run_header_parser.cxx \
 	src/header_parser.cxx \
-	src/tpool.c
+	src/tpool.cxx
 test_run_header_parser_LDADD = $(AM_LDADD) \
 	libpool.a libmemory.a \
 	libputil.a \
@@ -1548,7 +1547,7 @@ test_run_processor_SOURCES = test/run_processor.cxx \
 	src/text_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
 	src/header_writer.cxx src/args.cxx src/buffered_io.cxx \
@@ -1581,7 +1580,7 @@ test_t_processor_SOURCES = test/t_processor.cxx \
 	src/css_processor.cxx src/css_parser.cxx src/css_rewrite.cxx \
 	src/widget.cxx src/widget_init.cxx src/widget_approval.cxx src/widget_ref.cxx \
 	src/exec.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/istream_escape.cxx \
 	src/istream_html_escape.cxx \
 	src/header_writer.cxx src/args.cxx src/buffered_io.cxx \
@@ -1657,7 +1656,7 @@ test_t_fcgi_client_SOURCES = test/t_fcgi_client.cxx \
 	src/header_parser.cxx \
 	src/istream_gb.cxx \
 	src/fd-util.c src/fd_util.c \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/direct.c
 test_t_fcgi_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1713,7 +1712,7 @@ test_run_client_SOURCES = test/run_client.cxx \
 	src/stock.cxx src/pipe_stock.cxx \
 	src/shutdown_listener.c \
 	$(STOPWATCH_SRC) \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/direct.c 
 test_run_client_LDADD = $(AM_LDADD) \
 	libistream.a libpool.a libmemory.a \
@@ -1740,7 +1739,7 @@ test_run_http_cache_SOURCES = test/run_http_cache.cxx \
 	src/istream_unlock.cxx \
 	src/cache.cxx \
 	src/cleanup_timer.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/clock.c \
 	src/istream_rubber.cxx
 test_run_http_cache_LDADD = $(AM_LDADD) \
@@ -1776,7 +1775,7 @@ test_dump_memcached_choice_SOURCES = test/dump_memcached_choice.cxx \
 	src/direct.c \
 	src/serialize.cxx \
 	src/sink_buffer.cxx \
-	src/tpool.c
+	src/tpool.cxx
 test_dump_memcached_choice_LDADD = $(LIBEVENT_LIBS) $(GLIB_LIBS) \
 	libistream.a libpool.a libmemory.a \
 	libputil.a \
@@ -1802,7 +1801,7 @@ test_cleanup_memcached_choice_SOURCES = test/cleanup_memcached_choice.cxx \
 	src/serialize.cxx \
 	src/sink_buffer.cxx \
 	src/buffered_io.cxx \
-	src/tpool.c \
+	src/tpool.cxx \
 	src/clock.c \
 	$(STOPWATCH_SRC)
 test_cleanup_memcached_choice_LDADD = $(AM_LDADD) \

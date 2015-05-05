@@ -4,7 +4,7 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
-#include "tpool.h"
+#include "tpool.hxx"
 #include "direct.h"
 #include "bp_instance.hxx"
 #include "bp_connection.hxx"

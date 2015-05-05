@@ -6,7 +6,7 @@
 
 #include "lb_session.hxx"
 #include "strmap.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "cookie_server.hxx"
 #include "pool.hxx"
 

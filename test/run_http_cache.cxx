@@ -1,5 +1,5 @@
 #include "pool.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "cache.hxx"
 #include "http_cache_heap.hxx"
 #include "http_cache_info.hxx"

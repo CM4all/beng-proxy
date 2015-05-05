@@ -11,7 +11,7 @@
 #include "lb_expect_monitor.hxx"
 #include "lb_config.hxx"
 #include "pool.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "hashmap.hxx"
 #include "address_edit.h"
 #include "net/SocketAddress.hxx"

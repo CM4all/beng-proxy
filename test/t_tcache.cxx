@@ -13,7 +13,7 @@
 #include "mount_list.hxx"
 #include "namespace_options.hxx"
 #include "pool.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 
 #include <event.h>
 

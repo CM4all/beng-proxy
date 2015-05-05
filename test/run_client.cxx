@@ -13,7 +13,7 @@
 #include "sink_fd.hxx"
 #include "direct.h"
 #include "shutdown_listener.h"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "fb_pool.hxx"
 #include "ssl_init.hxx"
 #include "ssl_client.hxx"

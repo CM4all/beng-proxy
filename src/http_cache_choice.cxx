@@ -10,7 +10,7 @@
 #include "http_cache_internal.hxx"
 #include "memcached_stock.hxx"
 #include "memcached_client.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "format.h"
 #include "strmap.hxx"
 #include "serialize.hxx"

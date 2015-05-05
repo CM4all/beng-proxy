@@ -11,7 +11,7 @@
 #include "strmap.hxx"
 #include "widget.hxx"
 #include "growing_buffer.hxx"
-#include "tpool.h"
+#include "tpool.hxx"
 #include "async.hxx"
 #include "rewrite_uri.hxx"
 #include "bp_global.hxx"
