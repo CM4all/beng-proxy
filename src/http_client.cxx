@@ -16,6 +16,7 @@
 #include "istream-internal.h"
 #include "istream_gb.hxx"
 #include "istream_optional.hxx"
+#include "istream_chunked.hxx"
 #include "istream_dechunk.hxx"
 #include "async.hxx"
 #include "growing_buffer.hxx"

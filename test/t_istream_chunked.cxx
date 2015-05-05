@@ -1,6 +1,7 @@
-#include "istream.h"
+#include "istream_chunked.hxx"
 #include "istream-invoke.h"
 #include "istream-new.h"
+#include "pool.hxx"
 
 static struct istream *
 create_input(struct pool *pool)
@@ -32,7 +33,7 @@ static size_t
 custom_istream_data(gcc_unused const void *data, gcc_unused size_t length,
                     void *_ctx)
 {
-    struct custom *ctx = _ctx;
+    auto *ctx = (struct custom *)_ctx;
 
     istream_invoke_data(&ctx->output, " ", 1);
     return 0;
@@ -41,7 +42,7 @@ custom_istream_data(gcc_unused const void *data, gcc_unused size_t length,
 static void
 custom_istream_eof(void *_ctx)
 {
-    struct custom *ctx = _ctx;
+    auto *ctx = (struct custom *)_ctx;
 
     ctx->eof = true;
 }
@@ -49,7 +50,7 @@ custom_istream_eof(void *_ctx)
 static void
 custom_istream_abort(GError *error, void *_ctx)
 {
-    struct custom *ctx = _ctx;
+    auto *ctx = (struct custom *)_ctx;
 
     ctx->error = error;
 }
@@ -93,10 +94,10 @@ static void
 test_custom(struct pool *pool)
 {
     pool = pool_new_linear(pool, "test", 8192);
-    struct custom *ctx = p_malloc(pool, sizeof(*ctx));
+    auto *ctx = NewFromPool<struct custom>(*pool);
     istream_init(&ctx->output, &istream_custom, pool);
 
-    struct istream *chunked = istream_chunked_new(pool, &ctx->output);
+    auto *chunked = istream_chunked_new(pool, &ctx->output);
     istream_handler_set(chunked, &custom_istream_handler, ctx, 0);
     pool_unref(pool);
 

@@ -4,8 +4,11 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_chunked.hxx"
 #include "istream-internal.h"
+#include "pool.hxx"
 #include "format.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -56,7 +59,7 @@ chunked_buffer_append(struct istream_chunked *chunked,
     size_t old_length = sizeof(chunked->buffer) - chunked->buffer_sent;
     char *dest;
 
-    assert(data != NULL);
+    assert(data != nullptr);
     assert(length > 0);
     assert(length <= chunked->buffer_sent);
 
@@ -146,7 +149,7 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
     size_t total = 0, rest, nbytes;
     bool bret;
 
-    assert(chunked->input != NULL);
+    assert(chunked->input != nullptr);
 
     do {
         assert(!chunked->writing_buffer);
@@ -157,7 +160,7 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
 
         bret = chunked_write_buffer(chunked);
         if (!bret)
-            return chunked->input == NULL ? 0 : total;
+            return chunked->input == nullptr ? 0 : total;
 
         assert(chunked_buffer_empty(chunked));
 
@@ -174,7 +177,7 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
 
         nbytes = istream_invoke_data(&chunked->output, data + total, rest);
         if (nbytes == 0)
-            return chunked->input == NULL ? 0 : total;
+            return chunked->input == nullptr ? 0 : total;
 
         total += nbytes;
 
@@ -200,31 +203,26 @@ chunked_feed(struct istream_chunked *chunked, const char *data, size_t length)
 static size_t
 chunked_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_chunked *chunked = ctx;
-    size_t nbytes;
+    auto *chunked = (struct istream_chunked *)ctx;
 
     if (chunked->writing_buffer)
         /* this is a recursive call from istream_chunked_read(): bail
            out */
         return 0;
 
-    pool_ref(chunked->output.pool);
-    nbytes = chunked_feed(chunked, (const char*)data, length);
-    pool_unref(chunked->output.pool);
-
-    return nbytes;
+    const ScopePoolRef ref(*chunked->output.pool TRACE_ARGS);
+    return chunked_feed(chunked, (const char*)data, length);
 }
 
 static void
 chunked_input_eof(void *ctx)
 {
-    struct istream_chunked *chunked = ctx;
-    bool bret;
+    auto *chunked = (struct istream_chunked *)ctx;
 
-    assert(chunked->input != NULL);
+    assert(chunked->input != nullptr);
     assert(chunked->missing_from_current_chunk == 0);
 
-    chunked->input = NULL;
+    chunked->input = nullptr;
 
     /* write EOF chunk (length 0) */
 
@@ -232,24 +230,23 @@ chunked_input_eof(void *ctx)
 
     /* flush the buffer */
 
-    bret = chunked_write_buffer(chunked);
-    if (bret)
+    if (chunked_write_buffer(chunked))
         istream_deinit_eof(&chunked->output);
 }
 
 static void
 chunked_input_abort(GError *error, void *ctx)
 {
-    struct istream_chunked *chunked = ctx;
+    auto *chunked = (struct istream_chunked *)ctx;
 
-    assert(chunked->input != NULL);
+    assert(chunked->input != nullptr);
 
-    chunked->input = NULL;
+    chunked->input = nullptr;
 
     istream_deinit_abort(&chunked->output, error);
 }
 
-static const struct istream_handler chunked_input_handler = {
+static constexpr struct istream_handler chunked_input_handler = {
     .data = chunked_input_data,
     .eof = chunked_input_eof,
     .abort = chunked_input_abort,
@@ -264,7 +261,7 @@ static const struct istream_handler chunked_input_handler = {
 static inline struct istream_chunked *
 istream_to_chunked(struct istream *istream)
 {
-    return (struct istream_chunked *)(((char*)istream) - offsetof(struct istream_chunked, output));
+    return &ContainerCast2(*istream, &istream_chunked::output);
 }
 
 static void
@@ -275,12 +272,12 @@ istream_chunked_read(struct istream *istream)
     if (!chunked_write_buffer2(chunked))
         return;
 
-    if (chunked->input == NULL) {
+    if (chunked->input == nullptr) {
         istream_deinit_eof(&chunked->output);
         return;
     }
 
-    assert(chunked->input != NULL);
+    assert(chunked->input != nullptr);
 
     if (chunked_buffer_empty(chunked) &&
         chunked->missing_from_current_chunk == 0) {
@@ -300,13 +297,13 @@ istream_chunked_close(struct istream *istream)
 {
     struct istream_chunked *chunked = istream_to_chunked(istream);
 
-    if (chunked->input != NULL)
+    if (chunked->input != nullptr)
         istream_free_handler(&chunked->input);
 
     istream_deinit(&chunked->output);
 }
 
-static const struct istream_class istream_chunked = {
+static constexpr struct istream_class istream_chunked = {
     .read = istream_chunked_read,
     .close = istream_chunked_close,
 };
@@ -322,7 +319,7 @@ istream_chunked_new(struct pool *pool, struct istream *input)
 {
     struct istream_chunked *chunked = istream_new_macro(pool, chunked);
 
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
     chunked->writing_buffer = false;

@@ -12,6 +12,7 @@
 #include "format.h"
 #include "date.h"
 #include "growing_buffer.hxx"
+#include "istream_chunked.hxx"
 #include "istream_dechunk.hxx"
 #include "istream_gb.hxx"
 

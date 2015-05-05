@@ -42,9 +42,6 @@ struct istream *gcc_malloc
 istream_string_new(struct pool *pool, const char *s);
 
 struct istream *
-istream_chunked_new(struct pool *pool, struct istream *input);
-
-struct istream *
 istream_cat_new(struct pool *pool, ...);
 
 struct istream *
