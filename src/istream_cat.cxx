@@ -147,15 +147,14 @@ static off_t
 istream_cat_available(struct istream *istream, bool partial)
 {
     struct istream_cat *cat = istream_to_cat(istream);
-    struct input *input, *end;
-    off_t available = 0, a;
+    off_t available = 0;
 
-    for (input = &cat->GetCurrent(), end = &cat->inputs[cat->num];
+    for (auto *input = &cat->GetCurrent(), *end = &cat->inputs[cat->num];
          input < end; ++input) {
         if (input->istream == nullptr)
             continue;
 
-        a = istream_available(input->istream, partial);
+        const off_t a = istream_available(input->istream, partial);
         if (a != (off_t)-1)
             available += a;
         else if (!partial)
@@ -172,12 +171,12 @@ static void
 istream_cat_read(struct istream *istream)
 {
     struct istream_cat *cat = istream_to_cat(istream);
-    unsigned prev;
 
     pool_ref(cat->output.pool);
 
     cat->reading = true;
 
+    unsigned prev;
     do {
         while (!cat->IsEOF() && cat->GetCurrent().istream == nullptr)
             ++cat->current;
@@ -244,12 +243,8 @@ static const struct istream_class istream_cat = {
 struct istream *
 istream_cat_new(struct pool *pool, ...)
 {
-    struct istream_cat *cat;
-    va_list ap;
     unsigned num = 0;
-    struct istream *istream;
-    struct input *input;
-
+    va_list ap;
     va_start(ap, pool);
     while (va_arg(ap, struct istream *) != nullptr)
         ++num;
@@ -257,18 +252,20 @@ istream_cat_new(struct pool *pool, ...)
 
     assert(num > 0);
 
-    cat = (struct istream_cat*)istream_new(pool, &istream_cat,
-                                           sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
+    struct istream_cat *cat = (struct istream_cat *)
+        istream_new(pool, &istream_cat,
+                    sizeof(*cat) + (num - 1) * sizeof(cat->inputs));
     cat->reading = false;
     cat->current = 0;
     cat->num = num;
 
     va_start(ap, pool);
     num = 0;
+    struct istream *istream;
     while ((istream = va_arg(ap, struct istream *)) != nullptr) {
         assert(!istream_has_handler(istream));
 
-        input = &cat->inputs[num++];
+        struct input *input = &cat->inputs[num++];
         input->cat = cat;
 
         istream_assign_handler(&input->istream, istream,
