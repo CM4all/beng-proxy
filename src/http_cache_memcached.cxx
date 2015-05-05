@@ -17,6 +17,7 @@
 #include "strmap.hxx"
 #include "tpool.hxx"
 #include "background.hxx"
+#include "istream_cat.hxx"
 #include "istream_gb.hxx"
 #include "istream.h"
 #include "pool.hxx"

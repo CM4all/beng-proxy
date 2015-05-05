@@ -1,3 +1,4 @@
+#include "istream_cat.hxx"
 #include "istream.h"
 
 #define EXPECTED_RESULT "foo"

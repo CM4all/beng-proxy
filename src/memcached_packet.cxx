@@ -6,6 +6,7 @@
 
 #include "memcached_packet.hxx"
 #include "istream.h"
+#include "istream_cat.hxx"
 #include "istream_null.hxx"
 #include "pool.hxx"
 #include "util/ByteOrder.hxx"

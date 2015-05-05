@@ -4,7 +4,9 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_cat.hxx"
 #include "istream-internal.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -51,7 +53,7 @@ cat_close_inputs(struct istream_cat *cat)
 {
     while (!cat_is_eof(cat)) {
         struct input *input = cat_shift(cat);
-        if (input->istream != NULL)
+        if (input->istream != nullptr)
             istream_close_handler(input->istream);
     }
 }
@@ -65,10 +67,10 @@ cat_close_inputs(struct istream_cat *cat)
 static size_t
 cat_input_data(const void *data, size_t length, void *ctx)
 {
-    struct input *input = ctx;
+    auto *input = (struct input *)ctx;
     struct istream_cat *cat = input->cat;
 
-    assert(input->istream != NULL);
+    assert(input->istream != nullptr);
 
     if (!cat_is_current(cat, input))
         return 0;
@@ -77,12 +79,13 @@ cat_input_data(const void *data, size_t length, void *ctx)
 }
 
 static ssize_t
-cat_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
+cat_input_direct(enum istream_direct type, int fd, size_t max_length,
+                 void *ctx)
 {
-    struct input *input = ctx;
+    auto *input = (struct input *)ctx;
     struct istream_cat *cat = input->cat;
 
-    assert(input->istream != NULL);
+    assert(input->istream != nullptr);
     assert(cat_is_current(cat, input));
 
     return istream_invoke_direct(&cat->output, type, fd, max_length);
@@ -91,16 +94,16 @@ cat_input_direct(istream_direct_t type, int fd, size_t max_length, void *ctx)
 static void
 cat_input_eof(void *ctx)
 {
-    struct input *input = ctx;
+    auto *input = (struct input *)ctx;
     struct istream_cat *cat = input->cat;
 
-    assert(input->istream != NULL);
-    input->istream = NULL;
+    assert(input->istream != nullptr);
+    input->istream = nullptr;
 
     if (cat_is_current(cat, input)) {
         do {
             cat_shift(cat);
-        } while (!cat_is_eof(cat) && cat_current(cat)->istream == NULL);
+        } while (!cat_is_eof(cat) && cat_current(cat)->istream == nullptr);
 
         if (cat_is_eof(cat)) {
             istream_deinit_eof(&cat->output);
@@ -117,11 +120,11 @@ cat_input_eof(void *ctx)
 static void
 cat_input_abort(GError *error, void *ctx)
 {
-    struct input *input = ctx;
+    auto *input = (struct input *)ctx;
     struct istream_cat *cat = input->cat;
 
-    assert(input->istream != NULL);
-    input->istream = NULL;
+    assert(input->istream != nullptr);
+    input->istream = nullptr;
 
     cat_close_inputs(cat);
 
@@ -144,7 +147,7 @@ static const struct istream_handler cat_input_handler = {
 static inline struct istream_cat *
 istream_to_cat(struct istream *istream)
 {
-    return (struct istream_cat *)(((char*)istream) - offsetof(struct istream_cat, output));
+    return &ContainerCast2(*istream, &istream_cat::output);
 }
 
 static off_t
@@ -156,7 +159,7 @@ istream_cat_available(struct istream *istream, bool partial)
 
     for (input = cat_current(cat), end = &cat->inputs[cat->num];
          input < end; ++input) {
-        if (input->istream == NULL)
+        if (input->istream == nullptr)
             continue;
 
         a = istream_available(input->istream, partial);
@@ -183,7 +186,7 @@ istream_cat_read(struct istream *istream)
     cat->reading = true;
 
     do {
-        while (!cat_is_eof(cat) && cat_current(cat)->istream == NULL)
+        while (!cat_is_eof(cat) && cat_current(cat)->istream == nullptr)
             ++cat->current;
 
         if (cat_is_eof(cat)) {
@@ -255,7 +258,7 @@ istream_cat_new(struct pool *pool, ...)
     struct input *input;
 
     va_start(ap, pool);
-    while (va_arg(ap, struct istream *) != NULL)
+    while (va_arg(ap, struct istream *) != nullptr)
         ++num;
     va_end(ap);
 
@@ -269,7 +272,7 @@ istream_cat_new(struct pool *pool, ...)
 
     va_start(ap, pool);
     num = 0;
-    while ((istream = va_arg(ap, struct istream *)) != NULL) {
+    while ((istream = va_arg(ap, struct istream *)) != nullptr) {
         assert(!istream_has_handler(istream));
 
         input = &cat->inputs[num++];

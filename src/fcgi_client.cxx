@@ -13,6 +13,7 @@
 #include "http_response.hxx"
 #include "async.hxx"
 #include "istream-internal.h"
+#include "istream_cat.hxx"
 #include "istream_fcgi.hxx"
 #include "istream_gb.hxx"
 #include "please.hxx"

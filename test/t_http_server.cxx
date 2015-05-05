@@ -6,6 +6,7 @@
 #include "istream.h"
 #include "istream_block.hxx"
 #include "istream_socketpair.hxx"
+#include "istream_cat.hxx"
 #include "istream_catch.hxx"
 #include "fb_pool.hxx"
 
