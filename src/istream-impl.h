@@ -81,16 +81,6 @@ struct istream *
 istream_html_escape_new(struct pool *pool, struct istream *input);
 
 struct istream *
-istream_subst_new(struct pool *pool, struct istream *input);
-
-bool
-istream_subst_add_n(struct istream *istream, const char *a,
-                    const char *b, size_t b_length);
-
-bool
-istream_subst_add(struct istream *istream, const char *a, const char *b);
-
-struct istream *
 istream_byte_new(struct pool *pool, struct istream *input);
 
 struct istream *

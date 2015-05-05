@@ -1,4 +1,5 @@
 #include "istream.h"
+#include "istream_subst.hxx"
 
 #define EXPECTED_RESULT "bar fo fo bar bla! fo"
 

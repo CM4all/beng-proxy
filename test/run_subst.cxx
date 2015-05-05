@@ -1,4 +1,5 @@
 #include "istream.h"
+#include "istream_subst.hxx"
 #include "istream_file.hxx"
 #include "fb_pool.hxx"
 

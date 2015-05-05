@@ -7,8 +7,10 @@
  * author: Max Kellermann <mk@cm4all.com>
  */
 
+#include "istream_subst.hxx"
 #include "istream-internal.h"
 #include "strref.h"
+#include "util/Cast.hxx"
 
 #include <assert.h>
 #include <string.h>
@@ -63,27 +65,27 @@ static struct subst_node *
 subst_next_non_leaf_node(struct subst_node *node, struct subst_node *root)
 {
     /* dive into left wing first */
-    if (node->left != NULL && node->left->ch != 0)
+    if (node->left != nullptr && node->left->ch != 0)
         return node->left;
 
     /* if left does not exist, go right */
-    if (node->right != NULL && node->right->ch != 0)
+    if (node->right != nullptr && node->right->ch != 0)
         return node->right;
 
     /* this subtree is finished, go up */
-    while (1) {
+    while (true) {
         /* don't go above our root */
         if (node == root)
-            return NULL;
+            return nullptr;
 
-        assert(node->parent != NULL);
+        assert(node->parent != nullptr);
 
         if (node->parent->left == node) {
             node = node->parent;
 
             /* only go to parent->right if we came from
                parent->left */
-            if (node->right != NULL && node->right->ch != 0)
+            if (node->right != nullptr && node->right->ch != 0)
                 return node;
         } else {
             node = node->parent;
@@ -97,14 +99,14 @@ subst_find_first_char(struct istream_subst *subst,
                       const char *data, size_t length)
 {
     struct subst_node *node = subst->root;
-    const char *p, *min = NULL;
+    const char *min = nullptr;
 
-    while (node != NULL) {
+    while (node != nullptr) {
         assert(node->ch != 0);
 
-        p = memchr(data, node->ch, length);
-        if (p != NULL && (min == NULL || p < min)) {
-            assert(node->equals != NULL);
+        auto *p = (const char *)memchr(data, node->ch, length);
+        if (p != nullptr && (min == nullptr || p < min)) {
+            assert(node->equals != nullptr);
             subst->match = node->equals;
             min = p;
         }
@@ -119,15 +121,15 @@ subst_find_first_char(struct istream_subst *subst,
 static const struct subst_node *
 subst_find_char(const struct subst_node *node, char ch)
 {
-    assert(node != NULL);
+    assert(node != nullptr);
 
     if (ch == 0)
         /* we cannot support null bytes */
-        return NULL;
+        return nullptr;
 
     do {
         if (node->ch == ch) {
-            assert(node->equals != NULL);
+            assert(node->equals != nullptr);
             return node->equals;
         }
 
@@ -135,16 +137,16 @@ subst_find_char(const struct subst_node *node, char ch)
             node = node->left;
         else
             node = node->right;
-    } while (node != NULL);
+    } while (node != nullptr);
 
-    return NULL;
+    return nullptr;
 }
 
 /** find the leaf ending the current search word */
 static const struct subst_node *
 subst_find_leaf(const struct subst_node *node)
 {
-    assert(node != NULL);
+    assert(node != nullptr);
 
     do {
         if (node->ch == 0)
@@ -154,9 +156,9 @@ subst_find_leaf(const struct subst_node *node)
             node = node->left;
         else
             node = node->right;
-    } while (node != NULL);
+    } while (node != nullptr);
 
-    return NULL;
+    return nullptr;
 }
 
 /** find any leaf which begins with the current partial match, used to
@@ -165,14 +167,14 @@ subst_find_leaf(const struct subst_node *node)
 static const struct subst_node *
 subst_find_any_leaf(const struct subst_node *node)
 {
-    while (1) {
-        assert(node != NULL);
+    while (true) {
+        assert(node != nullptr);
 
         if (node->ch == 0)
             return node;
 
         node = node->equals;
-    } 
+    }
 }
 
 /**
@@ -183,20 +185,18 @@ subst_find_any_leaf(const struct subst_node *node)
 static size_t
 subst_try_write_b(struct istream_subst *subst)
 {
-    size_t length, nbytes;
-
-    assert(subst->state == STATE_INSERT);
+    assert(subst->state == istream_subst::STATE_INSERT);
     assert(subst->a_match > 0);
-    assert(subst->match != NULL);
+    assert(subst->match != nullptr);
     assert(subst->match->ch == 0);
     assert(subst->a_match == strlen(subst->match->leaf.a));
 
-    length = subst->match->leaf.b_length - subst->b_sent;
+    const size_t length = subst->match->leaf.b_length - subst->b_sent;
     assert(length > 0);
 
-    nbytes = istream_invoke_data(&subst->output,
-                                 subst->match->leaf.b + subst->b_sent,
-                                 length);
+    const size_t nbytes = istream_invoke_data(&subst->output,
+                                              subst->match->leaf.b + subst->b_sent,
+                                              length);
     assert(nbytes <= length);
     if (nbytes > 0) {
         /* note progress */
@@ -204,7 +204,7 @@ subst_try_write_b(struct istream_subst *subst)
 
         /* finished sending substitution? */
         if (nbytes == length)
-            subst->state = STATE_NONE;
+            subst->state = istream_subst::STATE_NONE;
     }
 
     return length - nbytes;
@@ -216,14 +216,13 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length);
 static bool
 subst_feed_mismatch(struct istream_subst *subst)
 {
-    size_t nbytes;
-
-    assert(subst->state == STATE_NONE);
-    assert(subst->input != NULL);
+    assert(subst->state == istream_subst::STATE_NONE);
+    assert(subst->input != nullptr);
     assert(!strref_is_empty(&subst->mismatch));
 
     if (subst->send_first) {
-        nbytes = istream_invoke_data(&subst->output, subst->mismatch.data, 1);
+        const size_t nbytes = istream_invoke_data(&subst->output,
+                                                  subst->mismatch.data, 1);
         if (nbytes == 0)
             return true;
 
@@ -237,8 +236,8 @@ subst_feed_mismatch(struct istream_subst *subst)
     }
 
     pool_ref(subst->output.pool);
-    nbytes = subst_feed(subst, subst->mismatch.data,
-                        subst->mismatch.length);
+    const size_t nbytes = subst_feed(subst, subst->mismatch.data,
+                                     subst->mismatch.length);
     pool_unref(subst->output.pool);
     if (nbytes == 0)
         return true;
@@ -254,7 +253,8 @@ subst_feed_mismatch(struct istream_subst *subst)
 static bool
 subst_write_mismatch(struct istream_subst *subst)
 {
-    assert(subst->input == NULL || subst->state == STATE_NONE);
+    assert(subst->input == nullptr ||
+           subst->state == istream_subst::STATE_NONE);
     assert(!strref_is_empty(&subst->mismatch));
 
     size_t nbytes = istream_invoke_data(&subst->output,
@@ -271,7 +271,7 @@ subst_write_mismatch(struct istream_subst *subst)
     if (!strref_is_empty(&subst->mismatch))
         return true;
 
-    if (subst->input == NULL) {
+    if (subst->input == nullptr) {
         istream_deinit_eof(&subst->output);
         return true;
     }
@@ -290,7 +290,7 @@ subst_invoke_data(struct istream_subst *subst, const char *start,
                   const char *p, size_t length)
 {
     size_t nbytes = istream_invoke_data(&subst->output, p, length);
-    if (nbytes == 0 && subst->state == STATE_CLOSED)
+    if (nbytes == 0 && subst->state == istream_subst::STATE_CLOSED)
         /* stream has been closed - we must return 0 */
         return 0;
 
@@ -298,7 +298,7 @@ subst_invoke_data(struct istream_subst *subst, const char *start,
 
     if (nbytes < length) {
         /* blocking */
-        subst->state = STATE_NONE;
+        subst->state = istream_subst::STATE_NONE;
         return (p - start) + nbytes;
     } else
         /* everything has been consumed */
@@ -310,7 +310,7 @@ subst_invoke_data_final(struct istream_subst *subst, const char *start,
                         const char *end, const char *p)
 {
     size_t nbytes = istream_invoke_data(&subst->output, p, end - p);
-    if (nbytes > 0 || subst->state != STATE_CLOSED) {
+    if (nbytes > 0 || subst->state != istream_subst::STATE_CLOSED) {
         subst->had_output = true;
         nbytes += (p - start);
     }
@@ -321,11 +321,11 @@ subst_invoke_data_final(struct istream_subst *subst, const char *start,
 static size_t
 subst_feed(struct istream_subst *subst, const void *_data, size_t length)
 {
-    const char *data0 = _data, *data = data0, *p = data0, *end = p + length, *first = NULL;
-    size_t chunk_length, nbytes;
+    const char *const data0 = (const char *)_data, *data = data0, *p = data0,
+        *const end = p + length, *first = nullptr;
     const struct subst_node *node;
 
-    assert(subst->input != NULL);
+    assert(subst->input != nullptr);
 
     subst->had_input = true;
 
@@ -337,17 +337,17 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
         assert(p <= end);
 
         switch (subst->state) {
-        case STATE_NONE:
+        case istream_subst::STATE_NONE:
             /* find matching first char */
 
-            assert(first == NULL);
+            assert(first == nullptr);
 
             first = subst_find_first_char(subst, p, end - p);
-            if (first == NULL)
+            if (first == nullptr)
                 /* no match, try to write and return */
                 return subst_invoke_data_final(subst, data0, end, data);
 
-            subst->state = STATE_MATCH;
+            subst->state = istream_subst::STATE_MATCH;
             subst->a_match = 1;
 
             p = first + 1;
@@ -355,15 +355,15 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
             /* XXX check if match is full */
             break;
 
-        case STATE_CLOSED:
+        case istream_subst::STATE_CLOSED:
             assert(0);
 
-        case STATE_MATCH:
+        case istream_subst::STATE_MATCH:
             /* now see if the rest matches; note that max_compare may be
                0, but that isn't a problem */
 
             node = subst_find_char(subst->match, *p);
-            if (node != NULL) {
+            if (node != nullptr) {
                 /* next character matches */
 
                 ++subst->a_match;
@@ -371,18 +371,20 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                 subst->match = node;
 
                 node = subst_find_leaf(node);
-                if (node != NULL) {
+                if (node != nullptr) {
                     /* full match */
 
                     subst->match = node;
 
-                    if (first != NULL && first > data) {
+                    if (first != nullptr && first > data) {
                         /* write the data chunk before the match */
 
                         subst->had_output = true;
 
-                        chunk_length = first - data;
-                        nbytes = subst_invoke_data(subst, data0, data, chunk_length);
+                        const size_t chunk_length = first - data;
+                        const size_t nbytes =
+                            subst_invoke_data(subst, data0,
+                                              data, chunk_length);
                         if (nbytes != (size_t)-1)
                             return nbytes;
                     }
@@ -390,36 +392,37 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                     /* move data pointer */
 
                     data = p;
-                    first = NULL;
+                    first = nullptr;
 
                     /* switch state */
 
                     if (node->leaf.b_length > 0) {
-                        subst->state = STATE_INSERT;
+                        subst->state = istream_subst::STATE_INSERT;
                         subst->b_sent = 0;
                     } else {
-                        subst->state = STATE_NONE;
+                        subst->state = istream_subst::STATE_NONE;
                     }
                 }
             } else {
                 /* mismatch. reset match indicator and find new one */
 
-                if (first != NULL && (first > data ||
+                if (first != nullptr && (first > data ||
                                       !strref_is_empty(&subst->mismatch))) {
                     /* write the data chunk before the (mis-)match */
 
                     subst->had_output = true;
 
-                    chunk_length = first - data;
+                    size_t chunk_length = first - data;
                     if (!strref_is_empty(&subst->mismatch))
                         ++chunk_length;
 
-                    nbytes = subst_invoke_data(subst, data0, data, chunk_length);
+                    const size_t nbytes = subst_invoke_data(subst, data0, data,
+                                                            chunk_length);
                     if (nbytes != (size_t)-1)
                         return nbytes;
                 } else {
                     /* when re-parsing a mismatch, "first" must not be
-                       NULL because we entered this function with
+                       nullptr because we entered this function with
                        state=STATE_NONE */
                     assert(strref_is_empty(&subst->mismatch));
                 }
@@ -427,7 +430,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                 /* move data pointer */
 
                 data = p;
-                first = NULL;
+                first = nullptr;
 
                 /* switch state */
 
@@ -435,7 +438,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                    can use to re-insert the partial match into the
                    stream */
 
-                subst->state = STATE_NONE;
+                subst->state = istream_subst::STATE_NONE;
 
                 if (strref_is_empty(&subst->mismatch)) {
                     bool ret;
@@ -443,42 +446,44 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
                     subst->send_first = true;
 
                     node = subst_find_any_leaf(subst->match);
-                    assert(node != NULL);
+                    assert(node != nullptr);
                     assert(node->ch == 0);
                     strref_set(&subst->mismatch, node->leaf.a, subst->a_match);
 
                     ret = subst_feed_mismatch(subst);
                     if (ret)
-                        return subst->state == STATE_CLOSED ? 0 : data - data0;
+                        return subst->state == istream_subst::STATE_CLOSED ? 0 : data - data0;
                 }
             }
 
             break;
 
-        case STATE_INSERT:
+        case istream_subst::STATE_INSERT:
             /* there is a previous full match, copy data from subst->b */
 
-            nbytes = subst_try_write_b(subst);
+            const size_t nbytes = subst_try_write_b(subst);
             if (nbytes > 0) {
-                if (subst->state == STATE_CLOSED)
+                if (subst->state == istream_subst::STATE_CLOSED)
                     return 0;
 
-                assert(subst->state == STATE_INSERT);
+                assert(subst->state == istream_subst::STATE_INSERT);
                 /* blocking */
                 return data - data0;
             }
 
-            assert(subst->state == STATE_NONE);
+            assert(subst->state == istream_subst::STATE_NONE);
 
             break;
         }
-    } while (p < end || subst->state == STATE_INSERT);
+    } while (p < end || subst->state == istream_subst::STATE_INSERT);
 
-    if (first != NULL)
+    size_t chunk_length;
+    if (first != nullptr)
         /* we have found a partial match which we discard now, instead
            we will write the chunk right before this match */
         chunk_length = first - data;
-    else if (subst->state == STATE_MATCH || subst->state == STATE_INSERT)
+    else if (subst->state == istream_subst::STATE_MATCH ||
+             subst->state == istream_subst::STATE_INSERT)
         chunk_length = 0;
     else
         /* there was no match (maybe a partial match which mismatched
@@ -490,7 +495,8 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
 
         subst->had_output = true;
 
-        nbytes = subst_invoke_data(subst, data0, data, chunk_length);
+        const size_t nbytes = subst_invoke_data(subst, data0, data,
+                                                chunk_length);
         if (nbytes != (size_t)-1)
             return nbytes;
     }
@@ -506,8 +512,7 @@ subst_feed(struct istream_subst *subst, const void *_data, size_t length)
 static size_t
 subst_input_data(const void *data, size_t length, void *ctx)
 {
-    struct istream_subst *subst = ctx;
-    size_t nbytes;
+    auto *subst = (struct istream_subst *)ctx;
 
     if (!strref_is_empty(&subst->mismatch)) {
         bool ret = subst_feed_mismatch(subst);
@@ -516,7 +521,7 @@ subst_input_data(const void *data, size_t length, void *ctx)
     }
 
     pool_ref(subst->output.pool);
-    nbytes = subst_feed(subst, data, length);
+    size_t nbytes = subst_feed(subst, data, length);
     pool_unref(subst->output.pool);
 
     return nbytes;
@@ -525,27 +530,28 @@ subst_input_data(const void *data, size_t length, void *ctx)
 static void
 subst_input_eof(void *ctx)
 {
-    struct istream_subst *subst = ctx;
-    size_t nbytes;
+    auto *subst = (struct istream_subst *)ctx;
 
-    assert(subst->input != NULL);
+    assert(subst->input != nullptr);
 
-    subst->input = NULL;
+    subst->input = nullptr;
 
     switch (subst->state) {
-    case STATE_NONE:
+        size_t nbytes;
+
+    case istream_subst::STATE_NONE:
         break;
 
-    case STATE_CLOSED:
+    case istream_subst::STATE_CLOSED:
         assert(0);
 
-    case STATE_MATCH:
+    case istream_subst::STATE_MATCH:
         /* we're in the middle of a match, technically making this a
            mismatch because we reach end of file before end of
            match */
         if (strref_is_empty(&subst->mismatch)) {
             const struct subst_node *node = subst_find_any_leaf(subst->match);
-            assert(node != NULL);
+            assert(node != nullptr);
             assert(node->ch == 0);
 
             strref_set(&subst->mismatch, node->leaf.a, subst->a_match);
@@ -554,15 +560,15 @@ subst_input_eof(void *ctx)
         }
         break;
 
-    case STATE_INSERT:
+    case istream_subst::STATE_INSERT:
         nbytes = subst_try_write_b(subst);
         if (nbytes > 0)
             return;
         break;
     }
 
-    if (subst->state == STATE_NONE) {
-        subst->state = STATE_CLOSED;
+    if (subst->state == istream_subst::STATE_NONE) {
+        subst->state = istream_subst::STATE_CLOSED;
         istream_deinit_eof(&subst->output);
     }
 }
@@ -570,11 +576,11 @@ subst_input_eof(void *ctx)
 static void
 subst_input_abort(GError *error, void *ctx)
 {
-    struct istream_subst *subst = ctx;
+    auto *subst = (struct istream_subst *)ctx;
 
-    subst->state = STATE_CLOSED;
+    subst->state = istream_subst::STATE_CLOSED;
 
-    subst->input = NULL;
+    subst->input = nullptr;
     istream_deinit_abort(&subst->output, error);
 }
 
@@ -593,33 +599,34 @@ static const struct istream_handler subst_input_handler = {
 static inline struct istream_subst *
 istream_to_subst(struct istream *istream)
 {
-    return (struct istream_subst *)(((char*)istream) - offsetof(struct istream_subst, output));
+    return &ContainerCast2(*istream, &istream_subst::output);
 }
 
 static void
 istream_subst_read(struct istream *istream)
 {
     struct istream_subst *subst = istream_to_subst(istream);
-    size_t nbytes;
 
     if (!strref_is_empty(&subst->mismatch)) {
         bool ret;
 
-        if (subst->input == NULL)
+        if (subst->input == nullptr)
             ret = subst_write_mismatch(subst);
         else
             ret = subst_feed_mismatch(subst);
 
-        if (ret || subst->input == NULL)
+        if (ret || subst->input == nullptr)
             return;
     } else {
-        assert(subst->input != NULL);
+        assert(subst->input != nullptr);
     }
 
     switch (subst->state) {
-    case STATE_NONE:
-    case STATE_MATCH:
-        assert(subst->input != NULL);
+        size_t nbytes;
+
+    case istream_subst::STATE_NONE:
+    case istream_subst::STATE_MATCH:
+        assert(subst->input != nullptr);
 
         subst->had_output = false;
 
@@ -628,25 +635,25 @@ istream_subst_read(struct istream *istream)
         do {
             subst->had_input = false;
             istream_read(subst->input);
-        } while (subst->input != NULL && subst->had_input &&
-                 !subst->had_output && subst->state != STATE_INSERT);
+        } while (subst->input != nullptr && subst->had_input &&
+                 !subst->had_output && subst->state != istream_subst::STATE_INSERT);
 
         pool_unref(subst->output.pool);
 
         return;
 
-    case STATE_CLOSED:
+    case istream_subst::STATE_CLOSED:
         assert(0);
 
-    case STATE_INSERT:
+    case istream_subst::STATE_INSERT:
         nbytes = subst_try_write_b(subst);
         if (nbytes > 0)
             return;
         break;
     }
 
-    if (subst->state == STATE_NONE && subst->input == NULL) {
-        subst->state = STATE_CLOSED;
+    if (subst->state == istream_subst::STATE_NONE && subst->input == nullptr) {
+        subst->state = istream_subst::STATE_CLOSED;
         istream_deinit_eof(&subst->output);
     }
 }
@@ -656,9 +663,9 @@ istream_subst_close(struct istream *istream)
 {
     struct istream_subst *subst = istream_to_subst(istream);
 
-    subst->state = STATE_CLOSED;
+    subst->state = istream_subst::STATE_CLOSED;
 
-    if (subst->input != NULL)
+    if (subst->input != nullptr)
         istream_free_handler(&subst->input);
 
     istream_deinit(&subst->output);
@@ -680,11 +687,11 @@ istream_subst_new(struct pool *pool, struct istream *input)
 {
     struct istream_subst *subst = istream_new_macro(pool, subst);
 
-    assert(input != NULL);
+    assert(input != nullptr);
     assert(!istream_has_handler(input));
 
-    subst->root = NULL;
-    subst->state = STATE_NONE;
+    subst->root = nullptr;
+    subst->state = istream_subst::STATE_NONE;
     strref_clear(&subst->mismatch);
 
     istream_assign_handler(&subst->input, input,
@@ -699,25 +706,26 @@ istream_subst_add_n(struct istream *istream, const char *a0,
                     const char *b, size_t b_length)
 {
     struct istream_subst *subst = istream_to_subst(istream);
-    struct subst_node **pp, *p, *parent = NULL;
+    struct subst_node *parent = nullptr;
     const char *a = a0;
 
-    assert(subst != NULL);
-    assert(a0 != NULL);
+    assert(subst != nullptr);
+    assert(a0 != nullptr);
     assert(*a0 != 0);
-    assert(b_length == 0 || b != NULL);
+    assert(b_length == 0 || b != nullptr);
 
-    pp = &subst->root;
+    auto **pp = &subst->root;
     do {
-        p = *pp;
-        if (p == NULL) {
+        auto *p = *pp;
+        if (p == nullptr) {
             /* create new tree node */
 
-            p = p_malloc(subst->output.pool, sizeof(*p) - sizeof(p->leaf));
+            p = (struct subst_node *)p_malloc(subst->output.pool,
+                                              sizeof(*p) - sizeof(p->leaf));
             p->parent = parent;
-            p->left = NULL;
-            p->right = NULL;
-            p->equals = NULL;
+            p->left = nullptr;
+            p->right = nullptr;
+            p->equals = nullptr;
             p->ch = *a++;
 
             *pp = parent = p;
@@ -738,16 +746,18 @@ istream_subst_add_n(struct istream *istream, const char *a0,
     } while (*a);
 
     /* this keyword already exists */
-    if (*pp != NULL)
+    if (*pp != nullptr)
         return false;
 
     /* create new leaf node */
 
-    p = p_malloc(subst->output.pool, sizeof(*p) + b_length - sizeof(p->leaf.b));
+    struct subst_node *p = (struct subst_node *)
+        p_malloc(subst->output.pool,
+                 sizeof(*p) + b_length - sizeof(p->leaf.b));
     p->parent = parent;
-    p->left = NULL;
-    p->right = NULL;
-    p->equals = NULL;
+    p->left = nullptr;
+    p->right = nullptr;
+    p->equals = nullptr;
     p->ch = 0;
     p->leaf.a = a0;
     p->leaf.b_length = b_length;
@@ -761,5 +771,5 @@ istream_subst_add_n(struct istream *istream, const char *a0,
 bool
 istream_subst_add(struct istream *istream, const char *a, const char *b)
 {
-    return istream_subst_add_n(istream, a, b, b == NULL ? 0 : strlen(b));
+    return istream_subst_add_n(istream, a, b, b == nullptr ? 0 : strlen(b));
 }
