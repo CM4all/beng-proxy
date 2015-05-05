@@ -21,42 +21,35 @@ struct istream_cat {
     bool reading;
     unsigned current, num;
     struct input inputs[1];
-};
 
-
-static inline struct input *
-cat_current(struct istream_cat *cat)
-{
-    return &cat->inputs[cat->current];
-}
-
-static inline bool
-cat_is_current(struct istream_cat *cat, struct input *input)
-{
-    return cat_current(cat) == input;
-}
-
-static inline struct input *
-cat_shift(struct istream_cat *cat)
-{
-    return &cat->inputs[cat->current++];
-}
-
-static inline bool
-cat_is_eof(const struct istream_cat *cat)
-{
-    return cat->current == cat->num;
-}
-
-static void
-cat_close_inputs(struct istream_cat *cat)
-{
-    while (!cat_is_eof(cat)) {
-        struct input *input = cat_shift(cat);
-        if (input->istream != nullptr)
-            istream_close_handler(input->istream);
+    struct input &GetCurrent() {
+        return inputs[current];
     }
-}
+
+    const struct input &GetCurrent() const {
+        return inputs[current];
+    }
+
+    bool IsCurrent(const struct input &input) const {
+        return &GetCurrent() == &input;
+    }
+
+    struct input &Shift() {
+        return inputs[current++];
+    }
+
+    bool IsEOF() const {
+        return current == num;
+    }
+
+    void CloseAllInputs() {
+        while (!IsEOF()) {
+            auto &input = Shift();
+            if (input.istream != nullptr)
+                istream_close_handler(input.istream);
+        }
+    }
+};
 
 
 /*
@@ -72,7 +65,7 @@ cat_input_data(const void *data, size_t length, void *ctx)
 
     assert(input->istream != nullptr);
 
-    if (!cat_is_current(cat, input))
+    if (!cat->IsCurrent(*input))
         return 0;
 
     return istream_invoke_data(&cat->output, data, length);
@@ -86,7 +79,7 @@ cat_input_direct(enum istream_direct type, int fd, size_t max_length,
     struct istream_cat *cat = input->cat;
 
     assert(input->istream != nullptr);
-    assert(cat_is_current(cat, input));
+    assert(cat->IsCurrent(*input));
 
     return istream_invoke_direct(&cat->output, type, fd, max_length);
 }
@@ -100,19 +93,19 @@ cat_input_eof(void *ctx)
     assert(input->istream != nullptr);
     input->istream = nullptr;
 
-    if (cat_is_current(cat, input)) {
+    if (cat->IsCurrent(*input)) {
         do {
-            cat_shift(cat);
-        } while (!cat_is_eof(cat) && cat_current(cat)->istream == nullptr);
+            cat->Shift();
+        } while (!cat->IsEOF() && cat->GetCurrent().istream == nullptr);
 
-        if (cat_is_eof(cat)) {
+        if (cat->IsEOF()) {
             istream_deinit_eof(&cat->output);
         } else if (!cat->reading) {
             /* only call istream_read() if this function was not
                called from istream_cat_read() - in this case,
                istream_cat_read() would provide the loop.  This is
                advantageous because we avoid unnecessary recursing. */
-            istream_read(cat_current(cat)->istream);
+            istream_read(cat->GetCurrent().istream);
         }
     }
 }
@@ -126,7 +119,7 @@ cat_input_abort(GError *error, void *ctx)
     assert(input->istream != nullptr);
     input->istream = nullptr;
 
-    cat_close_inputs(cat);
+    cat->CloseAllInputs();
 
     istream_deinit_abort(&cat->output, error);
 }
@@ -157,7 +150,7 @@ istream_cat_available(struct istream *istream, bool partial)
     struct input *input, *end;
     off_t available = 0, a;
 
-    for (input = cat_current(cat), end = &cat->inputs[cat->num];
+    for (input = &cat->GetCurrent(), end = &cat->inputs[cat->num];
          input < end; ++input) {
         if (input->istream == nullptr)
             continue;
@@ -186,20 +179,20 @@ istream_cat_read(struct istream *istream)
     cat->reading = true;
 
     do {
-        while (!cat_is_eof(cat) && cat_current(cat)->istream == nullptr)
+        while (!cat->IsEOF() && cat->GetCurrent().istream == nullptr)
             ++cat->current;
 
-        if (cat_is_eof(cat)) {
+        if (cat->IsEOF()) {
             istream_deinit_eof(&cat->output);
             break;
         }
 
-        istream_handler_set_direct(cat_current(cat)->istream,
+        istream_handler_set_direct(cat->GetCurrent().istream,
                                    cat->output.handler_direct);
 
         prev = cat->current;
-        istream_read(cat_current(cat)->istream);
-    } while (!cat_is_eof(cat) && cat->current != prev);
+        istream_read(cat->GetCurrent().istream);
+    } while (!cat->IsEOF() && cat->current != prev);
 
     cat->reading = false;
 
@@ -218,8 +211,8 @@ istream_cat_as_fd(struct istream *istream)
         /* not on last input */
         return -1;
 
-    struct input *i = cat_current(cat);
-    int fd = istream_as_fd(i->istream);
+    auto &i = cat->GetCurrent();
+    int fd = istream_as_fd(i.istream);
     if (fd >= 0)
         istream_deinit(&cat->output);
 
@@ -231,7 +224,7 @@ istream_cat_close(struct istream *istream)
 {
     struct istream_cat *cat = istream_to_cat(istream);
 
-    cat_close_inputs(cat);
+    cat->CloseAllInputs();
     istream_deinit(&cat->output);
 }
 
