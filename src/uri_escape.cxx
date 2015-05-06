@@ -11,12 +11,15 @@
 
 #include <string.h>
 
+/**
+ * @see RFC 3986 2.3
+ */
 constexpr
 static inline bool
 uri_harmless_char(char ch)
 {
     return IsAlphaNumericASCII(ch) ||
-        ch == '_' || ch == '-' || ch == '.';
+        ch == '-' || ch == '.' || ch == '_' || ch == '~';
 }
 
 size_t
