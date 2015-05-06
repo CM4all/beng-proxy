@@ -16,7 +16,7 @@
  */
 constexpr
 static inline bool
-uri_harmless_char(char ch)
+IsUriUnreserved(char ch)
 {
     return IsAlphaNumericASCII(ch) ||
         ch == '-' || ch == '.' || ch == '_' || ch == '~';
@@ -29,7 +29,7 @@ uri_escape(char *dest, const char *src, size_t src_length,
     size_t i, dest_length = 0;
 
     for (i = 0; i < src_length; ++i) {
-        if (uri_harmless_char(src[i])) {
+        if (IsUriUnreserved(src[i])) {
             dest[dest_length++] = src[i];
         } else {
             dest[dest_length++] = escape_char;
