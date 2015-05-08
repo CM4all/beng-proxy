@@ -213,7 +213,6 @@ SessionManager::Cleanup()
     non_empty = !sessions.empty();
 
     lock.WriteUnlock();
-    assert(!crash_in_unsafe());
 
     return non_empty;
 }
@@ -224,6 +223,8 @@ cleanup_event_callback(int fd gcc_unused, short event gcc_unused,
 {
     if (session_manager->Cleanup())
         evtimer_add(&session_cleanup_event, &cleanup_interval);
+
+    assert(!crash_in_unsafe());
 }
 
 static SessionManager *

@@ -1,6 +1,6 @@
 cm4all-beng-proxy (7.0.3) unstable; urgency=low
 
-  * 
+  * session_manager: fix bogus assertion failure in cleanup
 
  --   
 
