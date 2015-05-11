@@ -108,11 +108,14 @@ int
 dup_cloexec(int oldfd)
 {
 	int newfd = dup(oldfd);
-	if (newfd >= 0)
+	if (newfd >= 0) {
+		fd_set_cloexec(newfd, true);
 		fd_set_nonblock(newfd);
+	}
 
 	return newfd;
 }
+
 
 int
 open_cloexec(const char *path_fs, int flags, int mode)
