@@ -102,7 +102,7 @@ PKG_CHECK_MODULES([LIBCM4ALL_HTTP], [libcm4all-http >= 1.2.5],,
 PKG_CHECK_MODULES([LIBCM4ALL_SOCKET], [libcm4all-socket >= 0.3.4],,
 	[AC_MSG_ERROR([libcm4all-socket not found])])
 
-PKG_CHECK_MODULES([LIBWAS], [libcm4all-was-simple],,
+PKG_CHECK_MODULES([LIBWAS], [libcm4all-was-protocol >= 0.8],,
 	[AC_MSG_ERROR([libwas not found])])
 
 AC_CHECK_HEADERS(valgrind/memcheck.h)
