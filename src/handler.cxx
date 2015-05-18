@@ -471,9 +471,16 @@ repeat_translation(struct request &request, const TranslateResponse &response)
         if (!response.want.IsNull())
             request.translate.request.want = response.want;
 
-        if (response.Wants(TRANSLATE_LISTENER_TAG))
+        if (response.Wants(TRANSLATE_LISTENER_TAG)) {
+            if (response.protocol_version >= 2) {
+                response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
+                                      "Translation protocol 2 doesn't allow WANT/LISTENER_TAG");
+                return;
+            }
+
             fill_translate_request_listener_tag(request.translate.request,
                                                 request);
+        }
 
         if (response.Wants(TRANSLATE_LOCAL_ADDRESS))
             fill_translate_request_local_address(request.translate.request,
@@ -710,7 +717,8 @@ static void
 fill_translate_request(TranslateRequest &t,
                        const struct http_server_request &request,
                        const struct parsed_uri &uri,
-                       struct strmap *args)
+                       struct strmap *args,
+                       const char *listener_tag)
 {
     /* these two were set by request_args_parse() */
     const auto session = t.session;
@@ -737,6 +745,9 @@ fill_translate_request(TranslateRequest &t,
         fill_translate_request_args(t, *request.pool, args);
         fill_translate_request_query_string(t, *request.pool, uri);
     }
+
+    if (translation_protocol_version >= 2)
+        t.listener_tag = listener_tag;
 }
 
 static void
@@ -752,7 +763,8 @@ ask_translation_server(struct request &request2)
     request2.translate.enotdir_path_info = nullptr;
 
     fill_translate_request(request2.translate.request, *request2.request,
-                           request2.uri, request2.args);
+                           request2.uri, request2.args,
+                           request2.connection->listener_tag);
     request2.SubmitTranslateRequest();
 }
 
