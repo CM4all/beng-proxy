@@ -120,6 +120,11 @@ struct TranslateResponse {
 
     bool dump_headers;
 
+    /**
+     * @see #TRANSLATE_REGEX_ON_HOST_URI
+     */
+    bool regex_on_host_uri;
+
     ConstBuffer<void> session;
 
     /**

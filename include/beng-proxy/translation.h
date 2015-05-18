@@ -637,6 +637,12 @@ enum beng_translation_command {
      * Expansion for #TRANSLATE_HEADER.
      */
     TRANSLATE_EXPAND_HEADER = 154,
+
+    /**
+     * If present, the use HOST+URI as input for #TRANSLATE_REGEX and
+     * not just the URI.
+     */
+    TRANSLATE_REGEX_ON_HOST_URI = 155,
 };
 
 struct beng_translation_header {

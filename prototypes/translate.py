@@ -666,6 +666,14 @@ class Translation(Protocol):
                 response.packet(TRANSLATE_READ_FILE, '/tmp/foo')
             else:
                 response.path('/var/www/' + request.read_file)
+        elif raw_uri[:16] == '/regex_host_uri/':
+            response.packet(TRANSLATE_BASE, '/regex_host_uri/')
+            response.packet(TRANSLATE_EASY_BASE)
+            response.packet(TRANSLATE_REGEX, "^(.*)$")
+            response.packet(TRANSLATE_REGEX_TAIL)
+            response.packet(TRANSLATE_REGEX_ON_HOST_URI)
+            response.path('/var/www/')
+            response.packet(TRANSLATE_EXPAND_PATH, r'/var/www/\1')
         else:
             self._handle_local_file('/var/www' + uri, response,
                                     error_document=True)

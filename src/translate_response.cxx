@@ -88,6 +88,7 @@ TranslateResponse::Clear()
     widget_info = false;
     anchor_absolute = false;
     dump_headers = false;
+    regex_on_host_uri = false;
 
     session = nullptr;
     check = nullptr;
@@ -205,6 +206,7 @@ TranslateResponse::CopyFrom(struct pool *pool, const TranslateResponse &src)
 
     anchor_absolute = src.anchor_absolute;
     dump_headers = src.dump_headers;
+    regex_on_host_uri = src.regex_on_host_uri;
     session = nullptr;
 
     check = DupBuffer(pool, src.check);

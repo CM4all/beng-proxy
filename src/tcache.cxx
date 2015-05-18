@@ -661,7 +661,7 @@ tcache_response_evaluate(const TranslateResponse *response)
  * Returns the string that shall be used for (inverse) regex matching.
  */
 static const char *
-tcache_regex_input(struct pool *pool, const char *uri,
+tcache_regex_input(struct pool *pool, const char *uri, const char *host,
                    const TranslateResponse &response)
 {
     assert(uri != nullptr);
@@ -682,6 +682,12 @@ tcache_regex_input(struct pool *pool, const char *uri,
         uri = uri_unescape_dup(pool, uri, strlen(uri));
     }
 
+    if (response.regex_on_host_uri) {
+        if (*uri == '/')
+            ++uri;
+        uri = p_strcat(pool, host, "/", uri, nullptr);
+    }
+
     return uri;
 }
 
@@ -691,7 +697,8 @@ tcache_regex_input(struct pool *pool, const char *uri,
  */
 static bool
 tcache_expand_response(struct pool &pool, TranslateResponse &response,
-                       const TranslateCacheItem &item, const char *uri,
+                       const TranslateCacheItem &item,
+                       const char *uri, const char *host,
                        GError **error_r)
 {
     assert(item.regex != nullptr);
@@ -702,7 +709,13 @@ tcache_expand_response(struct pool &pool, TranslateResponse &response,
 
     const AutoRewindPool auto_rewind(*tpool);
 
-    uri = tcache_regex_input(tpool, uri, response);
+    if (response.regex_on_host_uri && strchr(host, '/') != nullptr) {
+        g_set_error(error_r, http_response_quark(),
+                    HTTP_STATUS_BAD_REQUEST, "Malformed Host header");
+        return false;
+    }
+
+    uri = tcache_regex_input(tpool, uri, host, response);
     if (!response.unsafe_base && !uri_path_verify_paranoid(uri)) {
         g_set_error(error_r, http_response_quark(),
                     HTTP_STATUS_BAD_REQUEST, "Malformed URI");
@@ -911,14 +924,16 @@ tcache_item_match(const struct cache_item *_item, void *ctx)
 
     if (item.response.base != nullptr && item.inverse_regex != nullptr &&
         g_regex_match(item.inverse_regex,
-                      tcache_regex_input(tpool, request.uri, item.response),
+                      tcache_regex_input(tpool, request.uri, request.host,
+                                         item.response),
                       GRegexMatchFlags(0), nullptr))
         /* the URI matches the inverse regular expression */
         return false;
 
     if (item.response.base != nullptr && item.regex != nullptr &&
         !g_regex_match(item.regex,
-                       tcache_regex_input(tpool, request.uri, item.response),
+                       tcache_regex_input(tpool, request.uri, request.host,
+                                          item.response),
                        GRegexMatchFlags(0), nullptr))
         /* the URI did not match the regular expression */
         return false;
@@ -1235,7 +1250,8 @@ tcache_handler_response(TranslateResponse *response, void *ctx)
         if (tcr.request.uri != nullptr && response->IsExpandable()) {
             /* create a writable copy and expand it */
             if (!tcache_expand_response(*tcr.pool, *response, *item,
-                                        tcr.request.uri, &error)) {
+                                        tcr.request.uri, tcr.request.host,
+                                        &error)) {
                 tcr.handler->error(error, tcr.handler_ctx);
                 return;
             }
@@ -1270,7 +1286,8 @@ static const TranslateHandler tcache_handler = {
 };
 
 static void
-tcache_hit(struct pool &pool, const char *uri, gcc_unused const char *key,
+tcache_hit(struct pool &pool, const char *uri, const char *host,
+           gcc_unused const char *key,
            const TranslateCacheItem &item,
            const TranslateHandler &handler, void *ctx)
 {
@@ -1285,7 +1302,7 @@ tcache_hit(struct pool &pool, const char *uri, gcc_unused const char *key,
     }
 
     if (uri != nullptr && response->IsExpandable() &&
-        !tcache_expand_response(pool, *response, item, uri, &error)) {
+        !tcache_expand_response(pool, *response, item, uri, host, &error)) {
         handler.error(error, ctx);
         return;
     }
@@ -1460,7 +1477,8 @@ translate_cache(struct pool &pool, struct tcache &tcache,
                                                  key);
 
         if (item != nullptr)
-            tcache_hit(pool, request.uri, key, *item, handler, ctx);
+            tcache_hit(pool, request.uri, request.host, key,
+                       *item, handler, ctx);
         else
             tcache_miss(pool, tcache, request, key,
                         handler, ctx, async_ref);
