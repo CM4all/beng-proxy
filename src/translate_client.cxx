@@ -47,7 +47,7 @@
 #include <stdlib.h>
 #include <netdb.h>
 
-static const uint8_t PROTOCOL_VERSION = 1;
+static const uint8_t PROTOCOL_VERSION = 2;
 
 struct TranslatePacketReader {
     enum class State {
