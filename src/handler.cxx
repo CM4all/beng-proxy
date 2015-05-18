@@ -131,7 +131,7 @@ handle_translated_request2(request &request,
          response.www_authenticate == nullptr &&
          response.bounce == nullptr &&
          response.redirect == nullptr)) {
-        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_message(request, HTTP_STATUS_BAD_GATEWAY,
                                   "Internal server error");
         return;
     }
@@ -179,7 +179,7 @@ handle_translated_request2(request &request,
         response_dispatch_message(request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
     } else {
-        response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
                               "Empty response from translation server");
     }
 }
@@ -277,7 +277,7 @@ request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
         return false;
 
     if (++translate.n_probe_path_suffixes > 2) {
-        response_dispatch_log(*this, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_log(*this, HTTP_STATUS_BAD_GATEWAY,
                               "Too many consecutive PROBE_PATH_SUFFIXES packets");
         return true;
     }
@@ -456,7 +456,7 @@ repeat_translation(struct request &request, const TranslateResponse &response)
         /* repeat request with CHECK set */
 
         if (++request.translate.n_checks > 4) {
-            response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
                                   "Too many consecutive CHECK packets");
             return;
         }
@@ -569,7 +569,7 @@ request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 
     if (response.previous) {
         if (translate.previous == nullptr) {
-            response_dispatch_log(*this, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            response_dispatch_log(*this, HTTP_STATUS_BAD_GATEWAY,
                                   "No previous translation response");
             return;
         }
@@ -618,7 +618,7 @@ request::CheckHandleReadFile(const TranslateResponse &response)
         return false;
 
     if (++translate.n_read_file > 2) {
-        response_dispatch_log(*this, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_log(*this, HTTP_STATUS_BAD_GATEWAY,
                               "Too many consecutive READ_FILE packets");
         return true;
     }

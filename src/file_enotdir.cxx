@@ -81,7 +81,7 @@ check_file_enotdir(struct request &request,
 
     const char *path = get_file_path(response);
     if (path == nullptr) {
-        response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
                               "Resource address not compatible with ENOTDIR");
         return false;
     }

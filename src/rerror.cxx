@@ -117,11 +117,11 @@ response_dispatch_error(struct request &request, GError *error)
         }
     } else if (error->domain == memcached_client_quark())
         response_dispatch_error(request, error,
-                                HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                HTTP_STATUS_BAD_GATEWAY,
                                 "Cache server failed");
     else
         response_dispatch_error(request, error,
-                                HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                HTTP_STATUS_BAD_GATEWAY,
                                 "Internal server error");
 }
 

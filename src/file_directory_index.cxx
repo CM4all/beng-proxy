@@ -42,7 +42,7 @@ check_directory_index(struct request &request,
         case RESOURCE_ADDRESS_FASTCGI:
         case RESOURCE_ADDRESS_WAS:
         case RESOURCE_ADDRESS_NFS:
-            response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+            response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
                                   "Resource address not compatible with DIRECTORY_INDEX");
             return false;
 
@@ -57,7 +57,7 @@ check_directory_index(struct request &request,
     }
 
     if (++request.translate.n_directory_index > 4) {
-        response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+        response_dispatch_log(request, HTTP_STATUS_BAD_GATEWAY,
                               "Got too many consecutive DIRECTORY_INDEX packets");
         return false;
     }
