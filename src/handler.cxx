@@ -373,14 +373,13 @@ install_error_response(request &request)
 }
 
 static const char *
-uri_without_query_string(struct pool *pool, const char *uri)
+uri_without_query_string(struct pool &pool, const char *uri)
 {
-    assert(pool != nullptr);
     assert(uri != nullptr);
 
     const char *qmark = strchr(uri, '?');
     if (qmark != nullptr)
-        return p_strndup(pool, uri, qmark - uri);
+        return p_strndup(&pool, uri, qmark - uri);
 
     return uri;
 }
@@ -408,9 +407,9 @@ fill_translate_request_remote_host(TranslateRequest &t,
 
 static void
 fill_translate_request_user_agent(TranslateRequest &t,
-                                  const strmap *headers)
+                                  const strmap &headers)
 {
-    t.user_agent = headers->Get("user-agent");
+    t.user_agent = headers.Get("user-agent");
 }
 
 static void
@@ -492,7 +491,7 @@ repeat_translation(struct request &request, const TranslateResponse &response)
 
         if (response.Wants(TRANSLATE_USER_AGENT))
             fill_translate_request_user_agent(request.translate.request,
-                                              request.request->headers);
+                                              *request.request->headers);
 
         if (response.Wants(TRANSLATE_UA_CLASS))
             fill_translate_request_ua_class(request.translate.request,
@@ -521,7 +520,7 @@ repeat_translation(struct request &request, const TranslateResponse &response)
 
         /* send the full URI this time */
         request.translate.request.uri =
-            uri_without_query_string(request.request->pool,
+            uri_without_query_string(*request.request->pool,
                                      request.request->uri);
 
         /* undo the uri_parse() call (but leave the query_string) */
@@ -742,7 +741,7 @@ fill_translate_request(TranslateRequest &t,
            optional */
         fill_translate_request_local_address(t, request);
         fill_translate_request_remote_host(t, request);
-        fill_translate_request_user_agent(t, request.headers);
+        fill_translate_request_user_agent(t, *request.headers);
         fill_translate_request_ua_class(t, *request.headers);
         fill_translate_request_language(t, *request.headers);
         fill_translate_request_args(t, *request.pool, args);
@@ -751,25 +750,25 @@ fill_translate_request(TranslateRequest &t,
 }
 
 static void
-ask_translation_server(struct request *request2)
+ask_translation_server(struct request &request2)
 {
-    request2->translate.previous = nullptr;
-    request2->translate.n_checks = 0;
-    request2->translate.n_file_not_found = 0;
-    request2->translate.n_directory_index = 0;
-    request2->translate.n_probe_path_suffixes = 0;
-    request2->translate.n_read_file = 0;
-    request2->translate.enotdir_uri = nullptr;
-    request2->translate.enotdir_path_info = nullptr;
+    request2.translate.previous = nullptr;
+    request2.translate.n_checks = 0;
+    request2.translate.n_file_not_found = 0;
+    request2.translate.n_directory_index = 0;
+    request2.translate.n_probe_path_suffixes = 0;
+    request2.translate.n_read_file = 0;
+    request2.translate.enotdir_uri = nullptr;
+    request2.translate.enotdir_path_info = nullptr;
 
-    fill_translate_request(request2->translate.request, *request2->request,
-                           request2->uri, request2->args);
-    request2->SubmitTranslateRequest();
+    fill_translate_request(request2.translate.request, *request2.request,
+                           request2.uri, request2.args);
+    request2.SubmitTranslateRequest();
 }
 
 static void
 serve_document_root_file(request &request2,
-                         const struct config *config)
+                         const struct config &config)
 {
     auto &request = *request2.request;
 
@@ -793,8 +792,8 @@ serve_document_root_file(request &request2,
     request2.translate.suffix_transformation = nullptr;
 
     const char *path = p_strncat(request.pool,
-                                 config->document_root,
-                                 strlen(config->document_root),
+                                 config.document_root,
+                                 strlen(config.document_root),
                                  uri->base.data,
                                  uri->base.length,
                                  index_file, (size_t)10,
@@ -899,7 +898,7 @@ handle_http_request(client_connection &connection,
     request_determine_session(*request2);
 
     if (connection.instance->translate_cache == nullptr)
-        serve_document_root_file(*request2, connection.config);
+        serve_document_root_file(*request2, *connection.config);
     else
-        ask_translation_server(request2);
+        ask_translation_server(*request2);
 }
