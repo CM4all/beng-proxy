@@ -296,6 +296,14 @@ void
 response_dispatch_error(struct request &request, GError *error);
 
 void
+response_dispatch_log(struct request &request, http_status_t status,
+                      const char *log_msg);
+
+void
+response_dispatch_log(struct request &request, http_status_t status,
+                      const char *msg, const char *log_msg);
+
+void
 response_dispatch_redirect(struct request &request, http_status_t status,
                            const char *location, const char *msg);
 

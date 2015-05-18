@@ -179,10 +179,8 @@ handle_translated_request2(request &request,
         response_dispatch_message(request, HTTP_STATUS_UNAUTHORIZED,
                                   "Unauthorized");
     } else {
-        daemon_log(2, "empty response from translation server\n");
-
-        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "Internal server error");
+        response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                              "Empty response from translation server");
     }
 }
 
@@ -279,10 +277,8 @@ request::CheckHandleProbePathSuffixes(const TranslateResponse &response)
         return false;
 
     if (++translate.n_probe_path_suffixes > 2) {
-        daemon_log(2, "got too many consecutive PROBE_PATH_SUFFIXES packets\n");
-        response_dispatch_message(*this,
-                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "Internal server error");
+        response_dispatch_log(*this, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                              "Too many consecutive PROBE_PATH_SUFFIXES packets");
         return true;
     }
 
@@ -460,10 +456,8 @@ repeat_translation(struct request &request, const TranslateResponse &response)
         /* repeat request with CHECK set */
 
         if (++request.translate.n_checks > 4) {
-            daemon_log(2, "got too many consecutive CHECK packets\n");
-            response_dispatch_message(request,
-                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                      "Internal server error");
+            response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                  "Too many consecutive CHECK packets");
             return;
         }
 
@@ -575,10 +569,8 @@ request::OnTranslateResponseAfterAuth(const TranslateResponse &response)
 
     if (response.previous) {
         if (translate.previous == nullptr) {
-            daemon_log(2, "no previous translation response\n");
-            response_dispatch_message(*this,
-                                      HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                      "Internal server error");
+            response_dispatch_log(*this, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                  "No previous translation response");
             return;
         }
 
@@ -626,10 +618,8 @@ request::CheckHandleReadFile(const TranslateResponse &response)
         return false;
 
     if (++translate.n_read_file > 2) {
-        daemon_log(2, "got too many consecutive READ_FILE packets\n");
-        response_dispatch_message(*this,
-                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "Internal server error");
+        response_dispatch_log(*this, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                              "Too many consecutive READ_FILE packets");
         return true;
     }
 

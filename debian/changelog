@@ -1,5 +1,6 @@
 cm4all-beng-proxy (7.0.3) unstable; urgency=low
 
+  * handler: more "verbose_response" messages
   * session_manager: fix bogus assertion failure in cleanup
   * build with libwas 0.8
 

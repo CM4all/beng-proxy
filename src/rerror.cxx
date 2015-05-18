@@ -21,6 +21,8 @@
 #include "gerrno.h"
 #include "pool.hxx"
 
+#include <daemon/log.h>
+
 #ifdef HAVE_LIBNFS
 #include "nfs_client.hxx"
 #include <nfsc/libnfs-raw-nfs.h>
@@ -121,4 +123,24 @@ response_dispatch_error(struct request &request, GError *error)
         response_dispatch_error(request, error,
                                 HTTP_STATUS_INTERNAL_SERVER_ERROR,
                                 "Internal server error");
+}
+
+void
+response_dispatch_log(struct request &request, http_status_t status,
+                      const char *msg, const char *log_msg)
+{
+    daemon_log(2, "%s\n", log_msg);
+
+    if (request.connection->instance->config.verbose_response)
+        msg = p_strdup(request.request->pool, log_msg);
+
+    response_dispatch_message(request, status, msg);
+}
+
+void
+response_dispatch_log(struct request &request, http_status_t status,
+                      const char *log_msg)
+{
+    response_dispatch_log(request, status,
+                          http_status_to_string(status), log_msg);
 }

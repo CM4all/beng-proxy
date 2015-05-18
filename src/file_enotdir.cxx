@@ -14,8 +14,6 @@
 #include "http_server.hxx"
 #include "pool.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -83,9 +81,8 @@ check_file_enotdir(struct request &request,
 
     const char *path = get_file_path(response);
     if (path == nullptr) {
-        daemon_log(2, "resource address not compatible with ENOTDIR\n");
-        response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "Internal Server Error");
+        response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                              "Resource address not compatible with ENOTDIR");
         return false;
     }
 

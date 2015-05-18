@@ -10,8 +10,6 @@
 #include "resource_address.hxx"
 #include "file_address.hxx"
 
-#include <daemon/log.h>
-
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -44,9 +42,8 @@ check_directory_index(struct request &request,
         case RESOURCE_ADDRESS_FASTCGI:
         case RESOURCE_ADDRESS_WAS:
         case RESOURCE_ADDRESS_NFS:
-            daemon_log(2, "resource address not compatible with TRANSLATE_DIRECTORY_INDEX\n");
-            response_dispatch_message(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                      "Internal Server Error");
+            response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                                  "Resource address not compatible with DIRECTORY_INDEX");
             return false;
 
         case RESOURCE_ADDRESS_LOCAL:
@@ -60,10 +57,8 @@ check_directory_index(struct request &request,
     }
 
     if (++request.translate.n_directory_index > 4) {
-        daemon_log(2, "got too many consecutive DIRECTORY_INDEX packets\n");
-        response_dispatch_message(request,
-                                  HTTP_STATUS_INTERNAL_SERVER_ERROR,
-                                  "Internal server error");
+        response_dispatch_log(request, HTTP_STATUS_INTERNAL_SERVER_ERROR,
+                              "Got too many consecutive DIRECTORY_INDEX packets");
         return false;
     }
 
