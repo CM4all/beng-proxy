@@ -2,7 +2,7 @@ cm4all-beng-proxy (7.0.3) unstable; urgency=low
 
   * handler: more "verbose_response" messages
   * handler: return "502 Bad Gateway" on translation server error
-  * translate_client: protocol v2 always transmits LISTENER_TAG
+  * translation: protocol v2 always transmits LISTENER_TAG
   * session_manager: fix bogus assertion failure in cleanup
   * build with libwas 1.0
 
